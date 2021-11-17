@@ -156,7 +156,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         sample_weight=None,
         check_input=True,
         classes=None,
-        X_idx_sorted="deprecated",
     ):
 
         random_state = check_random_state(self.random_state)
@@ -353,16 +352,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.min_impurity_decrease < 0.0:
             raise ValueError("min_impurity_decrease must be greater than or equal to 0")
-
-        # TODO: Remove in 1.1
-        if X_idx_sorted != "deprecated":
-            warnings.warn(
-                "The parameter 'X_idx_sorted' is deprecated and has no "
-                "effect. It will be removed in 1.1 (renaming of 0.26). You "
-                "can suppress this warning by not passing any value to the "
-                "'X_idx_sorted' parameter.",
-                FutureWarning,
-            )
 
         # Build tree
         criterion = self.criterion
@@ -955,12 +944,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated:: 0.24
-
         Returns
         -------
         self : DecisionTreeClassifier
@@ -973,7 +956,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             sample_weight=sample_weight,
             check_input=check_input,
             classes=classes,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -1433,7 +1415,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         sample_weight=None,
         check_input=True,
         classes=None,
-        X_idx_sorted="deprecated",
     ):
         """Build a decision tree regressor from the training set (X, y).
 
@@ -1460,12 +1441,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         classes : array-like of shape (n_classes,), default=None
             List of all the classes that can possibly appear in the y vector.
 
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated:: 0.24
-
         Returns
         -------
         self : DecisionTreeRegressor
@@ -1477,7 +1452,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
