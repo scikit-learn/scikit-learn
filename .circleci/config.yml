@@ -59,7 +59,9 @@ jobs:
       - MATPLOTLIB_VERSION: 'latest'
       - CYTHON_VERSION: 'latest'
       - SCIKIT_IMAGE_VERSION: 'latest'
-      - SPHINX_VERSION: 'min'
+      # Bump the sphinx version from time to time. Avoid latest sphinx version
+      # that tends to break things slightly too often
+      - SPHINX_VERSION: 4.2.0
       - PANDAS_VERSION: 'latest'
       - SPHINX_GALLERY_VERSION: 'latest'
       - NUMPYDOC_VERSION: 'latest'
