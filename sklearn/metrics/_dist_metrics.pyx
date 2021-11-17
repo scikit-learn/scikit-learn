@@ -191,8 +191,8 @@ cdef class DistanceMetric:
     """
     def __cinit__(self):
         self.p = 2
-        self.vec = ReadonlyArrayWrapper(np.zeros(1, dtype=DTYPE, order='c'))
-        self.mat = ReadonlyArrayWrapper(np.zeros((1, 1), dtype=DTYPE, order='c'))
+        self.vec = np.zeros(1, dtype=DTYPE, order='c')
+        self.mat = np.zeros((1, 1), dtype=DTYPE, order='c')
         self.size = 1
 
     def __reduce__(self):
@@ -605,7 +605,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
             raise ValueError("WMinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
-        self.vec = np.asarray(w, dtype=DTYPE)
+        self.vec = ReadonlyArrayWrapper(np.asarray(w, dtype=DTYPE))
         self.size = self.vec.shape[0]
 
     def _validate_data(self, X):
@@ -665,7 +665,7 @@ cdef class MahalanobisDistance(DistanceMetric):
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
 
-        self.mat = np.asarray(VI, dtype=float, order='C')
+        self.mat = ReadonlyArrayWrapper(np.asarray(VI, dtype=float, order='C'))
 
         self.size = self.mat.shape[0]
 
