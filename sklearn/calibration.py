@@ -1099,6 +1099,9 @@ class CalibrationDisplay:
             ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
 
+        # Unify AxesSubplot string representation for labels across matplotlib versions
+        self.line_.set_label(self.line_.get_label().replace("child", "line"))
+
         if "label" in line_kwargs:
             ax.legend(loc="lower right")
 
