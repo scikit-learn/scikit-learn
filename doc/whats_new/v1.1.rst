@@ -231,6 +231,14 @@ Changelog
   :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
   :user:`Loïc Estève <lesteve>`.
 
+- |Enhancement| Adds a `fit_inverse_transform` parameter to all transformers in
+  the :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. When set to True,
+  the pseudo-inverse of the components is computed during `fit` and stored in
+  `components_pinv_`, and `inverse_transform` becomes available.
+  by `Aurélien Geron <ageron>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

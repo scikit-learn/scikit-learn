@@ -373,3 +373,30 @@ def test_random_projection_feature_names_out(random_projection_cls):
     )
 
     assert_array_equal(names_out, expected_names_out)
+
+
+###############################################################################
+# tests on inverse transform
+###############################################################################
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+def test_inverse_transform(random_projection_cls):
+    random_projection = random_projection_cls(
+        n_components=2, fit_inverse_transform=True
+    )
+    projected = random_projection.fit_transform(data)
+    projected_back = random_projection.inverse_transform(projected)
+    projected_again = random_projection.transform(projected_back)
+    assert_array_almost_equal(projected, projected_again)
+    assert random_projection.components_pinv_.shape == (n_features, 2)
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+def test_no_inverse_transform_by_default(random_projection_cls):
+    random_projection = random_projection_cls(n_components=2)
+    projected = random_projection.fit_transform(data)
+    with pytest.raises(AttributeError):
+        random_projection.inverse_transform(projected)
+    with pytest.raises(AttributeError):
+        random_projection.components_pinv_
