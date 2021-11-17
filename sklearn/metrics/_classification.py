@@ -1943,10 +1943,16 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     Returns
     -------
     balanced_accuracy : float
+        Balanced accuracy score.
 
     See Also
     --------
-    recall_score, roc_auc_score
+    average_precision_score : Compute average precision (AP) from prediction
+        scores.
+    precision_score : Compute the precision score.
+    recall_score : Compute the recall score.
+    roc_auc_score : Compute Area Under the Receiver Operating Characteristic
+        Curve (ROC AUC) from prediction scores.
 
     Notes
     -----
@@ -1973,7 +1979,6 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     >>> y_pred = [0, 1, 0, 0, 0, 1]
     >>> balanced_accuracy_score(y_true, y_pred)
     0.625
-
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide="ignore", invalid="ignore"):

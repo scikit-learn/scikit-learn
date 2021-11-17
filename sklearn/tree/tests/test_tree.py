@@ -2138,21 +2138,6 @@ def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
     assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
-# TODO: Remove in v1.1
-@pytest.mark.parametrize(
-    "TreeEstimator", [DecisionTreeClassifier, DecisionTreeRegressor]
-)
-def test_X_idx_sorted_deprecated(TreeEstimator):
-    X_idx_sorted = np.argsort(X, axis=0)
-
-    tree = TreeEstimator()
-
-    with pytest.warns(
-        FutureWarning, match="The parameter 'X_idx_sorted' is deprecated"
-    ):
-        tree.fit(X, y, X_idx_sorted=X_idx_sorted)
-
-
 # TODO: Remove in v1.2
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize(
