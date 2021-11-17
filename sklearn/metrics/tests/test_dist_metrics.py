@@ -255,5 +255,5 @@ def test_readonly_kwargs():
 
     with NamedTemporaryFile(prefix="vec-kwargs") as tmp:
         joblib.dump(V, tmp)
-        readonly_V = joblib.load("/tmp/stuff.npy", "r")
+        readonly_V = joblib.load(tmp, "r")
     DistanceMetric.get_metric("seuclidean", V=readonly_V)
