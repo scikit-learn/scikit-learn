@@ -237,7 +237,7 @@ Changelog
   :class:`~sklearn.random_projection.SparseRandomProjection`. When set to True,
   the pseudo-inverse of the components is computed during `fit` and stored in
   `components_pinv_`, and `inverse_transform` becomes available.
-  by `Aurélien Geron <ageron>`.
+  :pr:`21701` by `Aurélien Geron <ageron>`.
 
 Code and Documentation Contributors
 -----------------------------------
