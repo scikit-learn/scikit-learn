@@ -1,8 +1,10 @@
 import itertools
 import pickle
+import joblib
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+from tempfile import NamedTemporaryFile
 
 import pytest
 
@@ -242,3 +244,16 @@ def test_input_data_size():
     pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
     eucl = DistanceMetric.get_metric("euclidean")
     assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
+
+
+def test_readonly_kwargs():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/21685
+
+    rng = check_random_state(0)
+    V = rng.rand(100)
+
+    with NamedTemporaryFile(prefix="vec-kwargs") as tmp:
+        joblib.dump(V, tmp)
+        readonly_V = joblib.load("/tmp/stuff.npy", "r")
+    DistanceMetric.get_metric("seuclidean", V=readonly_V)
