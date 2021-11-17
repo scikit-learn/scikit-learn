@@ -92,6 +92,10 @@ Changelog
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
+- |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
+  `fit` instead of `__init__`.
+  :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
   :class:`~sklearn.decomposition.DictionaryLearning`,
@@ -185,13 +189,6 @@ Changelog
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
   instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
-
-
-:mod:`sklearn.decomposition.KernelPCA`
-......................................
-- |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
-  `fit` instead of `__init__`.
-  :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
 
 :mod:`sklearn.svm`
 ..................
