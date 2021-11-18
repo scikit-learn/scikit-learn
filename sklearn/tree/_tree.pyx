@@ -655,7 +655,21 @@ cdef class Tree:
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
-
+    # The Cython code for decision trees uses platform-specific SIZE_t typed
+    # indexing fields that correspond to either i4 or i8 dtypes for the
+    # matching fields in the numpy array depending on the bitness of the
+    # platform (32 bit or 64 bit respectively).
+    #
+    # We need to cast the indexing fields of the NODE_DTYPE-dtyped array at
+    # pickle load time to enable cross-bitness deployment scenarios. We
+    # typically want to make it possible to run the expensive fit method of a
+    # tree estimator on a 64 bit server platform, pickle the estimator for
+    # deployment and run the predict method of a low power 32 bit edge
+    # platform.
+    #
+    # We do not expect a decision tree to reach 2 ** 32 nodes or more in a
+    # single tree, so using 32 bit precision index fields should not be a
+    # problem in practice.
         if (node_ndarray.dtype != NODE_DTYPE):
             try:
                 node_ndarray = node_ndarray.astype(
