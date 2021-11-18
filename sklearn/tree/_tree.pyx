@@ -589,19 +589,19 @@ cdef class Tree:
         size_t_dtype = np.array(dummy).dtype
 
         if n_classes.ndim != 1:
-            raise ValueError(f"Wrong dimensions for n_classes: expected 1, got {n_classes.ndim}")
+            raise ValueError(
+                f"Wrong dimensions for n_classes: expected 1, got {n_classes.ndim}")
 
         try:
             n_classes = n_classes.astype(dtype=size_t_dtype, casting='same_kind')
         except Exception as exc:
             raise ValueError(
-                f"Error converting n_classes: full exception was\n{exc}")
+                f"Error casting n_classes to dtype {size_t_dtype}") from exc
 
         # Input/Output layout
         self.n_features = n_features
         self.n_outputs = n_outputs
         self.n_classes = NULL
-
         safe_realloc(&self.n_classes, n_outputs)
 
         self.max_n_classes = np.max(n_classes)
