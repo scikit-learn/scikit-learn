@@ -2070,6 +2070,42 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True are incompatible")
             if self.alpha_per_target:
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
+            if isinstance(self.alphas, (np.ndarray, list, tuple)):
+                n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
+                if n_alphas != 1:
+                    for index, alpha in enumerate(self.alphas):
+                        alpha = check_scalar(
+                            alpha,
+                            f"alphas[{index}]",
+                            target_type=numbers.Real,
+                            min_val=0.0,
+                            include_boundaries="neither",
+                        )
+                elif np.ndim(self.alphas) == 0:
+                    self.alphas[()] = check_scalar(
+                        self.alphas[()],
+                        "alphas",
+                        target_type=numbers.Real,
+                        min_val=0.0,
+                        include_boundaries="neither",
+                    )
+                else:
+                    self.alphas[0] = check_scalar(
+                        self.alphas[0],
+                        "alphas",
+                        target_type=numbers.Real,
+                        min_val=0.0,
+                        include_boundaries="neither",
+                    )
+            else:
+                self.alphas = check_scalar(
+                    self.alphas,
+                    "alphas",
+                    target_type=numbers.Real,
+                    min_val=0.0,
+                    include_boundaries="neither",
+                )
+            self.alphas = np.asarray(self.alphas)
             parameters = {"alpha": self.alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
