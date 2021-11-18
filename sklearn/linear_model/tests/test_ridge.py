@@ -1234,21 +1234,23 @@ def test_ridgecv_int_alphas():
     ridge.fit(X, y)
 
 
-def test_ridgecv_negative_alphas():
+def test_ridgecv_scalar_alphas():
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
+    # The method for fitting _BaseRidgeCV depends whether cv=None
+    cv = KFold(3)
 
     # Negative integers
     ridge = RidgeCV(alphas=(1, -1, -100))
     with pytest.raises(ValueError, match=r"alphas\[1\] == -1, must be > 0.0"):
         ridge.fit(X, y)
 
-    # Negative floats
-    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
+    # Negative floats and cv is not None
+    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0), cv=cv)
     with pytest.raises(ValueError, match=r"alphas\[0\] == -0.1, must be > 0.0"):
         ridge.fit(X, y)
 
-    # Positive strings
+    # Strings
     ridge = RidgeCV(alphas=(1, 1.0, "1"))
     with pytest.raises(
         TypeError,
