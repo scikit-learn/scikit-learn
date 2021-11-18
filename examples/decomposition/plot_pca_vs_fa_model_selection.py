@@ -40,7 +40,7 @@ from sklearn.model_selection import GridSearchCV
 # #############################################################################
 # Create the data
 
-n_samples, n_features, rank = 500, 25, 5
+n_samples, n_features, rank = 1000, 50, 10
 sigma = 1.0
 rng = np.random.RandomState(42)
 U, _, _ = linalg.svd(rng.randn(n_features, n_features))

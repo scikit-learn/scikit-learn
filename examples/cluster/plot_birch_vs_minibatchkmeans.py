@@ -40,10 +40,10 @@ from sklearn.datasets import make_blobs
 xx = np.linspace(-22, 22, 10)
 yy = np.linspace(-22, 22, 10)
 xx, yy = np.meshgrid(xx, yy)
-n_centres = np.hstack((np.ravel(xx)[:, np.newaxis], np.ravel(yy)[:, np.newaxis]))
+n_centers = np.hstack((np.ravel(xx)[:, np.newaxis], np.ravel(yy)[:, np.newaxis]))
 
 # Generate blobs to do a comparison between MiniBatchKMeans and BIRCH.
-X, y = make_blobs(n_samples=25000, centers=n_centres, random_state=0)
+X, y = make_blobs(n_samples=25000, centers=n_centers, random_state=0)
 
 # Use all colors that matplotlib provides by default.
 colors_ = cycle(colors.cnames.keys())
