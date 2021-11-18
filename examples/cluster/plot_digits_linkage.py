@@ -22,39 +22,17 @@ being drawn from noise points around the fringes.
 # Authors: Gael Varoquaux
 # License: BSD 3 clause (C) INRIA 2014
 
-# We utilize the digits dataset which has 1800 entries.
-# We will only use 800 entries for the sake of speeding
-# up the calculations but feel free to use the whole dataset.
-
 from time import time
 
 import numpy as np
-from scipy import ndimage
 from matplotlib import pyplot as plt
 
 from sklearn import manifold, datasets
 
 X, y = datasets.load_digits(return_X_y=True)
-X, y = X[:800], y[:800]
 n_samples, n_features = X.shape
 
 np.random.seed(0)
-
-
-def nudge_images(X, y):
-    # Having a larger dataset shows more clearly the behavior of the
-    # methods, but we multiply the size of the dataset only by 2, as the
-    # cost of the hierarchical clustering methods are strongly
-    # super-linear in n_samples
-    shift = lambda x: ndimage.shift(
-        x.reshape((8, 8)), 0.3 * np.random.normal(size=2), mode="constant"
-    ).ravel()
-    X = np.concatenate([X, np.apply_along_axis(shift, 1, X)])
-    Y = np.concatenate([y, y], axis=0)
-    return X, Y
-
-
-X, y = nudge_images(X, y)
 
 
 # ----------------------------------------------------------------------
@@ -70,7 +48,7 @@ def plot_clustering(X_red, labels, title=None):
             X_red[i, 1],
             str(y[i]),
             color=plt.cm.nipy_spectral(labels[i] / 10.0),
-            fontdict={"weight": "bold", "size": 10},
+            fontdict={"weight": "bold", "size": 9},
         )
 
     plt.xticks([])
