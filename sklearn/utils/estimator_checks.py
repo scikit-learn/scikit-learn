@@ -2090,10 +2090,10 @@ def check_classifiers_train(
             # Prudently assume Prescott might be the architecture if it is unknown.
             and info.get("architecture", "prescott").lower() == "prescott"
         )
-
-        X_m, y_m, X_b, y_b = create_memmap_backed_data(
-            data=[X_m, y_m, X_b, y_b], aligned=has_prescott_openblas
-        )
+        X_m = create_memmap_backed_data(data=X_m, aligned=has_prescott_openblas)
+        y_m = create_memmap_backed_data(data=y_m, aligned=has_prescott_openblas)
+        X_b = create_memmap_backed_data(data=X_b, aligned=has_prescott_openblas)
+        y_b = create_memmap_backed_data(data=y_b, aligned=has_prescott_openblas)
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
