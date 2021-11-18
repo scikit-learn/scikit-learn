@@ -499,6 +499,7 @@ def test_pca_svd_solver_auto(data, n_components, expected_solver):
     pca_auto.fit(data)
     pca_test.fit(data)
     assert_allclose(pca_auto.components_, pca_test.components_)
+    assert_allclose(pca_auto.U_, pca_test.U_)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -547,6 +548,8 @@ def check_pca_float_dtype_preservation(svd_solver):
 
     assert pca_64.components_.dtype == np.float64
     assert pca_32.components_.dtype == np.float32
+    assert pca_64.U_.dtype == np.float64
+    assert pca_32.U_.dtype == np.float32
     assert pca_64.transform(X_64).dtype == np.float64
     assert pca_32.transform(X_32).dtype == np.float32
 
@@ -554,6 +557,7 @@ def check_pca_float_dtype_preservation(svd_solver):
     # conda-forge: PR#15775
     # see: https://github.com/conda-forge/scikit-learn-feedstock/pull/113
     assert_allclose(pca_64.components_, pca_32.components_, rtol=2e-4)
+    assert_allclose(pca_64.U_, pca_32.U_, rtol=2e-4)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):
@@ -567,10 +571,13 @@ def check_pca_int_dtype_upcast_to_double(svd_solver):
 
     assert pca_64.components_.dtype == np.float64
     assert pca_32.components_.dtype == np.float64
+    assert pca_64.U_.dtype == np.float64
+    assert pca_32.U_.dtype == np.float64
     assert pca_64.transform(X_i64).dtype == np.float64
     assert pca_32.transform(X_i32).dtype == np.float64
 
     assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-4)
+    assert_allclose(pca_64.U_, pca_32.U_, rtol=1e-4)
 
 
 def test_pca_n_components_mostly_explained_variance_ratio():
@@ -682,7 +689,10 @@ def test_pca_randomized_svd_n_oversamples():
     pca_arpack = PCA(n_components=1, svd_solver="arpack", random_state=0).fit(X)
 
     assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
+    assert_allclose(np.abs(pca_full.U_), np.abs(pca_arpack.U_))
+
     assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
+    assert_allclose(np.abs(pca_randomized.U_), np.abs(pca_arpack.components_))
 
 
 @pytest.mark.parametrize(
