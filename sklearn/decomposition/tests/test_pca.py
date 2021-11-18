@@ -557,7 +557,7 @@ def check_pca_float_dtype_preservation(svd_solver):
     # conda-forge: PR#15775
     # see: https://github.com/conda-forge/scikit-learn-feedstock/pull/113
     assert_allclose(pca_64.components_, pca_32.components_, rtol=2e-4)
-    assert_allclose(np.abs(pca_64.U_), np.abs(pca_32.U_), rtol=1e-2)
+    assert_allclose(np.abs(pca_64.U_), np.abs(pca_32.U_), atol=1e-3)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):
@@ -577,7 +577,7 @@ def check_pca_int_dtype_upcast_to_double(svd_solver):
     assert pca_32.transform(X_i32).dtype == np.float64
 
     assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-4)
-    assert_allclose(pca_64.U_, pca_32.U_, rtol=1e-4)
+    assert_allclose(np.abs(pca_64.U_), np.abs(pca_32.U_), atol=1e-3)
 
 
 def test_pca_n_components_mostly_explained_variance_ratio():
