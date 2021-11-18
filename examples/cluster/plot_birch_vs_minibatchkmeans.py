@@ -5,7 +5,7 @@ Compare BIRCH and MiniBatchKMeans
 
 This example compares the timing of BIRCH (with and without the global
 clustering step) and MiniBatchKMeans on a synthetic dataset having
-50,000 samples and 2 features generated using make_blobs.
+25,000 samples and 2 features generated using make_blobs.
 
 If ``n_clusters`` is set to None, the data is reduced from 25,000
 samples to a set of 158 clusters. This can be viewed as a preprocessing
