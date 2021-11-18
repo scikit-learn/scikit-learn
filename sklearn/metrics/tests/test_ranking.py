@@ -1814,6 +1814,56 @@ def test_top_k_accuracy_score_multiclass_with_labels(
     assert score == pytest.approx(true_score)
 
 
+@pytest.mark.parametrize(
+    "y_true, true_score, labels",
+    [
+        (
+            np.array([
+            [1, 1, 1, 1], 
+            [1, 1, 1, 0],
+            [1, 1, 0, 0],
+            [1, 0, 0, 0]
+            ]),
+            0.5,
+            [0, 1, 2, 3]
+        ),
+        (
+            np.array([
+            [1, 1, 1, 1], 
+            [1, 1, 1, 0],
+            [1, 1, 1, 0],
+            [1, 0, 0, 0]
+            ]),
+            0.75,
+            [0, 1, 2, 3]
+        ),
+        (
+            np.array([
+            [1, 0, 0, 0], 
+            [1, 0, 0, 0],
+            [1, 0, 0, 0],
+            [1, 0, 0, 0]
+            ]),
+            0.,
+            [0, 1, 2, 3]
+        ),
+    ],
+)
+def test_top_k_accuracy_score_multilabel(
+    y_true, true_score, labels
+):
+    y_score = np.array(
+        [
+            [0.1, 0.2, 0.3, 0.4],
+            [0.1, 0.2, 0.3, 0.4],
+            [0.1, 0.2, 0.3, 0.4],
+            [0.1, 0.2, 0.3, 0.4]
+        ]
+    )
+    score = top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
+    assert score == pytest.approx(true_score)
+
+
 def test_top_k_accuracy_score_increasing():
     # Make sure increasing k leads to a higher score
     X, y = datasets.make_classification(
@@ -1885,7 +1935,7 @@ def test_top_k_accuracy_score_warning(y_true, k):
         (
             [0, 0.57, 1, 2],
             None,
-            "y type must be 'binary' or 'multiclass', got 'continuous'",
+            "y type must be 'binary', 'multiclass' or 'multilabel-indicator', got 'continuous'",
         ),
         (
             [0, 1, 2, 3],

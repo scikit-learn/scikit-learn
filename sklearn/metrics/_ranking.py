@@ -35,7 +35,9 @@ from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
+from ..preprocessing import MultiLabelBinarizer
 from ..utils._encode import _encode, _unique
+
 
 from ._base import (
     _average_binary_score,
@@ -43,6 +45,7 @@ from ._base import (
     _check_pos_label_consistency,
 )
 
+import sys
 
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule.
@@ -1696,7 +1699,6 @@ def top_k_accuracy_score(
 
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
-    y_true = column_or_1d(y_true)
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type == "binary" and labels is not None and len(labels) > 2:
         y_type = "multiclass"
@@ -1704,9 +1706,9 @@ def top_k_accuracy_score(
     y_score = column_or_1d(y_score) if y_type == "binary" else y_score
     check_consistent_length(y_true, y_score, sample_weight)
 
-    if y_type not in {"binary", "multiclass"}:
+    if y_type not in {"binary", "multiclass", "multilabel-indicator"}:
         raise ValueError(
-            f"y type must be 'binary' or 'multiclass', got '{y_type}' instead."
+            f"y type must be 'binary', 'multiclass' or 'multilabel-indicator', got '{y_type}' instead."
         )
 
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
@@ -1760,6 +1762,10 @@ def top_k_accuracy_score(
     elif y_type == "multiclass":
         sorted_pred = np.argsort(y_score, axis=1, kind="mergesort")[:, ::-1]
         hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
+    elif y_type == "multilabel-indicator":
+        sorted_pred = np.argsort(y_score, axis=1, kind="mergesort")[:, ::-1]
+        sorted_pred_binary = MultiLabelBinarizer(classes=classes).fit_transform(sorted_pred[:, :k])
+        hits = (y_true * sorted_pred_binary).any(axis=1)
 
     if normalize:
         return np.average(hits, weights=sample_weight)
