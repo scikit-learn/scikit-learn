@@ -2245,6 +2245,8 @@ def get_different_bitness_dtype_descr_single(dtype_descr_element):
     if _IS_32BIT:
         new_dtype_str = re.sub(r"([iufc])4", r"\g<1>8", dtype_str)
     else:
+        # Map 64 bit dtypes to their matching 32 bit counterparts:
+        # <i8 to <i4, >u8 to >u4 and so on.
         new_dtype_str = re.sub(r"([iufc])8", r"\g<1>4", dtype_str)
 
     return (dtype_name, new_dtype_str, *rest)
@@ -2297,6 +2299,11 @@ def test_different_bitness_pickle():
 
 
 def test_different_bitness_joblib_pickle():
+    # Make sure that a platform specific pickle generated on a 64 bit
+    # platform can be converted at pickle load time into an estimator
+    # with Cython code that works with the host's native integer precision
+    # to index nodes in the tree data structure when the host is a 32 bit
+    # platform (and vice versa).
     X, y = datasets.make_classification(random_state=0)
 
     clf = DecisionTreeClassifier(random_state=0, max_depth=3)

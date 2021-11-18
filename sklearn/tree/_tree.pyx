@@ -592,8 +592,7 @@ cdef class Tree:
             raise ValueError(f"Wrong dimensions for n_classes: expected 1, got {n_classes.ndim}")
 
         try:
-            n_classes = n_classes.astype(
-                dtype=size_t_dtype, casting='same_kind')
+            n_classes = n_classes.astype(dtype=size_t_dtype, casting='same_kind')
         except Exception as exc:
             raise ValueError(
                 f"Error converting n_classes: full exception was\n{exc}")
@@ -664,8 +663,8 @@ cdef class Tree:
             except Exception as exc:
                 raise ValueError(
                     "Error when converting node array "
-                    f"from dtype {node_ndarray.dtype} to {NODE_DTYPE}. "
-                    f"Exception was\n{exc}")
+                    f"from dtype {node_ndarray.dtype} to {NODE_DTYPE}."
+                ) from exc
 
         if (value_ndarray.dtype != np.float64):
             try:
@@ -674,8 +673,8 @@ cdef class Tree:
             except Exception as exc:
                 raise ValueError(
                     "Error when converting value array "
-                    f" from dtype {value_ndarray.dtype} to float64. "
-                    f"Exception was\n{exc}")
+                    f" from dtype {value_ndarray.dtype} to float64."
+                ) from exc
 
         if (node_ndarray.ndim != 1 or
                 not node_ndarray.flags.c_contiguous or
