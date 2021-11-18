@@ -58,10 +58,10 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         default is larger than the default in
         :func:`~sklearn.utils.extmath.randomized_svd` to handle sparse
         matrices that may have large slowly decaying spectrum.
-    
+
     n_oversamples : int, default=10
         Number of oversamples for randomized SVD solver. Not used by ARPACK.
-        See :func:`~sklearn.utils.extmath.randomized_svd` for a complete 
+        See :func:`~sklearn.utils.extmath.randomized_svd` for a complete
         description.
 
     power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
@@ -159,7 +159,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         algorithm="randomized",
         n_iter=5,
         n_oversamples=10,
-        power_iteration_normalizer='auto',
+        power_iteration_normalizer="auto",
         random_state=None,
         tol=0.0,
     ):
@@ -225,10 +225,12 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
                     "n_components must be < n_features; got %d >= %d" % (k, n_features)
                 )
             U, Sigma, VT = randomized_svd(
-                X, self.n_components, n_iter=self.n_iter, 
+                X,
+                self.n_components,
+                n_iter=self.n_iter,
                 n_oversamples=self.n_oversamples,
                 power_iteration_normalizer=self.power_iteration_normalizer,
-                random_state=random_state
+                random_state=random_state,
             )
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
