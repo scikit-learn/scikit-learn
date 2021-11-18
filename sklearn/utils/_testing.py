@@ -48,12 +48,7 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.utils import (
-    IS_PYPY,
-    _IS_32BIT,
-    deprecated,
-    _in_unstable_openblas_configuration,
-)
+from sklearn.utils import IS_PYPY, _IS_32BIT, deprecated
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -457,10 +452,6 @@ try:
         not joblib.parallel.mp, reason="joblib is in serial mode"
     )
 
-    fails_if_unstable_openblas = pytest.mark.skipif(
-        _in_unstable_openblas_configuration(),
-        reason="OpenBLAS is unstable for this configuration (#21361)",
-    )
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #
     #  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction

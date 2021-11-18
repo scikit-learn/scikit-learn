@@ -25,7 +25,6 @@ from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
-from ..externals._packaging.version import parse
 from .deprecation import deprecated
 from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
@@ -42,8 +41,6 @@ from .validation import (
     check_scalar,
 )
 from .. import get_config
-
-from ..utils.fixes import threadpool_info
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
 # needed to tune `scikit-learn` behavior and have different effect if called
@@ -81,39 +78,6 @@ __all__ = [
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
-
-
-def _in_unstable_openblas_configuration():
-    """Return True if in an unstable configuration for OpenBLAS"""
-
-    # Import libraries which might load OpenBLAS.
-    import numpy  # noqa
-    import scipy  # noqa
-
-    modules_info = threadpool_info()
-
-    open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
-    if not open_blas_used:
-        return False
-
-    # OpenBLAS < 0.3.13 causes segfault for Prescott architecture, see:
-    # https://github.com/scikit-learn/scikit-learn/issues/21361 # noqa
-    openblas_stable_version = parse("0.3.13")
-    for info in modules_info:
-        if info["internal_api"] != "openblas":
-            continue
-        openblas_version = info.get("version")
-        openblas_architecture = info.get("architecture")
-        if openblas_version is None or openblas_architecture is None:
-            # Cannot be sure that we use a good version of OpenBLAS
-            # Hence assume bad configuration:
-            return True
-        if (
-            openblas_architecture.lower() == "prescott"
-            and openblas_version < openblas_stable_version
-        ):
-            return True
-    return False
 
 
 class Bunch(dict):
