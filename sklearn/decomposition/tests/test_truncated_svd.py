@@ -26,8 +26,7 @@ def X_sparse():
 def test_solvers(X_sparse, solver, kind):
     X = X_sparse if kind == "sparse" else X_sparse.toarray()
     svd_a = TruncatedSVD(30, algorithm="arpack")
-    svd = TruncatedSVD(30, algorithm=solver, random_state=42,
-        n_oversamples=100)
+    svd = TruncatedSVD(30, algorithm=solver, random_state=42, n_oversamples=100)
 
     Xa = svd_a.fit_transform(X)[:, :6]
     Xr = svd.fit_transform(X)[:, :6]
@@ -43,6 +42,7 @@ def test_solvers(X_sparse, solver, kind):
     assert_allclose(U_a[9:], U[9:], atol=1e-2)
     assert_allclose(U_a[9:], U[9:], rtol=1e-3)
 
+
 @pytest.mark.parametrize("n_components", (10, 25, 41))
 def test_attributes(n_components, X_sparse):
     n_samples, n_features = X_sparse.shape
@@ -50,6 +50,7 @@ def test_attributes(n_components, X_sparse):
     assert tsvd.n_components == n_components
     assert tsvd.components_.shape == (n_components, n_features)
     assert tsvd.U_.shape == (n_samples, n_components)
+
 
 @pytest.mark.parametrize("algorithm", SVD_SOLVERS)
 def test_too_many_components(algorithm, X_sparse):
