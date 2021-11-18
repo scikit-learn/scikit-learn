@@ -232,7 +232,8 @@ class PCA(_BasePCA):
         The components are sorted by ``explained_variance_``.
 
     U_ : ndarray of shape (n_samples, n_components)
-        The left singular vectors of the input data.
+        The left singular vectors of the centered input data.
+        The components are sorted by ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
