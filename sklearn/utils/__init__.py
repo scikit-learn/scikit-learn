@@ -19,13 +19,13 @@ from contextlib import suppress
 
 import warnings
 import numpy as np
-from distutils.version import LooseVersion
 from scipy.sparse import issparse
 
 from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
+from ..externals._packaging.version import parse
 from .deprecation import deprecated
 from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
@@ -97,7 +97,7 @@ def _in_unstable_openblas_configuration():
 
     # OpenBLAS < 0.3.13 causes segfault for Prescott architecture, see:
     # https://github.com/scikit-learn/scikit-learn/issues/21361 # noqa
-    openblas_stable_version = LooseVersion("0.3.13")
+    openblas_stable_version = parse("0.3.13")
     for info in modules_info:
         if info["internal_api"] != "openblas":
             continue
