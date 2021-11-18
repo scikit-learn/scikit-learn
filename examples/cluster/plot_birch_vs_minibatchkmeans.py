@@ -25,7 +25,7 @@ step before the final (global) clustering step that further reduces these
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-from os import cpu_count
+from joblib import cpu_count
 from itertools import cycle
 from time import time
 import numpy as np
