@@ -58,6 +58,16 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         default is larger than the default in
         :func:`~sklearn.utils.extmath.randomized_svd` to handle sparse
         matrices that may have large slowly decaying spectrum.
+    
+    n_oversamples : int, default=10
+        Number of oversamples for randomized SVD solver. Not used by ARPACK.
+        See :func:`~sklearn.utils.extmath.randomized_svd` for a complete 
+        description.
+
+    power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
+        Power iteration normalizer for randomized SVD solver.
+        Not used by ARPACK.See :func:`~sklearn.utils.extmath.randomized_svd`
+        for a complete description.
 
     random_state : int, RandomState instance or None, default=None
         Used during randomized svd. Pass an int for reproducible results across
@@ -72,6 +82,9 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     ----------
     components_ : ndarray of shape (n_components, n_features)
         The right singular vectors of the input data.
+
+    U_ : ndarray of shape (n_samples, n_components)
+        The left singular vectors of the input data.
 
     explained_variance_ : ndarray of shape (n_components,)
         The variance of the training samples transformed by a projection to
@@ -145,12 +158,16 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         *,
         algorithm="randomized",
         n_iter=5,
+        n_oversamples=10,
+        power_iteration_normalizer='auto',
         random_state=None,
         tol=0.0,
     ):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
+        self.n_oversamples = n_oversamples
+        self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
         self.tol = tol
 
@@ -208,11 +225,15 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
                     "n_components must be < n_features; got %d >= %d" % (k, n_features)
                 )
             U, Sigma, VT = randomized_svd(
-                X, self.n_components, n_iter=self.n_iter, random_state=random_state
+                X, self.n_components, n_iter=self.n_iter, 
+                n_oversamples=self.n_oversamples,
+                power_iteration_normalizer=self.power_iteration_normalizer,
+                random_state=random_state
             )
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
 
+        self.U_ = U
         self.components_ = VT
 
         # As a result of the SVD approximation error on X ~ U @ Sigma @ V.T,
