@@ -32,7 +32,7 @@ Changelog
 ......................
 
 - |Fix| All :class:`sklearn.metrics.DistanceMetric` now correctly support read-only
-  buffer attributes correctly.
+  buffer attributes.
   This fixes a regression introduced in 1.0.0 with respect to 0.24.2.
   :pr:`21694` by :user:`Julien Jerphanion <jjerphan>`.
 
