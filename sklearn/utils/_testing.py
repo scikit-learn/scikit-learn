@@ -457,9 +457,9 @@ try:
         not joblib.parallel.mp, reason="joblib is in serial mode"
     )
 
-    fails_if_unstable_openblas = pytest.mark.xfail(
+    fails_if_unstable_openblas = pytest.mark.skipif(
         _in_unstable_openblas_configuration(),
-        reason="OpenBLAS is unstable for this configuration",
+        reason="OpenBLAS is unstable for this configuration (#21361)",
     )
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #

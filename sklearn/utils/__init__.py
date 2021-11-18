@@ -42,6 +42,7 @@ from .validation import (
     check_scalar,
 )
 from .. import get_config
+
 from ..utils.fixes import threadpool_info
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
