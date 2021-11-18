@@ -736,7 +736,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         predict_stages(self.estimators_, X, self.learning_rate, raw_predictions)
         return raw_predictions
 
-    def _staged_raw_predict(self, X, check_input=False):
+    def _staged_raw_predict(self, X, check_input=True):
         """Compute raw predictions of ``X`` for each iteration.
 
         This method allows monitoring (i.e. determine error on testing set)
