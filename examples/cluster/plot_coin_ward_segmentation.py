@@ -6,13 +6,12 @@ A demo of structured Ward hierarchical clustering on an image of coins
 Compute the segmentation of a 2D image with Ward hierarchical
 clustering. The clustering is spatially constrained in order
 for each segmented region to be in one piece.
+
 """
 
 # Author : Vincent Michel, 2010
 #          Alexandre Gramfort, 2011
 # License: BSD 3 clause
-
-print(__doc__)
 
 import time as time
 

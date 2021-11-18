@@ -5,6 +5,7 @@ import pytest
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
+from numpy.testing import assert_array_equal
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -427,3 +428,11 @@ def test_incremental_pca_fit_overflow_error():
     pca.fit(A)
 
     np.testing.assert_allclose(ipca.singular_values_, pca.singular_values_)
+
+
+def test_incremental_pca_feature_names_out():
+    """Check feature names out for IncrementalPCA."""
+    ipca = IncrementalPCA(n_components=2).fit(iris.data)
+
+    names = ipca.get_feature_names_out()
+    assert_array_equal([f"incrementalpca{i}" for i in range(2)], names)
