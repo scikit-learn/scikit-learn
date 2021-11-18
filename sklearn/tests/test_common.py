@@ -40,6 +40,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.utils import IS_PYPY
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
+    fails_if_unstable_openblas,
     SkipTest,
     set_random_state,
 )
@@ -103,6 +104,7 @@ def _tested_estimators(type_filter=None):
 
 
 @parametrize_with_checks(list(_tested_estimators()))
+@fails_if_unstable_openblas
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):

@@ -6,7 +6,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import fails_if_unstable_openblas
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -151,7 +150,6 @@ def test_orthogonal_mp_gram_readonly():
 
 
 # FIXME: 'normalize' to be removed in 1.4
-@fails_if_unstable_openblas
 @pytest.mark.filterwarnings("ignore:The default of 'normalize'")
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
