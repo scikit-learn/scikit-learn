@@ -370,7 +370,7 @@ class PCA(_BasePCA):
         iterated_power="auto",
         n_oversamples=10,
         power_iteration_normalizer="auto",
-        random_state=None
+        random_state=None,
     ):
         self.n_components = n_components
         self.copy = copy
@@ -548,7 +548,7 @@ class PCA(_BasePCA):
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_ = components_[:n_components]
-        self.U_ = U[:,:n_components]
+        self.U_ = U[:, :n_components]
         self.n_components_ = n_components
         self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
