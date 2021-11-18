@@ -392,6 +392,7 @@ def test_inverse_transform(random_projection_cls):
     assert_array_almost_equal(projected, projected_again)
     assert random_projection.components_pinv_.shape == (n_features, 2)
 
+
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
 def test_no_inverse_transform_by_default(random_projection_cls):
     random_projection = random_projection_cls(n_components=2)
