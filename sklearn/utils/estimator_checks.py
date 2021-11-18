@@ -2087,7 +2087,8 @@ def check_classifiers_train(
             True
             for info in threadpool_info()
             if info["internal_api"] == "openblas"
-            and info.get("architecture").lower() == "prescott"
+            # Prudently assume Prescott might be the architecture if it is unknown.
+            and info.get("architecture", "prescott").lower() == "prescott"
         )
 
         X_m, y_m, X_b, y_b = create_memmap_backed_data(
