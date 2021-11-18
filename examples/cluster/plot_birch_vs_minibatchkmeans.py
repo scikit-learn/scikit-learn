@@ -7,7 +7,7 @@ This example compares the timing of BIRCH (with and without the global
 clustering step) and MiniBatchKMeans on a synthetic dataset having
 25,000 samples and 2 features generated using make_blobs.
 
-Both MiniBatchKMeans and BIRCH are very scalable algorithms and could
+Both ``MiniBatchKMeans`` and ``BIRCH`` are very scalable algorithms and could
 run efficiently on hundreds of thousands or even millions of datapoints. We
 chose to limit the dataset size of this example in the interest of keeping
 our Continuous Integration resource usage reasonable but the interested
