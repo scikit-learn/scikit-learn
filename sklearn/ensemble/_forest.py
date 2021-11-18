@@ -69,7 +69,6 @@ from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _num_samples
-from ..utils.validation import check_array
 
 
 __all__ = [
@@ -515,7 +514,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         # Prediction requires X to be in CSR format
         if issparse(X):
-            X = check_array(X, accept_sparse="csr", force_all_finite=True)
+            X = X.tocsr()
 
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
