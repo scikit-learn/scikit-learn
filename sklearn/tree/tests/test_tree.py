@@ -2281,9 +2281,6 @@ def test_different_bitness_pickle():
     clf.fit(X, y)
     score = clf.score(X, y)
 
-    def reduce_ndarray(arr):
-        return arr.byteswap().newbyteorder().__reduce__()
-
     def get_different_bitness_pickle():
         f = io.BytesIO()
         p = pickle.Pickler(f)
