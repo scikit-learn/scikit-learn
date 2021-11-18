@@ -1099,8 +1099,8 @@ class CalibrationDisplay:
             ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
 
-        if "label" in line_kwargs:
-            ax.legend(loc="lower right")
+        # We always have to show the legend for at least the reference line
+        ax.legend(loc="lower right")
 
         xlabel = f"Mean predicted probability {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
