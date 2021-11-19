@@ -28,6 +28,15 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| All :class:`sklearn.metrics.DistanceMetric` subclasses now correctly support
+  read-only buffer attributes.
+  This fixes a regression introduced in 1.0.0 with respect to 0.24.2.
+  :pr:`21694` by :user:`Julien Jerphanion <jjerphan>`.
+
+
 :mod:`sklearn.preprocessing`
 ............................
 
