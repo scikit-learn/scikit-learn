@@ -375,13 +375,9 @@ def test_random_projection_feature_names_out(random_projection_cls):
     assert_array_equal(names_out, expected_names_out)
 
 
-###############################################################################
-# tests on inverse transform
-###############################################################################
-
-
+@pytest.mark.parametrize("data", [data, data_csr])
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
-def test_inverse_transform(random_projection_cls):
+def test_inverse_transform(data, random_projection_cls):
     random_projection = random_projection_cls(
         n_components=2, fit_inverse_transform=True
     )
@@ -389,8 +385,14 @@ def test_inverse_transform(random_projection_cls):
     projected_back = random_projection.inverse_transform(projected)
     assert projected_back.shape == data.shape
     projected_again = random_projection.transform(projected_back)
+    if hasattr(projected, "toarray"):
+        projected = projected.toarray()
     assert_array_almost_equal(projected, projected_again)
-    assert random_projection.components_pinv_.shape == (n_features, 2)
+    assert random_projection.inverse_components_.shape == (n_features, 2)
+    assert_array_almost_equal(
+        random_projection.components_ @ random_projection.inverse_components_,
+        np.eye(random_projection.n_components),
+    )
 
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
@@ -400,4 +402,4 @@ def test_no_inverse_transform_by_default(random_projection_cls):
     with pytest.raises(AttributeError):
         random_projection.inverse_transform(projected)
     with pytest.raises(AttributeError):
-        random_projection.components_pinv_
+        random_projection.inverse_components_

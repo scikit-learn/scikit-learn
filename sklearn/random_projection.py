@@ -407,7 +407,7 @@ class BaseRandomProjection(
             components = self.components_
             if sp.issparse(components):
                 components = components.toarray()
-            self.components_pinv_ = linalg.pinv(components, check_finite=False)
+            self.inverse_components_ = linalg.pinv(components, check_finite=False)
 
         return self
 
@@ -449,21 +449,22 @@ class BaseRandomProjection(
     def inverse_transform(self, X):
         """Project data back to its original space.
 
-        Returns an array X_original whose transform would be X.
+        Returns an array X_original whose transform would be X. Note that even
+        if X is sparse, X_original is dense: this may use a lot of RAM.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_components)
+        X : {array-like, sparse matrix} of shape (n_samples, n_components)
             Data to be transformed back.
 
         Returns
         -------
-        X_original : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Transformed data.
         """
         check_is_fitted(self)
-        X = check_array(X)
-        return X @ self.components_pinv_.T
+        X = check_array(X, accept_sparse=("csr", "csc"))
+        return X @ self.inverse_components_.T
 
 
 class GaussianRandomProjection(BaseRandomProjection):
@@ -515,6 +516,12 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     components_ : ndarray of shape (n_components, n_features)
         Random matrix used for the projection.
+
+    inverse_components_ : ndarray of shape (n_features, n_components)
+        Pseudo-inverse of the components, only computed if
+        `fit_inverse_transform` is True.
+
+        .. versionadded:: 1.1
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -667,6 +674,12 @@ class SparseRandomProjection(BaseRandomProjection):
     components_ : sparse matrix of shape (n_components, n_features)
         Random matrix used for the projection. Sparse matrix will be of CSR
         format.
+
+    inverse_components_ : ndarray of shape (n_features, n_components)
+        Pseudo-inverse of the components, only computed if
+        `fit_inverse_transform` is True.
+
+        .. versionadded:: 1.1
 
     density_ : float in range 0.0 - 1.0
         Concrete density computed from when density = "auto".

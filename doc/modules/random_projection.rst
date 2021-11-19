@@ -160,3 +160,49 @@ projection transformer::
    In Proceedings of the 12th ACM SIGKDD international conference on
    Knowledge discovery and data mining (KDD '06). ACM, New York, NY, USA,
    287-296.
+
+
+.. _random_projection_inverse_transform:
+
+Inverse Transform
+========================
+By default, the random projection transformers do not have an
+``inverse_transform`` method. However, if the constructor option
+``fit_inverse_transform`` is set to ``True``, then the ``inverse_transform``
+method is enabled.
+
+In this case, after creating the random ``components_`` matrix during fitting,
+the transformer computes the pseudo-inverse of this matrix and stores it in
+``inverse_components_``. The ``inverse_components_`` matrix has shape
+:math:`n_{features} \times n_{components}`, and it is always a dense matrix,
+regardless of whether the components matrix is sparse or dense. So depending on
+the number of features and components, it may use a lot of memory.
+
+When the ``inverse_transform`` method is called, it computes the product of the
+input ``X`` and the transpose of ``inverse_components_``. The result is always
+dense, even if ``X`` is sparse.
+
+Here a small code example which illustrates how to use the inverse transform
+feature::
+
+  >>> import numpy as np
+  >>> from sklearn import random_projection
+  >>> X = np.random.rand(100, 10000)
+  >>> transformer = random_projection.SparseRandomProjection(
+  ...   fit_inverse_transform=True
+  ... )
+  ...
+  >>> X_new = transformer.fit_transform(X)
+  >>> X_new.shape
+  (100, 3947)
+  >>> X_new_inversed = transformer.inverse_transform(X_new)
+  >>> X_new_inversed.shape
+  (100, 10000)
+  >>> X_new_again = transformer.transform(X_new_inversed)
+  >>> np.allclose(X_new, X_new_again)
+  True
+
+If ``components_`` is dense, then the pseudo-inverse is computed using
+``scipy.linalg.pinv``, which is based on SVD decomposition. If ``components_``
+is sparse, then the pseudo-inverse is computed using an implementation of
+``pinv`` based on ``scipy.sparse.linalg.svds``.
