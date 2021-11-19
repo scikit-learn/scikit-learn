@@ -592,6 +592,9 @@ cdef class Tree:
             raise ValueError(
                 f"Wrong dimensions for n_classes: expected 1, got {n_classes.ndim}")
 
+        # TODO: if dtype not int32 or int64 give an error else try a cast
+        # 'same_kind'. Handle potential endianness difference as well (joblib <
+        # 1.1 loads it with non-native endianness) ...
         try:
             n_classes = n_classes.astype(dtype=size_t_dtype, casting='same_kind')
         except Exception as exc:
@@ -671,7 +674,39 @@ cdef class Tree:
         # We do not expect a decision tree to reach 2 ** 32 nodes or more in a
         # single tree, so using 32 bit precision index fields should not be a
         # problem in practice.
+        # TODO check that the only difference in dtype are in the indexing
+        # fields ...
         if (node_ndarray.dtype != NODE_DTYPE):
+            # TODO new strategy:
+            # - if check_compatibility(node_ndarray.dtype, NODE_DTYPE) or
+            #   check_compatibility(node_ndarray.dtype.newbyteorder(),
+            #   NODE_DTYPE) => astype kind='same_kind'
+            # - else raise an error message with both full dtype and that's it ...
+            indexing_field_names = ['left_child', 'right_child', 'feature', 'n_node_samples']
+
+            if node_ndarray.dtype.names != NODE_DTYPE.names:
+                raise ValueError(
+                    "node array dtype has incorrect field names, "
+                    f"expected {NODE_DTYPE.names} got {node_ndarray.dtype.names} instead")
+
+            non_indexing_field_names = [
+                name for name in NODE_DTYPE.names if name not in set(indexing_field_names)]
+
+            # TODO check that field dtype outside of index names match exactly up to endianness
+            for name in non_indexing_field_names:
+                if node_ndarray.dtype.get(name).kind != NODE_DTYPE.get(name):
+                    raise ValueError(f'non compatible dtype for field {name}: ')
+
+
+            # TODO check that field dtype in index_names match loosely 32bit vs 64bit accepted and endianness as well
+
+            # TODO When all this precondition are satisfied this is the case cast
+            # with casting='same_kind'
+
+            # TODO About endianness I need to check that all fields have
+            # different endianness or all have same endianness it can not be on
+            # a per-field basis
+
             try:
                 node_ndarray = node_ndarray.astype(
                     NODE_DTYPE, casting='same_kind')
@@ -682,10 +717,12 @@ cdef class Tree:
                 ) from exc
 
         if (value_ndarray.dtype != np.float64):
+            # handles different endianness here
             try:
                 value_ndarray = value_ndarray.astype(
-                    np.float64, casting='same_kind')
+                    np.float64, casting='equiv')
             except Exception as exc:
+                # TODO better error here?
                 raise ValueError(
                     "Error when converting value array "
                     f" from dtype {value_ndarray.dtype} to float64."
@@ -695,6 +732,7 @@ cdef class Tree:
                 not node_ndarray.flags.c_contiguous or
                 value_ndarray.shape != value_shape or
                 not value_ndarray.flags.c_contiguous):
+            # TODO better error here
             raise ValueError('Did not recognise loaded array layout')
 
         self.capacity = node_ndarray.shape[0]

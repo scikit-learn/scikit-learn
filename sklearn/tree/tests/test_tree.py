@@ -7,7 +7,6 @@ from itertools import product
 import struct
 import io
 import copyreg
-import re
 
 import pytest
 import numpy as np
@@ -49,6 +48,7 @@ from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
+from sklearn.tree._tree import Tree as CythonTree
 from sklearn.tree._classes import CRITERIA_CLF
 from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
@@ -2227,12 +2227,12 @@ def test_different_endianness_joblib_pickle():
 def get_different_bitness_dtype_descr_single(dtype_descr_element):
     dtype_name, dtype_str, *rest = dtype_descr_element
 
+    # Map 64 bit dtypes to their matching 32 bit counterparts:
+    # <i8 to <i4, >u8 to >u4 and so on.
     if _IS_32BIT:
-        new_dtype_str = re.sub(r"([iufc])4", r"\g<1>8", dtype_str)
+        new_dtype_str = dtype_str.replace("i4", "i8")
     else:
-        # Map 64 bit dtypes to their matching 32 bit counterparts:
-        # <i8 to <i4, >u8 to >u4 and so on.
-        new_dtype_str = re.sub(r"([iufc])8", r"\g<1>4", dtype_str)
+        new_dtype_str = dtype_str.replace("i8", "i4")
 
     return (dtype_name, new_dtype_str, *rest)
 
@@ -2261,6 +2261,31 @@ def reduce_different_bitness_ndarray(arr):
     return get_different_bitness_array(arr).__reduce__()
 
 
+def reduce_different_bitness_tree(tree):
+    tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
+    new_dtype = np.int64 if _IS_32BIT else np.int32
+    new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
+
+    new_state = state.copy()
+    descr = new_state["nodes"].dtype.descr
+
+    # field names in Node struct with SIZE_t types (see sklearn/tree/_tree.pxd)
+    index_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
+
+    new_descr = []
+    for field_name, dtype_str, *rest in descr:
+        if field_name in index_field_names:
+            to_append = (field_name, new_dtype, *rest)
+        else:
+            to_append = (field_name, dtype_str, *rest)
+
+        new_descr.append(to_append)
+
+    new_state["nodes"] = new_state["nodes"].astype(new_descr, casting="same_kind")
+
+    return (tree_cls, (n_features, new_n_classes, n_outputs), new_state)
+
+
 def test_different_bitness_pickle():
     X, y = datasets.make_classification(random_state=0)
 
@@ -2272,7 +2297,7 @@ def test_different_bitness_pickle():
         f = io.BytesIO()
         p = pickle.Pickler(f)
         p.dispatch_table = copyreg.dispatch_table.copy()
-        p.dispatch_table[np.ndarray] = reduce_different_bitness_ndarray
+        p.dispatch_table[CythonTree] = reduce_different_bitness_tree
 
         p.dump(clf)
         f.seek(0)
@@ -2295,15 +2320,11 @@ def test_different_bitness_joblib_pickle():
     clf.fit(X, y)
     score = clf.score(X, y)
 
-    class DifferentBitnessNumpyPickler(NumpyPickler):
-        def save(self, obj):
-            if isinstance(obj, np.ndarray):
-                obj = get_different_bitness_array(obj)
-            super().save(obj)
-
     def get_different_bitness_joblib_pickle():
         f = io.BytesIO()
-        p = DifferentBitnessNumpyPickler(f)
+        p = NumpyPickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[CythonTree] = reduce_different_bitness_tree
 
         p.dump(clf)
         f.seek(0)
@@ -2312,3 +2333,13 @@ def test_different_bitness_joblib_pickle():
     new_clf = joblib.load(get_different_bitness_joblib_pickle())
     new_score = new_clf.score(X, y)
     assert np.isclose(score, new_score)
+
+
+# TODO should I test error cases? Just a bit more painful but maybe worth it
+# since the check is more complicated now in the code ...
+# - n_classes is not of dtype.kind i
+#   nodes has some weird names
+# - nodes has some wrong dtypes
+#   check all the other c_contiguous, length of value_nodes, etc ... ?
+# - do I want to check on fields with padding? I don't think this can happen in
+#   practice but I may be wrong
