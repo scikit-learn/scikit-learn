@@ -45,7 +45,6 @@ from ._base import (
     _check_pos_label_consistency,
 )
 
-import sys
 
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule.
@@ -1706,11 +1705,86 @@ def top_k_accuracy_score(
     y_score = column_or_1d(y_score) if y_type == "binary" else y_score
     check_consistent_length(y_true, y_score, sample_weight)
 
-    if y_type not in {"binary", "multiclass", "multilabel-indicator"}:
+    if y_type == "binary":
+        if labels is not None:
+            raise ValueError("labels is not accepted on Binary")
+        return _top_k_accuracy_score_binary(
+            y_true,
+            y_score,
+            k=k,
+            normalize=normalize,
+            sample_weight=sample_weight,
+        )
+    elif y_type == "multiclass":
+        return _top_k_accuracy_score_multiclass(
+            y_true,
+            y_score,
+            k=k,
+            normalize=normalize,
+            sample_weight=sample_weight,
+            labels=labels,
+        )
+    elif y_type == "multilabel-indicator":
+        if labels is not None:
+            raise ValueError("labels is not accepted on Multilabel")
+        return _top_k_accuracy_score_multilabel(
+            y_true,
+            y_score,
+            k=k,
+            normalize=normalize,
+            sample_weight=sample_weight,
+        )
+    else:
         raise ValueError(
-            f"y type must be 'binary', 'multiclass' or 'multilabel-indicator', got '{y_type}' instead."
+            "y type must be 'binary', 'multiclass' or 'multilabel-indicator',"
+            f" got '{y_type}' instead."
         )
 
+
+def _top_k_accuracy_score_binary(
+    y_true, y_score, *, k=2, normalize=True, sample_weight=None
+):
+    y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
+
+    classes = _unique(y_true)
+    n_classes = len(classes)
+    if n_classes > 2:
+        raise ValueError(
+            "multilabel-indicator case supports only the case the number"
+            f"of classes in 'y_true' ({n_classes}) is lower equal than 2, "
+            "which means binary."
+        )
+    if n_classes != y_score_n_classes:
+        raise ValueError(
+            f"Number of classes in 'y_true' ({n_classes}) not equal "
+            f"to the number of classes in 'y_score' ({y_score_n_classes})."
+        )
+    if k >= n_classes:
+        warnings.warn(
+            f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
+            "will result in a perfect score and is therefore meaningless.",
+            UndefinedMetricWarning,
+        )
+
+    y_true_encoded = _encode(y_true, uniques=classes)
+
+    if k == 1:
+        threshold = 0.5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
+        y_pred = (y_score > threshold).astype(np.int64)
+        hits = y_pred == y_true_encoded
+    else:
+        hits = np.ones_like(y_score, dtype=np.bool_)
+    if normalize:
+        return np.average(hits, weights=sample_weight)
+    elif sample_weight is None:
+        return np.sum(hits)
+    else:
+        return np.dot(hits, sample_weight)
+
+
+def _top_k_accuracy_score_multiclass(
+    y_true, y_score, *, k=2, normalize=True, sample_weight=None, labels=None
+):
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
 
     if labels is None:
@@ -1752,20 +1826,43 @@ def top_k_accuracy_score(
 
     y_true_encoded = _encode(y_true, uniques=classes)
 
-    if y_type == "binary":
-        if k == 1:
-            threshold = 0.5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
-            y_pred = (y_score > threshold).astype(np.int64)
-            hits = y_pred == y_true_encoded
-        else:
-            hits = np.ones_like(y_score, dtype=np.bool_)
-    elif y_type == "multiclass":
-        sorted_pred = np.argsort(y_score, axis=1, kind="mergesort")[:, ::-1]
-        hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
-    elif y_type == "multilabel-indicator":
-        sorted_pred = np.argsort(y_score, axis=1, kind="mergesort")[:, ::-1]
-        sorted_pred_binary = MultiLabelBinarizer(classes=classes).fit_transform(sorted_pred[:, :k])
-        hits = (y_true * sorted_pred_binary).any(axis=1)
+    sorted_pred = np.argsort(y_score, axis=1, kind="mergesort")[:, ::-1]
+    hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
+
+    if normalize:
+        return np.average(hits, weights=sample_weight)
+    elif sample_weight is None:
+        return np.sum(hits)
+    else:
+        return np.dot(hits, sample_weight)
+
+
+def _top_k_accuracy_score_multilabel(
+    y_true, y_score, *, k=2, normalize=True, sample_weight=None
+):
+    """
+    the case y_true is multilabel-indicator
+    example:
+    y_score
+        [[0.1, 0.2, 0.3], [0.2, 0.2, 0.1]]
+
+    y_true
+        [0, 1, 0]
+        [1, 2, 1]
+
+    """
+    n_classes = len(_unique(y_true))
+    if n_classes > 2:
+        raise ValueError(
+            "multilabel-indicator case supports only the case the number"
+            f"of classes in 'y_true' ({n_classes}) is lower equal than 2, "
+            "which means binary."
+        )
+    sorted_pred = np.argsort(y_score, axis=1, kind="mergesort")[:, ::-1]
+    sorted_pred_binary = MultiLabelBinarizer(
+        classes=range(y_score.shape[1])
+    ).fit_transform(sorted_pred[:, :k])
+    hits = (y_true * sorted_pred_binary).any(axis=1)
 
     if normalize:
         return np.average(hits, weights=sample_weight)
