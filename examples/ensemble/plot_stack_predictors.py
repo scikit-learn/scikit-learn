@@ -12,7 +12,8 @@ estimator is trained using the stacked predictions of these base estimators.
 In this example, we illustrate the use case in which different regressors are
 stacked together and a final linear penalized regressor is used to output the
 prediction. We compare the performance of each individual regressor with the
-stacking strategy. Stacking slightly improves the overall performance.
+stacking strategy. Stacking can improve the overall performance, but this
+example unfortunately does not exhibit this gain.
 
 """
 
@@ -166,6 +167,11 @@ linear_preprocessor
 #    :class:`~sklearn.linear_model.RidgeCV()` does not need preprocessing of
 #    the data as it will be fed with the already preprocessed output from the 3
 #    learners.
+#
+# .. note::
+#    Across this example we use `cv=2` to reduce the number of folds for the
+#    cross validation. This is done to reduce computation time, and because in
+#    this case the default `cv=5` does not change the outcome.
 
 from sklearn.linear_model import LassoCV
 
@@ -196,7 +202,7 @@ estimators = [
     ("Gradient Boosting", gbdt_pipeline),
 ]
 
-stacking_regressor = StackingRegressor(estimators=estimators, final_estimator=RidgeCV())
+stacking_regressor = StackingRegressor(estimators=estimators, cv=2, final_estimator=RidgeCV())
 stacking_regressor
 
 # %%
@@ -249,11 +255,11 @@ for ax, (name, est) in zip(
 ):
     start_time = time.time()
     score = cross_validate(
-        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=-1, verbose=0
+        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=-1, verbose=0, cv=2
     )
     elapsed_time = time.time() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0, cv=2)
 
     plot_regression_results(
         ax,
