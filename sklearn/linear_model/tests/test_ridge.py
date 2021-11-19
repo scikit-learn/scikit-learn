@@ -1262,6 +1262,34 @@ def test_ridgecv_scalar_alphas():
         ridge.fit(X, y)
 
 
+def test_ridgeclassifiercv_scalar_alphas():
+    X, Y = make_multilabel_classification(n_classes=1, random_state=0)
+    Y = Y.reshape(-1, 1)
+    y = np.concatenate([Y, Y], axis=1)
+    # The method for fitting _BaseRidgeCV depends whether cv=None
+    cv = KFold(3)
+
+    clf = RidgeClassifierCV(alphas=(1, -1, -100))
+    with pytest.raises(ValueError, match=r"alphas\[1\] == -1, must be > 0.0"):
+        clf.fit(X, y)
+
+    # Negative floats and cv is not None
+    clf = RidgeClassifierCV(alphas=(-0.1, -1.0, -10.0), cv=cv)
+    with pytest.raises(ValueError, match=r"alphas\[0\] == -0.1, must be > 0.0"):
+        clf.fit(X, y)
+
+    # Strings
+    clf = RidgeClassifierCV(alphas=(1, 1.0, "1"))
+    with pytest.raises(
+        TypeError,
+        match=(
+            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
+            " 'str'>"
+        ),
+    ):
+        clf.fit(X, y)
+
+
 def test_raises_value_error_if_solver_not_supported():
     # Tests whether a ValueError is raised if a non-identified solver
     # is passed to ridge_regression
