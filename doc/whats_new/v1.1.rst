@@ -234,7 +234,7 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
-- [Fix| Support loading pickles of decision tree models when the pickle has
+- |Fix| Support loading pickles of decision tree models when the pickle has
   been generated on a platform with a different bitness. A typical example is
   to train and pickle the model on 64 bit machine and load the model on a 32
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
