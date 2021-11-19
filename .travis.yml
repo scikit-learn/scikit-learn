@@ -2,6 +2,8 @@
 # new container-based Travis workers
 language: python
 dist: xenial
+# Only used to install cibuildwheel, CIBW_BUILD determines the python version being
+# built in the docker image itself. Also: travis does not have 3.10 yet.
 python: 3.9
 
 cache:
