@@ -158,11 +158,16 @@ def check_pdist_bool(metric, D_true):
     assert_array_almost_equal(D12, D_true)
 
 
+@pytest.mark.parametrize("use_read_only_kwargs", [True, False])
 @pytest.mark.parametrize("metric", METRICS_DEFAULT_PARAMS)
-def test_pickle(metric):
+def test_pickle(use_read_only_kwargs, metric):
     argdict = METRICS_DEFAULT_PARAMS[metric]
     keys = argdict.keys()
     for vals in itertools.product(*argdict.values()):
+        if use_read_only_kwargs:
+            for val in vals:
+                if isinstance(val, np.ndarray):
+                    val.setflags(write=False)
         kwargs = dict(zip(keys, vals))
         check_pickle(metric, kwargs)
 
@@ -242,3 +247,20 @@ def test_input_data_size():
     pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
     eucl = DistanceMetric.get_metric("euclidean")
     assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
+
+
+def test_readonly_kwargs():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/21685
+
+    rng = check_random_state(0)
+
+    weights = rng.rand(100)
+    VI = rng.rand(10, 10)
+    weights.setflags(write=False)
+    VI.setflags(write=False)
+
+    # Those distances metrics have to support readonly buffers.
+    DistanceMetric.get_metric("seuclidean", V=weights)
+    DistanceMetric.get_metric("wminkowski", p=1, w=weights)
+    DistanceMetric.get_metric("mahalanobis", VI=VI)
