@@ -12,10 +12,18 @@ not to find good clusters for the digits. This is why the example works on a
 
 What this example shows us is the behavior "rich getting richer" of
 agglomerative clustering that tends to create uneven cluster sizes.
+
 This behavior is pronounced for the average linkage strategy,
-that ends up with a couple of singleton clusters, while in the case
-of single linkage we get a single central cluster with all other clusters
-being drawn from noise points around the fringes.
+that ends up with a couple of clusters with few datapoints.
+
+The case of single linkage is even more pathologic with a very
+large cluster covering most digits, an intermediate size (clean)
+cluster with most zero digits and all other clusters being drawn
+from noise points around the fringes.
+
+The other linkage strategies lead to more evenly distributed
+clusters that are therefore likely to be less sensible to a
+random resampling of the dataset.
 
 """
 
