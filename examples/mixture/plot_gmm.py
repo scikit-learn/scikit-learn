@@ -21,6 +21,7 @@ another advantage of the Dirichlet process model is that it can fit
 full covariance matrices effectively even when there are less examples
 per cluster than there are dimensions in the data, due to
 regularization properties of the inference algorithm.
+
 """
 
 import itertools

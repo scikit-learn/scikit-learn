@@ -7,6 +7,13 @@ import argparse
 if platform.python_implementation() == "PyPy":
     NUMPY_MIN_VERSION = "1.19.0"
 else:
+    # We pinned PyWavelet (a scikit-image dependence) to 1.1.1 in the minimum
+    # documentation CI builds that is the latest version that support our
+    # minimum NumPy version required. If PyWavelets 1.2+ is installed, it would
+    # require NumPy 1.17+ that trigger a bug with Pandas 0.25:
+    # https://github.com/numpy/numpy/issues/18355#issuecomment-774610226
+    # When upgrading NumPy, we can unpin PyWavelets but we need to update the
+    # minimum version of Pandas >= 1.0.5.
     NUMPY_MIN_VERSION = "1.14.6"
 
 SCIPY_MIN_VERSION = "1.1.0"
