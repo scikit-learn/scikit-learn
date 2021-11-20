@@ -44,9 +44,6 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 
     # Python 3.10 deprecates disutils and is imported by numpy interally during import time
     TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
-
-    # Workaround for https://github.com/pypa/setuptools/issues/2885
-    TEST_CMD="$TEST_CMD -Wignore:Creating\ a\ LegacyVersion:DeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
