@@ -275,9 +275,10 @@ def test_loss_dtype(
         out2 = np.empty_like(raw_prediction, dtype=dtype_out)
 
     if readonly_memmap:
-        y_true, raw_prediction = create_memmap_backed_data([y_true, raw_prediction])
+        y_true = create_memmap_backed_data(y_true, aligned=True)
+        raw_prediction = create_memmap_backed_data(raw_prediction, aligned=True)
         if sample_weight is not None:
-            sample_weight = create_memmap_backed_data(sample_weight)
+            sample_weight = create_memmap_backed_data(sample_weight, aligned=True)
 
     loss.loss(
         y_true=y_true,
