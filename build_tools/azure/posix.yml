@@ -51,6 +51,7 @@ jobs:
         key: '"$(Agent.JobName)"'
         path: $(CCACHE_DIR)
       displayName: ccache
+      continueOnError: true
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
