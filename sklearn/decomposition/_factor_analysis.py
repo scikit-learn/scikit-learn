@@ -203,8 +203,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
 
         if self.svd_method not in ["lapack", "randomized"]:
             raise ValueError(
-                "SVD method %s is not supported. Please consider the documentation"
-                % self.svd_method
+                f"SVD method {self.svd_method!r} is not supported. Please consider the documentation"
             )
 
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)

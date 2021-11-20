@@ -35,7 +35,8 @@ def test_factor_analysis():
     X = np.dot(h, W) + noise
 
     fa_fail = FactorAnalysis(svd_method="foo")
-    with pytest.raises(ValueError):
+    msg = "SVD method 'foo' is not supported"
+    with pytest.raises(ValueError, match=msg):
         fa_fail.fit(X)
     fas = []
     for method in ["randomized", "lapack"]:
