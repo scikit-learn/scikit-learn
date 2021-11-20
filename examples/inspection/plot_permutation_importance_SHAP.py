@@ -181,7 +181,7 @@ plt.show()
 # ``reg`` and some background data, which will be used to simulate missingness.
 # If your dataset is small (e.g., training data is <100 samples) you can use
 # the whole training subset for the background data. Our data is larger than
-# this so we must summarize it in some way, otherwise omputation will be
+# this so we must summarize it in some way, otherwise computation will be
 # too slow. For simplicity, we will use the
 # median values of our features but SHAP offers a ``kmeans`` function that
 # can summarize each feature with ``k`` means.
