@@ -167,11 +167,6 @@ linear_preprocessor
 #    :class:`~sklearn.linear_model.RidgeCV()` does not need preprocessing of
 #    the data as it will be fed with the already preprocessed output from the 3
 #    learners.
-#
-# .. note::
-#    Across this example we use `cv=2` to reduce the number of folds for the
-#    cross validation. This is done to reduce computation time, and because in
-#    this case the default `cv=5` does not change the outcome.
 
 from sklearn.linear_model import LassoCV
 
