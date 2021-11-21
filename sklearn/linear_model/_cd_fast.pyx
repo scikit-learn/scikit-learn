@@ -476,7 +476,7 @@ def sparse_enet_coordinate_descent(floating [::1] w,
 
 
 def enet_coordinate_descent_gram(floating[::1] w,
-                                 floating alpha, floating beta,
+                                 floating l1_reg, floating l2_reg,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
                                  np.ndarray[floating, ndim=1] y,
@@ -487,7 +487,7 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
         We minimize
 
-        (1/2) * w^T Q w - q^T w + alpha norm(w, 1) + (beta/2) * norm(w, 2)^2
+        (1/2) * w^T Q w - q^T w + l1_reg norm(w, 1) + (l2_reg/2) * norm(w, 2)^2
 
         which amount to the Elastic-Net problem when:
         Q = X^T X (Gram matrix)
@@ -531,8 +531,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
     cdef floating* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
 
-    if alpha == 0:
-        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+    if l1_reg == 0:
+        warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
             " results and is discouraged.")
 
     with nogil:
@@ -560,8 +560,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
                 if positive and tmp < 0:
                     w[ii] = 0.0
                 else:
-                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                        / (Q[ii, ii] + beta)
+                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - l1_reg, 0) \
+                        / (Q[ii, ii] + l2_reg)
 
                 if w[ii] != 0.0:
                     # H +=  w[ii] * Q[ii] # Update H = X.T X w
@@ -585,7 +585,7 @@ def enet_coordinate_descent_gram(floating[::1] w,
                 q_dot_w = _dot(n_features, w_ptr, 1, q_ptr, 1)
 
                 for ii in range(n_features):
-                    XtA[ii] = q[ii] - H[ii] - beta * w[ii]
+                    XtA[ii] = q[ii] - H[ii] - l2_reg * w[ii]
                 if positive:
                     dual_norm_XtA = max(n_features, XtA_ptr)
                 else:
@@ -600,8 +600,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
-                if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
+                if (dual_norm_XtA > l1_reg):
+                    const = l1_reg / dual_norm_XtA
                     A_norm2 = R_norm2 * (const ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
@@ -609,9 +609,9 @@ def enet_coordinate_descent_gram(floating[::1] w,
                     gap = R_norm2
 
                 # The call to asum is equivalent to the L1 norm of w
-                gap += (alpha * _asum(n_features, &w[0], 1) -
+                gap += (l1_reg * _asum(n_features, &w[0], 1) -
                         const * y_norm2 +  const * q_dot_w +
-                        0.5 * beta * (1 + const ** 2) * w_norm2)
+                        0.5 * l2_reg * (1 + const ** 2) * w_norm2)
 
                 if gap < tol:
                     # return if we reached desired tolerance

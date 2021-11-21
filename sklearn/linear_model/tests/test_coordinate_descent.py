@@ -1280,6 +1280,14 @@ def test_enet_l1_ratio():
     with pytest.raises(ValueError, match=msg):
         MultiTaskElasticNetCV(l1_ratio=0, random_state=42).fit(X, y[:, None])
 
+    # Test that l1_ratio=0 with alpha>0 produces user warning
+    warning_message = (
+        "Coordinate descent with l1_reg=0 may lead to unexpected"
+        " results and is discouraged."
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        ElasticNetCV(l1_ratio=[0], alphas=[1]).fit(X, y)
+
     # Test that l1_ratio=0 is allowed if we supply a grid manually
     alphas = [0.1, 10]
     estkwds = {"alphas": alphas, "random_state": 42}
