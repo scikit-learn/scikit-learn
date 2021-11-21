@@ -676,8 +676,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     fit_inverse_transform : bool, default=False
         Learn the inverse transform by computing the pseudo-inverse of the
-        components during fit. Note that the components will be converted to a
-        dense array, and the resulting pseudo-inverse is also a dense array.
+        components during fit. Note that the pseudo-inverse is a dense array.
         Moreover, computing the pseudo-inverse does not scale well to large
         matrices.
 
