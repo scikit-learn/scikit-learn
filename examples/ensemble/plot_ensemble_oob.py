@@ -81,7 +81,7 @@ error_rate = OrderedDict((label, []) for label, _ in ensemble_clfs)
 
 # Range of `n_estimators` values to explore.
 min_estimators = 15
-max_estimators = 175
+max_estimators = 125
 
 for label, clf in ensemble_clfs:
     for i in range(min_estimators, max_estimators + 1):
