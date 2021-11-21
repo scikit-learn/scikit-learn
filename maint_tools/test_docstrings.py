@@ -31,7 +31,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._base.load_boston",
     "sklearn.datasets._base.load_breast_cancer",
     "sklearn.datasets._base.load_digits",
-    "sklearn.datasets._base.load_files",
     "sklearn.datasets._base.load_iris",
     "sklearn.datasets._base.load_linnerud",
     "sklearn.datasets._base.load_sample_image",
