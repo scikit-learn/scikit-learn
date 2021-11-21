@@ -13,7 +13,7 @@ Changelog
 ---------
 
 :mod:`sklearn.linear_model`
-......................
+...........................
 
 - |Fix| Fixed :class:`linear_model.ElasticNetCV` call with l1_ratio=0 producing warning
   incorrectly.
