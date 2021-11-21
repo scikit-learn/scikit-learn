@@ -69,7 +69,7 @@ cdef class CyHalfTweedieLoss(CyLossFunction):
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) nogil
 
 
-cdef class CyBinaryCrossEntropy(CyLossFunction):
+cdef class CyHalfBinomialLoss(CyLossFunction):
     cdef double cy_loss(self, double y_true, double raw_prediction) nogil
     cdef double cy_gradient(self, double y_true, double raw_prediction) nogil
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) nogil
