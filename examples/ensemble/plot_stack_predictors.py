@@ -99,10 +99,7 @@ from sklearn.compose import make_column_selector
 
 cat_selector = make_column_selector(dtype_include=object)
 num_selector = make_column_selector(dtype_include=np.number)
-cat_selector(X)
 
-# %%
-num_selector(X)
 
 # %%
 # Then, we will need to design preprocessing pipelines which depends on the
@@ -213,7 +210,7 @@ stacking_regressor
 
 import time
 import matplotlib.pyplot as plt
-from sklearn.model_selection import cross_validate, cross_val_predict
+from sklearn.model_selection import cross_validate
 
 
 def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
@@ -247,13 +244,19 @@ axs = np.ravel(axs)
 for ax, (name, est) in zip(
     axs, estimators + [("Stacking Regressor", stacking_regressor)]
 ):
-    start_time = time.time()
-    score = cross_validate(
-        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=-1, verbose=0
+    start_time = time.perf_counter()
+    cv_results = cross_validate(
+        est,
+        X,
+        y,
+        scoring=["r2", "neg_mean_absolute_error"],
+        n_jobs=-1,
+        verbose=0,
+        return_estimator=True,
     )
-    elapsed_time = time.time() - start_time
+    elapsed_time = time.perf_counter() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+    y_pred = np.mean([est.predict(X) for est in cv_results["estimator"]], axis=0)
 
     plot_regression_results(
         ax,
@@ -261,10 +264,10 @@ for ax, (name, est) in zip(
         y_pred,
         name,
         (r"$R^2={:.2f} \pm {:.2f}$" + "\n" + r"$MAE={:.2f} \pm {:.2f}$").format(
-            np.mean(score["test_r2"]),
-            np.std(score["test_r2"]),
-            -np.mean(score["test_neg_mean_absolute_error"]),
-            np.std(score["test_neg_mean_absolute_error"]),
+            np.mean(cv_results["test_r2"]),
+            np.std(cv_results["test_r2"]),
+            -np.mean(cv_results["test_neg_mean_absolute_error"]),
+            np.std(cv_results["test_neg_mean_absolute_error"]),
         ),
         elapsed_time,
     )
