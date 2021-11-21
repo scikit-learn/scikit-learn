@@ -12,6 +12,13 @@ Version 1.0.2
 Changelog
 ---------
 
+:mod:`sklearn.linear_model`
+......................
+
+- |Fix| Fixed :class:`linear_model.ElasticNetCV` call with l1_ratio=0 producing warning
+  incorrectly.
+  :pr:`21724` by :user:`Yar Khine Phyo <yarkhinephyo>`.
+
 :mod:`sklearn.cluster`
 ......................
 
