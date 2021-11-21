@@ -51,17 +51,13 @@ from sklearn.preprocessing import MinMaxScaler
 def plot_embedding(X, title, ax):
     X = MinMaxScaler().fit_transform(X)
 
+    for t in np.unique(y):
+        ax.scatter(
+            *X[y == t].T, marker=f"${t}$", s=60, color=plt.cm.Dark2(t), alpha=0.7
+        )
     shown_images = np.array([[1.0, 1.0]])  # just something big
     for i in range(X.shape[0]):
         # plot every digit on the embedding
-        ax.text(
-            X[i, 0],
-            X[i, 1],
-            str(y[i]),
-            color=plt.cm.Dark2(y[i]),
-            fontdict={"weight": "bold", "size": 9},
-        )
-
         # show an annotation box for a group of digits
         dist = np.sum((X[i] - shown_images) ** 2, 1)
         if np.min(dist) < 4e-3:
@@ -151,7 +147,7 @@ embeddings = {
 # Once we declared all the methodes of interest, we can run and perform the projection
 # of the original data. We will store the projected data as well as the computational
 # time needed to perform each projection.
-from time import time
+from time import perf_counter
 
 projections, timing = {}, {}
 for name, transformer in embeddings.items():
@@ -162,9 +158,9 @@ for name, transformer in embeddings.items():
         data = X
 
     print(f"Computing {name}...")
-    start_time = time()
+    start_time = perf_counter()
     projections[name] = transformer.fit_transform(data, y)
-    timing[name] = time() - start_time
+    timing[name] = perf_counter() - start_time
 
 # %%
 # Finally, we can plot the resulting projection given by each method.
