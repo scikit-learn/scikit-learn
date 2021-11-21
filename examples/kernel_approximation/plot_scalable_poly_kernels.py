@@ -148,7 +148,7 @@ ksvm_time = time.time() - start
 ksvm_score = 100 * ksvm.score(X_test, y_test)
 
 results["KSVM"] = {"time": ksvm_time, "score": ksvm_score}
-print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
+print(f"Kernel-SVM score on raw features: {ksvm_score:.2f}%")
 
 # %%
 # Finally, plot the results of the different methods against their training
