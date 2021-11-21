@@ -293,6 +293,25 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 def _svd_for_sparse_matrix(a):
+    """SVD decomposition for sparse matrices, based on `scipy.sparse.linalg.svds`.
+
+    Parameters
+    ----------
+    a : sparse matrix,
+        The sparse matrix to decompose.
+
+    Returns
+    -------
+    U : ndarray
+        Unitary matrix having left singular vectors as columns.
+        Of shape ``(M, K)``.
+    s : ndarray
+        The singular values, sorted in non-increasing order.
+        Of shape (K,), with ``K = min(M, N)``.
+    Vh : ndarray
+        Unitary matrix having right singular vectors as rows.
+        Of shape ``(K, N)``.
+    """
     u1, s1, vt1 = sp.linalg.svds(a, k=min(a.shape) // 2)
     u2, s2, vt2 = sp.linalg.svds(a, k=min(a.shape) - min(a.shape) // 2, which="SM")
     u = np.concatenate([u1, u2], axis=1)
@@ -303,6 +322,29 @@ def _svd_for_sparse_matrix(a):
 
 
 def _pinv_for_sparse_matrix(a):
+    """
+    Compute the (Moore-Penrose) pseudo-inverse of a sparse matrix.
+
+    Calculate a generalized inverse of a sparse matrix using its singular-value
+    decomposition ``U @ S @ V`` and using only the columns/rows that are
+    associated with significant singular values.
+
+    If ``s`` is the maximum singular value of ``a``, then the significance
+    cut-off value is determined by ``rtol * s``, where ``rtol`` is equal to
+    ``max(a.shape) * eps``, and ``eps`` is the machine precision value of the
+    datatype of ``a``. Any singular value below this value is assumed
+    insignificant.
+
+    Parameters
+    ----------
+    a : (M, N) sparse matrix
+        Sparse matrix to be pseudo-inverted.
+
+    Returns
+    -------
+    B : (N, M) ndarray
+        The dense pseudo-inverse of the sparse matrix `a`.
+    """
     u, s, vh = _svd_for_sparse_matrix(a)
     type_ = u.dtype.char.lower()
     min_s = np.max(s) * max(a.shape) * np.finfo(type_).eps
