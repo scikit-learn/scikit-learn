@@ -60,12 +60,20 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.cluster`
+..........................
+
 - |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
   now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
   `'kmeans'` and `'discrete'` methods.
   See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
+
+- |Efficiency| In :class:`cluster.KMeans`, the default ``algorithm="auto"`` now
+  uses the full classical EM-style algorithm (as with ``algorithm="full"``)
+  instead of Elkan's algorithm, as the former is often faster in practice.
+  by :user:`Aurélien Geron <ageron>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................

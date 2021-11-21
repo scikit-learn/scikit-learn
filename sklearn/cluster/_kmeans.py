@@ -340,7 +340,7 @@ def k_means(
         intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
 
-        For now `"auto"` (kept for backward compatibility) chooses `"elkan"` but it
+        For now `"auto"` (kept for backward compatibility) chooses `"full"` but it
         might change in the future for a better heuristic.
 
     return_n_iter : bool, default=False
@@ -960,7 +960,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         self._algorithm = self.algorithm
         if self._algorithm == "auto":
-            self._algorithm = "full" if self.n_clusters == 1 else "elkan"
+            self._algorithm = "full"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn(
                 "algorithm='elkan' doesn't make sense for a single "
