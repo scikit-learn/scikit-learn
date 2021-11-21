@@ -29,6 +29,10 @@ from sklearn.datasets import load_diabetes
 
 diabetes = load_diabetes()
 X, y = diabetes.data, diabetes.target
+# Using a subset of columns to demo
+columns_interest = ["sex", "bmi", "s1", "s5", "s6"]
+feat_idx = dict(list(zip(diabetes.feature_names, range(len(diabetes.feature_names)))))
+X = X[:, [feat_idx[feature] for feature in columns_interest]]
 print(diabetes.DESCR)
 
 # %%
@@ -50,7 +54,7 @@ from sklearn.linear_model import LassoCV
 
 lasso = LassoCV().fit(X, y)
 importance = np.abs(lasso.coef_)
-feature_names = np.array(diabetes.feature_names)
+feature_names = np.array(columns_interest)
 plt.bar(height=importance, x=feature_names)
 plt.title("Feature importances via coefficients")
 plt.show()
@@ -127,10 +131,8 @@ print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 # features. In general, this isn't the case and the two methods would lead to
 # different results.
 #
-# We also note that the features selected by SFS differ from those selected by
-# feature importance: SFS selects `bmi` instead of `s1`. This does sound
-# reasonable though, since `bmi` corresponds to the third most important
-# feature according to the coefficients. It is quite remarkable considering
+# We also note that the features selected by SFS are the same as the features
+# selected by feature importance. It is quite remarkable considering
 # that SFS makes no use of the coefficients at all.
 #
 # To finish with, we should note that
