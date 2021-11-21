@@ -162,11 +162,6 @@ WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated
 """
 #------------------------------------------------------------------------------
 
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
-
 # Design:
 # See https://github.com/scikit-learn/scikit-learn/issues/15123 for reasons.
 # a) Merge link functions into loss functions for speed and numerical
