@@ -176,7 +176,6 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-
         self.svd_method = svd_method
 
         self.noise_variance_init = noise_variance_init
@@ -203,7 +202,8 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
 
         if self.svd_method not in ["lapack", "randomized"]:
             raise ValueError(
-                f"SVD method {self.svd_method!r} is not supported. Please consider the documentation"
+                f"SVD method {self.svd_method!r} is not supported. Possible methods "
+                "are either 'lapack' or 'randomized'."
             )
 
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)

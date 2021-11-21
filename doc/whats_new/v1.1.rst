@@ -79,8 +79,12 @@ Changelog
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-- |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and :user:`Krum Arnaudov <krumeto>`.
+  
+- |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
+  in `fit` instead of `__init__`.
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
+  :user:`Krum Arnaudov <krumeto>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
   :class:`~sklearn.decomposition.DictionaryLearning`,
