@@ -13,7 +13,7 @@ In this example, we illustrate the use case in which different regressors are
 stacked together and a final linear penalized regressor is used to output the
 prediction. We compare the performance of each individual regressor with the
 stacking strategy. Stacking can improve the overall performance, but this
-example unfortunately does not exhibit this gain.
+example does not exhibit this gain.
 
 """
 
