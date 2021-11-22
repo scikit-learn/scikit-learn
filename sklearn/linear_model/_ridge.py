@@ -769,7 +769,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
             )
 
-        self.tol = check_scalar(self.tol, "tol", target_type=float, min_val=0.0)
+        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
