@@ -99,7 +99,7 @@ print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 # compensate for the stochastic nature of :class:`PolynomialCountSketch`.
 
 n_runs = 3
-for n_components in [250, 450, 850, 1750]:
+for n_components in [250, 450, 650, 1350]:
 
     ps_lsvm_time = 0
     ps_lsvm_score = 0
