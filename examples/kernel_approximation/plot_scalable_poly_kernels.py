@@ -98,30 +98,24 @@ print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 # much more compact representation. We repeat the experiment 5 times to
 # compensate for the stochastic nature of :class:`PolynomialCountSketch`.
 
-n_runs = 3
 for n_components in [250, 500, 1000, 2000]:
 
     ps_lsvm_time = 0
     ps_lsvm_score = 0
-    for _ in range(n_runs):
+    pipeline = Pipeline(
+        steps=[
+            (
+                "kernel_approximator",
+                PolynomialCountSketch(n_components=n_components, degree=4),
+            ),
+            ("linear_classifier", LinearSVC()),
+        ]
+    )
 
-        pipeline = Pipeline(
-            steps=[
-                (
-                    "kernel_approximator",
-                    PolynomialCountSketch(n_components=n_components, degree=4),
-                ),
-                ("linear_classifier", LinearSVC()),
-            ]
-        )
-
-        start = time.time()
-        pipeline.fit(X_train, y_train)
-        ps_lsvm_time += time.time() - start
-        ps_lsvm_score += 100 * pipeline.score(X_test, y_test)
-
-    ps_lsvm_time /= n_runs
-    ps_lsvm_score /= n_runs
+    start = time.time()
+    pipeline.fit(X_train, y_train)
+    ps_lsvm_time += time.time() - start
+    ps_lsvm_score += 100 * pipeline.score(X_test, y_test)
 
     results[f"LSVM + PS({n_components})"] = {
         "time": ps_lsvm_time,
