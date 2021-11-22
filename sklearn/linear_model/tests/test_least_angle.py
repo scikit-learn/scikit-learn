@@ -964,7 +964,9 @@ def test_lassolarsic_noise_variance(fit_intercept):
     """Check the behaviour when `n_samples` < `n_features` and that one needs
     to provide the noise variance."""
     rng = np.random.RandomState(0)
-    X, y = datasets.make_regression(n_samples=10, n_features=11 - fit_intercept, random_state=rng)
+    X, y = datasets.make_regression(
+        n_samples=10, n_features=11 - fit_intercept, random_state=rng
+    )
 
     model = make_pipeline(
         StandardScaler(), LassoLarsIC(fit_intercept=fit_intercept, normalize=False)
