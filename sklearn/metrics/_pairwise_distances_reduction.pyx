@@ -120,7 +120,8 @@ cdef class PairwiseDistancesReduction:
         Parallelism is done on chunks and the sharding of chunks
         depends on the `strategy` set on :method:`~PairwiseDistancesReduction.compute`.
 
-        None and -1 means using all processors.
+        See _openmp_effective_n_threads, for details about
+        the specification of n_threads.
     """
 
     cdef:
@@ -511,7 +512,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         Parallelism is done on chunks and the sharding of chunks
         depends on the `strategy` set on :method:`~ArgKmin.compute`.
 
-        None and -1 means using all processors.
+        See _openmp_effective_n_threads, for details about
+        the specification of n_threads.
     """
 
     cdef:
@@ -568,7 +570,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             depends on the `strategy` set on
             :method:`~PairwiseDistancesArgKmin.compute`.
 
-            None and -1 means using all processors.
+            See _openmp_effective_n_threads, for details about
+            the specification of n_threads.
 
         Returns
         -------
