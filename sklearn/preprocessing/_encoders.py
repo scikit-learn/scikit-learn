@@ -692,7 +692,9 @@ class OneHotEncoder(_BaseEncoder):
 
         feature_names = []
         for i in range(len(cats)):
-            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            if type(input_features[i]) is not str:
+                raise Warning("Your features names are not strings. This may cause errors later on.")
+            names = [str(input_features[i]) + "_" + str(t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
@@ -724,7 +726,9 @@ class OneHotEncoder(_BaseEncoder):
 
         feature_names = []
         for i in range(len(cats)):
-            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            if type(input_features[i]) is not str:
+                raise Warning("Your features names are not strings. This may cause errors later on.")
+            names = [str(input_features[i]) + "_" + str(t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
