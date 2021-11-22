@@ -308,43 +308,6 @@ cdef class DistanceMetric:
         """
         return self.dist(x1, x2, size)
 
-    cdef DTYPE_t csr_dist(
-        self,
-        const DTYPE_t[:] x1_data,
-        const ITYPE_t[:] x1_indices,
-        const DTYPE_t[:] x2_data,
-        const ITYPE_t[:] x2_indices,
-    ) nogil except -1:
-        """Compute the distance between vectors x1 and x2 of a CSR matrix.
-
-        The computations is made given non null coordinates and
-        corresponding indices of the vectors CSR matrix.
-
-        This should be overridden in a base class.
-        """
-        return -999
-
-    cdef DTYPE_t csr_rdist(
-        self,
-        const DTYPE_t[:] x1_data,
-        const ITYPE_t[:] x1_indices,
-        const DTYPE_t[:] x2_data,
-        const ITYPE_t[:] x2_indices,
-    ) nogil except -1:
-        """Compute the rank-preserving surrogate distance between vectors x1 and x2 of a CSR matrix.
-
-        The computations is made given non null coordinates and
-        corresponding indices of the vectors CSR matrix.
-
-        This can optionally be overridden in a base class.
-
-        The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute. For example, the
-        rank-preserving surrogate distance of the Euclidean metric is the
-        squared-euclidean distance.
-        """
-        return self.csr_dist(x1_data, x1_indices, x2_data, x2_indices)
-
     cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
         """compute the pairwise distances between points in X"""
         cdef ITYPE_t i1, i2
