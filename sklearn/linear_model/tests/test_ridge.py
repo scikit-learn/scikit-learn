@@ -353,14 +353,9 @@ def test_ridge_individual_penalties():
         ),
         ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
         (
-            {"tol": 1},
-            TypeError,
-            "tol must be an instance of <class 'float'>, not <class 'int'>",
-        ),
-        (
             {"tol": "1"},
             TypeError,
-            "tol must be an instance of <class 'float'>, not <class 'str'>",
+            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
         ),
     ],
 )
