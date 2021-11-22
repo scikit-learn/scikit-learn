@@ -114,7 +114,12 @@ def set_config(
 
 @contextmanager
 def config_context(
-    *, assume_finite=None, working_memory=None, print_changed_only=None, display=None
+    *,
+    assume_finite=None,
+    working_memory=None,
+    print_changed_only=None,
+    display=None,
+    pairwise_dist_chunk_size=None,
 ):
     """Context manager for global scikit-learn configuration.
 
