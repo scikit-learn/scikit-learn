@@ -11,7 +11,6 @@ from itertools import chain
 import warnings
 
 from scipy.sparse import issparse
-from scipy.sparse.base import spmatrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
@@ -271,7 +270,7 @@ def type_of_target(y, input_name=""):
     'multilabel-indicator'
     """
     valid = (
-        isinstance(y, (Sequence, spmatrix)) or hasattr(y, "__array__")
+        isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__")
     ) and not isinstance(y, str)
 
     if not valid:
