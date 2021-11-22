@@ -16,6 +16,7 @@ import platform
 import struct
 import timeit
 from pathlib import Path
+from contextlib import suppress
 
 import warnings
 import numpy as np
@@ -1020,6 +1021,30 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     return chunk_n_rows
 
 
+def _is_pandas_na(x):
+    """Test if x is pandas.NA.
+
+    We intentionally do not use this function to return `True` for `pd.NA` in
+    `is_scalar_nan`, because estimators that support `pd.NA` are the exception
+    rather than the rule at the moment. When `pd.NA` is more universally
+    supported, we may reconsider this decision.
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+    """
+    with suppress(ImportError):
+        from pandas import NA
+
+        return x is NA
+
+    return False
+
+
 def is_scalar_nan(x):
     """Tests if x is NaN.
 
@@ -1142,8 +1167,7 @@ def check_matplotlib_support(caller_name):
 
 
 def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandas is not
-    installed.
+    """Raise ImportError with detailed error message if pandas is not installed.
 
     Plot utilities like :func:`fetch_openml` should lazily import
     pandas and call this helper before any computation.
@@ -1152,6 +1176,11 @@ def check_pandas_support(caller_name):
     ----------
     caller_name : str
         The name of the caller that requires pandas.
+
+    Returns
+    -------
+    pandas
+        The pandas package.
     """
     try:
         import pandas  # noqa

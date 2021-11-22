@@ -1,7 +1,3 @@
-#cython: boundscheck=False
-#cython: cdivision=True
-#cython: wraparound=False
-
 from libc.math cimport log, exp
 
 import numpy as np

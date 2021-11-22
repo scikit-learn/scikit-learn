@@ -1,7 +1,5 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
-#
-# cython: boundscheck=False, cdivision=True
 
 import sys
 import array
@@ -92,7 +90,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     indices_a = np.frombuffer(indices, dtype=np.int32)
     indptr_a = np.frombuffer(indptr, dtype=indices_np_dtype)
 
-    if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
+    if indptr[len(indptr) - 1] > np.iinfo(np.int32).max:  # = 2**31 - 1
         # both indices and indptr have the same dtype in CSR arrays
         indices_a = indices_a.astype(np.int64, copy=False)
     else:
