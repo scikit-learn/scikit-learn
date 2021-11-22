@@ -148,6 +148,9 @@ Changelog
   and :class:`ensemble.RandomTreesEmbedding` now raise a ``ValueError`` when
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
+- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is
+  faster for multiclass problems thanks to a new private loss function module.
+  :pr:`20567` and :pr:`20811` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.impute`
 .....................
