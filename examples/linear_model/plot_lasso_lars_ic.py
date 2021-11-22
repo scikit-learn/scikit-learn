@@ -9,9 +9,9 @@ diabetes dataset and the AIC and the BIC criteria are used to select
 the best model.
 
 .. note::
-    It is important to note the optimization to find `alpha` with
+    It is important to note that the optimization to find `alpha` with
     :class:`~sklearn.linear_model.LassoLarsIC` relies on the AIC or BIC
-    criterion that are computed insample, thus on the training set directly.
+    criterion that are computed in-sample, thus on the training set directly.
     This approach differs from the cross-validation procedure. For a comparison
     of the two approaches, you can refer to the following example:
     :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`.
@@ -62,7 +62,7 @@ lasso_lars_ic = make_pipeline(
 # %%
 # To be in line with the defintion in [ZHT2007]_, we need to rescale the
 # AIC and the BIC. Indeed, Zou et al. are ignoring some constant terms
-# compared to the original definition of AIC derivated from the maximum
+# compared to the original definition of AIC derived from the maximum
 # log-likelihood of a linear model. You can refer to
 # :ref:`mathematical detail section for the User Guide <lasso_lars_ic>`.
 def zou_et_al_criterion_rescaling(criterion, n_samples, noise_variance):
