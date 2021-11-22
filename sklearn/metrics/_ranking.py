@@ -1660,8 +1660,8 @@ def top_k_accuracy_score(
     labels : array-like of shape (n_classes,), default=None
         Multiclass only. List of labels that index the classes in ``y_score``.
         If ``None``, the numerical or lexicographical order of the labels in
-        ``y_true`` is used (if ``y_true`` does not contain all the labels, 
-        ``labels`` must be provided). 
+        ``y_true`` is used. If ``y_true`` does not contain all the labels, 
+        ``labels`` must be provided. 
 
     Returns
     -------
