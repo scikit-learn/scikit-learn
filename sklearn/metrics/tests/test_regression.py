@@ -362,6 +362,19 @@ def test_regression_single_sample(metric):
         assert np.isnan(score)
 
 
+def test_deprecation_positional_arguments_mape():
+    y_true = [1, 1, 1]
+    y_pred = [1, 0, 1]
+    sample_weights = [0.5, 0.1, 0.2]
+    multioutput = "raw_values"
+
+    warning_msg = "passing these as positional arguments will result in an error"
+
+    # Trigger the warning
+    with pytest.warns(FutureWarning, match=warning_msg):
+        mean_absolute_percentage_error(y_true, y_pred, sample_weights, multioutput)
+
+
 def test_tweedie_deviance_continuity():
     n_samples = 100
 
