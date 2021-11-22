@@ -51,9 +51,13 @@ from sklearn.preprocessing import MinMaxScaler
 def plot_embedding(X, title, ax):
     X = MinMaxScaler().fit_transform(X)
 
-    for t in np.unique(y):
+    for digit in digits.target_names:
         ax.scatter(
-            *X[y == t].T, marker=f"${t}$", s=60, color=plt.cm.Dark2(t), alpha=0.7
+            *X[y == digit].T,
+            marker=f"${digit}$",
+            s=60,
+            color=plt.cm.Dark2(digit),
+            alpha=0.7,
         )
     shown_images = np.array([[1.0, 1.0]])  # just something big
     for i in range(X.shape[0]):
@@ -127,7 +131,7 @@ embeddings = {
     "LTSA LLE embedding": LocallyLinearEmbedding(
         n_neighbors=n_neighbors, n_components=2, method="ltsa"
     ),
-    "MDS embedding": MDS(n_components=2, n_init=1, max_iter=100),
+    "MDS embedding": MDS(n_components=2, n_init=1, max_iter=100, n_jobs=-1),
     "Random Trees embedding": make_pipeline(
         RandomTreesEmbedding(n_estimators=200, max_depth=5, random_state=0),
         TruncatedSVD(n_components=2),
@@ -136,10 +140,16 @@ embeddings = {
         n_components=2, random_state=0, eigen_solver="arpack"
     ),
     "t-SNE embeedding": TSNE(
-        n_components=2, init="pca", learning_rate="auto", random_state=0
+        n_components=2,
+        init="pca",
+        learning_rate="auto",
+        n_iter=500,
+        n_iter_without_progress=150,
+        n_jobs=-1,
+        random_state=0,
     ),
     "NCA embedding": NeighborhoodComponentsAnalysis(
-        n_components=2, init="random", random_state=0
+        n_components=2, init="pca", random_state=0
     ),
 }
 
@@ -147,7 +157,7 @@ embeddings = {
 # Once we declared all the methodes of interest, we can run and perform the projection
 # of the original data. We will store the projected data as well as the computational
 # time needed to perform each projection.
-from time import perf_counter
+from time import time
 
 projections, timing = {}, {}
 for name, transformer in embeddings.items():
@@ -158,9 +168,9 @@ for name, transformer in embeddings.items():
         data = X
 
     print(f"Computing {name}...")
-    start_time = perf_counter()
+    start_time = time()
     projections[name] = transformer.fit_transform(data, y)
-    timing[name] = perf_counter() - start_time
+    timing[name] = time() - start_time
 
 # %%
 # Finally, we can plot the resulting projection given by each method.
