@@ -7,8 +7,8 @@ This example focuses on model selection for Lasso models that are
 linear models with an L1 penalty for regression problems.
 
 Indeed, several strategies can be used to select the value of the
-regularization parameter: via cross-validation or using an information criterion, namely AIC or BIC.
-.
+regularization parameter: via cross-validation or using an information
+criterion, namely AIC or BIC.
 
 In what follows, we will discuss in details the different strategies.
 """
@@ -46,7 +46,8 @@ X_random = pd.DataFrame(
     columns=[f"random_{i:02d}" for i in range(n_random_features)],
 )
 X = pd.concat([X, X_random], axis=1)
-X.head()
+# Show only a subset of the columns
+X[X.columns[::3]].head()
 
 # %%
 # Selecting Lasso via an information criterion
@@ -89,8 +90,15 @@ lasso_lars_ic.set_params(lassolarsic__criterion="bic").fit(X, y)
 results["BIC criterion"] = lasso_lars_ic[-1].criterion_
 alpha_bic = lasso_lars_ic[-1].alpha_
 
+
 # %%
-results
+# We can check which value of `alpha` lead to the minimum AIC and BIC.
+def highlight_min(x):
+    x_min = x.min()
+    return ["font-weight: bold" if v == x_min else "" for v in x]
+
+
+results.style.apply(highlight_min)
 
 # %%
 # Finally, we can plot the AIC and BIC values for the different alpha values.
@@ -230,3 +238,18 @@ _ = plt.title(f"Mean square error on each fold: Lars (train time: {fit_time:.2f}
 # why nested-cross validation is necessary when trying to evaluate the
 # performance of a method for which a parameter is chosen by cross-validation:
 # this choice of parameter may not be optimal for unseen data.
+#
+# Conclusion
+# ----------
+# In this tutorial, we presented to approaches for selecting the best
+# hyperparameter `alpha`: one strategy that find the optimal value of `alpha`
+# only using the training set and some information criterion and another based
+# on cross-validation.
+#
+# In this example, both approaches are working similarly. The insample
+# hyperparameter selection even shows its efficacy in terms of computational
+# performance. However, it should be noted that it can only be used when the
+# number of samples is large enough in regards to the number of features.
+#
+# That's why, hyperparameter optimization via cross-validation is a safe
+# strategy since it would work is the different settings.

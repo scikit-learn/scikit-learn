@@ -8,6 +8,14 @@ This example reproduces the example of Fig. 2 of [ZHT2007]_. A
 diabetes dataset and the AIC and the BIC criteria are used to select
 the best model.
 
+.. note::
+    It is important to note the optimization to find `alpha` with
+    :class:`~sklearn.linear_model.LassoLarsIC` relies on the AIC or BIC
+    criterion that are computed insample, thus on the training set directly.
+    This approach differs from the cross-validation procedure. For a comparison
+    of the two approaches, you can refer to the following example:
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`.
+
 .. topic:: References
 
     .. [ZHT2007] `Zou, Hui, Trevor Hastie, and Robert Tibshirani.
