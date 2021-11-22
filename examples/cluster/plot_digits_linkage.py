@@ -23,14 +23,15 @@ random resampling of the dataset.
 # Authors: Gael Varoquaux
 # License: BSD 3 clause (C) INRIA 2014
 
-from time import perf_counter
+from time import time
 
 import numpy as np
 from matplotlib import pyplot as plt
 
 from sklearn import manifold, datasets
 
-X, y = datasets.load_digits(return_X_y=True)
+digits = datasets.load_digits()
+X, y = digits.data, digits.target
 n_samples, n_features = X.shape
 
 np.random.seed(0)
@@ -43,12 +44,12 @@ def plot_clustering(X_red, labels, title=None):
     X_red = (X_red - x_min) / (x_max - x_min)
 
     plt.figure(figsize=(6, 4))
-    for t in np.sort(np.unique(y)):
+    for digit in digits.target_names:
         plt.scatter(
-            *X_red[y == t].T,
-            marker=f"${t}$",
+            *X_red[y == digit].T,
+            marker=f"${digit}$",
             s=50,
-            c=plt.cm.nipy_spectral(labels[y == t] / 10),
+            c=plt.cm.nipy_spectral(labels[y == digit] / 10),
             alpha=0.5,
         )
 
@@ -70,9 +71,9 @@ from sklearn.cluster import AgglomerativeClustering
 
 for linkage in ("ward", "average", "complete", "single"):
     clustering = AgglomerativeClustering(linkage=linkage, n_clusters=10)
-    t0 = perf_counter()
+    t0 = time()
     clustering.fit(X_red)
-    print("%s :\t%.2fs" % (linkage, perf_counter() - t0))
+    print("%s :\t%.2fs" % (linkage, time() - t0))
 
     plot_clustering(X_red, clustering.labels_, "%s linkage" % linkage)
 
