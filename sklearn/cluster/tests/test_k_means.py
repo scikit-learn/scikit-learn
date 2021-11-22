@@ -203,6 +203,7 @@ def test_algorithm_auto_full_deprecation_warning(algorithm):
         ),
     ):
         kmeans.fit(X)
+        assert kmeans._algorithm == "lloyd"
 
 
 def test_minibatch_update_consistency():
