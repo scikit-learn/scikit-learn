@@ -308,7 +308,7 @@ cdef class PairwiseDistancesReduction:
                     X_end = X_start + self.X_n_samples_chunk
 
                 # Reinitializing thread datastructures for the new X chunk
-                self._parallel_on_X_threadwise_init_chunk(thread_num, X_start)
+                self._parallel_on_X_init_chunk(thread_num, X_start)
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -330,7 +330,7 @@ cdef class PairwiseDistancesReduction:
             # end: for X_chunk_idx
 
             # Deallocating thread datastructures
-            self._parallel_on_X_threadwise_finalize(thread_num)
+            self._parallel_on_X_parallel_finalize(thread_num)
 
         # end: with nogil, parallel
         return
@@ -356,7 +356,7 @@ cdef class PairwiseDistancesReduction:
             ITYPE_t thread_num
 
         # Allocating datastructures
-        self._parallel_on_Y_init(num_threads)
+        self._parallel_on_Y_parallel_init(num_threads)
 
         for X_chunk_idx in range(self.X_n_chunks):
             X_start = X_chunk_idx * self.X_n_samples_chunk
@@ -369,7 +369,7 @@ cdef class PairwiseDistancesReduction:
                 thread_num = _openmp_thread_num()
 
                 # Initializing datastructures used in this thread
-                self._parallel_on_Y_threadwise_init(thread_num)
+                self._parallel_on_Y_init(thread_num)
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -386,7 +386,7 @@ cdef class PairwiseDistancesReduction:
                     )
                 # end: prange
 
-                # Note: we don't need a _parallel_on_Y_threadwise_finalize similarly.
+                # Note: we don't need a _parallel_on_Y_finalize similarly.
                 # This can be introduced if needed.
 
             # end: with nogil, parallel
@@ -436,7 +436,7 @@ cdef class PairwiseDistancesReduction:
         """Allocate datastructures used in a thread given its number."""
         return
 
-    cdef void _parallel_on_X_threadwise_init_chunk(
+    cdef void _parallel_on_X_init_chunk(
         self,
         ITYPE_t thread_num,
         ITYPE_t X_start,
@@ -453,21 +453,21 @@ cdef class PairwiseDistancesReduction:
         """Interact with datastructures after a reduction on chunks."""
         return
 
-    cdef void _parallel_on_X_threadwise_finalize(
+    cdef void _parallel_on_X_parallel_finalize(
         self,
         ITYPE_t thread_num
     ) nogil:
         """Interact with datastructures after executing all the reductions."""
         return
 
-    cdef void _parallel_on_Y_init(
+    cdef void _parallel_on_Y_parallel_init(
         self,
         ITYPE_t num_threads,
     ) nogil:
         """Allocate datastructures used in all threads."""
         return
 
-    cdef void _parallel_on_Y_threadwise_init(
+    cdef void _parallel_on_Y_init(
         self,
         ITYPE_t thread_num,
     ) nogil:
@@ -662,7 +662,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 )
 
     @final
-    cdef void _parallel_on_X_threadwise_init_chunk(
+    cdef void _parallel_on_X_init_chunk(
         self,
         ITYPE_t thread_num,
         ITYPE_t X_start,
@@ -690,7 +690,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 self.k
             )
 
-    cdef void _parallel_on_Y_init(
+    cdef void _parallel_on_Y_parallel_init(
         self,
         ITYPE_t num_threads,
     ) nogil:
@@ -715,7 +715,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             )
 
     @final
-    cdef void _parallel_on_Y_threadwise_init(
+    cdef void _parallel_on_Y_init(
         self,
         ITYPE_t thread_num,
     ) nogil:
@@ -887,15 +887,15 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         )
 
     @final
-    cdef void _parallel_on_X_threadwise_finalize(
+    cdef void _parallel_on_X_parallel_finalize(
         self,
         ITYPE_t thread_num
     ) nogil:
-        PairwiseDistancesArgKmin._parallel_on_X_threadwise_finalize(self, thread_num)
+        PairwiseDistancesArgKmin._parallel_on_X_parallel_finalize(self, thread_num)
         free(self.dist_middle_terms_chunks[thread_num])
 
     @final
-    cdef void _parallel_on_Y_init(
+    cdef void _parallel_on_Y_parallel_init(
         self,
         ITYPE_t num_threads,
     ) nogil:
