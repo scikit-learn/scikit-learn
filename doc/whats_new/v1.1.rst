@@ -82,8 +82,7 @@ Changelog
   
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
-  :user:`Krum Arnaudov <krumeto>`.
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and :user:`Krum Arnaudov <krumeto>`.
 
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
