@@ -648,7 +648,6 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             ITYPE_t i, j
             ITYPE_t n_samples_X = X_end - X_start
             ITYPE_t n_samples_Y = Y_end - Y_start
-            ITYPE_t k = self.k
             DTYPE_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
@@ -659,7 +658,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 heap_push(
                     heaps_r_distances + i * self.k,
                     heaps_indices + i * self.k,
-                    k,
+                    self.k,
                     self.datasets_pair.surrogate_dist(X_start + i, Y_start + j),
                     Y_start + j,
                 )
@@ -933,7 +932,6 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
     ) nogil:
         cdef:
             ITYPE_t i, j
-            ITYPE_t k = self.k
 
             const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
@@ -971,9 +969,9 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
                 heap_push(
-                    heaps_r_distances + i * k,
-                    heaps_indices + i * k,
-                    k,
+                    heaps_r_distances + i * self.k,
+                    heaps_indices + i * self.k,
+                    self.k,
                     # Using the squared euclidean distance as the rank-preserving distance:
                     #
                     #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
