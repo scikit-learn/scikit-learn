@@ -145,9 +145,9 @@ _ = ax.set_title(
 #
 # Selecting Lasso via cross-validation
 # ------------------------------------
-# The Lasso estimator can be implemented with different solvers: coordinate descent
-# and least angle regression. They differ with regards to their execution speed
-# and sources of numerical errors.
+# The Lasso estimator can be implemented with different solvers: coordinate
+# descent and least angle regression. They differ with regards to their
+# execution speed and sources of numerical errors.
 #
 # In scikit-learn, two different estimators are available with integrated
 # cross-validation: :class:`~sklearn.linear_model.LassoCV` and
