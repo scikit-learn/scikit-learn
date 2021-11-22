@@ -116,10 +116,10 @@ def benchmark_influence(conf):
         conf["postfit_hook"](estimator)
         complexity = conf["complexity_computer"](estimator)
         complexities.append(complexity)
-        start_time = time.perf_counter()
+        start_time = time.time()
         for _ in range(conf["n_samples"]):
             y_pred = estimator.predict(conf["data"]["X_test"])
-        elapsed_time = (time.perf_counter() - start_time) / float(conf["n_samples"])
+        elapsed_time = (time.time() - start_time) / float(conf["n_samples"])
         prediction_times.append(elapsed_time)
         pred_score = conf["prediction_performance_computer"](
             conf["data"]["y_test"], y_pred
@@ -175,13 +175,13 @@ configurations = [
         "prediction_performance_label": "Hamming Loss (Misclassification Ratio)",
         "postfit_hook": lambda x: x.sparsify(),
         "data": classification_data,
-        "n_samples": 30,
+        "n_samples": 5,
     },
     {
         "estimator": NuSVR,
         "tuned_params": {"C": 1e3, "gamma": 2 ** -15},
         "changing_param": "nu",
-        "changing_param_values": [0.1, 0.25, 0.5, 0.75, 0.9],
+        "changing_param_values": [0.05, 0.1, 0.2, 0.35, 0.5],
         "complexity_label": "n_support_vectors",
         "complexity_computer": lambda x: len(x.support_vectors_),
         "data": regression_data,
@@ -192,9 +192,13 @@ configurations = [
     },
     {
         "estimator": GradientBoostingRegressor,
-        "tuned_params": {"loss": "squared_error"},
+        "tuned_params": {
+            "loss": "squared_error",
+            "learning_rate": 0.05,
+            "max_depth": 2,
+        },
         "changing_param": "n_estimators",
-        "changing_param_values": [10, 50, 100, 200, 500],
+        "changing_param_values": [10, 20, 40, 60, 80],
         "complexity_label": "n_trees",
         "complexity_computer": lambda x: x.n_estimators,
         "data": regression_data,
@@ -268,7 +272,6 @@ for conf in configurations:
     prediction_performances, prediction_times, complexities = benchmark_influence(conf)
     plot_influence(conf, prediction_performances, prediction_times, complexities)
 plt.show()
-
 
 ##############################################################################
 # Conclusion
