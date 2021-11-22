@@ -49,20 +49,22 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             "constant"}, default="prior"
         Strategy to use to generate predictions.
 
-        * "most_frequent": the `predict` method always returns the most frequent
-          class label in the observed `y` argument passed to `fit`. The
-          `predict_proba` method returns the matching one-hot encoded vector.
+        * "most_frequent": the `predict` method always returns the most
+          frequent class label in the observed `y` argument passed to `fit`.
+          The `predict_proba` method returns the matching one-hot encoded
+          vector.
         * "prior": the `predict` method always returns the most frequent
           class label in the observed `y` argument passed to `fit` (like
           "most_frequent"). ``predict_proba`` always returns the empirical
           class distribution of `y` also known as the empirical class prior
           distribution.
-        * "stratified": the `predict` method generates random predictions by
-          drawing class labels from the empirical class prior. The
-          `predict_proba` method samples one-hot vectors from a multinomial
-          distribution parametrized by the empirical class prior.
-          Each sampled row returned by `predict_proba` is therefore an
-          independent and identically distributed one-hot vector.
+        * "stratified": the `predict_proba` method randomly samples one-hot
+          vectors from a multinomial distribution parametrized by the empirical
+          class prior probabilities.
+          The `predict` method returns the class label which got probability
+          one in the one-hot vector of `predict_proba`.
+          Each sampled row of both methods is therefore independent and
+          identically distributed.
         * "uniform": generates predictions uniformly at random from the list
           of unique classes observed in `y`, i.e. each class has equal
           probability.
