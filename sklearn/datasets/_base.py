@@ -1464,7 +1464,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
             break
         except URLError:
             if retry_cnt > 0:
-                warnings.warn("Retry downloading from url: {}".format(remote.url))
+                warnings.warn(f"Retry downloading from url: {remote.url}")
                 time.sleep(delay)
                 retry_cnt -= 1
             else:
