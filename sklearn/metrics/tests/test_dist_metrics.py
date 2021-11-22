@@ -72,7 +72,7 @@ def test_cdist(metric, X1, X2):
             # See: https://github.com/scipy/scipy/issues/13861
             pytest.xfail("scipy#13861: cdist with 'mahalanobis' fails onmemmap data")
         elif metric == "wminkowski":
-            if sp_version >= parse_version("1.8.0"):
+            if sp_version >= parse_version("1.8.0.dev0"):
                 pytest.skip("wminkowski will be removed in SciPy 1.8.0")
 
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
