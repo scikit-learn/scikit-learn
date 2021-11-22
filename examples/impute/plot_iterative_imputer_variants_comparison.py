@@ -56,7 +56,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
 
-N_SPLITS = 5
+N_SPLITS = 3
 
 rng = np.random.RandomState(0)
 
@@ -98,7 +98,9 @@ for strategy in ("mean", "median"):
 estimators = [
     BayesianRidge(),
     DecisionTreeRegressor(max_features="sqrt", random_state=0),
-    ExtraTreesRegressor(n_estimators=10, random_state=0),
+    ExtraTreesRegressor(
+        n_estimators=10, random_state=0, bootstrap=True, max_samples=0.75
+    ),
     KNeighborsRegressor(n_neighbors=15),
 ]
 score_iterative_imputer = pd.DataFrame()
@@ -109,7 +111,6 @@ for impute_estimator in estimators:
     score_iterative_imputer[impute_estimator.__class__.__name__] = cross_val_score(
         estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
     )
-
 scores = pd.concat(
     [score_full_data, score_simple_imputer, score_iterative_imputer],
     keys=["Original", "SimpleImputer", "IterativeImputer"],
