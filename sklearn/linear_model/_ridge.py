@@ -560,7 +560,7 @@ def _ridge_regression(
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
-    if not isinstance(alpha, (np.ndarray, type(None), tuple)):
+    if alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
         alpha = check_scalar(
             alpha,
             "alpha",
