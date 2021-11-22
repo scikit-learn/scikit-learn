@@ -2273,7 +2273,7 @@ class LassoLarsIC(LassoLars):
                 "possible. Provide an estimate of the noise variance in the "
                 "constructor."
             )
-        # X is supposed to be centered and we don't need to fit with an intercept
+        # X and y are already centered and we don't need to fit with an intercept
         ols_model = LinearRegression(positive=positive, fit_intercept=False)
         y_pred = ols_model.fit(X, y).predict(X)
         return np.sum((y - y_pred) ** 2) / (

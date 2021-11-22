@@ -35,12 +35,13 @@ X.head()
 
 # %%
 # Scikit-learn provides an estimator called
-# :class:`~sklearn.linear_model.LinearLarsIC` that uses an information
-# criterion, namely the AIC or BIC, to select the best model. Before fitting
+# :class:`~sklearn.linear_model.LinearLarsIC` that uses either Akaike's
+# information criterion (AIC) or the Bayesian information criterion (BIC) to
+# select the best model. Before fitting
 # this model, we will scale the dataset.
 #
 # In the following, we are going to fit two models to compare the values
-# reported by the AIC and the BIC.
+# reported by AIC and BIC.
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LassoLarsIC
 from sklearn.pipeline import make_pipeline
@@ -53,11 +54,11 @@ lasso_lars_ic = make_pipeline(
 # %%
 # To be in line with the defintion in [ZHT2007]_, we need to rescale the
 # AIC and the BIC. Indeed, Zou et al. are ignoring some constant terms
-# compared to the true definition of AIC derivated from the maximum
+# compared to the original definition of AIC derivated from the maximum
 # log-likelihood of a linear model. You can refer to
 # :ref:`mathematical detail section for the User Guide <lasso_lars_ic>`.
 def zou_et_al_criterion_rescaling(criterion, n_samples, noise_variance):
-    """Rescale the information criterion to follow Zou et al. definition."""
+    """Rescale the information criterion to follow the definition of Zou et al."""
     return criterion - n_samples * np.log(2 * np.pi * noise_variance) - n_samples
 
 
@@ -88,13 +89,13 @@ index_alpha_path_bic = np.flatnonzero(
 )[0]
 
 # %%
-# Now that we collected the AIC and BIC, we can as well check that the minimum
-# of both criteria happens at the same alpha. Then, we can simplify the
+# Now that we collected the AIC and BIC, we can as well check that the minima
+# of both criteria happen at the same alpha. Then, we can simplify the
 # following plot.
 index_alpha_path_aic == index_alpha_path_bic
 
 # %%
-# Now, we can plot the AIC and BIC criterion and the subsequent selected
+# Finally, we can plot the AIC and BIC criterion and the subsequent selected
 # regularization parameter.
 import matplotlib.pyplot as plt
 
