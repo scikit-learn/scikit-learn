@@ -73,7 +73,7 @@ def generate_data(case):
     if case == "regression":
         X, y = datasets.load_diabetes(return_X_y=True)
     elif case == "classification":
-        X, y = datasets.fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
+        X, y = datasets.fetch_20newsgroups_vectorized(subset="test", return_X_y=True)
     X, y = shuffle(X, y)
     offset = int(X.shape[0] * 0.8)
     X_train, y_train = X[:offset], y[:offset]
@@ -115,10 +115,10 @@ def benchmark_influence(conf):
         conf["postfit_hook"](estimator)
         complexity = conf["complexity_computer"](estimator)
         complexities.append(complexity)
-        start_time = time.time()
+        start_time = time.perf_counter()
         for _ in range(conf["n_samples"]):
             y_pred = estimator.predict(conf["data"]["X_test"])
-        elapsed_time = (time.time() - start_time) / float(conf["n_samples"])
+        elapsed_time = (time.perf_counter() - start_time) / float(conf["n_samples"])
         prediction_times.append(elapsed_time)
         pred_score = conf["prediction_performance_computer"](
             conf["data"]["y_test"], y_pred
