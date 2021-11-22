@@ -70,10 +70,12 @@ Changelog
   See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
 
-- |Efficiency| In :class:`cluster.KMeans`, the default ``algorithm="auto"`` now
-  uses the full classical EM-style algorithm (as with ``algorithm="full"``)
-  instead of Elkan's algorithm, as the former is often faster in practice.
-  by :user:`Aurélien Geron <ageron>`.
+- |Efficiency| In :class:`cluster.KMeans`, the default ``algorithm`` is now
+  ``"lloyd"`` which is the full classical EM-style algorithm. Both ``"auto"``
+  and ``"full"`` are deprecated, and they are aliases for ``"lloyd"``. The
+  previous default was ``"auto"`` which used Elkan's algorithm, but it is
+  often slower, and its results are identical, hence the change.
+  :pr:`21735` by :user:`Aurélien Geron <ageron>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
