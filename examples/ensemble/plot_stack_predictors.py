@@ -19,7 +19,7 @@ stacking strategy. Stacking slightly improves the overall performance.
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 #          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
-
+# %%
 from sklearn import set_config
 
 set_config(display="diagram")
@@ -100,7 +100,9 @@ from sklearn.compose import make_column_selector
 cat_selector = make_column_selector(dtype_include=object)
 num_selector = make_column_selector(dtype_include=np.number)
 
-
+cat_selector(X)
+# %%
+num_selector(X)
 # %%
 # Then, we will need to design preprocessing pipelines which depends on the
 # ending regressor. If the ending regressor is a linear model, one needs to
@@ -172,14 +174,16 @@ lasso_pipeline
 # %%
 from sklearn.ensemble import RandomForestRegressor
 
-rf_pipeline = make_pipeline(tree_preprocessor, RandomForestRegressor(random_state=42))
+rf_pipeline = make_pipeline(
+    tree_preprocessor, RandomForestRegressor(n_estimators=25, random_state=42)
+)
 rf_pipeline
 
 # %%
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 gbdt_pipeline = make_pipeline(
-    tree_preprocessor, HistGradientBoostingRegressor(random_state=0)
+    tree_preprocessor, HistGradientBoostingRegressor(max_iter=50, random_state=0)
 )
 gbdt_pipeline
 
@@ -211,7 +215,6 @@ stacking_regressor
 import time
 import matplotlib.pyplot as plt
 from sklearn.model_selection import cross_validate, KFold
-from collections import namedtuple
 
 
 def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
@@ -242,13 +245,12 @@ def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
 
-splits = namedtuple("splits", ("train", "test"))
-cv = [splits(*data) for data in KFold(n_splits=5).split(X, y)]
+cv = KFold(n_splits=3, shuffle=False)
 
 for ax, (name, est) in zip(
     axs, estimators + [("Stacking Regressor", stacking_regressor)]
 ):
-    start_time = time.perf_counter()
+    start_time = time.time()
     cv_results = cross_validate(
         est,
         X,
@@ -259,10 +261,10 @@ for ax, (name, est) in zip(
         verbose=0,
         return_estimator=True,
     )
-    elapsed_time = time.perf_counter() - start_time
+    elapsed_time = time.time() - start_time
     y_pred = np.zeros_like(y)
-    for estimator, fold in zip(cv_results["estimator"], cv):
-        y_pred[fold.test] = estimator.predict(X.iloc[fold.test])
+    for estimator, fold in zip(cv_results["estimator"], cv.split(X)):
+        y_pred[fold[1]] = estimator.predict(X.iloc[fold[1]])
 
     plot_regression_results(
         ax,
