@@ -42,13 +42,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import datasets
-from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.svm import NuSVR
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import hamming_loss
-
 
 # Initialize random generator
 np.random.seed(0)
@@ -72,12 +71,14 @@ def generate_data(case):
     """Generate regression/classification data."""
     if case == "regression":
         X, y = datasets.load_diabetes(return_X_y=True)
+        train_size = 0.8
     elif case == "classification":
-        X, y = datasets.fetch_20newsgroups_vectorized(subset="test", return_X_y=True)
-    X, y = shuffle(X, y)
-    offset = int(X.shape[0] * 0.8)
-    X_train, y_train = X[:offset], y[:offset]
-    X_test, y_test = X[offset:], y[offset:]
+        X, y = datasets.fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
+        train_size = 0.4
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=train_size, random_state=0
+    )
 
     data = {"X_train": X_train, "X_test": X_test, "y_train": y_train, "y_test": y_test}
     return data
