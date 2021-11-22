@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.base.clone",
     "sklearn.cluster._affinity_propagation.affinity_propagation",
     "sklearn.cluster._kmeans.kmeans_plusplus",
     "sklearn.cluster._mean_shift.estimate_bandwidth",
