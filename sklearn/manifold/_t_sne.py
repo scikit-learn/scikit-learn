@@ -652,7 +652,7 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.22
 
-    square_distances : True, default='warn'
+    square_distances : True, default='deprecated'
         This parameter has no effect since distance values are always squared
         since 1.1.
 
@@ -748,7 +748,7 @@ class TSNE(BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
-        square_distances="warn",
+        square_distances="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
@@ -800,7 +800,7 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
-        if self.square_distances != "warn":
+        if self.square_distances != "deprecated":
             warnings.warn(
                 "The parameter `square_distances` has not effect and will be "
                 "removed in version 1.3.",
