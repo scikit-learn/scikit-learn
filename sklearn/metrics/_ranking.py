@@ -1644,9 +1644,8 @@ def top_k_accuracy_score(
         multiclass case expects scores with shape (n_samples, n_classes). 
         In the multiclass case, the order of the class scores must 
         correspond to the order of ``labels``, if provided, or else to 
-        the numerical or lexicographical order of the labels in ``y_true``
-        (if ``y_true`` does not contain all the labels, 
-        ``labels`` must be provided).
+        the numerical or lexicographical order of the labels in ``y_true``.
+        If ``y_true`` does not contain all the labels, ``labels`` must be provided.
 
     k : int, default=2
         Number of most likely outcomes considered to find the correct label.
