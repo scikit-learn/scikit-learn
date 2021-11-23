@@ -63,7 +63,7 @@ def _write_label_html(
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
-    show_toggle_arrow=False,
+    show_toggle_arrow=True,
 ):
     """Write labeled html with or without a dropdown with named details"""
     out.write(f'<div class="{outer_class}"><div class="{inner_class} sk-toggleable">')
@@ -140,7 +140,7 @@ def _write_estimator_html(
                 out,
                 estimator_label,
                 estimator_label_details,
-                show_toggle_arrow=first_call,
+                # show_toggle_arrow=first_call,
             )
 
         kind = est_block.kind
@@ -166,7 +166,7 @@ def _write_estimator_html(
             outer_class="sk-item",
             inner_class="sk-estimator",
             checked=first_call,
-            show_toggle_arrow=first_call,
+            # show_toggle_arrow=first_call,
         )
 
 
@@ -190,15 +190,18 @@ _STYLE = """
   box-sizing: border-box;
   text-align: center;
 }
-#$id label.sk-toggleable__label:after {
-  content: "";
-  clear: both;
-  display: table;
-}
 #$id label.sk-toggleable__label-arrow:before {
   content: "▶";
   float: left;
   margin-right: 0.25em;
+  color: #696969;
+  font-size: 0.8em;
+}
+#$id div.sk-label:hover label.sk-toggleable__label-arrow:before {
+  color: black;
+}
+#$id div.sk-estimator:hover label.sk-toggleable__label-arrow:before {
+  color: black;
 }
 #$id div.sk-toggleable__name {
   display: inline;
