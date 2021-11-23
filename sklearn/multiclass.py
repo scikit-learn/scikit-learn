@@ -932,7 +932,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         An estimator object implementing :term:`fit` and one of
         :term:`decision_function` or :term:`predict_proba`.
 
-    code_size : float
+    code_size : float, default=1.5
         Percentage of the number of classes to be used to create the code book.
         A number between 0 and 1 will require fewer classifiers than
         one-vs-the-rest. A number greater than 1 will require more classifiers
