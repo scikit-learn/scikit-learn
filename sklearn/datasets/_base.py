@@ -578,6 +578,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        Returns a tuple of two ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
 
