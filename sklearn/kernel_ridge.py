@@ -48,11 +48,12 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         assumed to be specific to the targets. Hence they must correspond in
         number. See :ref:`ridge_regression` for formula.
 
-    kernel : str or callable, default="linear"
+    kernel : {'additive_chi2', 'chi2', 'cosine', 'linear', 'poly', \
+            'polynomial', 'rbf', 'laplacian', 'sigmoid', 'precomputed'} \
+             or callable , default="linear"
+
         Kernel mapping used internally. This parameter is directly passed to
         :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
-        If `kernel` is a string, it must be one of the metrics
-        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if `kernel` is a callable function, it is called on
         each pair of instances (rows) and the resulting value recorded. The
