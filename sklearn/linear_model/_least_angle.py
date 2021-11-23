@@ -2029,7 +2029,7 @@ class LassoLarsIC(LassoLars):
     noise_variance : float, default=None
         The estimated noise variance of the data. If `None`, an unbiased
         estimate is computed by an OLS model. However, it is only possible
-        in the case `n_samples > n_features + fit_intercept`.
+        in the case where `n_samples > n_features + fit_intercept`.
 
         .. versionadded:: 1.1
 
@@ -2057,7 +2057,7 @@ class LassoLarsIC(LassoLars):
     criterion_ : array-like of shape (n_alphas,)
         The value of the information criteria ('aic', 'bic') across all
         alphas. The alpha which has the smallest information criterion is
-        chosen.
+        chosen, as specified in [1]_.
 
     noise_variance_ : float
         The estimated noise variance from the data used to compute the
@@ -2203,9 +2203,9 @@ class LassoLarsIC(LassoLars):
         n_samples = X.shape[0]
 
         if self.criterion == "aic":
-            factor_criterion = 2
+            criterion_factor = 2
         elif self.criterion == "bic":
-            factor_criterion = log(n_samples)
+            criterion_factor = log(n_samples)
         else:
             raise ValueError(
                 f"criterion should be either bic or aic, got {self.criterion!r}"
@@ -2235,7 +2235,7 @@ class LassoLarsIC(LassoLars):
         self.criterion_ = (
             n_samples * np.log(2 * np.pi * self.noise_variance_)
             + residuals_sum_squares / self.noise_variance_
-            + factor_criterion * degrees_of_freedom
+            + criterion_factor * degrees_of_freedom
         )
         n_best = np.argmin(self.criterion_)
 

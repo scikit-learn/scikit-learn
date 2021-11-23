@@ -338,7 +338,7 @@ where :math:`\hat{L}` is the maximum likelihood of the model and
 :math:`d` is the number of parameters (as well referred to as degrees of
 freedom in the previous section).
 
-The definition of BIC replace the constant `2` by `log(N)`:
+The definition of BIC replace the constant :math:`2` by :math:`\log(N)`:
 
 .. math::
     BIC = -2 \log(\hat{L}) + \log(N) d
@@ -357,7 +357,7 @@ targets, and :math:`n` is the number of samples.
 Plugging the maximum log-likelihood in the AIC formula yields:
 
 .. math::
-    AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2d
+    AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2 d
 
 The first term of the above expression is sometimes discarded since it is a
 constant when :math:`\sigma^2` is provided. In addition,

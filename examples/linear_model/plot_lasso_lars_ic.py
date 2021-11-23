@@ -11,7 +11,7 @@ the best model.
 .. note::
     It is important to note that the optimization to find `alpha` with
     :class:`~sklearn.linear_model.LassoLarsIC` relies on the AIC or BIC
-    criterion that are computed in-sample, thus on the training set directly.
+    criteria that are computed in-sample, thus on the training set directly.
     This approach differs from the cross-validation procedure. For a comparison
     of the two approaches, you can refer to the following example:
     :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`.

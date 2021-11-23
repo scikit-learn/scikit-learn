@@ -249,8 +249,8 @@ _ = plt.title(f"Mean square error on each fold: Lars (train time: {fit_time:.2f}
 #
 # In this example, both approaches are working similarly. The in-sample
 # hyperparameter selection even shows its efficacy in terms of computational
-# performance. However, it should be noted that it can only be used when the
-# number of samples is large enough compared to the number of features.
+# performance. However, it can only be used when the number of samples is large
+# enough compared to the number of features.
 #
 # That's why hyperparameter optimization via cross-validation is a safe
 # strategy: it works in different settings.

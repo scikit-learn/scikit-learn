@@ -144,15 +144,15 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |API| Add a parameter `noise_variance` to :class:`linear_model.LassoLarsIC`
-  in order to provide an estimate of the noise variance. This is particularly
-  relevant when `n_features > n_samples` and the estimator of the noise
-  variance cannot be computed.
+- |API| :class:`linear_model.LassoLarsIC` now exposes `noise_variance` as
+  a parameter in order to provide an estimate of the noise variance.
+  This is particularly relevant when `n_features > n_samples` and the
+  estimator of the noise variance cannot be computed.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`
 
-- |Fix| Fixed the computation of AIC and BIC in
-  :class:`linear_model.LassoLarsIC`. An error is now raised when
-  `n_features > n_samples` and the noise variance is not provided.
+- |Fix| :class:`linear_model.LassoLarsIC` now correctly computes AIC
+  and BIC. An error is now raised when `n_features > n_samples` and
+  when the noise variance is not provided.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
