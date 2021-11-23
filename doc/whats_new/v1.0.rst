@@ -36,6 +36,13 @@ Changelog
   This fixes a regression introduced in 1.0.0 with respect to 0.24.2.
   :pr:`21694` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| All :class:`sklearn.metrics.MinkowskiDistance` now accepts a weight
+  parameter that makes it possible to write code that behaves consistently both
+  with scipy 1.8 and earlier versions. In turns this means that all
+  neighbors-based estimators (except those that use `algorithm="kd_tree"`) now
+  accept a weight parameter with `metric="minknowski"` to yield results that
+  are always consistent with `scipy.spatial.distance.cdist`.
+  :pr:`21741` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.preprocessing`
 ............................
