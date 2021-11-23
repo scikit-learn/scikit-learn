@@ -69,8 +69,9 @@ def plot_embedding(X, title, ax):
             continue
         shown_images = np.concatenate([shown_images, [X[i]]], axis=0)
         imagebox = offsetbox.AnnotationBbox(
-            offsetbox.OffsetImage(digits.images[i], cmap=plt.cm.gray_r), X[i], zorder=1
+            offsetbox.OffsetImage(digits.images[i], cmap=plt.cm.gray_r), X[i]
         )
+        imagebox.set(zorder=1)
         ax.add_artist(imagebox)
 
     ax.set_title(title)
