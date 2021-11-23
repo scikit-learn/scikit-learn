@@ -1719,6 +1719,8 @@ def top_k_accuracy_score(
             raise ValueError(
                 f"Number of classes in 'y_true' ({n_classes}) not equal "
                 f"to the number of classes in 'y_score' ({y_score_n_classes})."
+                "You can provide a list of all known classes by assigning it "
+                "to the parameter `labels`."
             )
     else:
         labels = column_or_1d(labels)
