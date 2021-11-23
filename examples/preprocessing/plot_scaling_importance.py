@@ -111,7 +111,7 @@ for target_class, color, marker in zip(target_classes, colors, markers):
         x=X_train_transformed[y_train == target_class, 0],
         y=X_train_transformed[y_train == target_class, 1],
         color=color,
-        label="class %s" % target_class,
+        label=f"class {target_class}",
         alpha=0.5,
         marker=marker,
     )
