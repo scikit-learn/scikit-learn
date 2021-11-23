@@ -185,7 +185,7 @@ _STYLE = """
   float: left;
   margin-right: 0.25em;
   color: #696969;
-  font-size: 0.8em;
+  font-size: 0.7em;
 }
 #$id div.sk-label:hover label.sk-toggleable__label-arrow:before {
   color: black;
