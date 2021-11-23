@@ -59,14 +59,14 @@ METRICS_DEFAULT_PARAMS = [
     ("braycurtis", {}),
 ]
 if sp_version >= parse_version("1.8.0.dev0"):
-    # In scipy 1.8.0.dev0, minkowski now accept a weighting parameter
-    # directly.
+    # Starting from scipy 1.8.0.dev0, minkowski now accepts w, the weighting
+    # parameter directly and using it is preferred over using wminkowski.
     METRICS_DEFAULT_PARAMS.append(
         ("minkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
     )
 else:
     # For previous versions of scipy, this was possible through a dedicated
-    # metric (deprecated 1.6 and removed in 1.8).
+    # metric (deprecated in 1.6 and removed in 1.8).
     METRICS_DEFAULT_PARAMS.append(
         ("wminkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
     )

@@ -119,7 +119,7 @@ cdef class DistanceMetric:
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
 
-    Note that "minkowski" with a non None parameter actually calls
+    Note that "minkowski" with a non-None `w` parameter actually calls
     `WMinkowskiDistance` with `w=w ** (1/p)` in order to be consistent with the
     parametrization of scipy 1.8 and later.
 
@@ -259,8 +259,8 @@ cdef class DistanceMetric:
             w = kwargs.pop('w', None)
             if w is not None:
                 # Be consistent with scipy 1.8 conventions: in scipy 1.8,
-                # 'wminkowski' was removed in favor adding the possibility
-                # of passing a weight vector directly to 'minkowski', however
+                # 'wminkowski' was removed in favor of passing a
+                # weight vector directly to 'minkowski', however
                 # the new weights apply to the absolute differences raised to
                 # the p power instead of the absolute difference as in
                 # previous versions of scipy.
