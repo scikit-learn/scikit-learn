@@ -99,7 +99,14 @@ estimators = [
     BayesianRidge(),
     DecisionTreeRegressor(max_features="sqrt", random_state=0),
     ExtraTreesRegressor(
-        n_estimators=10, random_state=0, bootstrap=True, max_samples=0.75
+        # We tuned the hyperparameters of the ExtraTreesRegressor to minimize
+        # the execution time
+        n_estimators=4,
+        max_depth=10,
+        bootstrap=True,
+        max_samples=0.5,
+        n_jobs=2,
+        random_state=0,
     ),
     KNeighborsRegressor(n_neighbors=15),
 ]
