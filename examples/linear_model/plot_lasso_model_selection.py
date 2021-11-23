@@ -237,7 +237,7 @@ _ = plt.title(f"Mean square error on each fold: Lars (train time: {fit_time:.2f}
 # descent algorithm will only sample the path on a grid.
 #
 # Note how the optimal value of alpha varies for each fold. This illustrates
-# why nested-cross validation is necessary when trying to evaluate the
+# why nested-cross validation is a good strategy when trying to evaluate the
 # performance of a method for which a parameter is chosen by cross-validation:
 # this choice of parameter may not be optimal for a final evaluation on
 # unseen test set only.
