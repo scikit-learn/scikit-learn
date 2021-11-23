@@ -9,6 +9,7 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 
 
 import warnings
+import numbers
 from itertools import combinations
 
 import numpy as np
@@ -20,6 +21,7 @@ from joblib import Parallel, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
+from ..utils.validation import check_scalar
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 
@@ -325,7 +327,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         *,
         fit_intercept=True,
         copy_X=True,
-        max_subpopulation=1e4,
+        max_subpopulation=10_000,
         n_subsamples=None,
         max_iter=300,
         tol=1.0e-3,
@@ -335,7 +337,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     ):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
-        self.max_subpopulation = int(max_subpopulation)
+        self.max_subpopulation = max_subpopulation
         self.n_subsamples = n_subsamples
         self.max_iter = max_iter
         self.tol = tol
@@ -375,15 +377,14 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         else:
             n_subsamples = min(n_dim, n_samples)
 
-        if self.max_subpopulation <= 0:
-            raise ValueError(
-                "Subpopulation must be strictly positive ({0} <= 0).".format(
-                    self.max_subpopulation
-                )
-            )
-
+        self._max_subpopulation = check_scalar(
+            self.max_subpopulation,
+            "max_subpopulation",
+            target_type=numbers.Integral,
+            min_val=1,
+        )
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
-        n_subpopulation = int(min(self.max_subpopulation, all_combinations))
+        n_subpopulation = int(min(self._max_subpopulation, all_combinations))
 
         return n_subsamples, n_subpopulation
 
@@ -418,7 +419,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             print("Number of subpopulations: {0}".format(self.n_subpopulation_))
 
         # Determine indices of subpopulation
-        if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
+        if np.rint(binom(n_samples, n_subsamples)) <= self._max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
             indices = [

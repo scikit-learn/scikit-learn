@@ -5,6 +5,7 @@ Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 # Author: Florian Wilhelm <florian.wilhelm@gmail.com>
 # License: BSD 3 clause
 import os
+import re
 import sys
 from contextlib import contextmanager
 import numpy as np
@@ -193,7 +194,7 @@ def test_theil_sen_2d():
     lstq = LinearRegression().fit(X, y)
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(max_subpopulation=1e3, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(max_subpopulation=1000, random_state=0).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
@@ -203,25 +204,35 @@ def test_calc_breakdown_point():
     assert np.abs(bp - 1 + 1 / (np.sqrt(2))) < 1.0e-6
 
 
-def test_checksubparams_negative_subpopulation():
+@pytest.mark.parametrize(
+    "param, ExceptionCls, match",
+    [
+        (
+            {"max_subpopulation": "hello"},
+            TypeError,
+            "max_subpopulation must be an instance of <class 'numbers.Integral'>",
+        ),
+        (
+            {"max_subpopulation": -1},
+            ValueError,
+            "max_subpopulation == -1, must be >= 1",
+        ),
+        (
+            {"n_subsamples": 1},
+            ValueError,
+            re.escape("Invalid parameter since n_features+1 > n_subsamples (2 > 50)"),
+        ),
+        (
+            {"n_subsamples": 101},
+            ValueError,
+            re.escape("Invalid parameter since n_subsamples > n_samples (101 > 50)"),
+        ),
+    ],
+)
+def test_checksubparams_invalid_input(param, ExceptionCls, match):
     X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(max_subpopulation=-1, random_state=0)
-
-    with pytest.raises(ValueError):
-        theil_sen.fit(X, y)
-
-
-def test_checksubparams_too_few_subsamples():
-    X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(n_subsamples=1, random_state=0)
-    with pytest.raises(ValueError):
-        theil_sen.fit(X, y)
-
-
-def test_checksubparams_too_many_subsamples():
-    X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(n_subsamples=101, random_state=0)
-    with pytest.raises(ValueError):
+    theil_sen = TheilSenRegressor(**param, random_state=0)
+    with pytest.raises(ExceptionCls, match=match):
         theil_sen.fit(X, y)
 
 
@@ -264,7 +275,7 @@ def test_theil_sen_parallel():
     lstq = LinearRegression().fit(X, y)
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(n_jobs=2, random_state=0, max_subpopulation=2e3).fit(
+    theil_sen = TheilSenRegressor(n_jobs=2, random_state=0, max_subpopulation=2000).fit(
         X, y
     )
     assert_array_almost_equal(theil_sen.coef_, w, 1)
