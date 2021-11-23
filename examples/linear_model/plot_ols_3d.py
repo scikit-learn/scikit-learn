@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 Sparsity Example: Fitting only features 1  and 2
@@ -12,8 +10,6 @@ has a strong coefficient on the full model, it does not
 give us much regarding `y` when compared to just feature 1
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

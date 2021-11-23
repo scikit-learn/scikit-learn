@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 The Digit Dataset
@@ -14,9 +12,8 @@ first transform it into a feature vector with length 64.
 See `here
 <https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
 for more information about this dataset.
-"""
-print(__doc__)
 
+"""
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

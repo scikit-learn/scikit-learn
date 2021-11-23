@@ -8,9 +8,6 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.npy_intp INTP
 ctypedef np.int8_t INT8
 
-# Numpy must be initialized. When using numpy from C or Cython you must
-# _always_ do that, or you will have segfaults
-
 np.import_array()
 
 from ..metrics._dist_metrics cimport DistanceMetric
@@ -32,9 +29,6 @@ from numpy.math cimport INFINITY
 ###############################################################################
 # Utilities for computing the ward momentum
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
                       np.ndarray[DOUBLE, ndim=2, mode='c'] m_2,
                       np.ndarray[INTP, ndim=1, mode='c'] coord_row,
@@ -101,8 +95,6 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     return descendent
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def hc_get_heads(np.ndarray[INTP, ndim=1] parents, copy=True):
     """Returns the heads of the forest, as defined by parents.
 
@@ -135,8 +127,6 @@ def hc_get_heads(np.ndarray[INTP, ndim=1] parents, copy=True):
     return parents
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
                  np.ndarray[INT8, ndim=1, mode='c'] not_visited):
     """Returns the heads of the given nodes, as defined by parents.
@@ -176,8 +166,6 @@ def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
 # as keys and edge weights as values.
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def max_merge(IntFloatDict a, IntFloatDict b,
               np.ndarray[ITYPE_t, ndim=1] mask,
               ITYPE_t n_a, ITYPE_t n_b):
@@ -231,8 +219,6 @@ def max_merge(IntFloatDict a, IntFloatDict b,
     return out_obj
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def average_merge(IntFloatDict a, IntFloatDict b,
               np.ndarray[ITYPE_t, ndim=1] mask,
               ITYPE_t n_a, ITYPE_t n_b):
@@ -302,7 +288,6 @@ cdef class WeightedEdge:
         self.a = a
         self.b = b
 
-    @cython.nonecheck(False)
     def __richcmp__(self, WeightedEdge other, int op):
         """Cython-specific comparison method.
 
@@ -348,8 +333,6 @@ cdef class UnionFind(object):
         self.size = np.hstack((np.ones(N, dtype=ITYPE),
                                np.zeros(N - 1, dtype=ITYPE)))
 
-    @cython.boundscheck(False)
-    @cython.nonecheck(False)
     cdef void union(self, ITYPE_t m, ITYPE_t n):
         self.parent[m] = self.next_label
         self.parent[n] = self.next_label
@@ -358,8 +341,7 @@ cdef class UnionFind(object):
 
         return
 
-    @cython.boundscheck(False)
-    @cython.nonecheck(False)
+    @cython.wraparound(True)
     cdef ITYPE_t fast_find(self, ITYPE_t n):
         cdef ITYPE_t p
         p = n
@@ -371,8 +353,7 @@ cdef class UnionFind(object):
             p, self.parent[p] = self.parent[p], n
         return n
 
-@cython.boundscheck(False)
-@cython.nonecheck(False)
+
 cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
     np.ndarray[DTYPE_t, ndim=2] L):
     """
@@ -423,6 +404,7 @@ cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
     return result_arr
 
 
+@cython.wraparound(True)
 def single_linkage_label(L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
@@ -452,8 +434,6 @@ def single_linkage_label(L):
 
 
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
-@cython.boundscheck(False)
-@cython.nonecheck(False)
 def mst_linkage_core(
         const DTYPE_t [:, ::1] raw_data,
         DistanceMetric dist_metric):

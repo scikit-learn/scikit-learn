@@ -102,6 +102,7 @@ can provide additional strategies beyond what is built-in:
   - :class:`neural_network.MLPClassifier`
   - :class:`neighbors.RadiusNeighborsClassifier`
   - :class:`ensemble.RandomForestClassifier`
+  - :class:`linear_model.RidgeClassifier`
   - :class:`linear_model.RidgeClassifierCV`
 
 

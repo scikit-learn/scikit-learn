@@ -333,7 +333,7 @@ def test_load_boston_warning():
 @pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 def test_load_boston_alternative():
     pd = pytest.importorskip("pandas")
-    if not os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
+    if os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
         raise SkipTest(
             "This test requires an internet connection to fetch the dataset."
         )
@@ -341,7 +341,10 @@ def test_load_boston_alternative():
     boston_sklearn = load_boston()
 
     data_url = "http://lib.stat.cmu.edu/datasets/boston"
-    raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
+    try:
+        raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
+    except ConnectionError as e:
+        pytest.xfail(f"The dataset can't be downloaded. Got exception: {e}")
     data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
     target = raw_df.values[1::2, 2]
 

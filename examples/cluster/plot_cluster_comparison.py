@@ -21,8 +21,8 @@ data structure.
 While these examples give some intuition about the
 algorithms, this intuition might not apply to very high
 dimensional data.
+
 """
-print(__doc__)
 
 import time
 import warnings

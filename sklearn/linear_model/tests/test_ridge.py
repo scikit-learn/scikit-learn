@@ -1146,6 +1146,27 @@ def test_ridge_classifier_cv_store_cv_values(scoring):
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
 
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+def test_ridgecv_alphas_conversion(Estimator):
+    rng = np.random.RandomState(0)
+    alphas = (0.1, 1.0, 10.0)
+
+    n_samples, n_features = 5, 5
+    if Estimator is RidgeCV:
+        y = rng.randn(n_samples)
+    else:
+        y = rng.randint(0, 2, n_samples)
+    X = rng.randn(n_samples, n_features)
+
+    ridge_est = Estimator(alphas=alphas)
+    assert (
+        ridge_est.alphas is alphas
+    ), f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+
+    ridge_est.fit(X, y)
+    assert_array_equal(ridge_est.alphas, np.asarray(alphas))
+
+
 def test_ridgecv_sample_weight():
     rng = np.random.RandomState(0)
     alphas = (0.1, 1.0, 10.0)
@@ -1432,12 +1453,6 @@ def test_ridge_regression_check_arguments_validity(
         assert_allclose(out, true_coefs, rtol=0, atol=atol)
 
 
-def test_ridge_classifier_no_support_multilabel():
-    X, y = make_multilabel_classification(n_samples=10, random_state=0)
-    with pytest.raises(ValueError):
-        RidgeClassifier().fit(X, y)
-
-
 @pytest.mark.parametrize(
     "solver", ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga", "lbfgs"]
 )
@@ -1548,6 +1563,28 @@ def test_ridge_sag_with_X_fortran():
     X = np.asfortranarray(X)
     X = X[::2, :]
     y = y[::2]
+    Ridge(solver="sag").fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Classifier, params",
+    [
+        (RidgeClassifier, {}),
+        (RidgeClassifierCV, {"cv": None}),
+        (RidgeClassifierCV, {"cv": 3}),
+    ],
+)
+def test_ridgeclassifier_multilabel(Classifier, params):
+    """Check that multilabel classification is supported and give meaningful
+    results."""
+    X, y = make_multilabel_classification(n_classes=1, random_state=0)
+    y = y.reshape(-1, 1)
+    Y = np.concatenate([y, y], axis=1)
+    clf = Classifier(**params).fit(X, Y)
+    Y_pred = clf.predict(X)
+
+    assert Y_pred.shape == Y.shape
+    assert_array_equal(Y_pred[:, 0], Y_pred[:, 1])
     Ridge(solver="sag").fit(X, y)
 
 

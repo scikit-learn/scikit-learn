@@ -7,11 +7,11 @@ import numpy as np
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ._dict_learning import dict_learning, dict_learning_online
 
 
-class SparsePCA(TransformerMixin, BaseEstimator):
+class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Sparse Principal Components Analysis (SparsePCA).
 
     Finds the set of sparse components that can optimally reconstruct
@@ -23,7 +23,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_components : int, default=None
-        Number of sparse atoms to extract.
+        Number of sparse atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1
         Sparsity controlling parameter. Higher values lead to sparser
@@ -235,6 +236,11 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         return U
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
 
 class MiniBatchSparsePCA(SparsePCA):
     """Mini-batch Sparse Principal Components Analysis.
@@ -248,7 +254,8 @@ class MiniBatchSparsePCA(SparsePCA):
     Parameters
     ----------
     n_components : int, default=None
-        Number of sparse atoms to extract.
+        Number of sparse atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : int, default=1
         Sparsity controlling parameter. Higher values lead to sparser

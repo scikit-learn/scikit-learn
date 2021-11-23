@@ -1,7 +1,3 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
-# Profiling is enabled by default as the overhead does not seem to be
-# measurable on this specific use case.
-
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Lars Buitinck
