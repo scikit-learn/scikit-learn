@@ -81,6 +81,18 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
+- |Enhancement| Adds optional arguments `n_retries` and `delay` to functions 
+  :func:`fetch_20newsgroups`
+  :func:`fetch_20newsgroups_vectorized`
+  :func:`fetch_california_housing`
+  :func:`fetch_covtype`
+  :func:`fetch_kddcup99`
+  :func:`fetch_lfw_pairs`
+  :func:`fetch_lfw_people`
+  :func:`fetch_lfw_people`
+  :func:`fetch_olivetti_faces`
+  :func:`fetch_species_distributions`. :pr:`21691` by :user:`Zhehao Liu <MaxwellLZH>`
+
 :mod:`sklearn.decomposition`
 ............................
 
