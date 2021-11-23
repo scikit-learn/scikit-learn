@@ -184,7 +184,7 @@ def fetch_20newsgroups(
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    categories : array-like, dtype=str or unicode, default=None
+    categories : array-like, dtype=str, default=None
         If None (default), load all the categories.
         If not None, list of category names to load (other categories
         ignored).

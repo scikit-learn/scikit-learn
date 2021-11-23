@@ -1,9 +1,3 @@
-#!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: initializedcheck=False
-#cython: cdivision=True
-
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
 # License: BSD
@@ -19,7 +13,7 @@ cdef extern from "arrayobject.h":
                                      int typenum, void* data)
 
 
-cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
+cdef inline np.ndarray _buffer_to_ndarray(const DTYPE_t* x, np.npy_intp n):
     # Wrap a memory buffer with an ndarray. Warning: this is not robust.
     # In particular, if x is deallocated before the returned array goes
     # out of scope, this could cause memory errors.  Since there is not
@@ -33,9 +27,9 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
-from ._typedefs import DTYPE, ITYPE
-
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
+from ..utils._typedefs import DTYPE, ITYPE
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 
 ######################################################################
 # newObj function
@@ -98,7 +92,7 @@ cdef class DistanceMetric:
 
     Examples
     --------
-    >>> from sklearn.neighbors import DistanceMetric
+    >>> from sklearn.metrics import DistanceMetric
     >>> dist = DistanceMetric.get_metric('euclidean')
     >>> X = [[0, 1, 2],
              [3, 4, 5]]
@@ -220,8 +214,8 @@ cdef class DistanceMetric:
         set state for pickling
         """
         self.p = state[0]
-        self.vec = state[1]
-        self.mat = state[2]
+        self.vec = ReadonlyArrayWrapper(state[1])
+        self.mat = ReadonlyArrayWrapper(state[2])
         if self.__class__.__name__ == "PyFuncDistance":
             self.func = state[3]
             self.kwargs = state[4]
@@ -235,7 +229,7 @@ cdef class DistanceMetric:
 
         Parameters
         ----------
-        metric : string or class name
+        metric : str or class name
             The distance metric to use
         **kwargs
             additional arguments will be passed to the requested metric
@@ -291,14 +285,13 @@ cdef class DistanceMetric:
 
     cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                        ITYPE_t size) nogil except -1:
-        """Compute the reduced distance between vectors x1 and x2.
+        """Compute the rank-preserving surrogate distance between vectors x1 and x2.
 
         This can optionally be overridden in a base class.
 
-        The reduced distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the reduced distance is the squared-euclidean
-        distance.
+        The rank-preserving surrogate distance is any measure that yields the same
+        rank as the distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
         """
         return self.dist(x1, x2, size)
 
@@ -323,25 +316,24 @@ cdef class DistanceMetric:
         return 0
 
     cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
-        """Convert the reduced distance to the distance"""
+        """Convert the rank-preserving surrogate distance to the distance"""
         return rdist
 
     cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
-        """Convert the distance to the reduced distance"""
+        """Convert the distance to the rank-preserving surrogate distance"""
         return dist
 
     def rdist_to_dist(self, rdist):
-        """Convert the Reduced distance to the true distance.
+        """Convert the rank-preserving surrogate distance to the distance.
 
-        The reduced distance, defined for some metrics, is a computationally
-        more efficient measure which preserves the rank of the true distance.
-        For example, in the Euclidean distance metric, the reduced distance
-        is the squared-euclidean distance.
+        The surrogate distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
 
         Parameters
         ----------
         rdist : double
-            Reduced distance.
+            Surrogate distance.
 
         Returns
         -------
@@ -351,12 +343,11 @@ cdef class DistanceMetric:
         return rdist
 
     def dist_to_rdist(self, dist):
-        """Convert the true distance to the reduced distance.
+        """Convert the true distance to the rank-preserving surrogate distance.
 
-        The reduced distance, defined for some metrics, is a computationally
-        more efficient measure which preserves the rank of the true distance.
-        For example, in the Euclidean distance metric, the reduced distance
-        is the squared-euclidean distance.
+        The surrogate distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
 
         Parameters
         ----------
@@ -366,7 +357,7 @@ cdef class DistanceMetric:
         Returns
         -------
         double
-            Reduced distance.
+            Surrogate distance.
         """
         return dist
 
@@ -453,7 +444,7 @@ cdef class SEuclideanDistance(DistanceMetric):
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
     """
     def __init__(self, V):
-        self.vec = np.asarray(V, dtype=DTYPE)
+        self.vec = ReadonlyArrayWrapper(np.asarray(V, dtype=DTYPE))
         self.size = self.vec.shape[0]
         self.p = 2
 
@@ -519,7 +510,7 @@ cdef class ChebyshevDistance(DistanceMetric):
 
     Examples
     --------
-    >>> from sklearn.neighbors.dist_metrics import DistanceMetric
+    >>> from sklearn.metrics.dist_metrics import DistanceMetric
     >>> dist = DistanceMetric.get_metric('chebyshev')
     >>> X = [[0, 1, 2],
     ...      [3, 4, 5]]
@@ -614,7 +605,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
             raise ValueError("WMinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
-        self.vec = np.asarray(w, dtype=DTYPE)
+        self.vec = ReadonlyArrayWrapper(np.asarray(w, dtype=DTYPE))
         self.size = self.vec.shape[0]
 
     def _validate_data(self, X):
@@ -674,7 +665,7 @@ cdef class MahalanobisDistance(DistanceMetric):
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
 
-        self.mat = np.asarray(VI, dtype=float, order='C')
+        self.mat = ReadonlyArrayWrapper(np.asarray(VI, dtype=float, order='C'))
 
         self.size = self.mat.shape[0]
 

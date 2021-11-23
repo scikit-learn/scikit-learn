@@ -82,8 +82,8 @@ def _check_targets(y_true, y_pred):
     y_pred : array or indicator matrix
     """
     check_consistent_length(y_true, y_pred)
-    type_true = type_of_target(y_true)
-    type_pred = type_of_target(y_pred)
+    type_true = type_of_target(y_true, input_name="y_true")
+    type_pred = type_of_target(y_pred, input_name="y_pred")
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -177,7 +177,13 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     See Also
     --------
-    jaccard_score, hamming_loss, zero_one_loss
+    balanced_accuracy_score : Compute the balanced accuracy to deal with
+        imbalanced datasets.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    hamming_loss : Compute the average Hamming loss or Hamming distance between
+        two sets of samples.
+    zero_one_loss : Compute the Zero-one classification loss. By default, the
+        function will return the percentage of imperfectly predicted subsets.
 
     Notes
     -----
@@ -297,7 +303,6 @@ def confusion_matrix(
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
-
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -939,15 +944,20 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         If ``normalize == True``, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
 
+    See Also
+    --------
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
+    hamming_loss : Compute the average Hamming loss or Hamming distance between
+        two sets of samples.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+
     Notes
     -----
     In multilabel classification, the zero_one_loss function corresponds to
     the subset zero-one loss: for each sample, the entire set of labels must be
     correctly predicted, otherwise the loss for that sample is equal to one.
-
-    See Also
-    --------
-    accuracy_score, hamming_loss, jaccard_score
 
     Examples
     --------
@@ -991,7 +1001,7 @@ def f1_score(
 ):
     """Compute the F1 score, also known as balanced F-score or F-measure.
 
-    The F1 score can be interpreted as a weighted average of the precision and
+    The F1 score can be interpreted as a harmonic mean of the precision and
     recall, where an F1 score reaches its best value at 1 and worst score at 0.
     The relative contribution of precision and recall to the F1 score are
     equal. The formula for the F1 score is::
@@ -1703,7 +1713,16 @@ def precision_score(
 
     See Also
     --------
-    precision_recall_fscore_support, multilabel_confusion_matrix
+    precision_recall_fscore_support : Compute precision, recall, F-measure and
+        support for each class.
+    recall_score :  Compute the ratio ``tp / (tp + fn)`` where ``tp`` is the
+        number of true positives and ``fn`` the number of false negatives.
+    PrecisionRecallDisplay.from_estimator : Plot precision-recall curve given
+        an estimator and some data.
+    PrecisionRecallDisplay.from_predictions : Plot precision-recall curve given
+        binary class predictions.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
 
     Notes
     -----
@@ -1836,8 +1855,18 @@ def recall_score(
 
     See Also
     --------
-    precision_recall_fscore_support, balanced_accuracy_score,
-    multilabel_confusion_matrix
+    precision_recall_fscore_support : Compute precision, recall, F-measure and
+        support for each class.
+    precision_score : Compute the ratio ``tp / (tp + fp)`` where ``tp`` is the
+        number of true positives and ``fp`` the number of false positives.
+    balanced_accuracy_score : Compute balanced accuracy to deal with imbalanced
+        datasets.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
+    PrecisionRecallDisplay.from_estimator : Plot precision-recall curve given
+        an estimator and some data.
+    PrecisionRecallDisplay.from_predictions : Plot precision-recall curve given
+        binary class predictions.
 
     Notes
     -----
@@ -1914,10 +1943,16 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     Returns
     -------
     balanced_accuracy : float
+        Balanced accuracy score.
 
     See Also
     --------
-    recall_score, roc_auc_score
+    average_precision_score : Compute average precision (AP) from prediction
+        scores.
+    precision_score : Compute the precision score.
+    recall_score : Compute the recall score.
+    roc_auc_score : Compute Area Under the Receiver Operating Characteristic
+        Curve (ROC AUC) from prediction scores.
 
     Notes
     -----
@@ -1944,7 +1979,6 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     >>> y_pred = [0, 1, 0, 0, 0, 1]
     >>> balanced_accuracy_score(y_true, y_pred)
     0.625
-
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -2009,7 +2043,7 @@ def classification_report(
 
     Returns
     -------
-    report : string / dict
+    report : str or dict
         Text summary of the precision, recall, F1 score for each class.
         Dictionary returned if output_dict is True. Dictionary has the
         following structure::
@@ -2206,7 +2240,12 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
     See Also
     --------
-    accuracy_score, jaccard_score, zero_one_loss
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    zero_one_loss : Compute the Zero-one classification loss. By default, the
+        function will return the percentage of imperfectly predicted subsets.
 
     Notes
     -----
@@ -2625,7 +2664,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
         raise ValueError(
             "Only binary classification is supported. The type of the target "

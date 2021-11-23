@@ -68,6 +68,7 @@ from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _num_samples
 
 
 __all__ = [
@@ -1417,7 +1418,7 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "absolute_error", "poisson"}, \
+    criterion : {"squared_error", "absolute_error", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
@@ -2061,8 +2062,7 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "mse", "absolute_error", "mae"}, \
-            default="squared_error"
+    criterion : {"squared_error", "absolute_error"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion, and "absolute_error"
@@ -2628,14 +2628,8 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        X = self._validate_data(X, accept_sparse=["csc"])
-        if issparse(X):
-            # Pre-sort indices to avoid that each individual tree of the
-            # ensemble sorts the indices.
-            X.sort_indices()
-
         rnd = check_random_state(self.random_state)
-        y = rnd.uniform(size=X.shape[0])
+        y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)
 
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
