@@ -90,9 +90,7 @@ def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
 # Define the estimators to compare
 estimator_dict = {
     "No stopping criterion": SGDClassifier(n_iter_no_change=3),
-    "Training loss": SGDClassifier(
-        early_stopping=False, n_iter_no_change=3, tol=0.1
-    ),
+    "Training loss": SGDClassifier(early_stopping=False, n_iter_no_change=3, tol=0.1),
     "Validation score": SGDClassifier(
         early_stopping=True, n_iter_no_change=3, tol=0.0001, validation_fraction=0.2
     ),
