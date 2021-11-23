@@ -25,6 +25,8 @@ from sklearn.datasets import load_wine
 from sklearn.datasets._base import (
     load_csv_data,
     load_gzip_compressed_csv_data,
+    RemoteFileMetadata,
+    _fetch_remote,
 )
 from sklearn.utils import Bunch
 from sklearn.utils._testing import SkipTest
@@ -347,3 +349,16 @@ def test_load_boston_alternative():
 
     np.testing.assert_allclose(data, boston_sklearn.data)
     np.testing.assert_allclose(target, boston_sklearn.target)
+
+
+def test_fetch_remote_raise_warnings_with_invalid_url():
+    from urllib.error import HTTPError
+
+    invalid_remote_file = RemoteFileMetadata(
+        "invalid_file", "https://scikit-learn.org/this_file_does_not_exist.tar.gz", None
+    )
+
+    with pytest.warns(UserWarning, match="Retry downloading") as record:
+        with pytest.raises(HTTPError, match="HTTP Error 404"):
+            _fetch_remote(invalid_remote_file, n_retries=3, delay=0)
+        assert len(record) == 3
