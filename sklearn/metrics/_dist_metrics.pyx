@@ -550,12 +550,11 @@ cdef class ChebyshevDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # Minkowski Distance
-#  d = sum(x_i^p - y_i^p) ^ (1/p)
 cdef class MinkowskiDistance(DistanceMetric):
     r"""Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i (x_i - y_i)^p] ^ (1/p)
+       D(x, y) = [\sum_i |x_i - y_i|^p] ^ (1/p)
 
     Minkowski Distance requires p >= 1 and finite. For p = infinity,
     use ChebyshevDistance.
@@ -597,7 +596,6 @@ cdef class MinkowskiDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # W-Minkowski Distance
-#  d = sum(w_i^p * (x_i^p - y_i^p)) ^ (1/p)
 cdef class WMinkowskiDistance(DistanceMetric):
     r"""Weighted Minkowski Distance
 
