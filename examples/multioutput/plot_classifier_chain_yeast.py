@@ -30,6 +30,7 @@ the chains and apply a threshold of 0.5. The Jaccard similarity score of the
 ensemble is greater than that of the independent models and tends to exceed
 the score of each chain in the ensemble (although this is not guaranteed
 with randomly ordered chains).
+
 """
 
 # Author: Adam Kleczewski
@@ -43,8 +44,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import jaccard_score
 from sklearn.linear_model import LogisticRegression
-
-print(__doc__)
 
 # Load a multi-label dataset from https://www.openml.org/d/40597
 X, Y = fetch_openml("yeast", version=4, return_X_y=True)

@@ -851,11 +851,11 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Only used when ``solver='sgd'``.
 
-    learning_rate_init : double, default=0.001
+    learning_rate_init : float, default=0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
 
-    power_t : double, default=0.5
+    power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.
@@ -1325,11 +1325,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         Only used when solver='sgd'.
 
-    learning_rate_init : double, default=0.001
+    learning_rate_init : float, default=0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
 
-    power_t : double, default=0.5
+    power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.

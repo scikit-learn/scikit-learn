@@ -7,7 +7,6 @@ Demo of DBSCAN clustering algorithm
 Finds core samples of high density and expands clusters from them.
 
 """
-print(__doc__)
 
 import numpy as np
 

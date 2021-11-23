@@ -30,9 +30,14 @@ import numpy as np
 
 from .._loss.glm_distribution import TweedieDistribution
 from ..exceptions import UndefinedMetricWarning
-from ..utils.validation import check_array, check_consistent_length, _num_samples
-from ..utils.validation import column_or_1d
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import (
+    check_array,
+    check_consistent_length,
+    _num_samples,
+    column_or_1d,
+    _check_sample_weight,
+    _deprecate_positional_args,
+)
 from ..utils.stats import _weighted_percentile
 
 
@@ -216,7 +221,7 @@ def mean_pinball_loss(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    alpha: double, slope of the pinball loss, default=0.5,
+    alpha: float, slope of the pinball loss, default=0.5,
         this loss is equivalent to :ref:`mean_absolute_error` when `alpha=0.5`,
         `alpha=0.95` is minimized by estimators of the 95th percentile.
 
@@ -283,13 +288,17 @@ def mean_pinball_loss(
     return np.average(output_errors, weights=multioutput)
 
 
+@_deprecate_positional_args(version="1.1")
 def mean_absolute_percentage_error(
-    y_true, y_pred, sample_weight=None, multioutput="uniform_average"
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
-    """Mean absolute percentage error regression loss.
+    """Mean absolute percentage error (MAPE) regression loss.
 
-    Note here that we do not represent the output as a percentage in range
-    [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
+    Note here that the output is not a percentage in the range [0, 100]
+    and a value of 100 does not mean 100% but 1e2. Furthermore, the output
+    can be arbitrarily high when `y_true` is small (which is specific to the
+    metric) or when `abs(y_true - y_pred)` is large (which is common for most
+    regression metrics). Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
 
     .. versionadded:: 0.24
@@ -318,16 +327,16 @@ def mean_absolute_percentage_error(
 
     Returns
     -------
-    loss : float or ndarray of floats in the range [0, 1/eps]
+    loss : float or ndarray of floats
         If multioutput is 'raw_values', then mean absolute percentage error
         is returned for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average of all output errors is returned.
 
         MAPE output is non-negative floating point. The best value is 0.0.
-        But note the fact that bad predictions can lead to arbitrarily large
-        MAPE values, especially if some y_true values are very close to zero.
-        Note that we return a large value instead of `inf` when y_true is zero.
+        But note that bad predictions can lead to arbitrarily large
+        MAPE values, especially if some `y_true` values are very close to zero.
+        Note that we return a large value instead of `inf` when `y_true` is zero.
 
     Examples
     --------
@@ -342,6 +351,12 @@ def mean_absolute_percentage_error(
     0.5515...
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.6198...
+    >>> # the value when some element of the y_true is zero is arbitrarily high because
+    >>> # of the division by epsilon
+    >>> y_true = [1., 0., 2.4, 7.]
+    >>> y_pred = [1.2, 0.1, 2.4, 8.]
+    >>> mean_absolute_percentage_error(y_true, y_pred)
+    112589990684262.48
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -822,7 +837,7 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
 
 def max_error(y_true, y_pred):
     """
-    max_error metric calculates the maximum residual error.
+    The max_error metric calculates the maximum residual error.
 
     Read more in the :ref:`User Guide <max_error>`.
 

@@ -11,8 +11,8 @@ We will cluster a set of data, first with KMeans and then with
 MiniBatchKMeans, and plot the results.
 We will also plot the points that are labelled differently between the two
 algorithms.
+
 """
-print(__doc__)
 
 import time
 
