@@ -331,7 +331,7 @@ def partial_dependence(
             The predictions for all the points in the grid, averaged
             over all samples in X (or over the training data if
             ``method`` is 'recursion').
-            Only available when kind='both'.
+            Only available when ``kind='both'``.
 
         values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
