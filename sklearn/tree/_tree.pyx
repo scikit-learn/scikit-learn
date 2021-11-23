@@ -20,6 +20,8 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
 
+import struct
+
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -585,21 +587,10 @@ cdef class Tree:
 
     def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs):
         """Constructor."""
-        cdef SIZE_t dummy
+        cdef SIZE_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
 
-        if n_classes.ndim != 1:
-            raise ValueError(
-                f"Wrong dimensions for n_classes: expected 1, got {n_classes.ndim}")
-
-        # TODO: if dtype not int32 or int64 give an error else try a cast
-        # 'same_kind'. Handle potential endianness difference as well (joblib <
-        # 1.1 loads it with non-native endianness) ...
-        try:
-            n_classes = n_classes.astype(dtype=size_t_dtype, casting='same_kind')
-        except Exception as exc:
-            raise ValueError(
-                f"Error casting n_classes to dtype {size_t_dtype}") from exc
+        n_classes = check_n_classes(n_classes, size_t_dtype)
 
         # Input/Output layout
         self.n_features = n_features
@@ -659,81 +650,8 @@ cdef class Tree:
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
 
-        # The Cython code for decision trees uses platform-specific SIZE_t
-        # typed indexing fields that correspond to either i4 or i8 dtypes for
-        # the matching fields in the numpy array depending on the bitness of
-        # the platform (32 bit or 64 bit respectively).
-        #
-        # We need to cast the indexing fields of the NODE_DTYPE-dtyped array at
-        # pickle load time to enable cross-bitness deployment scenarios. We
-        # typically want to make it possible to run the expensive fit method of
-        # a tree estimator on a 64 bit server platform, pickle the estimator
-        # for deployment and run the predict method of a low power 32 bit edge
-        # platform.
-        #
-        # We do not expect a decision tree to reach 2 ** 32 nodes or more in a
-        # single tree, so using 32 bit precision index fields should not be a
-        # problem in practice.
-        # TODO check that the only difference in dtype are in the indexing
-        # fields ...
-        if (node_ndarray.dtype != NODE_DTYPE):
-            # TODO new strategy:
-            # - if check_compatibility(node_ndarray.dtype, NODE_DTYPE) or
-            #   check_compatibility(node_ndarray.dtype.newbyteorder(),
-            #   NODE_DTYPE) => astype kind='same_kind'
-            # - else raise an error message with both full dtype and that's it ...
-            indexing_field_names = ['left_child', 'right_child', 'feature', 'n_node_samples']
-
-            if node_ndarray.dtype.names != NODE_DTYPE.names:
-                raise ValueError(
-                    "node array dtype has incorrect field names, "
-                    f"expected {NODE_DTYPE.names} got {node_ndarray.dtype.names} instead")
-
-            non_indexing_field_names = [
-                name for name in NODE_DTYPE.names if name not in set(indexing_field_names)]
-
-            # TODO check that field dtype outside of index names match exactly up to endianness
-            for name in non_indexing_field_names:
-                if node_ndarray.dtype.get(name).kind != NODE_DTYPE.get(name):
-                    raise ValueError(f'non compatible dtype for field {name}: ')
-
-
-            # TODO check that field dtype in index_names match loosely 32bit vs 64bit accepted and endianness as well
-
-            # TODO When all this precondition are satisfied this is the case cast
-            # with casting='same_kind'
-
-            # TODO About endianness I need to check that all fields have
-            # different endianness or all have same endianness it can not be on
-            # a per-field basis
-
-            try:
-                node_ndarray = node_ndarray.astype(
-                    NODE_DTYPE, casting='same_kind')
-            except Exception as exc:
-                raise ValueError(
-                    "Error when converting node array "
-                    f"from dtype {node_ndarray.dtype} to {NODE_DTYPE}."
-                ) from exc
-
-        if (value_ndarray.dtype != np.float64):
-            # handles different endianness here
-            try:
-                value_ndarray = value_ndarray.astype(
-                    np.float64, casting='equiv')
-            except Exception as exc:
-                # TODO better error here?
-                raise ValueError(
-                    "Error when converting value array "
-                    f" from dtype {value_ndarray.dtype} to float64."
-                ) from exc
-
-        if (node_ndarray.ndim != 1 or
-                not node_ndarray.flags.c_contiguous or
-                value_ndarray.shape != value_shape or
-                not value_ndarray.flags.c_contiguous):
-            # TODO better error here
-            raise ValueError('Did not recognise loaded array layout')
+        node_ndarray = check_node_array(node_ndarray, NODE_DTYPE)
+        value_ndarray = check_value_array(value_ndarray, np.dtype(np.float64), value_shape)
 
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
@@ -1294,6 +1212,133 @@ cdef class Tree:
             if not (0.999 < total_weight < 1.001):
                 raise ValueError("Total weight should be 1.0 but was %.9f" %
                                  total_weight)
+
+
+def check_n_classes(n_classes, expected_dtype):
+    if n_classes.ndim != 1:
+        raise ValueError(
+            f"Wrong dimensions for n_classes from the pickle: "
+            f"expected 1, got {n_classes.ndim}"
+        )
+
+    if n_classes.dtype == expected_dtype:
+        return n_classes
+
+    # Handles both different endianness and different bitness
+    if n_classes.dtype.kind == "i" and n_classes.dtype.itemsize in [4, 8]:
+        return n_classes.astype(expected_dtype, casting="same_kind")
+
+    raise ValueError(
+        "n_classes from the pickle has an incompatible dtype:\n"
+        f"- expected: {expected_dtype}\n"
+        f"- got:      {n_classes.dtype}"
+    )
+
+
+def check_value_array(value_array, expected_dtype, expected_shape):
+    if value_array.shape != expected_shape:
+        raise ValueError(
+            "Wrong shape for value array from the pickle: "
+            f"expected {expected_shape}, got {value_array.shape}"
+        )
+
+    if not value_array.flags.c_contiguous:
+        raise ValueError(
+            "value array from the pickle should be a C-contiguous array"
+        )
+
+    if value_array.dtype == expected_dtype:
+        return value_array
+
+    # Handles different endianness
+    if value_array.dtype.str.endswith('f8'):
+        return value_array.astype(expected_dtype, casting='equiv')
+
+    raise ValueError(
+        "value array from the pickle has an incompatible dtype:\n"
+        f"- expected: {expected_dtype}\n"
+        f"- got:      {value_array.dtype}"
+    )
+
+
+def _dtype_to_dict(dtype):
+    return {name: dt.str for name, (dt, *rest) in dtype.fields.items()}
+
+
+def _dtype_dict_with_modified_bitness(dtype_dict):
+    indexing_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
+
+    expected_dtype_size = str(struct.calcsize("P"))
+    allowed_dtype_size = "8" if expected_dtype_size == "4" else "4"
+
+    allowed_dtype_dict = dtype_dict.copy()
+    for name in indexing_field_names:
+        allowed_dtype_dict[name] = allowed_dtype_dict[name].replace(
+            expected_dtype_size, allowed_dtype_size
+        )
+
+    return allowed_dtype_dict
+
+
+def _all_compatible_dtype_dicts(dtype):
+    # The Cython code for decision trees uses platform-specific SIZE_t
+    # typed indexing fields that correspond to either i4 or i8 dtypes for
+    # the matching fields in the numpy array depending on the bitness of
+    # the platform (32 bit or 64 bit respectively).
+    #
+    # We need to cast the indexing fields of the NODE_DTYPE-dtyped array at
+    # pickle load time to enable cross-bitness deployment scenarios. We
+    # typically want to make it possible to run the expensive fit method of
+    # a tree estimator on a 64 bit server platform, pickle the estimator
+    # for deployment and run the predict method of a low power 32 bit edge
+    # platform.
+    #
+    # A similar thing happens for endianness, the machine where the pickle was
+    # saved can have a different endianness than the picle where the machine is
+    # loaded
+
+    dtype_dict = _dtype_to_dict(dtype)
+    dtype_dict_with_modified_bitness = _dtype_dict_with_modified_bitness(dtype_dict)
+    dtype_dict_with_modified_endianness = _dtype_to_dict(dtype.newbyteorder())
+    dtype_dict_with_modified_bitness_and_endianness = _dtype_dict_with_modified_bitness(
+        dtype_dict_with_modified_endianness
+    )
+
+    return [
+        dtype_dict,
+        dtype_dict_with_modified_bitness,
+        dtype_dict_with_modified_endianness,
+        dtype_dict_with_modified_bitness_and_endianness,
+    ]
+
+
+def check_node_array(node_array, expected_dtype):
+    if node_array.ndim != 1:
+        raise ValueError(
+            "Wrong dimensions for node array from the pickle: "
+            f"expected 1, got {node_array.ndim}"
+        )
+
+    if not node_array.flags.c_contiguous:
+        raise ValueError(
+            "node array from the pickle should be a C-contiguous array"
+        )
+
+    node_array_dtype = node_array.dtype
+    if node_array_dtype == expected_dtype:
+        return node_array
+
+    node_array_dtype_dict = _dtype_to_dict(node_array_dtype)
+    all_compatible_dtype_dicts = _all_compatible_dtype_dicts(expected_dtype)
+
+    if node_array_dtype_dict not in all_compatible_dtype_dicts:
+        raise ValueError(
+            "node array dtype from the pickle has an incompatible dtype:\n"
+            f"- expected: {expected_dtype}\n"
+            f"- got     : {node_array_dtype}"
+        )
+
+    return node_array.astype(expected_dtype, casting="same_kind")
 
 
 # =============================================================================
