@@ -11,7 +11,6 @@ The example with an Elastic-Net regression model and the performance is
 measured using the explained variance a.k.a. R^2.
 
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause

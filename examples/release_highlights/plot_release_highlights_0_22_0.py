@@ -17,6 +17,7 @@ To install the latest version (with pip)::
 or with conda::
 
     conda install -c conda-forge scikit-learn
+
 """
 
 # %%

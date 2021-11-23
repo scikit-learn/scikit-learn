@@ -105,6 +105,9 @@ def test_classification_toy(loss):
         ({"max_features": -0.1}, r"max_features must be in \(0, n_features\]"),
         ({"n_iter_no_change": "invalid"}, "n_iter_no_change should either be"),
     ],
+    # Avoid long error messages in test names:
+    # https://github.com/scikit-learn/scikit-learn/issues/21362
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",

@@ -20,8 +20,8 @@ between ground truth clusters.
 
 The dataset used for evaluation is a 2D grid of isotropic Gaussian
 clusters widely spaced.
+
 """
-print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause

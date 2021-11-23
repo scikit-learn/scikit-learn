@@ -1,8 +1,3 @@
-# cython: boundscheck=False
-# cython: cdivision=True
-# cython: initializedcheck=False
-# cython: wraparound=False
-
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
 # License: BSD
@@ -34,7 +29,7 @@ cdef DTYPE_t INF = np.inf
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
-
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 
 ######################################################################
 # newObj function
@@ -219,8 +214,8 @@ cdef class DistanceMetric:
         set state for pickling
         """
         self.p = state[0]
-        self.vec = state[1]
-        self.mat = state[2]
+        self.vec = ReadonlyArrayWrapper(state[1])
+        self.mat = ReadonlyArrayWrapper(state[2])
         if self.__class__.__name__ == "PyFuncDistance":
             self.func = state[3]
             self.kwargs = state[4]
@@ -449,7 +444,7 @@ cdef class SEuclideanDistance(DistanceMetric):
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
     """
     def __init__(self, V):
-        self.vec = np.asarray(V, dtype=DTYPE)
+        self.vec = ReadonlyArrayWrapper(np.asarray(V, dtype=DTYPE))
         self.size = self.vec.shape[0]
         self.p = 2
 
@@ -610,7 +605,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
             raise ValueError("WMinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
-        self.vec = np.asarray(w, dtype=DTYPE)
+        self.vec = ReadonlyArrayWrapper(np.asarray(w, dtype=DTYPE))
         self.size = self.vec.shape[0]
 
     def _validate_data(self, X):
@@ -670,7 +665,7 @@ cdef class MahalanobisDistance(DistanceMetric):
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
 
-        self.mat = np.asarray(VI, dtype=float, order='C')
+        self.mat = ReadonlyArrayWrapper(np.asarray(VI, dtype=float, order='C'))
 
         self.size = self.mat.shape[0]
 

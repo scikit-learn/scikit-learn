@@ -9,7 +9,6 @@ matrix decomposition (dimension reduction) methods from the module
 :ref:`decompositions`) .
 
 """
-print(__doc__)
 
 # Authors: Vlad Niculae, Alexandre Gramfort
 # License: BSD 3 clause
@@ -76,7 +75,7 @@ estimators = [
     ),
     (
         "Non-negative components - NMF",
-        decomposition.NMF(n_components=n_components, init="nndsvda", tol=5e-3),
+        decomposition.NMF(n_components=n_components, tol=5e-3),
         False,
     ),
     (

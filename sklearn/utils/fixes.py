@@ -36,6 +36,11 @@ else:
     # mypy error: Name 'lobpcg' already defined (possibly by an import)
     from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
+try:
+    from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
+except ImportError:  # SciPy < 1.8
+    from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
+
 
 def _object_dtype_isnan(X):
     return X != X
@@ -297,9 +302,15 @@ def threadpool_limits(limits=None, user_api=None):
         return threadpoolctl.threadpool_limits(limits=limits, user_api=user_api)
 
 
+threadpool_limits.__doc__ = threadpoolctl.threadpool_limits.__doc__
+
+
 def threadpool_info():
     controller = _get_threadpool_controller()
     if controller is not None:
         return controller.info()
     else:
         return threadpoolctl.threadpool_info()
+
+
+threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
