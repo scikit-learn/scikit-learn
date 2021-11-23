@@ -63,25 +63,21 @@ def _write_label_html(
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
-    show_toggle_arrow=True,
 ):
     """Write labeled html with or without a dropdown with named details"""
     out.write(f'<div class="{outer_class}"><div class="{inner_class} sk-toggleable">')
     name = html.escape(name)
 
     if name_details is not None:
-        if show_toggle_arrow:
-            label_class = "sk-toggleable__label sk-toggleable__label-arrow"
-        else:
-            label_class = "sk-toggleable__label"
+        name_details = html.escape(str(name_details))
+        label_class = "sk-toggleable__label sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
-            f'<label for="{est_id}" class="{label_class}">'
-            f'<div class="sk-toggleable__name">{name}</div></label>'
+            f'<label for="{est_id}" class="{label_class}">{name}</label>'
             f'<div class="sk-toggleable__content"><pre>{name_details}'
             "</pre></div>"
         )
@@ -136,12 +132,7 @@ def _write_estimator_html(
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            _write_label_html(
-                out,
-                estimator_label,
-                estimator_label_details,
-                # show_toggle_arrow=first_call,
-            )
+            _write_label_html(out, estimator_label, estimator_label_details)
 
         kind = est_block.kind
         out.write(f'<div class="sk-{kind}">')
@@ -166,7 +157,6 @@ def _write_estimator_html(
             outer_class="sk-item",
             inner_class="sk-estimator",
             checked=first_call,
-            # show_toggle_arrow=first_call,
         )
 
 
@@ -202,9 +192,6 @@ _STYLE = """
 }
 #$id div.sk-estimator:hover label.sk-toggleable__label-arrow:before {
   color: black;
-}
-#$id div.sk-toggleable__name {
-  display: inline;
 }
 #$id div.sk-toggleable__content {
   max-height: 0;

@@ -41,7 +41,7 @@ def test_write_label_html(checked):
     with closing(StringIO()) as out:
         _write_label_html(out, name, tool_tip, checked=checked)
         html_label = out.getvalue()
-        assert "LogisticRegression</div></label>" in html_label
+        assert "LogisticRegression</label>" in html_label
         assert html_label.startswith('<div class="sk-label-container">')
         assert "<pre>hello-world</pre>" in html_label
         if checked:
@@ -231,7 +231,7 @@ def test_stacking_regressor(final_estimator):
     assert html.escape(str(reg.estimators[0][0])) in html_output
     assert "LinearSVR</label>" in html_output
     if final_estimator is None:
-        assert "RidgeCV</div></label>" in html_output
+        assert "RidgeCV</label>" in html_output
     else:
         assert html.escape(final_estimator.__class__.__name__) in html_output
 
@@ -301,7 +301,6 @@ def test_show_arrow_pipeline():
 
     html_output = estimator_html_repr(pipe)
     assert (
-        'class="sk-toggleable__label sk-toggleable__label-arrow"><div'
-        ' class="sk-toggleable__name">Pipeline</div>'
+        'class="sk-toggleable__label sk-toggleable__label-arrow">Pipeline'
         in html_output
     )
