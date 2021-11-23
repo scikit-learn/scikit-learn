@@ -18,10 +18,10 @@ the best model.
 
 .. topic:: References
 
-    .. [ZHT2007] `Zou, Hui, Trevor Hastie, and Robert Tibshirani.
+    .. [ZHT2007] :arxiv:`Zou, Hui, Trevor Hastie, and Robert Tibshirani.
        "On the degrees of freedom of the lasso."
        The Annals of Statistics 35.5 (2007): 2173-2192.
-       <https://arxiv.org/pdf/0712.0881.pdf>`_
+       <0712.0881>`
 """
 
 # Author: Alexandre Gramfort

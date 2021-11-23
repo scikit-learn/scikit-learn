@@ -171,15 +171,16 @@ fit_time = time.time() - start_time
 import matplotlib.pyplot as plt
 
 ymin, ymax = 2300, 3800
-plt.semilogx(model[-1].alphas_, model[-1].mse_path_, linestyle=":")
+lasso = model[-1]
+plt.semilogx(lasso.alphas_, lasso.mse_path_, linestyle=":")
 plt.plot(
-    model[-1].alphas_,
-    model[-1].mse_path_.mean(axis=-1),
+    lasso.alphas_,
+    lasso.mse_path_.mean(axis=-1),
     color="black",
     label="Average across the folds",
     linewidth=2,
 )
-plt.axvline(model[-1].alpha_, linestyle="--", color="black", label="alpha: CV estimate")
+plt.axvline(lasso.alpha_, linestyle="--", color="black", label="alpha: CV estimate")
 
 plt.ylim(ymin, ymax)
 plt.xlabel(r"$\alpha$")
@@ -201,15 +202,16 @@ model = make_pipeline(StandardScaler(), LassoLarsCV(cv=20, normalize=False)).fit
 fit_time = time.time() - start_time
 
 # %%
-plt.semilogx(model[-1].cv_alphas_, model[-1].mse_path_, ":")
+lasso = model[-1]
+plt.semilogx(lasso.cv_alphas_, lasso.mse_path_, ":")
 plt.semilogx(
-    model[-1].cv_alphas_,
-    model[-1].mse_path_.mean(axis=-1),
+    lasso.cv_alphas_,
+    lasso.mse_path_.mean(axis=-1),
     color="black",
     label="Average across the folds",
     linewidth=2,
 )
-plt.axvline(model[-1].alpha_, linestyle="--", color="black", label="alpha CV")
+plt.axvline(lasso.alpha_, linestyle="--", color="black", label="alpha CV")
 
 plt.ylim(ymin, ymax)
 plt.xlabel(r"$\alpha$")
