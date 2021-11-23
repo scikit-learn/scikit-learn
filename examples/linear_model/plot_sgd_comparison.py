@@ -21,7 +21,8 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import LogisticRegression
 
 heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
-rounds = 15
+# Number of rounds to fit and evaluate an estimator.
+rounds = 10
 X, y = datasets.load_digits(return_X_y=True)
 
 classifiers = [
