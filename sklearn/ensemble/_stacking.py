@@ -166,6 +166,7 @@ class _BaseStacking(
             for est in all_estimators
             if est != "drop"
         )
+        self._n_features_out = len(self.estimators_)
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0

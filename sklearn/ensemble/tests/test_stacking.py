@@ -39,7 +39,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import ignore_warnings
 

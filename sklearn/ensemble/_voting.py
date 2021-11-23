@@ -86,6 +86,7 @@ class _BaseVoting(
             for idx, clf in enumerate(clfs)
             if clf != "drop"
         )
+        self._n_features_out = len(self.estimators_)
 
         self.named_estimators_ = Bunch()
 
