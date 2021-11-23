@@ -56,7 +56,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
 
-N_SPLITS = 3
+N_SPLITS = 5
 
 rng = np.random.RandomState(0)
 
