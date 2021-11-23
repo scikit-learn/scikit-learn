@@ -37,27 +37,21 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     encode : {'onehot', 'onehot-dense', 'ordinal'}, default='onehot'
         Method used to encode the transformed result.
 
-        onehot
-            Encode the transformed result with one-hot encoding
-            and return a sparse matrix. Ignored features are always
-            stacked to the right.
-        onehot-dense
-            Encode the transformed result with one-hot encoding
-            and return a dense array. Ignored features are always
-            stacked to the right.
-        ordinal
-            Return the bin identifier encoded as an integer value.
+        - 'onehot': Encode the transformed result with one-hot encoding
+          and return a sparse matrix. Ignored features are always
+          stacked to the right.
+        - 'onehot-dense': Encode the transformed result with one-hot encoding
+          and return a dense array. Ignored features are always
+          stacked to the right.
+        - 'ordinal': Return the bin identifier encoded as an integer value.
 
     strategy : {'uniform', 'quantile', 'kmeans'}, default='quantile'
         Strategy used to define the widths of the bins.
 
-        uniform
-            All bins in each feature have identical widths.
-        quantile
-            All bins in each feature have the same number of points.
-        kmeans
-            Values in each bin have the same nearest center of a 1D k-means
-            cluster.
+        - 'uniform': All bins in each feature have identical widths.
+        - 'quantile': All bins in each feature have the same number of points.
+        - 'kmeans': Values in each bin have the same nearest center of a 1D
+          k-means cluster.
 
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
