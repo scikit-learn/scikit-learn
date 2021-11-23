@@ -10,6 +10,7 @@ Ridge regression
 
 
 from abc import ABCMeta, abstractmethod
+import collections
 import numbers
 import warnings
 
@@ -1844,7 +1845,7 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        if isinstance(self.alphas, (np.ndarray, list, tuple)):
+        if isinstance(self.alphas, collections.abc.Collection):
             n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
             if n_alphas != 1:
                 for index, alpha in enumerate(self.alphas):
@@ -2070,7 +2071,7 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True are incompatible")
             if self.alpha_per_target:
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
-            if isinstance(self.alphas, (np.ndarray, list, tuple)):
+            if isinstance(self.alphas, collections.abc.Collection):
                 n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
                 if n_alphas != 1:
                     for index, alpha in enumerate(self.alphas):
