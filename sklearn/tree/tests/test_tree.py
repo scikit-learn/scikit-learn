@@ -2270,11 +2270,11 @@ def reduce_different_bitness_tree(tree):
     descr = new_state["nodes"].dtype.descr
 
     # field names in Node struct with SIZE_t types (see sklearn/tree/_tree.pxd)
-    index_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
+    indexing_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
 
     new_descr = []
     for field_name, dtype_str, *rest in descr:
-        if field_name in index_field_names:
+        if field_name in indexing_field_names:
             to_append = (field_name, new_dtype, *rest)
         else:
             to_append = (field_name, dtype_str, *rest)

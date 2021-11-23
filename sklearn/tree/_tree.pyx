@@ -650,8 +650,8 @@ cdef class Tree:
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
 
-        node_ndarray = check_node_array(node_ndarray, NODE_DTYPE)
-        value_ndarray = check_value_array(value_ndarray, np.dtype(np.float64), value_shape)
+        node_ndarray = check_node_ndarray(node_ndarray, NODE_DTYPE)
+        value_ndarray = check_value_ndarray(value_ndarray, np.dtype(np.float64), value_shape)
 
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
@@ -1235,29 +1235,29 @@ def check_n_classes(n_classes, expected_dtype):
     )
 
 
-def check_value_array(value_array, expected_dtype, expected_shape):
-    if value_array.shape != expected_shape:
+def check_value_ndarray(value_ndarray, expected_dtype, expected_shape):
+    if value_ndarray.shape != expected_shape:
         raise ValueError(
             "Wrong shape for value array from the pickle: "
-            f"expected {expected_shape}, got {value_array.shape}"
+            f"expected {expected_shape}, got {value_ndarray.shape}"
         )
 
-    if not value_array.flags.c_contiguous:
+    if not value_ndarray.flags.c_contiguous:
         raise ValueError(
             "value array from the pickle should be a C-contiguous array"
         )
 
-    if value_array.dtype == expected_dtype:
-        return value_array
+    if value_ndarray.dtype == expected_dtype:
+        return value_ndarray
 
     # Handles different endianness
-    if value_array.dtype.str.endswith('f8'):
-        return value_array.astype(expected_dtype, casting='equiv')
+    if value_ndarray.dtype.str.endswith('f8'):
+        return value_ndarray.astype(expected_dtype, casting='equiv')
 
     raise ValueError(
         "value array from the pickle has an incompatible dtype:\n"
         f"- expected: {expected_dtype}\n"
-        f"- got:      {value_array.dtype}"
+        f"- got:      {value_ndarray.dtype}"
     )
 
 
@@ -1266,6 +1266,7 @@ def _dtype_to_dict(dtype):
 
 
 def _dtype_dict_with_modified_bitness(dtype_dict):
+    # field names in Node struct with SIZE_t types (see sklearn/tree/_tree.pxd)
     indexing_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
 
     expected_dtype_size = str(struct.calcsize("P"))
@@ -1312,33 +1313,33 @@ def _all_compatible_dtype_dicts(dtype):
     ]
 
 
-def check_node_array(node_array, expected_dtype):
-    if node_array.ndim != 1:
+def check_node_ndarray(node_ndarray, expected_dtype):
+    if node_ndarray.ndim != 1:
         raise ValueError(
             "Wrong dimensions for node array from the pickle: "
-            f"expected 1, got {node_array.ndim}"
+            f"expected 1, got {node_ndarray.ndim}"
         )
 
-    if not node_array.flags.c_contiguous:
+    if not node_ndarray.flags.c_contiguous:
         raise ValueError(
             "node array from the pickle should be a C-contiguous array"
         )
 
-    node_array_dtype = node_array.dtype
-    if node_array_dtype == expected_dtype:
-        return node_array
+    node_ndarray_dtype = node_ndarray.dtype
+    if node_ndarray_dtype == expected_dtype:
+        return node_ndarray
 
-    node_array_dtype_dict = _dtype_to_dict(node_array_dtype)
+    node_ndarray_dtype_dict = _dtype_to_dict(node_ndarray_dtype)
     all_compatible_dtype_dicts = _all_compatible_dtype_dicts(expected_dtype)
 
-    if node_array_dtype_dict not in all_compatible_dtype_dicts:
+    if node_ndarray_dtype_dict not in all_compatible_dtype_dicts:
         raise ValueError(
             "node array dtype from the pickle has an incompatible dtype:\n"
             f"- expected: {expected_dtype}\n"
-            f"- got     : {node_array_dtype}"
+            f"- got     : {node_ndarray_dtype}"
         )
 
-    return node_array.astype(expected_dtype, casting="same_kind")
+    return node_ndarray.astype(expected_dtype, casting="same_kind")
 
 
 # =============================================================================
