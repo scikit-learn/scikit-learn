@@ -23,6 +23,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
+from ..base import _ClassNamePrefixFeaturesOutMixin
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
@@ -36,7 +37,9 @@ from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
 
 
-class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
+class _BaseVoting(
+    TransformerMixin, _BaseHeterogeneousEnsemble, _ClassNamePrefixFeaturesOutMixin
+):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes

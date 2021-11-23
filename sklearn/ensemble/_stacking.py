@@ -11,6 +11,7 @@ from joblib import Parallel
 import scipy.sparse as sparse
 
 from ..base import clone
+from ..base import _ClassNamePrefixFeaturesOutMixin
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
 from ..exceptions import NotFittedError
@@ -35,7 +36,12 @@ from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
 
 
-class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
+class _BaseStacking(
+    TransformerMixin,
+    _BaseHeterogeneousEnsemble,
+    _ClassNamePrefixFeaturesOutMixin,
+    metaclass=ABCMeta,
+):
     """Base class for stacking method."""
 
     @abstractmethod

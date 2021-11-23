@@ -561,3 +561,36 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     msg = "'MyEstimator' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
+
+
+@pytest.mark.parametrize(
+    "estimator, X, y",
+    [
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            X_iris[:100],
+            y_iris[:100],
+        ),  # keep only classes 0 and 1
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR(random_state=0)),
+                ]
+            ),
+            X_diabetes,
+            y_diabetes,
+        ),
+    ],
+    ids=["StackingClassifier", "StackingRegressor"],
+)
+def test_stacking_get_feature_names_out(estimator, X, y):
+    eclf = estimator.fit(X, y)
+    names = eclf.get_feature_names_out()
+    cls_name = estimator.__class__.__name__.lower()
+    assert_array_equal([f"{cls_name}{i}" for i in range(eclf._n_features_out)], names)
