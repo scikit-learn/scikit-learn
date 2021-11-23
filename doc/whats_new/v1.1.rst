@@ -184,6 +184,12 @@ Changelog
   `fit` instead of `__init__`.
   :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
 
+- |Enhancement| Introducing Manifold-regularized Discriminative NMF in :class:`MDNMF`.
+  :pr:`21763` by :user:`Jason Zhang <jasonyz-ucb>`.
+
+- |Enhancement| Introducing Manifold-regularized Discriminative NMF in :class:`MDNMF`.
+  :pr:`21763` by :user:`Jason Zhang <jasonyz-ucb>`.
+
 :mod:`sklearn.ensemble`
 .......................
 

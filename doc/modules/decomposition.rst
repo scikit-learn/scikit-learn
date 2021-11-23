@@ -920,6 +920,49 @@ stored components::
     >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
     >>> W_new = model.transform(X_new)
 
+Manifold-regularized Discriminative NMF
+---------------------------------------
+
+:class:`MDNMF` [7]_ is a variant of NMF, which preserves the geometry of the data
+space with manifold regularization and incorporates discriminative information
+by maximizing the inter-class margins.
+
+The objective function is:
+
+.. math::
+
+    KL(X, WH)
+
+    + 0.5 * alpha * tr(W e W^T)
+
+    + 0.5 * beta * tr(H H^T)
+
+    + 0.5 * gamma * tr(H (L_c^{-0.5}))^T L_g L_c^{-0.5} H^T)
+
+where:
+
+.. math::
+
+    KL(A, B) = \\sum_{i,j} (A_{ij} \\log \\frac{A_{ij}}{B_{ij}} - A_{ij} + B{ij})
+
+is the Kullback-Leibler divergence, :math:`L_c` is the different-class nearest
+neighbor graph Laplacian while :math:`L_g` is for samples of the same-class.
+
+The objective function is minimized with an alternating minimization of W
+and H, using Coordinate Descent ('cd') and Multiplicative Update ('mu').
+
+The algorithm will use the last column of the input matrix :math:`X` as the side
+labels for the discriminative term and therefore the input matrix should always
+have more than 1 column (feature)::
+
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> side_labels = [0, 1, 0, 0, 1, 2]
+    >>> from sklearn.decomposition import MDNMF
+    >>> model = MDNMF(n_components=2, random_state=0)
+    >>> W = model.fit_transform(np.c_[X, side_labels])
+    >>> H = model.components_
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
@@ -949,6 +992,11 @@ stored components::
     .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
       <https://arxiv.org/pdf/1010.1763.pdf>`_
       C. Fevotte, J. Idier, 2011
+
+    .. [7] `"Manifold regularized discriminative nonnegative matrix factorization
+      with fast gradient descent"
+      <https://ieeexplore.ieee.org/abstract/document/5685567/>`_
+      Guan, Naiyang, et al, 2011
 
 
 .. _LatentDirichletAllocation:
