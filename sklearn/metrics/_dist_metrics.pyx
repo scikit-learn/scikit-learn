@@ -265,7 +265,7 @@ cdef class DistanceMetric:
                 # the p power instead of the absolute difference as in
                 # previous versions of scipy.
                 # WMinkowskiDistance in sklearn implements the weighting
-                # scheme of the old 'wminkowski' in scipy < 1.8 and the
+                # scheme of the old 'wminkowski' in scipy < 1.8, hence the
                 # following adaptation:
                 return WMinkowskiDistance(p, w ** (1/p), **kwargs)
             if p == 1:
