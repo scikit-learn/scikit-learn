@@ -9,6 +9,7 @@ jobs:
 - job: ${{ parameters.name }}
   dependsOn: ${{ parameters.dependsOn }}
   condition: ${{ parameters.condition }}
+  timeoutInMinutes: 120
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
@@ -17,6 +18,7 @@ jobs:
     JUNITXML: 'test-data.xml'
     OMP_NUM_THREADS: '2'
     OPENBLAS_NUM_THREADS: '2'
+    CPU_COUNT: '2'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     CCACHE_DIR: $(Pipeline.Workspace)/ccache
     CCACHE_COMPRESS: '1'
