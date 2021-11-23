@@ -650,8 +650,12 @@ cdef class Tree:
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
 
-        node_ndarray = check_node_ndarray(node_ndarray, NODE_DTYPE)
-        value_ndarray = check_value_ndarray(value_ndarray, np.dtype(np.float64), value_shape)
+        node_ndarray = check_node_ndarray(node_ndarray, expected_dtype=NODE_DTYPE)
+        value_ndarray = check_value_ndarray(
+            value_ndarray,
+            expected_dtype=np.dtype(np.float64),
+            expected_shape=value_shape
+        )
 
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
@@ -1334,7 +1338,7 @@ def check_node_ndarray(node_ndarray, expected_dtype):
 
     if node_ndarray_dtype_dict not in all_compatible_dtype_dicts:
         raise ValueError(
-            "node array dtype from the pickle has an incompatible dtype:\n"
+            "node array from the pickle has an incompatible dtype:\n"
             f"- expected: {expected_dtype}\n"
             f"- got     : {node_ndarray_dtype}"
         )

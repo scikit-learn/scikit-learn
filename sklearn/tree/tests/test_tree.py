@@ -49,6 +49,11 @@ from sklearn.tree import ExtraTreeRegressor
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
 from sklearn.tree._tree import Tree as CythonTree
+from sklearn.tree._tree import check_n_classes
+from sklearn.tree._tree import check_value_ndarray
+from sklearn.tree._tree import check_node_ndarray
+from sklearn.tree._tree import NODE_DTYPE
+
 from sklearn.tree._classes import CRITERIA_CLF
 from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
@@ -2224,56 +2229,19 @@ def test_different_endianness_joblib_pickle():
     assert np.isclose(score, new_score)
 
 
-def get_different_bitness_dtype_descr_single(dtype_descr_element):
-    dtype_name, dtype_str, *rest = dtype_descr_element
-
-    # Map 64 bit dtypes to their matching 32 bit counterparts:
-    # <i8 to <i4, >u8 to >u4 and so on.
-    if _IS_32BIT:
-        new_dtype_str = dtype_str.replace("i4", "i8")
-    else:
-        new_dtype_str = dtype_str.replace("i8", "i4")
-
-    return (dtype_name, new_dtype_str, *rest)
-
-
-def get_different_bitness_array(arr):
-    descr = arr.dtype.descr
-
-    if arr.dtype.names is not None:
-        # Remove potential padding fields
-        descr = [
-            (field_name, *rest)
-            for field_name, *rest in descr
-            if field_name in arr.dtype.names
-        ]
-
-    new_descr = [get_different_bitness_dtype_descr_single(each) for each in descr]
-    # avoid creating dummy field names in simple dtype case e.g.
-    # dtype(np.float64)
-    if len(new_descr) == 1:
-        new_descr = new_descr[0][1]
-
-    return arr.astype(new_descr, casting="same_kind")
-
-
-def reduce_different_bitness_ndarray(arr):
-    return get_different_bitness_array(arr).__reduce__()
-
-
-def reduce_different_bitness_tree(tree):
-    tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
+def get_different_bitness_node_ndarray(node_ndarray):
     new_dtype = np.int64 if _IS_32BIT else np.int32
-    new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
-
-    new_state = state.copy()
-    descr = new_state["nodes"].dtype.descr
+    descr = node_ndarray.dtype.descr
 
     # field names in Node struct with SIZE_t types (see sklearn/tree/_tree.pxd)
     indexing_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
 
     new_descr = []
     for field_name, dtype_str, *rest in descr:
+        # ignore padding fields
+        if field_name not in NODE_DTYPE.fields:
+            continue
+
         if field_name in indexing_field_names:
             to_append = (field_name, new_dtype, *rest)
         else:
@@ -2281,7 +2249,16 @@ def reduce_different_bitness_tree(tree):
 
         new_descr.append(to_append)
 
-    new_state["nodes"] = new_state["nodes"].astype(new_descr, casting="same_kind")
+    return node_ndarray.astype(new_descr, casting="same_kind")
+
+
+def reduce_different_bitness_tree(tree):
+    new_dtype = np.int64 if _IS_32BIT else np.int32
+    tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
+    new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
+
+    new_state = state.copy()
+    new_state["nodes"] = get_different_bitness_node_ndarray(new_state["nodes"])
 
     return (tree_cls, (n_features, new_n_classes, n_outputs), new_state)
 
@@ -2335,11 +2312,83 @@ def test_different_bitness_joblib_pickle():
     assert np.isclose(score, new_score)
 
 
-# TODO should I test error cases? Just a bit more painful but maybe worth it
-# since the check is more complicated now in the code ...
-# - n_classes is not of dtype.kind i
-#   nodes has some weird names
-# - nodes has some wrong dtypes
-#   check all the other c_contiguous, length of value_nodes, etc ... ?
-# - do I want to check on fields with padding? I don't think this can happen in
-#   practice but I may be wrong
+def test_check_n_classes():
+    expected_dtype = np.dtype(np.int32) if _IS_32BIT else np.dtype(np.int64)
+    allowed_dtypes = [np.dtype(np.int32), np.dtype(np.int64)]
+    allowed_dtypes += [dt.newbyteorder() for dt in allowed_dtypes]
+
+    n_classes = np.array([0, 1], dtype=expected_dtype)
+    for dt in allowed_dtypes:
+        check_n_classes(n_classes.astype(dt), expected_dtype)
+
+    with pytest.raises(ValueError, match="Wrong dimensions.+n_classes"):
+        wrong_dim_n_classes = np.array([[0, 1]], dtype=expected_dtype)
+        check_n_classes(wrong_dim_n_classes, expected_dtype)
+
+    with pytest.raises(ValueError, match="n_classes.+incompatible dtype"):
+        wrong_dtype_n_classes = n_classes.astype(np.float64)
+        check_n_classes(wrong_dtype_n_classes, expected_dtype)
+
+
+def test_check_value_ndarray():
+    expected_dtype = np.dtype(np.float64)
+    expected_shape = (5, 1, 2)
+    value_ndarray = np.zeros((5, 1, 2), dtype=expected_dtype)
+
+    allowed_dtypes = [expected_dtype, expected_dtype.newbyteorder()]
+
+    for dt in allowed_dtypes:
+        check_value_ndarray(
+            value_ndarray, expected_dtype=dt, expected_shape=expected_shape
+        )
+
+    with pytest.raises(ValueError, match="Wrong shape.+value array"):
+        check_value_ndarray(
+            value_ndarray, expected_dtype=expected_dtype, expected_shape=(1, 2)
+        )
+
+    for problematic_arr in [value_ndarray[:, :, :1], np.asfortranarray(value_ndarray)]:
+        with pytest.raises(ValueError, match="value array.+C-contiguous"):
+            check_value_ndarray(
+                problematic_arr,
+                expected_dtype=expected_dtype,
+                expected_shape=problematic_arr.shape,
+            )
+
+    with pytest.raises(ValueError, match="value array.+incompatible dtype"):
+        check_value_ndarray(
+            value_ndarray.astype(np.float32),
+            expected_dtype=expected_dtype,
+            expected_shape=expected_shape,
+        )
+
+
+def test_check_node_ndarray():
+    expected_dtype = NODE_DTYPE
+
+    node_ndarray = np.zeros((5,), dtype=expected_dtype)
+
+    valid_node_ndarrays = [
+        node_ndarray,
+        get_different_bitness_node_ndarray(node_ndarray),
+    ]
+    valid_node_ndarrays += [
+        arr.astype(arr.dtype.newbyteorder()) for arr in valid_node_ndarrays
+    ]
+    # TODO add test array with padding?
+
+    for arr in valid_node_ndarrays:
+        check_node_ndarray(node_ndarray, expected_dtype=expected_dtype)
+
+    with pytest.raises(ValueError, match="Wrong dimensions.+node array"):
+        problematic_node_ndarray = np.zeros((5, 2), dtype=expected_dtype)
+        check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+        with pytest.raises(ValueError, match="node array.+C-contiguous"):
+            problematic_node_ndarray = node_ndarray[::2]
+            check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+    # TODO incompatible dtypes e.g. change one float64 array by float32 or
+    # change one indexing dtype by float64
+    # with pytest.raises(ValueError, match="node array.+incompatible dtype"):
+    #     check_node_ndarray()
