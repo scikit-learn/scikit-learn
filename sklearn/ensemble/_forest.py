@@ -377,16 +377,16 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         if not self.bootstrap and self.max_samples is not None:
             raise ValueError(
-                "Sub-sample size only available if bootstrap=True. "
-                "Please leave max_samples to None."
+                "`max_sample` cannot be set if `bootstrap=False`. "
+                "Either switch to `bootstrap=True` or set "
+                "`max_sample=None`."
             )
-
-        # Get bootstrap sample size
-        n_samples_bootstrap = None
-        if self.bootstrap:
+        elif self.bootstrap:
             n_samples_bootstrap = _get_n_samples_bootstrap(
                 n_samples=X.shape[0], max_samples=self.max_samples
             )
+        else:
+            n_samples_bootstrap = None
 
         # Check parameters
         self._validate_estimator()

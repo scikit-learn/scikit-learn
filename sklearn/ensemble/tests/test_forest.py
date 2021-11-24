@@ -1618,8 +1618,9 @@ def test_max_samples_bootstrap(name):
     # Check invalid `max_samples` values
     est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=False, max_samples=0.5)
     err_msg = (
-        r"Sub-sample size only available if bootstrap=True. "
-        r"Please leave max_samples to None."
+        r"`max_sample` cannot be set if `bootstrap=False`. "
+        r"Either switch to `bootstrap=True` or set "
+        r"`max_sample=None`."
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, y)
