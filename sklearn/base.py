@@ -31,29 +31,34 @@ from .utils.validation import _get_feature_names
 
 
 def clone(estimator, *, safe=True):
-    """Constructs a new unfitted estimator with the same parameters.
+    """Construct a new unfitted estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
-    without actually copying attached data. It yields a new estimator
+    without actually copying attached data. It returns a new estimator
     with the same parameters that has not been fitted on any data.
-
-    If the estimator's `random_state` parameter is an integer (or if the
-    estimator doesn't have a `random_state` parameter), an *exact clone* is
-    returned: the clone and the original estimator will give the exact same
-    results. Otherwise, *statistical clone* is returned: the clone might
-    yield different results from the original estimator. More details can be
-    found in :ref:`randomness`.
 
     Parameters
     ----------
     estimator : {list, tuple, set} of estimator instance or a single \
             estimator instance
         The estimator or group of estimators to be cloned.
-
     safe : bool, default=True
         If safe is False, clone will fall back to a deep copy on objects
         that are not estimators.
 
+    Returns
+    -------
+    estimator : object
+        The deep copy of the input, an estimator if input is an estimator.
+
+    Notes
+    -----
+    If the estimator's `random_state` parameter is an integer (or if the
+    estimator doesn't have a `random_state` parameter), an *exact clone* is
+    returned: the clone and the original estimator will give the exact same
+    results. Otherwise, *statistical clone* is returned: the clone might
+    return different results from the original estimator. More details can be
+    found in :ref:`randomness`.
     """
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
