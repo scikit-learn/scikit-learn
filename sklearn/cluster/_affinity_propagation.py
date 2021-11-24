@@ -71,7 +71,7 @@ def affinity_propagation(
         of estimated clusters that stops the convergence.
 
     max_iter : int, default=200
-        Maximum number of iterations
+        Maximum number of iterations.
 
     damping : float, default=0.5
         Damping factor between 0.5 and 1.
