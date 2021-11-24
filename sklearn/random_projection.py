@@ -322,8 +322,7 @@ def _svd_for_sparse_matrix(a):
 
 
 def _pinv_for_sparse_matrix(a):
-    """
-    Compute the (Moore-Penrose) pseudo-inverse of a sparse matrix.
+    """Compute the (Moore-Penrose) pseudo-inverse of a sparse matrix.
 
     Calculate a generalized inverse of a sparse matrix using its singular-value
     decomposition ``U @ S @ V`` and using only the columns/rows that are
@@ -334,6 +333,10 @@ def _pinv_for_sparse_matrix(a):
     ``max(a.shape) * eps``, and ``eps`` is the machine precision value of the
     datatype of ``a``. Any singular value below this value is assumed
     insignificant.
+
+    This function is adapted from ``scipy.linalg.pinv`` and will probably be
+    removed once SciPy provides an implementation of ``pinv`` compatible with
+    sparse arrays.
 
     Parameters
     ----------
@@ -718,9 +721,11 @@ class SparseRandomProjection(BaseRandomProjection):
 
     fit_inverse_transform : bool, default=False
         Learn the inverse transform by computing the pseudo-inverse of the
-        components during fit. Note that the pseudo-inverse is a dense array.
-        Moreover, computing the pseudo-inverse does not scale well to large
-        matrices.
+        components during fit. Note that the pseudo-inverse is always a dense
+        array, even if the training data was sparse. This means that it might be
+        necessary to call `inverse_transform` on a small batch of samples at a
+        time to avoid exhausting the available memory on the host. Moreover,
+        computing the pseudo-inverse does not scale well to large matrices.
 
     random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generator used to generate the
