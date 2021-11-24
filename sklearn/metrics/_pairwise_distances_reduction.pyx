@@ -902,7 +902,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         ITYPE_t num_threads,
     ) nogil:
         cdef ITYPE_t thread_num
-        PairwiseDistancesArgKmin._parallel_on_Y_init(self, num_threads)
+        PairwiseDistancesArgKmin._parallel_on_Y_parallel_init(self, num_threads)
 
         for thread_num in range(num_threads):
             # Temporary buffer for the `-2 * X_c @ Y_c.T` term
