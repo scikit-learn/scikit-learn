@@ -220,7 +220,7 @@ def test_calc_breakdown_point():
         (
             {"n_subsamples": 1},
             ValueError,
-            re.escape("Invalid parameter since n_features+1 > n_subsamples (2 > 50)"),
+            re.escape("Invalid parameter since n_features+1 > n_subsamples (2 > 1)"),
         ),
         (
             {"n_subsamples": 101},

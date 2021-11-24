@@ -365,7 +365,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
                     raise ValueError(
                         "Invalid parameter since n_features{0} "
                         "> n_subsamples ({1} > {2})."
-                        "".format(plus_1, n_dim, n_samples)
+                        "".format(plus_1, n_dim, n_subsamples)
                     )
             else:  # if n_samples < n_features
                 if n_subsamples != n_samples:
