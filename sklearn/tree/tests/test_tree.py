@@ -2264,7 +2264,7 @@ def get_different_alignment_node_ndarray(node_ndarray):
     return node_ndarray.astype(new_dtype, casting="same_kind")
 
 
-def reduce_tree_with_diffent_bitness(tree):
+def reduce_tree_with_different_bitness(tree):
     new_dtype = np.int64 if _IS_32BIT else np.int32
     tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
     new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
@@ -2286,7 +2286,7 @@ def test_different_bitness_pickle():
         f = io.BytesIO()
         p = pickle.Pickler(f)
         p.dispatch_table = copyreg.dispatch_table.copy()
-        p.dispatch_table[CythonTree] = reduce_tree_with_diffent_bitness
+        p.dispatch_table[CythonTree] = reduce_tree_with_different_bitness
 
         p.dump(clf)
         f.seek(0)
@@ -2313,7 +2313,7 @@ def test_different_bitness_joblib_pickle():
         f = io.BytesIO()
         p = NumpyPickler(f)
         p.dispatch_table = copyreg.dispatch_table.copy()
-        p.dispatch_table[CythonTree] = reduce_tree_with_diffent_bitness
+        p.dispatch_table[CythonTree] = reduce_tree_with_different_bitness
 
         p.dump(clf)
         f.seek(0)
@@ -2321,7 +2321,7 @@ def test_different_bitness_joblib_pickle():
 
     new_clf = joblib.load(joblib_dump_with_different_bitness)
     new_score = new_clf.score(X, y)
-    assert np.isclose(score, new_score)
+    assert score == pytest.approx(new_score)
 
 
 def test_check_n_classes():
@@ -2345,7 +2345,7 @@ def test_check_n_classes():
 def test_check_value_ndarray():
     expected_dtype = np.dtype(np.float64)
     expected_shape = (5, 1, 2)
-    value_ndarray = np.zeros((5, 1, 2), dtype=expected_dtype)
+    value_ndarray = np.zeros(expected_shape, dtype=expected_dtype)
 
     allowed_dtypes = [expected_dtype, expected_dtype.newbyteorder()]
 
