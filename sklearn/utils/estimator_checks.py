@@ -53,6 +53,7 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
+from ..utils.fixes import threadpool_info
 from ..utils.validation import check_is_fitted
 
 from . import shuffle
@@ -657,6 +658,11 @@ def _set_checking_parameters(estimator):
         # TruncatedSVD doesn't run with n_components = n_features
         # This is ugly :-/
         estimator.n_components = 1
+
+    if name == "LassoLarsIC":
+        # Noise variance estimation does not work when `n_samples < n_features`.
+        # We need to provide the noise variance explicitly.
+        estimator.set_params(noise_variance=1.0)
 
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = min(estimator.n_clusters, 2)
@@ -2080,7 +2086,19 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
+        # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
+        # See: https://github.com/scipy/scipy/issues/14886
+        has_prescott_openblas = any(
+            True
+            for info in threadpool_info()
+            if info["internal_api"] == "openblas"
+            # Prudently assume Prescott might be the architecture if it is unknown.
+            and info.get("architecture", "prescott").lower() == "prescott"
+        )
+        X_m = create_memmap_backed_data(data=X_m, aligned=has_prescott_openblas)
+        y_m = create_memmap_backed_data(data=y_m, aligned=has_prescott_openblas)
+        X_b = create_memmap_backed_data(data=X_b, aligned=has_prescott_openblas)
+        y_b = create_memmap_backed_data(data=y_b, aligned=has_prescott_openblas)
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)

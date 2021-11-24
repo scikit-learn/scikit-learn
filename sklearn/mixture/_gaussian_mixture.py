@@ -813,6 +813,9 @@ class GaussianMixture(BaseMixture):
     def bic(self, X):
         """Bayesian information criterion for the current model on the input X.
 
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the BIC used.
+
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
@@ -829,6 +832,9 @@ class GaussianMixture(BaseMixture):
 
     def aic(self, X):
         """Akaike information criterion for the current model on the input X.
+
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the AIC used.
 
         Parameters
         ----------

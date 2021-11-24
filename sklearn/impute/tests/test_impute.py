@@ -950,7 +950,7 @@ def test_iterative_imputer_catch_warning():
     imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
     with pytest.warns(None) as record:
         X_fill = imputer.fit_transform(X, y)
-    assert not record.list
+    assert not [w.message for w in record.list]
     assert not np.any(np.isnan(X_fill))
 
 
