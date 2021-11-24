@@ -7,9 +7,9 @@ This example shows how a feature selection can be easily integrated within
 a machine learning pipeline.
 
 We also show that you can easily introspect part of the pipeline.
+
 """
 
-print(__doc__)
 from sklearn import set_config
 
 set_config(display="diagram")

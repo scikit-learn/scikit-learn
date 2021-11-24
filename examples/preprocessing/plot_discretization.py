@@ -39,8 +39,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeRegressor
 
-print(__doc__)
-
 # construct the dataset
 rnd = np.random.RandomState(42)
 X = rnd.uniform(-3, 3, size=100)
