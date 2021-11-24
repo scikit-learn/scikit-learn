@@ -590,7 +590,7 @@ cdef class Tree:
         cdef SIZE_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
 
-        n_classes = check_n_classes(n_classes, size_t_dtype)
+        n_classes = _check_n_classes(n_classes, size_t_dtype)
 
         # Input/Output layout
         self.n_features = n_features
@@ -650,8 +650,8 @@ cdef class Tree:
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
 
-        node_ndarray = check_node_ndarray(node_ndarray, expected_dtype=NODE_DTYPE)
-        value_ndarray = check_value_ndarray(
+        node_ndarray = _check_node_ndarray(node_ndarray, expected_dtype=NODE_DTYPE)
+        value_ndarray = _check_value_ndarray(
             value_ndarray,
             expected_dtype=np.dtype(np.float64),
             expected_shape=value_shape
@@ -1218,7 +1218,7 @@ cdef class Tree:
                                  total_weight)
 
 
-def check_n_classes(n_classes, expected_dtype):
+def _check_n_classes(n_classes, expected_dtype):
     if n_classes.ndim != 1:
         raise ValueError(
             f"Wrong dimensions for n_classes from the pickle: "
@@ -1239,7 +1239,7 @@ def check_n_classes(n_classes, expected_dtype):
     )
 
 
-def check_value_ndarray(value_ndarray, expected_dtype, expected_shape):
+def _check_value_ndarray(value_ndarray, expected_dtype, expected_shape):
     if value_ndarray.shape != expected_shape:
         raise ValueError(
             "Wrong shape for value array from the pickle: "
@@ -1299,8 +1299,8 @@ def _all_compatible_dtype_dicts(dtype):
     # platform.
     #
     # A similar thing happens for endianness, the machine where the pickle was
-    # saved can have a different endianness than the picle where the machine is
-    # loaded
+    # saved can have a different endianness than the machine where the pickle
+    # is loaded
 
     dtype_dict = _dtype_to_dict(dtype)
     dtype_dict_with_modified_bitness = _dtype_dict_with_modified_bitness(dtype_dict)
@@ -1317,7 +1317,7 @@ def _all_compatible_dtype_dicts(dtype):
     ]
 
 
-def check_node_ndarray(node_ndarray, expected_dtype):
+def _check_node_ndarray(node_ndarray, expected_dtype):
     if node_ndarray.ndim != 1:
         raise ValueError(
             "Wrong dimensions for node array from the pickle: "

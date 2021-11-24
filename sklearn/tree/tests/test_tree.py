@@ -49,9 +49,9 @@ from sklearn.tree import ExtraTreeRegressor
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
 from sklearn.tree._tree import Tree as CythonTree
-from sklearn.tree._tree import check_n_classes
-from sklearn.tree._tree import check_value_ndarray
-from sklearn.tree._tree import check_node_ndarray
+from sklearn.tree._tree import _check_n_classes
+from sklearn.tree._tree import _check_value_ndarray
+from sklearn.tree._tree import _check_node_ndarray
 from sklearn.tree._tree import NODE_DTYPE
 
 from sklearn.tree._classes import CRITERIA_CLF
@@ -2264,7 +2264,7 @@ def get_different_alignment_node_ndarray(node_ndarray):
     return node_ndarray.astype(new_dtype, casting="same_kind")
 
 
-def reduce_different_bitness_tree(tree):
+def reduce_tree_with_diffent_bitness(tree):
     new_dtype = np.int64 if _IS_32BIT else np.int32
     tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
     new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
@@ -2282,19 +2282,19 @@ def test_different_bitness_pickle():
     clf.fit(X, y)
     score = clf.score(X, y)
 
-    def get_different_bitness_pickle():
+    def pickle_dump_with_different_bitness():
         f = io.BytesIO()
         p = pickle.Pickler(f)
         p.dispatch_table = copyreg.dispatch_table.copy()
-        p.dispatch_table[CythonTree] = reduce_different_bitness_tree
+        p.dispatch_table[CythonTree] = reduce_tree_with_diffent_bitness
 
         p.dump(clf)
         f.seek(0)
         return f
 
-    new_clf = pickle.load(get_different_bitness_pickle())
+    new_clf = pickle.load(pickle_dump_with_different_bitness())
     new_score = new_clf.score(X, y)
-    assert np.isclose(score, new_score)
+    assert score == pytest.approx(new_score)
 
 
 def test_different_bitness_joblib_pickle():
@@ -2309,17 +2309,17 @@ def test_different_bitness_joblib_pickle():
     clf.fit(X, y)
     score = clf.score(X, y)
 
-    def get_different_bitness_joblib_pickle():
+    def joblib_dump_with_different_bitness():
         f = io.BytesIO()
         p = NumpyPickler(f)
         p.dispatch_table = copyreg.dispatch_table.copy()
-        p.dispatch_table[CythonTree] = reduce_different_bitness_tree
+        p.dispatch_table[CythonTree] = reduce_tree_with_diffent_bitness
 
         p.dump(clf)
         f.seek(0)
         return f
 
-    new_clf = joblib.load(get_different_bitness_joblib_pickle())
+    new_clf = joblib.load(joblib_dump_with_different_bitness)
     new_score = new_clf.score(X, y)
     assert np.isclose(score, new_score)
 
@@ -2331,15 +2331,15 @@ def test_check_n_classes():
 
     n_classes = np.array([0, 1], dtype=expected_dtype)
     for dt in allowed_dtypes:
-        check_n_classes(n_classes.astype(dt), expected_dtype)
+        _check_n_classes(n_classes.astype(dt), expected_dtype)
 
     with pytest.raises(ValueError, match="Wrong dimensions.+n_classes"):
         wrong_dim_n_classes = np.array([[0, 1]], dtype=expected_dtype)
-        check_n_classes(wrong_dim_n_classes, expected_dtype)
+        _check_n_classes(wrong_dim_n_classes, expected_dtype)
 
     with pytest.raises(ValueError, match="n_classes.+incompatible dtype"):
         wrong_dtype_n_classes = n_classes.astype(np.float64)
-        check_n_classes(wrong_dtype_n_classes, expected_dtype)
+        _check_n_classes(wrong_dtype_n_classes, expected_dtype)
 
 
 def test_check_value_ndarray():
@@ -2350,25 +2350,25 @@ def test_check_value_ndarray():
     allowed_dtypes = [expected_dtype, expected_dtype.newbyteorder()]
 
     for dt in allowed_dtypes:
-        check_value_ndarray(
+        _check_value_ndarray(
             value_ndarray, expected_dtype=dt, expected_shape=expected_shape
         )
 
     with pytest.raises(ValueError, match="Wrong shape.+value array"):
-        check_value_ndarray(
+        _check_value_ndarray(
             value_ndarray, expected_dtype=expected_dtype, expected_shape=(1, 2)
         )
 
     for problematic_arr in [value_ndarray[:, :, :1], np.asfortranarray(value_ndarray)]:
         with pytest.raises(ValueError, match="value array.+C-contiguous"):
-            check_value_ndarray(
+            _check_value_ndarray(
                 problematic_arr,
                 expected_dtype=expected_dtype,
                 expected_shape=problematic_arr.shape,
             )
 
     with pytest.raises(ValueError, match="value array.+incompatible dtype"):
-        check_value_ndarray(
+        _check_value_ndarray(
             value_ndarray.astype(np.float32),
             expected_dtype=expected_dtype,
             expected_shape=expected_shape,
@@ -2390,15 +2390,15 @@ def test_check_node_ndarray():
     ]
 
     for arr in valid_node_ndarrays:
-        check_node_ndarray(node_ndarray, expected_dtype=expected_dtype)
+        _check_node_ndarray(node_ndarray, expected_dtype=expected_dtype)
 
     with pytest.raises(ValueError, match="Wrong dimensions.+node array"):
         problematic_node_ndarray = np.zeros((5, 2), dtype=expected_dtype)
-        check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+        _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
 
         with pytest.raises(ValueError, match="node array.+C-contiguous"):
             problematic_node_ndarray = node_ndarray[::2]
-            check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+            _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
 
     dtype_dict = {name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()}
 
@@ -2412,7 +2412,7 @@ def test_check_node_ndarray():
     problematic_node_ndarray = node_ndarray.astype(new_dtype)
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
-        check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+        _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
 
     # array with wrong 'left_child' field dtype (float64 rather than int64 or int32)
     new_dtype_dict = dtype_dict.copy()
@@ -2424,4 +2424,4 @@ def test_check_node_ndarray():
     problematic_node_ndarray = node_ndarray.astype(new_dtype)
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
-        check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+        _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
