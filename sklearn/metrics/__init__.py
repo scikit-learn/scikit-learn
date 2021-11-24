@@ -34,6 +34,7 @@ from ._classification import precision_score
 from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
+from ._classification import brier_score_loss_decomposition
 from ._classification import multilabel_confusion_matrix
 
 from ._dist_metrics import DistanceMetric
