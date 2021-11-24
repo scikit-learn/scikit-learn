@@ -50,8 +50,7 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.impute import SimpleImputer
 from sklearn.impute import IterativeImputer
 from sklearn.linear_model import BayesianRidge
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
@@ -66,7 +65,7 @@ X_full, y_full = fetch_california_housing(return_X_y=True)
 X_full = X_full[::10]
 y_full = y_full[::10]
 n_samples, n_features = X_full.shape
-
+# X_full = MinMaxScaler().fit_transform(X_full)
 # Estimate the score on the entire dataset, with no missing values
 br_estimator = BayesianRidge()
 score_full_data = pd.DataFrame(
@@ -97,7 +96,15 @@ for strategy in ("mean", "median"):
 # with different estimators
 estimators = [
     BayesianRidge(),
-    DecisionTreeRegressor(max_features="sqrt", random_state=0),
+    RandomForestRegressor(
+        # We tuned the hyperparameters of the ExtraTreesRegressor to minimize
+        # the execution time
+        n_estimators=4,
+        max_depth=10,
+        max_samples=0.5,
+        n_jobs=2,
+        random_state=0,
+    ),
     ExtraTreesRegressor(
         # We tuned the hyperparameters of the ExtraTreesRegressor to minimize
         # the execution time
@@ -110,9 +117,13 @@ estimators = [
     KNeighborsRegressor(n_neighbors=15),
 ]
 score_iterative_imputer = pd.DataFrame()
-for impute_estimator in estimators:
+tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
+for impute_estimator, tol in zip(estimators, tolerances):
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, estimator=impute_estimator), br_estimator
+        IterativeImputer(
+            random_state=0, estimator=impute_estimator, max_iter=25, tol=tol
+        ),
+        br_estimator,
     )
     score_iterative_imputer[impute_estimator.__class__.__name__] = cross_val_score(
         estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
