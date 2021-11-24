@@ -410,8 +410,8 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     assess_same_labelling(cut, cut_scipy)
 
 
-@pytest.mark.parametrize("metric", METRICS_DEFAULT_PARAMS)
-def test_mst_linkage_core_memory_mapped(metric):
+@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+def test_mst_linkage_core_memory_mapped(metric_param_grid):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
 
     Non-regression test for issue #19875.
@@ -419,9 +419,9 @@ def test_mst_linkage_core_memory_mapped(metric):
     rng = np.random.RandomState(seed=1)
     X = rng.normal(size=(20, 4))
     Xmm = create_memmap_backed_data(X)
-    argdict = METRICS_DEFAULT_PARAMS[metric]
-    keys = argdict.keys()
-    for vals in itertools.product(*argdict.values()):
+    metric, param_grid = metric_param_grid
+    keys = param_grid.keys()
+    for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         distance_metric = DistanceMetric.get_metric(metric, **kwargs)
         mst = mst_linkage_core(X, distance_metric)

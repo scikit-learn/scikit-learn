@@ -304,6 +304,7 @@ ax2.set_yticklabels([""] * n_bars)
 
 plt.show()
 
+# %%
 # You can also try different techniques. For instance, the median is a more
 # robust estimator for data with high magnitude variables which could dominate
 # results (otherwise known as a 'long tail').
