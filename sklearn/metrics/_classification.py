@@ -2688,3 +2688,103 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+def brier_score_loss_decomposition(y_true, y_prob):
+    """Compute the Brier score loss decomposition.
+
+    The Brier score can be used to assess how well a classifier is calibrated.
+    However, a lower Brier score loss does not always mean a better calibration.
+    This is because, by analogy with the bias-variance
+    decomposition of the mean squared error,
+    the Brier score loss can be decomposed
+    as the sum of calibration loss and refinement loss [Bella2012].
+
+    Calibration loss is defined as the mean squared deviation from
+    empirical probabilities derived from the slope of ROC segments.
+    Refinement loss can be defined as the expected optimal loss
+    as measured by the area under the optimal cost curve.
+    Refinement loss can change independently from calibration loss,
+    thus a lower Brier score loss does not necessarily mean a better calibrated model.
+    “Only when refinement loss remains the same does a lower Brier score loss
+    always mean better calibration” [Bella2012], [Flach2008].
+
+    Currently supported only for binary classification.
+
+    Read more in the :ref:`User Guide <brier_score_loss>`.
+
+    Parameters
+    ----------
+    y_true : array of shape (n_samples,)
+        True targets.
+
+    y_prob : array of shape (n_samples,)
+        Probabilities of the positive class.
+
+    Returns
+    -------
+
+    brier_score_loss : float
+        Brier score loss.
+    calibration_loss : float
+        Calibration loss.
+    refinement_loss : float
+        Refinement loss.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import brier_score_loss_decomposition
+    >>> y_true = np.array([1., 0., 1., 1., 0., 1., 1.])
+    >>> y_prob = np.array([0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.2])
+    >>> bl, cl, rl = brier_score_loss_decomposition(y_true, y_pred)
+    >>> bl
+    0.51...
+    >>> cl
+    0.31...
+    >>> rl
+    0.20...
+    >>> import math
+    >>> math.isclose(bl, cl + rl)
+    True
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier score
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+
+    .. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
+    `"Calibration of Machine Learning Models"
+    <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
+    in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
+    and applications." Hershey, PA: Information Science Reference (2012).
+
+    .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
+    and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
+    Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+    """
+
+    a = np.stack((y_prob, y_true), axis=-1)
+    a = a[a[:, 0].argsort()]
+
+    s_hat = a[:, 0]
+    s = a[:, 1]
+
+    p_i = np.array(
+        [
+            x.mean()
+            for x in np.split(a[:, 1], np.unique(a[:, 0], return_index=True)[1][1:])
+        ]
+    )
+    p_i_hat, n_i = np.unique(a[:, 0], return_counts=True)
+
+    # brier score loss
+    b_loss = np.sum((s_hat - s) ** 2) / s.shape[0]
+
+    # calibration loss
+    c_loss = np.sum(n_i * (p_i_hat - p_i) ** 2) / s.shape[0]
+
+    # refinement loss
+    r_loss = np.sum(n_i * p_i * (1 - p_i)) / s.shape[0]
+
+    return b_loss, c_loss, r_loss
