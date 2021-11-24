@@ -119,6 +119,7 @@ print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 # Qualitative evaluation of the predictions using matplotlib
 # %%
 
+
 def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
     """Helper function to plot a gallery of portraits"""
     plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
