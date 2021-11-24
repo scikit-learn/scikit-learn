@@ -64,7 +64,6 @@ multioutput_regression_data = (
 iris = load_iris()
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "Estimator, method, data",
     [
@@ -84,7 +83,7 @@ iris = load_iris()
 )
 @pytest.mark.parametrize("grid_resolution", (5, 10))
 @pytest.mark.parametrize("features", ([1], [1, 2]))
-@pytest.mark.parametrize("kind", ("legacy", "average", "individual", "both"))
+@pytest.mark.parametrize("kind", ("average", "individual", "both"))
 def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
@@ -109,8 +108,7 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
         kind=kind,
         grid_resolution=grid_resolution,
     )
-    # FIXME: Remove 'legacy' support in 1.1
-    pdp, axes = result if kind == "legacy" else (result, result["values"])
+    pdp, axes = result, result["values"]
 
     expected_pdp_shape = (n_targets, *[grid_resolution for _ in range(len(features))])
     expected_ice_shape = (
@@ -118,9 +116,7 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
         n_instances,
         *[grid_resolution for _ in range(len(features))],
     )
-    if kind == "legacy":
-        assert pdp.shape == expected_pdp_shape
-    elif kind == "average":
+    if kind == "average":
         assert pdp.average.shape == expected_pdp_shape
     elif kind == "individual":
         assert pdp.individual.shape == expected_ice_shape
@@ -783,16 +779,3 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     pdp_ind = partial_dependence(est, X=X, features=[1, 2], kind="individual")
     avg_ind = np.mean(pdp_ind["individual"], axis=1)
     assert_allclose(avg_ind, pdp_avg["average"])
-
-
-def test_warning_for_kind_legacy():
-    est = LogisticRegression()
-    (X, y), n_targets = binary_classification_data
-    est.fit(X, y)
-
-    err_msg = "A Bunch will be returned in place of 'predictions' from version 1.1"
-    with pytest.warns(FutureWarning, match=err_msg):
-        partial_dependence(est, X=X, features=[1, 2])
-
-    with pytest.warns(FutureWarning, match=err_msg):
-        partial_dependence(est, X=X, features=[1, 2], kind="legacy")
