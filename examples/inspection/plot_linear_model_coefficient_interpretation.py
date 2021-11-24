@@ -311,7 +311,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -366,7 +366,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -465,7 +465,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -571,7 +571,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
