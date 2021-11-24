@@ -2319,7 +2319,7 @@ def test_different_bitness_joblib_pickle():
         f.seek(0)
         return f
 
-    new_clf = joblib.load(joblib_dump_with_different_bitness)
+    new_clf = joblib.load(joblib_dump_with_different_bitness())
     new_score = new_clf.score(X, y)
     assert score == pytest.approx(new_score)
 
