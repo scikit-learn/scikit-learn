@@ -2737,7 +2737,7 @@ def brier_score_loss_decomposition(y_true, y_prob):
     >>> from sklearn.metrics import brier_score_loss_decomposition
     >>> y_true = np.array([1., 0., 1., 1., 0., 1., 1.])
     >>> y_prob = np.array([0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.2])
-    >>> bl, cl, rl = brier_score_loss_decomposition(y_true, y_pred)
+    >>> bl, cl, rl = brier_score_loss_decomposition(y_true, y_prob)
     >>> bl
     0.51...
     >>> cl
