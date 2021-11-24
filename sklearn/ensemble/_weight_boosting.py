@@ -111,9 +111,22 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
-        # Check parameters
-        if self.learning_rate <= 0:
-            raise ValueError("learning_rate must be greater than zero")
+        # Validate scalar parameters
+        check_scalar(
+            self.n_estimators,
+            "n_estimators",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.learning_rate,
+            "learning_rate",
+            target_type=numbers.Real,
+            min_val=0,
+            include_boundaries="neither",
+        )
 
         X, y = self._validate_data(
             X,
@@ -1078,23 +1091,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         self : object
             Fitted AdaBoostRegressor estimator.
         """
-        # Validate scalar parameters
-        check_scalar(
-            self.n_estimators,
-            "n_estimators",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.learning_rate,
-            "learning_rate",
-            target_type=numbers.Real,
-            min_val=0,
-            include_boundaries="neither",
-        )
-
         # Check loss
         if self.loss not in ("linear", "square", "exponential"):
             raise ValueError(
