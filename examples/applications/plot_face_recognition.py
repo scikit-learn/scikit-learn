@@ -33,7 +33,7 @@ import logging
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.datasets import fetch_lfw_people
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
@@ -108,7 +108,8 @@ param_grid = {
     "C": [1e3, 5e3, 1e4, 5e4, 1e5],
     "gamma": [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
 }
-clf = GridSearchCV(SVC(kernel="rbf", class_weight="balanced"), param_grid, n_jobs=-1)
+clf = RandomizedSearchCV(
+    SVC(kernel="rbf", class_weight="balanced"), param_grid, n_iter=10)
 clf = clf.fit(X_train_pca, y_train)
 print("done in %0.3fs" % (time() - t0))
 print("Best estimator found by grid search:")
