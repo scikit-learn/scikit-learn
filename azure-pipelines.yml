@@ -247,11 +247,13 @@ jobs:
         DISTRIB: 'conda'
         BLAS: 'mkl'
         CONDA_CHANNEL: 'conda-forge'
+        CPU_COUNT: '3'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
+        CPU_COUNT: '3'
 
 - template: build_tools/azure/windows.yml
   parameters:
