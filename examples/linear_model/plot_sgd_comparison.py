@@ -21,30 +21,27 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import LogisticRegression
 
 heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
-rounds = 15
+# Number of rounds to fit and evaluate an estimator.
+rounds = 10
 X, y = datasets.load_digits(return_X_y=True)
 
 classifiers = [
     ("SGD", SGDClassifier(max_iter=110)),
     ("ASGD", SGDClassifier(max_iter=110, average=True)),
-    ("Perceptron", Perceptron(max_iter=110, warm_start=True)),
+    ("Perceptron", Perceptron(max_iter=110)),
     (
         "Passive-Aggressive I",
-        PassiveAggressiveClassifier(
-            max_iter=110, loss="hinge", C=1.0, tol=1e-4, warm_start=True
-        ),
+        PassiveAggressiveClassifier(max_iter=110, loss="hinge", C=1.0, tol=1e-4),
     ),
     (
         "Passive-Aggressive II",
         PassiveAggressiveClassifier(
-            max_iter=110, loss="squared_hinge", C=1.0, tol=1e-4, warm_start=True
+            max_iter=110, loss="squared_hinge", C=1.0, tol=1e-4
         ),
     ),
     (
         "SAG",
-        LogisticRegression(
-            max_iter=110, solver="sag", tol=1e-1, C=1.0e4 / X.shape[0], warm_start=True
-        ),
+        LogisticRegression(max_iter=110, solver="sag", tol=1e-1, C=1.0e4 / X.shape[0]),
     ),
 ]
 
