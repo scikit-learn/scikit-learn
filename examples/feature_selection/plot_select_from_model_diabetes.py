@@ -36,7 +36,7 @@ print(diabetes.DESCR)
 # ------------------------------------
 #
 # To get an idea of the importance of the features, we are going to use the
-# :class:`~sklearn.linear_model.LassoCV` estimator. The features with the
+# :class:`~sklearn.linear_model.RidgeCV` estimator. The features with the
 # highest absolute `coef_` value are considered the most important.
 # We can observe the coefficients directly without needing to scale them (or
 # scale the data) because from the description above, we know that the features
@@ -128,7 +128,7 @@ print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 # different results.
 #
 # We also note that the features selected by SFS differ from those selected by
-# feature importance: SFS selects `bmi` instead of `s1`. This does sounds
+# feature importance: SFS selects `bmi` instead of `s1`. This does sound
 # reasonable though, since `bmi` corresponds to the third most important
 # feature according to the coefficients. It is quite remarkable considering
 # that SFS makes no use of the coefficients at all.
