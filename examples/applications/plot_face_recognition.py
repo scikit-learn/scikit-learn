@@ -109,7 +109,8 @@ param_grid = {
     "gamma": [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
 }
 clf = RandomizedSearchCV(
-    SVC(kernel="rbf", class_weight="balanced"), param_grid, n_iter=10)
+    SVC(kernel="rbf", class_weight="balanced"), param_grid, n_iter=10
+)
 clf = clf.fit(X_train_pca, y_train)
 print("done in %0.3fs" % (time() - t0))
 print("Best estimator found by grid search:")
