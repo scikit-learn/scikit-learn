@@ -1513,14 +1513,39 @@ def test_neighbors_metrics(
     metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
 ):
     # Test computing the neighbors for various metrics
-    if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
-        pytest.skip("wminkowski will be removed in SciPy 1.8.0")
+    # create a symmetric matrix
+    V = rng.rand(n_features, n_features)
+    VI = np.dot(V, V.T)
 
-    rng = np.random.RandomState(0)
-    X = rng.rand(n_samples, n_features)
-    test = rng.rand(n_query_pts, n_features)
+    metrics = [
+        ("euclidean", {}),
+        ("manhattan", {}),
+        ("minkowski", dict(p=1)),
+        ("minkowski", dict(p=2)),
+        ("minkowski", dict(p=3)),
+        ("minkowski", dict(p=np.inf)),
+        ("chebyshev", {}),
+        ("seuclidean", dict(V=rng.rand(n_features))),
+        ("mahalanobis", dict(VI=VI)),
+        ("haversine", {}),
+    ]
+    if sp_version < parse_version("1.8.0.dev0"):
+        # TODO: remove once we no longer support scipy < 1.8.0.
+        # wminkowski was removed in scipy 1.8.0 but should work for previous
+        # versions.
+        metrics.append(
+            ("wminkowski", dict(p=3, w=rng.rand(n_features))),
+        )
+    else:
+        # Recent scipy versions accept weights in the Minkowski metric directly:
+        metrics.append(
+            ("minkowski", dict(p=3, w=rng.rand(n_features))),
+        )
 
     algorithms = ["brute", "ball_tree", "kd_tree"]
+    X = rng.rand(n_samples, n_features)
+
+    test = rng.rand(n_query_pts, n_features)
     metric_params = _get_dummy_metric_kwargs(metric, n_features)
 
     # Haversine distance only accepts 2D data
@@ -1534,15 +1559,48 @@ def test_neighbors_metrics(
 
     results = {}
     p = metric_params.pop("p", 2)
-    for algorithm in algorithms:
-        # KD tree doesn't support all metrics
-        neigh = neighbors.NearestNeighbors(
-            n_neighbors=n_neighbors,
-            algorithm=algorithm,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-        )
+
+    for metric, metric_params in metrics:
+        results = {}
+        p = metric_params.pop("p", 2)
+        w = metric_params.get("w", None)
+        for algorithm in algorithms:
+            # KD tree doesn't support all metrics
+            if algorithm == "kd_tree" and (
+                metric not in neighbors.KDTree.valid_metrics or w is not None
+            ):
+                est = neighbors.NearestNeighbors(
+                    algorithm=algorithm, metric=metric, metric_params=metric_params
+                )
+                with pytest.raises(ValueError):
+                    est.fit(X)
+                continue
+            neigh = neighbors.NearestNeighbors(
+                n_neighbors=n_neighbors,
+                algorithm=algorithm,
+                metric=metric,
+                p=p,
+                metric_params=metric_params,
+            )
+
+            # Haversine distance only accepts 2D data
+            feature_sl = slice(None, 2) if metric == "haversine" else slice(None)
+
+            neigh.fit(X[:, feature_sl])
+
+            # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+            ExceptionToAssert = None
+            if (
+                metric == "wminkowski"
+                and algorithm == "brute"
+                and sp_version >= parse_version("1.6.0")
+            ):
+                ExceptionToAssert = DeprecationWarning
+
+            with pytest.warns(ExceptionToAssert):
+                results[algorithm] = neigh.kneighbors(
+                    test[:, feature_sl], return_distance=True
+                )
 
         neigh.fit(X_train)
         results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
