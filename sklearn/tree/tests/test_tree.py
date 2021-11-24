@@ -2230,26 +2230,38 @@ def test_different_endianness_joblib_pickle():
 
 
 def get_different_bitness_node_ndarray(node_ndarray):
-    new_dtype = np.int64 if _IS_32BIT else np.int32
-    descr = node_ndarray.dtype.descr
+    new_dtype_for_indexing_fields = np.int64 if _IS_32BIT else np.int32
 
     # field names in Node struct with SIZE_t types (see sklearn/tree/_tree.pxd)
     indexing_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
 
-    new_descr = []
-    for field_name, dtype_str, *rest in descr:
-        # ignore padding fields
-        if field_name not in NODE_DTYPE.fields:
-            continue
+    new_dtype_dict = {
+        name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()
+    }
+    for name in indexing_field_names:
+        new_dtype_dict[name] = new_dtype_for_indexing_fields
 
-        if field_name in indexing_field_names:
-            to_append = (field_name, new_dtype, *rest)
-        else:
-            to_append = (field_name, dtype_str, *rest)
+    new_dtype = np.dtype(
+        {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
+    )
+    return node_ndarray.astype(new_dtype, casting="same_kind")
 
-        new_descr.append(to_append)
 
-    return node_ndarray.astype(new_descr, casting="same_kind")
+def get_different_alignment_node_ndarray(node_ndarray):
+    new_dtype_dict = {
+        name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()
+    }
+    offsets = [offset for dtype, offset in node_ndarray.dtype.fields.values()]
+    shifted_offsets = [8 + offset for offset in offsets]
+
+    new_dtype = np.dtype(
+        {
+            "names": list(new_dtype_dict.keys()),
+            "formats": list(new_dtype_dict.values()),
+            "offsets": shifted_offsets,
+        }
+    )
+    return node_ndarray.astype(new_dtype, casting="same_kind")
 
 
 def reduce_different_bitness_tree(tree):
@@ -2371,11 +2383,11 @@ def test_check_node_ndarray():
     valid_node_ndarrays = [
         node_ndarray,
         get_different_bitness_node_ndarray(node_ndarray),
+        get_different_alignment_node_ndarray(node_ndarray),
     ]
     valid_node_ndarrays += [
         arr.astype(arr.dtype.newbyteorder()) for arr in valid_node_ndarrays
     ]
-    # TODO add test array with padding?
 
     for arr in valid_node_ndarrays:
         check_node_ndarray(node_ndarray, expected_dtype=expected_dtype)
@@ -2388,7 +2400,28 @@ def test_check_node_ndarray():
             problematic_node_ndarray = node_ndarray[::2]
             check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
 
-    # TODO incompatible dtypes e.g. change one float64 array by float32 or
-    # change one indexing dtype by float64
-    # with pytest.raises(ValueError, match="node array.+incompatible dtype"):
-    #     check_node_ndarray()
+    dtype_dict = {name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()}
+
+    # array with wrong 'threshold' field dtype (int64 rather than float64)
+    new_dtype_dict = dtype_dict.copy()
+    new_dtype_dict["threshold"] = np.int64
+
+    new_dtype = np.dtype(
+        {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
+    )
+    problematic_node_ndarray = node_ndarray.astype(new_dtype)
+
+    with pytest.raises(ValueError, match="node array.+incompatible dtype"):
+        check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+    # array with wrong 'left_child' field dtype (float64 rather than int64 or int32)
+    new_dtype_dict = dtype_dict.copy()
+    new_dtype_dict["left_child"] = np.float64
+    new_dtype = np.dtype(
+        {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
+    )
+
+    problematic_node_ndarray = node_ndarray.astype(new_dtype)
+
+    with pytest.raises(ValueError, match="node array.+incompatible dtype"):
+        check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
