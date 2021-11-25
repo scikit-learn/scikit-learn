@@ -40,7 +40,7 @@ param_grid = {
     "pca__n_components": [5, 15, 30, 45, 64],
     "logistic__C": np.logspace(-4, 4, 4),
 }
-search = GridSearchCV(pipe, param_grid, n_jobs=-1)
+search = GridSearchCV(pipe, param_grid, n_jobs=2)
 search.fit(X_digits, y_digits)
 print("Best parameter (CV score=%0.3f):" % search.best_score_)
 print(search.best_params_)
