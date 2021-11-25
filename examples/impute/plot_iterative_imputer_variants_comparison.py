@@ -65,7 +65,6 @@ X_full, y_full = fetch_california_housing(return_X_y=True)
 X_full = X_full[::10]
 y_full = y_full[::10]
 n_samples, n_features = X_full.shape
-# X_full = MinMaxScaler().fit_transform(X_full)
 # Estimate the score on the entire dataset, with no missing values
 br_estimator = BayesianRidge()
 score_full_data = pd.DataFrame(
