@@ -584,7 +584,7 @@ def _argmin_reduce(dist, start):
 
 
 def pairwise_distances_argmin_min(
-    X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
+    X, Y, *, axis=1, metric="fast_euclidean", metric_kwargs=None
 ):
     """Compute minimum distances between one point and a set of points.
 
@@ -692,7 +692,9 @@ def pairwise_distances_argmin_min(
     return indices, values
 
 
-def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs=None):
+def pairwise_distances_argmin(
+    X, Y, *, axis=1, metric="fast_euclidean", metric_kwargs=None
+):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
