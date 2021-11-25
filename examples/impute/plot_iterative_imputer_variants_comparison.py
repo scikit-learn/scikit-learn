@@ -49,8 +49,9 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import fetch_california_housing
 from sklearn.impute import SimpleImputer
 from sklearn.impute import IterativeImputer
-from sklearn.linear_model import BayesianRidge
-from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
+from sklearn.linear_model import BayesianRidge, Ridge
+from sklearn.kernel_approximation import Nystroem
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
@@ -105,22 +106,15 @@ estimators = [
         n_jobs=2,
         random_state=0,
     ),
-    ExtraTreesRegressor(
-        # We tuned the hyperparameters of the ExtraTreesRegressor to minimize
-        # the execution time
-        n_estimators=4,
-        max_depth=10,
-        bootstrap=True,
-        max_samples=0.5,
-        n_jobs=2,
-        random_state=0,
+    make_pipeline(
+        Nystroem(kernel="polynomial", degree=2, random_state=0), Ridge(alpha=1e3)
     ),
     KNeighborsRegressor(n_neighbors=15),
 ]
 score_iterative_imputer = pd.DataFrame()
+tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
 # iterative imputer is sensible to the tolerance and
 # dependent on the estimator used internally.
-tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
 for impute_estimator, tol in zip(estimators, tolerances):
     estimator = make_pipeline(
         IterativeImputer(
