@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import product
 
 import pytest
@@ -129,7 +130,7 @@ def test_unsupervised_kneighbors(
         indices_no_dist = results_nodist[i]
         distances, next_distances = results[i][0], results[i + 1][0]
         indices, next_indices = results[i][1], results[i + 1][1]
-        assert_allclose(
+        assert_array_equal(
             indices_no_dist,
             indices,
             err_msg=(
@@ -137,7 +138,7 @@ def test_unsupervised_kneighbors(
                 "indices depending on 'return_distances'."
             ),
         )
-        assert_allclose(
+        assert_array_equal(
             indices,
             next_indices,
             err_msg=(
@@ -152,6 +153,7 @@ def test_unsupervised_kneighbors(
                 f"The '{algorithm}' and '{next_algorithm}' "
                 "algorithms return different distances."
             ),
+            atol=1e-6,
         )
 
 
@@ -1508,45 +1510,45 @@ def test_neighbors_badargs():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
+def _get_dummy_metric_params_list(metric, n_features):
+
+    V = rng.rand(n_features, n_features)
+    VI = np.dot(V, V.T)
+
+    METRICS_PARAMS = defaultdict(
+        list,
+        {
+            "euclidean": [],
+            "manhattan": [],
+            "minkowski": [dict(p=1), dict(p=2), dict(p=3), dict(p=np.inf)],
+            "chebyshev": [],
+            "seuclidean": [dict(V=rng.rand(n_features))],
+            "mahalanobis": [dict(VI=VI)],
+            "haversine": [],
+        },
+    )
+
+    if sp_version < parse_version("1.8.0.dev0"):
+        # TODO: remove once we no longer support scipy < 1.8.0.
+        # wminkowski was removed in scipy 1.8.0 but should work for previous
+        # versions.
+        METRICS_PARAMS["wminkowski"].append(dict(p=3, w=rng.rand(n_features)))
+    else:
+        # Recent scipy versions accept weights in the Minkowski metric directly:
+        METRICS_PARAMS["minkowski"].append(dict(p=3, w=rng.rand(n_features)))
+
+    return METRICS_PARAMS.get(metric, [])
+
+
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 def test_neighbors_metrics(
     metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
 ):
     # Test computing the neighbors for various metrics
     # create a symmetric matrix
-    V = rng.rand(n_features, n_features)
-    VI = np.dot(V, V.T)
-
-    metrics = [
-        ("euclidean", {}),
-        ("manhattan", {}),
-        ("minkowski", dict(p=1)),
-        ("minkowski", dict(p=2)),
-        ("minkowski", dict(p=3)),
-        ("minkowski", dict(p=np.inf)),
-        ("chebyshev", {}),
-        ("seuclidean", dict(V=rng.rand(n_features))),
-        ("mahalanobis", dict(VI=VI)),
-        ("haversine", {}),
-    ]
-    if sp_version < parse_version("1.8.0.dev0"):
-        # TODO: remove once we no longer support scipy < 1.8.0.
-        # wminkowski was removed in scipy 1.8.0 but should work for previous
-        # versions.
-        metrics.append(
-            ("wminkowski", dict(p=3, w=rng.rand(n_features))),
-        )
-    else:
-        # Recent scipy versions accept weights in the Minkowski metric directly:
-        metrics.append(
-            ("minkowski", dict(p=3, w=rng.rand(n_features))),
-        )
-
     algorithms = ["brute", "ball_tree", "kd_tree"]
     X = rng.rand(n_samples, n_features)
-
     test = rng.rand(n_query_pts, n_features)
-    metric_params = _get_dummy_metric_kwargs(metric, n_features)
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -1557,10 +1559,9 @@ def test_neighbors_metrics(
         X_train = X
         X_test = test
 
-    results = {}
-    p = metric_params.pop("p", 2)
+    metric_params_list = _get_dummy_metric_params_list(metric, n_features)
 
-    for metric, metric_params in metrics:
+    for metric_params in metric_params_list:
         results = {}
         p = metric_params.pop("p", 2)
         w = metric_params.get("w", None)
@@ -1602,14 +1603,23 @@ def test_neighbors_metrics(
                     test[:, feature_sl], return_distance=True
                 )
 
-        neigh.fit(X_train)
-        results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+            neigh.fit(X_train)
+            results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
-    assert_allclose(results["brute"][0], results["ball_tree"][0])
-    assert_allclose(results["brute"][1], results["ball_tree"][1])
-    if "kd_tree" in results:
-        assert_allclose(results["brute"][0], results["kd_tree"][0])
-        assert_allclose(results["brute"][1], results["kd_tree"][1])
+        brute_dst, brute_idx = results["brute"]
+        ball_tree_dst, ball_tree_idx = results["ball_tree"]
+
+        assert_allclose(brute_dst, ball_tree_dst)
+        assert_array_equal(brute_idx, ball_tree_idx)
+
+        if "kd_tree" in results:
+            # KD tree might not have been computed
+            kd_tree_dst, kd_tree_idx = results["kd_tree"]
+            assert_allclose(brute_dst, kd_tree_dst)
+            assert_array_equal(brute_idx, kd_tree_idx)
+
+            assert_allclose(ball_tree_dst, kd_tree_dst)
+            assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
 def test_callable_metric():
