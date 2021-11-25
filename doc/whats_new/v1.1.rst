@@ -285,6 +285,7 @@ Changelog
   the pseudo-inverse of the components is computed during `fit` and stored in
   `inverse_components_`, and `inverse_transform` becomes available.
   :pr:`21701` by `Aurélien Geron <ageron>`.
+
 :mod:`sklearn.tree`
 ...................
 
