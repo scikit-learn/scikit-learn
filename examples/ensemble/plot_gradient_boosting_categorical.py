@@ -23,7 +23,6 @@ and categorical features, where the houses' sales prices is the target.
 
 """
 
-# %%
 # Load Ames Housing dataset
 # -------------------------
 # First, we load the ames housing data as a pandas dataframe. The features
@@ -70,7 +69,6 @@ print(f"Number of features: {X.shape[1]}")
 print(f"Number of categorical features: {n_categorical_features}")
 print(f"Number of numerical features: {n_numerical_features}")
 
-# %%
 # Gradient boosting estimator with dropped categorical features
 # -------------------------------------------------------------
 # As a baseline, we create an estimator where the categorical features are
@@ -86,7 +84,6 @@ dropper = make_column_transformer(
 )
 hist_dropped = make_pipeline(dropper, HistGradientBoostingRegressor(random_state=42))
 
-# %%
 # Gradient boosting estimator with one-hot encoding
 # -------------------------------------------------
 # Next, we create a pipeline that will one-hot encode the categorical features
@@ -106,7 +103,6 @@ hist_one_hot = make_pipeline(
     one_hot_encoder, HistGradientBoostingRegressor(random_state=42)
 )
 
-# %%
 # Gradient boosting estimator with ordinal encoding
 # -------------------------------------------------
 # Next, we create a pipeline that will treat categorical features as if they
@@ -128,7 +124,6 @@ hist_ordinal = make_pipeline(
     ordinal_encoder, HistGradientBoostingRegressor(random_state=42)
 )
 
-# %%
 # Gradient boosting estimator with native categorical support
 # -----------------------------------------------------------
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
@@ -153,8 +148,6 @@ hist_native = make_pipeline(
     ),
 )
 
-
-# %%
 # Model comparison
 # ----------------
 # Finally, we evaluate the models using cross validation. Here we compare the
@@ -206,7 +199,6 @@ def plot_results(figure_title):
 
 plot_results("Gradient Boosting on Adult Census")
 
-# %%
 # We see that the model with one-hot-encoded data is by far the slowest. This
 # is to be expected, since one-hot-encoding creates one additional feature per
 # category value (for each categorical feature), and thus more split points
@@ -221,10 +213,8 @@ plot_results("Gradient Boosting on Adult Census")
 # to poorer performance. The three models that use categorical features have
 # comparable error rates, with a slight edge for the native handling.
 
-# %%
 # Limitting the number of splits
 # ------------------------------
-#
 # In general, one can expect poorer predictions from one-hot-encoded data,
 # especially when the tree depths or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points, i.e. more depth, in order
@@ -259,7 +249,6 @@ plot_results("Gradient Boosting on Adult Census (few and small trees)")
 
 plt.show()
 
-# %%
 # The results for these under-fitting models confirm our previous intuition:
 # the native category handling strategy performs the best when the splitting
 # budget is constrained. The two other strategies (one-hot encoding and
