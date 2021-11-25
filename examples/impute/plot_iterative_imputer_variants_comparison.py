@@ -118,6 +118,8 @@ estimators = [
 ]
 score_iterative_imputer = pd.DataFrame()
 tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
+# iterative imputer is sensible to the tolerance and
+# dependent on the estimator used internally.
 for impute_estimator, tol in zip(estimators, tolerances):
     estimator = make_pipeline(
         IterativeImputer(
