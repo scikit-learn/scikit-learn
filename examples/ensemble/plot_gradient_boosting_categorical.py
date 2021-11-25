@@ -23,43 +23,43 @@ and categorical features, where the houses' sales prices is the target.
 
 """
 
-# %%
 # Load Ames Housing dataset
 # -------------------------
 # First, we load the Ames Housing data as a pandas dataframe. The features
 # are either categorical or numerical:
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
+X, y = fetch_openml(data_id=42165, as_frame=True, return_X_y=True)
 
 # Select only a subset of features of X to make the example faster to run
 categorical_columns_subset = [
-    "Bldg_Type",
-    "Garage_Finish",
-    "Lot_Config",
+    "BldgType",
+    "GarageFinish",
+    "LotConfig",
     "Functional",
-    "Mas_Vnr_Type",
-    "House_Style",
-    "Fireplace_Qu",
-    "Exter_Cond",
-    "Exter_Qual",
-    "Pool_QC",
+    "MasVnrType",
+    "HouseStyle",
+    "FireplaceQu",
+    "ExterCond",
+    "ExterQual",
+    "PoolQC",
 ]
 
 numerical_columns_subset = [
-    "Three_season_porch",
+    "3SsnPorch",
     "Fireplaces",
-    "Bsmt_Half_Bath",
-    "Half_Bath",
-    "Garage_Cars",
-    "TotRms_AbvGrd",
-    "BsmtFin_SF_1",
-    "BsmtFin_SF_2",
-    "Gr_Liv_Area",
-    "Screen_Porch",
+    "BsmtHalfBath",
+    "HalfBath",
+    "GarageCars",
+    "TotRmsAbvGrd",
+    "BsmtFinSF1",
+    "BsmtFinSF2",
+    "GrLivArea",
+    "ScreenPorch",
 ]
 
 X = X[categorical_columns_subset + numerical_columns_subset]
+X[categorical_columns_subset] = X[categorical_columns_subset].astype("category")
 
 n_categorical_features = X.select_dtypes(include="category").shape[1]
 n_numerical_features = X.select_dtypes(include="number").shape[1]
@@ -69,7 +69,6 @@ print(f"Number of features: {X.shape[1]}")
 print(f"Number of categorical features: {n_categorical_features}")
 print(f"Number of numerical features: {n_numerical_features}")
 
-# %%
 # Gradient boosting estimator with dropped categorical features
 # -------------------------------------------------------------
 # As a baseline, we create an estimator where the categorical features are
@@ -85,7 +84,6 @@ dropper = make_column_transformer(
 )
 hist_dropped = make_pipeline(dropper, HistGradientBoostingRegressor(random_state=42))
 
-# %%
 # Gradient boosting estimator with one-hot encoding
 # -------------------------------------------------
 # Next, we create a pipeline that will one-hot encode the categorical features
@@ -105,7 +103,6 @@ hist_one_hot = make_pipeline(
     one_hot_encoder, HistGradientBoostingRegressor(random_state=42)
 )
 
-# %%
 # Gradient boosting estimator with ordinal encoding
 # -------------------------------------------------
 # Next, we create a pipeline that will treat categorical features as if they
@@ -127,7 +124,6 @@ hist_ordinal = make_pipeline(
     ordinal_encoder, HistGradientBoostingRegressor(random_state=42)
 )
 
-# %%
 # Gradient boosting estimator with native categorical support
 # -----------------------------------------------------------
 # We now create a :class:`~ensemble.HistGradientBoostingRegressor` estimator
@@ -153,8 +149,6 @@ hist_native = make_pipeline(
     ),
 )
 
-
-# %%
 # Model comparison
 # ----------------
 # Finally, we evaluate the models using cross validation. Here we compare the
@@ -212,7 +206,6 @@ def plot_results(figure_title):
 
 plot_results("Gradient Boosting on Ames Housing")
 
-# %%
 # We see that the model with one-hot-encoded data is by far the slowest. This
 # is to be expected, since one-hot-encoding creates one additional feature per
 # category value (for each categorical feature), and thus more split points
@@ -227,10 +220,8 @@ plot_results("Gradient Boosting on Ames Housing")
 # to poorer performance. The three models that use categorical features have
 # comparable error rates, with a slight edge for the native handling.
 
-# %%
 # Limitting the number of splits
 # ------------------------------
-#
 # In general, one can expect poorer predictions from one-hot-encoded data,
 # especially when the tree depths or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points, i.e. more depth, in order
@@ -265,7 +256,6 @@ plot_results("Gradient Boosting on Ames Housing (few and small trees)")
 
 plt.show()
 
-# %%
 # The results for these under-fitting models confirm our previous intuition:
 # the native category handling strategy performs the best when the splitting
 # budget is constrained. The two other strategies (one-hot encoding and
