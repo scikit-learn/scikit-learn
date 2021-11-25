@@ -23,6 +23,17 @@ Put the changes in their relevant module.
 Changed models
 --------------
 
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Efficiency| :class:`cluster.KMeans` now defaults to ``algorithm="lloyd"``
+  instead of ``algorithm="auto"``, which was equivalent to
+  ``algorithm="elkan"``. Lloyd's algorithm and Elkan's algorithm converge to the
+  same solution, up to numerical rounding errors, but in general Lloyd's
+  algorithm uses much less memory, and it is often faster.
+
 
 Changelog
 ---------
@@ -60,12 +71,23 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.cluster`
+......................
+
 - |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
   now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
   that clusters samples in the embedding space as an alternative to the existing
   `'kmeans'` and `'discrete'` methods.
   See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
+
+- |Efficiency| In :class:`cluster.KMeans`, the default ``algorithm`` is now
+  ``"lloyd"`` which is the full classical EM-style algorithm. Both ``"auto"``
+  and ``"full"`` are deprecated and will be removed in version 1.3. They are
+  now aliases for ``"lloyd"``. The previous default was ``"auto"``, which relied
+  on Elkan's algorithm. Lloyd's algorithm uses less memory than Elkan's, it
+  is faster on many datasets, and its results are identical, hence the change.
+  :pr:`21735` by :user:`Aurélien Geron <ageron>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
