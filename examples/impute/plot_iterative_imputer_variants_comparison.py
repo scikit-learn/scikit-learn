@@ -110,6 +110,7 @@ estimators = [
         # the execution time
         n_estimators=4,
         max_depth=10,
+        bootstrap=True,
         max_samples=0.5,
         n_jobs=2,
         random_state=0,
