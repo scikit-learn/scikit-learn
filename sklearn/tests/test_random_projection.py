@@ -2,6 +2,7 @@ import functools
 from typing import List, Any
 
 import numpy as np
+import scipy.linalg as linalg
 import scipy.sparse as sp
 import pytest
 
@@ -395,7 +396,7 @@ def test_inverse_transform(random_state, shape, random_projection_cls):
         if hasattr(components, "toarray"):
             components = components.toarray()
         assert_array_almost_equal(
-            random_projection.inverse_components_, np.linalg.pinv(components)
+            random_projection.inverse_components_, linalg.pinv(components)
         )
 
 
