@@ -391,6 +391,13 @@ def test_inverse_transform(random_state, shape, random_projection_cls):
             projected = projected.toarray()
         assert_array_almost_equal(projected, projected_again)
         assert random_projection.inverse_components_.shape == (shape[1], 2)
+        components = random_projection.components_
+        if hasattr(components, "toarray"):
+            components = components.toarray()
+        assert_array_almost_equal(
+            random_projection.inverse_components_,
+            np.linalg.pinv(components)
+        )
 
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
