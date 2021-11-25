@@ -148,7 +148,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 print("Training HistGradientBoostingRegressor...")
 tic = time()
-est = HistGradientBoostingRegressor(max_depth=7, random_state=0)
+est = HistGradientBoostingRegressor(random_state=0)
 est.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
@@ -236,8 +236,8 @@ display = PartialDependenceDisplay.from_estimator(
     X_train,
     features,
     kind="average",
-    n_jobs=3,
-    grid_resolution=20,
+    n_jobs=2,
+    grid_resolution=10,
     ax=ax,
 )
 print(f"done in {time() - tic:.3f}s")
@@ -268,7 +268,7 @@ fig = plt.figure()
 
 features = ("AveOccup", "HouseAge")
 pdp = partial_dependence(
-    est, X_train, features=features, kind="average", grid_resolution=20
+    est, X_train, features=features, kind="average", grid_resolution=10
 )
 XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
 Z = pdp.average[0].T
