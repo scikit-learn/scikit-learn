@@ -238,6 +238,40 @@ Changelog
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
+  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
+  :user:`Lucy Jimenez <LucyJimenez>`.
+
+- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
+  now accept an `input_name` parameter to make the error message more
+  informative when passed invalid input data (e.g. with NaN or infinite
+  values).
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :func:`utils.validation.check_array` returns a float
+  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
+
+:mod:`sklearn.random_projection`
+................................
+
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
+  :user:`Loïc Estève <lesteve>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Support loading pickles of decision tree models when the pickle has
+  been generated on a platform with a different bitness. A typical example is
+  to train and pickle the model on 64 bit machine and load the model on a 32
+  bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
