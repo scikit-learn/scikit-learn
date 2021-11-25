@@ -1,4 +1,3 @@
-from collections import defaultdict
 from itertools import product
 
 import pytest
@@ -23,7 +22,7 @@ from sklearn.exceptions import EfficiencyWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
-    _get_dummy_metric_kwargs,
+    _get_dummy_metric_params_list,
 )
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -1510,36 +1509,6 @@ def test_neighbors_badargs():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
-def _get_dummy_metric_params_list(metric, n_features):
-
-    V = rng.rand(n_features, n_features)
-    VI = np.dot(V, V.T)
-
-    METRICS_PARAMS = defaultdict(
-        list,
-        {
-            "euclidean": [],
-            "manhattan": [],
-            "minkowski": [dict(p=1), dict(p=2), dict(p=3), dict(p=np.inf)],
-            "chebyshev": [],
-            "seuclidean": [dict(V=rng.rand(n_features))],
-            "mahalanobis": [dict(VI=VI)],
-            "haversine": [],
-        },
-    )
-
-    if sp_version < parse_version("1.8.0.dev0"):
-        # TODO: remove once we no longer support scipy < 1.8.0.
-        # wminkowski was removed in scipy 1.8.0 but should work for previous
-        # versions.
-        METRICS_PARAMS["wminkowski"].append(dict(p=3, w=rng.rand(n_features)))
-    else:
-        # Recent scipy versions accept weights in the Minkowski metric directly:
-        METRICS_PARAMS["minkowski"].append(dict(p=3, w=rng.rand(n_features)))
-
-    return METRICS_PARAMS.get(metric, [])
-
-
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 def test_neighbors_metrics(
     metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
@@ -1648,7 +1617,7 @@ def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=
     X = rng.rand(n_samples, n_features)
     Xcsr = csr_matrix(X)
 
-    metric_params = _get_dummy_metric_kwargs(metric, n_features)
+    metric_params_list = _get_dummy_metric_params_list(metric, n_features)
 
     if metric == "precomputed":
         X_precomputed = rng.random_sample((10, 4))
@@ -1662,24 +1631,28 @@ def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=
         nb_p.kneighbors(DYX)
 
     else:
-        nn = neighbors.NearestNeighbors(
-            n_neighbors=3, algorithm="auto", metric=metric, metric_params=metric_params
-        )
-        # Haversine distance only accepts 2D data
-        if metric == "haversine":
-            feature_sl = slice(None, 2)
-            X = np.ascontiguousarray(X[:, feature_sl])
-        else:
-            X = X
-
-        nn.fit(X)
-        nn.kneighbors(X)
-
-        if metric in VALID_METRICS_SPARSE["brute"]:
+        for metric_params in metric_params_list:
             nn = neighbors.NearestNeighbors(
-                n_neighbors=3, algorithm="auto", metric=metric
-            ).fit(Xcsr)
-            nn.kneighbors(Xcsr)
+                n_neighbors=3,
+                algorithm="auto",
+                metric=metric,
+                metric_params=metric_params,
+            )
+            # Haversine distance only accepts 2D data
+            if metric == "haversine":
+                feature_sl = slice(None, 2)
+                X = np.ascontiguousarray(X[:, feature_sl])
+            else:
+                X = X
+
+            nn.fit(X)
+            nn.kneighbors(X)
+
+            if metric in VALID_METRICS_SPARSE["brute"]:
+                nn = neighbors.NearestNeighbors(
+                    n_neighbors=3, algorithm="auto", metric=metric
+                ).fit(Xcsr)
+                nn.kneighbors(Xcsr)
 
 
 def test_metric_params_interface():

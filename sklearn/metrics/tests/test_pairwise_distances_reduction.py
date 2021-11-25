@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from collections import defaultdict
 from numpy.testing import assert_array_equal, assert_allclose
 from scipy.sparse import csr_matrix
 
@@ -15,12 +16,13 @@ from sklearn.metrics._pairwise_distances_reduction import (
 )
 
 from sklearn.utils import _in_unstable_openblas_configuration
-
+from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import fails_if_unstable_openblas
 
 
-def _get_dummy_metric_kwargs(metric: str, n_features: int):
-    """Return dummy DistanceMetric kwargs for tests."""
+def _get_dummy_metric_params_list(metric: str, n_features: int):
+    """Return list of dummy DistanceMetric kwargs for tests."""
+
     rng = np.random.RandomState(1)
     weights = rng.random_sample(n_features)
     weights /= weights.sum()
@@ -30,14 +32,33 @@ def _get_dummy_metric_kwargs(metric: str, n_features: int):
     # VI is positive-semidefinite, preferred for precision matrix
     VI = np.dot(V, V.T) + 3 * np.eye(n_features)
 
-    kwargs = {
-        "minkowski": dict(p=1.5),
-        "seuclidean": dict(V=weights),
-        "wminkowski": dict(p=1.5, w=weights),
-        "mahalanobis": dict(VI=VI),
-    }
+    METRICS_PARAMS = defaultdict(
+        list,
+        {
+            "euclidean": [{}],
+            "manhattan": [{}],
+            "minkowski": [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)],
+            "chebyshev": [{}],
+            "seuclidean": [dict(V=rng.rand(n_features))],
+            "haversine": [{}],
+            "wminkowski": [dict(p=1.5, w=weights)],
+            "mahalanobis": [dict(VI=VI)],
+        },
+    )
 
-    return kwargs.get(metric, {})
+    wminkowski_kwargs = dict(p=3, w=rng.rand(n_features))
+
+    if sp_version < parse_version("1.8.0.dev0"):
+        # TODO: remove once we no longer support scipy < 1.8.0.
+        # wminkowski was removed in scipy 1.8.0 but should work for previous
+        # versions.
+        METRICS_PARAMS["wminkowski"].append(wminkowski_kwargs)  # type: ignore
+    else:
+        # Recent scipy versions accept weights in the Minkowski metric directly:
+        # type: ignore
+        METRICS_PARAMS["minkowski"].append(wminkowski_kwargs)  # type: ignore
+
+    return METRICS_PARAMS.get(metric, [{}])
 
 
 def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
@@ -314,7 +335,8 @@ def test_strategies_consistency(
         Y,
         parameter,
         metric=metric,
-        metric_kwargs=_get_dummy_metric_kwargs(metric, n_features),
+        # Taking the first
+        metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
         # To be sure to use parallelization
         chunk_size=n_samples // 4,
     )
@@ -407,7 +429,7 @@ def test_fast_sqeuclidean_translation_invariance(
         Y,
         parameter,
         metric=metric,
-        metric_kwargs=_get_dummy_metric_kwargs(metric, n_features),
+        metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
     ).compute(return_distance=True)
 
     dist, indices = PairwiseDistancesReduction.get_for(
@@ -415,7 +437,7 @@ def test_fast_sqeuclidean_translation_invariance(
         Y + 0,
         parameter,
         metric=metric,
-        metric_kwargs=_get_dummy_metric_kwargs(metric, n_features),
+        metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
     ).compute(return_distance=True)
 
     ASSERT_RESULT[PairwiseDistancesReduction](
