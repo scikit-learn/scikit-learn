@@ -1833,6 +1833,15 @@ def lift_score(
     function.
     Lift is only possible on binary data.
 
+    References
+    ----------
+    .. [1] `Wikipedia entry for lift
+           <https://en.wikipedia.org/wiki/Lift_(data_mining)>`_.
+    .. [2] `Example of lift in parctice
+           <https://www.kdnuggets.com/2016/03/lift-analysis-data-scientist-secret-weapon.html>`_.
+    .. [3] `Life curve in machine learning
+           <https://howtolearnmachinelearning.com/articles/the-lift-curve-in-machine-learning/>`_.
+
     Examples
     --------
     >>> from sklearn.metrics import lift_score
