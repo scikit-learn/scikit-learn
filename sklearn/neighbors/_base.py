@@ -448,18 +448,21 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # For minkowski distance, use more efficient methods where available
         if self.metric == "minkowski":
             p = self.effective_metric_params_.pop("p", 2)
+            w = self.effective_metric_params_.pop("w", None)
             if p < 1:
                 raise ValueError(
                     "p must be greater or equal to one for minkowski metric"
                 )
-            elif p == 1:
+            elif p == 1 and w is None:
                 self.effective_metric_ = "manhattan"
-            elif p == 2:
+            elif p == 2 and w is None:
                 self.effective_metric_ = "euclidean"
-            elif p == np.inf:
+            elif p == np.inf and w is None:
                 self.effective_metric_ = "chebyshev"
             else:
+                # Use the generic minkowski metric, possibly weighted.
                 self.effective_metric_params_["p"] = p
+                self.effective_metric_params_["w"] = w
 
         if isinstance(X, NeighborsBase):
             self._fit_X = X._fit_X
