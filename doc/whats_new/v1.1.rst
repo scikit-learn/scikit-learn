@@ -72,7 +72,7 @@ Changelog
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.cluster`
-..........................
+......................
 
 - |Enhancement| :class:`cluster.SpectralClustering` and :func:`cluster.spectral`
   now include the new `'cluster_qr'` method from :func:`cluster.cluster_qr`
