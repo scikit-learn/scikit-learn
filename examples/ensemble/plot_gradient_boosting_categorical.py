@@ -26,7 +26,6 @@ and categorical features, where the houses' sales prices is the target.
 # %%
 # Load Ames Housing dataset
 # -------------------------
-
 # First, we load the ames housing data as a pandas dataframe. The features
 # are either categorical or numerical:
 from sklearn.datasets import fetch_openml
