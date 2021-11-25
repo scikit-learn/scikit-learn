@@ -159,12 +159,16 @@ def plot_learning_curve(
     axes[1].set_title("Scalability of the model")
 
     # Plot fit_time vs score
+    fit_time_argsort = fit_times_mean.argsort()
+    fit_time_sorted = fit_times_mean[fit_time_argsort]
+    test_scores_mean_sorted = test_scores_mean[fit_time_argsort]
+    test_scores_std_sorted = test_scores_std[fit_time_argsort]
     axes[2].grid()
-    axes[2].plot(fit_times_mean, test_scores_mean, "o-")
+    axes[2].plot(fit_time_sorted, test_scores_mean_sorted, "o-")
     axes[2].fill_between(
-        fit_times_mean,
-        test_scores_mean - test_scores_std,
-        test_scores_mean + test_scores_std,
+        fit_time_sorted,
+        test_scores_mean_sorted - test_scores_std_sorted,
+        test_scores_mean_sorted + test_scores_std_sorted,
         alpha=0.1,
     )
     axes[2].set_xlabel("fit_times")
