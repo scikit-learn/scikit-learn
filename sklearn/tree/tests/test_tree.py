@@ -2396,9 +2396,9 @@ def test_check_node_ndarray():
         problematic_node_ndarray = np.zeros((5, 2), dtype=expected_dtype)
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
 
-        with pytest.raises(ValueError, match="node array.+C-contiguous"):
-            problematic_node_ndarray = node_ndarray[::2]
-            _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+    with pytest.raises(ValueError, match="node array.+C-contiguous"):
+        problematic_node_ndarray = node_ndarray[::2]
+        _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
 
     dtype_dict = {name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()}
 
