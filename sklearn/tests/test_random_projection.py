@@ -29,8 +29,8 @@ all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 # Make some random data with uniformly located non zero entries with
 # Gaussian distributed values
-def make_sparse_random_data(n_samples, n_features, n_nonzeros):
-    rng = np.random.RandomState(0)
+def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=0):
+    rng = np.random.RandomState(random_state)
     data_coo = sp.coo_matrix(
         (
             rng.randn(n_nonzeros),
@@ -375,24 +375,22 @@ def test_random_projection_feature_names_out(random_projection_cls):
     assert_array_equal(names_out, expected_names_out)
 
 
-@pytest.mark.parametrize("data", [data, data_csr])
+@pytest.mark.parametrize("random_state", range(100))
+@pytest.mark.parametrize("shape", [(10, 1000), (1000, 10), (100, 100)])
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
-def test_inverse_transform(data, random_projection_cls):
-    random_projection = random_projection_cls(
-        n_components=2, fit_inverse_transform=True
-    )
-    projected = random_projection.fit_transform(data)
-    projected_back = random_projection.inverse_transform(projected)
-    assert projected_back.shape == data.shape
-    projected_again = random_projection.transform(projected_back)
-    if hasattr(projected, "toarray"):
-        projected = projected.toarray()
-    assert_array_almost_equal(projected, projected_again)
-    assert random_projection.inverse_components_.shape == (n_features, 2)
-    assert_array_almost_equal(
-        random_projection.components_ @ random_projection.inverse_components_,
-        np.eye(random_projection.n_components),
-    )
+def test_inverse_transform(random_state, shape, random_projection_cls):
+    for data in make_sparse_random_data(shape[0], shape[1], 100, random_state):
+        random_projection = random_projection_cls(
+            n_components=2, fit_inverse_transform=True
+        )
+        projected = random_projection.fit_transform(data)
+        projected_back = random_projection.inverse_transform(projected)
+        assert projected_back.shape == data.shape
+        projected_again = random_projection.transform(projected_back)
+        if hasattr(projected, "toarray"):
+            projected = projected.toarray()
+        assert_array_almost_equal(projected, projected_again)
+        assert random_projection.inverse_components_.shape == (shape[1], 2)
 
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)

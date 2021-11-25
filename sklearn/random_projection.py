@@ -308,17 +308,23 @@ def _svd_for_sparse_matrix(a):
     s : ndarray
         The singular values, sorted in non-increasing order.
         Of shape (K,), with ``K = min(M, N)``.
-    Vh : ndarray
+    Vt : ndarray
         Unitary matrix having right singular vectors as rows.
         Of shape ``(K, N)``.
     """
-    u1, s1, vt1 = sp.linalg.svds(a, k=min(a.shape) // 2)
-    u2, s2, vt2 = sp.linalg.svds(a, k=min(a.shape) - min(a.shape) // 2, which="SM")
-    u = np.concatenate([u1, u2], axis=1)
-    s = np.concatenate([s1, s2], axis=0)
-    vt = np.concatenate([vt1, vt2], axis=0)
+    n_rows, n_cols = a.shape
+    if n_rows < n_cols:
+        zeros_row = sp.csr_matrix(([], [], [0, 0]), shape=(1, n_cols))
+        a = sp.vstack([a, zeros_row])  # add an extra row full of zeros
+    else:
+        zeros_col = sp.csr_matrix(([], [], np.zeros(n_rows + 1)), shape=(n_rows, 1))
+        a = sp.hstack([a, zeros_col])  # add an extra column full of zeros
+    u, s, vt = sp.linalg.svds(a, k=min(a.shape) - 1)
     sorted_idx = np.flip(np.argsort(s), axis=0)
-    return u[:, sorted_idx], s[sorted_idx], vt[sorted_idx]
+    if n_rows < n_cols:
+        return u[:-1, sorted_idx], s[sorted_idx], vt[sorted_idx]
+    else:
+        return u[:, sorted_idx], s[sorted_idx], vt[sorted_idx, :-1]
 
 
 def _pinv_for_sparse_matrix(a):
@@ -348,13 +354,13 @@ def _pinv_for_sparse_matrix(a):
     B : (N, M) ndarray
         The dense pseudo-inverse of the sparse matrix `a`.
     """
-    u, s, vh = _svd_for_sparse_matrix(a)
+    u, s, vt = _svd_for_sparse_matrix(a)
     type_ = u.dtype.char.lower()
     min_s = np.max(s) * max(a.shape) * np.finfo(type_).eps
     rank = np.sum(s > min_s)
     u = u[:, :rank]
     u /= s[:rank]
-    return (u @ vh[:rank]).conj().T
+    return (u @ vt[:rank]).conj().T
 
 
 class BaseRandomProjection(
