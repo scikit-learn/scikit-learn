@@ -26,14 +26,43 @@ and categorical features, where the houses' sales prices is the target.
 # %%
 # Load Ames Housing dataset
 # -------------------------
-# First, we load the ames housing data as a pandas dataframe. The features
-# are either categorical or numerical:
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
+X, y = fetch_openml(data_id=42165, as_frame=True, return_X_y=True)
 
-n_categorical_features = (X.dtypes == "category").sum()
-n_numerical_features = (X.dtypes == "float").sum()
+# Select only a subset of features of X to make the example faster to run
+categorical_columns_subset = [
+    "BldgType",
+    "GarageFinish",
+    "LotConfig",
+    "Functional",
+    "MasVnrType",
+    "HouseStyle",
+    "FireplaceQu",
+    "ExterCond",
+    "ExterQual",
+    "PoolQC",
+]
+
+numerical_columns_subset = [
+    "3SsnPorch",
+    "Fireplaces",
+    "BsmtHalfBath",
+    "HalfBath",
+    "GarageCars",
+    "TotRmsAbvGrd",
+    "BsmtFinSF1",
+    "BsmtFinSF2",
+    "GrLivArea",
+    "ScreenPorch",
+]
+
+X = X[categorical_columns_subset + numerical_columns_subset]
+X[categorical_columns_subset] = X[categorical_columns_subset].astype("category")
+
+n_categorical_features = X.select_dtypes(include="category").shape[1]
+n_numerical_features = X.select_dtypes(include="number").shape[1]
+
 print(f"Number of samples: {X.shape[0]}")
 print(f"Number of features: {X.shape[1]}")
 print(f"Number of categorical features: {n_categorical_features}")
