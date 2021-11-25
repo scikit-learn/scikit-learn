@@ -181,14 +181,14 @@ configurations = [
         "estimator": NuSVR,
         "tuned_params": {"C": 1e3, "gamma": 2 ** -15},
         "changing_param": "nu",
-        "changing_param_values": [0.1, 0.25, 0.5, 0.75, 0.9],
+        "changing_param_values": [0.05, 0.1, 0.2, 0.35, 0.5],
         "complexity_label": "n_support_vectors",
         "complexity_computer": lambda x: len(x.support_vectors_),
         "data": regression_data,
         "postfit_hook": lambda x: x,
         "prediction_performance_computer": mean_squared_error,
         "prediction_performance_label": "MSE",
-        "n_samples": 30,
+        "n_samples": 15,
     },
     {
         "estimator": GradientBoostingRegressor,
@@ -205,7 +205,7 @@ configurations = [
         "postfit_hook": lambda x: x,
         "prediction_performance_computer": mean_squared_error,
         "prediction_performance_label": "MSE",
-        "n_samples": 30,
+        "n_samples": 15,
     },
 ]
 
