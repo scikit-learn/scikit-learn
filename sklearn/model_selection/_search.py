@@ -43,12 +43,7 @@ from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
 from ..utils import deprecated
 
-__all__ = [
-    "GridSearchCV",
-    "ParameterGrid",
-    "ParameterSampler",
-    "RandomizedSearchCV",
-]
+__all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
 
 class ParameterGrid:
@@ -426,7 +421,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
-                "and the estimator doesn't provide one %s" % self.best_estimator_
+                "and the estimator doesn't provide one %s"
+                % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
             if self.multimetric_:
@@ -916,7 +912,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
         param_results = defaultdict(
-            partial(MaskedArray, np.empty(n_candidates), mask=True, dtype=object)
+            partial(
+                MaskedArray,
+                np.empty(n_candidates),
+                mask=True,
+                dtype=object,
+            )
         )
         for cand_idx, params in enumerate(candidate_params):
             for name, value in params.items():
