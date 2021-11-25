@@ -53,7 +53,7 @@ jobs:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3
+      - PYTHON_VERSION: '3.9'
       - NUMPY_VERSION: 'latest'
       - SCIPY_VERSION: 'latest'
       - MATPLOTLIB_VERSION: 'latest'

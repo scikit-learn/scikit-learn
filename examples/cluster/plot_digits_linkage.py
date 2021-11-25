@@ -12,10 +12,18 @@ not to find good clusters for the digits. This is why the example works on a
 
 What this example shows us is the behavior "rich getting richer" of
 agglomerative clustering that tends to create uneven cluster sizes.
+
 This behavior is pronounced for the average linkage strategy,
-that ends up with a couple of singleton clusters, while in the case
-of single linkage we get a single central cluster with all other clusters
-being drawn from noise points around the fringes.
+that ends up with a couple of clusters with few datapoints.
+
+The case of single linkage is even more pathologic with a very
+large cluster covering most digits, an intermediate size (clean)
+cluster with most zero digits and all other clusters being drawn
+from noise points around the fringes.
+
+The other linkage strategies lead to more evenly distributed
+clusters that are therefore likely to be less sensible to a
+random resampling of the dataset.
 
 """
 
@@ -25,7 +33,6 @@ being drawn from noise points around the fringes.
 from time import time
 
 import numpy as np
-from scipy import ndimage
 from matplotlib import pyplot as plt
 
 from sklearn import manifold, datasets
@@ -34,22 +41,6 @@ X, y = datasets.load_digits(return_X_y=True)
 n_samples, n_features = X.shape
 
 np.random.seed(0)
-
-
-def nudge_images(X, y):
-    # Having a larger dataset shows more clearly the behavior of the
-    # methods, but we multiply the size of the dataset only by 2, as the
-    # cost of the hierarchical clustering methods are strongly
-    # super-linear in n_samples
-    shift = lambda x: ndimage.shift(
-        x.reshape((8, 8)), 0.3 * np.random.normal(size=2), mode="constant"
-    ).ravel()
-    X = np.concatenate([X, np.apply_along_axis(shift, 1, X)])
-    Y = np.concatenate([y, y], axis=0)
-    return X, Y
-
-
-X, y = nudge_images(X, y)
 
 
 # ----------------------------------------------------------------------

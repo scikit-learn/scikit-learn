@@ -689,7 +689,12 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
 
     assert viz.ax_.get_xlabel() == "Mean predicted probability (Positive class: 1)"
     assert viz.ax_.get_ylabel() == "Fraction of positives (Positive class: 1)"
-    assert viz.line_.get_label() == "LogisticRegression"
+
+    expected_legend_labels = ["LogisticRegression", "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
@@ -698,8 +703,12 @@ def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     clf = make_pipeline(StandardScaler(), LogisticRegression())
     clf.fit(X, y)
     viz = CalibrationDisplay.from_estimator(clf, X, y)
-    assert clf.__class__.__name__ in viz.line_.get_label()
-    assert viz.estimator_name == clf.__class__.__name__
+
+    expected_legend_labels = [viz.estimator_name, "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 @pytest.mark.parametrize(
@@ -712,7 +721,13 @@ def test_calibration_display_default_labels(pyplot, name, expected_label):
 
     viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
     viz.plot()
-    assert viz.line_.get_label() == expected_label
+
+    expected_legend_labels = [] if name is None else [name]
+    expected_legend_labels.append("Perfectly calibrated")
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 def test_calibration_display_label_class_plot(pyplot):
@@ -727,7 +742,12 @@ def test_calibration_display_label_class_plot(pyplot):
     assert viz.estimator_name == name
     name = "name two"
     viz.plot(name=name)
-    assert viz.line_.get_label() == name
+
+    expected_legend_labels = [name, "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -750,11 +770,19 @@ def test_calibration_display_name_multiple_calls(
     assert viz.estimator_name == clf_name
     pyplot.close("all")
     viz.plot()
-    assert clf_name == viz.line_.get_label()
+
+    expected_legend_labels = [clf_name, "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
+
     pyplot.close("all")
     clf_name = "another_name"
     viz.plot(name=clf_name)
-    assert clf_name == viz.line_.get_label()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 def test_calibration_display_ref_line(pyplot, iris_data_binary):
@@ -832,7 +860,12 @@ def test_calibration_display_pos_label(
         viz.ax_.get_ylabel()
         == f"Fraction of positives (Positive class: {expected_pos_label})"
     )
-    assert viz.line_.get_label() == "LogisticRegression"
+
+    expected_legend_labels = [lr.__class__.__name__, "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
