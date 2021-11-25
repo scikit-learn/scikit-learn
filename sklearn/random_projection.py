@@ -317,7 +317,7 @@ def _svd_for_sparse_matrix(a):
     u = np.concatenate([u1, u2], axis=1)
     s = np.concatenate([s1, s2], axis=0)
     vt = np.concatenate([vt1, vt2], axis=0)
-    sorted_idx = np.flip(np.argsort(s))
+    sorted_idx = np.flip(np.argsort(s), axis=0)
     return u[:, sorted_idx], s[sorted_idx], vt[sorted_idx]
 
 
