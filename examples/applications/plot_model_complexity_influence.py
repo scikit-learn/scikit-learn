@@ -74,7 +74,7 @@ def generate_data(case):
         train_size = 0.8
     elif case == "classification":
         X, y = datasets.fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
-        train_size = 0.4
+        train_size = 0.4  # to make the example run faster
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=train_size, random_state=0
