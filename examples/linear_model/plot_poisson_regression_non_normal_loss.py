@@ -194,9 +194,11 @@ def score_estimator(estimator, df_test):
         )
     )
 
+    return y_pred
+
 
 print("Constant mean frequency evaluation:")
-score_estimator(dummy, df_test)
+test_preds = [score_estimator(dummy, df_test)]
 
 # %%
 # (Generalized) linear models
@@ -226,7 +228,7 @@ ridge_glm = Pipeline(
 # meta-estimator to map ``y_pred`` to a strictly positive domain.
 
 print("Ridge evaluation:")
-score_estimator(ridge_glm, df_test)
+test_preds.append(score_estimator(ridge_glm, df_test))
 
 # %%
 # Next we fit the Poisson regressor on the target variable. We set the
@@ -255,7 +257,7 @@ poisson_glm.fit(
 )
 
 print("PoissonRegressor evaluation:")
-score_estimator(poisson_glm, df_test)
+test_preds.append(score_estimator(poisson_glm, df_test))
 
 # %%
 # Gradient Boosting Regression Trees for Poisson regression
@@ -307,7 +309,7 @@ poisson_gbrt.fit(
 )
 
 print("Poisson Gradient Boosted Trees evaluation:")
-score_estimator(poisson_gbrt, df_test)
+test_preds.append(score_estimator(poisson_gbrt, df_test))
 
 # %%
 # Like the Poisson GLM above, the gradient boosted trees model minimizes
@@ -335,7 +337,10 @@ for row_idx, label, df in zip(range(2), ["train", "test"], [df_train, df_test]):
     axes[row_idx, 0].set_ylabel(label + " samples")
 
     for idx, model in enumerate([ridge_glm, poisson_glm, poisson_gbrt]):
-        y_pred = model.predict(df)
+        if label == "train":
+            y_pred = model.predict(df)
+        else:
+            y_pred = test_preds[idx + 1]
 
         pd.Series(y_pred).hist(
             bins=np.linspace(-1, 4, n_bins), ax=axes[row_idx, idx + 1]
@@ -428,10 +433,12 @@ print(f"Actual number of claims: {df_test['ClaimNb'].sum()}")
 fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 plt.subplots_adjust(wspace=0.3)
 
-for axi, model in zip(ax.ravel(), [ridge_glm, poisson_glm, poisson_gbrt, dummy]):
-    y_pred = model.predict(df_test)
-    y_true = df_test["Frequency"].values
-    exposure = df_test["Exposure"].values
+y_true = df_test["Frequency"].values
+exposure = df_test["Exposure"].values
+for idx, (axi, model) in enumerate(
+    zip(ax.ravel(), [dummy, ridge_glm, poisson_glm, poisson_gbrt])
+):
+    y_pred = test_preds[idx]
     q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
         y_true, y_pred, sample_weight=exposure, n_bins=10
     )
@@ -505,8 +512,8 @@ def lorenz_curve(y_true, y_pred, exposure):
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
-for model in [dummy, ridge_glm, poisson_glm, poisson_gbrt]:
-    y_pred = model.predict(df_test)
+for idx, model in enumerate([dummy, ridge_glm, poisson_glm, poisson_gbrt]):
+    y_pred = test_preds[idx]
     cum_exposure, cum_claims = lorenz_curve(
         df_test["Frequency"], y_pred, df_test["Exposure"]
     )
