@@ -141,6 +141,12 @@ Changelog
   multilabel classification.
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now raise consistent error message
+  when passed invalid values for `alpha`.
+  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`
+  and :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.metrics`
 ......................
 
