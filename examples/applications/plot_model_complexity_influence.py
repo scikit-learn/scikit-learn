@@ -35,6 +35,7 @@ Hamming Loss).
 # Authors: Eustache Diemert <eustache@diemert.fr>
 #          Maria Telenczuk <https://github.com/maikia>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Nathan Astegiano <https://github.com/nastegiano>
 # License: BSD 3 clause
 
 import time
@@ -162,7 +163,7 @@ configurations = [
         "tuned_params": {
             "penalty": "elasticnet",
             "alpha": 0.001,
-            "loss": "modified_huber",
+            "loss": "hinge",
             "fit_intercept": True,
             "tol": 1e-3,
         },
@@ -191,7 +192,7 @@ configurations = [
     },
     {
         "estimator": GradientBoostingRegressor,
-        "tuned_params": {"loss": "squared_error"},
+        "tuned_params": {},
         "changing_param": "n_estimators",
         "changing_param_values": [10, 50, 100, 200, 500],
         "complexity_label": "n_trees",
@@ -262,10 +263,16 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
         % (conf["changing_param"], conf["estimator"].__name__)
     )
 
+ti = time.time()
 
 for conf in configurations:
     prediction_performances, prediction_times, complexities = benchmark_influence(conf)
     plot_influence(conf, prediction_performances, prediction_times, complexities)
+
+tf = time.time()-ti
+
+print("total time : %.2fs." % tf)
+
 plt.show()
 
 
