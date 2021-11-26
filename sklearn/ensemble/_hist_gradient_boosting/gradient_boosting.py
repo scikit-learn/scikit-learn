@@ -15,6 +15,7 @@ from ..._loss.loss import (
     HalfMultinomialLoss,
     HalfPoissonLoss,
     HalfSquaredError,
+    PinballLoss,
 )
 from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
 from ...utils import check_random_state, resample
@@ -42,6 +43,7 @@ _LOSSES.update(
         "least_squares": HalfSquaredError,
         "least_absolute_deviation": AbsoluteError,
         "poisson": HalfPoissonLoss,
+        "quantile": PinballLoss,
         "binary_crossentropy": HalfBinomialLoss,
         "categorical_crossentropy": HalfMultinomialLoss,
     }
@@ -87,6 +89,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self,
         loss,
         *,
+        loss_param,
         learning_rate,
         max_iter,
         max_leaf_nodes,
@@ -106,6 +109,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         random_state,
     ):
         self.loss = loss
+        self.loss_param = loss_param
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.max_leaf_nodes = max_leaf_nodes
@@ -321,7 +325,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_threads = _openmp_effective_n_threads()
 
         if isinstance(self.loss, str):
-            self._loss = self._get_loss(sample_weight=sample_weight)
+            self._loss = self._get_loss(
+                sample_weight=sample_weight, loss_param=self.loss_param
+            )
         elif isinstance(self.loss, BaseLoss):
             self._loss = self.loss
 
@@ -1077,7 +1083,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return {"allow_nan": True}
 
     @abstractmethod
-    def _get_loss(self, sample_weight):
+    def _get_loss(self, sample_weight, loss_param):
         pass
 
     @abstractmethod
@@ -1115,16 +1121,20 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'poisson'}, \
+    loss : {'squared_error', 'absolute_error', 'poisson', 'quantile'}, \
             default='squared_error'
         The loss function to use in the boosting process. Note that the
         "squared error" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
         uses a log-link and requires ``y >= 0``.
+        "quantile" uses the pinball loss.
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
+
+        .. versionchanged:: 1.1
+           Added option 'quantile'.
 
         .. deprecated:: 1.0
             The loss 'least_squares' was deprecated in v1.0 and will be removed
@@ -1135,6 +1145,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             be removed in version 1.2. Use `loss='absolute_error'` which is
             equivalent.
 
+    loss_param : float, default=None
+        If loss is "quantile", this parameter specifies which quantile to be estimated
+        and must be between 0 and 1.
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -1294,12 +1307,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         "absolute_error",
         "least_absolute_deviation",
         "poisson",
+        "quantile",
     )
 
     def __init__(
         self,
         loss="squared_error",
         *,
+        loss_param=None,
         learning_rate=0.1,
         max_iter=100,
         max_leaf_nodes=31,
@@ -1320,6 +1335,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     ):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss,
+            loss_param=loss_param,
             learning_rate=learning_rate,
             max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes,
@@ -1390,7 +1406,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 )
         return y
 
-    def _get_loss(self, sample_weight):
+    def _get_loss(self, sample_weight, loss_param):
         # TODO: Remove in v1.2
         if self.loss == "least_squares":
             warnings.warn(
@@ -1409,7 +1425,12 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             )
             return _LOSSES["absolute_error"](sample_weight=sample_weight)
 
-        return _LOSSES[self.loss](sample_weight=sample_weight)
+        if self.loss == "quantile":
+            return _LOSSES[self.loss](
+                sample_weight=sample_weight, quantile=self.loss_param
+            )
+        else:
+            return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
 class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
@@ -1624,6 +1645,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     ):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss,
+            loss_param=None,
             learning_rate=learning_rate,
             max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes,
@@ -1778,7 +1800,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
-    def _get_loss(self, sample_weight):
+    def _get_loss(self, sample_weight, loss_param):
         if self.loss == "auto":
             if self.n_trees_per_iteration_ == 1:
                 return _LOSSES["binary_crossentropy"](sample_weight=sample_weight)
