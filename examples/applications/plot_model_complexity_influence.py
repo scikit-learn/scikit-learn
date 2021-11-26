@@ -163,7 +163,7 @@ configurations = [
         "tuned_params": {
             "penalty": "elasticnet",
             "alpha": 0.001,
-            "loss": "hinge",
+            "loss": "modified_huber",
             "fit_intercept": True,
             "tol": 1e-3,
         },
@@ -263,13 +263,14 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
         % (conf["changing_param"], conf["estimator"].__name__)
     )
 
+
 ti = time.time()
 
 for conf in configurations:
     prediction_performances, prediction_times, complexities = benchmark_influence(conf)
     plot_influence(conf, prediction_performances, prediction_times, complexities)
 
-tf = time.time()-ti
+tf = time.time() - ti
 
 print("total time : %.2fs." % tf)
 
