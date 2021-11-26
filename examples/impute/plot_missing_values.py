@@ -42,6 +42,9 @@ missing values imputed using different techniques.
 # up the calculations but feel free to use the whole dataset.
 #
 
+import time
+start_time = time.time()
+
 import numpy as np
 
 from sklearn.datasets import fetch_california_housing
@@ -52,8 +55,10 @@ rng = np.random.RandomState(42)
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_california, y_california = fetch_california_housing(return_X_y=True)
-X_california = X_california[:400]
-y_california = y_california[:400]
+X_california = X_california[:300]
+y_california = y_california[:300]
+X_diabetes = X_diabetes[:300]
+y_diabetes = y_diabetes[:300]
 
 
 def add_missing_values(X_full, y_full):
@@ -98,7 +103,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
 
 
-N_SPLITS = 5
+N_SPLITS = 4
 regressor = RandomForestRegressor(random_state=0)
 
 # %%
@@ -231,7 +236,8 @@ def get_impute_iterative(X_missing, y_missing):
         missing_values=np.nan,
         add_indicator=True,
         random_state=0,
-        n_nearest_features=5,
+        n_nearest_features=3,
+        max_iter=1,
         sample_posterior=True,
     )
     iterative_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
@@ -303,7 +309,7 @@ ax2.invert_yaxis()
 ax2.set_yticklabels([""] * n_bars)
 
 plt.show()
-
+print("--- %s seconds ---" % (time.time() - start_time))
 # %%
 # You can also try different techniques. For instance, the median is a more
 # robust estimator for data with high magnitude variables which could dominate
