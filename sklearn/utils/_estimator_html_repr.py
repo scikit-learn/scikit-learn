@@ -307,6 +307,11 @@ _STYLE = """
   text-align: center;
 }
 #$id div.sk-container {
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org. 
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
   display: inline-block !important;
   position: relative;
 }
