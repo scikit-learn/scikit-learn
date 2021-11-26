@@ -42,9 +42,6 @@ missing values imputed using different techniques.
 # up the calculations but feel free to use the whole dataset.
 #
 
-import time
-start_time = time.time()
-
 import numpy as np
 
 from sklearn.datasets import fetch_california_housing
@@ -309,7 +306,7 @@ ax2.invert_yaxis()
 ax2.set_yticklabels([""] * n_bars)
 
 plt.show()
-print("--- %s seconds ---" % (time.time() - start_time))
+
 # %%
 # You can also try different techniques. For instance, the median is a more
 # robust estimator for data with high magnitude variables which could dominate
