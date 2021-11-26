@@ -376,22 +376,33 @@ def test_random_projection_feature_names_out(random_projection_cls):
     assert_array_equal(names_out, expected_names_out)
 
 
-@pytest.mark.parametrize("random_state", range(100))
-@pytest.mark.parametrize("shape", [(10, 1000), (1000, 10), (100, 100)])
+@pytest.mark.parametrize("random_state", range(50))
+@pytest.mark.parametrize("n_rows", (2, 9, 10, 11, 1000))
+@pytest.mark.parametrize("n_cols", (2, 9, 10, 11, 1000))
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
-def test_inverse_transform(random_state, shape, random_projection_cls):
-    for data in make_sparse_random_data(shape[0], shape[1], 100, random_state):
+def test_inverse_transform(random_state, n_rows, n_cols, random_projection_cls):
+    n_components = 10
+    for data in make_sparse_random_data(
+        n_rows, n_cols, n_rows * n_cols // 100 + 1, random_state
+    ):
         random_projection = random_projection_cls(
-            n_components=2, fit_inverse_transform=True
+            n_components=n_components, fit_inverse_transform=True
         )
-        projected = random_projection.fit_transform(data)
+        if n_cols < n_components:
+            with pytest.warns(
+                DataDimensionalityWarning,
+                match="The number of components is higher than the number of features",
+            ):
+                projected = random_projection.fit_transform(data)
+        else:
+            projected = random_projection.fit_transform(data)
         projected_back = random_projection.inverse_transform(projected)
         assert projected_back.shape == data.shape
         projected_again = random_projection.transform(projected_back)
         if hasattr(projected, "toarray"):
             projected = projected.toarray()
         assert_array_almost_equal(projected, projected_again)
-        assert random_projection.inverse_components_.shape == (shape[1], 2)
+        assert random_projection.inverse_components_.shape == (n_cols, n_components)
         components = random_projection.components_
         if hasattr(components, "toarray"):
             components = components.toarray()

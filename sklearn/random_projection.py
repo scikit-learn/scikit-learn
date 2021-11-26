@@ -312,19 +312,26 @@ def _svd_for_sparse_matrix(a):
         Unitary matrix having right singular vectors as rows.
         Of shape ``(K, N)``.
     """
+    # To work around the fact that `svds`` can only return up to max(a.shape) - 1
+    # components (missing one), we add an extra row or column (or both) full of
+    # zeros, and at the end we truncate the results to the appropriate size.
     n_rows, n_cols = a.shape
-    if n_rows < n_cols:
+    if n_rows <= n_cols:
         zeros_row = sp.csr_matrix(([], [], [0, 0]), shape=(1, n_cols))
         a = sp.vstack([a, zeros_row])  # add an extra row full of zeros
-    else:
-        zeros_col = sp.csr_matrix(([], [], np.zeros(n_rows + 1)), shape=(n_rows, 1))
+    if n_rows >= n_cols:
+        new_n_rows = n_rows + 1 if n_rows <= n_cols else n_rows
+        zeros_col = sp.csr_matrix(
+            ([], [], np.zeros(new_n_rows + 1)), shape=(new_n_rows, 1)
+        )
         a = sp.hstack([a, zeros_col])  # add an extra column full of zeros
     u, s, vt = sp.linalg.svds(a, k=min(a.shape) - 1)
+    # Since svds() does not sort the components, we must do it here.
     sorted_idx = np.flip(np.argsort(s), axis=0)
-    if n_rows < n_cols:
-        return u[:-1, sorted_idx], s[sorted_idx], vt[sorted_idx]
-    else:
-        return u[:, sorted_idx], s[sorted_idx], vt[sorted_idx, :-1]
+    u = u[:-1, sorted_idx] if n_rows <= n_cols else u[:, sorted_idx]
+    s = s[sorted_idx]
+    vt = vt[sorted_idx, :-1] if n_rows >= n_cols else vt[sorted_idx]
+    return u, s, vt
 
 
 def _pinv_for_sparse_matrix(a):
