@@ -10,6 +10,7 @@ Ridge regression
 
 
 from abc import ABCMeta, abstractmethod
+from functools import partial
 import collections
 import numbers
 import warnings
@@ -1845,41 +1846,6 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        if isinstance(self.alphas, collections.abc.Collection):
-            n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
-            if n_alphas != 1:
-                for index, alpha in enumerate(self.alphas):
-                    alpha = check_scalar(
-                        alpha,
-                        f"alphas[{index}]",
-                        target_type=numbers.Real,
-                        min_val=0.0,
-                        include_boundaries="neither",
-                    )
-            elif np.ndim(self.alphas) == 0:
-                self.alphas[()] = check_scalar(
-                    self.alphas[()],
-                    "alphas",
-                    target_type=numbers.Real,
-                    min_val=0.0,
-                    include_boundaries="neither",
-                )
-            else:
-                self.alphas[0] = check_scalar(
-                    self.alphas[0],
-                    "alphas",
-                    target_type=numbers.Real,
-                    min_val=0.0,
-                    include_boundaries="neither",
-                )
-        else:
-            self.alphas = check_scalar(
-                self.alphas,
-                "alphas",
-                target_type=numbers.Real,
-                min_val=0.0,
-                include_boundaries="neither",
-            )
         self.alphas = np.asarray(self.alphas)
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
@@ -2050,6 +2016,33 @@ class _BaseRidgeCV(LinearModel):
         the validation score.
         """
         cv = self.cv
+
+        check_scalar_alpha = partial(
+            check_scalar,
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+
+        if isinstance(self.alphas, collections.abc.Collection):
+            n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
+            if n_alphas != 1:
+                for index, alpha in enumerate(self.alphas):
+                    alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
+            elif np.ndim(self.alphas) == 0:
+                # converting a single scalar into a np.ndarray
+                # (e.g. `x=np.array(1)`)
+                # creates a 0d-array whose value can be accessed with
+                # `x[()]`
+                self.alphas[()] = check_scalar_alpha(self.alphas[()], "alphas")
+            else:
+                self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
+        else:
+            # check for single non-iterable item
+            self.alphas = check_scalar_alpha(self.alphas, "alphas")
+
+        self.alphas = np.asarray(self.alphas)
+
         if cv is None:
             estimator = _RidgeGCV(
                 self.alphas,
@@ -2071,42 +2064,7 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True are incompatible")
             if self.alpha_per_target:
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
-            if isinstance(self.alphas, collections.abc.Collection):
-                n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
-                if n_alphas != 1:
-                    for index, alpha in enumerate(self.alphas):
-                        alpha = check_scalar(
-                            alpha,
-                            f"alphas[{index}]",
-                            target_type=numbers.Real,
-                            min_val=0.0,
-                            include_boundaries="neither",
-                        )
-                elif np.ndim(self.alphas) == 0:
-                    self.alphas[()] = check_scalar(
-                        self.alphas[()],
-                        "alphas",
-                        target_type=numbers.Real,
-                        min_val=0.0,
-                        include_boundaries="neither",
-                    )
-                else:
-                    self.alphas[0] = check_scalar(
-                        self.alphas[0],
-                        "alphas",
-                        target_type=numbers.Real,
-                        min_val=0.0,
-                        include_boundaries="neither",
-                    )
-            else:
-                self.alphas = check_scalar(
-                    self.alphas,
-                    "alphas",
-                    target_type=numbers.Real,
-                    min_val=0.0,
-                    include_boundaries="neither",
-                )
-            self.alphas = np.asarray(self.alphas)
+
             parameters = {"alpha": self.alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
