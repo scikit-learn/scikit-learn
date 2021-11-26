@@ -726,7 +726,7 @@ class OneHotEncoder(_BaseEncoder):
 
         feature_names = []
         for i in range(len(cats)):
-            if type(input_features) is not str:
+            if not isinstance(input_features[i], str):
                 warnings.warn("Features names aren't strings, errors could occur")
             names = [str(input_features[i]) + "_" + str(t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
