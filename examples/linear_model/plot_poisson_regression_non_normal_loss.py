@@ -435,10 +435,9 @@ plt.subplots_adjust(wspace=0.3)
 
 y_true = df_test["Frequency"].values
 exposure = df_test["Exposure"].values
-for idx, (axi, model) in enumerate(
-    zip(ax.ravel(), [dummy, ridge_glm, poisson_glm, poisson_gbrt])
+for axi, model, y_pred in zip(
+    ax.ravel(), [dummy, ridge_glm, poisson_glm, poisson_gbrt], test_preds
 ):
-    y_pred = test_preds[idx]
     q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
         y_true, y_pred, sample_weight=exposure, n_bins=10
     )
@@ -512,8 +511,8 @@ def lorenz_curve(y_true, y_pred, exposure):
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
-for idx, model in enumerate([dummy, ridge_glm, poisson_glm, poisson_gbrt]):
-    y_pred = test_preds[idx]
+
+for model, y_pred in zip([dummy, ridge_glm, poisson_glm, poisson_gbrt], test_preds):
     cum_exposure, cum_claims = lorenz_curve(
         df_test["Frequency"], y_pred, df_test["Exposure"]
     )
