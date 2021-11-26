@@ -797,8 +797,6 @@ class NuSVC(BaseSVC):
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1056,8 +1054,6 @@ class SVR(RegressorMixin, BaseLibSVM):
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1256,8 +1252,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1435,8 +1429,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
