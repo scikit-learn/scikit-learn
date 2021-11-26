@@ -1285,31 +1285,3 @@ def test_tsne_n_jobs(method):
     ).fit_transform(X)
 
     assert_allclose(X_tr_ref, X_tr)
-
-#TO DO
-def test_tsne_mahalanobis_distance():
-    """Make sure that mahalanobis distance no longer raises parameter 
-    errors with method_parameters thanks to petric_params"""
-    random_state = check_random_state(0)
-    n_components_original = 3
-    n_components_embedding = 2
-    X = random_state.randn(50, n_components_original).astype(np.float32)
-    metric = "mahalanobis"
-    dist_func = mahalanobis_distances
-    X_transformed_tsne = TSNE(
-        metric=metric,
-        n_components=n_components_embedding,
-        random_state=0,
-        n_iter=300,
-        square_distances=True,
-        init="random",
-    ).fit_transform(X)
-    X_transformed_tsne_precomputed = TSNE(
-        metric="precomputed",
-        n_components=n_components_embedding,
-        random_state=0,
-        n_iter=300,
-        init="random",
-        square_distances=True,
-    ).fit_transform(dist_func(X))
-    assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
