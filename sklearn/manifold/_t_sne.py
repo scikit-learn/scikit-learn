@@ -764,6 +764,7 @@ class TSNE(BaseEstimator):
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
+        self.metric_params = metric_params
         self.init = init
         self.verbose = verbose
         self.random_state = random_state
@@ -898,7 +899,8 @@ class TSNE(BaseEstimator):
                     distances = pairwise_distances(X, metric=self.metric, squared=True)
                 else:
                     distances = pairwise_distances(
-                        X, metric=self.metric, n_jobs=self.n_jobs, **metric_params
+                        X, metric=self.metric, n_jobs=self.n_jobs,
+                        metric_params=self.metric_params,
                     )
 
             if np.any(distances < 0):
