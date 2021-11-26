@@ -307,7 +307,7 @@ _STYLE = """
   text-align: center;
 }
 #$id div.sk-container {
-  display: inline-block;
+  display: inline-block !important;
   position: relative;
 }
 #$id div.sk-text-repr-fallback {
