@@ -17,10 +17,12 @@ consists of a sinusoidal target function and strong noise added to every fifth
 datapoint. The first figure compares the learned model of KRR and SVR when both
 complexity/regularization and bandwidth of the RBF kernel are optimized using
 grid-search. The learned functions are very similar; however, fitting KRR is
-approx. seven times faster than fitting SVR (both with grid-search). However,
-prediction of 100000 target values is more than tree times faster with SVR
-since it has learned a sparse model using only approx. 1/3 of the 100 training
-datapoints as support vectors.
+approx. seven times faster than fitting SVR (both with grid-search). The speed
+of prediction of SVR could in theory be 3x faster than KRR because SVR uses
+approximately 1/3 of the 100 training datapoints as support vectors. However
+here we observe that this not the case, probably because of implementations
+details (the SVR prediction code does not seem to be as well optimized as the
+KRR prediction code).
 
 The next figure compares the time for fitting and prediction of KRR and SVR for
 different sizes of the training set. Fitting KRR is faster than SVR for medium-
@@ -49,13 +51,13 @@ rng = np.random.RandomState(0)
 
 # #############################################################################
 # Generate sample data
-X = 5 * rng.rand(10000, 1)
+X = 5 * rng.rand(7000, 1)
 y = np.sin(X).ravel()
 
 # Add noise to targets
 y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 
-X_plot = np.linspace(0, 5, 100000)[:, None]
+X_plot = np.linspace(0, 5, 10000)[:, None]
 
 # #############################################################################
 # Fit regression model
@@ -125,7 +127,7 @@ plt.legend()
 plt.figure()
 
 # Generate sample data
-X = 5 * rng.rand(10000, 1)
+X = 5 * rng.rand(7000, 1)
 y = np.sin(X).ravel()
 y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 sizes = np.logspace(1, 4, 7).astype(int)
