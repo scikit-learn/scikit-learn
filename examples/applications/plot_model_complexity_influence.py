@@ -260,7 +260,9 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     ax2.yaxis.label.set_color(line2.get_color())
     ax2.tick_params(axis="y", colors=line2.get_color())
 
-    plt.legend((line1, line2), ("prediction error", "latency"), loc="upper right")
+    plt.legend(
+        (line1, line2), ("prediction error", "prediction latency"), loc="upper right"
+    )
 
     plt.title(
         "Influence of varying '%s' on %s"
