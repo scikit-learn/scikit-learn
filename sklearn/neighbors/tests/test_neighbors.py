@@ -1510,17 +1510,8 @@ def test_neighbors_metrics(
     # Test computing the neighbors for various metrics
     # create a symmetric matrix
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    X = rng.rand(n_samples, n_features)
-    test = rng.rand(n_query_pts, n_features)
-
-    # Haversine distance only accepts 2D data
-    if metric == "haversine":
-        feature_sl = slice(None, 2)
-        X_train = np.ascontiguousarray(X[:, feature_sl])
-        X_test = np.ascontiguousarray(test[:, feature_sl])
-    else:
-        X_train = X
-        X_test = test
+    X_train = rng.rand(n_samples, n_features)
+    X_test = rng.rand(n_query_pts, n_features)
 
     metric_params_list = _get_dummy_metric_params_list(metric, n_features)
 
@@ -1536,10 +1527,7 @@ def test_neighbors_metrics(
                 metric_params=metric_params,
             )
 
-            # Haversine distance only accepts 2D data
-            feature_sl = slice(None, 2) if metric == "haversine" else slice(None)
-
-            neigh.fit(X[:, feature_sl])
+            neigh.fit(X_train)
 
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
             ExceptionToAssert = None
@@ -1551,12 +1539,7 @@ def test_neighbors_metrics(
                 ExceptionToAssert = DeprecationWarning
 
             with pytest.warns(ExceptionToAssert):
-                results[algorithm] = neigh.kneighbors(
-                    test[:, feature_sl], return_distance=True
-                )
-
-            neigh.fit(X_train)
-            results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+                results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
         brute_dst, brute_idx = results["brute"]
         kd_tree_dst, kd_tree_idx = results["kd_tree"]
