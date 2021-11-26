@@ -244,17 +244,12 @@ test_preds.append(score_estimator(ridge_glm, df_test))
 
 from sklearn.linear_model import PoissonRegressor
 
-n_samples = df_train.shape[0]
-
 poisson_glm = Pipeline(
     [
         ("preprocessor", linear_model_preprocessor),
         ("regressor", PoissonRegressor(alpha=1e-12, max_iter=300)),
     ]
-)
-poisson_glm.fit(
-    df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"]
-)
+).fit(df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"])
 
 print("PoissonRegressor evaluation:")
 test_preds.append(score_estimator(poisson_glm, df_test))
@@ -303,10 +298,7 @@ poisson_gbrt = Pipeline(
             HistGradientBoostingRegressor(loss="poisson", max_leaf_nodes=128),
         ),
     ]
-)
-poisson_gbrt.fit(
-    df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"]
-)
+).fit(df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"])
 
 print("Poisson Gradient Boosted Trees evaluation:")
 test_preds.append(score_estimator(poisson_gbrt, df_test))
