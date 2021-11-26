@@ -119,9 +119,9 @@ plt.show()
 # this script.
 
 if "--use-digits-dataset" in sys.argv:
-    data = load_digits().data[:500]
+    data = load_digits().data[:300]
 else:
-    data = fetch_20newsgroups_vectorized().data[:500]
+    data = fetch_20newsgroups_vectorized().data[:300]
 
 # %%
 # For each value of ``n_components``, we plot:
