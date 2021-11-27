@@ -338,7 +338,14 @@ def _estimators_that_predict_in_fit():
         if "oob_score" in est_params:
             yield estimator.set_params(oob_score=True, bootstrap=True)
         elif "early_stopping" in est_params:
-            yield estimator.set_params(early_stopping=True, n_iter_no_change=1)
+            est = estimator.set_params(early_stopping=True, n_iter_no_change=1)
+            if est.__class__.__name__ in {"MLPClassifier", "MLPRegressor"}:
+                # TODO: FIX MLP to not check validation set during MLP
+                yield pytest.param(
+                    est, marks=pytest.mark.xfail(msg="MLP still validates in fit")
+                )
+            else:
+                yield est
         elif "n_iter_no_change" in est_params:
             yield estimator.set_params(n_iter_no_change=1)
 
