@@ -113,11 +113,15 @@ cdef class DistanceMetric:
     "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
     "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
-    "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
+    "minkowski"     MinkowskiDistance     p, w      ``sum(w * |x - y|^p)^(1/p)``
     "wminkowski"    WMinkowskiDistance    p, w      ``sum(|w * (x - y)|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
+
+    Note that "minkowski" with a non-None `w` parameter actually calls
+    `WMinkowskiDistance` with `w=w ** (1/p)` in order to be consistent with the
+    parametrization of scipy 1.8 and later.
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
     distance metric requires data in the form of [latitude, longitude] and both
@@ -252,6 +256,18 @@ cdef class DistanceMetric:
         # In Minkowski special cases, return more efficient methods
         if metric is MinkowskiDistance:
             p = kwargs.pop('p', 2)
+            w = kwargs.pop('w', None)
+            if w is not None:
+                # Be consistent with scipy 1.8 conventions: in scipy 1.8,
+                # 'wminkowski' was removed in favor of passing a
+                # weight vector directly to 'minkowski', however
+                # the new weights apply to the absolute differences raised to
+                # the p power instead of the absolute difference as in
+                # previous versions of scipy.
+                # WMinkowskiDistance in sklearn implements the weighting
+                # scheme of the old 'wminkowski' in scipy < 1.8, hence the
+                # following adaptation:
+                return WMinkowskiDistance(p, w ** (1/p), **kwargs)
             if p == 1:
                 return ManhattanDistance(**kwargs)
             elif p == 2:
@@ -534,12 +550,11 @@ cdef class ChebyshevDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # Minkowski Distance
-#  d = sum(x_i^p - y_i^p) ^ (1/p)
 cdef class MinkowskiDistance(DistanceMetric):
     r"""Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i (x_i - y_i)^p] ^ (1/p)
+       D(x, y) = [\sum_i |x_i - y_i|^p] ^ (1/p)
 
     Minkowski Distance requires p >= 1 and finite. For p = infinity,
     use ChebyshevDistance.
@@ -581,7 +596,6 @@ cdef class MinkowskiDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # W-Minkowski Distance
-#  d = sum(w_i^p * (x_i^p - y_i^p)) ^ (1/p)
 cdef class WMinkowskiDistance(DistanceMetric):
     r"""Weighted Minkowski Distance
 
