@@ -355,9 +355,9 @@ def _estimators_that_predict_in_fit():
 # is checking for column name consistency.
 column_name_estimators = list(
     chain(
-        # _tested_estimators(),
-        # [make_pipeline(LogisticRegression(C=1))],
-        # list(_generate_search_cv_instances()),
+        _tested_estimators(),
+        [make_pipeline(LogisticRegression(C=1))],
+        list(_generate_search_cv_instances()),
         _estimators_that_predict_in_fit(),
     )
 )
