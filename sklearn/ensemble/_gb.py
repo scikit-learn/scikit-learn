@@ -749,6 +749,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
+        check_input : bool, default=True
+            If False, the input arrays X will not be checked.
+
         Returns
         -------
         raw_predictions : generator of ndarray of shape (n_samples, k)
