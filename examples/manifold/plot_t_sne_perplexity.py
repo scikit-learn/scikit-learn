@@ -34,12 +34,14 @@ from matplotlib.ticker import NullFormatter
 from sklearn import manifold, datasets
 from time import time
 
-n_samples = 300
+n_samples = 150
 n_components = 2
 (fig, subplots) = plt.subplots(3, 5, figsize=(15, 8))
 perplexities = [5, 30, 50, 100]
 
-X, y = datasets.make_circles(n_samples=n_samples, factor=0.5, noise=0.05)
+X, y = datasets.make_circles(
+    n_samples=n_samples, factor=0.5, noise=0.05, random_state=0
+)
 
 red = y == 0
 green = y == 1
@@ -56,7 +58,12 @@ for i, perplexity in enumerate(perplexities):
 
     t0 = time()
     tsne = manifold.TSNE(
-        n_components=n_components, init="random", random_state=0, perplexity=perplexity
+        n_components=n_components,
+        init="random",
+        random_state=0,
+        perplexity=perplexity,
+        learning_rate="auto",
+        n_iter=300,
     )
     Y = tsne.fit_transform(X)
     t1 = time()
@@ -81,7 +88,12 @@ for i, perplexity in enumerate(perplexities):
 
     t0 = time()
     tsne = manifold.TSNE(
-        n_components=n_components, init="random", random_state=0, perplexity=perplexity
+        n_components=n_components,
+        init="random",
+        random_state=0,
+        perplexity=perplexity,
+        learning_rate="auto",
+        n_iter=300,
     )
     Y = tsne.fit_transform(X)
     t1 = time()
@@ -114,7 +126,12 @@ for i, perplexity in enumerate(perplexities):
 
     t0 = time()
     tsne = manifold.TSNE(
-        n_components=n_components, init="random", random_state=0, perplexity=perplexity
+        n_components=n_components,
+        init="random",
+        random_state=0,
+        perplexity=perplexity,
+        learning_rate="auto",
+        n_iter=400,
     )
     Y = tsne.fit_transform(X)
     t1 = time()

@@ -145,8 +145,8 @@ fi
 
 MINICONDA_PATH=$HOME/miniconda
 # Install dependencies with miniconda
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-   -O miniconda.sh
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
+    -O miniconda.sh
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
 
@@ -165,7 +165,7 @@ fi
 source build_tools/shared.sh
 
 # packaging won't be needed once setuptools starts shipping packaging>=17.0
-conda create -n $CONDA_ENV_NAME --yes --quiet \
+mamba create -n $CONDA_ENV_NAME --yes --quiet \
     python="${PYTHON_VERSION:-*}" \
     "$(get_dep numpy $NUMPY_VERSION)" \
     "$(get_dep scipy $SCIPY_VERSION)" \
@@ -176,6 +176,11 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
     joblib memory_profiler packaging seaborn pillow pytest coverage
 
 source activate testenv
+# Pin PyWavelet to 1.1.1 that is the latest version that support our minumum
+# NumPy version required. If PyWavelets 1.2+ is installed, it would require
+# NumPy 1.17+ that trigger a bug with Pandas 0.25:
+# https://github.com/numpy/numpy/issues/18355#issuecomment-774610226
+pip install PyWavelets==1.1.1
 pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
 pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
 pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
