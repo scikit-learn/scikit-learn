@@ -375,10 +375,18 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             else:
                 sample_weight = expanded_class_weight
 
-        # Get bootstrap sample size
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples=X.shape[0], max_samples=self.max_samples
-        )
+        if not self.bootstrap and self.max_samples is not None:
+            raise ValueError(
+                "`max_sample` cannot be set if `bootstrap=False`. "
+                "Either switch to `bootstrap=True` or set "
+                "`max_sample=None`."
+            )
+        elif self.bootstrap:
+            n_samples_bootstrap = _get_n_samples_bootstrap(
+                n_samples=X.shape[0], max_samples=self.max_samples
+            )
+        else:
+            n_samples_bootstrap = None
 
         # Check parameters
         self._validate_estimator()
