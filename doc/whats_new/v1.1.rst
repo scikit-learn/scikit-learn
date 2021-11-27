@@ -99,8 +99,9 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters in `transform` instead of `__init__`.
-  :pr:`21573` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
+- |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
+  in `transform` instead of `__init__`. :pr:`21573` by
+  :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
 :mod:`sklearn.impute`
 .....................
