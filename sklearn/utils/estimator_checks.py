@@ -659,6 +659,11 @@ def _set_checking_parameters(estimator):
         # This is ugly :-/
         estimator.n_components = 1
 
+    if name == "LassoLarsIC":
+        # Noise variance estimation does not work when `n_samples < n_features`.
+        # We need to provide the noise variance explicitly.
+        estimator.set_params(noise_variance=1.0)
+
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = min(estimator.n_clusters, 2)
 
@@ -2064,6 +2069,22 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
+def _create_memmap_backed_data(numpy_arrays):
+    # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
+    # See: https://github.com/scipy/scipy/issues/14886
+    has_prescott_openblas = any(
+        True
+        for info in threadpool_info()
+        if info["internal_api"] == "openblas"
+        # Prudently assume Prescott might be the architecture if it is unknown.
+        and info.get("architecture", "prescott").lower() == "prescott"
+    )
+    return [
+        create_memmap_backed_data(array, aligned=has_prescott_openblas)
+        for array in numpy_arrays
+    ]
+
+
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2081,19 +2102,7 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
-        # See: https://github.com/scipy/scipy/issues/14886
-        has_prescott_openblas = any(
-            True
-            for info in threadpool_info()
-            if info["internal_api"] == "openblas"
-            # Prudently assume Prescott might be the architecture if it is unknown.
-            and info.get("architecture", "prescott").lower() == "prescott"
-        )
-        X_m = create_memmap_backed_data(data=X_m, aligned=has_prescott_openblas)
-        y_m = create_memmap_backed_data(data=y_m, aligned=has_prescott_openblas)
-        X_b = create_memmap_backed_data(data=X_b, aligned=has_prescott_openblas)
-        y_b = create_memmap_backed_data(data=y_b, aligned=has_prescott_openblas)
+        X_m, y_m, X_b, y_b = _create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
@@ -2761,7 +2770,7 @@ def check_regressors_train(
         y_ = y
 
     if readonly_memmap:
-        X, y, y_ = create_memmap_backed_data([X, y, y_])
+        X, y, y_ = _create_memmap_backed_data([X, y, y_])
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
