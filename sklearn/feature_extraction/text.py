@@ -5,6 +5,7 @@
 #          Robert Layton <robertlayton@gmail.com>
 #          Jochen Wersdörfer <jochen@wersdoerfer.de>
 #          Roman Sinayev <roman.sinayev@gmail.com>
+#          Geoff McDonald <glmcdona@gmail.com>
 #
 # License: BSD 3 clause
 """
@@ -1043,12 +1044,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         represent all out-of-vocab features through overlapping feature
         hashing count buckets. Note hash bag uses Murmurhash3 and the
         out-of-vocab features will overlap into these count buckets.
-        This option is usually used in conjunction with feature trimming
+        This option is often used in conjunction with feature trimming
         `max_features`, `min_df`, `max_df`, and/or `vocabulary` options to
         featurize the trimmed-off features in a compact form.
 
         .. versionadded:: 0.TODO
-
 
     Attributes
     ----------
