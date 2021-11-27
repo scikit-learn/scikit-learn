@@ -339,6 +339,8 @@ def _estimators_that_predict_in_fit():
             yield estimator.set_params(oob_score=True, bootstrap=True)
         elif "early_stopping" in est_params:
             yield estimator.set_params(early_stopping=True, n_iter_no_change=1)
+        elif "n_iter_no_change" in est_params:
+            yield estimator.set_params(n_iter_no_change=1)
 
 
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
@@ -346,9 +348,9 @@ def _estimators_that_predict_in_fit():
 # is checking for column name consistency.
 column_name_estimators = list(
     chain(
-        _tested_estimators(),
-        [make_pipeline(LogisticRegression(C=1))],
-        list(_generate_search_cv_instances()),
+        # _tested_estimators(),
+        # [make_pipeline(LogisticRegression(C=1))],
+        # list(_generate_search_cv_instances()),
         _estimators_that_predict_in_fit(),
     )
 )

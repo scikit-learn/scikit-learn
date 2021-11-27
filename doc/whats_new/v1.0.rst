@@ -12,7 +12,9 @@ Version 1.0.2
 - |Fix| :class:`cluster.Birch`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.GradientBoostingRegressor`,
-  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingClassifier`,
+  :class:`neural_network.MLPClassifier`,
+  :class:`neural_network.MLPRegressor`, and
   :class:`feature_selection.RFECV`, do not raise warning when fitted on
   a pandas DataFrame anymore. :pr:`21578` by `Thomas Fan`_.
 
