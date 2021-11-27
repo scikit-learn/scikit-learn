@@ -1037,12 +1037,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     out_of_vocab_features : int, default=None
         If not None, will add the specified number of out-of-vocabulary
         features.
-        If set to 1, it will add a single feature as count the
-        out-of-vocab features.
-        If >1, it will add the specified number of features to represent
-        all the out-of-vocab features through overlapping feature hashing
-        count buckets. Note hash bag uses Murmurhash3 and the out-of-vocab
-        features will overlap into these count buckets.
+        If set to 1, it will add a single feature as count of the
+        out-of-vocab features matched per document.
+        If set to >1, it will add the specified number of features to
+        represent all out-of-vocab features through overlapping feature
+        hashing count buckets. Note hash bag uses Murmurhash3 and the
+        out-of-vocab features will overlap into these count buckets.
         This option is usually used in conjunction with feature trimming
         `max_features`, `min_df`, `max_df`, and/or `vocabulary` options to
         featurize the trimmed-off features in a compact form.
