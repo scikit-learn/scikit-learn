@@ -127,6 +127,14 @@ Changelog
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
 
+:mod:`sklearn.feature_extraction`
+............................
+
+- |Enhancement| :class:`feature_extraction.text.CountVectorizer` and
+  `feature_extraction.text.TfidfVectorizer` added a parameter `out_of_vocab_features`
+  to add count and hash-bag counts for out-of-vocabulary matches.
+  :pr:`21801` by :user:`Geoff McDonald <glmcdona>`.
+
 :mod:`sklearn.impute`
 .....................
 

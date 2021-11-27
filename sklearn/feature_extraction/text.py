@@ -1048,7 +1048,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         `max_features`, `min_df`, `max_df`, and/or `vocabulary` options to
         featurize the trimmed-off features in a compact form.
 
-        .. versionadded:: 0.TODO
+        .. versionadded:: 1.1.0
 
     Attributes
     ----------
@@ -1337,7 +1337,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         return vocabulary, X
 
     def _validate_params(self):
-        """Validation of min_df, max_df and max_features"""
+        """Validation of min_df, max_df, max_features, and out_of_vocab_features"""
         super()._validate_params()
 
         if self.max_features is not None:
@@ -1352,6 +1352,14 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             check_scalar(self.max_df, "max_df", numbers.Integral, min_val=0)
         else:
             check_scalar(self.max_df, "max_df", numbers.Real, min_val=0.0, max_val=1.0)
+
+        if self.out_of_vocab_features is not None:
+            check_scalar(
+                self.out_of_vocab_features,
+                "out_of_vocab_features",
+                numbers.Integral,
+                min_val=1,
+            )
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
@@ -1956,6 +1964,21 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : bool, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    out_of_vocab_features : int, default=None
+        If not None, will add the specified number of out-of-vocabulary
+        features counting the number of vocabulary misses.
+        If set to 1, it will add a single feature as count of the
+        out-of-vocab features matched per document.
+        If set to >1, it will add the specified number of features to
+        represent all out-of-vocab features through overlapping feature
+        hashing count buckets. Note hash bag uses Murmurhash3 and the
+        out-of-vocab features will overlap into these count buckets.
+        This option is often used in conjunction with feature trimming
+        `max_features`, `min_df`, `max_df`, and/or `vocabulary` options to
+        featurize the trimmed-off features in a compact form.
+
+        .. versionadded:: 1.1.0
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -2033,6 +2056,7 @@ class TfidfVectorizer(CountVectorizer):
         use_idf=True,
         smooth_idf=True,
         sublinear_tf=False,
+        out_of_vocab_features=None,
     ):
 
         super().__init__(
@@ -2053,6 +2077,7 @@ class TfidfVectorizer(CountVectorizer):
             vocabulary=vocabulary,
             binary=binary,
             dtype=dtype,
+            out_of_vocab_features=out_of_vocab_features,
         )
 
         self._tfidf = TfidfTransformer(
