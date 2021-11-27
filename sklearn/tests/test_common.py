@@ -337,10 +337,8 @@ def _estimators_that_predict_in_fit():
         est_params = set(estimator.get_params())
         if "oob_score" in est_params:
             yield estimator.set_params(oob_score=True, bootstrap=True)
-        elif "n_iter_no_change" in est_params:
-            yield estimator.set_params(n_iter_no_change=1)
         elif "early_stopping" in est_params:
-            yield estimator.set_params(early_stopping=True)
+            yield estimator.set_params(early_stopping=True, n_iter_no_change=1)
 
 
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
