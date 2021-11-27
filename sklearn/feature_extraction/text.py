@@ -1036,7 +1036,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     out_of_vocab_features : int, default=None
         If not None, will add the specified number of out-of-vocabulary
-        features.
+        features counting the number of vocabulary misses.
         If set to 1, it will add a single feature as count of the
         out-of-vocab features matched per document.
         If set to >1, it will add the specified number of features to
