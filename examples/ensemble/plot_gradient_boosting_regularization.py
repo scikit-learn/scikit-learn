@@ -31,15 +31,14 @@ import matplotlib.pyplot as plt
 from sklearn import ensemble
 from sklearn import datasets
 
+from sklearn.model_selection import train_test_split
 
-X, y = datasets.make_hastie_10_2(n_samples=3000, random_state=1)
-X = X.astype(np.float32)
+X, y = datasets.make_hastie_10_2(n_samples=4000, random_state=1)
 
 # map labels from {-1, 1} to {0, 1}
 labels, y = np.unique(y, return_inverse=True)
 
-X_train, X_test = X[:1000], X[1000:]
-y_train, y_test = y[:1000], y[1000:]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.8, random_state=0)
 
 original_params = {
     "n_estimators": 400,
