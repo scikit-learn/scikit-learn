@@ -532,8 +532,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
     tol = tol * y_norm2
 
     if l1_reg == 0:
-        warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
-            " results and is discouraged.")
+        warnings.warn("Coordinate descent with no L1 regularization may"
+            " lead to unexpected results and is discouraged.")
 
     with nogil:
         for n_iter in range(max_iter):
