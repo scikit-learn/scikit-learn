@@ -142,15 +142,17 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is
+  a bit faster, for binary as well as for multiclass problems thanks the new
+  private loss function module.
+  :pr:`20567` and :pr:`20811` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Fix| :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
   and :class:`ensemble.RandomTreesEmbedding` now raise a ``ValueError`` when
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
-- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is
-  faster for multiclass problems thanks to a new private loss function module.
-  :pr:`20567` and :pr:`20811` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.impute`
 .....................
