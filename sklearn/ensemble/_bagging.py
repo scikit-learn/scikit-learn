@@ -415,6 +415,12 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             itertools.chain.from_iterable(t[1] for t in all_results)
         )
 
+        # Set `feature_names_in_` in `estimators_`
+        if hasattr(self, "feature_names_in_"):
+            feature_names_in = self.feature_names_in_
+            for estimator, features in zip(self.estimators_, self.estimators_features_):
+                estimator.feature_names_in_ = feature_names_in[features]
+
         if self.oob_score:
             self._set_oob_score(X, y)
 

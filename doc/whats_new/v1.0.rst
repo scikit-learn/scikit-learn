@@ -28,6 +28,12 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier`
+  sets `feature_names_in_` in `estimators_`. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
