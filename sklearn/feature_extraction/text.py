@@ -1263,9 +1263,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             # Add the out-of-vocab features
             if self.out_of_vocab_features and fixed_vocab:
                 # One count feature for out-of-vocabulary, add as last feature index
-                j_indices.append(len(vocabulary))
-                values.append(oov_count)
-                oov_count = 0
+                if oov_count > 0:
+                    j_indices.append(len(vocabulary))
+                    values.append(oov_count)
+                    oov_count = 0
 
                 if self.out_of_vocab_features > 1:
                     # For >1 out of vocabulary features, also add a hashbag. Build
