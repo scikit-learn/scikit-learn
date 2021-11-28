@@ -1043,7 +1043,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         If set to >1, on top of the single count feature above it will also
         add the specified number of features to represent all out-of-vocab
         terms through overlapping feature hashing count buckets. For example,
-        a value of 1024 will add single feature counting the total out-of-
+        a value of 1024 will add a single feature counting the total out-of-
         vocabulary terms, plus 1024 features from a hash-bag counting
         out-of-vocabulary terms in overlapping buckets. Note hash bag uses
         Murmurhash3 and the out-of-vocab terms will overlap into these
@@ -1212,6 +1212,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             raise ValueError(
                 "After pruning, no terms remain. Try a lower min_df or a higher max_df."
             )
+
         return X[:, kept_indices], removed_terms
 
     def _count_vocab(self, raw_documents, fixed_vocab):
@@ -1428,10 +1429,16 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                     )
                     break
 
-        vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary_)
+        if (
+            self.out_of_vocab_features
+            and not self.fixed_vocabulary_
+            and hasattr(raw_documents, "__iter__")
+        ):
+            # We need to iterate through in the input twice for fitting when
+            # adding out-of-vocab features. Convert to list to not exhaust iterable.
+            raw_documents = list(raw_documents)
 
-        if self.binary:
-            X.data.fill(1)
+        vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary_)
 
         if not self.fixed_vocabulary_:
             n_doc = X.shape[0]
@@ -1456,6 +1463,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 # Re-compute the vocabulary counts now that we fixed the trimmed
                 # vocabulary so we can count the out-of-vocabulary features
                 vocabulary, X = self._count_vocab(raw_documents, fixed_vocab=True)
+
+        if self.binary:
+            X.data.fill(1)
 
         return X
 
@@ -1508,6 +1518,19 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         terms = np.array(list(self.vocabulary_.keys()))
         indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
+
+        if self.out_of_vocab_features:
+            # Add out-of-vocab inverse vocabulary names
+
+            # Total out-of-vocab count feature name
+            inverse_vocabulary = np.append(inverse_vocabulary, "out_of_vocab_count")
+
+            if self.out_of_vocab_features > 1:
+                # Hashbag out-of-vocab feature names
+                oov_inverse_vocab = np.char.mod(
+                    "hash_%d", np.arange(0, self.out_of_vocab_features)
+                )
+                inverse_vocabulary = np.append(inverse_vocabulary, oov_inverse_vocab)
 
         if sp.issparse(X):
             return [
@@ -1975,7 +1998,7 @@ class TfidfVectorizer(CountVectorizer):
         If set to >1, on top of the single count feature above it will also
         add the specified number of features to represent all out-of-vocab
         terms through overlapping feature hashing count buckets. For example,
-        a value of 1024 will add single feature counting the total out-of-
+        a value of 1024 will add a single feature counting the total out-of-
         vocabulary terms, plus 1024 features from a hash-bag counting
         out-of-vocabulary terms in overlapping buckets. Note hash bag uses
         Murmurhash3 and the out-of-vocab terms will overlap into these
