@@ -262,7 +262,10 @@ def test_function_transformer_get_feature_names_out(
         feature_names_out=feature_names_out, validate=True
     )
     transformer.fit_transform(X)
-    assert tuple(transformer.get_feature_names_out(input_features)) == expected
+    names = transformer.get_feature_names_out(input_features)
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected)
 
 
 def test_function_transformer_get_feature_names_out_without_validation():

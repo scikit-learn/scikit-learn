@@ -1,12 +1,13 @@
 import warnings
 
+import numpy as np
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
     _check_feature_names_in,
     check_array,
-    column_or_1d,
 )
 
 
@@ -275,7 +276,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 "input feature names. The callable must return an array-like "
                 "of output feature names."
             )
-        return column_or_1d(names_out)
+        return np.asarray(names_out, dtype=object)
 
     def _transform(self, X, func=None, kw_args=None):
         if func is None:
