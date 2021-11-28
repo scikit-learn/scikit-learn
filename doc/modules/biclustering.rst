@@ -45,7 +45,7 @@ where biclusters have higher average values than the other rows and
 columns:
 
 .. figure:: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
-   :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
+   :target: ../auto_examples/bicluster/plot_spectral_coclustering.html
    :align: center
    :scale: 50
    :alt: 
@@ -60,7 +60,7 @@ structure where the variance of the values within each bicluster is
 small:
 
 .. figure:: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
-   :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
+   :target: ../auto_examples/bicluster/plot_spectral_biclustering.html
    :align: center
    :scale: 50
    :alt: 
