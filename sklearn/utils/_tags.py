@@ -44,7 +44,7 @@ def _safe_tags(estimator, key=None, default=tag_sentinel):
         Tag name to get. By default (`None`), all tags are returned.
 
     default : obj, default=tag_sentinel
-        Default value when `key` is not a tag for the estimator.
+        Default value when the `key` tag is missing for `estimator`.
 
     Returns
     -------
