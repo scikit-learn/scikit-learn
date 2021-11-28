@@ -181,11 +181,10 @@ _STYLE = """
   text-align: center;
 }
 #$id label.sk-toggleable__label-arrow:before {
-  content: "▶";
+  content: "▸";
   float: left;
   margin-right: 0.25em;
   color: #696969;
-  font-size: 0.7em;
 }
 #$id div.sk-label:hover label.sk-toggleable__label-arrow:before {
   color: black;
@@ -212,7 +211,7 @@ _STYLE = """
   overflow: auto;
 }
 #$id input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
-  content: "▼";
+  content: "▾";
 }
 #$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
   background-color: #d4ebff;
@@ -327,7 +326,7 @@ _STYLE = """
   /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
      but bootstrap.min.css set `[hidden] { display: none !important; }`
      so we also need the `!important` here to be able to override the
-     default hidden behavior on the sphinx rendered scikit-learn.org. 
+     default hidden behavior on the sphinx rendered scikit-learn.org.
      See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
   display: inline-block !important;
   position: relative;
