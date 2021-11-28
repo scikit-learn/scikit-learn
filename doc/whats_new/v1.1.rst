@@ -154,6 +154,12 @@ Changelog
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.RFE` now sets `allow-nan` to `True` by default.
+  :pr:`21807` by `Thomas Fan`_.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -229,6 +235,9 @@ Changelog
 - |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
+
+- |Fix| :class:`pipeline.Pipeline` now sets `allow-nan` to `True` by default.
+  :pr:`21807` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
