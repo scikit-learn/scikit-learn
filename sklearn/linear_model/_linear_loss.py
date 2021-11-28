@@ -278,7 +278,6 @@ class LinearLoss:
             if sparse.issparse(X):
                 hX = sparse.dia_matrix((hessian, 0), shape=(n_samples, n_samples)) @ X
             else:
-                # TODO: This may consume a lot of memory. Better preallocate the array.
                 hX = hessian[:, np.newaxis] * X
 
             if self.fit_intercept:
