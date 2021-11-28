@@ -113,10 +113,10 @@ Changelog
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-  
+
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and 
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
   :user:`Krum Arnaudov <krumeto>`.
 
 - |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
@@ -192,6 +192,10 @@ Changelog
   when the noise variance is not provided.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
+
+- |Fix| Fixed :class:`linear_model.ElasticNetCV` call with l1_ratio=0 producing
+  warning incorrectly.
+  :pr:`21724` by :user:`Yar Khine Phyo <yarkhinephyo>`.
 
 :mod:`sklearn.metrics`
 ......................
