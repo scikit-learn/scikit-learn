@@ -292,7 +292,10 @@ class LinearLoss:
             # res[:-1] = 1' @ hX @ s[:n_features] + sum(h) * s[-1]
             def hessp(s):
                 ret = np.empty_like(s)
-                ret[:n_features] = X.T @ (hX @ s[:n_features])
+                if sparse.issparse(X):
+                    ret[:n_features] = X.T @ (hX @ s[:n_features])
+                else:
+                    ret[:n_features] = np.linalg.multi_dot([X.T, hX, s[:n_features]])
                 ret[:n_features] += alpha * s[:n_features]
 
                 if self.fit_intercept:
