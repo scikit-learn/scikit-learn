@@ -429,7 +429,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     def _more_tags(self):
         return {
             "poor_score": True,
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
+            "allow_nan": _safe_tags(self.estimator, key="allow_nan", default=True),
             "requires_y": True,
         }
 

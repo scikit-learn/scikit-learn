@@ -11,6 +11,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.linear_model import LogisticRegression
@@ -612,3 +613,34 @@ def test_multioutput(ClsRFE):
     clf = RandomForestClassifier(n_estimators=5)
     rfe_test = ClsRFE(clf)
     rfe_test.fit(X, y)
+
+
+def test_estimator_without_tags():
+    """Check that estimator without tags defaults to allow_nan==True."""
+
+    class MyEstimator:
+        pass
+
+    fs = RFE(MyEstimator())
+    tags = fs._get_tags()
+    assert tags["allow_nan"] is True
+
+
+def test_pipeline_with_nans():
+    """Check that RFE works with pipeline that accept nans.
+
+    Non-regerssion test for #21743"""
+    X, y = load_iris(return_X_y=True)
+    X[0, 0] = np.nan
+
+    pipe = make_pipeline(
+        SimpleImputer(),
+        StandardScaler(),
+        LogisticRegression(),
+    )
+
+    fs = RFE(
+        estimator=pipe,
+        importance_getter="named_steps.logisticregression.coef_",
+    )
+    fs.fit(X, y)

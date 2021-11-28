@@ -20,9 +20,10 @@ _DEFAULT_TAGS = {
     "requires_y": False,
     "pairwise": False,
 }
+tag_sentinel = object()
 
 
-def _safe_tags(estimator, key=None):
+def _safe_tags(estimator, key=None, default=tag_sentinel):
     """Safely get estimator tags.
 
     :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
@@ -42,26 +43,37 @@ def _safe_tags(estimator, key=None):
     key : str, default=None
         Tag name to get. By default (`None`), all tags are returned.
 
+    default : obj, default=tag_sentinel
+        Default value when `key` is not a tag for the estimator.
+
     Returns
     -------
     tags : dict or tag value
         The estimator tags. A single value is returned if `key` is not None.
     """
+    default_is_sentinel = default is tag_sentinel
+
     if hasattr(estimator, "_get_tags"):
         tags_provider = "_get_tags()"
         tags = estimator._get_tags()
     elif hasattr(estimator, "_more_tags"):
         tags_provider = "_more_tags()"
-        tags = {**_DEFAULT_TAGS, **estimator._more_tags()}
+        more_tags = estimator._more_tags()
+        if default_is_sentinel:
+            tags = {**_DEFAULT_TAGS, **more_tags}
+        else:
+            tags = more_tags
     else:
         tags_provider = "_DEFAULT_TAGS"
-        tags = _DEFAULT_TAGS
+        tags = _DEFAULT_TAGS if default_is_sentinel else {}
 
     if key is not None:
         if key not in tags:
-            raise ValueError(
-                f"The key {key} is not defined in {tags_provider} for the "
-                f"class {estimator.__class__.__name__}."
-            )
+            if default_is_sentinel:
+                raise ValueError(
+                    f"The key {key} is not defined in {tags_provider} for the "
+                    f"class {estimator.__class__.__name__}."
+                )
+            return default
         return tags[key]
     return tags

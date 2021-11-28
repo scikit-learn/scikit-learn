@@ -1549,3 +1549,27 @@ def test_pipeline_get_feature_names_out_passes_names_through():
     feature_names_out = pipe.get_feature_names_out(input_names)
 
     assert_array_equal(feature_names_out, [f"my_prefix_{name}" for name in input_names])
+
+
+def test_pipeline_nan_first_step():
+    """Check that pipeline defaults to allowing nan."""
+    pipe = make_pipeline(LogisticRegression())
+
+    tags = pipe._get_tags()
+    assert tags["allow_nan"] is False
+
+    pipe = make_pipeline(SimpleImputer(), LogisticRegression())
+    tags = pipe._get_tags()
+    assert tags["allow_nan"] is True
+
+    # Estimator with no tags -> Pipeline defaults to allow_nan == True
+    class MyTransformer:
+        def fit(self, X, y):
+            return self
+
+        def transform(self, X, y=None):
+            return X
+
+    pipe = make_pipeline(MyTransformer(), LogisticRegression())
+    tags = pipe._get_tags()
+    assert tags["allow_nan"] is True
