@@ -182,6 +182,11 @@ Changelog
   estimator of the noise variance cannot be computed.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`
 
+- |Enhancement| :class:`~linear_model.LogisticRegression` is
+  a bit faster, for binary as well as for multiclass problems thanks the new
+  private loss function module.
+  :pr:`20567` and :pr:`21808` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Fix| :class:`linear_model.LassoLarsIC` now correctly computes AIC
   and BIC. An error is now raised when `n_features > n_samples` and
   when the noise variance is not provided.
