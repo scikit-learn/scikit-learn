@@ -1037,16 +1037,20 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     out_of_vocab_features : int, default=None
         If not None, will add the specified number of out-of-vocabulary
-        features counting the number of vocabulary misses.
-        If set to 1, it will add a single feature as count of the
-        out-of-vocab features matched per document.
-        If set to >1, it will add the specified number of features to
-        represent all out-of-vocab features through overlapping feature
-        hashing count buckets. Note hash bag uses Murmurhash3 and the
-        out-of-vocab features will overlap into these count buckets.
+        features counting the terms not in the vocabulary.
+        If set to 1, it will add a single feature as total count of the
+        out-of-vocab terms found per document.
+        If set to >1, on top of the single count feature above it will also
+        add the specified number of features to represent all out-of-vocab
+        terms through overlapping feature hashing count buckets. For example,
+        a value of 1024 will add single feature counting the total out-of-
+        vocabulary terms, plus 1024 features from a hash-bag counting
+        out-of-vocabulary terms in overlapping buckets. Note hash bag uses
+        Murmurhash3 and the out-of-vocab terms will overlap into these
+        count buckets.
         This option is often used in conjunction with feature trimming
         `max_features`, `min_df`, `max_df`, and/or `vocabulary` options to
-        featurize the trimmed-off features in a compact form.
+        featurize the trimmed-off terms in a compact form.
 
         .. versionadded:: 1.1.0
 
@@ -1224,7 +1228,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         indptr = []
 
         if self.out_of_vocab_features and self.out_of_vocab_features > 1:
-            # For >1 out of vocabulary features, use a hashbag. Build
+            # For >1 out-of-vocabulary features, use a hashbag. Build
             # the raw set of features to hash for this document.
             oov_feature_counter_arr = []
             oov_feature_counter = {}
@@ -1243,12 +1247,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                     else:
                         feature_counter[feature_idx] += 1
                 except KeyError:
-                    # Out-of-vocabulary items for non-None vocabulary_out_of_bound
-                    # map to out-of-vocabulary counts.
-                    if self.out_of_vocab_features:
-                        if self.out_of_vocab_features == 1:
-                            oov_count += 1
-                        else:
+                    # Out-of-vocabulary items map to out-of-vocabulary count
+                    if self.out_of_vocab_features and fixed_vocab:
+                        oov_count += 1
+                        if self.out_of_vocab_features > 1:
                             if feature not in oov_feature_counter:
                                 oov_feature_counter[feature] = 1
                             else:
@@ -1257,15 +1259,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             j_indices.extend(feature_counter.keys())
             values.extend(feature_counter.values())
 
-            # Add the out-of-bound features
+            # Add the out-of-vocab features
             if self.out_of_vocab_features and fixed_vocab:
-                if self.out_of_vocab_features == 1:
-                    # One count feature for out-of-vocabulary, add as last feature index
-                    j_indices.append(len(vocabulary))
-                    values.append(oov_count)
-                    oov_count = 0
-                else:
-                    # For >1 out of vocabulary features, use a hashbag. Build
+                # One count feature for out-of-vocabulary, add as last feature index
+                j_indices.append(len(vocabulary))
+                values.append(oov_count)
+                oov_count = 0
+
+                if self.out_of_vocab_features > 1:
+                    # For >1 out of vocabulary features, also add a hashbag. Build
                     # the raw set of features to hash for this document.
                     oov_feature_counter_arr.append(oov_feature_counter)
                     oov_feature_counter = {}
@@ -1298,7 +1300,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         values = np.frombuffer(values, dtype=np.intc)
 
         n_features = len(vocabulary)
-        if self.out_of_vocab_features and self.out_of_vocab_features == 1:
+        if self.out_of_vocab_features:
+            # Out-of-vocab count feature
             n_features += 1
 
         X = sp.csr_matrix(
@@ -1966,16 +1969,20 @@ class TfidfVectorizer(CountVectorizer):
 
     out_of_vocab_features : int, default=None
         If not None, will add the specified number of out-of-vocabulary
-        features counting the number of vocabulary misses.
-        If set to 1, it will add a single feature as count of the
-        out-of-vocab features matched per document.
-        If set to >1, it will add the specified number of features to
-        represent all out-of-vocab features through overlapping feature
-        hashing count buckets. Note hash bag uses Murmurhash3 and the
-        out-of-vocab features will overlap into these count buckets.
+        features counting the terms not in the vocabulary.
+        If set to 1, it will add a single feature as total count of the
+        out-of-vocab terms found per document.
+        If set to >1, on top of the single count feature above it will also
+        add the specified number of features to represent all out-of-vocab
+        terms through overlapping feature hashing count buckets. For example,
+        a value of 1024 will add single feature counting the total out-of-
+        vocabulary terms, plus 1024 features from a hash-bag counting
+        out-of-vocabulary terms in overlapping buckets. Note hash bag uses
+        Murmurhash3 and the out-of-vocab terms will overlap into these
+        count buckets.
         This option is often used in conjunction with feature trimming
         `max_features`, `min_df`, `max_df`, and/or `vocabulary` options to
-        featurize the trimmed-off features in a compact form.
+        featurize the trimmed-off terms in a compact form.
 
         .. versionadded:: 1.1.0
 
