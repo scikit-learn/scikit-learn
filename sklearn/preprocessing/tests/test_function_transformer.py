@@ -277,7 +277,10 @@ def test_function_transformer_get_feature_names_out_without_validation():
     with pytest.raises(ValueError, match=msg):
         transformer.get_feature_names_out()
 
-    assert tuple(transformer.get_feature_names_out(("a", "b"))) == ("a", "b")
+    names = transformer.get_feature_names_out(("a", "b"))
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, ("a", "b"))
 
 
 @pytest.mark.parametrize("feature_names_out", ["x0", ["x0"], ("x0",)])
@@ -318,9 +321,11 @@ def test_function_transformer_feature_names_out_uses_estimator():
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"a": np.random.rand(100), "b": np.random.rand(100)})
     transformer.fit_transform(df)
-    names_out = transformer.get_feature_names_out()
+    names = transformer.get_feature_names_out()
 
-    assert tuple(names_out) == ("a", "b", "rnd0", "rnd1", "rnd2")
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, ("a", "b", "rnd0", "rnd1", "rnd2"))
 
 
 def test_function_transformer_validate_inverse():
