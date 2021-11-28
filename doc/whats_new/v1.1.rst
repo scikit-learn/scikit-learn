@@ -142,9 +142,9 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is
-  a bit faster, for binary as well as for multiclass problems thanks the new
-  private loss function module.
+- |Enhancement| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is a bit
+  faster, for binary as well as for multiclass problems thanks to the new private loss
+  function module.
   :pr:`20567` and :pr:`20811` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| :class:`ensemble.RandomForestClassifier`,
