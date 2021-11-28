@@ -312,38 +312,71 @@ def test_word_ngram_analyzer():
     assert cnga_file(file) == cnga(text)
 
 
-def test_countvectorizer_custom_vocabulary():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_countvectorizer_custom_vocabulary(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     vocab = {"pizza": 0, "beer": 1}
     terms = set(vocab.keys())
+
+    # Compute the number of out-of-vocab features that are being added
+    n_features_out_of_vocab = 0
+    if out_of_vocab_features:
+        n_features_out_of_vocab = out_of_vocab_features
+        if out_of_vocab_features > 1:
+            n_features_out_of_vocab += 1
 
     # Try a few of the supported types.
     for typ in [dict, list, iter, partial(defaultdict, int)]:
         v = typ(vocab)
-        vect = CountVectorizer(vocabulary=v)
+        vect = CountVectorizer(
+            vocabulary=v, out_of_vocab_features=out_of_vocab_features
+        )
         vect.fit(JUNK_FOOD_DOCS)
         if isinstance(v, Mapping):
             assert vect.vocabulary_ == vocab
         else:
             assert set(vect.vocabulary_) == terms
         X = vect.transform(JUNK_FOOD_DOCS)
-        assert X.shape[1] == len(terms)
+        assert X.shape[1] == len(terms) + n_features_out_of_vocab
         v = typ(vocab)
-        vect = CountVectorizer(vocabulary=v)
+        vect = CountVectorizer(
+            vocabulary=v, out_of_vocab_features=out_of_vocab_features
+        )
         inv = vect.inverse_transform(X)
         assert len(inv) == X.shape[0]
 
 
-def test_countvectorizer_custom_vocabulary_pipeline():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_countvectorizer_custom_vocabulary_pipeline(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
+    # Compute the number of out-of-vocab features that are being added
+    n_features_out_of_vocab = 0
+    if out_of_vocab_features:
+        n_features_out_of_vocab = out_of_vocab_features
+        if out_of_vocab_features > 1:
+            n_features_out_of_vocab += 1
+
     what_we_like = ["pizza", "beer"]
     pipe = Pipeline(
         [
-            ("count", CountVectorizer(vocabulary=what_we_like)),
+            (
+                "count",
+                CountVectorizer(
+                    vocabulary=what_we_like, out_of_vocab_features=out_of_vocab_features
+                ),
+            ),
             ("tfidf", TfidfTransformer()),
         ]
     )
     X = pipe.fit_transform(ALL_FOOD_DOCS)
     assert set(pipe.named_steps["count"].vocabulary_) == set(what_we_like)
-    assert X.shape[1] == len(what_we_like)
+    assert X.shape[1] == len(what_we_like) + n_features_out_of_vocab
 
 
 def test_countvectorizer_custom_vocabulary_repeated_indices():
@@ -361,8 +394,13 @@ def test_countvectorizer_custom_vocabulary_gap_index():
         vect.fit(["pasta_verdura"])
 
 
-def test_countvectorizer_stop_words():
-    cv = CountVectorizer()
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_countvectorizer_stop_words(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
+    cv = CountVectorizer(out_of_vocab_features=out_of_vocab_features)
     cv.set_params(stop_words="english")
     assert cv.get_stop_words() == ENGLISH_STOP_WORDS
     cv.set_params(stop_words="_bad_str_stop_")
@@ -376,13 +414,24 @@ def test_countvectorizer_stop_words():
     assert cv.get_stop_words() == set(stoplist)
 
 
-def test_countvectorizer_empty_vocabulary():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_countvectorizer_empty_vocabulary(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     with pytest.raises(ValueError, match="empty vocabulary"):
-        vect = CountVectorizer(vocabulary=[])
+        vect = CountVectorizer(
+            vocabulary=[], out_of_vocab_features=out_of_vocab_features
+        )
         vect.fit(["foo"])
 
     with pytest.raises(ValueError, match="empty vocabulary"):
-        v = CountVectorizer(max_df=1.0, stop_words="english")
+        v = CountVectorizer(
+            max_df=1.0,
+            stop_words="english",
+            out_of_vocab_features=out_of_vocab_features,
+        )
         # fit on stopwords only
         v.fit(["to be or not to be", "and me too", "and so do you"])
 
@@ -512,21 +561,45 @@ def test_sublinear_tf():
     assert tfidf[2] < 3
 
 
-def test_vectorizer():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_vectorizer(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     # raw documents as an iterator
     train_data = iter(ALL_FOOD_DOCS[:-1])
     test_data = [ALL_FOOD_DOCS[-1]]
     n_train = len(ALL_FOOD_DOCS) - 1
 
+    # Compute the number of out-of-vocab features that are being added
+    n_features_out_of_vocab = 0
+    if out_of_vocab_features:
+        n_features_out_of_vocab = out_of_vocab_features
+        if out_of_vocab_features > 1:
+            n_features_out_of_vocab += 1
+
     # test without vocabulary
-    v1 = CountVectorizer(max_df=0.5)
+    v1 = CountVectorizer(max_df=0.5, out_of_vocab_features=out_of_vocab_features)
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, "tocsr"):
         counts_train = counts_train.tocsr()
     assert counts_train[0, v1.vocabulary_["pizza"]] == 2
+    if out_of_vocab_features:
+        # Total count of out-of-vocab terms comes right after vocab features
+        # 2 out of vocab terms: ['the','copyright']
+        assert counts_train[0, len(v1.vocabulary_)] == 2
+        if out_of_vocab_features > 1:
+            # Validate total out-of-vocab count matches hashbag bucket total count
+            print(counts_train[0, :])
+            assert counts_train[0, len(v1.vocabulary_)] == np.sum(
+                counts_train[0, len(v1.vocabulary_) + 1 :]
+            )
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
-    v2 = CountVectorizer(vocabulary=v1.vocabulary_)
+    v2 = CountVectorizer(
+        vocabulary=v1.vocabulary_, out_of_vocab_features=out_of_vocab_features
+    )
 
     # compare that the two vectorizer give the same output on the test sample
     for v in (v1, v2):
@@ -538,6 +611,14 @@ def test_vectorizer():
         assert counts_test[0, vocabulary["salad"]] == 1
         assert counts_test[0, vocabulary["tomato"]] == 1
         assert counts_test[0, vocabulary["water"]] == 1
+        if out_of_vocab_features:
+            # Same two out of vocab terms: ['the','copyright']
+            assert counts_test[0, len(vocabulary)] == 2
+            if out_of_vocab_features > 1:
+                # Validate total out-of-vocab count matches hashbag bucket total count
+                assert counts_test[0, len(vocabulary)] == np.sum(
+                    counts_test[0, len(vocabulary) + 1 :]
+                )
 
         # stop word from the fixed list
         assert "the" not in vocabulary
@@ -557,12 +638,15 @@ def test_vectorizer():
     # test tf-idf
     t1 = TfidfTransformer(norm="l1")
     tfidf = t1.fit(counts_train).transform(counts_train).toarray()
-    assert len(t1.idf_) == len(v1.vocabulary_)
-    assert tfidf.shape == (n_train, len(v1.vocabulary_))
+    assert len(t1.idf_) == len(v1.vocabulary_) + n_features_out_of_vocab
+    assert tfidf.shape == (n_train, len(v1.vocabulary_) + n_features_out_of_vocab)
 
     # test tf-idf with new data
     tfidf_test = t1.transform(counts_test).toarray()
-    assert tfidf_test.shape == (len(test_data), len(v1.vocabulary_))
+    assert tfidf_test.shape == (
+        len(test_data),
+        len(v1.vocabulary_) + n_features_out_of_vocab,
+    )
 
     # test tf alone
     t2 = TfidfTransformer(norm="l1", use_idf=False)
@@ -580,7 +664,7 @@ def test_vectorizer():
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
-    tv = TfidfVectorizer(norm="l1")
+    tv = TfidfVectorizer(norm="l1", out_of_vocab_features=out_of_vocab_features)
 
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
@@ -592,7 +676,7 @@ def test_vectorizer():
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
     # test transform on unfitted vectorizer with empty vocabulary
-    v3 = CountVectorizer(vocabulary=None)
+    v3 = CountVectorizer(vocabulary=None, out_of_vocab_features=out_of_vocab_features)
     with pytest.raises(ValueError):
         v3.transform(train_data)
 
@@ -669,8 +753,20 @@ def test_hashing_vectorizer():
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_feature_names(get_names):
-    cv = CountVectorizer(max_df=0.5)
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_feature_names(get_names, out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
+    cv = CountVectorizer(max_df=0.5, out_of_vocab_features=out_of_vocab_features)
+
+    # compute the number of out-of-vocab features that are being added
+    n_features_out_of_vocab = 0
+    if out_of_vocab_features:
+        n_features_out_of_vocab = out_of_vocab_features
+        if out_of_vocab_features > 1:
+            n_features_out_of_vocab += 1
 
     # test for Value error on unfitted/empty vocabulary
     with pytest.raises(ValueError):
@@ -680,7 +776,7 @@ def test_feature_names(get_names):
     # test for vocabulary learned from data
     X = cv.fit_transform(ALL_FOOD_DOCS)
     n_samples, n_features = X.shape
-    assert len(cv.vocabulary_) == n_features
+    assert len(cv.vocabulary_) + n_features_out_of_vocab == n_features
 
     feature_names = getattr(cv, get_names)()
     if get_names == "get_feature_names_out":
@@ -690,7 +786,7 @@ def test_feature_names(get_names):
         # get_feature_names
         assert isinstance(feature_names, list)
 
-    assert len(feature_names) == n_features
+    assert len(feature_names) + n_features_out_of_vocab == n_features
     assert_array_equal(
         [
             "beer",
@@ -722,7 +818,7 @@ def test_feature_names(get_names):
         "water",
     ]
 
-    cv = CountVectorizer(vocabulary=vocab)
+    cv = CountVectorizer(vocabulary=vocab, out_of_vocab_features=out_of_vocab_features)
     feature_names = getattr(cv, get_names)()
     assert_array_equal(
         [
@@ -745,7 +841,12 @@ def test_feature_names(get_names):
 
 
 @pytest.mark.parametrize("Vectorizer", (CountVectorizer, TfidfVectorizer))
-def test_vectorizer_max_features(Vectorizer):
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_vectorizer_max_features(Vectorizer, out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     expected_vocabulary = {"burger", "beer", "salad", "pizza"}
     expected_stop_words = {
         "celeri",
@@ -758,7 +859,9 @@ def test_vectorizer_max_features(Vectorizer):
     }
 
     # test bounded number of extracted features
-    vectorizer = Vectorizer(max_df=0.6, max_features=4)
+    vectorizer = Vectorizer(
+        max_df=0.6, max_features=4, out_of_vocab_features=out_of_vocab_features
+    )
     vectorizer.fit(ALL_FOOD_DOCS)
     assert set(vectorizer.vocabulary_) == expected_vocabulary
     assert vectorizer.stop_words_ == expected_stop_words
@@ -793,9 +896,16 @@ def test_count_vectorizer_max_features(get_names):
     assert "the" == features_None[np.argmax(counts_None)]
 
 
-def test_vectorizer_max_df():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_vectorizer_max_df(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     test_data = ["abc", "dea", "eat"]
-    vect = CountVectorizer(analyzer="char", max_df=1.0)
+    vect = CountVectorizer(
+        analyzer="char", max_df=1.0, out_of_vocab_features=out_of_vocab_features
+    )
     vect.fit(test_data)
     assert "a" in vect.vocabulary_.keys()
     assert len(vect.vocabulary_.keys()) == 6
@@ -816,9 +926,16 @@ def test_vectorizer_max_df():
     assert len(vect.stop_words_) == 2
 
 
-def test_vectorizer_min_df():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_vectorizer_min_df(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     test_data = ["abc", "dea", "eat"]
-    vect = CountVectorizer(analyzer="char", min_df=1)
+    vect = CountVectorizer(
+        analyzer="char", min_df=1, out_of_vocab_features=out_of_vocab_features
+    )
     vect.fit(test_data)
     assert "a" in vect.vocabulary_.keys()
     assert len(vect.vocabulary_.keys()) == 6
@@ -855,9 +972,29 @@ def test_vectorizer_min_df():
             "max_features must be an instance of <class 'numbers.Integral'>, not <class"
             " 'float'>",
         ),
+        (
+            {"out_of_vocab_features": 0},
+            ValueError,
+            "out_of_vocab_features == 0, must be >= 1.",
+        ),
+        (
+            {"out_of_vocab_features": -10},
+            ValueError,
+            "out_of_vocab_features == -10, must be >= 1.",
+        ),
+        (
+            {"out_of_vocab_features": 1.5},
+            TypeError,
+            "out_of_vocab_features must be an instance of <class 'numbers.Integral'>,"
+            " not <class 'float'>",
+        ),
     ),
 )
 def test_vectorizer_params_validation(params, err_type, message):
+    if "out_of_vocab_features" in params and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     with pytest.raises(err_type, match=message):
         test_data = ["abc", "dea", "eat"]
         vect = CountVectorizer(**params, analyzer="char")
@@ -883,6 +1020,63 @@ def test_count_binary_occurrences(get_names):
 
     # check the ability to change the dtype
     vect = CountVectorizer(analyzer="char", max_df=1.0, binary=True, dtype=np.float32)
+    X_sparse = vect.fit_transform(test_data)
+    assert X_sparse.dtype == np.float32
+
+
+@pytest.mark.parametrize("out_of_vocab_features", (1, 8))
+def test_count_binary_occurrences_out_of_vocab(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
+    # by default multiple occurrences are counted as longs
+    test_data = ["aaabcc", "abbde"]
+    vect = CountVectorizer(
+        analyzer="char", min_df=2, out_of_vocab_features=out_of_vocab_features
+    )
+    X = vect.fit_transform(test_data).toarray()
+    if out_of_vocab_features == 1:
+        assert_array_equal([[3, 1] + [2], [1, 2] + [2]], X)
+    else:
+        assert out_of_vocab_features == 8
+        assert_array_equal(
+            [
+                [3, 1] + [2] + [0, 2, 0, 0, 0, 0, 0, 0],
+                [1, 2] + [2] + [0, 0, 0, 1, 0, 0, 0, 1],
+            ],
+            X,
+        )
+
+    # using boolean features, we can fetch the binary occurrence info
+    # instead.
+    vect = CountVectorizer(
+        analyzer="char",
+        min_df=2,
+        binary=True,
+        out_of_vocab_features=out_of_vocab_features,
+    )
+    X = vect.fit_transform(test_data).toarray()
+    if out_of_vocab_features == 1:
+        assert_array_equal([[1, 1] + [1], [1, 1] + [1]], X)
+    else:
+        assert out_of_vocab_features == 8
+        assert_array_equal(
+            [
+                [1, 1] + [1] + [0, 1, 0, 0, 0, 0, 0, 0],
+                [1, 1] + [1] + [0, 0, 0, 1, 0, 0, 0, 1],
+            ],
+            X,
+        )
+
+    # check the ability to change the dtype
+    vect = CountVectorizer(
+        analyzer="char",
+        min_df=2,
+        binary=True,
+        dtype=np.float32,
+        out_of_vocab_features=out_of_vocab_features,
+    )
     X_sparse = vect.fit_transform(test_data)
     assert X_sparse.dtype == np.float32
 
@@ -915,10 +1109,15 @@ def test_hashed_binary_occurrences():
 
 
 @pytest.mark.parametrize("Vectorizer", (CountVectorizer, TfidfVectorizer))
-def test_vectorizer_inverse_transform(Vectorizer):
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_vectorizer_inverse_transform(Vectorizer, out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     # raw documents
     data = ALL_FOOD_DOCS
-    vectorizer = Vectorizer()
+    vectorizer = Vectorizer(out_of_vocab_features=out_of_vocab_features)
     transformed_data = vectorizer.fit_transform(data)
     inversed_data = vectorizer.inverse_transform(transformed_data)
     assert isinstance(inversed_data, list)
@@ -946,7 +1145,12 @@ def test_vectorizer_inverse_transform(Vectorizer):
         assert_array_equal(np.sort(terms), np.sort(terms3))
 
 
-def test_count_vectorizer_pipeline_grid_selection():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_count_vectorizer_pipeline_grid_selection(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
@@ -958,7 +1162,12 @@ def test_count_vectorizer_pipeline_grid_selection():
         data, target, test_size=0.2, random_state=0
     )
 
-    pipeline = Pipeline([("vect", CountVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline(
+        [
+            ("vect", CountVectorizer(out_of_vocab_features=out_of_vocab_features)),
+            ("svc", LinearSVC()),
+        ]
+    )
 
     parameters = {
         "vect__ngram_range": [(1, 1), (1, 2)],
@@ -982,7 +1191,12 @@ def test_count_vectorizer_pipeline_grid_selection():
     assert best_vectorizer.ngram_range == (1, 1)
 
 
-def test_vectorizer_pipeline_grid_selection():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_vectorizer_pipeline_grid_selection(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
@@ -994,7 +1208,12 @@ def test_vectorizer_pipeline_grid_selection():
         data, target, test_size=0.1, random_state=0
     )
 
-    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline(
+        [
+            ("vect", TfidfVectorizer(out_of_vocab_features=out_of_vocab_features)),
+            ("svc", LinearSVC()),
+        ]
+    )
 
     parameters = {
         "vect__ngram_range": [(1, 1), (1, 2)],
@@ -1021,14 +1240,24 @@ def test_vectorizer_pipeline_grid_selection():
     assert not best_vectorizer.fixed_vocabulary_
 
 
-def test_vectorizer_pipeline_cross_validation():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1))
+def test_vectorizer_pipeline_cross_validation(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
     # label junk food as -1, the others as +1
     target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
 
-    pipeline = Pipeline([("vect", TfidfVectorizer()), ("svc", LinearSVC())])
+    pipeline = Pipeline(
+        [
+            ("vect", TfidfVectorizer(out_of_vocab_features=out_of_vocab_features)),
+            ("svc", LinearSVC()),
+        ]
+    )
 
     cv_scores = cross_val_score(pipeline, data, target, cv=3)
     assert_array_equal(cv_scores, [1.0, 1.0, 1.0])
@@ -1059,10 +1288,17 @@ def test_vectorizer_unicode():
     assert_array_equal(np.sort(X_counted.data), np.sort(X_hashed.data))
 
 
-def test_tfidf_vectorizer_with_fixed_vocabulary():
+@pytest.mark.parametrize("out_of_vocab_features", (None, 1, 8))
+def test_tfidf_vectorizer_with_fixed_vocabulary(out_of_vocab_features):
+    if out_of_vocab_features and IS_PYPY:
+        # PYPY not supported for out_of_vocab features, pass test.
+        return
+
     # non regression smoke test for inheritance issues
     vocabulary = ["pizza", "celeri"]
-    vect = TfidfVectorizer(vocabulary=vocabulary)
+    vect = TfidfVectorizer(
+        vocabulary=vocabulary, out_of_vocab_features=out_of_vocab_features
+    )
     X_1 = vect.fit_transform(ALL_FOOD_DOCS)
     X_2 = vect.transform(ALL_FOOD_DOCS)
     assert_array_almost_equal(X_1.toarray(), X_2.toarray())
@@ -1076,13 +1312,21 @@ def test_pickling_vectorizer():
         HashingVectorizer(binary=True),
         HashingVectorizer(ngram_range=(1, 2)),
         CountVectorizer(),
+        CountVectorizer(out_of_vocab_features=1),
+        CountVectorizer(out_of_vocab_features=8),
         CountVectorizer(preprocessor=strip_tags),
         CountVectorizer(analyzer=lazy_analyze),
         CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
         CountVectorizer(strip_accents=strip_eacute).fit(JUNK_FOOD_DOCS),
+        CountVectorizer(out_of_vocab_features=1).fit(JUNK_FOOD_DOCS),
+        CountVectorizer(out_of_vocab_features=8).fit(JUNK_FOOD_DOCS),
         TfidfVectorizer(),
+        TfidfVectorizer(out_of_vocab_features=1),
+        TfidfVectorizer(out_of_vocab_features=8),
         TfidfVectorizer(analyzer=lazy_analyze),
         TfidfVectorizer().fit(JUNK_FOOD_DOCS),
+        TfidfVectorizer(out_of_vocab_features=1).fit(JUNK_FOOD_DOCS),
+        TfidfVectorizer(out_of_vocab_features=8).fit(JUNK_FOOD_DOCS),
     ]
 
     for orig in instances:
@@ -1091,6 +1335,12 @@ def test_pickling_vectorizer():
         assert type(copy) == orig.__class__
         assert copy.get_params() == orig.get_params()
         if IS_PYPY and isinstance(orig, HashingVectorizer):
+            continue
+        elif (
+            IS_PYPY
+            and hasattr(orig, "out_of_vocab_features")
+            and orig.out_of_vocab_features
+        ):
             continue
         else:
             assert_allclose_dense_sparse(
