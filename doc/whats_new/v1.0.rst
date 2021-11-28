@@ -32,7 +32,7 @@ Changelog
 .......................
 
 - |Fix| :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier`
-  sets `feature_names_in_` in `estimators_`. :pr:`xxxxx` by `Thomas Fan`_.
+  sets `feature_names_in_` in `estimators_`. :pr:`21811` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
