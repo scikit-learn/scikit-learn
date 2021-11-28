@@ -220,7 +220,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             X = check_array(X, accept_sparse=self.accept_sparse)
         return self._transform(X, func=self.inverse_func, kw_args=self.inv_kw_args)
 
-    @available_if(lambda transformer: transformer.feature_names_out is not None)
+    @available_if(lambda self: self.feature_names_out is not None)
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
