@@ -108,7 +108,7 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
         kind=kind,
         grid_resolution=grid_resolution,
     )
-    pdp, axes = result, result["values"]
+    pdp, axes = result, result["pdp_values"]
 
     expected_pdp_shape = (n_targets, *[grid_resolution for _ in range(len(features))])
     expected_ice_shape = (
@@ -377,7 +377,7 @@ def test_partial_dependence_easy_target(est, power):
         est, features=[target_variable], X=X, grid_resolution=1000, kind="average"
     )
 
-    new_X = pdp["values"][0].reshape(-1, 1)
+    new_X = pdp["pdp_values"][0].reshape(-1, 1)
     new_y = pdp["average"][0]
     # add polynomial features if needed
     new_X = PolynomialFeatures(degree=power).fit_transform(new_X)
@@ -597,7 +597,7 @@ def test_partial_dependence_sample_weight():
 
     pdp = partial_dependence(clf, X, features=[1], kind="average")
 
-    assert np.corrcoef(pdp["average"], pdp["values"])[0, 1] > 0.99
+    assert np.corrcoef(pdp["average"], pdp["pdp_values"])[0, 1] > 0.99
 
 
 def test_hist_gbdt_sw_not_supported():
@@ -635,8 +635,8 @@ def test_partial_dependence_pipeline():
     )
     assert_allclose(pdp_pipe["average"], pdp_clf["average"])
     assert_allclose(
-        pdp_pipe["values"][0],
-        pdp_clf["values"][0] * scaler.scale_[features] + scaler.mean_[features],
+        pdp_pipe["pdp_values"][0],
+        pdp_clf["pdp_values"][0] * scaler.scale_[features] + scaler.mean_[features],
     )
 
 
@@ -704,11 +704,11 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     if preprocessor is not None:
         scaler = preprocessor.named_transformers_["standardscaler"]
         assert_allclose(
-            pdp_pipe["values"][1],
-            pdp_clf["values"][1] * scaler.scale_[1] + scaler.mean_[1],
+            pdp_pipe["pdp_values"][1],
+            pdp_clf["pdp_values"][1] * scaler.scale_[1] + scaler.mean_[1],
         )
     else:
-        assert_allclose(pdp_pipe["values"][1], pdp_clf["values"][1])
+        assert_allclose(pdp_pipe["pdp_values"][1], pdp_clf["pdp_values"][1])
 
 
 @pytest.mark.parametrize(
@@ -739,7 +739,7 @@ def test_partial_dependence_feature_type(features, expected_pd_shape):
         pipe, df, features=features, grid_resolution=10, kind="average"
     )
     assert pdp_pipe["average"].shape == expected_pd_shape
-    assert len(pdp_pipe["values"]) == len(pdp_pipe["average"].shape) - 1
+    assert len(pdp_pipe["pdp_values"]) == len(pdp_pipe["average"].shape) - 1
 
 
 @pytest.mark.parametrize(
@@ -779,3 +779,32 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     pdp_ind = partial_dependence(est, X=X, features=[1, 2], kind="individual")
     avg_ind = np.mean(pdp_ind["individual"], axis=1)
     assert_allclose(avg_ind, pdp_avg["average"])
+
+
+# TODO(1.3): Remove when bunch values is deprecated in 1.3
+def test_partial_dependence_bunch_values_deprecated():
+    """Test that deprecation warning is raised when values is accessed."""
+
+    est = LogisticRegression()
+    (X, y), _ = binary_classification_data
+    est.fit(X, y)
+
+    pdp_avg = partial_dependence(est, X=X, features=[1, 2], kind="average")
+
+    msg = (
+        "Key: 'values', is deprecated in 1.1 and will be "
+        "removed in 1.3. Please use 'pdp_values' instead"
+    )
+
+    # Does not warn for "pdp_values"
+    with pytest.warns(None) as record:
+        pdp_values = pdp_avg["pdp_values"]
+
+    assert not [str(rec.message) for rec in record]
+
+    # Warns for "values"
+    with pytest.warns(FutureWarning, match=msg):
+        values = pdp_avg["values"]
+
+    # "values" and "pdp_values" are the same object
+    assert values is pdp_values

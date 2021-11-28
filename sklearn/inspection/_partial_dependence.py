@@ -334,6 +334,14 @@ def partial_dependence(
             Only available when ``kind='both'``.
 
         values : seq of 1d ndarrays
+            The values with which the grid has been created.
+
+            .. deprecated:: 1.1
+                The key `values` has been deprecated in 1.1 and will be removed
+                in 1.3 in favor of `pdp_values`. See `pdp_values` for details
+                about the `values` attribute.
+
+        pdp_values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
             grid is a cartesian product of the arrays in ``values``.
             ``len(values) == len(features)``. The size of each array
@@ -481,14 +489,22 @@ def partial_dependence(
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values]
     )
+    pdp_results = Bunch()
+
+    msg = (
+        "Key: 'values', is deprecated in 1.1 and will be "
+        "removed in 1.3. Please use 'pdp_values' instead"
+    )
+    pdp_results._set_deprecated(
+        values, new_key="pdp_values", deprecated_key="values", warning_message=msg
+    )
 
     if kind == "average":
-        return Bunch(average=averaged_predictions, values=values)
+        pdp_results["average"] = averaged_predictions
     elif kind == "individual":
-        return Bunch(individual=predictions, values=values)
+        pdp_results["individual"] = predictions
     else:  # kind='both'
-        return Bunch(
-            average=averaged_predictions,
-            individual=predictions,
-            values=values,
-        )
+        pdp_results["average"] = averaged_predictions
+        pdp_results["individual"] = predictions
+
+    return pdp_results

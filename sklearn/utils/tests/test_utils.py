@@ -30,6 +30,7 @@ from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
 from sklearn.utils import _approximate_mode
+from sklearn.utils import Bunch
 from sklearn.utils.fixes import parse_version
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import SkipTest
@@ -725,3 +726,29 @@ def test_to_object_array(sequence):
     assert isinstance(out, np.ndarray)
     assert out.dtype.kind == "O"
     assert out.ndim == 1
+
+
+def test_bunch_attribute_deprecation():
+    """Check that bunch raises deprecation message with `__getattr__`."""
+    bunch = Bunch()
+    values = np.asarray([1, 2, 3])
+    msg = (
+        "Key: 'values', is deprecated in 1.1 and will be "
+        "removed in 1.3. Please use 'pdp_values' instead"
+    )
+    bunch._set_deprecated(
+        values, new_key="pdp_values", deprecated_key="values", warning_message=msg
+    )
+
+    # Does not warn for "pdp_values"
+    with pytest.warns(None) as record:
+        v = bunch["pdp_values"]
+
+    assert not [str(rec.message) for rec in record]
+    assert v is values
+
+    # Warns for "values"
+    with pytest.warns(FutureWarning, match=msg):
+        v = bunch["values"]
+
+    assert v is values

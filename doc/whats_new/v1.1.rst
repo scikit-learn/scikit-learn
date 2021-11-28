@@ -113,10 +113,10 @@ Changelog
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-  
+
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and 
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
   :user:`Krum Arnaudov <krumeto>`.
 
 - |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
@@ -153,6 +153,14 @@ Changelog
   and :class:`ensemble.RandomTreesEmbedding` now raise a ``ValueError`` when
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |API| :func:`inspection.partial_dependence` returns a :class:`utils.Bunch` with
+  new key: `pdp_values`. The `values` key is deprecated in favor of `pdp_values`
+  and the `values` key will be removed in 1.3.
+  :pr:`xxxxx` by `Thomas Fan`_.
 
 :mod:`sklearn.impute`
 .....................
