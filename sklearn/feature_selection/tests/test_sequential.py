@@ -123,7 +123,7 @@ def test_nan_support():
     sfs.fit(X, y)
     sfs.transform(X)
 
-    with pytest.raises(ValueError, match="Input contains NaN"):
+    with pytest.raises(ValueError, match="Input X contains NaN"):
         # LinearRegression does not support nans
         SequentialFeatureSelector(LinearRegression(), cv=2).fit(X, y)
 

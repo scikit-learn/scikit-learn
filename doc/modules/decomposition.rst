@@ -167,9 +167,9 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 .. topic:: References:
 
     * Algorithm 4.3 in
-      `"Finding structure with randomness: Stochastic algorithms for
+      :arxiv:`"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <https://arxiv.org/abs/0909.4061>`_
+      <0909.4061>`
       Halko, et al., 2009
 
     * `"An implementation of a randomized algorithm for principal component
@@ -231,7 +231,7 @@ problem solved is a PCA problem (dictionary learning) with an
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
-                \text{subject to } & ||U_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||U_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{components}
 
 :math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
@@ -273,15 +273,22 @@ Exact Kernel PCA
 ----------------
 
 :class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It
+dimensionality reduction through the use of kernels (see :ref:`metrics`) [Scholkopf1997]_. It
 has many applications including denoising, compression and structured
 prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 ``transform`` and ``inverse_transform``.
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_002.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
     :align: center
     :scale: 75%
+
+.. note::
+    :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
+    function mapping samples from the PCA basis into the original feature
+    space [Bakir2004]_. Thus, the reconstruction obtained with
+    :meth:`KernelPCA.inverse_transform` is an approximation. See the example
+    linked below for more details.
 
 .. topic:: Examples:
 
@@ -289,10 +296,16 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
 .. topic:: References:
 
-    * Kernel PCA was introduced in "Kernel principal component analysis"
-      Bernhard Schoelkopf, Alexander J. Smola, and Klaus-Robert Mueller. 1999.
-      In Advances in kernel methods, MIT Press, Cambridge, MA, USA 327-352.
+    .. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       `"Kernel principal component analysis."
+       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+       International conference on artificial neural networks.
+       Springer, Berlin, Heidelberg, 1997.
 
+    .. [Bakir2004] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+       `"Learning to find pre-images."
+       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
+       Advances in neural information processing systems 16 (2004): 449-456.
 
 .. _kPCA_Solvers:
 
@@ -341,13 +354,13 @@ components is less than 10 (strict) and the number of samples is more than 200
 
     * *randomized* solver:
 
-        - Algorithm 4.3 in
-          `"Finding structure with randomness: Stochastic algorithms for
+        * Algorithm 4.3 in
+          :arxiv:`"Finding structure with randomness: Stochastic algorithms for
           constructing approximate matrix decompositions"
-          <https://arxiv.org/abs/0909.4061>`_
+          <0909.4061>`
           Halko, et al., 2009
 
-        - `"An implementation of a randomized algorithm for principal component
+        * `"An implementation of a randomized algorithm for principal component
           analysis"
           <https://arxiv.org/pdf/1412.3510.pdf>`_
           A. Szlam et al. 2014
@@ -513,7 +526,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
-                \text{subject to } & ||V_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||V_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 

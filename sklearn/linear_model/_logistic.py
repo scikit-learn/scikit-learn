@@ -663,7 +663,7 @@ def _logistic_regression_path(
             X,
             accept_sparse="csr",
             dtype=np.float64,
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
@@ -1511,7 +1511,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             accept_sparse="csr",
             dtype=_dtype,
             order="C",
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         check_classification_targets(y)
         self.classes_ = np.unique(y)
@@ -2080,7 +2080,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             accept_sparse="csr",
             dtype=np.float64,
             order="C",
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         check_classification_targets(y)
 

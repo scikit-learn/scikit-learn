@@ -108,7 +108,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
         'diag' : shape of (n_components, n_features)
         'spherical' : shape of (n_components,)
 
-    covariance_type : string
+    covariance_type : str
 
     n_components : int
         Number of components.
@@ -415,7 +415,10 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     """
     n_samples, n_features = X.shape
     n_components, _ = means.shape
-    # det(precision_chol) is half of det(precision)
+    # The determinant of the precision matrix from the Cholesky decomposition
+    # corresponds to the negative half of the determinant of the full precision
+    # matrix.
+    # In short: det(precision_chol) = - det(precision) / 2
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
     if covariance_type == "full":
@@ -445,6 +448,8 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
             - 2 * np.dot(X, means.T * precisions)
             + np.outer(row_norms(X, squared=True), precisions)
         )
+    # Since we are using the precision of the Cholesky decomposition,
+    # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
     return -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
 
 
@@ -468,14 +473,10 @@ class GaussianMixture(BaseMixture):
         String describing the type of covariance parameters to use.
         Must be one of:
 
-        'full'
-            each component has its own general covariance matrix
-        'tied'
-            all components share the same general covariance matrix
-        'diag'
-            each component has its own diagonal covariance matrix
-        'spherical'
-            each component has its own single variance
+        - 'full': each component has its own general covariance matrix.
+        - 'tied': all components share the same general covariance matrix.
+        - 'diag': each component has its own diagonal covariance matrix.
+        - 'spherical': each component has its own single variance.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -808,6 +809,9 @@ class GaussianMixture(BaseMixture):
     def bic(self, X):
         """Bayesian information criterion for the current model on the input X.
 
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the BIC used.
+
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
@@ -824,6 +828,9 @@ class GaussianMixture(BaseMixture):
 
     def aic(self, X):
         """Akaike information criterion for the current model on the input X.
+
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the AIC used.
 
         Parameters
         ----------

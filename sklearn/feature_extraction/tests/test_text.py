@@ -436,7 +436,9 @@ def test_countvectorizer_custom_token_pattern_with_several_group():
 
 
 def test_countvectorizer_uppercase_in_vocab():
-    vocabulary = ["Sample", "Upper", "CaseVocabulary"]
+    # Check that the check for uppercase in the provided vocabulary is only done at fit
+    # time and not at transform time (#21251)
+    vocabulary = ["Sample", "Upper", "Case", "Vocabulary"]
     message = (
         "Upper case characters found in"
         " vocabulary while 'lowercase'"
@@ -445,8 +447,13 @@ def test_countvectorizer_uppercase_in_vocab():
     )
 
     vectorizer = CountVectorizer(lowercase=True, vocabulary=vocabulary)
+
     with pytest.warns(UserWarning, match=message):
-        vectorizer.fit_transform(vocabulary)
+        vectorizer.fit(vocabulary)
+
+    with pytest.warns(None) as record:
+        vectorizer.transform(vocabulary)
+    assert not record
 
 
 def test_tf_transformer_feature_names_out():
@@ -832,6 +839,31 @@ def test_vectorizer_min_df():
     assert len(vect.stop_words_) == 5
 
 
+@pytest.mark.parametrize(
+    "params, err_type, message",
+    (
+        ({"max_df": 2.0}, ValueError, "max_df == 2.0, must be <= 1.0."),
+        ({"min_df": 1.5}, ValueError, "min_df == 1.5, must be <= 1.0."),
+        ({"max_df": -2}, ValueError, "max_df == -2, must be >= 0."),
+        ({"min_df": -10}, ValueError, "min_df == -10, must be >= 0."),
+        ({"min_df": 3, "max_df": 2.0}, ValueError, "max_df == 2.0, must be <= 1.0."),
+        ({"min_df": 1.5, "max_df": 50}, ValueError, "min_df == 1.5, must be <= 1.0."),
+        ({"max_features": -10}, ValueError, "max_features == -10, must be >= 0."),
+        (
+            {"max_features": 3.5},
+            TypeError,
+            "max_features must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'float'>",
+        ),
+    ),
+)
+def test_vectorizer_params_validation(params, err_type, message):
+    with pytest.raises(err_type, match=message):
+        test_data = ["abc", "dea", "eat"]
+        vect = CountVectorizer(**params, analyzer="char")
+        vect.fit(test_data)
+
+
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
@@ -1061,9 +1093,9 @@ def test_pickling_vectorizer():
         if IS_PYPY and isinstance(orig, HashingVectorizer):
             continue
         else:
-            assert_array_equal(
-                copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
-                orig.fit_transform(JUNK_FOOD_DOCS).toarray(),
+            assert_allclose_dense_sparse(
+                copy.fit_transform(JUNK_FOOD_DOCS),
+                orig.fit_transform(JUNK_FOOD_DOCS),
             )
 
 

@@ -210,7 +210,7 @@ def average_precision_score(
         # guaranteed to be 1, as returned by precision_recall_curve
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type == "multilabel-indicator" and pos_label != 1:
         raise ValueError(
             "Parameter pos_label is fixed to 1 for "
@@ -523,6 +523,7 @@ def roc_auc_score(
 
     Multilabel case:
 
+    >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> X, y = make_multilabel_classification(random_state=0)
@@ -540,7 +541,7 @@ def roc_auc_score(
     array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
     """
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_score = check_array(y_score, ensure_2d=False)
 
@@ -725,7 +726,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         Decreasing score values.
     """
     # Check to make sure y_true is valid
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
@@ -1058,7 +1059,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         raise ValueError("y_true and y_score have different shape")
 
     # Handle badly formatted array and the degenerate case with one label
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "multilabel-indicator" and not (
         y_type == "binary" and y_true.ndim == 2
     ):
@@ -1139,7 +1140,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "multilabel-indicator":
         raise ValueError("{0} format is not supported".format(y_type))
 
@@ -1197,7 +1198,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type not in ("multilabel-indicator",):
         raise ValueError("{0} format is not supported".format(y_type))
 
@@ -1344,7 +1345,7 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
 
 
 def _check_dcg_target_type(y_true):
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     supported_fmt = (
         "multilabel-indicator",
         "continuous-multioutput",
@@ -1429,6 +1430,7 @@ def dcg_score(
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import dcg_score
     >>> # we have groud-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
@@ -1578,6 +1580,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import ndcg_score
     >>> # we have groud-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
@@ -1636,12 +1639,14 @@ def top_k_accuracy_score(
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores. These can be either probability estimates or
         non-thresholded decision values (as returned by
-        :term:`decision_function` on some classifiers). The binary case expects
-        scores with shape (n_samples,) while the multiclass case expects scores
-        with shape (n_samples, n_classes). In the multiclass case, the order of
-        the class scores must correspond to the order of ``labels``, if
-        provided, or else to the numerical or lexicographical order of the
-        labels in ``y_true``.
+        :term:`decision_function` on some classifiers).
+        The binary case expects scores with shape (n_samples,) while the
+        multiclass case expects scores with shape (n_samples, n_classes).
+        In the multiclass case, the order of the class scores must
+        correspond to the order of ``labels``, if provided, or else to
+        the numerical or lexicographical order of the labels in ``y_true``.
+        If ``y_true`` does not contain all the labels, ``labels`` must be
+        provided.
 
     k : int, default=2
         Number of most likely outcomes considered to find the correct label.
@@ -1656,7 +1661,8 @@ def top_k_accuracy_score(
     labels : array-like of shape (n_classes,), default=None
         Multiclass only. List of labels that index the classes in ``y_score``.
         If ``None``, the numerical or lexicographical order of the labels in
-        ``y_true`` is used.
+        ``y_true`` is used. If ``y_true`` does not contain all the labels,
+        ``labels`` must be provided.
 
     Returns
     -------
@@ -1694,7 +1700,7 @@ def top_k_accuracy_score(
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type == "binary" and labels is not None and len(labels) > 2:
         y_type = "multiclass"
     y_score = check_array(y_score, ensure_2d=False)

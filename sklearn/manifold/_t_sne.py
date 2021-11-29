@@ -619,7 +619,7 @@ class TSNE(BaseEstimator):
         Determines the random number generator. Pass an int for reproducible
         results across multiple function calls. Note that different
         initializations might result in different local minima of the cost
-        function. See :term: `Glossary <random_state>`.
+        function. See :term:`Glossary <random_state>`.
 
     method : str, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut

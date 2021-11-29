@@ -34,6 +34,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
+from .base import _ClassNamePrefixFeaturesOutMixin
 
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
@@ -96,7 +97,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     Examples
     --------
-
+    >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
     >>> johnson_lindenstrauss_min_dim(1e6, eps=0.5)
     663
 
@@ -290,7 +291,9 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
+class BaseRandomProjection(
+    TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+):
     """Base class for random projections.
 
     Warning: This class should not be used directly.
@@ -420,6 +423,14 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         X_new = safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)
         return X_new
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features.
+
+        Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        """
+        return self.n_components
+
 
 class GaussianRandomProjection(BaseRandomProjection):
     """Reduce dimensionality through Gaussian random projection.
@@ -487,11 +498,11 @@ class GaussianRandomProjection(BaseRandomProjection):
     >>> import numpy as np
     >>> from sklearn.random_projection import GaussianRandomProjection
     >>> rng = np.random.RandomState(42)
-    >>> X = rng.rand(100, 10000)
+    >>> X = rng.rand(25, 3000)
     >>> transformer = GaussianRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
-    (100, 3947)
+    (25, 2759)
     """
 
     def __init__(self, n_components="auto", *, eps=0.1, random_state=None):
@@ -617,23 +628,10 @@ class SparseRandomProjection(BaseRandomProjection):
 
         .. versionadded:: 1.0
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.random_projection import SparseRandomProjection
-    >>> rng = np.random.RandomState(42)
-    >>> X = rng.rand(100, 10000)
-    >>> transformer = SparseRandomProjection(random_state=rng)
-    >>> X_new = transformer.fit_transform(X)
-    >>> X_new.shape
-    (100, 3947)
-    >>> # very few components are non-zero
-    >>> np.mean(transformer.components_ != 0)
-    0.0100...
-
     See Also
     --------
-    GaussianRandomProjection
+    GaussianRandomProjection : Reduce dimensionality through Gaussian
+        random projection.
 
     References
     ----------
@@ -645,6 +643,19 @@ class SparseRandomProjection(BaseRandomProjection):
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            https://users.soe.ucsc.edu/~optas/papers/jl.pdf
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.random_projection import SparseRandomProjection
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.rand(25, 3000)
+    >>> transformer = SparseRandomProjection(random_state=rng)
+    >>> X_new = transformer.fit_transform(X)
+    >>> X_new.shape
+    (25, 2759)
+    >>> # very few components are non-zero
+    >>> np.mean(transformer.components_ != 0)
+    0.0182...
     """
 
     def __init__(

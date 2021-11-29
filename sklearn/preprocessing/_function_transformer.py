@@ -91,7 +91,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     StandardScaler : Standardize features by removing the mean and
         scaling to unit variance.
     LabelBinarizer : Binarize labels in a one-vs-all fashion.
-    MultilabelBinarizer : Transform between iterable of iterables
+    MultiLabelBinarizer : Transform between iterable of iterables
         and a multilabel format.
 
     Examples

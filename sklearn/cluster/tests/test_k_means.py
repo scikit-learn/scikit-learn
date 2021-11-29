@@ -4,13 +4,13 @@ import sys
 
 import numpy as np
 from scipy import sparse as sp
-from threadpoolctl import threadpool_limits
 
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import _astype_copy_false
+from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
@@ -28,6 +28,7 @@ from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
 from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
 from sklearn.cluster._k_means_common import _inertia_dense
 from sklearn.cluster._k_means_common import _inertia_sparse
+from sklearn.cluster._k_means_common import _is_same_clustering
 from sklearn.datasets import make_blobs
 from io import StringIO
 
@@ -51,7 +52,7 @@ X_csr = sp.csr_matrix(X)
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("algo", ["full", "elkan"])
+@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_kmeans_results(array_constr, algo, dtype):
     # Checks that KMeans works as intended on toy dataset by comparing with
@@ -77,7 +78,7 @@ def test_kmeans_results(array_constr, algo, dtype):
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("algo", ["full", "elkan"])
+@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 def test_kmeans_relocated_clusters(array_constr, algo):
     # check that empty clusters are relocated as expected
     X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
@@ -158,20 +159,20 @@ def test_kmeans_elkan_results(distribution, array_constr, tol):
     X[X < 0] = 0
     X = array_constr(X)
 
-    km_full = KMeans(algorithm="full", n_clusters=5, random_state=0, n_init=1, tol=tol)
+    km_lloyd = KMeans(n_clusters=5, random_state=0, n_init=1, tol=tol)
     km_elkan = KMeans(
         algorithm="elkan", n_clusters=5, random_state=0, n_init=1, tol=tol
     )
 
-    km_full.fit(X)
+    km_lloyd.fit(X)
     km_elkan.fit(X)
-    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
-    assert_array_equal(km_elkan.labels_, km_full.labels_)
-    assert km_elkan.n_iter_ == km_full.n_iter_
-    assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
+    assert_allclose(km_elkan.cluster_centers_, km_lloyd.cluster_centers_)
+    assert_array_equal(km_elkan.labels_, km_lloyd.labels_)
+    assert km_elkan.n_iter_ == km_lloyd.n_iter_
+    assert km_elkan.inertia_ == pytest.approx(km_lloyd.inertia_, rel=1e-6)
 
 
-@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+@pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
 def test_kmeans_convergence(algorithm):
     # Check that KMeans stops when convergence is reached when tol=0. (#16075)
     rnd = np.random.RandomState(0)
@@ -188,6 +189,21 @@ def test_kmeans_convergence(algorithm):
     ).fit(X)
 
     assert km.n_iter_ < max_iter
+
+
+@pytest.mark.parametrize("algorithm", ["auto", "full"])
+def test_algorithm_auto_full_deprecation_warning(algorithm):
+    X = np.random.rand(100, 2)
+    kmeans = KMeans(algorithm=algorithm)
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            f"algorithm='{algorithm}' is deprecated, it will "
+            "be removed in 1.3. Using 'lloyd' instead."
+        ),
+    ):
+        kmeans.fit(X)
+        assert kmeans._algorithm == "lloyd"
 
 
 def test_minibatch_update_consistency():
@@ -325,7 +341,7 @@ def test_fortran_aligned_data(Estimator):
     assert_array_equal(km_c.labels_, km_f.labels_)
 
 
-@pytest.mark.parametrize("algo", ["full", "elkan"])
+@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("constructor", [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize(
@@ -366,7 +382,7 @@ def test_minibatch_kmeans_verbose():
         sys.stdout = old_stdout
 
 
-@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+@pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
 @pytest.mark.parametrize("tol", [1e-2, 0])
 def test_kmeans_verbose(algorithm, tol, capsys):
     # Check verbose mode of KMeans for better coverage.
@@ -610,7 +626,7 @@ def test_score_max_iter(Estimator):
 @pytest.mark.parametrize("init", ["random", "k-means++"])
 @pytest.mark.parametrize(
     "Estimator, algorithm",
-    [(KMeans, "full"), (KMeans, "elkan"), (MiniBatchKMeans, None)],
+    [(KMeans, "lloyd"), (KMeans, "elkan"), (MiniBatchKMeans, None)],
 )
 def test_predict(Estimator, algorithm, init, dtype, array_constr):
     # Check the predict method and the equivalence between fit.predict and
@@ -953,7 +969,7 @@ def test_warning_elkan_1_cluster():
 @pytest.mark.parametrize(
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
-@pytest.mark.parametrize("algo", ["full", "elkan"])
+@pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 def test_k_means_1_iteration(array_constr, algo):
     # check the results after a single iteration (E-step M-step E-step) by
     # comparing against a pure python implementation.
@@ -1087,7 +1103,7 @@ def test_wrong_params(Estimator, param, match):
 
 @pytest.mark.parametrize(
     "param, match",
-    [({"algorithm": "wrong"}, r"Algorithm must be 'auto', 'full' or 'elkan'")],
+    [({"algorithm": "wrong"}, r"Algorithm must be either 'lloyd' or 'elkan'")],
 )
 def test_kmeans_wrong_params(param, match):
     # Check that error are raised with clear error message when wrong values
@@ -1173,3 +1189,19 @@ def test_kmeans_plusplus_dataorder():
     centers_fortran, _ = kmeans_plusplus(X_fortran, n_clusters, random_state=0)
 
     assert_allclose(centers_c, centers_fortran)
+
+
+def test_is_same_clustering():
+    # Sanity check for the _is_same_clustering utility function
+    labels1 = np.array([1, 0, 0, 1, 2, 0, 2, 1], dtype=np.int32)
+    assert _is_same_clustering(labels1, labels1, 3)
+
+    # these other labels represent the same clustering since we can retrive the first
+    # labels by simply renaming the labels: 0 -> 1, 1 -> 2, 2 -> 0.
+    labels2 = np.array([0, 2, 2, 0, 1, 2, 1, 0], dtype=np.int32)
+    assert _is_same_clustering(labels1, labels2, 3)
+
+    # these other labels do not represent the same clustering since not all ones are
+    # mapped to a same value
+    labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
+    assert not _is_same_clustering(labels1, labels3, 3)

@@ -325,6 +325,8 @@ def lasso_path(
 
     Comparing lasso_path and lars_path with interpolation:
 
+    >>> import numpy as np
+    >>> from sklearn.linear_model import lasso_path
     >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
@@ -1142,7 +1144,6 @@ class Lasso(ElasticNet):
             ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
 
-    precompute : 'auto', bool or array-like of shape (n_features, n_features),\
     precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
@@ -2202,8 +2203,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
 
 class MultiTaskElasticNet(Lasso):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as
-    regularizer.
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -2311,6 +2311,20 @@ class MultiTaskElasticNet(Lasso):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
+        cross-validation.
+    ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2322,20 +2336,6 @@ class MultiTaskElasticNet(Lasso):
      [0.45663524 0.45612256]]
     >>> print(clf.intercept_)
     [0.0872422 0.0872422]
-
-    See Also
-    --------
-    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
-        cross-validation.
-    ElasticNet
-    MultiTaskLasso
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     def __init__(
@@ -2376,6 +2376,7 @@ class MultiTaskElasticNet(Lasso):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
@@ -2525,7 +2526,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -2561,6 +2562,19 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    Lasso: Linear Model trained with L1 prior as regularizer (aka the Lasso).
+    MultiTaskLasso: Multi-task L1/L2 Lasso with built-in cross-validation.
+    MultiTaskElasticNet: Multi-task L1/L2 ElasticNet with built-in cross-validation.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2572,19 +2586,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
     [0.         0.94592424]]
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
-
-    See Also
-    --------
-    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
-    Lasso
-    MultiTaskElasticNet
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     def __init__(
@@ -2645,7 +2646,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         prediction score is used. Note that a good choice of list of
         values for l1_ratio is often to put more values close to 1
         (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
-        .9, .95, .99, 1]``
+        .9, .95, .99, 1]``.
 
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
@@ -2766,6 +2767,21 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
+    MultiTaskLassoCV : Multi-task Lasso model trained with L1/L2
+        mixed-norm as regularizer.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2778,19 +2794,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
      [0.52875032 0.46958558]]
     >>> print(clf.intercept_)
     [0.00166409 0.00166409]
-
-    See Also
-    --------
-    MultiTaskElasticNet
-    ElasticNetCV
-    MultiTaskLassoCV
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     path = staticmethod(enet_path)
@@ -2847,13 +2850,14 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Data
+            Training data.
         y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary
+            Training target variable. Will be cast to X's dtype if necessary.
 
         Returns
         -------
         self : object
+            Returns MultiTaskElasticNet instance.
         """
         return super().fit(X, y)
 
@@ -2994,6 +2998,22 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    MultiTaskElasticNet : Multi-task ElasticNet model trained with L1/L2
+        mixed-norm as regularizer.
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
+    MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
+        cross-validation.
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
+
     Examples
     --------
     >>> from sklearn.linear_model import MultiTaskLassoCV
@@ -3007,19 +3027,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     0.5713...
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
-
-    See Also
-    --------
-    MultiTaskElasticNet
-    ElasticNetCV
-    MultiTaskElasticNetCV
-
-    Notes
-    -----
-    The algorithm used to fit the model is coordinate descent.
-
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
     """
 
     path = staticmethod(lasso_path)
