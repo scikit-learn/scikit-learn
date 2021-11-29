@@ -498,11 +498,11 @@ class GaussianRandomProjection(BaseRandomProjection):
     >>> import numpy as np
     >>> from sklearn.random_projection import GaussianRandomProjection
     >>> rng = np.random.RandomState(42)
-    >>> X = rng.rand(100, 10000)
+    >>> X = rng.rand(25, 3000)
     >>> transformer = GaussianRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
-    (100, 3947)
+    (25, 2759)
     """
 
     def __init__(self, n_components="auto", *, eps=0.1, random_state=None):
@@ -648,14 +648,14 @@ class SparseRandomProjection(BaseRandomProjection):
     >>> import numpy as np
     >>> from sklearn.random_projection import SparseRandomProjection
     >>> rng = np.random.RandomState(42)
-    >>> X = rng.rand(100, 10000)
+    >>> X = rng.rand(25, 3000)
     >>> transformer = SparseRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
-    (100, 3947)
+    (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    0.0100...
+    0.0182...
     """
 
     def __init__(

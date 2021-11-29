@@ -1,7 +1,9 @@
+import warnings
+import numbers
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 import scipy.sparse as sp
-import warnings
-from abc import ABCMeta, abstractmethod
 
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
@@ -97,13 +99,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "impl should be one of %s, %s was given" % (LIBSVM_IMPL, self._impl)
             )
-
-        if gamma == 0:
-            msg = (
-                "The gamma value of 0.0 is invalid. Use 'auto' to set"
-                " gamma to a value of 1 / n_features."
-            )
-            raise ValueError(msg)
 
         self.kernel = kernel
         self.degree = degree
@@ -242,10 +237,23 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             else:
                 raise ValueError(
                     "When 'gamma' is a string, it should be either 'scale' or "
-                    "'auto'. Got '{}' instead.".format(self.gamma)
+                    f"'auto'. Got '{self.gamma!r}' instead."
                 )
-        else:
+        elif isinstance(self.gamma, numbers.Real):
+            if self.gamma <= 0:
+                msg = (
+                    f"gamma value must be > 0; {self.gamma!r} is invalid. Use"
+                    " a positive number or use 'auto' to set gamma to a"
+                    " value of 1 / n_features."
+                )
+                raise ValueError(msg)
             self._gamma = self.gamma
+        else:
+            msg = (
+                "The gamma value should be set to 'scale', 'auto' or a"
+                f" positive float value. {self.gamma!r} is not a valid option"
+            )
+            raise ValueError(msg)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
