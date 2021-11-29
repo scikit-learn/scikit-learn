@@ -186,7 +186,7 @@ _STYLE = """
   margin-right: 0.25em;
   color: #696969;
 }
-#$id div.sk-label:hover label.sk-toggleable__label-arrow:before {
+#$id label.sk-toggleable__label-arrow:hover:before {
   color: black;
 }
 #$id div.sk-estimator:hover label.sk-toggleable__label-arrow:before {
