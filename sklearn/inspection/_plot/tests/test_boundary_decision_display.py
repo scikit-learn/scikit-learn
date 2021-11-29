@@ -229,14 +229,12 @@ def test_string_target(pyplot):
 
     # Use strings as target
     y = iris.target_names[iris.target]
-
     log_reg = LogisticRegression().fit(X, y)
 
-    disp = DecisionBoundaryDisplay.from_estimator(
+    # Does not raise
+    DecisionBoundaryDisplay.from_estimator(
         log_reg,
         X,
         grid_resolution=5,
         response_method="predict",
-        plot_method="pcolormesh",
     )
-    disp.plot()

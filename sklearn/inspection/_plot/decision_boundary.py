@@ -281,12 +281,14 @@ class DecisionBoundaryDisplay:
         pred_func = _check_boundary_response_method(estimator, response_method)
         response = pred_func(np.c_[xx0.ravel(), xx1.ravel()])
 
-        # convert strings to integers
-        if response.dtype.kind in {"O", "U"}:
+        # convert strings predictions to integers
+        if pred_func.__name__ == "predict" and response.dtype.kind in {"O", "U"}:
             class_name_to_idx = {
                 name: idx for idx, name in enumerate(estimator.classes_)
             }
-            response = np.asarray([class_name_to_idx[target] for target in response])
+            response = np.asarray(
+                [class_name_to_idx[target] for target in response], dtype=np.int32
+            )
 
         if response.ndim != 1:
             if response.shape[1] != 2:
