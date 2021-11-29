@@ -11,29 +11,68 @@ X_binary, y_binary = X[:100], y[:100]
 
 
 @pytest.mark.parametrize(
-    "estimator, target, err_type, err_msg",
+    "estimator, target, target_type, err_type, err_msg",
     [
         (
             DecisionTreeClassifier(),
             y_binary,
+            None,
+            NotFittedError,
+            "This DecisionTreeClassifier instance is not fitted yet",
+        ),
+        (
+            DecisionTreeClassifier(),
+            y_binary,
+            "binary",
             NotFittedError,
             "This DecisionTreeClassifier instance is not fitted yet",
         ),
         (
             DecisionTreeRegressor().fit(X_binary, y_binary),
             y_binary,
+            None,
+            ValueError,
+            "This plotting functionalities only support a binary classifier",
+        ),
+        (
+            DecisionTreeRegressor().fit(X_binary, y_binary),
+            y_binary,
+            "binary",
             ValueError,
             "This plotting functionalities only support a binary classifier",
         ),
         (
             DecisionTreeClassifier().fit(X, y),
             y,
+            None,
+            ValueError,
+            "This DecisionTreeClassifier instance is not a binary classifier",
+        ),
+        (
+            DecisionTreeClassifier().fit(X, y),
+            y,
+            "multiclass",
+            ValueError,
+            "This DecisionTreeClassifier instance is not a binary classifier",
+        ),
+        (
+            DecisionTreeClassifier().fit(X, y),
+            y_binary,
+            "multiclass",
             ValueError,
             "This DecisionTreeClassifier instance is not a binary classifier",
         ),
         (
             DecisionTreeClassifier().fit(X_binary, y_binary),
             y,
+            None,
+            ValueError,
+            "The target y is not binary",
+        ),
+        (
+            DecisionTreeClassifier().fit(X_binary, y_binary),
+            y,
+            "multiclass",
             ValueError,
             "The target y is not binary",
         ),
