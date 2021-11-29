@@ -4,6 +4,7 @@ from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import load_iris
 
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.inspection._plot.decision_boundary import _check_boundary_response_method
@@ -16,21 +17,18 @@ pytestmark = pytest.mark.filterwarnings(
 )
 
 
-@pytest.fixture(scope="module")
-def data():
-    X, y = make_classification(
-        n_informative=1,
-        n_redundant=1,
-        n_clusters_per_class=1,
-        n_features=2,
-        random_state=42,
-    )
-    return X, y
+X, y = make_classification(
+    n_informative=1,
+    n_redundant=1,
+    n_clusters_per_class=1,
+    n_features=2,
+    random_state=42,
+)
 
 
 @pytest.fixture(scope="module")
-def fitted_clf(data):
-    return LogisticRegression().fit(*data)
+def fitted_clf():
+    return LogisticRegression().fit(X, y)
 
 
 def test_check_boundary_response_method_auto():
@@ -102,14 +100,12 @@ def test_multiclass_error(pyplot, response_method):
         ({"eps": -1.1}, r"eps must be greater than or equal to 0. Got -1.1 instead"),
     ],
 )
-def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf, data):
-    X, _ = data
+def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf):
     with pytest.raises(ValueError, match=error_msg):
         DecisionBoundaryDisplay.from_estimator(fitted_clf, X, **kwargs)
 
 
-def test_display_plot_input_error(pyplot, fitted_clf, data):
-    X, y = data
+def test_display_plot_input_error(pyplot, fitted_clf):
     disp = DecisionBoundaryDisplay.from_estimator(fitted_clf, X, grid_resolution=5)
 
     with pytest.raises(ValueError, match="plot_method must be 'contourf'"):
@@ -120,12 +116,9 @@ def test_display_plot_input_error(pyplot, fitted_clf, data):
     "response_method", ["auto", "predict", "predict_proba", "decision_function"]
 )
 @pytest.mark.parametrize("plot_method", ["contourf", "contour"])
-def test_decision_boundary_display(
-    pyplot, fitted_clf, data, response_method, plot_method
-):
+def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_method):
     fig, ax = pyplot.subplots()
     eps = 2.0
-    X, y = data
     disp = DecisionBoundaryDisplay.from_estimator(
         fitted_clf,
         X,
@@ -162,27 +155,24 @@ def test_decision_boundary_display(
     [
         (
             "predict_proba",
-            "response method predict_proba is not defined in MyClassifier",
+            "MyClassifier has none of the following attributes: predict_proba",
         ),
         (
             "decision_function",
-            "response method decision_function is not defined in MyClassifier",
+            "MyClassifier has none of the following attributes: decision_function",
         ),
         (
             "auto",
-            "response method decision_function, predict_proba, or predict "
-            "is not defined in MyClassifier",
+            "MyClassifier has none of the following attributes: decision_function, "
+            "predict_proba, predict",
         ),
         (
             "bad_method",
-            "response_method must be one of predict_proba, decision_function, auto,"
-            " predict",
+            "MyClassifier has none of the following attributes: bad_method",
         ),
     ],
 )
-def test_error_bad_response(pyplot, response_method, msg, data):
-    X, y = data
-
+def test_error_bad_response(pyplot, response_method, msg):
     class MyClassifier(BaseEstimator, ClassifierMixin):
         def fit(self, X, y):
             self.fitted_ = True
@@ -195,9 +185,9 @@ def test_error_bad_response(pyplot, response_method, msg, data):
         DecisionBoundaryDisplay.from_estimator(clf, X, response_method=response_method)
 
 
-def test_dataframe_labels_used(pyplot, data, fitted_clf):
+def test_dataframe_labels_used(pyplot, fitted_clf):
     pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(data[0], columns=["col_x", "col_y"])
+    df = pd.DataFrame(X, columns=["col_x", "col_y"])
 
     # pandas column names are used by default
     _, ax = pyplot.subplots()
@@ -230,3 +220,23 @@ def test_dataframe_labels_used(pyplot, data, fitted_clf):
     )
     assert ax.get_xlabel() == "overwritten_x"
     assert ax.get_ylabel() == "overwritten_y"
+
+
+def test_string_target(pyplot):
+    """Check that decision boundary works with classifiers trained on string labels."""
+    iris = load_iris()
+    X = iris.data[:, [0, 1]]
+
+    # Use strings as target
+    y = iris.target_names[iris.target]
+
+    log_reg = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        log_reg,
+        X,
+        grid_resolution=5,
+        response_method="predict",
+        plot_method="pcolormesh",
+    )
+    disp.plot()

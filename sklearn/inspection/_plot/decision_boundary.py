@@ -1,3 +1,5 @@
+from functools import reduce
+
 import numpy as np
 
 from ...utils import check_matplotlib_support
@@ -23,39 +25,20 @@ def _check_boundary_response_method(estimator, response_method):
     prediction_method: callable
         Prediction method of estimator.
     """
-    # if "auto":
-    #     response_methods = ["decision_function", "predict_proba", "predict"]
+    if response_method == "auto":
+        list_methods = ["decision_function", "predict_proba", "predict"]
+    else:
+        list_methods = [response_method]
 
-    possible_response_methods = (
-        "predict_proba",
-        "decision_function",
-        "auto",
-        "predict",
-    )
-    if response_method not in possible_response_methods:
+    prediction_method = [getattr(estimator, method, None) for method in list_methods]
+    prediction_method = reduce(lambda x, y: x or y, prediction_method)
+    if prediction_method is None:
         raise ValueError(
-            f"response_method must be one of {', '.join(possible_response_methods)}"
+            f"{estimator.__class__.__name__} has none of the following attributes: "
+            f"{', '.join(list_methods)}."
         )
 
-    error_msg = "response method {} is not defined in {}"
-    if response_method != "auto":
-        if not hasattr(estimator, response_method):
-            raise ValueError(
-                error_msg.format(response_method, estimator.__class__.__name__)
-            )
-        return getattr(estimator, response_method)
-    elif hasattr(estimator, "decision_function"):
-        return getattr(estimator, "decision_function")
-    elif hasattr(estimator, "predict_proba"):
-        return getattr(estimator, "predict_proba")
-    elif hasattr(estimator, "predict"):
-        return getattr(estimator, "predict")
-
-    raise ValueError(
-        error_msg.format(
-            "decision_function, predict_proba, or predict", estimator.__class__.__name__
-        )
-    )
+    return prediction_method
 
 
 class DecisionBoundaryDisplay:
@@ -297,6 +280,13 @@ class DecisionBoundaryDisplay:
 
         pred_func = _check_boundary_response_method(estimator, response_method)
         response = pred_func(np.c_[xx0.ravel(), xx1.ravel()])
+
+        # convert strings to integers
+        if response.dtype.kind in {"O", "U"}:
+            class_name_to_idx = {
+                name: idx for idx, name in enumerate(estimator.classes_)
+            }
+            response = np.asarray([class_name_to_idx[target] for target in response])
 
         if response.ndim != 1:
             if response.shape[1] != 2:
