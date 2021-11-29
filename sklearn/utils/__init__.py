@@ -1281,7 +1281,7 @@ def _get_response_values(
     estimator,
     X,
     y_true,
-    response_method=None,
+    response_method,
     pos_label=None,
 ):
     """Compute the response values of a classifier or a regressor.
