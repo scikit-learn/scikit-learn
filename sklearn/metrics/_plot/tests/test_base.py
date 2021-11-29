@@ -78,7 +78,9 @@ X_binary, y_binary = X[:100], y[:100]
         ),
     ],
 )
-def test_check_estimator_and_target_is_binary(estimator, target, err_type, err_msg):
+def test_check_estimator_and_target_is_binary(
+    estimator, target, target_type, err_type, err_msg
+):
     """Check that we raise the expected error when checking the estimator and target."""
     with pytest.raises(err_type, match=err_msg):
-        _check_estimator_and_target_is_binary(estimator, target)
+        _check_estimator_and_target_is_binary(estimator, target, target_type)
