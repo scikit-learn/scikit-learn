@@ -366,4 +366,10 @@ def test_fetch_remote_raise_warnings_with_invalid_url():
     with pytest.warns(UserWarning, match="Retry downloading") as record:
         with pytest.raises(HTTPError, match="HTTP Error 404"):
             _fetch_remote(invalid_remote_file, n_retries=3, delay=0)
+
+        for r in record:
+            assert (
+                r.message.args[0]
+                == f"Retry downloading from url: {invalid_remote_file.url}"
+            )
         assert len(record) == 3
