@@ -258,7 +258,7 @@ Changelog
   by `Thomas Fan`_.
 
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
-  left corner of the HTML representation showing that the elements are
+  left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
