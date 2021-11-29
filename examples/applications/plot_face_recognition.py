@@ -21,8 +21,11 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.datasets import fetch_lfw_people
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
+from sklearn.utils.fixes import loguniform
 
 
 # Display progress logs on stdout
@@ -31,7 +34,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
 # %%
 # Download the data, if not already on disk and load it as numpy arrays
-# %%
+
 lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
 # introspect the images arrays to find the shapes (for plotting)
@@ -54,19 +57,20 @@ print("n_classes: %d" % n_classes)
 
 
 # %%
-# Split into a training set and a test set using a stratified k fold
+# Split into a training set and a test and keep 25% of the data for testing.
 
-# split into a training and testing set
-# %%
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.25, random_state=42
 )
 
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
 # %%
 # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
 # dataset): unsupervised feature extraction / dimensionality reduction
-# %%
+
 n_components = 150
 
 print(
@@ -87,12 +91,12 @@ print("done in %0.3fs" % (time() - t0))
 
 # %%
 # Train a SVM classification model
-# %%
+
 print("Fitting the classifier to the training set")
 t0 = time()
 param_grid = {
-    "C": [1e3, 5e3, 1e4, 5e4, 1e5],
-    "gamma": [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
+    "C": loguniform(1e3, 1e5),
+    "gamma": loguniform(1e-4, 1e-1),
 }
 clf = RandomizedSearchCV(
     SVC(kernel="rbf", class_weight="balanced"), param_grid, n_iter=10
@@ -105,19 +109,19 @@ print(clf.best_estimator_)
 
 # %%
 # Quantitative evaluation of the model quality on the test set
-# %%
+
 print("Predicting people's names on the test set")
 t0 = time()
 y_pred = clf.predict(X_test_pca)
 print("done in %0.3fs" % (time() - t0))
 
 print(classification_report(y_test, y_pred, target_names=target_names))
-print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
+ConfusionMatrixDisplay.from_estimator(clf, X_test_pca, y_test)
+plt.show()
 
 
 # %%
 # Qualitative evaluation of the predictions using matplotlib
-# %%
 
 
 def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
@@ -131,7 +135,7 @@ def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
         plt.xticks(())
         plt.yticks(())
 
-
+# %%
 # plot the result of the prediction on a portion of the test set
 
 
@@ -146,7 +150,7 @@ prediction_titles = [
 ]
 
 plot_gallery(X_test, prediction_titles, h, w)
-
+# %%
 # plot the gallery of the most significative eigenfaces
 
 eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
