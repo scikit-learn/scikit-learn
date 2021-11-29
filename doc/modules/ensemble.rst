@@ -219,9 +219,9 @@ when fully developing the trees). Bear in mind though that these values are
 usually not optimal, and might result in models that consume a lot of RAM.
 The best parameter values should always be cross-validated. In addition, note
 that in random forests, bootstrap samples are used by default
-(``bootstrap=True``) whilethe default strategy for extra-trees is to use the
+(``bootstrap=True``) while the default strategy for extra-trees is to use the
 whole dataset (``bootstrap=False``). When using bootstrap sampling the
-generalization accuracy can be estimated on the left out or out-of-bag samples.
+generalization error can be estimated on the left out or out-of-bag samples.
 This can be enabled by setting ``oob_score=True``.
 
 .. note::
