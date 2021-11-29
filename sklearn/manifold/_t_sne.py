@@ -604,7 +604,7 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    metric_params : None, 'V' or 'VI', default = None
+    metric_params : dictionnary, default = None (optional)
         Used for mahalanobis distance.
 
     init : {'random', 'pca'} or ndarray of shape (n_samples, n_components), \
@@ -893,7 +893,7 @@ class TSNE(BaseEstimator):
                 if self.metric_params is None:
                     metric_params_ = {}
                 else:
-                    metric_params_ = self.metric_params
+                    metric_params_ = self.metric_params.copy()
 
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
@@ -910,7 +910,7 @@ class TSNE(BaseEstimator):
                         X,
                         metric=self.metric,
                         n_jobs=self.n_jobs,
-                        **metric_params_,
+                        **metric_params_
                     )
 
             if np.any(distances < 0):
@@ -945,6 +945,7 @@ class TSNE(BaseEstimator):
                 n_jobs=self.n_jobs,
                 n_neighbors=n_neighbors,
                 metric=self.metric,
+                metric_params=metric_params_
             )
             t0 = time()
             knn.fit(X)

@@ -1303,7 +1303,8 @@ def test_tsne_with_mahalanobis_distance():
         learning_rate=50,
         n_components=n_embedding,
         random_state=0,
-        metric="mahalanobis",
+        metric='mahalanobis',
+        square_distances=True
     )
     ref = "Must provide either V or VI for Mahalanobis distance"
     with pytest.raises(ValueError, match=ref):
@@ -1318,8 +1319,8 @@ def test_tsne_with_mahalanobis_distance():
         learning_rate=50,
         n_components=n_embedding,
         random_state=0,
-        metric="precomputed",
-    ).fit_transform(precomputed_X)
+        metric='precomputed',
+        square_distances=True).fit_transform(precomputed_X)
 
     now = TSNE(
         verbose=1,
@@ -1328,7 +1329,7 @@ def test_tsne_with_mahalanobis_distance():
         learning_rate=50,
         n_components=n_embedding,
         random_state=0,
-        metric="mahalanobis",
-        metric_params={"V": np.cov(X.T)},
-    ).fit_transform(X)
+        metric='mahalanobis',
+        metric_params={'V': np.cov(X.T)},
+        square_distances=True).fit_transform(X)
     assert_array_equal(ref, now)
