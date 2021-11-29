@@ -603,7 +603,7 @@ class TSNE(BaseEstimator):
         should take two arrays from X as input and return a value indicating
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
-    
+
     metric_params : None, 'V' or 'VI', default = None
         Used for mahalanobis distance.
 
@@ -890,11 +890,11 @@ class TSNE(BaseEstimator):
             if self.metric == "precomputed":
                 distances = X
             else:
-                if (self.metric_params is None):
-                    metric_params_ = {} 
-                else: 
+                if self.metric_params is None:
+                    metric_params_ = {}
+                else:
                     metric_params_ = self.metric_params
-                
+
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
 
@@ -907,7 +907,9 @@ class TSNE(BaseEstimator):
                     distances = pairwise_distances(X, metric=self.metric, squared=True)
                 else:
                     distances = pairwise_distances(
-                        X, metric=self.metric, n_jobs=self.n_jobs,
+                        X,
+                        metric=self.metric,
+                        n_jobs=self.n_jobs,
                         **metric_params_,
                     )
 
