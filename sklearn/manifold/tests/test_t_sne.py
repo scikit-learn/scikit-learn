@@ -1,4 +1,3 @@
-from re import match
 import sys
 from io import StringIO
 import numpy as np
