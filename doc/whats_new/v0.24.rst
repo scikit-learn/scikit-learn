@@ -713,7 +713,7 @@ Changelog
   :user:`Joseph Willard <josephwillard>`
 
 - |Fix| bug in :func:`metrics.hinge_loss` where error occurs when
-  ``y_true`` is missing some labels that are provided explictly in the
+  ``y_true`` is missing some labels that are provided explicitly in the
   ``labels`` parameter.
   :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
 

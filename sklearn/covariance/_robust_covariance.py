@@ -71,7 +71,7 @@ def c_step(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -269,7 +269,7 @@ def select_candidates(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     See Also
     ---------
@@ -381,7 +381,7 @@ def fast_mcd(
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -610,7 +610,7 @@ class MinCovDet(EmpiricalCovariance):
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------

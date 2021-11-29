@@ -174,3 +174,27 @@ def test_function_transformer_frame():
     transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, "loc")
+
+
+def test_function_transformer_validate_inverse():
+    """Test that function transformer does not reset estimator in
+    `inverse_transform`."""
+
+    def add_constant_feature(X):
+        X_one = np.ones((X.shape[0], 1))
+        return np.concatenate((X, X_one), axis=1)
+
+    def inverse_add_constant(X):
+        return X[:, :-1]
+
+    X = np.array([[1, 2], [3, 4], [3, 4]])
+    trans = FunctionTransformer(
+        func=add_constant_feature,
+        inverse_func=inverse_add_constant,
+        validate=True,
+    )
+    X_trans = trans.fit_transform(X)
+    assert trans.n_features_in_ == X.shape[1]
+
+    trans.inverse_transform(X_trans)
+    assert trans.n_features_in_ == X.shape[1]

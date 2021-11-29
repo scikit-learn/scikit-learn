@@ -31,9 +31,8 @@ California housing dataset. The example is taken from [1]_.
        the Black Box: Visualizing Statistical Learning With Plots of
        Individual Conditional Expectation. (2015) Journal of Computational and
        Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
-"""
 
-print(__doc__)
+"""
 
 # %%
 # California Housing data preprocessing
@@ -111,12 +110,12 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 import matplotlib.pyplot as plt
 from sklearn.inspection import partial_dependence
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 
 print("Computing partial dependence plots...")
 tic = time()
 features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,
@@ -166,7 +165,7 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 print("Computing partial dependence plots...")
 tic = time()
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,
@@ -229,7 +228,7 @@ features = ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")]
 print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
     features,

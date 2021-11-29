@@ -53,7 +53,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         during training.
 
     verbose : int, default=0
-        The verbosity level. The default, zero, means silent mode.
+        The verbosity level. The default, zero, means silent mode. Range
+        of values is [0, inf].
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for:
@@ -76,13 +77,13 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         Biases of the visible units.
 
     components_ : array-like of shape (n_components, n_features)
-        Weight matrix, where n_features in the number of
-        visible units and n_components is the number of hidden units.
+        Weight matrix, where `n_features` is the number of
+        visible units and `n_components` is the number of hidden units.
 
     h_samples_ : array-like of shape (batch_size, n_components)
         Hidden Activation sampled from the model distribution,
-        where batch_size in the number of examples per minibatch and
-        n_components is the number of hidden units.
+        where `batch_size` is the number of examples per minibatch and
+        `n_components` is the number of hidden units.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -95,15 +96,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
-    Examples
+    See Also
     --------
-
-    >>> import numpy as np
-    >>> from sklearn.neural_network import BernoulliRBM
-    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> model = BernoulliRBM(n_components=2)
-    >>> model.fit(X)
-    BernoulliRBM(n_components=2)
+    sklearn.neural_network.MLPRegressor : Multi-layer Perceptron regressor.
+    sklearn.neural_network.MLPClassifier : Multi-layer Perceptron classifier.
+    sklearn.decomposition.PCA : An unsupervised linear dimensionality
+        reduction model.
 
     References
     ----------
@@ -115,6 +113,16 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
     [2] Tieleman, T. Training Restricted Boltzmann Machines using
         Approximations to the Likelihood Gradient. International Conference
         on Machine Learning (ICML) 2008
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> from sklearn.neural_network import BernoulliRBM
+    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
+    >>> model = BernoulliRBM(n_components=2)
+    >>> model.fit(X)
+    BernoulliRBM(n_components=2)
     """
 
     def __init__(
@@ -250,13 +258,15 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         return v_
 
     def partial_fit(self, X, y=None):
-        """Fit the model to the data X which should contain a partial
-        segment of the data.
+        """Fit the model to the partial segment of the data X.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             Training data.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
+            Target values (None for unsupervised transformations).
 
         Returns
         -------
@@ -361,6 +371,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
+            Target values (None for unsupervised transformations).
 
         Returns
         -------

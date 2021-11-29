@@ -141,10 +141,10 @@ def load_files(
 
     Parameters
     ----------
-    container_path : str or unicode
-        Path to the main folder holding one subfolder per category
+    container_path : str
+        Path to the main folder holding one subfolder per category.
 
-    description : str or unicode, default=None
+    description : str, default=None
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
 
@@ -928,7 +928,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -969,7 +969,9 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
             The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
-
+        Returns a tuple of two ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
         .. versionadded:: 0.18
     """
     data_filename = "diabetes_data.csv.gz"
@@ -1006,7 +1008,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
 
 def load_linnerud(*, return_X_y=False, as_frame=False):
-    """Load and return the physical excercise linnerud dataset.
+    """Load and return the physical exercise Linnerud dataset.
 
     This dataset is suitable for multi-ouput regression tasks.
 
@@ -1120,7 +1122,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     dataset unless the purpose of the code is to study and educate about
     ethical issues in data science and machine learning.
 
-    In this case special case, you can fetch the dataset from the original
+    In this special case, you can fetch the dataset from the original
     source::
 
         import pandas as pd
@@ -1133,13 +1135,13 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         target = raw_df.values[1::2, 2]
 
     Alternative datasets include the California housing dataset (i.e.
-    func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
-    dataset. You can load the datasets as follows:
+    :func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
+    dataset. You can load the datasets as follows::
 
         from sklearn.datasets import fetch_california_housing
         housing = fetch_california_housing()
 
-    for the California housing dataset and:
+    for the California housing dataset and::
 
         from sklearn.datasets import fetch_openml
         housing = fetch_openml(name="house_prices", as_frame=True)
@@ -1161,7 +1163,7 @@ def load_boston(*, return_X_y=False):
 
     .. deprecated:: 1.0
        This function is deprecated in 1.0 and will be removed in 1.2. See the
-       warning message below for futher details regarding the alternative
+       warning message below for further details regarding the alternative
        datasets.
 
     .. warning::
@@ -1177,7 +1179,7 @@ def load_boston(*, return_X_y=False):
         this dataset unless the purpose of the code is to study and educate
         about ethical issues in data science and machine learning.
 
-        In this case special case, you can fetch the dataset from the original
+        In this special case, you can fetch the dataset from the original
         source::
 
             import pandas as pd  # doctest: +SKIP
@@ -1190,7 +1192,7 @@ def load_boston(*, return_X_y=False):
             target = raw_df.values[1::2, 2]
 
         Alternative datasets include the California housing dataset [3]_
-        (i.e. func:`~sklearn.datasets.fetch_california_housing`) and Ames
+        (i.e. :func:`~sklearn.datasets.fetch_california_housing`) and Ames
         housing dataset [4]_. You can load the datasets as follows::
 
             from sklearn.datasets import fetch_california_housing

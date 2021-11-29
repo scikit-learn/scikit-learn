@@ -27,7 +27,6 @@ exclude = '''
   | \.git          # root of the project
   | \.mypy_cache
   | \.vscode
-  | examples
   | build
   | dist
   | doc/tutorial

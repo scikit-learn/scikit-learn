@@ -29,6 +29,7 @@ from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
+from sklearn.utils import _approximate_mode
 from sklearn.utils.fixes import parse_version
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import SkipTest
@@ -681,6 +682,23 @@ def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
     # make sure that we are returning a Python bool
     assert isinstance(is_scalar_nan(value), bool)
+
+
+def test_approximate_mode():
+    """Make sure sklearn.utils._approximate_mode returns valid
+    results for cases where "class_counts * n_draws" is enough
+    to overflow 32-bit signed integer.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
+    X = np.array([99000, 1000], dtype=np.int32)
+    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
+
+    # Draws 25% of the total population, so in this case a fair draw means:
+    # 25% * 99.000 = 24.750
+    # 25% *  1.000 =    250
+    assert_array_equal(ret, [24750, 250])
 
 
 def dummy_func():

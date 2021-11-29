@@ -49,7 +49,7 @@ def test_binomial_deviance():
     for datum in test_data:
         assert bd(*datum) == approx(alt_dev(*datum))
 
-    # check the negative gradient against altenative formula from ESLII
+    # check the negative gradient against alternative formula from ESLII
     # Note: negative_gradient is half the negative gradient.
     def alt_ng(y, raw_pred):
         z = 2 * y - 1

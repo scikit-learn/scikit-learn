@@ -1210,8 +1210,8 @@ Finally, many parts of the implementation of
      <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
   .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
      package", 2007
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, `"XGBoost: A Scalable Tree
-     Boosting System" <https://arxiv.org/abs/1603.02754>`_
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
+     Boosting System" <1603.02754>`
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_

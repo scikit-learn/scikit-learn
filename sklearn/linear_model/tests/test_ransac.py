@@ -387,7 +387,7 @@ def test_ransac_min_n_samples():
     with pytest.raises(ValueError):
         ransac_estimator7.fit(X, y)
 
-    err_msg = "From version 1.2, `min_samples` needs to be explicitely set"
+    err_msg = "From version 1.2, `min_samples` needs to be explicitly set"
     with pytest.warns(FutureWarning, match=err_msg):
         ransac_estimator8.fit(X, y)
 

@@ -227,7 +227,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         output = (
             re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
         )
-        # Shorten the filenames to have better compability with windows 10
+        # Shorten the filenames to have better compatibility with windows 10
         # and filenames > 260 characters
         return (
             output.replace("-json-data-list", "-jdl")

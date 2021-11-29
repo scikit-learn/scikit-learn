@@ -663,7 +663,7 @@ def _logistic_regression_path(
             X,
             accept_sparse="csr",
             dtype=np.float64,
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
@@ -1436,8 +1436,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
@@ -1511,7 +1511,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             accept_sparse="csr",
             dtype=_dtype,
             order="C",
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         check_classification_targets(y)
         self.classes_ = np.unique(y)
@@ -2013,8 +2013,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
@@ -2080,7 +2080,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             accept_sparse="csr",
             dtype=np.float64,
             order="C",
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         check_classification_targets(y)
 
