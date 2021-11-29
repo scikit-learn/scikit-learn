@@ -218,7 +218,7 @@ Changelog
 
 - |Enhancement| : add ``metric_params`` to :class:`manifold.TSNE` constructor for additional 
   parameters of distance metric to use in optimization. 
-  :issue:`21805` by :user:`Jeanne Dionisi <jeannedionisi>`.
+  :pr:issue:`21805` by :user:`Jeanne Dionisi <jeannedionisi>`.
 
 
 :mod:`sklearn.model_selection`
