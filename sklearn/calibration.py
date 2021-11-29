@@ -49,7 +49,7 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
 from .metrics._base import _check_pos_label_consistency
-from .metrics._plot.base import _check_estimator_target
+from .metrics._plot.base import _check_estimator_and_target_is_binary
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -1218,7 +1218,7 @@ class CalibrationDisplay:
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
 
-        _check_estimator_target(estimator, y)
+        _check_estimator_and_target_is_binary(estimator, y)
 
         y_prob, pos_label = _get_response_values(
             estimator, X, y, response_method="predict_proba", pos_label=pos_label
@@ -1337,10 +1337,10 @@ class CalibrationDisplay:
         method_name = f"{cls.__name__}.from_predictions"
         check_matplotlib_support(method_name)
 
-        if type_of_target(y_true) != "binary":
+        target_type = type_of_target(y_true)
+        if target_type != "binary":
             raise ValueError(
-                f"The target y is not binary. Got {type_of_target(y_true)} type of"
-                " target."
+                f"The target y is not binary. Got {target_type} type of target."
             )
 
         prob_true, prob_pred = calibration_curve(

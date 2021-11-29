@@ -1,4 +1,4 @@
-from .base import _check_estimator_target
+from .base import _check_estimator_and_target_is_binary
 
 from .. import average_precision_score
 from .. import precision_recall_curve
@@ -240,7 +240,7 @@ class PrecisionRecallDisplay:
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
 
-        _check_estimator_target(estimator, y)
+        _check_estimator_and_target_is_binary(estimator, y)
         if response_method == "auto":
             response_method = ["predict_proba", "decision_function"]
 
@@ -333,10 +333,10 @@ class PrecisionRecallDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
-        if type_of_target(y_true) != "binary":
+        target_type = type_of_target(y_true)
+        if target_type != "binary":
             raise ValueError(
-                f"The target y is not binary. Got {type_of_target(y_true)} type of"
-                " target."
+                f"The target y is not binary. Got {target_type} type of target."
             )
 
         check_consistent_length(y_true, y_pred, sample_weight)
@@ -444,7 +444,7 @@ def plot_precision_recall_curve(
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
-    _check_estimator_target(estimator, y)
+    _check_estimator_and_target_is_binary(estimator, y)
 
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]

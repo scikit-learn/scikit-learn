@@ -1,6 +1,6 @@
 import scipy as sp
 
-from .base import _check_estimator_target
+from .base import _check_estimator_and_target_is_binary
 
 from .. import det_curve
 from .._base import _check_pos_label_consistency
@@ -172,7 +172,7 @@ class DetCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
-        _check_estimator_target(estimator, y)
+        _check_estimator_and_target_is_binary(estimator, y)
         if response_method == "auto":
             response_method = ["predict_proba", "decision_function"]
 
@@ -275,10 +275,10 @@ class DetCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
-        if type_of_target(y_true) != "binary":
+        target_type = type_of_target(y_true)
+        if target_type != "binary":
             raise ValueError(
-                f"The target y is not binary. Got {type_of_target(y_true)} type of"
-                " target."
+                f"The target y is not binary. Got {target_type} type of target."
             )
 
         fpr, fnr, _ = det_curve(
@@ -470,7 +470,7 @@ def plot_det_curve(
     """
     check_matplotlib_support("plot_det_curve")
 
-    _check_estimator_target(estimator, y)
+    _check_estimator_and_target_is_binary(estimator, y)
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]
 

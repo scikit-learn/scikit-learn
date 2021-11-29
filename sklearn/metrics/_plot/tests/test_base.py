@@ -4,7 +4,7 @@ from sklearn.datasets import load_iris
 from sklearn.exceptions import NotFittedError
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
-from sklearn.metrics._plot.base import _check_estimator_target
+from sklearn.metrics._plot.base import _check_estimator_and_target_is_binary
 
 X, y = load_iris(return_X_y=True)
 X_binary, y_binary = X[:100], y[:100]
@@ -39,7 +39,7 @@ X_binary, y_binary = X[:100], y[:100]
         ),
     ],
 )
-def test_check_estimator_target(estimator, target, err_type, err_msg):
+def test_check_estimator_and_target_is_binary(estimator, target, err_type, err_msg):
     """Check that we raise the expected error when checking the estimator and target."""
     with pytest.raises(err_type, match=err_msg):
-        _check_estimator_target(estimator, target)
+        _check_estimator_and_target_is_binary(estimator, target)

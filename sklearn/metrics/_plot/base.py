@@ -4,16 +4,8 @@ from ...utils.multiclass import type_of_target
 from ...utils.validation import check_is_fitted
 
 
-def _check_estimator_target(estimator, y):
-    """Helper to check that estimator is a binary classifier and y is binary.
-
-    This function is aside from the class `BinaryClassifierCurveDisplayMixin`
-    below because it allows to have consistent error messages between the
-    displays and the plotting functions.
-
-    FIXME: Move into `BinaryClassifierCurveDisplayMixin.from_estimator` when
-    the plotting functions will be removed in 1.2.
-    """
+def _check_estimator_and_target_is_binary(estimator, y):
+    """Helper to check that estimator is a binary classifier and y is binary."""
     try:
         check_is_fitted(estimator)
     except NotFittedError as e:
@@ -34,7 +26,8 @@ def _check_estimator_target(estimator, y):
             "classifier. It was fitted on multiclass problem with "
             f"{len(estimator.classes_)} classes."
         )
-    elif type_of_target(y) != "binary":
+    target_type = type_of_target(y)
+    if target_type != "binary":
         raise ValueError(
-            f"The target y is not binary. Got {type_of_target(y)} type of target."
+            f"The target y is not binary. Got {target_type} type of target."
         )
