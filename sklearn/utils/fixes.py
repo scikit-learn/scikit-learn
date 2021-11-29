@@ -280,6 +280,18 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
         )
 
 
+def _percentile(a, q, *, method="linear", **kwargs):
+    """Rename the `method` kwarg to `interpolation` for NumPy < 1.22.
+
+    `interpolation` kwarg was deprecated in favor of `method` in NumPy >= 1.22.
+    """
+    if np_version < parse_version("1.22"):
+        return np.percentile(a, q, interpolation=method, **kwargs)
+
+    # NumPy >= 1.22
+    return np.percentile(a, q, method=method, **kwargs)
+
+
 # compatibility fix for threadpoolctl >= 3.0.0
 # since version 3 it's possible to setup a global threadpool controller to avoid
 # looping through all loaded shared libraries each time.
