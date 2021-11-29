@@ -1,3 +1,4 @@
+from re import match
 import sys
 from io import StringIO
 import numpy as np
@@ -1285,3 +1286,29 @@ def test_tsne_n_jobs(method):
     ).fit_transform(X)
 
     assert_allclose(X_tr_ref, X_tr)
+
+def test_tsne_with_mahalanobis_distance():
+    """Make sure that method_parameters works with mahalanobis distance"""
+    random_state = check_random_state(0)
+    n_features = 10
+    n_embedding = 3
+    n_samples = 500
+    X = random_state.randn(n_samples, n_features)
+
+    # 1. raises error here (original issue)
+    tsne = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+                n_components=n_embedding, random_state=0, metric='mahalanobis')
+    ref = "Must provide either V or VI for Mahalanobis distance"
+    with pytest.raises(ValueError, match=ref):
+        tsne.fit_transform(X)
+
+    # 2. check for correct answer
+    precomputed_X = squareform(pdist(X, metric='mahalanobis'), checks=True)
+    ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+               n_components=n_embedding, random_state=0,
+               metric='precomputed').fit_transform(precomputed_X)
+
+    now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+               n_components=n_embedding, random_state=0, metric='mahalanobis',
+               metric_params={'V': np.cov(X.T)}).fit_transform(X)
+    assert_array_equal(ref, now)
