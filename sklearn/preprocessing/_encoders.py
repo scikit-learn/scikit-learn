@@ -742,8 +742,7 @@ class OneHotEncoder(_BaseEncoder):
 
         1. Dropped columns are removed.
         2. If there are infrequent categories, the category is named
-        'infrequent'. If 'infrequent' is already a category, then then new
-        category is called 'infrequent_sklearn'.
+        'infrequent_sklearn'.
         """
         cats = self.categories_[i]
 
@@ -751,11 +750,7 @@ class OneHotEncoder(_BaseEncoder):
             infreq_map = self._default_to_infrequent_mappings[i]
             if infreq_map is not None:
                 frequent_mask = infreq_map < infreq_map.max()
-
-                if cats.dtype.kind in "US" and "infrequent" in cats:
-                    infrequent_cat = "infrequent_sklearn"
-                else:
-                    infrequent_cat = "infrequent"
+                infrequent_cat = "infrequent_sklearn"
                 # infrequent category is always at the end
                 cats = np.concatenate(
                     (cats[frequent_mask], np.array([infrequent_cat], dtype=object))
@@ -930,9 +925,7 @@ class OneHotEncoder(_BaseEncoder):
         category will be its inverse.
 
         For a given input feature, if there is an infrequent category,
-        'infrequent' will be used to represent the infrequent category. If
-        'infrequent' is already a category, 'infrequent_sklearn' will be used
-        instead.
+        'infrequent_sklearn' will be used to represent the infrequent category.
 
         Parameters
         ----------
@@ -1044,8 +1037,7 @@ class OneHotEncoder(_BaseEncoder):
         """Return feature names for output features.
 
         For a given input feature, if there is an infrequent category, the most
-        'infrequent' will be used as a feature name. If 'infrequent' is already
-        a category, 'infrequent_sklearn' will be used instead.
+        'infrequent_sklearn' will be used as a feature name.
 
         Parameters
         ----------
@@ -1098,16 +1090,18 @@ class OneHotEncoder(_BaseEncoder):
             Transformed feature names.
         """
         check_is_fitted(self)
-        cats = self.categories_
         input_features = _check_feature_names_in(self, input_features)
+        cats = [
+            self._compute_transformed_categories(i)
+            for i, _ in enumerate(self.categories_)
+        ]
 
         feature_names = []
         for i in range(len(cats)):
             names = [input_features[i] + "_" + str(t) for t in cats[i]]
-            if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
-                names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-        return np.asarray(feature_names, dtype=object)
+
+        return np.array(feature_names, dtype=object)
 
 
 class OrdinalEncoder(_BaseEncoder):

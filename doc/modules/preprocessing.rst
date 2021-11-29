@@ -714,7 +714,7 @@ categories are `min_frequency` and `max_categories`.
    the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
    a cardinality smaller than `min_frequency`  will be considered infrequent.
    If `min_frequency` is a float, categories with a cardinality smaller than
-   this fraction of the total number of samples will be considered infrequent.
+   this fraction of the total number of samples will be considered infrequent. The default value is 1, which means every category is encoded separately.
 
 2. `max_categories` is either `None` or any integer greater than 1. This
    parameter sets an upper limit to the number of output features for each
@@ -746,9 +746,9 @@ be considered infrequent::
 feature name::
 
    >>> enc.get_feature_names()
-   array(['x0_cat', 'x0_rabbit', 'x0_infrequent'], dtype=object)
+   array(['x0_cat', 'x0_rabbit', 'x0_infrequent_sklearn'], dtype=object)
 
-When this `'handle_unknown'` is set to `'infrequent_if_exist'` and an unknown
+When `'handle_unknown'` is set to `'infrequent_if_exist'` and an unknown
 category is encountered in transform:
 
 1. If infrequent category support was not configured or there was no
@@ -757,9 +757,8 @@ category is encountered in transform:
    category will be denoted as `None`.
 
 2. If there is an infrequent category during training, the unknown category
-   will be considered infrequent. In the inverse transform, 'infrequent' will
-   be used to represent the infrequent category. If `'infrequent'` is already a
-   category, `'infrequent_sklearn'` will be used instead.
+   will be considered infrequent. In the inverse transform, 'infrequent_sklearn'
+   will be used to represent the infrequent category.
 
 Infrequent categories can also be configured using `max_categories`. In the
 following example, we set `max_categories=2` to limit the number of features in
@@ -774,6 +773,10 @@ categories - which are all the others::
           [1., 0.],
           [0., 1.],
           [0., 1.]])
+
+If both `max_categories` and `min_frequency` are non-default values, then
+categories are selected based on `min_frequency` first and `max_categories`
+categories are kept.
 
 .. _preprocessing_discretization:
 
@@ -1057,7 +1060,7 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
       Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
 
     * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
-      spline function procedures in R <10.1186/s12874-019-0666-3>`. 
+      spline function procedures in R <10.1186/s12874-019-0666-3>`.
       BMC Med Res Methodol 19, 46 (2019).
 
 .. _function_transformer:
