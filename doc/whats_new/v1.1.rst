@@ -216,6 +216,10 @@ Changelog
   preserve this dtype.
   :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
 
+- |Enhancement| : add ``metric_params`` to :class:`manifold.TSNE` constructor for additional parameters of distance
+  metric to use in optimization. :issue:`11793` by :user:`Jeanne Dionisi <jeannedionisi>`.
+
+
 :mod:`sklearn.model_selection`
 ..............................
 
