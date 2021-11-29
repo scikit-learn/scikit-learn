@@ -159,6 +159,8 @@ def test_plot_partial_dependence_kind(
     assert disp.contours_[0, 1] is None
     assert disp.contours_[0, 2] is None
 
+    assert disp.kind == kind
+
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
@@ -851,3 +853,34 @@ def test_plot_partial_dependence_lines_kw(
         assert line.get_linestyle() == ice_lines_kw["linestyle"]
     else:
         assert line.get_linestyle() == "-"
+
+
+def test_partial_dependence_display_wrong_len_kind(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we raised an error when the `kind` is a list and does not have the
+    right length.
+
+    This bug cannot be trigger apart of creating a `PartialDependenceDisplay` without
+    calling `.from_estimator`.
+    """
+    disp = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        features=[0, 2],
+        grid_resolution=20,
+        kind="average",
+    )
+
+    # alter `kind` to be a list that does not have the same length than the
+    # length of `features`
+    disp.kind = ["average"]
+    err_msg = (
+        r"When `kind` is provided as a list of strings, it should contain as many"
+        r" elements as `features`. `kind` contains 1 element\(s\) and `features`"
+        r" contains 2 element\(s\)."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        disp.plot()
