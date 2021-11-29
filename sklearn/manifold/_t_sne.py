@@ -945,7 +945,7 @@ class TSNE(BaseEstimator):
                 n_jobs=self.n_jobs,
                 n_neighbors=n_neighbors,
                 metric=self.metric,
-                metric_params=metric_params_
+                metric_params=self.metric_params
             )
             t0 = time()
             knn.fit(X)
