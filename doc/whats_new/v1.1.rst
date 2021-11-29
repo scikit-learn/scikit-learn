@@ -91,7 +91,10 @@ Changelog
   :func:`fetch_lfw_people`
   :func:`fetch_lfw_people`
   :func:`fetch_olivetti_faces`
-  :func:`fetch_species_distributions`. :pr:`21691` by :user:`Zhehao Liu <MaxwellLZH>`
+  :func:`fetch_species_distributions`.
+  By default, all those functions will retry 3 times by default in case of network
+  failure.
+  :pr:`21691` by :user:`Zhehao Liu <MaxwellLZH>`
 
 :mod:`sklearn.decomposition`
 ............................
