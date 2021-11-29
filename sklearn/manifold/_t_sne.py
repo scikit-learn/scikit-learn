@@ -900,7 +900,7 @@ class TSNE(BaseEstimator):
                 else:
                     distances = pairwise_distances(
                         X, metric=self.metric, n_jobs=self.n_jobs,
-                        metric_params=self.metric_params,
+                        **metric_params_),
                     )
 
             if np.any(distances < 0):
