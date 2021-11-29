@@ -240,7 +240,8 @@ class PrecisionRecallDisplay:
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
 
-        _check_estimator_and_target_is_binary(estimator, y)
+        target_type = type_of_target(y)
+        _check_estimator_and_target_is_binary(estimator, y, target_type=target_type)
         if response_method == "auto":
             response_method = ["predict_proba", "decision_function"]
 
@@ -250,6 +251,7 @@ class PrecisionRecallDisplay:
             y,
             response_method,
             pos_label=pos_label,
+            target_type=target_type,
         )
 
         name = name if name is not None else estimator.__class__.__name__
@@ -444,13 +446,14 @@ def plot_precision_recall_curve(
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
-    _check_estimator_and_target_is_binary(estimator, y)
+    target_type = type_of_target(y)
+    _check_estimator_and_target_is_binary(estimator, y, target_type=target_type)
 
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]
 
     y_pred, pos_label = _get_response_values(
-        estimator, X, y, response_method, pos_label=pos_label
+        estimator, X, y, response_method, pos_label=pos_label, target_type=target_type
     )
 
     precision, recall, _ = precision_recall_curve(

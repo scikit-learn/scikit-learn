@@ -172,7 +172,8 @@ class DetCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
 
-        _check_estimator_and_target_is_binary(estimator, y)
+        target_type = type_of_target(y)
+        _check_estimator_and_target_is_binary(estimator, y, target_type=target_type)
         if response_method == "auto":
             response_method = ["predict_proba", "decision_function"]
 
@@ -184,6 +185,7 @@ class DetCurveDisplay:
             y,
             response_method,
             pos_label=pos_label,
+            target_type=target_type,
         )
 
         return cls.from_predictions(
@@ -470,12 +472,13 @@ def plot_det_curve(
     """
     check_matplotlib_support("plot_det_curve")
 
-    _check_estimator_and_target_is_binary(estimator, y)
+    target_type = type_of_target(y)
+    _check_estimator_and_target_is_binary(estimator, y, target_type=target_type)
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]
 
     y_pred, pos_label = _get_response_values(
-        estimator, X, y, response_method, pos_label=pos_label
+        estimator, X, y, response_method, pos_label=pos_label, target_type=target_type
     )
 
     fpr, fnr, _ = det_curve(

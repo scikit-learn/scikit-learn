@@ -1283,6 +1283,7 @@ def _get_response_values(
     y_true,
     response_method,
     pos_label=None,
+    target_type=None,
 ):
     """Compute the response values of a classifier or a regressor.
 
@@ -1325,6 +1326,13 @@ def _get_response_values(
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
 
+    target_type : str, default=None
+        The type of the target `y` as returned by
+        :func:`~sklearn.utils.multiclass.type_of_target`. If `None`, the type
+        will be inferred by calling :func:`~sklearn.utils.multiclass.type_of_target`.
+        Providing the type of the target could save time by avoid calling the
+        :func:`~sklearn.utils.multiclass.type_of_target` function.
+
     Returns
     -------
     y_pred : ndarray of shape (n_samples,)
@@ -1346,7 +1354,8 @@ def _get_response_values(
     from sklearn.base import is_classifier  # noqa
 
     if is_classifier(estimator):
-        y_type = type_of_target(y_true)
+        if target_type is None:
+            target_type = type_of_target(y_true)
         prediction_method = _check_response_method(estimator, response_method)
         y_pred = prediction_method(X)
         classes = estimator.classes_
@@ -1356,11 +1365,11 @@ def _get_response_values(
                 f"pos_label={pos_label} is not a valid label: It should be "
                 f"one of {classes}"
             )
-        elif pos_label is None and y_type == "binary":
+        elif pos_label is None and target_type == "binary":
             pos_label = pos_label if pos_label is not None else classes[-1]
 
         if prediction_method.__name__ == "predict_proba":
-            if y_type == "binary" and y_pred.shape[1] <= 2:
+            if target_type == "binary" and y_pred.shape[1] <= 2:
                 if y_pred.shape[1] == 2:
                     col_idx = np.flatnonzero(classes == pos_label)[0]
                     y_pred = y_pred[:, col_idx]
@@ -1371,7 +1380,7 @@ def _get_response_values(
                     )
                     raise ValueError(err_msg)
         elif prediction_method.__name__ == "decision_function":
-            if y_type == "binary":
+            if target_type == "binary":
                 if pos_label == classes[0]:
                     y_pred *= -1
     else:
