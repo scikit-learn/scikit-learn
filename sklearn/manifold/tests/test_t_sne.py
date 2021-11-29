@@ -1287,6 +1287,8 @@ def test_tsne_n_jobs(method):
     assert_allclose(X_tr_ref, X_tr)
 
 
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_tsne_with_mahalanobis_distance():
     """Make sure that method_parameters works with mahalanobis distance"""
     random_state = check_random_state(0)
