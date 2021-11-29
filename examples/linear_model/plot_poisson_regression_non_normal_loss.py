@@ -145,7 +145,11 @@ dummy = Pipeline(
         ("preprocessor", linear_model_preprocessor),
         ("regressor", DummyRegressor(strategy="mean")),
     ]
-).fit(df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"])
+).fit(
+    df_train.drop(columns=["Frequency"]),
+    df_train["Frequency"],
+    regressor__sample_weight=df_train["Exposure"],
+)
 
 
 ##############################################################################
@@ -159,7 +163,7 @@ from sklearn.metrics import mean_poisson_deviance
 
 def score_estimator(estimator, df_test):
     """Score an estimator on the test set."""
-    y_pred = estimator.predict(df_test)
+    y_pred = estimator.predict(df_test.drop(columns=["Frequency"]))
 
     print(
         "MSE: %.3f"
@@ -217,7 +221,11 @@ ridge_glm = Pipeline(
         ("preprocessor", linear_model_preprocessor),
         ("regressor", Ridge(alpha=1e-6)),
     ]
-).fit(df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"])
+).fit(
+    df_train.drop(columns=["Frequency"]),
+    df_train["Frequency"],
+    regressor__sample_weight=df_train["Exposure"],
+)
 
 # %%
 # The Poisson deviance cannot be computed on non-positive values predicted by
@@ -249,7 +257,11 @@ poisson_glm = Pipeline(
         ("preprocessor", linear_model_preprocessor),
         ("regressor", PoissonRegressor(alpha=1e-12, max_iter=300)),
     ]
-).fit(df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"])
+).fit(
+    df_train.drop(columns=["Frequency"]),
+    df_train["Frequency"],
+    regressor__sample_weight=df_train["Exposure"],
+)
 
 print("PoissonRegressor evaluation:")
 test_preds.append(score_estimator(poisson_glm, df_test))
@@ -298,7 +310,11 @@ poisson_gbrt = Pipeline(
             HistGradientBoostingRegressor(loss="poisson", max_leaf_nodes=128),
         ),
     ]
-).fit(df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"])
+).fit(
+    df_train.drop(columns=["Frequency"]),
+    df_train["Frequency"],
+    regressor__sample_weight=df_train["Exposure"],
+)
 
 print("Poisson Gradient Boosted Trees evaluation:")
 test_preds.append(score_estimator(poisson_gbrt, df_test))
@@ -330,7 +346,7 @@ for row_idx, label, df in zip(range(2), ["train", "test"], [df_train, df_test]):
 
     for idx, model in enumerate([ridge_glm, poisson_glm, poisson_gbrt]):
         if label == "train":
-            y_pred = model.predict(df)
+            y_pred = model.predict(df.drop(columns=["Frequency"]))
         else:
             y_pred = test_preds[idx + 1]
 
