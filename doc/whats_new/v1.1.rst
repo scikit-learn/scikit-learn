@@ -201,9 +201,9 @@ Changelog
   preserve this dtype.
   :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
 
-- |Enhancement| added ``metric_params`` to :class:`manifold.TSNE` constructor for additional 
+- |Enhancement| added `metric_params` to :class:`manifold.TSNE` constructor for additional 
   parameters of distance metric to use in optimization. 
-  :pr:issue:`21805` by :user:`Jeanne Dionisi <jeannedionisi>`.
+  :pr:`21805` by :user:`Jeanne Dionisi <jeannedionisi>`.
 
 :mod:`sklearn.metrics`
 ......................
