@@ -1290,24 +1290,36 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
         ("minkowski", dict(p=np.inf)),
         ("chebyshev", {}),
         ("seuclidean", dict(V=rng.rand(n_features))),
-        ("wminkowski", dict(p=3, w=rng.rand(n_features))),
         ("mahalanobis", dict(VI=VI)),
         ("haversine", {}),
     ]
+    if sp_version < parse_version("1.8.0.dev0"):
+        # TODO: remove once we no longer support scipy < 1.8.0.
+        # wminkowski was removed in scipy 1.8.0 but should work for previous
+        # versions.
+        metrics.append(
+            ("wminkowski", dict(p=3, w=rng.rand(n_features))),
+        )
+    else:
+        # Recent scipy versions accept weights in the Minkowski metric directly:
+        metrics.append(
+            ("minkowski", dict(p=3, w=rng.rand(n_features))),
+        )
+
     algorithms = ["brute", "ball_tree", "kd_tree"]
     X = rng.rand(n_samples, n_features)
 
     test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
-        if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
-            # wminkowski will be removed in SciPy 1.8.0
-            continue
         results = {}
         p = metric_params.pop("p", 2)
+        w = metric_params.get("w", None)
         for algorithm in algorithms:
             # KD tree doesn't support all metrics
-            if algorithm == "kd_tree" and metric not in neighbors.KDTree.valid_metrics:
+            if algorithm == "kd_tree" and (
+                metric not in neighbors.KDTree.valid_metrics or w is not None
+            ):
                 est = neighbors.NearestNeighbors(
                     algorithm=algorithm, metric=metric, metric_params=metric_params
                 )
