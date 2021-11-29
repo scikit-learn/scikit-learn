@@ -907,10 +907,7 @@ class TSNE(BaseEstimator):
                     distances = pairwise_distances(X, metric=self.metric, squared=True)
                 else:
                     distances = pairwise_distances(
-                        X,
-                        metric=self.metric,
-                        n_jobs=self.n_jobs,
-                        **metric_params_
+                        X, metric=self.metric, n_jobs=self.n_jobs, **metric_params_
                     )
 
             if np.any(distances < 0):
@@ -945,7 +942,7 @@ class TSNE(BaseEstimator):
                 n_jobs=self.n_jobs,
                 n_neighbors=n_neighbors,
                 metric=self.metric,
-                metric_params=self.metric_params
+                metric_params=self.metric_params,
             )
             t0 = time()
             knn.fit(X)
