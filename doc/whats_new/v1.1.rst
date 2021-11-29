@@ -113,10 +113,10 @@ Changelog
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-  
+
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and 
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
   :user:`Krum Arnaudov <krumeto>`.
 
 - |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
@@ -256,6 +256,10 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
+  left corner of the HTML representation to show how the elements are
+  clickable. :pr:`21298` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
 ........................
