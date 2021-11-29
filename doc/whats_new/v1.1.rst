@@ -154,6 +154,15 @@ Changelog
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
 
+- |API| Changed the default of :func:`max_features` to 1.0 for
+  :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
+  :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
+  results as before, but are much easier to understand. The old default value
+  `"auto"` has been deprecated and will be removed in version 1.3. The same
+  changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
+  :class:`ensemble.ExtraTreesClassifier`.
+  :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
 :mod:`sklearn.impute`
 .....................
 
