@@ -1240,12 +1240,7 @@ def test_vectorizer_pipeline_grid_selection(out_of_vocab_features):
     assert not best_vectorizer.fixed_vocabulary_
 
 
-@pytest.mark.parametrize("out_of_vocab_features", (None, 1))
-def test_vectorizer_pipeline_cross_validation(out_of_vocab_features):
-    if out_of_vocab_features and IS_PYPY:
-        # PYPY not supported for out_of_vocab features, pass test.
-        return
-
+def test_vectorizer_pipeline_cross_validation():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
 
@@ -1254,7 +1249,7 @@ def test_vectorizer_pipeline_cross_validation(out_of_vocab_features):
 
     pipeline = Pipeline(
         [
-            ("vect", TfidfVectorizer(out_of_vocab_features=out_of_vocab_features)),
+            ("vect", TfidfVectorizer()),
             ("svc", LinearSVC()),
         ]
     )
