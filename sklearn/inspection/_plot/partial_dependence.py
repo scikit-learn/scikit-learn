@@ -248,7 +248,7 @@ def plot_partial_dependence(
 
         .. note::
            ICE ('individual' or 'both') makes it impossible rendering 2-ways
-           interactions plot. As a result, a warning will be raised and a
+           interactions plot. As a result, an error will be raised and a
            regular 'average' plot will be made instead.
 
         .. note::
@@ -260,7 +260,7 @@ def plot_partial_dependence(
            Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
            options.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
            Add the possibility to pass a list of string specifying `kind`
            for each plot.
 
@@ -532,7 +532,7 @@ def _plot_partial_dependence(
         target_idx=target_idx,
         pdp_lim=pdp_lim,
         deciles=deciles,
-        kind=kind_,
+        kind=kind,
         subsample=subsample,
         random_state=random_state,
     )
@@ -612,7 +612,7 @@ class PartialDependenceDisplay:
 
         .. note::
            ICE ('individual' or 'both') makes it impossible rendering 2-ways
-           interactions plot. As a result, a warning will be raised and a
+           interactions plot. As a result, an error will be raised and a
            regular 'average' plot will be made instead.
 
         .. note::
@@ -624,7 +624,7 @@ class PartialDependenceDisplay:
            Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
            options.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
            Add the possibility to pass a list of string specifying `kind`
            for each plot.
 
