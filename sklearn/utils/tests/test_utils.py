@@ -753,7 +753,8 @@ def test_get_response_values_regressor_error(response_method):
         _get_response_values(my_estimator, X, y, response_method=response_method)
 
 
-def test_get_response_values_regressor():
+@pytest.mark.parametrize("target_type", [None, "continuous"])
+def test_get_response_values_regressor(target_type):
     """Check the behaviour of `_get_response_values` with regressor."""
     X, y = make_regression(n_samples=10, random_state=0)
     regressor = LinearRegression().fit(X, y)
@@ -762,6 +763,7 @@ def test_get_response_values_regressor():
         X,
         y,
         response_method="predict",
+        target_type=target_type,
     )
     assert_allclose(y_pred, regressor.predict(X))
     assert pos_label is None
@@ -777,7 +779,7 @@ def test_get_response_values_classifier_unknown_pos_label(response_method):
     X, y = make_classification(n_samples=10, n_classes=2, random_state=0)
     classifier = LogisticRegression().fit(X, y)
 
-    # provide a `pos_labe` which is not in `y`
+    # provide a `pos_label` which is not in `y`
     err_msg = r"pos_label=whatever is not a valid label: It should be one of \[0 1\]"
     with pytest.raises(ValueError, match=err_msg):
         _get_response_values(
@@ -806,7 +808,8 @@ def test_get_response_values_classifier_inconsistent_y_pred_for_binary_proba():
         )
 
 
-def test_get_response_values_binary_classifier_decision_function():
+@pytest.mark.parametrize("target_type", [None, "binary"])
+def test_get_response_values_binary_classifier_decision_function(target_type):
     """Check the behaviour of `_get_response_values` with `decision_function`
     and binary classifier.
     """
@@ -821,7 +824,12 @@ def test_get_response_values_binary_classifier_decision_function():
 
     # default `pos_label`
     y_pred, pos_label = _get_response_values(
-        classifier, X, y, response_method=response_method, pos_label=None
+        classifier,
+        X,
+        y,
+        response_method=response_method,
+        pos_label=None,
+        target_type=target_type,
     )
     assert_allclose(y_pred, classifier.decision_function(X))
     assert pos_label == 1
@@ -833,12 +841,14 @@ def test_get_response_values_binary_classifier_decision_function():
         y,
         response_method=response_method,
         pos_label=classifier.classes_[0],
+        target_type=target_type,
     )
     assert_allclose(y_pred, classifier.decision_function(X) * -1)
     assert pos_label == 0
 
 
-def test_get_response_values_binary_classifier_predict_proba():
+@pytest.mark.parametrize("target_type", [None, "binary"])
+def test_get_response_values_binary_classifier_predict_proba(target_type):
     """Check that `_get_response_values` with `predict_proba` and binary
     classifier."""
     X, y = make_classification(
@@ -852,7 +862,12 @@ def test_get_response_values_binary_classifier_predict_proba():
 
     # default `pos_label`
     y_pred, pos_label = _get_response_values(
-        classifier, X, y, response_method=response_method, pos_label=None
+        classifier,
+        X,
+        y,
+        response_method=response_method,
+        pos_label=None,
+        target_type=target_type,
     )
     assert_allclose(y_pred, classifier.predict_proba(X)[:, 1])
     assert pos_label == 1
@@ -864,6 +879,7 @@ def test_get_response_values_binary_classifier_predict_proba():
         y,
         response_method=response_method,
         pos_label=classifier.classes_[0],
+        target_type=target_type,
     )
     assert_allclose(y_pred, classifier.predict_proba(X)[:, 0])
     assert pos_label == 0
