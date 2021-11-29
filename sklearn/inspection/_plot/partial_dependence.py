@@ -1352,8 +1352,6 @@ class PartialDependenceDisplay:
             ice_lines_kw = {}
         if pd_line_kw is None:
             pd_line_kw = {}
-        if contour_kw is None:
-            contour_kw = {}
 
         if ax is None:
             _, ax = plt.subplots()
