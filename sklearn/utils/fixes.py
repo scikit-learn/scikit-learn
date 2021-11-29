@@ -285,11 +285,13 @@ def _percentile(a, q, *, method="linear", **kwargs):
 
     `interpolation` kwarg was deprecated in favor of `method` in NumPy >= 1.22.
     """
-    if np_version < parse_version("1.22"):
-        return np.percentile(a, q, interpolation=method, **kwargs)
+    return np.percentile(a, q, interpolation=method, **kwargs)
 
-    # NumPy >= 1.22
-    return np.percentile(a, q, method=method, **kwargs)
+
+if np_version < parse_version("1.22"):
+    percentile = _percentile
+else:  # >= 1.22
+    from numpy import percentile  # type: ignore  # noqa
 
 
 # compatibility fix for threadpoolctl >= 3.0.0
