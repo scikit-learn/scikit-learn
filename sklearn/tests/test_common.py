@@ -410,7 +410,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "GridSearchCV",
     "HalvingGridSearchCV",
     "Pipeline",
-    "SGDOneClassSVM",
     "TheilSenRegressor",
     "TweedieRegressor",
 ]
