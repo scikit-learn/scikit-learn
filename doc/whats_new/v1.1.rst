@@ -113,10 +113,10 @@ Changelog
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-  
+
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and 
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
   :user:`Krum Arnaudov <krumeto>`.
 
 - |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
@@ -177,6 +177,13 @@ Changelog
 - |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
   multilabel classification.
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| Add a display to plot the boundary decision of a classifier by
+  using the method :func:`inspection.DecisionBoundaryDisplay.from_estimator`.
+  :pr:`16061` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................

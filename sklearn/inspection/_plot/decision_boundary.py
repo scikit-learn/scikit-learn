@@ -23,6 +23,8 @@ def _check_boundary_response_method(estimator, response_method):
     prediction_method: callable
         Prediction method of estimator.
     """
+    # if "auto":
+    #     response_methods = ["decision_function", "predict_proba", "predict"]
 
     possible_response_methods = (
         "predict_proba",
@@ -79,10 +81,10 @@ class DecisionBoundaryDisplay:
     response : ndarray of shape (grid_resolution, grid_resolution)
         Values of the response function.
 
-    xlabel : str, default=""
+    xlabel : str, default=None
         Default label to place on x axis.
 
-    ylabel : str, default=""
+    ylabel : str, default=None
         Default label to place on y axis.
 
     Attributes

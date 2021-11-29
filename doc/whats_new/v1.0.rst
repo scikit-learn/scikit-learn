@@ -650,10 +650,6 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Feature| Add a display to plot the boundary decision of a classifier by
-  using the method :func:`inspection.DecisionBoundaryDisplay.from_estimator`.
-  :pr:`16061` by `Thomas Fan`_.
-
 - |Enhancement| Add `max_samples` parameter in
   :func:`inspection.permutation_importance`. It enables to draw a subset of the
   samples to compute the permutation importance. This is useful to keep the
