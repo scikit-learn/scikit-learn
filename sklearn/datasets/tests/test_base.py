@@ -352,6 +352,11 @@ def test_load_boston_alternative():
 
 
 def test_fetch_remote_raise_warnings_with_invalid_url():
+    if os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
+        raise SkipTest(
+            "This test requires an internet connection to fetch the dataset."
+        )
+
     from urllib.error import HTTPError
 
     invalid_remote_file = RemoteFileMetadata(
