@@ -280,11 +280,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
         )
 
 
+# Rename the `method` kwarg to `interpolation` for NumPy < 1.22, because
+# `interpolation` kwarg was deprecated in favor of `method` in NumPy >= 1.22.
 def _percentile(a, q, *, method="linear", **kwargs):
-    """Rename the `method` kwarg to `interpolation` for NumPy < 1.22.
-
-    `interpolation` kwarg was deprecated in favor of `method` in NumPy >= 1.22.
-    """
     return np.percentile(a, q, interpolation=method, **kwargs)
 
 
