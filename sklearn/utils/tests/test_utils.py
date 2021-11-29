@@ -753,8 +753,7 @@ def test_get_response_values_regressor_error(response_method):
         _get_response_values(my_estimator, X, y, response_method=response_method)
 
 
-@pytest.mark.parametrize("response_method", ["predict", None])
-def test_get_response_values_regressor(response_method):
+def test_get_response_values_regressor():
     """Check the behaviour of `_get_response_values` with regressor."""
     X, y = make_regression(n_samples=10, random_state=0)
     regressor = LinearRegression().fit(X, y)
@@ -762,7 +761,7 @@ def test_get_response_values_regressor(response_method):
         regressor,
         X,
         y,
-        response_method=response_method,
+        response_method="predict",
     )
     assert_allclose(y_pred, regressor.predict(X))
     assert pos_label is None
@@ -770,7 +769,7 @@ def test_get_response_values_regressor(response_method):
 
 @pytest.mark.parametrize(
     "response_method",
-    [None, "predict_proba", "decision_function", "predict"],
+    ["predict_proba", "decision_function", "predict"],
 )
 def test_get_response_values_classifier_unknown_pos_label(response_method):
     """Check that `_get_response_values` raises the proper error message with

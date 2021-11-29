@@ -1684,7 +1684,7 @@ def _check_sample_weight(
     return sample_weight
 
 
-def _check_response_method(estimator, response_method=None):
+def _check_response_method(estimator, response_method):
     """Check if `response_method` is available in estimator and return it.
 
     .. versionadded:: 1.1
@@ -1695,7 +1695,7 @@ def _check_response_method(estimator, response_method=None):
         Classifier or regressor to check.
 
     response_method : {"predict_proba", "decision_function", "predict"} or \
-            list of such str, default=None
+            list of such str
         Specifies the response method to use get prediction from an estimator
         (i.e. :term:`predict_proba`, :term:`decision_function` or
         :term:`predict`). Possible choices are:
@@ -1703,10 +1703,7 @@ def _check_response_method(estimator, response_method=None):
         - if `str`, it corresponds to the name to the method to return;
         - if a list of `str`, it provides the method names in order of
           preference. The method returned corresponds to the first method in
-          the list and which is implemented by `estimator`;
-        - if `None`, :term:`predict_proba` is tried first and if it does not
-          exist :term:`decision_function` is tried next and :term:`predict`
-          last.
+          the list and which is implemented by `estimator`.
 
     Returns
     -------
@@ -1718,9 +1715,7 @@ def _check_response_method(estimator, response_method=None):
     ValueError
         If `response_method` is not available in `estimator`.
     """
-    if response_method is None:
-        list_methods = ["predict_proba", "decision_function", "predict"]
-    elif isinstance(response_method, str):
+    if isinstance(response_method, str):
         list_methods = [response_method]
     else:
         list_methods = response_method

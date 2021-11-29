@@ -107,7 +107,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
     def _method_name(name, estimator, method):
         if estimator == "drop":
             return None
-        method = None if method == "auto" else method
+        method = (
+            ["predict_proba", "decision_function", "predict"]
+            if method == "auto"
+            else method
+        )
         try:
             method_name = _check_response_method(estimator, method).__name__
         except AttributeError as e:

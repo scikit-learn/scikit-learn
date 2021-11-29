@@ -1310,7 +1310,7 @@ def _get_response_values(
         The true label.
 
     response_method : {"predict_proba", "decision_function", "predict"} or \
-            list of such str, default=None
+            list of such str
         Specifies the response method to use get prediction from an estimator
         (i.e. :term:`predict_proba`, :term:`decision_function` or
         :term:`predict`). Possible choices are:
@@ -1318,10 +1318,7 @@ def _get_response_values(
         - if `str`, it corresponds to the name to the method to return;
         - if a list of `str`, it provides the method names in order of
           preference. The method returned corresponds to the first method in
-          the list and which is implemented by `estimator`;
-        - if `None`, :term:`predict_proba` is tried first and if it does not
-          exist :term:`decision_function` is tried next and :term:`predict`
-          last.
+          the list and which is implemented by `estimator`.
 
     pos_label : str or int, default=None
         The class considered as the positive class when computing
@@ -1378,7 +1375,7 @@ def _get_response_values(
                 if pos_label == classes[0]:
                     y_pred *= -1
     else:
-        if response_method not in ("predict", None):
+        if response_method != "predict":
             raise ValueError(f"{estimator.__class__.__name__} should be a classifier")
         y_pred, pos_label = estimator.predict(X), None
 

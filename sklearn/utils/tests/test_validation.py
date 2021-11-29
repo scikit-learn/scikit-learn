@@ -1704,38 +1704,16 @@ def test_check_response_method_unknown_method():
 
 
 @pytest.mark.parametrize(
-    "response_method", ["decision_function", "predict_proba", "predict", None]
+    "response_method", ["decision_function", "predict_proba", "predict"]
 )
 def test_check_response_method_not_supported_response_method(response_method):
     """Check the error message when a response method is not supported by the
     estimator."""
-    err_msg = "EstimatorWithFit has none of the following attributes: {}."
-    if response_method is None:
-        err_msg = err_msg.format("predict_proba, decision_function, predict")
-    else:
-        err_msg = err_msg.format(response_method)
+    err_msg = (
+        f"EstimatorWithFit has none of the following attributes: {response_method}."
+    )
     with pytest.raises(AttributeError, match=err_msg):
         _check_response_method(EstimatorWithFit(), response_method)
-
-
-@pytest.mark.parametrize(
-    "response_methods, expected_method_name",
-    [
-        (["predict_proba", "decision_function", "predict"], "predict_proba"),
-        (["decision_function", "predict"], "decision_function"),
-        (["predict_proba", "predict"], "predict_proba"),
-        (["predict_proba", "predict_proba"]),
-        (["decision_function", "decision_function"]),
-        (["predict"], "predict"),
-    ],
-)
-def test_check_response_method_order_None(response_methods, expected_method_name):
-    """Check the order of the response method when using None."""
-    my_estimator = _MockEstimatorOnOffPrediction(response_methods)
-
-    X = "mocking_data"
-    method_name_predicting = _check_response_method(my_estimator, None)(X)
-    assert method_name_predicting == expected_method_name
 
 
 def test_check_response_method_list_str():
