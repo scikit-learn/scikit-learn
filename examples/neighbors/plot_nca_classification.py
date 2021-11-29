@@ -40,7 +40,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, test_size=0.7, random_state=42
 )
 
-h = 0.01  # step size in the mesh
+h = 0.05  # step size in the mesh
 
 # Create color maps
 cmap_light = ListedColormap(["#FFAAAA", "#AAFFAA", "#AAAAFF"])

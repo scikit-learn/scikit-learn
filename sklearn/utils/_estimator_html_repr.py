@@ -69,6 +69,7 @@ def _write_label_html(
     name = html.escape(name)
 
     if name_details is not None:
+        name_details = html.escape(str(name_details))
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         out.write(
@@ -306,7 +307,12 @@ _STYLE = """
   text-align: center;
 }
 #$id div.sk-container {
-  display: inline-block;
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org. 
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+  display: inline-block !important;
   position: relative;
 }
 #$id div.sk-text-repr-fallback {
@@ -354,7 +360,7 @@ def estimator_html_repr(estimator):
         )
         out.write(
             f"<style>{style_with_id}</style>"
-            f'<div id="{container_id}" class"sk-top-container">'
+            f'<div id="{container_id}" class="sk-top-container">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"

@@ -3,70 +3,163 @@
 Kernel PCA
 ==========
 
-This example shows that Kernel PCA is able to find a projection of the data
-that makes data linearly separable.
+This example shows the difference between the Principal Components Analysis
+(:class:`~sklearn.decomposition.PCA`) and its kernalized version
+(:class:`~sklearn.decomposition.KernelPCA`).
 
+On the one hand, we show that :class:`~sklearn.decomposition.KernelPCA` is able
+to find a projection of the data which linearly separates them while it is not the case
+with :class:`~sklearn.decomposition.PCA`.
+
+Finally, we show that inverting this projection is an approximation with
+:class:`~sklearn.decomposition.KernelPCA`, while it is exact with
+:class:`~sklearn.decomposition.PCA`.
 """
 
 # Authors: Mathieu Blondel
 #          Andreas Mueller
+#          Guillaume Lemaitre
 # License: BSD 3 clause
 
-import numpy as np
+# %%
+# Projecting data: `PCA` vs. `KernelPCA`
+# --------------------------------------
+#
+# In this section, we show the advantages of using a kernel when
+# projecting data using a Principal Component Analysis (PCA). We create a
+# dataset made of two nested circles.
+from sklearn.datasets import make_circles
+from sklearn.model_selection import train_test_split
+
+X, y = make_circles(n_samples=1_000, factor=0.3, noise=0.05, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
+
+# %%
+# Let's have a quick first look at the generated dataset.
 import matplotlib.pyplot as plt
 
+_, (train_ax, test_ax) = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(8, 4))
+
+train_ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train)
+train_ax.set_ylabel("Feature #1")
+train_ax.set_xlabel("Feature #0")
+train_ax.set_title("Training data")
+
+test_ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test)
+test_ax.set_xlabel("Feature #0")
+_ = test_ax.set_title("Testing data")
+
+# %%
+# The samples from each class cannot be linearly separated: there is no
+# straight line that can split the samples of the inner set from the outer
+# set.
+#
+# Now, we will use PCA with and without a kernel to see what is the effect of
+# using such a kernel. The kernel used here is a radial basis function (RBF)
+# kernel.
 from sklearn.decomposition import PCA, KernelPCA
-from sklearn.datasets import make_circles
 
-np.random.seed(0)
+pca = PCA(n_components=2)
+kernel_pca = KernelPCA(
+    n_components=None, kernel="rbf", gamma=10, fit_inverse_transform=True, alpha=0.1
+)
 
-X, y = make_circles(n_samples=400, factor=0.3, noise=0.05)
+X_test_pca = pca.fit(X_train).transform(X_test)
+X_test_kernel_pca = kernel_pca.fit(X_train).transform(X_test)
 
-kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=10)
-X_kpca = kpca.fit_transform(X)
-X_back = kpca.inverse_transform(X_kpca)
-pca = PCA()
-X_pca = pca.fit_transform(X)
+# %%
+fig, (orig_data_ax, pca_proj_ax, kernel_pca_proj_ax) = plt.subplots(
+    ncols=3, figsize=(14, 4)
+)
 
-# Plot results
+orig_data_ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test)
+orig_data_ax.set_ylabel("Feature #1")
+orig_data_ax.set_xlabel("Feature #0")
+orig_data_ax.set_title("Testing data")
 
-plt.figure()
-plt.subplot(2, 2, 1, aspect="equal")
-plt.title("Original space")
-reds = y == 0
-blues = y == 1
+pca_proj_ax.scatter(X_test_pca[:, 0], X_test_pca[:, 1], c=y_test)
+pca_proj_ax.set_ylabel("Principal component #1")
+pca_proj_ax.set_xlabel("Principal component #0")
+pca_proj_ax.set_title("Projection of testing data\n using PCA")
 
-plt.scatter(X[reds, 0], X[reds, 1], c="red", s=20, edgecolor="k")
-plt.scatter(X[blues, 0], X[blues, 1], c="blue", s=20, edgecolor="k")
-plt.xlabel("$x_1$")
-plt.ylabel("$x_2$")
+kernel_pca_proj_ax.scatter(X_test_kernel_pca[:, 0], X_test_kernel_pca[:, 1], c=y_test)
+kernel_pca_proj_ax.set_ylabel("Principal component #1")
+kernel_pca_proj_ax.set_xlabel("Principal component #0")
+_ = kernel_pca_proj_ax.set_title("Projection of testing data\n using KernelPCA")
 
-X1, X2 = np.meshgrid(np.linspace(-1.5, 1.5, 50), np.linspace(-1.5, 1.5, 50))
-X_grid = np.array([np.ravel(X1), np.ravel(X2)]).T
-# projection on the first principal component (in the phi space)
-Z_grid = kpca.transform(X_grid)[:, 0].reshape(X1.shape)
-plt.contour(X1, X2, Z_grid, colors="grey", linewidths=1, origin="lower")
+# %%
+# We recall that PCA transforms the data linearly. Intuitively, it means that
+# the coordinate system will be centered, rescaled on each component
+# with respected to its variance and finally be rotated.
+# The obtained data from this transformation is isotropic and can now be
+# projected on its _principal components_.
+#
+# Thus, looking at the projection made using PCA (i.e. the middle figure), we
+# see that there is no change regarding the scaling; indeed the data being two
+# concentric circles centered in zero, the original data is already isotropic.
+# However, we can see that the data have been rotated. As a
+# conclusion, we see that such a projection would not help if define a linear
+# classifier to distinguish samples from both classes.
+#
+# Using a kernel allows to make a non-linear projection. Here, by using an RBF
+# kernel, we expect that the projection will unfold the dataset while keeping
+# approximately preserving the relative distances of pairs of data points that
+# are close to one another in the original space.
+#
+# We observe such behaviour in the figure on the right: the samples of a given
+# class are closer to each other than the samples from the opposite class,
+# untangling both sample sets. Now, we can use a linear classifier to separate
+# the samples from the two classes.
+#
+# Projecting into the original feature space
+# ------------------------------------------
+#
+# One particularity to have in mind when using
+# :class:`~sklearn.decomposition.KernelPCA` is related to the reconstruction
+# (i.e. the back projection in the original feature space). With
+# :class:`~sklearn.decomposition.PCA`, the reconstruction will be exact if
+# `n_components` is the same than the number of original features.
+# This is the case in this example.
+#
+# We can investigate if we get the original dataset when back projecting with
+# :class:`~sklearn.decomposition.KernelPCA`.
+X_reconstructed_pca = pca.inverse_transform(pca.transform(X_test))
+X_reconstructed_kernel_pca = kernel_pca.inverse_transform(kernel_pca.transform(X_test))
 
-plt.subplot(2, 2, 2, aspect="equal")
-plt.scatter(X_pca[reds, 0], X_pca[reds, 1], c="red", s=20, edgecolor="k")
-plt.scatter(X_pca[blues, 0], X_pca[blues, 1], c="blue", s=20, edgecolor="k")
-plt.title("Projection by PCA")
-plt.xlabel("1st principal component")
-plt.ylabel("2nd component")
+# %%
+fig, (orig_data_ax, pca_back_proj_ax, kernel_pca_back_proj_ax) = plt.subplots(
+    ncols=3, sharex=True, sharey=True, figsize=(13, 4)
+)
 
-plt.subplot(2, 2, 3, aspect="equal")
-plt.scatter(X_kpca[reds, 0], X_kpca[reds, 1], c="red", s=20, edgecolor="k")
-plt.scatter(X_kpca[blues, 0], X_kpca[blues, 1], c="blue", s=20, edgecolor="k")
-plt.title("Projection by KPCA")
-plt.xlabel(r"1st principal component in space induced by $\phi$")
-plt.ylabel("2nd component")
+orig_data_ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test)
+orig_data_ax.set_ylabel("Feature #1")
+orig_data_ax.set_xlabel("Feature #0")
+orig_data_ax.set_title("Original test data")
 
-plt.subplot(2, 2, 4, aspect="equal")
-plt.scatter(X_back[reds, 0], X_back[reds, 1], c="red", s=20, edgecolor="k")
-plt.scatter(X_back[blues, 0], X_back[blues, 1], c="blue", s=20, edgecolor="k")
-plt.title("Original space after inverse transform")
-plt.xlabel("$x_1$")
-plt.ylabel("$x_2$")
+pca_back_proj_ax.scatter(X_reconstructed_pca[:, 0], X_reconstructed_pca[:, 1], c=y_test)
+pca_back_proj_ax.set_xlabel("Feature #0")
+pca_back_proj_ax.set_title("Reconstruction via PCA")
 
-plt.tight_layout()
-plt.show()
+kernel_pca_back_proj_ax.scatter(
+    X_reconstructed_kernel_pca[:, 0], X_reconstructed_kernel_pca[:, 1], c=y_test
+)
+kernel_pca_back_proj_ax.set_xlabel("Feature #0")
+_ = kernel_pca_back_proj_ax.set_title("Reconstruction via KernelPCA")
+
+# %%
+# While we see a perfect reconstruction with
+# :class:`~sklearn.decomposition.PCA` we observe a different result for
+# :class:`~sklearn.decomposition.KernelPCA`.
+#
+# Indeed, :meth:`~sklearn.decomposition.KernelPCA.inverse_transform` cannot
+# rely on an analytical back-projection and thus an extact reconstruction.
+# Instead, a :class:`~sklearn.kernel_ridge.KernelRidge` is internally trained
+# to learn a mapping from the kernalized PCA basis to the original feature
+# space. This method therefore comes with an approximation introducing small
+# differences when back projecting in the original feature space.
+#
+# To improve the reconstruction using
+# :meth:`~sklearn.decomposition.KernelPCA.inverse_transform`, one can tune
+# `alpha` in :class:`~sklearn.decomposition.KernelPCA`, the regularization term
+# which controls the reliance on the training data during the training of
+# the mapping.

@@ -17,10 +17,14 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
+from ..utils import _is_pandas_na
 from ..utils import is_scalar_nan
 
 
 def _check_inputs_dtype(X, missing_values):
+    if _is_pandas_na(missing_values):
+        # Allow using `pd.NA` as missing values to impute numerical arrays.
+        return
     if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
         raise ValueError(
             "'X' and 'missing_values' types are expected to be"
@@ -136,11 +140,11 @@ class SimpleImputer(_BaseImputer):
 
     Parameters
     ----------
-    missing_values : int, float, str, np.nan or None, default=np.nan
+    missing_values : int, float, str, np.nan, None or pandas.NA, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`
-        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
+        can be set to either `np.nan` or `pd.NA`.
 
     strategy : str, default='mean'
         The imputation strategy.
@@ -167,8 +171,13 @@ class SimpleImputer(_BaseImputer):
     verbose : int, default=0
         Controls the verbosity of the imputer.
 
+        .. deprecated:: 1.1
+           The 'verbose' parameter was deprecated in version 1.1 and will be
+           removed in 1.3. A warning will always be raised upon the removal of
+           empty columns in the future version.
+
     copy : bool, default=True
-        If True, a copy of `X` will be created. If False, imputation will
+        If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
         a new copy will always be made, even if `copy=False`:
 
@@ -236,7 +245,7 @@ class SimpleImputer(_BaseImputer):
         missing_values=np.nan,
         strategy="mean",
         fill_value=None,
-        verbose=0,
+        verbose="deprecated",
         copy=True,
         add_indicator=False,
     ):
@@ -269,10 +278,10 @@ class SimpleImputer(_BaseImputer):
         else:
             dtype = FLOAT_DTYPES
 
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
+        if _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
+        else:
+            force_all_finite = True
 
         try:
             X = self._validate_data(
@@ -324,6 +333,15 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
+        if self.verbose != "deprecated":
+            warnings.warn(
+                "The 'verbose' parameter was deprecated in version "
+                "1.1 and will be removed in 1.3. A warning will "
+                "always be raised upon the removal of empty columns "
+                "in the future version.",
+                FutureWarning,
+            )
+
         X = self._validate_input(X, in_fit=True)
 
         # default fill_value is 0 for numerical input and "missing_value"
@@ -500,9 +518,9 @@ class SimpleImputer(_BaseImputer):
 
             if invalid_mask.any():
                 missing = np.arange(X.shape[1])[invalid_mask]
-                if self.verbose:
+                if self.verbose != "deprecated" and self.verbose:
                     warnings.warn(
-                        "Deleting features without observed values: %s" % missing
+                        "Skipping features without observed values: %s" % missing
                     )
                 X = X[:, valid_statistics_indexes]
 
@@ -603,6 +621,13 @@ class SimpleImputer(_BaseImputer):
 
         X_original[full_mask] = self.missing_values
         return X_original
+
+    def _more_tags(self):
+        return {
+            "allow_nan": (
+                _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values)
+            )
+        }
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
