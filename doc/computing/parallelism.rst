@@ -214,3 +214,9 @@ These environment variables should be set before importing scikit-learn.
     When this environment variable is set to a non zero value, the tests
     that need network access are skipped. When this environment variable is
     not set then network tests are skipped.
+
+:SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES:
+
+    When this environment variable is set to a non zero value, the `Cython`
+    derivative, `boundscheck` is set to `True`. This is useful for finding
+    segfaults.

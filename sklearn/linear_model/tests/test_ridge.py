@@ -1110,6 +1110,27 @@ def test_ridge_classifier_cv_store_cv_values(scoring):
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
 
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+def test_ridgecv_alphas_conversion(Estimator):
+    rng = np.random.RandomState(0)
+    alphas = (0.1, 1.0, 10.0)
+
+    n_samples, n_features = 5, 5
+    if Estimator is RidgeCV:
+        y = rng.randn(n_samples)
+    else:
+        y = rng.randint(0, 2, n_samples)
+    X = rng.randn(n_samples, n_features)
+
+    ridge_est = Estimator(alphas=alphas)
+    assert (
+        ridge_est.alphas is alphas
+    ), f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+
+    ridge_est.fit(X, y)
+    assert_array_equal(ridge_est.alphas, np.asarray(alphas))
+
+
 def test_ridgecv_sample_weight():
     rng = np.random.RandomState(0)
     alphas = (0.1, 1.0, 10.0)

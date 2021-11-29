@@ -21,6 +21,8 @@ from sklearn.svm import SVC
 from sklearn.model_selection import validation_curve
 
 X, y = load_digits(return_X_y=True)
+subset_mask = np.isin(y, [1, 2])  # binary classification: 1 vs 2
+X, y = X[subset_mask], y[subset_mask]
 
 param_range = np.logspace(-6, -1, 5)
 train_scores, test_scores = validation_curve(
@@ -30,7 +32,7 @@ train_scores, test_scores = validation_curve(
     param_name="gamma",
     param_range=param_range,
     scoring="accuracy",
-    n_jobs=1,
+    n_jobs=2,
 )
 train_scores_mean = np.mean(train_scores, axis=1)
 train_scores_std = np.std(train_scores, axis=1)

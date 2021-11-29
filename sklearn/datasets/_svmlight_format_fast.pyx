@@ -4,8 +4,6 @@
 #          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-#
-# cython: boundscheck=False, wraparound=False
 
 import array
 from cpython cimport array

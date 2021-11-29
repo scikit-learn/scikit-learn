@@ -1639,12 +1639,14 @@ def top_k_accuracy_score(
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores. These can be either probability estimates or
         non-thresholded decision values (as returned by
-        :term:`decision_function` on some classifiers). The binary case expects
-        scores with shape (n_samples,) while the multiclass case expects scores
-        with shape (n_samples, n_classes). In the multiclass case, the order of
-        the class scores must correspond to the order of ``labels``, if
-        provided, or else to the numerical or lexicographical order of the
-        labels in ``y_true``.
+        :term:`decision_function` on some classifiers).
+        The binary case expects scores with shape (n_samples,) while the
+        multiclass case expects scores with shape (n_samples, n_classes).
+        In the multiclass case, the order of the class scores must
+        correspond to the order of ``labels``, if provided, or else to
+        the numerical or lexicographical order of the labels in ``y_true``.
+        If ``y_true`` does not contain all the labels, ``labels`` must be
+        provided.
 
     k : int, default=2
         Number of most likely outcomes considered to find the correct label.
@@ -1659,7 +1661,8 @@ def top_k_accuracy_score(
     labels : array-like of shape (n_classes,), default=None
         Multiclass only. List of labels that index the classes in ``y_score``.
         If ``None``, the numerical or lexicographical order of the labels in
-        ``y_true`` is used.
+        ``y_true`` is used. If ``y_true`` does not contain all the labels,
+        ``labels`` must be provided.
 
     Returns
     -------
