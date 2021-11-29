@@ -208,7 +208,7 @@ np.import_array()
 # Note: The only important cutoff is at x = 18. All others are to save computation
 # time. Compared to the reference, we add the additional case distiction x <= -2 in
 # order to use log instead of log1p for improved performance. As with the other
-# cutoffs, this is precise within machine precision of double.
+# cutoffs, this is accurate within machine precision of double.
 cdef inline double log1pexp(double x) nogil:
     if x <= -37:
         return exp(x)
