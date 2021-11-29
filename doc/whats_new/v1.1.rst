@@ -193,6 +193,18 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Enhancement| :func:`manifold.spectral_embedding` and
+  :class:`manifold.SpectralEmbedding` supports `np.float32` dtype and will
+  preserve this dtype.
+  :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
+
+- |Enhancement| added ``metric_params`` to :class:`manifold.TSNE` constructor for additional 
+  parameters of distance metric to use in optimization. 
+  :pr:issue:`21805` by :user:`Jeanne Dionisi <jeannedionisi>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -207,18 +219,6 @@ Changelog
   <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`.
   A deprecation cycle was introduced.
   :pr:`21576` by :user:`Paul-Emile Dugnat <pedugnat>`.
-
-:mod:`sklearn.manifold`
-.......................
-
-- |Enhancement| :func:`manifold.spectral_embedding` and
-  :class:`manifold.SpectralEmbedding` supports `np.float32` dtype and will
-  preserve this dtype.
-  :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
-
-- |Enhancement| : add ``metric_params`` to :class:`manifold.TSNE` constructor for additional 
-  parameters of distance metric to use in optimization. 
-  :pr:issue:`21805` by :user:`Jeanne Dionisi <jeannedionisi>`.
 
 
 :mod:`sklearn.model_selection`
