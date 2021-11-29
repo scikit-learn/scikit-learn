@@ -340,7 +340,7 @@ class RocCurveDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
-        target_type = type_of_target
+        target_type = type_of_target(y_true)
         if target_type != "binary":
             raise ValueError(
                 f"The target y is not binary. Got {target_type} type of target."
