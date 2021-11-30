@@ -163,6 +163,16 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+- |Feature| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive/negative
+  effect on the target. :pr:`13649` by :user:`Samuel Ronsin <samronsin>` and
+  :user:`Patrick O'Reilly <pat-oreilly>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -303,6 +313,12 @@ Changelog
   been generated on a platform with a different bitness. A typical example is
   to train and pickle the model on 64 bit machine and load the model on a 32
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
+
+- |Feature| :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive/negative
+  effect on the target. :pr:`13649` by :user:`Samuel Ronsin <samronsin>` and
+  :user:`Patrick O'Reilly <pat-oreilly>`.
 
 Code and Documentation Contributors
 -----------------------------------
