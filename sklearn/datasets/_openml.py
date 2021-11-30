@@ -12,6 +12,9 @@ import itertools
 from collections.abc import Generator
 from collections import OrderedDict
 from functools import partial
+from threading import get_native_id
+from string import ascii_lowercase, digits
+from random import Random
 
 from urllib.request import urlopen, Request
 
@@ -43,6 +46,13 @@ OpenmlFeaturesType = List[Dict[str, str]]
 
 def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, "openml.org", openml_path + ".gz")
+
+
+def _get_tempfile_local_path(dir_name: str) -> str:
+    rng = Random(get_native_id())
+    tempfile_name = "".join(rng.choices(ascii_lowercase + digits, k=10))
+    tempfile_local_path = os.path.join(dir_name, tempfile_name + ".gz")
+    return tempfile_local_path
 
 
 def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Callable:
@@ -105,9 +115,11 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
         return fsrc
 
     local_path = _get_local_path(openml_path, data_home)
+    dir_name = os.path.dirname(local_path)
+    tempfile_local_path = _get_tempfile_local_path(dir_name)
     if not os.path.exists(local_path):
         try:
-            os.makedirs(os.path.dirname(local_path))
+            os.makedirs(dir_name)
         except OSError:
             # potentially, the directory has been created already
             pass
@@ -119,11 +131,12 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
                     opener = open
                 else:
                     opener = gzip.GzipFile
-                with opener(local_path, "wb") as fdst:
+                with opener(tempfile_local_path, "wb") as fdst:
                     shutil.copyfileobj(fsrc, fdst)
+            shutil.move(tempfile_local_path, local_path)
         except Exception:
-            if os.path.exists(local_path):
-                os.unlink(local_path)
+            if os.path.exists(tempfile_local_path):
+                os.unlink(tempfile_local_path)
             raise
 
     # XXX: First time, decompression will not be necessary (by using fsrc), but
