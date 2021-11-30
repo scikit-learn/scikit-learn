@@ -159,12 +159,16 @@ def plot_learning_curve(
     axes[1].set_title("Scalability of the model")
 
     # Plot fit_time vs score
+    fit_time_argsort = fit_times_mean.argsort()
+    fit_time_sorted = fit_times_mean[fit_time_argsort]
+    test_scores_mean_sorted = test_scores_mean[fit_time_argsort]
+    test_scores_std_sorted = test_scores_std[fit_time_argsort]
     axes[2].grid()
-    axes[2].plot(fit_times_mean, test_scores_mean, "o-")
+    axes[2].plot(fit_time_sorted, test_scores_mean_sorted, "o-")
     axes[2].fill_between(
-        fit_times_mean,
-        test_scores_mean - test_scores_std,
-        test_scores_mean + test_scores_std,
+        fit_time_sorted,
+        test_scores_mean_sorted - test_scores_std_sorted,
+        test_scores_mean_sorted + test_scores_std_sorted,
         alpha=0.1,
     )
     axes[2].set_xlabel("fit_times")
@@ -179,9 +183,9 @@ fig, axes = plt.subplots(3, 2, figsize=(10, 15))
 X, y = load_digits(return_X_y=True)
 
 title = "Learning Curves (Naive Bayes)"
-# Cross validation with 100 iterations to get smoother mean test and train
+# Cross validation with 50 iterations to get smoother mean test and train
 # score curves, each time with 20% data randomly selected as a validation set.
-cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=0)
+cv = ShuffleSplit(n_splits=50, test_size=0.2, random_state=0)
 
 estimator = GaussianNB()
 plot_learning_curve(
@@ -190,7 +194,7 @@ plot_learning_curve(
 
 title = r"Learning Curves (SVM, RBF kernel, $\gamma=0.001$)"
 # SVC is more expensive so we do a lower number of CV iterations:
-cv = ShuffleSplit(n_splits=10, test_size=0.2, random_state=0)
+cv = ShuffleSplit(n_splits=5, test_size=0.2, random_state=0)
 estimator = SVC(gamma=0.001)
 plot_learning_curve(
     estimator, title, X, y, axes=axes[:, 1], ylim=(0.7, 1.01), cv=cv, n_jobs=4
