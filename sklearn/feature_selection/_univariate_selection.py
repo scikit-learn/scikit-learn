@@ -214,11 +214,15 @@ def chi2(X, y):
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
-    Y = LabelBinarizer().fit_transform(y)
+    Y = LabelBinarizer(sparse_output=True).fit_transform(y)
     if Y.shape[1] == 1:
+        Y = Y.toarray()
         Y = np.append(1 - Y, Y, axis=1)
 
     observed = safe_sparse_dot(Y.T, X)  # n_classes * n_features
+
+    if issparse(observed):
+        observed = observed.toarray()
 
     feature_count = X.sum(axis=0).reshape(1, -1)
     class_prob = Y.mean(axis=0).reshape(1, -1)
