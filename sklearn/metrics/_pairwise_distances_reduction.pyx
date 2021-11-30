@@ -1,9 +1,3 @@
-# cython: boundscheck=False
-# cython: cdivision=True
-# cython: initializedcheck=False
-# cython: wraparound=False
-# distutils: language=c++
-
 # Pairwise Distances Reductions
 # =============================
 #

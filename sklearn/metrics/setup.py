@@ -22,7 +22,6 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_pairwise_distances_reduction",
         sources=["_pairwise_distances_reduction.pyx"],
-        language="c++",
         libraries=libraries,
     )
 
