@@ -2125,7 +2125,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         """Validate input params."""
         if not (0 < self.nu <= 1):
             raise ValueError("nu must be in (0, 1], got nu=%f" % self.nu)
-        
+  
         try:
             self.alpha = self.nu / 2
         except ValueError as e:
