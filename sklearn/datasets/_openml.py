@@ -124,7 +124,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
                         opener = gzip.GzipFile
                     with opener(os.path.join(tmpdir, file_name), "wb") as fdst:
                         shutil.copyfileobj(fsrc, fdst)
-                shutil.move(fdst, local_path)
+                shutil.move(fdst.name, local_path)
         except Exception:
             if os.path.exists(local_path):
                 os.unlink(local_path)
