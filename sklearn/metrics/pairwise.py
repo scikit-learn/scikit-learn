@@ -625,7 +625,7 @@ def pairwise_distances_argmin_min(
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'fast_euclidean',
-          'fast_euclidean', 'l1', 'l2', 'manhattan']
+          'fast_sqeuclidean', 'l1', 'l2', 'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
@@ -741,7 +741,7 @@ def pairwise_distances_argmin(
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'fast_euclidean',
-          'fast_euclidean', 'l1', 'l2', 'manhattan']
+          'fast_sqeuclidean', 'l1', 'l2', 'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
