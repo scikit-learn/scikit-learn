@@ -1222,7 +1222,6 @@ def test_tfidf_vectorizer_setter():
     orig = TfidfVectorizer(use_idf=True)
     orig.fit(JUNK_FOOD_DOCS)
     copy = TfidfVectorizer(vocabulary=orig.vocabulary_, use_idf=True)
-    print(copy.__dict__)
     copy.idf_ = orig.idf_
     assert_array_equal(
         copy.transform(JUNK_FOOD_DOCS).toarray(),
