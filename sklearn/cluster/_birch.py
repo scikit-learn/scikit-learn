@@ -677,14 +677,17 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse="csr", reset=False)
 
-        fast_euclidean_kwargs = {"Y_norm_squared": self._subcluster_norms}
+        metric_kwargs = {"Y_norm_squared": self._subcluster_norms}
 
         with config_context(assume_finite=True):
             argmin = pairwise_distances_argmin(
                 X,
                 self.subcluster_centers_,
-                metric="fast_euclidean",
-                metric_kwargs=fast_euclidean_kwargs,
+                # We use the fast squared euclidean metric alternative to get
+                # maximum acceleration as we are not concerned with the minimum
+                # values but only their indices.
+                metric="fast_sqeuclidean",
+                metric_kwargs=metric_kwargs,
             )
         return self.subcluster_labels_[argmin]
 

@@ -89,7 +89,7 @@ def set_config(
 
     pairwise_dist_chunk_size : int, default=None
         The number of vectors per chunk for PairwiseDistancesReduction.
-        Default is 256 (optimal for most of modern laptops' caches and architectures).
+        Default is 256 (suitable for most of modern laptops' caches and architectures).
 
         .. versionadded:: 1.1
 
@@ -160,7 +160,7 @@ def config_context(
 
     pairwise_dist_chunk_size : int, default=None
         The number of vectors per chunk for PairwiseDistancesReduction.
-        Default is 256 (optimal for most of modern laptops' caches and architectures).
+        Default is 256 (suitable for most of modern laptops' caches and architectures).
 
         .. versionadded:: 1.1
 

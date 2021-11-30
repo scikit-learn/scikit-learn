@@ -610,7 +610,7 @@ def pairwise_distances_argmin_min(
     axis : int, default=1
         Axis along which the argmin and distances are to be computed.
 
-    metric : str or callable, default='euclidean'
+    metric : str or callable, default="fast_euclidean"
         Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -624,14 +624,21 @@ def pairwise_distances_argmin_min(
 
         Valid values for metric are:
 
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'fast_euclidean',
+          'fast_euclidean', 'l1', 'l2', 'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
+
+        'fast_euclidean' (the default metric) is a variant of the 'euclidean'
+        metric which has a superior arithmetic intensity and hence better
+        running time. However it can suffer from numerical instability caused
+        by catastrophic cancellation in rare configuration.
+        Hence when exact results are mandatory, 'euclidean' should be preferred.
+        The same remark applies for 'fast_sqeuclidean' regarding 'sqeuclidean'.
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -719,7 +726,7 @@ def pairwise_distances_argmin(
     axis : int, default=1
         Axis along which the argmin and distances are to be computed.
 
-    metric : str or callable, default="euclidean"
+    metric : str or callable, default="fast_euclidean"
         Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -733,14 +740,21 @@ def pairwise_distances_argmin(
 
         Valid values for metric are:
 
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'fast_euclidean',
+          'fast_euclidean', 'l1', 'l2', 'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
+
+        'fast_euclidean' (the default metric) is a variant of the 'euclidean'
+        metric which has a superior arithmetic intensity and hence better
+        running time. However it can suffer from numerical instability caused
+        by catastrophic cancellation in rare configuration.
+        Hence when exact results are mandatory, 'euclidean' should be preferred.
+        The same remark applies for 'fast_sqeuclidean' regarding 'sqeuclidean'.
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.

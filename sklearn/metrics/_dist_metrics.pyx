@@ -1176,8 +1176,8 @@ cdef class DatasetsPair:
     of X and Y at a time given the pair of their indices (i, j). This class is
     specialized for each metric thanks to the :func:`get_for` factory classmethod.
 
-    The handling of chunking and parallelization to compute the distances
-    and aggregation for several rows at a time is handled in dedicated
+    The handling of parallelization over chunks to compute the distances
+    and aggregation for several rows at a time is done in dedicated
     subclasses of PairwiseDistancesReduction that in-turn rely on
     subclasses of DatasetsPair for each pair of rows in the data. The goal
     is to make it possible to decouple the generic parallelization and
@@ -1189,7 +1189,7 @@ cdef class DatasetsPair:
     This class avoids the overhead of dispatching distance computations
     to :class:`sklearn.metrics.DistanceMetric` based on the physical
     representation of the vectors (sparse vs. dense). It makes use of
-    cython.final to remove the overhead of method calls' dispatch.
+    cython.final to remove the overhead of dispatching method calls.
 
     Parameters
     ----------
