@@ -232,6 +232,13 @@ Changelog
   splits failed. Similarly raise an error during grid-search when the fits for
   all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| raise an error if the type of target is different from `"multilabel-indicator"`
+  in :class:`multioutput.ClassifierChain`.
+  :pr:`21839` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.pipeline`
 .......................
 

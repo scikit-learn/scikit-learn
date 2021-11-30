@@ -590,7 +590,6 @@ def test_base_chain_crossval_fit_and_predict():
     [
         RandomForestClassifier(n_estimators=2),
         MultiOutputClassifier(RandomForestClassifier(n_estimators=2)),
-        ClassifierChain(RandomForestClassifier(n_estimators=2)),
     ],
 )
 def test_multi_output_classes_(estimator):
@@ -716,3 +715,15 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
 
     # Does not raise
     reg.predict(X)
+
+
+def test_classifier_chain_error_wrong_target_type():
+    """Check that we raise an error if the type of target is not multilabel."""
+    chain = ClassifierChain(RandomForestClassifier())
+
+    err_msg = (
+        "ClassifierChain only supports a target of type  'multilabel-indicator'. "
+        "Got 'multiclass-multioutput' instead."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        chain.fit(X, y)

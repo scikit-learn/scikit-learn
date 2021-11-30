@@ -25,7 +25,7 @@ from .model_selection import cross_val_predict
 from .utils.metaestimators import available_if
 from .utils import check_random_state
 from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
-from .utils.multiclass import check_classification_targets
+from .utils.multiclass import check_classification_targets, type_of_target
 from .utils.fixes import delayed
 
 __all__ = [
@@ -554,6 +554,13 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             Returns a fitted instance.
         """
         X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
+        if is_classifier(self):
+            target_type = type_of_target(Y)
+            if target_type != "multilabel-indicator":
+                raise ValueError(
+                    f"{self.__class__.__name__} only supports a target of type "
+                    f" 'multilabel-indicator'. Got {target_type!r} instead."
+                )
 
         random_state = check_random_state(self.random_state)
         self.order_ = self.order
