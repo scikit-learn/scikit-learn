@@ -222,7 +222,7 @@ latest up-to-date workflow.
   `Video <https://youtu.be/dyxS9KKCNzA>`__,
   `Transcript
   <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
-  
+
 .. note::
   In January 2021, the default branch name changed from ``master`` to ``main``
   for the scikit-learn GitHub repository to use more inclusive terms.
@@ -254,33 +254,35 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-       git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
-       cd scikit-learn
+      git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+      cd scikit-learn
+
+3. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
+   development mode and return to this document.
 
 4. Install the development dependencies:
 
-    .. prompt:: bash $
+   .. prompt:: bash $
 
-       pip install cython pytest pytest-cov flake8 mypy black==21.6b0
-
-5. Install scikit-learn in editable mode:
-
-    .. prompt:: bash $
-
-       pip install --no-build-isolation --editable .
-
-   If you receive errors in building scikit-learn, see the
-   :ref:`install_bleeding_edge` section.
+        pip install pytest pytest-cov flake8 mypy black==21.6b0
 
 .. _upstream:
 
-6. Add the ``upstream`` remote. This saves a reference to the main
+5. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes:
 
    .. prompt:: bash $
 
-    git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+        git remote add upstream git@github.com:scikit-learn/scikit-learn.git
+
+6. Check that the `upstream` and `origin` remote aliases are configured correctly
+   by running `git remote -v` which should display::
+
+        origin	git@github.com:YourLogin/scikit-learn.git (fetch)
+        origin	git@github.com:YourLogin/scikit-learn.git (push)
+        upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
+        upstream	git@github.com:scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
@@ -536,7 +538,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   <https://docs.scipy.org/doc/scipy/reference/dev/contributor/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
@@ -547,7 +549,7 @@ Continuous Integration (CI)
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
 * CircleCI is used to build the docs for viewing, for linting with flake8, and
-  for testing with PyPy on Linux
+  for testing with ARM64 / aarch64 on Linux
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
@@ -558,9 +560,9 @@ message, the following actions are taken.
     [ci skip]              CI is skipped completely
     [cd build]             CD is run (wheels and source distribution are built)
     [lint skip]            Azure pipeline skips linting
-    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
-    [icc-build]            Add a Travis build with the Intel C compiler (ICC)
-    [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
+    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
+    [icc-build]            Build & test with the Intel C compiler (ICC)
+    [pypy]                 Build & test with PyPy
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)
@@ -703,7 +705,8 @@ Building the documentation requires installing some additional packages:
 .. prompt:: bash $
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn sphinx-prompt
+                scikit-image packaging seaborn sphinx-prompt \
+                sphinxext-opengraph
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -1004,7 +1007,7 @@ installed in your current Python environment:
 
   asv run --python=same
 
-It's particulary useful when you installed scikit-learn in editable mode to
+It's particularly useful when you installed scikit-learn in editable mode to
 avoid creating a new environment each time you run the benchmarks. By default
 the results are not saved when using an existing installation. To save the
 results you must specify a commit hash:
@@ -1115,8 +1118,8 @@ use the decorator ``deprecated`` on a property. Please note that the
 decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
-                "will be removed in 0.15. Use 'classes_' instead")
+    @deprecated("Attribute `labels_` was deprecated in version 0.13 and "
+                "will be removed in 0.15. Use `classes_` instead")
     @property
     def labels_(self):
         return self.classes_

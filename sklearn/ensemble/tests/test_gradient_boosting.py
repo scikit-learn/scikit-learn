@@ -105,6 +105,9 @@ def test_classification_toy(loss):
         ({"max_features": -0.1}, r"max_features must be in \(0, n_features\]"),
         ({"n_iter_no_change": "invalid"}, "n_iter_no_change should either be"),
     ],
+    # Avoid long error messages in test names:
+    # https://github.com/scikit-learn/scikit-learn/issues/21362
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
@@ -1303,7 +1306,7 @@ def test_gradient_boosting_with_init_pipeline():
 
     with pytest.raises(
         ValueError,
-        match="The initial estimator Pipeline does not support sample " "weights",
+        match="The initial estimator Pipeline does not support sample weights",
     ):
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
@@ -1330,8 +1333,8 @@ def test_gradient_boosting_init_wrong_methods(estimator, missing_method):
     # methods (fit, predict, predict_proba)
 
     message = (
-        "The init parameter must be a valid estimator and support "
-        "both fit and " + missing_method
+        "The init parameter must be a valid estimator and support both fit and "
+        + missing_method
     )
     with pytest.raises(ValueError, match=message):
         estimator.fit(X, y)
@@ -1374,21 +1377,19 @@ def test_gbr_deprecated_attr():
     X = np.zeros((10, 10))
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
-    msg = "Attribute n_classes_ was deprecated"
+    msg = "Attribute `n_classes_` was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         gbr.n_classes_
 
 
 # TODO: Remove in 1.1 when `n_classes_` is deprecated
-@pytest.mark.filterwarnings("ignore:Attribute n_classes_ was deprecated")
+@pytest.mark.filterwarnings("ignore:Attribute `n_classes_` was deprecated")
 def test_attr_error_raised_if_not_fitted():
     # check that accessing n_classes_ in not fitted GradientBoostingRegressor
     # raises an AttributeError
     gbr = GradientBoostingRegressor()
     # test raise AttributeError if not fitted
-    msg = (
-        f"{GradientBoostingRegressor.__name__} object has no n_classes_ " f"attribute."
-    )
+    msg = f"{GradientBoostingRegressor.__name__} object has no n_classes_ attribute."
     with pytest.raises(AttributeError, match=msg):
         gbr.n_classes_
 
@@ -1423,7 +1424,7 @@ def test_n_features_deprecation(Estimator):
     y = np.array([1, 0])
     est = Estimator().fit(X, y)
 
-    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
 
 

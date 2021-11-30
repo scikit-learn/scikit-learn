@@ -48,8 +48,25 @@ Every new triager will be announced in the mailing list.
 Triagers are welcome to participate in `monthly core developer meetings
 <https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
 
+.. _communication_team:
+
+Communication team
+-------------------
+
+Members of the communication team help with outreach and communication
+for scikit-learn. The goal of the team is to develop public awareness of
+scikit-learn, of its features and usage, as well as branding.
+
+For this, they can operate the scikit-learn accounts on various social
+networks and produce materials.
+
+Every new communicator will be announced in the mailing list.
+Communicators are welcome to participate in `monthly core developer meetings
+<https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
+
 Core developers
 ---------------
+
 Core developers are community members who have shown that they are dedicated to
 the continued development of the project through ongoing engagement with the
 community. They have shown they can be trusted to maintain scikit-learn with

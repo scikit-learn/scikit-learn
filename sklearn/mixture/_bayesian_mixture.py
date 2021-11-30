@@ -133,7 +133,7 @@ class BayesianGaussianMixture(BaseMixture):
             'dirichlet_process' (using the Stick-breaking representation),
             'dirichlet_distribution' (can favor more uniform weights).
 
-    weight_concentration_prior : float | None, default=None.
+    weight_concentration_prior : float or None, default=None
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). This is commonly called gamma in the
         literature. The higher concentration puts more mass in
@@ -142,22 +142,22 @@ class BayesianGaussianMixture(BaseMixture):
         mixture weights simplex. The value of the parameter must be greater
         than 0. If it is None, it's set to ``1. / n_components``.
 
-    mean_precision_prior : float | None, default=None.
+    mean_precision_prior : float or None, default=None
         The precision prior on the mean distribution (Gaussian).
         Controls the extent of where means can be placed. Larger
         values concentrate the cluster means around `mean_prior`.
         The value of the parameter must be greater than 0.
         If it is None, it is set to 1.
 
-    mean_prior : array-like, shape (n_features,), default=None.
+    mean_prior : array-like, shape (n_features,), default=None
         The prior on the mean distribution (Gaussian).
         If it is None, it is set to the mean of X.
 
-    degrees_of_freedom_prior : float | None, default=None.
+    degrees_of_freedom_prior : float or None, default=None
         The prior of the number of degrees of freedom on the covariance
         distributions (Wishart). If it is None, it's set to `n_features`.
 
-    covariance_prior : float or array-like, default=None.
+    covariance_prior : float or array-like, default=None
         The prior on the covariance distribution (Wishart).
         If it is None, the emiprical covariance prior is initialized using the
         covariance of X. The shape depends on `covariance_type`::
@@ -297,17 +297,11 @@ class BayesianGaussianMixture(BaseMixture):
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.mixture import BayesianGaussianMixture
-    >>> X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [12, 4], [10, 7]])
-    >>> bgm = BayesianGaussianMixture(n_components=2, random_state=42).fit(X)
-    >>> bgm.means_
-    array([[2.49... , 2.29...],
-           [8.45..., 4.52... ]])
-    >>> bgm.predict([[0, 0], [9, 3]])
-    array([0, 1])
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -328,6 +322,18 @@ class BayesianGaussianMixture(BaseMixture):
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
        <https://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.mixture import BayesianGaussianMixture
+    >>> X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [12, 4], [10, 7]])
+    >>> bgm = BayesianGaussianMixture(n_components=2, random_state=42).fit(X)
+    >>> bgm.means_
+    array([[2.49... , 2.29...],
+           [8.45..., 4.52... ]])
+    >>> bgm.predict([[0, 0], [9, 3]])
+    array([0, 1])
     """
 
     def __init__(
@@ -383,7 +389,8 @@ class BayesianGaussianMixture(BaseMixture):
             raise ValueError(
                 "Invalid value for 'covariance_type': %s "
                 "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']" % self.covariance_type
+                "['spherical', 'tied', 'diag', 'full']"
+                % self.covariance_type
             )
 
         if self.weight_concentration_prior_type not in [
@@ -431,7 +438,8 @@ class BayesianGaussianMixture(BaseMixture):
         else:
             raise ValueError(
                 "The parameter 'mean_precision_prior' should be "
-                "greater than 0., but got %.3f." % self.mean_precision_prior
+                "greater than 0., but got %.3f."
+                % self.mean_precision_prior
             )
 
         if self.mean_prior is None:
@@ -505,7 +513,8 @@ class BayesianGaussianMixture(BaseMixture):
         else:
             raise ValueError(
                 "The parameter 'spherical covariance_prior' "
-                "should be greater than 0., but got %.3f." % self.covariance_prior
+                "should be greater than 0., but got %.3f."
+                % self.covariance_prior
             )
 
     def _initialize(self, X, resp):

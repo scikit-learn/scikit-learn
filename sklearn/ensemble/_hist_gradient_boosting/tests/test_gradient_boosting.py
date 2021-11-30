@@ -21,6 +21,9 @@ from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.utils import shuffle
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
+n_threads = _openmp_effective_n_threads()
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -693,7 +696,7 @@ def test_sum_hessians_are_sample_weight(loss_name):
 
     sample_weight = rng.normal(size=n_samples)
 
-    loss = _LOSSES[loss_name](sample_weight=sample_weight)
+    loss = _LOSSES[loss_name](sample_weight=sample_weight, n_threads=n_threads)
     gradients, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=1, sample_weight=sample_weight
     )
@@ -958,10 +961,8 @@ def test_categorical_encoding_strategies():
         (
             ["hello", "world"],
             None,
-            (
-                "categorical_features must be an array-like of bools or array-like of "
-                "ints."
-            ),
+            "categorical_features must be an array-like of bools or array-like of "
+            "ints.",
         ),
         (
             [0, -1],
@@ -1025,13 +1026,13 @@ def test_categorical_bad_encoding_errors(Est):
 
     X = np.array([[0, 1, 2]]).T
     y = np.arange(3)
-    msg = "Categorical feature at index 0 is expected to have a " "cardinality <= 2"
+    msg = "Categorical feature at index 0 is expected to have a cardinality <= 2"
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 
     X = np.array([[0, 2]]).T
     y = np.arange(2)
-    msg = "Categorical feature at index 0 is expected to be encoded with " "values < 2"
+    msg = "Categorical feature at index 0 is expected to be encoded with values < 2"
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 

@@ -150,9 +150,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
 
         random_state = check_random_state(self.random_state)
 
@@ -236,15 +234,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if isinstance(self.min_samples_leaf, numbers.Integral):
             if not 1 <= self.min_samples_leaf:
                 raise ValueError(
-                    "min_samples_leaf must be at least 1 "
-                    "or in (0, 0.5], got %s" % self.min_samples_leaf
+                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
+                    % self.min_samples_leaf
                 )
             min_samples_leaf = self.min_samples_leaf
         else:  # float
             if not 0.0 < self.min_samples_leaf <= 0.5:
                 raise ValueError(
-                    "min_samples_leaf must be at least 1 "
-                    "or in (0, 0.5], got %s" % self.min_samples_leaf
+                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
+                    % self.min_samples_leaf
                 )
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
@@ -253,7 +251,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "min_samples_split must be an integer "
                     "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the integer %s" % self.min_samples_split
+                    "got the integer %s"
+                    % self.min_samples_split
                 )
             min_samples_split = self.min_samples_split
         else:  # float
@@ -261,7 +260,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "min_samples_split must be an integer "
                     "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the float %s" % self.min_samples_split
+                    "got the float %s"
+                    % self.min_samples_split
                 )
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
@@ -298,8 +298,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if len(y) != n_samples:
             raise ValueError(
-                "Number of labels=%d does not match "
-                "number of samples=%d" % (len(y), n_samples)
+                "Number of labels=%d does not match number of samples=%d"
+                % (len(y), n_samples)
             )
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
@@ -309,11 +309,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("max_features must be in (0, n_features]")
         if not isinstance(max_leaf_nodes, numbers.Integral):
             raise ValueError(
-                "max_leaf_nodes must be integral number but was " "%r" % max_leaf_nodes
+                "max_leaf_nodes must be integral number but was %r" % max_leaf_nodes
             )
         if -1 < max_leaf_nodes < 2:
             raise ValueError(
-                ("max_leaf_nodes {0} must be either None " "or larger than 1").format(
+                ("max_leaf_nodes {0} must be either None or larger than 1").format(
                     max_leaf_nodes
                 )
             )
@@ -334,19 +334,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
         if self.min_impurity_decrease < 0.0:
-            raise ValueError(
-                "min_impurity_decrease must be greater than " "or equal to 0"
-            )
-
-        # TODO: Remove in 1.1
-        if X_idx_sorted != "deprecated":
-            warnings.warn(
-                "The parameter 'X_idx_sorted' is deprecated and has no "
-                "effect. It will be removed in 1.1 (renaming of 0.26). You "
-                "can suppress this warning by not passing any value to the "
-                "'X_idx_sorted' parameter.",
-                FutureWarning,
-            )
+            raise ValueError("min_impurity_decrease must be greater than or equal to 0")
 
         # Build tree
         criterion = self.criterion
@@ -422,7 +410,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             self.tree_ = Tree(
                 self.n_features_in_,
-                # TODO: tree should't need this in this case
+                # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
             )
@@ -465,9 +453,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if issparse(X) and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
-                raise ValueError(
-                    "No support for np.int64 index based " "sparse matrices"
-                )
+                raise ValueError("No support for np.int64 index based sparse matrices")
         else:
             # The number of features is checked regardless of `check_input`
             self._check_n_features(X, reset=False)
@@ -845,6 +831,12 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -932,9 +924,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -958,12 +948,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated :: 0.24
-
         Returns
         -------
         self : DecisionTreeClassifier
@@ -975,7 +959,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -1056,12 +1039,15 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             return proba
 
     @deprecated(  # type: ignore
-        "The attribute 'n_features_' is deprecated in 1.0 and will be removed "
-        "in 1.2. Use 'n_features_in_' instead."
+        "The attribute `n_features_` is deprecated in 1.0 and will be removed "
+        "in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):
         return self.n_features_in_
+
+    def _more_tags(self):
+        return {"multilabel": True}
 
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
@@ -1071,8 +1057,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"squared_error", "mse", "friedman_mse", "absolute_error", \
-            "mae", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "friedman_mse", "absolute_error", \
+            "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
@@ -1229,6 +1215,12 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1309,9 +1301,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             monotonic_cst=monotonic_cst,
         )
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree regressor from the training set (X, y).
 
         Parameters
@@ -1334,12 +1324,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated :: 0.24
-
         Returns
         -------
         self : DecisionTreeRegressor
@@ -1351,7 +1335,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -1383,8 +1366,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         return averaged_predictions
 
     @deprecated(  # type: ignore
-        "The attribute 'n_features_' is deprecated in 1.0 and will be removed "
-        "in 1.2. Use 'n_features_in_' instead."
+        "The attribute `n_features_` is deprecated in 1.0 and will be removed "
+        "in 1.2. Use `n_features_in_` instead."
     )
     @property
     def n_features_(self):
@@ -1568,6 +1551,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1582,6 +1571,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     ExtraTreeRegressor : An extremely randomized tree regressor.
     sklearn.ensemble.ExtraTreesClassifier : An extra-trees classifier.
     sklearn.ensemble.ExtraTreesRegressor : An extra-trees regressor.
+    sklearn.ensemble.RandomForestClassifier : A random forest classifier.
+    sklearn.ensemble.RandomForestRegressor : A random forest regressor.
+    sklearn.ensemble.RandomTreesEmbedding : An ensemble of
+        totally random trees.
 
     Notes
     -----
@@ -1664,8 +1657,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "mse", "friedman_mse", "mae"}, \
-            default="squared_error"
+    criterion : {"squared_error", "friedman_mse"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and "mae" for the
@@ -1798,6 +1790,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     feature_importances_ : ndarray of shape (n_features,)
         Return impurity-based feature importances (the higher, the more

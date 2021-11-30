@@ -51,7 +51,7 @@ def _calculate_threshold(estimator, importances, threshold):
 
         else:
             raise ValueError(
-                "Expected threshold='mean' or threshold='median' " "got %s" % threshold
+                "Expected threshold='mean' or threshold='median' got %s" % threshold
             )
 
     else:
@@ -76,7 +76,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         ``feature_importances_`` or ``coef_`` attribute after fitting.
         Otherwise, the ``importance_getter`` parameter should be used.
 
-    threshold : string or float, default=None
+    threshold : str or float, default=None
         The threshold value to use for feature selection. Features whose
         importance is greater or equal are kept while the others are
         discarded. If "median" (resp. "mean"), then the ``threshold`` value is
@@ -135,8 +135,22 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     threshold_ : float
         The threshold value used for feature selection.
+
+    See Also
+    --------
+    RFE : Recursive feature elimination based on importance weights.
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
 
     Notes
     -----
@@ -163,14 +177,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.02],
            [-0.48],
            [ 1.48]])
-
-    See Also
-    --------
-    RFE : Recursive feature elimination based on importance weights.
-    RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features.
-    SequentialFeatureSelector : Sequential cross-validation based feature
-        selection. Does not rely on importance weights.
     """
 
     def __init__(
@@ -232,11 +238,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        **fit_params : Other estimator specific parameters
+        **fit_params : dict
+            Other estimator specific parameters.
 
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.max_features is not None:
             if not isinstance(self.max_features, numbers.Integral):
@@ -248,18 +256,22 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 )
             elif self.max_features < 0 or self.max_features > X.shape[1]:
                 raise ValueError(
-                    "'max_features' should be 0 and {} features."
-                    "Got {} instead.".format(X.shape[1], self.max_features)
+                    "'max_features' should be 0 and {} features.Got {} instead.".format(
+                        X.shape[1], self.max_features
+                    )
                 )
 
         if self.prefit:
             raise NotFittedError("Since 'prefit=True', call transform directly")
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
         return self
 
     @property
     def threshold_(self):
+        """Threshold value used for feature selection."""
         scores = _get_feature_importances(
             estimator=self.estimator_,
             getter=self.importance_getter,
@@ -281,11 +293,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        **fit_params : Other estimator specific parameters
+        **fit_params : dict
+            Other estimator specific parameters.
 
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.prefit:
             raise NotFittedError("Since 'prefit=True', call transform directly")
@@ -296,6 +310,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during `fit`."""
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:

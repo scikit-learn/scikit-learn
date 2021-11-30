@@ -245,8 +245,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     )
     if len(bin_seeds) == len(X):
         warnings.warn(
-            "Binning data failed with provided bin_size=%f,"
-            " using data points as seeds." % bin_size
+            "Binning data failed with provided bin_size=%f, using data points as seeds."
+            % bin_size
         )
         return X
     bin_seeds = bin_seeds * bin_size
@@ -331,19 +331,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.cluster import MeanShift
-    >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [1, 0],
-    ...               [4, 7], [3, 5], [3, 6]])
-    >>> clustering = MeanShift(bandwidth=2).fit(X)
-    >>> clustering.labels_
-    array([1, 1, 1, 0, 0, 0])
-    >>> clustering.predict([[0, 0], [5, 5]])
-    array([1, 0])
-    >>> clustering
-    MeanShift(bandwidth=2)
+    KMeans : K-Means clustering.
 
     Notes
     -----
@@ -369,6 +365,19 @@ class MeanShift(ClusterMixin, BaseEstimator):
     feature space analysis". IEEE Transactions on Pattern Analysis and
     Machine Intelligence. 2002. pp. 603-619.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import MeanShift
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = MeanShift(bandwidth=2).fit(X)
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering.predict([[0, 0], [5, 5]])
+    array([1, 0])
+    >>> clustering
+    MeanShift(bandwidth=2)
     """
 
     def __init__(
@@ -399,7 +408,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Samples to cluster.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
+        Returns
+        -------
+        self : object
+               Fitted instance.
         """
         X = self._validate_data(X)
         bandwidth = self.bandwidth
@@ -407,7 +421,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
         elif bandwidth <= 0:
             raise ValueError(
-                "bandwidth needs to be greater than zero or None," " got %f" % bandwidth
+                "bandwidth needs to be greater than zero or None, got %f" % bandwidth
             )
 
         seeds = self.seeds
@@ -439,9 +453,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
         if not center_intensity_dict:
             # nothing near seeds
             raise ValueError(
-                "No point was within bandwidth=%f of any seed."
-                " Try a different seeding strategy \
-                             or increase the bandwidth."
+                "No point was within bandwidth=%f of any seed. Try a different seeding"
+                " strategy                              or increase the bandwidth."
                 % bandwidth
             )
 
@@ -488,7 +501,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             New data to predict.
 
         Returns

@@ -1,8 +1,3 @@
-#!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: cdivision=True
-
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
 # License: BSD

@@ -238,7 +238,7 @@ def spectral_embedding(
     except ImportError as e:
         if eigen_solver == "amg":
             raise ValueError(
-                "The eigen_solver was set to 'amg', but pyamg is " "not available."
+                "The eigen_solver was set to 'amg', but pyamg is not available."
             ) from e
 
     if eigen_solver is None:
@@ -258,8 +258,7 @@ def spectral_embedding(
 
     if not _graph_is_connected(adjacency):
         warnings.warn(
-            "Graph is not fully connected, spectral embedding"
-            " may not work as expected."
+            "Graph is not fully connected, spectral embedding may not work as expected."
         )
 
     laplacian, dd = csgraph_laplacian(
@@ -316,8 +315,9 @@ def spectral_embedding(
         # problem.
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
-        # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64, accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
+        )
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # The Laplacian matrix is always singular, having at least one zero
@@ -338,6 +338,7 @@ def spectral_embedding(
         # Create initial approximation X to eigenvectors
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
+        X = X.astype(laplacian.dtype)
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.0e-5, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -347,8 +348,9 @@ def spectral_embedding(
             raise ValueError
 
     if eigen_solver == "lobpcg":
-        # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64, accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
+        )
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
@@ -367,8 +369,9 @@ def spectral_embedding(
             # approximation X to eigenvectors
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
+            X = X.astype(laplacian.dtype)
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=1e-15, largest=False, maxiter=2000
+                laplacian, X, tol=1e-5, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -463,20 +466,18 @@ class SpectralEmbedding(BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_neighbors_ : int
         Number of nearest neighbors effectively used.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.manifold import SpectralEmbedding
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> embedding = SpectralEmbedding(n_components=2)
-    >>> X_transformed = embedding.fit_transform(X[:100])
-    >>> X_transformed.shape
-    (100, 2)
+    Isomap : Non-linear dimensionality reduction through Isometric Mapping.
 
     References
     ----------
@@ -492,6 +493,18 @@ class SpectralEmbedding(BaseEstimator):
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import SpectralEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = SpectralEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
     """
 
     def __init__(
@@ -522,7 +535,7 @@ class SpectralEmbedding(BaseEstimator):
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
+        "Attribute `_pairwise` was deprecated in "
         "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -534,8 +547,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : array-like of shape (n_samples, n_samples),
@@ -593,8 +606,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix}, shape (n_samples, n_samples),
@@ -602,6 +615,7 @@ class SpectralEmbedding(BaseEstimator):
             samples.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -609,9 +623,7 @@ class SpectralEmbedding(BaseEstimator):
             Returns the instance itself.
         """
 
-        X = self._validate_data(
-            X, accept_sparse="csr", ensure_min_samples=2, estimator=self
-        )
+        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, str):
@@ -622,19 +634,14 @@ class SpectralEmbedding(BaseEstimator):
                 "precomputed_nearest_neighbors",
             }:
                 raise ValueError(
-                    (
-                        "%s is not a valid affinity. Expected "
-                        "'precomputed', 'rbf', 'nearest_neighbors' "
-                        "or a callable."
-                    )
+                    "%s is not a valid affinity. Expected "
+                    "'precomputed', 'rbf', 'nearest_neighbors' "
+                    "or a callable."
                     % self.affinity
                 )
         elif not callable(self.affinity):
             raise ValueError(
-                (
-                    "'affinity' is expected to be an affinity "
-                    "name or a callable. Got: %s"
-                )
+                "'affinity' is expected to be an affinity name or a callable. Got: %s"
                 % self.affinity
             )
 
@@ -653,8 +660,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix} of shape (n_samples, n_samples),
@@ -662,10 +669,12 @@ class SpectralEmbedding(BaseEstimator):
             samples.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         X_new : array-like of shape (n_samples, n_components)
+            Spectral embedding of the training matrix.
         """
         self.fit(X)
         return self.embedding_

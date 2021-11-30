@@ -6,6 +6,7 @@ TODO: remove hard coded numerical results when possible
 import numpy as np
 import itertools
 import pytest
+import re
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
@@ -297,6 +298,22 @@ def test_oneclass_score_samples():
         clf.score_samples([[2.0, 2.0]]),
         clf.decision_function([[2.0, 2.0]]) + clf.offset_,
     )
+
+
+# TODO: Remove in v1.2
+def test_oneclass_fit_params_is_deprecated():
+    clf = svm.OneClassSVM()
+    params = {
+        "unused_param": "",
+        "extra_param": None,
+    }
+    msg = (
+        "Passing additional keyword parameters has no effect and is deprecated "
+        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
+        f"keyword parameter(s) are: {params.keys()}."
+    )
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        clf.fit(X, **params)
 
 
 def test_tweak_params():
@@ -678,11 +695,47 @@ def test_bad_input():
         (svm.OneClassSVM, datasets.load_iris(return_X_y=True)),
     ],
 )
-def test_svm_gamma_error(Estimator, data):
+@pytest.mark.parametrize(
+    "gamma, err_msg",
+    [
+        (
+            "auto_deprecated",
+            "When 'gamma' is a string, it should be either 'scale' or 'auto'",
+        ),
+        (
+            -1,
+            "gamma value must be > 0; -1 is invalid. Use"
+            " a positive number or use 'auto' to set gamma to a"
+            " value of 1 / n_features.",
+        ),
+        (
+            0.0,
+            "gamma value must be > 0; 0.0 is invalid. Use"
+            " a positive number or use 'auto' to set gamma to a"
+            " value of 1 / n_features.",
+        ),
+        (
+            np.array([1.0, 4.0]),
+            "The gamma value should be set to 'scale',"
+            f" 'auto' or a positive float value. {np.array([1.0, 4.0])!r}"
+            " is not a valid option",
+        ),
+        (
+            [],
+            "The gamma value should be set to 'scale', 'auto' or a positive"
+            f" float value. {[]} is not a valid option",
+        ),
+        (
+            {},
+            "The gamma value should be set to 'scale', 'auto' or a positive"
+            " float value. {} is not a valid option",
+        ),
+    ],
+)
+def test_svm_gamma_error(Estimator, data, gamma, err_msg):
     X, y = data
-    est = Estimator(gamma="auto_deprecated")
-    err_msg = "When 'gamma' is a string, it should be either 'scale' or 'auto'"
-    with pytest.raises(ValueError, match=err_msg):
+    est = Estimator(gamma=gamma)
+    with pytest.raises(ValueError, match=(re.escape(err_msg))):
         est.fit(X, y)
 
 
@@ -735,8 +788,8 @@ def test_linearsvc_parameters():
 
             with pytest.raises(
                 ValueError,
-                match="Unsupported set of "
-                "arguments.*penalty='%s.*loss='%s.*dual=%s" % (penalty, loss, dual),
+                match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"
+                % (penalty, loss, dual),
             ):
                 clf.fit(X, y)
         else:
@@ -757,7 +810,7 @@ def test_linear_svx_uppercase_loss_penality_raises_error():
     with pytest.raises(ValueError, match=msg):
         svm.LinearSVC(loss="SQuared_hinge").fit(X, y)
 
-    msg = "The combination of penalty='L2'" " and loss='squared_hinge' is not supported"
+    msg = "The combination of penalty='L2' and loss='squared_hinge' is not supported"
     with pytest.raises(ValueError, match=msg):
         svm.LinearSVC(penalty="L2").fit(X, y)
 
@@ -1077,7 +1130,8 @@ def test_linear_svc_intercept_scaling():
         msg = (
             "Intercept scaling is %r but needs to be greater than 0."
             " To disable fitting an intercept,"
-            " set fit_intercept=False." % lsvc.intercept_scaling
+            " set fit_intercept=False."
+            % lsvc.intercept_scaling
         )
         with pytest.raises(ValueError, match=msg):
             lsvc.fit(X, Y)
@@ -1186,24 +1240,26 @@ def test_svc_ovr_tie_breaking(SVCClass):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
     """
-    X, y = make_blobs(random_state=27)
+    X, y = make_blobs(random_state=0, n_samples=20, n_features=2)
 
-    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 1000)
-    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 1000)
+    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
+    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 100)
     xx, yy = np.meshgrid(xs, ys)
 
+    common_params = dict(
+        kernel="rbf", gamma=1e6, random_state=42, decision_function_shape="ovr"
+    )
     svm = SVCClass(
-        kernel="linear",
-        decision_function_shape="ovr",
         break_ties=False,
-        random_state=42,
+        **common_params,
     ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert not np.all(pred == np.argmax(dv, axis=1))
 
     svm = SVCClass(
-        kernel="linear", decision_function_shape="ovr", break_ties=True, random_state=42
+        break_ties=True,
+        **common_params,
     ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
@@ -1353,3 +1409,16 @@ def test_custom_kernel_not_array_input(Estimator):
     else:  # regressor
         assert_allclose(svc1.predict(data), svc2.predict(X))
         assert_allclose(svc1.predict(data), svc3.predict(K))
+
+
+def test_svc_raises_error_internal_representation():
+    """Check that SVC raises error when internal representation is altered.
+
+    Non-regression test for #18891 and https://nvd.nist.gov/vuln/detail/CVE-2020-28975
+    """
+    clf = svm.SVC(kernel="linear").fit(X, Y)
+    clf._n_support[0] = 1000000
+
+    msg = "The internal representation of SVC was altered"
+    with pytest.raises(ValueError, match=msg):
+        clf.predict(X)

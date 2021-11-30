@@ -107,11 +107,12 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
     X = rng.randn(10, 2)  # 2 features required for haversine dist.
     Y = rng.randn(10, 2)
 
+    kde = KernelDensity(algorithm=algorithm, metric=metric)
+
     if algorithm == "kd_tree" and metric not in KDTree.valid_metrics:
         with pytest.raises(ValueError):
-            KernelDensity(algorithm=algorithm, metric=metric)
+            kde.fit(X)
     else:
-        kde = KernelDensity(algorithm=algorithm, metric=metric)
         kde.fit(X)
         y_dens = kde.score_samples(Y)
         assert y_dens.shape == Y.shape[:1]
@@ -126,16 +127,17 @@ def test_kde_score(n_samples=100, n_features=3):
 
 
 def test_kde_badargs():
+    X = np.random.random((200, 10))
     with pytest.raises(ValueError):
-        KernelDensity(algorithm="blah")
+        KernelDensity(algorithm="blah").fit(X)
     with pytest.raises(ValueError):
-        KernelDensity(bandwidth=0)
+        KernelDensity(bandwidth=0).fit(X)
     with pytest.raises(ValueError):
-        KernelDensity(kernel="blah")
+        KernelDensity(kernel="blah").fit(X)
     with pytest.raises(ValueError):
-        KernelDensity(metric="blah")
+        KernelDensity(metric="blah").fit(X)
     with pytest.raises(ValueError):
-        KernelDensity(algorithm="kd_tree", metric="blah")
+        KernelDensity(algorithm="kd_tree", metric="blah").fit(X)
     kde = KernelDensity()
     with pytest.raises(ValueError):
         kde.fit(np.random.random((200, 10)), sample_weight=np.random.random((200, 10)))
@@ -209,7 +211,7 @@ def test_sample_weight_invalid():
     data = np.reshape([1.0, 2.0, 3.0], (-1, 1))
 
     sample_weight = [0.1, -0.2, 0.3]
-    expected_err = "sample_weight must have positive values"
+    expected_err = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=expected_err):
         kde.fit(data, sample_weight=sample_weight)
 

@@ -23,33 +23,42 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils.validation import _check_y
 from .utils.validation import _num_features
+from .utils.validation import _check_feature_names_in
+from .utils.validation import _generate_get_feature_names_out
+from .utils.validation import check_is_fitted
 from .utils._estimator_html_repr import estimator_html_repr
+from .utils.validation import _get_feature_names
 
 
 def clone(estimator, *, safe=True):
-    """Constructs a new unfitted estimator with the same parameters.
+    """Construct a new unfitted estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
-    without actually copying attached data. It yields a new estimator
+    without actually copying attached data. It returns a new estimator
     with the same parameters that has not been fitted on any data.
-
-    If the estimator's `random_state` parameter is an integer (or if the
-    estimator doesn't have a `random_state` parameter), an *exact clone* is
-    returned: the clone and the original estimator will give the exact same
-    results. Otherwise, *statistical clone* is returned: the clone might
-    yield different results from the original estimator. More details can be
-    found in :ref:`randomness`.
 
     Parameters
     ----------
     estimator : {list, tuple, set} of estimator instance or a single \
             estimator instance
         The estimator or group of estimators to be cloned.
-
     safe : bool, default=True
         If safe is False, clone will fall back to a deep copy on objects
         that are not estimators.
 
+    Returns
+    -------
+    estimator : object
+        The deep copy of the input, an estimator if input is an estimator.
+
+    Notes
+    -----
+    If the estimator's `random_state` parameter is an integer (or if the
+    estimator doesn't have a `random_state` parameter), an *exact clone* is
+    returned: the clone and the original estimator will give the exact same
+    results. Otherwise, *statistical clone* is returned: the clone might
+    return different results from the original estimator. More details can be
+    found in :ref:`randomness`.
     """
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
@@ -208,8 +217,7 @@ class BaseEstimator:
         return out
 
     def set_params(self, **params):
-        """
-        Set the parameters of this estimator.
+        """Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
         (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
@@ -235,10 +243,10 @@ class BaseEstimator:
         for key, value in params.items():
             key, delim, sub_key = key.partition("__")
             if key not in valid_params:
+                local_valid_params = self._get_param_names()
                 raise ValueError(
-                    "Invalid parameter %s for estimator %s. "
-                    "Check the list of available parameters "
-                    "with `estimator.get_params().keys()`." % (key, self)
+                    f"Invalid parameter {key!r} for estimator {self}. "
+                    f"Valid parameters are: {local_valid_params!r}."
                 )
 
             if delim:
@@ -322,7 +330,10 @@ class BaseEstimator:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
                     "using version {2}. This might lead to breaking code or "
-                    "invalid results. Use at your own risk.".format(
+                    "invalid results. Use at your own risk. "
+                    "For more info please refer to:\n"
+                    "https://scikit-learn.org/stable/modules/model_persistence"
+                    ".html#security-maintainability-limitations".format(
                         self.__class__.__name__, pickle_version, __version__
                     ),
                     UserWarning,
@@ -392,6 +403,96 @@ class BaseEstimator:
                 f"is expecting {self.n_features_in_} features as input."
             )
 
+    def _check_feature_names(self, X, *, reset):
+        """Set or check the `feature_names_in_` attribute.
+
+        .. versionadded:: 1.0
+
+        Parameters
+        ----------
+        X : {ndarray, dataframe} of shape (n_samples, n_features)
+            The input samples.
+
+        reset : bool
+            Whether to reset the `feature_names_in_` attribute.
+            If False, the input will be checked for consistency with
+            feature names of data provided when reset was last True.
+            .. note::
+               It is recommended to call `reset=True` in `fit` and in the first
+               call to `partial_fit`. All other methods that validate `X`
+               should set `reset=False`.
+        """
+
+        if reset:
+            feature_names_in = _get_feature_names(X)
+            if feature_names_in is not None:
+                self.feature_names_in_ = feature_names_in
+            elif hasattr(self, "feature_names_in_"):
+                # Delete the attribute when the estimator is fitted on a new dataset
+                # that has no feature names.
+                delattr(self, "feature_names_in_")
+            return
+
+        fitted_feature_names = getattr(self, "feature_names_in_", None)
+        X_feature_names = _get_feature_names(X)
+
+        if fitted_feature_names is None and X_feature_names is None:
+            # no feature names seen in fit and in X
+            return
+
+        if X_feature_names is not None and fitted_feature_names is None:
+            warnings.warn(
+                f"X has feature names, but {self.__class__.__name__} was fitted without"
+                " feature names"
+            )
+            return
+
+        if X_feature_names is None and fitted_feature_names is not None:
+            warnings.warn(
+                "X does not have valid feature names, but"
+                f" {self.__class__.__name__} was fitted with feature names"
+            )
+            return
+
+        # validate the feature names against the `feature_names_in_` attribute
+        if len(fitted_feature_names) != len(X_feature_names) or np.any(
+            fitted_feature_names != X_feature_names
+        ):
+            message = (
+                "The feature names should match those that were "
+                "passed during fit. Starting version 1.2, an error will be raised.\n"
+            )
+            fitted_feature_names_set = set(fitted_feature_names)
+            X_feature_names_set = set(X_feature_names)
+
+            unexpected_names = sorted(X_feature_names_set - fitted_feature_names_set)
+            missing_names = sorted(fitted_feature_names_set - X_feature_names_set)
+
+            def add_names(names):
+                output = ""
+                max_n_names = 5
+                for i, name in enumerate(names):
+                    if i >= max_n_names:
+                        output += "- ...\n"
+                        break
+                    output += f"- {name}\n"
+                return output
+
+            if unexpected_names:
+                message += "Feature names unseen at fit time:\n"
+                message += add_names(unexpected_names)
+
+            if missing_names:
+                message += "Feature names seen at fit time, yet now missing:\n"
+                message += add_names(missing_names)
+
+            if not missing_names and not missing_names:
+                message += (
+                    "Feature names must be in the same order as they were in fit.\n"
+                )
+
+            warnings.warn(message, FutureWarning)
+
     def _validate_data(
         self,
         X="no_validation",
@@ -434,14 +535,22 @@ class BaseEstimator:
                It is recommended to call reset=True in `fit` and in the first
                call to `partial_fit`. All other methods that validate `X`
                should set `reset=False`.
+
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
             to be used for calling check_array() on X and y respectively.
+
+            `estimator=self` is automatically added to these dicts to generate
+            more informative error message in case of invalid input data.
+
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
             :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
             is not False.
+
+            `estimator=self` is automatically added to these params to generate
+            more informative error message in case of invalid input data.
 
         Returns
         -------
@@ -449,19 +558,24 @@ class BaseEstimator:
             The validated input. A tuple is returned if both `X` and `y` are
             validated.
         """
+        self._check_feature_names(X, reset=reset)
+
         if y is None and self._get_tags()["requires_y"]:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
-                f"requires y to be passed, but the target y is None."
+                "requires y to be passed, but the target y is None."
             )
 
         no_val_X = isinstance(X, str) and X == "no_validation"
         no_val_y = y is None or isinstance(y, str) and y == "no_validation"
 
+        default_check_params = {"estimator": self}
+        check_params = {**default_check_params, **check_params}
+
         if no_val_X and no_val_y:
             raise ValueError("Validation should be done on X, y or both.")
         elif not no_val_X and no_val_y:
-            X = check_array(X, **check_params)
+            X = check_array(X, input_name="X", **check_params)
             out = X
         elif no_val_X and not no_val_y:
             y = _check_y(y, **check_params)
@@ -473,8 +587,12 @@ class BaseEstimator:
                 # on X and y isn't equivalent to just calling check_X_y()
                 # :(
                 check_X_params, check_y_params = validate_separately
-                X = check_array(X, **check_X_params)
-                y = check_array(y, **check_y_params)
+                if "estimator" not in check_X_params:
+                    check_X_params = {**default_check_params, **check_X_params}
+                X = check_array(X, input_name="X", **check_X_params)
+                if "estimator" not in check_y_params:
+                    check_y_params = {**default_check_params, **check_y_params}
+                y = check_array(y, input_name="y", **check_y_params)
             else:
                 X, y = check_X_y(X, y, **check_params)
             out = X, y
@@ -558,17 +676,16 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination :math:`R^2` of the
-        prediction.
+        """Return the coefficient of determination of the prediction.
 
-        The coefficient :math:`R^2` is defined as :math:`(1 - \\frac{u}{v})`,
-        where :math:`u` is the residual sum of squares ``((y_true - y_pred)
-        ** 2).sum()`` and :math:`v` is the total sum of squares ``((y_true -
-        y_true.mean()) ** 2).sum()``. The best possible score is 1.0 and it
-        can be negative (because the model can be arbitrarily worse). A
-        constant model that always predicts the expected value of `y`,
-        disregarding the input features, would get a :math:`R^2` score of
-        0.0.
+        The coefficient of determination :math:`R^2` is defined as
+        :math:`(1 - \\frac{u}{v})`, where :math:`u` is the residual
+        sum of squares ``((y_true - y_pred)** 2).sum()`` and :math:`v`
+        is the total sum of squares ``((y_true - y_true.mean()) ** 2).sum()``.
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always predicts
+        the expected value of `y`, disregarding the input features, would get
+        a :math:`R^2` score of 0.0.
 
         Parameters
         ----------
@@ -666,7 +783,6 @@ class BiclusterMixin:
             Indices of rows in the dataset that belong to the bicluster.
         col_ind : ndarray, dtype=np.intp
             Indices of columns in the dataset that belong to the bicluster.
-
         """
         rows = self.rows_[i]
         columns = self.columns_[i]
@@ -755,6 +871,60 @@ class TransformerMixin:
             return self.fit(X, y, **fit_params).transform(X)
 
 
+class _OneToOneFeatureMixin:
+    """Provides `get_feature_names_out` for simple transformers.
+
+    Assumes there's a 1-to-1 correspondence between input features
+    and output features.
+    """
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Same as input features.
+        """
+        return _check_feature_names_in(self, input_features)
+
+
+class _ClassNamePrefixFeaturesOutMixin:
+    """Mixin class for transformers that generate their own names by prefixing.
+
+    Assumes that `_n_features_out` is defined for the estimator.
+    """
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        check_is_fitted(self, "_n_features_out")
+        return _generate_get_feature_names_out(
+            self, self._n_features_out, input_features=input_features
+        )
+
+
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
 
@@ -790,8 +960,8 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-            (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
 
         y : Ignored
             Not used, present for API consistency by convention.

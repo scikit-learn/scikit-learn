@@ -262,8 +262,7 @@ def callable_rbf_kernel(x, y, **kwds):
             _minkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w "
-                "parameter prior to scipy 1.0.",
+                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
             ),
         ),
         pytest.param(
@@ -272,8 +271,7 @@ def callable_rbf_kernel(x, y, **kwds):
             _minkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w "
-                "parameter prior to scipy 1.0.",
+                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
             ),
         ),
         pytest.param(
@@ -282,7 +280,7 @@ def callable_rbf_kernel(x, y, **kwds):
             _wminkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski " "and it has been already tested.",
+                reason="wminkowski is now minkowski and it has been already tested.",
             ),
         ),
         pytest.param(
@@ -291,31 +289,20 @@ def callable_rbf_kernel(x, y, **kwds):
             _wminkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski " "and it has been already tested.",
+                reason="wminkowski is now minkowski and it has been already tested.",
             ),
         ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
     ],
 )
-@pytest.mark.parametrize("array_constr", [np.array, csr_matrix])
 @pytest.mark.parametrize("dtype", [np.float64, int])
-def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
+def test_pairwise_parallel(func, metric, kwds, dtype):
     rng = np.random.RandomState(0)
-    X = array_constr(5 * rng.random_sample((5, 4)), dtype=dtype)
-    Y = array_constr(5 * rng.random_sample((3, 4)), dtype=dtype)
+    X = np.array(5 * rng.random_sample((5, 4)), dtype=dtype)
+    Y = np.array(5 * rng.random_sample((3, 4)), dtype=dtype)
 
-    try:
-        S = func(X, metric=metric, n_jobs=1, **kwds)
-    except (TypeError, ValueError) as exc:
-        # Not all metrics support sparse input
-        # ValueError may be triggered by bad callable
-        if array_constr is csr_matrix:
-            with pytest.raises(type(exc)):
-                func(X, metric=metric, n_jobs=2, **kwds)
-            return
-        else:
-            raise
+    S = func(X, metric=metric, n_jobs=1, **kwds)
     S2 = func(X, metric=metric, n_jobs=2, **kwds)
     assert_allclose(S, S2)
 
@@ -906,7 +893,7 @@ def test_nan_euclidean_distances_infinite_values(X, Y):
     with pytest.raises(ValueError) as excinfo:
         nan_euclidean_distances(X, Y=Y)
 
-    exp_msg = "Input contains infinity or a value too large for " "dtype('float64')."
+    exp_msg = "Input contains infinity or a value too large for dtype('float64')."
     assert exp_msg == str(excinfo.value)
 
 

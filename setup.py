@@ -183,7 +183,7 @@ def configuration(parent_package="", top_path=None):
 
     config = Configuration(None, parent_package, top_path)
 
-    # Avoid non-useful msg:
+    # Avoid useless msg:
     # "Ignoring attempt to set 'name' (from ... "
     config.set_options(
         ignore_setup_xxx_py=True,
@@ -233,14 +233,13 @@ def check_package_status(package, min_version):
     if package_status["up_to_date"] is False:
         if package_status["version"]:
             raise ImportError(
-                "Your installation of {} "
-                "{} is out-of-date.\n{}{}".format(
+                "Your installation of {} {} is out-of-date.\n{}{}".format(
                     package, package_status["version"], req_str, instructions
                 )
             )
         else:
             raise ImportError(
-                "{} is not " "installed.\n{}{}".format(package, req_str, instructions)
+                "{} is not installed.\n{}{}".format(package, req_str, instructions)
             )
 
 
@@ -273,8 +272,8 @@ def setup_package():
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
-            ("Programming Language :: Python :: " "Implementation :: CPython"),
-            ("Programming Language :: Python :: " "Implementation :: PyPy"),
+            "Programming Language :: Python :: Implementation :: CPython",
+            "Programming Language :: Python :: Implementation :: PyPy",
         ],
         cmdclass=cmdclass,
         python_requires=">=3.7",

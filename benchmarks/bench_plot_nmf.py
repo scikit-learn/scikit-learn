@@ -254,18 +254,19 @@ class _PGNMF(NMF):
 
         if not isinstance(n_components, numbers.Integral) or n_components <= 0:
             raise ValueError(
-                "Number of components must be a positive integer;"
-                " got (n_components=%r)" % n_components
+                "Number of components must be a positive integer; got (n_components=%r)"
+                % n_components
             )
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
                 "Maximum number of iterations must be a positive "
-                "integer; got (max_iter=%r)" % self.max_iter
+                "integer; got (max_iter=%r)"
+                % self.max_iter
             )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
-                "Tolerance for stopping criteria must be "
-                "positive; got (tol=%r)" % self.tol
+                "Tolerance for stopping criteria must be positive; got (tol=%r)"
+                % self.tol
             )
 
         # check W and H, or initialize them
@@ -306,7 +307,8 @@ class _PGNMF(NMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iteration %d reached. Increase it"
-                " to improve convergence." % self.max_iter,
+                " to improve convergence."
+                % self.max_iter,
                 ConvergenceWarning,
             )
 

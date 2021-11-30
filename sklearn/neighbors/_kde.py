@@ -85,6 +85,12 @@ class KernelDensity(BaseEstimator):
     tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     sklearn.neighbors.KDTree : K-dimensional tree for fast generalized N-point
@@ -96,6 +102,7 @@ class KernelDensity(BaseEstimator):
     --------
     Compute a gaussian kernel density estimate with a fixed bandwidth.
 
+    >>> from sklearn.neighbors import KernelDensity
     >>> import numpy as np
     >>> rng = np.random.RandomState(42)
     >>> X = rng.random_sample((100, 3))
@@ -128,16 +135,6 @@ class KernelDensity(BaseEstimator):
         self.leaf_size = leaf_size
         self.metric_params = metric_params
 
-        # run the choose algorithm code so that exceptions will happen here
-        # we're using clone() in the GenerativeBayes classifier,
-        # so we can't do this kind of logic in __init__
-        self._choose_algorithm(self.algorithm, self.metric)
-
-        if bandwidth <= 0:
-            raise ValueError("bandwidth must be positive")
-        if kernel not in VALID_KERNELS:
-            raise ValueError("invalid kernel: '{0}'".format(kernel))
-
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
         # algorithm to compute the result.
@@ -152,8 +149,7 @@ class KernelDensity(BaseEstimator):
         elif algorithm in TREE_DICT:
             if metric not in TREE_DICT[algorithm].valid_metrics:
                 raise ValueError(
-                    "invalid metric for {0}: "
-                    "'{1}'".format(TREE_DICT[algorithm], metric)
+                    "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
                 )
             return algorithm
         else:
@@ -180,15 +176,22 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         self : object
-            Returns instance of object.
+            Returns the instance itself.
         """
+
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
+
+        if self.bandwidth <= 0:
+            raise ValueError("bandwidth must be positive")
+        if self.kernel not in VALID_KERNELS:
+            raise ValueError("invalid kernel: '{0}'".format(self.kernel))
+
         X = self._validate_data(X, order="C", dtype=DTYPE)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, DTYPE)
-            if sample_weight.min() <= 0:
-                raise ValueError("sample_weight must have positive values")
+            sample_weight = _check_sample_weight(
+                sample_weight, X, DTYPE, only_non_negative=True
+            )
 
         kwargs = self.metric_params
         if kwargs is None:
@@ -203,7 +206,7 @@ class KernelDensity(BaseEstimator):
         return self
 
     def score_samples(self, X):
-        """Evaluate the log density model on the data.
+        """Compute the log-likelihood of each sample under the model.
 
         Parameters
         ----------
@@ -214,7 +217,7 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         density : ndarray of shape (n_samples,)
-            The array of log(density) evaluations. These are normalized to be
+            Log-likelihood of each sample in `X`. These are normalized to be
             probability densities, so values will be low for high-dimensional
             data.
         """
@@ -241,7 +244,7 @@ class KernelDensity(BaseEstimator):
         return log_density
 
     def score(self, X, y=None):
-        """Compute the total log probability density under the model.
+        """Compute the total log-likelihood under the model.
 
         Parameters
         ----------
@@ -276,7 +279,7 @@ class KernelDensity(BaseEstimator):
             Determines random number generation used to generate
             random samples. Pass an int for reproducible results
             across multiple function calls.
-            See :term: `Glossary <random_state>`.
+            See :term:`Glossary <random_state>`.
 
         Returns
         -------

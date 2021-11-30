@@ -1,8 +1,3 @@
-#!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: cdivision=True
-
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
 # License: BSD 3 clause
 

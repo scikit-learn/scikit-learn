@@ -82,7 +82,7 @@ def _mask_edges_weights(mask, edges, weights=None):
         maxval = edges.max()
     else:
         maxval = 0
-    order = np.searchsorted(np.unique(edges.ravel()), np.arange(maxval + 1))
+    order = np.searchsorted(np.flatnonzero(mask), np.arange(maxval + 1))
     edges = order[edges]
     if weights is None:
         return edges
@@ -374,12 +374,12 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
 
     if p_h > i_h:
         raise ValueError(
-            "Height of the patch should be less than the height" " of the image."
+            "Height of the patch should be less than the height of the image."
         )
 
     if p_w > i_w:
         raise ValueError(
-            "Width of the patch should be less than the width" " of the image."
+            "Width of the patch should be less than the width of the image."
         )
 
     image = check_array(image, allow_nd=True)
@@ -451,7 +451,7 @@ def reconstruct_from_patches_2d(patches, image_size):
 
 
 class PatchExtractor(BaseEstimator):
-    """Extracts patches from a collection of images
+    """Extracts patches from a collection of images.
 
     Read more in the :ref:`User Guide <image_feature_extraction>`.
 
@@ -463,15 +463,19 @@ class PatchExtractor(BaseEstimator):
         The dimensions of one patch.
 
     max_patches : int or float, default=None
-        The maximum number of patches per image to extract. If max_patches is a
-        float in (0, 1), it is taken to mean a proportion of the total number
+        The maximum number of patches per image to extract. If `max_patches` is
+        a float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
-        `max_patches` is not None. Use an int to make the randomness
+        `max_patches is not None`. Use an int to make the randomness
         deterministic.
         See :term:`Glossary <random_state>`.
+
+    See Also
+    --------
+    reconstruct_from_patches_2d : Reconstruct image from all of its patches.
 
     Examples
     --------
@@ -503,11 +507,19 @@ class PatchExtractor(BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
         """
         return self
 
     def transform(self, X):
-        """Transforms the image samples in X into a matrix of patch data.
+        """Transform the image samples in `X` into a matrix of patch data.
 
         Parameters
         ----------

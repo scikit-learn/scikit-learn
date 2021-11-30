@@ -10,6 +10,9 @@ from sklearn.ensemble._hist_gradient_boosting.binning import (
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import ALMOST_INF
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
+n_threads = _openmp_effective_n_threads()
 
 
 DATA = (
@@ -93,7 +96,7 @@ def test_map_to_bins(max_bins):
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, last_bin_idx, binned)
+    _map_to_bins(DATA, bin_thresholds, last_bin_idx, n_threads, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous

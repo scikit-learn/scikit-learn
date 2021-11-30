@@ -29,26 +29,7 @@ y3 = np.array([1, 1, 2, 2, 3, 3])
 
 # Degenerate data with only one feature (still should be separable)
 X1 = np.array(
-    [
-        [
-            -2,
-        ],
-        [
-            -1,
-        ],
-        [
-            -1,
-        ],
-        [
-            1,
-        ],
-        [
-            1,
-        ],
-        [
-            2,
-        ],
-    ],
+    [[-2], [-1], [-1], [1], [1], [2]],
     dtype="f",
 )
 
@@ -60,37 +41,7 @@ y6 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2])
 y7 = np.array([1, 2, 3, 2, 3, 1, 2, 3, 1])
 
 # Degenerate data with 1 feature (still should be separable)
-X7 = np.array(
-    [
-        [
-            -3,
-        ],
-        [
-            -2,
-        ],
-        [
-            -1,
-        ],
-        [
-            -1,
-        ],
-        [
-            0,
-        ],
-        [
-            1,
-        ],
-        [
-            1,
-        ],
-        [
-            2,
-        ],
-        [
-            3,
-        ],
-    ]
-)
+X7 = np.array([[-3], [-2], [-1], [-1], [0], [1], [1], [2], [3]])
 
 # Data that has zero variance in one dimension and needs regularization
 X2 = np.array(

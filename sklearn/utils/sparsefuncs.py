@@ -200,13 +200,13 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     if axis == 1:
         if np.size(last_mean) != X.shape[0]:
             raise ValueError(
-                f"If axis=1, then last_mean, last_n, last_var should be of "
+                "If axis=1, then last_mean, last_n, last_var should be of "
                 f"size n_samples {X.shape[0]} (Got {np.size(last_mean)})."
             )
     else:  # axis == 0
         if np.size(last_mean) != X.shape[1]:
             raise ValueError(
-                f"If axis=0, then last_mean, last_n, last_var should be of "
+                "If axis=0, then last_mean, last_n, last_var should be of "
                 f"size n_features {X.shape[1]} (Got {np.size(last_mean)})."
             )
 

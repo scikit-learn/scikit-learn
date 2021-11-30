@@ -14,8 +14,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import deprecated
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
@@ -26,8 +25,7 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 def _check_positive_coding(method, positive):
     if positive and method in ["omp", "lars"]:
         raise ValueError(
-            "Positive constraint not supported for '{}' "
-            "coding method.".format(method)
+            "Positive constraint not supported for '{}' coding method.".format(method)
         )
 
 
@@ -167,7 +165,7 @@ def _sparse_encode(
         clf = Lasso(
             alpha=alpha,
             fit_intercept=False,
-            normalize=False,
+            normalize="deprecated",  # as it was False by default
             precompute=gram,
             max_iter=max_iter,
             warm_start=True,
@@ -481,8 +479,8 @@ def _update_dict(
         if positive:
             np.clip(dictionary[k], 0, None, out=dictionary[k])
 
-        # Projection on the constraint set ||V_k|| == 1
-        dictionary[k] /= linalg.norm(dictionary[k])
+        # Projection on the constraint set ||V_k|| <= 1
+        dictionary[k] /= max(linalg.norm(dictionary[k]), 1)
 
     if verbose and n_unused > 0:
         print(f"{n_unused} unused atoms resampled.")
@@ -666,8 +664,7 @@ def dict_learning(
             sys.stdout.flush()
         elif verbose:
             print(
-                "Iteration % 3i "
-                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                "Iteration % 3i (elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
                 % (ii, dt, dt / 60, current_cost)
             )
 
@@ -764,8 +761,9 @@ def dict_learning_online(
     X : ndarray of shape (n_samples, n_features)
         Data matrix.
 
-    n_components : int, default=2
-        Number of dictionary atoms to extract.
+    n_components : int or None, default=2
+        Number of dictionary atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1
         Sparsity controlling parameter.
@@ -1015,7 +1013,7 @@ def dict_learning_online(
         return dictionary
 
 
-class _BaseSparseCoding(TransformerMixin):
+class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     """Base class from SparseCoder and DictionaryLearning algorithms."""
 
     def __init__(
@@ -1037,7 +1035,7 @@ class _BaseSparseCoding(TransformerMixin):
         self.positive_code = positive_code
 
     def _transform(self, X, dictionary):
-        """Private method allowing to accomodate both DictionaryLearning and
+        """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
@@ -1100,7 +1098,7 @@ class _BaseSparseCoding(TransformerMixin):
 
 
 class SparseCoder(_BaseSparseCoding, BaseEstimator):
-    """Sparse coding
+    """Sparse coding.
 
     Finds a sparse representation of data against a fixed, precomputed
     dictionary.
@@ -1173,13 +1171,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     Attributes
     ----------
-    components_ : ndarray of shape (n_components, n_features)
-        The unchanged dictionary atoms.
-
-        .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in
-           1.1 (renaming of 0.26). Use `dictionary` instead.
-
     n_components_ : int
         Number of atoms.
 
@@ -1187,6 +1178,22 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchDictionaryLearning : A faster, less accurate, version of the
+        dictionary learning algorithm.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparsePCA : Mini-batch Sparse Principal Components Analysis.
+    sparse_encode : Sparse coding where each row of the result is the solution
+        to a sparse coding problem.
 
     Examples
     --------
@@ -1208,14 +1215,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     >>> coder.transform(X)
     array([[ 0.,  0., -1.,  0.,  0.],
            [ 0.,  1.,  1.,  0.,  0.]])
-
-    See Also
-    --------
-    DictionaryLearning
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
-    sparse_encode
     """
 
     _required_parameters = ["dictionary"]
@@ -1252,23 +1251,17 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : Ignored
+            Not used, present for API consistency by convention.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         return self
-
-    @deprecated(  # type: ignore
-        "The attribute 'components_' is deprecated "
-        "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
-        "'dictionary' instead."
-    )
-    @property
-    def components_(self):
-        return self.dictionary
 
     def transform(self, X, y=None):
         """Encode the data as a sparse combination of the dictionary atoms.
@@ -1279,10 +1272,11 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Test data to be transformed, must have the same number of
-            features as the data used to train the model.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -1296,24 +1290,31 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     @property
     def n_components_(self):
+        """Number of atoms."""
         return self.dictionary.shape[0]
 
     @property
     def n_features_in_(self):
+        """Number of features seen during `fit`."""
         return self.dictionary.shape[1]
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.n_components_
 
 
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
-    """Dictionary learning
+    """Dictionary learning.
 
-    Finds a dictionary (a set of atoms) that can best be used to represent data
-    using a sparse code.
+    Finds a dictionary (a set of atoms) that performs well at sparsely
+    encoding the fitted data.
 
     Solves the optimization problem::
 
         (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
     the entry-wise matrix norm which is the sum of the absolute values
@@ -1323,8 +1324,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, default=n_features
-        Number of dictionary elements to extract.
+    n_components : int, default=None
+        Number of dictionary elements to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1.0
         Sparsity controlling parameter.
@@ -1411,7 +1413,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         .. versionadded:: 0.20
 
     positive_dict : bool, default=False
-        Whether to enforce positivity when finding the dictionary
+        Whether to enforce positivity when finding the dictionary.
 
         .. versionadded:: 0.20
 
@@ -1434,8 +1436,29 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Number of iterations run.
+
+    See Also
+    --------
+    MiniBatchDictionaryLearning: A faster, less accurate, version of the
+        dictionary learning algorithm.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparseCoder : Find a sparse representation of data from a fixed,
+        precomputed dictionary.
+    SparsePCA : Sparse Principal Components Analysis.
+
+    References
+    ----------
+
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     Examples
     --------
@@ -1463,20 +1486,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.08...
-
-    Notes
-    -----
-    **References:**
-
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-
-    See Also
-    --------
-    SparseCoder
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
     """
 
     def __init__(
@@ -1527,15 +1536,16 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where `n_samples` in the number of samples
+            Training vector, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
-            Returns the object itself.
+            Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
@@ -1565,18 +1575,23 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.error_ = E
         return self
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
-    """Mini-batch dictionary learning
+    """Mini-batch dictionary learning.
 
-    Finds a dictionary (a set of atoms) that can best be used to represent data
-    using a sparse code.
+    Finds a dictionary (a set of atoms) that performs well at sparsely
+    encoding the fitted data.
 
     Solves the optimization problem::
 
        (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
     the entry-wise matrix norm which is the sum of the absolute values
@@ -1617,7 +1632,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Whether to shuffle the samples before forming batches.
 
     dict_init : ndarray of shape (n_components, n_features), default=None
-        initial value of the dictionary for warm restart scenarios
+        Initial value of the dictionary for warm restart scenarios.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
             'threshold'}, default='omp'
@@ -1696,6 +1711,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Number of iterations run.
 
@@ -1706,6 +1727,20 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
+
+    See Also
+    --------
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparseCoder : Find a sparse representation of data from a fixed,
+        precomputed dictionary.
+    SparsePCA : Sparse Principal Components Analysis.
+
+    References
+    ----------
+
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     Examples
     --------
@@ -1732,21 +1767,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.07...
-
-    Notes
-    -----
-    **References:**
-
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
-
-    See Also
-    --------
-    SparseCoder
-    DictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
-
     """
 
     def __init__(
@@ -1798,10 +1818,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -1839,19 +1860,20 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         return self
 
     def partial_fit(self, X, y=None, iter_offset=None):
-        """Updates the model using the data in X as a mini-batch.
+        """Update the model using the data in X as a mini-batch.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         iter_offset : int, default=None
             The number of iteration on data batches that has been
-            performed before this call to partial_fit. This is optional:
+            performed before this call to `partial_fit`. This is optional:
             if no number is passed, the memory of the object is
             used.
 
@@ -1897,3 +1919,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.inner_stats_ = (A, B)
         self.iter_offset_ = iter_offset + 1
         return self
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

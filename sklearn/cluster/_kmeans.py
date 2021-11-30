@@ -15,13 +15,13 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from threadpoolctl import threadpool_limits
-from threadpoolctl import threadpool_info
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.fixes import threadpool_limits
+from ..utils.fixes import threadpool_info
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils import check_array
@@ -29,10 +29,12 @@ from ..utils import check_random_state
 from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
 from ._k_means_common import CHUNK_SIZE
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
+from ._k_means_common import _is_same_clustering
 from ._k_means_minibatch import _minibatch_update_dense
 from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_lloyd import lloyd_iter_chunked_dense
@@ -79,7 +81,7 @@ def kmeans_plusplus(
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
+        The initial centers for k-means.
 
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
@@ -112,7 +114,7 @@ def kmeans_plusplus(
 
     if X.shape[0] < n_clusters:
         raise ValueError(
-            f"n_samples={X.shape[0]} should be >= " f"n_clusters={n_clusters}."
+            f"n_samples={X.shape[0]} should be >= n_clusters={n_clusters}."
         )
 
     # Check parameters
@@ -130,7 +132,7 @@ def kmeans_plusplus(
     if n_local_trials is not None and n_local_trials < 1:
         raise ValueError(
             f"n_local_trials is set to {n_local_trials} but should be an "
-            f"integer value greater than zero."
+            "integer value greater than zero."
         )
 
     random_state = check_random_state(random_state)
@@ -171,7 +173,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
-        The inital centers for k-means.
+        The initial centers for k-means.
 
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
@@ -264,10 +266,10 @@ def k_means(
     tol=1e-4,
     random_state=None,
     copy_x=True,
-    algorithm="auto",
+    algorithm="lloyd",
     return_n_iter=False,
 ):
-    """K-means clustering algorithm.
+    """Perform K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
 
@@ -283,30 +285,27 @@ def k_means(
         centroids to generate.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        The weights for each observation in X. If None, all observations
+        The weights for each observation in `X`. If `None`, all observations
         are assigned equal weight.
 
     init : {'k-means++', 'random'}, callable or array-like of shape \
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centers for k-mean
-        clustering in a smart way to speed up convergence. See section
-        Notes in k_init for more details.
-
-        'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
-
-        If an array is passed, it should be of shape (n_clusters, n_features)
-        and gives the initial centers.
-
-        If a callable is passed, it should take arguments X, n_clusters and a
-        random state and return an initialization.
+        - `'k-means++'` : selects initial cluster centers for k-mean
+          clustering in a smart way to speed up convergence. See section
+          Notes in k_init for more details.
+        - `'random'`: choose `n_clusters` observations (rows) at random from data
+          for the initial centroids.
+        - If an array is passed, it should be of shape `(n_clusters, n_features)`
+          and gives the initial centers.
+        - If a callable is passed, it should take arguments `X`, `n_clusters` and a
+          random state and return an initialization.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
+        `n_init` consecutive runs in terms of inertia.
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -326,23 +325,30 @@ def k_means(
 
     copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
-        the data first. If copy_x is True (default), then the original data is
+        the data first. If `copy_x` is True (default), then the original data is
         not modified. If False, the original data is modified, and put back
         before the function returns, but small numerical differences may be
         introduced by subtracting and then adding the data mean. Note that if
         the original data is not C-contiguous, a copy will be made even if
-        copy_x is False. If the original data is sparse, but not in CSR format,
-        a copy will be made even if copy_x is False.
+        `copy_x` is False. If the original data is sparse, but not in CSR format,
+        a copy will be made even if `copy_x` is False.
 
-    algorithm : {"auto", "full", "elkan"}, default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient on data with well-defined
-        clusters, by using the triangle inequality. However it's more memory
-        intensive due to the allocation of an extra array of shape
-        (n_samples, n_clusters).
+    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+        K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
+        The `"elkan"` variation can be more efficient on some datasets with
+        well-defined clusters, by using the triangle inequality. However it's
+        more memory intensive due to the allocation of an extra array of shape
+        `(n_samples, n_clusters)`.
 
-        For now "auto" (kept for backward compatibility) chooses "elkan" but it
-        might change in the future for a better heuristic.
+        `"auto"` and `"full"` are deprecated and they will be removed in
+        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
+
+        .. versionchanged:: 0.18
+            Added Elkan algorithm
+
+        .. versionchanged:: 1.1
+            Renamed "full" to "lloyd", and deprecated "auto" and "full".
+            Changed "auto" to use "lloyd" instead of "elkan".
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
@@ -353,7 +359,7 @@ def k_means(
         Centroids found at the last iteration of k-means.
 
     label : ndarray of shape (n_samples,)
-        label[i] is the code or index of the centroid the
+        The `label[i]` is the code or index of the centroid the
         i'th observation is closest to.
 
     inertia : float
@@ -729,6 +735,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
     else:
         _labels = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
+        X = ReadonlyArrayWrapper(X)
 
     _labels(
         X,
@@ -821,18 +828,22 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
 
-    algorithm : {"auto", "full", "elkan"}, default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient on data with well-defined
-        clusters, by using the triangle inequality. However it's more memory
-        intensive due to the allocation of an extra array of shape
-        (n_samples, n_clusters).
+    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+        K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
+        The `"elkan"` variation can be more efficient on some datasets with
+        well-defined clusters, by using the triangle inequality. However it's
+        more memory intensive due to the allocation of an extra array of shape
+        `(n_samples, n_clusters)`.
 
-        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
-        might change in the future for a better heuristic.
+        `"auto"` and `"full"` are deprecated and they will be removed in
+        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
+
+        .. versionchanged:: 1.1
+            Renamed "full" to "lloyd", and deprecated "auto" and "full".
+            Changed "auto" to use "lloyd" instead of "elkan".
 
     Attributes
     ----------
@@ -855,6 +866,12 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -913,7 +930,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         verbose=0,
         random_state=None,
         copy_x=True,
-        algorithm="auto",
+        algorithm="lloyd",
     ):
 
         self.n_clusters = n_clusters
@@ -939,29 +956,34 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(
-                f"n_samples={X.shape[0]} should be >= " f"n_clusters={self.n_clusters}."
+                f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
             )
 
         # tol
         self._tol = _tolerance(X, self.tol)
 
         # algorithm
-        if self.algorithm not in ("auto", "full", "elkan"):
+        if self.algorithm not in ("lloyd", "elkan", "auto", "full"):
             raise ValueError(
-                f"Algorithm must be 'auto', 'full' or 'elkan', "
+                "Algorithm must be either 'lloyd' or 'elkan', "
                 f"got {self.algorithm} instead."
             )
 
         self._algorithm = self.algorithm
-        if self._algorithm == "auto":
-            self._algorithm = "full" if self.n_clusters == 1 else "elkan"
+        if self._algorithm in ("auto", "full"):
+            warnings.warn(
+                f"algorithm='{self._algorithm}' is deprecated, it will be "
+                "removed in 1.3. Using 'lloyd' instead.",
+                FutureWarning,
+            )
+            self._algorithm = "lloyd"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn(
                 "algorithm='elkan' doesn't make sense for a single "
-                "cluster. Using 'full' instead.",
+                "cluster. Using 'lloyd' instead.",
                 RuntimeWarning,
             )
-            self._algorithm = "full"
+            self._algorithm = "lloyd"
 
         # init
         if not (
@@ -970,13 +992,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             or (isinstance(self.init, str) and self.init in ["k-means++", "random"])
         ):
             raise ValueError(
-                f"init should be either 'k-means++', 'random', a ndarray or a "
+                "init should be either 'k-means++', 'random', a ndarray or a "
                 f"callable, got '{self.init}' instead."
             )
 
         if hasattr(self.init, "__array__") and self._n_init != 1:
             warnings.warn(
-                f"Explicit initial center position passed: performing only"
+                "Explicit initial center position passed: performing only"
                 f" one init in {self.__class__.__name__} instead of "
                 f"n_init={self._n_init}.",
                 RuntimeWarning,
@@ -1028,18 +1050,18 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             if has_vcomp and has_mkl:
                 if not hasattr(self, "batch_size"):  # KMeans
                     warnings.warn(
-                        f"KMeans is known to have a memory leak on Windows "
-                        f"with MKL, when there are less chunks than available "
-                        f"threads. You can avoid it by setting the environment"
+                        "KMeans is known to have a memory leak on Windows "
+                        "with MKL, when there are less chunks than available "
+                        "threads. You can avoid it by setting the environment"
                         f" variable OMP_NUM_THREADS={active_threads}."
                     )
                 else:  # MiniBatchKMeans
                     warnings.warn(
-                        f"MiniBatchKMeans is known to have a memory leak on "
-                        f"Windows with MKL, when there are less chunks than "
-                        f"available threads. You can prevent it by setting "
+                        "MiniBatchKMeans is known to have a memory leak on "
+                        "Windows with MKL, when there are less chunks than "
+                        "available threads. You can prevent it by setting "
                         f"batch_size >= {self._n_threads * CHUNK_SIZE} or by "
-                        f"setting the environment variable "
+                        "setting the environment variable "
                         f"OMP_NUM_THREADS={active_threads}"
                     )
 
@@ -1125,7 +1147,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self
+        self : object
             Fitted estimator.
         """
         X = self._validate_data(
@@ -1160,13 +1182,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
-        if self._algorithm == "full":
+        if self._algorithm == "elkan":
+            kmeans_single = _kmeans_single_elkan
+        else:
             kmeans_single = _kmeans_single_lloyd
             self._check_mkl_vcomp(X, X.shape[0])
-        else:
-            kmeans_single = _kmeans_single_elkan
 
-        best_inertia = None
+        best_inertia, best_labels = None, None
 
         for i in range(self._n_init):
             # Initialize centers
@@ -1189,7 +1211,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             )
 
             # determine if these results are the best so far
-            if best_inertia is None or inertia < best_inertia:
+            # we chose a new run if it has a better inertia and the clustering is
+            # different from the best so far (it's possible that the inertia is
+            # slightly better even if the clustering is the same with potentially
+            # permuted labels, due to rounding errors)
+            if best_inertia is None or (
+                inertia < best_inertia
+                and not _is_same_clustering(labels, best_labels, self.n_clusters)
+            ):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
@@ -1441,7 +1470,13 @@ def _mini_batch_step(
         )
     else:
         _minibatch_update_dense(
-            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads
+            ReadonlyArrayWrapper(X),
+            sample_weight,
+            centers,
+            centers_new,
+            weight_sums,
+            labels,
+            n_threads,
         )
 
     # Reassign clusters that have very low weight
@@ -1460,9 +1495,7 @@ def _mini_batch_step(
                 X.shape[0], replace=False, size=n_reassigns
             )
             if verbose:
-                print(
-                    f"[MiniBatchKMeans] Reassigning {n_reassigns} " f"cluster centers."
-                )
+                print(f"[MiniBatchKMeans] Reassigning {n_reassigns} cluster centers.")
 
             if sp.issparse(X):
                 assign_rows_csr(
@@ -1602,7 +1635,7 @@ class MiniBatchKMeans(KMeans):
         .. versionadded:: 1.0
 
     counts_ : ndarray of shape (n_clusters,)
-        Weigth sum of each cluster.
+        Weight sum of each cluster.
 
         .. deprecated:: 0.24
            This attribute is deprecated in 0.24 and will be removed in
@@ -1619,6 +1652,12 @@ class MiniBatchKMeans(KMeans):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1695,7 +1734,7 @@ class MiniBatchKMeans(KMeans):
         self.reassignment_ratio = reassignment_ratio
 
     @deprecated(  # type: ignore
-        "The attribute 'counts_' is deprecated in 0.24"
+        "The attribute `counts_` is deprecated in 0.24"
         " and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1703,7 +1742,7 @@ class MiniBatchKMeans(KMeans):
         return self._counts
 
     @deprecated(  # type: ignore
-        "The attribute 'init_size_' is deprecated in "
+        "The attribute `init_size_` is deprecated in "
         "0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1711,7 +1750,7 @@ class MiniBatchKMeans(KMeans):
         return self._init_size
 
     @deprecated(  # type: ignore
-        "The attribute 'random_state_' is deprecated "
+        "The attribute `random_state_` is deprecated "
         "in 0.24 and will be removed in 1.1 (renaming of 0.26)."
     )
     @property
@@ -1724,7 +1763,7 @@ class MiniBatchKMeans(KMeans):
         # max_no_improvement
         if self.max_no_improvement is not None and self.max_no_improvement < 0:
             raise ValueError(
-                f"max_no_improvement should be >= 0, got "
+                "max_no_improvement should be >= 0, got "
                 f"{self.max_no_improvement} instead."
             )
 
@@ -1747,7 +1786,7 @@ class MiniBatchKMeans(KMeans):
             warnings.warn(
                 f"init_size={self._init_size} should be larger than "
                 f"n_clusters={self.n_clusters}. Setting it to "
-                f"min(3*n_clusters, n_samples)",
+                "min(3*n_clusters, n_samples)",
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -1757,7 +1796,7 @@ class MiniBatchKMeans(KMeans):
         # reassignment_ratio
         if self.reassignment_ratio < 0:
             raise ValueError(
-                f"reassignment_ratio should be >= 0, got "
+                "reassignment_ratio should be >= 0, got "
                 f"{self.reassignment_ratio} instead."
             )
 
@@ -1802,7 +1841,7 @@ class MiniBatchKMeans(KMeans):
         # centers position
         if self._tol > 0.0 and centers_squared_diff <= self._tol:
             if self.verbose:
-                print(f"Converged (small centers change) at step " f"{step}/{n_steps}")
+                print(f"Converged (small centers change) at step {step}/{n_steps}")
             return True
 
         # Early stopping heuristic due to lack of improvement on smoothed
@@ -1819,7 +1858,7 @@ class MiniBatchKMeans(KMeans):
         ):
             if self.verbose:
                 print(
-                    f"Converged (lack of improvement in inertia) at step "
+                    "Converged (lack of improvement in inertia) at step "
                     f"{step}/{n_steps}"
                 )
             return True
@@ -1865,7 +1904,8 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self
+        self : object
+            Fitted estimator.
         """
         X = self._validate_data(
             X,
@@ -1924,7 +1964,7 @@ class MiniBatchKMeans(KMeans):
             )
 
             if self.verbose:
-                print(f"Inertia for init {init_idx + 1}/{self._n_init}: " f"{inertia}")
+                print(f"Inertia for init {init_idx + 1}/{self._n_init}: {inertia}")
             if best_inertia is None or inertia < best_inertia:
                 init_centers = cluster_centers
                 best_inertia = inertia
@@ -2018,7 +2058,8 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self
+        self : object
+            Return updated estimator.
         """
         has_centers = hasattr(self, "cluster_centers_")
 
