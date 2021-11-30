@@ -207,8 +207,7 @@ cdef class Criterion:
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
-    def __cinit__(self, SIZE_t n_outputs,
-                  np.ndarray[SIZE_t, ndim=1] n_classes):
+    def __cinit__(self, SIZE_t n_outputs, np.ndarray n_classes):
         """Initialize attributes for this criterion.
 
         Parameters
@@ -218,6 +217,10 @@ cdef class ClassificationCriterion(Criterion):
         n_classes : numpy.ndarray, dtype=SIZE_t
             The number of unique classes in each target
         """
+        cdef SIZE_t dummy = 0
+        size_t_dtype = np.array(dummy).dtype
+
+        n_classes = _check_n_classes(n_classes, size_t_dtype)
         self.sample_weight = NULL
 
         self.samples = NULL
