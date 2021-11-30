@@ -97,7 +97,7 @@ y_med = all_models["q 0.50"].predict(xx)
 fig = plt.figure(figsize=(10, 10))
 plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
-plt.plot(xx, y_med, "r-", label="Predicted median", color="orange")
+plt.plot(xx, y_med, "r-", label="Predicted median")
 plt.plot(xx, y_pred, "r-", label="Predicted mean")
 plt.plot(xx, y_upper, "k-")
 plt.plot(xx, y_lower, "k-")
@@ -232,14 +232,13 @@ coverage_fraction(
 # cross-validation on the pinball loss with alpha=0.05:
 
 # %%
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.metrics import make_scorer
 from pprint import pprint
 
-
 param_grid = dict(
     learning_rate=[0.05, 0.1, 0.2],
-    n_estimators=[150, 200, 250],
     max_depth=[2, 5, 10],
     min_samples_leaf=[1, 5, 10, 20],
     min_samples_split=[5, 10, 20, 30, 50],
@@ -251,10 +250,12 @@ neg_mean_pinball_loss_05p_scorer = make_scorer(
     greater_is_better=False,  # maximize the negative loss
 )
 gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, random_state=0)
-search_05p = RandomizedSearchCV(
+search_05p = HalvingRandomSearchCV(
     gbr,
     param_grid,
-    n_iter=10,  # increase this if computational budget allows
+    resource="n_estimators",
+    max_resources=250,
+    min_resources=50,
     scoring=neg_mean_pinball_loss_05p_scorer,
     n_jobs=2,
     random_state=0,
@@ -287,11 +288,13 @@ pprint(search_95p.best_params_)
 
 # %%
 # The result shows that the hyper-parameters for the 95th percentile regressor
-# identified by the grid search are roughly in the same range as the hand-
+# identified by the search procedure are roughly in the same range as the hand-
 # tuned hyper-parameters for the median regressor and the hyper-parameters
-# identified by the grid search for the 5th percentile regressor. However, the
-# hyper-parameter grid searches did lead to an improved 90% confidence
-# interval which can be seen below:
+# identified by the search procedure for the 5th percentile regressor. However,
+# the hyper-parameter searches did lead to an improved 90% confidence interval
+# that is comprised by the predictions of those two tuned quantile regressors.
+# Note that the prediction of the upper 95th percentile has a much coarser shape
+# than the prediction of the lower 5th percentile because of the outliers:
 y_lower = search_05p.predict(xx)
 y_upper = search_95p.predict(xx)
 
