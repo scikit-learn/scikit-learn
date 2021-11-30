@@ -837,7 +837,7 @@ def check_estimator_sparse_data(name, estimator_orig):
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 if tags["multioutput_only"]:
-                    assert pred.shape == (X.shape[0], 1)
+                    assert pred.shape == (X.shape[0], 2)
                 else:
                     assert pred.shape == (X.shape[0],)
             if hasattr(estimator, "predict_proba"):
@@ -1418,7 +1418,6 @@ def check_fit2d_1feature(name, estimator_orig):
     if name == "RANSACRegressor":
         estimator.residual_threshold = 0.5
 
-    y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 1)
 
     msgs = [r"1 feature\(s\)", "n_features = 1", "n_features=1"]
