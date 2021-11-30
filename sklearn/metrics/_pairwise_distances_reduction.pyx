@@ -185,21 +185,19 @@ cdef class PairwiseDistancesReduction:
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
 
-        self.chunk_size = check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
+        self.chunk_size = check_scalar(chunk_size, "chunk_size", Integral, min_val=20)
 
         self.effective_omp_n_thread = _openmp_effective_n_threads(n_threads)
-
-        n_samples_chunk = max(20, chunk_size)
 
         self.datasets_pair = datasets_pair
 
         self.n_samples_X = datasets_pair.n_samples_X()
-        self.X_n_samples_chunk = min(self.n_samples_X, n_samples_chunk)
+        self.X_n_samples_chunk = min(self.n_samples_X, self.chunk_size)
         X_n_full_chunks = self.n_samples_X // self.X_n_samples_chunk
         self.X_n_samples_remainder = self.n_samples_X % self.X_n_samples_chunk
 
         self.n_samples_Y = datasets_pair.n_samples_Y()
-        self.Y_n_samples_chunk = min(self.n_samples_Y, n_samples_chunk)
+        self.Y_n_samples_chunk = min(self.n_samples_Y, self.chunk_size)
         Y_n_full_chunks = self.n_samples_Y // self.Y_n_samples_chunk
         self.Y_n_samples_remainder = self.n_samples_Y % self.Y_n_samples_chunk
 
