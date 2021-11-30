@@ -12,9 +12,7 @@ import itertools
 from collections.abc import Generator
 from collections import OrderedDict
 from functools import partial
-from threading import get_ident
-from string import ascii_lowercase, digits
-from random import Random
+from tempfile import TemporaryDirectory
 
 from urllib.request import urlopen, Request
 
@@ -46,13 +44,6 @@ OpenmlFeaturesType = List[Dict[str, str]]
 
 def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, "openml.org", openml_path + ".gz")
-
-
-def _get_tempfile_local_path(dir_name: str) -> str:
-    rng = Random(get_ident())
-    tempfile_name = "".join(rng.choices(ascii_lowercase + digits, k=10))
-    tempfile_local_path = os.path.join(dir_name, tempfile_name + ".gz")
-    return tempfile_local_path
 
 
 def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Callable:
@@ -115,8 +106,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
         return fsrc
 
     local_path = _get_local_path(openml_path, data_home)
-    dir_name = os.path.dirname(local_path)
-    tempfile_local_path = _get_tempfile_local_path(dir_name)
+    dir_name, file_name = os.path.split(local_path)
     if not os.path.exists(local_path):
         try:
             os.makedirs(dir_name)
@@ -125,18 +115,19 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
             pass
 
         try:
-            with closing(urlopen(req)) as fsrc:
-                opener: Callable
-                if is_gzip_encoded(fsrc):
-                    opener = open
-                else:
-                    opener = gzip.GzipFile
-                with opener(tempfile_local_path, "wb") as fdst:
-                    shutil.copyfileobj(fsrc, fdst)
-            shutil.move(tempfile_local_path, local_path)
+            with TemporaryDirectory(dir=data_home) as tmpdir:
+                with closing(urlopen(req)) as fsrc:
+                    opener: Callable
+                    if is_gzip_encoded(fsrc):
+                        opener = open
+                    else:
+                        opener = gzip.GzipFile
+                    with opener(os.path.join(tmpdir, file_name), "wb") as fdst:
+                        shutil.copyfileobj(fsrc, fdst)
+                shutil.move(fdst, local_path)
         except Exception:
-            if os.path.exists(tempfile_local_path):
-                os.unlink(tempfile_local_path)
+            if os.path.exists(local_path):
+                os.unlink(local_path)
             raise
 
     # XXX: First time, decompression will not be necessary (by using fsrc), but

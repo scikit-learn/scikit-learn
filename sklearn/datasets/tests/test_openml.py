@@ -1158,7 +1158,6 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     assert response1.read() == response2.read()
 
 
-@pytest.mark.skip(reason="must be updated")
 @pytest.mark.parametrize("gzip_response", [True, False])
 @pytest.mark.parametrize("write_to_disk", [True, False])
 def test_open_openml_url_unlinks_local_path(
