@@ -62,7 +62,7 @@ height, width = face.shape
 # Distort the right half of the image
 print("Distorting image...")
 distorted = face.copy()
-distorted[:, width // 2:] += 0.075 * np.random.randn(height, width // 2)
+distorted[:, width // 2 :] += 0.075 * np.random.randn(height, width // 2)
 
 # Extract all reference patches from the left half of the image
 print("Extracting reference patches...")
@@ -130,7 +130,7 @@ show_with_diff(distorted, face, "Distorted image")
 
 print("Extracting noisy patches... ")
 t0 = time()
-data = extract_patches_2d(distorted[:, width // 2:], patch_size)
+data = extract_patches_2d(distorted[:, width // 2 :], patch_size)
 data = data.reshape(data.shape[0], -1)
 intercept = np.mean(data, axis=0)
 data -= intercept
@@ -157,7 +157,7 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     if transform_algorithm == "threshold":
         patches -= patches.min()
         patches /= patches.max()
-    reconstructions[title][:, width // 2:] = reconstruct_from_patches_2d(
+    reconstructions[title][:, width // 2 :] = reconstruct_from_patches_2d(
         patches, (height, width // 2)
     )
     dt = time() - t0
