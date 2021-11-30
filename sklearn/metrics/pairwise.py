@@ -682,8 +682,8 @@ def pairwise_distances_argmin_min(
         # asked for a fast alternative, we need to revert to the standard
         # "euclidean" strategy to match the API.
         # Internally, the "euclidean" strategy still uses the GEMM trick.
-        if metric == "fast_euclidean":
-            metric = "euclidean"
+        if metric in ("fast_euclidean", "fast_sqeuclidean"):
+            metric = metric.replace("fast_", "")
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
@@ -796,8 +796,8 @@ def pairwise_distances_argmin(
         # asked for a fast alternative, we need to revert to the standard one.
         # "euclidean" strategy to match the API.
         # Internally, the "euclidean" strategy still uses the GEMM trick.
-        if metric == "fast_euclidean":
-            metric = "euclidean"
+        if metric in ("fast_euclidean", "fast_sqeuclidean"):
+            metric = metric.replace("fast_", "")
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
