@@ -263,7 +263,8 @@ cdef class PairwiseDistancesReduction:
             elif strategy == 'parallel_on_X':
                 self._parallel_on_X()
             else:
-                raise RuntimeError(f"strategy '{strategy}' not supported.")
+                raise RuntimeError(f"strategy must be 'parallel_on_X, 'parallel_on_Y', "
+                                   f"or 'auto', but currently strategy='{strategy}'.")
 
         return self._finalize_results(return_distance)
 
@@ -831,6 +832,12 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         chunk_size=None,
         metric_kwargs=None,
     ):
+        if metric_kwargs is not None and len(metric_kwargs) > 0:
+            raise UserWarning(
+                f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't"
+                f"usable for this case ({self.__class__.__name__}) and will be ignored."
+            )
+
         super().__init__(
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
