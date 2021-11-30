@@ -6,7 +6,6 @@
 Descent (SGD).
 """
 
-from typing import Type
 import numpy as np
 import warnings
 
