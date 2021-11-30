@@ -916,7 +916,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         ccp_alpha=0.0,
         monotonic_cst=None,
     ):
-
         super().__init__(
             criterion=criterion,
             splitter=splitter,

@@ -260,16 +260,19 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 if not is_leaf:
                     if splitter.monotonic_cst[split.feature] == 0:
+                        # No constraint
                         left_child_min = lower_bound
                         left_child_max = upper_bound
                         right_child_min = lower_bound
                         right_child_max = upper_bound
                     elif splitter.monotonic_cst[split.feature] == 1:
+                        # Monotonically increasing constraint
                         left_child_min = lower_bound
                         left_child_max = middle_value
                         right_child_min = middle_value
                         right_child_max = upper_bound
                     elif splitter.monotonic_cst[split.feature] == -1:
+                        # Monotonically decreasing constraint
                         left_child_min = middle_value
                         left_child_max = upper_bound
                         right_child_min = lower_bound
@@ -1437,7 +1440,17 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
         # Push root node, using StackRecord.start as node id
-        rc = stack.push(0, 0, 0, -1, 0, 0, 0, -INFINITY, INFINITY)
+        rc = stack.push(
+                    start=0,
+                    end=0,
+                    depth=0,
+                    parent=-1,
+                    is_left=0,
+                    impurity=0,
+                    n_constant_features=0,
+                    lower_bound=-INFINITY,
+                    upper_bound=INFINITY,
+                )
         if rc == -1:
             with gil:
                 raise MemoryError("pruning tree")

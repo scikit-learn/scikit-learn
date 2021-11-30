@@ -61,10 +61,12 @@ cdef class Splitter:
 
     cdef const DOUBLE_t[:, ::1] y
     cdef DOUBLE_t* sample_weight
-    cdef INT32_t* monotonic_cst          # Monotonicity constraints
-                                         # -1: monotonically decreasing
-                                         #  0: no constraint
-                                         # +1: monotonically increasing
+    # Monotonicity constraints for each feature.
+    # The encoding is as follows:
+    #   -1: monotonically decreasing
+    #    0: no constraint
+    #   +1: monotonically increasing
+    cdef INT32_t* monotonic_cst
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -94,7 +96,8 @@ cdef class Splitter:
                         SplitRecord* split,
                         SIZE_t* n_constant_features,
                         double lower_bound,
-                        double upper_bound) nogil except -1
+                        double upper_bound,
+                    ) nogil except -1
 
     cdef void node_value(self, double* dest) nogil
 

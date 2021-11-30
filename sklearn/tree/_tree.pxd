@@ -59,7 +59,6 @@ cdef class Tree:
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_node_samples) nogil except -1
-
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
