@@ -1959,10 +1959,10 @@ class TfidfVectorizer(CountVectorizer):
             binary=binary,
             dtype=dtype,
         )
-
-        self._tfidf = TfidfTransformer(
-            norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
-        )
+        self._norm = norm
+        self._use_idf = use_idf
+        self._smooth_idf = smooth_idf
+        self._sublinear_tf = sublinear_tf
 
     # Broadcast the TF-IDF parameters to the underlying transformer instance
     # for easy grid search and repr
@@ -1970,38 +1970,38 @@ class TfidfVectorizer(CountVectorizer):
     @property
     def norm(self):
         """Norm of each row output, can be either "l1" or "l2"."""
-        return self._tfidf.norm
+        return self._norm
 
     @norm.setter
     def norm(self, value):
-        self._tfidf.norm = value
+        self._norm = value
 
     @property
     def use_idf(self):
         """Whether or not IDF re-weighting is used."""
-        return self._tfidf.use_idf
+        return self._use_idf
 
     @use_idf.setter
     def use_idf(self, value):
-        self._tfidf.use_idf = value
+        self._use_idf = value
 
     @property
     def smooth_idf(self):
         """Whether or not IDF weights are smoothed."""
-        return self._tfidf.smooth_idf
+        return self._smooth_idf
 
     @smooth_idf.setter
     def smooth_idf(self, value):
-        self._tfidf.smooth_idf = value
+        self._smooth_idf = value
 
     @property
     def sublinear_tf(self):
         """Whether or not sublinear TF scaling is applied."""
-        return self._tfidf.sublinear_tf
+        return self._sublinear_tf
 
     @sublinear_tf.setter
     def sublinear_tf(self, value):
-        self._tfidf.sublinear_tf = value
+        self._sublinear_tf = value
 
     @property
     def idf_(self):
@@ -2011,10 +2011,23 @@ class TfidfVectorizer(CountVectorizer):
         -------
         ndarray of shape (n_features,)
         """
+        if not hasattr(self, "_tfidf"):
+            raise NotFittedError(
+                f"{self.__class__.__name__} is not fitted yet. Call 'fit' with "
+                "appropriate arguments before using this attribute."
+            )
         return self._tfidf.idf_
 
     @idf_.setter
     def idf_(self, value):
+        if not hasattr(self, "_tfidf"):
+            # Warm start the TFIDF transformer if does not exist yet
+            self._tfidf = TfidfTransformer(
+                norm=self.norm,
+                use_idf=self.use_idf,
+                smooth_idf=self.smooth_idf,
+                sublinear_tf=self._sublinear_tf,
+            )
         self._validate_vocabulary()
         if hasattr(self, "vocabulary_"):
             if len(self.vocabulary_) != len(value):
@@ -2050,6 +2063,12 @@ class TfidfVectorizer(CountVectorizer):
         """
         self._check_params()
         self._warn_for_unused_params()
+        self._tfidf = TfidfTransformer(
+            norm=self._norm,
+            use_idf=self._use_idf,
+            smooth_idf=self._smooth_idf,
+            sublinear_tf=self._sublinear_tf,
+        )
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
@@ -2074,6 +2093,12 @@ class TfidfVectorizer(CountVectorizer):
             Tf-idf-weighted document-term matrix.
         """
         self._check_params()
+        self._tfidf = TfidfTransformer(
+            norm=self._norm,
+            use_idf=self._use_idf,
+            smooth_idf=self._smooth_idf,
+            sublinear_tf=self._sublinear_tf,
+        )
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so

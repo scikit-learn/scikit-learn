@@ -618,13 +618,13 @@ def test_vectorizer():
 def test_tfidf_vectorizer_setters():
     tv = TfidfVectorizer(norm="l2", use_idf=False, smooth_idf=False, sublinear_tf=False)
     tv.norm = "l1"
-    assert tv._tfidf.norm == "l1"
+    assert tv._norm == "l1"
     tv.use_idf = True
-    assert tv._tfidf.use_idf
+    assert tv._use_idf
     tv.smooth_idf = True
-    assert tv._tfidf.smooth_idf
+    assert tv._smooth_idf
     tv.sublinear_tf = True
-    assert tv._tfidf.sublinear_tf
+    assert tv._sublinear_tf
 
 
 @fails_if_pypy
@@ -1222,6 +1222,7 @@ def test_tfidf_vectorizer_setter():
     orig = TfidfVectorizer(use_idf=True)
     orig.fit(JUNK_FOOD_DOCS)
     copy = TfidfVectorizer(vocabulary=orig.vocabulary_, use_idf=True)
+    print(copy.__dict__)
     copy.idf_ = orig.idf_
     assert_array_equal(
         copy.transform(JUNK_FOOD_DOCS).toarray(),
