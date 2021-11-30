@@ -61,22 +61,6 @@ def _get_dummy_metric_params_list(metric: str, n_features: int):
     return METRICS_PARAMS.get(metric, [{}])
 
 
-def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
-    # We get arrays of arrays and we need to check for individual pairs
-    for i in range(ref_dist.shape[0]):
-        assert_array_equal(
-            ref_indices[i],
-            indices[i],
-            err_msg=f"Query vector #{i} has different neighbors' indices",
-        )
-        assert_allclose(
-            ref_dist[i],
-            dist[i],
-            err_msg=f"Query vector #{i} has different neighbors' distances",
-            rtol=1e-7,
-        )
-
-
 def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
     assert_array_equal(
         ref_indices,
@@ -358,23 +342,13 @@ def test_strategies_consistency(
 @pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
-@pytest.mark.parametrize("k, radius", [(50, 100)])
 def test_fast_sqeuclidean_correctness(
     seed,
     n_samples,
     n_features,
-    k,
-    radius,
+    k=50,
     dtype=np.float64,
 ):
-    # The fast squared euclidean strategy must return results
-    # that are close to the ones obtained with the euclidean distance
-    if n_samples < k:
-        pytest.skip(
-            f"Skipping as n_samples (={n_samples}) < k (={k})",
-            allow_module_level=True,
-        )
-
     rng = np.random.RandomState(seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread

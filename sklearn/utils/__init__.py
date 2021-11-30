@@ -3,7 +3,6 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 import pkgutil
 import inspect
-from distutils.version import LooseVersion
 from importlib import import_module
 from operator import itemgetter
 from collections.abc import Sequence
@@ -97,7 +96,7 @@ def _in_unstable_openblas_configuration():
 
     # OpenBLAS 0.3.16 fixed unstability for arm64, see:
     # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
-    openblas_arm64_stable_version = LooseVersion("0.3.16")
+    openblas_arm64_stable_version = parse_version("0.3.16")
     for info in modules_info:
         if info["internal_api"] != "openblas":
             continue
@@ -108,7 +107,7 @@ def _in_unstable_openblas_configuration():
             return True
         if (
             openblas_architecture == "neoversen1"
-            and openblas_version < openblas_arm64_stable_version
+            and parse_version(openblas_version) < openblas_arm64_stable_version
         ):
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True
