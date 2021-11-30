@@ -9,15 +9,15 @@ from cython cimport floating, integral, numeric
 from ._typedefs cimport ITYPE_t
 
 cdef inline void dual_swap(floating* darr, ITYPE_t* iarr,
-                           ITYPE_t i1, ITYPE_t i2) nogil:
-    """Swap the values at inex i1 and i2 of both darr and iarr"""
-    cdef floating dtmp = darr[i1]
-    darr[i1] = darr[i2]
-    darr[i2] = dtmp
+                           ITYPE_t a, ITYPE_t b) nogil:
+    """Swap the values at index i1 and i2 of both darr and iarr"""
+    cdef floating dtmp = darr[a]
+    darr[a] = darr[b]
+    darr[b] = dtmp
 
-    cdef ITYPE_t itmp = iarr[i1]
-    iarr[i1] = iarr[i2]
-    iarr[i2] = itmp
+    cdef ITYPE_t itmp = iarr[a]
+    iarr[a] = iarr[b]
+    iarr[b] = itmp
 
 cdef int simultaneous_sort(
     floating* values,
