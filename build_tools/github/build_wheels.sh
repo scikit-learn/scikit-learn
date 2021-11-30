@@ -12,7 +12,11 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     # supported macos version is: High Sierra / 10.13. When upgrading this, be
     # sure to update the MACOSX_DEPLOYMENT_TARGET environment variable in
     # wheels.yml accordingly. Note that Darwin_17 == High Sierra / 10.13.
-    wget https://packages.macports.org/libomp/libomp-11.0.1_0+universal.darwin_17.i386-x86_64.tbz2 -O libomp.tbz2
+    if [[ "$CIBW_BUILD" == *-macosx_arm64 ]]; then
+        wget https://packages.macports.org/libomp/libomp-11.0.1_0.darwin_20.arm64.tbz2 -O libomp.tbz2
+    else
+        wget https://packages.macports.org/libomp/libomp-11.0.1_0+universal.darwin_17.i386-x86_64.tbz2 -O libomp.tbz2
+    fi
     sudo tar -C / -xvjf libomp.tbz2 opt
 
     export CC=/usr/bin/clang
