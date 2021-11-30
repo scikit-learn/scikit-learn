@@ -2021,7 +2021,9 @@ class TfidfVectorizer(CountVectorizer):
     @idf_.setter
     def idf_(self, value):
         if not hasattr(self, "_tfidf"):
-            # Warm start the TFIDF transformer if does not exist yet
+            # We should support transfering `idf_` from another `TfidfTransformer`
+            # and therefore, we need to create the transformer instance it does not
+            # exist yet.
             self._tfidf = TfidfTransformer(
                 norm=self.norm,
                 use_idf=self.use_idf,
