@@ -203,6 +203,25 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+def _check_n_classes(n_classes, expected_dtype):
+    if n_classes.ndim != 1:
+        raise ValueError(
+            f"Wrong dimensions for n_classes from the pickle: "
+            f"expected 1, got {n_classes.ndim}"
+        )
+
+    if n_classes.dtype == expected_dtype:
+        return n_classes
+
+    # Handles both different endianness and different bitness
+    if n_classes.dtype.kind == "i" and n_classes.dtype.itemsize in [4, 8]:
+        return n_classes.astype(expected_dtype, casting="same_kind")
+
+    raise ValueError(
+        "n_classes from the pickle has an incompatible dtype:\n"
+        f"- expected: {expected_dtype}\n"
+        f"- got:      {n_classes.dtype}"
+    )
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
