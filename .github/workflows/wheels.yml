@@ -149,37 +149,28 @@ jobs:
             bitness: 64
             python: 37
             platform_id: macosx_x86_64
-            macosx_deployment_target: "10.13"
           - os: macos-latest
             bitness: 64
             python: 38
             platform_id: macosx_x86_64
-            macosx_deployment_target: "10.13"
           - os: macos-latest
             bitness: 64
             python: 39
             platform_id: macosx_x86_64
-            macosx_deployment_target: "10.13"
 
           # MacOS arm64
           - os: macos-latest
             bitness: 64
             python: 38
             platform_id: macosx_arm64
-            macosx_deployment_target: "12.0"
-            cibw_environment: "PYTHON_CROSSENV=1"
           - os: macos-latest
             bitness: 64
             python: 39
             platform_id: macosx_arm64
-            macosx_deployment_target: "12.0"
-            cibw_environment: "PYTHON_CROSSENV=1"
           - os: macos-latest
             bitness: 64
             python: 310
             platform_id: macosx_arm64
-            macosx_deployment_target: "12.0"
-            cibw_environment: "PYTHON_CROSSENV=1"
 
     steps:
       - name: Checkout scikit-learn
@@ -198,8 +189,6 @@ jobs:
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
-                            ${{ matrix.cibw_environment }}
-          CIBW_ENVIRONMENT_MACOS: MACOSX_DEPLOYMENT_TARGET=${{ matrix.macosx_deployment_target }}
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
