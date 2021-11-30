@@ -3230,6 +3230,8 @@ def _enforce_estimator_tags_y(estimator, y):
         y_2d = np.repeat(y[:, np.newaxis], 2, axis=1)
         if _safe_tags(estimator, key="multilabel"):
             # In multilabel classification, each target should be binary.
+            # If an estimator is supporting multioutput, it will for sure
+            # support multilabel since this is a special case of multioutput.
             return (y_2d > y_2d.mean(axis=0)).astype(np.int64)
         return y_2d
     return y
