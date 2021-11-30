@@ -2129,7 +2129,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         
         try:
             self.alpha = self.nu / 2
-        except:
+        except ValueError as e:
             raise ValueError("alpha and nu should be of type float")
 
         super(SGDOneClassSVM, self)._validate_params(for_partial_fit=for_partial_fit)
