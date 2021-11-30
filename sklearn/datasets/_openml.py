@@ -12,7 +12,7 @@ import itertools
 from collections.abc import Generator
 from collections import OrderedDict
 from functools import partial
-from threading import get_native_id
+from threading import get_ident
 from string import ascii_lowercase, digits
 from random import Random
 
@@ -49,7 +49,7 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
 
 
 def _get_tempfile_local_path(dir_name: str) -> str:
-    rng = Random(get_native_id())
+    rng = Random(get_ident())
     tempfile_name = "".join(rng.choices(ascii_lowercase + digits, k=10))
     tempfile_local_path = os.path.join(dir_name, tempfile_name + ".gz")
     return tempfile_local_path
