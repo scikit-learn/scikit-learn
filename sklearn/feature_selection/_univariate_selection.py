@@ -640,7 +640,7 @@ class SelectFpr(_BaseFilter):
         works with classification tasks.
 
     alpha : float, default=5e-2
-        The highest p-value for features to be kept.
+        Features with p-values less than `alpha` are selected.
 
     Attributes
     ----------

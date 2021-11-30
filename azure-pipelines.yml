@@ -200,6 +200,7 @@ jobs:
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
         THREADPOOLCTL_VERSION: '2.2.0'
+        SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
