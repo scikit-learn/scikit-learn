@@ -39,7 +39,11 @@ OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 test_offline = True
 
 
-# Do not use a cache for `fetch_openml` to avoid issues with `pytest-xdist`
+# Do not use a cache for `fetch_openml` to avoid concurrent writing
+# issues with `pytest-xdist`.
+# Furthermore sklearn/datasets/tests/data/openml/ is not always consistent
+# with the version on openml.org. If one were to load the dataset outside of
+# the tests, it may result in data that does not represent openml.org.
 fetch_openml = partial(fetch_openml_orig, data_home=None)
 
 
