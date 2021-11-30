@@ -13,9 +13,9 @@
 # Furthermore, the chunking strategy is also used to leverage OpenMP-based parallelism
 # (using Cython prange loops) which gives another multiplicative speed-up in
 # favorable cases on many-core machines.
-
 cimport numpy as np
 import numpy as np
+import warnings
 import scipy.sparse
 
 from .. import get_config
@@ -833,9 +833,11 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         metric_kwargs=None,
     ):
         if metric_kwargs is not None and len(metric_kwargs) > 0:
-            raise UserWarning(
+            warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't"
-                f"usable for this case ({self.__class__.__name__}) and will be ignored."
+                f"usable for this case ({self.__class__.__name__}) and will be ignored.",
+                UserWarning,
+                stacklevel=3,
             )
 
         super().__init__(
