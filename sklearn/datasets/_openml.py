@@ -115,7 +115,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
             pass
 
         try:
-            with TemporaryDirectory(dir=data_home) as tmpdir:
+            with TemporaryDirectory(dir=dir_name) as tmpdir:
                 with closing(urlopen(req)) as fsrc:
                     opener: Callable
                     if is_gzip_encoded(fsrc):
