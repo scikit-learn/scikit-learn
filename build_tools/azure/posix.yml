@@ -37,6 +37,7 @@ jobs:
     TEST_DOCSTRINGS: 'false'
     CREATE_ISSUE_ON_TRACKER: 'false'
     SHOW_SHORT_SUMMARY: 'false'
+    CHECK_MEMORY: 'false'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}

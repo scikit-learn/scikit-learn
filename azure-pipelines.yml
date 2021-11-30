@@ -190,6 +190,7 @@ jobs:
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
         COVERAGE: 'false'
+        CHECK_MEMORY: 'true'
       # Linux + Python 3.7 build with OpenBLAS and without SITE_JOBLIB
       py37_conda_defaults_openblas:
         DISTRIB: 'conda'

@@ -150,6 +150,10 @@ if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     python -m pip install numpydoc
 fi
 
+if [[ "$CHECK_MEMORY" == "true" ]]; then
+    python -m pip install psutil
+fi
+
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"

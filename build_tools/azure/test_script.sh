@@ -57,6 +57,10 @@ if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
     TEST_CMD="$TEST_CMD -ra"
 fi
 
+if [[ "$CHECK_MEMORY" == "true" ]]; then
+    TEST_CMD="$TEST_CMD --min-ram=50"
+fi
+
 set -x
 eval "$TEST_CMD --pyargs sklearn"
 set +x
