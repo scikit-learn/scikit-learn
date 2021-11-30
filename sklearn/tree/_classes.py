@@ -802,7 +802,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        Indicates the monotonic constraint to enforce on each feature. 1, -1
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. The constraints are only valid for
         binary classifications and hold over the probability of the positive
@@ -1198,7 +1198,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        Indicates the monotonic constraint to enforce on each feature. 1, -1
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint.
 
@@ -1526,7 +1526,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        Indicates the monotonic constraint to enforce on each feature. 1, -1
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. The constraints are only valid for
         binary classifications and hold over the probability of the positive
@@ -1779,7 +1779,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        Indicates the monotonic constraint to enforce on each feature. 1, -1
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint.
 
