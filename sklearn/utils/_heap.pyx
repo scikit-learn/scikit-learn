@@ -1,9 +1,3 @@
-# cython: boundscheck=False
-# cython: cdivision=True
-# cython: initializedcheck=False
-# cython: wraparound=False
-
-
 from cython cimport floating, integral, numeric
 
 from ._typedefs cimport ITYPE_t
