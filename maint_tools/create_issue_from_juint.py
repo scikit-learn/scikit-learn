@@ -28,11 +28,18 @@ parser.add_argument("ci_name", help="Name of CI run instance")
 parser.add_argument("issue_repo", help="Repo to track issues")
 parser.add_argument("link_to_ci_run", help="URL to link to")
 parser.add_argument("junit_file", help="JUnit file")
+parser.add_argument(
+    "max_failures",
+    help="Maximum number of test failures to include in issue",
+    default=5,
+    type=int,
+)
 
 args = parser.parse_args()
 gh = Github(args.bot_github_token)
 issue_repo = gh.get_repo(args.issue_repo)
 title = f"⚠️ CI failed on {args.ci_name} ⚠️"
+max_failures = args.max_failures
 
 
 def get_issue():
@@ -109,6 +116,9 @@ if not failure_cases:
 issue_summary = (
     "<details><summary>{title}</summary>\n\n```python\n{body}\n```\n</details>\n"
 )
-body_list = [issue_summary.format(**case) for case in failure_cases]
+body_list = [issue_summary.format(**case) for case in failure_cases[:max_failures]]
 body = "\n".join(body_list)
+n_remaining_failures = len(failure_cases) - max_failures
+if n_remaining_failures > 0:
+    body += f"\n\nand [{n_remaining_failures} more failures]({args.link_to_ci_run})."
 create_or_update_issue(body)
