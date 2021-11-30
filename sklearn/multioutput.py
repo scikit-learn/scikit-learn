@@ -839,7 +839,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
 
 class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
-    """A multi-label model that arranges regressions into a chain.
+    """A multi-output model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using
     all of the available features provided to the model plus the predictions
@@ -856,7 +856,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     order : array-like of shape (n_outputs,) or 'random', default=None
         If `None`, the order will be determined by the order of columns in
-        the label matrix Y.::
+        the matrix Y.::
 
             order = [0, 1, 2, ..., Y.shape[1] - 1]
 
