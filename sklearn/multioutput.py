@@ -302,8 +302,8 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> from sklearn.multioutput import MultiOutputRegressor
     >>> from sklearn.linear_model import Ridge
     >>> X, y = load_linnerud(return_X_y=True)
-    >>> clf = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
-    >>> clf.predict(X[[0]])
+    >>> regr = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
+    >>> regr.predict(X[[0]])
     array([[176..., 35..., 57...]])
     """
 

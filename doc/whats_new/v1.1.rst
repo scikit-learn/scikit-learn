@@ -251,6 +251,15 @@ Changelog
   instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
 
+- |Enhancement| Added the `get_feature_names_out` method and a new parameter
+  `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
+  `feature_names_out` to 'one-to-one' to use the input features names as the
+  output feature names, or you can set it to a callable that returns the output
+  feature names. This is especially useful when the transformer changes the
+  number of features. If `feature_names_out` is None (which is the default),
+  then `get_output_feature_names` is not defined.
+  :pr:`21569` by :user:`Aurélien Geron <ageron>`.
+
 :mod:`sklearn.svm`
 ..................
 
