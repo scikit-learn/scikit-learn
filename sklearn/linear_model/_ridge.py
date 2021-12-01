@@ -2060,7 +2060,7 @@ class _BaseRidgeCV(LinearModel):
             # check for single non-iterable item
             self.alphas = check_scalar_alpha(self.alphas, "alphas")
 
-        self.alphas = np.asarray(self.alphas)
+        alphas = np.asarray(self.alphas)
 
         if cv is None:
             estimator = _RidgeGCV(
