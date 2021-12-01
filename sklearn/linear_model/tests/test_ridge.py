@@ -335,6 +335,42 @@ def test_ridge_individual_penalties():
         ridge.fit(X, y)
 
 
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
+        (
+            {"alpha": "1"},
+            TypeError,
+            "alpha must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
+        (
+            {"max_iter": "1"},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'str'>",
+        ),
+        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
+        (
+            {"tol": "1"},
+            TypeError,
+            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+    ],
+)
+def test_ridge_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in Ridge."""
+
+    rng = np.random.RandomState(42)
+    n_samples, n_features, n_targets = 20, 10, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_targets)
+
+    with pytest.raises(err_type, match=err_msg):
+        Ridge(**params).fit(X, y)
+
+
 @pytest.mark.parametrize("n_col", [(), (1,), (3,)])
 def test_X_CenterStackOp(n_col):
     rng = np.random.RandomState(0)
