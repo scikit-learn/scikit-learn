@@ -108,16 +108,15 @@ class MemoryUsage:
     def pytest_terminal_summary(self, terminalreporter):
         tr = terminalreporter
         if self.stats:
-            tr._tw.sep(
-                "=",
-                f"Tests that Incremented RAM more than {self.min_ram} MB",
-                yellow=True,
-            )
             stats_filtered = filter(
                 lambda x: x[-1]["diff"] > self.min_ram, self.stats.items()
             )
             stats = sorted(stats_filtered, key=lambda x: x[-1]["diff"], reverse=True)
-
+            tr._tw.sep(
+                "=",
+                f"{len(stats)} tests that incremented RAM more than {self.min_ram} MB",
+                yellow=True,
+            )
             for test_name, info in stats:
                 line = "before setup: {:.3f} MB, increment: {:.3f} MB - {}".format(
                     info["setup"], info["diff"], test_name

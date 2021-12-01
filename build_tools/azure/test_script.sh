@@ -58,7 +58,7 @@ if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
 fi
 
 if [[ "$CHECK_MEMORY" == "true" ]]; then
-    TEST_CMD="$TEST_CMD --min-ram=50"
+    TEST_CMD="$TEST_CMD --min-ram=1"  # DEBUG with low value
 fi
 
 set -x
