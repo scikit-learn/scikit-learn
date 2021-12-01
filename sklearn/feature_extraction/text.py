@@ -1984,6 +1984,8 @@ class TfidfVectorizer(CountVectorizer):
 
     @idf_.setter
     def idf_(self, value):
+        if not self.use_idf:
+            raise ValueError("`idf_` cannot be set when `user_idf=False`.")
         if not hasattr(self, "_tfidf"):
             # We should support transfering `idf_` from another `TfidfTransformer`
             # and therefore, we need to create the transformer instance it does not
