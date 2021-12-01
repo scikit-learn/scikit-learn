@@ -4,10 +4,6 @@ from collections import defaultdict
 from numpy.testing import assert_array_equal, assert_allclose
 from scipy.sparse import csr_matrix
 
-from sklearn.metrics._dist_metrics import (
-    DenseDenseDatasetsPair,
-)
-
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
@@ -113,33 +109,33 @@ def test_argkmin_factory_method_wrong_usages():
     with pytest.raises(
         ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
-        PairwiseDistancesArgKmin.get_for(
+        PairwiseDistancesArgKmin.compute(
             X=X.astype(np.float32), Y=Y, k=k, metric=metric
         )
 
     with pytest.raises(
         ValueError, match="Only 64bit float datasets are supported for X and Y."
     ):
-        PairwiseDistancesArgKmin.get_for(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
+        PairwiseDistancesArgKmin.compute(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
-        PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=-1, metric=metric)
+        PairwiseDistancesArgKmin.compute(X=X, Y=Y, k=-1, metric=metric)
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
-        PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=0, metric=metric)
+        PairwiseDistancesArgKmin.compute(X=X, Y=Y, k=0, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
-        PairwiseDistancesArgKmin.get_for(X=X, Y=Y, k=k, metric="wrong metric")
+        PairwiseDistancesArgKmin.compute(X=X, Y=Y, k=k, metric="wrong metric")
 
     with pytest.raises(
         ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
     ):
-        PairwiseDistancesArgKmin.get_for(
+        PairwiseDistancesArgKmin.compute(
             X=np.array([1.0, 2.0]), Y=Y, k=k, metric=metric
         )
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
-        PairwiseDistancesArgKmin.get_for(
+        PairwiseDistancesArgKmin.compute(
             X=np.asfortranarray(X), Y=Y, k=k, metric=metric
         )
 
@@ -164,32 +160,33 @@ def test_pairwise_distances_reduction_factory_method(
     # Dummy value for k or radius
     dummy_arg = 5
 
-    dense_dense_instance = PairwiseDistancesReduction.get_for(X, Y, dummy_arg, metric)
-    assert isinstance(dense_dense_instance.datasets_pair, DenseDenseDatasetsPair)
-
     with pytest.raises(
         ValueError, match="Only dense datasets are supported for X and Y."
     ):
-        PairwiseDistancesReduction.get_for(
-            csr_matrix(X), csr_matrix(Y), dummy_arg, metric
+        PairwiseDistancesReduction.compute(
+            csr_matrix(X),
+            csr_matrix(Y),
+            dummy_arg,
+            metric,
         )
 
     with pytest.raises(
         ValueError, match="Only dense datasets are supported for X and Y."
     ):
-        PairwiseDistancesReduction.get_for(X, csr_matrix(Y), dummy_arg, metric=metric)
+        PairwiseDistancesReduction.compute(X, csr_matrix(Y), dummy_arg, metric=metric)
 
     with pytest.raises(
         ValueError, match="Only dense datasets are supported for X and Y."
     ):
-        PairwiseDistancesReduction.get_for(csr_matrix(X), Y, dummy_arg, metric=metric)
+        PairwiseDistancesReduction.compute(csr_matrix(X), Y, dummy_arg, metric=metric)
 
     # Test specialisations creation
-    fast_euclidean_instance = PairwiseDistancesReduction.get_for(
-        X, Y, dummy_arg, metric="fast_euclidean"
+    PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        dummy_arg,
+        metric="fast_euclidean",
     )
-    assert isinstance(fast_euclidean_instance, PairwiseDistancesReduction)
-    assert isinstance(fast_euclidean_instance, FastPairwiseDistancesReduction)
 
 
 @fails_if_unstable_openblas
@@ -222,13 +219,22 @@ def test_chunk_size_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric="euclidean"
-    ).compute(return_distance=True)
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        metric="euclidean",
+        return_distance=True,
+    )
 
-    dist, indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric=metric, chunk_size=chunk_size
-    ).compute(return_distance=True)
+    dist, indices = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        metric=metric,
+        chunk_size=chunk_size,
+        return_distance=True,
+    )
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
@@ -262,13 +268,22 @@ def test_n_threads_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric="fast_euclidean"
-    ).compute(return_distance=True)
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        metric="fast_euclidean",
+        return_distance=True,
+    )
 
-    dist, indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric="fast_euclidean", n_threads=1
-    ).compute(return_distance=True)
+    dist, indices = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        metric="fast_euclidean",
+        n_threads=1,
+        return_distance=True,
+    )
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
@@ -314,7 +329,7 @@ def test_strategies_consistency(
         else 10 ** np.log(n_features)
     )
 
-    pairwise_distances_reduction = PairwiseDistancesReduction.get_for(
+    dist_par_X, indices_par_X = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -323,18 +338,28 @@ def test_strategies_consistency(
         metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
         # To be sure to use parallelization
         chunk_size=n_samples // 4,
+        strategy="parallel_on_X",
+        return_distance=True,
     )
 
-    dist_par_X, indices_par_X = pairwise_distances_reduction.compute(
-        strategy="parallel_on_X", return_distance=True
-    )
-
-    dist_par_Y, indices_par_Y = pairwise_distances_reduction.compute(
-        strategy="parallel_on_Y", return_distance=True
+    dist_par_Y, indices_par_Y = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        metric=metric,
+        # Taking the first
+        metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
+        # To be sure to use parallelization
+        chunk_size=n_samples // 4,
+        strategy="parallel_on_Y",
+        return_distance=True,
     )
 
     ASSERT_RESULT[PairwiseDistancesReduction](
-        dist_par_X, dist_par_Y, indices_par_X, indices_par_Y
+        dist_par_X,
+        dist_par_Y,
+        indices_par_X,
+        indices_par_Y,
     )
 
 
@@ -354,12 +379,20 @@ def test_fast_sqeuclidean_correctness(
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    eucl_dist, eucl_indices = PairwiseDistancesArgKmin.get_for(
-        X, Y, k, metric="euclidean"
-    ).compute(return_distance=True)
-    fse_dist, fse_indices = PairwiseDistancesArgKmin.get_for(
-        X, Y, k, metric="fast_euclidean"
-    ).compute(return_distance=True)
+    eucl_dist, eucl_indices = PairwiseDistancesArgKmin.compute(
+        X,
+        Y,
+        k,
+        metric="euclidean",
+        return_distance=True,
+    )
+    fse_dist, fse_indices = PairwiseDistancesArgKmin.compute(
+        X,
+        Y,
+        k,
+        metric="fast_euclidean",
+        return_distance=True,
+    )
 
     assert_argkmin_results_equality(eucl_dist, fse_dist, eucl_indices, fse_indices)
 
@@ -398,21 +431,23 @@ def test_fast_sqeuclidean_translation_invariance(
         X = np.ascontiguousarray(X[:, :2])
         Y = np.ascontiguousarray(Y[:, :2])
 
-    reference_dist, reference_indices = PairwiseDistancesReduction.get_for(
+    reference_dist, reference_indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
         metric=metric,
         metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
-    ).compute(return_distance=True)
+        return_distance=True,
+    )
 
-    dist, indices = PairwiseDistancesReduction.get_for(
+    dist, indices = PairwiseDistancesReduction.compute(
         X + 0,
         Y + 0,
         parameter,
         metric=metric,
         metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
-    ).compute(return_distance=True)
+        return_distance=True,
+    )
 
     ASSERT_RESULT[PairwiseDistancesReduction](
         reference_dist, dist, reference_indices, indices

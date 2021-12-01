@@ -205,7 +205,7 @@ cdef class PairwiseDistancesReduction:
         self.X_n_chunks = X_n_full_chunks + (self.X_n_samples_remainder != 0)
         self.Y_n_chunks = Y_n_full_chunks + (self.Y_n_samples_remainder != 0)
 
-    def compute(
+    def _compute(
         self,
         str strategy=None,
         bint return_distance=False,
@@ -520,7 +520,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         ITYPE_t ** heaps_indices_chunks
 
     @classmethod
-    def get_for(
+    def compute(
         cls,
         X,
         Y,
@@ -529,8 +529,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         chunk_size=None,
         dict metric_kwargs=None,
         n_threads=None,
-    ) -> PairwiseDistancesArgKmin:
-        """Return the PairwiseDistancesArgKmin implementation for the given arguments.
+        str strategy=None,
+        bint return_distance=False,
+    ):
+        """Return the results of the reduction for the given arguments.
 
         Parameters
         ----------
@@ -566,26 +568,60 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             See _openmp_effective_n_threads, for details about
             the specification of n_threads.
 
+        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
+            The chunking strategy defining which dataset parallelization are made on.
+
+            Strategies differs on the dispatching they use for chunks on threads:
+
+              - 'parallel_on__X' dispatches chunks of X uniformly on threads.
+              Each thread then iterates on all the chunks of Y. This strategy is
+              embarrassingly parallel and comes with no datastructures synchronisation.
+
+              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+              Each thread then iterates on all the chunks of X. This strategy is
+              embarrassingly parallel but uses intermediate datastructures
+              synchronisation.
+
+              - 'auto' relies on a simple heuristic to choose between
+              'parallel_on__X' and 'parallel_on_Y'.
+
+              - None (default) looks-up in scikit-learn configuration for
+              `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
+
+        return_distance : boolean, default=False
+            Return distances between each X vector and its
+            argkmin if set to True.
+
         Returns
         -------
-        argkmin: PairwiseDistancesArgKmin
-            The suited PairwiseDistancesArgKmin implementation.
+            Indices of argkmin for each vector in X and its associated distances
+            if return_distance=True.
         """
-        # This factory comes to handle specialisations.
-        if metric in ("fast_euclidean", "fast_sqeuclidean") and not issparse(X) and not issparse(Y):
+        # Note (jjerphan): Some design thoughts for future extensions.
+        # This factory comes to handle specialisations for the given arguments.
+        # For future work, this might can be an entrypoint to specialise operations
+        # for various back-end and/or hardware and/or datatypes, and/or fused
+        # {sparse, dense}-datasetspair etc.
+        if (
+            metric in ("fast_euclidean", "fast_sqeuclidean")
+                and not issparse(X)
+                and not issparse(Y)
+        ):
             use_squared_distances = metric == "fast_sqeuclidean"
-            return FastEuclideanPairwiseDistancesArgKmin(
+            pda = FastEuclideanPairwiseDistancesArgKmin(
                 X=X, Y=Y, k=k,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
             )
+        else: # Fall back on the default
+            pda = PairwiseDistancesArgKmin(
+                datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
+                k=k,
+                chunk_size=chunk_size,
+            )
 
-        return PairwiseDistancesArgKmin(
-            datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
-            k=k,
-            chunk_size=chunk_size,
-        )
+        return pda._compute(strategy=strategy, return_distance=return_distance)
 
     def __init__(
         self,

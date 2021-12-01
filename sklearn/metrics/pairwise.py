@@ -669,9 +669,15 @@ def pairwise_distances_argmin_min(
         metric_kwargs = {}
 
     if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
-        values, indices = PairwiseDistancesArgKmin.get_for(
-            X=X, Y=Y, k=1, metric=metric, metric_kwargs=metric_kwargs
-        ).compute(strategy="auto", return_distance=True)
+        values, indices = PairwiseDistancesArgKmin.compute(
+            X=X,
+            Y=Y,
+            k=1,
+            metric=metric,
+            metric_kwargs=metric_kwargs,
+            strategy="auto",
+            return_distance=True,
+        )
         values = values.flatten()
         indices = indices.flatten()
     else:
@@ -784,9 +790,15 @@ def pairwise_distances_argmin(
         metric_kwargs = {}
 
     if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
-        indices = PairwiseDistancesArgKmin.get_for(
-            X=X, Y=Y, k=1, metric=metric, metric_kwargs=metric_kwargs
-        ).compute(strategy="auto", return_distance=False)
+        indices = PairwiseDistancesArgKmin.compute(
+            X=X,
+            Y=Y,
+            k=1,
+            metric=metric,
+            metric_kwargs=metric_kwargs,
+            strategy="auto",
+            return_distance=False,
+        )
         indices = indices.flatten()
     else:
         # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,

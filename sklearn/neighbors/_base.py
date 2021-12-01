@@ -786,14 +786,13 @@ class KNeighborsMixin:
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
         if use_pairwise_distances_reductions:
-            results = PairwiseDistancesArgKmin.get_for(
+            results = PairwiseDistancesArgKmin.compute(
                 X=X,
                 Y=self._fit_X,
                 k=n_neighbors,
                 metric=self.effective_metric_,
                 metric_kwargs=self.effective_metric_params_,
                 n_threads=self.n_jobs,
-            ).compute(
                 strategy="auto",
                 return_distance=return_distance,
             )
