@@ -1,18 +1,26 @@
 import numpy as np
 import pytest
-from sklearn import datasets
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
+
+from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
 
 
 @pytest.mark.parametrize("seed", range(4))
 @pytest.mark.parametrize("depth_first", (True, False))
-def test_montonic_constraints(seed, depth_first):
+def test_montonic_constraints_classifications(seed, depth_first):
     n_samples = 1000
     n_samples_train = 900
-    X, y = datasets.make_hastie_10_2(n_samples=n_samples, random_state=0)
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_classes=2,
+        n_features=5,
+        n_informative=5,
+        n_redundant=0,
+        random_state=0,
+    )
     train = np.arange(n_samples_train)
     test = np.arange(n_samples_train, n_samples)
     X_train = X[train]
@@ -26,34 +34,6 @@ def test_montonic_constraints(seed, depth_first):
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
-
-    regressors = REG_TREES.copy()
-    regressors.update({"GradientBoostingRegressor": GradientBoostingRegressor})
-
-    for name, TreeRegressor in regressors.items():
-        if depth_first:
-            est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
-        else:
-            est = TreeRegressor(
-                max_depth=None,
-                monotonic_cst=monotonic_cst,
-                max_leaf_nodes=n_samples_train,
-            )
-        if hasattr(est, "random_state"):
-            est.set_params(**{"random_state": seed})
-        if hasattr(est, "n_estimators"):
-            est.set_params(**{"n_estimators": 5})
-        est.fit(X_train, y_train)
-        y = est.predict(X_test)
-        # increasing constraint
-        y_incr = est.predict(X_test_incr)
-        # y_incr should always be greater than y
-        assert np.all(y_incr >= y)
-
-        # decreasing constraint
-        y_decr = est.predict(X_test_decr)
-        # y_decr should always be lower than y
-        assert np.all(y_decr <= y)
 
     classifiers = CLF_TREES.copy()
     classifiers.update({"GradientBoostingClassifier": GradientBoostingClassifier})
@@ -84,8 +64,60 @@ def test_montonic_constraints(seed, depth_first):
         assert np.all(y_decr <= y)
 
 
+@pytest.mark.parametrize("seed", range(4))
+@pytest.mark.parametrize("depth_first", (True, False))
+def test_montonic_constraints_regressions(seed, depth_first):
+    n_samples = 1000
+    n_samples_train = 900
+    # Build a classification task using 3 informative features
+    X, y = make_regression(
+        n_samples=n_samples, n_features=5, n_informative=5, random_state=0
+    )
+    train = np.arange(n_samples_train)
+    test = np.arange(n_samples_train, n_samples)
+    X_train = X[train]
+    y_train = y[train]
+    X_test = np.copy(X[test])
+    X_test_incr = np.copy(X_test)
+    X_test_decr = np.copy(X_test)
+    X_test_incr[:, 0] += 10
+    X_test_decr[:, 1] += 10
+    monotonic_cst = np.zeros(X.shape[1])
+    monotonic_cst[0] = 1
+    monotonic_cst[1] = -1
+    regressors = REG_TREES.copy()
+    regressors.update({"GradientBoostingRegressor": GradientBoostingRegressor})
+
+    for name, TreeRegressor in regressors.items():
+        if depth_first:
+            est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
+        else:
+            est = TreeRegressor(
+                max_depth=None,
+                monotonic_cst=monotonic_cst,
+                max_leaf_nodes=n_samples_train,
+            )
+        if hasattr(est, "random_state"):
+            est.set_params(**{"random_state": seed})
+        if hasattr(est, "n_estimators"):
+            est.set_params(**{"n_estimators": 5})
+        est.fit(X_train, y_train)
+        y = est.predict(X_test)
+        # increasing constraint
+        y_incr = est.predict(X_test_incr)
+        # y_incr should always be greater than y
+        assert np.all(y_incr >= y)
+
+        # decreasing constraint
+        y_decr = est.predict(X_test_decr)
+        # y_decr should always be lower than y
+        assert np.all(y_decr <= y)
+
+
 def test_multiclass_raises():
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=0)
+    X, y = make_classification(
+        n_samples=100, n_features=5, n_classes=3, n_informative=3, random_state=0
+    )
     y[0] = 0
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = -1
@@ -97,9 +129,7 @@ def test_multiclass_raises():
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": 0})
 
-        msg = (
-            "Monotonic constraints are not supported with multiclass " "classification"
-        )
+        msg = "Monotonic constraints are not supported with multiclass classification"
         with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
 
