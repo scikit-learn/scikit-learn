@@ -1302,6 +1302,24 @@ def test_ridgecv_alphas_validation(Estimator, params, err_type, err_msg):
         Estimator(**params).fit(X, y)
 
 
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+def test_ridgecv_alphas_scalar(Estimator):
+    """Check the case when `alphas` is a scalar.
+    This case was supported in the past when `alphas` where converted
+    into array in `__init__`.
+    We add this test to ensure backward compatibility.
+    """
+
+    n_samples, n_features = 5, 5
+    X = rng.randn(n_samples, n_features)
+    if Estimator is RidgeCV:
+        y = rng.randn(n_samples)
+    else:
+        y = rng.randint(0, 2, n_samples)
+
+    Estimator(alphas=1).fit(X, y)
+
+
 def test_raises_value_error_if_solver_not_supported():
     # Tests whether a ValueError is raised if a non-identified solver
     # is passed to ridge_regression
