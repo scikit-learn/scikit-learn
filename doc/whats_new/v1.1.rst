@@ -192,6 +192,7 @@ Changelog
   when passed invalid values for `alphas`.
   :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`
   and :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
