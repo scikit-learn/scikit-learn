@@ -1288,7 +1288,7 @@ def test_ridgecv_int_alphas():
         ),
     ],
 )
-def test_ridgecv_scalar_alphas(Estimator, params, err_type, err_msg):
+def test_ridgecv_alphas_validation(Estimator, params, err_type, err_msg):
     """Check the `alphas` validation in RidgeCV and RidgeClassifierCV."""
 
     n_samples, n_features = 5, 5
