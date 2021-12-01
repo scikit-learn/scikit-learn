@@ -178,6 +178,11 @@ Changelog
   :pr:`21448` by :user:`Oleh Kozynets <OlehKSS>` and
   :user:`Christian Ritter <chritter>`.
 
+- |Enhancement| :class:`SimpleImputer` now warns with feature names
+  when features which are skipped due to the lack of any observed
+  values in the training set.
+  :pr:`21617` by :user:`Christian Ritter <chritter>`.
+
 - |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
   `predict` was performing an `argmax` on the scores obtained from
   `decision_function` instead of returning the multilabel indicator matrix.
