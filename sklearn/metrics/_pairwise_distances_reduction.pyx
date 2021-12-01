@@ -596,6 +596,19 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         -------
             Indices of argkmin for each vector in X and its associated distances
             if return_distance=True.
+
+        Notes
+        -----
+            This public classmethod is responsible of introspecting the arguments
+            values to dispatch to the private :meth:`PairwiseDistancesArgKmin._compute`
+            instance method of the most appropriate :class:`PairwiseDistancesArgKmin`
+            concrete implementation.
+
+            All temporarily allocated datastructures necessary for the concrete
+            implementation are therefore freed when this classmethod returns.
+
+            This allows entirely decoupling the interface entirely from the
+            implementation details whilst maintaining RAII.
         """
         # Note (jjerphan): Some design thoughts for future extensions.
         # This factory comes to handle specialisations for the given arguments.
