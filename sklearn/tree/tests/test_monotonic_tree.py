@@ -134,6 +134,39 @@ def test_multiclass_raises():
             est.fit(X, y)
 
 
+def test_multiple_output_raises():
+    X = [[1, 2, 3, 4, 5],
+         [6, 7, 8, 9, 10]]
+    y = [[1, 0, 1, 0, 1],
+         [1, 0, 1, 0, 1]]
+
+    for name, TreeClassifier in CLF_TREES.items():
+        est = TreeClassifier(
+            max_depth=None, monotonic_cst=np.array([-1, 1]), random_state=0
+        )
+        msg = "Monotonic constraints are not supported with multiple output"
+        with pytest.raises(ValueError, match=msg):
+            est.fit(X, y)
+
+
+def test_bad_monotonic_cst_raises():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    y = [1, 0, 1, 0, 1]
+
+    for name, TreeClassifier in CLF_TREES.items():
+        est = TreeClassifier(
+            max_depth=None, monotonic_cst=np.array([-1, 1, 0]), random_state=0
+        )
+        msg = "monotonic_cst has shape 3 but the input data X has 2 features."
+        with pytest.raises(ValueError, match=msg):
+            est.fit(X, y)
+        est = TreeClassifier(
+            max_depth=None, monotonic_cst=np.array([-2, 2]), random_state=0
+        )
+        msg = "monotonic_cst must be None or an array-like of -1, 0 or 1."
+        with pytest.raises(ValueError, match=msg):
+            est.fit(X, y)
+
 def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
     # Flip values to always check for increasing constraint
     values = monotonic_sign * tree_.value
