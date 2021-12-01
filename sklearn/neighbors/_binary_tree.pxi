@@ -900,6 +900,10 @@ cdef class BinaryTree:
     cdef readonly const DTYPE_t[:, ::1] data
     cdef readonly const DTYPE_t[::1] sample_weight
     cdef public DTYPE_t sum_weight
+
+    # Even if those memoryviews attributes are const-qualified,
+    # they get modified via their numpy counterpart.
+    # For instance, `node_data` gets modified via `node_data_arr`.
     cdef public const ITYPE_t[::1] idx_array
     cdef public const NodeData_t[::1] node_data
     cdef public const DTYPE_t[:, :, ::1] node_bounds
@@ -986,7 +990,12 @@ cdef class BinaryTree:
 
         # Allocate tree-specific data
         allocate_data(self, self.n_nodes, n_features)
-        self._recursive_build(self.node_data_arr, 0, 0, n_samples)
+        self._recursive_build(
+            node_data=self.node_data_arr,
+            i_node=0,
+            idx_start=0,
+            idx_end=n_samples
+        )
 
     def _update_sample_weight(self, n_samples, sample_weight):
         if sample_weight is not None:

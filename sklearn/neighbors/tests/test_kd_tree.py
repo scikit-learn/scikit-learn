@@ -25,5 +25,7 @@ def test_kdtree_picklable_with_joblib():
     X = rng.random_sample((10, 3))
     tree = KDTree(X, leaf_size=2)
 
-    # Does not error
+    # Call Parallel with max_nbytes=1 to trigger readonly memory mapping that
+    # use to raise "ValueError: buffer source array is read-only" in a previous
+    # version of the Cython code.
     Parallel(n_jobs=2, max_nbytes=1)(delayed(tree.query)(data) for data in 2 * [X])
