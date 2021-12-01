@@ -2046,12 +2046,6 @@ class _BaseRidgeCV(LinearModel):
             if n_alphas != 1:
                 for index, alpha in enumerate(self.alphas):
                     alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
-            elif np.ndim(self.alphas) == 0:
-                # converting a single scalar into a np.ndarray
-                # (e.g. `x=np.array(1)`)
-                # creates a 0d-array whose value can be accessed with
-                # `x[()]`
-                self.alphas[()] = check_scalar_alpha(self.alphas[()], "alphas")
             else:
                 self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
         else:
