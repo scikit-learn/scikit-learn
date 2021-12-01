@@ -121,7 +121,7 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.rand_score",
     "sklearn.metrics.cluster._supervised.v_measure_score",
     "sklearn.metrics.cluster._unsupervised.davies_bouldin_score",
-    "sklearn.metrics.cluster._unsupervised.silhouette_samples",
+    #"sklearn.metrics.cluster._unsupervised.silhouette_samples",
     "sklearn.metrics.cluster._unsupervised.silhouette_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.check_paired_arrays",
