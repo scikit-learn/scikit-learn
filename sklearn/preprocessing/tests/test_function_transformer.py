@@ -176,6 +176,158 @@ def test_function_transformer_frame():
     assert hasattr(X_df_trans, "loc")
 
 
+@pytest.mark.parametrize(
+    "X, feature_names_out, input_features, expected",
+    [
+        (
+            # NumPy inputs, default behavior: generate names
+            np.random.rand(100, 3),
+            "one-to-one",
+            None,
+            ("x0", "x1", "x2"),
+        ),
+        (
+            # Pandas input, default behavior: use input feature names
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            "one-to-one",
+            None,
+            ("a", "b"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable
+            np.random.rand(100, 3),
+            lambda transformer, input_features: ("a", "b"),
+            None,
+            ("a", "b"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: ("c", "d", "e"),
+            None,
+            ("c", "d", "e"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable – default input_features
+            np.random.rand(100, 3),
+            lambda transformer, input_features: tuple(input_features) + ("a",),
+            None,
+            ("x0", "x1", "x2", "a"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable – default input_features
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: tuple(input_features) + ("c",),
+            None,
+            ("a", "b", "c"),
+        ),
+        (
+            # NumPy input, input_features=list of names
+            np.random.rand(100, 3),
+            "one-to-one",
+            ("a", "b", "c"),
+            ("a", "b", "c"),
+        ),
+        (
+            # Pandas input, input_features=list of names
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            "one-to-one",
+            ("a", "b"),  # must match feature_names_in_
+            ("a", "b"),
+        ),
+        (
+            # NumPy input, feature_names_out=callable, input_features=list
+            np.random.rand(100, 3),
+            lambda transformer, input_features: tuple(input_features) + ("d",),
+            ("a", "b", "c"),
+            ("a", "b", "c", "d"),
+        ),
+        (
+            # Pandas input, feature_names_out=callable, input_features=list
+            {"a": np.random.rand(100), "b": np.random.rand(100)},
+            lambda transformer, input_features: tuple(input_features) + ("c",),
+            ("a", "b"),  # must match feature_names_in_
+            ("a", "b", "c"),
+        ),
+    ],
+)
+def test_function_transformer_get_feature_names_out(
+    X, feature_names_out, input_features, expected
+):
+    if isinstance(X, dict):
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X)
+
+    transformer = FunctionTransformer(
+        feature_names_out=feature_names_out, validate=True
+    )
+    transformer.fit_transform(X)
+    names = transformer.get_feature_names_out(input_features)
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected)
+
+
+def test_function_transformer_get_feature_names_out_without_validation():
+    transformer = FunctionTransformer(feature_names_out="one-to-one", validate=False)
+    X = np.random.rand(100, 2)
+    transformer.fit_transform(X)
+
+    msg = "When 'feature_names_out' is 'one-to-one', either"
+    with pytest.raises(ValueError, match=msg):
+        transformer.get_feature_names_out()
+
+    names = transformer.get_feature_names_out(("a", "b"))
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, ("a", "b"))
+
+
+@pytest.mark.parametrize("feature_names_out", ["x0", ["x0"], ("x0",)])
+def test_function_transformer_feature_names_out_string(feature_names_out):
+    transformer = FunctionTransformer(feature_names_out=feature_names_out)
+    X = np.random.rand(100, 2)
+    transformer.fit_transform(X)
+
+    msg = """must either be "one-to-one" or a callable"""
+    with pytest.raises(ValueError, match=msg):
+        transformer.get_feature_names_out()
+
+
+def test_function_transformer_feature_names_out_is_None():
+    transformer = FunctionTransformer()
+    X = np.random.rand(100, 2)
+    transformer.fit_transform(X)
+
+    msg = "This 'FunctionTransformer' has no attribute 'get_feature_names_out'"
+    with pytest.raises(AttributeError, match=msg):
+        transformer.get_feature_names_out()
+
+
+def test_function_transformer_feature_names_out_uses_estimator():
+    def add_n_random_features(X, n):
+        return np.concatenate([X, np.random.rand(len(X), n)], axis=1)
+
+    def feature_names_out(transformer, input_features):
+        n = transformer.kw_args["n"]
+        return list(input_features) + [f"rnd{i}" for i in range(n)]
+
+    transformer = FunctionTransformer(
+        func=add_n_random_features,
+        feature_names_out=feature_names_out,
+        kw_args=dict(n=3),
+        validate=True,
+    )
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": np.random.rand(100), "b": np.random.rand(100)})
+    transformer.fit_transform(df)
+    names = transformer.get_feature_names_out()
+
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, ("a", "b", "rnd0", "rnd1", "rnd2"))
+
+
 def test_function_transformer_validate_inverse():
     """Test that function transformer does not reset estimator in
     `inverse_transform`."""
