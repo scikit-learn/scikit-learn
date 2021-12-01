@@ -121,8 +121,9 @@ Changelog
   :pr:`21448` by :user:`Oleh Kozynets <OlehKSS>` and
   :user:`Christian Ritter <chritter>`.
 
-- |Enhancement| Added warning with feature names for skipped features
-  due to no observed values in :class:`SimpleImputer`.
+- |Enhancement| :class:`SimpleImputer` now warns with feature names
+  when features which are skipped due to the lack of any observed
+  values in the training set.
   :pr:`21617` by :user:`Christian Ritter <chritter>`.
 
 - |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
