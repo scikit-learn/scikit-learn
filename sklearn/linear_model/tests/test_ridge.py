@@ -1234,60 +1234,58 @@ def test_ridgecv_int_alphas():
     ridge.fit(X, y)
 
 
-def test_ridgecv_scalar_alphas():
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alphas": (1, -1, -100)}, ValueError, r"alphas\[1\] == -1, must be > 0.0"),
+        (
+            {"alphas": (-0.1, -1.0, -10.0)},
+            ValueError,
+            r"alphas\[0\] == -0.1, must be > 0.0",
+        ),
+        (
+            {"alphas": (1, 1.0, "1")},
+            TypeError,
+            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
+            r" 'str'>",
+        ),
+    ],
+)
+def test_ridgecv_scalar_alphas(params, err_type, err_msg):
+    """Check the parameters validation in RidgeCV."""
+
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
-    # The method for fitting _BaseRidgeCV depends whether cv=None
-    cv = KFold(3)
 
-    # Negative integers
-    ridge = RidgeCV(alphas=(1, -1, -100))
-    with pytest.raises(ValueError, match=r"alphas\[1\] == -1, must be > 0.0"):
-        ridge.fit(X, y)
+    with pytest.raises(err_type, match=err_msg):
+        RidgeCV(**params).fit(X, y)
 
-    # Negative floats and cv is not None
-    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0), cv=cv)
-    with pytest.raises(ValueError, match=r"alphas\[0\] == -0.1, must be > 0.0"):
-        ridge.fit(X, y)
 
-    # Strings
-    ridge = RidgeCV(alphas=(1, 1.0, "1"))
-    with pytest.raises(
-        TypeError,
-        match=(
-            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
-            " 'str'>"
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alphas": (1, -1, -100)}, ValueError, r"alphas\[1\] == -1, must be > 0.0"),
+        (
+            {"alphas": (-0.1, -1.0, -10.0)},
+            ValueError,
+            r"alphas\[0\] == -0.1, must be > 0.0",
         ),
-    ):
-        ridge.fit(X, y)
-
-
-def test_ridgeclassifiercv_scalar_alphas():
+        (
+            {"alphas": (1, 1.0, "1")},
+            TypeError,
+            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
+            r" 'str'>",
+        ),
+    ],
+)
+def test_ridgeclassifiercv_scalar_alphas(params, err_type, err_msg):
+    """Check the parameters validation in RidgeClassifierCV."""
     X, Y = make_multilabel_classification(n_classes=1, random_state=0)
     Y = Y.reshape(-1, 1)
     y = np.concatenate([Y, Y], axis=1)
-    # The method for fitting _BaseRidgeCV depends whether cv=None
-    cv = KFold(3)
 
-    clf = RidgeClassifierCV(alphas=(1, -1, -100))
-    with pytest.raises(ValueError, match=r"alphas\[1\] == -1, must be > 0.0"):
-        clf.fit(X, y)
-
-    # Negative floats and cv is not None
-    clf = RidgeClassifierCV(alphas=(-0.1, -1.0, -10.0), cv=cv)
-    with pytest.raises(ValueError, match=r"alphas\[0\] == -0.1, must be > 0.0"):
-        clf.fit(X, y)
-
-    # Strings
-    clf = RidgeClassifierCV(alphas=(1, 1.0, "1"))
-    with pytest.raises(
-        TypeError,
-        match=(
-            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
-            " 'str'>"
-        ),
-    ):
-        clf.fit(X, y)
+    with pytest.raises(err_type, match=err_msg):
+        RidgeClassifierCV(**params).fit(X, y)
 
 
 def test_raises_value_error_if_solver_not_supported():
