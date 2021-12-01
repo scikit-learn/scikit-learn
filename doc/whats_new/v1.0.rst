@@ -55,7 +55,7 @@ Changelog
 ........................
 
 - |Fix| :class:`neighbors.KDTree` and :class`neighbors.BallTree` correctly supports
-  read-only buffer attributes. :pr:`xxxxx` by `Thomas Fan`_.
+  read-only buffer attributes. :pr:`21845` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
