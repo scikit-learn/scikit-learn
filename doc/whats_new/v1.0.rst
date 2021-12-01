@@ -51,6 +51,12 @@ Changelog
   are always consistent with `scipy.spatial.distance.cdist`.
   :pr:`21741` by :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KDTree` and :class`neighbors.BallTree` correctly supports
+  read-only buffer attributes. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
