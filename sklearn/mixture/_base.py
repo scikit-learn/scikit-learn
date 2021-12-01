@@ -166,7 +166,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 x_squared_norms=row_norms(X, squared=True),
                 random_state=random_state,
             )
-            resp(np.arange(n_samples), indices.astype(np.int64)] = 1
+            resp[np.arange(n_samples), indices.astype(np.int64)]= 1
         else:
             raise ValueError(
                 "Unimplemented initialization method '%s'" % self.init_params
