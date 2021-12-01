@@ -2,6 +2,7 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
+import itertools
 import re
 import sys
 import copy
@@ -162,11 +163,11 @@ def test_gaussian_mixture_attributes():
     with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
 
-    max_iter_bad = 0
+    max_iter_bad = -1
     gmm = GaussianMixture(max_iter=max_iter_bad)
     msg = (
         f"Invalid value for 'max_iter': {max_iter_bad} "
-        "Estimation requires at least one iteration"
+        "The number of iterations must be non-negative"
     )
     with pytest.raises(ValueError, match=msg):
         gmm.fit(X)
@@ -1258,3 +1259,66 @@ def test_gaussian_mixture_setting_best_params():
         "lower_bound_",
     ]:
         assert hasattr(gmm, attr)
+
+
+def test_init_param():
+    # Check that the init_param options produces valid output.
+    # Compare all to default (kmeans).
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+    gmm = GaussianMixture(
+        n_components=n_components, random_state=rng, init_params="kmeans"
+    )
+    gmm.fit(X)
+    default_means = np.sort(gmm.means_.flatten())
+
+    INIT_TYPE = ["random", "rand_data", "k-means++", "kmeans"]
+
+    for init in INIT_TYPE:
+        gmm = GaussianMixture(
+            n_components=n_components,
+            random_state=rng,
+            init_params=init,
+            tol=1e-06,
+            max_iter=1000,
+        )
+        gmm.fit(X)
+        assert_almost_equal(default_means, np.sort(gmm.means_.flatten()), decimal=1)
+
+    # Check that all initialisations provide unique starting means
+
+    rand_data = RandomData(rng, scale=5)
+    X = rand_data.X["full"]
+
+    gmm = GaussianMixture(
+        n_components=n_components, random_state=0, init_params="kmeans", max_iter=1
+    )
+    gmm.fit(X)
+    default_means_init = {}
+
+    for init in INIT_TYPE:
+        gmm = GaussianMixture(
+            n_components=n_components, random_state=0, init_params=init, max_iter=1
+        )
+        gmm.fit(X)
+        default_means_init[init] = gmm.means_
+
+    for i_mean, j_mean in itertools.combinations(default_means_init.values(), r=2):
+        assert np.any(np.not_equal(i_mean, j_mean))
+
+    # Check that max_iter=0 returns initialisation as expected
+    # Pick arbitrary initial means and check equal to max_iter=0
+    means_init = [[20, 30], [30, 25]]
+    gmm = GaussianMixture(
+        n_components=n_components,
+        random_state=rng,
+        means_init=means_init,
+        tol=1e-06,
+        max_iter=0,
+    )
+    gmm.fit(X)
+
+    assert_allclose(gmm.means_, means_init)
