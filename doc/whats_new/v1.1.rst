@@ -193,6 +193,11 @@ Changelog
   :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`
   and :user:`Julien Jerphanion <jjerphan>`.
 
+- |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
+  now raise consistent error message when passed invalid values for `alpha`,
+  `max_iter` and `tol`.
+  :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
