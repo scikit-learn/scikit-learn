@@ -168,6 +168,7 @@ jobs:
         BLAS: 'openblas'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
+        CHECK_MEMORY: 'true'
 
 - template: build_tools/azure/posix.yml
   parameters:
