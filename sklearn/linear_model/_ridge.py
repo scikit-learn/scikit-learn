@@ -11,8 +11,6 @@ Ridge regression
 
 from abc import ABCMeta, abstractmethod
 from functools import partial
-import collections
-import numbers
 import warnings
 
 import numpy as np
@@ -2043,7 +2041,7 @@ class _BaseRidgeCV(LinearModel):
             include_boundaries="neither",
         )
 
-        if isinstance(self.alphas, collections.abc.Collection):
+        if isinstance(self.alphas, (np.ndarray, list, tuple)):
             n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
             if n_alphas != 1:
                 for index, alpha in enumerate(self.alphas):
@@ -2064,7 +2062,7 @@ class _BaseRidgeCV(LinearModel):
 
         if cv is None:
             estimator = _RidgeGCV(
-                self.alphas,
+                alphas,
                 fit_intercept=self.fit_intercept,
                 normalize=self.normalize,
                 scoring=self.scoring,
@@ -2084,7 +2082,7 @@ class _BaseRidgeCV(LinearModel):
             if self.alpha_per_target:
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
 
-            parameters = {"alpha": self.alphas}
+            parameters = {"alpha": alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
             gs = GridSearchCV(
