@@ -114,7 +114,8 @@ class MemoryUsage:
             stats = sorted(stats_filtered, key=lambda x: x[-1]["diff"], reverse=True)
             tr._tw.sep(
                 "=",
-                f"{len(stats)} tests that incremented RAM more than {self.min_ram} MB",
+                f"{len(stats)} tests with a RAM usage increment larger than"
+                f" {self.min_ram} MB",
                 yellow=True,
             )
             for test_name, info in stats:
