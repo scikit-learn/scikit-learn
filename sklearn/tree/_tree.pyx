@@ -190,7 +190,17 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         with nogil:
             # push root node onto stack
-            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0, -INFINITY, INFINITY)
+            rc = stack.push(
+                            0,                  # start
+                            n_node_samples,     # end
+                            0,                  # depth
+                            _TREE_UNDEFINED,    # parent
+                            0,                  # is_left
+                            INFINITY,           # impurity
+                            0,                  # n_constant_features
+                            -INFINITY,          # lower_bound
+                            INFINITY            # upper_bound
+            )
             if rc == -1:
                 # got return code -1 - out-of-memory
                 with gil:
@@ -277,16 +287,32 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         right_child_max = middle_value
 
                     # Push right child on stack
-                    rc = stack.push(split.pos, end, depth + 1, node_id, 0,
-                                    split.impurity_right, n_constant_features,
-                                    right_child_min, right_child_max)
+                    rc = stack.push(
+                                    split.pos,              # start
+                                    end,                    # end
+                                    depth + 1,              # depth
+                                    node_id,                # parent
+                                    0,                      # is_left
+                                    split.impurity_right,   # impurity
+                                    n_constant_features,    # n_constant_features
+                                    right_child_min,        # lower_bound
+                                    right_child_max         # upper_bound
+                    )
                     if rc == -1:
                         break
 
                     # Push left child on stack
-                    rc = stack.push(start, split.pos, depth + 1, node_id, 1,
-                                    split.impurity_left, n_constant_features, left_child_min,
-                                    left_child_max)
+                    rc = stack.push(
+                                    start,                  # start
+                                    split.pos,              # end
+                                    depth + 1,              # depth
+                                    node_id,                # parent
+                                    1,                      # is_left
+                                    split.impurity_left,    # impurity
+                                    n_constant_features,    # n_constant_features
+                                    left_child_min,         # lower_bound
+                                    left_child_max          # upper_bound
+                    )
                     if rc == -1:
                         break
 
@@ -1563,7 +1589,17 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
         # Push root node, using StackRecord.start as node id
-        rc = stack.push(0, 0, 0, -1, 0, 0, 0, -INFINITY, INFINITY)
+        rc = stack.push(
+                        0,          # start
+                        0,          # end
+                        0,          # depth
+                        -1,         # parent
+                        0,          # is_left
+                        0,          # impurity
+                        0,          # n_constant_features
+                        -INFINITY,  # lower_bound
+                        INFINITY    # upper_bound
+        )
         if rc == -1:
             with gil:
                 raise MemoryError("pruning tree")
@@ -1576,12 +1612,32 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 # ... and child_r[node_idx] == _TREE_LEAF:
                 leaves_in_subtree[node_idx] = 1
             else:
-                rc = stack.push(child_l[node_idx], 0, 0, node_idx, 0, 0, 0, -INFINITY, INFINITY)
+                rc = stack.push(
+                                child_l[node_idx],  # start
+                                0,                  # end
+                                0,                  # depth
+                                node_idx,           # parent
+                                0,                  # is_left
+                                0,                  # impurity
+                                0,                  # n_constant_features
+                                -INFINITY,          # lower_bound
+                                INFINITY            # upper_bound
+                )
                 if rc == -1:
                     with gil:
                         raise MemoryError("pruning tree")
 
-                rc = stack.push(child_r[node_idx], 0, 0, node_idx, 0, 0, 0, -INFINITY, INFINITY)
+                rc = stack.push(
+                                child_r[node_idx],  # start
+                                0,                  # end
+                                0,                  # depth
+                                node_idx,           # parent
+                                0,                  # is_left
+                                0,                  # impurity
+                                0,                  # n_constant_features
+                                -INFINITY,          # lower_bound
+                                INFINITY            # upper_bound
+                )
                 if rc == -1:
                     with gil:
                         raise MemoryError("pruning tree")
@@ -1797,7 +1853,17 @@ cdef _build_pruned_tree(
 
     with nogil:
         # push root node onto stack
-        rc = stack.push(0, 0, 0, _TREE_UNDEFINED, 0, 0.0, 0, -INFINITY, INFINITY)
+        rc = stack.push(
+                        0,                  # start
+                        0,                  # end
+                        0,                  # depth
+                        _TREE_UNDEFINED,    # parent
+                        0,                  # is_left
+                        0.0,                # impurity
+                        0,                  # n_constant_features
+                        -INFINITY,          # lower_bound
+                        INFINITY            # upper_bound
+        )
         if rc == -1:
             with gil:
                 raise MemoryError("pruning tree")
@@ -1830,13 +1896,31 @@ cdef _build_pruned_tree(
             if not is_leaf:
                 # Push right child on stack
                 rc = stack.push(
-                    node.right_child, 0, depth + 1, new_node_id, 0, 0.0, 0, -INFINITY, INFINITY)
+                                node.right_child,   # start
+                                0,                  # end
+                                depth + 1,          # depth
+                                new_node_id,        # parent
+                                0,                  # is_left
+                                0.0,                # impurity
+                                0,                  # n_constant_features
+                                -INFINITY,          # lower_bound
+                                INFINITY            # upper_bound
+                )
                 if rc == -1:
                     break
 
                 # push left child on stack
                 rc = stack.push(
-                    node.left_child, 0, depth + 1, new_node_id, 1, 0.0, 0, -INFINITY, INFINITY)
+                                node.left_child,    # start
+                                0,                  # end
+                                depth + 1,          # depth
+                                new_node_id,        # parent
+                                1,                  # is_left
+                                0.0,                # impurity
+                                0,                  # n_constant_features
+                                -INFINITY,          # lower_bound
+                                INFINITY            # upper_bound
+                )
                 if rc == -1:
                     break
 
