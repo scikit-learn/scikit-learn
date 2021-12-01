@@ -18,6 +18,8 @@ from libc.stdlib cimport qsort
 from libc.string cimport memcpy
 from libc.string cimport memset
 
+from cython.operator cimport dereference as deref
+
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -237,15 +239,15 @@ cdef class Splitter:
     cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
         """Check monotonic constraint is satisfied at the current split"""
         cdef bint check_lower, check_upper, check_monotonic
-        check_lower = (self.criterion.sum_left[0] >= lower_bound * self.criterion.weighted_n_left) \
-                      & (self.criterion.sum_right[0] >= lower_bound * self.criterion.weighted_n_right)
-        check_upper = (self.criterion.sum_left[0] <= upper_bound * self.criterion.weighted_n_left) \
-                      & (self.criterion.sum_right[0] <= upper_bound * self.criterion.weighted_n_right)
+        check_lower = (deref(self.criterion.sum_left) >= lower_bound * self.criterion.weighted_n_left) \
+                      & (deref(self.criterion.sum_right) >= lower_bound * self.criterion.weighted_n_right)
+        check_upper = (deref(self.criterion.sum_left) <= upper_bound * self.criterion.weighted_n_left) \
+                      & (deref(self.criterion.sum_right) <= upper_bound * self.criterion.weighted_n_right)
         if monotonic_cst == 0: # No constraint
             return check_lower & check_upper
         else:
-            check_monotonic = (self.criterion.sum_left[0] * self.criterion.weighted_n_right
-                               - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
+            check_monotonic = (deref(self.criterion.sum_left) * self.criterion.weighted_n_right
+                               - deref(self.criterion.sum_right) * self.criterion.weighted_n_left) \
                               * monotonic_cst <= 0
             return check_lower & check_upper & check_monotonic
 
@@ -475,6 +477,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         split[0] = best
         n_constant_features[0] = n_total_constants
         return 0
+
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).

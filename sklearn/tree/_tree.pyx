@@ -1563,17 +1563,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
         # Push root node, using StackRecord.start as node id
-        rc = stack.push(
-                    start=0,
-                    end=0,
-                    depth=0,
-                    parent=-1,
-                    is_left=0,
-                    impurity=0,
-                    n_constant_features=0,
-                    lower_bound=-INFINITY,
-                    upper_bound=INFINITY,
-                )
+        rc = stack.push(0, 0, 0, -1, 0, 0, 0, -INFINITY, INFINITY)
         if rc == -1:
             with gil:
                 raise MemoryError("pruning tree")
