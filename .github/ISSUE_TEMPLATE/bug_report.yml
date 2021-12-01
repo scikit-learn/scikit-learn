@@ -60,7 +60,7 @@ body:
   attributes:
     label: Actual Results
     description: |
-      Please paste or describe the results you observe instead of the expected results. If you observe an error, please paste the error message including the **full traceback** of the exception. For instance for the above code raises the following exception:
+      Please paste or describe the results you observe instead of the expected results. If you observe an error, please paste the error message including the **full traceback** of the exception. For instance the code above raises the following exception:
 
       ```python-traceback
       ---------------------------------------------------------------------------
