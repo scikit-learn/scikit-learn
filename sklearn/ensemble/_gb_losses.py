@@ -109,9 +109,8 @@ class LossFunction(metaclass=ABCMeta):
         k : int, default=0
             The index of the estimator being updated.
         perform_line_search : bool, default=True
-            Whether line search must be performed. Monotonic constraints
-            requires not performing line search.
-
+            Whether line search must be performed. Line search must not be
+            performed under monotonic constraints.
         """
         # compute leaf for each sample in ``X``.
         terminal_regions = tree.apply(X)
@@ -290,8 +289,8 @@ class LeastSquaresError(RegressionLossFunction):
         k : int, default=0
             The index of the estimator being updated.
         perform_line_search : bool, default=True
-            Whether line search must be performed. Monotonic constraints
-            requires not performing line search.
+            Whether line search must be performed. Line search must not be
+            performed under monotonic constraints.
         """
         # update predictions
         raw_predictions[:, k] += learning_rate * tree.predict(X).ravel()
