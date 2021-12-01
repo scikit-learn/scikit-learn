@@ -13,6 +13,7 @@ from abc import ABCMeta, abstractmethod
 import warnings
 
 import numpy as np
+import numbers
 from scipy import linalg
 from scipy import sparse
 from scipy import optimize
@@ -26,6 +27,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
 from ..utils import check_consistent_length
+from ..utils import check_scalar
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
@@ -557,6 +559,17 @@ def _ridge_regression(
             # we implement sample_weight via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
+    # Some callers of this method might pass alpha as single
+    # element array which already has been validated.
+    if alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
+        alpha = check_scalar(
+            alpha,
+            "alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
     # There should be either 1 or n_targets penalties
     alpha = np.asarray(alpha, dtype=X.dtype).ravel()
     if alpha.size not in [1, n_targets]:
@@ -741,6 +754,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        if self.max_iter is not None:
+            self.max_iter = check_scalar(
+                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
+            )
+
+        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
