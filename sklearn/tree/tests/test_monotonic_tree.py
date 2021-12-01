@@ -167,6 +167,7 @@ def test_bad_monotonic_cst_raises():
         with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
 
+
 def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
     # Flip values to always check for increasing constraint
     values = monotonic_sign * tree_.value
