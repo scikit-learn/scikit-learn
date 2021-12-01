@@ -1293,10 +1293,7 @@ def test_ridgecv_scalar_alphas(Estimator, params, err_type, err_msg):
 
     n_samples, n_features = 5, 5
     X = rng.randn(n_samples, n_features)
-    if Estimator is RidgeCV:
-        y = rng.randn(n_samples)
-    else:
-        y = rng.randint(0, 2, n_samples)
+    y = rng.randint(0, 2, n_samples)
 
     with pytest.raises(err_type, match=err_msg):
         Estimator(**params).fit(X, y)
