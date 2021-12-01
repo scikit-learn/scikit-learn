@@ -190,8 +190,7 @@ Changelog
 - |Enhancement| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now raise consistent error message
   when passed invalid values for `alphas`.
-  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`
-  and :user:`Julien Jerphanion <jjerphan>`.
+  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 - |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
   now raise consistent error message when passed invalid values for `alpha`,
