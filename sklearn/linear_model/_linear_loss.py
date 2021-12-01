@@ -79,6 +79,7 @@ class LinearLoss:
             else:
                 intercept = 0.0
                 w = coef
+            raw_prediction = X @ w + intercept
         else:
             # reshape to (n_classes, n_dof)
             w = coef.reshape(self._loss.n_classes, -1)
@@ -87,8 +88,8 @@ class LinearLoss:
                 w = w[:, :-1]
             else:
                 intercept = 0.0
+            raw_prediction = X @ w.T + intercept
 
-        raw_prediction = X @ w.T + intercept
         return w, intercept, raw_prediction
 
     def loss(self, coef, X, y, sample_weight=None, alpha=0.0, n_threads=1):
