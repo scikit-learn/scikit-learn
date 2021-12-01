@@ -1270,19 +1270,51 @@ def test_ridgecv_int_alphas():
     ridge.fit(X, y)
 
 
-def test_ridgecv_negative_alphas():
-    X = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
-    y = [1, 1, 1, -1, -1]
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alphas": (1, -1, -100)}, ValueError, r"alphas\[1\] == -1, must be > 0.0"),
+        (
+            {"alphas": (-0.1, -1.0, -10.0)},
+            ValueError,
+            r"alphas\[0\] == -0.1, must be > 0.0",
+        ),
+        (
+            {"alphas": (1, 1.0, "1")},
+            TypeError,
+            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
+            r" 'str'>",
+        ),
+    ],
+)
+def test_ridgecv_alphas_validation(Estimator, params, err_type, err_msg):
+    """Check the `alphas` validation in RidgeCV and RidgeClassifierCV."""
 
-    # Negative integers
-    ridge = RidgeCV(alphas=(-1, -10, -100))
-    with pytest.raises(ValueError, match="alphas must be strictly positive"):
-        ridge.fit(X, y)
+    n_samples, n_features = 5, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randint(0, 2, n_samples)
 
-    # Negative floats
-    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
-    with pytest.raises(ValueError, match="alphas must be strictly positive"):
-        ridge.fit(X, y)
+    with pytest.raises(err_type, match=err_msg):
+        Estimator(**params).fit(X, y)
+
+
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+def test_ridgecv_alphas_scalar(Estimator):
+    """Check the case when `alphas` is a scalar.
+    This case was supported in the past when `alphas` where converted
+    into array in `__init__`.
+    We add this test to ensure backward compatibility.
+    """
+
+    n_samples, n_features = 5, 5
+    X = rng.randn(n_samples, n_features)
+    if Estimator is RidgeCV:
+        y = rng.randn(n_samples)
+    else:
+        y = rng.randint(0, 2, n_samples)
+
+    Estimator(alphas=1).fit(X, y)
 
 
 def test_raises_value_error_if_solver_not_supported():
