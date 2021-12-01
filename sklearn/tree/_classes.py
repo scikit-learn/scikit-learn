@@ -1006,9 +1006,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             )
             return self
 
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
-
         if check_input:
             # Need to validate separately here.
             # We can't pass multi_ouput=True because that would allow y to be
@@ -1024,18 +1021,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError(
                         "No support for np.int64 index based sparse matrices"
-                    )
-
-            if self.criterion == "poisson":
-                if np.any(y < 0):
-                    raise ValueError(
-                        "Some value(s) of y are negative which is"
-                        " not allowed for Poisson regression."
-                    )
-                if np.sum(y) <= 0:
-                    raise ValueError(
-                        "Sum of y is not positive which is "
-                        "necessary for Poisson regression."
                     )
 
         if X.shape[1] != self.n_features_in_:
