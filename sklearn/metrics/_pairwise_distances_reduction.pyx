@@ -599,7 +599,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         Notes
         -----
-            This public classmethod is responsible of introspecting the arguments
+            This public classmethod is responsible for introspecting the arguments
             values to dispatch to the private :meth:`PairwiseDistancesArgKmin._compute`
             instance method of the most appropriate :class:`PairwiseDistancesArgKmin`
             concrete implementation.
