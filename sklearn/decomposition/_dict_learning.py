@@ -15,7 +15,6 @@ from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ..utils import deprecated
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
@@ -1172,13 +1171,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     Attributes
     ----------
-    components_ : ndarray of shape (n_components, n_features)
-        The unchanged dictionary atoms.
-
-        .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in
-           1.1 (renaming of 0.26). Use `dictionary` instead.
-
     n_components_ : int
         Number of atoms.
 
@@ -1270,15 +1262,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
             Returns the instance itself.
         """
         return self
-
-    @deprecated(  # type: ignore
-        "The attribute `components_` is deprecated "
-        "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
-        "`dictionary` instead."
-    )
-    @property
-    def components_(self):
-        return self.dictionary
 
     def transform(self, X, y=None):
         """Encode the data as a sparse combination of the dictionary atoms.
