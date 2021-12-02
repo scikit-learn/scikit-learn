@@ -2688,3 +2688,58 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+def Fall_out(y_pred , y_true ):
+    mean = (None , )
+    warn_for = "Fall Out"
+    zero_division = "warn"
+    y_pred , y_true = column_or_1d(y_pred) , column_or_1d(y_true)
+    assert_all_finite(y_pred)
+    assert_all_finite(y_true)
+    true_neg , false_pos , false_neg , true_pos = confusion_matrix(y_true, y_pred).ravel()
+    Fall_out = _prf_divide(np.array([false_pos]),
+        np.array([false_pos + true_neg]),
+        "Fall Out",
+        "predicted",
+        mean,
+        warn_for,
+        zero_division
+        )
+    return Fall_out[0]
+
+
+def Miss_rate(y_pred , y_true):
+    mean = (None , )
+    warn_for = "Miss Rate"
+    zero_division = "warn"
+    y_pred , y_true = column_or_1d(y_pred) , column_or_1d(y_true)
+    assert_all_finite(y_pred)
+    assert_all_finite(y_true)
+    true_neg , false_pos , false_neg , true_pos = confusion_matrix(y_true, y_pred).ravel()
+    Fall_out = _prf_divide(np.array([false_neg]),
+        np.array([false_neg + true_pos]),
+        "Miss Rate",
+        "predicted",
+        mean,
+        warn_for,
+        zero_division
+        )
+    return Miss_rate[0]
+
+def Specificity(y_pred , y_true):
+    mean = (None , )
+    warn_for = "Specificity"
+    zero_division = "warn"
+    y_pred , y_true = column_or_1d(y_pred) , column_or_1d(y_true)
+    assert_all_finite(y_pred)
+    assert_all_finite(y_true)
+    true_neg , false_pos , false_neg , true_pos = confusion_matrix(y_true, y_pred).ravel()
+    Fall_out = _prf_divide(np.array([true_neg]),
+        np.array([true_neg + false_pos]),
+        "Specificity",
+        "predicted",
+        mean,
+        warn_for,
+        zero_division
+        )
+    return Specificity[0]
