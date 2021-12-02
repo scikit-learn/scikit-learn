@@ -1,5 +1,6 @@
 import itertools
 import pickle
+import copy
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
@@ -169,16 +170,17 @@ def check_pdist_bool(metric, D_true):
     assert_array_almost_equal(D12, D_true)
 
 
-@pytest.mark.parametrize("use_read_only_kwargs", [True, False])
+@pytest.mark.parametrize("writable_kwargs", [True, False])
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
-def test_pickle(use_read_only_kwargs, metric_param_grid):
+def test_pickle(writable_kwargs, metric_param_grid):
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     for vals in itertools.product(*param_grid.values()):
-        if use_read_only_kwargs:
+        if any(isinstance(val, np.ndarray) for val in vals):
+            vals = copy.deepcopy(vals)
             for val in vals:
                 if isinstance(val, np.ndarray):
-                    val.setflags(write=False)
+                    val.setflags(write=writable_kwargs)
         kwargs = dict(zip(keys, vals))
         check_pickle(metric, kwargs)
 
