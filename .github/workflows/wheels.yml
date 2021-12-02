@@ -173,6 +173,20 @@ jobs:
             python: 310
             platform_id: macosx_x86_64
 
+          # MacOS arm64
+          - os: macos-latest
+            bitness: 64
+            python: 38
+            platform_id: macosx_arm64
+          - os: macos-latest
+            bitness: 64
+            python: 39
+            platform_id: macosx_arm64
+          - os: macos-latest
+            bitness: 64
+            python: 310
+            platform_id: macosx_arm64
+
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v1
@@ -190,10 +204,11 @@ jobs:
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
-                            MACOSX_DEPLOYMENT_TARGET=10.13
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
+          CIBW_TEST_SKIP: "*-macosx_arm64"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
