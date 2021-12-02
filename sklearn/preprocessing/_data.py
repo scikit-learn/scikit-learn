@@ -646,15 +646,18 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators: they might behave badly if the
-    individual features do not more or less look like standard normally
-    distributed data (e.g. Gaussian with 0 mean and unit variance).
+    individual features are not on the same scale. Standardization 
+    helps their performance by bringing the features into the same scale of measurement. 
+    In addition to that, many learning algorithms assume that features are centered around 0 
+    and have similar variances. Standardization improves the performance of these algorithms 
+    by making sure all features have a distribution with mean 0 and standard deviation 1.
 
     For instance many elements used in the objective function of
     a learning algorithm (such as the RBF kernel of Support Vector
     Machines or the L1 and L2 regularizers of linear models) assume that
     all features are centered around 0 and have variance in the same
     order. If a feature has a variance that is orders of magnitude larger
-    that others, it might dominate the objective function and make the
+    than others, it might dominate the objective function and make the
     estimator unable to learn from other features correctly as expected.
 
     This scaler can also be applied to sparse CSR or CSC matrices by passing
