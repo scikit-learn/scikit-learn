@@ -8,14 +8,8 @@ gh_wheel_path = Path.cwd() / ".github" / "workflows" / "wheels.yml"
 with gh_wheel_path.open("r") as f:
     wheel_config = yaml.safe_load(f)
 
-build_matrix = wheel_config["jobs"]["build_wheels"]["strategy"]["matrix"]
-n_python_versions = len(build_matrix["python"])
-
-# Python 3.7, 3.8, and 3.9 each produces 7 wheels
-# 1 osx wheel (x86_64)
-# 4 linux wheel (i686 + x86_64) * (manylinux1 + manylinux2010)
-# 2 windows wheel (win32 + wind_amd64)
-n_wheels = 7 * n_python_versions
+build_matrix = wheel_config["jobs"]["build_wheels"]["strategy"]["matrix"]["include"]
+n_wheels = len(build_matrix)
 
 # NumPy on Python 3.10 only supports 64bit and is only avaliable with manylinux2014
 # With macos and window support the number of wheels should go up to 3
