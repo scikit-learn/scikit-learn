@@ -21,6 +21,8 @@ multi-layer perceptron model on this dataset.
 # License: BSD 3 clause
 
 import time
+from math import sqrt
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -65,8 +67,9 @@ plt.figure(figsize=(10, 5))
 scale = np.abs(coef).max()
 for i in range(10):
     l1_plot = plt.subplot(2, 5, i + 1)
+    pixels = int(sqrt(coef[i].shape[0]))
     l1_plot.imshow(
-        coef[i].reshape(28, 28),
+        coef[i].reshape(pixels, pixels),
         interpolation="nearest",
         cmap=plt.cm.RdBu,
         vmin=-scale,
