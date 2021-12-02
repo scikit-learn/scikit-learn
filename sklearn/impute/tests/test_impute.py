@@ -106,10 +106,45 @@ def test_imputation_error_invalid_strategy(strategy):
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
     X[:, 0] = np.nan
+    imputer = SimpleImputer(strategy=strategy, verbose=1)
 
-    with pytest.warns(UserWarning, match="Deleting"):
-        imputer = SimpleImputer(strategy=strategy, verbose=True)
-        imputer.fit_transform(X)
+    # TODO: Remove in 1.3
+    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
+        imputer.fit(X)
+
+    with pytest.warns(UserWarning, match="Skipping"):
+        imputer.transform(X)
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+def test_imputation_deletion_warning_feature_names(strategy):
+
+    pd = pytest.importorskip("pandas")
+
+    missing_values = np.nan
+    feature_names = np.array(["a", "b", "c", "d"], dtype=object)
+    X = pd.DataFrame(
+        [
+            [missing_values, missing_values, 1, missing_values],
+            [4, missing_values, 2, 10],
+        ],
+        columns=feature_names,
+    )
+
+    imputer = SimpleImputer(strategy=strategy, verbose=1)
+
+    # TODO: Remove in 1.3
+    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
+        imputer.fit(X)
+
+    # check SimpleImputer returning feature name attribute correctly
+    assert_array_equal(imputer.feature_names_in_, feature_names)
+
+    # ensure that skipped feature warning includes feature name
+    with pytest.warns(
+        UserWarning, match=r"Skipping features without any observed values: \['b'\]"
+    ):
+        imputer.transform(X)
 
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
@@ -946,7 +981,7 @@ def test_iterative_imputer_catch_warning():
     imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
     with pytest.warns(None) as record:
         X_fill = imputer.fit_transform(X, y)
-    assert not record.list
+    assert not [w.message for w in record.list]
     assert not np.any(np.isnan(X_fill))
 
 

@@ -5,6 +5,8 @@ import pytest
 from scipy import linalg
 from sklearn.base import clone
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
@@ -898,8 +900,8 @@ def test_copy_X_with_auto_gram():
 def test_lars_dtype_match(LARS, has_coef_path, args, dtype):
     # The test ensures that the fit method preserves input dtype
     rng = np.random.RandomState(0)
-    X = rng.rand(6, 6).astype(dtype)
-    y = rng.rand(6).astype(dtype)
+    X = rng.rand(20, 6).astype(dtype)
+    y = rng.rand(20).astype(dtype)
 
     model = LARS(**args)
     model.fit(X, y)
@@ -928,8 +930,8 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     atol = 1e-5
 
     rng = np.random.RandomState(0)
-    X_64 = rng.rand(6, 6)
-    y_64 = rng.rand(6)
+    X_64 = rng.rand(10, 6)
+    y_64 = rng.rand(10)
 
     model_64 = LARS(**args).fit(X_64, y_64)
     model_32 = LARS(**args).fit(X_64.astype(np.float32), y_64.astype(np.float32))
@@ -938,3 +940,44 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     if has_coef_path:
         assert_allclose(model_64.coef_path_, model_32.coef_path_, rtol=rtol, atol=atol)
     assert_allclose(model_64.intercept_, model_32.intercept_, rtol=rtol, atol=atol)
+
+
+@pytest.mark.parametrize("criterion", ["aic", "bic"])
+def test_lassolarsic_alpha_selection(criterion):
+    """Check that we properly compute the AIC and BIC score.
+
+    In this test, we reproduce the example of the Fig. 2 of Zou et al.
+    (reference [1] in LassoLarsIC) In this example, only 7 features should be
+    selected.
+    """
+    model = make_pipeline(
+        StandardScaler(), LassoLarsIC(criterion=criterion, normalize=False)
+    )
+    model.fit(X, y)
+
+    best_alpha_selected = np.argmin(model[-1].criterion_)
+    assert best_alpha_selected == 7
+
+
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_lassolarsic_noise_variance(fit_intercept):
+    """Check the behaviour when `n_samples` < `n_features` and that one needs
+    to provide the noise variance."""
+    rng = np.random.RandomState(0)
+    X, y = datasets.make_regression(
+        n_samples=10, n_features=11 - fit_intercept, random_state=rng
+    )
+
+    model = make_pipeline(
+        StandardScaler(), LassoLarsIC(fit_intercept=fit_intercept, normalize=False)
+    )
+
+    err_msg = (
+        "You are using LassoLarsIC in the case where the number of samples is smaller"
+        " than the number of features"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        model.fit(X, y)
+
+    model.set_params(lassolarsic__noise_variance=1.0)
+    model.fit(X, y).predict(X)
