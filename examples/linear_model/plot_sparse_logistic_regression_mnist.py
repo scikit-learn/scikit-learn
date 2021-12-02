@@ -32,9 +32,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
-# Turn down for faster convergence
 t0 = time.time()
-train_samples = 5000
 
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
@@ -46,14 +44,14 @@ y = y[permutation]
 X = X.reshape((X.shape[0], -1))
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, train_size=train_samples, test_size=10000, random_state=random_state
+    X, y, test_size=0.2, random_state=random_state
 )
+train_samples, _ = X_train.shape
 
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# Turn up tolerance for faster convergence
 clf = LogisticRegression(C=50.0 / train_samples, penalty="l1", solver="saga", tol=0.1, random_state=random_state)
 clf.fit(X_train, y_train)
 sparsity = np.mean(clf.coef_ == 0) * 100
