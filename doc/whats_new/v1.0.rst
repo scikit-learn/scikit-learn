@@ -801,9 +801,6 @@ Changelog
   :class:`~linear_model.PassiveAggressiveRegressor`.
   :pr:`20683` by `Guillaume Lemaitre`_.
 
-  :class:`linear_model.QuantileRegressor` now.
-  :pr:`21086` by `Venkatachalam Natchiappan`.
-
 :mod:`sklearn.manifold`
 .......................
 
