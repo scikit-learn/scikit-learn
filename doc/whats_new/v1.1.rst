@@ -296,7 +296,7 @@ Changelog
 
 - |Fix| The fetch_* functions are now thread safe. Data is first downloaded
   to a temprary folder and then renamed.
-  :pr:`21552` by :user:`Siavash Rezazadeh <siavrez>`.
+  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 
 Code and Documentation Contributors
 -----------------------------------
