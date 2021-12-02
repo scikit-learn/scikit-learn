@@ -453,20 +453,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._clear_state()
 
             # initialize raw_predictions: those are the accumulated values
-            # predicted by the trees for the training data. raw_predictions has
+            # predicted by the trees for the training data. raw_prediction has
             # shape (n_trees_per_iteration, n_samples) where
             # n_trees_per_iterations is n_classes in multiclass classification,
             # else 1.
+            # self._baseline_prediction has shape (n_trees_per_iteration, 1)
             self._baseline_prediction = np.atleast_1d(
                 self._loss.fit_intercept_only(
                     y_true=y_train, sample_weight=sample_weight_train
                 )
-            ).T
+            ).reshape((-1, 1))
             raw_predictions = np.zeros(
                 shape=(self.n_trees_per_iteration_, n_samples),
                 dtype=self._baseline_prediction.dtype,
             )
-            raw_predictions += self._baseline_prediction[:, None]
+            raw_predictions += self._baseline_prediction
 
             # predictors is a matrix (list of lists) of TreePredictor objects
             # with shape (n_iter_, n_trees_per_iteration)
@@ -498,7 +499,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             dtype=self._baseline_prediction.dtype,
                         )
 
-                        raw_predictions_val += self._baseline_prediction[:, None]
+                        raw_predictions_val += self._baseline_prediction
 
                     self._check_early_stopping_loss(
                         raw_predictions=raw_predictions,
@@ -981,7 +982,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             shape=(self.n_trees_per_iteration_, n_samples),
             dtype=self._baseline_prediction.dtype,
         )
-        raw_predictions += self._baseline_prediction[:, None]
+        raw_predictions += self._baseline_prediction
 
         # We intentionally decouple the number of threads used at prediction
         # time from the number of threads used at fit time because the model
@@ -1047,7 +1048,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             shape=(self.n_trees_per_iteration_, n_samples),
             dtype=self._baseline_prediction.dtype,
         )
-        raw_predictions += self._baseline_prediction[:, None]
+        raw_predictions += self._baseline_prediction
 
         # We intentionally decouple the number of threads used at prediction
         # time from the number of threads used at fit time because the model
