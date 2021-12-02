@@ -197,7 +197,9 @@ estimators = [
     ("Gradient Boosting", gbdt_pipeline),
 ]
 
-stacking_regressor = StackingRegressor(estimators=estimators, cv=2, final_estimator=RidgeCV())
+stacking_regressor = StackingRegressor(
+    estimators=estimators, cv=2, final_estimator=RidgeCV()
+)
 stacking_regressor
 
 # %%
