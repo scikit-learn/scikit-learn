@@ -186,6 +186,7 @@ Communication
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Github Discussions: https://github.com/scikit-learn/scikit-learn/discussions
 - Website: https://scikit-learn.org
+- LinkedIn: https://www.linkedin.com/company/scikit-learn
 
 Citation
 ~~~~~~~~
