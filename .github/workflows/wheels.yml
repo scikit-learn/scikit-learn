@@ -61,6 +61,10 @@ jobs:
             python: 39
             bitness: 64
             platform_id: win_amd64
+          - os: windows-latest
+            python: 310
+            bitness: 64
+            platform_id: win_amd64
 
           # Window 32 bit
           - os: windows-latest
@@ -109,6 +113,13 @@ jobs:
             bitness: 64
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2010
+            
+          # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
+          - os: ubuntu-latest
+            python: 310
+            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
 
           # Linux 32 bit manylinux1
           - os: ubuntu-latest
@@ -156,6 +167,10 @@ jobs:
           - os: macos-latest
             bitness: 64
             python: 39
+            platform_id: macosx_x86_64
+          - os: macos-latest
+            bitness: 64
+            python: 310
             platform_id: macosx_x86_64
 
     steps:
