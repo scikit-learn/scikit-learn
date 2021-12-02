@@ -43,7 +43,7 @@ cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
     return 0
 
 
-cdef int init_node(BinaryTree tree, ITYPE_t i_node,
+cdef int init_node(BinaryTree tree, NodeData_t[::1] node_data, ITYPE_t i_node,
                    ITYPE_t idx_start, ITYPE_t idx_end) except -1:
     """Initialize the node for the dataset stored in tree.data"""
     cdef ITYPE_t n_features = tree.data.shape[1]
@@ -94,9 +94,9 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
                                  data + n_features * idx_array[i],
                                  n_features))
 
-    tree.node_data[i_node].radius = tree.dist_metric._rdist_to_dist(radius)
-    tree.node_data[i_node].idx_start = idx_start
-    tree.node_data[i_node].idx_end = idx_end
+    node_data[i_node].radius = tree.dist_metric._rdist_to_dist(radius)
+    node_data[i_node].idx_start = idx_start
+    node_data[i_node].idx_end = idx_end
     return 0
 
 
