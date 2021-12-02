@@ -174,7 +174,7 @@ mamba create -n $CONDA_ENV_NAME --yes --quiet \
     "$(get_dep sphinx $SPHINX_VERSION)" \
     "$(get_dep pandas $PANDAS_VERSION)" \
     joblib memory_profiler packaging seaborn pillow pytest coverage \
-    compilers
+    compilers nss=3.72
 
 source activate testenv
 # Pin PyWavelet to 1.1.1 that is the latest version that support our minumum
@@ -194,6 +194,8 @@ export SKLEARN_BUILD_PARALLEL=3
 python setup.py develop
 
 export OMP_NUM_THREADS=1
+
+python -c "import sklearn; sklearn.show_versions()"
 
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
