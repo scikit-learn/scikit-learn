@@ -23,7 +23,7 @@ doesn't converge, in this case this is what we want because of resource
 usage constraints on our Continuous Integration infrastructure that is used
 to build this documentation on a regular basis.
 """
-
+import time
 import warnings
 import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_openml
@@ -31,9 +31,12 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 
+print("Starting fetching MNIST dataset...")
+start = time.time()
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml("mnist_784", version=1, return_X_y=True)
 X = X / 255.0
+print(f"Elapsed time: {time.time() - start:.2f}s")
 
 # Split data into train partition and test partition
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, test_size=0.7)
