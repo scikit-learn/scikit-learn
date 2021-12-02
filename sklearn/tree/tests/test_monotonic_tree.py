@@ -135,10 +135,8 @@ def test_multiclass_raises():
 
 
 def test_multiple_output_raises():
-    X = [[1, 2, 3, 4, 5],
-         [6, 7, 8, 9, 10]]
-    y = [[1, 0, 1, 0, 1],
-         [1, 0, 1, 0, 1]]
+    X = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]
+    y = [[1, 0, 1, 0, 1], [1, 0, 1, 0, 1]]
 
     for name, TreeClassifier in CLF_TREES.items():
         est = TreeClassifier(
