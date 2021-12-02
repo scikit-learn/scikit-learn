@@ -252,11 +252,11 @@ for ax, (name, est) in zip(
 ):
     start_time = time.time()
     score = cross_validate(
-        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=-1, verbose=0, cv=2
+        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=2, verbose=0, cv=2
     )
     elapsed_time = time.time() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0, cv=2)
+    y_pred = cross_val_predict(est, X, y, n_jobs=2, verbose=0, cv=2)
 
     plot_regression_results(
         ax,

@@ -173,7 +173,8 @@ mamba create -n $CONDA_ENV_NAME --yes --quiet \
     "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
     "$(get_dep sphinx $SPHINX_VERSION)" \
     "$(get_dep pandas $PANDAS_VERSION)" \
-    joblib memory_profiler packaging seaborn pillow pytest coverage
+    joblib memory_profiler packaging seaborn pillow pytest coverage \
+    compilers
 
 source activate testenv
 # Pin PyWavelet to 1.1.1 that is the latest version that support our minumum
