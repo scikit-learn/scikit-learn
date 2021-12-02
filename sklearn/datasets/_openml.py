@@ -108,12 +108,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     local_path = _get_local_path(openml_path, data_home)
     dir_name, file_name = os.path.split(local_path)
     if not os.path.exists(local_path):
-        try:
-            os.makedirs(dir_name)
-        except OSError:
-            # potentially, the directory has been created already
-            pass
-
+        os.makedirs(dir_name, exist_ok=True)
         try:
             with TemporaryDirectory(dir=dir_name) as tmpdir:
                 with closing(urlopen(req)) as fsrc:

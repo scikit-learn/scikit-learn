@@ -113,10 +113,10 @@ Changelog
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-  
+
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and 
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
   :user:`Krum Arnaudov <krumeto>`.
 
 - |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
@@ -290,6 +290,13 @@ Changelog
   been generated on a platform with a different bitness. A typical example is
   to train and pickle the model on 64 bit machine and load the model on a 32
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
+
+:mod:`sklearn.datasets`
+...................
+
+- |Fix| The fetch_* functions are now thread safe. Data is first downloaded
+  to a temprary folder and then renamed.
+  :pr:`21552` by :user:`Siavash Rezazadeh <siavrez>`.
 
 Code and Documentation Contributors
 -----------------------------------
