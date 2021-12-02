@@ -47,36 +47,116 @@ jobs:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        python: [37, 38, 39]
-        bitness: [32, 64]
-        manylinux_image: [manylinux1, manylinux2010]
         include:
-          # Run 32 and 64 bit version in parallel for Linux and Windows
+          # Window 64 bit
           - os: windows-latest
+            python: 37
             bitness: 64
             platform_id: win_amd64
           - os: windows-latest
+            python: 38
+            bitness: 64
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 39
+            bitness: 64
+            platform_id: win_amd64
+
+          # Window 32 bit
+          - os: windows-latest
+            python: 37
             bitness: 32
             platform_id: win32
+          - os: windows-latest
+            python: 38
+            bitness: 32
+            platform_id: win32
+          - os: windows-latest
+            python: 39
+            bitness: 32
+            platform_id: win32
+
+          # Linux 64 bit manylinux1
           - os: ubuntu-latest
+            python: 37
             bitness: 64
             platform_id: manylinux_x86_64
+            manylinux_image: manylinux1
           - os: ubuntu-latest
+            python: 38
+            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux1
+          - os: ubuntu-latest
+            python: 39
+            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux1
+
+          # Linux 64 bit manylinux2010
+          - os: ubuntu-latest
+            python: 37
+            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2010
+          - os: ubuntu-latest
+            python: 38
+            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2010
+          - os: ubuntu-latest
+            python: 39
+            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2010
+
+          # Linux 32 bit manylinux1
+          - os: ubuntu-latest
+            python: 37
             bitness: 32
             platform_id: manylinux_i686
+            manylinux_image: manylinux1
+          - os: ubuntu-latest
+            python: 38
+            bitness: 32
+            platform_id: manylinux_i686
+            manylinux_image: manylinux1
+          - os: ubuntu-latest
+            python: 39
+            bitness: 32
+            platform_id: manylinux_i686
+            manylinux_image: manylinux1
+
+          # Linux 32 bit manylinux2010
+          - os: ubuntu-latest
+            python: 37
+            bitness: 32
+            platform_id: manylinux_i686
+            manylinux_image: manylinux2010
+          - os: ubuntu-latest
+            python: 38
+            bitness: 32
+            platform_id: manylinux_i686
+            manylinux_image: manylinux2010
+          - os: ubuntu-latest
+            python: 39
+            bitness: 32
+            platform_id: manylinux_i686
+            manylinux_image: manylinux2010
+
+          # MacOS x86_64
           - os: macos-latest
             bitness: 64
+            python: 37
             platform_id: macosx_x86_64
-        exclude:
           - os: macos-latest
-            bitness: 32
-          # Remove manylinux1 from the windows and osx build matrix since
-          # manylinux_image is not used for these platforms
-          - os: windows-latest
-            manylinux_image: manylinux1
+            bitness: 64
+            python: 38
+            platform_id: macosx_x86_64
           - os: macos-latest
-            manylinux_image: manylinux1
+            bitness: 64
+            python: 39
+            platform_id: macosx_x86_64
 
     steps:
       - name: Checkout scikit-learn
