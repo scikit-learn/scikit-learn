@@ -44,7 +44,7 @@ y = y[permutation]
 X = X.reshape((X.shape[0], -1))
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, train_size=train_samples, test_size=10000
+    X, y, train_size=train_samples, test_size=10000, random_state=random_state
 )
 
 scaler = StandardScaler()
@@ -52,7 +52,7 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 # Turn up tolerance for faster convergence
-clf = LogisticRegression(C=50.0 / train_samples, penalty="l1", solver="saga", tol=0.1)
+clf = LogisticRegression(C=50.0 / train_samples, penalty="l1", solver="saga", tol=0.1, random_state=random_state)
 clf.fit(X_train, y_train)
 sparsity = np.mean(clf.coef_ == 0) * 100
 score = clf.score(X_test, y_test)
