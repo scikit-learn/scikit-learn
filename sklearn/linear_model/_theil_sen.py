@@ -235,7 +235,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         number of features), consider only a stochastic subpopulation of a
         given maximal size if 'n choose k' is larger than max_subpopulation.
         For other than small problem sizes this parameter will determine
-        memory usage and runtime if n_subsamples is not changed.
+        memory usage and runtime if n_subsamples is not changed. Note that the
+        data type should be int but floats such as 1e4 can be accepted too.
 
     n_subsamples : int, default=None
         Number of samples to calculate the parameters. This is at least the
@@ -327,7 +328,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         *,
         fit_intercept=True,
         copy_X=True,
-        max_subpopulation=10_000,
+        max_subpopulation=1e4,
         n_subsamples=None,
         max_iter=300,
         tol=1.0e-3,
@@ -380,7 +381,9 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self._max_subpopulation = check_scalar(
             self.max_subpopulation,
             "max_subpopulation",
-            target_type=numbers.Integral,
+            # target_type should be numbers.Integral but can accept float
+            # for backward compatibility reasons
+            target_type=numbers.Real,
             min_val=1,
         )
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))

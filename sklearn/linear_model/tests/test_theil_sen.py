@@ -194,7 +194,7 @@ def test_theil_sen_2d():
     lstq = LinearRegression().fit(X, y)
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(max_subpopulation=1000, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(max_subpopulation=1e3, random_state=0).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
@@ -210,7 +210,7 @@ def test_calc_breakdown_point():
         (
             {"max_subpopulation": "hello"},
             TypeError,
-            "max_subpopulation must be an instance of <class 'numbers.Integral'>",
+            "max_subpopulation must be an instance of <class 'numbers.Real'>",
         ),
         (
             {"max_subpopulation": -1},
@@ -275,7 +275,7 @@ def test_theil_sen_parallel():
     lstq = LinearRegression().fit(X, y)
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(n_jobs=2, random_state=0, max_subpopulation=2000).fit(
+    theil_sen = TheilSenRegressor(n_jobs=2, random_state=0, max_subpopulation=2e3).fit(
         X, y
     )
     assert_array_almost_equal(theil_sen.coef_, w, 1)
