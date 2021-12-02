@@ -496,6 +496,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     kernel : kernel instance, default=None
@@ -630,8 +632,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     >>> gpc.predict_proba(X[:2,:])
     array([[0.83548752, 0.03228706, 0.13222543],
            [0.79064206, 0.06525643, 0.14410151]])
-
-    .. versionadded:: 0.18
     """
 
     def __init__(

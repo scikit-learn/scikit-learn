@@ -216,7 +216,10 @@ def test_pipeline_init():
     repr(pipe)
 
     # Check that params are not set when naming them wrong
-    msg = "Invalid parameter C for estimator SelectKBest"
+    msg = re.escape(
+        "Invalid parameter 'C' for estimator SelectKBest(). Valid parameters are: ['k',"
+        " 'score_func']."
+    )
     with pytest.raises(ValueError, match=msg):
         pipe.set_params(anova__C=0.1)
 
@@ -316,17 +319,25 @@ def test_pipeline_raise_set_params_error():
 
     # expected error message
     error_msg = re.escape(
-        f"Invalid parameter fake for estimator {pipe}. "
-        "Check the list of available parameters "
-        "with `estimator.get_params().keys()`."
+        "Invalid parameter 'fake' for estimator Pipeline(steps=[('cls',"
+        " LinearRegression())]). Valid parameters are: ['memory', 'steps', 'verbose']."
     )
-
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
 
-    # nested model check
+    # invalid outer parameter name for compound parameter: the expected error message
+    # is the same as above.
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake__estimator="nope")
+
+    # expected error message for invalid inner parameter
+    error_msg = re.escape(
+        "Invalid parameter 'invalid_param' for estimator LinearRegression(). Valid"
+        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'normalize',"
+        " 'positive']."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        pipe.set_params(cls__invalid_param="nope")
 
 
 def test_pipeline_methods_pca_svm():
@@ -1517,3 +1528,24 @@ def test_pipeline_check_if_fitted():
         check_is_fitted(pipeline)
     pipeline.fit(iris.data, iris.target)
     check_is_fitted(pipeline)
+
+
+def test_pipeline_get_feature_names_out_passes_names_through():
+    """Check that pipeline passes names through.
+
+    Non-regresion test for #21349.
+    """
+    X, y = iris.data, iris.target
+
+    class AddPrefixStandardScalar(StandardScaler):
+        def get_feature_names_out(self, input_features=None):
+            names = super().get_feature_names_out(input_features=input_features)
+            return np.asarray([f"my_prefix_{name}" for name in names], dtype=object)
+
+    pipe = make_pipeline(AddPrefixStandardScalar(), StandardScaler())
+    pipe.fit(X, y)
+
+    input_names = iris.feature_names
+    feature_names_out = pipe.get_feature_names_out(input_names)
+
+    assert_array_equal(feature_names_out, [f"my_prefix_{name}" for name in input_names])

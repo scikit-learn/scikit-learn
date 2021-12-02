@@ -839,7 +839,7 @@ def export_graphviz(
 
     Returns
     -------
-    dot_data : string
+    dot_data : str
         String representation of the input tree in GraphViz dot format.
         Only returned if ``out_file`` is None.
 
@@ -961,7 +961,7 @@ def export_text(
 
     Returns
     -------
-    report : string
+    report : str
         Text summary of all the rules in the decision tree.
 
     Examples

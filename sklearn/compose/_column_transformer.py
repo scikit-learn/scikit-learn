@@ -1002,6 +1002,7 @@ class make_column_selector:
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> from sklearn.compose import make_column_selector
+    >>> import numpy as np
     >>> import pandas as pd  # doctest: +SKIP
     >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
     ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP

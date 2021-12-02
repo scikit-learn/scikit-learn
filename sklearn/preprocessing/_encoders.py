@@ -544,7 +544,7 @@ class OneHotEncoder(_BaseEncoder):
 
         indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
-        np.sum(X_mask, axis=1, out=indptr[1:])
+        np.sum(X_mask, axis=1, out=indptr[1:], dtype=indptr.dtype)
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
@@ -701,9 +701,6 @@ class OneHotEncoder(_BaseEncoder):
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
-
-        Returns `input_features` as this transformation doesn't add or drop
-        features.
 
         Parameters
         ----------

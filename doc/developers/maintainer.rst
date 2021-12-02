@@ -211,6 +211,12 @@ Making a release
 
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Publish+to+Pypi%22
 
+4.1 You can test the conda-forge builds by submitting a PR to the feedstock
+    repo: https://github.com/conda-forge/scikit-learn-feedstock. If you want to
+    publish an RC release on conda-forge, the PR should target the `rc` branch
+    as opposed to the `master` branch. The two branches need to be kept sync
+    together otherwise.
+
 5. If this went fine, you can proceed with tagging. Proceed with caution.
    Ideally, tags should be created when you're almost certain that the release
    is ready, since adding a tag to the main repo can trigger certain automated
@@ -272,11 +278,11 @@ Making a release
        git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
        cd scikit-learn.github.io
        echo stable > .git/info/sparse-checkout
-       git checkout master
+       git checkout main
        rm stable
        ln -s 0.999 stable
        sed -i "s/latestStable = '.*/latestStable = '0.999';/" versionwarning.js
-       git add stable/ versionwarning.js
+       git add stable versionwarning.js
        git commit -m "Update stable to point to 0.999"
        git push origin master
 
@@ -293,14 +299,11 @@ The following GitHub checklist might be helpful in a release PR::
     * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
     * [ ] create tag on the main github repo
-    * [ ] upload the wheels and source tarball to PyPI
-    * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
     * [ ] confirm bot detected at
       https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
+    * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
-    * [ ] fix the binder release version in ``.binder/requirement.txt`` (see
-      #15847)
-    * [ ] announce on mailing list and on twitter
+    * [ ] announce on mailing list and on Twitter, and LinkedIn
 
 Merging Pull Requests
 ---------------------

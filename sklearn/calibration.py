@@ -30,19 +30,23 @@ from .base import (
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import (
     column_or_1d,
-    deprecated,
     indexable,
     check_matplotlib_support,
 )
 
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
-from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight, _num_samples
+from .utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_consistent_length,
+    check_is_fitted,
+)
 from .utils import _safe_indexing
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
+from .metrics._base import _check_pos_label_consistency
 from .metrics._plot.base import _get_response
 
 
@@ -267,6 +271,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         check_classification_targets(y)
         X, y = indexable(X, y)
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
@@ -303,15 +309,17 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             # sample_weight checks
             fit_parameters = signature(base_estimator.fit).parameters
             supports_sw = "sample_weight" in fit_parameters
-            if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
-                if not supports_sw:
-                    estimator_name = type(base_estimator).__name__
-                    warnings.warn(
-                        f"Since {estimator_name} does not support "
-                        "sample_weights, sample weights will only be"
-                        " used for the calibration itself."
-                    )
+            if sample_weight is not None and not supports_sw:
+                estimator_name = type(base_estimator).__name__
+                warnings.warn(
+                    f"Since {estimator_name} does not appear to accept sample_weight, "
+                    "sample weights will only be used for the calibration itself. This "
+                    "can be caused by a limitation of the current scikit-learn API. "
+                    "See the following issue for more details: "
+                    "https://github.com/scikit-learn/scikit-learn/issues/21134. Be "
+                    "warned that the result of the calibration is likely to be "
+                    "incorrect."
+                )
 
             # Check that each cross-validation fold can have at least one
             # example per class
@@ -351,6 +359,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             else:
                 this_estimator = clone(base_estimator)
                 _, method_name = _get_prediction_method(this_estimator)
+                fit_params = (
+                    {"sample_weight": sample_weight}
+                    if sample_weight is not None and supports_sw
+                    else None
+                )
                 pred_method = partial(
                     cross_val_predict,
                     estimator=this_estimator,
@@ -359,6 +372,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     cv=cv,
                     method=method_name,
                     n_jobs=self.n_jobs,
+                    fit_params=fit_params,
                 )
                 predictions = _compute_predictions(
                     pred_method, method_name, X, n_classes
@@ -436,7 +450,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         return {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
+                    "Due to the cross-validation and sample ordering, removing a sample"
+                    " is not strictly equal to putting is weight to zero. Specific unit"
+                    " tests are added for CalibratedClassifierCV specifically."
                 ),
             }
         }
@@ -649,16 +665,6 @@ class _CalibratedClassifier:
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach based on isotonic regression.
-
-    Attributes
-    ----------
-    calibrators_ : list of fitted estimator instances
-        Same as `calibrators`. Exposed for backward-compatibility. Use
-        `calibrators` instead.
-
-        .. deprecated:: 0.24
-           `calibrators_` is deprecated from 0.24 and will be removed in
-           1.1 (renaming of 0.26). Use `calibrators` instead.
     """
 
     def __init__(self, base_estimator, calibrators, *, classes, method="sigmoid"):
@@ -666,16 +672,6 @@ class _CalibratedClassifier:
         self.calibrators = calibrators
         self.classes = classes
         self.method = method
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`calibrators_` is deprecated in 0.24 and will be removed in 1.1"
-        "(renaming of 0.26). Use `calibrators` instead."
-    )
-    @property
-    def calibrators_(self):
-        return self.calibrators
 
     def predict_proba(self, X):
         """Calculate calibrated probabilities.
@@ -760,10 +756,17 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
 
     F = predictions  # F follows Platt's notations
 
-    # Bayesian priors (see Platt end of section 2.2)
-    prior0 = float(np.sum(y <= 0))
-    prior1 = y.shape[0] - prior0
-    T = np.zeros(y.shape)
+    # Bayesian priors (see Platt end of section 2.2):
+    # It corresponds to the number of samples, taking into account the
+    # `sample_weight`.
+    mask_negative_samples = y <= 0
+    if sample_weight is not None:
+        prior0 = (sample_weight[mask_negative_samples]).sum()
+        prior1 = (sample_weight[~mask_negative_samples]).sum()
+    else:
+        prior0 = float(np.sum(mask_negative_samples))
+        prior1 = y.shape[0] - prior0
+    T = np.zeros_like(y, dtype=np.float64)
     T[y > 0] = (prior1 + 1.0) / (prior1 + 2.0)
     T[y <= 0] = 1.0 / (prior0 + 2.0)
     T1 = 1.0 - T
@@ -847,7 +850,9 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="uniform"):
+def calibration_curve(
+    y_true, y_prob, *, pos_label=None, normalize=False, n_bins=5, strategy="uniform"
+):
     """Compute true and predicted probabilities for a calibration curve.
 
     The method assumes the inputs come from a binary classifier, and
@@ -864,6 +869,11 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
 
     y_prob : array-like of shape (n_samples,)
         Probabilities of the positive class.
+
+    pos_label : int or str, default=None
+        The label of the positive class.
+
+        .. versionadded:: 1.1
 
     normalize : bool, default=False
         Whether y_prob needs to be normalized into the [0, 1] interval, i.e.
@@ -915,6 +925,7 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
     check_consistent_length(y_true, y_prob)
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
 
     if normalize:  # Normalize predicted values into interval [0, 1]
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
@@ -926,9 +937,9 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5, strategy="un
     labels = np.unique(y_true)
     if len(labels) > 2:
         raise ValueError(
-            "Only binary classification is supported. Provided labels %s." % labels
+            f"Only binary classification is supported. Provided labels {labels}."
         )
-    y_true = label_binarize(y_true, classes=labels)[:, 0]
+    y_true = y_true == pos_label
 
     if strategy == "quantile":  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)
@@ -983,6 +994,13 @@ class CalibrationDisplay:
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
+    pos_label : str or int, default=None
+        The positive class when computing the calibration curve.
+        By default, `estimators.classes_[1]` is considered as the
+        positive class.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     line_ : matplotlib Artist
@@ -1022,11 +1040,14 @@ class CalibrationDisplay:
     <...>
     """
 
-    def __init__(self, prob_true, prob_pred, y_prob, *, estimator_name=None):
+    def __init__(
+        self, prob_true, prob_pred, y_prob, *, estimator_name=None, pos_label=None
+    ):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
         self.estimator_name = estimator_name
+        self.pos_label = pos_label
 
     def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
         """Plot visualization.
@@ -1063,6 +1084,9 @@ class CalibrationDisplay:
             fig, ax = plt.subplots()
 
         name = self.estimator_name if name is None else name
+        info_pos_label = (
+            f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
+        )
 
         line_kwargs = {}
         if name is not None:
@@ -1075,10 +1099,12 @@ class CalibrationDisplay:
             ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
 
-        if "label" in line_kwargs:
-            ax.legend(loc="lower right")
+        # We always have to show the legend for at least the reference line
+        ax.legend(loc="lower right")
 
-        ax.set(xlabel="Mean predicted probability", ylabel="Fraction of positives")
+        xlabel = f"Mean predicted probability {info_pos_label}"
+        ylabel = f"Fraction of positives {info_pos_label}"
+        ax.set(xlabel=xlabel, ylabel=ylabel)
 
         self.ax_ = ax
         self.figure_ = ax.figure
@@ -1093,6 +1119,7 @@ class CalibrationDisplay:
         *,
         n_bins=5,
         strategy="uniform",
+        pos_label=None,
         name=None,
         ref_line=True,
         ax=None,
@@ -1137,6 +1164,13 @@ class CalibrationDisplay:
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
+
+        pos_label : str or int, default=None
+            The positive class when computing the calibration curve.
+            By default, `estimators.classes_[1]` is considered as the
+            positive class.
+
+            .. versionadded:: 1.1
 
         name : str, default=None
             Name for labeling curve. If `None`, the name of the estimator is
@@ -1185,10 +1219,8 @@ class CalibrationDisplay:
         if not is_classifier(estimator):
             raise ValueError("'estimator' should be a fitted classifier.")
 
-        # FIXME: `pos_label` should not be set to None
-        # We should allow any int or string in `calibration_curve`.
-        y_prob, _ = _get_response(
-            X, estimator, response_method="predict_proba", pos_label=None
+        y_prob, pos_label = _get_response(
+            X, estimator, response_method="predict_proba", pos_label=pos_label
         )
 
         name = name if name is not None else estimator.__class__.__name__
@@ -1197,6 +1229,7 @@ class CalibrationDisplay:
             y_prob,
             n_bins=n_bins,
             strategy=strategy,
+            pos_label=pos_label,
             name=name,
             ref_line=ref_line,
             ax=ax,
@@ -1211,6 +1244,7 @@ class CalibrationDisplay:
         *,
         n_bins=5,
         strategy="uniform",
+        pos_label=None,
         name=None,
         ref_line=True,
         ax=None,
@@ -1250,6 +1284,13 @@ class CalibrationDisplay:
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
+
+        pos_label : str or int, default=None
+            The positive class when computing the calibration curve.
+            By default, `estimators.classes_[1]` is considered as the
+            positive class.
+
+            .. versionadded:: 1.1
 
         name : str, default=None
             Name for labeling curve.
@@ -1296,11 +1337,16 @@ class CalibrationDisplay:
         check_matplotlib_support(method_name)
 
         prob_true, prob_pred = calibration_curve(
-            y_true, y_prob, n_bins=n_bins, strategy=strategy
+            y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
         )
-        name = name if name is not None else "Classifier"
+        name = "Classifier" if name is None else name
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
 
         disp = cls(
-            prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob, estimator_name=name
+            prob_true=prob_true,
+            prob_pred=prob_pred,
+            y_prob=y_prob,
+            estimator_name=name,
+            pos_label=pos_label,
         )
         return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
