@@ -115,7 +115,7 @@ def test_nan_support():
     # Make sure nans are OK if the underlying estimator supports nans
 
     rng = np.random.RandomState(0)
-    n_samples, n_features = 100, 10
+    n_samples, n_features = 40, 4
     X, y = make_regression(n_samples, n_features, random_state=0)
     nan_mask = rng.randint(0, 2, size=(n_samples, n_features), dtype=bool)
     X[nan_mask] = np.nan
