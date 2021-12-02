@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.datasets import fetch_openml
+from sklearn.datasets import load_digits
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -34,8 +35,11 @@ from sklearn.utils import check_random_state
 
 t0 = time.time()
 
-# Load data from https://www.openml.org/d/554
-X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
+# Load toy dataset
+X, y = load_digits(return_X_y=True, as_frame=False)
+
+# Alternatively, load larger MNIST data set from OpenML, https://www.openml.org/d/554
+# X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
 
 random_state = check_random_state(0)
 permutation = random_state.permutation(X.shape[0])
@@ -52,7 +56,7 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-clf = LogisticRegression(C=50.0 / train_samples, penalty="l1", solver="saga", tol=0.1, random_state=random_state)
+clf = LogisticRegression(C=20.0 / train_samples, penalty="l1", solver="saga", tol=0.1, random_state=random_state)
 clf.fit(X_train, y_train)
 sparsity = np.mean(clf.coef_ == 0) * 100
 score = clf.score(X_test, y_test)
