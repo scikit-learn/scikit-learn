@@ -12,7 +12,7 @@ jobs:
       - NUMPY_VERSION: 'min'
       - SCIPY_VERSION: 'min'
       - MATPLOTLIB_VERSION: 'min'
-      - CYTHON_VERSION: 'latest'
+      - CYTHON_VERSION: 'min'
       - SCIKIT_IMAGE_VERSION: 'min'
       - SPHINX_VERSION: 'min'
       - PANDAS_VERSION: 'min'
