@@ -577,11 +577,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             begin_at_stage = self.n_iter_
 
         # initialize gradients and hessians (empty arrays).
-        # shape = (n_trees_per_iteration, n_samples).
-        gradients, hessians = _init_gradients_and_hessians(
-            constant_hessian=self._loss.constant_hessian,
-            n_samples=n_samples,
-            prediction_dim=self.n_trees_per_iteration_,
+        # shape = (n_samples, n_trees_per_iteration).
+        gradient, hessian = self._loss.init_gradient_and_hessian(
+            n_samples=n_samples, dtype=G_H_DTYPE, order="F"
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
@@ -595,13 +593,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Update gradients and hessians, inplace
             # Note that self._loss expects shape (n_samples,) for
             # n_trees_per_iteration = 1 else shape (n_samples, n_trees_per_iteration).
-            # T (transpose) returns a view.
             if self._loss.constant_hessian:
                 self._loss.gradient(
                     y_true=y_train,
                     raw_prediction=raw_predictions.T,
                     sample_weight=sample_weight_train,
-                    gradient_out=gradients.T,
+                    gradient_out=gradient,
                     n_threads=n_threads,
                 )
             else:
@@ -609,20 +606,29 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     y_true=y_train,
                     raw_prediction=raw_predictions.T,
                     sample_weight=sample_weight_train,
-                    gradient_out=gradients.T,
-                    hessian_out=hessians.T,
+                    gradient_out=gradient,
+                    hessian_out=hessian,
                     n_threads=n_threads,
                 )
 
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
 
+            # 2-d views of shape (n_samples, n_trees_per_iteration_) or (n_samples, 1)
+            # on gradient and hessian to simplify the loop over n_trees_per_iteration_.
+            if gradient.ndim == 1:
+                g_view = gradient.reshape((-1, 1))
+                h_view = hessian.reshape((-1, 1))
+            else:
+                g_view = gradient
+                h_view = hessian
+
             # Build `n_trees_per_iteration` trees.
             for k in range(self.n_trees_per_iteration_):
                 grower = TreeGrower(
-                    X_binned_train,
-                    gradients[k, :],
-                    hessians[k, :],
+                    X_binned=X_binned_train,
+                    gradients=g_view[:, k],
+                    hessians=h_view[:, k],
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
