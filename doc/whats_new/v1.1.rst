@@ -294,7 +294,7 @@ Changelog
 :mod:`sklearn.datasets`
 ...................
 
-- |Fix| The fetch_* functions are now thread safe. Data is first downloaded
+- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
   to a temporary subfolder and then renamed.
   :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 
