@@ -55,7 +55,7 @@ Changelog
 .........................
 
 - |Fix| :meth:`multiclass.OneVsRestClassifier.predict_proba` dose not error when
-  fitted on constant integer targets. :pr:`xxxxx` by `Thomas Fan`_.
+  fitted on constant integer targets. :pr:`21871` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
 ........................
