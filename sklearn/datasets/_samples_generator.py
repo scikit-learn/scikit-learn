@@ -1461,7 +1461,7 @@ def make_sparse_spd_matrix(
     return prec
 
 
-def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None):
+def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     """Generate a swiss roll dataset.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1469,7 +1469,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None):
     Parameters
     ----------
     n_samples : int, default=100
-        The number of sample points on the S curve.
+        The number of sample points on the Swiss Roll.
 
     noise : float, default=0.0
         The standard deviation of the gaussian noise.
@@ -1478,6 +1478,9 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None):
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    hole : bool, default=False
+        If True generates the swiss roll with hole dataset.
 
     Returns
     -------
@@ -1500,12 +1503,22 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None):
     """
     generator = check_random_state(random_state)
 
-    t = 1.5 * np.pi * (1 + 2 * generator.rand(1, n_samples))
+    if not hole:
+        t = 1.5 * np.pi * (1 + 2 * generator.rand(n_samples))
+        y = 21 * generator.rand(n_samples)
+    else:
+        corners = np.array(
+            [[np.pi * (1.5 + i), j * 7] for i in range(3) for j in range(3)]
+        )
+        corners = np.delete(corners, 4, axis=0)
+        corner_index = generator.choice(8, n_samples)
+        parameters = generator.rand(2, n_samples) * np.array([[np.pi], [7]])
+        t, y = corners[corner_index].T + parameters
+
     x = t * np.cos(t)
-    y = 21 * generator.rand(1, n_samples)
     z = t * np.sin(t)
 
-    X = np.concatenate((x, y, z))
+    X = np.vstack((x, y, z))
     X += noise * generator.randn(3, n_samples)
     X = X.T
     t = np.squeeze(t)
