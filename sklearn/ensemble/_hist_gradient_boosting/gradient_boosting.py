@@ -48,47 +48,6 @@ _LOSSES.update(
 )
 
 
-def _init_gradients_and_hessians(constant_hessian, n_samples, prediction_dim):
-    """Return initial gradients and hessians.
-
-    Unless hessians are constant, arrays are initialized with undefined values.
-
-    Parameters
-    ----------
-    constant_hessian : bool
-        Usual input is loss.constant_hessian.
-    n_samples : int
-        The number of samples passed to `fit()`.
-    prediction_dim : int
-        The dimension of a raw prediction, i.e. the number of trees
-        built at each iteration. Equals 1 for regression and binary
-        classification, or K where K is the number of classes for
-        multiclass classification.
-
-    Returns
-    -------
-    gradients : ndarray, shape (prediction_dim, n_samples)
-        The initial gradients. The array is not initialized.
-    hessians : ndarray, shape (prediction_dim, n_samples)
-        If hessians are constant (e.g. for `LeastSquares` loss, the
-        array is initialized to ``1``. Otherwise, the array is allocated
-        without being initialized.
-    """
-    shape = (prediction_dim, n_samples)
-    gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
-
-    if constant_hessian:
-        # If the hessians are constant, we consider they are equal to 1.
-        # - This is correct for the half LS loss
-        # - For the Absolute Error, hessians are actually 0, but they are
-        # always ignored anyway.
-        hessians = np.ones(shape=(1, 1), dtype=G_H_DTYPE)
-    else:
-        hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
-
-    return gradients, hessians
-
-
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     """Update the leaf values to be predicted by the tree.
 
