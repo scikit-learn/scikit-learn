@@ -255,16 +255,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
 
-                if tree.max_n_classes == 1:
-                    # Regression
-                    middle_value = tree.value[node_id]
-                else:
-                    # Classification
-                    with gil:
-                        middle_value = (
-                            tree._get_value_ndarray()[node_id][0][0]
-                            / np.sum(tree._get_value_ndarray()[node_id][0])
-                        )
+                middle_value = tree._get_middle_value(node_id)
 
                 if not is_leaf:
                     if splitter.monotonic_cst[split.feature] == 0:
@@ -433,27 +424,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                 else:
                     # Node is expandable
-                    if tree.max_n_classes == 1:
-                        # Regression
-                        middle_value = tree.value[record.node_id]
-                    else:
-                        # Classification
-                        with gil:
-                            middle_value = (
-                                tree._get_value_ndarray()[record.node_id][0][0]
-                                / np.sum(tree._get_value_ndarray()[record.node_id][0])
-                            )
                     if splitter.monotonic_cst[node.feature] == 0:
                         left_child_min = record.lower_bound
                         left_child_max = record.upper_bound
                         right_child_min = record.lower_bound
                         right_child_max = record.upper_bound
                     elif splitter.monotonic_cst[node.feature] == 1:
+                        middle_value = tree._get_middle_value(record.node_id)
                         left_child_min = record.lower_bound
                         left_child_max = middle_value
                         right_child_min = middle_value
                         right_child_max = record.upper_bound
                     elif splitter.monotonic_cst[node.feature] == -1:
+                        middle_value = tree._get_middle_value(record.node_id)
                         left_child_min = middle_value
                         left_child_max = record.upper_bound
                         right_child_min = record.lower_bound
@@ -1221,6 +1204,27 @@ cdef class Tree:
         if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
         return arr
+
+    cdef inline double _get_middle_value(self, int node_id) nogil:
+        cdef:
+            int i
+            double middle_value = 0
+
+        if self.max_n_classes == 1:
+            # Regression
+            middle_value = self.value[node_id]
+        else:
+            # Classification
+
+            # This performs some raw pointers arithmetic
+            # Ideally a memory view could wrap self.value so that's
+            # indexing on several axis can be used.
+            for i in range(self.max_n_classes):
+                middle_value += self.value[node_id * self.value_stride + i]
+
+            middle_value = self.value[node_id * self.value_stride] / middle_value
+
+        return middle_value
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
                                    int[::1] target_features,
