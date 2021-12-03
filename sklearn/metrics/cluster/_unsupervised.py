@@ -302,7 +302,7 @@ def calinski_harabasz_score(X, labels):
 
 
 def davies_bouldin_score(X, labels):
-    """Computes the Davies-Bouldin score.
+    """Compute the Davies-Bouldin score.
 
     The score is defined as the average similarity measure of each cluster with
     its most similar cluster, where similarity is the ratio of within-cluster
