@@ -105,7 +105,6 @@ def silhouette_score(
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
-
     """
     if sample_size is not None:
         X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
