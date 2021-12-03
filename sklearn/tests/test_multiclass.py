@@ -971,3 +971,18 @@ def test_support_missing_values(MultiClassClassifier):
     lr = make_pipeline(SimpleImputer(), LogisticRegression(random_state=rng))
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
+
+
+def test_constant_int_target():
+    """Check that constant y target does not raise.
+
+    Non-regression test for #21869"""
+    X = np.ones((10, 2))
+    y = np.zeros((10, 1), dtype=np.int32)
+    ovr = OneVsRestClassifier(LogisticRegression())
+
+    ovr.fit(X, y)
+    y_pred = ovr.predict_proba(X)
+    expected = np.zeros((X.shape[0], 2))
+    expected[:, 0] = 1
+    np.testing.assert_allclose(y_pred, expected)
