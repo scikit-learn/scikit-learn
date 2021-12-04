@@ -15,8 +15,8 @@ significant speedups.
 
 import numpy as np
 import warnings
-from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
+from .fixes import line_search_wolfe1, line_search_wolfe2
 from ..exceptions import ConvergenceWarning
 
 
