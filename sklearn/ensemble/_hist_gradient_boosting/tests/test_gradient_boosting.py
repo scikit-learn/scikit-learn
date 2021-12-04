@@ -24,6 +24,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
@@ -707,12 +708,14 @@ def test_sum_hessians_are_sample_weight(loss_name):
     bin_mapper = _BinMapper()
     X_binned = bin_mapper.fit_transform(X)
 
+    # While sample weights are supposed to be positive, this still works.
     sample_weight = rng.normal(size=n_samples)
 
     loss = _LOSSES[loss_name](sample_weight=sample_weight)
     gradients, hessians = loss.init_gradient_and_hessian(
-        n_samples=n_samples,
+        n_samples=n_samples, dtype=G_H_DTYPE
     )
+    gradients, hessians = gradients.reshape((-1, 1)), hessians.reshape((-1, 1))
     raw_predictions = rng.normal(size=(1, n_samples))
     loss.gradient_hessian(
         y_true=y,
@@ -734,7 +737,9 @@ def test_sum_hessians_are_sample_weight(loss_name):
             ]
 
     # Build histogram
-    grower = TreeGrower(X_binned, gradients[0], hessians[0], n_bins=bin_mapper.n_bins)
+    grower = TreeGrower(
+        X_binned, gradients[:, 0], hessians[:, 0], n_bins=bin_mapper.n_bins
+    )
     histograms = grower.histogram_builder.compute_histograms_brute(
         grower.root.sample_indices
     )
