@@ -328,6 +328,13 @@ Changelog
   to train and pickle the model on 64 bit machine and load the model on a 32
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
 
+:mod:`sklearn.datasets`
+...................
+
+- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
+  to a temporary subfolder and then renamed.
+  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
