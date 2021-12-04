@@ -499,6 +499,7 @@ class OneVsRestClassifier(
 
         if not self.multilabel_:
             # Then, probabilities should be normalized to 1.
+            Y = Y.astype(np.float64)
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
