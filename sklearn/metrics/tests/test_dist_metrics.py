@@ -71,9 +71,6 @@ else:
     METRICS_DEFAULT_PARAMS.append(
         ("wminkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
     )
-METRICS_DEFAULT_PARAMS.append(
-    ("minkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
-)
 
 
 def check_cdist(metric, kwargs, X1, X2):
