@@ -110,6 +110,10 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     if not os.path.exists(local_path):
         os.makedirs(dir_name, exist_ok=True)
         try:
+            # Create a tmpdir as a subfolder of dir_name where the final file will
+            # be moved to if the download is successful. This guarantees that the
+            # renaming operation to the final location is atomic to ensure the
+            # concurrence safety of the dataset caching mechanism.
             with TemporaryDirectory(dir=dir_name) as tmpdir:
                 with closing(urlopen(req)) as fsrc:
                     opener: Callable
