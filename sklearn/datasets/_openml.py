@@ -12,6 +12,7 @@ import itertools
 from collections.abc import Generator
 from collections import OrderedDict
 from functools import partial
+from tempfile import TemporaryDirectory
 
 from urllib.request import urlopen, Request
 
@@ -105,22 +106,24 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
         return fsrc
 
     local_path = _get_local_path(openml_path, data_home)
+    dir_name, file_name = os.path.split(local_path)
     if not os.path.exists(local_path):
+        os.makedirs(dir_name, exist_ok=True)
         try:
-            os.makedirs(os.path.dirname(local_path))
-        except OSError:
-            # potentially, the directory has been created already
-            pass
-
-        try:
-            with closing(urlopen(req)) as fsrc:
-                opener: Callable
-                if is_gzip_encoded(fsrc):
-                    opener = open
-                else:
-                    opener = gzip.GzipFile
-                with opener(local_path, "wb") as fdst:
-                    shutil.copyfileobj(fsrc, fdst)
+            # Create a tmpdir as a subfolder of dir_name where the final file will
+            # be moved to if the download is successful. This guarantees that the
+            # renaming operation to the final location is atomic to ensure the
+            # concurrence safety of the dataset caching mechanism.
+            with TemporaryDirectory(dir=dir_name) as tmpdir:
+                with closing(urlopen(req)) as fsrc:
+                    opener: Callable
+                    if is_gzip_encoded(fsrc):
+                        opener = open
+                    else:
+                        opener = gzip.GzipFile
+                    with opener(os.path.join(tmpdir, file_name), "wb") as fdst:
+                        shutil.copyfileobj(fsrc, fdst)
+                shutil.move(fdst.name, local_path)
         except Exception:
             if os.path.exists(local_path):
                 os.unlink(local_path)
