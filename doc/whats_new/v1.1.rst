@@ -113,10 +113,10 @@ Changelog
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-  
+
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and 
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
   :user:`Krum Arnaudov <krumeto>`.
 
 - |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
@@ -154,6 +154,15 @@ Changelog
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
 
+- |API| Changed the default of :func:`max_features` to 1.0 for
+  :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
+  :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
+  results as before, but are much easier to understand. The old default value
+  `"auto"` has been deprecated and will be removed in version 1.3. The same
+  changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
+  :class:`ensemble.ExtraTreesClassifier`.
+  :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -169,6 +178,11 @@ Changelog
   :pr:`21448` by :user:`Oleh Kozynets <OlehKSS>` and
   :user:`Christian Ritter <chritter>`.
 
+- |Enhancement| :class:`SimpleImputer` now warns with feature names
+  when features which are skipped due to the lack of any observed
+  values in the training set.
+  :pr:`21617` by :user:`Christian Ritter <chritter>`.
+
 - |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
   `predict` was performing an `argmax` on the scores obtained from
   `decision_function` instead of returning the multilabel indicator matrix.
@@ -177,6 +191,16 @@ Changelog
 - |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
   multilabel classification.
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now raise consistent error message
+  when passed invalid values for `alphas`.
+  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+- |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
+  now raise consistent error message when passed invalid values for `alpha`,
+  `max_iter` and `tol`.
+  :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -242,6 +266,15 @@ Changelog
   instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
 
+- |Enhancement| Added the `get_feature_names_out` method and a new parameter
+  `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
+  `feature_names_out` to 'one-to-one' to use the input features names as the
+  output feature names, or you can set it to a callable that returns the output
+  feature names. This is especially useful when the transformer changes the
+  number of features. If `feature_names_out` is None (which is the default),
+  then `get_output_feature_names` is not defined.
+  :pr:`21569` by :user:`Aurélien Geron <ageron>`.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -256,6 +289,10 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
+  left corner of the HTML representation to show how the elements are
+  clickable. :pr:`21298` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
 ........................

@@ -9,6 +9,13 @@ Version 1.0.2
 
 **In Development**
 
+- |Fix| :class:`cluster.Birch`,
+  :class:`feature_selection.RFECV`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.GradientBoostingRegressor`, and
+  :class:`ensemble.GradientBoostingClassifier` do not raise warning when fitted
+  on a pandas DataFrame anymore. :pr:`21578` by `Thomas Fan`_.
+
 Changelog
 ---------
 
@@ -43,6 +50,12 @@ Changelog
   accept a weight parameter with `metric="minknowski"` to yield results that
   are always consistent with `scipy.spatial.distance.cdist`.
   :pr:`21741` by :user:`Olivier Grisel <ogrisel>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly supports
+  read-only buffer attributes. :pr:`21845` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................

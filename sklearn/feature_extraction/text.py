@@ -633,7 +633,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     preprocessor : callable, default=None
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     tokenizer : callable, default=None
         Override the string tokenization step while preserving the
@@ -665,7 +665,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
         unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
         only bigrams.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     analyzer : {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word or character n-grams.
@@ -933,7 +933,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     preprocessor : callable, default=None
         Override the preprocessing (strip_accents and lowercase) stage while
         preserving the tokenizing and n-grams generation steps.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     tokenizer : callable, default=None
         Override the string tokenization step while preserving the
@@ -969,7 +969,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         such that min_n <= n <= max_n will be used. For example an
         ``ngram_range`` of ``(1, 1)`` means only unigrams, ``(1, 2)`` means
         unigrams and bigrams, and ``(2, 2)`` means only bigrams.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     analyzer : {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word n-gram or character
@@ -1753,7 +1753,7 @@ class TfidfVectorizer(CountVectorizer):
     preprocessor : callable, default=None
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     tokenizer : callable, default=None
         Override the string tokenization step while preserving the
@@ -1804,7 +1804,7 @@ class TfidfVectorizer(CountVectorizer):
         will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
         unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
         only bigrams.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     max_df : float or int, default=1.0
         When building the vocabulary ignore terms that have a document
