@@ -714,9 +714,9 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             aggressive_elimination=aggressive_elimination,
         )
         self.param_grid = param_grid
-        _check_param_grid(self.param_grid)
 
     def _generate_candidate_params(self):
+        _check_param_grid(self.param_grid)
         return ParameterGrid(self.param_grid)
 
 

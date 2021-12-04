@@ -1385,10 +1385,10 @@ class GridSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
         self.param_grid = param_grid
-        _check_param_grid(param_grid)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
+        _check_param_grid(self.param_grid)
         evaluate_candidates(ParameterGrid(self.param_grid))
 
 
