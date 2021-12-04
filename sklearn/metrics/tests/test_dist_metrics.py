@@ -70,6 +70,9 @@ else:
     METRICS_DEFAULT_PARAMS.append(
         ("wminkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
     )
+METRICS_DEFAULT_PARAMS.append(
+    ("minkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
+)
 
 
 def check_cdist(metric, kwargs, X1, X2):
@@ -88,6 +91,8 @@ def check_cdist(metric, kwargs, X1, X2):
     assert_array_almost_equal(D_sklearn, D_scipy_cdist)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 @pytest.mark.parametrize("X1, X2", [(X1, X2), (X1_mmap, X2_mmap)])
 def test_cdist(metric_param_grid, X1, X2):
@@ -119,6 +124,8 @@ def check_cdist_bool(metric, D_true):
     assert_array_almost_equal(D12, D_true)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 @pytest.mark.parametrize("X1, X2", [(X1, X2), (X1_mmap, X2_mmap)])
 def test_pdist(metric_param_grid, X1, X2):
@@ -169,6 +176,8 @@ def check_pdist_bool(metric, D_true):
     assert_array_almost_equal(D12, D_true)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("use_read_only_kwargs", [True, False])
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 def test_pickle(use_read_only_kwargs, metric_param_grid):
@@ -183,6 +192,8 @@ def test_pickle(use_read_only_kwargs, metric_param_grid):
         check_pickle(metric, kwargs)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X1_bool", [X1_bool, X1_bool_mmap])
 def test_pickle_bool_metrics(metric, X1_bool):
@@ -260,6 +271,8 @@ def test_input_data_size():
     assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 def test_readonly_kwargs():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/21685
@@ -275,3 +288,25 @@ def test_readonly_kwargs():
     DistanceMetric.get_metric("seuclidean", V=weights)
     DistanceMetric.get_metric("wminkowski", p=1, w=weights)
     DistanceMetric.get_metric("mahalanobis", VI=VI)
+
+
+def test_minkowski_metric_validate_weights():
+    w1 = rng.random_sample(d)
+    w1[0] = -1337
+    msg = "w cannot contain negative weights"
+    with pytest.raises(ValueError, match=msg):
+        DistanceMetric.get_metric("minkowski", p=3, w=w1)
+
+    w2 = rng.random_sample(d + 1)
+    dm = DistanceMetric.get_metric("minkowski", p=3, w=w2)
+    msg = "size of w does not match"
+    with pytest.raises(ValueError, match=msg):
+        dm.pairwise(X1, X2)
+
+
+# TODO: Remove in 1.3 when mwinkowski is removed
+def test_wminkowski_deprecated():
+    w = rng.random_sample(d)
+    msg = "WMinkowskiDistance is deprecated in version 1.1"
+    with pytest.warns(FutureWarning, match=msg):
+        DistanceMetric.get_metric("wminkowski", p=3, w=w)
