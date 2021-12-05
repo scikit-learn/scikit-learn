@@ -1055,10 +1055,6 @@ Changelog
   deprecated and will be removed in 1.2.
   :pr:`20843` by :user:`Juan Martín Loyola <jmloyola>`.
 
-- |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
-  better supports significantly non-Gaussian data when searching for an optimal
-  lambda. :pr:`20653` by `Thomas Fan`_.
-
 :mod:`sklearn.tree`
 ...................
 

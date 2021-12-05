@@ -266,6 +266,10 @@ Changelog
   instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
+  better supports significantly non-Gaussian data when searching for an optimal
+  lambda. :pr:`20653` by `Thomas Fan`_.
+
 - |Enhancement| Added the `get_feature_names_out` method and a new parameter
   `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
   `feature_names_out` to 'one-to-one' to use the input features names as the
