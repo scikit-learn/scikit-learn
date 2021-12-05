@@ -48,7 +48,7 @@ def cluster_qr(vectors):
     """
 
     k = vectors.shape[1]
-    _, _, piv = qr(vectors.T, pivoting=True, check_finite=False)
+    _, _, piv = qr(vectors.T, pivoting=True)
     ut, _, v = svd(vectors[piv[:k], :].T)
     vectors = abs(np.dot(vectors, np.dot(ut, v.conj())))
     return vectors.argmax(axis=1)
