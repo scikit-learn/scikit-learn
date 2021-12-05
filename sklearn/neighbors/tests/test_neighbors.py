@@ -1276,7 +1276,7 @@ def test_neighbors_badargs():
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5):
     # Test computing the neighbors for various metrics
     # create a symmetric matrix
@@ -1384,7 +1384,7 @@ def test_callable_metric():
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 def test_valid_brute_metric_for_auto_algorithm():
     X = rng.rand(12, 12)
     Xcsr = csr_matrix(X)

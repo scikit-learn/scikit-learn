@@ -124,7 +124,7 @@ cdef class DistanceMetric:
         Use `MinkowskiDistance` instead. Note that in `MinkowskiDistance`, the weights are
         applied to the absolute differences already raised to the p power. This is different from
         `WMinkowskiDistance` where weights are applied to the absolute differences before raising
-        to the p power. The deprecation aims to remain consistent with Scipy-1.8 convention.
+        to the p power. The deprecation aims to remain consistent with SciPy 1.8 convention.
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
     distance metric requires data in the form of [latitude, longitude] and both
@@ -566,29 +566,34 @@ cdef class MinkowskiDistance(DistanceMetric):
         elif np.isinf(p):
             raise ValueError("MinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
-        elif w is not None and any(w_i < 0 for w_i in w):
-            raise ValueError("w cannot contain negative weights")
 
         self.p = p
-        self.vec = ReadonlyArrayWrapper(np.asarray([], dtype=DTYPE))
-        self.size = 0
         if w is not None:
-            self.vec = ReadonlyArrayWrapper(np.asarray(w, dtype=DTYPE))
+            w_array = np.asarray(w, dtype=DTYPE)
+            if (w_array < 0).any():
+                raise ValueError("w cannot contain negative weights")
+            self.vec = ReadonlyArrayWrapper(w_array)
             self.size = self.vec.shape[0]
+        else:
+            self.vec = ReadonlyArrayWrapper(np.asarray([], dtype=DTYPE))
+            self.size = 0
 
     def _validate_data(self, X):
         if self.size > 0 and X.shape[1] != self.size:
-            raise ValueError('MinkowskiDistance dist: '
-                             'size of w does not match')
+            raise ValueError('MinkowskiDistance: size of w %d should match '
+                             'col of input %d' % (self.size, X.shape[1]))
 
     cdef inline DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        cdef DTYPE_t vec_j, d=0
+        cdef DTYPE_t d=0
         cdef np.intp_t j
         cdef bint has_w = self.size > 0
-        for j in range(size):
-            vec_j = self.vec[j] if has_w else 1.
-            d += vec_j * pow(fabs(x1[j] - x2[j]), self.p)
+        if has_w:
+            for j in range(size):
+                d += self.vec[j] * pow(fabs(x1[j] - x2[j]), self.p)
+        else:
+            for j in range(size):
+                d += pow(fabs(x1[j] - x2[j]), self.p)
         return d
 
     cdef inline DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
