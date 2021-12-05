@@ -1045,7 +1045,7 @@ def test_init_gradient_and_hessians(loss, sample_weight, dtype, order):
 def test_init_gradient_and_hessian_raises(loss, params, err_msg):
     """Test that init_gradient_and_hessian raises errors for invalid input."""
     loss = loss()
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises((ValueError, TypeError), match=err_msg):
         gradient, hessian = loss.init_gradient_and_hessian(n_samples=5, **params)
 
 
