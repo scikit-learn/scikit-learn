@@ -55,9 +55,9 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
-            dist = norm(X_scaled.data - X.data)
+            dist = norm(X_scaled.data - X.data, check_finite=False)
         else:
-            dist = norm(X_scaled - X_new)
+            dist = norm(X_scaled - X_new, check_finite=False)
         X_scaled = X_new
         if dist is not None and dist < tol:
             break
@@ -145,7 +145,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         elif self.svd_method == "arpack":
-            u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs)
+            u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs, check_finite=False)
             if np.any(np.isnan(vt)):
                 # some eigenvalues of A * A.T are negative, causing
                 # sqrt() to be np.nan. This causes some vectors in vt
@@ -154,14 +154,14 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                 random_state = check_random_state(self.random_state)
                 # initialize with [-1,1] as in ARPACK
                 v0 = random_state.uniform(-1, 1, A.shape[0])
-                _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
+                _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0, check_finite=False)
                 vt = v.T
             if np.any(np.isnan(u)):
                 A = safe_sparse_dot(array, array.T)
                 random_state = check_random_state(self.random_state)
                 # initialize with [-1,1] as in ARPACK
                 v0 = random_state.uniform(-1, 1, A.shape[0])
-                _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
+                _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0, check_finite=False)
 
         assert_all_finite(u)
         assert_all_finite(vt)
