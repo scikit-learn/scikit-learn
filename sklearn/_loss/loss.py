@@ -119,7 +119,7 @@ class BaseLoss:
     differentiable = True
     is_multiclass = False
 
-    def __init__(self, closs, link, n_classes=1):
+    def __init__(self, closs, link, n_classes=None):
         self.closs = closs
         self.link = link
         self.approx_hessian = False
