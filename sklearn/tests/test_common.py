@@ -423,12 +423,11 @@ def test_transformers_get_feature_names_out(transformer):
 
 
 VALIDATE_ESTIMATOR_INIT = [
-    "ColumnTransformer",    #_set_params
+    "ColumnTransformer",
     "FeatureHasher",
-    "FeatureUnion",         #_validate_transformers
+    "FeatureUnion",
     "GridSearchCV",
     "HalvingGridSearchCV",
-#    "Pipeline",             #_get_params, steps
     "SGDOneClassSVM",
     "TheilSenRegressor",
     "TweedieRegressor",
