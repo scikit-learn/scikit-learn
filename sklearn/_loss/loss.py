@@ -489,15 +489,10 @@ class BaseLoss:
             If constant_hessian is True (e.g. `HalfSquaredError`), the array is
             initialized to ``1``.
         """
-        supported_dtype = (np.float64, np.float32)
-        if dtype not in supported_dtype:
+        if dtype not in (np.float32, np.float64):
             raise ValueError(
-                f"Valid options for 'dtype' are {supported_dtype}. "
+                "Valid options for 'dtype' are np.float32 and np.flaot64. "
                 f"Got dtype={dtype} instead."
-            )
-        if order not in ("C", "F"):
-            raise ValueError(
-                f"Valid options for 'order' are {order}. Got dtype={dtype} instead."
             )
 
         if self.is_multiclass:

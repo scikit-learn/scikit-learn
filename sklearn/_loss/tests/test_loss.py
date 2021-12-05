@@ -991,7 +991,7 @@ def test_predict_proba(loss):
             )
 
 
-@pytest.mark.parametrize("loss", ALL_LOSSES, ids=loss_instance_name)
+@pytest.mark.parametrize("loss", ALL_LOSSES)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 @pytest.mark.parametrize("order", ("C", "F"))
@@ -1029,6 +1029,24 @@ def test_init_gradient_and_hessians(loss, sample_weight, dtype, order):
     else:
         assert gradient.flags.f_contiguous
         assert hessian.flags.f_contiguous
+
+
+@pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {"dtype": np.int64},
+            f"Valid options for 'dtype' are .* Got dtype={np.int64} instead.",
+        ),
+        ({"order": "nonsense"}, "order must be one of 'C', 'F'"),
+    ],
+)
+def test_init_gradient_and_hessian_raises(loss, params, err_msg):
+    """Test that init_gradient_and_hessian raises errors for invalid input."""
+    loss = loss()
+    with pytest.raises(ValueError, match=err_msg):
+        gradient, hessian = loss.init_gradient_and_hessian(n_samples=5, **params)
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
