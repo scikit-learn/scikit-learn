@@ -147,9 +147,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
 
         random_state = check_random_state(self.random_state)
 
@@ -335,16 +333,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.min_impurity_decrease < 0.0:
             raise ValueError("min_impurity_decrease must be greater than or equal to 0")
 
-        # TODO: Remove in 1.1
-        if X_idx_sorted != "deprecated":
-            warnings.warn(
-                "The parameter 'X_idx_sorted' is deprecated and has no "
-                "effect. It will be removed in 1.1 (renaming of 0.26). You "
-                "can suppress this warning by not passing any value to the "
-                "'X_idx_sorted' parameter.",
-                FutureWarning,
-            )
-
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
@@ -391,7 +379,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             self.tree_ = Tree(
                 self.n_features_in_,
-                # TODO: tree should't need this in this case
+                # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
             )
@@ -805,6 +793,12 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -890,9 +884,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -916,12 +908,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated:: 0.24
-
         Returns
         -------
         self : DecisionTreeClassifier
@@ -933,7 +919,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -1032,8 +1017,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"squared_error", "mse", "friedman_mse", "absolute_error", \
-            "mae", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "friedman_mse", "absolute_error", \
+            "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
@@ -1185,6 +1170,12 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1263,9 +1254,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree regressor from the training set (X, y).
 
         Parameters
@@ -1288,12 +1277,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated :: 0.24
-
         Returns
         -------
         self : DecisionTreeRegressor
@@ -1305,7 +1288,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -1515,6 +1497,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1612,8 +1600,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "mse", "friedman_mse", "mae"}, \
-            default="squared_error"
+    criterion : {"squared_error", "friedman_mse"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and "mae" for the
@@ -1741,6 +1728,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     feature_importances_ : ndarray of shape (n_features,)
         Return impurity-based feature importances (the higher, the more

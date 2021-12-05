@@ -974,7 +974,7 @@ test is therefore only able to show when the model reliably outperforms
 random guessing.
 
 Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
-using brute force and interally fits ``(n_permutations + 1) * n_cv`` models.
+using brute force and internally fits ``(n_permutations + 1) * n_cv`` models.
 It is therefore only tractable with small datasets for which fitting an
 individual model is very fast.
 

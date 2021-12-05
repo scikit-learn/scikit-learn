@@ -4,6 +4,8 @@ set -e
 set -x
 
 UNAMESTR=`uname`
+N_CORES=`nproc --all`
+
 
 setup_ccache() {
     echo "Setting up ccache"
@@ -12,8 +14,10 @@ setup_ccache() {
     for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
       ln -s $(which ccache) "/tmp/ccache/${name}"
     done
-    export PATH="/tmp/ccache/:${PATH}"
-    ccache -M 256M
+    export PATH="/tmp/ccache:${PATH}"
+    # Unset ccache limits
+    ccache -F 0
+    ccache -M 0
 }
 
 # imports get_dep
@@ -21,40 +25,64 @@ source build_tools/shared.sh
 
 sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
 sudo apt-get update
-sudo apt-get install python3-virtualenv ccache
-python3 -m virtualenv --system-site-packages --python=python3 testenv
-source testenv/bin/activate
-pip install --upgrade pip
+
+# Setup conda environment
+MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
+
+# Install Mambaforge
+wget $MINICONDA_URL -O mambaforge.sh
+MINICONDA_PATH=$HOME/miniconda
+chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
+export PATH=$MINICONDA_PATH/bin:$PATH
+mamba init --all --verbose
+mamba update --yes conda
+
+# Create environment and install dependencies
+mamba create -n testenv --yes $(get_dep python $PYTHON_VERSION)
+source activate testenv
+
+# Use the latest by default
+mamba install --verbose -y  ccache \
+                            pip \
+                            $(get_dep numpy $NUMPY_VERSION) \
+                            $(get_dep scipy $SCIPY_VERSION) \
+                            $(get_dep cython $CYTHON_VERSION) \
+                            $(get_dep joblib $JOBLIB_VERSION) \
+                            $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
+                            $(get_dep pytest $PYTEST_VERSION) \
+                            $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 setup_ccache
-python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                      $(get_dep joblib $JOBLIB_VERSION)
-python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-                      $(get_dep pytest $PYTEST_VERSION) \
-                      $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
-fi
-
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    python -m pip install pytest-xdist
+    mamba install --verbose -y codecov pytest-cov
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     # numpydoc requires sphinx
-    python -m pip install sphinx
-    python -m pip install numpydoc
+    mamba install --verbose -y sphinx
+    mamba install --verbose -y numpydoc
 fi
 
 python --version
 
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
+# Set parallelism to $N_CORES + 1 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with $N_CORES cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
 
-python -m pip list
-pip install --verbose --editable .
-ccache -s
+# Disable the build isolation and build in the tree so that the same folder can be
+# cached between CI runs.
+# TODO: remove the '--use-feature' flag when made obsolete in pip 21.3.
+pip install --verbose --no-build-isolation --use-feature=in-tree-build .
+
+# Report cache usage
+ccache -s --verbose
+
+mamba list
+
+# Changing directory not to have module resolution use scikit-learn source
+# directory but to the installed package.
+cd /tmp
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
-python -m pytest sklearn
+# Test using as many workers as available cores
+pytest --pyargs -n $N_CORES sklearn

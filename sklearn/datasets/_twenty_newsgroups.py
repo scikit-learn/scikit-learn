@@ -184,7 +184,7 @@ def fetch_20newsgroups(
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    categories : array-like, dtype=str or unicode, default=None
+    categories : array-like, dtype=str, default=None
         If None (default), load all the categories.
         If not None, list of category names to load (other categories
         ignored).
@@ -479,7 +479,7 @@ def fetch_20newsgroups_vectorized(
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()
         X_test = vectorizer.transform(data_test.data).tocsr()
-        feature_names = vectorizer.get_feature_names()
+        feature_names = vectorizer.get_feature_names_out()
 
         joblib.dump((X_train, X_test, feature_names), target_file, compress=9)
 

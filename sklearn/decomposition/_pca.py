@@ -20,7 +20,7 @@ from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
@@ -203,6 +203,14 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
+    n_oversamples : int, default=10
+        This parameter is only relevant when `svd_solver="randomized"`.
+        It corresponds to the additional number of random vectors to sample the
+        range of `X` so as to ensure proper conditioning. See
+        :func:`~sklearn.utils.extmath.randomized_svd` for more details.
+
+        .. versionadded:: 1.1
+
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
@@ -272,6 +280,12 @@ class PCA(_BasePCA):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -346,6 +360,7 @@ class PCA(_BasePCA):
         svd_solver="auto",
         tol=0.0,
         iterated_power="auto",
+        n_oversamples=10,
         random_state=None,
     ):
         self.n_components = n_components
@@ -354,6 +369,7 @@ class PCA(_BasePCA):
         self.svd_solver = svd_solver
         self.tol = tol
         self.iterated_power = iterated_power
+        self.n_oversamples = n_oversamples
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -362,8 +378,8 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Ignored.
@@ -373,6 +389,13 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
+        check_scalar(
+            self.n_oversamples,
+            "n_oversamples",
+            min_val=1,
+            target_type=numbers.Integral,
+        )
+
         self._fit(X)
         return self
 
@@ -382,8 +405,8 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Ignored.
@@ -574,6 +597,7 @@ class PCA(_BasePCA):
             U, S, Vt = randomized_svd(
                 X,
                 n_components=n_components,
+                n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
                 flip_sign=True,
                 random_state=random_state,

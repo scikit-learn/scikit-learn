@@ -13,7 +13,7 @@ import scipy.sparse
 import sklearn
 import pytest
 from sklearn import config_context
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import fetch_openml as fetch_openml_orig
 from sklearn.datasets._openml import (
     _open_openml_url,
     _arff,
@@ -37,6 +37,14 @@ from sklearn.utils._testing import fails_if_pypy
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
+
+
+# Do not use a cache for `fetch_openml` to avoid concurrent writing
+# issues with `pytest-xdist`.
+# Furthermore sklearn/datasets/tests/data/openml/ is not always consistent
+# with the version on openml.org. If one were to load the dataset outside of
+# the tests, it may result in data that does not represent openml.org.
+fetch_openml = partial(fetch_openml_orig, data_home=None)
 
 
 def _test_features_list(data_id):
@@ -227,7 +235,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         output = (
             re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
         )
-        # Shorten the filenames to have better compability with windows 10
+        # Shorten the filenames to have better compatibility with windows 10
         # and filenames > 260 characters
         return (
             output.replace("-json-data-list", "-jdl")

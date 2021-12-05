@@ -619,7 +619,7 @@ class TSNE(BaseEstimator):
         Determines the random number generator. Pass an int for reproducible
         results across multiple function calls. Note that different
         initializations might result in different local minima of the cost
-        function. See :term: `Glossary <random_state>`.
+        function. See :term:`Glossary <random_state>`.
 
     method : str, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
@@ -677,6 +677,12 @@ class TSNE(BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         Number of iterations run.
@@ -792,7 +798,7 @@ class TSNE(BaseEstimator):
 
         if isinstance(self._init, str) and self._init == "pca" and issparse(X):
             raise TypeError(
-                "PCA initialization is currently not suported "
+                "PCA initialization is currently not supported "
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )

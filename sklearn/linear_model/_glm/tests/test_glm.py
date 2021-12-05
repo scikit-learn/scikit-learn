@@ -220,7 +220,7 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
     assert_allclose(glm.coef_, coef, rtol=1e-12)
 
     # setting one element of sample_weight to 0 is equivalent to removing
-    # the correspoding sample
+    # the corresponding sample
     sample_weight = np.ones(y.shape)
     sample_weight[-1] = 0
     glm.fit(X, y, sample_weight=sample_weight)
@@ -229,7 +229,7 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
     assert_allclose(glm.coef_, coef1, rtol=1e-12)
 
     # check that multiplying sample_weight by 2 is equivalent
-    # to repeating correspoding samples twice
+    # to repeating corresponding samples twice
     X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
     y2 = np.concatenate([y, y[: n_samples // 2]])
     sample_weight_1 = np.ones(len(y))

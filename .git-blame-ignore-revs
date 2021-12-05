@@ -16,3 +16,6 @@
 
 # PR 20412: Use experimental_string_processing=true in Black
 3ae7c7615343bbd36acece57825d8b0d70fd9da4
+
+# PR 20502: Runs Black on examples
+70a185ae59b4362633d18b0d0083abb1b6f7370c

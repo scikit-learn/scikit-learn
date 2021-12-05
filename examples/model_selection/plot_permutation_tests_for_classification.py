@@ -6,6 +6,7 @@ Test with permutations the significance of a classification score
 This example demonstrates the use of
 :func:`~sklearn.model_selection.permutation_test_score` to evaluate the
 significance of a cross-validated score using permutations.
+
 """
 
 # Authors:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -26,14 +27,14 @@ X = iris.data
 y = iris.target
 
 # %%
-# We will also generate some random feature data (i.e., 2200 features),
+# We will also generate some random feature data (i.e., 20 features),
 # uncorrelated with the class labels in the iris dataset.
 
 import numpy as np
 
-n_uncorrelated_features = 2200
+n_uncorrelated_features = 20
 rng = np.random.RandomState(seed=0)
-# Use same number of samples as in iris and 2200 features
+# Use same number of samples as in iris and 20 features
 X_rand = rng.normal(size=(X.shape[0], n_uncorrelated_features))
 
 # %%

@@ -64,17 +64,35 @@ def test_affinity_propagation():
     )
     assert_array_equal(labels, labels_no_copy)
 
-    # Test input validation
-    with pytest.raises(ValueError):
+
+def test_affinity_propagation_affinity_shape():
+    """Check the shape of the affinity matrix when using `affinity_propagation."""
+    S = -euclidean_distances(X, squared=True)
+    err_msg = "S must be a square array"
+    with pytest.raises(ValueError, match=err_msg):
         affinity_propagation(S[:, :-1])
-    with pytest.raises(ValueError):
-        affinity_propagation(S, damping=0)
-    af = AffinityPropagation(affinity="unknown", random_state=78)
-    with pytest.raises(ValueError):
-        af.fit(X)
-    af_2 = AffinityPropagation(affinity="precomputed", random_state=21)
-    with pytest.raises(TypeError):
-        af_2.fit(csr_matrix((3, 3)))
+
+
+@pytest.mark.parametrize(
+    "input, params, err_type, err_msg",
+    [
+        (X, {"damping": 0}, ValueError, "damping == 0, must be >= 0.5"),
+        (X, {"damping": 2}, ValueError, "damping == 2, must be < 1"),
+        (X, {"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
+        (X, {"convergence_iter": 0}, ValueError, "convergence_iter == 0, must be >= 1"),
+        (X, {"affinity": "unknown"}, ValueError, "Affinity must be"),
+        (
+            csr_matrix((3, 3)),
+            {"affinity": "precomputed"},
+            TypeError,
+            "A sparse matrix was passed, but dense data is required",
+        ),
+    ],
+)
+def test_affinity_propagation_params_validation(input, params, err_type, err_msg):
+    """Check the parameters validation in `AffinityPropagation`."""
+    with pytest.raises(err_type, match=err_msg):
+        AffinityPropagation(**params).fit(input)
 
 
 def test_affinity_propagation_predict():

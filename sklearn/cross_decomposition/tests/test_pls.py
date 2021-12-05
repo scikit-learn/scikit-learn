@@ -59,6 +59,8 @@ def test_pls_canonical_basics():
     # Check that inverse_transform works
     X_back = pls.inverse_transform(Xt)
     assert_array_almost_equal(X_back, X)
+    _, Y_back = pls.inverse_transform(Xt, Yt)
+    assert_array_almost_equal(Y_back, Y)
 
 
 def test_sanity_check_pls_regression():
@@ -432,7 +434,7 @@ def _generate_test_scale_and_stability_datasets():
     X *= 1000
     yield X, Y
 
-    # Data set where one of the features is constaint
+    # Data set where one of the features is constraint
     X, Y = load_linnerud(return_X_y=True)
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0

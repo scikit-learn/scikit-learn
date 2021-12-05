@@ -52,7 +52,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Kernel mapping used internally. This parameter is directly passed to
         :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
         If `kernel` is a string, it must be one of the metrics
-        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS` or "precomputed".
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if `kernel` is a callable function, it is called on
         each pair of instances (rows) and the resulting value recorded. The
@@ -94,6 +94,12 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     sklearn.gaussian_process.GaussianProcessRegressor : Gaussian
@@ -119,8 +125,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = KernelRidge(alpha=1.0)
-    >>> clf.fit(X, y)
+    >>> krr = KernelRidge(alpha=1.0)
+    >>> krr.fit(X, y)
     KernelRidge(alpha=1.0)
     """
 

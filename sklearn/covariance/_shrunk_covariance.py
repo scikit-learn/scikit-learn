@@ -98,6 +98,12 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     EllipticEnvelope : An object for detecting outliers in
@@ -151,8 +157,8 @@ class ShrunkCovariance(EmpiricalCovariance):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -266,7 +272,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     delta = delta_ - 2.0 * mu * emp_cov_trace.sum() + n_features * mu ** 2
     delta /= n_features
     # get final beta as the min between beta and delta
-    # We do this to prevent shrinking more than "1", which whould invert
+    # We do this to prevent shrinking more than "1", which would invert
     # the value of covariances
     beta = min(beta, delta)
     # finally get shrinkage
@@ -385,6 +391,12 @@ class LedoitWolf(EmpiricalCovariance):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -584,6 +596,12 @@ class OAS(EmpiricalCovariance):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------

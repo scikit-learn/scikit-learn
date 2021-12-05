@@ -27,10 +27,6 @@ dtypes = [('64', 'double', 'np.float64'),
 
 #------------------------------------------------------------------------------
 
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-#
 # Authors: Danny Sullivan <dbsullivan23@gmail.com>
 #          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #          Arthur Mensch <arthur.mensch@m4x.org
@@ -260,7 +256,7 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
     # the number of non-zero features for current sample
     cdef int xnnz = -1
     # the label value for current sample
-    # the label value for curent sample
+    # the label value for current sample
     cdef {{c_type}} y
     # the sample weight
     cdef {{c_type}} sample_weight
@@ -353,7 +349,7 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
 
     # Loss function to optimize
     cdef LossFunction loss
-    # Wether the loss function is multinomial
+    # Whether the loss function is multinomial
     cdef bint multinomial = False
     # Multinomial loss function
     cdef MultinomialLogLoss{{name_suffix}} multiloss

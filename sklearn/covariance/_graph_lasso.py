@@ -395,6 +395,12 @@ class GraphicalLasso(EmpiricalCovariance):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     graphical_lasso : L1-penalized covariance estimator.
@@ -459,9 +465,7 @@ class GraphicalLasso(EmpiricalCovariance):
             Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(
-            X, ensure_min_features=2, ensure_min_samples=2, estimator=self
-        )
+        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
@@ -760,6 +764,12 @@ class GraphicalLassoCV(GraphicalLasso):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     graphical_lasso : L1-penalized covariance estimator.
@@ -844,7 +854,7 @@ class GraphicalLassoCV(GraphicalLasso):
             Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2, estimator=self)
+        X = self._validate_data(X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
