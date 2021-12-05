@@ -145,7 +145,12 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         elif self.svd_method == "arpack":
-            u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs, check_finite=False)
+            u, _, vt = svds(
+                array,
+                k=n_components,
+                ncv=self.n_svd_vecs, 
+                check_finite=False
+            )
             if np.any(np.isnan(vt)):
                 # some eigenvalues of A * A.T are negative, causing
                 # sqrt() to be np.nan. This causes some vectors in vt
