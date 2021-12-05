@@ -471,7 +471,9 @@ Below is an example of multiclass-multioutput classification:
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.utils import shuffle
     >>> import numpy as np
-    >>> X, y1 = make_classification(n_samples=10, n_features=100, n_informative=30, n_classes=3, random_state=1)
+    >>> X, y1 = make_classification(n_samples=10, n_features=100,
+    ...                             n_informative=30, n_classes=3,
+    ...                             random_state=1)
     >>> y2 = shuffle(y1, random_state=1)
     >>> y3 = shuffle(y1, random_state=2)
     >>> Y = np.vstack((y1, y2, y3)).T
