@@ -148,8 +148,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             u, _, vt = svds(
                 array,
                 k=n_components,
-                ncv=self.n_svd_vecs,
-                check_finite=False
+                ncv=self.n_svd_vecs
             )
             if np.any(np.isnan(vt)):
                 # some eigenvalues of A * A.T are negative, causing
