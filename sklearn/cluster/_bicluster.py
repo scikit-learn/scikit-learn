@@ -148,7 +148,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             u, _, vt = svds(
                 array,
                 k=n_components,
-                ncv=self.n_svd_vecs, 
+                ncv=self.n_svd_vecs,
                 check_finite=False
             )
             if np.any(np.isnan(vt)):
