@@ -106,7 +106,9 @@ class ParameterGrid:
         for grid in param_grid:
             if not isinstance(grid, dict):
                 raise TypeError("Parameter grid is not a dict ({!r})".format(grid))
-            for key in grid:
+            for key, value in grid.items():
+                if isinstance(value, np.ndarray) and value.ndim > 1:
+                    raise ValueError("Parameter array should be one-dimensional.")
                 if not isinstance(grid[key], Iterable):
                     raise TypeError(
                         "Parameter grid value is not iterable "
@@ -319,30 +321,6 @@ class ParameterSampler:
             return min(self.n_iter, grid_size)
         else:
             return self.n_iter
-
-
-def _check_param_grid(param_grid):
-    if hasattr(param_grid, "items"):
-        param_grid = [param_grid]
-
-    for p in param_grid:
-        for name, v in p.items():
-            if isinstance(v, np.ndarray) and v.ndim > 1:
-                raise ValueError("Parameter array should be one-dimensional.")
-
-            if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
-                raise ValueError(
-                    "Parameter grid for parameter ({0}) needs to"
-                    " be a list or numpy array, but got ({1})."
-                    " Single values need to be wrapped in a list"
-                    " with one element.".format(name, type(v))
-                )
-
-            if len(v) == 0:
-                raise ValueError(
-                    "Parameter values for parameter ({0}) need "
-                    "to be a non-empty sequence.".format(name)
-                )
 
 
 def _check_refit(search_cv, attr):
@@ -1385,7 +1363,6 @@ class GridSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
         self.param_grid = param_grid
-        _check_param_grid(param_grid)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
