@@ -4,6 +4,7 @@ from abc import abstractmethod
 from numbers import Integral
 
 import numpy as np
+from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
 from ..base import is_classifier
