@@ -149,6 +149,7 @@ Changelog
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
   :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
+  
 - |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
   The default value of its `whiten` argument will change from `True`
   (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
