@@ -1166,7 +1166,7 @@ def test_gradient_boosting_early_stopping():
     X, y = make_classification(n_samples=1000, random_state=0)
 
     gbc = GradientBoostingClassifier(
-        n_estimators=1000,
+        n_estimators=100,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
@@ -1174,7 +1174,7 @@ def test_gradient_boosting_early_stopping():
     )
 
     gbr = GradientBoostingRegressor(
-        n_estimators=1000,
+        n_estimators=100,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
@@ -1196,16 +1196,16 @@ def test_gradient_boosting_early_stopping():
 
     # Without early stopping
     gbc = GradientBoostingClassifier(
-        n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42
+        n_estimators=5, learning_rate=0.1, max_depth=3, random_state=42
     )
     gbc.fit(X, y)
     gbr = GradientBoostingRegressor(
-        n_estimators=200, learning_rate=0.1, max_depth=3, random_state=42
+        n_estimators=10, learning_rate=0.1, max_depth=3, random_state=42
     )
     gbr.fit(X, y)
 
-    assert gbc.n_estimators_ == 100
-    assert gbr.n_estimators_ == 200
+    assert gbc.n_estimators_ == 5
+    assert gbr.n_estimators_ == 10
 
 
 def test_gradient_boosting_validation_fraction():
