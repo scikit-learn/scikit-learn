@@ -440,7 +440,6 @@ def test_grid_search_when_param_grid_includes_range():
 
 
 def test_grid_search_bad_param_grid():
-    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
     param_dict = {"C": 1}
     clf = SVC(gamma="auto")
     error_msg = re.escape(
@@ -450,7 +449,7 @@ def test_grid_search_bad_param_grid():
         " with one element."
     )
     with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict).fit(X_, y_)
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": []}
     clf = SVC()
@@ -458,7 +457,7 @@ def test_grid_search_bad_param_grid():
         "Parameter values for parameter (C) need to be a non-empty sequence."
     )
     with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict).fit(X_, y_)
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": "1,2,3"}
     clf = SVC(gamma="auto")
@@ -469,12 +468,12 @@ def test_grid_search_bad_param_grid():
         " with one element."
     )
     with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict).fit(X_, y_)
+        GridSearchCV(clf, param_dict)
 
     param_dict = {"C": np.ones((3, 2))}
     clf = SVC()
     with pytest.raises(ValueError):
-        GridSearchCV(clf, param_dict).fit(X_, y_)
+        GridSearchCV(clf, param_dict)
 
 
 def test_grid_search_sparse():

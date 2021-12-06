@@ -757,9 +757,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return best_index
 
     def fit(self, X, y=None, *, groups=None, **fit_params):
-        return self._fit(X, y=y, groups=groups, **fit_params)
-
-    def _fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -1389,12 +1386,9 @@ class GridSearchCV(BaseSearchCV):
         )
         self.param_grid = param_grid
 
-    def _fit(self, X, y=None, *, groups=None, **fit_params):
-        _check_param_grid(self.param_grid)
-        return super()._fit(X, y=y, groups=groups, **fit_params)
-
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
+        _check_param_grid(self.param_grid)
         evaluate_candidates(ParameterGrid(self.param_grid))
 
 
