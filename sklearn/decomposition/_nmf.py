@@ -639,8 +639,7 @@ def _multiplicative_update_w(
     return delta_W, H_sum, HHt, XHt
 
 
-def _multiplicative_update_h(X, W, H, A, B, beta_loss, l1_reg_H, l2_reg_H, gamma, rho):
-
+def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma, A=None, B=None, rho=None):
     """update H in Multiplicative Update NMF."""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
@@ -841,14 +840,14 @@ def _fit_multiplicative_update(
             X,
             W,
             H,
-            beta_loss,
-            l1_reg_W,
-            l2_reg_W,
-            gamma,
-            H_sum,
-            HHt,
-            XHt,
-            update_H,
+            beta_loss=beta_loss,
+            l1_reg_W=l1_reg_W,
+            l2_reg_W=l2_reg_W,
+            gamma=gamma,
+            H_sum=H_sum,
+            HHt=HHt,
+            XHt=XHt,
+            update_H=update_H,
         )
         W *= delta_W
 
@@ -859,8 +858,7 @@ def _fit_multiplicative_update(
         # update H
         if update_H:
             H = _multiplicative_update_h(
-                X, W, H, None, None, beta_loss, l1_reg_H, l2_reg_H, gamma, None
-            )
+                X, W, H, beta_loss=beta_loss, l1_reg_H=l1_reg_H, l2_reg_H=l2_reg_H, gamma=gamma)
 
             # These values will be recomputed since H changed
             H_sum, HHt, XHt = None, None, None
@@ -1898,7 +1896,7 @@ class MiniBatchNMF(NMF):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Factorization matrix, sometimes called 'dictionary'.
 
     n_components_ : integer
@@ -2096,13 +2094,13 @@ class MiniBatchNMF(NMF):
                 X,
                 W,
                 H,
-                self._components_numerator,
-                self._components_denominator,
-                self._beta_loss,
-                l1_reg_H,
-                l2_reg_H,
-                self._gamma,
-                self._rho,
+                beta_loss=self._beta_loss,
+                l1_reg_H=l1_reg_H,
+                l2_reg_H=l2_reg_H,
+                gamma=self._gamma,
+                A=self._components_numerator,
+                B=self._components_denominator,
+                rho=self._rho,
             )
 
             # necessary for stability with beta_loss < 1
