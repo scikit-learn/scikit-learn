@@ -1,5 +1,3 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
-#
 # Author: Andreas Mueller
 #
 # Licence: BSD 3 clause
@@ -525,7 +523,7 @@ def elkan_iter_chunked_sparse(
             _update_chunk_sparse(
                 X_data[X_indptr[start]: X_indptr[end]],
                 X_indices[X_indptr[start]: X_indptr[end]],
-                X_indptr[start: end],
+                X_indptr[start: end+1],
                 sample_weight[start: end],
                 centers_old,
                 centers_squared_norms,

@@ -142,7 +142,7 @@ def load_files(
     Parameters
     ----------
     container_path : str
-        Path to the main folder holding one subfolder per category
+        Path to the main folder holding one subfolder per category.
 
     description : str, default=None
         A paragraph describing the characteristic of the dataset: its source,
@@ -578,6 +578,10 @@ def load_iris(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of shape
+        (n_samples, n_features) with each row representing one sample and
+        each column representing the features. The second ndarray of shape
+        (n_samples,) containing the target samples.
 
         .. versionadded:: 0.18
 
@@ -928,7 +932,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -969,7 +973,9 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
             The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
-
+        Returns a tuple of two ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
         .. versionadded:: 0.18
     """
     data_filename = "diabetes_data.csv.gz"

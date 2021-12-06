@@ -3,6 +3,7 @@ import re
 
 import numpy as np
 from scipy import sparse
+from scipy.linalg import LinAlgError
 
 import pytest
 
@@ -354,3 +355,19 @@ def test_spectral_clustering_np_matrix_raises():
     msg = r"spectral_clustering does not support passing in affinity as an np\.matrix"
     with pytest.raises(TypeError, match=msg):
         spectral_clustering(X)
+
+
+def test_spectral_clustering_not_infinite_loop(capsys, monkeypatch):
+    """Check that discretize raises LinAlgError when svd never converges.
+
+    Non-regression test for #21380
+    """
+
+    def new_svd(*args, **kwargs):
+        raise LinAlgError()
+
+    monkeypatch.setattr(np.linalg, "svd", new_svd)
+    vectors = np.ones((10, 4))
+
+    with pytest.raises(LinAlgError, match="SVD did not converge"):
+        discretize(vectors)
