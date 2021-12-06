@@ -709,12 +709,12 @@ def test_warm_start_with_oob_score_fails():
 
 
 def test_oob_score_removed_on_warm_start():
-    X, y = make_hastie_10_2(n_samples=2000, random_state=1)
+    X, y = make_hastie_10_2(n_samples=100, random_state=1)
 
-    clf = BaggingClassifier(n_estimators=50, oob_score=True)
+    clf = BaggingClassifier(n_estimators=5, oob_score=True)
     clf.fit(X, y)
 
-    clf.set_params(warm_start=True, oob_score=False, n_estimators=100)
+    clf.set_params(warm_start=True, oob_score=False, n_estimators=10)
     clf.fit(X, y)
 
     with pytest.raises(AttributeError):
