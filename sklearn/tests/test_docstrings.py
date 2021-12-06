@@ -344,7 +344,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     if estimator is not None:
         obj = getattr(estimator, method)
         try:
-            obj_signature = signature(obj)
+            obj_signature = str(signature(obj))
         except TypeError:
             # In particular we can't parse the signature of properties
             obj_signature = (
@@ -360,7 +360,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     msg = "\n\n" + "\n\n".join(
         [
             str(res["file"]),
-            obj_name + str(obj_signature),
+            obj_name + obj_signature,
             res["docstring"],
             "# Errors",
             "\n".join(
