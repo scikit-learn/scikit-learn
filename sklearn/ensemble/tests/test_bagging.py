@@ -471,9 +471,8 @@ def test_error():
 
 def test_parallel_classification():
     # Check parallel classification.
-    # Classification
     X_train, X_test, y_train, y_test = train_test_split(
-        iris.data, iris.target, random_state=rng
+        iris.data, iris.target, random_state=0
     )
 
     ensemble = BaggingClassifier(
