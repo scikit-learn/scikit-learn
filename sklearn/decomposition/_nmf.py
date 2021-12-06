@@ -2025,7 +2025,6 @@ class MiniBatchNMF(NMF):
         self._batch_size = min(self._batch_size, X.shape[0])
 
         # forget_factor
-        # TODO
         self._rho = self.forget_factor ** (self._batch_size / X.shape[0])
 
         # gamma for Maximization-Minimization (MM) algorithm [Fevotte 2011]
