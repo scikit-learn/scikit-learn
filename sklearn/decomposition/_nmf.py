@@ -639,7 +639,9 @@ def _multiplicative_update_w(
     return delta_W, H_sum, HHt, XHt
 
 
-def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma, A=None, B=None, rho=None):
+def _multiplicative_update_h(
+    X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma, A=None, B=None, rho=None
+):
     """update H in Multiplicative Update NMF."""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
@@ -858,7 +860,14 @@ def _fit_multiplicative_update(
         # update H
         if update_H:
             H = _multiplicative_update_h(
-                X, W, H, beta_loss=beta_loss, l1_reg_H=l1_reg_H, l2_reg_H=l2_reg_H, gamma=gamma)
+                X,
+                W,
+                H,
+                beta_loss=beta_loss,
+                l1_reg_H=l1_reg_H,
+                l2_reg_H=l2_reg_H,
+                gamma=gamma,
+            )
 
             # These values will be recomputed since H changed
             H_sum, HHt, XHt = None, None, None

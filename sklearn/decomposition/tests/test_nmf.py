@@ -364,8 +364,7 @@ def test_nmf_sparse_transform(Estimator, solver):
     A[1, 1] = 0
     A = csc_matrix(A)
 
-    model = Estimator(
-        solver=solver, random_state=0, n_components=2, max_iter=400)
+    model = Estimator(solver=solver, random_state=0, n_components=2, max_iter=400)
     A_fit_tr = model.fit_transform(A)
     A_tr = model.transform(A)
     assert_allclose(A_fit_tr, A_tr, atol=1e-1)
@@ -898,7 +897,9 @@ def test_minibatch_nmf_partial_fit():
     mbnmf2 = MiniBatchNMF(n_components=n_components, init="custom", random_state=0)
 
     # Force the same init of H (W is recomputed anyway) to be able to compare results.
-    W, H = nmf._initialize_nmf(X, n_components=n_components, init="random", random_state=0)
+    W, H = nmf._initialize_nmf(
+        X, n_components=n_components, init="random", random_state=0
+    )
 
     mbnmf1.fit(X, W=W, H=H)
     for i in range(max_iter):
