@@ -12,7 +12,7 @@ parameters of an estimator.
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
-from collections.abc import Mapping, Sequence, Iterable
+from collections.abc import Mapping, Iterable
 from functools import partial, reduce
 from itertools import product
 import numbers
