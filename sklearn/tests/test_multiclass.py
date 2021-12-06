@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+from numpy.testing import assert_allclose
 
 from re import escape
 
@@ -976,7 +977,8 @@ def test_support_missing_values(MultiClassClassifier):
 def test_constant_int_target():
     """Check that constant y target does not raise.
 
-    Non-regression test for #21869"""
+    Non-regression test for #21869
+    """
     X = np.ones((10, 2))
     y = np.zeros((10, 1), dtype=np.int32)
     ovr = OneVsRestClassifier(LogisticRegression())
@@ -985,4 +987,4 @@ def test_constant_int_target():
     y_pred = ovr.predict_proba(X)
     expected = np.zeros((X.shape[0], 2))
     expected[:, 0] = 1
-    np.testing.assert_allclose(y_pred, expected)
+    assert_allclose(y_pred, expected)
