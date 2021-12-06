@@ -347,7 +347,7 @@ Changelog
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.datasets`
-...................
+.......................
 
 - |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
   to a temporary subfolder and then renamed.
