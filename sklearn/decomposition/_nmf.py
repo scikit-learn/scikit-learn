@@ -1831,12 +1831,6 @@ class MiniBatchNMF(NMF):
         Number of samples in each mini-batch. Large batch sizes
         give better long-term convergence at the cost of a slower start.
 
-    solver : 'mu'
-        Numerical solver to use:
-        'mu' is a Multiplicative Update solver.
-        For now, this is the only available solver in the
-        MiniBatch implementation.
-
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
         Beta divergence to be minimized, measuring the distance between X
@@ -1968,7 +1962,6 @@ class MiniBatchNMF(NMF):
         *,
         init=None,
         batch_size=1024,
-        solver="mu",
         beta_loss="frobenius",
         tol=1e-4,
         max_no_improvement=10,
@@ -1987,7 +1980,7 @@ class MiniBatchNMF(NMF):
         super().__init__(
             n_components=n_components,
             init=init,
-            solver=solver,
+            solver="mu",
             beta_loss=beta_loss,
             tol=tol,
             max_iter=max_iter,
@@ -2007,13 +2000,6 @@ class MiniBatchNMF(NMF):
 
     def _check_params(self, X):
         super()._check_params(X)
-
-        # solver
-        if not isinstance(self.solver, str) or self.solver != "mu":
-            raise ValueError(
-                f"Invalid solver parameter '{self.solver}'. "
-                "Only solver='mu' is accepted."
-            )
 
         # batch_size
         self._batch_size = self.batch_size
