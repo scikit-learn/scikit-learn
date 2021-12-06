@@ -2147,9 +2147,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         # counts steps starting from 1 for user friendly verbose mode.
         step = step + 1
 
-        # Ignore first iteration because dictionary is not projected on the
-        # constraint set yet.
-        if step <= 1:
+        # Ignore 100 first steps or 1 epoch to avoid initializing the ewa_cost with a
+        # too bad value
+        if step <= min(100, n_samples / batch_size):
             if self.verbose:
                 print(f"Minibatch step {step}/{n_steps}: mean batch cost: {batch_cost}")
             return False
@@ -2214,7 +2214,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Returns
         -------
         self : object
-            Return the instance itself.
+            Returns the instance itself.
         """
         self._batch_size = self.batch_size
         if self.batch_size == "warn":
@@ -2262,23 +2262,21 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
             # allow max_iter = 0
             i = -1
-            import time
 
-            t = 0
             for i, batch in zip(range(n_steps), batches):
-                t1 = time.time()
                 this_X = X_train[batch]
 
                 batch_cost = self._minibatch_step(
                     this_X, dictionary, self._random_state, i
                 )
-                t += time.time() - t1
+
                 if self._minibatch_convergence(
                     this_X, batch_cost, dictionary, dict_buffer, n_samples, i, n_steps
                 ):
                     break
-                print(f"[{self._ewa_cost},{t}],")
 
+                # XXX callback param added for backward compat in #18975 but a common
+                # unified callback API should be preferred
                 if self.callback is not None:
                     self.callback(locals())
 
@@ -2307,6 +2305,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 trigger_verbose = self.verbose and i % ceil(100.0 / self.verbose) == 0
                 if self.verbose > 10 or trigger_verbose:
                     print(f"{i} batches processed.")
+
+                if self.callback is not None:
+                    self.callback(locals())
 
             self.n_steps_ = n_iter
             self.n_iter_ = np.ceil(n_iter / int(np.ceil(n_samples / self._batch_size)))
