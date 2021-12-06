@@ -24,7 +24,7 @@ all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
 all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
 all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
-all_RandomProjection = set(all_SparseRandomProjection + all_DenseRandomProjection)
+all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 
 # Make some random data with uniformly located non zero entries with
@@ -359,3 +359,17 @@ def test_johnson_lindenstrauss_min_dim():
     Regression test for #17111: before #19374, 32-bit systems would fail.
     """
     assert johnson_lindenstrauss_min_dim(100, eps=1e-5) == 368416070986
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+def test_random_projection_feature_names_out(random_projection_cls):
+    random_projection = random_projection_cls(n_components=2)
+    random_projection.fit(data)
+    names_out = random_projection.get_feature_names_out()
+    class_name_lower = random_projection_cls.__name__.lower()
+    expected_names_out = np.array(
+        [f"{class_name_lower}{i}" for i in range(random_projection.n_components_)],
+        dtype=object,
+    )
+
+    assert_array_equal(names_out, expected_names_out)

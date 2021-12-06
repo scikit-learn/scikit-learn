@@ -94,7 +94,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         run is performed.
 
     normalize_y : bool, default=False
-        Whether or not to normalized the target values `y` by removing the mean
+        Whether or not to normalize the target values `y` by removing the mean
         and scaling to unit-variance. This is recommended for cases where
         zero-mean, unit-variance priors are used. Note that, in this
         implementation, the normalisation is reversed before the GP predictions

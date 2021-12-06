@@ -22,7 +22,7 @@ def _get_threadlocal_config():
 
 
 def get_config():
-    """Retrieve current values for configuration set by :func:`set_config`
+    """Retrieve current values for configuration set by :func:`set_config`.
 
     Returns
     -------

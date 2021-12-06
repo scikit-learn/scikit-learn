@@ -16,10 +16,10 @@ i.e. class one or two, using the logistic curve.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import linear_model
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from scipy.special import expit
 
-# General a toy dataset:s it's just a straight line with some Gaussian noise:
+# Generate a toy dataset, it's just a straight line with some Gaussian noise:
 xmin, xmax = -5, 5
 n_samples = 100
 np.random.seed(0)
@@ -31,7 +31,7 @@ X += 0.3 * np.random.normal(size=n_samples)
 X = X[:, np.newaxis]
 
 # Fit the classifier
-clf = linear_model.LogisticRegression(C=1e5)
+clf = LogisticRegression(C=1e5)
 clf.fit(X, y)
 
 # and plot the result
@@ -43,7 +43,7 @@ X_test = np.linspace(-5, 10, 300)
 loss = expit(X_test * clf.coef_ + clf.intercept_).ravel()
 plt.plot(X_test, loss, color="red", linewidth=3)
 
-ols = linear_model.LinearRegression()
+ols = LinearRegression()
 ols.fit(X, y)
 plt.plot(X_test, ols.coef_ * X_test + ols.intercept_, linewidth=1)
 plt.axhline(0.5, color=".5")

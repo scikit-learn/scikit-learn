@@ -676,6 +676,10 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse="csr", reset=False)
+        return self._predict(X)
+
+    def _predict(self, X):
+        """Predict data using the ``centroids_`` of subclusters."""
         kwargs = {"Y_norm_squared": self._subcluster_norms}
 
         with config_context(assume_finite=True):
@@ -745,4 +749,4 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             self.subcluster_labels_ = clusterer.fit_predict(self.subcluster_centers_)
 
         if compute_labels:
-            self.labels_ = self.predict(X)
+            self.labels_ = self._predict(X)
