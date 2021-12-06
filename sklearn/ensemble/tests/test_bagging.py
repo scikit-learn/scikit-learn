@@ -471,11 +471,8 @@ def test_error():
 
 def test_parallel_classification():
     # Check parallel classification.
-    rng = check_random_state(0)
-
-    # Classification
     X_train, X_test, y_train, y_test = train_test_split(
-        iris.data, iris.target, random_state=rng
+        iris.data, iris.target, random_state=0
     )
 
     ensemble = BaggingClassifier(
@@ -483,9 +480,8 @@ def test_parallel_classification():
     ).fit(X_train, y_train)
 
     # predict_proba
-    ensemble.set_params(n_jobs=1)
     y1 = ensemble.predict_proba(X_test)
-    ensemble.set_params(n_jobs=2)
+    ensemble.set_params(n_jobs=1)
     y2 = ensemble.predict_proba(X_test)
     assert_array_almost_equal(y1, y2)
 
@@ -501,9 +497,8 @@ def test_parallel_classification():
         SVC(decision_function_shape="ovr"), n_jobs=3, random_state=0
     ).fit(X_train, y_train)
 
-    ensemble.set_params(n_jobs=1)
     decisions1 = ensemble.decision_function(X_test)
-    ensemble.set_params(n_jobs=2)
+    ensemble.set_params(n_jobs=1)
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
