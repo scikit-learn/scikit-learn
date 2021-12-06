@@ -103,6 +103,10 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
+- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
+  to a temporary subfolder and then renamed.
+  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -327,13 +331,6 @@ Changelog
   been generated on a platform with a different bitness. A typical example is
   to train and pickle the model on 64 bit machine and load the model on a 32
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
-
-:mod:`sklearn.datasets`
-...................
-
-- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
-  to a temporary subfolder and then renamed.
-  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 
 Code and Documentation Contributors
 -----------------------------------
