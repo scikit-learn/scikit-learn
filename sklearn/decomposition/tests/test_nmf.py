@@ -91,7 +91,7 @@ def test_parameter_checking():
     ],
 )
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
-def test_nmf_wrong_params(Estimator, param, match):
+def test_nmf_common_wrong_params(Estimator, param, match):
     # Check that appropriate errors are raised for invalid values of paramters common
     # to NMF and MiniBatchNMF.
     A = np.ones((2, 2))
