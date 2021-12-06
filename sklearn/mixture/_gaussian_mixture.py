@@ -473,14 +473,10 @@ class GaussianMixture(BaseMixture):
         String describing the type of covariance parameters to use.
         Must be one of:
 
-        'full'
-            each component has its own general covariance matrix
-        'tied'
-            all components share the same general covariance matrix
-        'diag'
-            each component has its own diagonal covariance matrix
-        'spherical'
-            each component has its own single variance
+        - 'full': each component has its own general covariance matrix.
+        - 'tied': all components share the same general covariance matrix.
+        - 'diag': each component has its own diagonal covariance matrix.
+        - 'spherical': each component has its own single variance.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -813,6 +809,9 @@ class GaussianMixture(BaseMixture):
     def bic(self, X):
         """Bayesian information criterion for the current model on the input X.
 
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the BIC used.
+
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
@@ -829,6 +828,9 @@ class GaussianMixture(BaseMixture):
 
     def aic(self, X):
         """Akaike information criterion for the current model on the input X.
+
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the AIC used.
 
         Parameters
         ----------
