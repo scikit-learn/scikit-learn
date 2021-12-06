@@ -16,7 +16,12 @@ from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from ..base import (
+    BaseEstimator,
+    TransformerMixin,
+    _OneToOneFeatureMixin,
+    _ClassNamePrefixFeaturesOutMixin,
+)
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.extmath import _incremental_mean_and_var, row_norms
@@ -35,7 +40,6 @@ from ..utils.validation import (
     check_random_state,
     _check_sample_weight,
     FLOAT_DTYPES,
-    _check_feature_names_in,
 )
 
 from ._encoders import OneHotEncoder
@@ -2120,7 +2124,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"stateless": True}
 
 
-class KernelCenterer(TransformerMixin, BaseEstimator):
+class KernelCenterer(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     r"""Center an arbitrary kernel matrix :math:`K`.
 
     Let define a kernel :math:`K` such that:
@@ -2259,25 +2263,14 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         return K
 
-    def get_feature_names_out(self, input_features=None):
-        """Get output feature names for transformation.
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Not used, present here for API consistency by convention.
-
-        Returns
-        -------
-        feature_names_out : ndarray of str objects
-            Transformed feature names.
-        """
-        _check_feature_names_in(self, input_features, generate_names=False)
-        class_name = self.__class__.__name__.lower()
-        return np.asarray(
-            [f"{class_name}{i}" for i in range(self.n_features_in_)],
-            dtype=object,
-        )
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        # Used by _ClassNamePrefixFeaturesOutMixin. This model preserves the
+        # number of input features but this is not a one-to-one mapping in the
+        # usual sense. Hence the choice not to use _OneToOneFeatureMixin to
+        # implement get_feature_names_out for this class.
+        return self.n_features_in_
 
     def _more_tags(self):
         return {"pairwise": True}
