@@ -134,7 +134,7 @@ print(
 # ---------------
 #
 # Machine learning models are not designed for the estimation of causal effects.
-# While we showed this with a linear model, OVB can strike any type of model.
+# While we showed this with a linear model, OVB can affect any type of model.
 #
 # Whenever interpreting a coefficient or a change in predictions
 # brought about by a change in one of the features, it is important to keep in
