@@ -47,12 +47,16 @@ abilities = rng.normal(0, 0.15, size=n_samples)
 parent_hourly_wages = 50 * rng.beta(2, 8, size=n_samples)
 parent_hourly_wages[parent_hourly_wages < 0] = 0
 
-college_degrees = (9 * abilities + 0.02 * parent_hourly_wages
-                   + rng.randn(n_samples) > 0.7).astype(int)
+college_degrees = (
+    9 * abilities + 0.02 * parent_hourly_wages + rng.randn(n_samples) > 0.7
+).astype(int)
 
 hourly_wages = (
-  0.2 * experiences + parent_hourly_wages + 2
-  * college_degrees + 5 * abilities + rng.normal(0, 1, size=n_samples)
+    0.2 * experiences
+    + parent_hourly_wages
+    + 2 * college_degrees
+    + 5 * abilities
+    + rng.normal(0, 1, size=n_samples)
 )
 
 hourly_wages[hourly_wages < 0] = 0
@@ -68,13 +72,15 @@ hourly_wages[hourly_wages < 0] = 0
 import pandas as pd
 import seaborn as sns
 
-df = pd.DataFrame({
-    'college degree': college_degrees,
-    'ability': abilities,
-    'hourly wage': hourly_wages,
-    'experience': experiences,
-    'parent hourly wage': parent_hourly_wages,
-    })
+df = pd.DataFrame(
+    {
+        "college degree": college_degrees,
+        "ability": abilities,
+        "hourly wage": hourly_wages,
+        "experience": experiences,
+        "parent hourly wage": parent_hourly_wages,
+    }
+)
 
 grid = sns.pairplot(df, diag_kind="kde", corner=True)
 # %%
@@ -96,11 +102,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
-X = df[['experience', 'parent hourly wage', 'college degree', 'ability']]
-y = df['hourly wage']
+X = df[["experience", "parent hourly wage", "college degree", "ability"]]
+y = df["hourly wage"]
 
 X_train, X_test, y_train, y_test = train_test_split(
-  X, y, test_size=0.2, random_state=42)
+    X, y, test_size=0.2, random_state=42
+)
 
 regressor_with_ability = LinearRegression()
 regressor_with_ability.fit(X_train, y_train)
@@ -108,23 +115,17 @@ y_pred_with_ability = regressor_with_ability.predict(X_test)
 R2_with_ability = r2_score(y_test, y_pred_with_ability)
 
 regressor_without_ability = LinearRegression()
-regressor_without_ability.fit(X_train.drop(columns='ability'), y_train)
+regressor_without_ability.fit(X_train.drop(columns="ability"), y_train)
 y_pred_without_ability = regressor_without_ability.predict(
-  X_test.drop(columns='ability')
-  )
+    X_test.drop(columns="ability")
+)
 R2_without_ability = r2_score(y_test, y_pred_without_ability)
 
+print(f"R2 score with ability: {R2_with_ability}")
+print(f"College degree coefficient with ability: {regressor_with_ability.coef_[2]}")
+print(f"R2 score without ability: {R2_without_ability}")
 print(
-  f"R2 score with ability: {R2_with_ability}"
-)
-print(
-  f"College degree coefficient with ability: {regressor_with_ability.coef_[2]}"
-)
-print(
-  f"R2 score without ability: {R2_without_ability}"
-)
-print(
-  f"College degree coefficient without ability: {regressor_without_ability.coef_[2]}"
+    f"College degree coefficient without ability: {regressor_without_ability.coef_[2]}"
 )
 
 
