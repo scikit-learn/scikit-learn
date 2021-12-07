@@ -252,7 +252,7 @@ plt.tight_layout()
 # **Advantages**
 #
 # * This method allows you to compute feature importances for individual
-#   samples.
+#   samples (local explanations).
 # * Interaction effects are accounted for, unlike in permutation importances.
 #   For each sample, the contribution of each feature add up to the overall
 #   prediction, as shown above.
