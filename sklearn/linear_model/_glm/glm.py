@@ -13,6 +13,7 @@ import scipy.optimize
 
 from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
+from ...utils import check_scalar
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ..._loss.glm_distribution import (
     ExponentialDispersionModel,
@@ -227,12 +228,20 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "'lbfgs'; got {0}".format(self.solver)
             )
         solver = self.solver
-        if not isinstance(self.max_iter, numbers.Integral) or self.max_iter <= 0:
-            raise ValueError(
-                "Maximum number of iteration must be a positive "
-                "integer;"
-                " got (max_iter={0!r})".format(self.max_iter)
-            )
+        # if not isinstance(self.max_iter, numbers.Integral) or self.max_iter <= 0:
+        #    raise ValueError(
+        #        "Maximum number of iteration must be a positive "
+        #        "integer;"
+        #        " got (max_iter={0!r})".format(self.max_iter)
+        #    )
+        check_scalar(
+            self.max_iter,
+            name="max_iter",
+            target_type=numbers.Integral,
+            min_val=1,
+            max_val=None,
+            include_boundaries="left",
+        )
         if not isinstance(self.tol, numbers.Number) or self.tol <= 0:
             raise ValueError(
                 "Tolerance for stopping criteria must be "
