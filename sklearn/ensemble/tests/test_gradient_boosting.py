@@ -1166,7 +1166,7 @@ def test_gradient_boosting_early_stopping():
     X, y = make_classification(n_samples=1000, random_state=0)
 
     gbc = GradientBoostingClassifier(
-        n_estimators=100,
+        n_estimators=1000,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
