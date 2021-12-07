@@ -77,7 +77,7 @@ reg.fit(X_train, y_train)
 # using the default score metric of
 # :class:`~sklearn.ensemble.RandomForestRegressor`: :ref:`R² <r2_score>`.
 # The values of each feature will be permuted ``n_repeats=10`` times and the
-# decrease in R^2 value for each permutation is shown below with boxplots.
+# decrease in R² value for each permutation is shown below with boxplots.
 
 import matplotlib.pyplot as plt
 
