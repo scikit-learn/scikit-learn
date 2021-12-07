@@ -40,7 +40,7 @@ Changelog
 
 - |Fix| Fixed an unnecessary error when fitting :class:`manifold.Isomap` with a
   precomputed dense distance matrix where the neighbors graph has multiple
-  disconnected components. :pr:`xxx` by :user:`Tom Dupre la Tour`_.
+  disconnected components. :pr:`21915` by :user:`Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
