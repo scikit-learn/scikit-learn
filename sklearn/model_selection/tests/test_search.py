@@ -444,13 +444,12 @@ def test_grid_search_bad_param_grid():
     param_dict = {"C": 1}
     clf = SVC(gamma="auto")
     error_msg = re.escape(
-        "Parameter grid for parameter (C) needs to"
-        " be a list or numpy array, but got (<class 'int'>)."
-        " Single values need to be wrapped in a list"
+        "Parameter grid for parameter 'C' needs to be a list or a numpy array, but got"
+        " 1 (of type <class 'int'>) instead. Single values need to be wrapped in a list"
         " with one element."
     )
     search = GridSearchCV(clf, param_dict)
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(TypeError, match=error_msg):
         search.fit(X, y)
 
     param_dict = {"C": []}

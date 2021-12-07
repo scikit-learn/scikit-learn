@@ -12,7 +12,7 @@ parameters of an estimator.
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
-from collections.abc import Mapping, Iterable
+from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
 import numbers
@@ -94,7 +94,8 @@ class ParameterGrid:
     def __init__(self, param_grid):
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter grid is not a dict or a list ({!r})".format(param_grid)
+                f"Parameter grid should be a dict or a list, got: {param_grid!r} of"
+                f" type {type(param_grid)}"
             )
 
         if isinstance(param_grid, Mapping):
@@ -108,11 +109,23 @@ class ParameterGrid:
                 raise TypeError("Parameter grid is not a dict ({!r})".format(grid))
             for key, value in grid.items():
                 if isinstance(value, np.ndarray) and value.ndim > 1:
-                    raise ValueError("Parameter array should be one-dimensional.")
-                if not isinstance(grid[key], Iterable):
+                    raise ValueError(
+                        f"Parameter array for {key} should be one-dimensional, got:"
+                        f" {value!r} with shape {value.shape}"
+                    )
+                if isinstance(value, str) or not isinstance(
+                    value, (np.ndarray, Sequence)
+                ):
                     raise TypeError(
-                        "Parameter grid value is not iterable "
-                        "(key={!r}, value={!r})".format(key, grid[key])
+                        f"Parameter grid for parameter {key!r} needs to be a list or a"
+                        f" numpy array, but got {value!r} (of type {type(value)})"
+                        " instead. Single values need to be wrapped in a list with one"
+                        " element."
+                    )
+                if len(value) == 0:
+                    raise ValueError(
+                        f"Parameter grid for parameter {key!r} need "
+                        f"to be a non-empty sequence, got: {value!r}"
                     )
 
         self.param_grid = param_grid
