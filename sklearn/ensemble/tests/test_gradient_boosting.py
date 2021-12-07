@@ -1204,8 +1204,8 @@ def test_gradient_boosting_early_stopping():
     )
     gbr.fit(X, y)
 
-    assert gbc.n_estimators_ == 5
-    assert gbr.n_estimators_ == 10
+    assert gbc.n_estimators_ == 50
+    assert gbr.n_estimators_ == 30
 
 
 def test_gradient_boosting_validation_fraction():
