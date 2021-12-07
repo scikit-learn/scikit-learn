@@ -66,7 +66,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=7)
 
 from sklearn.ensemble import RandomForestRegressor
 
-reg = RandomForestRegressor(max_depth=10, random_state=7)
+reg = RandomForestRegressor(max_depth=10, n_jobs=2, random_state=7)
 reg.fit(X_train, y_train)
 
 # %%
