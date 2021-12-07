@@ -30,7 +30,7 @@ print(__doc__)
 # Work experience in years and a measure of ability are drawn
 # from a Normal distribution;
 # the hourly wage of one of the parents is drawn from Beta distribution.
-# We then create an indicator of college degree which is positivily
+# We then create an indicator of college degree which is positively
 # impacted by ability and parental hourly wage. Finally, we model
 # hourly wages as a linear function of all the previous variables and a
 # random component. Note that all variables have a positive effect on
