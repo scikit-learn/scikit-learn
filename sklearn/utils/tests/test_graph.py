@@ -38,7 +38,7 @@ def test_fix_connected_components_precomputed():
     assert n_connected_components == 1
 
     # but it does not work with precomputed neighbors graph
-    with pytest.raises(RuntimeError, match="number of connected components"):
+    with pytest.raises(RuntimeError, match="does not work with a sparse"):
         _fix_connected_components(
             graph, graph, n_connected_components, labels, metric="precomputed"
         )
