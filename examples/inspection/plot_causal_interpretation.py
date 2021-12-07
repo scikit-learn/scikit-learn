@@ -9,7 +9,7 @@ those models are unable to infer causal effects.
 
 To illustrate this, we will simulate a situation in which we try to answer
 one of the most important questions in economics of education:
-what is the causal effect of earning a college degree on hourly wages?
+**what is the causal effect of earning a college degree on hourly wages?**
 Although the answer to this question is crucial to policy makers,
 `Omitted-Variable Biases <https://en.wikipedia.org/wiki/Omitted-variable_bias>`_ (OVB)
 prevent us from identifying that causal effect.
