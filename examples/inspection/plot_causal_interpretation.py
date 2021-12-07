@@ -69,15 +69,14 @@ import pandas as pd
 import seaborn as sns
 
 df = pd.DataFrame({
+    'college degree': college_degrees,
+    'ability': abilities,
     'hourly wage': hourly_wages,
     'experience': experiences,
     'parent hourly wage': parent_hourly_wages,
-    'college degree': college_degrees,
-    'ability': abilities
     })
 
-_ = sns.pairplot(df, diag_kind='kde')
-
+grid = sns.pairplot(df, diag_kind="kde", corner=True)
 # %%
 # Predicting income with and without the ability feature
 # ------------------------------------------------------
