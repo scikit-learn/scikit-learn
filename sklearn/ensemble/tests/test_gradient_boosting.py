@@ -1196,7 +1196,7 @@ def test_gradient_boosting_early_stopping():
 
     # Without early stopping
     gbc = GradientBoostingClassifier(
-        n_estimators=5, learning_rate=0.1, max_depth=3, random_state=42
+        n_estimators=50, learning_rate=0.1, max_depth=3, random_state=42
     )
     gbc.fit(X, y)
     gbr = GradientBoostingRegressor(
