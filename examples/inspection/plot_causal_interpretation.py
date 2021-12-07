@@ -33,7 +33,7 @@ print(__doc__)
 # We then create an indicator of college degree which is positivily
 # impacted by ability and parental hourly wage. Finally, we model
 # hourly wages as a linear function of all the previous variables and a
-# random component. Note that all variables have a positivie effect on
+# random component. Note that all variables have a positive effect on
 # hourly wages.
 
 import numpy as np
