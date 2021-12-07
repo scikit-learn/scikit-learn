@@ -524,7 +524,7 @@ est = SimplePipeline(
 est.fit(X, y, foo=my_weights, bar=my_groups).predict(X[:3], bar=my_groups)
 
 # %%
-# Deprechation / Default Value Change
+# Deprecation / Default Value Change
 # -----------------------------------
 # In this section we show how one should handle the case where a router becomes
 # also a consumer, especially when it consumes the same metadata as its
