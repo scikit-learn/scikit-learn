@@ -15,7 +15,7 @@ Although the answer to this question is crucial to policy makers,
 prevent us from identifying that causal effect.
 
 
-.. contents::
+.. contents:: Table of Contents
    :local:
    :depth: 1
 """
