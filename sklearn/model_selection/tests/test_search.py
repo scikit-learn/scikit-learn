@@ -455,7 +455,7 @@ def test_grid_search_bad_param_grid():
     param_dict = {"C": []}
     clf = SVC()
     error_msg = re.escape(
-        "Parameter values for parameter (C) need to be a non-empty sequence."
+        "Parameter grid for parameter 'C' need to be a non-empty sequence, got: []"
     )
     search = GridSearchCV(clf, param_dict)
     with pytest.raises(ValueError, match=error_msg):
@@ -464,13 +464,12 @@ def test_grid_search_bad_param_grid():
     param_dict = {"C": "1,2,3"}
     clf = SVC(gamma="auto")
     error_msg = re.escape(
-        "Parameter grid for parameter (C) needs to"
-        " be a list or numpy array, but got (<class 'str'>)."
-        " Single values need to be wrapped in a list"
-        " with one element."
+        "Parameter grid for parameter 'C' needs to be a list or a numpy array, "
+        "but got '1,2,3' (of type <class 'str'>) instead. "
+        "Single values need to be wrapped in a list with one element."
     )
     search = GridSearchCV(clf, param_dict)
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(TypeError, match=error_msg):
         search.fit(X, y)
 
     param_dict = {"C": np.ones((3, 2))}
