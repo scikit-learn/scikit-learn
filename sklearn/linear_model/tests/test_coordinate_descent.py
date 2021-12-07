@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
-import joblib
 
 from sklearn.base import is_classifier
 from sklearn.base import clone
@@ -29,7 +28,6 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import parse_version
 from sklearn.utils import check_random_state
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -1632,24 +1630,18 @@ def test_enet_cv_sample_weight_sparse(estimator):
         reg.fit(X, y, sample_weight=sw)
 
 
-@pytest.mark.parametrize("backend", ["loky", "threading"])
 @pytest.mark.parametrize(
     "estimator", [ElasticNetCV, MultiTaskElasticNetCV, LassoCV, MultiTaskLassoCV]
 )
-def test_linear_models_cv_fit_for_all_backends(backend, estimator):
+def test_linear_models_cv_fit_readonly_data(estimator):
     # LinearModelsCV.fit performs inplace operations on input data which is
     # memmapped when using loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
-        pytest.skip("loky backend does not exist in joblib <0.12")
-
-    # Create a problem sufficiently large to cause memmapping (1MB).
     n_targets = 1 + (estimator in (MultiTaskElasticNetCV, MultiTaskLassoCV))
-    X, y = make_regression(20000, 10, n_targets=n_targets)
-
-    with joblib.parallel_backend(backend=backend):
-        estimator(n_jobs=2, cv=3).fit(X, y)
+    X, y = make_regression(1000, 10, n_targets=n_targets)
+    with TempMemmap(X) as X_readonly, TempMemmap(y) as y_readonly:
+        estimator(cv=3).fit(X_readonly, y_readonly)
 
 
 @pytest.mark.parametrize("check_input", [True, False])
