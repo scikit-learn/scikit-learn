@@ -11,7 +11,7 @@ trained on tabular data.
 Permutation importance uses the decrease in model score, after shuffling
 the values of a feature, to measure how important each feature is. It can
 be calculated using :func:`~sklearn.inspection.permutation_importance`.
-Shapley values represent the contribution of each feature to the prediction
+SHAP values represent the contribution of each feature to the prediction
 output by the model, using game theory. It is calculated as the average
 marginal contribution of each feature, across all possible feature subset
 combinations. These values satisfy a number of good properties and are thus
