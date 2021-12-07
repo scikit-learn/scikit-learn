@@ -222,7 +222,7 @@ shap_values[0, :]
 
 # %%
 # The Shapley values should sum to the difference between the
-# prediction output by our our model ``reg`` and  the ``expected_value`
+# prediction output by our model ``reg`` and  the ``expected_value``
 # (depending on how well the linear model was able to be fit).
 
 print(f"The sum of Shapley values: {shap_values[0, :].sum()}")
