@@ -1200,7 +1200,7 @@ def test_gradient_boosting_early_stopping():
     )
     gbc.fit(X, y)
     gbr = GradientBoostingRegressor(
-        n_estimators=10, learning_rate=0.1, max_depth=3, random_state=42
+        n_estimators=30, learning_rate=0.1, max_depth=3, random_state=42
     )
     gbr.fit(X, y)
 
