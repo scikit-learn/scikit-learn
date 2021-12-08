@@ -67,7 +67,7 @@ Changelog
 ...................
 
 - |Fix| Prevents :func:`tree.plot_tree` from drawing out of the boundary of
-  the figure. :pr:`xxxxx` by `Thomas Fan`_.
+  the figure. :pr:`21917` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
 ....................
