@@ -106,7 +106,8 @@ class ParameterGrid:
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError("Parameter grid is not a dict ({!r})".format(grid))
+                raise TypeError(f"Parameter grid for parameter '{grid}' is "
+                f"not a dict ({grid})")
             for key, value in grid.items():
                 if isinstance(value, np.ndarray) and value.ndim > 1:
                     raise ValueError(
@@ -118,9 +119,9 @@ class ParameterGrid:
                 ):
                     raise TypeError(
                         f"Parameter grid for parameter {key!r} needs to be a list or a"
-                        f" numpy array, but got {value!r} (of type {type(value).__name__})"
-                        " instead. Single values need to be wrapped in a list with one"
-                        " element."
+                        f" numpy array, but got {value!r} (of type "
+                        f"{type(value).__name__}) instead. Single values "
+                        "need to be wrapped in a list with one element."
                     )
                 if len(value) == 0:
                     raise ValueError(
@@ -260,7 +261,8 @@ class ParameterSampler:
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError(
                 f"Parameter distribution is not a dict or a list,"
-                f" got: {param_distributions!r} of type {type(param_distributions).__name__}"
+                f" got: {param_distributions!r} of type "
+                f"{type(param_distributions).__name__}"
             )
 
         if isinstance(param_distributions, Mapping):
