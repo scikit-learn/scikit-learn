@@ -118,14 +118,14 @@ class BayesianGaussianMixture(BaseMixture):
         The number of initializations to perform. The result with the highest
         lower bound value on the likelihood is kept.
 
-    init_params : {'kmeans', 'kmeans++', 'random', 'rand_data'}, default='kmeans'
+    init_params : {'kmeans', 'kmeans++', 'random', 'random_from_data'}, default='kmeans'
         The method used to initialize the weights, the means and the
         covariances.
         String must be one of:
 
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
-            'rand_data' : Initial means are randomly selected data points.
+            'random_from_data' : Initial means are randomly selected data points.
             'k-means++' : Use the k-means++ method to initialize.
 
     weight_concentration_prior_type : str, default='dirichlet_process'

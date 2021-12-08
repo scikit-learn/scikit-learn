@@ -153,7 +153,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         elif self.init_params == "random":
             resp = random_state.rand(n_samples, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
-        elif self.init_params == "rand_data":
+        elif self.init_params == "random_from_data":
             resp = np.zeros((n_samples, self.n_components))
             points = random_state.choice(
                 range(n_samples), self.n_components, replace=False

@@ -153,7 +153,7 @@ k-means++
   quicker than running a full k-means but can still take a significant amount of
   time for large data sets with many components.
 
-rand_data
+random_from_data
   This will pick random data points from the input data as the initial
   centers. This is a very fast method of initialization but can produce non-convergent
   results if the chosen points are too close to each other.

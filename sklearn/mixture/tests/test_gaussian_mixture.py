@@ -1275,7 +1275,7 @@ def test_init_param():
     gmm.fit(X)
     default_means = np.sort(gmm.means_.flatten())
 
-    INIT_TYPE = ["random", "rand_data", "k-means++", "kmeans"]
+    INIT_TYPE = ["random", "random_from_data", "k-means++", "kmeans"]
 
     for init in INIT_TYPE:
         gmm = GaussianMixture(
