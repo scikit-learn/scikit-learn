@@ -95,7 +95,7 @@ class ParameterGrid:
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError(
                 f"Parameter grid should be a dict or a list, got: {param_grid!r} of"
-                f" type {type(param_grid)}"
+                f" type {type(param_grid).__name__}"
             )
 
         if isinstance(param_grid, Mapping):
