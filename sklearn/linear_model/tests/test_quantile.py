@@ -147,7 +147,7 @@ def test_asymmetric_error(quantile):
     )
     intercept = 1.23
     coef = np.array([0.5, -2])
-    assert np.max(X @ coef + intercept) > 0, "take care that X @ coef + intercept > 0"
+    assert np.min(X @ coef + intercept) > 0, "take care that X @ coef + intercept > 0"
     # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
     # the quantile at level q is:
     #   quantile(q) = - log(1 - q) / lambda
