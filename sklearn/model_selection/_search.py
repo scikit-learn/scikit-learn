@@ -891,7 +891,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 results = self._format_results(
                     all_candidate_params, n_splits, all_out, all_more_results
                 )
-                return results            
+                return results
             self._run_search(evaluate_candidates)
             # multimetric is determined here because in the case of a callable
             # self.scoring the return type is only known after calling
