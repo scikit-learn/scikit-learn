@@ -15,13 +15,14 @@ the training samples.
 We also show the tree structure of a model built on all of the features.
 """
 # %%
+# First load the copy of the Iris dataset shipped with scikit-learn:
 from sklearn.datasets import load_iris
 
 iris = load_iris()
 
 
-# Print the decision functions of trees trained on all pairs of features.
 # %%
+# Display the decision functions of trees trained on all pairs of features.
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
@@ -72,12 +73,11 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]])
 
 plt.suptitle("Decision surface of decision trees trained on pairs of features")
 plt.legend(loc="lower right", borderpad=0, handletextpad=0)
-plt.axis("tight")
+_ = plt.axis("tight")
 
-
-# Print the structure of a single decision tree trained on all the features
-# together.
 # %%
+# Display the structure of a single decision tree trained on all the features
+# together.
 from sklearn.tree import plot_tree
 
 plt.figure()
