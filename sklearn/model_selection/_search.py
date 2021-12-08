@@ -263,7 +263,8 @@ class ParameterSampler:
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError(
                 "Parameter distribution is not a dict or a list,"
-                f" got: {param_distributions!r} of type {type(param_distributions).__name__}"
+                f" got: {param_distributions!r} of type "
+                f"{type(param_distributions).__name__}"
             )
 
         if isinstance(param_distributions, Mapping):
