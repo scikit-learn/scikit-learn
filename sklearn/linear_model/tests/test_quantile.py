@@ -130,7 +130,7 @@ def test_quantile_sample_weight():
 
 
 # This test can be made to pass with any solver but in the interest of sparing
-# continuous integration resources, we decided to only test with the fastest solver.
+# continuous integration resources, only test with the fastest solver is performed.
 @pytest.mark.skipif(
     parse_version(scipy.__version__) < parse_version("1.6.0"),
     reason="The `highs` solver is available from the 1.6.0 scipy version",
