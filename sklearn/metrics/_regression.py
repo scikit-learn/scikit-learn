@@ -30,9 +30,14 @@ import numpy as np
 
 from .._loss.glm_distribution import TweedieDistribution
 from ..exceptions import UndefinedMetricWarning
-from ..utils.validation import check_array, check_consistent_length, _num_samples
-from ..utils.validation import column_or_1d
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import (
+    check_array,
+    check_consistent_length,
+    _num_samples,
+    column_or_1d,
+    _check_sample_weight,
+    _deprecate_positional_args,
+)
 from ..utils.stats import _weighted_percentile
 
 
@@ -283,8 +288,9 @@ def mean_pinball_loss(
     return np.average(output_errors, weights=multioutput)
 
 
+@_deprecate_positional_args(version="1.1")
 def mean_absolute_percentage_error(
-    y_true, y_pred, sample_weight=None, multioutput="uniform_average"
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
     """Mean absolute percentage error (MAPE) regression loss.
 
