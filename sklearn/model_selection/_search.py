@@ -756,7 +756,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             rank_test_score = results[f"rank_test_{refit_metric}"]
             first_rank_indices = np.where(rank_test_score == rank_test_score.min())
             all_best_params = np.array(results["params"])[first_rank_indices]
-            all_best_params_df = DataFrame.from_records(all_best_params, \
+            all_best_params_df = DataFrame.from_records(all_best_params,
                                                         index=first_rank_indices[0])
             sort_on_columns = all_best_params_df.columns.tolist()
             all_best_params_df.sort_values(by=sort_on_columns, inplace=True)
