@@ -790,7 +790,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         self : object
             Instance of fitted estimator.
-        """        
+        """
         estimator = self.estimator
         refit_metric = "score"
 
@@ -828,8 +828,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             all_candidate_params = []
             all_out = []
             all_more_results = defaultdict(list)
-
-            def evaluate_candidates(candidate_params, cv=None, more_results=None): 
+            def evaluate_candidates(candidate_params, cv=None, more_results=None):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
@@ -893,8 +892,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     all_candidate_params, n_splits, all_out, all_more_results
                 )
 
-                return results
-            
+                return results            
             self._run_search(evaluate_candidates)
             
             # multimetric is determined here because in the case of a callable
@@ -910,7 +908,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
-        
         if self.refit or not self.multimetric_:
             self.best_index_ = self._select_best_index(
                 self.refit, refit_metric, results
