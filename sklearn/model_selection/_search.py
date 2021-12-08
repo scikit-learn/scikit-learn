@@ -118,7 +118,7 @@ class ParameterGrid:
                 ):
                     raise TypeError(
                         f"Parameter grid for parameter {key!r} needs to be a list or a"
-                        f" numpy array, but got {value!r} (of type {type(value)})"
+                        f" numpy array, but got {value!r} (of type {type(value).__name__})"
                         " instead. Single values need to be wrapped in a list with one"
                         " element."
                     )
