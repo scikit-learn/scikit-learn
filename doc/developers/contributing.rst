@@ -559,6 +559,7 @@ message, the following actions are taken.
     ---------------------- -------------------
     [ci skip]              CI is skipped completely
     [cd build]             CD is run (wheels and source distribution are built)
+    [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Build & test with the Intel C compiler (ICC)
