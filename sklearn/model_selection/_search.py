@@ -753,9 +753,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             if best_index < 0 or best_index >= len(results["params"]):
                 raise IndexError("best_index_ index out of range")
         else:
-            first_rank_indices = np.where(results[f"rank_test_{refit_metric}"] == results[f"rank_test_{refit_metric}"].min())
+            rank_test_score = results[f"rank_test_{refit_metric}"]
+            first_rank_indices = np.where(rank_test_score == rank_test_score.min())
             all_best_params = np.array(results["params"])[first_rank_indices]
-            all_best_params_df = DataFrame.from_records(all_best_params, index=first_rank_indices[0])
+            all_best_params_df = DataFrame.from_records(all_best_params, \
+                                                        index=first_rank_indices[0])
             sort_on_columns = all_best_params_df.columns.tolist()
             all_best_params_df.sort_values(by=sort_on_columns, inplace=True)
             best_index = all_best_params_df.index[0]
