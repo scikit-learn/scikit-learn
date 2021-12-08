@@ -39,7 +39,7 @@ outlined below.
 #
 # We will use the :ref:`california_housing_dataset` for this example. In this
 # dataset the target is the median house price (in $100,000's) for a district
-# and the 8 features consist of various information about each district. We
+# and the 8 features consist of information about each district. We
 # will only use a subset of the data to speed up computation.
 
 import pandas as pd
@@ -55,7 +55,7 @@ X.head()
 # %%
 # Split the data into training and testing subsets.
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=7)
+X_train, X_test, y_train, y_test = train_test_split(X.values, y, random_state=7)
 
 # %%
 # Calculating feature importance
@@ -186,9 +186,11 @@ plt.show()
 # median values of our features but SHAP offers a ``kmeans`` function that
 # can summarize each feature with ``k`` means.
 
+import numpy as np
+
 import shap
 
-med = X_train.median().values.reshape((1, X_train.shape[1]))
+med = np.median(X_train, axis=0).reshape((1, X_train.shape[1]))
 explainer = shap.KernelExplainer(reg.predict, med)
 
 # %%
@@ -237,8 +239,7 @@ print(
 
 import matplotlib.pyplot as plt
 
-shap.summary_plot(shap_values, X_test, show=False)
-plt.tight_layout()
+shap.summary_plot(shap_values, X_test)
 
 # %%
 # In the plot above, each dot represents the Shapley value of one sample,
@@ -295,8 +296,7 @@ plt.tight_layout()
 explainer = shap.TreeExplainer(reg)
 shap_values = explainer.shap_values(X_test)
 
-shap.summary_plot(shap_values, X_test, show=False)
-plt.tight_layout()
+shap.summary_plot(shap_values, X_test)
 
 # %%
 # Note that the order of features is exactly the same as that calculated
