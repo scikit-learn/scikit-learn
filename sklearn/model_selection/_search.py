@@ -790,8 +790,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         self : object
             Instance of fitted estimator.
-        """
-        
+        """        
         estimator = self.estimator
         refit_metric = "score"
 
@@ -830,8 +829,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, cv=None, more_results=None):
-            
+            def evaluate_candidates(candidate_params, cv=None, more_results=None): 
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
@@ -898,7 +896,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 return results
             
             self._run_search(evaluate_candidates)
-
+            
             # multimetric is determined here because in the case of a callable
             # self.scoring the return type is only known after calling
             first_test_score = all_out[0]["test_scores"]
