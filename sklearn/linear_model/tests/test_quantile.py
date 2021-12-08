@@ -129,8 +129,6 @@ def test_quantile_sample_weight():
     assert weighted_fraction_below == approx(0.5, abs=3e-2)
 
 
-# This test can be made to pass with any solver but in the interest of sparing
-# continuous integration resources, only test with the fastest solver is performed.
 @pytest.mark.skipif(
     parse_version(scipy.__version__) < parse_version("1.6.0"),
     reason="The `highs` solver is available from the 1.6.0 scipy version",
@@ -162,6 +160,8 @@ def test_asymmetric_error(quantile):
         alpha=0,
         solver="highs",
     ).fit(X, y)
+    # This test can be made to pass with any solver but in the interest of sparing
+    # continuous integration resources, only test with the fastest solver is performed.
 
     assert model.intercept_ == approx(intercept, rel=0.2)
     assert_allclose(model.coef_, coef, rtol=0.6)
