@@ -212,7 +212,7 @@ reg.predict(med)
 # Next we will calculate Shapley values using the testing subset. This is the
 # computationally expensive step.
 
-shap_values = explainer.shap_values(X_test, l1_reg="aic")
+shap_values = explainer.shap_values(X_test)
 
 # %%
 # Let's look at the Shapley values of one sample. There are 8 Shapley values,
@@ -228,7 +228,7 @@ shap_values[0, :]
 # (depending on how well the linear model was able to be fit).
 
 print(f"The sum of Shapley values: {shap_values[0, :].sum()}")
-prediction = reg.predict(X_test.iloc[0, :].values.reshape(1, -1))[0]
+prediction = reg.predict(X_test[0, :].reshape(1, -1))[0]
 print(
     "Difference between prediction and expected value: "
     f"{prediction - explainer.expected_value}"
