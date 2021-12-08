@@ -1,4 +1,4 @@
-"GridSearch ""
+"""
 The :mod:`sklearn.model_selection._search` includes utilities to fine-tune the
 parameters of an estimator.
 """
@@ -19,7 +19,7 @@ import numbers
 import operator
 import time
 import warnings
-
+from pandas import DataFrame
 import numpy as np
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
@@ -753,7 +753,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             if best_index < 0 or best_index >= len(results["params"]):
                 raise IndexError("best_index_ index out of range")
         else:
-            best_index = results[f"rank_test_{refit_metric}"].argmin()
+            first_rank_indices = np.where(results[f"rank_test_{refit_metric}"] == results[f"rank_test_{refit_metric}"].min())
+            all_best_params = np.array(results["params"])[first_rank_indices]
+            all_best_params_df = DataFrame.from_records(all_best_params, index=first_rank_indices[0])
+            sort_on_columns = all_best_params_df.columns.tolist()
+            all_best_params_df.sort_values(by=sort_on_columns, inplace=True)
+            best_index = all_best_params_df.index[0]
         return best_index
 
     def fit(self, X, y=None, *, groups=None, **fit_params):
@@ -784,6 +789,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Instance of fitted estimator.
         """
+        
         estimator = self.estimator
         refit_metric = "score"
 
@@ -823,7 +829,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             all_more_results = defaultdict(list)
 
             def evaluate_candidates(candidate_params, cv=None, more_results=None):
-                import pdb;pdb.set_trace();
+            
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
@@ -888,7 +894,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
                 return results
-            import pdb;pdb.set_trace();
+            
             self._run_search(evaluate_candidates)
 
             # multimetric is determined here because in the case of a callable
@@ -904,6 +910,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
+        
         if self.refit or not self.multimetric_:
             self.best_index_ = self._select_best_index(
                 self.refit, refit_metric, results
@@ -942,7 +949,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _format_results(self, candidate_params, n_splits, out, more_results=None):
-        import pdb;pdb.set_trace();
         n_candidates = len(candidate_params)
         out = _aggregate_score_dicts(out)
 
@@ -953,7 +959,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results[key] = np.asarray(val)
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
-            import pdb;pdb.set_trace();
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
             # We want `array` to have `n_candidates` rows and `n_splits` cols.
@@ -1033,7 +1038,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     train_scores_dict[scorer_name],
                     splits=True,
                 )
-        import pdb;pdb.set_trace();
+        
         return results
 
 
