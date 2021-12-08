@@ -1093,9 +1093,9 @@ def test_pickling_vectorizer():
         if IS_PYPY and isinstance(orig, HashingVectorizer):
             continue
         else:
-            assert_array_equal(
-                copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
-                orig.fit_transform(JUNK_FOOD_DOCS).toarray(),
+            assert_allclose_dense_sparse(
+                copy.fit_transform(JUNK_FOOD_DOCS),
+                orig.fit_transform(JUNK_FOOD_DOCS),
             )
 
 
@@ -1476,7 +1476,7 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     ],
 )
 def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
-    if issubclass(Estimator, HashingVectorizer):
+    if issubclass(Estimator, HashingVectorizer) and IS_PYPY:
         pytest.xfail("HashingVectorizer is not supported on PyPy")
     data = ["this is text, not file or filename"]
     with pytest.raises(err_type, match=err_msg):
@@ -1509,7 +1509,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     def analyzer(doc):
         raise Exception("testing")
 
-    if issubclass(Estimator, HashingVectorizer):
+    if issubclass(Estimator, HashingVectorizer) and IS_PYPY:
         pytest.xfail("HashingVectorizer is not supported on PyPy")
 
     f = tmpdir.join("file.txt")

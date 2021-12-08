@@ -138,7 +138,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
        different labels, the results will depend on the ordering of the
        training data.
 
-    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
 
     Examples
     --------
