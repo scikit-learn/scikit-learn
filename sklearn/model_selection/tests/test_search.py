@@ -440,7 +440,7 @@ def test_grid_search_when_param_grid_includes_range():
 
 
 def test_grid_search_bad_param_grid():
-    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
     param_dict = {"C": 1}
     clf = SVC(gamma="auto")
     error_msg = re.escape(
