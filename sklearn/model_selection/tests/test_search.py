@@ -133,7 +133,7 @@ def assert_grid_iter_equals_getitem(grid):
 @pytest.mark.parametrize(
     "input, error_type, error_message",
     [
-        (0, TypeError, r"Parameter .* a dict or a list, got: 0 of type .*"),
+        (0, TypeError, r"Parameter .* a dict or a list, got: 0 of type int"),
         ([{"foo": [0]}, 0], TypeError, r"Parameter .* is not a dict \(0\)"),
         (
             {"foo": 0},
