@@ -92,7 +92,7 @@ fig, ax = plt.subplots()
 ax.boxplot(
     perm_import.importances[sorted_idx].T,
     vert=False,
-    labels=X_train.columns[sorted_idx],
+    labels=X.columns[sorted_idx],
 )
 ax.set_title("Permutation Importances")
 fig.tight_layout()
