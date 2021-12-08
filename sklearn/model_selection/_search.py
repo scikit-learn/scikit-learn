@@ -106,8 +106,10 @@ class ParameterGrid:
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError(f"Parameter grid for parameter '{grid}' is "
-                f"not a dict ({grid})")
+                raise TypeError(
+                    f"Parameter grid for parameter '{grid}' is"
+                    f" not a dict ({grid})"
+                )
             for key, value in grid.items():
                 if isinstance(value, np.ndarray) and value.ndim > 1:
                     raise ValueError(
