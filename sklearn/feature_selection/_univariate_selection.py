@@ -224,6 +224,10 @@ def chi2(X, y):
     observed = safe_sparse_dot(Y.T, X)  # n_classes * n_features
 
     if issparse(observed):
+        # convert back to a dense array before calling _chisquare
+        # XXX: could _chisquare be reimplement to accept sparse matrices for
+        # cases where both n_classes and n_features are large (and X is
+        # sparse)?
         observed = observed.toarray()
 
     feature_count = X.sum(axis=0).reshape(1, -1)
