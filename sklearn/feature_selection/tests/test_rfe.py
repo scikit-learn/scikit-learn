@@ -513,7 +513,11 @@ def test_rfe_cv_groups():
 
 @pytest.mark.parametrize(
     "importance_getter",
-    [lambda estimator: estimator.regressor_.coef_, "regressor_.coef_"],
+    [
+        lambda estimator: estimator.regressor_.coef_,
+        "regressor_.coef_",
+        lambda estimator, X, y: estimator.regressor_.coef_,
+    ],
 )
 @pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 4)])
 def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features):
@@ -529,6 +533,24 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     selector = selector(log_estimator, importance_getter=importance_getter)
     sel = selector.fit(X, y)
     assert sel.support_.sum() == expected_n_features
+
+
+def test_importance_getter_with_train_instances():
+    clf = LogisticRegression()
+
+    data, y = load_iris(return_X_y=True)
+
+    def custom_importance_getter(estimator, X, y):
+        return estimator.coef_ + np.sum(X, axis=0)
+
+    sfm = RFE(
+        clf,
+        n_features_to_select=2,
+        importance_getter=custom_importance_getter,
+    )
+
+    sfm.fit(data, y)
+    assert sfm.transform(data).shape[1] == 2
 
 
 @pytest.mark.parametrize(
