@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
+import joblib
 
 from sklearn.base import is_classifier
 from sklearn.base import clone
@@ -1641,7 +1642,7 @@ def test_linear_models_cv_fit_with_loky(estimator):
     # change the max_nbyte of the inner Parallel call.
     X, y = make_regression(int(1e6) // 8 + 1, 1)
     assert X.nbytes > 1e6  # 1 MB
-    with parallel_backend("loky"):
+    with joblib.parallel_backend("loky"):
         estimator(n_jobs=2, cv=3).fit(X, y)
 
 
