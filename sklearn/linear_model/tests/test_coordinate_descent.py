@@ -1631,7 +1631,7 @@ def test_enet_cv_sample_weight_sparse(estimator):
 
 
 @pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
-def test_linear_models_cv_fit_with_joblib(estimator):
+def test_linear_models_cv_fit_with_loky(estimator):
     # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
     # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
@@ -1641,7 +1641,8 @@ def test_linear_models_cv_fit_with_joblib(estimator):
     # change the max_nbyte of the inner Parallel call.
     X, y = make_regression(int(1e6) // 8 + 1, 1)
     assert X.nbytes > 1e6  # 1 MB
-    estimator(n_jobs=2, cv=3).fit(X, y)
+    with parallel_backend("loky"):
+        estimator(n_jobs=2, cv=3).fit(X, y)
 
 
 @pytest.mark.parametrize("check_input", [True, False])
