@@ -12,7 +12,7 @@ np.import_array()
 
 # Work around Cython bug: C++ exceptions are not caught unless thrown within
 # a cdef function with an "except +" declaration.
-cdef inline void push(vector[np.npy_intp] &stack, np.npy_intp i) except +:
+cdef extern inline void push(vector[np.npy_intp] &stack, np.npy_intp i) except +:
     stack.push_back(i)
 
 
