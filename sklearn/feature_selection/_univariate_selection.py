@@ -214,6 +214,8 @@ def chi2(X, y):
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
+    # Use a sparse representation for Y by default to reduce memory usage when
+    # y has many unique classes.
     Y = LabelBinarizer(sparse_output=True).fit_transform(y)
     if Y.shape[1] == 1:
         Y = Y.toarray()
