@@ -38,9 +38,9 @@ For this particular pattern of missing values we see that
 :class:`~ensemble.RandomForestRegressor` give the best results.
 
 It shoud be noted that some estimators such as
-:class:`~ensemble.HistGradientBoostingRegressor` can natively deal with missing
-features and are often recommended over building pipelines with complex and
-costly missing values imputation strategies.
+:class:`~ensemble.HistGradientBoostingRegressor` can natively deal with
+missing features and are often recommended over building pipelines with
+complex and costly missing values imputation strategies.
 
 """
 
