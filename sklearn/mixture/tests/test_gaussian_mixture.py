@@ -128,56 +128,39 @@ def test_gaussian_mixture_attributes():
 
     n_components_bad = 0
     gmm = GaussianMixture(n_components=n_components_bad)
-    msg = (
-        f"Invalid value for 'n_components': {n_components_bad} "
-        "Estimation requires at least one component"
-    )
-    with pytest.raises(ValueError, match=msg):
+
+    with pytest.raises(ValueError):
         gmm.fit(X)
 
     # covariance_type should be in [spherical, diag, tied, full]
     covariance_type_bad = "bad_covariance_type"
     gmm = GaussianMixture(covariance_type=covariance_type_bad)
-    msg = (
-        f"Invalid value for 'covariance_type': {covariance_type_bad} "
-        "'covariance_type' should be in ['spherical', 'tied', 'diag', 'full']"
-    )
+
     with pytest.raises(ValueError):
         gmm.fit(X)
 
     tol_bad = -1
     gmm = GaussianMixture(tol=tol_bad)
-    msg = (
-        f"Invalid value for 'tol': {tol_bad:.5f} "
-        "Tolerance used by the EM must be non-negative"
-    )
-    with pytest.raises(ValueError, match=msg):
+
+    with pytest.raises(ValueError):
         gmm.fit(X)
 
     reg_covar_bad = -1
     gmm = GaussianMixture(reg_covar=reg_covar_bad)
-    msg = (
-        f"Invalid value for 'reg_covar': {reg_covar_bad:.5f} "
-        "regularization on covariance must be non-negative"
-    )
-    with pytest.raises(ValueError, match=msg):
+
+    with pytest.raises(ValueError):
         gmm.fit(X)
 
     max_iter_bad = -1
     gmm = GaussianMixture(max_iter=max_iter_bad)
-    msg = (
-        f"Invalid value for 'max_iter': {max_iter_bad} "
-        "The number of iterations must be non-negative"
-    )
-    with pytest.raises(ValueError, match=msg):
+
+    with pytest.raises(ValueError):
         gmm.fit(X)
 
     n_init_bad = 0
     gmm = GaussianMixture(n_init=n_init_bad)
-    msg = (
-        f"Invalid value for 'n_init': {n_init_bad} Estimation requires at least one run"
-    )
-    with pytest.raises(ValueError, match=msg):
+
+    with pytest.raises(ValueError):
         gmm.fit(X)
 
     init_params_bad = "bad_method"
