@@ -974,13 +974,14 @@ def test_support_missing_values(MultiClassClassifier):
     MultiClassClassifier(lr).fit(X, y).score(X, y)
 
 
-def test_constant_int_target():
+@pytest.mark.parametrize("make_y", [np.ones, np.zeros])
+def test_constant_int_target(make_y):
     """Check that constant y target does not raise.
 
     Non-regression test for #21869
     """
     X = np.ones((10, 2))
-    y = np.zeros((10, 1), dtype=np.int32)
+    y = make_y((10, 1), dtype=np.int32)
     ovr = OneVsRestClassifier(LogisticRegression())
 
     ovr.fit(X, y)
