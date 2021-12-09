@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 from pytest import approx
 from scipy.optimize import minimize
-import scipy
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
@@ -130,7 +129,7 @@ def test_quantile_sample_weight():
 
 
 @pytest.mark.skipif(
-    parse_version(scipy.__version__) < parse_version("1.6.0"),
+    sp_version < parse_version("1.6.0"),
     reason="The `highs` solver is available from the 1.6.0 scipy version",
 )
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
@@ -166,7 +165,7 @@ def test_asymmetric_error(quantile):
 
     assert model.intercept_ == approx(intercept, rel=0.2)
     assert_allclose(model.coef_, coef, rtol=0.6)
-    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=6e-3)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
 
     # Now compare to Nelder-Mead optimization with L1 penalty
     alpha = 0.01
@@ -189,7 +188,7 @@ def test_asymmetric_error(quantile):
     assert func(model_coef) == approx(func(res.x))
     assert_allclose(model.intercept_, res.x[0])
     assert_allclose(model.coef_, res.x[1:])
-    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=6e-3)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
 
 
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
