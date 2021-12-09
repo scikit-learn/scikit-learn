@@ -54,7 +54,7 @@ Changelog
 :mod:`sklearn.multiclass`
 .........................
 
-- |Fix| :meth:`multiclass.OneVsRestClassifier.predict_proba` dose not error when
+- |Fix| :meth:`multiclass.OneVsRestClassifier.predict_proba` does not error when
   fitted on constant integer targets. :pr:`21871` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
