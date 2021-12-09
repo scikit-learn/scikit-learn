@@ -351,7 +351,7 @@ def test_lasso_cv_positive_constraint():
 
 def _scale_alpha_inplace(estimator, n_samples):
     """Rescale the parameter alpha from when the estimator is evoked with
-    normalize set to True to when it is evoked in a Pipeline with normalize set
+    normalize set to True as if it were evoked in a Pipeline with normalize set
     to False and with a StandardScaler.
     """
     if ("alpha" not in estimator.get_params()) and (
@@ -360,7 +360,10 @@ def _scale_alpha_inplace(estimator, n_samples):
         return
 
     if isinstance(estimator, (RidgeCV, RidgeClassifierCV)):
-        alphas = estimator.alphas * n_samples
+        # alphas is not validated at this point and can be a list.
+        # We convert it to a np.ndarray to make sure broadcasting
+        # is used.
+        alphas = np.asarray(estimator.alphas) * n_samples
         return estimator.set_params(alphas=alphas)
     if isinstance(estimator, (Lasso, LassoLars, MultiTaskLasso)):
         alpha = estimator.alpha * np.sqrt(n_samples)

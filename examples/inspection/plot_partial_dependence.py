@@ -31,9 +31,8 @@ California housing dataset. The example is taken from [1]_.
        the Black Box: Visualizing Statistical Learning With Plots of
        Individual Conditional Expectation. (2015) Journal of Computational and
        Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
-"""
 
-print(__doc__)
+"""
 
 # %%
 # California Housing data preprocessing

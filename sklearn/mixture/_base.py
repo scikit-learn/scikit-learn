@@ -28,7 +28,7 @@ def _check_shape(param, param_shape, name):
 
     param_shape : tuple
 
-    name : string
+    name : str
     """
     param = np.array(param)
     if param.shape != param_shape:

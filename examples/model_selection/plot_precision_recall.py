@@ -90,6 +90,7 @@ matrix as a binary prediction (micro-averaging).
              :func:`sklearn.metrics.precision_score`,
              :func:`sklearn.metrics.f1_score`
 """
+
 # %%
 # In binary classification settings
 # ---------------------------------
