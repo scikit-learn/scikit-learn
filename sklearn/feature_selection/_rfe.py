@@ -287,6 +287,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                 estimator,
                 self.importance_getter,
                 transform_func="square",
+                X=X[:, features],
+                y=y,
             )
             ranks = np.argsort(importances)
 

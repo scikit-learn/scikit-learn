@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+from inspect import signature
 from warnings import warn
 from operator import attrgetter
 
@@ -166,7 +167,9 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         return input_features[self.get_support()]
 
 
-def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):
+def _get_feature_importances(
+    estimator, getter, transform_func=None, norm_order=1, X=None, y=None
+):
     """
     Retrieve and aggregate (ndim > 1)  the feature importances
     from an estimator. Also optionally applies transformation.
@@ -176,6 +179,12 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     estimator : estimator
         A scikit-learn estimator from which we want to get the feature
         importances.
+
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The training input samples.
+
+    y : array-like of shape (n_samples,)
+        The target values.
 
     getter : "auto", str or callable
         An attribute or a callable to get the feature importance. If `"auto"`,
@@ -210,9 +219,16 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
                 )
         else:
             getter = attrgetter(getter)
-    elif not callable(getter):
+        importances = getter(estimator)
+
+    elif callable(getter):
+        if len(signature(getter).parameters) == 3 and X is not None and y is not None:
+            importances = getter(estimator, X, y)
+        else:
+            importances = getter(estimator)
+
+    else:
         raise ValueError("`importance_getter` has to be a string or `callable`")
-    importances = getter(estimator)
 
     if transform_func is None:
         return importances

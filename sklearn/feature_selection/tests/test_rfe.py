@@ -2,7 +2,6 @@
 Testing Recursive feature elimination
 """
 
-from operator import attrgetter
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
@@ -513,7 +512,8 @@ def test_rfe_cv_groups():
 
 
 @pytest.mark.parametrize(
-    "importance_getter", [attrgetter("regressor_.coef_"), "regressor_.coef_"]
+    "importance_getter",
+    [lambda estimator: estimator.regressor_.coef_, "regressor_.coef_"],
 )
 @pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 4)])
 def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features):
