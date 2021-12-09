@@ -69,7 +69,7 @@ colors = ["navy", "turquoise", "cornflowerblue", "darkorange"]
 times_init = {}
 relative_times = {}
 
-plt.figure(figsize=(3 * len(methods) // 2, 6))
+plt.figure(figsize=(4 * len(methods) // 2, 6))
 plt.subplots_adjust(
     bottom=0.1, top=0.9, hspace=0.15, wspace=0.05, left=0.05, right=0.95
 )
