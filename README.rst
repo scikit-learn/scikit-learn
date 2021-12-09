@@ -183,10 +183,14 @@ Communication
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - Gitter: https://gitter.im/scikit-learn/scikit-learn
 - Twitter: https://twitter.com/scikit_learn
+- Twitter (commits): https://twitter.com/sklearn_commits
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Github Discussions: https://github.com/scikit-learn/scikit-learn/discussions
 - Website: https://scikit-learn.org
 - LinkedIn: https://www.linkedin.com/company/scikit-learn
+- YouTube: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
+- Facebook: https://www.facebook.com/scikitlearnofficial/
+- Instagram: https://www.instagram.com/scikitlearnofficial/
 
 Citation
 ~~~~~~~~
