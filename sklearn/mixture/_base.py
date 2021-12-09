@@ -4,6 +4,7 @@
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
@@ -16,7 +17,7 @@ from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted
 
@@ -78,40 +79,20 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
         X : array-like of shape (n_samples, n_features)
         """
-        if self.n_components < 1:
-            raise ValueError(
-                "Invalid value for 'n_components': %d "
-                "Estimation requires at least one component"
-                % self.n_components
-            )
+        check_scalar(self.n_components, name='n_components',
+                     target_type=numbers.Integral, min_val=1)
 
-        if self.tol < 0.0:
-            raise ValueError(
-                "Invalid value for 'tol': %.5f "
-                "Tolerance used by the EM must be non-negative"
-                % self.tol
-            )
+        check_scalar(self.tol, name='tol',
+                     target_type=numbers.Real, min_val=0.0)
 
-        if self.n_init < 1:
-            raise ValueError(
-                "Invalid value for 'n_init': %d Estimation requires at least one run"
-                % self.n_init
-            )
+        check_scalar(self.n_init, name='n_init',
+                     target_type=numbers.Integral, min_val=1)
 
-        if self.max_iter < 0:
-            raise ValueError(
-                "Invalid value for 'max_iter': %d "
-                "The number of iterations must be non-negative"
-                % self.max_iter
-            )
+        check_scalar(self.max_iter, name='max_iter',
+                     target_type=numbers.Integral, min_val=0)
 
-        if self.reg_covar < 0.0:
-            raise ValueError(
-                "Invalid value for 'reg_covar': %.5f "
-                "regularization on covariance must be "
-                "non-negative"
-                % self.reg_covar
-            )
+        check_scalar(self.reg_covar, name='reg_covar',
+                     target_type=numbers.Real, min_val=0.0)
 
         # Check all the parameters values of the derived class
         self._check_parameters(X)
