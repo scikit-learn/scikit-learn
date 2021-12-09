@@ -138,7 +138,8 @@ def assert_grid_iter_equals_getitem(grid):
         (
             {"foo": 0},
             TypeError,
-            r"Parameter .*",
+            r"Parameter (grid|distribution) for parameter 'foo' (is not|needs to be) "
+            r"(a list or a numpy array|iterable or a distribution).*",
         ),
     ],
 )
