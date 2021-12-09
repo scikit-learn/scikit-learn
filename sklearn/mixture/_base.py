@@ -136,11 +136,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             resp /= resp.sum(axis=1)[:, np.newaxis]
         elif self.init_params == "random_from_data":
             resp = np.zeros((n_samples, self.n_components))
-            points = random_state.choice(
+            indices = random_state.choice(
                 range(n_samples), self.n_components, replace=False
             )
-            for n, i in enumerate(points):
-                resp[i, n] = 1
+            resp[indices, np.arange(self.n_components)] = 1
         elif self.init_params == "k-means++":
             resp = np.zeros((n_samples, self.n_components))
             _, indices = kmeans_plusplus(
@@ -149,8 +148,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 x_squared_norms=row_norms(X, squared=True),
                 random_state=random_state,
             )
-            for n, i in enumerate(indices.astype(int)):
-                resp[i, n] = 1
+            resp[indices.astype(int), np.arange(self.n_components)] = 1
         else:
             raise ValueError(
                 "Unimplemented initialization method '%s'" % self.init_params
