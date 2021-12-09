@@ -95,8 +95,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
-        The callable is passed with the fitted estimator and it should
-        return importance for each feature.
+        The callable is passed with the fitted estimator and optionally the
+        training input samples `X` and the target labels `y`. The callable
+        should return importance for each feature.
 
         .. versionadded:: 0.24
 
@@ -514,8 +515,9 @@ class RFECV(RFE):
         :class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
-        The callable is passed with the fitted estimator and it should
-        return importance for each feature.
+        The callable is passed with the fitted estimator and optionally the
+        training input samples `X` and the target labels `y`. The callable
+        should return importance for each feature.
 
         .. versionadded:: 0.24
 
