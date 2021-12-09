@@ -224,7 +224,8 @@ class Isomap(TransformerMixin, BaseEstimator):
                     f" is {n_connected_components} > 1. The graph cannot be "
                     "completed with metric='precomputed', and Isomap cannot be"
                     "fitted. Increase the number of neighbors to avoid this "
-                    "issue, or precompute the full distance matrix."
+                    "issue, or precompute the full distance matrix instead "
+                    "of passing a sparse neighbors graph."
                 )
             warnings.warn(
                 "The number of connected components of the neighbors graph "
