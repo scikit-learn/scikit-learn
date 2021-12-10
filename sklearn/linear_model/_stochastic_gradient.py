@@ -2161,7 +2161,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         average=False,
     ):
 
-        alpha = nu / 2
+        alpha = None
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
             loss="hinge",
@@ -2364,7 +2364,9 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
+        self._validate_params(for_partial_fit=True)
         alpha = self.nu / 2
+
         return self._partial_fit(
             X,
             alpha,
@@ -2461,6 +2463,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self._validate_params()
         self._more_validate_params()
 
+        self._validate_params()
         alpha = self.nu / 2
         self._fit(
             X,
