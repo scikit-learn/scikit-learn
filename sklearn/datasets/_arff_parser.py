@@ -1,4 +1,4 @@
-"""This module is ARFF parser using LIAC-ARFF library implemented in pure Python."""
+"""Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
 import itertools
 from collections import OrderedDict
 from collections.abc import Generator
