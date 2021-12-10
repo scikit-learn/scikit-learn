@@ -110,7 +110,7 @@ class ParameterGrid:
             for key, value in grid.items():
                 if isinstance(value, np.ndarray) and value.ndim > 1:
                     raise ValueError(
-                        f"Parameter array for {key} should be one-dimensional, got:"
+                        f"Parameter array for {key!r} should be one-dimensional, got:"
                         f" {value!r} with shape {value.shape}"
                     )
                 if isinstance(value, str) or not isinstance(
@@ -279,7 +279,7 @@ class ParameterSampler:
                     dist[key], "rvs"
                 ):
                     raise TypeError(
-                        f"Parameter grid for parameter '{key}' is not iterable "
+                        f"Parameter grid for parameter {key!r} is not iterable "
                         f"or a distribution (value={dist[key]})"
                     )
         self.n_iter = n_iter
