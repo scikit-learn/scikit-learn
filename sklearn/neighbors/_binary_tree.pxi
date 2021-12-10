@@ -900,9 +900,13 @@ cdef class BinaryTree:
     cdef readonly const DTYPE_t[:, ::1] data
     cdef readonly const DTYPE_t[::1] sample_weight
     cdef public DTYPE_t sum_weight
-    cdef public ITYPE_t[::1] idx_array
-    cdef public NodeData_t[::1] node_data
-    cdef public DTYPE_t[:, :, ::1] node_bounds
+
+    # Even if those memoryviews attributes are const-qualified,
+    # they get modified via their numpy counterpart.
+    # For instance, `node_data` gets modified via `node_data_arr`.
+    cdef public const ITYPE_t[::1] idx_array
+    cdef public const NodeData_t[::1] node_data
+    cdef public const DTYPE_t[:, :, ::1] node_bounds
 
     cdef ITYPE_t leaf_size
     cdef ITYPE_t n_levels
@@ -986,7 +990,12 @@ cdef class BinaryTree:
 
         # Allocate tree-specific data
         allocate_data(self, self.n_nodes, n_features)
-        self._recursive_build(0, 0, n_samples)
+        self._recursive_build(
+            node_data=self.node_data_arr,
+            i_node=0,
+            idx_start=0,
+            idx_end=n_samples
+        )
 
     def _update_sample_weight(self, n_samples, sample_weight):
         if sample_weight is not None:
@@ -1133,7 +1142,7 @@ cdef class BinaryTree:
         else:
             return self.dist_metric.rdist(x1, x2, size)
 
-    cdef int _recursive_build(self, ITYPE_t i_node, ITYPE_t idx_start,
+    cdef int _recursive_build(self, NodeData_t[::1] node_data, ITYPE_t i_node, ITYPE_t idx_start,
                               ITYPE_t idx_end) except -1:
         """Recursively build the tree.
 
@@ -1153,10 +1162,10 @@ cdef class BinaryTree:
         cdef DTYPE_t* data = &self.data[0, 0]
 
         # initialize node data
-        init_node(self, i_node, idx_start, idx_end)
+        init_node(self, node_data, i_node, idx_start, idx_end)
 
         if 2 * i_node + 1 >= self.n_nodes:
-            self.node_data[i_node].is_leaf = True
+            node_data[i_node].is_leaf = True
             if idx_end - idx_start > 2 * self.leaf_size:
                 # this shouldn't happen if our memory allocation is correct
                 # we'll proactively prevent memory errors, but raise a
@@ -1171,18 +1180,18 @@ cdef class BinaryTree:
             import warnings
             warnings.warn("Internal: memory layout is flawed: "
                           "too many nodes allocated")
-            self.node_data[i_node].is_leaf = True
+            node_data[i_node].is_leaf = True
 
         else:
             # split node and recursively construct child nodes.
-            self.node_data[i_node].is_leaf = False
+            node_data[i_node].is_leaf = False
             i_max = find_node_split_dim(data, idx_array,
                                         n_features, n_points)
             partition_node_indices(data, idx_array, i_max, n_mid,
                                    n_features, n_points)
-            self._recursive_build(2 * i_node + 1,
+            self._recursive_build(node_data,2 * i_node + 1,
                                   idx_start, idx_start + n_mid)
-            self._recursive_build(2 * i_node + 2,
+            self._recursive_build(node_data, 2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
 
     def query(self, X, k=1, return_distance=True,
