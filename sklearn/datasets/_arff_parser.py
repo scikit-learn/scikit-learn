@@ -153,9 +153,7 @@ def _post_process_array(X, y, columns_info, feature_names, target_names):
     }
     frame = None
 
-    print(X, X.shape, y, y.shape)
-
-    is_classification = {col_name in nominal_attributes for col_name in target_names}
+    is_classification = [col_name in nominal_attributes for col_name in target_names]
     if not is_classification:  # No target
         pass
     elif all(is_classification):
