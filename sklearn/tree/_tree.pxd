@@ -5,6 +5,7 @@
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Haoyin Xu <haoyinxu@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -59,6 +60,10 @@ cdef class Tree:
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_node_samples) nogil except -1
+    cdef SIZE_t _update_node(self, SIZE_t parent, bint is_left, bint is_leaf,
+                             SIZE_t feature, double threshold, double impurity,
+                             SIZE_t n_node_samples,
+                             double weighted_n_node_samples) nogil except -1
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
@@ -100,4 +105,6 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*)
+    cpdef update(self, Tree tree, object X, np.ndarray y,
+                 np.ndarray sample_weight=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
