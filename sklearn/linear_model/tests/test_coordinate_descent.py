@@ -1632,23 +1632,21 @@ def test_enet_cv_sample_weight_sparse(estimator):
         reg.fit(X, y, sample_weight=sw)
 
 
-@pytest.mark.parametrize("backend", ["loky", "threading"])
-@pytest.mark.parametrize(
-    "estimator", [ElasticNetCV, MultiTaskElasticNetCV, LassoCV, MultiTaskLassoCV]
-)
-def test_linear_models_cv_fit_for_all_backends(backend, estimator):
-    # LinearModelsCV.fit performs inplace operations on input data which is
-    # memmapped when using loky backend, causing an error due to unexpected
+@pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
+def test_linear_models_cv_fit_with_loky(estimator):
+    # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
+    # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
+    if parse_version(joblib.__version__) < parse_version("0.12"):
         pytest.skip("loky backend does not exist in joblib <0.12")
 
     # Create a problem sufficiently large to cause memmapping (1MB).
-    n_targets = 1 + (estimator in (MultiTaskElasticNetCV, MultiTaskLassoCV))
-    X, y = make_regression(20000, 10, n_targets=n_targets)
-
-    with joblib.parallel_backend(backend=backend):
+    # Unfortunately the scikit-learn and joblib APIs do not make it possible to
+    # change the max_nbyte of the inner Parallel call.
+    X, y = make_regression(int(1e6) // 8 + 1, 1)
+    assert X.nbytes > 1e6  # 1 MB
+    with joblib.parallel_backend("loky"):
         estimator(n_jobs=2, cv=3).fit(X, y)
 
 

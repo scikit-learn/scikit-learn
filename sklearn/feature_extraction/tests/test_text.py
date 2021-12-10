@@ -616,15 +616,32 @@ def test_vectorizer():
 
 
 def test_tfidf_vectorizer_setters():
-    tv = TfidfVectorizer(norm="l2", use_idf=False, smooth_idf=False, sublinear_tf=False)
+    norm, use_idf, smooth_idf, sublinear_tf = "l2", False, False, False
+    tv = TfidfVectorizer(
+        norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
+    )
+    tv.fit(JUNK_FOOD_DOCS)
+    assert tv._tfidf.norm == norm
+    assert tv._tfidf.use_idf == use_idf
+    assert tv._tfidf.smooth_idf == smooth_idf
+    assert tv._tfidf.sublinear_tf == sublinear_tf
+
+    # assigning value to `TfidfTransformer` should not have any effect until
+    # fitting
     tv.norm = "l1"
-    assert tv._tfidf.norm == "l1"
     tv.use_idf = True
-    assert tv._tfidf.use_idf
     tv.smooth_idf = True
-    assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
-    assert tv._tfidf.sublinear_tf
+    assert tv._tfidf.norm == norm
+    assert tv._tfidf.use_idf == use_idf
+    assert tv._tfidf.smooth_idf == smooth_idf
+    assert tv._tfidf.sublinear_tf == sublinear_tf
+
+    tv.fit(JUNK_FOOD_DOCS)
+    assert tv._tfidf.norm == tv.norm
+    assert tv._tfidf.use_idf == tv.use_idf
+    assert tv._tfidf.smooth_idf == tv.smooth_idf
+    assert tv._tfidf.sublinear_tf == tv.sublinear_tf
 
 
 @fails_if_pypy
@@ -1227,6 +1244,11 @@ def test_tfidf_vectorizer_setter():
         copy.transform(JUNK_FOOD_DOCS).toarray(),
         orig.transform(JUNK_FOOD_DOCS).toarray(),
     )
+    # `idf_` cannot be set with `use_idf=False`
+    copy = TfidfVectorizer(vocabulary=orig.vocabulary_, use_idf=False)
+    err_msg = "`idf_` cannot be set when `user_idf=False`."
+    with pytest.raises(ValueError, match=err_msg):
+        copy.idf_ = orig.idf_
 
 
 def test_tfidfvectorizer_invalid_idf_attr():
