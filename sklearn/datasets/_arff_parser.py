@@ -22,7 +22,7 @@ def _split_sparse_columns(
     """Obtains several columns from sparse ARFF representation. Additionally,
     the column indices are re-labelled, given the columns that are not
     included. (e.g., when including [1, 2, 3], the columns will be relabelled
-    to [0, 1, 2])
+    to [0, 1, 2]).
 
     Parameters
     ----------
