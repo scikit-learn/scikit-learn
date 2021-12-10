@@ -1,35 +1,23 @@
 import gzip
+import hashlib
 import json
 import os
 import shutil
-import hashlib
-from os.path import join
-from warnings import warn
 from contextlib import closing
 from functools import wraps
+from os.path import join
 from typing import Callable, Optional, Dict, Tuple, List, Any, Union
-import itertools
-from collections.abc import Generator
-from collections import OrderedDict
-from functools import partial
 from tempfile import TemporaryDirectory
-
+from urllib.error import HTTPError
 from urllib.request import urlopen, Request
+from warnings import warn
 
 import numpy as np
-import scipy.sparse
 
-from ..externals import _arff
-from ..externals._arff import ArffContainerType
 from . import get_data_home
-from urllib.error import HTTPError
-from ..utils import Bunch
-from ..utils import is_scalar_nan
-from ..utils import get_chunk_n_rows
-from ..utils import _chunk_generator
-from ..utils import check_pandas_support  # noqa
-
 from ._arff_parser import load_arff_from_gzip_file
+from ..utils import Bunch
+from ..utils import check_pandas_support  # noqa
 
 __all__ = ["fetch_openml"]
 
@@ -76,7 +64,8 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
 
 
 class _GzipFileChecksum(gzip.GzipFile):
-    """GzipFile that can also calculate the checksum."""
+    """This class is the same as `gzip.GzipFile` except that it calculates
+    the md5 checksum while reading the file."""
 
     def __init__(self, *args, **kwargs):
         self.md5_checksum = hashlib.md5()
@@ -164,7 +153,7 @@ def _get_json_content_from_openml_api(
     url: str, error_message: Optional[str], data_home: Optional[str]
 ) -> Dict:
     """
-    Loads json data from the openml api
+    Loads json data from the openml api.
 
     Parameters
     ----------
@@ -328,17 +317,80 @@ def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
 
 
 def _load_arff_response(
-    url,
-    data_home,
-    parser,
-    output_arrays_type,
-    columns_info_openml,
-    feature_names_to_select,
-    target_names_to_select,
-    infer_casting,
-    shape,
-    md5_checksum,
+    url: str,
+    data_home: Optional[str],
+    parser: str,
+    output_arrays_type: str,
+    columns_info_openml: dict,
+    feature_names_to_select: List[str],
+    target_names_to_select: List[str],
+    infer_casting: bool,
+    shape: Optional[Tuple[int, int]],
+    md5_checksum: str,
 ):
+    """Load the ARFF data associated with the OpenML URL.
+
+    In addition of loading the data, this function will also check the
+    integrity of the downloaded file from OpenML using MD5 checksum.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the ARFF file on OpenML.
+
+    data_home : str
+        The location where to cache the data.
+
+    parser : {"liac-arff", "pandas"}
+        The parser used to parse the ARFF file.
+
+    output_arrays_type : {"numpy", "pandas", "sparse"}
+        The type of the arrays that will be returned. The possibilities ara:
+
+        - `"numpy"`: both `X` and `y` will be NumPy arrays;
+        - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
+        - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
+          pandas Series or DataFrame.
+
+    columns_info_openml : dict
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
+
+    feature_names_to_select : list of str
+        The list of the features to be selected.
+
+    target_names_to_select : list of str
+        The list of the target variables to be selected.
+
+    infer_casting : bool
+        Whether or not to infer the type of the data in each column and thus
+        cast the data to the most appropriate type. Activating this option
+        will be more costly but will solved ambiguities regarding the data
+        types provided by the ARFF metadata.
+
+    shape : tuple or None
+        With `parser="liac-arff"`, when using a generator to load the data,
+        one needs to provide the shape of the data beforehand.
+
+    md5_checksum : str
+        The MD5 checksum provided by OpenML to check the data integrity.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix, dataframe}
+        The data matrix.
+
+    y : {ndarray, dataframe, series}
+        The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
+
+    nominal_attributes : list of str or None
+        The names of the features that are categorical. `None` if
+        `output_array_type == "pandas"`.
+    """
     gzip_file = _open_openml_url(url, data_home)
 
     with closing(gzip_file):
@@ -374,7 +426,7 @@ def _download_data_to_bunch(
     data_home: Optional[str],
     *,
     as_frame: bool,
-    features_list: List,
+    columns_info_openml_as_list: List[dict],
     data_columns: List[str],
     target_columns: List[str],
     shape: Optional[Tuple[int, int]],
@@ -382,9 +434,70 @@ def _download_data_to_bunch(
     parser: str,
     infer_casting: bool,
 ):
-    """Download OpenML ARFF and convert to Bunch of data."""
+    """Download ARFF data, load it to a specific container and create to Bunch.
+
+    This function has a mechanism to retry/cache/clean the data.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the ARFF file on OpenML.
+
+    sparse : bool
+        Whether or not the dataset will be a sparse ARFF format.
+
+    data_home : str
+        The location where to cache the data.
+
+    as_frame : bool
+        Whether or not to return the data into a pandas DataFrame.
+
+    columns_info_openml_as_list : list of dict
+        The information regarding the columns provided by OpenML for the
+        ARFF dataset. The information is stored as a list of dictionaries.
+
+    data_columns : list of str
+        The list of the features to be selected.
+
+    target_columns : list of str
+        The list of the target variables to be selected.
+
+    shape : tuple or None
+        With `parser="liac-arff"`, when using a generator to load the data,
+        one needs to provide the shape of the data beforehand.
+
+    md5_checksum : str
+        The MD5 checksum provided by OpenML to check the data integrity.
+
+    parser : {"liac-arff", "pandas"}
+        The parser used to parse the ARFF file.
+
+    infer_casting : bool
+        Whether or not to infer the type of the data in each column and thus
+        cast the data to the most appropriate type. Activating this option
+        will be more costly but will solved ambiguities regarding the data
+        types provided by the ARFF metadata.
+
+    Returns
+    -------
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        X : {ndarray, sparse matrix, dataframe}
+            The data matrix.
+        y : {ndarray, dataframe, series}
+            The target.
+        frame : dataframe or None
+            A dataframe containing both `X` and `y`. `None` if
+            `output_array_type != "pandas"`.
+        nominal_attributes : list of str or None
+            The names of the features that are categorical. `None` if
+            `output_array_type == "pandas"`.
+    """
     # Prepare which columns and data types should be returned for the X and y
-    features_dict = {feature["name"]: feature for feature in features_list}
+    features_dict = {
+        feature["name"]: feature for feature in columns_info_openml_as_list
+    }
     if sparse:
         output_arrays_type = "sparse"
     elif as_frame:
@@ -567,7 +680,15 @@ def fetch_openml(
            types).
 
     infer_casting : bool or str, default="auto"
-        FIXME
+        Whether or not to infer the type of the data in each column and thus
+        cast the data to the most appropriate type. Activating this option
+        will be more costly but will solved ambiguities regarding the data
+        types provided by the ARFF metadata. This option is only necessary
+        when `parser="liac-arff"` since we can let Pandas infering the columns
+        type. When `infer_casting="auto"`, this option is set to `True` if
+        `parser="liac-arff"` and `False` otherwise.
+
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -693,11 +814,17 @@ def fetch_openml(
     elif parser != "liac-arff":
         raise ValueError("Invalid value for argument 'parser'. ")
 
-    if infer_casting == "auto":
-        if parser == "liac-arff":
-            infer_casting = True
+    if isinstance(infer_casting, str):
+        if infer_casting == "auto":
+            if parser == "liac-arff":
+                infer_casting = True
+            else:
+                infer_casting = False
         else:
-            infer_casting = False
+            raise ValueError(
+                "Invalid value for argument 'infer_casting'. "
+                "Only 'auto' when providing a string."
+            )
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
@@ -753,7 +880,7 @@ def fetch_openml(
         return_sparse,
         data_home,
         as_frame=bool(as_frame),
-        features_list=features_list,
+        columns_info_openml_as_list=features_list,
         shape=shape,
         target_columns=target_columns,
         data_columns=data_columns,

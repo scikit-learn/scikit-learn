@@ -2,8 +2,6 @@
 import itertools
 from collections import OrderedDict
 from collections.abc import Generator
-from contextlib import closing
-from io import BytesIO
 from typing import List
 
 import numpy as np
@@ -85,7 +83,7 @@ def _cast_frame(frame, columns_info, infer_casting=False):
     columns_info : dict
         The ARFF metadata for the columns of the dataframe.
 
-    infer_casting : bool
+    infer_casting : bool, default=False
         Whether or not to infer the right casting. Indeed, ARFF does not
         provide the right information for two of the types:
 
@@ -194,6 +192,57 @@ def _liac_arff_parser(
     infer_casting,
     shape=None,
 ):
+    """ARFF parser using the LIAC-ARFF library coded purely in Python.
+
+    This parser is quite slow but consume a generator. This parser should also
+    additional cast the columns of the dataframe to ensure to have the
+    appropriate data type.
+
+    Parameters
+    ----------
+    gzip_file : GzipFile instance
+        The file compressed to be read.
+
+    output_array_type : {"numpy", "sparse", "pandas"}
+        The type of the arrays that will be returned. The possibilities ara:
+
+        - `"numpy"`: both `X` and `y` will be NumPy arrays;
+        - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
+        - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
+          pandas Series or DataFrame.
+
+    columns_info : dict
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
+
+    feature_names_to_select : list of str
+        A list of the feature names to be selected.
+
+    target_names_to_select : list of str
+        A list of the target names to be selected.
+
+    infer_casting : bool
+        Whether or not to infer the type of the data in each column and thus
+        cast the data to the most appropriate type. Activating this option
+        will be more costly but will solved ambiguities regarding the data
+        types provided by the ARFF metadata.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix, dataframe}
+        The data matrix.
+
+    y : {ndarray, dataframe, series}
+        The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
+
+    nominal_attributes : list of str or None
+        The names of the features that are categorical. `None` if
+        `output_array_type == "pandas"`.
+    """
 
     def _io_to_generator(gzip_file):
         for line in gzip_file:
@@ -293,6 +342,56 @@ def _pandas_arff_parser(
     target_names_to_select,
     infer_casting,
 ):
+    """ARFF parser using `pandas.read_csv`.
+
+    The metadata being fetch directly to OpenML, one can skip the metadata from
+    the ARFF file and read the data as a CSV file.
+
+    Parameters
+    ----------
+    gzip_file : GzipFile instance
+        The file compressed to be read.
+
+    output_array_type : {"numpy", "sparse", "pandas"}
+        The type of the arrays that will be returned. The possibilities ara:
+
+        - `"numpy"`: both `X` and `y` will be NumPy arrays;
+        - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
+        - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
+          pandas Series or DataFrame.
+
+    columns_info : dict
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
+
+    feature_names_to_select : list of str
+        A list of the feature names to be selected.
+
+    target_names_to_select : list of str
+        A list of the target names to be selected.
+
+    infer_casting : bool
+        Whether or not to infer the type of the data in each column and thus
+        cast the data to the most appropriate type. Activating this option
+        will be more costly but will solved ambiguities regarding the data
+        types provided by the ARFF metadata.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix, dataframe}
+        The data matrix.
+
+    y : {ndarray, dataframe, series}
+        The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
+
+    nominal_attributes : list of str or None
+        The names of the features that are categorical. `None` if
+        `output_array_type == "pandas"`.
+    """
     import pandas as pd
 
     # read the file until the data section
@@ -339,7 +438,7 @@ def load_arff_from_gzip_file(
         The file compressed to be read.
 
     parser : {"liac-arff", "pandas"}
-        FIXME
+        The parser used to parse the ARFF file.
 
     output_array_type : {"numpy", "sparse", "pandas"}
         The type of the arrays that will be returned. The possibilities ara:
@@ -350,7 +449,8 @@ def load_arff_from_gzip_file(
           pandas Series or DataFrame.
 
     columns_info : dict
-        FIXME
+        The information provided by OpenML regarding the columns of the ARFF
+        file.
 
     feature_names_to_select : list of str
         A list of the feature names to be selected.
@@ -359,19 +459,22 @@ def load_arff_from_gzip_file(
         A list of the target names to be selected.
 
     infer_casting : bool
-        FIXME
+        Whether or not to infer the type of the data in each column and thus
+        cast the data to the most appropriate type. Activating this option
+        will be more costly but will solved ambiguities regarding the data
+        types provided by the ARFF metadata.
 
     Returns
     -------
-    frame : dataframe or None
-        A dataframe containing both `X` and `y`. `None` if
-        `output_array_type != "pandas"`.
-
     X : {ndarray, sparse matrix, dataframe}
         The data matrix.
 
     y : {ndarray, dataframe, series}
         The target.
+
+    frame : dataframe or None
+        A dataframe containing both `X` and `y`. `None` if
+        `output_array_type != "pandas"`.
 
     nominal_attributes : list of str or None
         The names of the features that are categorical. `None` if
