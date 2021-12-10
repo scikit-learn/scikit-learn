@@ -279,7 +279,7 @@ class ParameterSampler:
                     dist[key], "rvs"
                 ):
                     raise TypeError(
-                        f"Parameter grid for parameter {key!r} is not iterable "
+                        f"Parameter grid for parameter '{key}' is not iterable "
                         f"or a distribution (value={dist[key]})"
                     )
         self.n_iter = n_iter
