@@ -38,7 +38,7 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
-test_offline = False
+test_offline = True
 
 
 # Do not use a cache for `fetch_openml` to avoid concurrent writing

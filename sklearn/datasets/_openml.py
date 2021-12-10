@@ -63,25 +63,6 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
     return decorator
 
 
-class _GzipFileChecksum(gzip.GzipFile):
-    """This class is the same as `gzip.GzipFile` except that it calculates
-    the md5 checksum while reading the file."""
-
-    def __init__(self, *args, **kwargs):
-        self.md5_checksum = hashlib.md5()
-        super().__init__(*args, **kwargs)
-
-    def read1(self, size):
-        chunk = super().read1(size)
-        self.md5_checksum.update(chunk)
-        return chunk
-
-    def __next__(self):
-        chunk = super().__next__()
-        self.md5_checksum.update(chunk)
-        return chunk
-
-
 def _open_openml_url(openml_path: str, data_home: Optional[str]):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
@@ -111,7 +92,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip_encoded(fsrc):
-            return _GzipFileChecksum(fileobj=fsrc, mode="rb")
+            return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
 
     local_path = _get_local_path(openml_path, data_home)
@@ -140,7 +121,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
 
     # XXX: First time, decompression will not be necessary (by using fsrc), but
     # it will happen nonetheless
-    return _GzipFileChecksum(local_path, "rb")
+    return gzip.GzipFile(local_path, "rb")
 
 
 class OpenMLError(ValueError):
@@ -392,7 +373,17 @@ def _load_arff_response(
         `output_array_type == "pandas"`.
     """
     gzip_file = _open_openml_url(url, data_home)
+    actual_md5_checksum = hashlib.md5(gzip_file.read()).hexdigest()
+    gzip_file.close()
 
+    if actual_md5_checksum != md5_checksum:
+        raise ValueError(
+            f"md5 checksum of local file for {url} does not match description. "
+            "Downloaded file could have been modified / corrupted, clean cache "
+            "and retry..."
+        )
+
+    gzip_file = _open_openml_url(url, data_home)
     with closing(gzip_file):
 
         X, y, frame, nominal_attributes = load_arff_from_gzip_file(
@@ -405,17 +396,6 @@ def _load_arff_response(
             infer_casting=infer_casting,
             shape=shape,
         )
-
-        # consume remaining stream, if early exited
-        for _ in gzip_file:
-            pass
-
-        if gzip_file.md5_checksum.hexdigest() != md5_checksum:
-            raise ValueError(
-                f"md5 checksum of local file for {url} does not match description. "
-                "Downloaded file could have been modified / corrupted, clean cache "
-                "and retry..."
-            )
 
         return X, y, frame, nominal_attributes
 

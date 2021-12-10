@@ -130,8 +130,20 @@ def _cast_frame(frame, columns_info, infer_casting=False):
     return frame
 
 
+def _compute_nominal_attributes(columns_info, feature_names, target_names):
+    """Compute the nominal attributes from the ARFF metadata."""
+    columns_to_select = feature_names + target_names
+    nominal_attributes = {}
+    for name in columns_to_select:
+        if columns_info[name]["data_type"].lower() == "nominal":
+            for potential_key in ["nominal_value", "nominal_values"]:
+                if potential_key in columns_info[name]:
+                    nominal_attributes[name] = columns_info[name][potential_key]
+
+    return nominal_attributes
+
+
 def _post_process_frame(frame, feature_names, target_names):
-    """Post-process the dataframe to output `X, y, frame, nominal_attributes`."""
     X = frame[feature_names]
     if len(target_names) >= 2:
         y = frame[target_names]
@@ -139,46 +151,7 @@ def _post_process_frame(frame, feature_names, target_names):
         y = frame[target_names[0]]
     else:
         y = None
-    nominal_attributes = None
-    return X, y, frame, nominal_attributes
-
-
-def _post_process_array(X, y, columns_info, feature_names, target_names):
-    """Post-process the `X` and `y` to output `X, y, frame, nominal_attributes`."""
-    columns_to_select = feature_names + target_names
-    nominal_attributes = {
-        name: columns_info[name]["nominal_value"]
-        for name in columns_to_select
-        if name in columns_to_select and columns_info[name]["data_type"] == "nominal"
-    }
-    frame = None
-
-    is_classification = [col_name in nominal_attributes for col_name in target_names]
-    if not is_classification:  # No target
-        pass
-    elif all(is_classification):
-        y = np.hstack(
-            [
-                np.take(
-                    np.asarray(nominal_attributes.pop(col_name), dtype="O"),
-                    y[:, i : i + 1].astype(int, copy=False),
-                )
-                for i, col_name in enumerate(target_names)
-            ]
-        )
-    elif any(is_classification):
-        raise ValueError(
-            "Mix of nominal and non-nominal targets is not currently supported"
-        )
-
-    # reshape y back to 1-D array, if there is only 1 target column;
-    # back to None if there are not target columns
-    if y.shape[1] == 1:
-        y = y.reshape((-1,))
-    elif y.shape[1] == 0:
-        y = None
-
-    return X, y, frame, nominal_attributes
+    return X, y
 
 
 def _liac_arff_parser(
@@ -251,6 +224,9 @@ def _liac_arff_parser(
     return_type = _arff.COO if output_arrays_type == "sparse" else _arff.DENSE_GEN
     arff_container = _arff.load(stream, return_type=return_type)
 
+    nominal_attributes = _compute_nominal_attributes(
+        columns_info_openml, feature_names_to_select, target_names_to_select
+    )
     columns_to_select = feature_names_to_select + target_names_to_select
     if output_arrays_type == "pandas":
         pd = check_pandas_support("fetch_openml with as_frame=True")
@@ -274,7 +250,7 @@ def _liac_arff_parser(
         del dfs, first_df
 
         frame = _cast_frame(frame, columns_info_openml, infer_casting)
-        X, y, frame, nominal_attributes = _post_process_frame(
+        X, y = _post_process_frame(
             frame, feature_names_to_select, target_names_to_select
         )
     else:
@@ -321,15 +297,36 @@ def _liac_arff_parser(
             # This should never happen
             raise ValueError("Unexpected Data Type obtained from arff.")
 
-        X, y, frame, nominal_attributes = _post_process_array(
-            X,
-            y,
-            columns_info_openml,
-            feature_names_to_select,
-            target_names_to_select,
-        )
+        is_classification = [
+            col_name in nominal_attributes for col_name in target_names_to_select
+        ]
+        if not is_classification:  # No target
+            pass
+        elif all(is_classification):
+            y = np.hstack(
+                [
+                    np.take(
+                        np.asarray(nominal_attributes.pop(col_name), dtype="O"),
+                        y[:, i : i + 1].astype(int, copy=False),
+                    )
+                    for i, col_name in enumerate(target_names_to_select)
+                ]
+            )
+        elif any(is_classification):
+            raise ValueError(
+                "Mix of nominal and non-nominal targets is not currently supported"
+            )
 
-    return X, y, frame, nominal_attributes
+        # reshape y back to 1-D array, if there is only 1 target column;
+        # back to None if there are not target columns
+        if y.shape[1] == 1:
+            y = y.reshape((-1,))
+        elif y.shape[1] == 0:
+            y = None
+
+    if output_arrays_type == "pandas":
+        return X, y, frame, None
+    return X, y, None, nominal_attributes
 
 
 def _pandas_arff_parser(
@@ -396,6 +393,14 @@ def _pandas_arff_parser(
     for line in gzip_file:
         if line.decode("utf-8").lower().startswith("@data"):
             break
+    # potentially there are some comments before the data section
+    # let's peek a ahead such that the pandas parser does not fail
+    while True:
+        stream_ahead = gzip_file.peek(1)
+        if stream_ahead.decode("utf-8").startswith("%"):
+            line = gzip_file.readline()
+        else:
+            break
 
     # ARFF represent missing values with "?"
     frame = pd.read_csv(
@@ -405,17 +410,14 @@ def _pandas_arff_parser(
     )
     frame.columns = [name for name in columns_info_openml]
     frame = _cast_frame(frame, columns_info_openml, infer_casting)
+    X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
+    nominal_attributes = _compute_nominal_attributes(
+        columns_info_openml, feature_names_to_select, target_names_to_select
+    )
+
     if output_arrays_type == "pandas":
-        X, y, frame, nominal_attributes = _post_process_frame(
-            frame, feature_names_to_select, target_names_to_select
-        )
-    else:
-        X = frame[feature_names_to_select].to_numpy()
-        y = frame[target_names_to_select].to_numpy()
-        X, y, frame, nominal_attributes = _post_process_array(
-            X, y, columns_info_openml, feature_names_to_select, target_names_to_select
-        )
-    return X, y, frame, nominal_attributes
+        return X, y, frame, None
+    return X.to_numpy(), y.to_numpy() if y is not None else y, None, nominal_attributes
 
 
 def load_arff_from_gzip_file(
