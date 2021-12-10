@@ -159,9 +159,10 @@ def test_asymmetric_error(quantile):
         quantile=quantile,
         alpha=0,
         solver="highs",
-    ).fit(X, y)
-    # This test can be made to pass with any solver but in the interest of sparing
-    # continuous integration resources, the test is performed with the fastest solver only.
+    ).fit(X, y)    
+    # This test can be made to pass with any solver but in the interest
+    # of sparing continuous integration resources, the test is performed
+    # with the fastest solver only.
 
     assert model.intercept_ == approx(intercept, rel=0.2)
     assert_allclose(model.coef_, coef, rtol=0.6)
