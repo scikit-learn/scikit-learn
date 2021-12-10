@@ -353,10 +353,10 @@ class LinearLoss:
                 tmp *= proba  # * p_i_k
                 if sample_weight is not None:
                     tmp *= sample_weight[:, np.newaxis]
-                hessProd = np.empty_like(grad)
-                hessProd[:, :n_features] = tmp.T @ X + alpha * s
+                hess_prod = np.empty_like(grad)
+                hess_prod[:, :n_features] = tmp.T @ X + alpha * s
                 if self.fit_intercept:
-                    hessProd[:, -1] = tmp.sum(axis=0)
-                return hessProd.ravel()
+                    hess_prod[:, -1] = tmp.sum(axis=0)
+                return hess_prod.ravel()
 
         return grad.ravel(), hessp
