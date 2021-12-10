@@ -167,6 +167,14 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+:mod:`sklearn.feature_extraction.text`
+......................................
+
+- |Fix| :class:`feature_extraction.text.TfidfVectorizer` now does not create
+  a :class:`feature_extraction.text.TfidfTransformer` at `__init__` as required
+  by our API.
+  :pr:`21832` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
