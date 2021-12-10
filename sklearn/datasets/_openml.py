@@ -20,7 +20,7 @@ import numpy as np
 import scipy.sparse
 
 from ..externals import _arff
-from ..externals._arff import ArffSparseDataType, ArffContainerType
+from ..externals._arff import ArffContainerType
 from . import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
@@ -28,6 +28,8 @@ from ..utils import is_scalar_nan
 from ..utils import get_chunk_n_rows
 from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
+
+from ._arff_parser import load_arff_from_gzip_file
 
 __all__ = ["fetch_openml"]
 
@@ -183,198 +185,6 @@ def _get_json_content_from_openml_api(
     raise OpenMLError(error_message)
 
 
-def _split_sparse_columns(
-    arff_data: ArffSparseDataType, include_columns: List
-) -> ArffSparseDataType:
-    """
-    obtains several columns from sparse arff representation. Additionally, the
-    column indices are re-labelled, given the columns that are not included.
-    (e.g., when including [1, 2, 3], the columns will be relabelled to
-    [0, 1, 2])
-
-    Parameters
-    ----------
-    arff_data : tuple
-        A tuple of three lists of equal size; first list indicating the value,
-        second the x coordinate and the third the y coordinate.
-
-    include_columns : list
-        A list of columns to include.
-
-    Returns
-    -------
-    arff_data_new : tuple
-        Subset of arff data with only the include columns indicated by the
-        include_columns argument.
-    """
-    arff_data_new: ArffSparseDataType = (list(), list(), list())
-    reindexed_columns = {
-        column_idx: array_idx for array_idx, column_idx in enumerate(include_columns)
-    }
-    for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
-        if col_idx in include_columns:
-            arff_data_new[0].append(val)
-            arff_data_new[1].append(row_idx)
-            arff_data_new[2].append(reindexed_columns[col_idx])
-    return arff_data_new
-
-
-def _sparse_data_to_array(
-    arff_data: ArffSparseDataType, include_columns: List
-) -> np.ndarray:
-    # turns the sparse data back into an array (can't use toarray() function,
-    # as this does only work on numeric data)
-    num_obs = max(arff_data[1]) + 1
-    y_shape = (num_obs, len(include_columns))
-    reindexed_columns = {
-        column_idx: array_idx for array_idx, column_idx in enumerate(include_columns)
-    }
-    # TODO: improve for efficiency
-    y = np.empty(y_shape, dtype=np.float64)
-    for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
-        if col_idx in include_columns:
-            y[row_idx, reindexed_columns[col_idx]] = val
-    return y
-
-
-def _convert_arff_data(
-    arff: ArffContainerType,
-    col_slice_x: List[int],
-    col_slice_y: List[int],
-    shape: Optional[Tuple] = None,
-) -> Tuple:
-    """
-    converts the arff object into the appropriate matrix type (np.array or
-    scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
-    liac-arff dict, the object from the 'data' key)
-
-    Parameters
-    ----------
-    arff : dict
-        As obtained from liac-arff object.
-
-    col_slice_x : list
-        The column indices that are sliced from the original array to return
-        as X data
-
-    col_slice_y : list
-        The column indices that are sliced from the original array to return
-        as y data
-
-    Returns
-    -------
-    X : np.array or scipy.sparse.csr_matrix
-    y : np.array
-    """
-    arff_data = arff["data"]
-    if isinstance(arff_data, Generator):
-        if shape is None:
-            raise ValueError("shape must be provided when arr['data'] is a Generator")
-        if shape[0] == -1:
-            count = -1
-        else:
-            count = shape[0] * shape[1]
-        data = np.fromiter(
-            itertools.chain.from_iterable(arff_data), dtype="float64", count=count
-        )
-        data = data.reshape(*shape)
-        X = data[:, col_slice_x]
-        y = data[:, col_slice_y]
-        return X, y
-    elif isinstance(arff_data, tuple):
-        arff_data_X = _split_sparse_columns(arff_data, col_slice_x)
-        num_obs = max(arff_data[1]) + 1
-        X_shape = (num_obs, len(col_slice_x))
-        X = scipy.sparse.coo_matrix(
-            (arff_data_X[0], (arff_data_X[1], arff_data_X[2])),
-            shape=X_shape,
-            dtype=np.float64,
-        )
-        X = X.tocsr()
-        y = _sparse_data_to_array(arff_data, col_slice_y)
-        return X, y
-    else:
-        # This should never happen
-        raise ValueError("Unexpected Data Type obtained from arff.")
-
-
-def _feature_to_dtype(feature: Dict[str, str]):
-    """Map feature to dtype for pandas DataFrame"""
-    if feature["data_type"] == "string":
-        return object
-    elif feature["data_type"] == "nominal":
-        return "category"
-    # only numeric, integer, real are left
-    elif feature["number_of_missing_values"] != "0" or feature["data_type"] in [
-        "numeric",
-        "real",
-    ]:
-        # cast to floats when there are any missing values
-        return np.float64
-    elif feature["data_type"] == "integer":
-        return np.int64
-    raise ValueError("Unsupported feature: {}".format(feature))
-
-
-def _convert_arff_data_dataframe(
-    arff: ArffContainerType, columns: List, features_dict: Dict[str, Any]
-) -> Tuple:
-    """Convert the ARFF object into a pandas DataFrame.
-
-    Parameters
-    ----------
-    arff : dict
-        As obtained from liac-arff object.
-
-    columns : list
-        Columns from dataframe to return.
-
-    features_dict : dict
-        Maps feature name to feature info from openml.
-
-    Returns
-    -------
-    result : tuple
-        tuple with the resulting dataframe
-    """
-    pd = check_pandas_support("fetch_openml with as_frame=True")
-
-    attributes = OrderedDict(arff["attributes"])
-    arff_columns = list(attributes)
-
-    if not isinstance(arff["data"], Generator):
-        raise ValueError(
-            "arff['data'] must be a generator when converting to pd.DataFrame."
-        )
-
-    # calculate chunksize
-    first_row = next(arff["data"])
-    first_df = pd.DataFrame([first_row], columns=arff_columns)
-
-    row_bytes = first_df.memory_usage(deep=True).sum()
-    chunksize = get_chunk_n_rows(row_bytes)
-
-    # read arff data with chunks
-    columns_to_keep = [col for col in arff_columns if col in columns]
-    dfs = []
-    dfs.append(first_df[columns_to_keep])
-    for data in _chunk_generator(arff["data"], chunksize):
-        dfs.append(pd.DataFrame(data, columns=arff_columns)[columns_to_keep])
-    df = pd.concat(dfs, ignore_index=True)
-
-    for column in columns_to_keep:
-        dtype = _feature_to_dtype(features_dict[column])
-        if dtype == "category":
-            cats_without_missing = [
-                cat
-                for cat in attributes[column]
-                if cat is not None and not is_scalar_nan(cat)
-            ]
-            dtype = pd.api.types.CategoricalDtype(cats_without_missing)
-        df[column] = df[column].astype(dtype, copy=False)
-    return (df,)
-
-
 def _get_data_info_by_name(
     name: str, version: Union[int, str], data_home: Optional[str]
 ):
@@ -499,51 +309,6 @@ def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
     return int(float(qualities.get("NumberOfInstances", default_n_samples)))
 
 
-def _load_arff_response(
-    url: str,
-    data_home: Optional[str],
-    return_type,
-    encode_nominal: bool,
-    parse_arff: Callable[[ArffContainerType], Tuple],
-    md5_checksum: str,
-) -> Tuple:
-    """Load arff data with url and parses arff response with parse_arff"""
-    response = _open_openml_url(url, data_home)
-
-    with closing(response):
-        # Note that if the data is dense, no reading is done until the data
-        # generator is iterated.
-        actual_md5_checksum = hashlib.md5()
-
-        def _stream_checksum_generator(response):
-            for line in response:
-                actual_md5_checksum.update(line)
-                yield line.decode("utf-8")
-
-        stream = _stream_checksum_generator(response)
-
-        arff = _arff.load(
-            stream, return_type=return_type, encode_nominal=encode_nominal
-        )
-
-        parsed_arff = parse_arff(arff)
-
-        # consume remaining stream, if early exited
-        for _ in stream:
-            pass
-
-        if actual_md5_checksum.hexdigest() != md5_checksum:
-            raise ValueError(
-                "md5 checksum of local file for "
-                + url
-                + " does not match description. "
-                "Downloaded file could have been modified / "
-                "corrupted, clean cache and retry..."
-            )
-
-        return parsed_arff
-
-
 def _download_data_to_bunch(
     url: str,
     sparse: bool,
@@ -551,116 +316,59 @@ def _download_data_to_bunch(
     *,
     as_frame: bool,
     features_list: List,
-    data_columns: List[int],
-    target_columns: List,
+    data_columns: List[str],
+    target_columns: List[str],
     shape: Optional[Tuple[int, int]],
     md5_checksum: str,
+    parser: str,
+    infer_casting: bool,
 ):
-    """Download OpenML ARFF and convert to Bunch of data"""
-    # NB: this function is long in order to handle retry for any failure
-    #     during the streaming parse of the ARFF.
-
+    """Download OpenML ARFF and convert to Bunch of data."""
     # Prepare which columns and data types should be returned for the X and y
     features_dict = {feature["name"]: feature for feature in features_list}
+    if sparse:
+        output_arrays_type = "sparse"
+    elif as_frame:
+        output_arrays_type = "pandas"
+    else:
+        output_arrays_type = "numpy"
 
-    # XXX: col_slice_y should be all nominal or all numeric
+    # XXX: target columns should all be nominal or all numeric
     _verify_target_data_type(features_dict, target_columns)
 
-    col_slice_y = [int(features_dict[col_name]["index"]) for col_name in target_columns]
+    response = _open_openml_url(url, data_home)
+    # FIXME: need to put back the mechanism of retry
+    # calling (_retry_with_clean_cache)
+    # FIXME: put back MD5 checksum
+    # actual_md5_checksum = hashlib.md5()
+    # def _stream_checksum_generator(response):
+    #     for line in response:
+    #         actual_md5_checksum.update(line)
+    #         yield line.decode("utf-8")
+    # stream = _stream_checksum_generator(response)
+    # ...
+    # # consume remaining stream, if early exited
+    # for _ in stream:
+    #     pass
+    # if actual_md5_checksum.hexdigest() != md5_checksum:
+    #     raise ValueError(
+    #         "md5 checksum of local file for "
+    #         + url
+    #         + " does not match description. "
+    #         "Downloaded file could have been modified / "
+    #         "corrupted, clean cache and retry..."
+    #     )
 
-    col_slice_x = [int(features_dict[col_name]["index"]) for col_name in data_columns]
-    for col_idx in col_slice_y:
-        feat = features_list[col_idx]
-        nr_missing = int(feat["number_of_missing_values"])
-        if nr_missing > 0:
-            raise ValueError(
-                "Target column {} has {} missing values. "
-                "Missing values are not supported for target "
-                "columns. ".format(feat["name"], nr_missing)
-            )
-
-    # Access an ARFF file on the OpenML server. Documentation:
-    # https://www.openml.org/api_data_docs#!/data/get_download_id
-
-    if sparse is True:
-        return_type = _arff.COO
-    else:
-        return_type = _arff.DENSE_GEN
-
-    frame = nominal_attributes = None
-
-    parse_arff: Callable
-    postprocess: Callable
-    if as_frame:
-        columns = data_columns + target_columns
-        parse_arff = partial(
-            _convert_arff_data_dataframe, columns=columns, features_dict=features_dict
-        )
-
-        def postprocess(frame):
-            X = frame[data_columns]
-            if len(target_columns) >= 2:
-                y = frame[target_columns]
-            elif len(target_columns) == 1:
-                y = frame[target_columns[0]]
-            else:
-                y = None
-            return X, y, frame, nominal_attributes
-
-    else:
-
-        def parse_arff(arff):
-            X, y = _convert_arff_data(arff, col_slice_x, col_slice_y, shape)
-            # nominal attributes is a dict mapping from the attribute name to
-            # the possible values. Includes also the target column (which will
-            # be popped off below, before it will be packed in the Bunch
-            # object)
-            nominal_attributes = {
-                k: v
-                for k, v in arff["attributes"]
-                if isinstance(v, list) and k in data_columns + target_columns
-            }
-            return X, y, nominal_attributes
-
-        def postprocess(X, y, nominal_attributes):
-            is_classification = {
-                col_name in nominal_attributes for col_name in target_columns
-            }
-            if not is_classification:
-                # No target
-                pass
-            elif all(is_classification):
-                y = np.hstack(
-                    [
-                        np.take(
-                            np.asarray(nominal_attributes.pop(col_name), dtype="O"),
-                            y[:, i : i + 1].astype(int, copy=False),
-                        )
-                        for i, col_name in enumerate(target_columns)
-                    ]
-                )
-            elif any(is_classification):
-                raise ValueError(
-                    "Mix of nominal and non-nominal targets is not currently supported"
-                )
-
-            # reshape y back to 1-D array, if there is only 1 target column;
-            # back to None if there are not target columns
-            if y.shape[1] == 1:
-                y = y.reshape((-1,))
-            elif y.shape[1] == 0:
-                y = None
-            return X, y, frame, nominal_attributes
-
-    out = _retry_with_clean_cache(url, data_home)(_load_arff_response)(
-        url,
-        data_home,
-        return_type=return_type,
-        encode_nominal=not as_frame,
-        parse_arff=parse_arff,
-        md5_checksum=md5_checksum,
+    X, y, frame, nominal_attributes = load_arff_from_gzip_file(
+        response,
+        parser=parser,
+        output_arrays_type=output_arrays_type,
+        columns_info_openml=features_dict,
+        feature_names_to_select=data_columns,
+        target_names_to_select=target_columns,
+        infer_casting=infer_casting,
+        shape=shape,
     )
-    X, y, frame, nominal_attributes = postprocess(*out)
 
     return Bunch(
         data=X,
@@ -725,6 +433,8 @@ def fetch_openml(
     cache: bool = True,
     return_X_y: bool = False,
     as_frame: Union[str, bool] = "auto",
+    parser: Optional[str] = "auto",
+    infer_casting: Union[str, bool] = "auto",
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -796,6 +506,28 @@ def fetch_openml(
         .. versionchanged:: 0.24
            The default value of `as_frame` changed from `False` to `'auto'`
            in 0.24.
+
+    parser : {"auto", "liac-arff", "pandas"}, default="auto"
+        Parser used to load the ARFF file. `"pandas"` is the most efficient
+        parser but requires Pandas to be installed and is only used with
+        dense datasets. `"liac-arff"` is a pure Python ARFF parser that
+        is less efficient memory- and CPU-wise but it deals with sparse
+        datasets. `"auto"` selects `"pandas"` if Pandas is installed and that
+        the dataset to fetch is dense, otherwise `"liac-arff"`.
+
+        .. versionadded:: 1.1
+
+        .. note::
+           The data type of the numerical columns might differ between
+           `parser="pandas"` and `parser="liac-arff"`. Indeed, some columns
+           will be inferred as integer with Pandas while float with LIAC-ARFF.
+           It is due to the fact that LIAC-ARFF parser will use the metadata
+           where the data types provided are not sufficient to decide whether
+           or not a column is integer or float (i.e. `numeric` and `real`
+           types).
+
+    infer_casting : bool or str, default="auto"
+        FIXME
 
     Returns
     -------
@@ -906,6 +638,27 @@ def fetch_openml(
     if as_frame and return_sparse:
         raise ValueError("Cannot return dataframe with sparse data")
 
+    if parser == "auto":
+        if return_sparse:
+            parser = "liac-arff"
+        else:
+            try:
+                import pandas  # noqa
+
+                parser = "pandas"
+            except ImportError:
+                parser = "liac-arff"
+    elif parser == "pandas":
+        check_pandas_support("fetch_openml with parser='pandas'")
+    elif parser != "liac-arff":
+        raise ValueError("Invalid value for argument 'parser'. ")
+
+    if infer_casting == "auto":
+        if parser == "liac-arff":
+            infer_casting = True
+        else:
+            infer_casting = False
+
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
@@ -965,6 +718,8 @@ def fetch_openml(
         target_columns=target_columns,
         data_columns=data_columns,
         md5_checksum=data_description["md5_checksum"],
+        parser=parser,
+        infer_casting=infer_casting,
     )
 
     if return_X_y:
