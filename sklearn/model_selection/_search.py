@@ -19,7 +19,7 @@ import numbers
 import operator
 import time
 import warnings
-from pandas import DataFrame
+
 import numpy as np
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
@@ -754,13 +754,25 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 raise IndexError("best_index_ index out of range")
         else:
             rank_test_score = results[f"rank_test_{refit_metric}"]
-            first_rank_indices = np.where(rank_test_score == rank_test_score.min())
-            all_best_params = np.array(results["params"])[first_rank_indices]
-            all_best_params_df = DataFrame.from_records(all_best_params,
-                                                        index=first_rank_indices[0])
-            sort_on_columns = all_best_params_df.columns.tolist()
-            all_best_params_df.sort_values(by=sort_on_columns, inplace=True)
-            best_index = all_best_params_df.index[0]
+            first_rank_indices = np.where(rank_test_score == rank_test_score.min())[0]
+            if len(first_rank_indices) == 1:
+                best_index = first_rank_indices[0]
+            else:
+                hyper_params = [i for i in results.keys() if i.startswith('param_')]
+                param_values = []
+                for key in hyper_params:
+                    if key == 'param_regressor':
+                        value = results.get(key).data.astype(str)
+                    else:
+                        value = results.get(key).filled(float('inf'))
+                    param_values.append(value)
+                param_combinations = np.asarray(param_values).transpose()
+                param_combinations[param_combinations == None] = float('inf')
+                all_best_params = list(zip(first_rank_indices.tolist(),
+                                           param_combinations[first_rank_indices]
+                                           .tolist()))
+                all_best_params.sort(key=lambda x: x[1])
+                best_index = all_best_params[0][0]
         return best_index
 
     def fit(self, X, y=None, *, groups=None, **fit_params):
@@ -828,6 +840,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             all_candidate_params = []
             all_out = []
             all_more_results = defaultdict(list)
+
             def evaluate_candidates(candidate_params, cv=None, more_results=None):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)

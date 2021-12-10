@@ -945,7 +945,6 @@ def test_grid_search_cv_results():
         "std_score_time",
     )
     n_candidates = n_grid_points
-
     search = GridSearchCV(
         SVC(), cv=n_splits, param_grid=params, return_train_score=True
     )
@@ -1350,7 +1349,6 @@ def test_search_cv_results_none_param():
     estimators = (DecisionTreeRegressor(), DecisionTreeClassifier())
     est_parameters = {"random_state": [0, None]}
     cv = KFold()
-
     for est in estimators:
         grid_search = GridSearchCV(
             est,
