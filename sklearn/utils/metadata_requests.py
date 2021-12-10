@@ -587,6 +587,7 @@ def metadata_request_factory(obj=None):
     metadata_requests : MetadataRequest
         A ``MetadataRequest`` taken or created from the given object.
     """
+    # TODO: this should always return a copy
     if obj is None:
         return MetadataRequest()
 
@@ -596,10 +597,11 @@ def metadata_request_factory(obj=None):
     if isinstance(obj, dict):
         return MetadataRequest(obj)
 
-    try:
+    # doing this instead of a try/except since an AttributeError could be raised
+    # for other reasons.
+    if hasattr(obj, "get_metadata_request"):
         return MetadataRequest(obj.get_metadata_request())
-    except AttributeError:
-        # The object doesn't have a `get_metadata_request` method.
+    else:
         return MetadataRequest()
 
 
@@ -851,10 +853,11 @@ class _MetadataRequester:
             # we don't check for attr.startswith() since python prefixes attrs
             # starting with __ with the `_ClassName`.
             substr = "__metadata_request__"
-            expected_metadata = attr[attr.index(substr) + len(substr) :]
-            requests.add_requests(
-                value, overwrite=True, expected_metadata=expected_metadata
-            )
+            method = attr[attr.index(substr) + len(substr) :]
+            for prop, alias in value.items():
+                getattr(requests, method).add_request(
+                    prop=prop, alias=alias, overwrite=True
+                )
         return requests
 
     def get_metadata_request(self):

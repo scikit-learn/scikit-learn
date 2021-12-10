@@ -565,7 +565,7 @@ reg.fit(X, y, sample_weight=my_weights)
 
 
 class SampledMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
-    __metadata_request__sample_weight = {"fit": {"sample_weight": RequestType.WARN}}
+    __metadata_request__fit = {"sample_weight": RequestType.WARN}
 
     def __init__(self, estimator):
         self.estimator = estimator
@@ -592,7 +592,7 @@ class SampledMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
 # %%
 # The above implementation is almost no different than ``MetaRegressor``, and
-# because of the default request value defined in `__metadata_request__sample_weight``
+# because of the default request value defined in `__metadata_request__fit``
 # there is a warning raised.
 
 with warnings.catch_warnings(record=True) as record:
@@ -609,7 +609,7 @@ for w in record:
 
 
 class ExampleRegressor(RegressorMixin, BaseEstimator):
-    __metadata_request__sample_weight = {"fit": {"sample_weight": RequestType.WARN}}
+    __metadata_request__fit = {"sample_weight": RequestType.WARN}
 
     def fit(self, X, y, sample_weight=None):
         return self
