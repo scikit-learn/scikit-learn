@@ -1,42 +1,44 @@
 """Test the openml loader.
 """
 import gzip
-import warnings
 import json
 import os
 import re
+import warnings
+from functools import partial
 from importlib import resources
 from io import BytesIO
+from urllib.error import HTTPError
 
 import numpy as np
 import scipy.sparse
-import sklearn
 import pytest
+
+import sklearn
 from sklearn import config_context
+from sklearn.externals._arff import ArffContainerType
+from sklearn.utils import is_scalar_nan
+from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import fails_if_pypy
+
 from sklearn.datasets import fetch_openml as fetch_openml_orig
 from sklearn.datasets._openml import (
     _open_openml_url,
-    _arff,
+    # _arff,
     _DATA_FILE,
-    _convert_arff_data,
-    _convert_arff_data_dataframe,
+    # _convert_arff_data,
+    # _convert_arff_data_dataframe,
     _get_data_description_by_id,
     _get_local_path,
     _retry_with_clean_cache,
-    _feature_to_dtype,
+    # _feature_to_dtype,
 )
-from sklearn.utils import is_scalar_nan
-from sklearn.utils._testing import assert_allclose, assert_array_equal
-from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.externals._arff import ArffContainerType
-from functools import partial
-from sklearn.utils._testing import fails_if_pypy
 
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
-test_offline = True
+test_offline = False
 
 
 # Do not use a cache for `fetch_openml` to avoid concurrent writing
@@ -332,32 +334,32 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         context.setattr(sklearn.datasets._openml, "urlopen", _mock_urlopen)
 
 
-@pytest.mark.parametrize(
-    "feature, expected_dtype",
-    [
-        ({"data_type": "string", "number_of_missing_values": "0"}, object),
-        ({"data_type": "string", "number_of_missing_values": "1"}, object),
-        ({"data_type": "numeric", "number_of_missing_values": "0"}, np.float64),
-        ({"data_type": "numeric", "number_of_missing_values": "1"}, np.float64),
-        ({"data_type": "real", "number_of_missing_values": "0"}, np.float64),
-        ({"data_type": "real", "number_of_missing_values": "1"}, np.float64),
-        ({"data_type": "integer", "number_of_missing_values": "0"}, np.int64),
-        ({"data_type": "integer", "number_of_missing_values": "1"}, np.float64),
-        ({"data_type": "nominal", "number_of_missing_values": "0"}, "category"),
-        ({"data_type": "nominal", "number_of_missing_values": "1"}, "category"),
-    ],
-)
-def test_feature_to_dtype(feature, expected_dtype):
-    assert _feature_to_dtype(feature) == expected_dtype
+# @pytest.mark.parametrize(
+#     "feature, expected_dtype",
+#     [
+#         ({"data_type": "string", "number_of_missing_values": "0"}, object),
+#         ({"data_type": "string", "number_of_missing_values": "1"}, object),
+#         ({"data_type": "numeric", "number_of_missing_values": "0"}, np.float64),
+#         ({"data_type": "numeric", "number_of_missing_values": "1"}, np.float64),
+#         ({"data_type": "real", "number_of_missing_values": "0"}, np.float64),
+#         ({"data_type": "real", "number_of_missing_values": "1"}, np.float64),
+#         ({"data_type": "integer", "number_of_missing_values": "0"}, np.int64),
+#         ({"data_type": "integer", "number_of_missing_values": "1"}, np.float64),
+#         ({"data_type": "nominal", "number_of_missing_values": "0"}, "category"),
+#         ({"data_type": "nominal", "number_of_missing_values": "1"}, "category"),
+#     ],
+# )
+# def test_feature_to_dtype(feature, expected_dtype):
+#     assert _feature_to_dtype(feature) == expected_dtype
 
 
-@pytest.mark.parametrize(
-    "feature", [{"data_type": "datatime", "number_of_missing_values": "0"}]
-)
-def test_feature_to_dtype_error(feature):
-    msg = "Unsupported feature: {}".format(feature)
-    with pytest.raises(ValueError, match=msg):
-        _feature_to_dtype(feature)
+# @pytest.mark.parametrize(
+#     "feature", [{"data_type": "datatime", "number_of_missing_values": "0"}]
+# )
+# def test_feature_to_dtype_error(feature):
+#     msg = "Unsupported feature: {}".format(feature)
+#     with pytest.raises(ValueError, match=msg):
+#         _feature_to_dtype(feature)
 
 
 # Known failure of PyPy for OpenML. See the following issue:
