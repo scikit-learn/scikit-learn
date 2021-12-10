@@ -159,7 +159,7 @@ def test_asymmetric_error(quantile):
         quantile=quantile,
         alpha=0,
         solver="highs",
-    ).fit(X, y)    
+    ).fit(X, y)
     # This test can be made to pass with any solver but in the interest
     # of sparing continuous integration resources, the test is performed
     # with the fastest solver only.
