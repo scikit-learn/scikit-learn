@@ -426,7 +426,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "ColumnTransformer",
     "FeatureHasher",
     "FeatureUnion",
-    "Pipeline",
     "SGDOneClassSVM",
     "TheilSenRegressor",
     "TweedieRegressor",
