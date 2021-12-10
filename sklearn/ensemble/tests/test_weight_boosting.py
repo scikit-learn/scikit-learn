@@ -548,7 +548,7 @@ def test_adaboostregressor_sample_weight():
     assert score_with_outlier < score_with_weight
     assert score_no_outlier == pytest.approx(score_with_weight)
 
-# Test that it gives proper exception on deficient input.
+
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
