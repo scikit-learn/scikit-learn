@@ -194,11 +194,12 @@ def _liac_arff_parser(
     infer_casting,
     shape=None,
 ):
-    def streamer(gzip_file):
+
+    def _io_to_generator(gzip_file):
         for line in gzip_file:
             yield line.decode("utf-8")
 
-    stream = streamer(gzip_file)
+    stream = _io_to_generator(gzip_file)
 
     return_type = _arff.COO if output_arrays_type == "sparse" else _arff.DENSE_GEN
     arff_container = _arff.load(stream, return_type=return_type)
@@ -296,13 +297,12 @@ def _pandas_arff_parser(
 
     # read the file until the data section
     for line in gzip_file:
-        line_str = line.decode("utf-8")
-        if line_str.lower().startswith("@data"):
+        if line.decode("utf-8").lower().startswith("@data"):
             break
 
     # ARFF represent missing values with "?"
     frame = pd.read_csv(
-        BytesIO(gzip_file.read()),
+        gzip_file,
         header=None,
         na_values=["?"],
     )
@@ -377,24 +377,22 @@ def load_arff_from_gzip_file(
         The names of the features that are categorical. `None` if
         `output_array_type == "pandas"`.
     """
-    with closing(gzip_file):
-
-        if parser == "liac-arff":
-            return _liac_arff_parser(
-                gzip_file,
-                output_arrays_type,
-                columns_info_openml,
-                feature_names_to_select,
-                target_names_to_select,
-                infer_casting,
-                shape,
-            )
-        elif parser == "pandas":
-            return _pandas_arff_parser(
-                gzip_file,
-                output_arrays_type,
-                columns_info_openml,
-                feature_names_to_select,
-                target_names_to_select,
-                infer_casting,
-            )
+    if parser == "liac-arff":
+        return _liac_arff_parser(
+            gzip_file,
+            output_arrays_type,
+            columns_info_openml,
+            feature_names_to_select,
+            target_names_to_select,
+            infer_casting,
+            shape,
+        )
+    elif parser == "pandas":
+        return _pandas_arff_parser(
+            gzip_file,
+            output_arrays_type,
+            columns_info_openml,
+            feature_names_to_select,
+            target_names_to_select,
+            infer_casting,
+        )

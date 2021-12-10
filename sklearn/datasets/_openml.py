@@ -75,6 +75,24 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
     return decorator
 
 
+class _GzipFileChecksum(gzip.GzipFile):
+    """GzipFile that can also calculate the checksum."""
+
+    def __init__(self, *args, **kwargs):
+        self.md5_checksum = hashlib.md5()
+        super().__init__(*args, **kwargs)
+
+    def read1(self, size):
+        chunk = super().read1(size)
+        self.md5_checksum.update(chunk)
+        return chunk
+
+    def __next__(self):
+        chunk = super().__next__()
+        self.md5_checksum.update(chunk)
+        return chunk
+
+
 def _open_openml_url(openml_path: str, data_home: Optional[str]):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
@@ -104,7 +122,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip_encoded(fsrc):
-            return gzip.GzipFile(fileobj=fsrc, mode="rb")
+            return _GzipFileChecksum(fileobj=fsrc, mode="rb")
         return fsrc
 
     local_path = _get_local_path(openml_path, data_home)
@@ -133,7 +151,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
 
     # XXX: First time, decompression will not be necessary (by using fsrc), but
     # it will happen nonetheless
-    return gzip.GzipFile(local_path, "rb")
+    return _GzipFileChecksum(local_path, "rb")
 
 
 class OpenMLError(ValueError):
@@ -309,6 +327,47 @@ def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
     return int(float(qualities.get("NumberOfInstances", default_n_samples)))
 
 
+def _load_arff_response(
+    url,
+    data_home,
+    parser,
+    output_arrays_type,
+    columns_info_openml,
+    feature_names_to_select,
+    target_names_to_select,
+    infer_casting,
+    shape,
+    md5_checksum,
+):
+    gzip_file = _open_openml_url(url, data_home)
+
+    with closing(gzip_file):
+
+        X, y, frame, nominal_attributes = load_arff_from_gzip_file(
+            gzip_file,
+            parser=parser,
+            output_arrays_type=output_arrays_type,
+            columns_info_openml=columns_info_openml,
+            feature_names_to_select=feature_names_to_select,
+            target_names_to_select=target_names_to_select,
+            infer_casting=infer_casting,
+            shape=shape,
+        )
+
+        # consume remaining stream, if early exited
+        for _ in gzip_file:
+            pass
+
+        if gzip_file.md5_checksum.hexdigest() != md5_checksum:
+            raise ValueError(
+                f"md5 checksum of local file for {url} does not match description. "
+                "Downloaded file could have been modified / corrupted, clean cache "
+                "and retry..."
+            )
+
+        return X, y, frame, nominal_attributes
+
+
 def _download_data_to_bunch(
     url: str,
     sparse: bool,
@@ -336,31 +395,11 @@ def _download_data_to_bunch(
     # XXX: target columns should all be nominal or all numeric
     _verify_target_data_type(features_dict, target_columns)
 
-    response = _open_openml_url(url, data_home)
-    # FIXME: need to put back the mechanism of retry
-    # calling (_retry_with_clean_cache)
-    # FIXME: put back MD5 checksum
-    # actual_md5_checksum = hashlib.md5()
-    # def _stream_checksum_generator(response):
-    #     for line in response:
-    #         actual_md5_checksum.update(line)
-    #         yield line.decode("utf-8")
-    # stream = _stream_checksum_generator(response)
-    # ...
-    # # consume remaining stream, if early exited
-    # for _ in stream:
-    #     pass
-    # if actual_md5_checksum.hexdigest() != md5_checksum:
-    #     raise ValueError(
-    #         "md5 checksum of local file for "
-    #         + url
-    #         + " does not match description. "
-    #         "Downloaded file could have been modified / "
-    #         "corrupted, clean cache and retry..."
-    #     )
-
-    X, y, frame, nominal_attributes = load_arff_from_gzip_file(
-        response,
+    X, y, frame, nominal_attributes = _retry_with_clean_cache(url, data_home)(
+        _load_arff_response
+    )(
+        url,
+        data_home,
         parser=parser,
         output_arrays_type=output_arrays_type,
         columns_info_openml=features_dict,
@@ -368,6 +407,7 @@ def _download_data_to_bunch(
         target_names_to_select=target_columns,
         infer_casting=infer_casting,
         shape=shape,
+        md5_checksum=md5_checksum,
     )
 
     return Bunch(
