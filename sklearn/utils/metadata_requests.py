@@ -1,4 +1,5 @@
 import inspect
+from copy import deepcopy
 from enum import Enum
 from collections import defaultdict
 from typing import Union, Optional
@@ -572,6 +573,10 @@ class MetadataRequest:
 def metadata_request_factory(obj=None):
     """Get a MetadataRequest instance from the given object.
 
+    This function always returns a copy or an instance constructed from the
+    intput, such that changing the output of this function will not change the
+    original object.
+
     .. versionadded:: 1.1
 
     Parameters
@@ -587,12 +592,11 @@ def metadata_request_factory(obj=None):
     metadata_requests : MetadataRequest
         A ``MetadataRequest`` taken or created from the given object.
     """
-    # TODO: this should always return a copy
     if obj is None:
         return MetadataRequest()
 
     if isinstance(obj, MetadataRequest):
-        return obj
+        return deepcopy(obj)
 
     if isinstance(obj, dict):
         return MetadataRequest(obj)
