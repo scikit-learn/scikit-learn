@@ -100,6 +100,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values should be >=1.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,

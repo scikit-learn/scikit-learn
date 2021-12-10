@@ -140,14 +140,37 @@ def test_glm_solver_argument(solver):
         glm.fit(X, y)
 
 
-# @pytest.mark.parametrize("max_iter", ["not a number", 0, -1, 5.5, [1]])
-@pytest.mark.parametrize("max_iter", [10])
-def test_glm_max_iter_argument(max_iter):
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1"),
+        ({"max_iter": -1}, ValueError, "max_iter == -1, must be >= 1"),
+        (
+            {"max_iter": "not a number"},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'str'>",
+        ),
+        (
+            {"max_iter": [1]},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>,"
+            " not <class 'list'>",
+        ),
+        (
+            {"max_iter": 5.5},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>,"
+            " not <class 'float'>",
+        ),
+    ],
+)
+def test_glm_scalar_argument(params, err_type, err_msg):
     """Test GLM for invalid max_iter argument."""
     y = np.array([1, 2])
     X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(max_iter=max_iter)
-    with pytest.raises(ValueError, match="must be a positive integer"):
+    glm = GeneralizedLinearRegressor(**params)
+    with pytest.raises(err_type, match=err_msg):
         glm.fit(X, y)
 
 
