@@ -342,20 +342,36 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_features = max(1, int(np.log2(self.n_features_in_)))
             else:
                 raise ValueError(
-                    "Invalid value for max_features: %r. "
-                    "Allowed string values are 'auto', 'sqrt' "
-                    "or 'log2'."
-                    % self.max_features
+                    f"Invalid value for max_features: {self.max_features}. "
+                    "Allowed string values are 'auto', 'sqrt' or 'log2'."
                 )
         elif self.max_features is None:
             max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
+            check_scalar(
+                self.max_features,
+                "max_features",
+                target_type=numbers.Integral,
+                min_val=0,
+                max_val=self.n_features_in_,
+                include_boundaries="right",
+            )
             max_features = self.max_features
+        # else:  # float
+        # if 0.0 < self.max_features <= 1.0:
+        #     max_features = max(int(self.max_features * self.n_features_in_), 1)
+        # else:
+        #     raise ValueError("max_features must be in (0, n_features]")
         else:  # float
-            if 0.0 < self.max_features <= 1.0:
-                max_features = max(int(self.max_features * self.n_features_in_), 1)
-            else:
-                raise ValueError("max_features must be in (0, n_features]")
+            check_scalar(
+                self.max_features,
+                "max_features",
+                target_type=numbers.Real,
+                min_val=0.0,
+                max_val=1.0,
+                include_boundaries="neither",
+            )
+            max_features = max(1, int(self.max_features * self.n_features_in_))
 
         self.max_features_ = max_features
 

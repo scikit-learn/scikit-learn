@@ -111,16 +111,17 @@ def test_classification_toy(loss):
         ({"max_depth": -0.1}, "max_depth must be greater than zero"),
         ({"max_depth": 0}, "max_depth must be greater than zero"),
         ({"init": {}}, "The init parameter must be an estimator or 'zero'"),
-        ({"max_features": "invalid"}, "Invalid value for max_features:"),
-        ({"max_features": 0}, r"max_features must be in \(0, n_features\]"),
-        ({"max_features": 100}, r"max_features must be in \(0, n_features\]"),
-        ({"max_features": -0.1}, r"max_features must be in \(0, n_features\]"),
+        ({"max_features": "invalid"}, ValueError, "Invalid value for max_features:"),
+        ({"max_features": -0.1}, ValueError, "max_features == -0.1, must be > 0."),
+        ({"max_features": 0}, ValueError, "max_features == 0, must be > 0."),
+        ({"max_features": 100}, ValueError, "max_features == 100, must be <= "),
+        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be < 1."),
         ({"n_iter_no_change": -1}, ValueError, "n_iter_no_change == -1, must be > 0."),
         ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be > 0."),
         (
             {"n_iter_no_change": 1.5},
             TypeError,
-            "n_iter_no_change must be an instance of <class 'numbers.Integral'>, not",
+            "n_iter_no_change must be an instance of <class 'numbers.Integral'>, not"
             " <class 'float'>.",
         ),
         (
