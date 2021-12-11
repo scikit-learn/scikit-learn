@@ -500,9 +500,18 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch, parser, infer_casting
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-@pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
-def test_fetch_openml_anneal_pandas(monkeypatch, parser, infer_casting):
+@pytest.mark.parametrize(
+    "parser,infer_casting, expected_data_floats, expected_data_ints",
+    [
+        ("liac-arff", False, 6, 0),
+        ("liac-arff", True, 2, 4),
+        ("pandas", False, 2, 4),
+        ("pandas", True, 2, 4),
+    ],
+)
+def test_fetch_openml_anneal_pandas(
+    monkeypatch, parser, infer_casting, expected_data_floats, expected_data_ints
+):
     # classification dataset with numeric and categorical columns
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -513,7 +522,6 @@ def test_fetch_openml_anneal_pandas(monkeypatch, parser, infer_casting):
     target_shape = (11,)
     frame_shape = (11, 39)
     expected_data_categories = 32
-    expected_data_floats = 6
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
@@ -535,8 +543,10 @@ def test_fetch_openml_anneal_pandas(monkeypatch, parser, infer_casting):
         [dtype for dtype in data.dtypes if isinstance(dtype, CategoricalDtype)]
     )
     n_floats = len([dtype for dtype in data.dtypes if dtype.kind == "f"])
+    n_ints = len([dtype for dtype in data.dtypes if dtype.kind == "i"])
     assert expected_data_categories == n_categories
     assert expected_data_floats == n_floats
+    assert expected_data_ints == n_ints
 
     assert isinstance(target, pd.Series)
     assert target.shape == target_shape
