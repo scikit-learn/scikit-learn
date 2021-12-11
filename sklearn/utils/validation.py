@@ -1380,11 +1380,10 @@ def check_scalar(
         Whether the interval defined by `min_val` and `max_val` should include
         the boundaries. Possible choices are:
 
-        - `"left"`: only `min_val` is included in the valid interval;
-        - `"right"`: only `max_val` is included in the valid interval;
-        - `"both"`: `min_val` and `max_val` are included in the valid interval;
-        - `"neither"`: neither `min_val` nor `max_val` are included in the
-          valid interval.
+        - `"left"`: [`min_val`, `max_val`)
+        - `"right"`: (`min_val`, `max_val`]
+        - `"both"`: [`min_val`, `max_val`]
+        - `"neither"`: (`min_val`, `max_val`)
 
     Returns
     -------
