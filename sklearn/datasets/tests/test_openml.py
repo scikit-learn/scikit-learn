@@ -365,7 +365,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_fetch_openml_iris_pandas(monkeypatch):
+@pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
+@pytest.mark.parametrize("infer_casting", [True, False])
+def test_fetch_openml_iris_pandas(monkeypatch, parser, infer_casting):
     # classification dataset with numeric only columns
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -383,7 +385,13 @@ def test_fetch_openml_iris_pandas(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    bunch = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser=parser,
+        infer_casting=infer_casting,
+    )
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -410,14 +418,22 @@ def test_fetch_openml_iris_pandas(monkeypatch):
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch):
+@pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
+@pytest.mark.parametrize("infer_casting", [True, False])
+def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch, parser, infer_casting):
     # as_frame = True returns the same underlying data as as_frame = False
     pytest.importorskip("pandas")
     data_id = 61
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    frame_bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    frame_bunch = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser=parser,
+        infer_casting=infer_casting,
+    )
     frame_data = frame_bunch.data
     frame_target = frame_bunch.target
 
@@ -432,7 +448,9 @@ def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch):
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
+@pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
+@pytest.mark.parametrize("infer_casting", [True, False])
+def test_fetch_openml_iris_multitarget_pandas(monkeypatch, parser, infer_casting):
     # classification dataset with numeric only columns
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -451,7 +469,12 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     bunch = fetch_openml(
-        data_id=data_id, as_frame=True, cache=False, target_column=target_column
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        target_column=target_column,
+        parser=parser,
+        infer_casting=infer_casting,
     )
     data = bunch.data
     target = bunch.target
@@ -477,7 +500,9 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_fetch_openml_anneal_pandas(monkeypatch):
+@pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
+@pytest.mark.parametrize("infer_casting", [True, False])
+def test_fetch_openml_anneal_pandas(monkeypatch, parser, infer_casting):
     # classification dataset with numeric and categorical columns
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -493,7 +518,12 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     bunch = fetch_openml(
-        data_id=data_id, as_frame=True, target_column=target_column, cache=False
+        data_id=data_id,
+        as_frame=True,
+        target_column=target_column,
+        cache=False,
+        parser=parser,
+        infer_casting=infer_casting,
     )
     data = bunch.data
     target = bunch.target
