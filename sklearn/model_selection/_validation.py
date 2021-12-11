@@ -393,7 +393,7 @@ def cross_val_score(
     pre_dispatch="2*n_jobs",
     error_score=np.nan,
 ):
-    """Evaluate a score by cross-validation
+    """Evaluate a score by cross-validation.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -433,7 +433,7 @@ def cross_val_score(
         - `None`, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For `int`/`None` inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -509,7 +509,6 @@ def cross_val_score(
 
     sklearn.metrics.make_scorer : Make a scorer from a performance metric or
         loss function.
-
     """
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)

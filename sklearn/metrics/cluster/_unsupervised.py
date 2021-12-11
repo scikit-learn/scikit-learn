@@ -105,7 +105,6 @@ def silhouette_score(
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
-
     """
     if sample_size is not None:
         X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
@@ -303,7 +302,7 @@ def calinski_harabasz_score(X, labels):
 
 
 def davies_bouldin_score(X, labels):
-    """Computes the Davies-Bouldin score.
+    """Compute the Davies-Bouldin score.
 
     The score is defined as the average similarity measure of each cluster with
     its most similar cluster, where similarity is the ratio of within-cluster
