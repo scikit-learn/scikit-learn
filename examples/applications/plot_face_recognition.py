@@ -113,6 +113,7 @@ print(classification_report(y_test, y_pred, target_names=target_names))
 ConfusionMatrixDisplay.from_estimator(
     clf, X_test_pca, y_test, display_labels=target_names, xticks_rotation="vertical"
 )
+plt.tight_layout()
 plt.show()
 
 
