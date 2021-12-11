@@ -63,6 +63,12 @@ Changelog
 - |Fix| Fixes compatibility bug with NumPy 1.22 in :class:`preprocessing.OneHotEncoder`.
   :pr:`21517` by `Thomas Fan`_.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Prevents :func:`tree.plot_tree` from drawing out of the boundary of
+  the figure. :pr:`21917` by `Thomas Fan`_.
+
 :mod:`sklearn.utils`
 ....................
 
