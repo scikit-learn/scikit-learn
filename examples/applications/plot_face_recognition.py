@@ -154,3 +154,9 @@ eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
 plot_gallery(eigenfaces, eigenface_titles, h, w)
 
 plt.show()
+
+# %%
+# Face recognition problem would be much more effectively solved by training
+# convolutional neural networks but this family of models is outside of the scope of
+# the scikit-learn library. Interested readers should instead try to use pytorch or
+# tensorflow to implement such models.
