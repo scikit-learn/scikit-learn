@@ -229,6 +229,11 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
+- |Fix| :class:`linear_model.SGDOneClassSVM` now does not validate in 
+  `__init__`. All the validation is now handled through `fit()` and 
+  `partial_fit()`.
+  :pr:`21944` by :user:`Yogendrasingh <iofall>` and :user: `Arisa Y. <arisayosh>`
+
 :mod:`sklearn.metrics`
 ......................
 
