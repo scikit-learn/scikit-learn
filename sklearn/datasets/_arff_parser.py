@@ -393,20 +393,13 @@ def _pandas_arff_parser(
     for line in gzip_file:
         if line.decode("utf-8").lower().startswith("@data"):
             break
-    # potentially there are some comments before the data section
-    # let's peek a ahead such that the pandas parser does not fail
-    while True:
-        stream_ahead = gzip_file.peek(1)
-        if stream_ahead.decode("utf-8").startswith("%"):
-            line = gzip_file.readline()
-        else:
-            break
 
     # ARFF represent missing values with "?"
     frame = pd.read_csv(
         gzip_file,
         header=None,
-        na_values=["?"],
+        na_values=["?"],  # missing values are represented by `?`
+        comment="%",  # skip line starting by `%` since they are comments
     )
     frame.columns = [name for name in columns_info_openml]
     frame = _cast_frame(frame, columns_info_openml, infer_casting)
