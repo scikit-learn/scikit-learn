@@ -283,7 +283,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if self._impl in ["c_svc", "nu_svc"]:
             self.n_iter_ = self._num_iter
         else:
-            self.n_iter_ = self._num_iter[0]
+            self.n_iter_ = self._num_iter.item()
 
         return self
 
