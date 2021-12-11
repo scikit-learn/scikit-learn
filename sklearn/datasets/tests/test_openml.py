@@ -559,7 +559,24 @@ def test_fetch_openml_anneal_pandas(
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_fetch_openml_cpu_pandas(monkeypatch):
+@pytest.mark.parametrize(
+    "parser,infer_casting, expected_data_floats, expected_data_ints,"
+    " expected_target_dtype",
+    [
+        ("liac-arff", False, 6, 0, "f"),
+        ("liac-arff", True, 0, 6, "i"),
+        ("pandas", False, 0, 6, "i"),
+        ("pandas", True, 0, 6, "i"),
+    ],
+)
+def test_fetch_openml_cpu_pandas(
+    monkeypatch,
+    parser,
+    infer_casting,
+    expected_data_floats,
+    expected_data_ints,
+    expected_target_dtype,
+):
     # regression dataset with numeric and categorical columns
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -567,61 +584,40 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
     data_shape = (209, 7)
     target_shape = (209,)
     frame_shape = (209, 8)
-
-    cat_dtype = CategoricalDtype(
-        [
-            "adviser",
-            "amdahl",
-            "apollo",
-            "basf",
-            "bti",
-            "burroughs",
-            "c.r.d",
-            "cdc",
-            "cambex",
-            "dec",
-            "dg",
-            "formation",
-            "four-phase",
-            "gould",
-            "hp",
-            "harris",
-            "honeywell",
-            "ibm",
-            "ipl",
-            "magnuson",
-            "microdata",
-            "nas",
-            "ncr",
-            "nixdorf",
-            "perkin-elmer",
-            "prime",
-            "siemens",
-            "sperry",
-            "sratus",
-            "wang",
-        ]
-    )
-    data_dtypes = [cat_dtype] + [np.float64] * 6
     feature_names = ["vendor", "MYCT", "MMIN", "MMAX", "CACH", "CHMIN", "CHMAX"]
     target_name = "class"
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    bunch = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser=parser,
+        infer_casting=infer_casting,
+    )
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
 
     assert isinstance(data, pd.DataFrame)
     assert data.shape == data_shape
-    assert np.all(data.dtypes == data_dtypes)
+
+    n_categories = len(
+        [dtype for dtype in data.dtypes if isinstance(dtype, CategoricalDtype)]
+    )
+    n_floats = len([dtype for dtype in data.dtypes if dtype.kind == "f"])
+    n_ints = len([dtype for dtype in data.dtypes if dtype.kind == "i"])
+    assert n_categories == 1
+    assert n_floats == expected_data_floats
+    assert n_ints == expected_data_ints
+
     assert np.all(data.columns == feature_names)
     assert np.all(bunch.feature_names == feature_names)
     assert bunch.target_names == [target_name]
 
     assert isinstance(target, pd.Series)
     assert target.shape == target_shape
-    assert target.dtype == np.float64
+    assert target.dtype.kind == expected_target_dtype
     assert target.name == target_name
 
     assert isinstance(frame, pd.DataFrame)
