@@ -13,7 +13,6 @@ The dataset used in this example is a preprocessed excerpt of the
 """
 # %%
 from time import time
-import logging
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
@@ -25,10 +24,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.utils.fixes import loguniform
-
-
-# Display progress logs on stdout
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
 
 # %%
@@ -115,7 +110,9 @@ y_pred = clf.predict(X_test_pca)
 print("done in %0.3fs" % (time() - t0))
 
 print(classification_report(y_test, y_pred, target_names=target_names))
-ConfusionMatrixDisplay.from_estimator(clf, X_test_pca, y_test)
+ConfusionMatrixDisplay.from_estimator(
+    clf, X_test_pca, y_test, display_labels=target_names, xticks_rotation="vertical"
+)
 plt.show()
 
 
