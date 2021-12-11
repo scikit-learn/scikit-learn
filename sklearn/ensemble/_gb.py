@@ -359,11 +359,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         self.max_features_ = max_features
 
-        if not isinstance(self.n_iter_no_change, (numbers.Integral, type(None))):
-            raise ValueError(
-                "n_iter_no_change should either be None or an integer. %r was passed"
-                % self.n_iter_no_change
-            )
+        # if not isinstance(self.n_iter_no_change, (numbers.Integral, type(None))):
+        #     raise ValueError(
+        #         "n_iter_no_change should either be None or an integer. %r was passed"
+        #         % self.n_iter_no_change
+        #     )
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures."""
@@ -549,6 +549,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             max_val=1.0,
             include_boundaries="right",
         )
+
+        if self.n_iter_no_change is not None:
+            check_scalar(
+                self.n_iter_no_change,
+                "n_iter_no_change",
+                target_type=numbers.Integral,
+                min_val=0,
+                include_boundaries="neither",
+            )
 
         if not self._is_initialized():
             # init state

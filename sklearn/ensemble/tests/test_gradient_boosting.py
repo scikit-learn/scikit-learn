@@ -79,7 +79,7 @@ def test_classification_toy(loss):
 
 
 @pytest.mark.parametrize(
-    "params, err_type,err_msg",
+    "params, err_type, err_msg",
     [
         ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1."),
         ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1."),
@@ -115,7 +115,20 @@ def test_classification_toy(loss):
         ({"max_features": 0}, r"max_features must be in \(0, n_features\]"),
         ({"max_features": 100}, r"max_features must be in \(0, n_features\]"),
         ({"max_features": -0.1}, r"max_features must be in \(0, n_features\]"),
-        ({"n_iter_no_change": "invalid"}, "n_iter_no_change should either be"),
+        ({"n_iter_no_change": -1}, ValueError, "n_iter_no_change == -1, must be > 0."),
+        ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be > 0."),
+        (
+            {"n_iter_no_change": 1.5},
+            TypeError,
+            "n_iter_no_change must be an instance of <class 'numbers.Integral'>, not",
+            " <class 'float'>.",
+        ),
+        (
+            {"n_iter_no_change": "invalid"},
+            TypeError,
+            "n_iter_no_change must be an instance of <class 'numbers.Integral'>, not"
+            " <class 'str'>.",
+        ),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
