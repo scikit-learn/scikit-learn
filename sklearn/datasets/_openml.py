@@ -50,7 +50,7 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
                 return f(*args, **kw)
             try:
                 return f(*args, **kw)
-            except HTTPError:
+            except URLError:
                 raise
             except Exception:
                 warn("Invalid cache, redownloading file", RuntimeWarning)
