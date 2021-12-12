@@ -776,9 +776,6 @@ def fetch_openml(
     if as_frame == "auto":
         as_frame = not return_sparse
 
-    if as_frame and return_sparse:
-        raise ValueError("Cannot return dataframe with sparse data")
-
     if parser == "auto":
         if return_sparse:
             parser = "liac-arff"
@@ -793,6 +790,18 @@ def fetch_openml(
         check_pandas_support("fetch_openml with parser='pandas'")
     elif parser != "liac-arff":
         raise ValueError("Invalid value for argument 'parser'. ")
+
+    if return_sparse and (parser == "pandas" or as_frame):
+        if as_frame:
+            err_msg = (
+                "Cannot return dataframe with sparse data. Switch to `as_frame=False`."
+            )
+        else:
+            err_msg = (
+                "Cannot use `parser='pandas'` with sparse ARFF file. Switch to "
+                "`parser='liac-arff'`."
+            )
+        raise ValueError(err_msg)
 
     if isinstance(infer_casting, str):
         if infer_casting == "auto":

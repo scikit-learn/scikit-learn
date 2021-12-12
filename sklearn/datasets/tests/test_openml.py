@@ -368,7 +368,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 @pytest.mark.parametrize("infer_casting", [True, False])
 def test_fetch_openml_iris_pandas(monkeypatch, parser, infer_casting):
-    # classification dataset with numeric only columns
+    """Check fetching on a numerical only dataset with string labels."""
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
     data_id = 61
@@ -421,7 +421,7 @@ def test_fetch_openml_iris_pandas(monkeypatch, parser, infer_casting):
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 @pytest.mark.parametrize("infer_casting", [True, False])
 def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch, parser, infer_casting):
-    # as_frame = True returns the same underlying data as as_frame = False
+    """Check that `as_frame=False` and `as_frame=True` yield the same result."""
     pytest.importorskip("pandas")
     data_id = 61
 
@@ -451,7 +451,7 @@ def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch, parser, infer_c
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 @pytest.mark.parametrize("infer_casting", [True, False])
 def test_fetch_openml_iris_multitarget_pandas(monkeypatch, parser, infer_casting):
-    # classification dataset with numeric only columns
+    """Check fetching a dataset where the target columns are not the default."""
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
     data_id = 61
@@ -512,7 +512,11 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch, parser, infer_casting
 def test_fetch_openml_anneal_pandas(
     monkeypatch, parser, infer_casting, expected_data_floats, expected_data_ints
 ):
-    # classification dataset with numeric and categorical columns
+    """Check fetching for a dataset containing both numerical (float and int)
+    and categorical features.
+
+    In addition, this dataset contains comments within the data field.
+    """
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
 
@@ -577,7 +581,8 @@ def test_fetch_openml_cpu_pandas(
     expected_data_ints,
     expected_target_dtype,
 ):
-    # regression dataset with numeric and categorical columns
+    """Check fetching for a regression dataset containing both numerical
+    (float and int) and categorical features."""
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
     data_id = 561
@@ -624,31 +629,66 @@ def test_fetch_openml_cpu_pandas(
     assert frame.shape == frame_shape
 
 
-def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
+@pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
+@pytest.mark.parametrize("infer_casting", [True, False])
+def test_fetch_openml_australian_pandas_error_sparse(
+    monkeypatch, parser, infer_casting
+):
+    """Check that we raise an error if a dataset is sparse and we try to request a
+    dataframe.
+    """
     data_id = 292
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    msg = "Cannot return dataframe with sparse data"
+    msg = "Cannot return dataframe with sparse data. Switch to `as_frame=False`."
     with pytest.raises(ValueError, match=msg):
-        fetch_openml(data_id=data_id, as_frame=True, cache=False)
+        fetch_openml(
+            data_id=data_id,
+            as_frame=True,
+            cache=False,
+            parser=parser,
+            infer_casting=infer_casting,
+        )
+
+
+def test_fetch_openml_pandas_parser_error_on_sparse(monkeypatch):
+    """Check that we raise an error using the pandas parser on a sparse dataset."""
+    data_id = 292
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    msg = (
+        "Cannot use `parser='pandas'` with sparse ARFF file. Switch to "
+        "`parser='liac-arff'`."
+    )
+    with pytest.raises(ValueError, match=msg):
+        fetch_openml(
+            data_id=data_id,
+            as_frame=False,
+            cache=False,
+            parser="pandas",
+        )
 
 
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_fetch_openml_as_frame_auto(monkeypatch):
+@pytest.mark.parametrize(
+    "data_id, data_type",
+    [
+        (61, "dataframe"),  # iris dataset version 1
+        (292, "sparse"),  # Australian dataset version 1
+    ],
+)
+def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
+    """Check the auto mode of `fetch_openml`."""
     pd = pytest.importorskip("pandas")
 
-    data_id = 61  # iris dataset version 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     data = fetch_openml(data_id=data_id, as_frame="auto", cache=False)
-    assert isinstance(data.data, pd.DataFrame)
-
-    data_id = 292  # Australian dataset version 1
-    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    data = fetch_openml(data_id=data_id, as_frame="auto", cache=False)
-    assert isinstance(data.data, scipy.sparse.csr_matrix)
+    klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_matrix
+    assert isinstance(data.data, klass)
 
 
 # Known failure of PyPy for OpenML. See the following issue:

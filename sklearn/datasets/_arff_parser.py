@@ -297,32 +297,21 @@ def _liac_arff_parser(
             # This should never happen
             raise ValueError("Unexpected Data Type obtained from arff.")
 
-        is_classification = [
-            col_name in nominal_attributes for col_name in target_names_to_select
-        ]
-        if not is_classification:  # No target
-            pass
-        elif all(is_classification):
-            y = np.hstack(
-                [
-                    np.take(
-                        np.asarray(nominal_attributes.pop(col_name), dtype="O"),
-                        y[:, i : i + 1].astype(int, copy=False),
-                    )
-                    for i, col_name in enumerate(target_names_to_select)
-                ]
-            )
-        elif any(is_classification):
-            raise ValueError(
-                "Mix of nominal and non-nominal targets is not currently supported"
-            )
+    print(y)
+    is_classification = [
+        col_name in nominal_attributes for col_name in target_names_to_select
+    ]
+    if is_classification and any(is_classification):
+        raise ValueError(
+            "Mix of nominal and non-nominal targets is not currently supported"
+        )
 
-        # reshape y back to 1-D array, if there is only 1 target column;
-        # back to None if there are not target columns
-        if y.shape[1] == 1:
-            y = y.reshape((-1,))
-        elif y.shape[1] == 0:
-            y = None
+    # reshape y back to 1-D array, if there is only 1 target column;
+    # back to None if there are not target columns
+    if y.shape[1] == 1:
+        y = y.reshape((-1,))
+    elif y.shape[1] == 0:
+        y = None
 
     if output_arrays_type == "pandas":
         return X, y, frame, None
