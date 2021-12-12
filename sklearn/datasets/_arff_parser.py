@@ -130,19 +130,6 @@ def _cast_frame(frame, columns_info, infer_casting=False):
     return frame
 
 
-def _compute_nominal_attributes(columns_info, feature_names, target_names):
-    """Compute the nominal attributes from the ARFF metadata."""
-    columns_to_select = feature_names + target_names
-    nominal_attributes = {}
-    for name in columns_to_select:
-        if columns_info[name]["data_type"].lower() == "nominal":
-            for potential_key in ["nominal_value", "nominal_values"]:
-                if potential_key in columns_info[name]:
-                    nominal_attributes[name] = columns_info[name][potential_key]
-
-    return nominal_attributes
-
-
 def _post_process_frame(frame, feature_names, target_names):
     X = frame[feature_names]
     if len(target_names) >= 2:
@@ -221,13 +208,21 @@ def _liac_arff_parser(
 
     stream = _io_to_generator(gzip_file)
 
+    # find which type (dense or sparse) ARFF type we will have to deal with
     return_type = _arff.COO if output_arrays_type == "sparse" else _arff.DENSE_GEN
-    arff_container = _arff.load(stream, return_type=return_type)
-
-    nominal_attributes = _compute_nominal_attributes(
-        columns_info_openml, feature_names_to_select, target_names_to_select
+    # we should not let LIAC-ARFF to encode the nominal attributes with NumPy
+    # arrays to have only numerical values.
+    encode_nominal = not (output_arrays_type == "pandas")
+    arff_container = _arff.load(
+        stream, return_type=return_type, encode_nominal=encode_nominal
     )
     columns_to_select = feature_names_to_select + target_names_to_select
+
+    nominal_attributes = {
+        name: categories
+        for name, categories in arff_container["attributes"]
+        if isinstance(categories, list) and name in columns_to_select
+    }
     if output_arrays_type == "pandas":
         pd = check_pandas_support("fetch_openml with as_frame=True")
 
@@ -297,21 +292,33 @@ def _liac_arff_parser(
             # This should never happen
             raise ValueError("Unexpected Data Type obtained from arff.")
 
-    print(y)
-    is_classification = [
-        col_name in nominal_attributes for col_name in target_names_to_select
-    ]
-    if is_classification and any(is_classification):
-        raise ValueError(
-            "Mix of nominal and non-nominal targets is not currently supported"
-        )
+        is_classification = {
+            col_name in nominal_attributes for col_name in target_names_to_select
+        }
+        if not is_classification:
+            # No target
+            pass
+        elif all(is_classification):
+            y = np.hstack(
+                [
+                    np.take(
+                        np.asarray(nominal_attributes.pop(col_name), dtype="O"),
+                        y[:, i : i + 1].astype(int, copy=False),
+                    )
+                    for i, col_name in enumerate(target_names_to_select)
+                ]
+            )
+        elif any(is_classification):
+            raise ValueError(
+                "Mix of nominal and non-nominal targets is not currently supported"
+            )
 
-    # reshape y back to 1-D array, if there is only 1 target column;
-    # back to None if there are not target columns
-    if y.shape[1] == 1:
-        y = y.reshape((-1,))
-    elif y.shape[1] == 0:
-        y = None
+        # reshape y back to 1-D array, if there is only 1 target column;
+        # back to None if there are not target columns
+        if y.shape[1] == 1:
+            y = y.reshape((-1,))
+        elif y.shape[1] == 0:
+            y = None
 
     if output_arrays_type == "pandas":
         return X, y, frame, None
@@ -393,9 +400,10 @@ def _pandas_arff_parser(
     frame.columns = [name for name in columns_info_openml]
     frame = _cast_frame(frame, columns_info_openml, infer_casting)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
-    nominal_attributes = _compute_nominal_attributes(
-        columns_info_openml, feature_names_to_select, target_names_to_select
-    )
+    nominal_attributes = {
+        col_name: frame[col_name].cat.categories.tolist()
+        for col_name in frame.columns if frame[col_name].dtype == "category"
+    }
 
     if output_arrays_type == "pandas":
         return X, y, frame, None
