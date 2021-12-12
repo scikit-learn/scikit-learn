@@ -100,7 +100,7 @@ est.get_metadata_request()
 # %%
 # As you can see, now the two metadata have explicit request values, one is
 # requested and the other one is not. Instead of ``True`` and ``False``, we
-# could also use the :class:`~sklearn.utils.metadata_requests.RequestType``
+# could also use the :class:`~sklearn.utils.metadata_requests.RequestType`
 # values.
 
 est = (
@@ -140,7 +140,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         )
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator
-        fit_params_ = metadata_request_factory(self.estimator).fit.get_method_input(
+        fit_params_ = metadata_request_factory(self.estimator).fit.get_input(
             ignore_extras=False, kwargs=fit_params
         )
         self.estimator_ = clone(self.estimator).fit(X, y, **fit_params_)
@@ -154,9 +154,9 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             ignore_extras=False, kwargs=predict_params
         )
         # and then prepare the input to the underlying ``predict`` method.
-        predict_params_ = metadata_request_factory(
-            self.estimator_
-        ).predict.get_method_input(ignore_extras=False, kwargs=predict_params)
+        predict_params_ = metadata_request_factory(self.estimator_).predict.get_input(
+            ignore_extras=False, kwargs=predict_params
+        )
         return self.estimator_.predict(X, **predict_params_)
 
     def get_metadata_request(self):
@@ -177,7 +177,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # have such a method, then a default empty ``MetadataRequest`` is returned.
 #
 # Then in each method, we use the corresponding
-# :method:`~utils.metadata_requests.MethodMetadataRequest.get_method_input` to
+# :method:`~utils.metadata_requests.MethodMetadataRequest.get_input` to
 # construct a dictionary of the form ``{"metadata": value}`` to pass to the
 # underlying estimator's method. Please note that since in this example the
 # meta-estimator does not consume any of the given metadata itself, and there
@@ -325,7 +325,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         )
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator
-        fit_params_ = metadata_request_factory(self.estimator).fit.get_method_input(
+        fit_params_ = metadata_request_factory(self.estimator).fit.get_input(
             ignore_extras=False, kwargs=fit_params
         )
         self.estimator_ = clone(self.estimator).fit(X, y, **fit_params_)
@@ -339,9 +339,9 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
             ignore_extras=False, kwargs=predict_params
         )
         # and then prepare the input to the underlying ``predict`` method.
-        predict_params_ = metadata_request_factory(
-            self.estimator_
-        ).predict.get_method_input(ignore_extras=False, kwargs=predict_params)
+        predict_params_ = metadata_request_factory(self.estimator_).predict.get_input(
+            ignore_extras=False, kwargs=predict_params
+        )
         return self.estimator_.predict(X, **predict_params_)
 
     def get_metadata_request(self):
@@ -450,16 +450,16 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
         transformer_fit_params = metadata_request_factory(
             self.transformer
-        ).fit.get_method_input(ignore_extras=True, kwargs=fit_params)
+        ).fit.get_input(ignore_extras=True, kwargs=fit_params)
         transformer_transform_params = metadata_request_factory(
             self.transformer
-        ).transform.get_method_input(ignore_extras=True, kwargs=fit_params)
+        ).transform.get_input(ignore_extras=True, kwargs=fit_params)
         self.transformer_ = clone(self.transformer).fit(X, y, **transformer_fit_params)
         X_transformed = self.transformer_.transform(X, **transformer_transform_params)
 
-        classifier_fit_params = metadata_request_factory(
-            self.classifier
-        ).fit.get_method_input(ignore_extras=True, kwargs=fit_params)
+        classifier_fit_params = metadata_request_factory(self.classifier).fit.get_input(
+            ignore_extras=True, kwargs=fit_params
+        )
         self.classifier_ = clone(self.classifier).fit(
             X_transformed, y, **classifier_fit_params
         )
@@ -470,12 +470,12 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
         transformer_transform_params = metadata_request_factory(
             self.transformer
-        ).transform.get_method_input(ignore_extras=True, kwargs=predict_params)
+        ).transform.get_input(ignore_extras=True, kwargs=predict_params)
         X_transformed = self.transformer_.transform(X, **transformer_transform_params)
 
         classifier_predict_params = metadata_request_factory(
             self.classifier
-        ).predict.get_method_input(ignore_extras=True, kwargs=predict_params)
+        ).predict.get_input(ignore_extras=True, kwargs=predict_params)
         return self.classifier_.predict(X_transformed, **classifier_predict_params)
 
     def get_metadata_request(self):
@@ -558,7 +558,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         metadata_request_factory(self).fit.validate_metadata(
             ignore_extras=False, self_metadata=super(), kwargs=fit_params
         )
-        fit_params_ = metadata_request_factory(self.estimator).fit.get_method_input(
+        fit_params_ = metadata_request_factory(self.estimator).fit.get_input(
             ignore_extras=False, kwargs=fit_params
         )
         self.estimator_ = clone(self.estimator).fit(X, y, **fit_params_)
@@ -594,9 +594,9 @@ class SampledMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         metadata_request_factory(self).fit.validate_metadata(
             ignore_extras=False, self_metadata=super(), kwargs=fit_params
         )
-        estimator_fit_params = metadata_request_factory(
-            self.estimator
-        ).fit.get_method_input(ignore_extras=True, kwargs=fit_params)
+        estimator_fit_params = metadata_request_factory(self.estimator).fit.get_input(
+            ignore_extras=True, kwargs=fit_params
+        )
         self.estimator_ = clone(self.estimator).fit(X, y, **estimator_fit_params)
 
     def get_metadata_request(self):

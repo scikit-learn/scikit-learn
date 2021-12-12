@@ -316,7 +316,7 @@ class MethodMetadataRequest:
                         f"requested or not. In method: {self.name}"
                     )
 
-    def get_method_input(self, ignore_extras=False, kwargs=None):
+    def get_input(self, ignore_extras=False, kwargs=None):
         """Return the input parameters requested by the method.
 
         The output of this method can be used directly as the input to the

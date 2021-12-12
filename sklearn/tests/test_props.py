@@ -91,7 +91,7 @@ class TestSimpleMetaEstimator(MetaEstimatorMixin, ClassifierMixin, BaseEstimator
         metadata_request_factory(self).fit.validate_metadata(
             ignore_extras=False, self_metadata=super(), kwargs=kwargs
         )
-        fit_params = metadata_request_factory(self.estimator).fit.get_method_input(
+        fit_params = metadata_request_factory(self.estimator).fit.get_input(
             ignore_extras=True, kwargs=kwargs
         )
         self.estimator_ = clone(self.estimator).fit(X, y, **fit_params)
@@ -150,7 +150,7 @@ class TestMetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
             ignore_extras=False,
             kwargs=fit_params,
         )
-        fit_params_ = metadata_request_factory(self.transformer).fit.get_method_input(
+        fit_params_ = metadata_request_factory(self.transformer).fit.get_input(
             ignore_extras=False, kwargs=fit_params
         )
         self.transformer_ = clone(self.transformer).fit(X, y, **fit_params_)
@@ -162,7 +162,7 @@ class TestMetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         )
         transform_params_ = metadata_request_factory(
             self.transformer
-        ).transform.get_method_input(ignore_extras=False, kwargs=transform_params)
+        ).transform.get_input(ignore_extras=False, kwargs=transform_params)
         return self.transformer_.transform(X, **transform_params_)
 
 
@@ -180,12 +180,12 @@ class SimplePipeline(BaseEstimator):
         X_transformed = X
         for step in self.steps[:-1]:
             requests = metadata_request_factory(step)
-            step_fit_params = requests.fit.get_method_input(
+            step_fit_params = requests.fit.get_input(
                 ignore_extras=True, kwargs=fit_params
             )
             transformer = clone(step).fit(X_transformed, y, **step_fit_params)
             self.steps_.append(transformer)
-            step_transform_params = requests.transform.get_method_input(
+            step_transform_params = requests.transform.get_input(
                 ignore_extras=True, kwargs=fit_params
             )
             X_transformed = transformer.transform(
@@ -193,9 +193,7 @@ class SimplePipeline(BaseEstimator):
             )
 
         requests = metadata_request_factory(step)
-        step_fit_params = requests.fit.get_method_input(
-            ignore_extras=True, kwargs=fit_params
-        )
+        step_fit_params = requests.fit.get_input(ignore_extras=True, kwargs=fit_params)
         self.steps_.append(
             clone(self.steps[-1]).fit(X_transformed, y, **step_fit_params)
         )
@@ -208,14 +206,14 @@ class SimplePipeline(BaseEstimator):
             ignore_extras=False, kwargs=predict_params
         )
         for step in self.steps_[:-1]:
-            step_transform_params = metadata_request_factory(
-                step
-            ).transform.get_method_input(ignore_extras=True, kwargs=predict_params)
+            step_transform_params = metadata_request_factory(step).transform.get_input(
+                ignore_extras=True, kwargs=predict_params
+            )
             X_transformed = step.transform(X, **step_transform_params)
 
         step_predict_params = metadata_request_factory(
             self.steps_[-1]
-        ).predict.get_method_input(ignore_extras=True, kwargs=predict_params)
+        ).predict.get_input(ignore_extras=True, kwargs=predict_params)
         return self.steps_[-1].predict(X_transformed, **step_predict_params)
 
     def get_metadata_request(self):
