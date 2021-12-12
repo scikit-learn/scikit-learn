@@ -259,9 +259,10 @@ def test_assert_request_is_empty():
 
 def test_default_requests():
     class OddEstimator(BaseEstimator):
-        __metadata_request__sample_weight = {
-            "fit": {"sample_weight": RequestType.REQUESTED}  # type: ignore
-        }  # set a different default request
+        __metadata_request__fit = {
+            # set a different default request
+            "sample_weight": RequestType.REQUESTED
+        }  # type: ignore
 
     odd_request = metadata_request_factory(OddEstimator())
     assert odd_request.fit.requests == {"sample_weight": RequestType.REQUESTED}
@@ -374,61 +375,34 @@ def test_invalid_metadata():
 
 
 def test_get_metadata_request():
-    class TestDefaultsBadMetadataName(_MetadataRequester):
-        __metadata_request__sample_weight = {
-            "fit": "sample_weight",
-            "score": "sample_weight",
-        }
-
-        __metadata_request__my_param = {
-            "score": {"my_param": True},
-            # the following method raise an error
-            "other_method": {"my_param": True},
-        }
-
-        __metadata_request__my_other_param = {
-            "score": "my_other_param",
-            # this should raise since the name is different than the metadata
-            "fit": "my_param",
-        }
-
     class TestDefaultsBadMethodName(_MetadataRequester):
-        __metadata_request__sample_weight = {
-            "fit": "sample_weight",
-            "score": "sample_weight",
+        __metadata_request__fit = {
+            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_param": RequestType.ERROR_IF_PASSED,
         }
-
-        __metadata_request__my_param = {
-            "score": {"my_param": True},
-            # the following method raise an error
-            "other_method": {"my_param": True},
+        __metadata_request__score = {
+            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_param": True,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
         }
-
-        __metadata_request__my_other_param = {
-            "score": "my_other_param",
-            "fit": "my_other_param",
-        }
+        # this will raise an error since we don't understand "other_method" as a method
+        __metadata_request__other_method = {"my_param": True}
 
     class TestDefaults(_MetadataRequester):
-        __metadata_request__sample_weight = {
-            "fit": "sample_weight",
-            "score": "sample_weight",
+        __metadata_request__fit = {
+            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
         }
-
-        __metadata_request__my_param = {
-            "score": {"my_param": True},
-            "predict": {"my_param": True},
+        __metadata_request__score = {
+            "sample_weight": RequestType.ERROR_IF_PASSED,
+            "my_param": True,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
         }
+        __metadata_request__predict = {"my_param": True}
 
-        __metadata_request__my_other_param = {
-            "score": "my_other_param",
-            "fit": "my_other_param",
-        }
-
-    with pytest.raises(ValueError, match="Expected all metadata to be called"):
-        TestDefaultsBadMetadataName().get_metadata_request()
-
-    with pytest.raises(ValueError, match="other_method is not supported as a method"):
+    with pytest.raises(
+        AttributeError, match="'MetadataRequest' object has no attribute 'other_method'"
+    ):
         TestDefaultsBadMethodName().get_metadata_request()
 
     expected = {
@@ -491,7 +465,7 @@ def test_get_metadata_request():
 def test__get_default_requests():
     # Test _get_default_requests method
     class ExplicitRequest(BaseEstimator):
-        __metadata_request__prop = {"fit": "prop"}
+        __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
         def fit(self, X, y):
             return self
@@ -502,7 +476,7 @@ def test__get_default_requests():
     assert_request_is_empty(ExplicitRequest().get_metadata_request(), exclude="fit")
 
     class ExplicitRequestOverwrite(BaseEstimator):
-        __metadata_request__prop = {"fit": {"prop": RequestType.REQUESTED}}
+        __metadata_request__fit = {"prop": RequestType.REQUESTED}
 
         def fit(self, X, y, prop=None, **kwargs):
             return self
@@ -524,7 +498,7 @@ def test__get_default_requests():
     assert_request_is_empty(ImplicitRequest().get_metadata_request(), exclude="fit")
 
     class ImplicitRequestRemoval(BaseEstimator):
-        __metadata_request__prop = {"fit": {"prop": RequestType.UNUSED}}
+        __metadata_request__fit = {"prop": RequestType.UNUSED}
 
         def fit(self, X, y, prop=None, **kwargs):
             return self
@@ -574,7 +548,7 @@ def test_method_metadata_request():
 
 def test_metadata_request_factory():
     class Consumer(BaseEstimator):
-        __metadata_request__prop = {"fit": "prop"}
+        __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
     assert_request_is_empty(metadata_request_factory(None))
     assert_request_is_empty(metadata_request_factory({}))
