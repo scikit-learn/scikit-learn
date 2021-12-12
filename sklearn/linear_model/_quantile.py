@@ -226,7 +226,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         #
         # Filtering out zero samples weights from the beginning makes life
         # easier for the linprog solver.
-        indices = np.nonzero(sample_weight)
+        indices = np.nonzero(sample_weight)[0]
         n_indices = len(indices)  # use n_mask instead of n_samples
         if n_indices < len(sample_weight):
             sample_weight = sample_weight[indices]

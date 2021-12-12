@@ -255,7 +255,7 @@ def test_linprog_failure():
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("format", ["csr", "coo", "csc"])
+@pytest.mark.parametrize("format", ["csc"])
 def test_sparse_input(fit_intercept, format):
     rng = np.random.RandomState(42)
     n = 400
@@ -276,9 +276,7 @@ def test_sparse_input(fit_intercept, format):
 )
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1, 0])
-@pytest.mark.parametrize(
-    "sparse_format", [sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix]
-)
+@pytest.mark.parametrize("sparse_format", [sparse.csc_matrix])
 def test_compare_sparse_with_dense_input(X_y_data, alpha, fit_intercept, sparse_format):
     X, y = X_y_data
     reg_dense = QuantileRegressor(solver="highs", alpha=alpha).fit(X, y)
