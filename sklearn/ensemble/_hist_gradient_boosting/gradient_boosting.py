@@ -230,6 +230,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.0  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.0
+        # Getting column names if monotonic_cst is a dict
+        if hasattr(X, "columns"):
+            column_names = np.asarray(X.columns, dtype=object)
+        else:
+            column_names = None
+
         X, y = self._validate_data(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
         check_consistent_length(X, y)
@@ -522,6 +528,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
+                    column_names=column_names,
                 )
                 grower.grow()
 
@@ -1085,10 +1092,17 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.24
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features) or dict, default= \
+            None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
         and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
+        constraint and no constraint.
+
+        - None : no constraint would be imposed.
+        - integer array-like : constraints for all features in order of indices.
+        - dict : constraints for features specified by feature names.
+
+        Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
@@ -1397,10 +1411,17 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.24
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
+    monotonic_cst : array-like of int of shape (n_features) or dict, default= \
+            None
         Indicates the monotonic constraint to enforce on each feature. -1, 1
         and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
+        constraint and no constraint.
+
+        - None : no constraint would be imposed.
+        - integer array-like : constraints for all features in order of indices.
+        - dict : constraints for features specified by feature names.
+
+        Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
