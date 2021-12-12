@@ -99,7 +99,7 @@ def _cast_frame(frame, columns_info, infer_casting=False):
     frame : dataframe
         The dataframe with the right casting.
     """
-    for name in columns_info:
+    for name in frame.columns:
         column_dtype = columns_info[name]["data_type"]
         if column_dtype.lower() == "integer" and infer_casting:
             frame[name] = frame[name].astype("Int64")
@@ -398,11 +398,17 @@ def _pandas_arff_parser(
         comment="%",  # skip line starting by `%` since they are comments
     )
     frame.columns = [name for name in columns_info_openml]
+
+    columns_to_select = feature_names_to_select + target_names_to_select
+    columns_to_keep = [col for col in frame.columns if col in columns_to_select]
+    frame = frame[columns_to_keep]
+
     frame = _cast_frame(frame, columns_info_openml, infer_casting)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
     nominal_attributes = {
         col_name: frame[col_name].cat.categories.tolist()
-        for col_name in frame.columns if frame[col_name].dtype == "category"
+        for col_name in frame.columns
+        if frame[col_name].dtype == "category"
     }
 
     if output_arrays_type == "pandas":

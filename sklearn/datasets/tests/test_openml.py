@@ -501,7 +501,7 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch, parser, infer_casting
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize(
-    "parser,infer_casting, expected_data_floats, expected_data_ints",
+    "parser, infer_casting, expected_data_floats, expected_data_ints",
     [
         ("liac-arff", False, 6, 0),
         ("liac-arff", True, 2, 4),
@@ -564,7 +564,7 @@ def test_fetch_openml_anneal_pandas(
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize(
-    "parser,infer_casting, expected_data_floats, expected_data_ints,"
+    "parser, infer_casting, expected_data_floats, expected_data_ints,"
     " expected_target_dtype",
     [
         ("liac-arff", False, 6, 0, "f"),
@@ -686,7 +686,7 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
     pd = pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    data = fetch_openml(data_id=data_id, as_frame="auto", cache=False)
+    data = fetch_openml(data_id=data_id, as_frame="auto", parser="auto", cache=False)
     klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_matrix
     assert isinstance(data.data, klass)
 
@@ -694,7 +694,12 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
+@pytest.mark.parametrize("infer_casting", [True, False])
+def test_convert_arff_data_dataframe_warning_low_memory_pandas(
+    monkeypatch, infer_casting
+):
+    """Check that we raise a warning regarding the working memory when using
+    LIAC-ARFF parser."""
     pytest.importorskip("pandas")
 
     data_id = 1119
@@ -703,13 +708,31 @@ def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     msg = "Could not adhere to working_memory config."
     with pytest.warns(UserWarning, match=msg):
         with config_context(working_memory=1e-6):
-            fetch_openml(data_id=data_id, as_frame=True, cache=False)
+            fetch_openml(
+                data_id=data_id,
+                as_frame=True,
+                cache=False,
+                parser="liac-arff",
+                infer_casting=infer_casting,
+            )
 
 
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
+@pytest.mark.parametrize(
+    "parser, infer_casting, expected_data_floats, expected_data_ints",
+    [
+        ("liac-arff", False, 6, 0),
+        ("liac-arff", True, 0, 6),
+        ("pandas", False, 0, 6),
+        ("pandas", True, 0, 6),
+    ],
+)
+def test_fetch_openml_adultcensus_pandas_return_X_y(
+    monkeypatch, parser, infer_casting, expected_data_floats, expected_data_ints
+):
+    """Check the behaviour of `return_X_y`."""
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
 
@@ -718,19 +741,27 @@ def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
     target_shape = (10,)
 
     expected_data_categories = 8
-    expected_data_floats = 6
     target_column = "class"
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    X, y = fetch_openml(data_id=data_id, as_frame=True, cache=False, return_X_y=True)
+    X, y = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        return_X_y=True,
+        parser=parser,
+        infer_casting=infer_casting,
+    )
     assert isinstance(X, pd.DataFrame)
     assert X.shape == data_shape
     n_categories = len(
         [dtype for dtype in X.dtypes if isinstance(dtype, CategoricalDtype)]
     )
     n_floats = len([dtype for dtype in X.dtypes if dtype.kind == "f"])
-    assert expected_data_categories == n_categories
-    assert expected_data_floats == n_floats
+    n_ints = len([dtype for dtype in X.dtypes if dtype.kind == "i"])
+    assert n_categories == expected_data_categories
+    assert n_floats == expected_data_floats
+    assert n_ints == expected_data_ints
 
     assert isinstance(y, pd.Series)
     assert y.shape == target_shape
@@ -740,22 +771,40 @@ def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-def test_fetch_openml_adultcensus_pandas(monkeypatch):
+@pytest.mark.parametrize(
+    "parser, infer_casting, expected_data_floats, expected_data_ints",
+    [
+        ("liac-arff", False, 6, 0),
+        ("liac-arff", True, 0, 6),
+        ("pandas", False, 0, 6),
+        ("pandas", True, 0, 6),
+    ],
+)
+def test_fetch_openml_adultcensus_pandas(
+    monkeypatch, parser, infer_casting, expected_data_floats, expected_data_ints
+):
+    """Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12329
+    """
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
 
-    # Check because of the numeric row attribute (issue #12329)
     data_id = 1119
     data_shape = (10, 14)
     target_shape = (10,)
     frame_shape = (10, 15)
 
     expected_data_categories = 8
-    expected_data_floats = 6
     target_column = "class"
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    bunch = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser=parser,
+        infer_casting=infer_casting,
+    )
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -766,8 +815,10 @@ def test_fetch_openml_adultcensus_pandas(monkeypatch):
         [dtype for dtype in data.dtypes if isinstance(dtype, CategoricalDtype)]
     )
     n_floats = len([dtype for dtype in data.dtypes if dtype.kind == "f"])
-    assert expected_data_categories == n_categories
-    assert expected_data_floats == n_floats
+    n_ints = len([dtype for dtype in data.dtypes if dtype.kind == "i"])
+    assert n_categories == expected_data_categories
+    assert n_floats == expected_data_floats
+    assert n_ints == expected_data_ints
 
     assert isinstance(target, pd.Series)
     assert target.shape == target_shape
