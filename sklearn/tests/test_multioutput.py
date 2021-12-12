@@ -225,6 +225,23 @@ def test_multi_output_predict_proba():
         multi_target_linear.predict_proba(X)
 
 
+# check multioutput has decision_function
+def test_hasattr_multi_output_decision_function():
+    # RandomForestClassifier does not have decision_function 
+    # hence MultiOutputClassifier won't expose it
+    forest = RandomForestClassifier(n_estimators=10, random_state=1)
+    multi_target_linear = MultiOutputClassifier(forest)
+    multi_target_linear.fit(X, y)
+    assert not hasattr(multi_target_linear, "decision_function")
+    
+    # case where decision_threshold exists
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    multi_target_linear.fit(X, y)
+    assert hasattr(multi_target_linear, "decision_function")
+
+
+
 def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict
