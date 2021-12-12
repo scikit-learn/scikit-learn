@@ -542,7 +542,7 @@ est.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 )
 
 # %%
-# Deprechation / Default Value Change
+# Deprecation / Default Value Change
 # -----------------------------------
 # In this section we show how one should handle the case where a router becomes
 # also a consumer, especially when it consumes the same metadata as its
