@@ -282,7 +282,7 @@ meta_est = MetaClassifier(estimator=est).fit(X, y, aliased_sample_weight=my_weig
 
 # %%
 # In the above example, this is how each ``fit`` method will call the
-# sub-estimator's ``fit``:
+# sub-estimator's ``fit``::
 #
 #     meta_est.fit(X, y, aliased_sample_weight=my_weights):
 #         ...  # this estimator (est), expects aliased_sample_weight as seen above
@@ -398,15 +398,15 @@ est.get_metadata_request()["fit"]
 est = RouterConsumerClassifier(
     sample_weight_is_none=False,
     estimator=ExampleClassifier(sample_weight_is_none=False).fit_requests(
-        sample_weight="first_aliased_sample_weight"
+        sample_weight="clf_sample_weight"
     ),
-).fit_requests(sample_weight="second_aliased_sample_weight")
+).fit_requests(sample_weight="meta_clf_sample_weight")
 est.get_metadata_request()["fit"]
 
 # %%
 # However, ``fit`` of the meta-estimator only needs the alias for the
 # sub-estimator:
-est.fit(X, y, sample_weight=my_weights, first_aliased_sample_weight=my_other_weights)
+est.fit(X, y, sample_weight=my_weights, clf_sample_weight=my_other_weights)
 
 # %%
 # Alias only on the sub-estimator. This is useful if we don't want the
