@@ -103,6 +103,10 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
+- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
+  to a temporary subfolder and then renamed.
+  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -162,6 +166,14 @@ Changelog
   changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
+:mod:`sklearn.feature_extraction.text`
+......................................
+
+- |Fix| :class:`feature_extraction.text.TfidfVectorizer` now does not create
+  a :class:`feature_extraction.text.TfidfTransformer` at `__init__` as required
+  by our API.
+  :pr:`21832` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -256,6 +268,10 @@ Changelog
 - |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
+
+- |Fix| :class: `pipeline.Pipeline` now does not validate hyper-parameters in
+  `__init__` but in `.fit()`.
+  :pr:`21888` by :user:`iofall <iofall>` and :user: `Arisa Y. <arisayosh>`.
 
 :mod:`sklearn.preprocessing`
 ............................
