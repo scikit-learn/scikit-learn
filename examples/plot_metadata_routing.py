@@ -46,27 +46,30 @@ my_other_weights = np.random.rand(N)
 # Estimators
 # ----------
 # Here we demonstrate how an estimator can expose the required API to support
-# metadata routing as a consumer. Imagine a simple classifier accepting ``foo``
-# as a metadata on its ``fit`` and ``bar`` in its ``predict`` method. We add
-# two constructor arguments to helps us check whether an expected metadata is
-# given or not. This is a minimal scikit-learn compatible classifier:
+# metadata routing as a consumer. Imagine a simple classifier accepting
+# ``sample_weight`` as a metadata on its ``fit`` and ``groups`` in its
+# ``predict`` method. We add two constructor arguments to helps us check
+# whether an expected metadata is given or not. This is a minimal scikit-learn
+# compatible classifier:
 
 
 class ExampleClassifier(ClassifierMixin, BaseEstimator):
-    def __init__(self, foo_is_none=True, bar_is_none=True):
-        self.foo_is_none = foo_is_none
-        self.bar_is_none = bar_is_none
+    def __init__(self, sample_weight_is_none=True, groups_is_none=True):
+        self.sample_weight_is_none = sample_weight_is_none
+        self.groups_is_none = groups_is_none
 
-    def fit(self, X, y, foo=None):
-        if (foo is None) != self.foo_is_none:
-            raise ValueError("foo's value and foo_is_none disagree!")
+    def fit(self, X, y, sample_weight=None):
+        if (sample_weight is None) != self.sample_weight_is_none:
+            raise ValueError(
+                "sample_weight's value and sample_weight_is_none disagree!"
+            )
         # all classifiers need to expose a classes_ attribute once they're fit.
         self.classes_ = np.array([0, 1])
         return self
 
-    def predict(self, X, bar=None):
-        if (bar is None) != self.bar_is_none:
-            raise ValueError("bar's value and bar_is_none disagree!")
+    def predict(self, X, groups=None):
+        if (groups is None) != self.groups_is_none:
+            raise ValueError("groups's value and groups_is_none disagree!")
         # return a constant value of 1, not a very smart classifier!
         return np.ones(len(X))
 
@@ -82,14 +85,16 @@ class ExampleClassifier(ClassifierMixin, BaseEstimator):
 ExampleClassifier().get_metadata_request()
 
 # %%
-# The above output means that ``foo`` and ``bar`` are not requested, but if a
-# router is given those metadata, it should raise an error, since the user has
-# not explicitly set whether they are required or not. The same is true for
-# ``sample_weight`` in ``score`` method, which is inherited from
-# :class:`~base.ClassifierMixin`. In order to explicitly set request values for
-# those metadata, we can use these methods:
+# The above output means that ``sample_weight`` and ``groups`` are not
+# requested, but if a router is given those metadata, it should raise an error,
+# since the user has not explicitly set whether they are required or not. The
+# same is true for ``sample_weight`` in ``score`` method, which is inherited
+# from :class:`~base.ClassifierMixin`. In order to explicitly set request
+# values for those metadata, we can use these methods:
 
-est = ExampleClassifier().fit_requests(foo=False).predict_requests(bar=True)
+est = (
+    ExampleClassifier().fit_requests(sample_weight=False).predict_requests(groups=True)
+)
 est.get_metadata_request()
 
 # %%
@@ -100,8 +105,8 @@ est.get_metadata_request()
 
 est = (
     ExampleClassifier()
-    .fit_requests(foo=RequestType.UNREQUESTED)
-    .predict_requests(bar=RequestType.REQUESTED)
+    .fit_requests(sample_weight=RequestType.UNREQUESTED)
+    .predict_requests(groups=RequestType.REQUESTED)
 )
 est.get_metadata_request()
 
@@ -109,12 +114,12 @@ est.get_metadata_request()
 # Please note that as long as the above estimator is not used in another
 # meta-estimator, the user does not need to set any requests for the metadata.
 # A simple usage of the above estimator would work as expected. Remember that
-# ``{foo, bar}_is_none`` are for testing/demonstration purposes and don't have
-# anything to do with the routing mechanisms.
+# ``{sample_weight, groups}_is_none`` are for testing/demonstration purposes
+# and don't have anything to do with the routing mechanisms.
 
-est = ExampleClassifier(foo_is_none=False, bar_is_none=False)
-est.fit(X, y, foo=my_weights)
-est.predict(X[:3, :], bar=my_groups)
+est = ExampleClassifier(sample_weight_is_none=False, groups_is_none=False)
+est.fit(X, y, sample_weight=my_weights)
+est.predict(X[:3, :], groups=my_groups)
 
 # %%
 # Now let's have a meta-estimator, which doesn't do much other than routing the
@@ -182,12 +187,14 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # silent bugs, and this is how it will work:
 
 est = MetaClassifier(
-    estimator=ExampleClassifier(foo_is_none=False).fit_requests(foo=True)
+    estimator=ExampleClassifier(sample_weight_is_none=False).fit_requests(
+        sample_weight=True
+    )
 )
-est.fit(X, y, foo=my_weights)
+est.fit(X, y, sample_weight=my_weights)
 
 # %%
-# Note that the above example checks that ``foo`` is correctly passed to
+# Note that the above example checks that ``sample_weight`` is correctly passed to
 # ``ExampleClassifier``, or else it would have raised:
 
 try:
@@ -205,19 +212,19 @@ except ValueError as e:
 # %%
 # And if we pass something which is not explicitly requested:
 try:
-    est.fit(X, y, foo=my_weights).predict(X, bar=my_groups)
+    est.fit(X, y, sample_weight=my_weights).predict(X, groups=my_groups)
 except ValueError as e:
     print(e)
 
 # %%
 # Also, if we explicitly say it's not requested, but pass it:
 est = MetaClassifier(
-    estimator=ExampleClassifier(foo_is_none=False)
-    .fit_requests(foo=True)
-    .predict_requests(bar=False)
+    estimator=ExampleClassifier(sample_weight_is_none=False)
+    .fit_requests(sample_weight=True)
+    .predict_requests(groups=False)
 )
 try:
-    est.fit(X, y, foo=my_weights).predict(X[:3, :], bar=my_groups)
+    est.fit(X, y, sample_weight=my_weights).predict(X[:3, :], groups=my_groups)
 except ValueError as e:
     print(e)
 
@@ -229,18 +236,21 @@ except ValueError as e:
 # could request ``sample_weight1`` and the other ``sample_weight2``. Note that
 # this doesn't change what the estimator expects, it only tells the
 # meta-estimator how to map provided metadata to what's required. Here's an
-# example, where we pass ``aliased_foo`` to the meta-estimator, but the
-# meta-estimator understands that ``aliased_foo`` is an alias for ``foo``, and
-# passes it as ``foo`` to the underlying estimator:
+# example, where we pass ``aliased_sample_weight`` to the meta-estimator, but
+# the meta-estimator understands that ``aliased_sample_weight`` is an alias for
+# ``sample_weight``, and passes it as ``sample_weight`` to the underlying
+# estimator:
 est = MetaClassifier(
-    estimator=ExampleClassifier(foo_is_none=False).fit_requests(foo="aliased_foo")
+    estimator=ExampleClassifier(sample_weight_is_none=False).fit_requests(
+        sample_weight="aliased_sample_weight"
+    )
 )
-est.fit(X, y, aliased_foo=my_weights)
+est.fit(X, y, aliased_sample_weight=my_weights)
 
 # %%
-# And passing ``foo`` here will fail since it is requested with an alias:
+# And passing ``sample_weight`` here will fail since it is requested with an alias:
 try:
-    est.fit(X, y, foo=my_weights)
+    est.fit(X, y, sample_weight=my_weights)
 except ValueError as e:
     print(e)
 
@@ -256,9 +266,9 @@ est.get_metadata_request()["fit"]
 
 # %%
 # As you can see, the only metadata requested for method ``fit`` is
-# ``"aliased_foo"``. This information is enough for another
+# ``"aliased_sample_weight"``. This information is enough for another
 # meta-estimator/router to know what needs to be passed to ``est``. In other
-# words, ``foo`` is *masked* . The ``MetadataRouter`` class enables us to
+# words, ``sample_weight`` is *masked* . The ``MetadataRouter`` class enables us to
 # easily create the routing object which would create the output we need for
 # our ``get_metadata_request``. In the above implementation,
 # ``mapping="one-to-one"`` means all requests are mapped one to one from the
@@ -268,18 +278,18 @@ est.get_metadata_request()["fit"]
 # original metadata name. Without it, having ``est`` in another meta-estimator
 # would break the routing. Imagine this example:
 
-meta_est = MetaClassifier(estimator=est).fit(X, y, aliased_foo=my_weights)
+meta_est = MetaClassifier(estimator=est).fit(X, y, aliased_sample_weight=my_weights)
 
 # %%
 # In the above example, this is how each ``fit`` method will call the
 # sub-estimator's ``fit``:
 #
-#     meta_est.fit(X, y, aliased_foo=my_weights):
-#         ...  # this estimator (est), expects aliased_foo as seen above
-#         self.estimator_.fit(X, y, aliased_foo=aliased_foo):
-#             ...  # est passes aliased_foo's value as foo, which is expected
-#                  # by the sub-estimator
-#             self.estimator_.fit(X, y, foo=aliased_foo)
+#     meta_est.fit(X, y, aliased_sample_weight=my_weights):
+#         ...  # this estimator (est), expects aliased_sample_weight as seen above
+#         self.estimator_.fit(X, y, aliased_sample_weight=aliased_sample_weight):
+#             ...  # est passes aliased_sample_weight's value as sample_weight,
+#                  # which is expected by the sub-estimator
+#             self.estimator_.fit(X, y, sample_weight=aliased_sample_weight)
 #    ...
 
 # %%
@@ -293,19 +303,21 @@ meta_est = MetaClassifier(estimator=est).fit(X, y, aliased_foo=my_weights)
 
 
 class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
-    def __init__(self, estimator, foo_is_none=True):
+    def __init__(self, estimator, sample_weight_is_none=True):
         self.estimator = estimator
-        self.foo_is_none = foo_is_none
+        self.sample_weight_is_none = sample_weight_is_none
 
-    def fit(self, X, y, foo, **fit_params):
+    def fit(self, X, y, sample_weight, **fit_params):
         if self.estimator is None:
             raise ValueError("estimator cannot be None!")
 
-        if (foo is None) != self.foo_is_none:
-            raise ValueError("foo's value and foo_is_none disagree!")
+        if (sample_weight is None) != self.sample_weight_is_none:
+            raise ValueError(
+                "sample_weight's value and sample_weight_is_none disagree!"
+            )
 
-        if foo is not None:
-            fit_params["foo"] = foo
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
 
         # meta-estimators are responsible for validating the given metadata
         metadata_request_factory(self).fit.validate_metadata(
@@ -355,7 +367,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 # without masking them, before adding what's requested by the sub-estimator.
 # Passing ``super()`` here means only what's explicitly mentioned in the
 # methods' signature is considered as metadata consumed by this estimator; in
-# this case fit's ``foo``. Let's see what the routing metadata looks like with
+# this case fit's ``sample_weight``. Let's see what the routing metadata looks like with
 # different settings:
 
 # %%
@@ -365,12 +377,16 @@ est.get_metadata_request()["fit"]
 
 
 # %%
-# ``foo`` requested by child estimator
-est = RouterConsumerClassifier(estimator=ExampleClassifier().fit_requests(foo=True))
+# ``sample_weight`` requested by child estimator
+est = RouterConsumerClassifier(
+    estimator=ExampleClassifier().fit_requests(sample_weight=True)
+)
 est.get_metadata_request()["fit"]
 # %%
-# ``foo`` requested by meta-estimator
-est = RouterConsumerClassifier(estimator=ExampleClassifier()).fit_requests(foo=True)
+# ``sample_weight`` requested by meta-estimator
+est = RouterConsumerClassifier(estimator=ExampleClassifier()).fit_requests(
+    sample_weight=True
+)
 est.get_metadata_request()["fit"]
 
 # %%
@@ -380,33 +396,33 @@ est.get_metadata_request()["fit"]
 #
 # Aliased on both
 est = RouterConsumerClassifier(
-    foo_is_none=False,
-    estimator=ExampleClassifier(foo_is_none=False).fit_requests(
-        foo="first_aliased_foo"
+    sample_weight_is_none=False,
+    estimator=ExampleClassifier(sample_weight_is_none=False).fit_requests(
+        sample_weight="first_aliased_sample_weight"
     ),
-).fit_requests(foo="second_aliased_foo")
+).fit_requests(sample_weight="second_aliased_sample_weight")
 est.get_metadata_request()["fit"]
 
 # %%
 # However, ``fit`` of the meta-estimator only needs the alias for the
 # sub-estimator:
-est.fit(X, y, foo=my_weights, first_aliased_foo=my_other_weights)
+est.fit(X, y, sample_weight=my_weights, first_aliased_sample_weight=my_other_weights)
 
 # %%
 # Alias only on the sub-estimator. This is useful if we don't want the
 # meta-estimator to use the metadata, and we only want the metadata to be used
 # by the sub-estimator.
 est = RouterConsumerClassifier(
-    estimator=ExampleClassifier().fit_requests(foo="aliased_foo")
-).fit_requests(foo=True)
+    estimator=ExampleClassifier().fit_requests(sample_weight="aliased_sample_weight")
+).fit_requests(sample_weight=True)
 est.get_metadata_request()["fit"]
 
 # %%
 # Alias only on the meta-estimator. This example raises an error since there
-# will be two conflicting values for routing ``foo``.
+# will be two conflicting values for routing ``sample_weight``.
 est = RouterConsumerClassifier(
-    estimator=ExampleClassifier().fit_requests(foo=True)
-).fit_requests(foo="aliased_foo")
+    estimator=ExampleClassifier().fit_requests(sample_weight=True)
+).fit_requests(sample_weight="aliased_sample_weight")
 try:
     est.get_metadata_request()["fit"]
 except ValueError as e:
@@ -487,14 +503,14 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
 
 class ExampleTransformer(TransformerMixin, BaseEstimator):
-    def fit(self, X, y, foo=None):
-        if foo is None:
-            raise ValueError("foo is None!")
+    def fit(self, X, y, sample_weight=None):
+        if sample_weight is None:
+            raise ValueError("sample_weight is None!")
         return self
 
-    def transform(self, X, bar=None):
-        if bar is None:
-            raise ValueError("bar is None!")
+    def transform(self, X, groups=None):
+        if groups is None:
+            raise ValueError("groups is None!")
         return X
 
 
@@ -505,23 +521,25 @@ class ExampleTransformer(TransformerMixin, BaseEstimator):
 
 est = SimplePipeline(
     transformer=ExampleTransformer()
-    # we transformer's fit to receive foo
-    .fit_requests(foo=True)
-    # we want transformer's transform to receive bar
-    .transform_requests(bar=True),
+    # we transformer's fit to receive sample_weight
+    .fit_requests(sample_weight=True)
+    # we want transformer's transform to receive groups
+    .transform_requests(groups=True),
     classifier=RouterConsumerClassifier(
-        foo_is_none=False,
-        estimator=ExampleClassifier(foo_is_none=False)
-        # we want this sub-estimator to receive foo in fit
-        .fit_requests(foo=True)
-        # but not bar in predict
-        .predict_requests(bar=False),
+        sample_weight_is_none=False,
+        estimator=ExampleClassifier(sample_weight_is_none=False)
+        # we want this sub-estimator to receive sample_weight in fit
+        .fit_requests(sample_weight=True)
+        # but not groups in predict
+        .predict_requests(groups=False),
     ).fit_requests(
-        # and we want the meta-estimator to receive foo as well
-        foo=True
+        # and we want the meta-estimator to receive sample_weight as well
+        sample_weight=True
     ),
 )
-est.fit(X, y, foo=my_weights, bar=my_groups).predict(X[:3], bar=my_groups)
+est.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
+    X[:3], groups=my_groups
+)
 
 # %%
 # Deprechation / Default Value Change
