@@ -114,8 +114,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
+            CSC and CSR are accepted without additional copies,
+            while other sparse formats will be converted to CSR.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -131,7 +133,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         X, y = self._validate_data(
             X,
             y,
-            accept_sparse=["csr", "csc", "coo"],
+            accept_sparse=["csr", "csc"],
             y_numeric=True,
             multi_output=False,
         )
@@ -224,13 +226,17 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         #
         # Filtering out zero samples weights from the beginning makes life
         # easier for the linprog solver.
-        indices = np.flatnonzero(sample_weight != 0)
+        indices = np.nonzero(sample_weight)
         n_indices = len(indices)  # use n_mask instead of n_samples
+        if n_indices < len(sample_weight):
+            sample_weight = sample_weight[indices]
+            X = _safe_indexing(X, indices)
+            y = _safe_indexing(y, indices)
         c = np.concatenate(
             [
                 np.full(2 * n_params, fill_value=alpha),
-                _safe_indexing(sample_weight, indices) * self.quantile,
-                _safe_indexing(sample_weight, indices) * (1 - self.quantile),
+                sample_weight * self.quantile,
+                sample_weight * (1 - self.quantile),
             ]
         )
         if self.fit_intercept:
@@ -238,24 +244,18 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[0] = 0
             c[n_params] = 0
 
-        if (sparse.issparse(X)) and (X.format == "coo"):
-            X = X.tocsr()
-        X = _safe_indexing(X, indices)
-
         if sparse.issparse(X):
             sparse_constructor = {
-                "csr": sparse.csr_matrix,
                 "csc": sparse.csc_matrix,
-                "coo": sparse.coo_matrix,
             }
-            eye = sparse.eye(n_indices, dtype=X.dtype, format=X.format)
+            eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
                 ones = sparse_constructor[X.format](
                     np.ones(shape=(n_indices, 1), dtype=X.dtype)
                 )
-                A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye])
+                A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
             else:
-                A_eq = sparse.hstack([X, -X, eye, -eye])
+                A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")
         else:
             eye = np.eye(n_indices)
             if self.fit_intercept:
@@ -264,7 +264,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             else:
                 A_eq = np.concatenate([X, -X, eye, -eye], axis=1)
 
-        b_eq = _safe_indexing(y, indices)
+        b_eq = y
 
         result = linprog(
             c=c,
