@@ -225,7 +225,6 @@ def test_multi_output_predict_proba():
         multi_target_linear.predict_proba(X)
 
 
-# CR: check multioutput has decision_function
 def test_hasattr_multi_output_decision_function():
     # RandomForestClassifier does not have decision_function
     # hence MultiOutputClassifier won't expose it
@@ -246,7 +245,6 @@ def test_hasattr_multi_output_decision_function():
     assert hasattr(multi_target_linear, "decision_function")
 
 
-# CR: check multioutput decision_function return error
 def test_multi_output_missing_decision_function():
     # RandomForestClassifier does not have decision_function
     # hence MultiOutputClassifier won't expose it

@@ -484,12 +484,12 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         # unfitted estimator
         getattr(self.estimator, "decision_function")
         return True
-    
+
     @available_if(_check_decision_function)
     def decision_function(self, X):
         """Return confidence scores for each class of each output.
 
-        This method will raise a ``AttributeError??`` if any of the
+        This method will raise a ``AttributeError`` if any of the
         estimators do not have ``decision_function``.
 
         Parameters
@@ -505,10 +505,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        results = [estimator.decision_function(X) for 
-                   estimator in self.estimators_]
+        results = [estimator.decision_function(X) for estimator in self.estimators_]
         return results
-
 
     def score(self, X, y):
         """Return the mean accuracy on the given test data and labels.
