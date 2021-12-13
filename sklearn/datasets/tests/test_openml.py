@@ -1055,7 +1055,7 @@ def test_fetch_openml_types_inference(
 
 
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-def test_fetch_openml_australian_pandas_error_sparse(monkeypatch, parser):
+def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
     """Check that we raise an error if a dataset is sparse and we try to request a
     dataframe.
     """
@@ -1137,7 +1137,7 @@ def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response, parser):
+def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response):
     """Check that a warning is raised when multiple versions exist and no version is
     requested."""
     data_id = 61
