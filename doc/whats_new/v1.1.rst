@@ -340,6 +340,14 @@ Changelog
   to train and pickle the model on 64 bit machine and load the model on a 32
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
 
+:mod:`sklearn.multioutput`
+...................
+- |Enhancement| Added method `decision_function` to 
+  :class:`multioutput.MultiOutputClassifier` which allows to use the
+  `decision_function` of the provided estimator in the multi-class multi-label
+  case. :pr:`21960` by :user:`Christian Ritter <chritter>`.
+
+
 Code and Documentation Contributors
 -----------------------------------
 
