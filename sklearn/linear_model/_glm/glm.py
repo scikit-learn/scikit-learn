@@ -73,6 +73,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values should be >=0.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -107,6 +108,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values should be >=0.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -250,6 +252,12 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             min_val=1,
             max_val=None,
             include_boundaries="left",
+        )
+        check_scalar(
+            self.tol,
+            name="tol",
+            target_type=numbers.Real,
+            min_val=0,
         )
         if not isinstance(self.tol, numbers.Number) or self.tol <= 0:
             raise ValueError(
