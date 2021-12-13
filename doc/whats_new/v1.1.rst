@@ -175,6 +175,13 @@ Changelog
   be a callable that receives as parameters the training instances `X` and the
   training labels `y` together with the estimator.
   :pr:`21935` by :user:`Claudio Salvatore Arcidiacono <ClaudioSalvatoreArcidiacono>`.
+:mod:`sklearn.feature_extraction.text`
+......................................
+
+- |Fix| :class:`feature_extraction.text.TfidfVectorizer` now does not create
+  a :class:`feature_extraction.text.TfidfTransformer` at `__init__` as required
+  by our API.
+  :pr:`21832` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -266,6 +273,10 @@ Changelog
 - |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
+
+- |Fix| :class: `pipeline.Pipeline` now does not validate hyper-parameters in
+  `__init__` but in `.fit()`.
+  :pr:`21888` by :user:`iofall <iofall>` and :user: `Arisa Y. <arisayosh>`.
 
 :mod:`sklearn.preprocessing`
 ............................

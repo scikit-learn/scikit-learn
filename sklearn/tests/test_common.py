@@ -428,7 +428,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "FeatureUnion",
     "GridSearchCV",
     "HalvingGridSearchCV",
-    "Pipeline",
     "SGDOneClassSVM",
     "TheilSenRegressor",
     "TweedieRegressor",
