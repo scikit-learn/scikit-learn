@@ -270,11 +270,25 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         #     raise ValueError(
         #         "n_estimators must be greater than 0 but was %r" % self.n_estimators
         #     )
+        check_scalar(
+            self.n_estimators,
+            "n_estimators",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
 
         # if self.learning_rate <= 0.0:
         #     raise ValueError(
         #         "learning_rate must be greater than 0 but was %r" % self.learning_rate
         #     )
+        check_scalar(
+            self.learning_rate,
+            "learning_rate",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
 
         if (
             self.loss not in self._SUPPORTED_LOSS
@@ -316,6 +330,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         # if not (0.0 < self.subsample <= 1.0):
         #     raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
+        check_scalar(
+            self.subsample,
+            "subsample",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="right",
+        )
 
         if self.init is not None:
             # init must be an estimator or 'zero'
@@ -380,6 +402,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         #         "n_iter_no_change should either be None or an integer. %r was passed"
         #         % self.n_iter_no_change
         #     )
+        if self.n_iter_no_change is not None:
+            check_scalar(
+                self.n_iter_no_change,
+                "n_iter_no_change",
+                target_type=numbers.Integral,
+                min_val=0,
+                include_boundaries="neither",
+            )
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures."""
@@ -540,40 +570,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             X_val = y_val = sample_weight_val = None
 
         self._check_params()
-
-        check_scalar(
-            self.n_estimators,
-            "n_estimators",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.learning_rate,
-            "learning_rate",
-            target_type=numbers.Real,
-            min_val=0,
-            include_boundaries="neither",
-        )
-
-        check_scalar(
-            self.subsample,
-            "subsample",
-            target_type=numbers.Real,
-            min_val=0,
-            max_val=1.0,
-            include_boundaries="right",
-        )
-
-        if self.n_iter_no_change is not None:
-            check_scalar(
-                self.n_iter_no_change,
-                "n_iter_no_change",
-                target_type=numbers.Integral,
-                min_val=0,
-                include_boundaries="neither",
-            )
 
         if not self._is_initialized():
             # init state
