@@ -163,6 +163,12 @@ def test_glm_solver_argument(solver):
             "max_iter must be an instance of <class 'numbers.Integral'>,"
             " not <class 'float'>",
         ),
+        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
+        (
+            {"alpha": "1"},
+            TypeError,
+            "alpha must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
     ],
 )
 def test_glm_scalar_argument(params, err_type, err_msg):

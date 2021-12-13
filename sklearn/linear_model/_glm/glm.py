@@ -211,12 +211,20 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "got (link={0})".format(self.link)
                 )
 
-        if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
-            raise ValueError(
-                "Penalty term must be a non-negative number; got (alpha={0})".format(
-                    self.alpha
-                )
-            )
+        # if self.alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
+        # if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
+        #    raise ValueError(
+        #         "Penalty term must be a non-negative number; got (alpha={0})".format(
+        #             self.alpha
+        #         )
+        #     )
+        check_scalar(
+            self.alpha,
+            name="alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
                 "The argument fit_intercept must be bool; got {0}".format(
