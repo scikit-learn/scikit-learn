@@ -69,11 +69,8 @@ def _sparse_data_to_array(
     return y
 
 
-def _cast_frame(frame, columns_info, infer_casting=False):
+def _cast_frame(frame, columns_info):
     """Cast the columns of a dataframe using the ARFF metadata.
-
-    In addition, we provide a way to infer the casting to go beyond the
-    limitations of the ARFF metadata.
 
     Parameters
     ----------
@@ -83,54 +80,25 @@ def _cast_frame(frame, columns_info, infer_casting=False):
     columns_info : dict
         The ARFF metadata for the columns of the dataframe.
 
-    infer_casting : bool, default=False
-        Whether or not to infer the right casting. Indeed, ARFF does not
-        provide the right information for two of the types:
-
-        - `"numeric"` and `"real"` data type can also represent integer values.
-          Therefore, when `infer_casting` is `True`, we will try to cast the
-          columns to integer.
-        - `"nominal"` columns are represented with categorical values that are
-          only strings. Therefore, when `infer_casting` is `True`, we will try
-          to cast these columns into integers or floats if possible.
-
     Returns
     -------
     frame : dataframe
         The dataframe with the right casting.
     """
+    dtypes = {}
     for name in frame.columns:
         column_dtype = columns_info[name]["data_type"]
-        if column_dtype.lower() == "integer" and infer_casting:
-            frame[name] = frame[name].astype("Int64")
-        elif column_dtype.lower() in ("numeric", "real") and infer_casting:
-            # "numeric" and "real" could represent integer values.
-            # LIAC-ARFF will parse those as float. We can try to cast them to int.
-            frame[name] = frame[name].astype("Int64", errors="ignore")
+        if column_dtype.lower() == "integer":
+            dtypes[name] = "Int64"
         elif column_dtype.lower() == "nominal":
-            # convert to categorical columns
-            frame[name] = frame[name].astype("category")
-            if infer_casting:
-                # LIAC-ARFF will always parse categories as strings.
-                # We can try to cast first as integer and then float. If that fails,
-                # we can then keep them as strings.
-                categories = frame[name].cat.categories
-                rename_categories = False
-                try:
-                    categories = [int(category) for category in categories]
-                    rename_categories = True
-                except ValueError:
-                    try:
-                        categories = [float(category) for category in categories]
-                        rename_categories = True
-                    except ValueError:
-                        pass
-                if rename_categories:
-                    frame[name] = frame[name].cat.rename_categories(categories)
-    return frame
+            dtypes[name] = "category"
+        else:
+            dtypes[name] = frame.dtypes[name]
+    return frame.astype(dtypes)
 
 
 def _post_process_frame(frame, feature_names, target_names):
+    """Post process a dataframe to select the desired columns in `X` and `y`."""
     X = frame[feature_names]
     if len(target_names) >= 2:
         y = frame[target_names]
@@ -147,14 +115,11 @@ def _liac_arff_parser(
     columns_info_openml,
     feature_names_to_select,
     target_names_to_select,
-    infer_casting,
     shape=None,
 ):
     """ARFF parser using the LIAC-ARFF library coded purely in Python.
 
-    This parser is quite slow but consume a generator. This parser should also
-    additional cast the columns of the dataframe to ensure to have the
-    appropriate data type.
+    This parser is quite slow but consume a generator.
 
     Parameters
     ----------
@@ -178,12 +143,6 @@ def _liac_arff_parser(
 
     target_names_to_select : list of str
         A list of the target names to be selected.
-
-    infer_casting : bool
-        Whether or not to infer the type of the data in each column and thus
-        cast the data to the most appropriate type. Activating this option
-        will be more costly but will solved ambiguities regarding the data
-        types provided by the ARFF metadata.
 
     Returns
     -------
@@ -244,7 +203,7 @@ def _liac_arff_parser(
         frame = pd.concat(dfs, ignore_index=True)
         del dfs, first_df
 
-        frame = _cast_frame(frame, columns_info_openml, infer_casting)
+        frame = _cast_frame(frame, columns_info_openml)
         X, y = _post_process_frame(
             frame, feature_names_to_select, target_names_to_select
         )
@@ -331,7 +290,6 @@ def _pandas_arff_parser(
     columns_info_openml,
     feature_names_to_select,
     target_names_to_select,
-    infer_casting,
 ):
     """ARFF parser using `pandas.read_csv`.
 
@@ -360,12 +318,6 @@ def _pandas_arff_parser(
 
     target_names_to_select : list of str
         A list of the target names to be selected.
-
-    infer_casting : bool
-        Whether or not to infer the type of the data in each column and thus
-        cast the data to the most appropriate type. Activating this option
-        will be more costly but will solved ambiguities regarding the data
-        types provided by the ARFF metadata.
 
     Returns
     -------
@@ -403,7 +355,7 @@ def _pandas_arff_parser(
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
 
-    frame = _cast_frame(frame, columns_info_openml, infer_casting)
+    frame = _cast_frame(frame, columns_info_openml)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
     nominal_attributes = {
         col_name: frame[col_name].cat.categories.tolist()
@@ -423,7 +375,6 @@ def load_arff_from_gzip_file(
     columns_info_openml,
     feature_names_to_select,
     target_names_to_select,
-    infer_casting,
     shape=None,
 ):
     """Load a compressed ARFF file using a given parser.
@@ -454,12 +405,6 @@ def load_arff_from_gzip_file(
     target_names_to_select : list of str
         A list of the target names to be selected.
 
-    infer_casting : bool
-        Whether or not to infer the type of the data in each column and thus
-        cast the data to the most appropriate type. Activating this option
-        will be more costly but will solved ambiguities regarding the data
-        types provided by the ARFF metadata.
-
     Returns
     -------
     X : {ndarray, sparse matrix, dataframe}
@@ -483,7 +428,6 @@ def load_arff_from_gzip_file(
             columns_info_openml,
             feature_names_to_select,
             target_names_to_select,
-            infer_casting,
             shape,
         )
     elif parser == "pandas":
@@ -493,5 +437,4 @@ def load_arff_from_gzip_file(
             columns_info_openml,
             feature_names_to_select,
             target_names_to_select,
-            infer_casting,
         )

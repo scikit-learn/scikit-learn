@@ -305,7 +305,6 @@ def _load_arff_response(
     columns_info_openml: dict,
     feature_names_to_select: List[str],
     target_names_to_select: List[str],
-    infer_casting: bool,
     shape: Optional[Tuple[int, int]],
     md5_checksum: str,
 ):
@@ -342,12 +341,6 @@ def _load_arff_response(
 
     target_names_to_select : list of str
         The list of the target variables to be selected.
-
-    infer_casting : bool
-        Whether or not to infer the type of the data in each column and thus
-        cast the data to the most appropriate type. Activating this option
-        will be more costly but will solved ambiguities regarding the data
-        types provided by the ARFF metadata.
 
     shape : tuple or None
         With `parser="liac-arff"`, when using a generator to load the data,
@@ -393,7 +386,6 @@ def _load_arff_response(
             columns_info_openml=columns_info_openml,
             feature_names_to_select=feature_names_to_select,
             target_names_to_select=target_names_to_select,
-            infer_casting=infer_casting,
             shape=shape,
         )
 
@@ -412,7 +404,6 @@ def _download_data_to_bunch(
     shape: Optional[Tuple[int, int]],
     md5_checksum: str,
     parser: str,
-    infer_casting: bool,
 ):
     """Download ARFF data, load it to a specific container and create to Bunch.
 
@@ -451,12 +442,6 @@ def _download_data_to_bunch(
 
     parser : {"liac-arff", "pandas"}
         The parser used to parse the ARFF file.
-
-    infer_casting : bool
-        Whether or not to infer the type of the data in each column and thus
-        cast the data to the most appropriate type. Activating this option
-        will be more costly but will solved ambiguities regarding the data
-        types provided by the ARFF metadata.
 
     Returns
     -------
@@ -507,7 +492,6 @@ def _download_data_to_bunch(
         columns_info_openml=features_dict,
         feature_names_to_select=data_columns,
         target_names_to_select=target_columns,
-        infer_casting=infer_casting,
         shape=shape,
         md5_checksum=md5_checksum,
     )
@@ -576,7 +560,6 @@ def fetch_openml(
     return_X_y: bool = False,
     as_frame: Union[str, bool] = "auto",
     parser: Optional[str] = "auto",
-    infer_casting: Union[str, bool] = "auto",
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -667,17 +650,6 @@ def fetch_openml(
            where the data types provided are not sufficient to decide whether
            or not a column is integer or float (i.e. `numeric` and `real`
            types).
-
-    infer_casting : bool or str, default="auto"
-        Whether or not to infer the type of the data in each column and thus
-        cast the data to the most appropriate type. Activating this option
-        will be more costly but will solved ambiguities regarding the data
-        types provided by the ARFF metadata. This option is only necessary
-        when `parser="liac-arff"` since we can let Pandas infering the columns
-        type. When `infer_casting="auto"`, this option is set to `True` if
-        `parser="liac-arff"` and `False` otherwise.
-
-        .. versionadded:: 1.1
 
     Returns
     -------
@@ -812,18 +784,6 @@ def fetch_openml(
             )
         raise ValueError(err_msg)
 
-    if isinstance(infer_casting, str):
-        if infer_casting == "auto":
-            if parser == "liac-arff":
-                infer_casting = True
-            else:
-                infer_casting = False
-        else:
-            raise ValueError(
-                "Invalid value for argument 'infer_casting'. "
-                "Only 'auto' when providing a string."
-            )
-
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
@@ -884,7 +844,6 @@ def fetch_openml(
         data_columns=data_columns,
         md5_checksum=data_description["md5_checksum"],
         parser=parser,
-        infer_casting=infer_casting,
     )
 
     if return_X_y:

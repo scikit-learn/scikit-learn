@@ -186,7 +186,6 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     ],
 )
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
 @pytest.mark.parametrize("gzip_response", [True, False])
 def test_fetch_openml_as_frame_true(
     monkeypatch,
@@ -196,7 +195,6 @@ def test_fetch_openml_as_frame_true(
     n_features,
     n_targets,
     parser,
-    infer_casting,
     gzip_response,
 ):
     """Check the behaviour of `fetch_openml` with `as_frame=True`.
@@ -210,7 +208,6 @@ def test_fetch_openml_as_frame_true(
         as_frame=True,
         cache=False,
         parser=parser,
-        infer_casting=infer_casting,
         **dataset_params,
     )
 
@@ -259,7 +256,6 @@ def test_fetch_openml_as_frame_true(
     ],
 )
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
 def test_fetch_openml_as_frame_false(
     monkeypatch,
     data_id,
@@ -268,7 +264,6 @@ def test_fetch_openml_as_frame_false(
     n_features,
     n_targets,
     parser,
-    infer_casting,
 ):
     """Check the behaviour of `fetch_openml` with `as_frame=False`.
 
@@ -281,7 +276,6 @@ def test_fetch_openml_as_frame_false(
         as_frame=False,
         cache=False,
         parser=parser,
-        infer_casting=infer_casting,
         **dataset_params,
     )
     assert int(bunch.details["id"]) == data_id
@@ -305,8 +299,7 @@ def test_fetch_openml_as_frame_false(
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
-def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser, infer_casting):
+def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser):
     """Check the equivalence of the dataset when using `as_frame=False` and
     `as_dataframe=True`.
     """
@@ -319,7 +312,6 @@ def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser, infer_cas
         as_frame=True,
         cache=False,
         parser=parser,
-        infer_casting=infer_casting,
     )
 
     bunch_as_frame_false = fetch_openml(
@@ -327,7 +319,6 @@ def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser, infer_cas
         as_frame=True,
         cache=False,
         parser=parser,
-        infer_casting=infer_casting,
     )
 
     assert_allclose(bunch_as_frame_false.data, bunch_as_frame_true.data)
@@ -338,8 +329,7 @@ def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser, infer_cas
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
-def test_fetch_openml_iris_pandas(monkeypatch, parser, infer_casting):
+def test_fetch_openml_iris_pandas(monkeypatch, parser):
     """Check fetching on a numerical only dataset with string labels."""
     pd = pytest.importorskip("pandas")
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -362,7 +352,6 @@ def test_fetch_openml_iris_pandas(monkeypatch, parser, infer_casting):
         as_frame=True,
         cache=False,
         parser=parser,
-        infer_casting=infer_casting,
     )
     data = bunch.data
     target = bunch.target
@@ -391,11 +380,8 @@ def test_fetch_openml_iris_pandas(monkeypatch, parser, infer_casting):
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
 @pytest.mark.parametrize("target_column", ["petalwidth", ["petalwidth", "petallength"]])
-def test_fetch_openml_forcing_targets(
-    monkeypatch, parser, infer_casting, target_column
-):
+def test_fetch_openml_forcing_targets(monkeypatch, parser, target_column):
     """Check that we can force the target to not be the default target."""
     pd = pytest.importorskip("pandas")
 
@@ -407,14 +393,12 @@ def test_fetch_openml_forcing_targets(
         cache=False,
         target_column=target_column,
         parser=parser,
-        infer_casting=infer_casting,
     )
     bunch_default = fetch_openml(
         data_id=data_id,
         as_frame=True,
         cache=False,
         parser=parser,
-        infer_casting=infer_casting,
     )
 
     pd.testing.assert_frame_equal(bunch_forcing_target.frame, bunch_default.frame)
@@ -433,10 +417,7 @@ def test_fetch_openml_forcing_targets(
 @fails_if_pypy
 @pytest.mark.parametrize("data_id", [61, 2, 561, 40589, 1119])
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
-def test_fetch_openml_equivalence_frame_return_X_y(
-    monkeypatch, data_id, parser, infer_casting
-):
+def test_fetch_openml_equivalence_frame_return_X_y(monkeypatch, data_id, parser):
     """Check the behaviour of `return_X_y=True` when `as_frame=True`."""
     pd = pytest.importorskip("pandas")
 
@@ -447,7 +428,6 @@ def test_fetch_openml_equivalence_frame_return_X_y(
         cache=False,
         return_X_y=False,
         parser=parser,
-        infer_casting=infer_casting,
     )
     X, y = fetch_openml(
         data_id=data_id,
@@ -455,7 +435,6 @@ def test_fetch_openml_equivalence_frame_return_X_y(
         cache=False,
         return_X_y=True,
         parser=parser,
-        infer_casting=infer_casting,
     )
 
     pd.testing.assert_frame_equal(bunch.data, X)
@@ -470,10 +449,7 @@ def test_fetch_openml_equivalence_frame_return_X_y(
 @fails_if_pypy
 @pytest.mark.parametrize("data_id", [61, 561, 40589, 1119])
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
-def test_fetch_openml_equivalence_array_return_X_y(
-    monkeypatch, data_id, parser, infer_casting
-):
+def test_fetch_openml_equivalence_array_return_X_y(monkeypatch, data_id, parser):
     """Check the behaviour of `return_X_y=True` when `as_frame=False`."""
     pytest.importorskip("pandas")
 
@@ -484,7 +460,6 @@ def test_fetch_openml_equivalence_array_return_X_y(
         cache=False,
         return_X_y=False,
         parser=parser,
-        infer_casting=infer_casting,
     )
     X, y = fetch_openml(
         data_id=data_id,
@@ -492,7 +467,6 @@ def test_fetch_openml_equivalence_array_return_X_y(
         cache=False,
         return_X_y=True,
         parser=parser,
-        infer_casting=infer_casting,
     )
 
     assert_array_equal(bunch.data, X)
@@ -1008,46 +982,31 @@ def datasets_missing_values():
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize(
-    "data_id, parser, infer_casting, expected_n_categories, expected_n_floats,"
-    " expected_n_ints",
+    "data_id, parser, expected_n_categories, expected_n_floats, expected_n_ints",
     [
         # iris dataset
-        (61, "liac-arff", False, 1, 4, 0),
-        (61, "liac-arff", True, 1, 4, 0),
-        (61, "pandas", False, 1, 4, 0),
-        (61, "pandas", True, 1, 4, 0),
+        (61, "liac-arff", 1, 4, 0),
+        (61, "pandas", 1, 4, 0),
         # anneal dataset
-        (2, "liac-arff", False, 33, 6, 0),
-        (2, "liac-arff", True, 33, 2, 4),
-        (2, "pandas", False, 33, 2, 4),
-        (2, "pandas", True, 33, 2, 4),
+        (2, "liac-arff", 33, 6, 0),
+        (2, "pandas", 33, 2, 4),
         # cpu dataset
-        (561, "liac-arff", False, 1, 7, 0),
-        (561, "liac-arff", True, 1, 0, 7),
-        (561, "pandas", False, 1, 0, 7),
-        (561, "pandas", True, 1, 0, 7),
+        (561, "liac-arff", 1, 7, 0),
+        (561, "pandas", 1, 0, 7),
         # emotions dataset
-        (40589, "liac-arff", False, 6, 72, 0),
-        (40589, "liac-arff", True, 6, 69, 3),
-        (40589, "pandas", False, 6, 69, 3),
-        (40589, "pandas", True, 6, 69, 3),
+        (40589, "liac-arff", 6, 72, 0),
+        (40589, "pandas", 6, 69, 3),
         # adult-census dataset
-        (1119, "liac-arff", False, 9, 6, 0),
-        (1119, "liac-arff", True, 9, 0, 6),
-        (1119, "pandas", False, 9, 0, 6),
-        (1119, "pandas", True, 9, 0, 6),
+        (1119, "liac-arff", 9, 6, 0),
+        (1119, "pandas", 9, 0, 6),
         # miceprotein
         # 1 column has only missing values with object dtype
-        (40966, "liac-arff", False, 1, 76, 0),
+        (40966, "liac-arff", 1, 76, 0),
         # with casting it will be transformed to either float or Int64
-        (40966, "liac-arff", True, 1, 76, 1),
-        (40966, "pandas", False, 1, 77, 0),
-        (40966, "pandas", True, 1, 76, 1),
+        (40966, "pandas", 1, 77, 0),
         # titanic
-        (40945, "liac-arff", False, 3, 5, 0),
-        (40945, "liac-arff", True, 3, 2, 4),
-        (40945, "pandas", False, 3, 3, 3),
-        (40945, "pandas", True, 3, 2, 4),
+        (40945, "liac-arff", 3, 5, 0),
+        (40945, "pandas", 3, 3, 3),
     ],
 )
 @pytest.mark.parametrize("gzip_response", [True, False])
@@ -1055,7 +1014,6 @@ def test_fetch_openml_types_inference(
     monkeypatch,
     data_id,
     parser,
-    infer_casting,
     expected_n_categories,
     expected_n_floats,
     expected_n_ints,
@@ -1075,7 +1033,6 @@ def test_fetch_openml_types_inference(
         as_frame=True,
         cache=False,
         parser=parser,
-        infer_casting=infer_casting,
     )
     frame = bunch.frame
 
@@ -1098,11 +1055,7 @@ def test_fetch_openml_types_inference(
 
 
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-@pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
-def test_fetch_openml_australian_pandas_error_sparse(
-    monkeypatch, parser, infer_casting
-):
+def test_fetch_openml_australian_pandas_error_sparse(monkeypatch, parser):
     """Check that we raise an error if a dataset is sparse and we try to request a
     dataframe.
     """
@@ -1116,8 +1069,7 @@ def test_fetch_openml_australian_pandas_error_sparse(
             data_id=data_id,
             as_frame=True,
             cache=False,
-            parser=parser,
-            infer_casting=infer_casting,
+            parser="auto",
         )
 
 
@@ -1165,10 +1117,7 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-@pytest.mark.parametrize("infer_casting", [True, False])
-def test_convert_arff_data_dataframe_warning_low_memory_pandas(
-    monkeypatch, infer_casting
-):
+def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     """Check that we raise a warning regarding the working memory when using
     LIAC-ARFF parser."""
     pytest.importorskip("pandas")
@@ -1184,12 +1133,10 @@ def test_convert_arff_data_dataframe_warning_low_memory_pandas(
                 as_frame=True,
                 cache=False,
                 parser="liac-arff",
-                infer_casting=infer_casting,
             )
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-@pytest.mark.parametrize("parser", ["pandas", "liac-arff"])
 def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response, parser):
     """Check that a warning is raised when multiple versions exist and no version is
     requested."""
@@ -1208,7 +1155,7 @@ def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response, par
             name=data_name,
             as_frame=False,
             cache=False,
-            parser=parser,
+            parser="auto",
         )
 
 
@@ -1230,8 +1177,7 @@ def test_fetch_openml_no_target(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize("gzip_response", [True, False])
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
-@pytest.mark.parametrize("infer_casting", [True, False])
-def test_missing_values_pandas(monkeypatch, gzip_response, parser, infer_casting):
+def test_missing_values_pandas(monkeypatch, gzip_response, parser):
     """check that missing values in categories are compatible with pandas
     categorical"""
     pytest.importorskip("pandas")
@@ -1243,7 +1189,6 @@ def test_missing_values_pandas(monkeypatch, gzip_response, parser, infer_casting
         cache=False,
         as_frame=True,
         parser=parser,
-        infer_casting=infer_casting,
     )
 
     cat_dtype = penguins.data.dtypes["sex"]
@@ -1581,8 +1526,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-@pytest.mark.parametrize("parser", ["pandas", "liac-arff"])
-def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
+def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     """Check that we can load the "zoo" dataset.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/14340
@@ -1591,7 +1535,7 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
     dataset = sklearn.datasets.fetch_openml(
-        data_id=data_id, cache=False, as_frame=False, parser=parser
+        data_id=data_id, cache=False, as_frame=False, parser="auto"
     )
     assert dataset is not None
     # The dataset has 17 features, including 1 ignored (animal),
