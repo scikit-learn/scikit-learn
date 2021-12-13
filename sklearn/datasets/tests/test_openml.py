@@ -3,7 +3,6 @@ import gzip
 import json
 import os
 import re
-import warnings
 from functools import partial
 from importlib import resources
 from io import BytesIO
@@ -16,6 +15,7 @@ import pytest
 import sklearn
 from sklearn import config_context
 from sklearn.utils import Bunch
+from sklearn.utils._mocking import _MockHTTPResponse
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils._testing import fails_if_pypy
 
@@ -25,7 +25,6 @@ from sklearn.datasets._openml import (
     _get_local_path,
     _retry_with_clean_cache,
 )
-from sklearn.datasets.tests.test_common import check_return_X_y
 
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
@@ -39,127 +38,6 @@ test_offline = True
 # with the version on openml.org. If one were to load the dataset outside of
 # the tests, it may result in data that does not represent openml.org.
 fetch_openml = partial(fetch_openml_orig, data_home=None)
-
-
-def _fetch_dataset_from_openml(
-    data_id,
-    data_name,
-    data_version,
-    target_column,
-    expected_observations,
-    expected_features,
-    expected_missing,
-    expected_data_dtype,
-    expected_target_dtype,
-    expect_sparse,
-    compare_default_target,
-):
-    # fetches a dataset in three various ways from OpenML, using the
-    # fetch_openml function, and does various checks on the validity of the
-    # result. Note that this function can be mocked (by invoking
-    # _monkey_patch_webbased_functions before invoking this function)
-    data_by_name_id = fetch_openml(
-        name=data_name, version=data_version, cache=False, as_frame=False
-    )
-    assert int(data_by_name_id.details["id"]) == data_id
-
-    # Please note that cache=False is crucial, as the monkey patched files are
-    # not consistent with reality
-    with warnings.catch_warnings():
-        # See discussion in PR #19373
-        # Catching UserWarnings about multiple versions of dataset
-        warnings.simplefilter("ignore", category=UserWarning)
-        fetch_openml(name=data_name, cache=False, as_frame=False)
-    # without specifying the version, there is no guarantee that the data id
-    # will be the same
-
-    # fetch with dataset id
-    data_by_id = fetch_openml(
-        data_id=data_id, cache=False, target_column=target_column, as_frame=False
-    )
-    assert data_by_id.details["name"] == data_name
-    assert data_by_id.data.shape == (expected_observations, expected_features)
-    if isinstance(target_column, str):
-        # single target, so target is vector
-        assert data_by_id.target.shape == (expected_observations,)
-        assert data_by_id.target_names == [target_column]
-    elif isinstance(target_column, list):
-        # multi target, so target is array
-        assert data_by_id.target.shape == (expected_observations, len(target_column))
-        assert data_by_id.target_names == target_column
-    assert data_by_id.data.dtype == expected_data_dtype
-    assert data_by_id.target.dtype == expected_target_dtype
-    assert len(data_by_id.feature_names) == expected_features
-    for feature in data_by_id.feature_names:
-        assert isinstance(feature, str)
-
-    # TODO: pass in a list of expected nominal features
-    for feature, categories in data_by_id.categories.items():
-        feature_idx = data_by_id.feature_names.index(feature)
-
-        # TODO: Remove when https://github.com/numpy/numpy/issues/19300 gets fixed
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                category=DeprecationWarning,
-                message="elementwise comparison failed",
-            )
-            values = np.unique(data_by_id.data[:, feature_idx])
-        values = values[np.isfinite(values)]
-        assert set(values) <= set(range(len(categories)))
-
-    if compare_default_target:
-        # check whether the data by id and data by id target are equal
-        data_by_id_default = fetch_openml(data_id=data_id, cache=False, as_frame=False)
-        np.testing.assert_allclose(data_by_id.data, data_by_id_default.data)
-        if data_by_id.target.dtype == np.float64:
-            np.testing.assert_allclose(data_by_id.target, data_by_id_default.target)
-        else:
-            assert np.array_equal(data_by_id.target, data_by_id_default.target)
-
-    if expect_sparse:
-        assert isinstance(data_by_id.data, scipy.sparse.csr_matrix)
-    else:
-        assert isinstance(data_by_id.data, np.ndarray)
-        # np.isnan doesn't work on CSR matrix
-        assert np.count_nonzero(np.isnan(data_by_id.data)) == expected_missing
-
-    # test return_X_y option
-    fetch_func = partial(
-        fetch_openml,
-        data_id=data_id,
-        cache=False,
-        target_column=target_column,
-        as_frame=False,
-    )
-    check_return_X_y(data_by_id, fetch_func)
-    return data_by_id
-
-
-class _MockHTTPResponse:
-    def __init__(self, data, is_gzip):
-        self.data = data
-        self.is_gzip = is_gzip
-
-    def read(self, amt=-1):
-        return self.data.read(amt)
-
-    def close(self):
-        self.data.close()
-
-    def info(self):
-        if self.is_gzip:
-            return {"Content-Encoding": "gzip"}
-        return {}
-
-    def __iter__(self):
-        return iter(self.data)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
 
 
 def _monkey_patch_webbased_functions(context, data_id, gzip_response):
@@ -284,14 +162,27 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize(
-    "data_id, n_samples, n_features, n_targets",
+    "data_id, dataset_params, n_samples, n_features, n_targets",
     [
-        (61, 150, 4, 1),  # iris
-        (2, 11, 38, 1),  # anneal
-        (561, 209, 7, 1),  # cpu
-        (40589, 13, 72, 6),  # emotions
-        (1119, 10, 14, 1),  # adult-census
-        (40945, 1309, 13, 1),  # titanic
+        # iris
+        (61, {"data_id": 61}, 150, 4, 1),
+        (61, {"name": "iris", "version": 1}, 150, 4, 1),
+        # anneal
+        (2, {"data_id": 2}, 11, 38, 1),
+        (2, {"name": "anneal", "version": 1}, 11, 38, 1),
+        # cpu
+        (561, {"data_id": 561}, 209, 7, 1),
+        (561, {"name": "cpu", "version": 1}, 209, 7, 1),
+        # emotions
+        (40589, {"data_id": 40589}, 13, 72, 6),
+        # adult-census
+        (1119, {"data_id": 1119}, 10, 14, 1),
+        (1119, {"name": "adult-census"}, 10, 14, 1),
+        # miceprotein
+        (40966, {"data_id": 40966}, 7, 77, 1),
+        (40966, {"name": "MiceProtein"}, 7, 77, 1),
+        # titanic
+        (40945, {"data_id": 40945}, 1309, 13, 1),
     ],
 )
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
@@ -300,6 +191,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 def test_fetch_openml_as_frame_true(
     monkeypatch,
     data_id,
+    dataset_params,
     n_samples,
     n_features,
     n_targets,
@@ -309,20 +201,20 @@ def test_fetch_openml_as_frame_true(
 ):
     """Check the behaviour of `fetch_openml` with `as_frame=True`.
 
-    We explicitely check for the type of the returned container and the shape
-    of these containers.
+    Fetch by ID and/or name (depending if the file was previously cached).
     """
     pd = pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=gzip_response)
     bunch = fetch_openml(
-        data_id=data_id,
         as_frame=True,
         cache=False,
         parser=parser,
         infer_casting=infer_casting,
+        **dataset_params,
     )
 
+    assert int(bunch.details["id"]) == data_id
     assert isinstance(bunch, Bunch)
 
     assert isinstance(bunch.frame, pd.DataFrame)
@@ -345,37 +237,54 @@ def test_fetch_openml_as_frame_true(
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize(
-    "data_id, n_samples, n_features, n_targets",
+    "data_id, dataset_params, n_samples, n_features, n_targets",
     [
-        (61, 150, 4, 1),  # iris
-        (2, 11, 38, 1),  # anneal
-        (561, 209, 7, 1),  # cpu
-        (40589, 13, 72, 6),  # emotions
-        (1119, 10, 14, 1),  # adult-census
-        (40966, 7, 77, 1),  # miceprotein
+        # iris
+        (61, {"data_id": 61}, 150, 4, 1),
+        (61, {"name": "iris", "version": 1}, 150, 4, 1),
+        # anneal
+        (2, {"data_id": 2}, 11, 38, 1),
+        (2, {"name": "anneal", "version": 1}, 11, 38, 1),
+        # cpu
+        (561, {"data_id": 561}, 209, 7, 1),
+        (561, {"name": "cpu", "version": 1}, 209, 7, 1),
+        # emotions
+        (40589, {"data_id": 40589}, 13, 72, 6),
+        # adult-census
+        (1119, {"data_id": 1119}, 10, 14, 1),
+        (1119, {"name": "adult-census"}, 10, 14, 1),
+        # miceprotein
+        (40966, {"data_id": 40966}, 7, 77, 1),
+        (40966, {"name": "MiceProtein"}, 7, 77, 1),
     ],
 )
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 @pytest.mark.parametrize("infer_casting", [True, False])
 def test_fetch_openml_as_frame_false(
-    monkeypatch, data_id, n_samples, n_features, n_targets, parser, infer_casting
+    monkeypatch,
+    data_id,
+    dataset_params,
+    n_samples,
+    n_features,
+    n_targets,
+    parser,
+    infer_casting,
 ):
     """Check the behaviour of `fetch_openml` with `as_frame=False`.
 
-    We explicitely check for the type of the returned container and the shape
-    of these containers.
+    Fetch by ID and/or name (depending if the file was previously cached).
     """
     pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
     bunch = fetch_openml(
-        data_id=data_id,
         as_frame=False,
         cache=False,
         parser=parser,
         infer_casting=infer_casting,
+        **dataset_params,
     )
-
+    assert int(bunch.details["id"]) == data_id
     assert isinstance(bunch, Bunch)
 
     assert bunch.frame is None
