@@ -360,7 +360,8 @@ def _pandas_arff_parser(
     nominal_attributes = {
         col_name: frame[col_name].cat.categories.tolist()
         for col_name in frame.columns
-        if frame[col_name].dtype == "category"
+        if hasattr(frame[col_name].dtype, "is_dtype")
+        and frame[col_name].dtype.is_dtype("category")
     }
 
     if output_arrays_type == "pandas":
