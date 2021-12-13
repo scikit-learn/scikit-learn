@@ -450,7 +450,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def predict_proba(self, X):
         """Return prediction probabilities for each class of each output.
 
-        This method will raise a ``ValueError`` if any of the
+        This method will raise a ``AttributeError`` if any of the
         estimators do not have ``predict_proba``.
 
         Parameters
