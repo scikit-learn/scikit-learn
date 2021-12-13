@@ -116,8 +116,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-            CSC and CSR are accepted without additional copies,
-            while other sparse formats will be converted to CSR.
+            CSC format is only accepted for sparse data.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -133,7 +132,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         X, y = self._validate_data(
             X,
             y,
-            accept_sparse=["csr", "csc"],
+            accept_sparse=["csc"],
             y_numeric=True,
             multi_output=False,
         )
