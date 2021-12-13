@@ -653,7 +653,7 @@ def test_check_no_attributes_set_in_init():
 
     class ConformantEstimatorClassAttribute(BaseEstimator):
         # making sure our __metadata_request__* class attributes are okay!
-        __metadata_request__foo = {"fit": "foo"}
+        __metadata_request__fit = {"foo": True}
 
     msg = (
         "Estimator estimator_name should not set any"
