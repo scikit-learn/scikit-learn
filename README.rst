@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Nightly wheels|_ |Black|_ |PythonVersion|_ |PyPi|_ |DOI|_
+|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Nightly wheels|_ |Black|_ |PythonVersion|_ |PyPi|_ |DOI|_ |Benchmark|_
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
@@ -29,6 +29,8 @@
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
+.. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
+.. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
 .. |PythonMinVersion| replace:: 3.7
 .. |NumPyMinVersion| replace:: 1.14.6
