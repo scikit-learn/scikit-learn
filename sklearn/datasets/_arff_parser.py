@@ -366,7 +366,9 @@ def _pandas_arff_parser(
 
     if output_arrays_type == "pandas":
         return X, y, frame, None
-    return X.to_numpy(), y.to_numpy() if y is not None else y, None, nominal_attributes
+    # FIXME: .values should be changed by .to_numpy() when pandas will be
+    # updated to version >= 0.23.0
+    return X.values, y.values if y is not None else y, None, nominal_attributes
 
 
 def load_arff_from_gzip_file(
