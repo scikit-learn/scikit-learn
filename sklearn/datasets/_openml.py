@@ -478,6 +478,7 @@ def _download_data_to_bunch(
     features_dict = {
         feature["name"]: feature for feature in columns_info_openml_as_list
     }
+
     if sparse:
         output_arrays_type = "sparse"
     elif as_frame:
@@ -487,6 +488,14 @@ def _download_data_to_bunch(
 
     # XXX: target columns should all be nominal or all numeric
     _verify_target_data_type(features_dict, target_columns)
+    for name in target_columns:
+        column_info = features_dict[name]
+        n_missing_values = int(column_info["number_of_missing_values"])
+        if n_missing_values > 0:
+            raise ValueError(
+                f"Target column '{column_info['name']}' has {n_missing_values} missing "
+                "values. Missing values are not supported for target columns."
+            )
 
     X, y, frame, nominal_attributes = _retry_with_clean_cache(url, data_home)(
         _load_arff_response
@@ -521,7 +530,7 @@ def _verify_target_data_type(features_dict, target_columns):
     found_types = set()
     for target_column in target_columns:
         if target_column not in features_dict:
-            raise KeyError("Could not find target_column={}")
+            raise KeyError(f"Could not find target_column='{target_column}'")
         if features_dict[target_column]["data_type"] == "numeric":
             found_types.add(np.float64)
         else:
@@ -529,9 +538,9 @@ def _verify_target_data_type(features_dict, target_columns):
 
         # note: we compare to a string, not boolean
         if features_dict[target_column]["is_ignore"] == "true":
-            warn("target_column={} has flag is_ignore.".format(target_column))
+            warn(f"target_column='{target_column}' has flag is_ignore.")
         if features_dict[target_column]["is_row_identifier"] == "true":
-            warn("target_column={} has flag is_row_identifier.".format(target_column))
+            warn(f"target_column='{target_column}' has flag is_row_identifier.")
     if len(found_types) > 1:
         raise ValueError(
             "Can only handle homogeneous multi-target datasets, "
