@@ -1076,10 +1076,9 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
 def test_fetch_openml_pandas_parser_error_on_sparse(monkeypatch):
     """Check that we raise an error using the pandas parser on a sparse dataset."""
+    pytest.importorskip("pandas")
     data_id = 292
-
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-
     msg = (
         "Cannot use `parser='pandas'` with sparse ARFF file. Switch to "
         "`parser='liac-arff'`."
@@ -1475,8 +1474,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
 @pytest.mark.parametrize("as_frame", [True, False])
-@pytest.mark.parametrize("parser", ["pandas", "liac-arff"])
-def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, parser):
+def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     """Check that the checksum is working as expected."""
     if as_frame:
         pytest.importorskip("pandas")
@@ -1515,7 +1513,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
     # validate failed checksum
     with pytest.raises(ValueError) as exc:
         sklearn.datasets.fetch_openml(
-            data_id=data_id, cache=False, as_frame=as_frame, parser=parser
+            data_id=data_id, cache=False, as_frame=as_frame, parser="auto"
         )
     # exception message should have file-path
     assert exc.match("1666876")
