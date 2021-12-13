@@ -116,6 +116,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values should be >=0.
 
     Attributes
     ----------
@@ -258,6 +259,13 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             name="tol",
             target_type=numbers.Real,
             min_val=0,
+        )
+        check_scalar(
+            self.verbose,
+            name="verbose",
+            target_type=numbers.Integral,
+            min_val=0,
+            include_boundaries="left",
         )
         if not isinstance(self.tol, numbers.Number) or self.tol <= 0:
             raise ValueError(

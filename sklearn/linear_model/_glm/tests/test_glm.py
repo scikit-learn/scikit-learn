@@ -175,6 +175,13 @@ def test_glm_solver_argument(solver):
             TypeError,
             "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
         ),
+        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0."),
+        (
+            {"verbose": "1"},
+            TypeError,
+            "verbose must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'str'>",
+        ),
     ],
 )
 def test_glm_scalar_argument(params, err_type, err_msg):
