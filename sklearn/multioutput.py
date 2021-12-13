@@ -500,7 +500,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         Returns
         -------
         X : list of n_outputs, each output's shape corresponds to the
-            provided estimators decision function returned shape.
+                provided estimators decision function returned shape.
             The confidence scores of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
