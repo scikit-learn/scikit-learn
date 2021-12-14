@@ -87,6 +87,10 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             force_all_finite=not _safe_tags(self, key="allow_nan"),
             reset=False,
         )
+        return self._transform(X)
+
+    def _transform(self, X):
+        """Reduce X to the selected features."""
         mask = self.get_support()
         if not mask.any():
             warn(

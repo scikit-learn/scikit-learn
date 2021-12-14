@@ -695,11 +695,47 @@ def test_bad_input():
         (svm.OneClassSVM, datasets.load_iris(return_X_y=True)),
     ],
 )
-def test_svm_gamma_error(Estimator, data):
+@pytest.mark.parametrize(
+    "gamma, err_msg",
+    [
+        (
+            "auto_deprecated",
+            "When 'gamma' is a string, it should be either 'scale' or 'auto'",
+        ),
+        (
+            -1,
+            "gamma value must be > 0; -1 is invalid. Use"
+            " a positive number or use 'auto' to set gamma to a"
+            " value of 1 / n_features.",
+        ),
+        (
+            0.0,
+            "gamma value must be > 0; 0.0 is invalid. Use"
+            " a positive number or use 'auto' to set gamma to a"
+            " value of 1 / n_features.",
+        ),
+        (
+            np.array([1.0, 4.0]),
+            "The gamma value should be set to 'scale',"
+            f" 'auto' or a positive float value. {np.array([1.0, 4.0])!r}"
+            " is not a valid option",
+        ),
+        (
+            [],
+            "The gamma value should be set to 'scale', 'auto' or a positive"
+            f" float value. {[]} is not a valid option",
+        ),
+        (
+            {},
+            "The gamma value should be set to 'scale', 'auto' or a positive"
+            " float value. {} is not a valid option",
+        ),
+    ],
+)
+def test_svm_gamma_error(Estimator, data, gamma, err_msg):
     X, y = data
-    est = Estimator(gamma="auto_deprecated")
-    err_msg = "When 'gamma' is a string, it should be either 'scale' or 'auto'"
-    with pytest.raises(ValueError, match=err_msg):
+    est = Estimator(gamma=gamma)
+    with pytest.raises(ValueError, match=(re.escape(err_msg))):
         est.fit(X, y)
 
 
@@ -1204,24 +1240,26 @@ def test_svc_ovr_tie_breaking(SVCClass):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
     """
-    X, y = make_blobs(random_state=27)
+    X, y = make_blobs(random_state=0, n_samples=20, n_features=2)
 
-    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 1000)
-    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 1000)
+    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
+    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 100)
     xx, yy = np.meshgrid(xs, ys)
 
+    common_params = dict(
+        kernel="rbf", gamma=1e6, random_state=42, decision_function_shape="ovr"
+    )
     svm = SVCClass(
-        kernel="linear",
-        decision_function_shape="ovr",
         break_ties=False,
-        random_state=42,
+        **common_params,
     ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert not np.all(pred == np.argmax(dv, axis=1))
 
     svm = SVCClass(
-        kernel="linear", decision_function_shape="ovr", break_ties=True, random_state=42
+        break_ties=True,
+        **common_params,
     ).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
