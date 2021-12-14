@@ -276,3 +276,11 @@ def test_sparse_input(sparse_format, solver, fit_intercept):
         assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
         # check that we still predict fraction
         assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.55
+
+
+def test_compatible_solver_sparse():
+    X, y = make_regression(n_samples=100, n_features=20, random_state=1, noise=1.0)
+    X_sparse = sparse.csc_matrix(X)
+    err_msg = "`revised simplex` solver is not supported "
+    with pytest.raises(ValueError, match=err_msg):
+        QuantileRegressor(solver="revised simplex").fit(X_sparse, y)

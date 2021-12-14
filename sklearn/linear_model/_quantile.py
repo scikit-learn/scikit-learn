@@ -243,11 +243,15 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[n_params] = 0
 
         if sparse.issparse(X):
+            if self.solver == "revised simplex":
+                raise ValueError(
+                    "`revised simplex` solver is not supported for sparse input data"
+                )
             eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
                 ones = sparse.csc_matrix(
                     np.ones(shape=(n_indices, 1), dtype=X.dtype)
-                )  # linprog will convert to csc anyway
+                )  # linprog will convert X into csc format anyway
                 A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
             else:
                 A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")
