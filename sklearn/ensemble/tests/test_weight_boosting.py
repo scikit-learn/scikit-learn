@@ -273,8 +273,9 @@ def test_importances():
 def test_error():
     # Test that it gives proper exception on deficient input.
 
+    reg = AdaBoostRegressor(loss="foo")
     with pytest.raises(ValueError):
-        AdaBoostRegressor(loss="foo").fit(X, y_class)
+        reg.fit(X, y_class)
 
     clf = AdaBoostClassifier(algorithm="foo")
     with pytest.raises(ValueError):
