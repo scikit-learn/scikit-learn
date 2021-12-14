@@ -116,6 +116,11 @@ plt.show()
 #   the training data than the testing data. This can be seen in
 #   :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
 #   where random features are added into the dataset.
+# * Permutation importance depends on the true ``y``` to quantify the ability
+#   of features to contribute to correct predictions, contrary to SHAP which
+#   quantifies the ability of features to contribute to changes to the
+#   decision function, irrespective of whether this improves the accuracy of
+#   the model or not.
 #
 # **Advantages**
 #
@@ -149,18 +154,21 @@ plt.show()
 #   is that the 'importance' is split between correlated features. See
 #   :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`
 #   for an example of this.
+# * Permutation importances can only be used to compute a global "explanation",
+#   a decomposition of the impact of different features for a full dataset.
+#   Unlike SHAP, it cannot provide local "explanations" for individual samples.
 #
 # KernelSHAP
 # ^^^^^^^^^^^
 #
-# KernelSHAP is a kernel-based method to estimate Shapley values for
+# KernelSHAP is a kernel-based method to estimate SHAP values for
 # individual samples.
 # First, it calculates the predictions for a sample when different subsets of
 # the features are 'missing'. Missingness is simulated by using a 'background'
 # (e.g., average) value for that feature. These predictions are then used to
 # fit a linear model whose predictions match that of the original model as
 # closely as possible. The coefficients of the linear 'explanation' model are
-# the Shapley values. The linear explanation model equation is:
+# the SHAP values. The linear explanation model equation is:
 #
 # .. math::
 #   g(z')=\phi_0 + \sum_{i=1}^{M} \phi_i z'
@@ -169,7 +177,7 @@ plt.show()
 # prediction when all features are 'missing', :math:`M` is the number of
 # possible subset sizes (n_features - 1), :math:`z'\in\{0,1\}^M`
 # (denotes the presence or absence of each feature) and :math:`\phi_i` is the
-# estimated Shapley value.
+# estimated SHAP value.
 #
 # This is much more computationally expensive than permutation importance
 # particularly as the number of possible combinations of features for all
@@ -209,13 +217,13 @@ explainer.expected_value
 reg.predict(med)
 
 # %%
-# Next we will calculate Shapley values using the testing subset. This is the
+# Next we will calculate SHAP values using the testing subset. This is the
 # computationally expensive step.
 
 shap_values = explainer.shap_values(X_test)
 
 # %%
-# Let's look at the Shapley values of one sample. There are 8 Shapley values,
+# Let's look at the SHAP values of one sample. There are 8 SHAP values,
 # one for each feature. '0' means that the feature did not contribute to the
 # prediction output. A negative value 'pushes' the prediction lower and a
 # positive value pushes the prediction higher.
@@ -223,11 +231,11 @@ shap_values = explainer.shap_values(X_test)
 shap_values[0, :]
 
 # %%
-# The Shapley values should sum to the difference between the
+# The SHAP values should sum to the difference between the
 # prediction output by our model ``reg`` and  the ``expected_value``
 # (depending on how well the linear model was able to be fit).
 
-print(f"The sum of Shapley values: {shap_values[0, :].sum()}")
+print(f"The sum of SHAP values: {shap_values[0, :].sum()}")
 prediction = reg.predict(X_test[0, :].reshape(1, -1))[0]
 print(
     "Difference between prediction and expected value: "
@@ -235,17 +243,20 @@ print(
 )
 
 # %%
-# We can also plot the Shapley values:
+# We can also plot the SHAP values:
 
 import matplotlib.pyplot as plt
 
 shap.summary_plot(shap_values, X_test)
 
 # %%
-# In the plot above, each dot represents the Shapley value of one sample,
+# In the plot above, each dot represents the SHAP value of one sample,
 # for that feature. The features are ordered from most important at the top
 # to least important at the bottom. Note that the dots cluster around 0
-# (no contribution) more and more as you go down.
+# (no contribution) more and more as you go down. As mentioned above, it is
+# important to note that SHAP values quantify the contribution of each feature
+# to the decision function, irrespective of whether this improves the
+# model accuracy.
 #
 # Additionally, if you compare with the permutation importance plot, you will
 # notice that the order of the features is roughly the same.
@@ -280,13 +291,13 @@ shap.summary_plot(shap_values, X_test)
 # that is present, only the child that satisfies the split condition is
 # 'reachable'. The difference between the conditional expectation of feature
 # subsets with and without the feature of interest is used to estimate
-# Shapley values.
+# SHAP values.
 #
 # The major advantage of TreeSHAP is its time complexity.
-# Compared to KernelSHAP, which computes Shapley values
+# Compared to KernelSHAP, which computes SHAP values
 # in exponential time, TreeSHAP does this in polynomial time [2]_.
 #
-# Below we calculate Shapley values using ``TreeExplainer``. We do not have
+# Below we calculate SHAP values using ``TreeExplainer``. We do not have
 # to provide a 'background' dataset as the model can use the number of
 # training samples at each node/leaf of the tree. This information is
 # stored in the tree model. Note that the background dataset is used
@@ -300,16 +311,16 @@ shap.summary_plot(shap_values, X_test)
 
 # %%
 # Note that the order of features is exactly the same as that calculated
-# with KernelShap. TreeSHAP is able to calculate Shapley values much faster
+# with KernelShap. TreeSHAP is able to calculate SHAP values much faster
 # though.
 #
-# TreeSHAP Shapley values do have some problems:
+# TreeSHAP values do have some problems:
 #
 # * They are sensitive to the degree of sparsity, which often arises when
-#   features are continuous. This means that the calucalted Shapley values
+#   features are continuous. This means that the calucalted SHAP values
 #   "are very sensitive to noise in the data" [3]_.
 # * A 'dummy' feature, which is not used by the model but is correlated
-#   to a 'useful' feature, can have a non-zero Shapley value [3]_.
+#   to a 'useful' feature, can have a non-zero SHAP value [3]_.
 #
 # References
 # ----------
