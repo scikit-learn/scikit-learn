@@ -55,7 +55,7 @@ X.head()
 # %%
 # Split the data into training and testing subsets.
 
-X_train, X_test, y_train, y_test = train_test_split(X.values, y, random_state=7)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=7)
 
 # %%
 # Calculating feature importance
@@ -194,12 +194,16 @@ plt.show()
 # median values of our features but SHAP offers a ``kmeans`` function that
 # can summarize each feature with ``k`` means.
 
+import warnings
 import numpy as np
 
 import shap
 
 med = np.median(X_train, axis=0).reshape((1, X_train.shape[1]))
-explainer = shap.KernelExplainer(reg.predict, med)
+# To prevent warning about feature names
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    explainer = shap.KernelExplainer(reg.predict, med)
 
 # %%
 # ``explainer`` stores various information about the data as attributes. Of
@@ -247,7 +251,7 @@ print(
 
 import matplotlib.pyplot as plt
 
-shap.summary_plot(shap_values, X_test)
+shap.beeswarm(shap_values)
 
 # %%
 # In the plot above, each dot represents the SHAP value of one sample,
@@ -307,7 +311,7 @@ shap.summary_plot(shap_values, X_test)
 explainer = shap.TreeExplainer(reg)
 shap_values = explainer.shap_values(X_test)
 
-shap.summary_plot(shap_values, X_test)
+shap.beeswarm(shap_values)
 
 # %%
 # Note that the order of features is exactly the same as that calculated
