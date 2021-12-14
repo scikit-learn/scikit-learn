@@ -195,7 +195,6 @@ plt.show()
 # can summarize each feature with ``k`` means.
 
 import warnings
-import numpy as np
 
 import shap
 
