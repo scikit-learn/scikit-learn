@@ -202,7 +202,7 @@ import shap
 med = np.median(X_train, axis=0).reshape((1, X_train.shape[1]))
 # To prevent warning about feature names
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
+    warnings.filterwarnings("ignore", message="X does not have valid feature names,")
     explainer = shap.KernelExplainer(reg.predict, med)
 
 # %%
