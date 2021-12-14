@@ -564,6 +564,7 @@ message, the following actions are taken.
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
+    [azure all-parallel]   Run Azure CI in parallel
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)
