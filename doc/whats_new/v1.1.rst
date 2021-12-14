@@ -103,11 +103,10 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
-- |Enhancement| :func:`datasets.fetch_openml` has two new parameters: `parser`
-  and `infer_casting`. `parser` allows to use Pandas when installed to read
-  ARFF files that improve memory and speed performances. `infer_casting` makes
-  a post-loading casting to find the most adequate data type for each column
-  of the dataframe.
+- |Enhancement| Introduce a new parameter `parser` in
+  :func:`datasets.fetch_openml`. This parameter allows to use `pandas.read_csv`
+  and its C parser to read ARFF file that is more memory efficient and much
+  faster. It will be used by default if `pandas` is installed.
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
