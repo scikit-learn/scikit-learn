@@ -64,10 +64,6 @@ jobs:
         build_tools/azure/test_docs.sh
       displayName: 'Test Docs'
     - script: |
-        build_tools/azure/test_docstring.sh
-      displayName: "Numpydoc validation"
-      condition: eq(variables['TEST_DOCSTRINGS'], 'true')
-    - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test Soft Dependency'
       condition: eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true')
