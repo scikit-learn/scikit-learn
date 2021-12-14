@@ -34,6 +34,10 @@ random sampling procedures.
   same solution, up to numerical rounding errors, but in general Lloyd's
   algorithm uses much less memory, and it is often faster.
 
+- |Fix| The eigenvectors initialization for :class:`cluster.SpectralClustering`
+  and :class:`manifold.SpectralEmbedding` now samples from a Gaussian when
+  using the `'amg'` or `'lobpcg'` solver. This change  improves numerical
+  stability of the solver, but may result in a different model.
 
 Changelog
 ---------
@@ -251,6 +255,11 @@ Changelog
   :class:`manifold.SpectralEmbedding` supports `np.float32` dtype and will
   preserve this dtype.
   :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
+
+- |Fix| :func:`manifold.spectral_embedding` now uses Gaussian instead of
+  the previous uniform on [0, 1] random initial approximations to eigenvectors
+  in eigen_solvers `lobpcg` and `amg` to improve their numerical stability.
+  :pr:`21565` by :user:`Andrew Knyazev <lobpcg>`.
 
 :mod:`sklearn.model_selection`
 ..............................
