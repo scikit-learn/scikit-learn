@@ -465,3 +465,7 @@ def load_arff_from_gzip_file(
             feature_names_to_select,
             target_names_to_select,
         )
+    else:
+        raise ValueError(
+            f"Unknown parser: '{parser}'. Should be 'liac-arff' or 'pandas'."
+        )
