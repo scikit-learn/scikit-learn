@@ -39,6 +39,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve, CalibrationDisplay
+from sklearn.ensemble import HistGradientBoostingRegressor
 
 
 @pytest.fixture(scope="module")
@@ -47,10 +48,12 @@ def data():
     return X, y
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize(
+    "method", ["sigmoid", "isotonic", HistGradientBoostingRegressor(monotonic_cst=[1])]
+)
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration(data, method, ensemble):
-    # Test calibration objects with isotonic and sigmoid
+    # Test calibration objects with isotonic, sigmoid and custom regressor
     n_samples = 100
     X, y = data
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
@@ -108,12 +111,13 @@ def test_calibration(data, method, ensemble):
             )
 
 
+@pytest.mark.parametrize("method", ["foo", LogisticRegression()])
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_bad_method(data, ensemble):
-    # Check only "isotonic" and "sigmoid" are accepted as methods
+def test_calibration_bad_method(data, method, ensemble):
+    # Check only "isotonic", "sigmoid" or regressor are accepted as methods
     X, y = data
     clf = LinearSVC()
-    clf_invalid_method = CalibratedClassifierCV(clf, method="foo", ensemble=ensemble)
+    clf_invalid_method = CalibratedClassifierCV(clf, method=method, ensemble=ensemble)
     with pytest.raises(ValueError):
         clf_invalid_method.fit(X, y)
 
@@ -182,7 +186,9 @@ def test_sample_weight(data, method, ensemble):
     assert diff > 0.1
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize(
+    "method", ["sigmoid", "isotonic", HistGradientBoostingRegressor()]
+)
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_parallel_execution(data, method, ensemble):
     """Test parallel calibration"""
@@ -206,7 +212,9 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize(
+    "method", ["sigmoid", "isotonic", HistGradientBoostingRegressor()]
+)
 @pytest.mark.parametrize("ensemble", [True, False])
 # increase the number of RNG seeds to assess the statistical stability of this
 # test:
@@ -344,7 +352,9 @@ def test_calibration_prefit():
                 )
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize(
+    "method", ["sigmoid", "isotonic", HistGradientBoostingRegressor()]
+)
 def test_calibration_ensemble_false(data, method):
     # Test that `ensemble=False` is the same as using predictions from
     # `cross_val_predict` to train calibrator.
@@ -868,7 +878,9 @@ def test_calibration_display_pos_label(
         assert labels.get_text() in expected_legend_labels
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize(
+    "method", ["sigmoid", "isotonic", HistGradientBoostingRegressor()]
+)
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ensemble):
     """Check that passing repeating twice the dataset `X` is equivalent to
@@ -918,7 +930,9 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize(
+    "method", ["sigmoid", "isotonic", HistGradientBoostingRegressor()]
+)
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensemble):
     """Check that passing removing some sample from the dataset `X` is
