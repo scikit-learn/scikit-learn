@@ -48,6 +48,7 @@ from .svm import LinearSVC
 from .model_selection import check_cv, cross_val_predict
 from .metrics._base import _check_pos_label_consistency
 from .metrics._plot.base import _get_response
+from .utils.extmath import log_logistic
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -627,16 +628,23 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     Y = label_binarize(y, classes=classes)
     label_encoder = LabelEncoder().fit(classes)
     pos_class_indices = label_encoder.transform(clf.classes_)
+    _, method_name = _get_prediction_method(clf)
     calibrators = []
     for class_idx, this_pred in zip(pos_class_indices, predictions.T):
-        if method == "isotonic":
+        if isinstance(method, RegressorMixin):
+            calibrator = _NonParametricCalibration(
+                method=method, confidence_method=method_name
+            )
+        elif method == "isotonic":
             calibrator = IsotonicRegression(out_of_bounds="clip")
         elif method == "sigmoid":
             calibrator = _SigmoidCalibration()
         else:
             raise ValueError(
-                f"'method' should be one of: 'sigmoid' or 'isotonic'. Got {method}."
+                "'method' should be one of: 'sigmoid', 'isotonic' or a "
+                f"scikit-learn regressor. Got {method}."
             )
+        this_pred = this_pred.reshape(-1, 1)
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
 
@@ -704,7 +712,7 @@ class _CalibratedClassifier:
                 # When binary, `predictions` consists only of predictions for
                 # clf.classes_[1] but `pos_class_indices` = 0
                 class_idx += 1
-            proba[:, class_idx] = calibrator.predict(this_pred)
+            proba[:, class_idx] = calibrator.predict(this_pred.reshape(-1, 1))
 
         # Normalize the probabilities
         if n_classes == 2:
@@ -848,6 +856,73 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         """
         T = column_or_1d(T)
         return expit(-(self.a_ * T + self.b_))
+
+
+def _non_parametric_calibration(predictions, y, n_bins, sample_weight=None):
+    """Estimate the calibrated probabilities with binning."""
+    if len(np.unique(y)) > 2:
+        raise NotImplementedError("Multidim not yet implemented.")
+
+    predictions = column_or_1d(predictions)
+    y = column_or_1d(y)
+
+    idx_pos = y == 1
+    idx_neg = ~idx_pos
+
+    prob_pos = predictions[idx_pos]
+    prob_neg = predictions[idx_neg]
+    sw_pos = sample_weight[idx_pos] if sample_weight is not None else None
+    sw_neg = sample_weight[idx_neg] if sample_weight is not None else None
+
+    hist_pos, bins = np.histogram(prob_pos, bins=n_bins, range=(0, 1), weights=sw_pos)
+    hist_neg, _ = np.histogram(prob_neg, bins=n_bins, range=(0, 1), weights=sw_neg)
+
+    hist_pos = hist_pos.astype(float)
+    hist_neg = hist_neg.astype(float)
+    hist_tot = hist_pos + hist_neg
+
+    # Replace undefined values with 0 to silent warning, but could be any
+    # value since no scores will fall in these undefined bins
+    replace = np.zeros_like(hist_pos)
+    prob_bins = np.divide(hist_pos, hist_tot, out=replace, where=(hist_tot != 0))
+
+    # Return the indices of the bins to which each input proba belongs
+    i_bins = np.digitize(predictions, bins=bins)
+
+    # For each predicted proba, get the estimated true proba
+    prob_cal = prob_bins[i_bins - 1]
+
+    return prob_cal
+
+
+class _NonParametricCalibration(RegressorMixin, BaseEstimator):
+    def __init__(self, method, n_bins=15, confidence_method="predict_proba"):
+        self.method = clone(method)
+        self.n_bins = n_bins
+        self.confidence_method = confidence_method
+
+    def _process(self, X):
+        """Convert given scores to probas if they come from decision_function."""
+        if self.confidence_method == "predict_proba":
+            return X
+        elif self.confidence_method == "decision_function":
+            return np.exp(log_logistic(X))
+        else:
+            raise ValueError(
+                "'confidence_method' should be one of 'predict_proba' "
+                f"or 'decision_function'. Got {self.confidence_method}."
+            )
+
+    def fit(self, X, y, sample_weight):
+        X = self._process(X)
+        # Estimate the calibrated probabilities using bins
+        prob_cal = _non_parametric_calibration(X, y, self.n_bins, sample_weight)
+        self.method.fit(X, prob_cal)
+        return self
+
+    def predict(self, T):
+        T = self._process(T)
+        return np.clip(self.method.predict(T), 0, 1)
 
 
 def calibration_curve(
