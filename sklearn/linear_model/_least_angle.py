@@ -19,6 +19,7 @@ from joblib import Parallel
 
 from ._base import LinearModel
 from ._base import _deprecate_normalize
+from ._base import LinearRegression
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -1961,17 +1962,17 @@ class LassoLarsIC(LassoLars):
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    AIC is the Akaike information criterion and BIC is the Bayes
-    Information criterion. Such criteria are useful to select the value
+    AIC is the Akaike information criterion [2]_ and BIC is the Bayes
+    Information criterion [3]_. Such criteria are useful to select the value
     of the regularization parameter by making a trade-off between the
     goodness of fit and the complexity of the model. A good model should
     explain well the data while being simple.
 
-    Read more in the :ref:`User Guide <least_angle_regression>`.
+    Read more in the :ref:`User Guide <lasso_lars_ic>`.
 
     Parameters
     ----------
-    criterion : {'bic' , 'aic'}, default='aic'
+    criterion : {'aic', 'bic'}, default='aic'
         The type of criterion to use.
 
     fit_intercept : bool, default=True
@@ -2025,6 +2026,13 @@ class LassoLarsIC(LassoLars):
         As a consequence using LassoLarsIC only makes sense for problems where
         a sparse solution is expected and/or reached.
 
+    noise_variance : float, default=None
+        The estimated noise variance of the data. If `None`, an unbiased
+        estimate is computed by an OLS model. However, it is only possible
+        in the case where `n_samples > n_features + fit_intercept`.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     coef_ : array-like of shape (n_features,)
@@ -2049,8 +2057,13 @@ class LassoLarsIC(LassoLars):
     criterion_ : array-like of shape (n_alphas,)
         The value of the information criteria ('aic', 'bic') across all
         alphas. The alpha which has the smallest information criterion is
-        chosen. This value is larger by a factor of ``n_samples`` compared to
-        Eqns. 2.15 and 2.16 in (Zou et al, 2007).
+        chosen, as specified in [1]_.
+
+    noise_variance_ : float
+        The estimated noise variance from the data used to compute the
+        criterion.
+
+        .. versionadded:: 1.1
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2078,20 +2091,31 @@ class LassoLarsIC(LassoLars):
 
     Notes
     -----
-    The estimation of the number of degrees of freedom is given by:
+    The number of degrees of freedom is computed as in [1]_.
 
-    "On the degrees of freedom of the lasso"
-    Hui Zou, Trevor Hastie, and Robert Tibshirani
-    Ann. Statist. Volume 35, Number 5 (2007), 2173-2192.
+    To have more details regarding the mathematical formulation of the
+    AIC and BIC criteria, please refer to :ref:`User Guide <lasso_lars_ic>`.
 
-    https://en.wikipedia.org/wiki/Akaike_information_criterion
-    https://en.wikipedia.org/wiki/Bayesian_information_criterion
+    References
+    ----------
+    .. [1] :arxiv:`Zou, Hui, Trevor Hastie, and Robert Tibshirani.
+            "On the degrees of freedom of the lasso."
+            The Annals of Statistics 35.5 (2007): 2173-2192.
+            <0712.0881>`
+
+    .. [2] `Wikipedia entry on the Akaike information criterion
+            <https://en.wikipedia.org/wiki/Akaike_information_criterion>`_
+
+    .. [3] `Wikipedia entry on the Bayesian information criterion
+            <https://en.wikipedia.org/wiki/Bayesian_information_criterion>`_
 
     Examples
     --------
     >>> from sklearn import linear_model
     >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
-    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    >>> X = [[-2, 2], [-1, 1], [0, 0], [1, 1], [2, 2]]
+    >>> y = [-2.2222, -1.1111, 0, -1.1111, -2.2222]
+    >>> reg.fit(X, y)
     LassoLarsIC(criterion='bic', normalize=False)
     >>> print(reg.coef_)
     [ 0.  -1.11...]
@@ -2109,6 +2133,7 @@ class LassoLarsIC(LassoLars):
         eps=np.finfo(float).eps,
         copy_X=True,
         positive=False,
+        noise_variance=None,
     ):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
@@ -2120,6 +2145,7 @@ class LassoLarsIC(LassoLars):
         self.precompute = precompute
         self.eps = eps
         self.fit_path = True
+        self.noise_variance = noise_variance
 
     def _more_tags(self):
         return {"multioutput": False}
@@ -2177,17 +2203,17 @@ class LassoLarsIC(LassoLars):
         n_samples = X.shape[0]
 
         if self.criterion == "aic":
-            K = 2  # AIC
+            criterion_factor = 2
         elif self.criterion == "bic":
-            K = log(n_samples)  # BIC
+            criterion_factor = log(n_samples)
         else:
-            raise ValueError("criterion should be either bic or aic")
+            raise ValueError(
+                f"criterion should be either bic or aic, got {self.criterion!r}"
+            )
 
-        R = y[:, np.newaxis] - np.dot(X, coef_path_)  # residuals
-        mean_squared_error = np.mean(R ** 2, axis=0)
-        sigma2 = np.var(y)
-
-        df = np.zeros(coef_path_.shape[1], dtype=int)  # Degrees of freedom
+        residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
+        residuals_sum_squares = np.sum(residuals ** 2, axis=0)
+        degrees_of_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps
             if not np.any(mask):
@@ -2195,16 +2221,61 @@ class LassoLarsIC(LassoLars):
             # get the number of degrees of freedom equal to:
             # Xc = X[:, mask]
             # Trace(Xc * inv(Xc.T, Xc) * Xc.T) ie the number of non-zero coefs
-            df[k] = np.sum(mask)
+            degrees_of_freedom[k] = np.sum(mask)
 
         self.alphas_ = alphas_
-        eps64 = np.finfo("float64").eps
+
+        if self.noise_variance is None:
+            self.noise_variance_ = self._estimate_noise_variance(
+                X, y, positive=self.positive
+            )
+        else:
+            self.noise_variance_ = self.noise_variance
+
         self.criterion_ = (
-            n_samples * mean_squared_error / (sigma2 + eps64) + K * df
-        )  # Eqns. 2.15--16 in (Zou et al, 2007)
+            n_samples * np.log(2 * np.pi * self.noise_variance_)
+            + residuals_sum_squares / self.noise_variance_
+            + criterion_factor * degrees_of_freedom
+        )
         n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]
         self.coef_ = coef_path_[:, n_best]
         self._set_intercept(Xmean, ymean, Xstd)
         return self
+
+    def _estimate_noise_variance(self, X, y, positive):
+        """Compute an estimate of the variance with an OLS model.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Data to be fitted by the OLS model. We expect the data to be
+            centered.
+
+        y : ndarray of shape (n_samples,)
+            Associated target.
+
+        positive : bool, default=False
+            Restrict coefficients to be >= 0. This should be inline with
+            the `positive` parameter from `LassoLarsIC`.
+
+        Returns
+        -------
+        noise_variance : float
+            An estimator of the noise variance of an OLS model.
+        """
+        if X.shape[0] <= X.shape[1] + self.fit_intercept:
+            raise ValueError(
+                f"You are using {self.__class__.__name__} in the case where the number "
+                "of samples is smaller than the number of features. In this setting, "
+                "getting a good estimate for the variance of the noise is not "
+                "possible. Provide an estimate of the noise variance in the "
+                "constructor."
+            )
+        # X and y are already centered and we don't need to fit with an intercept
+        ols_model = LinearRegression(positive=positive, fit_intercept=False)
+        y_pred = ols_model.fit(X, y).predict(X)
+        return np.sum((y - y_pred) ** 2) / (
+            X.shape[0] - X.shape[1] - self.fit_intercept
+        )
