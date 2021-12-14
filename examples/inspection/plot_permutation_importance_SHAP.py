@@ -199,7 +199,7 @@ import numpy as np
 
 import shap
 
-med = np.median(X_train, axis=0).reshape((1, X_train.shape[1]))
+med = X_train.median().values.reshape((1, X_train.shape[1]))
 # To prevent warning about feature names
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", message="X does not have valid feature names,")
@@ -240,7 +240,7 @@ shap_values[0, :]
 # (depending on how well the linear model was able to be fit).
 
 print(f"The sum of SHAP values: {shap_values[0, :].sum()}")
-prediction = reg.predict(X_test[0, :].reshape(1, -1))[0]
+prediction = reg.predict(X_test.iloc[0, :].values.reshape(1, -1))[0]
 print(
     "Difference between prediction and expected value: "
     f"{prediction - explainer.expected_value}"
