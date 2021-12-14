@@ -6,6 +6,7 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
+from functools import partial
 import numbers
 import numpy as np
 import scipy.sparse as sp
@@ -23,6 +24,7 @@ from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
 )
+from ..callback._base import _eval_callbacks_on_fit_iter_end
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -424,6 +426,8 @@ def _fit_coordinate_descent(
     verbose=0,
     shuffle=False,
     random_state=None,
+    estimator=None,
+    parent_node=None,
 ):
     """Compute Non-negative Matrix Factorization (NMF) with Coordinate Descent
 
@@ -500,7 +504,9 @@ def _fit_coordinate_descent(
 
     rng = check_random_state(random_state)
 
-    for n_iter in range(1, max_iter + 1):
+    nodes = parent_node.children if parent_node is not None else [None] * max_iter
+
+    for n_iter, node in enumerate(nodes, 1):
         violation = 0.0
 
         # Update W
@@ -517,6 +523,21 @@ def _fit_coordinate_descent(
             violation_init = violation
 
         if violation_init == 0:
+            break
+
+        if _eval_callbacks_on_fit_iter_end(
+            estimator=estimator,
+            node=node,
+            stopping_criterion=lambda: violation / violation_init,
+            tol=tol,
+            fit_state={"H": Ht.T, "W": W},
+            reconstruction_attributes=lambda: {
+                "n_components_": Ht.T.shape[0],
+                "components_": H,
+                "n_iter_": n_iter,
+                "reconstruction_err_": _beta_divergence(X, W, Ht.T, 2, True),
+            },
+        ):
             break
 
         if verbose:
@@ -731,6 +752,8 @@ def _fit_multiplicative_update(
     l2_reg_H=0,
     update_H=True,
     verbose=0,
+    estimator=None,
+    parent_node=None,
 ):
     """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
@@ -815,8 +838,10 @@ def _fit_multiplicative_update(
     error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
     previous_error = error_at_init
 
+    nodes = parent_node.children if parent_node is not None else [None] * max_iter
+
     H_sum, HHt, XHt = None, None, None
-    for n_iter in range(1, max_iter + 1):
+    for n_iter, node in enumerate(nodes, 1):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -841,6 +866,27 @@ def _fit_multiplicative_update(
             # necessary for stability with beta_loss < 1
             if beta_loss <= 1:
                 H[H < np.finfo(np.float64).eps] = 0.0
+
+        if _eval_callbacks_on_fit_iter_end(
+            estimator=estimator,
+            node=node,
+            stopping_criterion=lambda: (
+                (
+                    previous_error
+                    - _beta_divergence(X, W, H, beta_loss, square_root=True)
+                )
+                / error_at_init
+            ),
+            tol=tol,
+            fit_state={"H": H, "W": W},
+            reconstruction_attributes=lambda: {
+                "n_components_": H.shape[0],
+                "components_": H,
+                "n_iter_": n_iter,
+                "reconstruction_err_": _beta_divergence(X, W, H, 2, True),
+            },
+        ):
+            break
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
@@ -1538,20 +1584,27 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
-        with config_context(assume_finite=True):
-            W, H, n_iter = self._fit_transform(X, W=W, H=H)
-
-        self.reconstruction_err_ = _beta_divergence(
-            X, W, H, self._beta_loss, square_root=True
+        root = self._eval_callbacks_on_fit_begin(
+            levels=[
+                {"descr": "fit", "max_iter": self.max_iter},
+                {"descr": "iter", "max_iter": None},
+            ],
+            X=X,
         )
+
+        W, H, n_iter = self._fit_transform(X, W=W, H=H, parent_node=root)
 
         self.n_components_ = H.shape[0]
         self.components_ = H
         self.n_iter_ = n_iter
 
+        self._eval_callbacks_on_fit_end()
+
         return W
 
-    def _fit_transform(self, X, y=None, W=None, H=None, update_H=True):
+    def _fit_transform(
+        self, X, y=None, W=None, H=None, update_H=True, parent_node=None
+    ):
         """Learn a NMF model for the data X and returns the transformed data.
 
         Parameters
@@ -1618,6 +1671,8 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 verbose=self.verbose,
                 shuffle=self.shuffle,
                 random_state=self.random_state,
+                estimator=self,
+                parent_node=parent_node,
             )
         elif self.solver == "mu":
             W, H, n_iter = _fit_multiplicative_update(
@@ -1633,6 +1688,8 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 l2_reg_H,
                 update_H=update_H,
                 verbose=self.verbose,
+                estimator=self,
+                parent_node=parent_node,
             )
         else:
             raise ValueError("Invalid solver parameter '%s'." % self.solver)
@@ -1712,6 +1769,28 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
         return np.dot(W, self.components_)
+
+    def objective_function(self, X, y=None, *, W=None, H=None, normalize=False):
+        if W is None:
+            W = self.transform(X)
+        if H is None:
+            H = self.components_
+
+        data_fit = _beta_divergence(X, W, H, self._beta_loss)
+
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
+        penalization = (
+            l1_reg_W * W.sum()
+            + l1_reg_H * H.sum()
+            + l2_reg_W * (W ** 2).sum()
+            + l2_reg_H * (H ** 2).sum()
+        )
+
+        if normalize:
+            data_fit /= X.shape[0]
+            penalization /= X.shape[0]
+
+        return data_fit + penalization, data_fit, penalization
 
     @property
     def _n_features_out(self):

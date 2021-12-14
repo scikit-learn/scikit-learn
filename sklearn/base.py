@@ -9,6 +9,7 @@ from collections import defaultdict
 import platform
 import inspect
 import re
+import pickle
 
 import numpy as np
 
@@ -28,6 +29,9 @@ from .utils.validation import _generate_get_feature_names_out
 from .utils.validation import check_is_fitted
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _get_feature_names
+from .callback import BaseCallback
+from .callback import AutoPropagatedMixin
+from .callback import ComputationTree
 
 
 def clone(estimator, *, safe=True):
@@ -83,6 +87,10 @@ def clone(estimator, *, safe=True):
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
+
+    # copy callbacks
+    if hasattr(estimator, "_callbacks"):
+        new_object._callbacks = clone(estimator._callbacks, safe=False)
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -596,6 +604,134 @@ class BaseEstimator:
             self._check_n_features(X, reset=reset)
 
         return out
+
+    def _set_callbacks(self, callbacks):
+        """Set callbacks for the estimator.
+
+        Parameters
+        ----------
+        callbacks : callback or list of callbacks
+            the callbacks to set.
+        """
+        if not isinstance(callbacks, list):
+            callbacks = [callbacks]
+
+        if not all(isinstance(callback, BaseCallback) for callback in callbacks):
+            raise TypeError(f"callbacks must be subclasses of BaseCallback.")
+
+        self._callbacks = callbacks
+
+    # XXX should be a method of MetaEstimatorMixin but this mixin can't handle all
+    # meta-estimators.
+    def _propagate_callbacks(self, sub_estimator, parent_node):
+        """Propagate the auto-propagated callbacks to a sub-estimator
+
+        Parameters
+        ----------
+        sub_estimator : estimator instance
+            The sub-estimator to propagate the callbacks to.
+
+        parent_node : ComputationNode instance
+            The computation node in this estimator to set as parent_node to the
+            computation tree of the sub-estimator. It must be the node where the fit
+            method of the sub-estimator is called.
+        """
+        if not hasattr(self, "_callbacks"):
+            return
+
+        if hasattr(sub_estimator, "_callbacks") and any(
+            isinstance(callback, AutoPropagatedMixin)
+            for callback in sub_estimator._callbacks
+        ):
+            bad_callbacks = [
+                callback.__class__.__name__
+                for callback in sub_estimator._callbacks
+                if isinstance(callback, AutoPropagatedMixin)
+            ]
+            raise TypeError(
+                f"The sub-estimators ({sub_estimator.__class__.__name__}) of a"
+                f" meta-estimator ({self.__class__.__name__}) can't have"
+                f" auto-propagated callbacks ({bad_callbacks})."
+                " Set them directly on the meta-estimator."
+            )
+
+        propagated_callbacks = [
+            callback
+            for callback in self._callbacks
+            if isinstance(callback, AutoPropagatedMixin)
+        ]
+
+        if not propagated_callbacks:
+            return
+
+        sub_estimator._parent_node = parent_node
+
+        if not hasattr(sub_estimator, "_callbacks"):
+            sub_estimator._callbacks = propagated_callbacks
+        else:
+            sub_estimator._callbacks.extend(propagated_callbacks)
+
+    def _eval_callbacks_on_fit_begin(self, *, levels, X=None, y=None):
+        """Evaluate the on_fit_begin method of the callbacks
+
+        The computation tree is also built at this point.
+
+        This method should be called after all data and parameters validation.
+
+        Parameters
+        ----------
+        X : ndarray or sparse matrix, default=None
+            The training data.
+
+        y : ndarray, default=None
+            The target.
+
+        levels : list of dict
+            A description of the nested levels of computation of the estimator to build
+            the computation tree. It's a list of dict with "descr" and "max_iter" keys.
+
+        Returns
+        -------
+        root : ComputationNode instance
+            The root of the computation tree.
+        """
+        self._computation_tree = ComputationTree(
+            estimator_name=self.__class__.__name__,
+            levels=levels,
+            parent_node=getattr(self, "_parent_node", None),
+        )
+
+        if hasattr(self, "_callbacks"):
+            file_path = self._computation_tree.tree_dir / "computation_tree.pkl"
+            with open(file_path, "wb") as f:
+                pickle.dump(self._computation_tree, f)
+
+            for callback in self._callbacks:
+                is_propagated = hasattr(self, "_parent_node") and isinstance(
+                    callback, AutoPropagatedMixin
+                )
+                if not is_propagated:
+                    # Only call the on_fit_begin method of callbacks that are not
+                    # propagated from a meta-estimator.
+                    callback.on_fit_begin(estimator=self, X=X, y=y)
+
+        return self._computation_tree.root
+
+    def _eval_callbacks_on_fit_end(self):
+        """Evaluate the on_fit_end method of the callbacks"""
+        if not hasattr(self, "_callbacks"):
+            return
+
+        self._computation_tree._tree_status[0] = True
+
+        for callback in self._callbacks:
+            is_propagated = isinstance(callback, AutoPropagatedMixin) and hasattr(
+                self, "_parent_node"
+            )
+            if not is_propagated:
+                # Only call the on_fit_end method of callbacks that are not
+                # propagated from a meta-estimator.
+                callback.on_fit_end()
 
     @property
     def _repr_html_(self):

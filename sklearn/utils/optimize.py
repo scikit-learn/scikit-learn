@@ -18,6 +18,7 @@ import warnings
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
 from ..exceptions import ConvergenceWarning
+from ..callback._base import _eval_callbacks_on_fit_iter_end
 
 
 class _LineSearchError(RuntimeError):
@@ -120,6 +121,8 @@ def _newton_cg(
     maxinner=200,
     line_search=True,
     warn=True,
+    estimator=None,
+    parent_node=None,
 ):
     """
     Minimization of scalar function of one or more variables using the
@@ -168,20 +171,31 @@ def _newton_cg(
     """
     x0 = np.asarray(x0).flatten()
     xk = x0
-    k = 0
 
     if line_search:
         old_fval = func(x0, *args)
         old_old_fval = None
 
+    nodes = parent_node.children if parent_node is not None else [None] * maxiter
+
     # Outer loop: our Newton iteration
-    while k < maxiter:
+    for k, node in enumerate(nodes, 1):
         # Compute a search direction pk by applying the CG method to
         #  del2 f(xk) p = - fgrad f(xk) starting from 0.
         fgrad, fhess_p = grad_hess(xk, *args)
 
         absgrad = np.abs(fgrad)
-        if np.max(absgrad) <= tol:
+        max_absgrad = np.max(absgrad)
+
+        if _eval_callbacks_on_fit_iter_end(
+            estimator=estimator,
+            node=node,
+            stopping_criterion=lambda: max_absgrad,
+            tol=tol,
+        ):
+            break
+
+        if max_absgrad <= tol:
             break
 
         maggrad = np.sum(absgrad)
@@ -204,7 +218,6 @@ def _newton_cg(
                 break
 
         xk = xk + alphak * xsupi  # upcast if necessary
-        k += 1
 
     if warn and k >= maxiter:
         warnings.warn(

@@ -26,12 +26,13 @@ from .utils import (
 )
 from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
+from .utils.metaestimators import _BaseComposition
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
+from .callback._base import _eval_callbacks_on_fit_iter_end
 
-from .utils.metaestimators import _BaseComposition
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 
@@ -318,15 +319,24 @@ class Pipeline(_BaseComposition):
         # Setup the memory
         memory = check_memory(self.memory)
 
+        root = self._eval_callbacks_on_fit_begin(
+            levels=[
+                {"descr": "fit", "max_iter": len(self.steps)},
+                {"descr": "step", "max_iter": None},
+            ],
+            X=X,
+            y=y,
+        )
+
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        for (step_idx, name, transformer) in self._iter(
+        for (step_idx, name, transformer), node in zip(self._iter(
             with_final=False, filter_passthrough=False
-        ):
+        ), root.children[:-1]):
             if transformer is None or transformer == "passthrough":
+                _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
                 with _print_elapsed_time("Pipeline", self._log_message(step_idx)):
                     continue
-
             if hasattr(memory, "location"):
                 # joblib >= 0.12
                 if memory.location is None:
@@ -346,6 +356,7 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transformer
+            self._propagate_callbacks(cloned_transformer, parent_node=node)
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer,
                 X,
@@ -359,6 +370,9 @@ class Pipeline(_BaseComposition):
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
+
+            _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
+
         return X
 
     def fit(self, X, y=None, **fit_params):
@@ -388,11 +402,19 @@ class Pipeline(_BaseComposition):
             Pipeline with fitted steps.
         """
         fit_params_steps = self._check_fit_params(**fit_params)
+
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if self._final_estimator != "passthrough":
+                node = self._computation_tree.root.children[-1]
+                self._propagate_callbacks(self._final_estimator, parent_node=node)
+
                 fit_params_last_step = fit_params_steps[self.steps[-1][0]]
                 self._final_estimator.fit(Xt, y, **fit_params_last_step)
+
+                _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
+
+        self._eval_callbacks_on_fit_end()
 
         return self
 
