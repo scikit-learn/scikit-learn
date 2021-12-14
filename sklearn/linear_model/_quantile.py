@@ -116,7 +116,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-            CSC format is only accepted for sparse data.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -132,7 +131,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         X, y = self._validate_data(
             X,
             y,
-            accept_sparse=["csc"],
+            accept_sparse=["csc", "csr", "coo"],
             y_numeric=True,
             multi_output=False,
         )
@@ -244,14 +243,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[n_params] = 0
 
         if sparse.issparse(X):
-            sparse_constructor = {
-                "csc": sparse.csc_matrix,
-            }
             eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
-                ones = sparse_constructor[X.format](
+                ones = sparse.csc_matrix(
                     np.ones(shape=(n_indices, 1), dtype=X.dtype)
-                )
+                )  # linprog will convert to csc anyway
                 A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
             else:
                 A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")

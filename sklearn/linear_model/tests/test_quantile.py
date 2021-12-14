@@ -13,7 +13,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils.fixes import parse_version, sp_version
 
 
@@ -254,32 +253,26 @@ def test_linprog_failure():
         reg.fit(X, y)
 
 
-@pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("format", ["csc"])
-def test_sparse_input(fit_intercept, format):
-    rng = np.random.RandomState(42)
-    n = 400
-    dim = 2
-    X = sparse.rand(n, dim, format=format, density=0.5, random_state=rng)
-    beta = rng.rand(dim)
-    y = X * beta[:, np.newaxis]
-    reg = QuantileRegressor(alpha=0, fit_intercept=fit_intercept)
-    reg.fit(X, y.ravel())
-    assert_array_almost_equal(beta, reg.coef_ + reg.intercept_)
-
-    assert_array_almost_equal(reg.predict(X) - y.ravel(), 0)
-
-
 @pytest.mark.skipif(
     sp_version <= parse_version("1.6.0"),
     reason="Solvers are available as of scipy 1.6.0",
 )
+@pytest.mark.parametrize(
+    "sparse_format", [sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix]
+)
+@pytest.mark.parametrize("solver", ["highs"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("alpha", [1, 0])
-@pytest.mark.parametrize("sparse_format", [sparse.csc_matrix])
-def test_compare_sparse_with_dense_input(X_y_data, alpha, fit_intercept, sparse_format):
-    X, y = X_y_data
-    reg_dense = QuantileRegressor(solver="highs", alpha=alpha).fit(X, y)
-    sparse_x = sparse_format(X)
-    reg_sparse = QuantileRegressor(solver="highs", alpha=alpha).fit(sparse_x, y)
-    assert_array_almost_equal(reg_dense.coef_, reg_sparse.coef_)
+def test_sparse_input(sparse_format, solver, fit_intercept):
+    """Test that sparse and dense X give same results."""
+    X, y = make_regression(n_samples=100, n_features=20, random_state=1, noise=1.0)
+    X_sparse = sparse_format(X)
+    alpha = 1e-4
+    quant_dense = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(X, y)
+    quant_sparse = QuantileRegressor(
+        alpha=alpha, fit_intercept=fit_intercept, solver=solver
+    ).fit(X_sparse, y)
+    assert_allclose(quant_sparse.coef_, quant_dense.coef_, rtol=1e-2)
+    if fit_intercept:
+        assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
+        # check that we still predict fraction
+        assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.55
