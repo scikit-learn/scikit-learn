@@ -575,8 +575,9 @@ def test_adaboostregressor_sample_weight():
 )
 def test_adaboost_params_validation(model, X, y, params, err_type, err_msg):
     """Check input parameter validation in weight boosting."""
+    est = model(**params)
     with pytest.raises(err_type, match=err_msg):
-        model(**params).fit(X, y)
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
