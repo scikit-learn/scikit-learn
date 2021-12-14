@@ -276,8 +276,9 @@ def test_error():
     with pytest.raises(ValueError):
         AdaBoostRegressor(loss="foo").fit(X, y_class)
 
+    clf = AdaBoostClassifier(algorithm="foo")
     with pytest.raises(ValueError):
-        AdaBoostClassifier(algorithm="foo").fit(X, y_class)
+        clf.fit(X, y_class)
 
     with pytest.raises(ValueError):
         AdaBoostClassifier().fit(X, y_class, sample_weight=np.asarray([-1]))
