@@ -21,6 +21,13 @@ cdef int simultaneous_sort(
     """
     Perform a recursive quicksort on the values array, simultaneously
     performing the same swaps on the indices array.
+
+    The numpy equivalent is:
+
+        def simultaneous_sort(dist, idx):
+             i = np.argsort(dist)
+             return dist[i], idx[i]
+
     """
     # TODO: In order to support discrete distance metrics, we need to have a
     # simultaneous sort which breaks ties on indices when distances are identical.

@@ -106,7 +106,7 @@
 # cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes, ITYPE_t n_features):
 #     """Allocate arrays needed for the KD Tree"""
 
-# cdef int init_node(BinaryTree tree, NodeData_t[::1] node_data, ITYPE_t i_node,
+# cdef int init_node(BinaryTree tree, ITYPE_t i_node,
 #                    ITYPE_t idx_start, ITYPE_t idx_end):
 #    """Initialize the node for the dataset stored in tree.data"""
 
@@ -758,7 +758,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-from ..metrics._dist_metrics import get_valid_metric_ids
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 
@@ -775,9 +775,13 @@ cdef class BinaryTree:
     cdef readonly const DTYPE_t[:, ::1] data
     cdef readonly const DTYPE_t[::1] sample_weight
     cdef public DTYPE_t sum_weight
-    cdef public ITYPE_t[::1] idx_array
-    cdef public NodeData_t[::1] node_data
-    cdef public DTYPE_t[:, :, ::1] node_bounds
+
+    # Even if those memoryviews attributes are const-qualified,
+    # they get modified via their numpy counterpart.
+    # For instance, `node_data` gets modified via `node_data_arr`.
+    cdef public const ITYPE_t[::1] idx_array
+    cdef public const NodeData_t[::1] node_data
+    cdef public const DTYPE_t[:, :, ::1] node_bounds
 
     cdef ITYPE_t leaf_size
     cdef ITYPE_t n_levels
