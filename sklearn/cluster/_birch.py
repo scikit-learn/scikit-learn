@@ -686,10 +686,6 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             argmin = pairwise_distances_argmin(
                 X,
                 self.subcluster_centers_,
-                # We use the fast squared euclidean metric alternative to get
-                # maximum acceleration as we are not concerned with the minimum
-                # values but only their indices.
-                metric="fast_sqeuclidean",
                 metric_kwargs=metric_kwargs,
             )
         return self.subcluster_labels_[argmin]

@@ -185,11 +185,11 @@ def test_pairwise_distances_reduction_factory_method(
         PairwiseDistancesReduction.get_for(csr_matrix(X), Y, dummy_arg, metric=metric)
 
     # Test specialisations creation
-    fast_euclidean_instance = PairwiseDistancesReduction.get_for(
-        X, Y, dummy_arg, metric="fast_euclidean"
+    euclidean_instance = PairwiseDistancesReduction.get_for(
+        X, Y, dummy_arg, metric="euclidean"
     )
-    assert isinstance(fast_euclidean_instance, PairwiseDistancesReduction)
-    assert isinstance(fast_euclidean_instance, FastPairwiseDistancesReduction)
+    assert isinstance(euclidean_instance, PairwiseDistancesReduction)
+    assert isinstance(euclidean_instance, FastPairwiseDistancesReduction)
 
 
 @fails_if_unstable_openblas
@@ -205,7 +205,6 @@ def test_chunk_size_agnosticism(
     seed,
     n_samples,
     chunk_size,
-    metric="fast_euclidean",
     n_features=100,
     dtype=np.float64,
 ):
@@ -223,11 +222,13 @@ def test_chunk_size_agnosticism(
     )
 
     ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric="euclidean"
+        X,
+        Y,
+        parameter,
     ).compute(return_distance=True)
 
     dist, indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric=metric, chunk_size=chunk_size
+        X, Y, parameter, chunk_size=chunk_size
     ).compute(return_distance=True)
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
@@ -263,11 +264,13 @@ def test_n_threads_agnosticism(
     )
 
     ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric="fast_euclidean"
+        X,
+        Y,
+        parameter,
     ).compute(return_distance=True)
 
     dist, indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, metric="fast_euclidean", n_threads=1
+        X, Y, parameter, n_threads=1
     ).compute(return_distance=True)
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
@@ -289,12 +292,9 @@ def test_strategies_consistency(
     dtype=np.float64,
 ):
     # Results obtained using both parallelization strategies must be identical
-    if _in_unstable_openblas_configuration() and metric == {
-        "fast_sqeuclidean",
-        "fast_euclidean",
-    }:
+    if _in_unstable_openblas_configuration() and metric in ("sqeuclidean", "euclidean"):
         pytest.xfail(
-            "OpenBLAS (used for 'fast_(sq)euclidean') is unstable in this configuration"
+            "OpenBLAS (used for '(sq)euclidean') is unstable in this configuration"
         )
 
     rng = np.random.RandomState(seed)
@@ -339,32 +339,6 @@ def test_strategies_consistency(
 
 
 @fails_if_unstable_openblas
-@pytest.mark.parametrize("seed", range(10))
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("n_features", [5, 10, 100])
-def test_fast_sqeuclidean_correctness(
-    seed,
-    n_samples,
-    n_features,
-    k=50,
-    dtype=np.float64,
-):
-    rng = np.random.RandomState(seed)
-    spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
-
-    eucl_dist, eucl_indices = PairwiseDistancesArgKmin.get_for(
-        X, Y, k, metric="euclidean"
-    ).compute(return_distance=True)
-    fse_dist, fse_indices = PairwiseDistancesArgKmin.get_for(
-        X, Y, k, metric="fast_euclidean"
-    ).compute(return_distance=True)
-
-    assert_argkmin_results_equality(eucl_dist, fse_dist, eucl_indices, fse_indices)
-
-
-@fails_if_unstable_openblas
 @pytest.mark.parametrize("n_features", [50, 500])
 @pytest.mark.parametrize("translation", [10 ** i for i in [4, 8]])
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
@@ -372,7 +346,7 @@ def test_fast_sqeuclidean_correctness(
     "PairwiseDistancesReduction",
     [PairwiseDistancesArgKmin],
 )
-def test_fast_sqeuclidean_translation_invariance(
+def test_euclidean_translation_invariance(
     n_features,
     translation,
     metric,
