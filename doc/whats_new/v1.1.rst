@@ -232,7 +232,10 @@ Changelog
   a parameter in order to provide an estimate of the noise variance.
   This is particularly relevant when `n_features > n_samples` and the
   estimator of the noise variance cannot be computed.
-  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`
+  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.QuantileRegressor` support sparse inputs.
+  :pr:`21086` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
 
 - |Fix| :class:`linear_model.LassoLarsIC` now correctly computes AIC
   and BIC. An error is now raised when `n_features > n_samples` and
