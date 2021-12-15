@@ -858,7 +858,7 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def _non_parametric_calibration(predictions, y, n_bins, sample_weight=None):
+def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
     """Estimate the calibrated probabilities with binning."""
     if len(np.unique(y)) > 2:
         raise NotImplementedError("Multidim not yet implemented.")
@@ -874,14 +874,11 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight=None):
 
     prob_pos = predictions[idx_pos]
     prob_neg = predictions[idx_neg]
-    sw_pos = sample_weight[idx_pos] if sample_weight is not None else None
-    sw_neg = sample_weight[idx_neg] if sample_weight is not None else None
+    sw_pos = sample_weight[idx_pos]
+    sw_neg = sample_weight[idx_neg]
 
     hist_pos, bins = np.histogram(prob_pos, bins=n_bins, range=(0, 1), weights=sw_pos)
     hist_neg, _ = np.histogram(prob_neg, bins=n_bins, range=(0, 1), weights=sw_neg)
-
-    hist_pos = hist_pos.astype(float)
-    hist_neg = hist_neg.astype(float)
     hist_tot = hist_pos + hist_neg
 
     # Replace undefined values with 0 to silent warning, but could be any
@@ -922,6 +919,7 @@ class _NonParametricCalibration(RegressorMixin, BaseEstimator):
 
     def fit(self, X, y, sample_weight=None):
         X = self._process(X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         # Estimate the calibrated probabilities using bins
         prob_cal = _non_parametric_calibration(X, y, self.n_bins, sample_weight)
         self.method.fit(X, prob_cal)
