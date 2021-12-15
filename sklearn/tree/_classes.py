@@ -354,9 +354,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
-        if self.min_impurity_decrease < 0.0:
-            raise ValueError("min_impurity_decrease must be greater than or equal to 0")
-
+        # if self.min_impurity_decrease < 0.0:
+        #     raise ValueError("min_impurity_decrease must be greater than or equal to 0")
+        check_scalar(
+            self.min_impurity_decrease,
+            "min_impurity_decrease",
+            target_type=numbers.Real,
+            min_val=0,
+            include_boundaries="left",
+        )
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):

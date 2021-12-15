@@ -606,8 +606,8 @@ def test_error():
         #     TreeEstimator(max_depth=-1).fit(X, y)
         with pytest.raises(ValueError):
             TreeEstimator(max_features=42).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_impurity_decrease=-1.0).fit(X, y)
+        # with pytest.raises(ValueError):
+        #     TreeEstimator(min_impurity_decrease=-1.0).fit(X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -694,6 +694,16 @@ def test_error():
             TypeError,
             "min_samples_split must be an instance of <class 'numbers.Real'>, not"
             " <class 'str'>.",
+        ),
+        (
+            {"min_impurity_decrease": -1.0},
+            ValueError,
+            "min_impurity_decrease == -1.0, must be >= 0",
+        ),
+        (
+            {"min_impurity_decrease": "foo"},
+            TypeError,
+            "min_impurity_decrease must be an instance of <class 'numbers.Real'>",
         ),
     ],
 )
