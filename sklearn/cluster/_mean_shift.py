@@ -40,7 +40,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
         Input points.
 
     quantile : float, default=0.3
-        should be between [0, 1]
+        Should be between [0, 1]
         0.5 means that the median of all pairwise distances is used.
 
     n_samples : int, default=None

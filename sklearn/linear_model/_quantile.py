@@ -4,11 +4,13 @@
 import warnings
 
 import numpy as np
+from scipy import sparse
 from scipy.optimize import linprog
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
 from ..exceptions import ConvergenceWarning
+from ..utils import _safe_indexing
 from ..utils.validation import _check_sample_weight
 from ..utils.fixes import sp_version, parse_version
 
@@ -44,6 +46,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Method used by :func:`scipy.optimize.linprog` to solve the linear
         programming formulation. Note that the highs methods are recommended
         for usage with `scipy>=1.6.0` because they are the fastest ones.
+        Solvers "highs-ds", "highs-ipm" and "highs" support
+        sparse input data.
 
     solver_options : dict, default=None
         Additional parameters passed to :func:`scipy.optimize.linprog` as
@@ -112,7 +116,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : array-like of shape (n_samples,)
@@ -127,7 +131,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             Returns self.
         """
         X, y = self._validate_data(
-            X, y, accept_sparse=False, y_numeric=True, multi_output=False
+            X,
+            y,
+            accept_sparse=["csc", "csr", "coo"],
+            y_numeric=True,
+            multi_output=False,
         )
         sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -218,13 +226,17 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         #
         # Filtering out zero samples weights from the beginning makes life
         # easier for the linprog solver.
-        mask = sample_weight != 0
-        n_mask = int(np.sum(mask))  # use n_mask instead of n_samples
+        indices = np.nonzero(sample_weight)[0]
+        n_indices = len(indices)  # use n_mask instead of n_samples
+        if n_indices < len(sample_weight):
+            sample_weight = sample_weight[indices]
+            X = _safe_indexing(X, indices)
+            y = _safe_indexing(y, indices)
         c = np.concatenate(
             [
                 np.full(2 * n_params, fill_value=alpha),
-                sample_weight[mask] * self.quantile,
-                sample_weight[mask] * (1 - self.quantile),
+                sample_weight * self.quantile,
+                sample_weight * (1 - self.quantile),
             ]
         )
         if self.fit_intercept:
@@ -232,23 +244,29 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[0] = 0
             c[n_params] = 0
 
-            A_eq = np.concatenate(
-                [
-                    np.ones((n_mask, 1)),
-                    X[mask],
-                    -np.ones((n_mask, 1)),
-                    -X[mask],
-                    np.eye(n_mask),
-                    -np.eye(n_mask),
-                ],
-                axis=1,
-            )
+        if sparse.issparse(X):
+            if self.solver not in ["highs-ds", "highs-ipm", "highs"]:
+                raise ValueError(
+                    f"Solver {self.solver} does not support sparse X. "
+                    "Use solver 'highs' for example."
+                )
+            # Note that highs methods do convert to csc.
+            # Therefore, we work with csc matrices as much as possible.
+            eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
+            if self.fit_intercept:
+                ones = sparse.csc_matrix(np.ones(shape=(n_indices, 1), dtype=X.dtype))
+                A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
+            else:
+                A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")
         else:
-            A_eq = np.concatenate(
-                [X[mask], -X[mask], np.eye(n_mask), -np.eye(n_mask)], axis=1
-            )
+            eye = np.eye(n_indices)
+            if self.fit_intercept:
+                ones = np.ones((n_indices, 1))
+                A_eq = np.concatenate([ones, X, -ones, -X, eye, -eye], axis=1)
+            else:
+                A_eq = np.concatenate([X, -X, eye, -eye], axis=1)
 
-        b_eq = y[mask]
+        b_eq = y
 
         result = linprog(
             c=c,
