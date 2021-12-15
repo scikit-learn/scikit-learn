@@ -495,7 +495,7 @@ class GaussianMixture(BaseMixture):
     init_params : str, default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
-        String must be one of::
+        String must be one of:
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
             'random_from_data' : Initial means are randomly selected data points.
