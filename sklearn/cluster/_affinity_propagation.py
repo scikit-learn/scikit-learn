@@ -524,12 +524,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         if self.cluster_centers_.shape[0] > 0:
             with config_context(assume_finite=True):
                 return pairwise_distances_argmin(
-                    # We use the fast squared euclidean metric alternative to get
-                    # maximum acceleration as we are not concerned with the minimum
-                    # values but only their indices.
                     X,
                     self.cluster_centers_,
-                    metric="fast_sqeuclidean",
                 )
         else:
             warnings.warn(
