@@ -275,6 +275,10 @@ Changelog
   splits failed. Similarly raise an error during grid-search when the fits for
   all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| :class:`model_selection.GridSearchCV`, :class:`model_selection.HalvingGridSearchCV`
+   now validate input parameters in `fit` instead of `__init__`. 
+   :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
