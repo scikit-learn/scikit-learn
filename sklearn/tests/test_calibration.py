@@ -229,7 +229,7 @@ def test_calibration_multiclass(method, ensemble, seed):
     # only decision function.
     clf = LinearSVC(random_state=7)
     X, y = make_blobs(
-        n_samples=500, n_features=100, random_state=seed, centers=10, cluster_std=15.0
+        n_samples=750, n_features=100, random_state=seed, centers=10, cluster_std=15.0
     )
 
     # Use an unbalanced dataset by collapsing 8 clusters into one class
