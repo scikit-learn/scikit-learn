@@ -870,7 +870,10 @@ def test_invalid_shape_precomputed_dist_matrix():
     # and a non square matrix is passed (PR #16257).
     rng = np.random.RandomState(0)
     X = rng.rand(5, 3)
-    with pytest.raises(ValueError, match=r"Distance matrix should be square, Got matrix of shape \(5, 3\)"):
+    with pytest.raises(
+        ValueError,
+        match=r"Distance matrix should be square, Got matrix of shape \(5, 3\)",
+    ):
         AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(X)
 
 
