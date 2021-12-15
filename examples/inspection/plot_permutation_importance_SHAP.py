@@ -194,15 +194,10 @@ plt.show()
 # median values of our features but SHAP offers a ``kmeans`` function that
 # can summarize each feature with ``k`` means.
 
-import warnings
-
 import shap
 
 med = X_train.median().values.reshape((1, X_train.shape[1]))
-# To prevent warning about feature names
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", message="X does not have valid feature names,")
-    explainer = shap.KernelExplainer(reg.predict, med)
+explainer = shap.KernelExplainer(reg.predict, med)
 
 # %%
 # ``explainer`` stores various information about the data as attributes. Of
@@ -223,7 +218,12 @@ reg.predict(med)
 # Next we will calculate SHAP values using the testing subset. This is the
 # computationally expensive step.
 
-shap_values = explainer.shap_values(X_test)
+import warnings
+
+# To prevent warning about feature names
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", message="X does not have valid feature names,")
+    shap_values = explainer.shap_values(X_test)
 
 # %%
 # Let's look at the SHAP values of one sample. There are 8 SHAP values,
