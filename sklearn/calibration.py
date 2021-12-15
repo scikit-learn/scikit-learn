@@ -858,24 +858,23 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
+def _non_parametric_calibration(scores, y, n_bins, sample_weight):
     """Estimate the calibrated probabilities with binning."""
-    if (predictions > 1).any() or (predictions < 0).any():
-        raise ValueError("Predicted probas should be in [0, 1].")
+    if (scores > 1).any() or (scores < 0).any():
+        raise ValueError("Predicted scores should be in [0, 1].")
 
-    predictions = column_or_1d(predictions)
+    # Check inputs
+    scores = column_or_1d(scores)
     y = column_or_1d(y)
-    sample_weight = _check_sample_weight(
-        sample_weight, predictions, dtype=predictions.dtype
-    )
+    sample_weight = _check_sample_weight(sample_weight, scores, dtype=scores.dtype)
     mask = sample_weight > 0
-    predictions, y, sample_weight = predictions[mask], y[mask], sample_weight[mask]
+    scores, y, sample_weight = scores[mask], y[mask], sample_weight[mask]
 
     # Build the histograms of the positive and negative classes using a 2D
     # histogram where predicted scores are splitted in n_bins bins along the
     # x axis and the labels y are splitted in 2 bins along the y axis
     hist_2d, bins, _ = np.histogram2d(
-        predictions, y, bins=(n_bins, 2), range=[[0, 1], [0, 1]], weights=sample_weight
+        scores, y, bins=(n_bins, 2), range=[[0, 1], [0, 1]], weights=sample_weight
     )
 
     # Retrieve the histograms of the positive class and the one of both
@@ -890,7 +889,7 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
     prob_bins = np.divide(hist_pos, hist_tot, out=replace, where=(hist_tot != 0))
 
     # Return the indices of the bins to which each input proba belongs
-    i_bins = np.digitize(predictions, bins=bins)
+    i_bins = np.digitize(scores, bins=bins)
     # When a score is equal to the upper bound of the greatest bin (here 1),
     # np.digitize associates it to bin number n_bins+1 which is out of bound.
     i_bins = np.clip(i_bins, 1, n_bins)
@@ -898,7 +897,7 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
     # For each predicted score, get the estimated true proba
     prob_cal = prob_bins[i_bins - 1]
 
-    return predictions, prob_cal
+    return scores, prob_cal
 
 
 class _NonParametricCalibration(RegressorMixin, BaseEstimator):
