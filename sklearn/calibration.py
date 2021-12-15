@@ -860,9 +860,6 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
 def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
     """Estimate the calibrated probabilities with binning."""
-    if len(np.unique(y)) > 2:
-        raise NotImplementedError("Multidim not yet implemented.")
-
     if (predictions > 1).any() or (predictions < 0).any():
         raise ValueError("Predicted probas should be in [0, 1].")
 
