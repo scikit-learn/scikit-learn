@@ -46,7 +46,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Method used by :func:`scipy.optimize.linprog` to solve the linear
         programming formulation. Note that the highs methods are recommended
         for usage with `scipy>=1.6.0` because they are the fastest ones.
-        solvers "highs-ds", "highs-ipm" and "highs" support
+        Solvers "highs-ds", "highs-ipm" and "highs" support
         sparse input data.
 
     solver_options : dict, default=None
@@ -250,7 +250,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                     f"Solver {self.solver} does not support sparse X. "
                     "Use solver 'highs' for example."
                 )
-            # Note that highs as well as interior point do convert to csc.
+            # Note that highs methods do convert to csc.
             # Therefore, we work with csc matrices as much as possible.
             eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
