@@ -777,6 +777,12 @@ class OrdinalEncoder(_BaseEncoder):
 
         .. versionadded:: 0.24
 
+    encoded_missing_value : int or np.nan, default=np.nan
+        Encoded value of missing categories. If set to `np.nan`, then the `dtype`
+        parameter must be a float dtype.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -829,11 +835,13 @@ class OrdinalEncoder(_BaseEncoder):
         dtype=np.float64,
         handle_unknown="error",
         unknown_value=None,
+        encoded_missing_value=np.nan,
     ):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.unknown_value = unknown_value
+        self.encoded_missing_value = encoded_missing_value
 
     def fit(self, X, y=None):
         """
@@ -903,13 +911,16 @@ class OrdinalEncoder(_BaseEncoder):
                     self._missing_indices[cat_idx] = i
                     continue
 
-        if np.dtype(self.dtype).kind != "f" and self._missing_indices:
-            raise ValueError(
-                "There are missing values in features "
-                f"{list(self._missing_indices)}. For OrdinalEncoder to "
-                "passthrough missing values, the dtype parameter must be a "
-                "float"
-            )
+        dtype_kind = np.dtype(self.dtype).kind
+        if self._missing_indices:
+            if dtype_kind != "f" and is_scalar_nan(self.encoded_missing_value):
+                raise ValueError(
+                    "There are missing values in features "
+                    f"{list(self._missing_indices)}. For OrdinalEncoder to "
+                    f"encode missing values with dtype: {self.dtype}, set "
+                    "encoded_missing_value to a non-nan value, or "
+                    "set dtype to a float"
+                )
 
         return self
 
@@ -934,7 +945,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         for cat_idx, missing_idx in self._missing_indices.items():
             X_missing_mask = X_int[:, cat_idx] == missing_idx
-            X_trans[X_missing_mask, cat_idx] = np.nan
+            X_trans[X_missing_mask, cat_idx] = self.encoded_missing_value
 
         # create separate category for unknown values
         if self.handle_unknown == "use_encoded_value":
@@ -979,7 +990,7 @@ class OrdinalEncoder(_BaseEncoder):
 
             # replace values of X[:, i] that were nan with actual indices
             if i in self._missing_indices:
-                X_i_mask = _get_mask(X[:, i], np.nan)
+                X_i_mask = _get_mask(X[:, i], self.encoded_missing_value)
                 labels[X_i_mask] = self._missing_indices[i]
 
             if self.handle_unknown == "use_encoded_value":
