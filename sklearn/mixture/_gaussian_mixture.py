@@ -496,10 +496,10 @@ class GaussianMixture(BaseMixture):
         The method used to initialize the weights, the means and the
         precisions.
         String must be one of:
-            'kmeans' : responsibilities are initialized using kmeans.
-            'random' : responsibilities are initialized randomly.
-            'random_from_data' : Initial means are randomly selected data points.
-            'k-means++' : Use the k-means++ method to initialize.
+        - 'kmeans' : responsibilities are initialized using kmeans.
+        - 'random' : responsibilities are initialized randomly.
+        - 'random_from_data' : Initial means are randomly selected data points.
+        - 'k-means++' : Use the k-means++ method to initialize.
 
     weights_init : array-like of shape (n_components, ), default=None
         The user-provided initial weights.
