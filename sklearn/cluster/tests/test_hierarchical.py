@@ -872,7 +872,7 @@ def test_invalid_shape_precomputed_dist_matrix():
     X = rng.rand(5, 3)
     with pytest.raises(
         ValueError,
-        match=r"Distance matrix should be square, Got matrix of shape \(5, 3\)",
+        match=r"Distance matrix should be square, got matrix of shape \(5, 3\)",
     ):
         AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(X)
 
