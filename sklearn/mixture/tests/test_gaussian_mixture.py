@@ -1271,15 +1271,16 @@ def test_init_param(init_params):
     gmm.fit(X)
     assert_almost_equal(default_means, np.sort(gmm.means_.flatten()), decimal=10)
 
+
+@pytest.mark.parametrize(
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+)
+def test_check_non_unique_means_initialisation(init_params):
     # Check that all initialisations provide unique starting means
-
+    rng = np.random.RandomState(0)
     rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
     X = rand_data.X["full"]
-
-    gmm = GaussianMixture(
-        n_components=n_components, random_state=0, init_params="kmeans", max_iter=1
-    )
-    gmm.fit(X)
     default_means_init = {}
 
     gmm = GaussianMixture(
@@ -1287,12 +1288,17 @@ def test_init_param(init_params):
     )
     gmm.fit(X)
     default_means_init[init_params] = gmm.means_
-
     for i_mean, j_mean in itertools.combinations(default_means_init.values(), r=2):
         assert np.any(np.not_equal(i_mean, j_mean))
 
+
+def test_check_that_max_iter_with_zero_returns_initialisation_as_expected():
     # Check that max_iter=0 returns initialisation as expected
     # Pick arbitrary initial means and check equal to max_iter=0
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
     means_init = [[20, 30], [30, 25]]
     gmm = GaussianMixture(
         n_components=n_components,
