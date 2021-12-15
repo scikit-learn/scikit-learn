@@ -45,7 +45,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 @pytest.fixture(scope="module")
 def data():
-    X, y = make_classification(n_samples=200, n_features=6, random_state=42)
+    X, y = make_classification(n_samples=250, n_features=6, random_state=42)
     return X, y
 
 
@@ -55,7 +55,7 @@ def data():
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration(data, method, ensemble):
     # Test calibration objects with isotonic, sigmoid and custom regressor
-    n_samples = 100
+    n_samples = 200
     X, y = data
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
 
