@@ -39,7 +39,7 @@ Changelog
 ................................
 
 - |Fix| Fixed :class:`feature_selection.SelectFromModel` to improve support
-  for estimators that set `feature_names_in_`. :pr:`xxxxx` by `Thomas Fan`_.
+  for estimators that set `feature_names_in_`. :pr:`21991` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
