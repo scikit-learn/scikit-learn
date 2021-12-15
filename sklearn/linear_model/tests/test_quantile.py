@@ -46,6 +46,18 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
         QuantileRegressor(**params).fit(X, y)
 
 
+@pytest.mark.parametrize("solver", ["revised simplex"])
+def test_incompatible_solver_sparse(X_y_data, solver):
+    X, y = X_y_data
+    X_sparse = sparse.csc_matrix(X)
+    err_msg = (
+        "Solver revised simplex does not support sparse X. Use solver 'highs' for"
+        " example."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        QuantileRegressor(solver=solver).fit(X_sparse, y)
+
+
 @pytest.mark.parametrize("solver", ("highs-ds", "highs-ipm", "highs"))
 @pytest.mark.skipif(
     sp_version >= parse_version("1.6.0"),
@@ -276,15 +288,3 @@ def test_sparse_input(sparse_format, solver, fit_intercept):
         assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
         # check that we still predict fraction
         assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.55
-
-
-@pytest.mark.parametrize("solver", ["revised simplex"])
-def test_compatible_solver_sparse(X_y_data, solver):
-    X, y = X_y_data
-    X_sparse = sparse.csc_matrix(X)
-    err_msg = (
-        "Solver revised simplex does not support sparse X. Use solver 'highs' for"
-        " example."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        QuantileRegressor(solver=solver).fit(X_sparse, y)
