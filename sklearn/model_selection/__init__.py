@@ -32,6 +32,8 @@ from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
 
+from ._search_space import GridFactory
+
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
@@ -44,6 +46,7 @@ if typing.TYPE_CHECKING:
 __all__ = [
     "BaseCrossValidator",
     "BaseShuffleSplit",
+    "GridFactory",
     "GridSearchCV",
     "TimeSeriesSplit",
     "KFold",

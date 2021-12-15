@@ -993,9 +993,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         param_results = defaultdict(
             partial(
                 MaskedArray,
-                np.empty(
-                    n_candidates,
-                ),
+                np.empty(n_candidates),
                 mask=True,
                 dtype=object,
             )
@@ -1385,11 +1383,18 @@ class GridSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
         self.param_grid = param_grid
-        _check_param_grid(param_grid)
+        if not hasattr(param_grid, "get_grid"):
+            _check_param_grid(param_grid)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid))
+        if hasattr(self.param_grid, "get_grid"):
+            param_grid = self.param_grid.get_grid(self.estimator)
+        else:
+            param_grid = self.param_grid
+        _check_param_grid(param_grid)
+
+        evaluate_candidates(ParameterGrid(param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
