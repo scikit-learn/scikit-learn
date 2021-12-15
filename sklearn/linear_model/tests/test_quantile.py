@@ -47,7 +47,7 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
 
 
 @pytest.mark.parametrize("solver", ["revised simplex"])
-def test_incompatible_solver_sparse(X_y_data, solver):
+def test_incompatible_solver_for_sparse_input(X_y_data, solver):
     X, y = X_y_data
     X_sparse = sparse.csc_matrix(X)
     err_msg = (
