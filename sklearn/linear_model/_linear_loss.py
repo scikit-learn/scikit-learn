@@ -98,11 +98,11 @@ class LinearLoss:
         ----------
         coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
             Coefficients of a linear model.
-        y : C/F-contiguous array of shape (n_samples,)
+        y : contiguous array of shape (n_samples,)
             Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-        sample_weight : None or C/F-contiguous array of shape (n_samples,)
+        sample_weight : None or contiguous array of shape (n_samples,)
             Sample weights.
         alpha: float
             L2 regularization strength
@@ -136,11 +136,11 @@ class LinearLoss:
         ----------
         coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
             Coefficients of a linear model.
-        y : C/F-contiguous array of shape (n_samples,)
+        y : contiguous array of shape (n_samples,)
             Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-        sample_weight : None or C/F-contiguous array of shape (n_samples,)
+        sample_weight : None or contiguous array of shape (n_samples,)
             Sample weights.
         alpha: float
             L2 regularization strength
@@ -190,11 +190,11 @@ class LinearLoss:
         ----------
         coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
             Coefficients of a linear model.
-        y : C/F-contiguous array of shape (n_samples,)
+        y : contiguous array of shape (n_samples,)
             Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-        sample_weight : None or C/F-contiguous array of shape (n_samples,)
+        sample_weight : None or contiguous array of shape (n_samples,)
             Sample weights.
         alpha: float
             L2 regularization strength
@@ -238,11 +238,11 @@ class LinearLoss:
         ----------
         coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
             Coefficients of a linear model.
-        y : C/F-contiguous array of shape (n_samples,)
+        y : contiguous array of shape (n_samples,)
             Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-        sample_weight : None or C/F-contiguous array of shape (n_samples,)
+        sample_weight : None or contiguous array of shape (n_samples,)
             Sample weights.
         alpha: float
             L2 regularization strength
