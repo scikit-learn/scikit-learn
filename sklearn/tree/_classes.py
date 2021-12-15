@@ -253,22 +253,37 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, numbers.Integral):
-            if not 2 <= self.min_samples_split:
-                raise ValueError(
-                    "min_samples_split must be an integer "
-                    "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the integer %s"
-                    % self.min_samples_split
-                )
+            # if not 2 <= self.min_samples_split:
+            #     raise ValueError(
+            #         "min_samples_split must be an integer "
+            #         "greater than 1 or a float in (0.0, 1.0]; "
+            #         "got the integer %s"
+            #         % self.min_samples_split
+            #     )
+            check_scalar(
+                self.min_samples_split,
+                "min_samples_split",
+                target_type=numbers.Integral,
+                min_val=1,
+                include_boundaries="neither",
+            )
             min_samples_split = self.min_samples_split
-        else:  # float
-            if not 0.0 < self.min_samples_split <= 1.0:
-                raise ValueError(
-                    "min_samples_split must be an integer "
-                    "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the float %s"
-                    % self.min_samples_split
-                )
+        else:  # float, string, other
+            # if not 0.0 < self.min_samples_split <= 1.0:
+            #     raise ValueError(
+            #         "min_samples_split must be an integer "
+            #         "greater than 1 or a float in (0.0, 1.0]; "
+            #         "got the float %s"
+            #         % self.min_samples_split
+            #     )
+            check_scalar(
+                self.min_samples_split,
+                "min_samples_split",
+                target_type=numbers.Real,
+                min_val=0.0,
+                max_val=1.0,
+                include_boundaries="right",
+            )
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 

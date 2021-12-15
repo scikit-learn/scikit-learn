@@ -594,14 +594,14 @@ def test_error():
             TreeEstimator(min_weight_fraction_leaf=-1).fit(X, y)
         with pytest.raises(ValueError):
             TreeEstimator(min_weight_fraction_leaf=0.51).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_split=-1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_split=0.0).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_split=1.1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_split=2.5).fit(X, y)
+        # with pytest.raises(ValueError):
+        #     TreeEstimator(min_samples_split=-1).fit(X, y)
+        # with pytest.raises(ValueError):
+        #     TreeEstimator(min_samples_split=0.0).fit(X, y)
+        # with pytest.raises(ValueError):
+        #     TreeEstimator(min_samples_split=1.1).fit(X, y)
+        # with pytest.raises(ValueError):
+        #     TreeEstimator(min_samples_split=2.5).fit(X, y)
         # with pytest.raises(ValueError):
         #     TreeEstimator(max_depth=-1).fit(X, y)
         with pytest.raises(ValueError):
@@ -671,6 +671,29 @@ def test_error():
             {"max_depth": 1.1},
             TypeError,
             "max_depth must be an instance of <class 'numbers.Integral'>, not",
+        ),
+        ({"min_samples_split": -1}, ValueError, "min_samples_split == -1, must be > 1"),
+        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be > 1"),
+        (
+            {"min_samples_split": 0.0},
+            ValueError,
+            "min_samples_split == 0.0, must be > 0.0",
+        ),
+        (
+            {"min_samples_split": 1.1},
+            ValueError,
+            "min_samples_split == 1.1, must be <= 1.0",
+        ),
+        (
+            {"min_samples_split": 2.5},
+            ValueError,
+            "min_samples_split == 2.5, must be <= 1.0",
+        ),
+        (
+            {"min_samples_split": "foo"},
+            TypeError,
+            "min_samples_split must be an instance of <class 'numbers.Real'>, not"
+            " <class 'str'>.",
         ),
     ],
 )
