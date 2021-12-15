@@ -46,13 +46,12 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
         QuantileRegressor(**params).fit(X, y)
 
 
-@pytest.mark.parametrize("solver", ["revised simplex"])
+@pytest.mark.parametrize("solver", ["interior-point", "revised simplex"])
 def test_incompatible_solver_for_sparse_input(X_y_data, solver):
     X, y = X_y_data
     X_sparse = sparse.csc_matrix(X)
     err_msg = (
-        "Solver revised simplex does not support sparse X. Use solver 'highs' for"
-        " example."
+        f"Solver {solver} does not support sparse X. Use solver 'highs' for example."
     )
     with pytest.raises(ValueError, match=err_msg):
         QuantileRegressor(solver=solver).fit(X_sparse, y)
@@ -272,7 +271,7 @@ def test_linprog_failure():
 @pytest.mark.parametrize(
     "sparse_format", [sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix]
 )
-@pytest.mark.parametrize("solver", ["highs", "highs-ds", "highs-ipm", "interior-point"])
+@pytest.mark.parametrize("solver", ["highs", "highs-ds", "highs-ipm"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_sparse_input(sparse_format, solver, fit_intercept):
     """Test that sparse and dense X give same results."""
