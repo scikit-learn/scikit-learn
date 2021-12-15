@@ -868,6 +868,11 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
 
     predictions = column_or_1d(predictions)
     y = column_or_1d(y)
+    sample_weight = _check_sample_weight(
+        sample_weight, predictions, dtype=predictions.dtype
+    )
+    mask = sample_weight > 0
+    predictions, y, sample_weight = predictions[mask], y[mask], sample_weight[mask]
 
     idx_pos = y == 1
     idx_neg = ~idx_pos
@@ -883,7 +888,7 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
 
     # Replace undefined values with 0 to silent warning, but could be any
     # value since no scores will fall in these undefined bins
-    replace = np.zeros_like(hist_pos)
+    replace = np.full_like(hist_pos, np.nan)
     prob_bins = np.divide(hist_pos, hist_tot, out=replace, where=(hist_tot != 0))
 
     # Return the indices of the bins to which each input proba belongs
@@ -895,7 +900,7 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
     # For each predicted proba, get the estimated true proba
     prob_cal = prob_bins[i_bins - 1]
 
-    return prob_cal
+    return predictions, prob_cal
 
 
 class _NonParametricCalibration(RegressorMixin, BaseEstimator):
@@ -905,7 +910,6 @@ class _NonParametricCalibration(RegressorMixin, BaseEstimator):
         self.confidence_method = confidence_method
 
     def _process(self, X):
-        X = X.reshape(-1, 1)
         """Convert given scores to probas if they come from decision_function."""
         if self.confidence_method == "predict_proba":
             return X
@@ -919,14 +923,16 @@ class _NonParametricCalibration(RegressorMixin, BaseEstimator):
 
     def fit(self, X, y, sample_weight=None):
         X = self._process(X)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
         # Estimate the calibrated probabilities using bins
-        prob_cal = _non_parametric_calibration(X, y, self.n_bins, sample_weight)
+        X, prob_cal = _non_parametric_calibration(X, y, self.n_bins, sample_weight)
+        X = X.reshape(-1, 1)
         self.method.fit(X, prob_cal)
         return self
 
     def predict(self, T):
         T = self._process(T)
+        T = T.reshape(-1, 1)
         return np.clip(self.method.predict(T), 0, 1)
 
 
