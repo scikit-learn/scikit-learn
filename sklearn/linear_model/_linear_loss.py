@@ -28,16 +28,15 @@ class LinearLoss:
 
         if loss.is_multiclass:
             coef.shape = (n_classes * n_dof,)
-            intercept.shape = (n_classes)
         else:
             coef.shape = (n_dof,)
-            intercept.shape = (1) or it is a float
 
         The intercept term is at the end of the coef array:
         if loss.is_multiclass:
-            coef[n_features::n_dof] = coef[(n_dof-1)::n_dof]
+            intercept = coef[n_features::n_dof] = coef[(n_dof-1)::n_dof]
+            intercept.shape = (n_classes,)
         else:
-            coef[-1]
+            intercept = coef[-1]
 
     Note: If the average loss per sample is wanted instead of the sum of the
     loss per sample, one can simply use a rescaled sample_weight such that
