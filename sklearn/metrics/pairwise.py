@@ -610,7 +610,7 @@ def pairwise_distances_argmin_min(
     axis : int, default=1
         Axis along which the argmin and distances are to be computed.
 
-    metric : str or callable, default="euclidean"
+    metric : str or callable, default='euclidean'
         Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 

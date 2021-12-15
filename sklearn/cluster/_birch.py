@@ -680,13 +680,11 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
     def _predict(self, X):
         """Predict data using the ``centroids_`` of subclusters."""
-        metric_kwargs = {"Y_norm_squared": self._subcluster_norms}
+        kwargs = {"Y_norm_squared": self._subcluster_norms}
 
         with config_context(assume_finite=True):
             argmin = pairwise_distances_argmin(
-                X,
-                self.subcluster_centers_,
-                metric_kwargs=metric_kwargs,
+                X, self.subcluster_centers_, metric_kwargs=kwargs
             )
         return self.subcluster_labels_[argmin]
 
@@ -732,8 +730,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 "n_clusters should be an instance of ClusterMixin or an int"
             )
 
-        # We compute subcluster norms once here, so that we won't need to compute it
-        # again at each call of `Birch.predict`.
+        # To use in predict to avoid recalculation.
         self._subcluster_norms = row_norms(self.subcluster_centers_, squared=True)
 
         if clusterer is None or not_enough_centroids:
