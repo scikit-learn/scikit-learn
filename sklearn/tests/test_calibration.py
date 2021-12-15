@@ -39,6 +39,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve, CalibrationDisplay
+from sklearn.calibration import _NonParametricCalibration
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 
@@ -369,8 +370,12 @@ def test_calibration_ensemble_false(data, method):
     unbiased_preds = cross_val_predict(clf, X, y, cv=3, method="decision_function")
     if method == "isotonic":
         calibrator = IsotonicRegression(out_of_bounds="clip")
-    else:
+    elif method == "sigmoid":
         calibrator = _SigmoidCalibration()
+    else:
+        calibrator = _NonParametricCalibration(
+            method=method, confidence_method="decision_function"
+        )
     calibrator.fit(unbiased_preds, y)
     # Use `clf` fit on all data
     clf.fit(X, y)

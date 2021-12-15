@@ -908,6 +908,7 @@ class _NonParametricCalibration(RegressorMixin, BaseEstimator):
         self.confidence_method = confidence_method
 
     def _process(self, X):
+        X = X.reshape(-1, 1)
         """Convert given scores to probas if they come from decision_function."""
         if self.confidence_method == "predict_proba":
             return X
@@ -919,7 +920,7 @@ class _NonParametricCalibration(RegressorMixin, BaseEstimator):
                 f"or 'decision_function'. Got {self.confidence_method}."
             )
 
-    def fit(self, X, y, sample_weight):
+    def fit(self, X, y, sample_weight=None):
         X = self._process(X)
         # Estimate the calibrated probabilities using bins
         prob_cal = _non_parametric_calibration(X, y, self.n_bins, sample_weight)
