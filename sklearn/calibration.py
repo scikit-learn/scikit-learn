@@ -615,7 +615,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     classes : ndarray, shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}
+    method : str ('sigmoid' or 'isotonic') or custom scikit-learn regressor
         The method to use for calibration.
 
     sample_weight : ndarray, shape (n_samples,), default=None
@@ -661,18 +661,19 @@ class _CalibratedClassifier:
         Fitted classifier.
 
     calibrators : list of fitted estimator instances
-        List of fitted calibrators (either 'IsotonicRegression' or
-        '_SigmoidCalibration'). The number of calibrators equals the number of
-        classes. However, if there are 2 classes, the list contains only one
-        fitted calibrator.
+        List of fitted calibrators (either 'IsotonicRegression',
+        '_SigmoidCalibration' or '_NonParametricCalibration'). The number of
+        calibrators equals the number of classes. However, if there are 2
+        classes, the list contains only one fitted calibrator.
 
     classes : array-like of shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}, default='sigmoid'
+    method : str ('sigmoid' or 'isotonic') or custom regressor, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method or 'isotonic' which is a
-        non-parametric approach based on isotonic regression.
+        corresponds to Platt's method, 'isotonic' which is a
+        non-parametric approach based on isotonic regression, or a custom
+        scikit-learn-compatible regressor.
     """
 
     def __init__(self, base_estimator, calibrators, *, classes, method="sigmoid"):
@@ -858,8 +859,38 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def _non_parametric_calibration(scores, y, n_bins, sample_weight):
-    """Estimate the calibrated probabilities with binning."""
+def _non_parametric_calibration(scores, y, sample_weight, n_bins):
+    """Estimate the calibrated probabilities with binning.
+
+    Parameters
+    ----------
+    scores : ndarray of shape (n_samples,)
+        The decision function or predict proba for the samples.
+
+    y : ndarray of shape (n_samples,)
+        The targets.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If None, then samples are equally weighted.
+
+    n_bins : int
+        Number of bins to use in [0, 1] to estimate the calibrated
+        probabilities.
+
+    Returns
+    -------
+    scores : ndarray
+        The decision function or predict proba for the samples.
+
+    prob_cal : ndarray
+        The estimated .
+
+    Notes
+    -----
+    The returned scores array contains the same values as the input scores
+    except that the values with a null weight are discarded. Returned scores
+    and prob_cal arrays are of the same shape.
+    """
     if (scores > 1).any() or (scores < 0).any():
         raise ValueError("Predicted scores should be in [0, 1].")
 
@@ -901,6 +932,20 @@ def _non_parametric_calibration(scores, y, n_bins, sample_weight):
 
 
 class _NonParametricCalibration(RegressorMixin, BaseEstimator):
+    """Non parametric calibration using a custom regressor.
+
+    Parameters:
+    -----------
+    method : RegressorMixin object
+        The regressor to use for the calibration.
+    n_bins : int, default=15
+        The number of bins used to estimate the true probabilities from
+        predicted scores.
+    confidence_method : {'predict_proba', 'decision_function'}, default='predict_proba'
+        The method used by the classifier to compute the confidence in its
+        predictions.
+    """
+
     def __init__(self, method, n_bins=15, confidence_method="predict_proba"):
         self.method = clone(method)
         self.n_bins = n_bins
@@ -919,15 +964,46 @@ class _NonParametricCalibration(RegressorMixin, BaseEstimator):
             )
 
     def fit(self, X, y, sample_weight=None):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples,) or (n_samples, 1)
+            Training data.
+
+        y : array-like of shape (n_samples,)
+            Training target.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Weights. If set to None, all weights will be set to 1 (equal
+            weights).
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
         X = self._process(X)
 
         # Estimate the calibrated probabilities using bins
-        X, prob_cal = _non_parametric_calibration(X, y, self.n_bins, sample_weight)
+        X, prob_cal = _non_parametric_calibration(X, y, sample_weight, self.n_bins)
         X = X.reshape(-1, 1)
         self.method.fit(X, prob_cal)
         return self
 
     def predict(self, T):
+        """Predict calibrated probabilities using the regressor.
+
+        Parameters
+        ----------
+        T : array-like of shape (n_samples,) or (n_samples, 1)
+            Data to transform.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            Transformed data.
+        """
         T = self._process(T)
         T = T.reshape(-1, 1)
         return np.clip(self.method.predict(T), 0, 1)
