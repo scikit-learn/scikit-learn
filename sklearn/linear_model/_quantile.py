@@ -46,7 +46,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Method used by :func:`scipy.optimize.linprog` to solve the linear
         programming formulation. Note that the highs methods are recommended
         for usage with `scipy>=1.6.0` because they are the fastest ones.
-        solvers "highs-ds", "highs-ipm", "highs", "interior-point" support
+        solvers "highs-ds", "highs-ipm", "highs" and "interior-point" support
         sparse input data.
 
     solver_options : dict, default=None
