@@ -863,6 +863,9 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight=None):
     if len(np.unique(y)) > 2:
         raise NotImplementedError("Multidim not yet implemented.")
 
+    if (predictions > 1).any() or (predictions < 0).any():
+        raise ValueError("Predicted probas should be in [0, 1].")
+
     predictions = column_or_1d(predictions)
     y = column_or_1d(y)
 
@@ -888,6 +891,9 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight=None):
 
     # Return the indices of the bins to which each input proba belongs
     i_bins = np.digitize(predictions, bins=bins)
+    # When a score is equal to the upper bound of the greatest bin (here 1),
+    # np.digitize associates it to bin number n_bins+1 which is out of bound.
+    i_bins = np.clip(i_bins, 1, n_bins)
 
     # For each predicted proba, get the estimated true proba
     prob_cal = prob_bins[i_bins - 1]
