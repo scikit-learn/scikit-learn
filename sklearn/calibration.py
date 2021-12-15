@@ -874,18 +874,19 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
     mask = sample_weight > 0
     predictions, y, sample_weight = predictions[mask], y[mask], sample_weight[mask]
 
-    idx_pos = y == 1
-    idx_neg = ~idx_pos
+    # Build the histograms of the positive and negative classes using a 2D
+    # histogram where predicted scores are splitted in n_bins bins along the
+    # x axis and the labels y are splitted in 2 bins along the y axis
+    hist_2d, bins, _ = np.histogram2d(
+        predictions, y, bins=(n_bins, 2), range=[[0, 1], [0, 1]], weights=sample_weight
+    )
 
-    prob_pos = predictions[idx_pos]
-    prob_neg = predictions[idx_neg]
-    sw_pos = sample_weight[idx_pos]
-    sw_neg = sample_weight[idx_neg]
+    # Retrieve the histograms of the positive class and the one of both
+    hist_pos = hist_2d[:, 1]
+    hist_tot = hist_2d.sum(axis=1)
 
-    hist_pos, bins = np.histogram(prob_pos, bins=n_bins, range=(0, 1), weights=sw_pos)
-    hist_neg, _ = np.histogram(prob_neg, bins=n_bins, range=(0, 1), weights=sw_neg)
-    hist_tot = hist_pos + hist_neg
-
+    # From the two histograms, estimate the probability of the positive class
+    # given the predicted score bin.
     # Replace undefined values with 0 to silent warning, but could be any
     # value since no scores will fall in these undefined bins
     replace = np.full_like(hist_pos, np.nan)
@@ -897,7 +898,7 @@ def _non_parametric_calibration(predictions, y, n_bins, sample_weight):
     # np.digitize associates it to bin number n_bins+1 which is out of bound.
     i_bins = np.clip(i_bins, 1, n_bins)
 
-    # For each predicted proba, get the estimated true proba
+    # For each predicted score, get the estimated true proba
     prob_cal = prob_bins[i_bins - 1]
 
     return predictions, prob_cal
