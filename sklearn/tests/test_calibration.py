@@ -50,7 +50,7 @@ def data():
 
 
 @pytest.mark.parametrize(
-    "method", ["sigmoid", "isotonic", HistGradientBoostingRegressor(monotonic_cst=[1])]
+    "method", ["sigmoid", "isotonic", HistGradientBoostingRegressor()]
 )
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration(data, method, ensemble):
