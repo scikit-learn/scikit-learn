@@ -110,16 +110,6 @@ def test_glm_link_auto(family, expected_link_class):
     assert isinstance(glm._link_instance, expected_link_class)
 
 
-@pytest.mark.parametrize("alpha", ["not a number", -4.2])
-def test_glm_alpha_argument(alpha):
-    """Test GLM for invalid alpha argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(family="normal", alpha=alpha)
-    with pytest.raises(ValueError, match="Penalty term must be a non-negative"):
-        glm.fit(X, y)
-
-
 @pytest.mark.parametrize("fit_intercept", ["not bool", 1, 0, [True]])
 def test_glm_fit_intercept_argument(fit_intercept):
     """Test GLM for invalid fit_intercept argument."""
@@ -182,6 +172,12 @@ def test_glm_solver_argument(solver):
             "verbose must be an instance of <class 'numbers.Integral'>, not <class"
             " 'str'>",
         ),
+        (
+            {"verbose": 1.0},
+            TypeError,
+            "verbose must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'float'>",
+        ),
     ],
 )
 def test_glm_scalar_argument(params, err_type, err_msg):
@@ -190,16 +186,6 @@ def test_glm_scalar_argument(params, err_type, err_msg):
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(**params)
     with pytest.raises(err_type, match=err_msg):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize("tol", ["not a number", 0, -1.0, [1e-3]])
-def test_glm_tol_argument(tol):
-    """Test GLM for invalid tol argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(tol=tol)
-    with pytest.raises(ValueError, match="stopping criteria must be positive"):
         glm.fit(X, y)
 
 
