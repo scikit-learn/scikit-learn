@@ -79,20 +79,26 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
         X : array-like of shape (n_samples, n_features)
         """
-        check_scalar(self.n_components, name='n_components',
-                     target_type=numbers.Integral, min_val=1)
+        check_scalar(
+            self.n_components,
+            name="n_components",
+            target_type=numbers.Integral,
+            min_val=1,
+        )
 
-        check_scalar(self.tol, name='tol',
-                     target_type=numbers.Real, min_val=0.0)
+        check_scalar(self.tol, name="tol", target_type=numbers.Real, min_val=0.0)
 
-        check_scalar(self.n_init, name='n_init',
-                     target_type=numbers.Integral, min_val=1)
+        check_scalar(
+            self.n_init, name="n_init", target_type=numbers.Integral, min_val=1
+        )
 
-        check_scalar(self.max_iter, name='max_iter',
-                     target_type=numbers.Integral, min_val=0)
+        check_scalar(
+            self.max_iter, name="max_iter", target_type=numbers.Integral, min_val=0
+        )
 
-        check_scalar(self.reg_covar, name='reg_covar',
-                     target_type=numbers.Real, min_val=0.0)
+        check_scalar(
+            self.reg_covar, name="reg_covar", target_type=numbers.Real, min_val=0.0
+        )
 
         # Check all the parameters values of the derived class
         self._check_parameters(X)
@@ -124,8 +130,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             resp = np.zeros((n_samples, self.n_components))
             label = (
                 cluster.KMeans(
-                    n_clusters=self.n_components, n_init=1,
-                    random_state=random_state
+                    n_clusters=self.n_components, n_init=1, random_state=random_state
                 )
                 .fit(X)
                 .labels_
