@@ -602,8 +602,8 @@ def test_error():
             TreeEstimator(min_samples_split=1.1).fit(X, y)
         with pytest.raises(ValueError):
             TreeEstimator(min_samples_split=2.5).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(max_depth=-1).fit(X, y)
+        # with pytest.raises(ValueError):
+        #     TreeEstimator(max_depth=-1).fit(X, y)
         with pytest.raises(ValueError):
             TreeEstimator(max_features=42).fit(X, y)
         with pytest.raises(ValueError):
@@ -660,6 +660,31 @@ def test_error():
         est.fit([[0, 1, 2]], [0, 0, 0])
     with pytest.raises(ValueError, match="Some.*y are negative.*Poisson"):
         est.fit([[0, 1, 2]], [5, -0.1, 2])
+
+
+@pytest.mark.parametrize("name, Tree", ALL_TREES.items())
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"max_depth": -1}, ValueError, "max_depth == -1, must be > 0"),
+        (
+            {"max_depth": 1.1},
+            TypeError,
+            "max_depth must be an instance of <class 'numbers.Integral'>, not",
+        ),
+    ],
+)
+def test_tree_params_validation(name, Tree, params, err_type, err_msg):
+    """Check parameter validation in DecisionTreeClassifier, DecisionTreeRegressor,
+    ExtraTreeClassifier, and ExtraTreeRegressor.
+    """
+    if "Classifier" in name:
+        X, y = iris.data, iris.target
+    else:
+        X, y = diabetes.data, diabetes.target
+    est = Tree(**params)
+    with pytest.raises(err_type, match=err_msg):
+        est.fit(X, y)
 
 
 def test_min_samples_split():
