@@ -1412,3 +1412,17 @@ def test_ordinal_encoder_unknown_missing_interaction():
     X_test = np.array([["c"], [np.nan]], dtype=object)
     X_test_trans = oe.transform(X_test)
     assert_allclose(X_test_trans, [[np.nan], [-3]])
+
+
+def test_ordinal_encoder_encoded_missing_value_error():
+    """Check OrdinalEncoder errors when encoded_missing_value is used by
+    an known category."""
+    X = np.array([["a"], ["b"], [np.nan]], dtype=object)
+
+    oe = OrdinalEncoder(encoded_missing_value=0)
+
+    error_msg = (
+        r"encoded_missing_value \(0\) is already used to encode a known category"
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        oe.fit(X)

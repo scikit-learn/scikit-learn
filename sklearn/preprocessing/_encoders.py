@@ -911,9 +911,10 @@ class OrdinalEncoder(_BaseEncoder):
                     self._missing_indices[cat_idx] = i
                     continue
 
-        dtype_kind = np.dtype(self.dtype).kind
         if self._missing_indices:
-            if dtype_kind != "f" and is_scalar_nan(self.encoded_missing_value):
+            if np.dtype(self.dtype).kind != "f" and is_scalar_nan(
+                self.encoded_missing_value
+            ):
                 raise ValueError(
                     "There are missing values in features "
                     f"{list(self._missing_indices)}. For OrdinalEncoder to "
@@ -921,6 +922,14 @@ class OrdinalEncoder(_BaseEncoder):
                     "encoded_missing_value to a non-nan value, or "
                     "set dtype to a float"
                 )
+
+            if not is_scalar_nan(self.encoded_missing_value):
+                for feature_cats in self.categories_:
+                    if 0 <= self.encoded_missing_value < len(feature_cats):
+                        raise ValueError(
+                            f"encoded_missing_value ({self.encoded_missing_value}) "
+                            "is already used to encode a known category"
+                        )
 
         return self
 
