@@ -525,9 +525,9 @@ def test_logistic_loss_and_grad():
             fit_intercept=False,
         )
         # First check that our derivation of the grad is correct
-        loss, grad = logloss.loss_gradient(w, X, y, alpha=alpha)
+        loss, grad = logloss.loss_gradient(w, X, y, l2_reg_strength=alpha)
         approx_grad = optimize.approx_fprime(
-            w, lambda w: logloss.loss(w, X, y, alpha=alpha), 1e-3
+            w, lambda w: logloss.loss(w, X, y, l2_reg_strength=alpha), 1e-3
         )
         assert_array_almost_equal(grad, approx_grad, decimal=2)
 
@@ -536,12 +536,14 @@ def test_logistic_loss_and_grad():
             loss=HalfBinomialLoss(),
             fit_intercept=True,
         )
-        loss_inter, grad_inter = logloss.loss_gradient(w, X_inter, y, alpha=alpha)
+        loss_inter, grad_inter = logloss.loss_gradient(
+            w, X_inter, y, l2_reg_strength=alpha
+        )
         # Note, that intercept gets no L2 penalty.
         assert loss == pytest.approx(loss_inter + 0.5 * alpha * w[-1] ** 2)
 
         approx_grad = optimize.approx_fprime(
-            w, lambda w: logloss.loss(w, X_inter, y, alpha=alpha), 1e-3
+            w, lambda w: logloss.loss(w, X_inter, y, l2_reg_strength=alpha), 1e-3
         )
         assert_array_almost_equal(grad_inter, approx_grad, decimal=2)
 
@@ -565,9 +567,9 @@ def test_logistic_grad_hess():
 
         # First check that gradients from gradient(), loss_gradient() and
         # gradient_hessp() are consistent
-        grad = logloss.gradient(w, X, y, alpha=alpha)
-        loss, grad_2 = logloss.loss_gradient(w, X, y, alpha=alpha)
-        grad_3, hessp = logloss.gradient_hessp(w, X, y, alpha=alpha)
+        grad = logloss.gradient(w, X, y, l2_reg_strength=alpha)
+        loss, grad_2 = logloss.loss_gradient(w, X, y, l2_reg_strength=alpha)
+        grad_3, hessp = logloss.gradient_hessp(w, X, y, l2_reg_strength=alpha)
         assert_array_almost_equal(grad, grad_2)
         assert_array_almost_equal(grad, grad_3)
 
@@ -583,7 +585,7 @@ def test_logistic_grad_hess():
         e = 1e-3
         d_x = np.linspace(-e, e, 30)
         d_grad = np.array(
-            [logloss.gradient(w + t * vector, X, y, alpha=alpha) for t in d_x]
+            [logloss.gradient(w + t * vector, X, y, l2_reg_strength=alpha) for t in d_x]
         )
 
         d_grad -= d_grad.mean(axis=0)
@@ -594,9 +596,9 @@ def test_logistic_grad_hess():
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
         logloss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=True)
-        loss_inter, grad_inter = logloss.loss_gradient(w, X, y, alpha=alpha)
-        loss_inter_2 = logloss.loss(w, X, y, alpha=alpha)
-        grad_inter_2, hess = logloss.gradient_hessp(w, X, y, alpha=alpha)
+        loss_inter, grad_inter = logloss.loss_gradient(w, X, y, l2_reg_strength=alpha)
+        loss_inter_2 = logloss.loss(w, X, y, l2_reg_strength=alpha)
+        grad_inter_2, hess = logloss.gradient_hessp(w, X, y, l2_reg_strength=alpha)
         assert_array_almost_equal(loss_inter, loss_inter_2)
         assert_array_almost_equal(grad_inter, grad_inter_2)
 
@@ -736,8 +738,8 @@ def test_intercept_logistic_helper():
     logloss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=True)
     alpha = 1.0
     w = np.ones(n_features + 1)
-    grad_inter, hess_inter = logloss.gradient_hessp(w, X, y, alpha=alpha)
-    loss_inter = logloss.loss(w, X, y, alpha=alpha)
+    grad_inter, hess_inter = logloss.gradient_hessp(w, X, y, l2_reg_strength=alpha)
+    loss_inter = logloss.loss(w, X, y, l2_reg_strength=alpha)
 
     # Do not fit intercept. This can be considered equivalent to adding
     # a feature vector of ones, i.e last column vector's elements are all one.
@@ -746,8 +748,8 @@ def test_intercept_logistic_helper():
         loss=HalfBinomialLoss(),
         fit_intercept=False,
     )
-    grad, hessp = logloss.gradient_hessp(w, X_, y, alpha=alpha)
-    loss = logloss.loss(w, X_, y, alpha=alpha)
+    grad, hessp = logloss.gradient_hessp(w, X_, y, l2_reg_strength=alpha)
+    loss = logloss.loss(w, X_, y, l2_reg_strength=alpha)
 
     # In the fit_intercept=False case, the feature vector of ones is
     # penalized. This should be taken care of.
@@ -1161,7 +1163,7 @@ def test_multinomial_grad_hess():
         fit_intercept=False,
     )
     grad, hessp = multinomial.gradient_hessp(
-        w, X, y, alpha=alpha, sample_weight=sample_weights
+        w, X, y, l2_reg_strength=alpha, sample_weight=sample_weights
     )
     # extract first column of hessian matrix
     vec = np.zeros(n_features * n_classes)
@@ -1175,7 +1177,7 @@ def test_multinomial_grad_hess():
     d_grad = np.array(
         [
             multinomial.gradient_hessp(
-                w + t * vec, X, y, alpha=alpha, sample_weight=sample_weights
+                w + t * vec, X, y, l2_reg_strength=alpha, sample_weight=sample_weights
             )[0]
             for t in d_x
         ]

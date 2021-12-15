@@ -11,14 +11,15 @@ class LinearLoss:
 
     The loss is the sum of per sample losses and includes an L2 term::
 
-        loss = sum_i s_i loss(y_i, X_i @ coef + intercept) + 1/2 * alpha * ||coef||_2^2
+        loss = sum_i s_i loss(y_i, X_i @ coef + intercept)
+               + 1/2 * l2_reg_strength * ||coef||_2^2
 
     with sample weights s_i=1 if sample_weight=None.
 
     Gradient and hessian, for simplicity without intercept, are::
 
-        gradient = X.T @ loss.gradient + alpha * coef
-        hessian = X.T @ diag(loss.hessian) @ X + alpha * identity
+        gradient = X.T @ loss.gradient + l2_reg_strength * coef
+        hessian = X.T @ diag(loss.hessian) @ X + l2_reg_strength * identity
 
     Conventions:
         if fit_intercept:
@@ -91,7 +92,7 @@ class LinearLoss:
 
         return w, intercept, raw_prediction
 
-    def loss(self, coef, X, y, sample_weight=None, alpha=0.0, n_threads=1):
+    def loss(self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1):
         """Compute the loss as sum over point-wise losses.
 
         Parameters
@@ -104,7 +105,7 @@ class LinearLoss:
             Training data.
         sample_weight : None or contiguous array of shape (n_samples,)
             Sample weights.
-        alpha: float
+        l2_reg_strength: float
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
@@ -125,11 +126,13 @@ class LinearLoss:
         loss = loss.sum()
 
         if w.ndim == 1:
-            return loss + 0.5 * alpha * (w @ w)
+            return loss + 0.5 * l2_reg_strength * (w @ w)
         else:
-            return loss + 0.5 * alpha * squared_norm(w)
+            return loss + 0.5 * l2_reg_strength * squared_norm(w)
 
-    def loss_gradient(self, coef, X, y, sample_weight=None, alpha=0.0, n_threads=1):
+    def loss_gradient(
+        self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
+    ):
         """Computes the sum/average of loss and gradient.
 
         Parameters
@@ -142,7 +145,7 @@ class LinearLoss:
             Training data.
         sample_weight : None or contiguous array of shape (n_samples,)
             Sample weights.
-        alpha: float
+        l2_reg_strength: float
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
@@ -168,22 +171,24 @@ class LinearLoss:
         loss = loss.sum()
 
         if not self._loss.is_multiclass:
-            loss += 0.5 * alpha * (w @ w)
+            loss += 0.5 * l2_reg_strength * (w @ w)
             grad = np.empty_like(coef, dtype=X.dtype)
-            grad[:n_features] = X.T @ gradient_per_sample + alpha * w
+            grad[:n_features] = X.T @ gradient_per_sample + l2_reg_strength * w
             if self.fit_intercept:
                 grad[-1] = gradient_per_sample.sum()
             return loss, grad
         else:
-            loss += 0.5 * alpha * squared_norm(w)
+            loss += 0.5 * l2_reg_strength * squared_norm(w)
             grad = np.empty((n_classes, n_dof), dtype=X.dtype)
             # gradient.shape = (n_samples, n_classes)
-            grad[:, :n_features] = gradient_per_sample.T @ X + alpha * w
+            grad[:, :n_features] = gradient_per_sample.T @ X + l2_reg_strength * w
             if self.fit_intercept:
                 grad[:, -1] = gradient_per_sample.sum(axis=0)
             return loss, grad.ravel()
 
-    def gradient(self, coef, X, y, sample_weight=None, alpha=0.0, n_threads=1):
+    def gradient(
+        self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
+    ):
         """Computes the gradient.
 
         Parameters
@@ -196,7 +201,7 @@ class LinearLoss:
             Training data.
         sample_weight : None or contiguous array of shape (n_samples,)
             Sample weights.
-        alpha: float
+        l2_reg_strength: float
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
@@ -219,19 +224,21 @@ class LinearLoss:
 
         if not self._loss.is_multiclass:
             grad = np.empty_like(coef, dtype=X.dtype)
-            grad[:n_features] = X.T @ gradient_per_sample + alpha * w
+            grad[:n_features] = X.T @ gradient_per_sample + l2_reg_strength * w
             if self.fit_intercept:
                 grad[-1] = gradient_per_sample.sum()
             return grad
         else:
             grad = np.empty((n_classes, n_dof), dtype=X.dtype)
             # gradient.shape = (n_samples, n_classes)
-            grad[:, :n_features] = gradient_per_sample.T @ X + alpha * w
+            grad[:, :n_features] = gradient_per_sample.T @ X + l2_reg_strength * w
             if self.fit_intercept:
                 grad[:, -1] = gradient_per_sample.sum(axis=0)
             return grad.ravel()
 
-    def gradient_hessp(self, coef, X, y, sample_weight=None, alpha=0.0, n_threads=1):
+    def gradient_hessp(
+        self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
+    ):
         """Computes gradient and hessp (hessian product function).
 
         Parameters
@@ -244,7 +251,7 @@ class LinearLoss:
             Training data.
         sample_weight : None or contiguous array of shape (n_samples,)
             Sample weights.
-        alpha: float
+        l2_reg_strength: float
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
@@ -269,7 +276,7 @@ class LinearLoss:
                 n_threads=n_threads,
             )
             grad = np.empty_like(coef, dtype=X.dtype)
-            grad[:n_features] = X.T @ gradient + alpha * w
+            grad[:n_features] = X.T @ gradient + l2_reg_strength * w
             if self.fit_intercept:
                 grad[-1] = gradient.sum()
 
@@ -285,7 +292,7 @@ class LinearLoss:
                 # Note: In case hX is sparse, hX.sum is a matrix object.
                 hh_intercept = np.squeeze(np.array(hX.sum(axis=0)))
 
-            # With intercept included and alpha = 0, hessp returns
+            # With intercept included and l2_reg_strength = 0, hessp returns
             # res = (X, 1)' @ diag(h) @ (X, 1) @ s
             #     = (X, 1)' @ (hX @ s[:n_features], sum(h) * s[-1])
             # res[:n_features] = X' @ hX @ s[:n_features] + sum(h) * s[-1]
@@ -296,7 +303,7 @@ class LinearLoss:
                     ret[:n_features] = X.T @ (hX @ s[:n_features])
                 else:
                     ret[:n_features] = np.linalg.multi_dot([X.T, hX, s[:n_features]])
-                ret[:n_features] += alpha * s[:n_features]
+                ret[:n_features] += l2_reg_strength * s[:n_features]
 
                 if self.fit_intercept:
                     ret[:n_features] += s[-1] * hh_intercept
@@ -316,7 +323,7 @@ class LinearLoss:
                 n_threads=n_threads,
             )
             grad = np.empty_like(coef.reshape(n_classes, -1), dtype=X.dtype)
-            grad[:, :n_features] = gradient.T @ X + alpha * w
+            grad[:, :n_features] = gradient.T @ X + l2_reg_strength * w
             if self.fit_intercept:
                 grad[:, -1] = gradient.sum(axis=0)
 
@@ -353,7 +360,7 @@ class LinearLoss:
                 if sample_weight is not None:
                     tmp *= sample_weight[:, np.newaxis]
                 hess_prod = np.empty_like(grad)
-                hess_prod[:, :n_features] = tmp.T @ X + alpha * s
+                hess_prod[:, :n_features] = tmp.T @ X + l2_reg_strength * s
                 if self.fit_intercept:
                     hess_prod[:, -1] = tmp.sum(axis=0)
                 return hess_prod.ravel()
