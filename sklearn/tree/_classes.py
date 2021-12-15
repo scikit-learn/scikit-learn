@@ -32,6 +32,7 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
+from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -225,6 +226,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
+        if self.max_depth is not None:
+            check_scalar(
+                self.max_depth,
+                "max_depth",
+                target_type=numbers.Integral,
+                min_val=0,
+                include_boundaries="neither",
+            )
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
@@ -300,8 +309,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
-        if max_depth <= 0:
-            raise ValueError("max_depth must be greater than zero. ")
+        # if max_depth <= 0:
+        #     raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_in_):
             raise ValueError("max_features must be in (0, n_features]")
         if not isinstance(max_leaf_nodes, numbers.Integral):
