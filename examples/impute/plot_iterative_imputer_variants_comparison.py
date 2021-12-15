@@ -116,12 +116,12 @@ estimators = [
     KNeighborsRegressor(n_neighbors=15),
 ]
 score_iterative_imputer = pd.DataFrame()
-tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
 # iterative imputer is sensible to the tolerance and
 # dependent on the estimator used internally.
 # we tuned the tolerance to keep this example run with limited computational
 # resources while not changing the results too much compared to keeping the
 # stricter default value for the tolerance parameter.
+tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
 for impute_estimator, tol in zip(estimators, tolerances):
     estimator = make_pipeline(
         IterativeImputer(
