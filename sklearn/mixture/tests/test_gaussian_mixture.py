@@ -1260,7 +1260,6 @@ def test_init_param(init_params):
     gmm.fit(X)
     default_means = np.sort(gmm.means_.flatten())
 
-
     gmm = GaussianMixture(
         n_components=n_components,
         random_state=rng,
