@@ -1244,8 +1244,9 @@ def test_gaussian_mixture_setting_best_params():
         assert hasattr(gmm, attr)
 
 
-@pytest.mark.parametrize("init_params", ["random", "random_from_data",
-                                         "k-means++", "kmeans"])
+@pytest.mark.parametrize(
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+)
 def test_init_param(init_params):
     # Check that the init_param options produces valid output.
     # Compare all to default (kmeans).
@@ -1268,8 +1269,7 @@ def test_init_param(init_params):
         max_iter=1000,
     )
     gmm.fit(X)
-    assert_almost_equal(default_means, np.sort(gmm.means_.flatten()),
-                        decimal=10)
+    assert_almost_equal(default_means, np.sort(gmm.means_.flatten()), decimal=10)
 
     # Check that all initialisations provide unique starting means
 
