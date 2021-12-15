@@ -149,5 +149,7 @@ The following workflow [1]_ is a good way to approach issue triaging:
    An additional useful step can be to tag the corresponding module e.g.
    `sklearn.linear_models` when relevant.
 
+#. Remove the "Needs Triage" label from the issue if the label exists.
+
 .. [1] Adapted from the pandas project `maintainers guide
        <https://dev.pandas.io/docs/development/maintaining.html>`_
