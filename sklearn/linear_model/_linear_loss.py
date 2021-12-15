@@ -159,7 +159,7 @@ class LinearLoss:
         n_dof = n_features + self.fit_intercept
         w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
-        loss, gradient = self._loss.loss_gradient(
+        loss, gradient_per_sample = self._loss.loss_gradient(
             y_true=y,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -170,17 +170,17 @@ class LinearLoss:
         if not self._loss.is_multiclass:
             loss += 0.5 * alpha * (w @ w)
             grad = np.empty_like(coef, dtype=X.dtype)
-            grad[:n_features] = X.T @ gradient + alpha * w
+            grad[:n_features] = X.T @ gradient_per_sample + alpha * w
             if self.fit_intercept:
-                grad[-1] = gradient.sum()
+                grad[-1] = gradient_per_sample.sum()
             return loss, grad
         else:
             loss += 0.5 * alpha * squared_norm(w)
             grad = np.empty((n_classes, n_dof), dtype=X.dtype)
             # gradient.shape = (n_samples, n_classes)
-            grad[:, :n_features] = gradient.T @ X + alpha * w
+            grad[:, :n_features] = gradient_per_sample.T @ X + alpha * w
             if self.fit_intercept:
-                grad[:, -1] = gradient.sum(axis=0)
+                grad[:, -1] = gradient_per_sample.sum(axis=0)
             return loss, grad.ravel()
 
     def gradient(self, coef, X, y, sample_weight=None, alpha=0.0, n_threads=1):
@@ -210,7 +210,7 @@ class LinearLoss:
         n_dof = n_features + self.fit_intercept
         w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
-        gradient = self._loss.gradient(
+        gradient_per_sample = self._loss.gradient(
             y_true=y,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -219,16 +219,16 @@ class LinearLoss:
 
         if not self._loss.is_multiclass:
             grad = np.empty_like(coef, dtype=X.dtype)
-            grad[:n_features] = X.T @ gradient + alpha * w
+            grad[:n_features] = X.T @ gradient_per_sample + alpha * w
             if self.fit_intercept:
-                grad[-1] = gradient.sum()
+                grad[-1] = gradient_per_sample.sum()
             return grad
         else:
             grad = np.empty((n_classes, n_dof), dtype=X.dtype)
             # gradient.shape = (n_samples, n_classes)
-            grad[:, :n_features] = gradient.T @ X + alpha * w
+            grad[:, :n_features] = gradient_per_sample.T @ X + alpha * w
             if self.fit_intercept:
-                grad[:, -1] = gradient.sum(axis=0)
+                grad[:, -1] = gradient_per_sample.sum(axis=0)
             return grad.ravel()
 
     def gradient_hessp(self, coef, X, y, sample_weight=None, alpha=0.0, n_threads=1):
