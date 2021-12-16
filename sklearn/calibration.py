@@ -266,7 +266,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             Sample weights. If None, then samples are equally weighted.
 
         **fit_params : dict
-            Parameters passed to the `fit` method of the underlying
+            Parameters to pass to the `fit` method of the underlying
             classifier.
 
         Returns
@@ -515,8 +515,9 @@ def _fit_classifier_calibrator_pair(
     sample_weight : array-like, default=None
         Sample weights for `X`.
 
-    **fit_params : dict of str -> object
-        Parameters passed to the ``fit`` method of the estimator
+    **fit_params : dict
+        Parameters to pass to the `fit` method of the underlying
+        classifier.
 
     Returns
     -------
