@@ -36,9 +36,14 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
-from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
-from sklearn.calibration import calibration_curve
+from sklearn.calibration import (
+    _CalibratedClassifier,
+    _SigmoidCalibration,
+    _sigmoid_calibration,
+    CalibratedClassifierCV,
+    CalibrationDisplay,
+    calibration_curve,
+)
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import _convert_container
 
@@ -911,7 +916,16 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
         calibrated_clf_with_weights.calibrated_classifiers_,
         calibrated_clf_without_weights.calibrated_classifiers_,
     ):
-        assert clf1 is clf2
+        assert_allclose(
+            est_with_weights.base_estimator.coef_,
+            est_without_weights.base_estimator.coef_,
+        )
+
+    # Check that the predictions are the same
+    y_pred_with_weights = calibrated_clf_with_weights.predict_proba(X)
+    y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
+
+    assert_allclose(y_pred_with_weights, y_pred_without_weights)
 
 
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
@@ -988,16 +1002,6 @@ def test_calibration_with_fit_params_inconsistent_length(data):
     )
     with pytest.raises(ValueError, match=msg):
         pc_clf.fit(X, y, **fit_params)
-        assert_allclose(
-            est_with_weights.base_estimator.coef_,
-            est_without_weights.base_estimator.coef_,
-        )
-
-    # Check that the predictions are the same
-    y_pred_with_weights = calibrated_clf_with_weights.predict_proba(X)
-    y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
-
-    assert_allclose(y_pred_with_weights, y_pred_without_weights)
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
