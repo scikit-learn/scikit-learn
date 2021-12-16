@@ -218,7 +218,7 @@ cdef class PairwiseDistancesReduction:
 
             Strategies differs on the dispatching they use for chunks on threads:
 
-              - 'parallel_on__X' dispatches chunks of X uniformly on threads.
+              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
               Each thread then iterates on all the chunks of Y. This strategy is
               embarrassingly parallel and comes with no datastructures synchronisation.
 
@@ -228,7 +228,7 @@ cdef class PairwiseDistancesReduction:
               synchronisation.
 
               - 'auto' relies on a simple heuristic to choose between
-              'parallel_on__X' and 'parallel_on_Y'.
+              'parallel_on_X' and 'parallel_on_Y'.
 
               - None (default) looks-up in scikit-learn configuration for
               `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
