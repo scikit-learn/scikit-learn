@@ -695,6 +695,12 @@ def test_error():
             "min_samples_split must be an instance of <class 'numbers.Real'>, not"
             " <class 'str'>.",
         ),
+        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
+        (
+            {"max_leaf_nodes": 1.5},
+            TypeError,
+            "max_leaf_nodes must be an instance of <class 'numbers.Integral'>",
+        ),
         (
             {"min_impurity_decrease": -1.0},
             ValueError,

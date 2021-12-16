@@ -235,6 +235,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 include_boundaries="neither",
             )
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
+
+        if self.max_leaf_nodes is not None:
+            check_scalar(
+                self.max_leaf_nodes,
+                "max_leaf_nodes",
+                target_type=numbers.Integral,
+                min_val=2,
+                include_boundaries="left",
+            )
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
         if isinstance(self.min_samples_leaf, numbers.Integral):
@@ -328,16 +337,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         #     raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_in_):
             raise ValueError("max_features must be in (0, n_features]")
-        if not isinstance(max_leaf_nodes, numbers.Integral):
-            raise ValueError(
-                "max_leaf_nodes must be integral number but was %r" % max_leaf_nodes
-            )
-        if -1 < max_leaf_nodes < 2:
-            raise ValueError(
-                ("max_leaf_nodes {0} must be either None or larger than 1").format(
-                    max_leaf_nodes
-                )
-            )
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
