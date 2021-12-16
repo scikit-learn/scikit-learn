@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 
 # Import datasets, classifiers and performance metrics
+from sklearn.datasets import fetch_openml
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -70,8 +71,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Consequently, we need to find similar movies to a given movie
 # in order to make a movie proposal the user might like.
 
-# Read .csv file and write data into dataframe
-df = pd.read_csv("movies.csv")
+# Fetch dataset from OpenML and load it as a dataframe
+X, y = fetch_openml('movies', version=1, as_frame=True, return_X_y=True)
+X = X.astype({"index": int})
 
 # Choose relevant columns of the dataframe as feature set
 features = ["keywords", "cast", "genres", "director"]
@@ -83,17 +85,17 @@ def concat_features(row):
 
 # Replacing NaN values with blank strings
 for feature in features:
-	df[feature] = df[feature].fillna("")
+	X[feature] = X[feature].fillna("")
 
 # Iterating over each dataframe row, applying concat_features
 # method to each row and writing resulting string in the
 # newly created concatenated_features column
-df["concatenated_features"] = df.apply(concat_features, axis=1)
+X["concatenated_features"] = X.apply(concat_features, axis=1)
 
 # Calling CountVectorizer to receive the count matrix
 # listing the number of occurences of each word/element
 cv = CountVectorizer()
-count_matrix = cv.fit_transform(df["concatenated_features"])
+count_matrix = cv.fit_transform(X["concatenated_features"])
 
 # Calculate the cosine similarity matrix from the count matrix
 # All word matrices base on the same principle. Word similarity
@@ -109,11 +111,11 @@ cosine_sim = cosine_similarity(count_matrix)
 
 # Retrieving a movie title from an index
 def get_title_from_index(index):
-	return df[df.index == index]["title"].values[0]
+	return X[X.index == index]["title"].values[0]
 
 # Retrieving a movie index from a title
 def get_index_from_title(title):
-	return df[df.title == title]["index"].values[0]
+	return X[X.title == title]["index"].values[0]
 
 # Ask user for the title of movie he/she likes
 movie_user_likes = "Avatar"
