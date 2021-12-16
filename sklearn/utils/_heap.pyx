@@ -4,7 +4,7 @@ from ._typedefs cimport ITYPE_t
 
 cdef inline void dual_swap(floating* darr, ITYPE_t* iarr,
                            ITYPE_t a, ITYPE_t b) nogil:
-    """Swap the values at index i1 and i2 of both darr and iarr"""
+    """Swap the values at index a and b of both darr and iarr"""
     cdef floating dtmp = darr[a]
     darr[a] = darr[b]
     darr[b] = dtmp
@@ -19,8 +19,8 @@ cdef int simultaneous_sort(
     ITYPE_t size
 ) nogil:
     """
-    Perform a recursive quicksort on the values array, simultaneously
-    performing the same swaps on the indices array.
+    Perform a recursive quicksort on the values array as to sort them ascendingly.
+    This simultaneously perform the swaps on both the values and the indices arrays.
 
     The numpy equivalent is:
 
@@ -28,6 +28,10 @@ cdef int simultaneous_sort(
              i = np.argsort(dist)
              return dist[i], idx[i]
 
+    Notes
+    -----
+    Arrays are manipulated via a pointer to there first element and their size
+    as to ease the processing of dynamically allocated buffers.
     """
     # TODO: In order to support discrete distance metrics, we need to have a
     # simultaneous sort which breaks ties on indices when distances are identical.
@@ -65,7 +69,7 @@ cdef int simultaneous_sort(
                 dual_swap(values, indices, 0, size - 1)
         pivot_val = values[size - 1]
 
-        # partition indices about pivot.  At the end of this operation,
+        # Partition indices about pivot.  At the end of this operation,
         # pivot_idx will contain the pivot value, everything to the left
         # will be smaller, and everything to the right will be larger.
         store_idx = 0
@@ -76,7 +80,7 @@ cdef int simultaneous_sort(
         dual_swap(values, indices, store_idx, size - 1)
         pivot_idx = store_idx
 
-        # recursively sort each side of the pivot
+        # Recursively sort each side of the pivot
         if pivot_idx > 1:
             simultaneous_sort(values, indices, pivot_idx)
         if pivot_idx + 2 < size:
@@ -93,24 +97,29 @@ cdef inline int heap_push(
     floating val,
     ITYPE_t val_idx,
 ) nogil:
-    """Push a tuple (val, val_idx) into a fixed-size max-heap.
+    """Push a tuple (val, val_idx) onto a fixed-size max-heap.
 
-    The max-heap is represented as a struct of arrays where:
-     - values is the array containing the data to construct the heap on
-     - indices is the array containing the indices (meta-data) of each value.
+    The max-heap is represented as a Structure of Arrays where:
+     - values is the array containing the data to construct then heap with
+     - indices is the array containing the indices (meta-data) of each value
+
+    Notes
+    -----
+    Arrays are manipulated via a pointer to there first element and their size
+    as to ease the processing of dynamically allocated buffers.
     """
     cdef:
         ITYPE_t current_idx, left_child_idx, right_child_idx, swap_idx
 
-    # check if val should be in heap
+    # Check if val should be in heap
     if val >= values[0]:
         return 0
 
-    # insert val at position zero
+    # Insert val at position zero
     values[0] = val
     indices[0] = val_idx
 
-    # descend the heap, swapping values until the max heap criterion is met
+    # Descend the heap, swapping values until the max heap criterion is met
     current_idx = 0
     while True:
         left_child_idx = 2 * current_idx + 1

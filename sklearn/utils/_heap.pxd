@@ -1,4 +1,4 @@
-# Heap routines, used in various Cython implementation.
+# Heap routines, used in various Cython implementations.
 
 from cython cimport floating
 
