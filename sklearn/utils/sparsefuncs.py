@@ -5,12 +5,12 @@
 # License: BSD 3 clause
 import scipy.sparse as sp
 import numpy as np
-from .validation import _deprecate_positional_args
 
 from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
-    incr_mean_variance_axis0 as _incr_mean_var_axis0)
+    incr_mean_variance_axis0 as _incr_mean_var_axis0,
+)
 from ..utils.validation import _check_sample_weight
 
 
@@ -24,7 +24,8 @@ def _raise_typeerror(X):
 def _raise_error_wrong_axis(axis):
     if axis not in (0, 1):
         raise ValueError(
-            "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
+            "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis
+        )
 
 
 def inplace_csr_column_scale(X, scale):
@@ -43,11 +44,11 @@ def inplace_csr_column_scale(X, scale):
         Array of precomputed feature-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[1]
-    X.data *= scale.take(X.indices, mode='clip')
+    X.data *= scale.take(X.indices, mode="clip")
 
 
 def inplace_csr_row_scale(X, scale):
-    """ Inplace row scaling of a CSR matrix.
+    """Inplace row scaling of a CSR matrix.
 
     Scale each sample of the data matrix by multiplying with specific scale
     provided by the caller assuming a (n_samples, n_features) shape.
@@ -105,24 +106,26 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
             return _csr_mean_var_axis0(
-                X, weights=weights, return_sum_weights=return_sum_weights)
+                X, weights=weights, return_sum_weights=return_sum_weights
+            )
         else:
             return _csc_mean_var_axis0(
-                X.T, weights=weights, return_sum_weights=return_sum_weights)
+                X.T, weights=weights, return_sum_weights=return_sum_weights
+            )
     elif isinstance(X, sp.csc_matrix):
         if axis == 0:
             return _csc_mean_var_axis0(
-                X, weights=weights, return_sum_weights=return_sum_weights)
+                X, weights=weights, return_sum_weights=return_sum_weights
+            )
         else:
             return _csr_mean_var_axis0(
-                X.T, weights=weights, return_sum_weights=return_sum_weights)
+                X.T, weights=weights, return_sum_weights=return_sum_weights
+            )
     else:
         _raise_typeerror(X)
 
 
-@_deprecate_positional_args
-def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
-                            weights=None):
+def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=None):
     """Compute incremental mean and variance along an axis on a CSR or
     CSC matrix.
 
@@ -192,20 +195,18 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
         last_n = np.full(last_mean.shape, last_n, dtype=last_mean.dtype)
 
     if not (np.size(last_mean) == np.size(last_var) == np.size(last_n)):
-        raise ValueError(
-            "last_mean, last_var, last_n do not have the same shapes."
-        )
+        raise ValueError("last_mean, last_var, last_n do not have the same shapes.")
 
     if axis == 1:
         if np.size(last_mean) != X.shape[0]:
             raise ValueError(
-                f"If axis=1, then last_mean, last_n, last_var should be of "
+                "If axis=1, then last_mean, last_n, last_var should be of "
                 f"size n_samples {X.shape[0]} (Got {np.size(last_mean)})."
             )
     else:  # axis == 0
         if np.size(last_mean) != X.shape[1]:
             raise ValueError(
-                f"If axis=0, then last_mean, last_n, last_var should be of "
+                "If axis=0, then last_mean, last_n, last_var should be of "
                 f"size n_features {X.shape[1]} (Got {np.size(last_mean)})."
             )
 
@@ -214,9 +215,9 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n,
     if weights is not None:
         weights = _check_sample_weight(weights, X, dtype=X.dtype)
 
-    return _incr_mean_var_axis0(X, last_mean=last_mean,
-                                last_var=last_var, last_n=last_n,
-                                weights=weights)
+    return _incr_mean_var_axis0(
+        X, last_mean=last_mean, last_var=last_var, last_n=last_n, weights=weights
+    )
 
 
 def inplace_column_scale(X, scale):
@@ -243,7 +244,7 @@ def inplace_column_scale(X, scale):
 
 
 def inplace_row_scale(X, scale):
-    """ Inplace row scaling of a CSR or CSC matrix.
+    """Inplace row scaling of a CSR or CSC matrix.
 
     Scale each row of the data matrix by multiplying with specific scale
     provided by the caller assuming a (n_samples, n_features) shape.
@@ -334,20 +335,28 @@ def inplace_swap_row_csr(X, m, n):
 
     if nz_m != nz_n:
         # Modify indptr first
-        X.indptr[m + 2:n] += nz_n - nz_m
+        X.indptr[m + 2 : n] += nz_n - nz_m
         X.indptr[m + 1] = m_start + nz_n
         X.indptr[n] = n_stop - nz_m
 
-    X.indices = np.concatenate([X.indices[:m_start],
-                                X.indices[n_start:n_stop],
-                                X.indices[m_stop:n_start],
-                                X.indices[m_start:m_stop],
-                                X.indices[n_stop:]])
-    X.data = np.concatenate([X.data[:m_start],
-                             X.data[n_start:n_stop],
-                             X.data[m_stop:n_start],
-                             X.data[m_start:m_stop],
-                             X.data[n_stop:]])
+    X.indices = np.concatenate(
+        [
+            X.indices[:m_start],
+            X.indices[n_start:n_stop],
+            X.indices[m_stop:n_start],
+            X.indices[m_start:m_stop],
+            X.indices[n_stop:],
+        ]
+    )
+    X.data = np.concatenate(
+        [
+            X.data[:m_start],
+            X.data[n_start:n_stop],
+            X.data[m_stop:n_start],
+            X.data[m_start:m_stop],
+            X.data[n_stop:],
+        ]
+    )
 
 
 def inplace_swap_row(X, m, n):
@@ -428,11 +437,13 @@ def _min_or_max_axis(X, axis, min_or_max):
     value = np.compress(mask, value)
 
     if axis == 0:
-        res = sp.coo_matrix((value, (np.zeros(len(value)), major_index)),
-                            dtype=X.dtype, shape=(1, M))
+        res = sp.coo_matrix(
+            (value, (np.zeros(len(value)), major_index)), dtype=X.dtype, shape=(1, M)
+        )
     else:
-        res = sp.coo_matrix((value, (major_index, np.zeros(len(value)))),
-                            dtype=X.dtype, shape=(M, 1))
+        res = sp.coo_matrix(
+            (value, (major_index, np.zeros(len(value)))), dtype=X.dtype, shape=(M, 1)
+        )
     return res.A.ravel()
 
 
@@ -456,13 +467,14 @@ def _sparse_min_or_max(X, axis, min_or_max):
 
 
 def _sparse_min_max(X, axis):
-        return (_sparse_min_or_max(X, axis, np.minimum),
-                _sparse_min_or_max(X, axis, np.maximum))
+    return (
+        _sparse_min_or_max(X, axis, np.minimum),
+        _sparse_min_or_max(X, axis, np.maximum),
+    )
 
 
 def _sparse_nan_min_max(X, axis):
-    return(_sparse_min_or_max(X, axis, np.fmin),
-           _sparse_min_or_max(X, axis, np.fmax))
+    return (_sparse_min_or_max(X, axis, np.fmin), _sparse_min_or_max(X, axis, np.fmax))
 
 
 def min_max_axis(X, axis, ignore_nan=False):
@@ -520,8 +532,8 @@ def count_nonzero(X, axis=None, sample_weight=None):
         axis = 1
     elif axis == -2:
         axis = 0
-    elif X.format != 'csr':
-        raise TypeError('Expected CSR sparse format, got {0}'.format(X.format))
+    elif X.format != "csr":
+        raise TypeError("Expected CSR sparse format, got {0}".format(X.format))
 
     # We rely here on the fact that np.diff(Y.indptr) for a CSR
     # will return the number of nonzero entries in each row.
@@ -536,17 +548,16 @@ def count_nonzero(X, axis=None, sample_weight=None):
         out = np.diff(X.indptr)
         if sample_weight is None:
             # astype here is for consistency with axis=0 dtype
-            return out.astype('intp')
+            return out.astype("intp")
         return out * sample_weight
     elif axis == 0:
         if sample_weight is None:
             return np.bincount(X.indices, minlength=X.shape[1])
         else:
             weights = np.repeat(sample_weight, np.diff(X.indptr))
-            return np.bincount(X.indices, minlength=X.shape[1],
-                            weights=weights)
+            return np.bincount(X.indices, minlength=X.shape[1], weights=weights)
     else:
-        raise ValueError('Unsupported axis: {0}'.format(axis))
+        raise ValueError("Unsupported axis: {0}".format(axis))
 
 
 def _get_median(data, n_zeros):
@@ -565,8 +576,10 @@ def _get_median(data, n_zeros):
     if is_odd:
         return _get_elem_at_rank(middle, data, n_negative, n_zeros)
 
-    return (_get_elem_at_rank(middle - 1, data, n_negative, n_zeros) +
-            _get_elem_at_rank(middle, data, n_negative, n_zeros)) / 2.
+    return (
+        _get_elem_at_rank(middle - 1, data, n_negative, n_zeros)
+        + _get_elem_at_rank(middle, data, n_negative, n_zeros)
+    ) / 2.0
 
 
 def _get_elem_at_rank(rank, data, n_negative, n_zeros):
@@ -603,7 +616,7 @@ def csc_median_axis_0(X):
     for f_ind, (start, end) in enumerate(zip(indptr[:-1], indptr[1:])):
 
         # Prevent modifying X in place
-        data = np.copy(X.data[start: end])
+        data = np.copy(X.data[start:end])
         nz = n_samples - data.size
         median[f_ind] = _get_median(data, nz)
 

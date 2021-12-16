@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
 """This module contains routines for building histograms."""
 
 # Author: Nicolas Hug
@@ -53,7 +49,7 @@ cdef class HistogramBuilder:
 
     There are different ways to build a histogram:
     - by subtraction: hist(child) = hist(parent) - hist(sibling)
-    - from scratch. In this case we have rountines that update the hessians
+    - from scratch. In this case we have routines that update the hessians
       or not (not useful when hessians are constant for some losses e.g.
       least squares). Also, there's a special case for the root which
       contains all the samples, leading to some possible optimizations.
@@ -85,11 +81,13 @@ cdef class HistogramBuilder:
         G_H_DTYPE_C [::1] ordered_gradients
         G_H_DTYPE_C [::1] ordered_hessians
         unsigned char hessians_are_constant
+        int n_threads
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
                  unsigned int n_bins, G_H_DTYPE_C [::1] gradients,
                  G_H_DTYPE_C [::1] hessians,
-                 unsigned char hessians_are_constant):
+                 unsigned char hessians_are_constant,
+                 int n_threads):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -102,6 +100,7 @@ cdef class HistogramBuilder:
         self.ordered_gradients = gradients.copy()
         self.ordered_hessians = hessians.copy()
         self.hessians_are_constant = hessians_are_constant
+        self.n_threads = n_threads
 
     def compute_histograms_brute(
             HistogramBuilder self,
@@ -137,6 +136,7 @@ cdef class HistogramBuilder:
                 shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
+            int n_threads = self.n_threads
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -146,14 +146,17 @@ cdef class HistogramBuilder:
             # cache hit.
             if sample_indices.shape[0] != gradients.shape[0]:
                 if hessians_are_constant:
-                    for i in prange(n_samples, schedule='static'):
+                    for i in prange(n_samples, schedule='static',
+                                    num_threads=n_threads):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                 else:
-                    for i in prange(n_samples, schedule='static'):
+                    for i in prange(n_samples, schedule='static',
+                                    num_threads=n_threads):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
-            for feature_idx in prange(n_features, schedule='static'):
+            for feature_idx in prange(n_features, schedule='static',
+                                      num_threads=n_threads):
                 # Compute histogram of each feature
                 self._compute_histogram_brute_single_feature(
                     feature_idx, sample_indices, histograms)
@@ -238,8 +241,10 @@ cdef class HistogramBuilder:
                 shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
+            int n_threads = self.n_threads
 
-        for feature_idx in prange(n_features, schedule='static', nogil=True):
+        for feature_idx in prange(n_features, schedule='static', nogil=True,
+                                  num_threads=n_threads):
             # Compute histogram of each feature
             _subtract_histograms(feature_idx,
                                  self.n_bins,

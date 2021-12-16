@@ -207,19 +207,22 @@ results will stop getting significantly better beyond a critical number of
 trees. The latter is the size of the random subsets of features to consider
 when splitting a node. The lower the greater the reduction of variance, but
 also the greater the increase in bias. Empirical good default values are
-``max_features=None`` (always considering all features instead of a random
-subset) for regression problems, and ``max_features="sqrt"`` (using a random
-subset of size ``sqrt(n_features)``) for classification tasks (where
-``n_features`` is the number of features in the data). Good results are often
-achieved when setting ``max_depth=None`` in combination with
-``min_samples_split=2`` (i.e., when fully developing the trees). Bear in mind
-though that these values are usually not optimal, and might result in models
-that consume a lot of RAM. The best parameter values should always be
-cross-validated. In addition, note that in random forests, bootstrap samples
-are used by default (``bootstrap=True``) while the default strategy for
-extra-trees is to use the whole dataset (``bootstrap=False``). When using
-bootstrap sampling the generalization accuracy can be estimated on the left out
-or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
+``max_features=1.0`` or equivalently ``max_features=None`` (always considering
+all features instead of a random subset) for regression problems, and
+``max_features="sqrt"`` (using a random subset of size ``sqrt(n_features)``)
+for classification tasks (where ``n_features`` is the number of features in
+the data). The default value of ``max_features=1.0`` is equivalent to bagged
+trees and more randomness can be achieved by setting smaller values (e.g. 0.3
+is a typical default in the literature). Good results are often achieved when
+setting ``max_depth=None`` in combination with ``min_samples_split=2`` (i.e.,
+when fully developing the trees). Bear in mind though that these values are
+usually not optimal, and might result in models that consume a lot of RAM.
+The best parameter values should always be cross-validated. In addition, note
+that in random forests, bootstrap samples are used by default
+(``bootstrap=True``) while the default strategy for extra-trees is to use the
+whole dataset (``bootstrap=False``). When using bootstrap sampling the
+generalization error can be estimated on the left out or out-of-bag samples.
+This can be enabled by setting ``oob_score=True``.
 
 .. note::
 
@@ -761,12 +764,12 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The negative binomial
-      log-likelihood loss function for binary classification (provides
+    * Binomial deviance (``'deviance'``): The binomial
+      negative log-likelihood loss function for binary classification (provides
       probability estimates).  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The negative multinomial
-      log-likelihood loss function for multi-class classification with
+    * Multinomial deviance (``'deviance'``): The multinomial
+      negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
       prior probability of each class. At each iteration ``n_classes``
@@ -944,7 +947,7 @@ controls the number of iterations of the boosting process::
   0.8965
 
 Available losses for regression are 'squared_error',
-'least_absolute_deviation', which is less sensitive to outliers, and
+'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
 'categorical_crossentropy' is used for multiclass classification. By default
@@ -1210,8 +1213,8 @@ Finally, many parts of the implementation of
      <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
   .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
      package", 2007
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, `"XGBoost: A Scalable Tree
-     Boosting System" <https://arxiv.org/abs/1603.02754>`_
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
+     Boosting System" <1603.02754>`
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_

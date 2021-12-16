@@ -153,11 +153,16 @@ import numpy as np
 import warnings
 from ..utils import check_array
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from ._typedefs import DTYPE, ITYPE
+from sklearn.utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from sklearn.utils._typedefs import DTYPE, ITYPE
 
-from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
-                             euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+from ..metrics._dist_metrics cimport (
+    DistanceMetric,
+    euclidean_dist,
+    euclidean_rdist,
+    euclidean_dist_to_rdist,
+    euclidean_rdist_to_dist,
+)
 
 from ._partition_nodes cimport partition_node_indices
 
@@ -246,6 +251,7 @@ Examples
 Query for k-nearest neighbors
 
     >>> import numpy as np
+    >>> from sklearn.neighbors import {BinaryTree}
     >>> rng = np.random.RandomState(0)
     >>> X = rng.random_sample((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
@@ -569,7 +575,7 @@ cdef class NeighborsHeap:
         cdef ITYPE_t* ind_arr = &self.indices[row, 0]
 
         # check if val should be in heap
-        if val > dist_arr[0]:
+        if val >= dist_arr[0]:
             return 0
 
         # insert val at position zero
@@ -877,7 +883,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-from ._dist_metrics import get_valid_metric_ids
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 
@@ -894,9 +900,13 @@ cdef class BinaryTree:
     cdef readonly const DTYPE_t[:, ::1] data
     cdef readonly const DTYPE_t[::1] sample_weight
     cdef public DTYPE_t sum_weight
-    cdef public ITYPE_t[::1] idx_array
-    cdef public NodeData_t[::1] node_data
-    cdef public DTYPE_t[:, :, ::1] node_bounds
+
+    # Even if those memoryviews attributes are const-qualified,
+    # they get modified via their numpy counterpart.
+    # For instance, `node_data` gets modified via `node_data_arr`.
+    cdef public const ITYPE_t[::1] idx_array
+    cdef public const NodeData_t[::1] node_data
+    cdef public const DTYPE_t[:, :, ::1] node_bounds
 
     cdef ITYPE_t leaf_size
     cdef ITYPE_t n_levels
@@ -980,7 +990,12 @@ cdef class BinaryTree:
 
         # Allocate tree-specific data
         allocate_data(self, self.n_nodes, n_features)
-        self._recursive_build(0, 0, n_samples)
+        self._recursive_build(
+            node_data=self.node_data_arr,
+            i_node=0,
+            idx_start=0,
+            idx_end=n_samples
+        )
 
     def _update_sample_weight(self, n_samples, sample_weight):
         if sample_weight is not None:
@@ -1127,7 +1142,7 @@ cdef class BinaryTree:
         else:
             return self.dist_metric.rdist(x1, x2, size)
 
-    cdef int _recursive_build(self, ITYPE_t i_node, ITYPE_t idx_start,
+    cdef int _recursive_build(self, NodeData_t[::1] node_data, ITYPE_t i_node, ITYPE_t idx_start,
                               ITYPE_t idx_end) except -1:
         """Recursively build the tree.
 
@@ -1147,10 +1162,10 @@ cdef class BinaryTree:
         cdef DTYPE_t* data = &self.data[0, 0]
 
         # initialize node data
-        init_node(self, i_node, idx_start, idx_end)
+        init_node(self, node_data, i_node, idx_start, idx_end)
 
         if 2 * i_node + 1 >= self.n_nodes:
-            self.node_data[i_node].is_leaf = True
+            node_data[i_node].is_leaf = True
             if idx_end - idx_start > 2 * self.leaf_size:
                 # this shouldn't happen if our memory allocation is correct
                 # we'll proactively prevent memory errors, but raise a
@@ -1165,18 +1180,18 @@ cdef class BinaryTree:
             import warnings
             warnings.warn("Internal: memory layout is flawed: "
                           "too many nodes allocated")
-            self.node_data[i_node].is_leaf = True
+            node_data[i_node].is_leaf = True
 
         else:
             # split node and recursively construct child nodes.
-            self.node_data[i_node].is_leaf = False
+            node_data[i_node].is_leaf = False
             i_max = find_node_split_dim(data, idx_array,
                                         n_features, n_points)
             partition_node_indices(data, idx_array, i_max, n_mid,
                                    n_features, n_points)
-            self._recursive_build(2 * i_node + 1,
+            self._recursive_build(node_data,2 * i_node + 1,
                                   idx_start, idx_start + n_mid)
-            self._recursive_build(2 * i_node + 2,
+            self._recursive_build(node_data, 2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
 
     def query(self, X, k=1, return_distance=True,
@@ -1511,11 +1526,16 @@ cdef class BinaryTree:
             - 'linear'
             - 'cosine'
             Default is kernel = 'gaussian'
-        atol, rtol : float, default=0, 1e-8
-            Specify the desired relative and absolute tolerance of the result.
-            If the true result is K_true, then the returned result K_ret
+        atol : float, default=0
+            Specify the desired absolute tolerance of the result.
+            If the true result is `K_true`, then the returned result `K_ret`
             satisfies ``abs(K_true - K_ret) < atol + rtol * K_ret``
-            The default is zero (i.e. machine precision) for both.
+            The default is zero (i.e. machine precision).
+        rtol : float, default=1e-8
+            Specify the desired relative tolerance of the result.
+            If the true result is `K_true`, then the returned result `K_ret`
+            satisfies ``abs(K_true - K_ret) < atol + rtol * K_ret``
+            The default is `1e-8` (i.e. machine precision).
         breadth_first : bool, default=False
             If True, use a breadth-first search.  If False (default) use a
             depth-first search.  Breadth-first is generally faster for
@@ -1716,8 +1736,7 @@ cdef class BinaryTree:
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
                                      self.data.shape[1])
-                if dist_pt < heap.largest(i_pt):
-                    heap._push(i_pt, dist_pt, self.idx_array[i])
+                heap._push(i_pt, dist_pt, self.idx_array[i])
 
         #------------------------------------------------------------
         # Case 3: Node is not a leaf.  Recursively query subnodes
@@ -1779,8 +1798,7 @@ cdef class BinaryTree:
                     dist_pt = self.rdist(pt,
                                          &self.data[self.idx_array[i], 0],
                                          self.data.shape[1])
-                    if dist_pt < heap.largest(i_pt):
-                        heap._push(i_pt, dist_pt, self.idx_array[i])
+                    heap._push(i_pt, dist_pt, self.idx_array[i])
 
             #------------------------------------------------------------
             # Case 3: Node is not a leaf.  Add subnodes to the node heap
@@ -1834,8 +1852,7 @@ cdef class BinaryTree:
                         data1 + n_features * self.idx_array[i1],
                         data2 + n_features * i_pt,
                         n_features)
-                    if dist_pt < heap.largest(i_pt):
-                        heap._push(i_pt, dist_pt, self.idx_array[i1])
+                    heap._push(i_pt, dist_pt, self.idx_array[i1])
 
                 # keep track of node bound
                 bounds[i_node2] = fmax(bounds[i_node2],
@@ -1947,8 +1964,7 @@ cdef class BinaryTree:
                             data1 + n_features * self.idx_array[i1],
                             data2 + n_features * i_pt,
                             n_features)
-                        if dist_pt < heap.largest(i_pt):
-                            heap._push(i_pt, dist_pt, self.idx_array[i1])
+                        heap._push(i_pt, dist_pt, self.idx_array[i1])
 
                     # keep track of node bound
                     bounds[i_node2] = fmax(bounds[i_node2],
