@@ -852,8 +852,6 @@ def test_permutation_test_score_fit_params():
         permutation_test_score(clf, X, y)
 
     err_msg = r"sample_weight.shape == \(1,\), expected \(8,\)!"
-    # FIXME: maybe it should be this:
-    # err_msg = "Fit parameter sample_weight has length 1; expected"
     with pytest.raises(ValueError, match=err_msg):
         permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(1)})
     permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(10)})
@@ -1524,8 +1522,6 @@ def test_learning_curve_fit_params():
         learning_curve(clf, X, y, error_score="raise")
 
     err_msg = r"sample_weight.shape == \(1,\), expected \(2,\)!"
-    # FIXME: maybe it should be this
-    # err_msg = "Fit parameter sample_weight has length 1; expected"
     with pytest.raises(ValueError, match=err_msg):
         learning_curve(
             clf, X, y, error_score="raise", fit_params={"sample_weight": np.ones(1)}
@@ -1695,8 +1691,6 @@ def test_validation_curve_fit_params():
         )
 
     err_msg = r"sample_weight.shape == \(1,\), expected \(8,\)!"
-    # FIXME: maybe it shoule be this
-    # err_msg = "Fit parameter sample_weight has length 1; expected"
     with pytest.raises(ValueError, match=err_msg):
         validation_curve(
             clf,
