@@ -251,8 +251,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             name="max_iter",
             target_type=numbers.Integral,
             min_val=1,
-            max_val=None,
-            include_boundaries="left",
         )
         check_scalar(
             self.tol,
