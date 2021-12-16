@@ -285,8 +285,8 @@ def r_regression(X, y, *, center=True):
     else:
         X_norms = row_norms(X.T)
 
+    correlation_coefficient = safe_sparse_dot(y, X)
     with np.errstate(divide="ignore", invalid="ignore"):
-        correlation_coefficient = safe_sparse_dot(y, X)
         correlation_coefficient /= X_norms
         correlation_coefficient /= np.linalg.norm(y)
     return correlation_coefficient
