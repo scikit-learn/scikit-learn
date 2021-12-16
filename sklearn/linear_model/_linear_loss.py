@@ -364,12 +364,13 @@ class LinearModelLoss:
                 grad[:, -1] = gradient.sum(axis=0)
 
             # Full hessian-vector product, i.e. not only the diagonal part of the
-            # hessian. Derivation with some index battle for inupt vector s:
+            # hessian. Derivation with some index battle for input vector s:
             #   - sample index i
             #   - feature indices j, m
             #   - class indices k, l
             #   - 1_{k=l} is one if k=l else 0
-            #   - p_i_k is class probability of sample i and class k
+            #   - p_i_k is the (predicted) probability that sample i belongs to class k
+            #     for all i: sum_k p_i_k = 1
             #   - s_l_m is input vector for class l and feature m
             #   - X' = X transposed
             #

@@ -240,9 +240,9 @@ Changelog
 - |Enhancement| :class:`~linear_model.LogisticRegression` is faster for
   ``solvers="lbfgs"`` and ``solver="newton-cg"``, for binary and in particular for
   multiclass problems thanks to the new private loss function module. In the multiclass
-  case, also the memory consumption is reduced for these solvers as the target is now
-  label encoded (mapped to integers) instead of label binarized (one-hot encoded). The
-  more classes, the larger the benefit.
+  case, the memory consumption has also been reduced for these solvers as the target is
+  now label encoded (mapped to integers) instead of label binarized (one-hot encoded).
+  The more classes, the larger the benefit.
   :pr:`21808`, :pr:`20567` and :pr:`21814` by
   :user:`Christian Lorentzen <lorentzenchr>`.
 

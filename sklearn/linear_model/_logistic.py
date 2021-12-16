@@ -319,6 +319,8 @@ def _logistic_regression_path(
         mask = y == pos_class
         y_bin = np.ones(y.shape, dtype=X.dtype)
         if solver in ["lbfgs", "newton-cg"]:
+            # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
+            # of in [-1, 1].
             mask_classes = np.array([0, 1])
             y_bin[~mask] = 0.0
         else:
@@ -335,7 +337,9 @@ def _logistic_regression_path(
     else:
         if solver in ["sag", "saga", "lbfgs", "newton-cg"]:
             # SAG, lbfgs and newton-cg multinomial solvers need LabelEncoder,
-            # not LabelBinarizer, i.e. y is mapped to integers.
+            # not LabelBinarizer, i.e. y as a 1d-array of integers.
+            # LabelEncoder also saves memory compared to LabelBinarizer, especially
+            # when n_classes is large.
             le = LabelEncoder()
             Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
         else:
