@@ -1,4 +1,4 @@
-from ._typedefs cimport DTYPE_t, ITYPE_t
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 
 cdef int partition_node_indices(
         DTYPE_t *data,

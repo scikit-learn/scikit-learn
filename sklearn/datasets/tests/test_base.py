@@ -26,8 +26,9 @@ from sklearn.datasets._base import (
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
-from sklearn.utils import Bunch
 from sklearn.preprocessing import scale
+from sklearn.utils import Bunch
+from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
 
 from sklearn.externals._pilutil import pillow_installed
@@ -238,6 +239,7 @@ def test_load_diabetes_raw():
     )
 
 
+@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 @pytest.mark.parametrize(
     "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
     [
@@ -333,3 +335,33 @@ def test_bunch_dir():
     # check that dir (important for autocomplete) shows attributes
     data = load_iris()
     assert "data" in dir(data)
+
+
+# FIXME: to be removed in 1.2
+def test_load_boston_warning():
+    """Check that we raise the ethical warning when loading `load_boston`."""
+    warn_msg = "The Boston housing prices dataset has an ethical problem"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        load_boston()
+
+
+@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
+def test_load_boston_alternative():
+    pd = pytest.importorskip("pandas")
+    if os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
+        raise SkipTest(
+            "This test requires an internet connection to fetch the dataset."
+        )
+
+    boston_sklearn = load_boston()
+
+    data_url = "http://lib.stat.cmu.edu/datasets/boston"
+    try:
+        raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
+    except ConnectionError as e:
+        pytest.xfail(f"The dataset can't be downloaded. Got exception: {e}")
+    data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+    target = raw_df.values[1::2, 2]
+
+    np.testing.assert_allclose(data, boston_sklearn.data)
+    np.testing.assert_allclose(target, boston_sklearn.target)

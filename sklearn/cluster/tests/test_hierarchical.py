@@ -17,7 +17,7 @@ from scipy.cluster import hierarchy
 from scipy.sparse.csgraph import connected_components
 
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.neighbors.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
+from sklearn.metrics.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
 from sklearn.utils._testing import assert_almost_equal, create_memmap_backed_data
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
@@ -31,6 +31,7 @@ from sklearn.cluster._agglomerative import (
     _fix_connectivity,
 )
 from sklearn.feature_extraction.image import grid_to_graph
+from sklearn.metrics import DistanceMetric
 from sklearn.metrics.pairwise import (
     PAIRED_DISTANCES,
     cosine_distances,
@@ -38,7 +39,7 @@ from sklearn.metrics.pairwise import (
     pairwise_distances,
 )
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors import kneighbors_graph, DistanceMetric
+from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster._hierarchical_fast import (
     average_merge,
     max_merge,
@@ -409,8 +410,8 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     assess_same_labelling(cut, cut_scipy)
 
 
-@pytest.mark.parametrize("metric", METRICS_DEFAULT_PARAMS)
-def test_mst_linkage_core_memory_mapped(metric):
+@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+def test_mst_linkage_core_memory_mapped(metric_param_grid):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
 
     Non-regression test for issue #19875.
@@ -418,9 +419,9 @@ def test_mst_linkage_core_memory_mapped(metric):
     rng = np.random.RandomState(seed=1)
     X = rng.normal(size=(20, 4))
     Xmm = create_memmap_backed_data(X)
-    argdict = METRICS_DEFAULT_PARAMS[metric]
-    keys = argdict.keys()
-    for vals in itertools.product(*argdict.values()):
+    metric, param_grid = metric_param_grid
+    keys = param_grid.keys()
+    for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         distance_metric = DistanceMetric.get_metric(metric, **kwargs)
         mst = mst_linkage_core(X, distance_metric)
@@ -869,7 +870,10 @@ def test_invalid_shape_precomputed_dist_matrix():
     # and a non square matrix is passed (PR #16257).
     rng = np.random.RandomState(0)
     X = rng.rand(5, 3)
-    with pytest.raises(ValueError, match="Distance matrix should be square, "):
+    with pytest.raises(
+        ValueError,
+        match=r"Distance matrix should be square, got matrix of shape \(5, 3\)",
+    ):
         AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(X)
 
 

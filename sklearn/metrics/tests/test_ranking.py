@@ -1479,7 +1479,7 @@ def test_coverage_error():
     assert_almost_equal(coverage_error([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 2)
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
 
-    # Non trival case
+    # Non trivial case
     assert_almost_equal(
         coverage_error([[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]]),
         (1 + 3) / 2.0,
@@ -1538,7 +1538,7 @@ def test_label_ranking_loss():
     assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
     assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
 
-    # Non trival case
+    # Non trivial case
     assert_almost_equal(
         label_ranking_loss([[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]]),
         (0 + 2 / 2) / 2.0,

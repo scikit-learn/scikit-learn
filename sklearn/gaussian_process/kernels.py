@@ -1821,7 +1821,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     --------
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.gaussian_process import GaussianProcessClassifier
-    >>> from sklearn.gaussian_process.kernels import Matern
+    >>> from sklearn.gaussian_process.kernels import RationalQuadratic
     >>> X, y = load_iris(return_X_y=True)
     >>> kernel = RationalQuadratic(length_scale=1.0, alpha=1.5)
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
@@ -2100,7 +2100,7 @@ class DotProduct(Kernel):
     ----------
     sigma_0 : float >= 0, default=1.0
         Parameter controlling the inhomogenity of the kernel. If sigma_0=0,
-        the kernel is homogenous.
+        the kernel is homogeneous.
 
     sigma_0_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
         The lower and upper bound on 'sigma_0'.

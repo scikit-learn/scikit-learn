@@ -5,6 +5,8 @@ import copy
 import pickle
 from itertools import product
 import struct
+import io
+import copyreg
 
 import pytest
 import numpy as np
@@ -12,6 +14,9 @@ from numpy.testing import assert_allclose
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
+
+import joblib
+from joblib.numpy_pickle import NumpyPickler
 
 from sklearn.random_projection import _sparse_random_matrix
 
@@ -32,6 +37,7 @@ from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
+from sklearn.utils import _IS_32BIT
 
 from sklearn.exceptions import NotFittedError
 
@@ -42,6 +48,12 @@ from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
+from sklearn.tree._tree import Tree as CythonTree
+from sklearn.tree._tree import _check_n_classes
+from sklearn.tree._tree import _check_value_ndarray
+from sklearn.tree._tree import _check_node_ndarray
+from sklearn.tree._tree import NODE_DTYPE
+
 from sklearn.tree._classes import CRITERIA_CLF
 from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
@@ -857,7 +869,7 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(name):
 
 def test_min_impurity_decrease():
     # test if min_impurity_decrease ensure that a split is made only if
-    # if the impurity decrease is atleast that value
+    # if the impurity decrease is at least that value
     X, y = datasets.make_classification(n_samples=10000, random_state=42)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -2132,21 +2144,6 @@ def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
     assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
-# TODO: Remove in v1.1
-@pytest.mark.parametrize(
-    "TreeEstimator", [DecisionTreeClassifier, DecisionTreeRegressor]
-)
-def test_X_idx_sorted_deprecated(TreeEstimator):
-    X_idx_sorted = np.argsort(X, axis=0)
-
-    tree = TreeEstimator()
-
-    with pytest.warns(
-        FutureWarning, match="The parameter 'X_idx_sorted' is deprecated"
-    ):
-        tree.fit(X, y, X_idx_sorted=X_idx_sorted)
-
-
 # TODO: Remove in v1.2
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize(
@@ -2179,3 +2176,252 @@ def test_n_features_deprecated(Tree):
 
     with pytest.warns(FutureWarning, match=depr_msg):
         Tree().fit(X, y).n_features_
+
+
+def test_different_endianness_pickle():
+    X, y = datasets.make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    def reduce_ndarray(arr):
+        return arr.byteswap().newbyteorder().__reduce__()
+
+    def get_pickle_non_native_endianness():
+        f = io.BytesIO()
+        p = pickle.Pickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[np.ndarray] = reduce_ndarray
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    new_clf = pickle.load(get_pickle_non_native_endianness())
+    new_score = new_clf.score(X, y)
+    assert np.isclose(score, new_score)
+
+
+def test_different_endianness_joblib_pickle():
+    X, y = datasets.make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    class NonNativeEndiannessNumpyPickler(NumpyPickler):
+        def save(self, obj):
+            if isinstance(obj, np.ndarray):
+                obj = obj.byteswap().newbyteorder()
+            super().save(obj)
+
+    def get_joblib_pickle_non_native_endianness():
+        f = io.BytesIO()
+        p = NonNativeEndiannessNumpyPickler(f)
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    new_clf = joblib.load(get_joblib_pickle_non_native_endianness())
+    new_score = new_clf.score(X, y)
+    assert np.isclose(score, new_score)
+
+
+def get_different_bitness_node_ndarray(node_ndarray):
+    new_dtype_for_indexing_fields = np.int64 if _IS_32BIT else np.int32
+
+    # field names in Node struct with SIZE_t types (see sklearn/tree/_tree.pxd)
+    indexing_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
+
+    new_dtype_dict = {
+        name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()
+    }
+    for name in indexing_field_names:
+        new_dtype_dict[name] = new_dtype_for_indexing_fields
+
+    new_dtype = np.dtype(
+        {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
+    )
+    return node_ndarray.astype(new_dtype, casting="same_kind")
+
+
+def get_different_alignment_node_ndarray(node_ndarray):
+    new_dtype_dict = {
+        name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()
+    }
+    offsets = [offset for dtype, offset in node_ndarray.dtype.fields.values()]
+    shifted_offsets = [8 + offset for offset in offsets]
+
+    new_dtype = np.dtype(
+        {
+            "names": list(new_dtype_dict.keys()),
+            "formats": list(new_dtype_dict.values()),
+            "offsets": shifted_offsets,
+        }
+    )
+    return node_ndarray.astype(new_dtype, casting="same_kind")
+
+
+def reduce_tree_with_different_bitness(tree):
+    new_dtype = np.int64 if _IS_32BIT else np.int32
+    tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
+    new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
+
+    new_state = state.copy()
+    new_state["nodes"] = get_different_bitness_node_ndarray(new_state["nodes"])
+
+    return (tree_cls, (n_features, new_n_classes, n_outputs), new_state)
+
+
+def test_different_bitness_pickle():
+    X, y = datasets.make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    def pickle_dump_with_different_bitness():
+        f = io.BytesIO()
+        p = pickle.Pickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[CythonTree] = reduce_tree_with_different_bitness
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    new_clf = pickle.load(pickle_dump_with_different_bitness())
+    new_score = new_clf.score(X, y)
+    assert score == pytest.approx(new_score)
+
+
+def test_different_bitness_joblib_pickle():
+    # Make sure that a platform specific pickle generated on a 64 bit
+    # platform can be converted at pickle load time into an estimator
+    # with Cython code that works with the host's native integer precision
+    # to index nodes in the tree data structure when the host is a 32 bit
+    # platform (and vice versa).
+    X, y = datasets.make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    def joblib_dump_with_different_bitness():
+        f = io.BytesIO()
+        p = NumpyPickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[CythonTree] = reduce_tree_with_different_bitness
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    new_clf = joblib.load(joblib_dump_with_different_bitness())
+    new_score = new_clf.score(X, y)
+    assert score == pytest.approx(new_score)
+
+
+def test_check_n_classes():
+    expected_dtype = np.dtype(np.int32) if _IS_32BIT else np.dtype(np.int64)
+    allowed_dtypes = [np.dtype(np.int32), np.dtype(np.int64)]
+    allowed_dtypes += [dt.newbyteorder() for dt in allowed_dtypes]
+
+    n_classes = np.array([0, 1], dtype=expected_dtype)
+    for dt in allowed_dtypes:
+        _check_n_classes(n_classes.astype(dt), expected_dtype)
+
+    with pytest.raises(ValueError, match="Wrong dimensions.+n_classes"):
+        wrong_dim_n_classes = np.array([[0, 1]], dtype=expected_dtype)
+        _check_n_classes(wrong_dim_n_classes, expected_dtype)
+
+    with pytest.raises(ValueError, match="n_classes.+incompatible dtype"):
+        wrong_dtype_n_classes = n_classes.astype(np.float64)
+        _check_n_classes(wrong_dtype_n_classes, expected_dtype)
+
+
+def test_check_value_ndarray():
+    expected_dtype = np.dtype(np.float64)
+    expected_shape = (5, 1, 2)
+    value_ndarray = np.zeros(expected_shape, dtype=expected_dtype)
+
+    allowed_dtypes = [expected_dtype, expected_dtype.newbyteorder()]
+
+    for dt in allowed_dtypes:
+        _check_value_ndarray(
+            value_ndarray, expected_dtype=dt, expected_shape=expected_shape
+        )
+
+    with pytest.raises(ValueError, match="Wrong shape.+value array"):
+        _check_value_ndarray(
+            value_ndarray, expected_dtype=expected_dtype, expected_shape=(1, 2)
+        )
+
+    for problematic_arr in [value_ndarray[:, :, :1], np.asfortranarray(value_ndarray)]:
+        with pytest.raises(ValueError, match="value array.+C-contiguous"):
+            _check_value_ndarray(
+                problematic_arr,
+                expected_dtype=expected_dtype,
+                expected_shape=problematic_arr.shape,
+            )
+
+    with pytest.raises(ValueError, match="value array.+incompatible dtype"):
+        _check_value_ndarray(
+            value_ndarray.astype(np.float32),
+            expected_dtype=expected_dtype,
+            expected_shape=expected_shape,
+        )
+
+
+def test_check_node_ndarray():
+    expected_dtype = NODE_DTYPE
+
+    node_ndarray = np.zeros((5,), dtype=expected_dtype)
+
+    valid_node_ndarrays = [
+        node_ndarray,
+        get_different_bitness_node_ndarray(node_ndarray),
+        get_different_alignment_node_ndarray(node_ndarray),
+    ]
+    valid_node_ndarrays += [
+        arr.astype(arr.dtype.newbyteorder()) for arr in valid_node_ndarrays
+    ]
+
+    for arr in valid_node_ndarrays:
+        _check_node_ndarray(node_ndarray, expected_dtype=expected_dtype)
+
+    with pytest.raises(ValueError, match="Wrong dimensions.+node array"):
+        problematic_node_ndarray = np.zeros((5, 2), dtype=expected_dtype)
+        _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+    with pytest.raises(ValueError, match="node array.+C-contiguous"):
+        problematic_node_ndarray = node_ndarray[::2]
+        _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+    dtype_dict = {name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()}
+
+    # array with wrong 'threshold' field dtype (int64 rather than float64)
+    new_dtype_dict = dtype_dict.copy()
+    new_dtype_dict["threshold"] = np.int64
+
+    new_dtype = np.dtype(
+        {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
+    )
+    problematic_node_ndarray = node_ndarray.astype(new_dtype)
+
+    with pytest.raises(ValueError, match="node array.+incompatible dtype"):
+        _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+    # array with wrong 'left_child' field dtype (float64 rather than int64 or int32)
+    new_dtype_dict = dtype_dict.copy()
+    new_dtype_dict["left_child"] = np.float64
+    new_dtype = np.dtype(
+        {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
+    )
+
+    problematic_node_ndarray = node_ndarray.astype(new_dtype)
+
+    with pytest.raises(ValueError, match="node array.+incompatible dtype"):
+        _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)

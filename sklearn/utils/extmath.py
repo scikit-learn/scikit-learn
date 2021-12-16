@@ -659,17 +659,22 @@ def cartesian(arrays, out=None):
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
-    out : ndarray, default=None
+    out : ndarray of shape (M, len(arrays)), default=None
         Array to place the cartesian product in.
 
     Returns
     -------
-    out : ndarray
-        2-D array of shape (M, len(arrays)) containing cartesian products
-        formed of input arrays.
+    out : ndarray of shape (M, len(arrays))
+        Array containing the cartesian products formed of input arrays.
+
+    Notes
+    -----
+    This function may not be used on more than 32 arrays
+    because the underlying numpy functions do not support it.
 
     Examples
     --------
+    >>> from sklearn.utils.extmath import cartesian
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
     array([[1, 4, 6],
            [1, 4, 7],
@@ -683,11 +688,6 @@ def cartesian(arrays, out=None):
            [3, 4, 7],
            [3, 5, 6],
            [3, 5, 7]])
-
-    Notes
-    -----
-    This function may not be used on more than 32 arrays
-    because the underlying numpy functions do not support it.
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
@@ -723,7 +723,7 @@ def svd_flip(u, v, u_based_decision=True):
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
         The input v should really be called vt to be consistent with scipy's
-        ouput.
+        output.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.

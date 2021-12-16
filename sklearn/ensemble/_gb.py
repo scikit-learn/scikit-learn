@@ -643,7 +643,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             loss_history = np.full(self.n_iter_no_change, np.inf)
             # We create a generator to get the predictions for X_val after
             # the addition of each successive stage
-            y_val_pred_iter = self._staged_raw_predict(X_val)
+            y_val_pred_iter = self._staged_raw_predict(X_val, check_input=False)
 
         # perform boosting iterations
         i = begin_at_stage
@@ -736,7 +736,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         predict_stages(self.estimators_, X, self.learning_rate, raw_predictions)
         return raw_predictions
 
-    def _staged_raw_predict(self, X):
+    def _staged_raw_predict(self, X, check_input=True):
         """Compute raw predictions of ``X`` for each iteration.
 
         This method allows monitoring (i.e. determine error on testing set)
@@ -749,6 +749,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
+        check_input : bool, default=True
+            If False, the input arrays X will not be checked.
+
         Returns
         -------
         raw_predictions : generator of ndarray of shape (n_samples, k)
@@ -757,9 +760,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = self._validate_data(
-            X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
-        )
+        if check_input:
+            X = self._validate_data(
+                X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
+            )
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, raw_predictions)
@@ -1016,7 +1020,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         boosting iteration.
         In addition, it controls the random permutation of the features at
         each split (see Notes for more details).
-        It also controls the random spliting of the training data to obtain a
+        It also controls the random splitting of the training data to obtain a
         validation set if `n_iter_no_change` is not None.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1146,6 +1150,12 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_classes_ : int
         The number of classes.
@@ -1468,8 +1478,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'ls', 'absolute_error', 'lad', 'huber', \
-            'quantile'}, default='squared_error'
+    loss : {'squared_error', 'absolute_error', 'huber', 'quantile'}, \
+            default='squared_error'
         Loss function to be optimized. 'squared_error' refers to the squared
         error for regression. 'absolute_error' refers to the absolute error of
         regression and is a robust loss function. 'huber' is a
@@ -1587,7 +1597,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         boosting iteration.
         In addition, it controls the random permutation of the features at
         each split (see Notes for more details).
-        It also controls the random spliting of the training data to obtain a
+        It also controls the random splitting of the training data to obtain a
         validation set if `n_iter_no_change` is not None.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1722,6 +1732,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     max_features_ : int
         The inferred value of max_features.
 
@@ -1768,7 +1784,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     0.4...
     """
 
-    # TODO: remove "ls" in verion 1.2
+    # TODO: remove "ls" in version 1.2
     _SUPPORTED_LOSS = (
         "squared_error",
         "ls",

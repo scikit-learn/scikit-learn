@@ -27,6 +27,7 @@ from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
@@ -90,6 +91,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         for name, est in self.estimators:
             current_est = est if est == "drop" else next(est_iter)
             self.named_estimators_[name] = current_est
+
+            if hasattr(current_est, "feature_names_in_"):
+                self.feature_names_in_ = current_est.feature_names_in_
 
         return self
 
@@ -216,6 +220,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
+
     See Also
     --------
     VotingRegressor : Prediction voting regressor.
@@ -279,8 +288,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -296,7 +305,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         -------
         self : object
             Returns the instance itself.
-
         """
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
@@ -348,16 +356,15 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """Collect results from clf.predict calls."""
         return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
-    def _predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting."""
-        check_is_fitted(self)
-        avg = np.average(
-            self._collect_probas(X), axis=0, weights=self._weights_not_none
-        )
-        return avg
+    def _check_voting(self):
+        if self.voting == "hard":
+            raise AttributeError(
+                f"predict_proba is not available when voting={repr(self.voting)}"
+            )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_voting)
+    def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
         Parameters
@@ -370,11 +377,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         avg : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
-        if self.voting == "hard":
-            raise AttributeError(
-                "predict_proba is not available when voting=%r" % self.voting
-            )
-        return self._predict_proba
+        check_is_fitted(self)
+        avg = np.average(
+            self._collect_probas(X), axis=0, weights=self._weights_not_none
+        )
+        return avg
 
     def transform(self, X):
         """Return class labels or probabilities for X for each estimator.
@@ -382,8 +389,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -466,6 +473,11 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
+
     See Also
     --------
     VotingClassifier : Soft Voting/Majority Rule classifier.
@@ -497,8 +509,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
