@@ -226,6 +226,8 @@ def test_load_missing_sample_image_error():
 
 
 def test_load_diabetes_raw():
+    """Test to check that we load a scaled version by default but that we can
+    get an unscaled version when setting `scaled=False`."""
     diabetes_raw = load_diabetes(scaled=False)
     assert diabetes_raw.data.shape == (442, 10)
     assert diabetes_raw.target.size, 442

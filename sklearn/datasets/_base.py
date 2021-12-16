@@ -953,7 +953,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         standard deviation times the square root of `n_samples`.
         If False, raw data is returned for the feature variables.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -992,7 +992,8 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     target = load_gzip_compressed_csv_data(target_filename)
 
     if scaled:
-        data = scale(data) / data.shape[0] ** 0.5
+        data = scale(data, copy=False)
+        data /= data.shape[0] ** 0.5
 
     fdescr = load_descr("diabetes.rst")
 
