@@ -488,16 +488,6 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_kddcup99` raises a better message
   when the cached file is invalid. :pr:`19669` `Thomas Fan`_.
 
-- |Enhancement| :func:`datasets.load_diabetes` now accepts the parameters
-  ``scaled``, to allow loading unscaled data. The scaled version of this dataset
-  is now computed from the unscaled data, and can produce slightly different
-  different results that in previous version (within a 1e-4 absolute tolerance).
-  :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
-
-- |Fix| Shorten data file names in the openml tests to better support
-  installing on Windows and its default 260 character limit on file names.
-  :pr:`20209` by `Thomas Fan`_.
-
 - |Enhancement| Replace usages of ``__file__`` related to resource file I/O
   with ``importlib.resources`` to avoid the assumption that these resource
   files (e.g. ``iris.csv``) already exist on a filesystem, and by extension
