@@ -40,7 +40,8 @@ Changelog
 
 - |Fix| :class:`gaussian_process.GaussianProcessRegressor` was not handling
   properly multi-target when `normalize_y=False`.
-  :pr:`21996` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`21996` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Aidar Shakerimoff <AidarShakerimoff>`.
 
 :mod:`sklearn.metrics`
 ......................
