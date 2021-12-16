@@ -389,10 +389,12 @@ def _logistic_regression_path(
                 w0[:, : coef.shape[1]] = coef
 
     if multi_class == "multinomial":
-        # scipy.optimize.minimize and newton-cg accepts only
-        # ravelled parameters.
         if solver in ["lbfgs", "newton-cg"]:
-            w0 = w0.ravel()
+            # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
+            # i.e. 1d-arrays. LinearLoss expects classes to be contiguous and
+            # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
+            # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
+            w0 = w0.ravel(order="F")
             loss = LinearLoss(
                 loss=HalfMultinomialLoss(n_classes=classes.size),
                 fit_intercept=fit_intercept,
@@ -507,7 +509,10 @@ def _logistic_regression_path(
 
         if multi_class == "multinomial":
             n_classes = max(2, classes.size)
-            multi_w0 = np.reshape(w0, (n_classes, -1))
+            if solver in ["lbfgs", "newton-cg"]:
+                multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+            else:
+                multi_w0 = w0
             if n_classes == 2:
                 multi_w0 = multi_w0[1][np.newaxis, :]
             coefs.append(multi_w0.copy())

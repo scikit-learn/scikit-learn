@@ -1155,7 +1155,7 @@ def test_multinomial_grad_hess():
     X = rng.randn(n_samples, n_features)
     w = rng.rand(n_classes, n_features)
     y = np.argmax(np.dot(X, w.T), axis=1).astype(X.dtype)
-    w = w.ravel()
+    w = w.ravel(order="F")
     sample_weights = np.ones(X.shape[0])
     alpha = 1.0
     multinomial = LinearLoss(
@@ -1183,7 +1183,7 @@ def test_multinomial_grad_hess():
         ]
     )
     d_grad -= d_grad.mean(axis=0)
-    approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
+    approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel(order="F")
     assert_array_almost_equal(hess_col, approx_hess_col)
 
 

@@ -7,7 +7,7 @@ from ..utils.extmath import squared_norm
 
 
 class LinearLoss:
-    """General class for loss functions with raw_prediction = X @ coef.
+    """General class for loss functions with raw_prediction = X @ coef + intercept.
 
     The loss is the sum of per sample losses and includes an L2 term::
 
@@ -28,19 +28,30 @@ class LinearLoss:
             n_dof = n_features
 
         if loss.is_multiclass:
-            coef.shape = (n_classes * n_dof,)
+            coef.shape = (n_classes, n_dof) or ravelled (n_classes * n_dof,)
         else:
             coef.shape = (n_dof,)
 
         The intercept term is at the end of the coef array:
         if loss.is_multiclass:
-            intercept = coef[n_features::n_dof] = coef[(n_dof-1)::n_dof]
+            if coef.shape (n_classes, n_dof):
+                intercept = coef[:, -1]
+            if coef.shape (n_classes * n_dof,)
+                intercept = coef[n_features::n_dof] = coef[(n_dof-1)::n_dof]
             intercept.shape = (n_classes,)
         else:
             intercept = coef[-1]
 
-    Note: If the average loss per sample is wanted instead of the sum of the
-    loss per sample, one can simply use a rescaled sample_weight such that
+    Note: If coef has shape (n_classes * n_dof,), the 2d-array can be reconstructed as
+
+        coef.reshape((n_classes, -1), order="F")
+
+    The option order="F" makes coef[:, i] contiguous. This, in turn, makes the
+    coefficients without intercept, coef[:, :-1], contiguous and speeds up
+    matrix-vector computations.
+
+    Note: If the average loss per sample is wanted instead of the sum of the loss per
+    sample, one can simply use a rescaled sample_weight such that
     sum(sample_weight) = 1.
 
     Parameters
@@ -58,8 +69,11 @@ class LinearLoss:
 
         Parameters
         ----------
-        coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
+        coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
             Coefficients of a linear model.
+            If shape (n_classes * n_dof,), the classes of one feature are contiguous,
+            i.e. one reconstructs the 2d-array via
+            coef.reshape((n_classes, -1), order="F").
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
@@ -82,7 +96,10 @@ class LinearLoss:
             raw_prediction = X @ w + intercept
         else:
             # reshape to (n_classes, n_dof)
-            w = coef.reshape(self._loss.n_classes, -1)
+            if coef.ndim == 1:
+                w = coef.reshape((self._loss.n_classes, -1), order="F")
+            else:
+                w = coef
             if self.fit_intercept:
                 intercept = w[:, -1]
                 w = w[:, :-1]
@@ -97,8 +114,11 @@ class LinearLoss:
 
         Parameters
         ----------
-        coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
+        coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
             Coefficients of a linear model.
+            If shape (n_classes * n_dof,), the classes of one feature are contiguous,
+            i.e. one reconstructs the 2d-array via
+            coef.reshape((n_classes, -1), order="F").
         y : contiguous array of shape (n_samples,)
             Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -137,8 +157,11 @@ class LinearLoss:
 
         Parameters
         ----------
-        coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
+        coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
             Coefficients of a linear model.
+            If shape (n_classes * n_dof,), the classes of one feature are contiguous,
+            i.e. one reconstructs the 2d-array via
+            coef.reshape((n_classes, -1), order="F").
         y : contiguous array of shape (n_samples,)
             Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -155,8 +178,8 @@ class LinearLoss:
         loss : float
             Sum of losses per sample plus penalty.
 
-        gradient : ndarray of shape (n_dof,) or (n_classes * n_dof)
-             The gradient of the loss as ravelled array.
+        gradient : ndarray of shape coef.shape
+             The gradient of the loss.
         """
         n_features, n_classes = X.shape[1], self._loss.n_classes
         n_dof = n_features + self.fit_intercept
@@ -179,12 +202,15 @@ class LinearLoss:
             return loss, grad
         else:
             loss += 0.5 * l2_reg_strength * squared_norm(w)
-            grad = np.empty((n_classes, n_dof), dtype=X.dtype)
+            grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
             # gradient.shape = (n_samples, n_classes)
             grad[:, :n_features] = gradient_per_sample.T @ X + l2_reg_strength * w
             if self.fit_intercept:
                 grad[:, -1] = gradient_per_sample.sum(axis=0)
-            return loss, grad.ravel()
+            if coef.ndim == 1:
+                return loss, grad.ravel(order="F")
+            else:
+                return loss, grad
 
     def gradient(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
@@ -193,8 +219,11 @@ class LinearLoss:
 
         Parameters
         ----------
-        coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
+        coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
             Coefficients of a linear model.
+            If shape (n_classes * n_dof,), the classes of one feature are contiguous,
+            i.e. one reconstructs the 2d-array via
+            coef.reshape((n_classes, -1), order="F").
         y : contiguous array of shape (n_samples,)
             Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -208,8 +237,8 @@ class LinearLoss:
 
         Returns
         -------
-        gradient : ndarray of shape (n_dof,) or (n_classes * n_dof)
-             The gradient of the loss as ravelled array.
+        gradient : ndarray of shape coef.shape
+             The gradient of the loss.
         """
         n_features, n_classes = X.shape[1], self._loss.n_classes
         n_dof = n_features + self.fit_intercept
@@ -229,12 +258,15 @@ class LinearLoss:
                 grad[-1] = gradient_per_sample.sum()
             return grad
         else:
-            grad = np.empty((n_classes, n_dof), dtype=X.dtype)
+            grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
             # gradient.shape = (n_samples, n_classes)
             grad[:, :n_features] = gradient_per_sample.T @ X + l2_reg_strength * w
             if self.fit_intercept:
                 grad[:, -1] = gradient_per_sample.sum(axis=0)
-            return grad.ravel()
+            if coef.ndim == 1:
+                return grad.ravel(order="F")
+            else:
+                return grad
 
     def gradient_hessp(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
@@ -243,8 +275,11 @@ class LinearLoss:
 
         Parameters
         ----------
-        coef : ndarray of shape (n_dof,) or (n_classes * n_dof,)
+        coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
             Coefficients of a linear model.
+            If shape (n_classes * n_dof,), the classes of one feature are contiguous,
+            i.e. one reconstructs the 2d-array via
+            coef.reshape((n_classes, -1), order="F").
         y : contiguous array of shape (n_samples,)
             Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -258,14 +293,15 @@ class LinearLoss:
 
         Returns
         -------
-        gradient : ndarray of shape (n_dof,) or (n_classes * n_dof)
-             The gradient of the loss as ravelled array.
+        gradient : ndarray of shape coef.shape
+             The gradient of the loss.
 
         hessp : callable
             Function that takes in a vector input of shape of gradient and
             and returns matrix-vector product with hessian.
         """
         (n_samples, n_features), n_classes = X.shape, self._loss.n_classes
+        n_dof = n_features + self.fit_intercept
         w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
         if not self._loss.is_multiclass:
@@ -322,7 +358,7 @@ class LinearLoss:
                 sample_weight=sample_weight,
                 n_threads=n_threads,
             )
-            grad = np.empty_like(coef.reshape(n_classes, -1), dtype=X.dtype)
+            grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
             grad[:, :n_features] = gradient.T @ X + l2_reg_strength * w
             if self.fit_intercept:
                 grad[:, -1] = gradient.sum(axis=0)
@@ -348,7 +384,7 @@ class LinearLoss:
             #
             # See also https://github.com/scikit-learn/scikit-learn/pull/3646#discussion_r17461411  # noqa
             def hessp(s):
-                s = s.reshape(n_classes, -1)  # shape = (n_classes, n_dof)
+                s = s.reshape((n_classes, -1), order="F")  # shape = (n_classes, n_dof)
                 if self.fit_intercept:
                     s_intercept = s[:, -1]
                     s = s[:, :-1]
@@ -359,10 +395,16 @@ class LinearLoss:
                 tmp *= proba  # * p_i_k
                 if sample_weight is not None:
                     tmp *= sample_weight[:, np.newaxis]
-                hess_prod = np.empty_like(grad)
+                hess_prod = np.empty_like(grad, order="F")
                 hess_prod[:, :n_features] = tmp.T @ X + l2_reg_strength * s
                 if self.fit_intercept:
                     hess_prod[:, -1] = tmp.sum(axis=0)
-                return hess_prod.ravel()
+                if coef.ndim == 1:
+                    return hess_prod.ravel(order="F")
+                else:
+                    return hess_prod
 
-        return grad.ravel(), hessp
+        if coef.ndim == 1:
+            return grad.ravel(order="F"), hessp
+        else:
+            return grad, hessp
