@@ -343,7 +343,7 @@ def _logistic_regression_path(
             le = LabelEncoder()
             Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
         else:
-            # Apply LabelBinarizer, i.e. y is one-hot encoded.
+            # For liblinear solver, apply LabelBinarizer, i.e. y is one-hot encoded.
             lbin = LabelBinarizer()
             Y_multi = lbin.fit_transform(y)
             if Y_multi.shape[1] == 1:
