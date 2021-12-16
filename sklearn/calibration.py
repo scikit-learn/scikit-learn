@@ -252,7 +252,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         self.ensemble = ensemble
 
     def fit(self, X, y, sample_weight=None, **fit_params):
-        """Fit the calibrated model
+        """Fit the calibrated model.
 
         Parameters
         ----------
@@ -265,8 +265,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
-        **fit_params : dict of string
-            Parameters passed to the fit method of the underlying
+        **fit_params : dict
+            Parameters passed to the `fit` method of the underlying
             classifier.
 
         Returns
