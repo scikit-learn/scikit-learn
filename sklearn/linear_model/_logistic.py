@@ -18,7 +18,7 @@ from scipy import optimize
 from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
-from ._linear_loss import LinearLoss
+from ._linear_loss import LinearModelLoss
 from ._sag import sag_solver
 from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from ..preprocessing import LabelEncoder, LabelBinarizer
@@ -391,11 +391,11 @@ def _logistic_regression_path(
     if multi_class == "multinomial":
         if solver in ["lbfgs", "newton-cg"]:
             # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
-            # i.e. 1d-arrays. LinearLoss expects classes to be contiguous and
+            # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
             # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
             w0 = w0.ravel(order="F")
-            loss = LinearLoss(
+            loss = LinearModelLoss(
                 loss=HalfMultinomialLoss(n_classes=classes.size),
                 fit_intercept=fit_intercept,
             )
@@ -410,10 +410,10 @@ def _logistic_regression_path(
     else:
         target = y_bin
         if solver == "lbfgs":
-            loss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
+            loss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
             func = loss.loss_gradient
         elif solver == "newton-cg":
-            loss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
+            loss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessp  # hess = [gradient, hessp]

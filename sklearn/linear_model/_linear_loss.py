@@ -6,7 +6,7 @@ from scipy import sparse
 from ..utils.extmath import squared_norm
 
 
-class LinearLoss:
+class LinearModelLoss:
     """General class for loss functions with raw_prediction = X @ coef + intercept.
 
     The loss is the sum of per sample losses and includes an L2 term::

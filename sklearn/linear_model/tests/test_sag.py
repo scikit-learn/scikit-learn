@@ -11,7 +11,7 @@ import scipy.sparse as sp
 from scipy.special import logsumexp
 
 from sklearn._loss.loss import HalfMultinomialLoss
-from sklearn.linear_model._linear_loss import LinearLoss
+from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import get_auto_step_size
 from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
 from sklearn.linear_model import LogisticRegression, Ridge
@@ -934,7 +934,7 @@ def test_multinomial_loss():
         dataset, weights, intercept, n_samples, n_features, n_classes
     )
     # compute loss and gradient like in multinomial LogisticRegression
-    loss = LinearLoss(
+    loss = LinearModelLoss(
         loss=HalfMultinomialLoss(n_classes=n_classes),
         fit_intercept=True,
     )
@@ -968,7 +968,7 @@ def test_multinomial_loss_ground_truth():
     diff = sample_weights[:, np.newaxis] * (np.exp(p) - Y_bin)
     grad_1 = np.dot(X.T, diff)
 
-    loss = LinearLoss(
+    loss = LinearModelLoss(
         loss=HalfMultinomialLoss(n_classes=n_classes),
         fit_intercept=True,
     )

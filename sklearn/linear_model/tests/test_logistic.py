@@ -27,7 +27,7 @@ from sklearn.preprocessing import scale
 from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model._linear_loss import LinearLoss
+from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
@@ -520,7 +520,7 @@ def test_logistic_loss_and_grad():
         # make an intercept of 0.5
         w[-1] = 0.5
 
-        logloss = LinearLoss(
+        logloss = LinearModelLoss(
             loss=HalfBinomialLoss(),
             fit_intercept=False,
         )
@@ -532,7 +532,7 @@ def test_logistic_loss_and_grad():
         assert_array_almost_equal(grad, approx_grad, decimal=2)
 
         # Second check that our intercept implementation is good
-        logloss = LinearLoss(
+        logloss = LinearModelLoss(
             loss=HalfBinomialLoss(),
             fit_intercept=True,
         )
@@ -563,7 +563,7 @@ def test_logistic_grad_hess():
     X_sp = sp.csr_matrix(X_sp)
     for X in (X_ref, X_sp):
         w = np.full(n_features, 0.1)
-        logloss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=False)
+        logloss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=False)
 
         # First check that gradients from gradient(), loss_gradient() and
         # gradient_hessp() are consistent
@@ -595,7 +595,7 @@ def test_logistic_grad_hess():
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
-        logloss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=True)
+        logloss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=True)
         loss_inter, grad_inter = logloss.loss_gradient(w, X, y, l2_reg_strength=alpha)
         loss_inter_2 = logloss.loss(w, X, y, l2_reg_strength=alpha)
         grad_inter_2, hess = logloss.gradient_hessp(w, X, y, l2_reg_strength=alpha)
@@ -735,7 +735,7 @@ def test_intercept_logistic_helper():
     y = y.astype(np.float64)
 
     # Fit intercept case.
-    logloss = LinearLoss(loss=HalfBinomialLoss(), fit_intercept=True)
+    logloss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=True)
     alpha = 1.0
     w = np.ones(n_features + 1)
     grad_inter, hess_inter = logloss.gradient_hessp(w, X, y, l2_reg_strength=alpha)
@@ -744,7 +744,7 @@ def test_intercept_logistic_helper():
     # Do not fit intercept. This can be considered equivalent to adding
     # a feature vector of ones, i.e last column vector's elements are all one.
     X_ = np.hstack((X, np.ones(n_samples)[:, np.newaxis]))
-    logloss = LinearLoss(
+    logloss = LinearModelLoss(
         loss=HalfBinomialLoss(),
         fit_intercept=False,
     )
@@ -1158,7 +1158,7 @@ def test_multinomial_grad_hess():
     w = w.ravel(order="F")
     sample_weights = np.ones(X.shape[0])
     alpha = 1.0
-    multinomial = LinearLoss(
+    multinomial = LinearModelLoss(
         loss=HalfMultinomialLoss(n_classes=n_classes),
         fit_intercept=False,
     )
