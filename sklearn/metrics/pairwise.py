@@ -584,7 +584,7 @@ def _argmin_reduce(dist, start):
 
 
 def pairwise_distances_argmin_min(
-    X, Y, *, axis=1, metric="fast_euclidean", metric_kwargs=None
+    X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
     """Compute minimum distances between one point and a set of points.
 
@@ -610,7 +610,7 @@ def pairwise_distances_argmin_min(
     axis : int, default=1
         Axis along which the argmin and distances are to be computed.
 
-    metric : str or callable, default="fast_euclidean"
+    metric : str or callable, default='euclidean'
         Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -624,21 +624,14 @@ def pairwise_distances_argmin_min(
 
         Valid values for metric are:
 
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'fast_euclidean',
-          'fast_sqeuclidean', 'l1', 'l2', 'manhattan']
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
-
-        'fast_euclidean' (the default metric) is a variant of the 'euclidean'
-        metric which has a superior arithmetic intensity and hence better
-        running time. However it can suffer from numerical instability caused
-        by catastrophic cancellation in rare configuration.
-        Hence when exact results are mandatory, 'euclidean' should be preferred.
-        The same remark applies for 'fast_sqeuclidean' regarding 'sqeuclidean'.
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -683,13 +676,6 @@ def pairwise_distances_argmin_min(
     else:
         # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
-        #
-        # When PairwiseDistancesArgKmin is not supported and when the user
-        # asked for a fast alternative, we need to revert to the standard
-        # "euclidean" strategy to match the API.
-        # Internally, the "euclidean" strategy still uses the GEMM trick.
-        if metric in ("fast_euclidean", "fast_sqeuclidean"):
-            metric = metric.replace("fast_", "")
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
@@ -705,9 +691,7 @@ def pairwise_distances_argmin_min(
     return indices, values
 
 
-def pairwise_distances_argmin(
-    X, Y, *, axis=1, metric="fast_euclidean", metric_kwargs=None
-):
+def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -732,7 +716,7 @@ def pairwise_distances_argmin(
     axis : int, default=1
         Axis along which the argmin and distances are to be computed.
 
-    metric : str or callable, default="fast_euclidean"
+    metric : str or callable, default="euclidean"
         Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -746,21 +730,14 @@ def pairwise_distances_argmin(
 
         Valid values for metric are:
 
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'fast_euclidean',
-          'fast_sqeuclidean', 'l1', 'l2', 'manhattan']
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
-
-        'fast_euclidean' (the default metric) is a variant of the 'euclidean'
-        metric which has a superior arithmetic intensity and hence better
-        running time. However it can suffer from numerical instability caused
-        by catastrophic cancellation in rare configuration.
-        Hence when exact results are mandatory, 'euclidean' should be preferred.
-        The same remark applies for 'fast_sqeuclidean' regarding 'sqeuclidean'.
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -803,13 +780,6 @@ def pairwise_distances_argmin(
     else:
         # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
-        #
-        # When PairwiseDistancesArgKmin is not supported and when the user
-        # asked for a fast alternative, we need to revert to the standard one.
-        # "euclidean" strategy to match the API.
-        # Internally, the "euclidean" strategy still uses the GEMM trick.
-        if metric in ("fast_euclidean", "fast_sqeuclidean"):
-            metric = metric.replace("fast_", "")
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.

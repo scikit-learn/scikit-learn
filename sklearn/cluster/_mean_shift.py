@@ -40,7 +40,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
         Input points.
 
     quantile : float, default=0.3
-        should be between [0, 1]
+        Should be between [0, 1]
         0.5 means that the median of all pairwise distances is used.
 
     n_samples : int, default=None
@@ -512,11 +512,4 @@ class MeanShift(ClusterMixin, BaseEstimator):
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
         with config_context(assume_finite=True):
-            return pairwise_distances_argmin(
-                # We use the fast squared euclidean metric alternative to get
-                # maximum acceleration as we are not concerned with the minimum
-                # values but only their indices.
-                X,
-                self.cluster_centers_,
-                metric="fast_sqeuclidean",
-            )
+            return pairwise_distances_argmin(X, self.cluster_centers_)

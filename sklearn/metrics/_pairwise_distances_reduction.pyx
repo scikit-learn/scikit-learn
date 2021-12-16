@@ -140,8 +140,7 @@ cdef class PairwiseDistancesReduction:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted({"fast_euclidean", "fast_sqeuclidean",
-                       *METRIC_MAPPING.keys()}.difference(excluded))
+        return sorted(set(METRIC_MAPPING.keys()).difference(excluded))
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -525,7 +524,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         X,
         Y,
         ITYPE_t k,
-        str metric="fast_euclidean",
+        str metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
         n_threads=None,
@@ -545,9 +544,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         k : int
             The k for the argkmin reduction.
 
-        metric : str, default='fast_euclidean'
-            The distance metric to use for argkmin. The default metric is
-            a fast implementation of the standard Euclidean metric.
+        metric : str, default='euclidean'
+            The distance metric to use for argkmin.
             For a list of available metrics, see the documentation of
             :class:`~sklearn.metrics.DistanceMetric`.
 
@@ -616,11 +614,11 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         # for various back-end and/or hardware and/or datatypes, and/or fused
         # {sparse, dense}-datasetspair etc.
         if (
-            metric in ("fast_euclidean", "fast_sqeuclidean")
+            metric in ("euclidean", "sqeuclidean")
                 and not issparse(X)
                 and not issparse(Y)
         ):
-            use_squared_distances = metric == "fast_sqeuclidean"
+            use_squared_distances = metric == "sqeuclidean"
             pda = FastEuclideanPairwiseDistancesArgKmin(
                 X=X, Y=Y, k=k,
                 use_squared_distances=use_squared_distances,

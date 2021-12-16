@@ -3,7 +3,6 @@ from itertools import product
 import pytest
 import re
 import numpy as np
-import scipy
 from scipy.sparse import (
     bsr_matrix,
     coo_matrix,
@@ -213,120 +212,6 @@ def test_neigh_predictions_algorithm_agnosticity(
                 "algorithms return different predictions."
             ),
         )
-
-
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("n_features", [5, 10, 100])
-@pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
-@pytest.mark.parametrize(
-    "NeighborsMixinSubclass",
-    [
-        neighbors.KNeighborsClassifier,
-        neighbors.KNeighborsRegressor,
-    ],
-)
-def test_neighs_predictions_fast_euclidean_correctness(
-    n_samples,
-    n_features,
-    n_neighbors,
-    radius,
-    NeighborsMixinSubclass,
-    dtype=np.float64,
-):
-    # The fast euclidean strategy must return results
-    # that are close to the ones obtained with the euclidean distance
-    rng = np.random.RandomState(0)
-    X = rng.rand(n_samples, n_features).astype(dtype)
-    y = rng.randint(3, size=n_samples)
-
-    parameter = (
-        n_neighbors if issubclass(NeighborsMixinSubclass, KNeighborsMixin) else radius
-    )
-
-    euclidean_est = NeighborsMixinSubclass(
-        parameter, algorithm="brute", metric="euclidean"
-    ).fit(X, y)
-    euclidean_pred = euclidean_est.predict(X)
-
-    fast_euclidean_clf = NeighborsMixinSubclass(
-        parameter, algorithm="brute", metric="fast_euclidean"
-    ).fit(X, y)
-    fast_euclidean_pred = fast_euclidean_clf.predict(X)
-
-    assert_allclose(euclidean_pred, fast_euclidean_pred)
-
-
-@pytest.mark.parametrize(
-    "KNeighborsEstimator",
-    [
-        neighbors.KNeighborsClassifier,
-        neighbors.KNeighborsRegressor,
-    ],
-)
-@pytest.mark.parametrize("algorithm", ["kd_tree", "ball_tree"])
-def test_knn_prediction_fast_alternatives_fall_back_on_tree(
-    KNeighborsEstimator,
-    algorithm,
-    specified_metric="fast_euclidean",
-    fall_back_metric="euclidean",
-    parameter=10,
-    n_samples=1000,
-    n_features=100,
-    dtype=np.float64,
-):
-    # The fast euclidean metric can't be used on "kd_tree", "ball_tree".
-    rng = np.random.RandomState(0)
-    X = rng.rand(n_samples, n_features).astype(dtype)
-    y = rng.randint(3, size=n_samples)
-
-    est = KNeighborsEstimator(
-        parameter,
-        algorithm=algorithm,
-        metric=specified_metric,
-    )
-    with pytest.warns(
-        UserWarning,
-        match=(
-            f"'{specified_metric}' is only available for algorithm='brute' but "
-            f"algorithm='{algorithm}' is used. Falling "
-            f"back on metric='{fall_back_metric}'."
-        ),
-    ):
-        est.fit(X, y)
-
-    assert est.metric == specified_metric
-    assert est._metric == fall_back_metric
-    assert est.effective_metric_ == fall_back_metric
-
-
-@pytest.mark.parametrize(
-    "KNeighborsEstimator",
-    [
-        neighbors.KNeighborsClassifier,
-        neighbors.KNeighborsRegressor,
-    ],
-)
-def test_knn_prediction_fast_alternatives_fall_back_on_sparse(
-    KNeighborsEstimator,
-    specified_metric="fast_euclidean",
-    fall_back_metric="euclidean",
-    parameter=10,
-    n_samples=1000,
-    n_features=100,
-    dtype=np.float64,
-):
-    # The fast euclidean metric can't be used on sparse datasets.
-    rng = np.random.RandomState(0)
-    X = scipy.sparse.random(n_samples, n_features, density=0.25, random_state=rng)
-    y = rng.randint(3, size=n_samples)
-
-    est = KNeighborsEstimator(
-        parameter,
-        algorithm="brute",
-        metric=specified_metric,
-    )
-    est.fit(X, y)
-    assert est.effective_metric_ == fall_back_metric
 
 
 @pytest.mark.parametrize(
