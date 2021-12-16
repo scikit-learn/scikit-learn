@@ -414,7 +414,8 @@ def resample(*arrays,
              replace=True,
              n_samples=None,
              random_state=None,
-             stratify=None):
+             stratify=None,
+             copy=True):
     """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
@@ -554,7 +555,14 @@ def resample(*arrays,
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
-    resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
+
+    if copy:
+        resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
+    else:
+        for a in arrays:
+            a[:] = _safe_indexing(a, indices)
+        resampled_arrays = arrays
+
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]
@@ -562,7 +570,7 @@ def resample(*arrays,
         return resampled_arrays
 
 
-def shuffle(*arrays, random_state=None, n_samples=None):
+def shuffle(*arrays, random_state=None, n_samples=None, copy=True):
     """Shuffle arrays or sparse matrices in a consistent way.
 
     This is a convenience alias to ``resample(*arrays, replace=False)`` to do
@@ -628,7 +636,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     resample
     """
     return resample(*arrays, replace=False, n_samples=n_samples,
-                    random_state=random_state)
+                    random_state=random_state, copy=copy)
 
 
 def safe_sqr(X, *, copy=True):
