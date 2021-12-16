@@ -207,10 +207,7 @@ def test_f_regression_corner_case(X, y, expected_f_statistic, expected_p_values)
     """
     with pytest.warns(None) as records:
         f_statistic, p_values = f_regression(X, y)
-    assert len(records) == 0, (
-        f"f_regression raised {len(records)} warnings:"
-        f" {[' '.join(str(w.message) for w in records)]}"
-    )
+    assert not [str(w.message) for w in records]
     np.testing.assert_array_almost_equal(f_statistic, expected_f_statistic)
     np.testing.assert_array_almost_equal(p_values, expected_p_values)
 
