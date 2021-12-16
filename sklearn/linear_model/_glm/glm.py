@@ -73,7 +73,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values should be >=0.
+        Values should be in the range `[ 0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -101,14 +101,14 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
-        Values should be >=1.
+        Values should be in the range `[ 1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
-        Values should be >=0.
+        Values should be in the range `[ 0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -116,7 +116,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
-        Values should be >=0.
+        Values should be in the range `[ 1, inf)`.
 
     Attributes
     ----------
@@ -214,13 +214,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "got (link={0})".format(self.link)
                 )
 
-        # if self.alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
-        # if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
-        #    raise ValueError(
-        #         "Penalty term must be a non-negative number; got (alpha={0})".format(
-        #             self.alpha
-        #         )
-        #     )
         check_scalar(
             self.alpha,
             name="alpha",
@@ -240,12 +233,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "'lbfgs'; got {0}".format(self.solver)
             )
         solver = self.solver
-        # if not isinstance(self.max_iter, numbers.Integral) or self.max_iter <= 0:
-        #    raise ValueError(
-        #        "Maximum number of iteration must be a positive "
-        #        "integer;"
-        #        " got (max_iter={0!r})".format(self.max_iter)
-        #    )
         check_scalar(
             self.max_iter,
             name="max_iter",
