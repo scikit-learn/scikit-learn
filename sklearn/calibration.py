@@ -282,7 +282,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         for sample_aligned_params in fit_params.values():
             check_consistent_length(y, sample_aligned_params)
 
-        self.calibrated_classifiers_ = []
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
