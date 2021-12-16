@@ -35,6 +35,13 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| :class:`gaussian_process.GaussianProcessRegressor` was not handling
+  properly multi-target when `normalize_y=False`.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.metrics`
 ......................
 

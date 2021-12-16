@@ -361,12 +361,17 @@ def test_y_multioutput():
     assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
 
     # Standard deviation and covariance do not depend on output
-    assert_almost_equal(y_std_1d, y_std_2d)
-    assert_almost_equal(y_cov_1d, y_cov_2d)
+    for target in range(y_2d.shape[1]):
+        assert_almost_equal(y_std_1d, y_std_2d[..., target])
+        assert_almost_equal(y_cov_1d, y_cov_2d[..., target])
 
     y_sample_1d = gpr.sample_y(X2, n_samples=10)
     y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
-    assert_almost_equal(y_sample_1d, y_sample_2d[:, 0])
+
+    assert y_sample_1d.shape == (5, 10)
+    assert y_sample_2d.shape == (5, 2, 10)
+    # Only the first target will be equal
+    assert_almost_equal(y_sample_1d, y_sample_2d[:, 0, :])
 
     # Test hyperparameter optimization
     for kernel in kernels:
@@ -654,8 +659,9 @@ def test_gpr_predict_error():
         gpr.predict(X, return_cov=True, return_std=True)
 
 
-def test_y_std_with_multitarget_normalized():
-    """Check the proper normalization of `y_std` and `y_cov` in multi-target scene.
+@pytest.mark.parametrize("normalize_y", [True, False])
+def test_multitarget_std_cov_shape(normalize_y):
+    """Check the shape of std. dev. and covariance in multi-output setting.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/17394
@@ -673,7 +679,7 @@ def test_y_std_with_multitarget_normalized():
     kernel = WhiteKernel(1.0, (1e-1, 1e3)) * C(10.0, (1e-3, 1e3))
 
     model = GaussianProcessRegressor(
-        kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True
+        kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=normalize_y
     )
     model.fit(X_train, y_train)
     y_pred, y_std = model.predict(X_test, return_std=True)
