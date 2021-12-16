@@ -1,7 +1,7 @@
 """
-===========================
-Movie Recommendation Engine
-===========================
+=========================================
+Content-based Movie Recommendation Engine
+=========================================
 This example shows how scikit-learn can be used to build a
 content-based recommendation engine.
 """
