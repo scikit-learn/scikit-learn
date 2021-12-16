@@ -1419,15 +1419,17 @@ def test_n_iter(solver):
     assert clf.n_iter_.shape == (1, n_cv_fold, n_Cs)
 
     # multinomial case
-    n_classes = 1
     if solver in ("liblinear", "sag", "saga"):
+        # Those solvers only support one-vs-rest multiclass classification.
         return
 
     clf = LogisticRegression(
         tol=1e-2, multi_class="multinomial", solver=solver, C=1.0, random_state=42
     )
     clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes,)
+    # Whe using the multinomial objective function, there is a single
+    # optimization problem to solver for all classes at once:
+    assert clf.n_iter_.shape == (1,)
 
     clf = LogisticRegressionCV(
         tol=1e-2,
@@ -1438,7 +1440,7 @@ def test_n_iter(solver):
         random_state=42,
     )
     clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
+    assert clf.n_iter_.shape == (1, n_cv_fold, n_Cs)
     clf.fit(X, y_bin)
     assert clf.n_iter_.shape == (1, n_cv_fold, n_Cs)
 
