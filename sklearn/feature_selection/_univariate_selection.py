@@ -289,6 +289,11 @@ def r_regression(X, y, *, center=True):
     with np.errstate(divide="ignore", invalid="ignore"):
         correlation_coefficient /= X_norms
         correlation_coefficient /= np.linalg.norm(y)
+
+    # The Pearson correlation coefficient is undefined for random variables
+    # (attributes and target) with a standard deviation of zero
+    nan_mask = np.isnan(correlation_coefficient)
+    correlation_coefficient[nan_mask] = 0.0
     return correlation_coefficient
 
 
