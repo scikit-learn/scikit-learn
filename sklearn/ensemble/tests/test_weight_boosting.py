@@ -273,6 +273,14 @@ def test_importances():
 def test_error():
     # Test that it gives proper exception on deficient input.
 
+    reg = AdaBoostRegressor(loss="foo")
+    with pytest.raises(ValueError):
+        reg.fit(X, y_class)
+
+    clf = AdaBoostClassifier(algorithm="foo")
+    with pytest.raises(ValueError):
+        clf.fit(X, y_class)
+
     with pytest.raises(ValueError):
         AdaBoostClassifier().fit(X, y_class, sample_weight=np.asarray([-1]))
 
@@ -556,17 +564,20 @@ def test_adaboostregressor_sample_weight():
         ),
         ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
         ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
-        (
-            {"algorithm": "unknown"},
-            ValueError,
-            "Algorithm must be 'SAMME' or 'SAMME.R'.",
-        ),
     ],
 )
-def test_adaboost_classifier_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `AdaBoostClassifier`."""
+@pytest.mark.parametrize(
+    "model, X, y",
+    [
+        (AdaBoostClassifier, X, y_class),
+        (AdaBoostRegressor, X, y_regr),
+    ],
+)
+def test_adaboost_params_validation(model, X, y, params, err_type, err_msg):
+    """Check input parameter validation in weight boosting."""
+    est = model(**params)
     with pytest.raises(err_type, match=err_msg):
-        AdaBoostClassifier(**params).fit(X, y_class)
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
