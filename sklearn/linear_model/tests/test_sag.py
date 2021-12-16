@@ -938,11 +938,10 @@ def test_multinomial_loss():
         loss=HalfMultinomialLoss(n_classes=n_classes),
         fit_intercept=True,
     )
-    weights_intercept = np.vstack((weights, intercept)).T.ravel()
+    weights_intercept = np.vstack((weights, intercept)).T
     loss_2, grad_2 = loss.loss_gradient(
-        weights_intercept, X, y, alpha=0.0, sample_weight=sample_weights
+        weights_intercept, X, y, l2_reg_strength=0.0, sample_weight=sample_weights
     )
-    grad_2 = grad_2.reshape(n_classes, -1)
     grad_2 = grad_2[:, :-1].T
 
     # comparison
@@ -973,11 +972,10 @@ def test_multinomial_loss_ground_truth():
         loss=HalfMultinomialLoss(n_classes=n_classes),
         fit_intercept=True,
     )
-    weights_intercept = np.vstack((weights, intercept)).T.ravel()
+    weights_intercept = np.vstack((weights, intercept)).T
     loss_2, grad_2 = loss.loss_gradient(
-        weights_intercept, X, y, alpha=0.0, sample_weight=sample_weights
+        weights_intercept, X, y, l2_reg_strength=0.0, sample_weight=sample_weights
     )
-    grad_2 = grad_2.reshape(n_classes, -1)
     grad_2 = grad_2[:, :-1].T
 
     assert_almost_equal(loss_1, loss_2)
