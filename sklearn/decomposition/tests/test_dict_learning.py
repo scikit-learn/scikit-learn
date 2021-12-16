@@ -679,6 +679,41 @@ def test_dict_learning_dtype_match(data_type, expected_type, method):
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
+def test_dict_learning_numerical_consistency(method):
+    # verify numerically consistent among np.float32 and np.float64
+    rtol = 1e-7
+    atol = 1e-7
+    rng = np.random.RandomState(0)
+    n_components = 6
+    alpha = 4
+
+    U_64, V_64, _ = dict_learning(
+        X.astype(np.float64),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=rng,
+        method=method,
+    )
+    U_32, V_32, _ = dict_learning(
+        X.astype(np.float32),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=rng,
+        method=method,
+    )
+
+    # Optimal solution (U*, V*) is not unique.
+    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
+    # and (column permutated U*, row permutated V*) are also optional
+    # as long as holding UV.
+    # So here UV, ||U||_1,1 and sum(|||V_k||_2) are verified
+    # instead of comparing directory U and V.
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol, atol=atol)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol, atol=atol)
+    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol, atol=atol)
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
 @pytest.mark.parametrize(
     "data_type, expected_type",
     (
@@ -700,6 +735,43 @@ def test_dict_learning_online_dtype_match(data_type, expected_type, method):
     )
     assert code.dtype == expected_type
     assert dictionary.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+def test_dict_learning_online_numerical_consistency(method):
+    # verify numerically consistent among np.float32 and np.float64
+    rtol = 1e-6
+    atol = 1e-6
+    rng = np.random.RandomState(0)
+    n_components = 8
+    # The larger alpha, the more sparsity, as a result likely to relax tolerance error.
+    alpha = 4
+
+    U_64, V_64 = dict_learning_online(
+        X.astype(np.float64),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=rng,
+        method=method,
+    )
+    U_32, V_32 = dict_learning_online(
+        X.astype(np.float32),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=rng,
+        method=method,
+    )
+
+    print(np.matmul(U_64, V_64) - np.matmul(U_32, V_32))
+    # Optimal solution (U*, V*) is not unique.
+    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
+    # and (column permutated U*, row permutated V*) are also optional
+    # as long as holding UV.
+    # So here UV, ||U||_1,1 and sum(|||V_k||_2) are verified
+    # instead of comparing directory U and V.
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol, atol=atol)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol, atol=atol)
+    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol, atol=atol)
 
 
 @pytest.mark.parametrize(
