@@ -171,7 +171,7 @@ General Concepts
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `categorical-encoding
-        <https://contrib.scikit-learn.org/categorical-encoding>`_
+        <https://github.com/scikit-learn-contrib/category_encoders>`_
         package for tools related to encoding categorical features.
 
     clone
@@ -255,6 +255,13 @@ General Concepts
         or vectorizing.  Our estimators do not work with struct arrays, for
         instance.
 
+        Our documentation can sometimes give information about the dtype
+        precision, e.g. `np.int32`, `np.int64`, etc. When the precision is
+        provided, it refers to the NumPy dtype. If an arbitrary precision is
+        used, the documentation will refer to dtype `integer` or `floating`.
+        Note that in this case, the precision can be platform dependent.
+        The `numeric` dtype refers to accepting both `integer` and `floating`.
+
         TODO: Mention efficiency and precision issues; casting policy.
 
     duck typing
@@ -328,6 +335,12 @@ General Concepts
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
 
+    experimental
+        An experimental tool is already usable but its public API, such as
+        default parameter values or fitted attributes, is still subject to
+        change in future versions without the usual :term:`deprecation`
+        warning policy.
+
     evaluation metric
     evaluation metrics
         Evaluation metrics give a measure of how well a model performs.  We may
@@ -383,9 +396,9 @@ General Concepts
 
                 .. deprecated:: 0.24
 
-                    The _pairwise attribute is deprecated in 0.24. From 0.26
-                    onward, the `pairwise` estimator tag should be used
-                    instead.
+                    The _pairwise attribute is deprecated in 0.24. From 1.1
+                    (renaming of 0.26) onward, the `pairwise` estimator tag
+                    should be used instead.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -631,9 +644,8 @@ General Concepts
 
         Note that for most distance metrics, we rely on implementations from
         :mod:`scipy.spatial.distance`, but may reimplement for efficiency in
-        our context.  The :mod:`neighbors` module also duplicates some metric
-        implementations for integration with efficient binary tree search data
-        structures.
+        our context. The :class:`metrics.DistanceMetric` interface is used to implement
+        distance metrics for integration with efficient neighbors search.
 
     pd
         A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
@@ -881,6 +893,7 @@ Class APIs and Estimator Types
         * :term:`fit`
         * :term:`transform`
         * :term:`get_feature_names`
+        * :term:`get_feature_names_out`
 
     meta-estimator
     meta-estimators
@@ -910,7 +923,7 @@ Class APIs and Estimator Types
         possible to identify which methods are provided by the underlying
         estimator until the meta-estimator has been :term:`fitted` (see also
         :term:`duck typing`), for which
-        :func:`utils.metaestimators.if_delegate_has_method` may help.  It
+        :func:`utils.metaestimators.available_if` may help.  It
         should also provide (or modify) the :term:`estimator tags` and
         :term:`classes_` attribute provided by the base estimator.
 
@@ -1009,7 +1022,7 @@ such as:
 
 Further examples:
 
-* :class:`neighbors.DistanceMetric`
+* :class:`metrics.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
 
@@ -1080,7 +1093,7 @@ Target Types
         For semi-supervised classification, :term:`unlabeled` samples should
         have the special label -1 in ``y``.
 
-        Within sckit-learn, all estimators supporting binary classification
+        Within scikit-learn, all estimators supporting binary classification
         also support multiclass classification, using One-vs-Rest by default.
 
         A :class:`preprocessing.LabelEncoder` helps to canonicalize multiclass
@@ -1248,6 +1261,17 @@ Methods
         strings and may take a list of strings as input, corresponding
         to the names of input columns from which output column names can
         be generated.  By default input features are named x0, x1, ....
+
+    ``get_feature_names_out``
+        Primarily for :term:`feature extractors`, but also used for other
+        transformers to provide string names for each column in the output of
+        the estimator's :term:`transform` method.  It outputs an array of
+        strings and may take an array-like of strings as input, corresponding
+        to the names of input columns from which output column names can
+        be generated.  If `input_features` is not passed in, then the
+        `feature_names_in_` attribute will be used. If the
+        `feature_names_in_` attribute is not defined, then the
+        input names are named `[x0, x1, ..., x(n_features_in_)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of

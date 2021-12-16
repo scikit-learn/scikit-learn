@@ -27,10 +27,10 @@ from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
@@ -46,15 +46,14 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return '(%d of %d) Processing %s' % (idx, total, name)
+        return "(%d of %d) Processing %s" % (idx, total, name)
 
     @property
     def _weights_not_none(self):
         """Get the weights of not `None` estimators."""
         if self.weights is None:
             return None
-        return [w for est, w in zip(self.estimators, self.weights)
-                if est[1] != 'drop']
+        return [w for est, w in zip(self.estimators, self.weights) if est[1] != "drop"]
 
     def _predict(self, X):
         """Collect results from clf.predict calls."""
@@ -65,30 +64,36 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
-        if (self.weights is not None and
-                len(self.weights) != len(self.estimators)):
-            raise ValueError('Number of `estimators` and weights must be equal'
-                             '; got %d weights, %d estimators'
-                             % (len(self.weights), len(self.estimators)))
+        if self.weights is not None and len(self.weights) != len(self.estimators):
+            raise ValueError(
+                "Number of `estimators` and weights must be equal"
+                "; got %d weights, %d estimators"
+                % (len(self.weights), len(self.estimators))
+            )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_single_estimator)(
-                        clone(clf), X, y,
-                        sample_weight=sample_weight,
-                        message_clsname='Voting',
-                        message=self._log_message(names[idx],
-                                                  idx + 1, len(clfs))
-                )
-                for idx, clf in enumerate(clfs) if clf != 'drop'
+            delayed(_fit_single_estimator)(
+                clone(clf),
+                X,
+                y,
+                sample_weight=sample_weight,
+                message_clsname="Voting",
+                message=self._log_message(names[idx], idx + 1, len(clfs)),
             )
+            for idx, clf in enumerate(clfs)
+            if clf != "drop"
+        )
 
         self.named_estimators_ = Bunch()
 
         # Uses 'drop' as placeholder for dropped estimators
         est_iter = iter(self.estimators_)
         for name, est in self.estimators:
-            current_est = est if est == 'drop' else next(est_iter)
+            current_est = est if est == "drop" else next(est_iter)
             self.named_estimators_[name] = current_est
+
+            if hasattr(current_est, "feature_names_in_"):
+                self.feature_names_in_ = current_est.feature_names_in_
 
         return self
 
@@ -101,7 +106,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
-            Input samples
+            Input samples.
 
         y : ndarray of shape (n_samples,), default=None
             Target values (None for unsupervised transformations).
@@ -118,21 +123,23 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__
+                )
             ) from nfe
 
         return self.estimators_[0].n_features_in_
 
     def _sk_visual_block_(self):
         names, estimators = zip(*self.estimators)
-        return _VisualBlock('parallel', estimators, names=names)
+        return _VisualBlock("parallel", estimators, names=names)
 
     def _more_tags(self):
         return {"preserves_dtype": []}
@@ -200,8 +207,23 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
-    classes_ : array-like of shape (n_predictions,)
+    le_ : :class:`~sklearn.preprocessing.LabelEncoder`
+        Transformer used to encode the labels during fit and decode during
+        prediction.
+
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying classifier exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -242,9 +264,17 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     >>> print(eclf3.transform(X).shape)
     (6, 6)
     """
-    @_deprecate_positional_args
-    def __init__(self, estimators, *, voting='hard', weights=None,
-                 n_jobs=None, flatten_transform=True, verbose=False):
+
+    def __init__(
+        self,
+        estimators,
+        *,
+        voting="hard",
+        weights=None,
+        n_jobs=None,
+        flatten_transform=True,
+        verbose=False,
+    ):
         super().__init__(estimators=estimators)
         self.voting = voting
         self.weights = weights
@@ -258,8 +288,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -274,16 +304,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Returns
         -------
         self : object
-
+            Returns the instance itself.
         """
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
-            raise NotImplementedError('Multilabel and multi-output'
-                                      ' classification is not supported.')
+            raise NotImplementedError(
+                "Multilabel and multi-output classification is not supported."
+            )
 
-        if self.voting not in ('soft', 'hard'):
-            raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
-                             % self.voting)
+        if self.voting not in ("soft", "hard"):
+            raise ValueError(
+                "Voting must be 'soft' or 'hard'; got (voting=%r)" % self.voting
+            )
 
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
@@ -305,15 +337,16 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Predicted class labels.
         """
         check_is_fitted(self)
-        if self.voting == 'soft':
+        if self.voting == "soft":
             maj = np.argmax(self.predict_proba(X), axis=1)
 
         else:  # 'hard' voting
             predictions = self._predict(X)
             maj = np.apply_along_axis(
-                lambda x: np.argmax(
-                    np.bincount(x, weights=self._weights_not_none)),
-                axis=1, arr=predictions)
+                lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
+                axis=1,
+                arr=predictions,
+            )
 
         maj = self.le_.inverse_transform(maj)
 
@@ -323,15 +356,15 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """Collect results from clf.predict calls."""
         return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
-    def _predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting."""
-        check_is_fitted(self)
-        avg = np.average(self._collect_probas(X), axis=0,
-                         weights=self._weights_not_none)
-        return avg
+    def _check_voting(self):
+        if self.voting == "hard":
+            raise AttributeError(
+                f"predict_proba is not available when voting={repr(self.voting)}"
+            )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_voting)
+    def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
         Parameters
@@ -344,10 +377,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         avg : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
-        if self.voting == 'hard':
-            raise AttributeError("predict_proba is not available when"
-                                 " voting=%r" % self.voting)
-        return self._predict_proba
+        check_is_fitted(self)
+        avg = np.average(
+            self._collect_probas(X), axis=0, weights=self._weights_not_none
+        )
+        return avg
 
     def transform(self, X):
         """Return class labels or probabilities for X for each estimator.
@@ -355,8 +389,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -373,7 +407,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """
         check_is_fitted(self)
 
-        if self.voting == 'soft':
+        if self.voting == "soft":
             probas = self._collect_probas(X)
             if not self.flatten_transform:
                 return probas
@@ -428,10 +462,21 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying regressor exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -451,9 +496,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
-    @_deprecate_positional_args
-    def __init__(self, estimators, *, weights=None, n_jobs=None,
-                 verbose=False):
+
+    def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
         super().__init__(estimators=estimators)
         self.weights = weights
         self.n_jobs = n_jobs
@@ -465,8 +509,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -501,8 +545,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1,
-                          weights=self._weights_not_none)
+        return np.average(self._predict(X), axis=1, weights=self._weights_not_none)
 
     def transform(self, X):
         """Return predictions for X for each estimator.
@@ -514,7 +557,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        predictions: ndarray of shape (n_samples, n_classifiers)
+        predictions : ndarray of shape (n_samples, n_classifiers)
             Values predicted by each regressor.
         """
         check_is_fitted(self)
