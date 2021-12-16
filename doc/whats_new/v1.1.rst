@@ -75,8 +75,7 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| `fit` method of
-  :class:`calibration.CalibratedClassifierCV` now supports passing
+- |Enhancement| :meth:`calibration.CalibratedClassifierCV.fit` now supports passing
   `fit_params`, which are routed to the `base_estimator`.
   :pr:`18170` by :user:`Benjamin Bossan <BenjaminBossan>`.
 
