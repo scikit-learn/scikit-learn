@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
@@ -21,7 +21,7 @@ from ..utils.validation import check_is_fitted
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(TransformerMixin, BaseEstimator):
+class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -64,13 +64,14 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    tol : float, default=0.
+    tol : float, default=0.0
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
         SVD solver.
 
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
+        The right singular vectors of the input data.
 
     explained_variance_ : ndarray of shape (n_components,)
         The variance of the training samples transformed by a projection to
@@ -83,6 +84,40 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    FactorAnalysis : A simple linear generative model with
+        Gaussian latent variables.
+    IncrementalPCA : Incremental principal components analysis.
+    KernelPCA : Kernel Principal component analysis.
+    NMF : Non-Negative Matrix Factorization.
+    PCA : Principal component analysis.
+
+    Notes
+    -----
+    SVD suffers from a problem called "sign indeterminacy", which means the
+    sign of the ``components_`` and the output from transform depend on the
+    algorithm and random state. To work around this, fit instances of this
+    class to data once, then keep the instance around to do transformations.
+
+    References
+    ----------
+    Finding structure with randomness: Stochastic algorithms for constructing
+    approximate matrix decompositions
+    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
 
     Examples
     --------
@@ -102,27 +137,17 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     0.2102...
     >>> print(svd.singular_values_)
     [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
-
-    See Also
-    --------
-    PCA
-
-    References
-    ----------
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
-
-    Notes
-    -----
-    SVD suffers from a problem called "sign indeterminacy", which means the
-    sign of the ``components_`` and the output from transform depend on the
-    algorithm and random state. To work around this, fit instances of this
-    class to data once, then keep the instance around to do transformations.
-
     """
-    def __init__(self, n_components=2, *, algorithm="randomized", n_iter=5,
-                 random_state=None, tol=0.):
+
+    def __init__(
+        self,
+        n_components=2,
+        *,
+        algorithm="randomized",
+        n_iter=5,
+        random_state=None,
+        tol=0.0,
+    ):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
@@ -138,6 +163,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             Training data.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -156,14 +182,14 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             Training data.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = self._validate_data(X, accept_sparse=['csr', 'csc'],
-                                ensure_min_features=2)
+        X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
@@ -178,11 +204,12 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             k = self.n_components
             n_features = X.shape[1]
             if k >= n_features:
-                raise ValueError("n_components must be < n_features;"
-                                 " got %d >= %d" % (k, n_features))
-            U, Sigma, VT = randomized_svd(X, self.n_components,
-                                          n_iter=self.n_iter,
-                                          random_state=random_state)
+                raise ValueError(
+                    "n_components must be < n_features; got %d >= %d" % (k, n_features)
+                )
+            U, Sigma, VT = randomized_svd(
+                X, self.n_components, n_iter=self.n_iter, random_state=random_state
+            )
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
 
@@ -190,8 +217,9 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         # As a result of the SVD approximation error on X ~ U @ Sigma @ V.T,
         # X @ V is not the same as U @ Sigma
-        if self.algorithm == "randomized" or \
-                (self.algorithm == "arpack" and self.tol > 0):
+        if self.algorithm == "randomized" or (
+            self.algorithm == "arpack" and self.tol > 0
+        ):
             X_transformed = safe_sparse_dot(X, self.components_.T)
         else:
             X_transformed = U * Sigma
@@ -222,7 +250,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             Reduced version of X. This will always be a dense array.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=['csr', 'csc'], reset=False)
+        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):
@@ -244,4 +272,9 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         return np.dot(X, self.components_)
 
     def _more_tags(self):
-        return {'preserves_dtype': [np.float64, np.float32]}
+        return {"preserves_dtype": [np.float64, np.float32]}
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

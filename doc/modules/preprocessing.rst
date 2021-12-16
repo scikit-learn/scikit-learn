@@ -973,17 +973,16 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
 .. topic:: References:
 
-    * Eilers, P., & Marx, B. (1996). Flexible Smoothing with B-splines and
-      Penalties. Statist. Sci. 11 (1996), no. 2, 89--121.
-      `doi:10.1214/ss/1038425655 <https://doi.org/10.1214/ss/1038425655>`_
+    * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
+      Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
 
-    * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. A review of
-      spline function procedures in R. BMC Med Res Methodol 19, 46 (2019).
-      `doi:10.1186/s12874-019-0666-3
-      <https://doi.org/10.1186/s12874-019-0666-3>`_
+    * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
+      spline function procedures in R <10.1186/s12874-019-0666-3>`. 
+      BMC Med Res Methodol 19, 46 (2019).
 
 .. _function_transformer:
 
@@ -1014,4 +1013,5 @@ error with a ``filterwarnings``::
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to extract features from text data see
-:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py` and
+:ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.

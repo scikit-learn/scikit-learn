@@ -5,8 +5,6 @@
 # continuous deployment jobs, we have to execute the scripts for
 # testing the continuous integration jobs.
 
-set -e
-
 if [[ $BUILD_WHEEL != true ]]; then
     # This trick will make Travis terminate the continuation of the pipeline
     bash build_tools/travis/test_script.sh || travis_terminate 1

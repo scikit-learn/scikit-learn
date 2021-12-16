@@ -5,7 +5,7 @@ get_dep() {
         # do not install with none
         echo
     elif [[ "${version%%[^0-9.]*}" ]]; then
-        # version number is explicity passed
+        # version number is explicitly passed
         echo "$package==$version"
     elif [[ "$version" == "latest" ]]; then
         # use latest
