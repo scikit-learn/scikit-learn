@@ -100,13 +100,29 @@ cdef inline int heap_push(
     """Push a tuple (val, val_idx) onto a fixed-size max-heap.
 
     The max-heap is represented as a Structure of Arrays where:
-     - values is the array containing the data to construct then heap with
+     - values is the array containing the data to construct the heap with
      - indices is the array containing the indices (meta-data) of each value
 
     Notes
     -----
     Arrays are manipulated via a pointer to there first element and their size
     as to ease the processing of dynamically allocated buffers.
+
+    For instance, in pseudo-code:
+
+        heap_push(
+            values=[0.1, 0.4, 1.2],
+            indices=[42, 1, 5],
+            size=3,
+            val=0.2,
+            val_idx=4,
+        )
+
+    will modify values and indices inplace, giving at the end of the call:
+
+        values  == [0.1, 0.2, 0.4]
+        indices == [42, 4, 1]
+
     """
     cdef:
         ITYPE_t current_idx, left_child_idx, right_child_idx, swap_idx
