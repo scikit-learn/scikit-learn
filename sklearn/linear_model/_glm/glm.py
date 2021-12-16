@@ -263,7 +263,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             name="verbose",
             target_type=numbers.Integral,
             min_val=0,
-            include_boundaries="left",
         )
         if not isinstance(self.tol, numbers.Number) or self.tol <= 0:
             raise ValueError(
