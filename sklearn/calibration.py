@@ -279,8 +279,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
-        for val in fit_params.values():
-            check_consistent_length(y, val)
+        for sample_aligned_params in fit_params.values():
+            check_consistent_length(y, sample_aligned_params)
 
         self.calibrated_classifiers_ = []
         if self.base_estimator is None:
@@ -348,7 +348,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 )
             cv = check_cv(self.cv, y, classifier=True)
 
-            cv = check_cv(self.cv, y, classifier=True)
             if self.ensemble:
                 parallel = Parallel(n_jobs=self.n_jobs)
                 self.calibrated_classifiers_ = parallel(
