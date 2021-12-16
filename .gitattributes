@@ -1,1 +1,1 @@
-/doc/whats_new.rst merge=union
+/doc/whats_new/v*.rst merge=union
