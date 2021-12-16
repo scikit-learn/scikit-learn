@@ -18,7 +18,7 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKern
 from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
-
+from sklearn.utils.validation import assert_all_finite
 from sklearn.utils._testing import (
     assert_array_less,
     assert_almost_equal,
@@ -551,8 +551,6 @@ def test_bound_check_fixed_hyperparameter():
     GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
 
-# FIXME: we should test for multitargets as well. However, GPR is broken:
-# see: https://github.com/scikit-learn/scikit-learn/pull/19706
 @pytest.mark.parametrize("kernel", kernels)
 def test_constant_target(kernel):
     """Check that the std. dev. is affected to 1 when normalizing a constant
@@ -572,6 +570,26 @@ def test_constant_target(kernel):
     assert_allclose(y_pred, y_constant)
     # set atol because we compare to zero
     assert_allclose(np.diag(y_cov), 0.0, atol=1e-9)
+
+    # Test multi-target data
+    n_samples, n_targets = X.shape[0], 2
+    rng = np.random.RandomState(0)
+    y = np.concatenate(
+        [
+            rng.normal(size=(n_samples, 1)),  # non-constant target
+            np.full(shape=(n_samples, 1), fill_value=2),  # constant target
+        ],
+        axis=1,
+    )
+
+    gpr.fit(X, y)
+    Y_pred, Y_cov = gpr.predict(X, return_cov=True)
+
+    assert_all_finite(Y_pred)
+    assert_all_finite(Y_cov)
+
+    assert Y_pred.shape == (n_samples, n_targets)
+    assert Y_cov.shape == (n_samples, n_samples, n_targets)
 
 
 def test_gpr_consistency_std_cov_non_invertible_kernel():
