@@ -198,7 +198,8 @@ def spectral_clustering(
     eigen_solver=None,
     random_state=None,
     n_init=10,
-    eigen_tol=0.0,
+    eigen_tol=None,
+    max_iter=None,
     assign_labels="kmeans",
     verbose=False,
 ):
@@ -259,9 +260,17 @@ def spectral_clustering(
         consecutive runs in terms of inertia. Only used if
         ``assign_labels='kmeans'``.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+    eigen_tol : float or None, default=None
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        The default tolerance depends on the `eigen_solver`:
+
+        - when `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - when `eigen_solver="lobpcg"`, then `eigen_tol=1e-5`.
+
+    max_iter : int, default=None
+        The maximum number of iterations done by the eigendecomposition.
+
+        .. versionadded:: 1.1
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy to use to assign labels in the embedding
@@ -359,6 +368,7 @@ def spectral_clustering(
         eigen_solver=eigen_solver,
         random_state=random_state,
         eigen_tol=eigen_tol,
+        max_iter=max_iter,
         drop_first=False,
     )
     if verbose:
@@ -461,9 +471,18 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when ``eigen_solver='arpack'``.
+    eigen_tol : float or None, default=None
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        The default tolerance depends on the `eigen_solver`:
+
+        - when `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - when `eigen_solver="lobpcg"` and `eigen_solver="amg"`, then
+          `eigen_tol=1e-5`.
+
+    max_iter : int, default=None
+        The maximum number of iterations done by the eigendecomposition.
+
+        .. versionadded:: 1.1
 
     assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy for assigning labels in the embedding space. There are two
@@ -598,7 +617,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         gamma=1.0,
         affinity="rbf",
         n_neighbors=10,
-        eigen_tol=0.0,
+        eigen_tol=None,
+        max_iter=None,
         assign_labels="kmeans",
         degree=3,
         coef0=1,
@@ -615,6 +635,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self.affinity = affinity
         self.n_neighbors = n_neighbors
         self.eigen_tol = eigen_tol
+        self.max_iter = max_iter
         self.assign_labels = assign_labels
         self.degree = degree
         self.coef0 = coef0
@@ -696,6 +717,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             random_state=random_state,
             n_init=self.n_init,
             eigen_tol=self.eigen_tol,
+            max_iter=self.max_iter,
             assign_labels=self.assign_labels,
             verbose=self.verbose,
         )

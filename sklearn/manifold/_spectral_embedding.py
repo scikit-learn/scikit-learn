@@ -257,8 +257,6 @@ def spectral_embedding(
             "Unknown value for eigen_solver: '%s'."
             "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
         )
-    if eigen_solver is None:
-        eigen_tol = 1e-5 if eigen_solver == "lobpcg" else 0.0
 
     random_state = check_random_state(random_state)
 
@@ -303,6 +301,7 @@ def spectral_embedding(
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
         try:
+            tol = 0 if eigen_tol is None else eigen_tol
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
@@ -312,7 +311,7 @@ def spectral_embedding(
                 k=n_components,
                 sigma=1.0,
                 which="LM",
-                tol=eigen_tol,
+                tol=tol,
                 maxiter=max_iter,
                 v0=v0,
             )
@@ -359,9 +358,9 @@ def spectral_embedding(
         # Until scikit-learn minimum scipy dependency <1.4.0 we require high
         # tolerance as explained in:
         # https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509
-        eigen_tol = max(1e-5, eigen_tol)
+        tol = max(1e-5, 1e-5 if eigen_tol is None else eigen_tol)
         _, diffusion_map = lobpcg(
-            laplacian, X, M=M, tol=eigen_tol, maxiter=max_iter, largest=False
+            laplacian, X, M=M, tol=tol, maxiter=max_iter, largest=False
         )
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -393,12 +392,13 @@ def spectral_embedding(
             X = random_state.randn(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
             X = X.astype(laplacian.dtype)
+            tol = 1e-5 if eigen_tol is None else eigen_tol
             _, diffusion_map = lobpcg(
                 laplacian,
                 X,
-                tol=eigen_tol,
-                largest=False,
+                tol=tol,
                 maxiter=max_iter,
+                largest=False,
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -469,6 +469,21 @@ class SpectralEmbedding(BaseEstimator):
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems.
         If None, then ``'arpack'`` is used.
+
+    eigen_tol : float or None, default=None
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        The default tolerance depends on the `eigen_solver`:
+
+        - when `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - when `eigen_solver="lobpcg"` and `eigen_solver="amg"`, then
+          `eigen_tol=1e-5`.
+
+        .. versionadded:: 1.1
+
+    max_iter : int, default=None
+        The maximum number of iterations done by the eigendecomposition.
+
+        .. versionadded:: 1.1
 
     n_neighbors : int, default=None
         Number of nearest neighbors for nearest_neighbors graph building.
@@ -542,6 +557,8 @@ class SpectralEmbedding(BaseEstimator):
         gamma=None,
         random_state=None,
         eigen_solver=None,
+        eigen_tol=None,
+        max_iter=None,
         n_neighbors=None,
         n_jobs=None,
     ):
@@ -550,6 +567,8 @@ class SpectralEmbedding(BaseEstimator):
         self.gamma = gamma
         self.random_state = random_state
         self.eigen_solver = eigen_solver
+        self.eigen_tol = eigen_tol
+        self.max_iter = max_iter
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
@@ -677,6 +696,8 @@ class SpectralEmbedding(BaseEstimator):
             affinity_matrix,
             n_components=self.n_components,
             eigen_solver=self.eigen_solver,
+            eigen_tol=self.eigen_tol,
+            max_iter=self.max_iter,
             random_state=random_state,
         )
         return self
