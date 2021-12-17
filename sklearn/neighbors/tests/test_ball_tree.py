@@ -99,6 +99,6 @@ def test_bad_pyfunc_metric():
     with pytest.raises(TypeError, match=msg):
         BallTree(X, metric=wrong_returned_value)
 
-    msg = "one_arg_func\(\) takes 1 positional argument but 2 were given"
+    msg = "takes 1 positional argument but 2 were given"
     with pytest.raises(TypeError, match=msg):
         BallTree(X, metric=one_arg_func)
