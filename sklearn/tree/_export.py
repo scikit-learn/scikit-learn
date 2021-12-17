@@ -209,6 +209,7 @@ class _BaseTreeExporter:
         rounded=False,
         precision=3,
         fontsize=None,
+        add_holizontal_line_in_node=False,
     ):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -221,6 +222,7 @@ class _BaseTreeExporter:
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
+        self.add_holizontal_line_in_node = add_holizontal_line_in_node
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -277,13 +279,16 @@ class _BaseTreeExporter:
         labels = (self.label == "root" and node_id == 0) or self.label == "all"
 
         characters = self.characters
-        node_string = characters[-1]
+        node_string = characters[-1] + ("{" if self.add_holizontal_line_in_node else "")
+
+        separator = "|" if self.add_holizontal_line_in_node else ""
 
         # Write node ID
         if self.node_ids:
             if labels:
                 node_string += "node "
             node_string += characters[0] + str(node_id) + characters[4]
+            node_string += separator
 
         # Write decision criteria
         if tree.children_left[node_id] != _tree.TREE_LEAF:
@@ -303,6 +308,8 @@ class _BaseTreeExporter:
                 characters[4],
             )
 
+            node_string += separator
+
         # Write impurity
         if self.impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
@@ -316,6 +323,7 @@ class _BaseTreeExporter:
             node_string += (
                 str(round(tree.impurity[node_id], self.precision)) + characters[4]
             )
+            node_string += separator
 
         # Write node sample count
         if labels:
@@ -377,7 +385,11 @@ class _BaseTreeExporter:
         if node_string.endswith(characters[4]):
             node_string = node_string[: -len(characters[4])]
 
-        return node_string + characters[5]
+        return (
+            node_string
+            + ("}" if self.add_holizontal_line_in_node else "")
+            + characters[5]
+        )
 
 
 class _DOTTreeExporter(_BaseTreeExporter):
@@ -398,6 +410,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         special_characters=False,
         precision=3,
         fontname="helvetica",
+        add_holizontal_line_in_node=False,
     ):
 
         super().__init__(
@@ -411,18 +424,28 @@ class _DOTTreeExporter(_BaseTreeExporter):
             proportion=proportion,
             rounded=rounded,
             precision=precision,
+            add_holizontal_line_in_node=add_holizontal_line_in_node,
         )
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
         self.fontname = fontname
         self.rotate = rotate
+        self.add_holizontal_line_in_node = add_holizontal_line_in_node
 
         # PostScript compatibility for special characters
         if special_characters:
             self.characters = ["&#35;", "<SUB>", "</SUB>", "&le;", "<br/>", ">", "<"]
         else:
-            self.characters = ["#", "[", "]", "<=", "\\n", '"', '"']
+            self.characters = [
+                "#",
+                "[",
+                "]",
+                r"\<=" if self.add_holizontal_line_in_node else "<=",
+                "\\n",
+                '"',
+                '"',
+            ]
 
         # validate
         if isinstance(precision, Integral):
@@ -476,7 +499,8 @@ class _DOTTreeExporter(_BaseTreeExporter):
         self.out_file.write("digraph Tree {\n")
 
         # Specify node aesthetics
-        self.out_file.write("node [shape=box")
+        shape = "record" if self.add_holizontal_line_in_node else "box"
+        self.out_file.write("node [shape=" + shape)
         rounded_filled = []
         if self.filled:
             rounded_filled.append("filled")
@@ -756,6 +780,7 @@ def export_graphviz(
     special_characters=False,
     precision=3,
     fontname="helvetica",
+    add_holizontal_line_in_node=False,
 ):
     """Export a decision tree in DOT format.
 
@@ -836,6 +861,9 @@ def export_graphviz(
     fontname : str, default='helvetica'
         Name of font used to render text.
 
+    add_holizontal_line_in_node : bool, default=True
+
+
     Returns
     -------
     dot_data : str
@@ -885,6 +913,7 @@ def export_graphviz(
             special_characters=special_characters,
             precision=precision,
             fontname=fontname,
+            add_holizontal_line_in_node=add_holizontal_line_in_node,
         )
         exporter.export(decision_tree)
 
