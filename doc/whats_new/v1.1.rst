@@ -105,7 +105,7 @@ Changelog
   :class:`cross_decomposition.PLSRegression`, and
   :class:`cross_decomposition.CCA`. The method `predict` is indeed equivalent to
   `Y = X @ coef_ + intercept_`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`22015` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
