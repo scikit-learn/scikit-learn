@@ -695,9 +695,21 @@ def test_error():
             "min_samples_split must be an instance of <class 'numbers.Real'>, not"
             " <class 'str'>.",
         ),
-        ({"min_weight_fraction_leaf": -1}, ValueError, "min_weight_fraction_leaf == -1, must be >= 0"),
-        ({"min_weight_fraction_leaf": 1.1}, ValueError, "min_weight_fraction_leaf == 1.1, must be < 1"),
-        ({"min_weight_fraction_leaf": "foo"}, TypeError, "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>"),
+        (
+            {"min_weight_fraction_leaf": -1},
+            ValueError,
+            "min_weight_fraction_leaf == -1, must be >= 0",
+        ),
+        (
+            {"min_weight_fraction_leaf": 1.1},
+            ValueError,
+            "min_weight_fraction_leaf == 1.1, must be < 1",
+        ),
+        (
+            {"min_weight_fraction_leaf": "foo"},
+            TypeError,
+            "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
+        ),
         ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
         (
             {"max_leaf_nodes": 1.5},

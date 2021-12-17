@@ -339,7 +339,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             target_type=numbers.Real,
             min_val=0,
             max_val=1,
-            include_boundaries="left"
+            include_boundaries="left",
         )
         # if max_depth <= 0:
         #     raise ValueError("max_depth must be greater than zero. ")
