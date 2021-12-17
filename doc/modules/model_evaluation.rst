@@ -2007,15 +2007,15 @@ The best possible score is 1.0, lower values are worse.
 Note: when the prediction residuals have zero mean (perfectly unbiased
 model), the Explained Variance score and the :ref:`r2_score` are identical.
 
-In the particular case where the true y is constant, the Explained Variance
-score is not finite: it is either ``NaN`` (perfect predictions) or ``-Inf``
-(imperfect predictions). Such non-finite scores may prevent correct model
-optimization such as grid-search cross-validation to be performed correctly.
-For this reason the default behaviour of :func:`explained_variance_score` is
-to replace them with 1.0 (perfect predictions) or 0.0 (imperfect predictions).
-You can set the ``force_finite`` parameter to ``False`` to
-prevent this fix to happen and fallback on the original Explained Variance
-score.
+In the particular case where the true target is constant, the Explained
+Variance score is not finite: it is either ``NaN`` (perfect predictions) or
+``-Inf`` (imperfect predictions). Such non-finite scores may prevent correct
+model optimization such as grid-search cross-validation to be performed
+correctly. For this reason the default behaviour of
+:func:`explained_variance_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). You can set the ``force_finite``
+parameter to ``False`` to prevent this fix to happen and fallback on the
+original Explained Variance score.
 
 Here is a small example of usage of the :func:`explained_variance_score`
 function::

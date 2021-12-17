@@ -606,7 +606,7 @@ def explained_variance_score(
 
     Best possible score is 1.0, lower values are worse.
 
-    In the particular case when the true y is constant, the explained variance
+    In the particular case when ``y_true`` is constant, the explained variance
     score is not finite: it is either ``NaN`` (perfect predictions) or
     ``-Inf`` (imperfect predictions). To prevent such non-finite numbers to
     pollute higher-level experiments such as a grid search cross-validation,
@@ -704,7 +704,7 @@ def explained_variance_score(
     return _assemble_r2_explained_variance(
         numerator=numerator,
         denominator=denominator,
-        nb_outputs=y_true.shape[1],
+        n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
     )
@@ -860,14 +860,14 @@ def r2_score(
     return _assemble_r2_explained_variance(
         numerator=numerator,
         denominator=denominator,
-        nb_outputs=y_true.shape[1],
+        n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
     )
 
 
 def _assemble_r2_explained_variance(
-    numerator, denominator, nb_outputs, multioutput, force_finite
+    numerator, denominator, n_outputs, multioutput, force_finite
 ):
     """Common part used by explained variance score and :math:`R^2` score"""
 
@@ -879,7 +879,7 @@ def _assemble_r2_explained_variance(
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
         # (note: even if denominator is zero, thus avoiding NaN scores)
-        output_scores = np.ones([nb_outputs])
+        output_scores = np.ones([n_outputs])
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
         output_scores[valid_score] = 1 - (
