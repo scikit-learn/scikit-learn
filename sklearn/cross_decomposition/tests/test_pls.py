@@ -607,3 +607,23 @@ def test_pls_constant_y():
         pls.fit(x, y)
 
     assert_allclose(pls.x_rotations_, 0)
+
+
+@pytest.mark.parametrize("scale", [True, False])
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_prediction(PLSEstimator, scale):
+    """Check the behaviour of the prediction function."""
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True, scale=scale).fit(X, Y)
+    Y_pred = pls.predict(X, copy=True)
+
+    y_mean = Y.mean(axis=0)
+    X_trans = X - X.mean(axis=0)
+    if scale:
+        X_trans /= X.std(axis=0, ddof=1)
+
+    assert_allclose(pls.intercept_, y_mean)
+    assert_allclose(Y_pred, X_trans @ pls.coef_ + pls.intercept_)

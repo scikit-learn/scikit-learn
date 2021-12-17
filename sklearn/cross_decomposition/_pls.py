@@ -361,6 +361,7 @@ class _PLS(
 
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
         self.coef_ = self.coef_ * self._y_std
+        self.intercept_ = self._y_mean
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -474,7 +475,7 @@ class _PLS(
         X -= self._x_mean
         X /= self._x_std
         Ypred = np.dot(X, self.coef_)
-        return Ypred + self._y_mean
+        return Ypred + self.intercept_
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
@@ -631,7 +632,13 @@ class PLSRegression(_PLS):
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_ + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -757,7 +764,13 @@ class PLSCanonical(_PLS):
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_ + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -885,7 +898,11 @@ class CCA(_PLS):
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_ + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
