@@ -115,6 +115,13 @@ Changelog
   to a temporary subfolder and then renamed.
   :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 
+- |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
+  ``scaled``, to allow loading unscaled data. The scaled version of this
+  dataset is now computed from the unscaled data, and can produce slightly
+  different different results that in previous version (within a 1e-4 absolute
+  tolerance).
+  :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
+
 :mod:`sklearn.decomposition`
 ............................
 

@@ -147,7 +147,7 @@ def test_diabetes(loss):
     reg = AdaBoostRegressor(loss=loss, random_state=0)
     reg.fit(diabetes.data, diabetes.target)
     score = reg.score(diabetes.data, diabetes.target)
-    assert score > 0.6
+    assert score > 0.55
 
     # Check we used multiple estimators
     assert len(reg.estimators_) > 1
