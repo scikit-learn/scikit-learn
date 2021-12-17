@@ -189,6 +189,9 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+- |API| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction.text`
 ......................................
 
