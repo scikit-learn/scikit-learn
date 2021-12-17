@@ -1386,11 +1386,11 @@ def check_scalar(
         the boundaries. Possible choices are:
 
         - `"left"`: only `min_val` is included in the valid interval.
-          It is equivalent to the interval `[ min_val, max_val )`;
+          It is equivalent to the interval `[ min_val, max_val )`.
         - `"right"`: only `max_val` is included in the valid interval.
-          It is equivalent to the interval `( min_val, max_val ]`;
+          It is equivalent to the interval `( min_val, max_val ]`.
         - `"both"`: `min_val` and `max_val` are included in the valid interval.
-          It is equivalent to the interval `[ min_val, max_val ]`;
+          It is equivalent to the interval `[ min_val, max_val ]`.
         - `"neither"`: neither `min_val` nor `max_val` are included in the
           valid interval. It is equivalent to the interval `( min_val, max_val )`.
 
