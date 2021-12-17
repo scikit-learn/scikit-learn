@@ -37,7 +37,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 # - Collaborative Filtering
 #
 # Popularity-based
-#-----------------
+# -----------------
 # Popularity-based Recommendation Engines are the simplest form of
 # Recommendation Engine. They count the number of views or clicks
 # a product or service got and rank their popularity alongside
@@ -46,7 +46,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Recommendation Engines is YouTube's list of trending videos.
 #
 # Content-based
-#--------------
+# --------------
 # Content-based Recommendation Engines focus on the preferences
 # of the user currently using the service. They take into con-
 # sideration what content the user likes, then make out the key
@@ -55,7 +55,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 # ristics to be recommended to that user.
 #
 # Collaborative Filtering
-#------------------------
+# ------------------------
 # Collabarative Filtering tries to identify similar types of
 # users based on their individual behavior and preferences.
 # If two users were clustered as members of a group of similar
@@ -66,13 +66,13 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 #################################################################
 # Content-based Movie Recommendation Engine
-#------------------------------------------
+# ------------------------------------------
 # In this example, our Recommendation Engine will be Content-based.
 # Consequently, we need to find similar movies to a given movie
 # in order to make a movie proposal the user might like.
 
 # Fetch dataset from OpenML and load it as a dataframe
-X, y = fetch_openml('movies', version=1, as_frame=True, return_X_y=True)
+X, y = fetch_openml("movies", version=1, as_frame=True, return_X_y=True)
 X = X.astype({"index": int})
 
 # Choose relevant columns of the dataframe as feature set
@@ -81,12 +81,20 @@ features = ["keywords", "cast", "genres", "director"]
 
 # Concatenating all extracted features into single string
 def concat_features(row):
-    return (row["keywords"] + " " + row["cast"] + " " +
-		row["genres"] + " " + row["director"])
+    return (
+        row["keywords"]
+        + " "
+        + row["cast"]
+        + " "
+        + row["genres"]
+        + " "
+        + row["director"]
+    )
+
 
 # Replacing NaN values with blank strings
 for feature in features:
-	X[feature] = X[feature].fillna("")
+    X[feature] = X[feature].fillna("")
 
 # Iterating over each dataframe row, applying concat_features
 # method to each row and writing resulting string in the
@@ -112,11 +120,13 @@ cosine_sim = cosine_similarity(count_matrix)
 
 # Retrieving a movie title from an index
 def get_title_from_index(index):
-	return X[X.index == index]["title"].values[0]
+    return X[X.index == index]["title"].values[0]
+
 
 # Retrieving a movie index from a title
 def get_index_from_title(title):
-	return X[X.title == title]["index"].values[0]
+    return X[X.title == title]["index"].values[0]
+
 
 # Ask user for the title of movie he/she likes
 movie_user_likes = "Avatar"
@@ -133,14 +143,13 @@ similar_movies = list(enumerate(cosine_sim[movie_index]))
 # Sort list similar_movies by similarity scores in descending
 # order. Drop first element after sorting, since the most
 # similar movie to a given movie is itself.
-sorted_similar_movies = sorted(similar_movies, key=lambda x:x[1], reverse=True)[1:]
+sorted_similar_movies = sorted(similar_movies, key=lambda x: x[1], reverse=True)[1:]
 
 # Print 5 most recommended movies (first 5 list entries)
 i = 0
 
 for element in sorted_similar_movies:
-	print(get_title_from_index(element[0]))
-	i += 1
-	if i > 5:
-		break
-		
+    print(get_title_from_index(element[0]))
+    i += 1
+    if i > 5:
+        break
