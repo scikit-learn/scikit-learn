@@ -607,3 +607,18 @@ def test_pls_constant_y():
         pls.fit(x, y)
 
     assert_allclose(pls.x_rotations_, 0)
+
+
+@pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
+def test_pls_coef_shape(PLSEstimator):
+    """Check the shape of `coef_` attribute.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    pls = PLSEstimator(copy=True).fit(X, Y)
+    assert pls.coef_.shape == (Y.shape[1], X.shape[1])
