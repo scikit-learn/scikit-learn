@@ -20,7 +20,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 #################################################################
 # Recommendation Engines
-#-----------------------
+# ----------------------
 # A Recommendation Engine seeks to predict the rating a user would
 # give to an item or to predict the item in order to meet the
 # user's taste. The more precise Recommendation Engines are, the
