@@ -78,6 +78,7 @@ X = X.astype({"index": int})
 # Choose relevant columns of the dataframe as feature set
 features = ["keywords", "cast", "genres", "director"]
 
+
 # Concatenating all extracted features into single string
 def concat_features(row):
     return (row["keywords"] + " " + row["cast"] + " " +
