@@ -450,7 +450,9 @@ def _get_column_indices(X, key):
         )
 
 
-def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None, copy=True):
+def resample(
+    *arrays, replace=True, n_samples=None, random_state=None, stratify=None, copy=True
+):
     """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
@@ -565,7 +567,7 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
 
         # FIXME: Make sure MockDataFrame also supports `copy=False``
         for a in arrays:
-            if hasattr(a, 'iloc'):
+            if hasattr(a, "iloc"):
                 raise ValueError("MockDataFrame does not support `copy=False`")
 
     check_consistent_length(*arrays)
@@ -695,9 +697,13 @@ def shuffle(*arrays, random_state=None, n_samples=None, copy=True):
     --------
     resample
     """
-    
+
     return resample(
-        *arrays, replace=False, n_samples=n_samples, random_state=random_state, copy=copy
+        *arrays,
+        replace=False,
+        n_samples=n_samples,
+        random_state=random_state,
+        copy=copy,
     )
 
 
