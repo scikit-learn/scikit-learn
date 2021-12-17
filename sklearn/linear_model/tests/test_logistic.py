@@ -4,12 +4,10 @@ import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-import scipy.sparse as sp
-from scipy import linalg, optimize, sparse
+from scipy import sparse
 
 import pytest
 
-from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
@@ -27,7 +25,6 @@ from sklearn.preprocessing import scale
 from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
@@ -36,7 +33,7 @@ from sklearn.linear_model._logistic import (
 )
 
 X = [[-1, 0], [0, 1], [1, 1]]
-X_sp = sp.csr_matrix(X)
+X_sp = sparse.csr_matrix(X)
 Y1 = [0, 1, 1]
 Y2 = [2, 1, 0]
 iris = load_iris()
@@ -314,10 +311,10 @@ def test_sparsify():
     pred_d_d = clf.decision_function(iris.data)
 
     clf.sparsify()
-    assert sp.issparse(clf.coef_)
+    assert sparse.issparse(clf.coef_)
     pred_s_d = clf.decision_function(iris.data)
 
-    sp_data = sp.coo_matrix(iris.data)
+    sp_data = sparse.coo_matrix(iris.data)
     pred_s_s = clf.decision_function(sp_data)
 
     clf.densify()
@@ -498,111 +495,6 @@ def test_liblinear_dual_random_state():
         assert_array_almost_equal(lr1.coef_, lr3.coef_)
 
 
-def test_logistic_loss_and_grad():
-    n_samples, n_features = 20, 20
-    alpha = 1.0
-    X_ref, y = make_classification(
-        n_samples=n_samples, n_features=n_features, random_state=0
-    )
-    # make last column of 1 to mimic intercept term
-    X_ref[:, -1] = 1
-    X_ref_inter = X_ref[:, :-1]  # exclude intercept column
-    y = y.astype(np.float64)
-    n_features = X_ref.shape[1]
-
-    X_sp = X_ref.copy()
-    X_sp[X_sp < 0.1] = 0
-    X_sp = sp.csr_matrix(X_sp)
-    X_sp_inter = sp.lil_matrix(X_sp)  # supports slicing
-    X_sp_inter = sp.csr_matrix(X_sp_inter[:, :-1])
-    for X, X_inter in ((X_ref, X_ref_inter), (X_sp, X_sp_inter)):
-        w = np.ones(n_features)
-        # make an intercept of 0.5
-        w[-1] = 0.5
-
-        logloss = LinearModelLoss(
-            loss=HalfBinomialLoss(),
-            fit_intercept=False,
-        )
-        # First check that our derivation of the grad is correct
-        loss, grad = logloss.loss_gradient(w, X, y, l2_reg_strength=alpha)
-        approx_grad = optimize.approx_fprime(
-            w, lambda w: logloss.loss(w, X, y, l2_reg_strength=alpha), 1e-3
-        )
-        assert_array_almost_equal(grad, approx_grad, decimal=2)
-
-        # Second check that our intercept implementation is good
-        logloss = LinearModelLoss(
-            loss=HalfBinomialLoss(),
-            fit_intercept=True,
-        )
-        loss_inter, grad_inter = logloss.loss_gradient(
-            w, X_inter, y, l2_reg_strength=alpha
-        )
-        # Note, that intercept gets no L2 penalty.
-        assert loss == pytest.approx(loss_inter + 0.5 * alpha * w[-1] ** 2)
-
-        approx_grad = optimize.approx_fprime(
-            w, lambda w: logloss.loss(w, X_inter, y, l2_reg_strength=alpha), 1e-3
-        )
-        assert_array_almost_equal(grad_inter, approx_grad, decimal=2)
-
-
-def test_logistic_grad_hess():
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 50, 5
-    alpha = 1.0
-    X_ref = rng.randn(n_samples, n_features)
-    y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
-    X_ref -= X_ref.mean()
-    X_ref /= X_ref.std()
-    # make last column of 1 to mimic intercept term
-    X_ref[:, :-1] = 1
-    X_sp = X_ref.copy()
-    X_sp[X_sp < 0.1] = 0
-    X_sp = sp.csr_matrix(X_sp)
-    for X in (X_ref, X_sp):
-        w = np.full(n_features, 0.1)
-        logloss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=False)
-
-        # First check that gradients from gradient(), loss_gradient() and
-        # gradient_hessp() are consistent
-        grad = logloss.gradient(w, X, y, l2_reg_strength=alpha)
-        loss, grad_2 = logloss.loss_gradient(w, X, y, l2_reg_strength=alpha)
-        grad_3, hessp = logloss.gradient_hessp(w, X, y, l2_reg_strength=alpha)
-        assert_array_almost_equal(grad, grad_2)
-        assert_array_almost_equal(grad, grad_3)
-
-        # Now check our hessian along the second direction of the grad
-        vector = np.zeros_like(grad)
-        vector[1] = 1
-        hess_col = hessp(vector)
-
-        # Computation of the Hessian is particularly fragile to numerical
-        # errors when doing simple finite differences. Here we compute the
-        # grad along a path in the direction of the vector and then use a
-        # least-square regression to estimate the slope
-        e = 1e-3
-        d_x = np.linspace(-e, e, 30)
-        d_grad = np.array(
-            [logloss.gradient(w + t * vector, X, y, l2_reg_strength=alpha) for t in d_x]
-        )
-
-        d_grad -= d_grad.mean(axis=0)
-        approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
-
-        assert_array_almost_equal(approx_hess_col, hess_col, decimal=3)
-
-        # Second check that our intercept implementation is good
-        w = np.zeros(n_features + 1)
-        logloss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=True)
-        loss_inter, grad_inter = logloss.loss_gradient(w, X, y, l2_reg_strength=alpha)
-        loss_inter_2 = logloss.loss(w, X, y, l2_reg_strength=alpha)
-        grad_inter_2, hess = logloss.gradient_hessp(w, X, y, l2_reg_strength=alpha)
-        assert_array_almost_equal(loss_inter, loss_inter_2)
-        assert_array_almost_equal(grad_inter, grad_inter_2)
-
-
 def test_logistic_cv():
     # test for LogisticRegressionCV object
     n_samples, n_features = 50, 5
@@ -716,7 +608,7 @@ def test_multinomial_logistic_regression_string_inputs():
 def test_logistic_cv_sparse():
     X, y = make_classification(n_samples=50, n_features=5, random_state=0)
     X[X < 1.0] = 0.0
-    csr = sp.csr_matrix(X)
+    csr = sparse.csr_matrix(X)
 
     clf = LogisticRegressionCV()
     clf.fit(X, y)
@@ -725,46 +617,6 @@ def test_logistic_cv_sparse():
     assert_array_almost_equal(clfs.coef_, clf.coef_)
     assert_array_almost_equal(clfs.intercept_, clf.intercept_)
     assert clfs.C_ == clf.C_
-
-
-def test_intercept_logistic_helper():
-    n_samples, n_features = 10, 5
-    X, y = make_classification(
-        n_samples=n_samples, n_features=n_features, random_state=0
-    )
-    y = y.astype(np.float64)
-
-    # Fit intercept case.
-    logloss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=True)
-    alpha = 1.0
-    w = np.ones(n_features + 1)
-    grad_inter, hess_inter = logloss.gradient_hessp(w, X, y, l2_reg_strength=alpha)
-    loss_inter = logloss.loss(w, X, y, l2_reg_strength=alpha)
-
-    # Do not fit intercept. This can be considered equivalent to adding
-    # a feature vector of ones, i.e last column vector's elements are all one.
-    X_ = np.hstack((X, np.ones(n_samples)[:, np.newaxis]))
-    logloss = LinearModelLoss(
-        loss=HalfBinomialLoss(),
-        fit_intercept=False,
-    )
-    grad, hessp = logloss.gradient_hessp(w, X_, y, l2_reg_strength=alpha)
-    loss = logloss.loss(w, X_, y, l2_reg_strength=alpha)
-
-    # In the fit_intercept=False case, the feature vector of ones is
-    # penalized. This should be taken care of.
-    assert_almost_equal(loss_inter + 0.5 * (w[-1] ** 2), loss)
-
-    # Check gradient.
-    assert_array_almost_equal(grad_inter[:n_features], grad[:n_features])
-    assert_almost_equal(grad_inter[-1] + alpha * w[-1], grad[-1])
-
-    rng = np.random.RandomState(0)
-    grad = rng.rand(n_features + 1)
-    hess_interp = hess_inter(grad)
-    hess = hessp(grad)
-    assert_array_almost_equal(hess_interp[:n_features], hess[:n_features])
-    assert_almost_equal(hess_interp[-1] + alpha * grad[-1], hess[-1])
 
 
 def test_ovr_multinomial_iris():
@@ -1147,44 +999,6 @@ def test_logistic_regression_multinomial():
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=2e-2)
         assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=2e-2)
-
-
-def test_multinomial_grad_hess():
-    rng = np.random.RandomState(0)
-    n_samples, n_features, n_classes = 100, 5, 3
-    X = rng.randn(n_samples, n_features)
-    w = rng.rand(n_classes, n_features)
-    y = np.argmax(np.dot(X, w.T), axis=1).astype(X.dtype)
-    w = w.ravel(order="F")
-    sample_weights = np.ones(X.shape[0])
-    alpha = 1.0
-    multinomial = LinearModelLoss(
-        loss=HalfMultinomialLoss(n_classes=n_classes),
-        fit_intercept=False,
-    )
-    grad, hessp = multinomial.gradient_hessp(
-        w, X, y, l2_reg_strength=alpha, sample_weight=sample_weights
-    )
-    # extract first column of hessian matrix
-    vec = np.zeros(n_features * n_classes)
-    vec[0] = 1
-    hess_col = hessp(vec)
-
-    # Estimate hessian using least squares as done in
-    # test_logistic_grad_hess
-    e = 1e-3
-    d_x = np.linspace(-e, e, 30)
-    d_grad = np.array(
-        [
-            multinomial.gradient_hessp(
-                w + t * vec, X, y, l2_reg_strength=alpha, sample_weight=sample_weights
-            )[0]
-            for t in d_x
-        ]
-    )
-    d_grad -= d_grad.mean(axis=0)
-    approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel(order="F")
-    assert_array_almost_equal(hess_col, approx_hess_col)
 
 
 def test_liblinear_decision_function_zero():
@@ -1578,8 +1392,8 @@ def test_dtype_match(solver, multi_class, fit_intercept):
     y_32 = np.array(Y1).astype(np.float32)
     X_64 = np.array(X).astype(np.float64)
     y_64 = np.array(Y1).astype(np.float64)
-    X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
-    X_sparse_64 = sp.csr_matrix(X, dtype=np.float64)
+    X_sparse_32 = sparse.csr_matrix(X, dtype=np.float32)
+    X_sparse_64 = sparse.csr_matrix(X, dtype=np.float64)
     solver_tol = 5e-4
 
     lr_templ = LogisticRegression(
@@ -2281,7 +2095,7 @@ def test_large_sparse_matrix(solver):
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = sp.rand(20, 10, format="csr")
+    X = sparse.rand(20, 10, format="csr")
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
     y = np.random.randint(2, size=X.shape[0])
