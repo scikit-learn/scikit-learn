@@ -932,7 +932,7 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
 def test_calibration_with_fit_params(fit_params_type, data):
     """Tests that fit_params are passed to the underlying base estimator.
 
-    Related issue:
+    Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/12384
     """
     X, y = data
