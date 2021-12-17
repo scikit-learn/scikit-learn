@@ -867,7 +867,7 @@ def r2_score(
 
 
 def _assemble_r2_explained_variance(
-    numerator, denominator, nb_outputs, multioutput, force_finite
+    numerator, denominator, n_outputs, multioutput, force_finite
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
 
