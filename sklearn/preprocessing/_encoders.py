@@ -924,12 +924,25 @@ class OrdinalEncoder(_BaseEncoder):
                 )
 
             if not is_scalar_nan(self.encoded_missing_value):
-                for feature_cats in self.categories_:
-                    if 0 <= self.encoded_missing_value < len(feature_cats):
-                        raise ValueError(
-                            f"encoded_missing_value ({self.encoded_missing_value}) "
-                            "is already used to encode a known category"
-                        )
+                # Features are invalid when they contain a missing category
+                # and encoded_missing_value was already used to encode a
+                # known category
+                invalid_features = [
+                    cat_idx
+                    for cat_idx, categories_for_idx in enumerate(self.categories_)
+                    if cat_idx in self._missing_indices
+                    and 0 <= self.encoded_missing_value < len(categories_for_idx)
+                ]
+
+                if invalid_features:
+                    # Use feature names if they are avaliable
+                    if hasattr(self, "feature_names_in_"):
+                        invalid_features = self.feature_names_in_[invalid_features]
+                    raise ValueError(
+                        f"encoded_missing_value ({self.encoded_missing_value}) "
+                        "is already used to encode a known category in features: "
+                        f"{invalid_features}"
+                    )
 
         return self
 

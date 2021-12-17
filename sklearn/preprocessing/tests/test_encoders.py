@@ -1414,15 +1414,27 @@ def test_ordinal_encoder_unknown_missing_interaction():
     assert_allclose(X_test_trans, [[np.nan], [-3]])
 
 
-def test_ordinal_encoder_encoded_missing_value_error():
+@pytest.mark.parametrize("with_pandas", [True, False])
+def test_ordinal_encoder_encoded_missing_value_error(with_pandas):
     """Check OrdinalEncoder errors when encoded_missing_value is used by
     an known category."""
-    X = np.array([["a"], ["b"], [np.nan]], dtype=object)
+    X = np.array([["a", "dog"], ["b", "cat"], ["c", np.nan]], dtype=object)
 
-    oe = OrdinalEncoder(encoded_missing_value=0)
-
+    # The 0-th feature has no missing values so it is not included in the list of
+    # features
     error_msg = (
-        r"encoded_missing_value \(0\) is already used to encode a known category"
+        r"encoded_missing_value \(1\) is already used to encode a known category "
+        r"in features: "
     )
+
+    if with_pandas:
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X, columns=["letter", "pet"])
+        error_msg = error_msg + r"\['pet'\]"
+    else:
+        error_msg = error_msg + r"\[1\]"
+
+    oe = OrdinalEncoder(encoded_missing_value=1)
+
     with pytest.raises(ValueError, match=error_msg):
         oe.fit(X)
