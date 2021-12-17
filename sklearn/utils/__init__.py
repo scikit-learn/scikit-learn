@@ -489,7 +489,7 @@ def resample(
     copy : bool, default=True
         Flag to return the copied array. This frag works if `replace=False`.
         If `replace=False` and `copy=False`,
-        indexable data-structures in *arrays are destructed
+        indexable data-structures in `*arrays` are destructed
         instead of consuming less memory.
 
     Returns
@@ -650,7 +650,7 @@ def shuffle(*arrays, random_state=None, n_samples=None, copy=True):
 
     copy : bool, default=True
         Flag to return the copied array. If set False,
-        indexable data-structures in *arrays are destructed
+        indexable data-structures in `*arrays` are destructed
         instead of consuming less memory.
 
     Returns
