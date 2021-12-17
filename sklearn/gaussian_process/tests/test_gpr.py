@@ -18,7 +18,6 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKern
 from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.validation import assert_all_finite
 from sklearn.utils._testing import (
     assert_array_less,
     assert_almost_equal,
@@ -585,8 +584,8 @@ def test_constant_target(kernel):
     gpr.fit(X, y)
     Y_pred, Y_cov = gpr.predict(X, return_cov=True)
 
-    assert_all_finite(Y_pred)
-    assert_all_finite(Y_cov)
+    assert_allclose(Y_pred[:, 1], 2)
+    assert_allclose(np.diag(Y_cov[..., 1]), 0.0, atol=1e-9)
 
     assert Y_pred.shape == (n_samples, n_targets)
     assert Y_cov.shape == (n_samples, n_samples, n_targets)
