@@ -170,43 +170,129 @@ def test_f_regression_center():
 
 
 @pytest.mark.parametrize(
-    "X, y, expected_f_statistic, expected_p_values",
+    "X, y, expected_corr_coef, force_finite",
     [
         (
-            # there is a constant feature and the correlation should be 0.0 and
-            # a p-value of 1.0 for this specific feature
+            # A feature in X is constant - forcing finite
             np.array([[2, 1], [2, 0], [2, 10], [2, 4]]),
             np.array([0, 1, 1, 0]),
-            np.array([0.0, 0.2293578]),
-            np.array([1.0, 0.67924985]),
+            np.array([0.0, 0.32075]),
+            True,
         ),
         (
-            # the target is constant and thus all f-statistic should be 0.0
-            # and all p-values should be 1.0
+            # The target y is constant - forcing finite
             np.array([[5, 1], [3, 0], [2, 10], [8, 4]]),
             np.array([0, 0, 0, 0]),
             np.array([0.0, 0.0]),
-            np.array([1.0, 1.0]),
+            True,
         ),
         (
-            # In this case, we expected an infinite correlation but it should
-            # not raise a warning. The p-values should be 0.0
-            np.array([[0, 1], [1, 0], [2, 10], [3, 4]]),
-            np.array([0, 1, 2, 3]),
-            np.array([np.inf, 0.845433]),
-            np.array([0.0, 0.454913]),
+            # A feature in X is constant - not forcing finite
+            np.array([[2, 1], [2, 0], [2, 10], [2, 4]]),
+            np.array([0, 1, 1, 0]),
+            np.array([np.nan, 0.32075]),
+            False,
+        ),
+        (
+            # The target y is constant - not forcing finite
+            np.array([[5, 1], [3, 0], [2, 10], [8, 4]]),
+            np.array([0, 0, 0, 0]),
+            np.array([np.nan, np.nan]),
+            False,
         ),
     ],
 )
-def test_f_regression_corner_case(X, y, expected_f_statistic, expected_p_values):
-    """Check that no warnings are raised for some corner cases and that we provide
-    the proper correlation and p-value.
+def test_r_regression_force_finite(X, y, expected_corr_coef, force_finite):
+    """Check the behaviour of `force_finite` for some corner cases with `r_regression`.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/15672
     """
     with pytest.warns(None) as records:
-        f_statistic, p_values = f_regression(X, y)
+        corr_coef = r_regression(X, y, force_finite=force_finite)
+    assert not [str(w.message) for w in records]
+    np.testing.assert_array_almost_equal(corr_coef, expected_corr_coef)
+
+
+@pytest.mark.parametrize(
+    "X, y, expected_f_statistic, expected_p_values, force_finite",
+    [
+        (
+            # A feature in X is constant - forcing finite
+            np.array([[2, 1], [2, 0], [2, 10], [2, 4]]),
+            np.array([0, 1, 1, 0]),
+            np.array([0.0, 0.2293578]),
+            np.array([1.0, 0.67924985]),
+            True,
+        ),
+        (
+            # The target y is constant - forcing finite
+            np.array([[5, 1], [3, 0], [2, 10], [8, 4]]),
+            np.array([0, 0, 0, 0]),
+            np.array([0.0, 0.0]),
+            np.array([1.0, 1.0]),
+            True,
+        ),
+        (
+            # Feature in X correlated with y - forcing finite
+            np.array([[0, 1], [1, 0], [2, 10], [3, 4]]),
+            np.array([0, 1, 2, 3]),
+            np.array([1, 0.845433]),
+            np.array([0.0, 0.454913]),
+            True,
+        ),
+        (
+            # Feature in X anti-correlated with y - forcing finite
+            np.array([[3, 1], [2, 0], [1, 10], [0, 4]]),
+            np.array([0, 1, 2, 3]),
+            np.array([1, 0.845433]),
+            np.array([0.0, 0.454913]),
+            True,
+        ),
+        (
+            # A feature in X is constant - not forcing finite
+            np.array([[2, 1], [2, 0], [2, 10], [2, 4]]),
+            np.array([0, 1, 1, 0]),
+            np.array([np.nan, 0.2293578]),
+            np.array([np.nan, 0.67924985]),
+            False,
+        ),
+        (
+            # The target y is constant - not forcing finite
+            np.array([[5, 1], [3, 0], [2, 10], [8, 4]]),
+            np.array([0, 0, 0, 0]),
+            np.array([np.nan, np.nan]),
+            np.array([np.nan, np.nan]),
+            False,
+        ),
+        (
+            # Feature in X correlated with y - not forcing finite
+            np.array([[0, 1], [1, 0], [2, 10], [3, 4]]),
+            np.array([0, 1, 2, 3]),
+            np.array([np.inf, 0.845433]),
+            np.array([0.0, 0.454913]),
+            False,
+        ),
+        (
+            # Feature in X anti-correlated with y - not forcing finite
+            np.array([[3, 1], [2, 0], [1, 10], [0, 4]]),
+            np.array([0, 1, 2, 3]),
+            np.array([np.inf, 0.845433]),
+            np.array([0.0, 0.454913]),
+            False,
+        ),
+    ],
+)
+def test_f_regression_corner_case(
+    X, y, expected_f_statistic, expected_p_values, force_finite
+):
+    """Check the behaviour of `force_finite` for some corner cases with `f_regression`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/15672
+    """
+    with pytest.warns(None) as records:
+        f_statistic, p_values = f_regression(X, y, force_finite=force_finite)
     assert not [str(w.message) for w in records]
     np.testing.assert_array_almost_equal(f_statistic, expected_f_statistic)
     np.testing.assert_array_almost_equal(p_values, expected_p_values)

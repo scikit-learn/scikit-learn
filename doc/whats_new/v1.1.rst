@@ -40,9 +40,10 @@ random sampling procedures.
   stability of the solver, but may result in a different model.
 
 - |Fix| :func:`feature_selection.f_regression` and
-  :func:`feature_selection.r_regression` is now returning a correlation
-  of 0.0 and a p-value of 1.0 instead of `np.nan` when a division by zero
-  occurred due to constant feature or target.
+  :func:`feature_selection.r_regression` will now returned finite score by
+  default instead of `np.nan` and `np.inf` for some corner case. You can use
+  `force_finite=False` if you really want to get non-finite values and keep
+  the old behavior.
 
 Changelog
 ---------
@@ -167,10 +168,12 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
-- |Fix| Fixed bug in :func:`feature_selection.f_regression` and
-  :func:`feature_selection.r_regression` for convenience
-  in cross validation routines to avoid `RuntimeWarning` for a correlation
-  of one, or features or target with identically constant columns.
+- |Enhancement| Add a parameter `force_finite` to
+  :func:`feature_selection.f_regression` and
+  :func:`feature_selection.r_regression`. This parameter allows to force the
+  output to be finite in the case where a feature or a the target is constant
+  or that the feature and target are perfectly correlated (only for the
+  F-statistic).
   :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.ensemble`
