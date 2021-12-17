@@ -501,6 +501,12 @@ Changelog
   precision of the computed variance was very poor when the real variance is
   exactly zero. :pr:`19766` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Enhancement| Added `copy` args to :func:`utils.shuffle`. If `copy=False`,
+  indexable data-structures in `*arrays` are destructed
+  instead of consuming less memory. :func:`utils.shuffle` without copy does not
+  support :class:`utils._mocking.MockDataFrame`. It raises `ValueError`.
+  :pr:`<dummy>` by :user:`murata-yu`.
+
 Code and Documentation Contributors
 -----------------------------------
 
