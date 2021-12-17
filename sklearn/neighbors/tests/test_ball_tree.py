@@ -88,7 +88,7 @@ def test_array_object_type():
 
 
 def test_bad_pyfunc_metric():
-    def wrong_distance(x, y):
+    def wrong_distance(x):
         return "1"
 
     X = np.ones((5, 2))
