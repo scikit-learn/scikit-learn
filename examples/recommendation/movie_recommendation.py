@@ -135,7 +135,7 @@ similar_movies = list(enumerate(cosine_sim[movie_index]))
 sorted_similar_movies = sorted(similar_movies, key=lambda x:x[1], reverse=True)[1:]
 
 # Print 5 most recommended movies (first 5 list entries)
-i=0
+i = 0
 
 for element in sorted_similar_movies:
 	print(get_title_from_index(element[0]))
