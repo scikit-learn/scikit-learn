@@ -769,7 +769,7 @@ def r2_score(
     non-constant, a constant model that always predicts the average y
     disregarding the input features would get a :math:`R^2` score of 0.0.
 
-    In the particular case when the true y is constant, the :math:`R^2` score
+    In the particular case when ``y_true`` is constant, the :math:`R^2` score
     is not finite: it is either ``NaN`` (perfect predictions) or ``-Inf``
     (imperfect predictions). To prevent such non-finite numbers to pollute
     higher-level experiments such as a grid search cross-validation, by default
