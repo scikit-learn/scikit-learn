@@ -1216,10 +1216,19 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             prefer = "threads"
         else:
             prefer = "processes"
-        if solver in ["lbfgs", "newton-cg"] and len(classes_) == 1:
+
+        # TODO: Refactor this to avoid joblib parallelism entirely when doing binary
+        # and multinomial multiclass classification and use joblib only for the
+        # one-vs-rest multiclass case.
+        if (
+            solver in ["lbfgs", "newton-cg"]
+            and len(classes_) == 1
+            and effective_n_jobs(self.n_jobs) == 1
+        ):
             n_threads = _openmp_effective_n_threads()
         else:
             n_threads = 1
+
         fold_coefs_ = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
