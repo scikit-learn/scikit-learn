@@ -80,7 +80,7 @@ features = ["keywords", "cast", "genres", "director"]
 
 # Concatenating all extracted features into single string
 def concat_features(row):
-	return (row["keywords"] + " " + row["cast"] + " " +
+    return (row["keywords"] + " " + row["cast"] + " " +
 		row["genres"] + " " + row["director"])
 
 # Replacing NaN values with blank strings
