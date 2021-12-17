@@ -104,6 +104,14 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+- |Fix| :class:`cross_decomposition.CCA`,
+  :class:`cross_decomposition.PLSCanonical`, and
+  :class:`cross_decomposition.PLSRegression`, changes the shape of `coef_`
+  from `(n_features, n_targets)` to `(n_targets, n_features)` to be consistent
+  with other linear models and make it work classes expected a specific `coef_`
+  shape (e.g. :class:`feature_selection.RFE`).
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.datasets`
 .......................
 

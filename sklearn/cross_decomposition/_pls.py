@@ -360,7 +360,7 @@ class _PLS(
         )
 
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self.coef_ = self.coef_ * self._y_std
+        self.coef_ = (self.coef_ * self._y_std).T
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -473,7 +473,7 @@ class _PLS(
         # Normalize
         X -= self._x_mean
         X /= self._x_std
-        Ypred = np.dot(X, self.coef_)
+        Ypred = X @ self.coef_.T
         return Ypred + self._y_mean
 
     def fit_transform(self, X, y=None):
@@ -629,7 +629,7 @@ class PLSRegression(_PLS):
     y_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_targets, n_features)
         The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
 
@@ -755,7 +755,7 @@ class PLSCanonical(_PLS):
     y_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_targets, n_features)
         The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
 
@@ -883,7 +883,7 @@ class CCA(_PLS):
     y_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape (n_features, n_targets)
+    coef_ : ndarray of shape (n_targets, n_features)
         The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
 
