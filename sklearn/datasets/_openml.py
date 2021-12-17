@@ -64,11 +64,15 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
     return decorator
 
 
-def _retry_on_network_error(n_retries: int = 3, delay: float = 1.0) -> Callable:
+def _retry_on_network_error(
+    n_retries: int = 3, delay: float = 1.0, url: str = ""
+) -> Callable:
     """If the function call results in a network error, call the function again
     up to ``n_retries`` times with a ``delay`` between each call. If the error
     has a 412 status code, don't call the function again as this is a specific
     OpenML error.
+    The url parameter is used to give more information to the user about the
+    error.
     """
 
     def decorator(f):
@@ -85,7 +89,7 @@ def _retry_on_network_error(n_retries: int = 3, delay: float = 1.0) -> Callable:
                     if retry_counter == 0:
                         raise
                     warn(
-                        "A network error occured while downloading a file. Retrying..."
+                        f"A network error occured while downloading {url}. Retrying..."
                     )
                     retry_counter -= 1
                     time.sleep(delay)
@@ -131,7 +135,9 @@ def _open_openml_url(
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
-        fsrc = _retry_on_network_error(n_retries, delay)(urlopen)(req, timeout=delay)
+        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
+            req, timeout=delay
+        )
         if is_gzip_encoded(fsrc):
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
@@ -147,7 +153,7 @@ def _open_openml_url(
             # concurrence safety of the dataset caching mechanism.
             with TemporaryDirectory(dir=dir_name) as tmpdir:
                 with closing(
-                    _retry_on_network_error(n_retries, delay)(urlopen)(
+                    _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
                         req, timeout=delay
                     )
                 ) as fsrc:

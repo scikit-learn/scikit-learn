@@ -18,6 +18,9 @@ from sklearn.datasets._openml import (
     _open_openml_url,
     _arff,
     _DATA_FILE,
+    _OPENML_PREFIX,
+    _convert_arff_data,
+    _convert_arff_data_dataframe,
     _get_data_description_by_id,
     _get_local_path,
     _retry_with_clean_cache,
@@ -235,7 +238,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
     def _file_name(url, suffix):
         output = (
-            re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
+            re.sub(r"\W", "-", url[len("https://openml.org/"):]) + suffix + path_suffix
         )
         # Shorten the filenames to have better compatibility with windows 10
         # and filenames > 260 characters
@@ -1535,16 +1538,15 @@ def test_open_openml_url_retry_on_network_error(monkeypatch):
         sklearn.datasets._openml, "urlopen", _mock_urlopen_network_error
     )
 
+    invalid_openml_url = "invalid-url"
+
     with pytest.warns(
         UserWarning,
-        match="A network error occured while downloading a file. Retrying...",
+        match=(
+            "A network error occured while downloading"
+            f" {_OPENML_PREFIX + invalid_openml_url}. Retrying..."
+        ),
     ) as record:
         with pytest.raises(HTTPError, match="Simulated network error"):
-            _open_openml_url("invalid-url", None, delay=0)
-
-        for r in record:
-            assert (
-                r.message.args[0]
-                == "A network error occured while downloading a file. Retrying..."
-            )
+            _open_openml_url(invalid_openml_url, None, delay=0)
         assert len(record) == 3
