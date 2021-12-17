@@ -665,6 +665,7 @@ def test_warning_default_transform_alpha(Estimator):
     ),
 )
 def test_dict_learning_dtype_match(data_type, expected_type, method):
+    # Verify output matrix dtype
     rng = np.random.RandomState(0)
     n_components = 8
     code, dictionary, _ = dict_learning(
@@ -685,6 +686,8 @@ def test_dict_learning_numerical_consistency(method):
     atol = 1e-7
     rng = np.random.RandomState(0)
     n_components = 6
+    # The larger alpha, the more sparsity,
+    # as a result likely to achieve tolerance error.
     alpha = 4
 
     U_64, V_64, _ = dict_learning(
@@ -706,7 +709,7 @@ def test_dict_learning_numerical_consistency(method):
     # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
     # and (column permutated U*, row permutated V*) are also optional
     # as long as holding UV.
-    # So here UV, ||U||_1,1 and sum(|||V_k||_2) are verified
+    # So here UV, ||U||_1,1 and sum(||V_k||_2^2) are verified
     # instead of comparing directory U and V.
     assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol, atol=atol)
     assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol, atol=atol)
@@ -724,6 +727,7 @@ def test_dict_learning_numerical_consistency(method):
     ),
 )
 def test_dict_learning_online_dtype_match(data_type, expected_type, method):
+    # Verify output matrix dtype
     rng = np.random.RandomState(0)
     n_components = 8
     code, dictionary = dict_learning_online(
@@ -744,7 +748,8 @@ def test_dict_learning_online_numerical_consistency(method):
     atol = 1e-6
     rng = np.random.RandomState(0)
     n_components = 8
-    # The larger alpha, the more sparsity, as a result likely to relax tolerance error.
+    # The larger alpha, the more sparsity,
+    # as a result likely to achieve tolerance error.
     alpha = 4
 
     U_64, V_64 = dict_learning_online(
@@ -762,12 +767,11 @@ def test_dict_learning_online_numerical_consistency(method):
         method=method,
     )
 
-    print(np.matmul(U_64, V_64) - np.matmul(U_32, V_32))
     # Optimal solution (U*, V*) is not unique.
     # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
     # and (column permutated U*, row permutated V*) are also optional
     # as long as holding UV.
-    # So here UV, ||U||_1,1 and sum(|||V_k||_2) are verified
+    # So here UV, ||U||_1,1 and sum(||V_k||_2) are verified
     # instead of comparing directory U and V.
     assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol, atol=atol)
     assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol, atol=atol)
