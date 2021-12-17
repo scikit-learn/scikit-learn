@@ -190,7 +190,7 @@ Changelog
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
 - |API| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`22014` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction.text`
 ......................................
