@@ -34,6 +34,10 @@ random sampling procedures.
   same solution, up to numerical rounding errors, but in general Lloyd's
   algorithm uses much less memory, and it is often faster.
 
+- |Fix| The eigenvectors initialization for :class:`cluster.SpectralClustering`
+  and :class:`manifold.SpectralEmbedding` now samples from a Gaussian when
+  using the `'amg'` or `'lobpcg'` solver. This change  improves numerical
+  stability of the solver, but may result in a different model.
 
 Changelog
 ---------
@@ -71,6 +75,10 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :meth:`calibration.CalibratedClassifierCV.fit` now supports passing
+  `fit_params`, which are routed to the `base_estimator`.
+  :pr:`18170` by :user:`Benjamin Bossan <BenjaminBossan>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -107,6 +115,13 @@ Changelog
   to a temporary subfolder and then renamed.
   :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 
+- |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
+  ``scaled``, to allow loading unscaled data. The scaled version of this
+  dataset is now computed from the unscaled data, and can produce slightly
+  different different results that in previous version (within a 1e-4 absolute
+  tolerance).
+  :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -142,6 +157,13 @@ Changelog
   :class:`~sklearn.decomposition.SparsePCA`,
   and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
   `Thomas Fan`_.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
+  in `transform` instead of `__init__`. :pr:`21573` by
+  :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
 - |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
   The default value of its `whiten` argument will change from `True`
@@ -221,7 +243,11 @@ Changelog
   a parameter in order to provide an estimate of the noise variance.
   This is particularly relevant when `n_features > n_samples` and the
   estimator of the noise variance cannot be computed.
-  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`
+  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.QuantileRegressor` support sparse input
+  for the highs based solvers.
+  :pr:`21086` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
 
 - |Fix| :class:`linear_model.LassoLarsIC` now correctly computes AIC
   and BIC. An error is now raised when `n_features > n_samples` and
@@ -252,12 +278,21 @@ Changelog
   preserve this dtype.
   :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
 
+- |Fix| :func:`manifold.spectral_embedding` now uses Gaussian instead of
+  the previous uniform on [0, 1] random initial approximations to eigenvectors
+  in eigen_solvers `lobpcg` and `amg` to improve their numerical stability.
+  :pr:`21565` by :user:`Andrew Knyazev <lobpcg>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
 - |Enhancement| raise an error during cross-validation when the fits for all the
   splits failed. Similarly raise an error during grid-search when the fits for
   all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| :class:`model_selection.GridSearchCV`, :class:`model_selection.HalvingGridSearchCV`
+   now validate input parameters in `fit` instead of `__init__`.
+   :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
 
 :mod:`sklearn.pipeline`
 .......................
