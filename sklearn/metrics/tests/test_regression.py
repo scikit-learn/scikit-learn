@@ -177,7 +177,7 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(r2_score([0.0, 1], [0.0, 1]), 1.0)
 
     # Non-finite cases
-    # R2 and explained variance have a fix by default for non-finite cases
+    # R² and explained variance have a fix by default for non-finite cases
     for s in (r2_score, explained_variance_score):
         assert_almost_equal(s([0, 0], [1, -1]), 0.0)
         assert_almost_equal(s([0, 0], [1, -1], force_finite=False), -np.inf)

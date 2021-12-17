@@ -647,13 +647,13 @@ def explained_variance_score(
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
 
-    force_finite : boolean, optional
+    force_finite : bool, default=True
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
         for model optimization procedures (e.g. grid search cross-validation).
 
-        .. versionadded:: 1.1.0
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -730,8 +730,8 @@ def r2_score(
     (imperfect predictions). To prevent such non-finite numbers to pollute
     higher-level experiments such as a grid search cross-validation, by default
     these cases are replaced with 1.0 (perfect predictions) or 0.0 (imperfect
-    predictions) respectively. You can set ``force_finite`` to
-    ``False`` to prevent this fix to happen.
+    predictions) respectively. You can set ``force_finite`` to ``False`` to
+    prevent this fix from happening.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
     model), the :math:`R^2` score is identical to the
@@ -770,13 +770,13 @@ def r2_score(
         .. versionchanged:: 0.19
             Default value of multioutput is 'uniform_average'.
 
-    force_finite : boolean, optional
+    force_finite : bool, default=True
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
         for model optimization procedures (e.g. grid search cross-validation).
 
-        .. versionadded:: 1.1.0
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -869,7 +869,7 @@ def r2_score(
 def _assemble_r2_explained_variance(
     numerator, denominator, n_outputs, multioutput, force_finite
 ):
-    """Common part used by explained variance score and :math:`R^2` score"""
+    """Common part used by explained variance score and :math:`R^2` score."""
 
     if not force_finite:
         # Standard formula, that may lead to NaN or -Inf

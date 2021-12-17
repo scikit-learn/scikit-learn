@@ -2014,7 +2014,7 @@ model optimization such as grid-search cross-validation to be performed
 correctly. For this reason the default behaviour of
 :func:`explained_variance_score` is to replace them with 1.0 (perfect
 predictions) or 0.0 (imperfect predictions). You can set the ``force_finite``
-parameter to ``False`` to prevent this fix to happen and fallback on the
+parameter to ``False`` to prevent this fix from happening and fallback on the
 original Explained Variance score.
 
 Here is a small example of usage of the :func:`explained_variance_score`
@@ -2284,13 +2284,13 @@ where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n}
 Note that :func:`r2_score` calculates unadjusted R² without correcting for
 bias in sample variance of y.
 
-In the particular case where the true y is constant, the R² score is not
-finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+In the particular case where the true target is constant, the :math:`R^2` score is
+not finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
 predictions). Such non-finite scores may prevent correct model optimization
 such as grid-search cross-validation to be performed correctly. For this reason
 the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
 predictions) or 0.0 (imperfect predictions). If ``force_finite``
-is set to ``False``, this score fallbacks on the original R² definition.
+is set to ``False``, this score fallbacks on the original :math:`R^2` definition.
 
 Here is a small example of usage of the :func:`r2_score` function::
 
