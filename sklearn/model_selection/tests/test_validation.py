@@ -371,9 +371,8 @@ def test_cross_validate_invalid_scoring_param():
     # the warning message we're expecting to see
     warning_message = (
         "Scoring failed. The score on this train-test "
-        "partition for these parameters will be set to %f. "
+        f"partition for these parameters will be set to {np.nan}. "
         "Details: \n"
-        % np.nan
     )
 
     with pytest.warns(UserWarning, match=warning_message):
@@ -846,14 +845,14 @@ def test_permutation_test_score_allow_nans():
 def test_permutation_test_score_fit_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    clf = CheckingClassifier(expected_sample_weight=True)
 
-    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    err_msg = r"Expected sample_weight to be passed"
     with pytest.raises(AssertionError, match=err_msg):
         permutation_test_score(clf, X, y)
 
-    err_msg = "Fit parameter sample_weight has length 1; expected"
-    with pytest.raises(AssertionError, match=err_msg):
+    err_msg = r"sample_weight.shape == \(1,\), expected \(8,\)!"
+    with pytest.raises(ValueError, match=err_msg):
         permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(1)})
     permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(10)})
 
@@ -1516,14 +1515,14 @@ def test_learning_curve_with_shuffle():
 def test_learning_curve_fit_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    clf = CheckingClassifier(expected_sample_weight=True)
 
-    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    err_msg = r"Expected sample_weight to be passed"
     with pytest.raises(AssertionError, match=err_msg):
         learning_curve(clf, X, y, error_score="raise")
 
-    err_msg = "Fit parameter sample_weight has length 1; expected"
-    with pytest.raises(AssertionError, match=err_msg):
+    err_msg = r"sample_weight.shape == \(1,\), expected \(2,\)!"
+    with pytest.raises(ValueError, match=err_msg):
         learning_curve(
             clf, X, y, error_score="raise", fit_params={"sample_weight": np.ones(1)}
         )
@@ -1678,9 +1677,9 @@ def test_validation_curve_cv_splits_consistency():
 def test_validation_curve_fit_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
-    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    clf = CheckingClassifier(expected_sample_weight=True)
 
-    err_msg = r"Expected fit parameter\(s\) \['sample_weight'\] not seen."
+    err_msg = r"Expected sample_weight to be passed"
     with pytest.raises(AssertionError, match=err_msg):
         validation_curve(
             clf,
@@ -1691,8 +1690,8 @@ def test_validation_curve_fit_params():
             error_score="raise",
         )
 
-    err_msg = "Fit parameter sample_weight has length 1; expected"
-    with pytest.raises(AssertionError, match=err_msg):
+    err_msg = r"sample_weight.shape == \(1,\), expected \(8,\)!"
+    with pytest.raises(ValueError, match=err_msg):
         validation_curve(
             clf,
             X,

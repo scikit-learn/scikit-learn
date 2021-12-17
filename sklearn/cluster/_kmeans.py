@@ -266,7 +266,7 @@ def k_means(
     tol=1e-4,
     random_state=None,
     copy_x=True,
-    algorithm="auto",
+    algorithm="lloyd",
     return_n_iter=False,
 ):
     """Perform K-means clustering algorithm.
@@ -333,15 +333,22 @@ def k_means(
         `copy_x` is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if `copy_x` is False.
 
-    algorithm : {"auto", "full", "elkan"}, default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is `"full"`.
-        The `"elkan"` variation is more efficient on data with well-defined
-        clusters, by using the triangle inequality. However it's more memory
-        intensive due to the allocation of an extra array of shape
+    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+        K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
+        The `"elkan"` variation can be more efficient on some datasets with
+        well-defined clusters, by using the triangle inequality. However it's
+        more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
 
-        For now `"auto"` (kept for backward compatibility) chooses `"elkan"` but it
-        might change in the future for a better heuristic.
+        `"auto"` and `"full"` are deprecated and they will be removed in
+        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
+
+        .. versionchanged:: 0.18
+            Added Elkan algorithm
+
+        .. versionchanged:: 1.1
+            Renamed "full" to "lloyd", and deprecated "auto" and "full".
+            Changed "auto" to use "lloyd" instead of "elkan".
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
@@ -821,18 +828,22 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
 
-    algorithm : {"auto", "full", "elkan"}, default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient on data with well-defined
-        clusters, by using the triangle inequality. However it's more memory
-        intensive due to the allocation of an extra array of shape
-        (n_samples, n_clusters).
+    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+        K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
+        The `"elkan"` variation can be more efficient on some datasets with
+        well-defined clusters, by using the triangle inequality. However it's
+        more memory intensive due to the allocation of an extra array of shape
+        `(n_samples, n_clusters)`.
 
-        For now "auto" (kept for backward compatibility) chooses "elkan" but it
-        might change in the future for a better heuristic.
+        `"auto"` and `"full"` are deprecated and they will be removed in
+        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
         .. versionchanged:: 0.18
             Added Elkan algorithm
+
+        .. versionchanged:: 1.1
+            Renamed "full" to "lloyd", and deprecated "auto" and "full".
+            Changed "auto" to use "lloyd" instead of "elkan".
 
     Attributes
     ----------
@@ -919,7 +930,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         verbose=0,
         random_state=None,
         copy_x=True,
-        algorithm="auto",
+        algorithm="lloyd",
     ):
 
         self.n_clusters = n_clusters
@@ -952,22 +963,27 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self._tol = _tolerance(X, self.tol)
 
         # algorithm
-        if self.algorithm not in ("auto", "full", "elkan"):
+        if self.algorithm not in ("lloyd", "elkan", "auto", "full"):
             raise ValueError(
-                "Algorithm must be 'auto', 'full' or 'elkan', "
+                "Algorithm must be either 'lloyd' or 'elkan', "
                 f"got {self.algorithm} instead."
             )
 
         self._algorithm = self.algorithm
-        if self._algorithm == "auto":
-            self._algorithm = "full" if self.n_clusters == 1 else "elkan"
+        if self._algorithm in ("auto", "full"):
+            warnings.warn(
+                f"algorithm='{self._algorithm}' is deprecated, it will be "
+                "removed in 1.3. Using 'lloyd' instead.",
+                FutureWarning,
+            )
+            self._algorithm = "lloyd"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn(
                 "algorithm='elkan' doesn't make sense for a single "
-                "cluster. Using 'full' instead.",
+                "cluster. Using 'lloyd' instead.",
                 RuntimeWarning,
             )
-            self._algorithm = "full"
+            self._algorithm = "lloyd"
 
         # init
         if not (
@@ -1166,11 +1182,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
-        if self._algorithm == "full":
+        if self._algorithm == "elkan":
+            kmeans_single = _kmeans_single_elkan
+        else:
             kmeans_single = _kmeans_single_lloyd
             self._check_mkl_vcomp(X, X.shape[0])
-        else:
-            kmeans_single = _kmeans_single_elkan
 
         best_inertia, best_labels = None, None
 
