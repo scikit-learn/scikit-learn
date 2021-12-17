@@ -256,11 +256,12 @@ def r_regression(X, y, *, center=True, force_finite=True):
         By default, `X` and `y` will be centered.
 
     force_finite : bool, default=True
+        Whether or not to force the Pearson's R correlation to be finite. 
         In the particular case where some features in `X` or the target `y`
         are constant, the Pearson's R correlation is not defined. When
         `force_finite=False`, a correlation of `np.nan` is returned to
         acknowledge this case. When `force_finite=True`, this value will be
-        force to a minimal correlation of `0.0`.
+        forced to a minimal correlation of `0.0`.
 
         .. versionadded:: 1.1
 
