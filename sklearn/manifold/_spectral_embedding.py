@@ -146,7 +146,8 @@ def spectral_embedding(
     n_components=8,
     eigen_solver=None,
     random_state=None,
-    eigen_tol=1e-5,
+    eigen_tol=None,
+    max_iter=None,
     norm_laplacian=True,
     drop_first=True,
 ):
@@ -198,9 +199,17 @@ def spectral_embedding(
             https://github.com/pyamg/pyamg/issues/139 for further
             information.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+    eigen_tol : float or None, default=None
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        The default tolerance depends on the `eigen_solver`:
+
+        - when `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - when `eigen_solver="lobpcg"`, then `eigen_tol=1e-5`.
+
+    max_iter : int, default=None
+        The maximum number of iterations done by the eigendecomposition.
+
+        .. versionadded:: 1.1
 
     norm_laplacian : bool, default=True
         If True, then compute symmetric normalized Laplacian.
@@ -248,6 +257,8 @@ def spectral_embedding(
             "Unknown value for eigen_solver: '%s'."
             "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
         )
+    if eigen_solver is None:
+        eigen_tol = 1e-5 if eigen_solver == "lobpcg" else 0.0
 
     random_state = check_random_state(random_state)
 
@@ -297,7 +308,13 @@ def spectral_embedding(
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=eigen_tol, v0=v0
+                laplacian,
+                k=n_components,
+                sigma=1.0,
+                which="LM",
+                tol=eigen_tol,
+                maxiter=max_iter,
+                v0=v0,
             )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
@@ -343,7 +360,9 @@ def spectral_embedding(
         # tolerance as explained in:
         # https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509
         eigen_tol = max(1e-5, eigen_tol)
-        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=eigen_tol, largest=False)
+        _, diffusion_map = lobpcg(
+            laplacian, X, M=M, tol=eigen_tol, maxiter=max_iter, largest=False
+        )
         embedding = diffusion_map.T
         if norm_laplacian:
             # recover u = D^-1/2 x from the eigenvector output x
@@ -375,7 +394,11 @@ def spectral_embedding(
             X[:, 0] = dd.ravel()
             X = X.astype(laplacian.dtype)
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=eigen_tol, largest=False, maxiter=2000
+                laplacian,
+                X,
+                tol=eigen_tol,
+                largest=False,
+                maxiter=max_iter,
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
