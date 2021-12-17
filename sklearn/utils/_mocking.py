@@ -24,6 +24,7 @@ class MockDataFrame:
     ----------
     array
     """
+
     # have shape and length but don't support indexing.
 
     def __init__(self, array):
@@ -48,6 +49,9 @@ class MockDataFrame:
 
     def __ne__(self, other):
         return not self == other
+
+    def take(self, indices, axis=0):
+        return MockDataFrame(self.array.take(indices, axis=axis))
 
 
 class CheckingClassifier(ClassifierMixin, BaseEstimator):
@@ -111,9 +115,17 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     CheckingClassifier(...)
     """
 
-    def __init__(self, *, check_y=None, check_y_params=None,
-                 check_X=None, check_X_params=None, methods_to_check="all",
-                 foo_param=0, expected_fit_params=None):
+    def __init__(
+        self,
+        *,
+        check_y=None,
+        check_y_params=None,
+        check_X=None,
+        check_X_params=None,
+        methods_to_check="all",
+        foo_param=0,
+        expected_fit_params=None,
+    ):
         self.check_y = check_y
         self.check_y_params = check_y_params
         self.check_X = check_X
@@ -163,8 +175,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples, n_outputs) or (n_samples,), \
                 default=None
@@ -182,20 +194,18 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if self.methods_to_check == "all" or "fit" in self.methods_to_check:
             X, y = self._check_X_y(X, y, should_be_fitted=False)
         self.n_features_in_ = np.shape(X)[1]
-        self.classes_ = np.unique(
-            check_array(y, ensure_2d=False, allow_nd=True)
-        )
+        self.classes_ = np.unique(check_array(y, ensure_2d=False, allow_nd=True))
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
             if missing:
                 raise AssertionError(
-                    f'Expected fit parameter(s) {list(missing)} not seen.'
+                    f"Expected fit parameter(s) {list(missing)} not seen."
                 )
             for key, value in fit_params.items():
                 if _num_samples(value) != _num_samples(X):
                     raise AssertionError(
-                        f'Fit parameter {key} has length {_num_samples(value)}'
-                        f'; expected {_num_samples(X)}.'
+                        f"Fit parameter {key} has length {_num_samples(value)}"
+                        f"; expected {_num_samples(X)}."
                     )
 
         return self
@@ -213,8 +223,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         preds : ndarray of shape (n_samples,)
             Predictions of the first class seens in `classes_`.
         """
-        if (self.methods_to_check == "all" or
-                "predict" in self.methods_to_check):
+        if self.methods_to_check == "all" or "predict" in self.methods_to_check:
             X, y = self._check_X_y(X)
         return self.classes_[np.zeros(_num_samples(X), dtype=int)]
 
@@ -234,8 +243,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         proba : ndarray of shape (n_samples, n_classes)
             The probabilities for each sample and class.
         """
-        if (self.methods_to_check == "all" or
-                "predict_proba" in self.methods_to_check):
+        if self.methods_to_check == "all" or "predict_proba" in self.methods_to_check:
             X, y = self._check_X_y(X)
         proba = np.zeros((_num_samples(X), len(self.classes_)))
         proba[:, 0] = 1
@@ -255,8 +263,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 else (n_samples, n_classes)
             Confidence score.
         """
-        if (self.methods_to_check == "all" or
-                "decision_function" in self.methods_to_check):
+        if (
+            self.methods_to_check == "all"
+            or "decision_function" in self.methods_to_check
+        ):
             X, y = self._check_X_y(X)
         if len(self.classes_) == 2:
             # for binary classifier, the confidence score is related to
@@ -273,8 +283,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Input data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Y : array-like of shape (n_samples, n_output) or (n_samples,)
             Target relative to X for classification or regression;
@@ -289,13 +299,13 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if self.methods_to_check == "all" or "score" in self.methods_to_check:
             self._check_X_y(X, Y)
         if self.foo_param > 1:
-            score = 1.
+            score = 1.0
         else:
-            score = 0.
+            score = 0.0
         return score
 
     def _more_tags(self):
-        return {'_skip_test': True, 'X_types': ['1dlabel']}
+        return {"_skip_test": True, "X_types": ["1dlabel"]}
 
 
 class NoSampleWeightWrapper(BaseEstimator):
@@ -320,4 +330,4 @@ class NoSampleWeightWrapper(BaseEstimator):
         return self.est.predict_proba(X)
 
     def _more_tags(self):
-        return {'_skip_test': True}
+        return {"_skip_test": True}

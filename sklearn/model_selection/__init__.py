@@ -1,6 +1,7 @@
 import typing
 
 from ._split import BaseCrossValidator
+from ._split import BaseShuffleSplit
 from ._split import KFold
 from ._split import GroupKFold
 from ._split import StratifiedKFold
@@ -35,35 +36,39 @@ if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
     from ._search_successive_halving import (  # noqa
-        HalvingGridSearchCV, HalvingRandomSearchCV
+        HalvingGridSearchCV,
+        HalvingRandomSearchCV,
     )
 
 
-__all__ = ['BaseCrossValidator',
-           'GridSearchCV',
-           'TimeSeriesSplit',
-           'KFold',
-           'GroupKFold',
-           'GroupShuffleSplit',
-           'LeaveOneGroupOut',
-           'LeaveOneOut',
-           'LeavePGroupsOut',
-           'LeavePOut',
-           'RepeatedKFold',
-           'RepeatedStratifiedKFold',
-           'ParameterGrid',
-           'ParameterSampler',
-           'PredefinedSplit',
-           'RandomizedSearchCV',
-           'ShuffleSplit',
-           'StratifiedKFold',
-           'StratifiedGroupKFold',
-           'StratifiedShuffleSplit',
-           'check_cv',
-           'cross_val_predict',
-           'cross_val_score',
-           'cross_validate',
-           'learning_curve',
-           'permutation_test_score',
-           'train_test_split',
-           'validation_curve']
+__all__ = [
+    "BaseCrossValidator",
+    "BaseShuffleSplit",
+    "GridSearchCV",
+    "TimeSeriesSplit",
+    "KFold",
+    "GroupKFold",
+    "GroupShuffleSplit",
+    "LeaveOneGroupOut",
+    "LeaveOneOut",
+    "LeavePGroupsOut",
+    "LeavePOut",
+    "RepeatedKFold",
+    "RepeatedStratifiedKFold",
+    "ParameterGrid",
+    "ParameterSampler",
+    "PredefinedSplit",
+    "RandomizedSearchCV",
+    "ShuffleSplit",
+    "StratifiedKFold",
+    "StratifiedGroupKFold",
+    "StratifiedShuffleSplit",
+    "check_cv",
+    "cross_val_predict",
+    "cross_val_score",
+    "cross_validate",
+    "learning_curve",
+    "permutation_test_score",
+    "train_test_split",
+    "validation_curve",
+]

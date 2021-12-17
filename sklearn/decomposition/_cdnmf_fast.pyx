@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-
 # Author: Mathieu Blondel, Tom Dupre la Tour
 # License: BSD 3 clause
 
