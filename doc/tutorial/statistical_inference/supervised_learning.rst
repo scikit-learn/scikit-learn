@@ -180,7 +180,7 @@ Linear models: :math:`y = X\beta + \epsilon`
 
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
-    2004.56760268...
+    2004.5...
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
