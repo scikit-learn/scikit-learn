@@ -262,13 +262,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, numbers.Integral):
-            # if not 2 <= self.min_samples_split:
-            #     raise ValueError(
-            #         "min_samples_split must be an integer "
-            #         "greater than 1 or a float in (0.0, 1.0]; "
-            #         "got the integer %s"
-            #         % self.min_samples_split
-            #     )
             check_scalar(
                 self.min_samples_split,
                 "min_samples_split",
@@ -278,13 +271,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
             min_samples_split = self.min_samples_split
         else:  # float, string, other
-            # if not 0.0 < self.min_samples_split <= 1.0:
-            #     raise ValueError(
-            #         "min_samples_split must be an integer "
-            #         "greater than 1 or a float in (0.0, 1.0]; "
-            #         "got the float %s"
-            #         % self.min_samples_split
-            #     )
             check_scalar(
                 self.min_samples_split,
                 "min_samples_split",
@@ -331,18 +317,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "Number of labels=%d does not match number of samples=%d"
                 % (len(y), n_samples)
             )
-        # if not 0 <= self.min_weight_fraction_leaf <= 0.5:
-        #     raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
+
         check_scalar(
             self.min_weight_fraction_leaf,
             "min_weight_fraction_leaf",
             target_type=numbers.Real,
-            min_val=0,
-            max_val=1,
+            min_val=0.0,
+            max_val=1.0,
             include_boundaries="left",
         )
-        # if max_depth <= 0:
-        #     raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_in_):
             raise ValueError("max_features must be in (0, n_features]")
 
@@ -361,15 +344,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
-        # if self.min_impurity_decrease < 0.0:
-        #     raise ValueError(
-        #         "min_impurity_decrease must be greater than or equal to 0"
-        #     )
         check_scalar(
             self.min_impurity_decrease,
             "min_impurity_decrease",
             target_type=numbers.Real,
-            min_val=0,
+            min_val=0.0,
             include_boundaries="left",
         )
         # Build tree
