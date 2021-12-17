@@ -110,7 +110,7 @@ Changelog
   from `(n_features, n_targets)` to `(n_targets, n_features)` to be consistent
   with other linear models and make it work classes expected a specific `coef_`
   shape (e.g. :class:`feature_selection.RFE`).
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`22016` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
