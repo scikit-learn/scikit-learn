@@ -449,12 +449,19 @@ def resample(*arrays,
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
+    copy : bool, default=True
+        Flag to return the copied array. This frag works if `replace=False`.
+        If `replace=False` and `copy=False`,
+        indexable data-structures in *arrays are destructed
+        instead of consuming less memory.
+
     Returns
     -------
     resampled_arrays : sequence of array-like of shape (n_samples,) or \
             (n_samples, n_outputs)
         Sequence of resampled copies of the collections. The original arrays
-        are not impacted.
+        are not impacted if `copy=True`.
+        If `replace=False` and `copy=False`, the original arrays are resampled too.
 
     Examples
     --------
@@ -514,6 +521,15 @@ def resample(*arrays,
         raise ValueError("Cannot sample %d out of arrays with dim %d "
                          "when replace is False" % (max_n_samples,
                                                     n_samples))
+
+    if not copy:
+        if replace:
+            raise ValueError("`copy=False` is valid only when `replace=False`")
+
+        # FIXME: Make sure MockDataFrame also supports `copy=False``
+        for a in arrays:
+            if hasattr(a, 'iloc'):
+                raise ValueError("MockDataFrame does not support `copy=False`")
 
     check_consistent_length(*arrays)
 
@@ -593,11 +609,17 @@ def shuffle(*arrays, random_state=None, n_samples=None, copy=True):
         automatically set to the first dimension of the arrays.  It should
         not be larger than the length of arrays.
 
+    copy : bool, default=True
+        Flag to return the copied array. If set False,
+        indexable data-structures in *arrays are destructed
+        instead of consuming less memory.
+
     Returns
     -------
     shuffled_arrays : sequence of indexable data-structures
         Sequence of shuffled copies of the collections. The original arrays
-        are not impacted.
+        are not impacted if `copy=True`.
+        If `copy=False`, the original arrays are shuffled too.
 
     Examples
     --------
