@@ -149,17 +149,17 @@ def test_resample_stratified_replace():
     X = rng.normal(size=(n_samples, 1))
     y = rng.randint(0, 2, size=n_samples)
 
-    X_replace, _ = resample(X.copy(), y, replace=True, n_samples=50,
-                            random_state=rng, stratify=y, copy=copy)
-    X_no_replace, _ = resample(X.copy(), y, replace=False, n_samples=50,
-                               random_state=rng, stratify=y, copy=copy)
+    X_replace, _ = resample(X, y, replace=True, n_samples=50,
+                            random_state=rng, stratify=y)
+    X_no_replace, _ = resample(X, y, replace=False, n_samples=50,
+                               random_state=rng, stratify=y, )
     assert np.unique(X_replace).shape[0] < 50
     assert np.unique(X_no_replace).shape[0] == 50
 
     # make sure n_samples can be greater than X.shape[0] if we sample with
     # replacement
-    X_replace, _ = resample(X.copy(), y, replace=True, n_samples=1000,
-                            random_state=rng, stratify=y, copy=copy)
+    X_replace, _ = resample(X, y, replace=True, n_samples=1000,
+                            random_state=rng, stratify=y)
     assert X_replace.shape[0] == 1000
     assert np.unique(X_replace).shape[0] == 100
 
