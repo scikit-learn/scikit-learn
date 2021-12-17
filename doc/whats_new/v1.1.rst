@@ -334,7 +334,7 @@ Changelog
   clickable. :pr:`21298` by `Thomas Fan`_.
 
 - |Enhancement| :func:`utils.validation.column_or_1d` will cast pandas Boolean
-  Extension Dtype to a bool ndarray. :pr:`xxxxx` by `Thomas Fan`_.
+  Extension Dtype to a bool ndarray. :pr:`22004` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
 ........................
