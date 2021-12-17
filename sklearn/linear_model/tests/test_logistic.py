@@ -2256,3 +2256,19 @@ def test_large_sparse_matrix(solver):
             LogisticRegression(solver=solver).fit(X, y)
     else:
         LogisticRegression(solver=solver).fit(X, y)
+
+
+def test_with_pandas_boolean_target():
+    """Check that fit works with pandas boolean targets.
+
+    Non-regression test for #17675.
+    """
+    pd = pytest.importorskip("pandas", minversion="1.0")
+
+    X = iris.data
+    y = pd.Series((iris.target > 0), dtype="boolean")
+
+    log_reg = LogisticRegression()
+
+    # Does not raise.
+    log_reg.fit(X, y)

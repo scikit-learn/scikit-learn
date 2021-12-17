@@ -220,6 +220,15 @@ def test_column_or_1d():
                 column_or_1d(y)
 
 
+def test_column_or_1d_pandas_boolean():
+    """Check that column_or_1d maps to boolean."""
+    pd = pytest.importorskip("pandas", minversion="1.0")
+    y = pd.Series([False, True, False, True], dtype="boolean")
+    y_1d = column_or_1d(y)
+    assert y_1d.dtype == bool
+    assert_array_equal(y_1d, [False, True, False, True])
+
+
 @pytest.mark.parametrize(
     "key, dtype",
     [
