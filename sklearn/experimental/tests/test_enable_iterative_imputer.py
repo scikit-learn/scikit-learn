@@ -2,7 +2,7 @@
 
 import textwrap
 
-from sklearn.utils.testing import assert_run_python_script
+from sklearn.utils._testing import assert_run_python_script
 
 
 def test_imports_strategies():

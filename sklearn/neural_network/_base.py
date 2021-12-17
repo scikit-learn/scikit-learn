@@ -10,94 +10,71 @@ from scipy.special import expit as logistic_sigmoid
 from scipy.special import xlogy
 
 
-def identity(X):
-    """Simply return the input array.
+def inplace_identity(X):
+    """Simply leave the input array unchanged.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Data, where n_samples is the number of samples
-        and n_features is the number of features.
-
-    Returns
-    -------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Same as the input data.
+        Data, where `n_samples` is the number of samples
+        and `n_features` is the number of features.
     """
-    return X
+    # Nothing to do
 
 
-def logistic(X):
+def inplace_logistic(X):
     """Compute the logistic function inplace.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
-
-    Returns
-    -------
-    X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The transformed data.
     """
-    return logistic_sigmoid(X, out=X)
+    logistic_sigmoid(X, out=X)
 
 
-def tanh(X):
+def inplace_tanh(X):
     """Compute the hyperbolic tan function inplace.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
-
-    Returns
-    -------
-    X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The transformed data.
     """
-    return np.tanh(X, out=X)
+    np.tanh(X, out=X)
 
 
-def relu(X):
+def inplace_relu(X):
     """Compute the rectified linear unit function inplace.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
-
-    Returns
-    -------
-    X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The transformed data.
     """
-    np.clip(X, 0, np.finfo(X.dtype).max, out=X)
-    return X
+    np.maximum(X, 0, out=X)
 
 
-def softmax(X):
+def inplace_softmax(X):
     """Compute the K-way softmax function inplace.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
-
-    Returns
-    -------
-    X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The transformed data.
     """
     tmp = X - X.max(axis=1)[:, np.newaxis]
     np.exp(tmp, out=X)
     X /= X.sum(axis=1)[:, np.newaxis]
 
-    return X
 
-
-ACTIVATIONS = {'identity': identity, 'tanh': tanh, 'logistic': logistic,
-               'relu': relu, 'softmax': softmax}
+ACTIVATIONS = {
+    "identity": inplace_identity,
+    "tanh": inplace_tanh,
+    "logistic": inplace_logistic,
+    "relu": inplace_relu,
+    "softmax": inplace_softmax,
+}
 
 
 def inplace_identity_derivative(Z, delta):
@@ -131,7 +108,7 @@ def inplace_logistic_derivative(Z, delta):
          The backpropagated error signal to be modified inplace.
     """
     delta *= Z
-    delta *= (1 - Z)
+    delta *= 1 - Z
 
 
 def inplace_tanh_derivative(Z, delta):
@@ -149,7 +126,7 @@ def inplace_tanh_derivative(Z, delta):
     delta : {array-like}, shape (n_samples, n_features)
          The backpropagated error signal to be modified inplace.
     """
-    delta *= (1 - Z ** 2)
+    delta *= 1 - Z ** 2
 
 
 def inplace_relu_derivative(Z, delta):
@@ -170,10 +147,12 @@ def inplace_relu_derivative(Z, delta):
     delta[Z == 0] = 0
 
 
-DERIVATIVES = {'identity': inplace_identity_derivative,
-               'tanh': inplace_tanh_derivative,
-               'logistic': inplace_logistic_derivative,
-               'relu': inplace_relu_derivative}
+DERIVATIVES = {
+    "identity": inplace_identity_derivative,
+    "tanh": inplace_tanh_derivative,
+    "logistic": inplace_logistic_derivative,
+    "relu": inplace_relu_derivative,
+}
 
 
 def squared_loss(y_true, y_pred):
@@ -212,13 +191,15 @@ def log_loss(y_true, y_prob):
     loss : float
         The degree to which the samples are correctly predicted.
     """
+    eps = np.finfo(y_prob.dtype).eps
+    y_prob = np.clip(y_prob, eps, 1 - eps)
     if y_prob.shape[1] == 1:
         y_prob = np.append(1 - y_prob, y_prob, axis=1)
 
     if y_true.shape[1] == 1:
         y_true = np.append(1 - y_true, y_true, axis=1)
 
-    return - xlogy(y_true, y_prob).sum() / y_prob.shape[0]
+    return -xlogy(y_true, y_prob).sum() / y_prob.shape[0]
 
 
 def binary_log_loss(y_true, y_prob):
@@ -232,7 +213,7 @@ def binary_log_loss(y_true, y_prob):
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_prob : array-like of float, shape = (n_samples, n_classes)
+    y_prob : array-like of float, shape = (n_samples, 1)
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
@@ -241,9 +222,16 @@ def binary_log_loss(y_true, y_prob):
     loss : float
         The degree to which the samples are correctly predicted.
     """
-    return -(xlogy(y_true, y_prob) +
-             xlogy(1 - y_true, 1 - y_prob)).sum() / y_prob.shape[0]
+    eps = np.finfo(y_prob.dtype).eps
+    y_prob = np.clip(y_prob, eps, 1 - eps)
+    return (
+        -(xlogy(y_true, y_prob).sum() + xlogy(1 - y_true, 1 - y_prob).sum())
+        / y_prob.shape[0]
+    )
 
 
-LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss,
-                  'binary_log_loss': binary_log_loss}
+LOSS_FUNCTIONS = {
+    "squared_error": squared_loss,
+    "log_loss": log_loss,
+    "binary_log_loss": binary_log_loss,
+}

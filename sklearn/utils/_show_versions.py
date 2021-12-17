@@ -8,22 +8,26 @@ adapted from :func:`pandas.show_versions`
 import platform
 import sys
 import importlib
+from ..utils.fixes import threadpool_info
+
+
+from ._openmp_helpers import _openmp_parallelism_enabled
 
 
 def _get_sys_info():
     """System information
 
-    Return
-    ------
+    Returns
+    -------
     sys_info : dict
         system and Python version information
 
     """
-    python = sys.version.replace('\n', ' ')
+    python = sys.version.replace("\n", " ")
 
     blob = [
         ("python", python),
-        ('executable', sys.executable),
+        ("executable", sys.executable),
         ("machine", platform.platform()),
     ]
 
@@ -49,6 +53,7 @@ def _get_deps_info():
         "pandas",
         "matplotlib",
         "joblib",
+        "threadpoolctl",
     ]
 
     def get_version(module):
@@ -71,15 +76,36 @@ def _get_deps_info():
 
 
 def show_versions():
-    "Print useful debugging information"
+    """Print useful debugging information"
+
+    .. versionadded:: 0.20
+    """
 
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
 
-    print('\nSystem:')
+    print("\nSystem:")
     for k, stat in sys_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
 
-    print('\nPython deps:')
+    print("\nPython dependencies:")
     for k, stat in deps_info.items():
-        print("{k:>10}: {stat}".format(k=k, stat=stat))
+        print("{k:>13}: {stat}".format(k=k, stat=stat))
+
+    print(
+        "\n{k}: {stat}".format(
+            k="Built with OpenMP", stat=_openmp_parallelism_enabled()
+        )
+    )
+
+    # show threadpoolctl results
+    threadpool_results = threadpool_info()
+    if threadpool_results:
+        print()
+        print("threadpoolctl info:")
+
+        for i, result in enumerate(threadpool_results):
+            for key, val in result.items():
+                print(f"{key:>15}: {val}")
+            if i != len(threadpool_results) - 1:
+                print()
