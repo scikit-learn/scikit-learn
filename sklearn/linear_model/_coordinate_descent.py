@@ -504,6 +504,7 @@ def enet_path(
     max_iter = params.pop("max_iter", 1000)
     random_state = params.pop("random_state", None)
     selection = params.pop("selection", "cyclic")
+    check_gram = params.pop("check_gram", True)
 
     if len(params) > 0:
         raise ValueError("Unexpected parameters in params", params.keys())
@@ -564,6 +565,7 @@ def enet_path(
             fit_intercept=False,
             copy=False,
             check_input=check_input,
+            check_gram=check_gram,
         )
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
@@ -1392,6 +1394,7 @@ def _path_residuals(
     path_params["precompute"] = precompute
     path_params["copy_X"] = False
     path_params["alphas"] = alphas
+    path_params["check_gram"] = False
 
     if "l1_ratio" in path_params:
         path_params["l1_ratio"] = l1_ratio
