@@ -653,7 +653,7 @@ def explained_variance_score(
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
         for model optimization procedures (e.g. grid search cross-validation).
 
-        .. versionadded:: 1.1.0
+        .. versionadded:: 1.1
 
     Returns
     -------
