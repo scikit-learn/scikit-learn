@@ -879,7 +879,7 @@ def _assemble_r2_explained_variance(
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
         # (note: even if denominator is zero, thus avoiding NaN scores)
-        output_scores = np.ones([nb_outputs])
+        output_scores = np.ones([n_outputs])
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
         output_scores[valid_score] = 1 - (
