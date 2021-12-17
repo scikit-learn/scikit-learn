@@ -331,8 +331,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "Number of labels=%d does not match number of samples=%d"
                 % (len(y), n_samples)
             )
-        if not 0 <= self.min_weight_fraction_leaf <= 0.5:
-            raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
+        # if not 0 <= self.min_weight_fraction_leaf <= 0.5:
+        #     raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
+        check_scalar(
+            self.min_weight_fraction_leaf,
+            "min_weight_fraction_leaf",
+            target_type=numbers.Real,
+            min_val=0,
+            max_val=1,
+            include_boundaries="left"
+        )
         # if max_depth <= 0:
         #     raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_in_):
