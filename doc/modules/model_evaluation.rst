@@ -2267,7 +2267,7 @@ As such variance is dataset dependent, R² may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected (average) value of y, disregarding the input features,
-would get a :math:`R^2` score of 0.0.
+would get an :math:`R^2` score of 0.0.
 
 Note: when the prediction residuals have zero mean (perfectly unbiased
 model), the :math:`R^2` score and the :ref:`explained_variance_score` are identical.
