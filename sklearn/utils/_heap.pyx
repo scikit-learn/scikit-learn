@@ -110,9 +110,11 @@ cdef inline int heap_push(
 
     For instance, in pseudo-code:
 
+        values = [1.2, 0.4, 0.1],
+        indices = [42, 1, 5],
         heap_push(
-            values=[0.1, 0.4, 1.2],
-            indices=[42, 1, 5],
+            values=values,
+            indices=indices,
             size=3,
             val=0.2,
             val_idx=4,
@@ -120,8 +122,8 @@ cdef inline int heap_push(
 
     will modify values and indices inplace, giving at the end of the call:
 
-        values  == [0.1, 0.2, 0.4]
-        indices == [42, 4, 1]
+        values  == [0.4, 0.2, 0.1]
+        indices == [1, 4, 5]
 
     """
     cdef:
