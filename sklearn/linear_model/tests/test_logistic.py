@@ -1389,8 +1389,8 @@ def test_max_iter(max_iter, multi_class, solver, message):
 def test_n_iter(solver):
     # Test that self.n_iter_ has the correct format.
     X, y = iris.data, iris.target
-    n_classes = 3
-    assert n_classes == np.unique(y).shape[0]
+    n_classes = np.unique(y).shape[0]
+    assert n_classes == 3
 
     # Also generate a binary classification sub-problem.
     y_bin = y.copy()
