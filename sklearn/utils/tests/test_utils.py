@@ -119,8 +119,11 @@ def test_resample():
     with pytest.raises(ValueError):
         resample([0], [1], copy=False)
     with pytest.raises(ValueError):
-        resample(MockDataFrame(np.array([['a', 0], ['b', 1]], dtype=object)),
-                 replace=False, copy=False)
+        resample(
+            MockDataFrame(np.array([["a", 0], ["b", 1]], dtype=object)),
+            replace=False,
+            copy=False,
+        )
 
     # Issue:6581, n_samples can be more when replace is True (default).
     assert len(resample([1, 2], n_samples=5)) == 5
@@ -530,7 +533,7 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
 
 @pytest.mark.parametrize("copy", [True, False])
 def test_shuffle_on_ndim_equals_three(copy):
-    def to_tuple(A):    # to make the inner arrays hashable
+    def to_tuple(A):  # to make the inner arrays hashable
         return tuple(tuple(tuple(C) for C in B) for B in A)
 
     A = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])  # A.shape = (2,2,2)
@@ -550,10 +553,9 @@ def test_shuffle_dont_convert_to_array(copy):
     e = sp.csc_matrix(np.arange(6).reshape(3, 2))
 
     if copy:
-        a_s, b_s, c_s, d_s, e_s = shuffle(
-            a, b, c, d, e, random_state=0, copy=copy)
+        a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0, copy=copy)
     else:
-        a_s, b_s, c_s, e_s = shuffle(a, b, c,  e, random_state=0, copy=copy)
+        a_s, b_s, c_s, e_s = shuffle(a, b, c, e, random_state=0, copy=copy)
 
     assert a_s == ["c", "b", "a"]
     assert type(a_s) == list
@@ -565,10 +567,7 @@ def test_shuffle_dont_convert_to_array(copy):
     assert type(c_s) == list
 
     if copy:
-        assert_array_equal(d_s, np.array([['c', 2],
-                                          ['b', 1],
-                                          ['a', 0]],
-                                         dtype=object))
+        assert_array_equal(d_s, np.array([["c", 2], ["b", 1], ["a", 0]], dtype=object))
         assert type(d_s) == MockDataFrame
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))
