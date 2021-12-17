@@ -200,13 +200,15 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         else:
             solver_options = self.solver_options
 
+        # After rescaling alpha, the minimization problem is
+        #     min sum(pinball loss) + alpha * L1
         # Use linear programming formulation of quantile regression
         #     min_x c x
         #           A_eq x = b_eq
         #                0 <= x
         # x = (s0, s, t0, t, u, v) = slack variables
-        # intercept = s0 + t0
-        # coef = s + t
+        # intercept = s0 - t0
+        # coef = s - t
         # c = (alpha * 1_p, alpha * 1_p, quantile * 1_n, (1-quantile) * 1_n)
         # residual = y - X@coef - intercept = u - v
         # A_eq = (1_n, X, -1_n, -X, diag(1_n), -diag(1_n))
@@ -216,7 +218,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # 1_n = vector of length n with entries equal one
         # see https://stats.stackexchange.com/questions/384909/
         #
-        # Filtering out zero samples weights from the beginning makes life
+        # Filtering out zero sample weights from the beginning makes life
         # easier for the linprog solver.
         mask = sample_weight != 0
         n_mask = int(np.sum(mask))  # use n_mask instead of n_samples
