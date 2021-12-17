@@ -1427,8 +1427,8 @@ def test_n_iter(solver):
         tol=1e-2, multi_class="multinomial", solver=solver, C=1.0, random_state=42
     )
     clf.fit(X, y)
-    # Whe using the multinomial objective function, there is a single
-    # optimization problem to solver for all classes at once:
+    # When using the multinomial objective function, there is a single
+    # optimization problem to solve for all classes at once:
     assert clf.n_iter_.shape == (1,)
 
     clf = LogisticRegressionCV(
