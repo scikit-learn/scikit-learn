@@ -1542,7 +1542,7 @@ def test_open_openml_url_retry_on_network_error(monkeypatch):
 
     with pytest.warns(
         UserWarning,
-        match=(
+        match=re.escape(
             "A network error occured while downloading"
             f" {_OPENML_PREFIX + invalid_openml_url}. Retrying..."
         ),
