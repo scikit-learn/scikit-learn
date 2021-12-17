@@ -9,10 +9,6 @@ content-based recommendation engine.
 # Author: Sven Eschlbeck <sven dot eschlbeck at t-online dot de>
 # License: BSD 3 clause
 
-# Standard scientific Python imports
-import pandas as pd
-import numpy as np
-
 # Import datasets, classifiers and performance metrics
 from sklearn.datasets import fetch_openml
 from sklearn.feature_extraction.text import CountVectorizer
@@ -117,6 +113,7 @@ count_matrix = cv.fit_transform(X["concatenated_features"])
 # the cosine(theta) with theta being the angle between the
 # vectors is used.
 cosine_sim = cosine_similarity(count_matrix)
+
 
 # Retrieving a movie title from an index
 def get_title_from_index(index):
