@@ -75,6 +75,10 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :meth:`calibration.CalibratedClassifierCV.fit` now supports passing
+  `fit_params`, which are routed to the `base_estimator`.
+  :pr:`18170` by :user:`Benjamin Bossan <BenjaminBossan>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -153,7 +157,7 @@ Changelog
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
   :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-  
+
 - |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
   The default value of its `whiten` argument will change from `True`
   (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
@@ -279,7 +283,7 @@ Changelog
   all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
 
 - |Fix| :class:`model_selection.GridSearchCV`, :class:`model_selection.HalvingGridSearchCV`
-   now validate input parameters in `fit` instead of `__init__`. 
+   now validate input parameters in `fit` instead of `__init__`.
    :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
 
 :mod:`sklearn.pipeline`
