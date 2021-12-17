@@ -256,7 +256,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
         By default, `X` and `y` will be centered.
 
     force_finite : bool, default=True
-        Whether or not to force the Pearson's R correlation to be finite. 
+        Whether or not to force the Pearson's R correlation to be finite.
         In the particular case where some features in `X` or the target `y`
         are constant, the Pearson's R correlation is not defined. When
         `force_finite=False`, a correlation of `np.nan` is returned to
@@ -356,8 +356,8 @@ def f_regression(X, y, *, center=True, force_finite=True):
         - when the target `y` or some features in `X` are constant. In this
           case, the Pearson's R correlation is not defined leading to obtain
           `np.nan` values in the F-statistic and p-value. When
-          `force_finite=True`, the F-statistic is set to `0.0` and the associated
-          p-value is set to `1.0`.
+          `force_finite=True`, the F-statistic is set to `0.0` and the
+          associated p-value is set to `1.0`.
         - when the a feature in `X` is perfectly correlated (or
           anti-correlated) with the target `y`. In this case, the F-statistic
           is expected to be `np.inf`. When `force_finite=True`, the F-statistic
