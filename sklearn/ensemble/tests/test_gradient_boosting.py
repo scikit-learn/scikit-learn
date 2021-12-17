@@ -46,7 +46,7 @@ true_result = [-1, 1, 1]
 
 # also make regression dataset
 X_reg, y_reg = make_regression(
-    n_samples=500, n_features=10, n_informative=8, noise=10, random_state=7
+    n_samples=100, n_features=1, n_informative=8, noise=10, random_state=7
 )
 y_reg = scale(y_reg)
 
@@ -198,21 +198,22 @@ def test_regression_dataset(loss, subsample):
     last_y_pred = None
     for sample_weight in [None, ones, 2 * ones]:
         reg = GradientBoostingRegressor(
-            n_estimators=1,
+            n_estimators=10,
             loss=loss,
             max_depth=4,
             subsample=subsample,
             min_samples_split=2,
             random_state=1,
+            learning_rate=0.5,
         )
 
         reg.fit(X_reg, y_reg, sample_weight=sample_weight)
         leaves = reg.apply(X_reg)
-        assert leaves.shape == (500, 1)
+        assert leaves.shape == (100, 10)
 
         y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
-        assert mse < 1.0
+        assert mse < 0.04
 
         if last_y_pred is not None:
             # FIXME: We temporarily bypass this test. This is due to the fact
@@ -995,7 +996,7 @@ def test_zero_estimator_reg():
     est.fit(X_reg, y_reg)
     y_pred = est.predict(X_reg)
     mse = mean_squared_error(y_reg, y_pred)
-    assert_almost_equal(mse, 0.52, decimal=2)
+    assert_almost_equal(mse, 0.13, decimal=2)
 
     est = GradientBoostingRegressor(
         n_estimators=20, max_depth=1, random_state=1, init="foobar"
