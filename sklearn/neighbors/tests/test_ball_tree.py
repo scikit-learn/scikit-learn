@@ -88,10 +88,10 @@ def test_array_object_type():
 
 
 def test_bad_pyfunc_metric():
-    def wrong_distance(x):
+    def wrong_distance(x, y):
         return "1"
 
     X = np.ones((5, 2))
-    msg = "Custom distance function must accept two vectors"
+    msg = "Custom distance function must accept two vectors and return a float."
     with pytest.raises(TypeError, match=msg):
         BallTree(X, metric=wrong_distance)
