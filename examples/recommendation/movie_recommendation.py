@@ -139,7 +139,7 @@ i=0
 
 for element in sorted_similar_movies:
 	print(get_title_from_index(element[0]))
-	i+=1
-	if i>5:
+	i += 1
+	if i > 5:
 		break
 		
