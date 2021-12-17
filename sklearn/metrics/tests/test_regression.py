@@ -139,6 +139,13 @@ def test_multioutput_regression():
     error = r2_score(y_true, y_pred, multioutput="uniform_average")
     assert_almost_equal(error, -0.875)
 
+    # constant `y_true` with force_finite=True leads to 1. or 0.
+    yc = [5., 5.]
+    error = r2_score(yc, [5., 5.], multioutput="variance_weighted")
+    assert_almost_equal(error, 1.)
+    error = r2_score(yc, [5., 5.1], multioutput="variance_weighted")
+    assert_almost_equal(error, 0.)
+
     # Setting force_finite=False results in the nan for 4th output propagating
     error = r2_score(
         y_true, y_pred, multioutput="variance_weighted", force_finite=False
@@ -158,6 +165,12 @@ def test_multioutput_regression():
     error = r2_score(y_true, y_pred, multioutput="uniform_average")
     error2 = r2_score(y_true, y_pred, multioutput="uniform_average", force_finite=False)
     assert_almost_equal(error, error2)
+
+    # constant `y_true` with force_finite=False leads to NaN or -Inf.
+    error = r2_score(yc, [5., 5.], multioutput="variance_weighted", force_finite=False)
+    assert_almost_equal(error, np.nan)
+    error = r2_score(yc, [5., 6.], multioutput="variance_weighted", force_finite=False)
+    assert_almost_equal(error, -np.inf)
 
 
 def test_regression_metrics_at_limits():

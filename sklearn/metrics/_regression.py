@@ -614,11 +614,12 @@ def _assemble_r2_explained_variance(
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
 
+    nonzero_denominator = denominator != 0
+
     if not force_finite:
         # Standard formula, that may lead to NaN or -Inf
         output_scores = 1 - (numerator / denominator)
     else:
-        nonzero_denominator = denominator != 0
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
         # (note: even if denominator is zero, thus avoiding NaN scores)
@@ -641,12 +642,11 @@ def _assemble_r2_explained_variance(
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
-            if force_finite and not np.any(nonzero_denominator):
-                # Avoid failing on constant y or one-element arrays.
-                if not np.any(nonzero_numerator):
-                    return 1.0
-                else:
-                    return 0.0
+            if not np.any(nonzero_denominator):
+                # All weights are zero, np.average would raise a ZeroDiv error.
+                # This only happens when all y are constant (or 1-element long)
+                # Since weights are all equal, fall back to uniform weights.
+                avg_weights = None
     else:
         avg_weights = multioutput
 
