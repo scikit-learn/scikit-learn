@@ -1,4 +1,6 @@
+import pickle
 import re
+import tempfile
 
 import numpy as np
 import scipy.sparse as sp
@@ -18,6 +20,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.callback import Snapshot
 
 
 @pytest.mark.parametrize("solver", ["cd", "mu"])
@@ -719,3 +722,29 @@ def test_feature_names_out():
 
     names = nmf.get_feature_names_out()
     assert_array_equal([f"nmf{i}" for i in range(3)], names)
+
+
+@pytest.mark.parametrize("solver, beta_loss", [("mu", 0), ("mu", 2), ("cd", 2)])
+def test_nmf_callback_reconstruction_attributes(solver, beta_loss):
+    # Check that the reconstruction attributes passed to the callback allow to make
+    # a new estimator as if the fit ended when the callback is called.
+    X = np.random.RandomState(0).random_sample((100, 100))
+
+    nmf = NMF(n_components=3, solver=solver, beta_loss=beta_loss, random_state=0)
+    nmf.fit(X)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        callback = Snapshot(base_dir=tmp_dir)
+        nmf._set_callbacks(callback)
+        nmf.fit(X)
+
+        # load model from last iteration
+        snapshot = sorted(callback.directory.iterdir())[-1]
+        with open(snapshot, "rb") as f:
+            loaded_nmf = pickle.load(f)
+
+    # The model loaded from the last iteration is the same as the original model
+    assert nmf.n_iter_ == loaded_nmf.n_iter_
+    assert_allclose(nmf.components_, loaded_nmf.components_) 
+    assert_allclose(nmf.reconstruction_err_, loaded_nmf.reconstruction_err_)
+    assert_allclose(nmf.transform(X), loaded_nmf.transform(X))

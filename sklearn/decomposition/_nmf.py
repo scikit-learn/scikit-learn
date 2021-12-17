@@ -6,7 +6,6 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
-from functools import partial
 import numbers
 import numpy as np
 import scipy.sparse as sp
@@ -504,9 +503,7 @@ def _fit_coordinate_descent(
 
     rng = check_random_state(random_state)
 
-    nodes = parent_node.children if parent_node is not None else [None] * max_iter
-
-    for n_iter, node in enumerate(nodes, 1):
+    for n_iter in range(1, max_iter + 1):
         violation = 0.0
 
         # Update W
@@ -527,7 +524,7 @@ def _fit_coordinate_descent(
 
         if _eval_callbacks_on_fit_iter_end(
             estimator=estimator,
-            node=node,
+            node=parent_node.children[n_iter - 1] if parent_node is not None else None,
             stopping_criterion=lambda: violation / violation_init,
             tol=tol,
             fit_state={"H": Ht.T, "W": W},
@@ -838,10 +835,8 @@ def _fit_multiplicative_update(
     error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
     previous_error = error_at_init
 
-    nodes = parent_node.children if parent_node is not None else [None] * max_iter
-
     H_sum, HHt, XHt = None, None, None
-    for n_iter, node in enumerate(nodes, 1):
+    for n_iter in range(1, max_iter + 1):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -869,7 +864,7 @@ def _fit_multiplicative_update(
 
         if _eval_callbacks_on_fit_iter_end(
             estimator=estimator,
-            node=node,
+            node=parent_node.children[n_iter - 1] if parent_node is not None else None,
             stopping_criterion=lambda: (
                 (
                     previous_error
@@ -883,7 +878,7 @@ def _fit_multiplicative_update(
                 "n_components_": H.shape[0],
                 "components_": H,
                 "n_iter_": n_iter,
-                "reconstruction_err_": _beta_divergence(X, W, H, 2, True),
+                "reconstruction_err_": _beta_divergence(X, W, H, beta_loss, True),
             },
         ):
             break
@@ -1594,6 +1589,9 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         W, H, n_iter = self._fit_transform(X, W=W, H=H, parent_node=root)
 
+        self.reconstruction_err_ = _beta_divergence(
+            X, W, H, self._beta_loss, square_root=True
+        )
         self.n_components_ = H.shape[0]
         self.components_ = H
         self.n_iter_ = n_iter
