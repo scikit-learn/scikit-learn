@@ -15,8 +15,9 @@ picking a threshold, and keeping a single feature from each cluster.
 .. note::
     See also
     :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
+
 """
-print(__doc__)
+
 from collections import defaultdict
 
 import matplotlib.pyplot as plt

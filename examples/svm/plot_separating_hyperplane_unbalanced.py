@@ -24,7 +24,6 @@ unbalanced classes.
         clf = SGDClassifier(n_iter=100, alpha=0.01)
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

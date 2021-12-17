@@ -10,7 +10,6 @@ All of the above are supported by :class:`~sklearn.linear_model.SGDClassifier`
 and :class:`~sklearn.linear_model.SGDRegressor`.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

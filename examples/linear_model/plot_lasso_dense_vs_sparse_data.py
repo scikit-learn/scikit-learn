@@ -7,7 +7,6 @@ We show that linear_model.Lasso provides the same results for dense and sparse
 data and that in the case of sparse data the speed is improved.
 
 """
-print(__doc__)
 
 from time import time
 from scipy import sparse

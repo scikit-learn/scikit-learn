@@ -18,9 +18,8 @@ We evaluate quantitatively **overfitting** / **underfitting** by using
 cross-validation. We calculate the mean squared error (MSE) on the validation
 set, the higher, the less likely the model generalizes correctly from the
 training data.
-"""
 
-print(__doc__)
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt

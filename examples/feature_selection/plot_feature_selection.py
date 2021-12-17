@@ -18,8 +18,8 @@ Selects many of the non-informative features.
 Applying univariate feature selection before the SVM
 increases the SVM weight attributed to the significant features, and will
 thus improve classification.
+
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

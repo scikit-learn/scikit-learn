@@ -20,7 +20,10 @@ brittle single linkage. This effect is more pronounced for very sparse graphs
 (try decreasing the number of neighbors in kneighbors_graph) and with
 complete linkage. In particular, having a very small number of neighbors in
 the graph, imposes a geometry that is close to that of single linkage,
-which is well known to have this percolation instability. """
+which is well known to have this percolation instability.
+
+"""
+
 # Authors: Gael Varoquaux, Nelle Varoquaux
 # License: BSD 3 clause
 

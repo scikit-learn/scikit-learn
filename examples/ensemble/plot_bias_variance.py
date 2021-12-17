@@ -61,7 +61,6 @@ References
        "Elements of Statistical Learning", Springer, 2009.
 
 """
-print(__doc__)
 
 # Author: Gilles Louppe <g.louppe@gmail.com>
 # License: BSD 3 clause

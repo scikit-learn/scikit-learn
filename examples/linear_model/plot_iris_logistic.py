@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 Logistic Regression 3-class Classifier
@@ -12,7 +10,6 @@ first two dimensions (sepal length and width) of the `iris
 are colored according to their labels.
 
 """
-print(__doc__)
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

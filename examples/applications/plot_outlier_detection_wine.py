@@ -33,7 +33,6 @@ Models, univariate outlier detection, ...). But had it been a high-dimensional
 example, none of these could be applied that easily.
 
 """
-print(__doc__)
 
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 # License: BSD 3 clause

@@ -36,6 +36,11 @@ else:
     # mypy error: Name 'lobpcg' already defined (possibly by an import)
     from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
+try:
+    from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
+except ImportError:  # SciPy < 1.8
+    from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
+
 
 def _object_dtype_isnan(X):
     return X != X
@@ -275,6 +280,18 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
         )
 
 
+# Rename the `method` kwarg to `interpolation` for NumPy < 1.22, because
+# `interpolation` kwarg was deprecated in favor of `method` in NumPy >= 1.22.
+def _percentile(a, q, *, method="linear", **kwargs):
+    return np.percentile(a, q, interpolation=method, **kwargs)
+
+
+if np_version < parse_version("1.22"):
+    percentile = _percentile
+else:  # >= 1.22
+    from numpy import percentile  # type: ignore  # noqa
+
+
 # compatibility fix for threadpoolctl >= 3.0.0
 # since version 3 it's possible to setup a global threadpool controller to avoid
 # looping through all loaded shared libraries each time.
@@ -297,9 +314,15 @@ def threadpool_limits(limits=None, user_api=None):
         return threadpoolctl.threadpool_limits(limits=limits, user_api=user_api)
 
 
+threadpool_limits.__doc__ = threadpoolctl.threadpool_limits.__doc__
+
+
 def threadpool_info():
     controller = _get_threadpool_controller()
     if controller is not None:
         return controller.info()
     else:
         return threadpoolctl.threadpool_info()
+
+
+threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__

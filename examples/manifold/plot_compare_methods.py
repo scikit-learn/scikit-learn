@@ -17,11 +17,10 @@ representation of the data (here 2D) in which the distances respect well
 the distances in the original high-dimensional space, unlike other
 manifold-learning algorithms, it does not seeks an isotropic
 representation of the data in the low-dimensional space.
+
 """
 
 # Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
-
-print(__doc__)
 
 from collections import OrderedDict
 from functools import partial

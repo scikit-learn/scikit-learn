@@ -17,8 +17,6 @@ is computed.
 
 """
 
-print(__doc__)
-
 # %%
 # Let's start by loading the dataset and creating some sample weights.
 import numpy as np

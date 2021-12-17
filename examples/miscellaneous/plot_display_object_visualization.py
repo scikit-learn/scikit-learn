@@ -12,8 +12,8 @@ is an alternative to using their corresponding plot functions when
 a model's predictions are already computed or expensive to compute. Note that
 this is advanced usage, and in general we recommend using their respective
 plot functions.
+
 """
-print(__doc__)
 
 # %%
 # Load Data and train model

@@ -20,7 +20,6 @@ Using a single underlying feature the model learns both the
 x and y coordinate as output.
 
 """
-print(__doc__)
 
 # Author: Tim Head <betatim@gmail.com>
 #

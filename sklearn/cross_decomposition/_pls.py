@@ -212,7 +212,9 @@ class _PLS(
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
-        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y = check_array(
+            Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
+        )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -388,7 +390,9 @@ class _PLS(
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES)
+            Y = check_array(
+                Y, input_name="Y", ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES
+            )
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Y -= self._y_mean
@@ -398,7 +402,7 @@ class _PLS(
 
         return x_scores
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, Y=None):
         """Transform data back to its original space.
 
         Parameters
@@ -407,23 +411,39 @@ class _PLS(
             New data, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
 
+        Y : array-like of shape (n_samples, n_components)
+            New target, where `n_samples` is the number of samples
+            and `n_components` is the number of pls components.
+
         Returns
         -------
-        self : ndarray of shape (n_samples, n_features)
-            Return the reconstructed array.
+        X_reconstructed : ndarray of shape (n_samples, n_features)
+            Return the reconstructed `X` data.
+
+        Y_reconstructed : ndarray of shape (n_samples, n_targets)
+            Return the reconstructed `X` target. Only returned when `Y` is given.
 
         Notes
         -----
         This transformation will only be exact if `n_components=n_features`.
         """
         check_is_fitted(self)
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        X = check_array(X, input_name="X", dtype=FLOAT_DTYPES)
         # From pls space to original space
         X_reconstructed = np.matmul(X, self.x_loadings_.T)
-
         # Denormalize
         X_reconstructed *= self._x_std
         X_reconstructed += self._x_mean
+
+        if Y is not None:
+            Y = check_array(Y, input_name="Y", dtype=FLOAT_DTYPES)
+            # From pls space to original space
+            Y_reconstructed = np.matmul(Y, self.y_loadings_.T)
+            # Denormalize
+            Y_reconstructed *= self._y_std
+            Y_reconstructed += self._y_mean
+            return X_reconstructed, Y_reconstructed
+
         return X_reconstructed
 
     def predict(self, X, copy=True):
@@ -1020,7 +1040,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
-        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y = check_array(
+            Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
+        )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -1135,7 +1157,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, dtype=np.float64)
+            Y = check_array(Y, input_name="Y", ensure_2d=False, dtype=np.float64)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Yr = (Y - self._y_mean) / self._y_std

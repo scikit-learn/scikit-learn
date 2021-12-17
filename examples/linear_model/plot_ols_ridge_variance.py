@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 Ordinary Least Squares and Ridge Regression Variance
@@ -19,9 +17,8 @@ Despite the few data points in each dimension, the slope
 of the prediction is much more stable and the variance
 in the line itself is greatly reduced, in comparison to that
 of the standard linear regression
-"""
-print(__doc__)
 
+"""
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

@@ -21,6 +21,7 @@ particular pre-processor: by column names and by column data types.
 Finally, the preprocessing pipeline is integrated in a full prediction pipeline
 using :class:`~pipeline.Pipeline`, together with a simple classification
 model.
+
 """
 
 # Author: Pedro Morales <part.morales@gmail.com>
@@ -93,7 +94,7 @@ clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
 
 # %%
-# HTML representation of ``Pipeline``
+# HTML representation of ``Pipeline`` (display diagram)
 ###############################################################################
 # When the ``Pipeline`` is printed out in a jupyter notebook an HTML
 # representation of the estimator is displayed as follows:

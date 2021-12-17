@@ -8,6 +8,7 @@ This example shows how to use
 errors.
 
 """
+
 from sklearn import datasets
 from sklearn.model_selection import cross_val_predict
 from sklearn import linear_model

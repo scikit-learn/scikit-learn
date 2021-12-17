@@ -15,10 +15,10 @@ score.
 [1] Hastie, T., Tibshirani, R.,, Friedman, J. (2001). Model Assessment and
 Selection. The Elements of Statistical Learning (pp. 219-260). New York,
 NY, USA: Springer New York Inc..
-"""
-# Author: Wenhao Zhang <wenhaoz@ucla.edu>
 
-print(__doc__)
+"""
+
+# Author: Wenhao Zhang <wenhaoz@ucla.edu>
 
 import numpy as np
 import matplotlib.pyplot as plt

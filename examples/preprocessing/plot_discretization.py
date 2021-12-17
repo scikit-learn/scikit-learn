@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 ================================================================
 Using KBinsDiscretizer to discretize continuous features
@@ -39,8 +38,6 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeRegressor
-
-print(__doc__)
 
 # construct the dataset
 rnd = np.random.RandomState(42)

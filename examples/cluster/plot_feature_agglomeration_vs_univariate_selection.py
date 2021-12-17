@@ -11,12 +11,11 @@ This example compares 2 dimensionality reduction strategies:
 
 Both methods are compared in a regression problem using
 a BayesianRidge as supervised estimator.
+
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
-
-print(__doc__)
 
 import shutil
 import tempfile

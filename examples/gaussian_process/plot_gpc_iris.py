@@ -7,8 +7,8 @@ This example illustrates the predicted probability of GPC for an isotropic
 and anisotropic RBF kernel on a two-dimensional version for the iris-dataset.
 The anisotropic RBF kernel obtains slightly higher log-marginal-likelihood by
 assigning different length-scales to the two feature dimensions.
+
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

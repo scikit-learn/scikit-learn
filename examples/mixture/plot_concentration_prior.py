@@ -26,7 +26,9 @@ component only if it is necessary.
 On the contrary the classical finite mixture model with a Dirichlet
 distribution prior will favor more uniformly weighted components and therefore
 tends to divide natural clusters into unnecessary sub-components.
+
 """
+
 # Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
@@ -36,8 +38,6 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from sklearn.mixture import BayesianGaussianMixture
-
-print(__doc__)
 
 
 def plot_ellipses(ax, weights, means, covars):

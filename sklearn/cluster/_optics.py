@@ -398,7 +398,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
 ):
-    """Computes the OPTICS reachability graph.
+    """Compute the OPTICS reachability graph.
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -621,7 +621,7 @@ def _set_reach_dist(
 
 
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
-    """Performs DBSCAN extraction for an arbitrary epsilon.
+    """Perform DBSCAN extraction for an arbitrary epsilon.
 
     Extracting the clusters runs in linear time. Note that this results in
     ``labels_`` which are close to a :class:`~sklearn.cluster.DBSCAN` with
@@ -630,13 +630,13 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     Parameters
     ----------
     reachability : array of shape (n_samples,)
-        Reachability distances calculated by OPTICS (``reachability_``)
+        Reachability distances calculated by OPTICS (``reachability_``).
 
     core_distances : array of shape (n_samples,)
-        Distances at which points become core (``core_distances_``)
+        Distances at which points become core (``core_distances_``).
 
     ordering : array of shape (n_samples,)
-        OPTICS ordered point indices (``ordering_``)
+        OPTICS ordered point indices (``ordering_``).
 
     eps : float
         DBSCAN ``eps`` parameter. Must be set to < ``max_eps``. Results
@@ -647,7 +647,6 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     -------
     labels_ : array of shape (n_samples,)
         The estimated labels.
-
     """
     n_samples = len(core_distances)
     labels = np.zeros(n_samples, dtype=int)

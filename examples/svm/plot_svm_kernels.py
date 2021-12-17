@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 SVM-Kernels
@@ -12,8 +10,6 @@ data-points are not linearly separable.
 
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 # License: BSD 3 clause

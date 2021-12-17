@@ -9,10 +9,10 @@ kind of confidence on the prediction. This example demonstrates how to
 visualize how well calibrated the predicted probabilities are using calibration
 curves, also known as reliability diagrams. Calibration of an uncalibrated
 classifier will also be demonstrated.
-"""
-print(__doc__)
-# %%
 
+"""
+
+# %%
 # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause.

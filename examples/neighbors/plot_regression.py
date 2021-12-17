@@ -8,7 +8,6 @@ using a k-Nearest Neighbor and the interpolation of the
 target using both barycenter and constant weights.
 
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>

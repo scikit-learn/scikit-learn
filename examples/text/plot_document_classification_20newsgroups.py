@@ -18,6 +18,7 @@ automatically downloaded, then cached.
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck
 # License: BSD 3 clause
+
 import logging
 import numpy as np
 from optparse import OptionParser

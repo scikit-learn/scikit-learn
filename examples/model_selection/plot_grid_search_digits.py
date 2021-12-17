@@ -15,13 +15,12 @@ More details on tools available for model selection can be found in the
 sections on :ref:`cross_validation` and :ref:`grid_search`.
 
 """
+
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.svm import SVC
-
-print(__doc__)
 
 # Loading the Digits dataset
 digits = datasets.load_digits()

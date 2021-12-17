@@ -34,10 +34,13 @@ accuracy as compared to a model built without early stopping. This can
 significantly reduce training time. Note that scores differ between the
 stopping criteria even from early iterations because some of the training data
 is held out with the validation stopping criterion.
+
 """
+
 # Authors: Tom Dupre la Tour
 #
 # License: BSD 3 clause
+
 import time
 import sys
 
@@ -52,13 +55,11 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import shuffle
 
-print(__doc__)
-
 
 def load_mnist(n_samples=None, class_0="0", class_1="8"):
     """Load MNIST, select two classes, shuffle and return only n_samples."""
     # Load data from http://openml.org/d/554
-    mnist = fetch_openml("mnist_784", version=1)
+    mnist = fetch_openml("mnist_784", version=1, as_frame=False)
 
     # take only two classes for binary classification
     mask = np.logical_or(mnist.target == class_0, mnist.target == class_1)

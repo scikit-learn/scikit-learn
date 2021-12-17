@@ -13,7 +13,6 @@ at recovering our `instruments` since the related signals reflect
 non-Gaussian processes.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

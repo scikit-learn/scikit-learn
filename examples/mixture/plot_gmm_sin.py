@@ -48,8 +48,6 @@ import matplotlib as mpl
 
 from sklearn import mixture
 
-print(__doc__)
-
 color_iter = itertools.cycle(["navy", "c", "cornflowerblue", "gold", "darkorange"])
 
 

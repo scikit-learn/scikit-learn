@@ -17,14 +17,15 @@ palette.
 
 For comparison, a quantized image using a random codebook (colors picked up
 randomly) is also shown.
+
 """
+
 # Authors: Robert Layton <robertlayton@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #
 # License: BSD 3 clause
 
-print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans

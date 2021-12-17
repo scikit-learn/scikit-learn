@@ -22,7 +22,6 @@ collected from a cohort of diabetes patients. The target is a quantitative
 measure of disease progression one year after baseline.
 
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 

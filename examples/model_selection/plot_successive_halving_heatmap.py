@@ -7,6 +7,7 @@ This example compares the parameter search performed by
 :class:`~sklearn.model_selection.GridSearchCV`.
 
 """
+
 from time import time
 
 import matplotlib.pyplot as plt
@@ -19,8 +20,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 
-
-print(__doc__)
 
 # %%
 # We first define the parameter space for an :class:`~sklearn.svm.SVC`

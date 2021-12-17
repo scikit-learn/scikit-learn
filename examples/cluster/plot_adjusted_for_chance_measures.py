@@ -20,7 +20,6 @@ to evaluate the average stability of clustering algorithms for a given
 value of k on various overlapping sub-samples of the dataset.
 
 """
-print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause

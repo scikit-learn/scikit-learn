@@ -17,14 +17,13 @@ Some of the clusters learned without connectivity constraints do not
 respect the structure of the swiss roll and extend across different folds of
 the manifolds. On the opposite, when opposing connectivity constraints,
 the clusters form a nice parcellation of the swiss roll.
+
 """
 
 # Authors : Vincent Michel, 2010
 #           Alexandre Gramfort, 2010
 #           Gael Varoquaux, 2010
 # License: BSD 3 clause
-
-print(__doc__)
 
 import time as time
 import numpy as np

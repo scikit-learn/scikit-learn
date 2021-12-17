@@ -665,7 +665,7 @@ def test_groups_support(Est):
     ]
     error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
-        gs = Est(clf, grid, cv=cv)
+        gs = Est(clf, grid, cv=cv, random_state=0)
         with pytest.raises(ValueError, match=error_msg):
             gs.fit(X, y)
         gs.fit(X, y, groups=groups)

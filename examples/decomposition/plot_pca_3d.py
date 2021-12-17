@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 Principal components analysis (PCA)
@@ -11,7 +9,6 @@ can be very flat in one direction--which is where PCA
 comes in to choose a direction that is not flat.
 
 """
-print(__doc__)
 
 # Authors: Gael Varoquaux
 #          Jaques Grobler

@@ -36,6 +36,7 @@ Sample output::
     TSNE with internal NearestNeighbors: 64.984 sec
 
 """
+
 # Author: Tom Dupre la Tour
 #
 # License: BSD 3 clause
@@ -66,8 +67,6 @@ from sklearn.datasets import fetch_openml
 from sklearn.pipeline import make_pipeline
 from sklearn.manifold import TSNE
 from sklearn.utils import shuffle
-
-print(__doc__)
 
 
 class NMSlibTransformer(TransformerMixin, BaseEstimator):

@@ -7,9 +7,8 @@ A tutorial exercise which uses cross-validation with linear models.
 
 This exercise is used in the :ref:`cv_estimators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
-"""
 
-print(__doc__)
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt

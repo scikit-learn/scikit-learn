@@ -13,6 +13,7 @@ ending in ``'_<scorer_name>'`` (``'mean_test_precision'``,
 
 The ``best_estimator_``, ``best_index_``, ``best_score_`` and ``best_params_``
 correspond to the scorer (key) that is set to the ``refit`` attribute.
+
 """
 
 # Author: Raghav RV <rvraghav93@gmail.com>
@@ -26,8 +27,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
-
-print(__doc__)
 
 # %%
 # Running ``GridSearchCV`` using multiple evaluation metrics

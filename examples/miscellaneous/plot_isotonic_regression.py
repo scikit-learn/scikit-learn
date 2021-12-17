@@ -18,7 +18,6 @@ points are a subset of the training input observations and their matching
 target values are computed by the isotonic non-parametric fit.
 
 """
-print(__doc__)
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>

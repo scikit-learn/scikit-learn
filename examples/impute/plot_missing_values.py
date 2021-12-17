@@ -27,7 +27,6 @@ is then compared the performance on the altered datasets with the artificially
 missing values imputed using different techniques.
 
 """
-print(__doc__)
 
 # Authors: Maria Telenczuk  <https://github.com/maikia>
 # License: BSD 3 clause
@@ -305,6 +304,7 @@ ax2.set_yticklabels([""] * n_bars)
 
 plt.show()
 
+# %%
 # You can also try different techniques. For instance, the median is a more
 # robust estimator for data with high magnitude variables which could dominate
 # results (otherwise known as a 'long tail').

@@ -38,8 +38,6 @@ This is not easily possible for the case of the kernelized SVM.
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-print(__doc__)
-
 # Standard scientific Python imports
 import matplotlib.pyplot as plt
 import numpy as np

@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 K-means Clustering
@@ -16,8 +14,6 @@ The next plot displays what using eight clusters would deliver
 and finally the ground truth.
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

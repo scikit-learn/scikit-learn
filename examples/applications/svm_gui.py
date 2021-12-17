@@ -14,8 +14,6 @@ If all examples are from the same class, it uses a one-class SVM.
 
 """
 
-print(__doc__)
-
 # Author: Peter Prettenhoer <peter.prettenhofer@gmail.com>
 #
 # License: BSD 3 clause

@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 The Iris Dataset
@@ -15,9 +13,8 @@ Sepal Length, Sepal Width, Petal Length and Petal Width.
 The below plot uses the first two features.
 See `here <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
 information on this dataset.
-"""
-print(__doc__)
 
+"""
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

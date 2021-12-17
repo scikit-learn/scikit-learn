@@ -21,8 +21,8 @@ for one dimensional regression using polynomial feature expansion.
 Note the uncertainty starts going up on the right side of the plot.
 This is because these test samples are outside of the range of the training
 samples.
+
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

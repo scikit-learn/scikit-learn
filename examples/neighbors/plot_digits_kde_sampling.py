@@ -8,6 +8,7 @@ non-parametric density estimation technique, can be used to learn
 a generative model for a dataset.  With this generative model in place,
 new samples can be drawn.  These new samples reflect the underlying model
 of the data.
+
 """
 
 import numpy as np

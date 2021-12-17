@@ -37,12 +37,12 @@ helper functions for loading the data and visualizing results.
     <http://dx.doi.org/10.2139/ssrn.3164764>`_
 
 """
-print(__doc__)
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+
 from functools import partial
 
 import numpy as np

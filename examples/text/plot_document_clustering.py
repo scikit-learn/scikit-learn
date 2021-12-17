@@ -52,6 +52,7 @@ necessary to get a good convergence.
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Lars Buitinck
 # License: BSD 3 clause
+
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -118,6 +119,7 @@ op.add_option(
 
 print(__doc__)
 op.print_help()
+print()
 
 
 def is_interactive():

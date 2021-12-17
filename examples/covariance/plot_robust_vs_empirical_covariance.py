@@ -52,7 +52,6 @@ References
     Statistical Ass., 79:871, 1984.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

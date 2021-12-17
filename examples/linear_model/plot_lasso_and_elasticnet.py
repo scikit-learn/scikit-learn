@@ -8,7 +8,6 @@ sparse signal corrupted with an additive noise. Estimated coefficients are
 compared with the ground-truth.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

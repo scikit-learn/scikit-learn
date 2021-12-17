@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
 =============================================================
 Compare the effect of different scalers on data with outliers
@@ -64,8 +62,6 @@ from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import PowerTransformer
 
 from sklearn.datasets import fetch_california_housing
-
-print(__doc__)
 
 dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target

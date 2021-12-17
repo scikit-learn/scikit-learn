@@ -75,14 +75,12 @@ is not scaled.
     Two separate datasets are used for the two different plots. The reason
     behind this is the `l1` case works better on sparse data, while `l2`
     is better suited to the non-sparse case.
-"""
-print(__doc__)
 
+"""
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Jaques Grobler <jaques.grobler@inria.fr>
 # License: BSD 3 clause
-
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -140,7 +138,7 @@ for clf, cs, X, y in clf_sets:
             refit=False,
             param_grid=param_grid,
             cv=ShuffleSplit(
-                train_size=train_size, test_size=0.3, n_splits=250, random_state=1
+                train_size=train_size, test_size=0.3, n_splits=50, random_state=1
             ),
         )
         grid.fit(X, y)

@@ -12,18 +12,19 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     source /opt/intel/oneapi/setvars.sh
 fi
 
-python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "\
-try:
-    import pandas
-    print('pandas %s' % pandas.__version__)
-except ImportError:
-    print('pandas not installed')
-"
-python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
-pip list
+mkdir -p $TEST_DIR
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
+
+python -c "import sklearn; sklearn.show_versions()"
+
+if ! command -v conda &> /dev/null
+then
+    pip list
+else
+    # conda list provides more info than pip list (when available)
+    conda list
+fi
 
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
@@ -34,22 +35,25 @@ if [[ "$COVERAGE" == "true" ]]; then
     # report that otherwise hides the test failures and forces long scrolls in
     # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
-    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn --cov-report="
+    TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
+
+    # Python 3.10 deprecates disutils and is imported by numpy interally during import time
+    TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    TEST_CMD="$TEST_CMD -n2"
+    TEST_CMD="$TEST_CMD -n$CPU_COUNT"
 fi
 
-mkdir -p $TEST_DIR
-cp setup.cfg $TEST_DIR
-cd $TEST_DIR
+if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
+    TEST_CMD="$TEST_CMD -ra"
+fi
 
 set -x
-$TEST_CMD --pyargs sklearn
+eval "$TEST_CMD --pyargs sklearn"
 set +x
