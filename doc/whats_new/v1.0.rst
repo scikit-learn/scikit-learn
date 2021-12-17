@@ -505,7 +505,7 @@ Changelog
   indexable data-structures in `*arrays` are destructed
   instead of consuming less memory. :func:`utils.shuffle` without copy does not
   support :class:`utils._mocking.MockDataFrame`. It raises `ValueError`.
-  :pr:`<dummy>` by :user:`murata-yu`.
+  :pr:`22003` by :user:`murata-yu`.
 
 Code and Documentation Contributors
 -----------------------------------
