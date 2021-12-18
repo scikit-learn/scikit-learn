@@ -62,6 +62,7 @@ def test_kernel_density(kernel, bandwidth):
             for breadth_first in (True, False):
                 check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true)
 
+
 @pytest.mark.parametrize(
     "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear"]
 )
@@ -103,8 +104,12 @@ def test_kernel_density_sampling_1d():
         ("tophat", rng.uniform(-bandwidth, bandwidth, size=size)),
         ("linear", rng.triangular(-bandwidth, 0, bandwidth, size=size)),
         ("exponential", rng.laplace(0, bandwidth, size=size)),
-        ("epanechnikov", (2*np.random.randint(2, size=size) - 1)
-                         * np.sqrt(rng.beta(1/2, 2, size=size))*bandwidth),
+        (
+            "epanechnikov",
+            (2 * np.random.randint(2, size=size) - 1)
+            * np.sqrt(rng.beta(1 / 2, 2, size=size))
+            * bandwidth,
+        ),
     ]:
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         samp = kde.sample(size, random_state=0)

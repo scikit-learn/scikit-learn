@@ -291,7 +291,13 @@ class KernelDensity(BaseEstimator):
         """
         check_is_fitted(self)
         # TODO: implement sampling for cosine kernel
-        if self.kernel not in {"gaussian", "tophat", "linear", "exponential", "epanechnikov"}:
+        if self.kernel not in {
+            "gaussian",
+            "tophat",
+            "linear",
+            "exponential",
+            "epanechnikov",
+        }:
             raise NotImplementedError()
 
         data = np.asarray(self.tree_.data)
@@ -318,11 +324,11 @@ class KernelDensity(BaseEstimator):
         lengths = row_norms(X, squared=False)
 
         if self.kernel == "tophat":
-            rads = rng.uniform(size=(n_samples))**(1/dim)
+            rads = rng.uniform(size=(n_samples)) ** (1 / dim)
         elif self.kernel == "linear":
             rads = rng.beta(a=dim, b=2, size=(n_samples))
         elif self.kernel == "epanechnikov":
-            rads = np.sqrt(rng.beta(a=dim/2, b=2, size=(n_samples)))
+            rads = np.sqrt(rng.beta(a=dim / 2, b=2, size=(n_samples)))
         elif self.kernel == "exponential":
             rads = rng.gamma(dim, size=(n_samples))
 
