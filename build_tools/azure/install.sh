@@ -16,6 +16,7 @@ make_conda() {
     if [[ "$DISTRIB" == *"mamba"* ]]; then
         mamba create -n $VIRTUALENV --yes $TO_INSTALL
     else
+        conda config --show
         conda create -n $VIRTUALENV --yes $TO_INSTALL
     fi
     source activate $VIRTUALENV
@@ -38,7 +39,7 @@ source build_tools/shared.sh
 if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$CONDA_CHANNEL" != "" ]]; then
-        TO_INSTALL="-c $CONDA_CHANNEL"
+        TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
     else
         TO_INSTALL=""
     fi
@@ -128,7 +129,7 @@ elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
     echo "Installing pillow master"
-    pip install https://github.com/python-pillow/Pillow/archive/master.zip
+    pip install https://github.com/python-pillow/Pillow/archive/main.zip
 fi
 
 python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \

@@ -5,7 +5,9 @@ Prediction Intervals for Gradient Boosting Regression
 
 This example shows how quantile regression can be used to create prediction
 intervals.
+
 """
+
 # %%
 # Generate some data for a synthetic regression problem by applying the
 # function f to uniformly sampled random inputs.
@@ -60,20 +62,19 @@ from sklearn.metrics import mean_pinball_loss, mean_squared_error
 all_models = {}
 common_params = dict(
     learning_rate=0.05,
-    n_estimators=250,
+    n_estimators=200,
     max_depth=2,
     min_samples_leaf=9,
     min_samples_split=9,
 )
 for alpha in [0.05, 0.5, 0.95]:
-    gbr = GradientBoostingRegressor(loss='quantile', alpha=alpha,
-                                    **common_params)
+    gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, **common_params)
     all_models["q %1.2f" % alpha] = gbr.fit(X_train, y_train)
 
 # %%
 # For the sake of comparison, we also fit a baseline model trained with the
 # usual (mean) squared error (MSE).
-gbr_ls = GradientBoostingRegressor(loss='squared_error', **common_params)
+gbr_ls = GradientBoostingRegressor(loss="squared_error", **common_params)
 all_models["mse"] = gbr_ls.fit(X_train, y_train)
 
 # %%
@@ -88,24 +89,25 @@ xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 import matplotlib.pyplot as plt
 
 
-y_pred = all_models['mse'].predict(xx)
-y_lower = all_models['q 0.05'].predict(xx)
-y_upper = all_models['q 0.95'].predict(xx)
-y_med = all_models['q 0.50'].predict(xx)
+y_pred = all_models["mse"].predict(xx)
+y_lower = all_models["q 0.05"].predict(xx)
+y_upper = all_models["q 0.95"].predict(xx)
+y_med = all_models["q 0.50"].predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), 'g:', linewidth=3, label=r'$f(x) = x\,\sin(x)$')
-plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
-plt.plot(xx, y_med, 'r-', label='Predicted median', color="orange")
-plt.plot(xx, y_pred, 'r-', label='Predicted mean')
-plt.plot(xx, y_upper, 'k-')
-plt.plot(xx, y_lower, 'k-')
-plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.4,
-                 label='Predicted 90% interval')
-plt.xlabel('$x$')
-plt.ylabel('$f(x)$')
+plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
+plt.plot(xx, y_med, "r-", label="Predicted median")
+plt.plot(xx, y_pred, "r-", label="Predicted mean")
+plt.plot(xx, y_upper, "k-")
+plt.plot(xx, y_lower, "k-")
+plt.fill_between(
+    xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
+)
+plt.xlabel("$x$")
+plt.ylabel("$f(x)$")
 plt.ylim(-10, 25)
-plt.legend(loc='upper left')
+plt.legend(loc="upper left")
 plt.show()
 
 # %%
@@ -129,21 +131,19 @@ import pandas as pd
 
 def highlight_min(x):
     x_min = x.min()
-    return ['font-weight: bold' if v == x_min else ''
-            for v in x]
+    return ["font-weight: bold" if v == x_min else "" for v in x]
 
 
 results = []
 for name, gbr in sorted(all_models.items()):
-    metrics = {'model': name}
+    metrics = {"model": name}
     y_pred = gbr.predict(X_train)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(
-            y_train, y_pred, alpha=alpha)
-    metrics['MSE'] = mean_squared_error(y_train, y_pred)
+        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(y_train, y_pred, alpha=alpha)
+    metrics["MSE"] = mean_squared_error(y_train, y_pred)
     results.append(metrics)
 
-pd.DataFrame(results).set_index('model').style.apply(highlight_min)
+pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 
 # %%
 # One column shows all models evaluated by the same metric. The minimum number
@@ -163,15 +163,14 @@ pd.DataFrame(results).set_index('model').style.apply(highlight_min)
 # We then do the same on the test set.
 results = []
 for name, gbr in sorted(all_models.items()):
-    metrics = {'model': name}
+    metrics = {"model": name}
     y_pred = gbr.predict(X_test)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(
-            y_test, y_pred, alpha=alpha)
-    metrics['MSE'] = mean_squared_error(y_test, y_pred)
+        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(y_test, y_pred, alpha=alpha)
+    metrics["MSE"] = mean_squared_error(y_test, y_pred)
     results.append(metrics)
 
-pd.DataFrame(results).set_index('model').style.apply(highlight_min)
+pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 
 
 # %%
@@ -199,16 +198,18 @@ def coverage_fraction(y, y_low, y_high):
     return np.mean(np.logical_and(y >= y_low, y <= y_high))
 
 
-coverage_fraction(y_train,
-                  all_models['q 0.05'].predict(X_train),
-                  all_models['q 0.95'].predict(X_train))
+coverage_fraction(
+    y_train,
+    all_models["q 0.05"].predict(X_train),
+    all_models["q 0.95"].predict(X_train),
+)
 
 # %%
 # On the training set the calibration is very close to the expected coverage
 # value for a 90% confidence interval.
-coverage_fraction(y_test,
-                  all_models['q 0.05'].predict(X_test),
-                  all_models['q 0.95'].predict(X_test))
+coverage_fraction(
+    y_test, all_models["q 0.05"].predict(X_test), all_models["q 0.95"].predict(X_test)
+)
 
 
 # %%
@@ -223,7 +224,7 @@ coverage_fraction(y_test,
 # underfit and could not adapt to sinusoidal shape of the signal.
 #
 # The hyper-parameters of the model were approximately hand-tuned for the
-# median regressor and there is no reason than the same hyper-parameters are
+# median regressor and there is no reason that the same hyper-parameters are
 # suitable for the 5th percentile regressor.
 #
 # To confirm this hypothesis, we tune the hyper-parameters of a new regressor
@@ -231,17 +232,16 @@ coverage_fraction(y_test,
 # cross-validation on the pinball loss with alpha=0.05:
 
 # %%
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.metrics import make_scorer
 from pprint import pprint
 
-
 param_grid = dict(
-    learning_rate=[0.01, 0.05, 0.1],
-    n_estimators=[100, 150, 200, 250, 300],
-    max_depth=[2, 5, 10, 15, 20],
-    min_samples_leaf=[1, 5, 10, 20, 30, 50],
-    min_samples_split=[2, 5, 10, 20, 30, 50],
+    learning_rate=[0.05, 0.1, 0.2],
+    max_depth=[2, 5, 10],
+    min_samples_leaf=[1, 5, 10, 20],
+    min_samples_split=[5, 10, 20, 30, 50],
 )
 alpha = 0.05
 neg_mean_pinball_loss_05p_scorer = make_scorer(
@@ -250,10 +250,12 @@ neg_mean_pinball_loss_05p_scorer = make_scorer(
     greater_is_better=False,  # maximize the negative loss
 )
 gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, random_state=0)
-search_05p = RandomizedSearchCV(
+search_05p = HalvingRandomSearchCV(
     gbr,
     param_grid,
-    n_iter=10,  # increase this if computational budget allows
+    resource="n_estimators",
+    max_resources=250,
+    min_resources=50,
     scoring=neg_mean_pinball_loss_05p_scorer,
     n_jobs=2,
     random_state=0,
@@ -261,9 +263,9 @@ search_05p = RandomizedSearchCV(
 pprint(search_05p.best_params_)
 
 # %%
-# We observe that the search procedure identifies that deeper trees are needed
-# to get a good fit for the 5th percentile regressor. Deeper trees are more
-# expressive and less likely to underfit.
+# We observe that the hyper-parameters that were hand-tuned for the median
+# regressor are in the same range as the hyper-parameters suitable for the 5th
+# percentile regressor.
 #
 # Let's now tune the hyper-parameters for the 95th percentile regressor. We
 # need to redefine the `scoring` metric used to select the best model, along
@@ -285,29 +287,29 @@ search_95p.fit(X_train, y_train)
 pprint(search_95p.best_params_)
 
 # %%
-# This time, shallower trees are selected and lead to a more constant piecewise
-# and therefore more robust estimation of the 95th percentile. This is
-# beneficial as it avoids overfitting the large outliers of the log-normal
-# additive noise.
-#
-# We can confirm this intuition by displaying the predicted 90% confidence
-# interval comprised by the predictions of those two tuned quantile regressors:
-# the prediction of the upper 95th percentile has a much coarser shape than the
-# prediction of the lower 5th percentile:
+# The result shows that the hyper-parameters for the 95th percentile regressor
+# identified by the search procedure are roughly in the same range as the hand-
+# tuned hyper-parameters for the median regressor and the hyper-parameters
+# identified by the search procedure for the 5th percentile regressor. However,
+# the hyper-parameter searches did lead to an improved 90% confidence interval
+# that is comprised by the predictions of those two tuned quantile regressors.
+# Note that the prediction of the upper 95th percentile has a much coarser shape
+# than the prediction of the lower 5th percentile because of the outliers:
 y_lower = search_05p.predict(xx)
 y_upper = search_95p.predict(xx)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), 'g:', linewidth=3, label=r'$f(x) = x\,\sin(x)$')
-plt.plot(X_test, y_test, 'b.', markersize=10, label='Test observations')
-plt.plot(xx, y_upper, 'k-')
-plt.plot(xx, y_lower, 'k-')
-plt.fill_between(xx.ravel(), y_lower, y_upper, alpha=0.4,
-                 label='Predicted 90% interval')
-plt.xlabel('$x$')
-plt.ylabel('$f(x)$')
+plt.plot(xx, f(xx), "g:", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
+plt.plot(xx, y_upper, "k-")
+plt.plot(xx, y_lower, "k-")
+plt.fill_between(
+    xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
+)
+plt.xlabel("$x$")
+plt.ylabel("$f(x)$")
 plt.ylim(-10, 25)
-plt.legend(loc='upper left')
+plt.legend(loc="upper left")
 plt.title("Prediction with tuned hyper-parameters")
 plt.show()
 
@@ -317,13 +319,9 @@ plt.show()
 #
 # We now quantitatively evaluate the joint-calibration of the pair of
 # estimators:
-coverage_fraction(y_train,
-                  search_05p.predict(X_train),
-                  search_95p.predict(X_train))
+coverage_fraction(y_train, search_05p.predict(X_train), search_95p.predict(X_train))
 # %%
-coverage_fraction(y_test,
-                  search_05p.predict(X_test),
-                  search_95p.predict(X_test))
+coverage_fraction(y_test, search_05p.predict(X_test), search_95p.predict(X_test))
 # %%
 # The calibration of the tuned pair is sadly not better on the test set: the
 # width of the estimated confidence interval is still too narrow.

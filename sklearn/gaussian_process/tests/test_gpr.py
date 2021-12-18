@@ -652,3 +652,33 @@ def test_gpr_predict_error():
     err_msg = "At most one of return_std or return_cov can be requested."
     with pytest.raises(RuntimeError, match=err_msg):
         gpr.predict(X, return_cov=True, return_std=True)
+
+
+def test_y_std_with_multitarget_normalized():
+    """Check the proper normalization of `y_std` and `y_cov` in multi-target scene.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/17394
+    https://github.com/scikit-learn/scikit-learn/issues/18065
+    """
+    rng = np.random.RandomState(1234)
+
+    n_samples, n_features, n_targets = 12, 10, 6
+
+    X_train = rng.randn(n_samples, n_features)
+    y_train = rng.randn(n_samples, n_targets)
+    X_test = rng.randn(n_samples, n_features)
+
+    # Generic kernel
+    kernel = WhiteKernel(1.0, (1e-1, 1e3)) * C(10.0, (1e-3, 1e3))
+
+    model = GaussianProcessRegressor(
+        kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True
+    )
+    model.fit(X_train, y_train)
+    y_pred, y_std = model.predict(X_test, return_std=True)
+    _, y_cov = model.predict(X_test, return_cov=True)
+
+    assert y_pred.shape == (n_samples, n_targets)
+    assert y_std.shape == (n_samples, n_targets)
+    assert y_cov.shape == (n_samples, n_samples, n_targets)

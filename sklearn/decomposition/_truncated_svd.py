@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
@@ -21,7 +21,7 @@ from ..utils.validation import check_is_fitted
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(TransformerMixin, BaseEstimator):
+class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -273,3 +273,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"preserves_dtype": [np.float64, np.float32]}
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

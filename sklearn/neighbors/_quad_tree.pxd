@@ -1,7 +1,3 @@
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: cdivision=True
-#
 # Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
 # Author: Olivier Grisel <olivier.grisel@ensta.fr>
 

@@ -1614,6 +1614,19 @@ def test_forest_degenerate_feature_importances():
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_max_samples_bootstrap(name):
+    # Check invalid `max_samples` values
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=False, max_samples=0.5)
+    err_msg = (
+        r"`max_sample` cannot be set if `bootstrap=False`. "
+        r"Either switch to `bootstrap=True` or set "
+        r"`max_sample=None`."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize(
     "max_samples, exc_type, exc_msg",
     [
@@ -1654,10 +1667,13 @@ def test_forest_degenerate_feature_importances():
             r"'\<class 'numpy.ndarray'\>'",
         ),
     ],
+    # Avoid long error messages in test names:
+    # https://github.com/scikit-learn/scikit-learn/issues/21362
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     # Check invalid `max_samples` values
-    est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=max_samples)
     with pytest.raises(exc_type, match=exc_msg):
         est.fit(X, y)
 
@@ -1668,10 +1684,14 @@ def test_max_samples_boundary_regressors(name):
         X_reg, y_reg, train_size=0.7, test_size=0.3, random_state=0
     )
 
-    ms_1_model = FOREST_REGRESSORS[name](max_samples=1.0, random_state=0)
+    ms_1_model = FOREST_REGRESSORS[name](
+        bootstrap=True, max_samples=1.0, random_state=0
+    )
     ms_1_predict = ms_1_model.fit(X_train, y_train).predict(X_test)
 
-    ms_None_model = FOREST_REGRESSORS[name](max_samples=None, random_state=0)
+    ms_None_model = FOREST_REGRESSORS[name](
+        bootstrap=True, max_samples=None, random_state=0
+    )
     ms_None_predict = ms_None_model.fit(X_train, y_train).predict(X_test)
 
     ms_1_ms = mean_squared_error(ms_1_predict, y_test)
@@ -1686,10 +1706,14 @@ def test_max_samples_boundary_classifiers(name):
         X_large, y_large, random_state=0, stratify=y_large
     )
 
-    ms_1_model = FOREST_CLASSIFIERS[name](max_samples=1.0, random_state=0)
+    ms_1_model = FOREST_CLASSIFIERS[name](
+        bootstrap=True, max_samples=1.0, random_state=0
+    )
     ms_1_proba = ms_1_model.fit(X_train, y_train).predict_proba(X_test)
 
-    ms_None_model = FOREST_CLASSIFIERS[name](max_samples=None, random_state=0)
+    ms_None_model = FOREST_CLASSIFIERS[name](
+        bootstrap=True, max_samples=None, random_state=0
+    )
     ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
 
     np.testing.assert_allclose(ms_1_proba, ms_None_proba)
@@ -1755,6 +1779,35 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+# TODO: Remove in v1.3
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        ExtraTreesClassifier,
+        ExtraTreesRegressor,
+        RandomForestClassifier,
+        RandomForestRegressor,
+    ],
+)
+def test_max_features_deprecation(Estimator):
+    """Check warning raised for max_features="auto" deprecation."""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator(max_features="auto")
+
+    err_msg = (
+        r"`max_features='auto'` has been deprecated in 1.1 "
+        r"and will be removed in 1.3. To keep the past behaviour, "
+        r"explicitly set `max_features=(1.0|'sqrt')` or remove this "
+        r"parameter as it is also the default value for RandomForest"
+        r"(Regressors|Classifiers) and ExtraTrees(Regressors|"
+        r"Classifiers)\."
+    )
+
+    with pytest.warns(FutureWarning, match=err_msg):
+        est.fit(X, y)
 
 
 # TODO: Remove in v1.2

@@ -254,33 +254,35 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-       git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
-       cd scikit-learn
+      git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
+      cd scikit-learn
+
+3. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
+   development mode and return to this document.
 
 4. Install the development dependencies:
 
-    .. prompt:: bash $
+   .. prompt:: bash $
 
-       pip install cython pytest pytest-cov flake8 mypy black==21.6b0
-
-5. Install scikit-learn in editable mode:
-
-    .. prompt:: bash $
-
-       pip install --no-build-isolation --editable .
-
-   If you receive errors in building scikit-learn, see the
-   :ref:`install_bleeding_edge` section.
+        pip install pytest pytest-cov flake8 mypy black==21.6b0
 
 .. _upstream:
 
-6. Add the ``upstream`` remote. This saves a reference to the main
+5. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes:
 
    .. prompt:: bash $
 
-    git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+        git remote add upstream git@github.com:scikit-learn/scikit-learn.git
+
+6. Check that the `upstream` and `origin` remote aliases are configured correctly
+   by running `git remote -v` which should display::
+
+        origin	git@github.com:YourLogin/scikit-learn.git (fetch)
+        origin	git@github.com:YourLogin/scikit-learn.git (push)
+        upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
+        upstream	git@github.com:scikit-learn/scikit-learn.git (push)
 
 You should now have a working installation of scikit-learn, and your git
 repository properly configured. The next steps now describe the process of
@@ -536,7 +538,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   <https://docs.scipy.org/doc/scipy/reference/dev/contributor/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
@@ -547,7 +549,7 @@ Continuous Integration (CI)
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
 * CircleCI is used to build the docs for viewing, for linting with flake8, and
-  for testing with PyPy and ARM64 / aarch64 on Linux
+  for testing with ARM64 / aarch64 on Linux
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
@@ -557,9 +559,11 @@ message, the following actions are taken.
     ---------------------- -------------------
     [ci skip]              CI is skipped completely
     [cd build]             CD is run (wheels and source distribution are built)
+    [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
-    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
-    [icc-build]            Add a Travis build with the Intel C compiler (ICC)
+    [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
+    [icc-build]            Build & test with the Intel C compiler (ICC)
+    [pypy]                 Build & test with PyPy
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)

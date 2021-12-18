@@ -30,7 +30,7 @@ from ..utils.fixes import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-from ..exceptions import FitFailedWarning, NotFittedError
+from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
 
@@ -226,7 +226,7 @@ def cross_validate(
     >>> sorted(cv_results.keys())
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']
-    array([0.33150734, 0.08022311, 0.03531764])
+    array([0.3315057 , 0.08022103, 0.03531816])
 
     Multiple metric evaluation using ``cross_validate``
     (please refer the ``scoring`` parameter doc for more information)
@@ -237,7 +237,7 @@ def cross_validate(
     >>> print(scores['test_neg_mean_squared_error'])
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])
-    [0.28010158 0.39088426 0.22784852]
+    [0.28009951 0.3908844  0.22784907]
 
     See Also
     ---------
@@ -283,7 +283,7 @@ def cross_validate(
         for train, test in cv.split(X, y, groups)
     )
 
-    _warn_about_fit_failures(results, error_score)
+    _warn_or_raise_about_fit_failures(results, error_score)
 
     # For callabe scoring, the return type is only know after calling. If the
     # return type is a dictionary, the error scores can now be inserted with
@@ -327,9 +327,6 @@ def _insert_error_scores(results, error_score):
         elif successful_score is None:
             successful_score = result["test_scores"]
 
-    if successful_score is None:
-        raise NotFittedError("All estimators failed to fit")
-
     if isinstance(successful_score, dict):
         formatted_error = {name: error_score for name in successful_score}
         for i in failed_indices:
@@ -347,7 +344,7 @@ def _normalize_score_results(scores, scaler_score_key="score"):
     return {scaler_score_key: scores}
 
 
-def _warn_about_fit_failures(results, error_score):
+def _warn_or_raise_about_fit_failures(results, error_score):
     fit_errors = [
         result["fit_error"] for result in results if result["fit_error"] is not None
     ]
@@ -361,15 +358,25 @@ def _warn_about_fit_failures(results, error_score):
             for error, n in fit_errors_counter.items()
         )
 
-        some_fits_failed_message = (
-            f"\n{num_failed_fits} fits failed out of a total of {num_fits}.\n"
-            "The score on these train-test partitions for these parameters"
-            f" will be set to {error_score}.\n"
-            "If these failures are not expected, you can try to debug them "
-            "by setting error_score='raise'.\n\n"
-            f"Below are more details about the failures:\n{fit_errors_summary}"
-        )
-        warnings.warn(some_fits_failed_message, FitFailedWarning)
+        if num_failed_fits == num_fits:
+            all_fits_failed_message = (
+                f"\nAll the {num_fits} fits failed.\n"
+                "It is is very likely that your model is misconfigured.\n"
+                "You can try to debug the error by setting error_score='raise'.\n\n"
+                f"Below are more details about the failures:\n{fit_errors_summary}"
+            )
+            raise ValueError(all_fits_failed_message)
+
+        else:
+            some_fits_failed_message = (
+                f"\n{num_failed_fits} fits failed out of a total of {num_fits}.\n"
+                "The score on these train-test partitions for these parameters"
+                f" will be set to {error_score}.\n"
+                "If these failures are not expected, you can try to debug them "
+                "by setting error_score='raise'.\n\n"
+                f"Below are more details about the failures:\n{fit_errors_summary}"
+            )
+            warnings.warn(some_fits_failed_message, FitFailedWarning)
 
 
 def cross_val_score(
@@ -386,7 +393,7 @@ def cross_val_score(
     pre_dispatch="2*n_jobs",
     error_score=np.nan,
 ):
-    """Evaluate a score by cross-validation
+    """Evaluate a score by cross-validation.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -426,7 +433,7 @@ def cross_val_score(
         - `None`, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For `int`/`None` inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -490,7 +497,7 @@ def cross_val_score(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> print(cross_val_score(lasso, X, y, cv=3))
-    [0.33150734 0.08022311 0.03531764]
+    [0.3315057  0.08022103 0.03531816]
 
     See Also
     ---------
@@ -502,7 +509,6 @@ def cross_val_score(
 
     sklearn.metrics.make_scorer : Make a scorer from a performance metric or
         loss function.
-
     """
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)
@@ -808,7 +814,7 @@ def cross_val_predict(
     pre_dispatch="2*n_jobs",
     method="predict",
 ):
-    """Generate cross-validated estimates for each input data point
+    """Generate cross-validated estimates for each input data point.
 
     The data is split according to the cv parameter. Each sample belongs
     to exactly one test set, and its prediction is computed with an
@@ -846,7 +852,7 @@ def cross_val_predict(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all

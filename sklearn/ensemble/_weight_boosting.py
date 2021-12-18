@@ -25,6 +25,7 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
+import numbers
 import numpy as np
 
 import warnings
@@ -36,6 +37,7 @@ from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, _safe_indexing
+from ..utils import check_scalar
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -109,9 +111,22 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
-        # Check parameters
-        if self.learning_rate <= 0:
-            raise ValueError("learning_rate must be greater than zero")
+        # Validate scalar parameters
+        check_scalar(
+            self.n_estimators,
+            "n_estimators",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.learning_rate,
+            "learning_rate",
+            target_type=numbers.Real,
+            min_val=0,
+            include_boundaries="neither",
+        )
 
         X, y = self._validate_data(
             X,
@@ -480,7 +495,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """
         # Check that algorithm is supported
         if self.algorithm not in ("SAMME", "SAMME.R"):
-            raise ValueError("algorithm %s is not supported" % self.algorithm)
+            raise ValueError(
+                "Algorithm must be 'SAMME' or 'SAMME.R'."
+                f" Got {self.algorithm!r} instead."
+            )
 
         # Fit
         return super().fit(X, y, sample_weight)
@@ -877,7 +895,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Yields
-        -------
+        ------
         p : generator of ndarray of shape (n_samples,)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
@@ -1059,7 +1077,10 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         """
         # Check loss
         if self.loss not in ("linear", "square", "exponential"):
-            raise ValueError("loss must be 'linear', 'square', or 'exponential'")
+            raise ValueError(
+                "loss must be 'linear', 'square', or 'exponential'"
+                f" Got {self.loss!r} instead."
+            )
 
         # Fit
         return super().fit(X, y, sample_weight)
