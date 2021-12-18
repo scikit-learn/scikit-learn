@@ -10,7 +10,6 @@ import numpy as np
 import numbers
 from joblib import Parallel, effective_n_jobs
 
-
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils._tags import _safe_tags

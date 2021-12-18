@@ -367,6 +367,9 @@ def test_attibutes_shapes(Est):
         )
 
 
+@pytest.mark.filterwarnings(
+    "ignore:The attribute `coef_` will be transposed in version 1.3"
+)  # FIXME: remove in 1.3
 @pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
 def test_univariate_equivalence(Est):
     # Ensure 2D Y with 1 column is equivalent to 1D Y
@@ -621,4 +624,10 @@ def test_pls_coef_shape(PLSEstimator):
     Y = d.target
 
     pls = PLSEstimator(copy=True).fit(X, Y)
-    assert pls.coef_.shape == (Y.shape[1], X.shape[1])
+
+    # FIXME: remove the warning check in 1.3
+    warning_msg = "The attribute `coef_` will be transposed in version 1.3"
+    with pytest.warns(FutureWarning, match=warning_msg):
+        assert pls.coef_.shape == (X.shape[1], Y.shape[1])
+    # In the future rename `_coef_` to `coef_`
+    assert pls._coef_.shape == (Y.shape[1], X.shape[1])
