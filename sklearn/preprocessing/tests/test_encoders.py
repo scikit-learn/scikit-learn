@@ -800,8 +800,8 @@ def test_encoder_dtypes():
     for X in [
         np.array([[1, 2], [3, 4]], dtype="int64"),
         np.array([[1, 2], [3, 4]], dtype="float64"),
-        np.array([["a", "b"], ["c", "d"]]),  # unicode dtype
-        np.array([[b"a", b"b"], [b"c", b"d"]]),  # string dtype
+        np.array([["a", "b"], ["c", "d"]]),  # str dtype
+        np.array([[b"a", b"b"], [b"c", b"d"]]),  # bytes dtype
         np.array([[1, "a"], [3, "b"]], dtype="object"),
     ]:
         enc.fit(X)

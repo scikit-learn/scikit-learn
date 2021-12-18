@@ -638,6 +638,11 @@ def test_feature_names_in():
     trans = NoOpTransformer().fit(df)
     assert_array_equal(trans.feature_names_in_, df.columns)
 
+    # fit again but on ndarray does not keep the previous feature names (see #21383)
+    trans.fit(X_np)
+    assert not hasattr(trans, "feature_names_in_")
+
+    trans.fit(df)
     msg = "The feature names should match those that were passed"
     df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
     with pytest.warns(FutureWarning, match=msg):
@@ -665,7 +670,7 @@ def test_feature_names_in():
     assert not record
 
     # fit on dataframe with no feature names or all integer feature names
-    # -> do not warn on trainsform
+    # -> do not warn on transform
     Xs = [X_np, df_int_names]
     for X in Xs:
         with pytest.warns(None) as record:

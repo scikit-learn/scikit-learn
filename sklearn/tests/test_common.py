@@ -11,11 +11,12 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator, signature
+from inspect import isgenerator, signature, Parameter
 from itertools import product, chain
 from functools import partial
 
 import pytest
+import numpy as np
 
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
@@ -331,6 +332,24 @@ def test_check_n_features_in_after_fitting(estimator):
     check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
 
 
+def _estimators_that_predict_in_fit():
+    for estimator in _tested_estimators():
+        est_params = set(estimator.get_params())
+        if "oob_score" in est_params:
+            yield estimator.set_params(oob_score=True, bootstrap=True)
+        elif "early_stopping" in est_params:
+            est = estimator.set_params(early_stopping=True, n_iter_no_change=1)
+            if est.__class__.__name__ in {"MLPClassifier", "MLPRegressor"}:
+                # TODO: FIX MLP to not check validation set during MLP
+                yield pytest.param(
+                    est, marks=pytest.mark.xfail(msg="MLP still validates in fit")
+                )
+            else:
+                yield est
+        elif "n_iter_no_change" in est_params:
+            yield estimator.set_params(n_iter_no_change=1)
+
+
 # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
 # delegates validation to a base estimator, the check is testing that the base estimator
 # is checking for column name consistency.
@@ -339,6 +358,7 @@ column_name_estimators = list(
         _tested_estimators(),
         [make_pipeline(LogisticRegression(C=1))],
         list(_generate_search_cv_instances()),
+        _estimators_that_predict_in_fit(),
     )
 )
 
@@ -362,17 +382,14 @@ def test_pandas_column_name_consistency(estimator):
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "cluster",
     "cross_decomposition",
-    "decomposition",
     "discriminant_analysis",
     "ensemble",
-    "impute",
     "isotonic",
     "kernel_approximation",
     "preprocessing",
     "manifold",
     "neighbors",
     "neural_network",
-    "random_projection",
 ]
 
 
@@ -403,3 +420,39 @@ def test_transformers_get_feature_names_out(transformer):
         check_transformer_get_feature_names_out_pandas(
             transformer.__class__.__name__, transformer
         )
+
+
+VALIDATE_ESTIMATOR_INIT = [
+    "ColumnTransformer",
+    "FeatureUnion",
+    "SGDOneClassSVM",
+    "TheilSenRegressor",
+    "TweedieRegressor",
+]
+VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [est for name, est in all_estimators() if name not in VALIDATE_ESTIMATOR_INIT],
+)
+def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
+    """Check that init or set_param does not raise errors."""
+
+    # Remove parameters with **kwargs by filtering out Parameter.VAR_KEYWORD
+    # TODO: Remove in 1.2 when **kwargs is removed in RadiusNeighborsClassifier
+    params = [
+        name
+        for name, param in signature(Estimator).parameters.items()
+        if param.kind != Parameter.VAR_KEYWORD
+    ]
+
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), {}, []]
+    for value in smoke_test_values:
+        new_params = {key: value for key in params}
+
+        # Does not raise
+        est = Estimator(**new_params)
+
+        # Also do does not raise
+        est.set_params(**new_params)

@@ -618,18 +618,6 @@ def test_sparse_coder_common_transformer():
     check_transformers_unfitted(sc.__class__.__name__, sc)
 
 
-# TODO: remove in 1.1
-def test_sparse_coder_deprecation():
-    # check that we raise a deprecation warning when accessing `components_`
-    rng = np.random.RandomState(777)
-    n_components, n_features = 40, 64
-    init_dict = rng.rand(n_components, n_features)
-    sc = SparseCoder(init_dict)
-
-    with pytest.warns(FutureWarning, match="`components_` is deprecated"):
-        sc.components_
-
-
 def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
     sc = SparseCoder(d)
@@ -664,3 +652,21 @@ def test_warning_default_transform_alpha(Estimator):
     dl = Estimator(alpha=0.1)
     with pytest.warns(FutureWarning, match="default transform_alpha"):
         dl.fit_transform(X)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning()],
+    ids=lambda x: x.__class__.__name__,
+)
+def test_get_feature_names_out(estimator):
+    """Check feature names for dict learning estimators."""
+    estimator.fit(X)
+    n_components = X.shape[1]
+
+    feature_names_out = estimator.get_feature_names_out()
+    estimator_name = estimator.__class__.__name__.lower()
+    assert_array_equal(
+        feature_names_out,
+        [f"{estimator_name}{i}" for i in range(n_components)],
+    )

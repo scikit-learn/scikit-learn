@@ -14,8 +14,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import deprecated
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
@@ -480,8 +479,8 @@ def _update_dict(
         if positive:
             np.clip(dictionary[k], 0, None, out=dictionary[k])
 
-        # Projection on the constraint set ||V_k|| == 1
-        dictionary[k] /= linalg.norm(dictionary[k])
+        # Projection on the constraint set ||V_k|| <= 1
+        dictionary[k] /= max(linalg.norm(dictionary[k]), 1)
 
     if verbose and n_unused > 0:
         print(f"{n_unused} unused atoms resampled.")
@@ -762,8 +761,9 @@ def dict_learning_online(
     X : ndarray of shape (n_samples, n_features)
         Data matrix.
 
-    n_components : int, default=2
-        Number of dictionary atoms to extract.
+    n_components : int or None, default=2
+        Number of dictionary atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1
         Sparsity controlling parameter.
@@ -1013,7 +1013,7 @@ def dict_learning_online(
         return dictionary
 
 
-class _BaseSparseCoding(TransformerMixin):
+class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     """Base class from SparseCoder and DictionaryLearning algorithms."""
 
     def __init__(
@@ -1171,13 +1171,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     Attributes
     ----------
-    components_ : ndarray of shape (n_components, n_features)
-        The unchanged dictionary atoms.
-
-        .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in
-           1.1 (renaming of 0.26). Use `dictionary` instead.
-
     n_components_ : int
         Number of atoms.
 
@@ -1270,15 +1263,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return self
 
-    @deprecated(  # type: ignore
-        "The attribute `components_` is deprecated "
-        "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
-        "`dictionary` instead."
-    )
-    @property
-    def components_(self):
-        return self.dictionary
-
     def transform(self, X, y=None):
         """Encode the data as a sparse combination of the dictionary atoms.
 
@@ -1314,6 +1298,11 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """Number of features seen during `fit`."""
         return self.dictionary.shape[1]
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.n_components_
+
 
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Dictionary learning.
@@ -1325,7 +1314,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
     the entry-wise matrix norm which is the sum of the absolute values
@@ -1335,8 +1324,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, default=n_features
-        Number of dictionary elements to extract.
+    n_components : int, default=None
+        Number of dictionary elements to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1.0
         Sparsity controlling parameter.
@@ -1585,6 +1575,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.error_ = E
         return self
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Mini-batch dictionary learning.
@@ -1596,7 +1591,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
        (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
     the entry-wise matrix norm which is the sum of the absolute values
@@ -1924,3 +1919,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.inner_stats_ = (A, B)
         self.iter_offset_ = iter_offset + 1
         return self
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

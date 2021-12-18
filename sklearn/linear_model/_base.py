@@ -66,7 +66,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
     default : bool,
         default normalize value used by the estimator
 
-    estimator_name : string,
+    estimator_name : str
         name of the linear estimator which calls this function.
         The name will be used for writing the deprecation warnings
 
@@ -392,15 +392,15 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the confidence scores.
 
         Returns
         -------
-        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
-            Confidence scores per (sample, class) combination. In the binary
-            case, confidence score for self.classes_[1] where >0 means this
-            class would be predicted.
+        scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Confidence scores per `(n_samples, n_classes)` combination. In the
+            binary case, confidence score for `self.classes_[1]` where >0 means
+            this class would be predicted.
         """
         check_is_fitted(self)
 
@@ -414,13 +414,13 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the predictions.
 
         Returns
         -------
-        C : array, shape [n_samples]
-            Predicted class label per sample.
+        y_pred : ndarray of shape (n_samples,)
+            Vector containing the class labels for each sample.
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
@@ -536,10 +536,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
-        speedup for n_targets > 1 and sufficient large problems.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        speedup in case of sufficiently large problems, that is if firstly
+        `n_targets > 1` and secondly `X` is sparse or if `positive` is set
+        to `True`. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        processors. See :term:`Glossary <n_jobs>` for more details.
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive. This

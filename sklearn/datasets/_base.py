@@ -15,6 +15,7 @@ from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from importlib import resources
 
+from ..preprocessing import scale
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
@@ -141,10 +142,10 @@ def load_files(
 
     Parameters
     ----------
-    container_path : str or unicode
-        Path to the main folder holding one subfolder per category
+    container_path : str
+        Path to the main folder holding one subfolder per category.
 
-    description : str or unicode, default=None
+    description : str, default=None
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
 
@@ -578,6 +579,10 @@ def load_iris(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of shape
+        (n_samples, n_features) with each row representing one sample and
+        each column representing the features. The second ndarray of shape
+        (n_samples,) containing the target samples.
 
         .. versionadded:: 0.18
 
@@ -908,7 +913,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     )
 
 
-def load_diabetes(*, return_X_y=False, as_frame=False):
+def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
 
     ==============   ==================
@@ -928,7 +933,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -942,6 +947,13 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
         DataFrames or Series as described below.
 
         .. versionadded:: 0.23
+
+    scaled : bool, default=True
+        If True, the feature variables are mean centered and scaled by the
+        standard deviation times the square root of `n_samples`.
+        If False, raw data is returned for the feature variables.
+
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -969,13 +981,19 @@ def load_diabetes(*, return_X_y=False, as_frame=False):
             The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
-
+        Returns a tuple of two ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
         .. versionadded:: 0.18
     """
-    data_filename = "diabetes_data.csv.gz"
+    data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
     data = load_gzip_compressed_csv_data(data_filename)
     target = load_gzip_compressed_csv_data(target_filename)
+
+    if scaled:
+        data = scale(data, copy=False)
+        data /= data.shape[0] ** 0.5
 
     fdescr = load_descr("diabetes.rst")
 

@@ -543,42 +543,44 @@ def locally_linear_embedding(
 
 
 class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator):
-    """Locally Linear Embedding
+    """Locally Linear Embedding.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
 
     Parameters
     ----------
     n_neighbors : int, default=5
-        number of neighbors to consider for each point.
+        Number of neighbors to consider for each point.
 
     n_components : int, default=2
-        number of coordinates for the manifold
+        Number of coordinates for the manifold.
 
     reg : float, default=1e-3
-        regularization constant, multiplies the trace of the local covariance
+        Regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
-        auto : algorithm will attempt to choose the best method for input data
+        The solver used to compute the eigenvectors. The available options are:
 
-        arpack : use arnoldi iteration in shift-invert mode.
-                    For this method, M may be a dense matrix, sparse matrix,
-                    or general linear operator.
-                    Warning: ARPACK can be unstable for some problems.  It is
-                    best to try several random seeds in order to check results.
+        - `'auto'` : algorithm will attempt to choose the best method for input
+          data.
+        - `'arpack'` : use arnoldi iteration in shift-invert mode. For this
+          method, M may be a dense matrix, sparse matrix, or general linear
+          operator.
+        - `'dense'`  : use standard dense matrix operations for the eigenvalue
+          decomposition. For this method, M must be an array or matrix type.
+          This method should be avoided for large problems.
 
-        dense  : use standard dense matrix operations for the eigenvalue
-                    decomposition.  For this method, M must be an array
-                    or matrix type.  This method should be avoided for
-                    large problems.
+        .. warning::
+           ARPACK can be unstable for some problems.  It is best to try several
+           random seeds in order to check results.
 
     tol : float, default=1e-6
         Tolerance for 'arpack' method
         Not used if eigen_solver=='dense'.
 
     max_iter : int, default=100
-        maximum number of iterations for the arpack solver.
+        Maximum number of iterations for the arpack solver.
         Not used if eigen_solver=='dense'.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
@@ -594,16 +596,16 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
 
     hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
-        Only used if ``method == 'hessian'``
+        Only used if ``method == 'hessian'``.
 
     modified_tol : float, default=1e-12
         Tolerance for modified LLE method.
-        Only used if ``method == 'modified'``
+        Only used if ``method == 'modified'``.
 
     neighbors_algorithm : {'auto', 'brute', 'kd_tree', 'ball_tree'}, \
                           default='auto'
-        algorithm to use for nearest neighbors search,
-        passed to neighbors.NearestNeighbors instance
+        Algorithm to use for nearest neighbors search, passed to
+        :class:`~sklearn.neighbors.NearestNeighbors` instance.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator when
@@ -639,17 +641,11 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_digits
-    >>> from sklearn.manifold import LocallyLinearEmbedding
-    >>> X, _ = load_digits(return_X_y=True)
-    >>> X.shape
-    (1797, 64)
-    >>> embedding = LocallyLinearEmbedding(n_components=2)
-    >>> X_transformed = embedding.fit_transform(X[:100])
-    >>> X_transformed.shape
-    (100, 2)
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality
+        reduction.
+    TSNE : Distributed Stochastic Neighbor Embedding.
 
     References
     ----------
@@ -665,6 +661,18 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import LocallyLinearEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = LocallyLinearEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
     """
 
     def __init__(
@@ -722,18 +730,20 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         )
 
     def fit(self, X, y=None):
-        """Compute the embedding vectors for data X
+        """Compute the embedding vectors for data X.
 
         Parameters
         ----------
-        X : array-like of shape [n_samples, n_features]
-            training set.
+        X : array-like of shape (n_samples, n_features)
+            Training set.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted `LocallyLinearEmbedding` class instance.
         """
         self._fit_transform(X)
         return self
@@ -743,14 +753,16 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
 
         Parameters
         ----------
-        X : array-like of shape [n_samples, n_features]
-            training set.
+        X : array-like of shape (n_samples, n_features)
+            Training set.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Returns the instance itself.
         """
         self._fit_transform(X)
         return self.embedding_
@@ -762,15 +774,17 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Training set.
 
         Returns
         -------
-        X_new : array, shape = [n_samples, n_components]
+        X_new : ndarray of shape (n_samples, n_components)
+            Returns the instance itself.
 
         Notes
         -----
         Because of scaling performed by this method, it is discouraged to use
-        it together with methods that are not scale-invariant (like SVMs)
+        it together with methods that are not scale-invariant (like SVMs).
         """
         check_is_fitted(self)
 
