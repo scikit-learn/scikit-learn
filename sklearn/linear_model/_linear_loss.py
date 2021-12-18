@@ -105,7 +105,7 @@ class LinearModelLoss:
                 w = w[:, :-1]
             else:
                 intercept = 0.0
-            raw_prediction = X @ w.T + intercept
+            raw_prediction = X @ w.T + intercept  # ndarray, likely C-contiguous
 
         return w, intercept, raw_prediction
 
