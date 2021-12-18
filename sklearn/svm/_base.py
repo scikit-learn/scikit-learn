@@ -274,6 +274,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
 
+        # check for finiteness of coefficients
+        check_coef = (
+            np.isfinite(self._dual_coef_.data).all()
+            if self._sparse
+            else np.isfinite(self._dual_coef_).all()
+        )
+        if not (check_coef and np.isfinite(self._intercept_).all()):
+            # maybe check which coeff/feature is non-finite?
+            raise ValueError("Iterative parameter estimation led to non-finite values.")
+
         return self
 
     def _validate_targets(self, y):

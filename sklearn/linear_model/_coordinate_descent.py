@@ -1075,6 +1075,16 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # workaround since _set_intercept will cast self.coef_ into X.dtype
         self.coef_ = np.asarray(self.coef_, dtype=X.dtype)
 
+        # check for finiteness of coefficients
+        if not (np.isfinite(self.coef_).all() and np.isfinite(self.intercept_).all()):
+            num_notfinite = (~np.isfinite(self.coef_)).sum() + (
+                ~np.isfinite(self.intercept_)
+            ).sum()
+            raise ValueError(
+                f"Coordinate descent iterations resulted in {num_notfinite} non-finite"
+                " parameter values."
+            )
+
         # return self for chaining fit and predict calls
         return self
 
