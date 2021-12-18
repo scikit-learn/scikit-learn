@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import kstest
+from scipy.stats import ks_2samp
 
 import pytest
 
@@ -113,7 +113,7 @@ def test_kernel_density_sampling_1d():
     ]:
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         samp = kde.sample(size, random_state=0)
-        statistic, p_value = kstest(expected, samp.flatten())
+        statistic, p_value = ks_2samp(expected, samp.flatten())
         assert p_value > 0.01
 
 
@@ -124,7 +124,7 @@ def test_kernel_density_sampling_exceptions():
     kde = KernelDensity(bandwidth=1, kernel="tophat").fit([[1], [3], [5], [7], [9]])
     samp = kde.sample(size, random_state=0)
     rng = np.random.RandomState(0)
-    statistic, p_value = kstest(rng.uniform(0, 10, size=size), samp.flatten())
+    statistic, p_value = ks_2samp(rng.uniform(0, 10, size=size), samp.flatten())
     assert p_value > 0.01
 
     # check unsupported cosine kernel
