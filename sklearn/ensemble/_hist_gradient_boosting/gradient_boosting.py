@@ -413,16 +413,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # initialize raw_predictions: those are the accumulated values
             # predicted by the trees for the training data. raw_prediction has
-            # shape (n_trees_per_iteration, n_samples) where
+            # shape (n_samples, n_trees_per_iteration) where
             # n_trees_per_iterations is n_classes in multiclass classification,
             # else 1.
-            # self._baseline_prediction has shape (n_trees_per_iteration, 1)
+            # self._baseline_prediction has shape (1, n_trees_per_iteration)
             self._baseline_prediction = self._loss.fit_intercept_only(
                 y_true=y_train, sample_weight=sample_weight_train
-            ).reshape((-1, 1))
+            ).reshape((1, -1))
             raw_predictions = np.zeros(
-                shape=(self.n_trees_per_iteration_, n_samples),
+                shape=(n_samples, self.n_trees_per_iteration_),
                 dtype=self._baseline_prediction.dtype,
+                order="F",
             )
             raw_predictions += self._baseline_prediction
 
@@ -452,8 +453,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                     if self._use_validation_data:
                         raw_predictions_val = np.zeros(
-                            shape=(self.n_trees_per_iteration_, X_binned_val.shape[0]),
+                            shape=(X_binned_val.shape[0], self.n_trees_per_iteration_),
                             dtype=self._baseline_prediction.dtype,
+                            order="F",
                         )
 
                         raw_predictions_val += self._baseline_prediction
@@ -553,7 +555,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if self._loss.constant_hessian:
                 self._loss.gradient(
                     y_true=y_train,
-                    raw_prediction=raw_predictions.T,
+                    raw_prediction=raw_predictions,
                     sample_weight=sample_weight_train,
                     gradient_out=gradient,
                     n_threads=n_threads,
@@ -561,7 +563,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             else:
                 self._loss.gradient_hessian(
                     y_true=y_train,
-                    raw_prediction=raw_predictions.T,
+                    raw_prediction=raw_predictions,
                     sample_weight=sample_weight_train,
                     gradient_out=gradient,
                     hessian_out=hessian,
@@ -609,7 +611,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         loss=self._loss,
                         grower=grower,
                         y_true=y_train,
-                        raw_prediction=raw_predictions[k, :],
+                        raw_prediction=raw_predictions[:, k],
                         sample_weight=sample_weight_train,
                     )
 
@@ -621,7 +623,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
                 tic_pred = time()
-                _update_raw_predictions(raw_predictions[k, :], grower, n_threads)
+                _update_raw_predictions(raw_predictions[:, k], grower, n_threads)
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
@@ -631,7 +633,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # Update raw_predictions_val with the newest tree(s)
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
-                            raw_predictions_val[k, :] += pred.predict_binned(
+                            raw_predictions_val[:, k] += pred.predict_binned(
                                 X_binned_val,
                                 self._bin_mapper.missing_values_bin_idx_,
                                 n_threads,
@@ -804,7 +806,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.train_score_.append(
             -self._loss(
                 y_true=y_train,
-                raw_prediction=raw_predictions.T,
+                raw_prediction=raw_predictions,
                 sample_weight=sample_weight_train,
                 n_threads=n_threads,
             )
@@ -814,7 +816,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self.validation_score_.append(
                 -self._loss(
                     y_true=y_val,
-                    raw_prediction=raw_predictions_val.T,
+                    raw_prediction=raw_predictions_val,
                     sample_weight=sample_weight_val,
                     n_threads=n_threads,
                 )
@@ -928,7 +930,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Returns
         -------
-        raw_predictions : array, shape (n_trees_per_iteration, n_samples)
+        raw_predictions : array, shape (n_samples, n_trees_per_iteration)
             The raw predicted values.
         """
         is_binned = getattr(self, "_in_fit", False)
@@ -942,8 +944,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(self.n_trees_per_iteration_, n_samples),
+            shape=(n_samples, self.n_trees_per_iteration_),
             dtype=self._baseline_prediction.dtype,
+            order="F",
         )
         raw_predictions += self._baseline_prediction
 
@@ -979,7 +982,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         f_idx_map=f_idx_map,
                         n_threads=n_threads,
                     )
-                raw_predictions[k, :] += predict(X)
+                raw_predictions[:, k] += predict(X)
 
     def _staged_raw_predict(self, X):
         """Compute raw predictions of ``X`` for each iteration.
@@ -995,7 +998,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         Yields
         -------
         raw_predictions : generator of ndarray of shape \
-            (n_trees_per_iteration, n_samples)
+            (n_samples, n_trees_per_iteration)
             The raw predictions of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -1008,8 +1011,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(self.n_trees_per_iteration_, n_samples),
+            shape=(n_samples, self.n_trees_per_iteration_),
             dtype=self._baseline_prediction.dtype,
+            order="F",
         )
         raw_predictions += self._baseline_prediction
 
@@ -1693,7 +1697,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The class probabilities of the input samples.
         """
         raw_predictions = self._raw_predict(X)
-        return self._loss.predict_proba(raw_predictions.T)
+        return self._loss.predict_proba(raw_predictions)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities at each iteration.
@@ -1713,7 +1717,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self._loss.predict_proba(raw_predictions.T)
+            yield self._loss.predict_proba(raw_predictions)
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
@@ -1732,9 +1736,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             classes in multiclass classification.
         """
         decision = self._raw_predict(X)
-        if decision.shape[0] == 1:
+        if decision.shape[1] == 1:
             decision = decision.ravel()
-        return decision.T
+        return decision
 
     def staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
@@ -1756,9 +1760,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         for staged_decision in self._staged_raw_predict(X):
-            if staged_decision.shape[0] == 1:
+            if staged_decision.shape[1] == 1:
                 staged_decision = staged_decision.ravel()
-            yield staged_decision.T
+            yield staged_decision
 
     def _encode_y(self, y):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
