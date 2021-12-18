@@ -62,68 +62,70 @@ def test_kernel_density(kernel, bandwidth):
             for breadth_first in (True, False):
                 check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true)
 
-
-def test_kernel_density_sampling():
+@pytest.mark.parametrize(
+    "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear"]
+)
+def test_kernel_density_sampling(kernel):
     rng = np.random.RandomState(0)
     n_samples = 100
     n_features = 3
     X = rng.randn(n_samples + 10, n_features)
-
     bandwidth = 0.01
 
-    for kernel in ["gaussian", "tophat", "exponential", "linear"]:
-        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
-        samp = kde.sample(n_samples, random_state=0)
-        assert samp.shape == (n_samples, n_features)
+    kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
+    samp = kde.sample(n_samples, random_state=0)
+    assert samp.shape == (n_samples, n_features)
 
-        # check that samples are in the right range
-        nbrs = NearestNeighbors(n_neighbors=1).fit(X)
-        dist, ind = nbrs.kneighbors(samp, return_distance=True)
+    # check that samples are in the right range
+    nbrs = NearestNeighbors(n_neighbors=1).fit(X)
+    dist, ind = nbrs.kneighbors(samp, return_distance=True)
 
-        if kernel in ["tophat", "linear"]:
-            # each point in the sample must be within an n-dimensional
-            # cube of the nearest point
-            assert np.all(dist < (n_features ** 0.5 * bandwidth))
-        elif kernel == "gaussian":
-            # 5 standard deviations is safe for 100 samples, but there's a
-            # very small chance this test could fail.
-            assert np.all(dist < 5 * bandwidth)
-        elif kernel == "exponential":
-            assert np.all(dist < 8 * bandwidth)
+    if kernel in ["tophat", "linear", "epanechnikov"]:
+        assert np.all(dist < bandwidth)
+    elif kernel == "gaussian":
+        # 5 standard deviations is safe for 100 samples, but there's a
+        # very small chance this test could fail.
+        assert np.all(dist < 5 * bandwidth)
+    elif kernel == "exponential":
+        # 10 is safe for exp
+        assert np.all(dist < 10 * bandwidth)
 
-        kde.fit([[0, 0, 0]])
-        samp = kde.sample(n_samples)
-        assert len(np.unique(samp)) == (n_samples * n_features)
-        # unless n_samples * n_features if huge (default is fine),
-        # each value should be different, both across features and samples
 
+def test_kernel_density_sampling_1d():
     # check the simple case - sampling from kde fit on a single point
-    # should create the expected distribution
+    # should create the expected distribution in 1d
     X = np.array([[0]])
     size = 1000
+    rng = np.random.RandomState(0)
+    bandwidth = 0.1
     for kernel, expected in [
         ("gaussian", rng.normal(0, bandwidth, size=size)),
         ("tophat", rng.uniform(-bandwidth, bandwidth, size=size)),
         ("linear", rng.triangular(-bandwidth, 0, bandwidth, size=size)),
         ("exponential", rng.laplace(0, bandwidth, size=size)),
+        ("epanechnikov", (2*np.random.randint(2, size=size) - 1)
+                         * np.sqrt(rng.beta(1/2, 2, size=size))*bandwidth),
     ]:
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         samp = kde.sample(size, random_state=0)
         statistic, p_value = kstest(expected, samp.flatten())
         assert p_value > 0.01
 
+
+def test_kernel_density_sampling_exceptions():
     # check 5 points next to each other with tophat, should be same as 1 uniform
     # distribution 5 times as wide
+    size = 1000
     kde = KernelDensity(bandwidth=1, kernel="tophat").fit([[1], [3], [5], [7], [9]])
     samp = kde.sample(size, random_state=0)
+    rng = np.random.RandomState(0)
     statistic, p_value = kstest(rng.uniform(0, 10, size=size), samp.flatten())
     assert p_value > 0.01
 
-    # check unsupported kernels
-    for kernel in ["epanechnikov", "cosine"]:
-        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
-        with pytest.raises(NotImplementedError):
-            kde.sample(100)
+    # check unsupported cosine kernel
+    kde = KernelDensity(kernel="cosine").fit(np.array([[0]]))
+    with pytest.raises(NotImplementedError):
+        kde.sample(100)
 
     # non-regression test: used to return a scalar
     X = rng.randn(4, 1)

@@ -49,7 +49,7 @@ Changelog
 ........................
 
 - |Enhancement| Implemented the sample method of :class:`neighbors.KernelDensity`
-  for the linear and exponential kernels
+  for the linear, exponential and epanechnikov kernels
   :pr:`21225` by :user:`Lewis Ball  <lrjball>`
 
 :mod:`sklearn.utils`

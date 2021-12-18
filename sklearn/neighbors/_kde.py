@@ -5,11 +5,13 @@ Kernel Density Estimation
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 
 import numpy as np
+from scipy.special import gammainc
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight, check_is_fitted
 
 from ._ball_tree import BallTree, DTYPE
+from ..utils.extmath import row_norms
 from ._kd_tree import KDTree
 
 
@@ -269,8 +271,7 @@ class KernelDensity(BaseEstimator):
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
 
-        Currently, this is implemented only for gaussian, tophat,
-        exponential and linear kernels.
+        Currently, this is not implemented for the cosine kernel
 
         Parameters
         ----------
@@ -289,8 +290,8 @@ class KernelDensity(BaseEstimator):
             List of samples.
         """
         check_is_fitted(self)
-        # TODO: implement sampling for other valid kernel shapes
-        if self.kernel not in ["gaussian", "tophat", "exponential", "linear"]:
+        # TODO: implement sampling for cosine kernel
+        if self.kernel not in {"gaussian", "tophat", "linear", "exponential", "epanechnikov"}:
             raise NotImplementedError()
 
         data = np.asarray(self.tree_.data)
@@ -304,16 +305,29 @@ class KernelDensity(BaseEstimator):
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
 
-        size = data[i].shape
         if self.kernel == "gaussian":
-            additional = rng.normal(0, self.bandwidth, size=size)
-        elif self.kernel == "tophat":
-            additional = rng.uniform(-self.bandwidth, self.bandwidth, size=size)
-        elif self.kernel == "exponential":
-            additional = rng.laplace(0, self.bandwidth, size=size)
+            return np.atleast_2d(rng.normal(data[i], self.bandwidth))
+
+        # sampling done as follows:
+        # 'dim' normal rvs for each sample, providing a radially symmetric sample
+        # then radius sampled from A*r^(dim - 1)*K(r) (for some constant A), which
+        # results in the below distributions for the various kernels
+        # The normal rvs are then scaled to have that radius.
+        dim = data.shape[1]
+        X = rng.normal(size=(n_samples, dim))
+        lengths = row_norms(X, squared=False)
+
+        if self.kernel == "tophat":
+            rads = rng.uniform(size=(n_samples))**(1/dim)
         elif self.kernel == "linear":
-            additional = rng.triangular(-self.bandwidth, 0, self.bandwidth, size=size)
-        return np.atleast_2d(data[i] + additional)
+            rads = rng.beta(a=dim, b=2, size=(n_samples))
+        elif self.kernel == "epanechnikov":
+            rads = np.sqrt(rng.beta(a=dim/2, b=2, size=(n_samples)))
+        elif self.kernel == "exponential":
+            rads = rng.gamma(dim, size=(n_samples))
+
+        X = X * (self.bandwidth * rads / lengths).reshape(-1, 1)
+        return np.atleast_2d(data[i] + X)
 
     def _more_tags(self):
         return {
