@@ -1039,7 +1039,6 @@ def test_init_gradient_and_hessians(loss, sample_weight, dtype, order):
             {"dtype": np.int64},
             f"Valid options for 'dtype' are .* Got dtype={np.int64} instead.",
         ),
-        ({"order": "nonsense"}, ""),
     ],
 )
 def test_init_gradient_and_hessian_raises(loss, params, err_msg):
