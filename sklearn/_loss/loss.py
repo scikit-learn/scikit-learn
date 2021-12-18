@@ -427,7 +427,7 @@ class BaseLoss:
 
         Returns
         -------
-        raw_prediction : float or (n_classes,)
+        raw_prediction : numpy scalar or array of shape (n_classes,)
             Raw predictions of an intercept-only model.
         """
         # As default, take weighted average of the target over the samples

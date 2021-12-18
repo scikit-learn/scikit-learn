@@ -417,10 +417,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # n_trees_per_iterations is n_classes in multiclass classification,
             # else 1.
             # self._baseline_prediction has shape (n_trees_per_iteration, 1)
-            self._baseline_prediction = np.atleast_1d(
-                self._loss.fit_intercept_only(
-                    y_true=y_train, sample_weight=sample_weight_train
-                )
+            self._baseline_prediction = self._loss.fit_intercept_only(
+                y_true=y_train, sample_weight=sample_weight_train
             ).reshape((-1, 1))
             raw_predictions = np.zeros(
                 shape=(self.n_trees_per_iteration_, n_samples),
