@@ -2005,8 +2005,8 @@ then the explained variance is estimated as follow:
 
 The best possible score is 1.0, lower values are worse.
 
-Note: when the prediction residuals have zero mean (perfectly unbiased
-model), the Explained Variance score and the :ref:`r2_score` are identical.
+Note: when the prediction residuals have zero mean, the Explained Variance
+score and the :ref:`r2_score` are identical.
 
 In the particular case where the true target is constant, the Explained
 Variance score is not finite: it is either ``NaN`` (perfect predictions) or
@@ -2269,8 +2269,8 @@ across different datasets. Best possible score is 1.0 and it can be negative
 predicts the expected (average) value of y, disregarding the input features,
 would get an :math:`R^2` score of 0.0.
 
-Note: when the prediction residuals have zero mean (perfectly unbiased
-model), the :math:`R^2` score and the :ref:`explained_variance_score` are identical.
+Note: when the prediction residuals have zero mean, the :math:`R^2` score and
+the :ref:`explained_variance_score` are identical.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,

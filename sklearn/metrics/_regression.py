@@ -674,9 +674,8 @@ def explained_variance_score(
     is set to ``False``, this score falls back on the original :math:`R^2`
     definition.
 
-    Note: when the prediction residuals have zero mean (perfectly unbiased
-    model), the Explained Variance score is identical to the
-    :func:`R^2 score <r2_score>`.
+    Note: when the prediction residuals have zero mean, the Explained Variance
+    score is identical to the :func:`R^2 score <r2_score>`.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
 
@@ -792,8 +791,8 @@ def r2_score(
     predictions) respectively. You can set ``force_finite`` to ``False`` to
     prevent this fix from happening.
 
-    Note: when the prediction residuals have zero mean (perfectly unbiased
-    model), the :math:`R^2` score is identical to the
+    Note: when the prediction residuals have zero mean, the :math:`R^2` score
+    is identical to the
     :func:`Explained Variance score <explained_variance_score>`.
 
     Read more in the :ref:`User Guide <r2_score>`.
