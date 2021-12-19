@@ -26,7 +26,7 @@ else
     conda list
 fi
 
-TEST_CMD="python -m pytest -vv --tb=long --showlocals --durations=20 --junitxml=$JUNITXML"
+TEST_CMD="python -m pytest -s -vv --tb=long --showlocals --durations=20 --junitxml=$JUNITXML"
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Note: --cov-report= is used to disable to long text output report in the
@@ -55,5 +55,5 @@ if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
 fi
 
 set -x
-eval "$TEST_CMD --pyargs sklearn"
+eval "$TEST_CMD --pyargs sklearn.linear_model"
 set +x
