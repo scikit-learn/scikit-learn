@@ -186,7 +186,6 @@ def mean_shift(
     -----
     For an example, see :ref:`examples/cluster/plot_mean_shift.py
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
-
     """
     model = MeanShift(
         bandwidth=bandwidth,
