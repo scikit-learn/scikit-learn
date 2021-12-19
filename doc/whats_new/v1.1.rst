@@ -180,6 +180,10 @@ Changelog
   ``bootstrap=False`` and ``max_samples`` is not ``None``.
   :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
 
+- |Fix| :class:`ensemble.BaggingClassifier` now supports `base_estimators`
+  with `class_weight` that uses string targets or non-standard integer encoding.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
   :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
