@@ -716,10 +716,10 @@ def test_sum_hessians_are_sample_weight(loss_name):
         n_samples=n_samples, dtype=G_H_DTYPE
     )
     gradients, hessians = gradients.reshape((-1, 1)), hessians.reshape((-1, 1))
-    raw_predictions = rng.normal(size=(1, n_samples))
+    raw_predictions = rng.normal(size=(n_samples, 1))
     loss.gradient_hessian(
         y_true=y,
-        raw_prediction=raw_predictions.T,
+        raw_prediction=raw_predictions,
         sample_weight=sample_weight,
         gradient_out=gradients,
         hessian_out=hessians,
