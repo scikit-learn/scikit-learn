@@ -200,7 +200,7 @@ def mean_shift(
 
 
 def get_bin_seeds(X, bin_size, min_bin_freq=1):
-    """Finds seeds for mean_shift.
+    """Find seeds for mean_shift.
 
     Finds seeds by first binning data onto a grid whose lines are
     spaced bin_size apart, and then choosing those bins with at least
