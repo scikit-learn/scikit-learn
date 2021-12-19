@@ -165,20 +165,23 @@ class DummyEstimatorParams(BaseEstimator):
         return self
 
 
-def test_pipeline_init():
-    # Test the various init parameters of the pipeline.
+def test_pipeline_invalid_parameters():
+    # Test the various init parameters of the pipeline in fit
+    # method
+    pipeline = Pipeline([(1, 1)])
     with pytest.raises(TypeError):
-        Pipeline()
+        pipeline.fit([[1]], [1])
 
-    # Check that we can't instantiate pipelines with objects without fit
+    # Check that we can't fit pipelines with objects without fit
     # method
     msg = (
         "Last step of Pipeline should implement fit "
         "or be the string 'passthrough'"
         ".*NoFit.*"
     )
+    pipeline = Pipeline([("clf", NoFit())])
     with pytest.raises(TypeError, match=msg):
-        Pipeline([("clf", NoFit())])
+        pipeline.fit([[1]], [1])
 
     # Smoke test with only an estimator
     clf = NoTrans()
@@ -203,11 +206,12 @@ def test_pipeline_init():
     assert pipe.named_steps["anova"] is filter1
     assert pipe.named_steps["svc"] is clf
 
-    # Check that we can't instantiate with non-transformers on the way
+    # Check that we can't fit with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
     msg = "All intermediate steps should be transformers.*\\bNoTrans\\b.*"
+    pipeline = Pipeline([("t", NoTrans()), ("svc", clf)])
     with pytest.raises(TypeError, match=msg):
-        Pipeline([("t", NoTrans()), ("svc", clf)])
+        pipeline.fit([[1]], [1])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -1086,7 +1090,7 @@ def test_step_name_validation():
             # three ways to make invalid:
             # - construction
             with pytest.raises(ValueError, match=message):
-                cls(**{param: bad_steps})
+                cls(**{param: bad_steps}).fit([[1]], [1])
 
             # - setattr
             est = cls(**{param: [("a", Mult(1))]})
