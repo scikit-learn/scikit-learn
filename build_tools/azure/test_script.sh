@@ -55,5 +55,5 @@ if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
 fi
 
 set -x
-eval "$TEST_CMD --pyargs sklearn"
+eval "$TEST_CMD -k LogisticRegression --pyargs sklearn"
 set +x
