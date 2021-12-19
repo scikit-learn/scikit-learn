@@ -1,4 +1,5 @@
 """ test the label propagation module """
+import itertools
 
 import numpy as np
 import pytest
@@ -15,76 +16,61 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 
-ESTIMATOR_CLS = [label_propagation.LabelPropagation, label_propagation.LabelSpreading]
-
-
-PARAMETERS = [
-    {"kernel": "rbf"},
-    {"kernel": "knn", "n_neighbors": 2},
-    {"kernel": lambda x, y: rbf_kernel(x, y, gamma=20)},
-]
-
-
 CONSTRUCTOR_TYPES = ("array", "sparse_csr", "sparse_csc")
 
 
-@pytest.fixture
-def estimators():
-    estimators_ = []
-    for estimator in ESTIMATOR_CLS:
-        for params in PARAMETERS:
-            estimators_.append(estimator(**params))
-    return estimators_
+def label_estimator():
+    LabelEstimator = [
+        label_propagation.LabelPropagation,
+        label_propagation.LabelSpreading,
+    ]
+    parama_grid = [
+        {"kernel": "rbf"},
+        {"kernel": "knn", "n_neighbors": 2},
+        {"kernel": lambda x, y: rbf_kernel(x, y, gamma=20)},
+    ]
+    for Estimator, params in itertools.product(LabelEstimator, parama_grid):
+        yield Estimator(**params)
 
 
 @pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
-def test_fit_transduction(constructor_type, estimators):
-    for estimator in estimators:
-        samples = _convert_container(
-            [[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], constructor_type
-        )
-        labels = [0, 1, -1]
-        clf = estimator.fit(samples, labels)
-        assert clf.transduction_[2] == 1
+@pytest.mark.parametrize("estimator", label_estimator())
+def test_fit_transduction(constructor_type, estimator):
+    samples = _convert_container([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], constructor_type)
+    labels = [0, 1, -1]
+    clf = estimator.fit(samples, labels)
+    assert clf.transduction_[2] == 1
 
 
 @pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
-def test_distribution(constructor_type, estimators):
-    for estimator in estimators:
-        samples = _convert_container(
-            [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], constructor_type
-        )
-        labels = [0, 1, -1]
-        clf = estimator.fit(samples, labels)
-        if estimator.kernel != "knn":
-            # unstable test; changes in k-NN ordering break it
-            assert_array_almost_equal(
-                np.asarray(clf.label_distributions_[2]), np.array([0.5, 0.5]), 2
-            )
-
-
-@pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
-def test_predict(constructor_type, estimators):
-    for estimator in estimators:
-        samples = _convert_container(
-            [[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], constructor_type
-        )
-        labels = [0, 1, -1]
-        clf = estimator.fit(samples, labels)
-        assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
-
-
-@pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
-def test_predict_proba(constructor_type, estimators):
-    for estimator in estimators:
-        samples = _convert_container(
-            [[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], constructor_type
-        )
-        labels = [0, 1, -1]
-        clf = estimator.fit(samples, labels)
+@pytest.mark.parametrize("estimator", label_estimator())
+def test_distribution(constructor_type, estimator):
+    samples = _convert_container([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], constructor_type)
+    labels = [0, 1, -1]
+    clf = estimator.fit(samples, labels)
+    if estimator.kernel != "knn":
+        # unstable test; changes in k-NN ordering break it
         assert_array_almost_equal(
-            clf.predict_proba([[1.0, 1.0]]), np.array([[0.5, 0.5]])
+            np.asarray(clf.label_distributions_[2]), np.array([0.5, 0.5]), 2
         )
+
+
+@pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
+@pytest.mark.parametrize("estimator", label_estimator())
+def test_predict(constructor_type, estimator):
+    samples = _convert_container([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], constructor_type)
+    labels = [0, 1, -1]
+    clf = estimator.fit(samples, labels)
+    assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
+
+
+@pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
+@pytest.mark.parametrize("estimator", label_estimator())
+def test_predict_proba(constructor_type, estimator):
+    samples = _convert_container([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], constructor_type)
+    labels = [0, 1, -1]
+    clf = estimator.fit(samples, labels)
+    assert_array_almost_equal(clf.predict_proba([[1.0, 1.0]]), np.array([[0.5, 0.5]]))
 
 
 @pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
@@ -187,7 +173,10 @@ def test_convergence_warning(constructor_type):
 
 
 @pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
-@pytest.mark.parametrize("LabelPropagationCls", ESTIMATOR_CLS)
+@pytest.mark.parametrize(
+    "LabelPropagationCls",
+    [label_propagation.LabelPropagation, label_propagation.LabelSpreading],
+)
 def test_label_propagation_non_zero_normalizer(LabelPropagationCls, constructor_type):
     # check that we don't divide by zero in case of null normalizer
     # non-regression test for
