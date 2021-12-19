@@ -732,7 +732,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     def _validate_y(self, y):
         y = column_or_1d(y, warn=True)
         check_classification_targets(y)
-
         self._le = LabelEncoder()
         y = self._le.fit_transform(y)
 
