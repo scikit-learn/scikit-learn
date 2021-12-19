@@ -237,7 +237,7 @@ def test_r_regression_force_finite(X, y, expected_corr_coef, force_finite):
             # Feature in X correlated with y - forcing finite
             np.array([[0, 1], [1, 0], [2, 10], [3, 4]]),
             np.array([0, 1, 2, 3]),
-            np.array([1, 0.845433]),
+            np.array([np.finfo(np.float64).max, 0.845433]),
             np.array([0.0, 0.454913]),
             True,
         ),
@@ -245,7 +245,7 @@ def test_r_regression_force_finite(X, y, expected_corr_coef, force_finite):
             # Feature in X anti-correlated with y - forcing finite
             np.array([[3, 1], [2, 0], [1, 10], [0, 4]]),
             np.array([0, 1, 2, 3]),
-            np.array([1, 0.845433]),
+            np.array([np.finfo(np.float64).max, 0.845433]),
             np.array([0.0, 0.454913]),
             True,
         ),

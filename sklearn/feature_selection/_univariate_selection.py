@@ -300,7 +300,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
         correlation_coefficient /= X_norms
         correlation_coefficient /= np.linalg.norm(y)
 
-    if force_finite and not np.isfinite(correlation_coefficient.sum()):
+    if force_finite and not np.isfinite(correlation_coefficient).all():
         # case where the target or some features are constant
         # the correlation coefficient(s) is/are set to the minimum (i.e. 0.0)
         nan_mask = np.isnan(correlation_coefficient)
@@ -361,7 +361,8 @@ def f_regression(X, y, *, center=True, force_finite=True):
         - when the a feature in `X` is perfectly correlated (or
           anti-correlated) with the target `y`. In this case, the F-statistic
           is expected to be `np.inf`. When `force_finite=True`, the F-statistic
-          is set to `1.0` and the associated p-value is set to `0.0`.
+          is set to `np.finfo(dtype).max` and the associated p-value is set to
+          `0.0`.
 
         .. versionadded:: 1.1
 
@@ -396,12 +397,11 @@ def f_regression(X, y, *, center=True, force_finite=True):
         f_statistic = corr_coef_squared / (1 - corr_coef_squared) * deg_of_freedom
         p_values = stats.f.sf(f_statistic, 1, deg_of_freedom)
 
-    if force_finite and not np.isfinite(f_statistic.sum()):
+    if force_finite and not np.isfinite(f_statistic).all():
         # case where there is a perfect (anti-)correlation
         # f-statistics can be set to the maximum and p-values to zero
-        mask_inf = np.isclose(corr_coef_squared, 1.0)
-        f_statistic[mask_inf] = 1.0
-        p_values[mask_inf] = 0.0
+        mask_inf = np.isinf(f_statistic)
+        f_statistic[mask_inf] = np.finfo(f_statistic.dtype).max
         # case where the target or some features are constant
         # f-statistics would be minimum and thus p-values large
         mask_nan = np.isnan(f_statistic)
