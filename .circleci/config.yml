@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.7-buster
+      - image: cimg/python:3.7.12
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
@@ -48,7 +48,7 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.7-buster
+      - image: cimg/python:3.7.12
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
@@ -100,7 +100,7 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7.12
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -144,7 +144,7 @@ jobs:
             - ~/project/build
   deploy:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7.12
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
