@@ -95,7 +95,6 @@ elif [[ "$DISTRIB" == "debian-32" ]]; then
     apt-get install -y python3-dev python3-numpy python3-scipy python3-setuptools python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-    python3 -m pip list
     source $VIRTUALENV/bin/activate
     python3 -m pip list
     setup_ccache
