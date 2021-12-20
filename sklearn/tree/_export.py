@@ -288,7 +288,6 @@ class _BaseTreeExporter:
             if labels:
                 node_string += "node "
             node_string += characters[0] + str(node_id) + characters[4]
-            node_string += separator
 
         # Write decision criteria
         if tree.children_left[node_id] != _tree.TREE_LEAF:
@@ -307,7 +306,7 @@ class _BaseTreeExporter:
                 round(tree.threshold[node_id], self.precision),
                 characters[4],
             )
-
+            # Put separator to split criteria and other strings for visibility
             node_string += separator
 
         # Write impurity
@@ -323,7 +322,6 @@ class _BaseTreeExporter:
             node_string += (
                 str(round(tree.impurity[node_id], self.precision)) + characters[4]
             )
-            node_string += separator
 
         # Write node sample count
         if labels:
@@ -861,8 +859,9 @@ def export_graphviz(
     fontname : str, default='helvetica'
         Name of font used to render text.
 
-    add_holizontal_line_in_node : bool, default=True
-
+    add_holizontal_line_in_node : bool, default=False
+        When set to ``True``, add a splitter line between a criteria and remaining
+        contents in a node.
 
     Returns
     -------
