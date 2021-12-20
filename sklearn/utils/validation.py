@@ -1421,12 +1421,12 @@ def check_scalar(
 
     if max_val is None and include_boundaries in ("right"):
         raise ValueError(
-            f"`include_boundaries`='right' with no `max_val` is inconsitent."
+            "`include_boundaries`='right' with no `max_val` is inconsitent."
         )
 
     if min_val is None and include_boundaries in ("left"):
         raise ValueError(
-            f"`include_boundaries`='left' with no `min_val` is inconsitent."
+            "`include_boundaries`='left' with no `min_val` is inconsitent."
         )
 
     comparison_operator = (
