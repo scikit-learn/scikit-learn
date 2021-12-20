@@ -25,7 +25,6 @@ from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
-from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.extmath import softmax
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
@@ -1225,7 +1224,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             and len(classes_) == 1
             and effective_n_jobs(self.n_jobs) == 1
         ):
-            n_threads = _openmp_effective_n_threads()
+            # In the future, we would like n_threads = _openmp_effective_n_threads()
+            # For the time being, we just do
+            n_threads = 1
         else:
             n_threads = 1
 
