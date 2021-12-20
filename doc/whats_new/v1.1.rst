@@ -119,6 +119,9 @@ Changelog
   get accurate results when the number of features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
+- |Enhancement| `dict_learning` and `dict_learning_online` methods preserve dtype for numpy.float32.
+  :pr:`22022` by :user:`Takeshi Oura <takoika>`.
+
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
@@ -153,7 +156,7 @@ Changelog
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
   :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-  
+
 - |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
   The default value of its `whiten` argument will change from `True`
   (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
