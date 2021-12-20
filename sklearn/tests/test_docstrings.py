@@ -13,7 +13,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.cluster._kmeans.kmeans_plusplus",
-    "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
     "sklearn.compose._column_transformer.make_column_transformer",
     "sklearn.covariance._graph_lasso.graphical_lasso",
