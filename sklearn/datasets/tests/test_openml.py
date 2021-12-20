@@ -1476,7 +1476,9 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     def swap_file_mock(request):
         url = request.get_full_url()
         if url.endswith("data/v1/download/1666876"):
-            return _MockHTTPResponse(open(corrupt_copy_path, "rb"), is_gzip=True)
+            with open(corrupt_copy_path, "rb") as f:
+                corrupted_data = f.read()
+            return _MockHTTPResponse(BytesIO(corrupted_data), is_gzip=True)
         else:
             return mocked_openml_url(request)
 

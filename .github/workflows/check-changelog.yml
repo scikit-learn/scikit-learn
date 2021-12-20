@@ -8,6 +8,7 @@ on:
 
 jobs:
   check:
+    name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
     if: ${{ contains(github.event.pull_request.labels.*.name, 'No Changelog Needed') == 0 }}
     steps:
@@ -18,7 +19,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: '0'
-      - name: Check the changelog
+      - name: Check the changelog entry
         run: |
           set -xe
           changed_files=$(git diff --name-only origin/main)

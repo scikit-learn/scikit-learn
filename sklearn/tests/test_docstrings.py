@@ -13,9 +13,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.cluster._kmeans.kmeans_plusplus",
-    "sklearn.cluster._mean_shift.estimate_bandwidth",
-    "sklearn.cluster._mean_shift.get_bin_seeds",
-    "sklearn.cluster._mean_shift.mean_shift",
     "sklearn.cluster._optics.cluster_optics_xi",
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
@@ -120,8 +117,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.pair_confusion_matrix",
     "sklearn.metrics.cluster._supervised.rand_score",
     "sklearn.metrics.cluster._supervised.v_measure_score",
-    "sklearn.metrics.cluster._unsupervised.davies_bouldin_score",
-    "sklearn.metrics.cluster._unsupervised.silhouette_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.check_paired_arrays",
     "sklearn.metrics.pairwise.check_pairwise_arrays",
@@ -345,7 +340,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     if estimator is not None:
         obj = getattr(estimator, method)
         try:
-            obj_signature = signature(obj)
+            obj_signature = str(signature(obj))
         except TypeError:
             # In particular we can't parse the signature of properties
             obj_signature = (
@@ -361,7 +356,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     msg = "\n\n" + "\n\n".join(
         [
             str(res["file"]),
-            obj_name + str(obj_signature),
+            obj_name + obj_signature,
             res["docstring"],
             "# Errors",
             "\n".join(

@@ -4,7 +4,6 @@ from abc import abstractmethod
 from numbers import Integral
 
 import numpy as np
-from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
 from ..base import is_classifier
@@ -714,7 +713,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             aggressive_elimination=aggressive_elimination,
         )
         self.param_grid = param_grid
-        _check_param_grid(self.param_grid)
 
     def _generate_candidate_params(self):
         return ParameterGrid(self.param_grid)
