@@ -32,6 +32,10 @@ jobs:
     COVERAGE: 'false'
     TEST_DOCSTRINGS: 'false'
     BLAS: 'openblas'
+    # temporary fix with setuptools 60.0.0 by setting SETUPTOOLS_USE_DISTUTILS
+    # see the update there:
+    # https://github.com/pypa/setuptools/issues/2941
+    SETUPTOOLS_USE_DISTUTILS: 'stdlib'
     # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''
@@ -71,6 +75,7 @@ jobs:
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
         -e BLAS=$BLAS
         -e CPU_COUNT=$CPU_COUNT
+        -e SETUPTOOLS_USE_DISTUTILS=$SETUPTOOLS_USE_DISTUTILS
         $DOCKER_CONTAINER
         sleep 1000000
       displayName: 'Start container'
