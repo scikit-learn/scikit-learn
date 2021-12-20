@@ -291,7 +291,7 @@ def test_parallel_fit():
         estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="soft", n_jobs=1
     ).fit(X, y)
     eclf2 = VotingClassifier(
-        estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="soft", n_jobs=2
+        estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="soft", n_jobs=1
     ).fit(X, y)
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
