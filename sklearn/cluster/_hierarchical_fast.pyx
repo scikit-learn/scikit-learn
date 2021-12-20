@@ -451,7 +451,7 @@ def single_linkage_label(L):
     return _single_linkage_label(L)
 
 
-# Implements MST-LINKAGE-CORE from :arxiv:`<1109.2378>`
+# Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 def mst_linkage_core(
