@@ -44,6 +44,9 @@ jobs:
     # Container is detached and sleeping, allowing steps to run commands
     # in the container. The TEST_DIR is mapped allowing the host to access
     # the JUNITXML file
+    # temporary fix with setuptools 60.0.0 by setting SETUPTOOLS_USE_DISTUTILS
+    # see the update there:
+    # https://github.com/pypa/setuptools/issues/2941
     - script: >
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
@@ -71,6 +74,7 @@ jobs:
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
         -e BLAS=$BLAS
         -e CPU_COUNT=$CPU_COUNT
+        -e SETUPTOOLS_USE_DISTUTILS: 'stdlib'
         $DOCKER_CONTAINER
         sleep 1000000
       displayName: 'Start container'
