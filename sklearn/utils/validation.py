@@ -1406,7 +1406,7 @@ def check_scalar(
 
     ValueError
         If the parameter's value violates the given bounds.
-        If `min_val`, `max_val` and `include_boundaries` are inconsitent.
+        If `min_val`, `max_val` and `include_boundaries` are inconsistent.
     """
 
     if not isinstance(x, target_type):
@@ -1421,12 +1421,12 @@ def check_scalar(
 
     if max_val is None and include_boundaries in ("right"):
         raise ValueError(
-            "`include_boundaries`='right' with no `max_val` is inconsitent."
+            "`include_boundaries`='right' with no `max_val` is inconsistent."
         )
 
     if min_val is None and include_boundaries in ("left"):
         raise ValueError(
-            "`include_boundaries`='left' with no `min_val` is inconsitent."
+            "`include_boundaries`='left' with no `min_val` is inconsistent."
         )
 
     comparison_operator = (
