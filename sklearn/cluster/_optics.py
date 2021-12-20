@@ -68,7 +68,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         should take two arrays as input and return one value indicating the
         distance between them. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string. If metric is
-        "precomputed", X is assumed to be a distance matrix and must be square.
+        "precomputed", 'X' is assumed to be a distance matrix and must be square.
 
         Valid values for metric are:
 
@@ -124,8 +124,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
+        - 'ball_tree' will use :class:`BallTree`.
+        - 'kd_tree' will use :class:`KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method. (default)
@@ -457,8 +457,8 @@ def compute_optics_graph(
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
+        - 'ball_tree' will use :class:`BallTree`.
+        - 'kd_tree' will use :class:`KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method. (default)
@@ -673,13 +673,13 @@ def cluster_optics_xi(
     Parameters
     ----------
     reachability : ndarray of shape (n_samples,)
-        Reachability distances calculated by OPTICS (`reachability_`)
+        Reachability distances calculated by OPTICS (`reachability_`).
 
     predecessor : ndarray of shape (n_samples,)
         Predecessors calculated by OPTICS.
 
     ordering : ndarray of shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
+        OPTICS ordered point indices (`ordering_`).
 
     min_samples : int > 1 or float between 0 and 1
         The same as the min_samples given to OPTICS. Up and down steep regions
