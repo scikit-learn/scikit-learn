@@ -500,7 +500,7 @@ cdef class Splitter:
                     # case yields the best gain: either missing values go to
                     # the right (left to right scan) or to the left (right to
                     # left case). See algo 3 from the XGBoost paper
-                    # :arxiv:`<1603.02754>`
+                    # https://arxiv.org/abs/1603.02754
                     # Note: for the categorical features above, this isn't
                     # needed since missing values are considered a native
                     # category.
