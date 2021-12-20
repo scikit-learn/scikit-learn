@@ -164,12 +164,12 @@ def test_graphviz_toy():
         "digraph Tree {\n"
         'node [shape=record, fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
-        r'0 [label="{X[0] \<= 0.0\n|gini = 0.5\n|samples = 6\n'
+        r'0 [label="{X[0] \<= 0.0\n|gini = 0.5\nsamples = 6\n'
         'value = [3, 3]}"] ;\n'
-        '1 [label="{gini = 0.0\\n|samples = 3\\nvalue = [3, 0]}"] ;\n'
+        '1 [label="{gini = 0.0\\nsamples = 3\\nvalue = [3, 0]}"] ;\n'
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
         'headlabel="True"] ;\n'
-        '2 [label="{gini = 0.0\\n|samples = 3\\nvalue = [0, 3]}"] ;\n'
+        '2 [label="{gini = 0.0\\nsamples = 3\\nvalue = [0, 3]}"] ;\n'
         "0 -> 2 [labeldistance=2.5, labelangle=-45, "
         'headlabel="False"] ;\n'
         "}"
