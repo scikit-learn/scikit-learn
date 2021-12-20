@@ -91,12 +91,15 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
                           $(get_dep joblib $JOBLIB_VERSION)
 
 elif [[ "$DISTRIB" == "debian-32" ]]; then
+    # temporary fix with setuptools 60.0.0
+    # see the update there:
+    # https://github.com/pypa/setuptools/issues/2941
+    export SETUPTOOLS_USE_DISTUTILS=stdlib
     apt-get update
-    apt-get install -y python3-dev python3-numpy python3-scipy python3-setuptools python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
+    apt-get install -y python3-dev python3-numpy python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv python3-pandas ccache
 
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
-    python3 -m pip list
     setup_ccache
     python -m pip install $(get_dep cython $CYTHON_VERSION) \
                           $(get_dep joblib $JOBLIB_VERSION)
