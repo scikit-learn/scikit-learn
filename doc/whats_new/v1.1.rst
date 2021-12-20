@@ -39,6 +39,12 @@ random sampling procedures.
   using the `'amg'` or `'lobpcg'` solver. This change  improves numerical
   stability of the solver, but may result in a different model.
 
+- |Fix| :func:`feature_selection.f_regression` and
+  :func:`feature_selection.r_regression` will now returned finite score by
+  default instead of `np.nan` and `np.inf` for some corner case. You can use
+  `force_finite=False` if you really want to get non-finite values and keep
+  the old behavior.
+
 Changelog
 ---------
 
@@ -75,6 +81,10 @@ Changelog
   add this information to the plot.
   :pr:`21038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :meth:`calibration.CalibratedClassifierCV.fit` now supports passing
+  `fit_params`, which are routed to the `base_estimator`.
+  :pr:`18170` by :user:`Benjamin Bossan <BenjaminBossan>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -110,6 +120,13 @@ Changelog
 - |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
   to a temporary subfolder and then renamed.
   :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
+
+- |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
+  ``scaled``, to allow loading unscaled data. The scaled version of this
+  dataset is now computed from the unscaled data, and can produce slightly
+  different different results that in previous version (within a 1e-4 absolute
+  tolerance).
+  :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -158,6 +175,17 @@ Changelog
   The default value of its `whiten` argument will change from `True`
   (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
   :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and :user:`Julien Jerphanion <jjerphan>`
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| Add a parameter `force_finite` to
+  :func:`feature_selection.f_regression` and
+  :func:`feature_selection.r_regression`. This parameter allows to force the
+  output to be finite in the case where a feature or a the target is constant
+  or that the feature and target are perfectly correlated (only for the
+  F-statistic).
+  :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -234,7 +262,8 @@ Changelog
   estimator of the noise variance cannot be computed.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| :class:`linear_model.QuantileRegressor` support sparse inputs.
+- |Enhancement| :class:`linear_model.QuantileRegressor` support sparse input
+  for the highs based solvers.
   :pr:`21086` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
 
 - |Enhancement| :class:`~linear_model.LogisticRegression` is faster for

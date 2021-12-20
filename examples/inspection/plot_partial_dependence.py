@@ -191,7 +191,7 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Analysis of the plots
 # .....................
 #
-# We can clearly see on the PDPs (thick blue line) that the median house price
+# We can clearly see on the PDPs (dashed orange line) that the median house price
 # shows a linear relationship with the median income (top left) and that the
 # house price drops when the average occupants per household increases (top
 # middle). The top right plot shows that the house age in a district does not
