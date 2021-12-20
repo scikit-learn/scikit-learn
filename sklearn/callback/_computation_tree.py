@@ -1,9 +1,10 @@
 # License: BSD 3 clause
 
-from tempfile import mkdtemp
+import os
 from pathlib import Path
 import pickle
-import os
+from tempfile import mkdtemp
+from uuid import uuid4
 
 import numpy as np
 
@@ -116,6 +117,9 @@ class ComputationTree:
         The path of the directory where the computation tree is dumped during the fit of
         its estimator. If it has a parent tree, this is a sub-directory of the
         `tree_dir` of its parent.
+
+    uid : uuid.UUID
+        Unique indentifier for a ComputationTree instance.
     """
 
     def __init__(self, estimator_name, levels, *, parent_node=None):
@@ -124,6 +128,8 @@ class ComputationTree:
 
         self.depth = len(levels) - 1
         self.root, self.n_nodes = self._build_tree(levels)
+
+        self.uid = uuid4()
 
         parent_tree_dir = (
             None

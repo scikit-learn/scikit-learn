@@ -22,11 +22,6 @@ class Snapshot(BaseCallback):
     base_dir : str or pathlib.Path instance, default=None
         The directory where the snapshots should be stored. If None, they are stored in
         the current directory.
-
-    Attributes
-    ----------
-    directory : pathlib.Path instance
-        The directory where the snapshots are saved. It's a sub-directory of `base_dir`.
     """
 
     request_reconstruction_attributes = True
@@ -42,41 +37,36 @@ class Snapshot(BaseCallback):
         self.base_dir = Path("." if base_dir is None else base_dir)
 
     def on_fit_begin(self, estimator, X=None, y=None):
-        self.estimator = estimator
+        subdir = self._get_subdir(estimator._computation_tree)
+        subdir.mkdir()
 
-        # Use a hash in the name of this directory to avoid name collision if several
-        # clones of this estimator are fitted in parallel in a meta-estimator for
-        # instance.
-        dir_name = (
-            "snapshots_"
-            f"{self.estimator.__class__.__name__}_"
-            f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')}_"
-            f"{hash(self.estimator._computation_tree)}"
-        )
-
-        self.directory = self.base_dir / dir_name
-        self.directory.mkdir()
-
-    def on_fit_iter_end(self, *, node, **kwargs):
+    def on_fit_iter_end(self, *, estimator, node, **kwargs):
         reconstruction_attributes = kwargs.get("reconstruction_attributes", None)
         if reconstruction_attributes is None:
             return
 
-        new_estimator = copy(self.estimator)
+        new_estimator = copy(estimator)
         for key, val in reconstruction_attributes.items():
             setattr(new_estimator, key, val)
 
-        file_name = f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')}.pkl"
-        file_path = self.directory / file_name
+        subdir = self._get_subdir(node.computation_tree)
+        snapshot_filename = f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')}.pkl"
 
-        with open(file_path, "wb") as f:
+        with open(subdir / snapshot_filename, "wb") as f:
             pickle.dump(new_estimator, f)
 
         if self.keep_last_n is not None:
-            for snapshot in sorted(self.directory.iterdir())[: -self.keep_last_n]:
+            for snapshot in sorted(subdir.iterdir())[: -self.keep_last_n]:
                 snapshot.unlink(missing_ok=True)
 
     def on_fit_end(self):
-        if self.keep_last_n is not None:
-            for snapshot in sorted(self.directory.iterdir())[: -self.keep_last_n]:
-                snapshot.unlink()
+        pass
+
+    def _get_subdir(self, computation_tree):
+        """Return the sub directory containing the snapshots of the estimator"""
+        subdir = (
+            self.base_dir
+            / f"snapshots_{computation_tree.estimator_name}_{str(computation_tree.uid)}"
+        )
+
+        return subdir

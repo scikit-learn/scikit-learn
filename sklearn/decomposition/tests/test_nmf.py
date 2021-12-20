@@ -728,9 +728,9 @@ def test_feature_names_out():
 def test_nmf_callback_reconstruction_attributes(solver, beta_loss):
     # Check that the reconstruction attributes passed to the callback allow to make
     # a new estimator as if the fit ended when the callback is called.
-    X = np.random.RandomState(0).random_sample((100, 100))
+    X = np.random.RandomState(0).random_sample((100, 20))
 
-    nmf = NMF(n_components=3, solver=solver, beta_loss=beta_loss, random_state=0)
+    nmf = NMF(n_components=5, solver=solver, beta_loss=beta_loss, random_state=0)
     nmf.fit(X)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -739,11 +739,12 @@ def test_nmf_callback_reconstruction_attributes(solver, beta_loss):
         nmf.fit(X)
 
         # load model from last iteration
-        snapshot = sorted(callback.directory.iterdir())[-1]
+        snapshot_dir = next(callback.base_dir.iterdir())
+        snapshot = sorted(snapshot_dir.iterdir())[-1]
         with open(snapshot, "rb") as f:
             loaded_nmf = pickle.load(f)
 
-    # The model loaded from the last iteration is the same as the original model
+    # The model saved during the last iteration is the same as the original model
     assert nmf.n_iter_ == loaded_nmf.n_iter_
     assert_allclose(nmf.components_, loaded_nmf.components_) 
     assert_allclose(nmf.reconstruction_err_, loaded_nmf.reconstruction_err_)
