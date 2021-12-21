@@ -656,11 +656,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         self.k = check_scalar(k, "k", Integral, min_val=1)
 
         # Allocating pointers to datastructures but not the datastructures themselves.
-        # There are as many pointers as available threads.
-        # However, when reducing on small datasets, there can be more pointers than
-        # actual threads.
-        # In this case, some pointers will be dynamically allocated but there won't
-        # be allocated yet unused data-structures referenced by them.
+        # There are as many pointers as effective threads.
         #
         # For the sake of explicitness:
         #   - when parallelizing on X, those heaps pointers are referencing
