@@ -313,8 +313,8 @@ class LinearModelLoss:
             if self.fit_intercept:
                 grad[-1] = gradient.sum()
 
-            # Precompute as much as possible: hX, hh_intercept and hsum
-            hsum = hessian.sum()
+            # Precompute as much as possible: hX, hX_sum and hessian_sum
+            hessian_sum = hessian.sum()
             if sparse.issparse(X):
                 hX = sparse.dia_matrix((hessian, 0), shape=(n_samples, n_samples)) @ X
             else:
@@ -323,7 +323,7 @@ class LinearModelLoss:
             if self.fit_intercept:
                 # Calculate the double derivative with respect to intercept.
                 # Note: In case hX is sparse, hX.sum is a matrix object.
-                hh_intercept = np.squeeze(np.asarray(hX.sum(axis=0)))
+                hX_sum = np.squeeze(np.asarray(hX.sum(axis=0)))
 
             # With intercept included and l2_reg_strength = 0, hessp returns
             # res = (X, 1)' @ diag(h) @ (X, 1) @ s
@@ -339,8 +339,8 @@ class LinearModelLoss:
                 ret[:n_features] += l2_reg_strength * s[:n_features]
 
                 if self.fit_intercept:
-                    ret[:n_features] += s[-1] * hh_intercept
-                    ret[-1] = hh_intercept @ s[:n_features] + hsum * s[-1]
+                    ret[:n_features] += s[-1] * hX_sum
+                    ret[-1] = hX_sum @ s[:n_features] + hessian_sum * s[-1]
                 return ret
 
         else:
