@@ -275,7 +275,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # and LogisticRegression but LogisticRegression sets a structured
         # `n_iter_` attribute with information about the underlying OvR fits
         # while LinearSVC/R only reports the maximum value.
-        self.n_iter_ = int(np.max(n_iter_))
+        self.n_iter_ = n_iter_.max().item()
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -508,7 +508,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         # and LogisticRegression but LogisticRegression sets a structured
         # `n_iter_` attribute with information about the underlying OvR fits
         # while LinearSVC/R only reports the maximum value.
-        self.n_iter_ = int(np.max(n_iter_))
+        self.n_iter_ = n_iter_.max().item()
 
         return self
 
