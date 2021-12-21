@@ -180,13 +180,6 @@ def test_pairwise_distances_reduction_factory_method(
     ):
         PairwiseDistancesReduction.compute(csr_matrix(X), Y, dummy_arg, metric=metric)
 
-    # Test specialisations creation
-    euclidean_instance = PairwiseDistancesReduction.get_for(
-        X, Y, dummy_arg, metric="euclidean"
-    )
-    assert isinstance(euclidean_instance, PairwiseDistancesReduction)
-    assert isinstance(euclidean_instance, FastPairwiseDistancesReduction)
-
 
 @fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(5))
@@ -217,15 +210,20 @@ def test_chunk_size_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
-    ).compute(return_distance=True)
+        return_distance=True,
+    )
 
-    dist, indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, chunk_size=chunk_size
-    ).compute(return_distance=True)
+    dist, indices = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        chunk_size=chunk_size,
+        return_distance=True,
+    )
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
@@ -259,15 +257,16 @@ def test_n_threads_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_dist, ref_indices = PairwiseDistancesReduction.get_for(
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
-    ).compute(return_distance=True)
+        return_distance=True,
+    )
 
-    dist, indices = PairwiseDistancesReduction.get_for(
-        X, Y, parameter, n_threads=1
-    ).compute(return_distance=True)
+    dist, indices = PairwiseDistancesReduction.compute(
+        X, Y, parameter, n_threads=1, return_distance=True
+    )
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
