@@ -49,7 +49,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         Strategy used to define the widths of the bins.
 
         - 'uniform': All bins in each feature have identical widths.
-        - 'quantile': All bins in each feature have the same number of points.
+        - 'quantile': If weight_sample parameter in fit method is None, all
+          bins in each feature have the same number of points. Else,
+          the number of points in each bin is proportional to each provided 
+          weight value.
         - 'kmeans': Values in each bin have the same nearest center of a 1D
           k-means cluster.
 
@@ -171,7 +174,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.subsample = subsample
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, weight_sample=None):
         """
         Fit the estimator.
 
@@ -183,6 +186,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         y : None
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
+        
+        weight_sample : array-like of shape (n_bins,) or None
+            Weights that represent the proportion of datas to be associated 
+            with each bins. The sum of each weight value should be equal to 1.
+            This parameter is taken into account only for quantile strategy.
 
         Returns
         -------
@@ -267,7 +275,21 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
 
             elif self.strategy == "quantile":
-                quantiles = np.linspace(0, 100, n_bins[jj] + 1)
+                # if w (weight) parameter is defined, then the size of each bin 
+                # should be proportional to each weight value (in w)
+                if weight_sample != None:
+                    if sum(weight_sample) != 1:
+                        raise ValueError("Sum of weights in fit method should "
+                        "be equal to 1 (current value : {})".format(sum(weight_sample)))
+                    quantiles = [0]
+                    wt = 0
+                    for wi in weight_sample:
+                        wt += wi
+                        quantiles.append(100*wt)
+                # if w parameter is None then each bin should have the same 
+                # number of samples 
+                else:
+                    quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                 bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
             elif self.strategy == "kmeans":
