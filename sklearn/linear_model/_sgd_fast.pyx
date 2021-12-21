@@ -365,7 +365,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
 cdef class PinBall(Regression):
     """Pin ball loss used for quantile regression.
 
-    loss = q * max(p - y, 0) + (1 - q) * max(y - p, 0)
+    loss = q * max(y - p, 0) + (1 - q) * max(p - y, 0)
     """
 
     cdef double quantile
@@ -374,15 +374,15 @@ cdef class PinBall(Regression):
         self.quantile = quantile
 
     cdef double loss(self, double p, double y) nogil:
-        cdef double ret = p - y
+        cdef double ret = y - p
         return self.quantile * ret if ret > 0\
-         else (self.quantile - 1) * ret
+         else (1 - self.quantile) * -ret
 
     cdef double dloss(self, double p, double y) nogil:
-        if p - y > 0:
-            return self.quantile
-        elif p - y < 0:
-            return self.quantile - 1
+        if y - p > 0:
+            return -self.quantile
+        elif y - p < 0:
+            return 1- self.quantile
         else:
             return 0
 
