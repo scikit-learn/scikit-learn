@@ -36,6 +36,7 @@ from ._sgd_fast import SquaredLoss
 from ._sgd_fast import Huber
 from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import SquaredEpsilonInsensitive
+from ._sgd_fast import PinBall
 from ..utils.fixes import _joblib_parallel_args
 
 LEARNING_RATE_TYPES = {
@@ -51,6 +52,7 @@ PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
 DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
+DEFAULT_QUANTILE = 0.5
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -91,6 +93,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         shuffle=True,
         verbose=0,
         epsilon=0.1,
+        quantile=0.5,
         random_state=None,
         learning_rate="optimal",
         eta0=0.0,
@@ -105,6 +108,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.penalty = penalty
         self.learning_rate = learning_rate
         self.epsilon = epsilon
+        self.quantile = quantile
         self.alpha = alpha
         self.C = C
         self.l1_ratio = l1_ratio
@@ -138,6 +142,8 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
+        if not (0.0 <= self.quantile <= 1.0):
+            raise ValueError("quantile must be in [0, 1]")
         if not isinstance(self, SGDOneClassSVM) and self.alpha < 0.0:
             raise ValueError("alpha must be >= 0")
         if self.n_iter_no_change < 1:
@@ -176,6 +182,8 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             loss_class, args = loss_[0], loss_[1:]
             if loss in ("huber", "epsilon_insensitive", "squared_epsilon_insensitive"):
                 args = (self.epsilon,)
+            elif loss == "pinball":
+                args = (self.quantile,)
             return loss_class(*args)
         except KeyError as e:
             raise ValueError("The loss %s is not supported. " % loss) from e
@@ -501,6 +509,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
+        "pinball": (PinBall, DEFAULT_QUANTILE),
     }
 
     @abstractmethod
@@ -1327,6 +1336,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
+        "pinball": (PinBall, DEFAULT_QUANTILE),
     }
 
     @abstractmethod
@@ -1343,6 +1353,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         shuffle=True,
         verbose=0,
         epsilon=DEFAULT_EPSILON,
+        quantile=DEFAULT_QUANTILE,
         random_state=None,
         learning_rate="invscaling",
         eta0=0.01,
@@ -1364,6 +1375,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             shuffle=shuffle,
             verbose=verbose,
             epsilon=epsilon,
+            quantile=quantile,
             random_state=random_state,
             learning_rate=learning_rate,
             eta0=eta0,
@@ -1688,7 +1700,8 @@ class SGDRegressor(BaseSGDRegressor):
     ----------
     loss : str, default='squared_error'
         The loss function to be used. The possible values are 'squared_error',
-        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'
+        'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'
+        or 'pinball'
 
         The 'squared_error' refers to the ordinary least squares fit.
         'huber' modifies 'squared_error' to focus less on getting outliers
@@ -1697,6 +1710,7 @@ class SGDRegressor(BaseSGDRegressor):
         linear past that; this is the loss function used in SVR.
         'squared_epsilon_insensitive' is the same but becomes squared loss past
         a tolerance of epsilon.
+        'pinball' loss refers to qunatile regression.
 
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
@@ -1898,6 +1912,7 @@ class SGDRegressor(BaseSGDRegressor):
         shuffle=True,
         verbose=0,
         epsilon=DEFAULT_EPSILON,
+        quantile=DEFAULT_QUANTILE,
         random_state=None,
         learning_rate="invscaling",
         eta0=0.01,
@@ -1919,6 +1934,7 @@ class SGDRegressor(BaseSGDRegressor):
             shuffle=shuffle,
             verbose=verbose,
             epsilon=epsilon,
+            quantile=quantile,
             random_state=random_state,
             learning_rate=learning_rate,
             eta0=eta0,

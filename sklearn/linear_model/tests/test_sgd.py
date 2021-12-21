@@ -1454,6 +1454,13 @@ def test_loss_function_epsilon(klass):
     assert clf.loss_functions["huber"][1] == 0.1
 
 
+@pytest.mark.parametrize("klass", [SGDRegressor, SparseSGDRegressor])
+def test_loss_function_quantile(klass):
+    clf = klass(quantile=0.1, loss="pinball")
+    clf.set_params(quantile=0.95)
+    assert clf.loss_functions["pinball"][1] == 0.95
+
+
 ###############################################################################
 # SGD One Class SVM Test Case
 
@@ -2054,6 +2061,20 @@ def test_loss_squared_epsilon_insensitive():
     _test_loss_common(loss, cases)
 
 
+def test_loss_pinball():
+    # Test PinBall
+    loss = sgd_fast.PinBall(0.05)
+    cases = [
+        # (p, y, expected_loss, expected_dloss)
+        (0.0, 0.0, 0.0, 0.0),
+        (0.1, 0.0, 0.005, 0.05),
+        (0.0, 0.1, 0.095, -0.95),
+        (2.2, 2.0, 0.01, 0.05),
+        (2.0, -1.0, 0.15, 0.05),
+    ]
+    _test_loss_common(loss, cases)
+
+
 def test_multi_thread_multi_class_and_early_stopping():
     # This is a non-regression test for a bad interaction between
     # early stopping internal attribute and thread-based parallelism.
@@ -2144,3 +2165,21 @@ def test_loss_squared_loss_deprecated(Estimator):
         assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
     else:
         assert_allclose(est1.predict(X), est2.predict(X))
+
+
+def test_quantile():
+    X, y = datasets.make_regression(
+        n_samples=1000, n_features=10, n_informative=9, random_state=1234
+    )
+    from .._quantile import QuantileRegressor
+
+    benchmark = QuantileRegressor(alpha=1e-6, solver="highs").fit(X, y).score(X, y)
+
+    est = SGDRegressor(
+        alpha=1e-5,
+        loss="pinball",
+        quantile=0.5,
+        max_iter=50,
+        random_state=42,
+    ).fit(X, y)
+    assert est.score(X, y) + 0.2 > benchmark

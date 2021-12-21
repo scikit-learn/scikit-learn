@@ -362,6 +362,34 @@ cdef class SquaredEpsilonInsensitive(Regression):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
 
+cdef class PinBall(Regression):
+    """Pin ball loss used for quantile regression.
+
+    loss = q * max(p - y, 0) + (1 - q) * max(y - p, 0)
+    """
+
+    cdef double quantile
+
+    def __init__(self, double quantile):
+        self.quantile = quantile
+
+    cdef double loss(self, double p, double y) nogil:
+        cdef double ret = p - y
+        return self.quantile * ret if ret > 0\
+         else (self.quantile - 1) * ret
+
+    cdef double dloss(self, double p, double y) nogil:
+        if p - y > 0:
+            return self.quantile
+        elif p - y < 0:
+            return self.quantile - 1
+        else:
+            return 0
+
+    def __reduce__(self):
+        return PinBall, (self.quantile,)
+
+
 def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double intercept,
                np.ndarray[double, ndim=1, mode='c'] average_weights,
