@@ -272,6 +272,9 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
+-|Enhancement| :class:`linear_model.SGDRegressor` would support pinball loss now.
+  :pr: `22043` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
+
 :mod:`sklearn.metrics`
 ......................
 
