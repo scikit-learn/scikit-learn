@@ -79,7 +79,7 @@ class LinearModelLoss:
 
         Returns
         -------
-        w : ndarray of shape (n_features,) or (n_classes, n_features)
+        weights : ndarray of shape (n_features,) or (n_classes, n_features)
             Coefficients without intercept term.
         intercept : float or ndarray of shape (n_classes,)
             Intercept terms.
@@ -89,25 +89,25 @@ class LinearModelLoss:
         if not self._loss.is_multiclass:
             if self.fit_intercept:
                 intercept = coef[-1]
-                w = coef[:-1]
+                weights = coef[:-1]
             else:
                 intercept = 0.0
-                w = coef
-            raw_prediction = X @ w + intercept
+                weights = coef
+            raw_prediction = X @ weights + intercept
         else:
             # reshape to (n_classes, n_dof)
             if coef.ndim == 1:
-                w = coef.reshape((self._loss.n_classes, -1), order="F")
+                weights = coef.reshape((self._loss.n_classes, -1), order="F")
             else:
-                w = coef
+                weights = coef
             if self.fit_intercept:
-                intercept = w[:, -1]
-                w = w[:, :-1]
+                intercept = weights[:, -1]
+                weights = weights[:, :-1]
             else:
                 intercept = 0.0
-            raw_prediction = X @ w.T + intercept  # ndarray, likely C-contiguous
+            raw_prediction = X @ weights.T + intercept  # ndarray, likely C-contiguous
 
-        return w, intercept, raw_prediction
+        return weights, intercept, raw_prediction
 
     def loss(self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1):
         """Compute the loss as sum over point-wise losses.
@@ -135,7 +135,7 @@ class LinearModelLoss:
         loss : float
             Sum of losses per sample plus penalty.
         """
-        w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
+        weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
         loss = self._loss.loss(
             y_true=y,
@@ -145,7 +145,7 @@ class LinearModelLoss:
         )
         loss = loss.sum()
 
-        norm2_w = w @ w if w.ndim == 1 else squared_norm(w)
+        norm2_w = weights @ weights if weights.ndim == 1 else squared_norm(weights)
         return loss + 0.5 * l2_reg_strength * norm2_w
 
     def loss_gradient(
@@ -181,9 +181,9 @@ class LinearModelLoss:
         """
         n_features, n_classes = X.shape[1], self._loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
-        w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
+        weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
-        loss, gradient_per_sample = self._loss.loss_gradient(
+        loss, grad_per_sample = self._loss.loss_gradient(
             y_true=y,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -192,18 +192,18 @@ class LinearModelLoss:
         loss = loss.sum()
 
         if not self._loss.is_multiclass:
-            loss += 0.5 * l2_reg_strength * (w @ w)
+            loss += 0.5 * l2_reg_strength * (weights @ weights)
             grad = np.empty_like(coef, dtype=X.dtype)
-            grad[:n_features] = X.T @ gradient_per_sample + l2_reg_strength * w
+            grad[:n_features] = X.T @ grad_per_sample + l2_reg_strength * weights
             if self.fit_intercept:
-                grad[-1] = gradient_per_sample.sum()
+                grad[-1] = grad_per_sample.sum()
         else:
-            loss += 0.5 * l2_reg_strength * squared_norm(w)
+            loss += 0.5 * l2_reg_strength * squared_norm(weights)
             grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
-            # gradient_per_sample.shape = (n_samples, n_classes)
-            grad[:, :n_features] = gradient_per_sample.T @ X + l2_reg_strength * w
+            # grad_per_sample.shape = (n_samples, n_classes)
+            grad[:, :n_features] = grad_per_sample.T @ X + l2_reg_strength * weights
             if self.fit_intercept:
-                grad[:, -1] = gradient_per_sample.sum(axis=0)
+                grad[:, -1] = grad_per_sample.sum(axis=0)
             if coef.ndim == 1:
                 grad = grad.ravel(order="F")
 
@@ -239,9 +239,9 @@ class LinearModelLoss:
         """
         n_features, n_classes = X.shape[1], self._loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
-        w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
+        weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
-        gradient_per_sample = self._loss.gradient(
+        grad_per_sample = self._loss.gradient(
             y_true=y,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -250,16 +250,16 @@ class LinearModelLoss:
 
         if not self._loss.is_multiclass:
             grad = np.empty_like(coef, dtype=X.dtype)
-            grad[:n_features] = X.T @ gradient_per_sample + l2_reg_strength * w
+            grad[:n_features] = X.T @ grad_per_sample + l2_reg_strength * weights
             if self.fit_intercept:
-                grad[-1] = gradient_per_sample.sum()
+                grad[-1] = grad_per_sample.sum()
             return grad
         else:
             grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
             # gradient.shape = (n_samples, n_classes)
-            grad[:, :n_features] = gradient_per_sample.T @ X + l2_reg_strength * w
+            grad[:, :n_features] = grad_per_sample.T @ X + l2_reg_strength * weights
             if self.fit_intercept:
-                grad[:, -1] = gradient_per_sample.sum(axis=0)
+                grad[:, -1] = grad_per_sample.sum(axis=0)
             if coef.ndim == 1:
                 return grad.ravel(order="F")
             else:
@@ -299,7 +299,7 @@ class LinearModelLoss:
         """
         (n_samples, n_features), n_classes = X.shape, self._loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
-        w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
+        weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
         if not self._loss.is_multiclass:
             gradient, hessian = self._loss.gradient_hessian(
@@ -309,7 +309,7 @@ class LinearModelLoss:
                 n_threads=n_threads,
             )
             grad = np.empty_like(coef, dtype=X.dtype)
-            grad[:n_features] = X.T @ gradient + l2_reg_strength * w
+            grad[:n_features] = X.T @ gradient + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[-1] = gradient.sum()
 
@@ -356,7 +356,7 @@ class LinearModelLoss:
                 n_threads=n_threads,
             )
             grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
-            grad[:, :n_features] = gradient.T @ X + l2_reg_strength * w
+            grad[:, :n_features] = gradient.T @ X + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[:, -1] = gradient.sum(axis=0)
 
