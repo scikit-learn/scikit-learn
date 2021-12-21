@@ -51,6 +51,16 @@ struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
     return node;
 }
 
+double* set_sv_square(struct svm_node* SV, int l, BlasFunctions *blas_functions)
+{
+	double * result = (double*) malloc(l * sizeof(double));
+	int dim = SV[0].dim;
+
+	for(int i=0; i<l; i++){
+		result[i] = blas_functions->dot(dim, SV[i].values, 1, SV[i].values, 1);
+	}
+	return result;
+}
 
 /*
  * Fill an svm_parameter struct.
@@ -109,7 +119,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *support, npy_intp *support_dims,
                             npy_intp *sv_coef_strides,
                             char *sv_coef, char *rho, char *nSV,
-                            char *probA, char *probB)
+                            char *probA, char *probB, BlasFunctions *blas_functions)
 {
     struct svm_model *model;
     double *dsv_coef = (double *) sv_coef;
@@ -141,6 +151,11 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
         }
     } else {
         model->SV = dense_to_libsvm((double *) SV, SV_dims);
+        if(param->kernel_type == RBF) {
+            model->sv_square = set_sv_square(model->SV, SV_dims[0], blas_functions);
+        } else {
+            model->sv_square = NULL;
+        }
     }
     /*
      * regression and one-class does not use nSV, label.
@@ -362,6 +377,10 @@ int free_model(struct svm_model *model)
     /* like svm_free_and_destroy_model, but does not free sv_coef[i] */
     if (model == NULL) return -1;
     free(model->SV);
+
+    if(model->sv_square){
+        free(model->sv_square);
+    }
 
     /* We don't free sv_ind, since we did not create them in
        set_model */

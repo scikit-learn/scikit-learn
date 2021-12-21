@@ -70,9 +70,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "_svm_cython_blas_helpers.h"
 #include "../newrand/newrand.h"
 
-
 #ifndef _LIBSVM_CPP
-typedef float Qfloat;
+typedef double Qfloat;
 typedef signed char schar;
 #ifndef min
 template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }
@@ -299,6 +298,9 @@ public:
 
 	static double k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 				 const svm_parameter& param, BlasFunctions *blas_functions);
+#ifdef _DENSE_REP
+	static void k_gemv_function(int l, double param, const svm_node *x, double *SV, double* kvalue, BlasFunctions *blas_functions);
+#endif
 	virtual Qfloat *get_Q(int column, int len) const = 0;
 	virtual double *get_QD() const = 0;
 	virtual void swap_index(int i, int j) const	// no so const...
@@ -309,6 +311,29 @@ public:
 protected:
 
 	double (Kernel::*kernel_function)(int i, int j) const;
+#ifdef _DENSE_REP
+	void kernel_gemv_function(int index, double* data, int l1, int l2) const
+	{
+		int dim = x[index].dim;
+		int length = l1 + l2;
+
+		if(length < 1) return;
+
+		for(int j=0; j<length; j++) {
+            data[j] = x_square[index] + x_square[j];
+		}
+
+		m_blas->dscal(length, -gamma, data, 1);
+
+		if(l1 > 0)
+			m_blas->dgemv(RowMajor, NoTrans, l1, dim, 2.0*gamma, x[0].values, dim, x[index].values, 1, 1, data, 1);
+		if(l2 > 0)
+			m_blas->dgemv(RowMajor, NoTrans, l2, dim, 2.0*gamma, x[l1].values, dim, x[index].values, 1, 1, data+l1, 1);
+		for(int i=0; i<length; i++) {
+            data[i]= exp(data[i]);
+		}
+	}
+#endif
 
 private:
 #ifdef _DENSE_REP
@@ -523,6 +548,25 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			return 0;  // Unreachable 
 	}
 }
+
+#ifdef _DENSE_REP
+void Kernel::k_gemv_function(int length, double gamma, const svm_node *x, double *SV, double* kvalue, BlasFunctions *blas_functions){
+	int dim = x->dim;
+
+	double sumx = blas_functions->dot(dim, x[0].values, 1, x[0].values, 1);
+	for(int j=0; j<length; j++){
+		kvalue[j] += sumx;
+	}
+
+	blas_functions->dscal(length, -gamma, kvalue, 1);
+	blas_functions->dgemv(RowMajor, NoTrans, length, dim, 2.0*gamma, SV, dim, x[0].values, 1, 1, kvalue, 1);
+
+	for(int i =0; i<length; i++){
+		kvalue[i]= exp(kvalue[i]);
+	}
+}
+#endif
+
 // An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
 // Solves:
 //
@@ -1423,17 +1467,38 @@ public:
 		QD = new double[prob.l];
 		for(int i=0;i<prob.l;i++)
 			QD[i] = (this->*kernel_function)(i,i);
+#ifdef _DENSE_REP
+		this->shrinking = param.shrinking;
+		this->l1 = prob.l1;
+		this->l2 = prob.l2;
+		this->kernel_type = param.kernel_type;
+#endif
 	}
 	
 	Qfloat *get_Q(int i, int len) const
 	{
 		Qfloat *data;
 		int start, j;
-		if((start = cache->get_data(i,&data,len)) < len)
-		{
-			for(j=start;j<len;j++)
-				data[j] = (Qfloat)(y[i]*y[j]*(this->*kernel_function)(i,j));
+
+		start = cache->get_data(i, &data, len);
+#ifdef _DENSE_REP
+		if (shrinking==0 && kernel_type==RBF) {
+            if (start < len) {
+                kernel_gemv_function(i, data, l1, l2);
+                for(j=start; j<len; j++) {
+                    data[j] = (Qfloat)(y[i] * y[j] * data[j]);
+				}
+			}
+		}else{
+#endif
+			if(start < len) {
+                for(j=start; j<len; j++) {
+                    data[j] = (Qfloat)(y[i] * y[j] * (this->*kernel_function)(i,j));
+				}
+			}
+#ifdef _DENSE_REP
 		}
+#endif
 		return data;
 	}
 
@@ -1457,6 +1522,12 @@ public:
 		delete[] QD;
 	}
 private:
+#ifdef _DENSE_REP
+    int shrinking;
+    int l1;
+    int l2;
+    int kernel_type;
+#endif
 	schar *y;
 	Cache *cache;
 	double *QD;
@@ -2319,18 +2390,25 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 
 // Remove zero weighed data as libsvm and some liblinear solvers require C > 0.
 //
-static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob) 
+static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob, bool compress_flag)
 {
 	int i;
 	int l = 0;
 	for(i=0;i<prob->l;i++)
 		if(prob->W[i] > 0) l++;
-	*newprob = *prob;
 	newprob->l = l;
+
+	if (l == prob->l) {  // No data line removed, fall back to use the original prob
+		newprob->y = NULL;
+		newprob->W = NULL;
+		newprob->x = NULL;
+		return;
+	}
+
 #ifdef _DENSE_REP
 	newprob->x = Malloc(PREFIX(node),l);
 #else
-      	newprob->x = Malloc(PREFIX(node) *,l);
+	newprob->x = Malloc(PREFIX(node) *,l);
 #endif
 	newprob->y = Malloc(double,l);
 	newprob->W = Malloc(double,l);
@@ -2344,7 +2422,79 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 			newprob->W[j] = prob->W[i];
 			j++;
 		}
+
+#ifdef _DENSE_REP
+	if (compress_flag == true) {
+		int dim = prob->x[0].dim;
+		int zero_w_count = 0;
+		int i = 0;
+		while (i<prob->l) {
+			while(i < prob->l && prob->W[i] > 0) {i++;}  // Find next 0 entry
+
+			i++;
+			while(i < prob->l && prob->W[i] > 0) {
+				memcpy(prob->x[i].values, prob->x[i-1-zero_w_count].values, dim*sizeof(double));
+				prob->x[i-1-zero_w_count].dim = prob->x[i].dim;
+				prob->x[i-1-zero_w_count].ind = prob->x[i].ind;
+				prob->y[i-1-zero_w_count] = prob->y[i];
+				prob->W[i-1-zero_w_count] = prob->W[i];
+				i++;
+			}
+			zero_w_count++;
+		}
+
+		for(i=0;i<newprob->l;i++) {
+			newprob->x[i] = prob->x[i];
+			newprob->y[i] = prob->y[i];
+			newprob->W[i] = prob->W[i];
+		}
+	}
+#endif
 }
+
+#ifdef _DENSE_REP
+static void perm_sort(svm_node *x, int *perm, int length)
+{
+    int dim = x[0].dim;
+    int reorder_flag[length] = {0};
+    int reorder_link[length];
+    int reverse_perm[length];
+
+    double * reorder_buffer = new double[dim];
+
+    // Generate the reversed perm map
+    for(int i=0; i<length; i++) {
+        reverse_perm[perm[i]] = i;
+    }
+
+    for(int i=0; i<length; i++) {
+        // Find the first not reordered element
+        if (reorder_flag[i] == 0 && reverse_perm[i] != i) {
+            int index_link = 0;
+            int index_r_perm = i;
+
+            memcpy(reorder_buffer, x[i].values, dim*sizeof(double));
+            while (1) {
+                reorder_link[index_link++] = index_r_perm;
+                reorder_flag[index_r_perm] = 1;
+                index_r_perm = reverse_perm[index_r_perm];
+                if (index_r_perm == i) {
+                    index_link --;
+                    break;
+                }
+            }
+
+            memcpy(x[reorder_link[0]].values, x[reorder_link[index_link]].values, dim*sizeof(double));
+            for (; index_link > 1; index_link--) {
+                memcpy(x[reorder_link[index_link]].values, x[reorder_link[index_link-1]].values, dim*sizeof(double));
+            }
+            memcpy(x[reorder_link[1]].values, reorder_buffer, dim*sizeof(double));
+        }
+    }
+
+    delete[] reorder_buffer;
+}
+#endif
 
 //
 // Interface functions
@@ -2353,8 +2503,8 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
         int *status, BlasFunctions *blas_functions)
 {
 	PREFIX(problem) newprob;
-	remove_zero_weight(&newprob, prob);
-	prob = &newprob;
+	remove_zero_weight(&newprob, prob, true);
+	if (newprob.l != prob->l) {prob = &newprob;}
 
 	PREFIX(model) *model = Malloc(PREFIX(model),1);
 	model->param = *param;
@@ -2422,21 +2572,25 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		int *count = NULL;
 		int *perm = Malloc(int,l);
 
-		// group training data of the same class
-                NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);		
+        // group training data of the same class
+        NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);
 #ifdef _DENSE_REP
+        perm_sort(prob->x, perm, l);
 		PREFIX(node) *x = Malloc(PREFIX(node),l);
 #else
 		PREFIX(node) **x = Malloc(PREFIX(node) *,l);
 #endif
-                double *W = Malloc(double, l);
+        double *W = Malloc(double, l);
 
-		int i;
-		for(i=0;i<l;i++)
-                {
-			x[i] = prob->x[perm[i]];
-			W[i] = prob->W[perm[i]];
-                }
+        int i;
+        for(i=0;i<l;i++) {
+#ifdef _DENSE_REP
+            x[i] = prob->x[i];
+#else
+            x[i] = prob->x[perm[i]];
+#endif
+            W[i] = prob->W[perm[i]];
+        }
 
 		// calculate weighted C
 
@@ -2478,6 +2632,8 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 				int ci = count[i], cj = count[j];
 				sub_prob.l = ci+cj;
 #ifdef _DENSE_REP
+				sub_prob.l1 = ci;
+				sub_prob.l2 = cj;
 				sub_prob.x = Malloc(PREFIX(node),sub_prob.l);
 #else
 				sub_prob.x = Malloc(PREFIX(node) *,sub_prob.l);
@@ -2829,11 +2985,24 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		int l = model->l;
 		
 		double *kvalue = Malloc(double,l);
-		for(i=0;i<l;i++)
 #ifdef _DENSE_REP
-                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
+        int kernel_type = model->param.kernel_type;
+        if(kernel_type != RBF) {
+#endif
+		    for(i=0; i<l; i++) {
+#ifdef _DENSE_REP
+                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
 #else
                 kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param,blas_functions);
+#endif
+			}
+#ifdef _DENSE_REP
+		} else {
+            for(int i=0; i<l; i++) {
+                kvalue[i] = model->sv_square[i];
+            }
+            NAMESPACE::Kernel::k_gemv_function(l, model->param.gamma, x, model->SV[0].values, kvalue, blas_functions);
+		}
 #endif
 
 		int *start = Malloc(int,nr_class);
@@ -3122,7 +3291,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	{
 		PREFIX(problem) newprob;
 		// filter samples with negative and null weights 
-		remove_zero_weight(&newprob, prob);
+		remove_zero_weight(&newprob, prob, false);
 
 		char* msg = NULL;
 		// all samples were removed

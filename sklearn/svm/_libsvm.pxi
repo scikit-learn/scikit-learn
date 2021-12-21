@@ -2,9 +2,14 @@
 # Includes
 cdef extern from "_svm_cython_blas_helpers.h":
     ctypedef double (*dot_func)(int, double*, int, double*, int)
+    ctypedef void (*dscal_func)(int, double, double*, int)
+    ctypedef void (*dgemv_func)(BLAS_Order, BLAS_Trans, int, int, double,
+                double *, int, double *, int,
+                double, double *, int);
     cdef struct BlasFunctions:
         dot_func dot
-
+        dscal_func dscal
+        dgemv_func dgemv
 
 cdef extern from "svm.h":
     cdef struct svm_node
@@ -32,6 +37,8 @@ cdef extern from "svm.h":
 
     cdef struct svm_problem:
         int l
+        int l1
+        int l2
         double *y
         svm_node *x
         double *W # instance weights
@@ -53,7 +60,8 @@ cdef extern from "libsvm_helper.c":
 
     svm_model *set_model (svm_parameter *, int, char *, np.npy_intp *,
                          char *, np.npy_intp *, np.npy_intp *, char *,
-                         char *, char *, char *, char *)
+                         char *, char *, char *, char *,
+                         BlasFunctions *)
 
     void copy_sv_coef   (char *, svm_model *)
     void copy_intercept (char *, svm_model *, np.npy_intp *)
