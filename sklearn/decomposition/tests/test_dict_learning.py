@@ -682,26 +682,22 @@ def test_dict_learning_dtype_match(data_type, expected_type, method):
 @pytest.mark.parametrize("method", ("lars", "cd"))
 def test_dict_learning_numerical_consistency(method):
     # verify numerically consistent among np.float32 and np.float64
-    rtol = 1e-7
-    atol = 1e-7
-    rng = np.random.RandomState(0)
-    n_components = 6
-    # The larger alpha, the more sparsity,
-    # as a result likely to achieve tolerance error.
-    alpha = 4
+    rtol = 1e-6
+    n_components = 4
+    alpha = 2
 
     U_64, V_64, _ = dict_learning(
         X.astype(np.float64),
         n_components=n_components,
         alpha=alpha,
-        random_state=rng,
+        random_state=0,
         method=method,
     )
     U_32, V_32, _ = dict_learning(
         X.astype(np.float32),
         n_components=n_components,
         alpha=alpha,
-        random_state=rng,
+        random_state=0,
         method=method,
     )
 
@@ -711,9 +707,12 @@ def test_dict_learning_numerical_consistency(method):
     # as long as holding UV.
     # So here UV, ||U||_1,1 and sum(||V_k||_2^2) are verified
     # instead of comparing directory U and V.
-    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol, atol=atol)
-    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol, atol=atol)
-    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol, atol=atol)
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
+    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol)
+    # verify an obtained solution is not degenerate
+    assert np.mean(U_64 != 0.0) > 0.05
+    assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
@@ -744,26 +743,22 @@ def test_dict_learning_online_dtype_match(data_type, expected_type, method):
 @pytest.mark.parametrize("method", ("lars", "cd"))
 def test_dict_learning_online_numerical_consistency(method):
     # verify numerically consistent among np.float32 and np.float64
-    rtol = 1e-6
-    atol = 1e-6
-    rng = np.random.RandomState(0)
-    n_components = 8
-    # The larger alpha, the more sparsity,
-    # as a result likely to achieve tolerance error.
-    alpha = 4
+    rtol = 1e-4
+    n_components = 4
+    alpha = 1
 
     U_64, V_64 = dict_learning_online(
         X.astype(np.float64),
         n_components=n_components,
         alpha=alpha,
-        random_state=rng,
+        random_state=0,
         method=method,
     )
     U_32, V_32 = dict_learning_online(
         X.astype(np.float32),
         n_components=n_components,
         alpha=alpha,
-        random_state=rng,
+        random_state=0,
         method=method,
     )
 
@@ -773,9 +768,12 @@ def test_dict_learning_online_numerical_consistency(method):
     # as long as holding UV.
     # So here UV, ||U||_1,1 and sum(||V_k||_2) are verified
     # instead of comparing directory U and V.
-    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol, atol=atol)
-    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol, atol=atol)
-    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol, atol=atol)
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
+    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol)
+    # verify an obtained solution is not degenerate
+    assert np.mean(U_64 != 0.0) > 0.05
+    assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
 
 
 @pytest.mark.parametrize(
