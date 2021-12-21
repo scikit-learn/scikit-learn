@@ -20,7 +20,6 @@ import scipy.sparse
 
 from .. import get_config
 from libc.stdlib cimport free, malloc
-from libc.stdio cimport printf
 from libc.float cimport DBL_MAX
 from cython cimport final
 from cython.parallel cimport parallel, prange
