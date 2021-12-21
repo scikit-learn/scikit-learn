@@ -2808,6 +2808,11 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None, labels=None)
     score : float
         Brier score loss.
 
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier score
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+
     Examples
     --------
     >>> from sklearn.metrics import multiclass_brier_score_loss
@@ -2818,11 +2823,6 @@ def multiclass_brier_score_loss(y_true, y_prob, sample_weight=None, labels=None)
     ...                                                       [.2, .7, .1],
     ...                                                       [.2, .2, .6]])
     0.146...
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Brier score
-            <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
     y_true = column_or_1d(y_true)
 
