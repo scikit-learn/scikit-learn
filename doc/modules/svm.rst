@@ -623,7 +623,7 @@ misclassified or within the margin boundary. Ideally, the value :math:`y_i
 (w^T \phi (x_i) + b)` would be :math:`\geq 1` for all samples, which
 indicates a perfect prediction. But problems are usually not always perfectly
 separable with a hyperplane, so we allow some samples to be at a distance :math:`\zeta_i` from
-their correct margin boundary. The penalty term `C` controls the strengh of
+their correct margin boundary. The penalty term `C` controls the strength of
 this penalty, and as a result, acts as an inverse regularization parameter
 (see note below).
 
@@ -677,7 +677,7 @@ The primal problem can be equivalently formulated as
 
 .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, y_i (w^T \phi(x_i) + b)),
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
 
 where we make use of the `hinge loss
 <https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is

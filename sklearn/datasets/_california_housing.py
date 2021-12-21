@@ -21,7 +21,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists
 from os import makedirs, remove
 import tarfile
 
@@ -35,24 +35,24 @@ from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
 ARCHIVE = RemoteFileMetadata(
-    filename='cal_housing.tgz',
-    url='https://ndownloader.figshare.com/files/5976036',
-    checksum=('aaa5c9a6afe2225cc2aed2723682ae40'
-              '3280c4a3695a2ddda4ffb5d8215ea681'))
+    filename="cal_housing.tgz",
+    url="https://ndownloader.figshare.com/files/5976036",
+    checksum="aaa5c9a6afe2225cc2aed2723682ae403280c4a3695a2ddda4ffb5d8215ea681",
+)
 
 logger = logging.getLogger(__name__)
 
 
-@_deprecate_positional_args
-def fetch_california_housing(*, data_home=None, download_if_missing=True,
-                             return_X_y=False, as_frame=False):
+def fetch_california_housing(
+    *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
+):
     """Load the California housing dataset (regression).
 
     ==============   ==============
@@ -102,7 +102,7 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : list of length 8
             Array of ordered feature names used in the dataset.
-        DESCR : string
+        DESCR : str
             Description of the California housing dataset.
         frame : pandas DataFrame
             Only present when `as_frame=True`. DataFrame with ``data`` and
@@ -123,20 +123,21 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
     if not exists(data_home):
         makedirs(data_home)
 
-    filepath = _pkl_filepath(data_home, 'cal_housing.pkz')
+    filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        logger.info('Downloading Cal. housing from {} to {}'.format(
-            ARCHIVE.url, data_home))
+        logger.info(
+            "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
+        )
 
         archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
 
         with tarfile.open(mode="r:gz", name=archive_path) as f:
             cal_housing = np.loadtxt(
-                f.extractfile('CaliforniaHousing/cal_housing.data'),
-                delimiter=',')
+                f.extractfile("CaliforniaHousing/cal_housing.data"), delimiter=","
+            )
             # Columns are not in the same order compared to the previous
             # URL resource on lib.stat.cmu.edu
             columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
@@ -148,8 +149,16 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
     else:
         cal_housing = joblib.load(filepath)
 
-    feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
-                     "Population", "AveOccup", "Latitude", "Longitude"]
+    feature_names = [
+        "MedInc",
+        "HouseAge",
+        "AveRooms",
+        "AveBedrms",
+        "Population",
+        "AveOccup",
+        "Latitude",
+        "Longitude",
+    ]
 
     target, data = cal_housing[:, 0], cal_housing[:, 1:]
 
@@ -165,28 +174,28 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
     # target in units of 100,000
     target = target / 100000.0
 
-    module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'california_housing.rst')) as dfile:
-        descr = dfile.read()
+    descr = load_descr("california_housing.rst")
 
     X = data
     y = target
 
     frame = None
-    target_names = ["MedHouseVal", ]
+    target_names = [
+        "MedHouseVal",
+    ]
     if as_frame:
-        frame, X, y = _convert_data_dataframe("fetch_california_housing",
-                                              data,
-                                              target,
-                                              feature_names,
-                                              target_names)
+        frame, X, y = _convert_data_dataframe(
+            "fetch_california_housing", data, target, feature_names, target_names
+        )
 
     if return_X_y:
         return X, y
 
-    return Bunch(data=X,
-                 target=y,
-                 frame=frame,
-                 target_names=target_names,
-                 feature_names=feature_names,
-                 DESCR=descr)
+    return Bunch(
+        data=X,
+        target=y,
+        frame=frame,
+        target_names=target_names,
+        feature_names=feature_names,
+        DESCR=descr,
+    )

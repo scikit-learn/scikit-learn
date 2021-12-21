@@ -38,7 +38,7 @@ git remote --verbose
 
 # Travis does the git clone with a limited depth (50 at the time of
 # writing). This may not be enough to find the common ancestor with
-# $REMOTE/master so we unshallow the git checkout
+# $REMOTE/main so we unshallow the git checkout
 if [[ -a .git/shallow ]]; then
     echo -e '\nTrying to unshallow the repo:'
     echo '--------------------------------------------------------------------------------'
@@ -59,7 +59,7 @@ if [[ "$TRAVIS" == "true" ]]; then
         fi
     else
         # We want to fetch the code as it is in the PR branch and not
-        # the result of the merge into master. This way line numbers
+        # the result of the merge into main. This way line numbers
         # reported by Travis will match with the local code.
         LOCAL_BRANCH_REF=travis_pr_$TRAVIS_PULL_REQUEST
         # In Travis the PR target is always origin
@@ -68,7 +68,7 @@ if [[ "$TRAVIS" == "true" ]]; then
 fi
 
 # If not using the commit range from Travis we need to find the common
-# ancestor between $LOCAL_BRANCH_REF and $REMOTE/master
+# ancestor between $LOCAL_BRANCH_REF and $REMOTE/main
 if [[ -z "$COMMIT_RANGE" ]]; then
     if [[ -z "$LOCAL_BRANCH_REF" ]]; then
         LOCAL_BRANCH_REF=$(git rev-parse --abbrev-ref HEAD)
@@ -77,16 +77,16 @@ if [[ -z "$COMMIT_RANGE" ]]; then
     echo '--------------------------------------------------------------------------------'
     git --no-pager log -2 $LOCAL_BRANCH_REF
 
-    REMOTE_MASTER_REF="$REMOTE/master"
-    # Make sure that $REMOTE_MASTER_REF is a valid reference
-    echo -e "\nFetching $REMOTE_MASTER_REF"
+    REMOTE_MAIN_REF="$REMOTE/main"
+    # Make sure that $REMOTE_MAIN_REF is a valid reference
+    echo -e "\nFetching $REMOTE_MAIN_REF"
     echo '--------------------------------------------------------------------------------'
-    git fetch $REMOTE master:refs/remotes/$REMOTE_MASTER_REF
+    git fetch $REMOTE main:refs/remotes/$REMOTE_MAIN_REF
     LOCAL_BRANCH_SHORT_HASH=$(git rev-parse --short $LOCAL_BRANCH_REF)
-    REMOTE_MASTER_SHORT_HASH=$(git rev-parse --short $REMOTE_MASTER_REF)
+    REMOTE_MAIN_SHORT_HASH=$(git rev-parse --short $REMOTE_MAIN_REF)
 
-    COMMIT=$(git merge-base $LOCAL_BRANCH_REF $REMOTE_MASTER_REF) || \
-        echo "No common ancestor found for $(git show $LOCAL_BRANCH_REF -q) and $(git show $REMOTE_MASTER_REF -q)"
+    COMMIT=$(git merge-base $LOCAL_BRANCH_REF $REMOTE_MAIN_REF) || \
+        echo "No common ancestor found for $(git show $LOCAL_BRANCH_REF -q) and $(git show $REMOTE_MAIN_REF -q)"
 
     if [ -z "$COMMIT" ]; then
         exit 1
@@ -95,7 +95,7 @@ if [[ -z "$COMMIT_RANGE" ]]; then
     COMMIT_SHORT_HASH=$(git rev-parse --short $COMMIT)
 
     echo -e "\nCommon ancestor between $LOCAL_BRANCH_REF ($LOCAL_BRANCH_SHORT_HASH)"\
-         "and $REMOTE_MASTER_REF ($REMOTE_MASTER_SHORT_HASH) is $COMMIT_SHORT_HASH:"
+         "and $REMOTE_MAIN_REF ($REMOTE_MAIN_SHORT_HASH) is $COMMIT_SHORT_HASH:"
     echo '--------------------------------------------------------------------------------'
     git --no-pager show --no-patch $COMMIT_SHORT_HASH
 

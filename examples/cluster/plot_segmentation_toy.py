@@ -23,8 +23,8 @@ a Voronoi partition of the graph.
 In addition, we use the mask of the objects to restrict the graph to the
 outline of the objects. In this example, we are interested in
 separating the objects one from the other, and not from the background.
+
 """
-print(__doc__)
 
 # Authors:  Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #           Gael Varoquaux <gael.varoquaux@normalesup.org>
@@ -73,8 +73,8 @@ graph.data = np.exp(-graph.data / graph.data.std())
 
 # Force the solver to be arpack, since amg is numerically
 # unstable on this example
-labels = spectral_clustering(graph, n_clusters=4, eigen_solver='arpack')
-label_im = np.full(mask.shape, -1.)
+labels = spectral_clustering(graph, n_clusters=4, eigen_solver="arpack")
+label_im = np.full(mask.shape, -1.0)
 label_im[mask] = labels
 
 plt.matshow(img)
@@ -91,8 +91,8 @@ img += 1 + 0.2 * np.random.randn(*img.shape)
 graph = image.img_to_graph(img, mask=mask)
 graph.data = np.exp(-graph.data / graph.data.std())
 
-labels = spectral_clustering(graph, n_clusters=2, eigen_solver='arpack')
-label_im = np.full(mask.shape, -1.)
+labels = spectral_clustering(graph, n_clusters=2, eigen_solver="arpack")
+label_im = np.full(mask.shape, -1.0)
 label_im[mask] = labels
 
 plt.matshow(img)
