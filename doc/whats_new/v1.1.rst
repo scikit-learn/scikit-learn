@@ -332,7 +332,14 @@ Changelog
   to train and pickle the model on 64 bit machine and load the model on a 32
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
 
-Code and Documentation Contributors
+:mod:`sklearn.model_selection`
+...................
+
+- |Bug| return of the different combination of hyper-parameters based on the index when they have same rank
+- |Fix| This implementation fixes the ranking issue and returns the best hyper-parameters combination in consistent manner using grid/randomized search cv when mean_test_scores and rank are same. Since best_params_ in all search algorithms is supposed to return only one combination of hyper-parameters, keeping that in mind, my approach was to sort the hyper-parameters combination having same mean test score and rank 1 in lexicographical order and return the top most. :pr:`21925` by :user:`Nivi09e>`.
+
+
+  Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of
