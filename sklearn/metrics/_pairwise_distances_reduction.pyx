@@ -116,6 +116,26 @@ cdef class PairwiseDistancesReduction:
 
         See _openmp_effective_n_threads, for details about
         the specification of n_threads.
+
+    strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
+        The chunking strategy defining which dataset parallelization are made on.
+
+        Strategies differs on the dispatching they use for chunks on threads:
+
+          - 'parallel_on_X' dispatches chunks of X uniformly on threads.
+          Each thread then iterates on all the chunks of Y. This strategy is
+          embarrassingly parallel and comes with no datastructures synchronisation.
+
+          - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+          Each thread then iterates on all the chunks of X. This strategy is
+          embarrassingly parallel but uses intermediate datastructures
+          synchronisation.
+
+          - 'auto' relies on a simple heuristic to choose between
+          'parallel_on_X' and 'parallel_on_Y'.
+
+          - None (default) looks-up in scikit-learn configuration for
+          `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
     """
 
     cdef:
@@ -127,6 +147,8 @@ cdef class PairwiseDistancesReduction:
 
         ITYPE_t n_samples_X, X_n_samples_chunk, X_n_chunks, X_n_samples_remainder
         ITYPE_t n_samples_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_remainder
+
+        bint execute_in_parallel_on_Y
 
     @classmethod
     def valid_metrics(cls) -> List[str]:
@@ -177,6 +199,7 @@ cdef class PairwiseDistancesReduction:
         DatasetsPair datasets_pair,
         chunk_size=None,
         n_threads=None,
+        strategy='auto',
      ):
         cdef:
             ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
@@ -204,35 +227,31 @@ cdef class PairwiseDistancesReduction:
         self.X_n_chunks = X_n_full_chunks + (self.X_n_samples_remainder != 0)
         self.Y_n_chunks = Y_n_full_chunks + (self.Y_n_samples_remainder != 0)
 
+        if strategy is None:
+            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
+
+        if strategy not in ('parallel_on_X', 'parallel_on_Y', 'auto'):
+            raise RuntimeError(f"strategy must be 'parallel_on_X, 'parallel_on_Y', "
+                               f"or 'auto', but currently strategy='{self.strategy}'.")
+
+        if strategy == 'auto':
+            # This is a simple heuristic whose constant for the
+            # comparison has been chosen based on experiments.
+            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_samples_X:
+                strategy = 'parallel_on_X'
+            else:
+                strategy = 'parallel_on_Y'
+
+        self.execute_in_parallel_on_Y = strategy == "parallel_on_Y"
+
     def _compute(
         self,
-        str strategy=None,
         bint return_distance=False,
     ):
         """Compute the pairwise distances and the reduction of vectors (rows) of X on Y.
 
         Parameters
         ----------
-        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
-            The chunking strategy defining which dataset parallelization are made on.
-
-            Strategies differs on the dispatching they use for chunks on threads:
-
-              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
-              Each thread then iterates on all the chunks of Y. This strategy is
-              embarrassingly parallel and comes with no datastructures synchronisation.
-
-              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-              Each thread then iterates on all the chunks of X. This strategy is
-              embarrassingly parallel but uses intermediate datastructures
-              synchronisation.
-
-              - 'auto' relies on a simple heuristic to choose between
-              'parallel_on_X' and 'parallel_on_Y'.
-
-              - None (default) looks-up in scikit-learn configuration for
-              `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
-
         return_distance : boolean, default=False
             Return distances between each X vector and its
             argkmin if set to True.
@@ -243,27 +262,13 @@ cdef class PairwiseDistancesReduction:
         the samples of Y selected by the reduction function.
         """
 
-        if strategy is None:
-            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
-
-        if strategy == 'auto':
-            # This is a simple heuristic whose constant for the
-            # comparison has been chosen based on experiments.
-            if 4 * self.chunk_size * self.effective_omp_n_thread < self.n_samples_X:
-                strategy = 'parallel_on_X'
-            else:
-                strategy = 'parallel_on_Y'
-
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in GEMM for instance).
         with threadpool_limits(limits=1, user_api="blas"):
-            if strategy == 'parallel_on_Y':
+            if self.execute_in_parallel_on_Y:
                 self._parallel_on_Y()
-            elif strategy == 'parallel_on_X':
-                self._parallel_on_X()
             else:
-                raise RuntimeError(f"strategy must be 'parallel_on_X, 'parallel_on_Y', "
-                                   f"or 'auto', but currently strategy='{strategy}'.")
+                self._parallel_on_X()
 
         return self._finalize_results(return_distance)
 
@@ -623,6 +628,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 X=X, Y=Y, k=k,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
+                strategy=strategy,
                 metric_kwargs=metric_kwargs,
             )
         else: # Fall back on the default
@@ -630,9 +636,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                 k=k,
                 chunk_size=chunk_size,
+                strategy=strategy,
             )
 
-        return pda._compute(strategy=strategy, return_distance=return_distance)
+        return pda._compute(return_distance=return_distance)
 
     def __init__(
         self,
@@ -640,8 +647,9 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         ITYPE_t k,
         chunk_size=None,
         n_threads=None,
+        strategy='auto',
     ):
-        super().__init__(datasets_pair, chunk_size, n_threads)
+        super().__init__(datasets_pair, chunk_size, n_threads, strategy)
 
         self.k = check_scalar(k, "k", Integral, min_val=1)
 
@@ -877,6 +885,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         ITYPE_t k,
         bint use_squared_distances=False,
         chunk_size=None,
+        strategy='auto',
         metric_kwargs=None,
     ):
         if metric_kwargs is not None and len(metric_kwargs) > 0:
