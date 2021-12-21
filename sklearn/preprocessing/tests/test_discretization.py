@@ -16,16 +16,17 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 
 
 @pytest.mark.parametrize(
-    "strategy, expected",
+    "strategy, expected, sample_weight",
     [
-        ("uniform", [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]]),
-        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]]),
-        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]]),
+        ("uniform", [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]], None),
+        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]], None),
+        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]], None),
+        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]], [0.25, 0.25, 0.50]),
     ],
 )
-def test_fit_transform(strategy, expected):
+def test_fit_transform(strategy, expected, sample_weight):
     est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
-    est.fit(X)
+    est.fit(X, sample_weight=sample_weight)
     assert_array_equal(expected, est.transform(X))
 
 
@@ -92,17 +93,19 @@ def test_invalid_n_bins_array():
 
 
 @pytest.mark.parametrize(
-    "strategy, expected",
+    "strategy, expected, sample_weight",
     [
-        ("uniform", [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]]),
-        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]]),
-        ("quantile", [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]]),
+        ("uniform", [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]], None),
+        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]], None),
+        ("quantile", [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]], None),
+        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 2, 2], [1, 2, 2, 3]], [
+         [0.25, 0.75], [0.25, 0.50, 0.25], [0.25, 0.25, 0.50], [0.25, 0.25, 0.25, 0.25]]),
     ],
 )
-def test_fit_transform_n_bins_array(strategy, expected):
+def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
     est = KBinsDiscretizer(
         n_bins=[2, 3, 3, 3], encode="ordinal", strategy=strategy
-    ).fit(X)
+    ).fit(X, sample_weight=sample_weight)
     assert_array_equal(expected, est.transform(X))
 
     # test the shape of bin_edges_
