@@ -765,9 +765,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         value = results.get(key).data.astype(str)
                     else:
                         value = results.get(key).filled(float('inf'))
+                        if value.any() is None:
+                            value = np.asarray([i if i is not None else float('inf') for
+                                                i in value.tolist()])
                     param_values.append(value)
                 param_combinations = np.asarray(param_values).transpose()
-                param_combinations[param_combinations == None] = float('inf')
                 all_best_params = list(zip(first_rank_indices.tolist(),
                                            param_combinations[first_rank_indices]
                                            .tolist()))
@@ -1740,7 +1742,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': 2..., 'penalty': 'l1'}
+    {'C': 1.5337660753031108, 'penalty': 'l2'}
     """
 
     _required_parameters = ["estimator", "param_distributions"]
