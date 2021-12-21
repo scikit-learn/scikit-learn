@@ -1377,7 +1377,7 @@ def check_scalar(
         The minimum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
-    max_val : float or int, default=False
+    max_val : float or int, default=None
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
@@ -1385,11 +1385,14 @@ def check_scalar(
         Whether the interval defined by `min_val` and `max_val` should include
         the boundaries. Possible choices are:
 
-        - `"left"`: only `min_val` is included in the valid interval;
-        - `"right"`: only `max_val` is included in the valid interval;
-        - `"both"`: `min_val` and `max_val` are included in the valid interval;
+        - `"left"`: only `min_val` is included in the valid interval.
+          It is equivalent to the interval `[ min_val, max_val )`.
+        - `"right"`: only `max_val` is included in the valid interval.
+          It is equivalent to the interval `( min_val, max_val ]`.
+        - `"both"`: `min_val` and `max_val` are included in the valid interval.
+          It is equivalent to the interval `[ min_val, max_val ]`.
         - `"neither"`: neither `min_val` nor `max_val` are included in the
-          valid interval.
+          valid interval. It is equivalent to the interval `( min_val, max_val )`.
 
     Returns
     -------
