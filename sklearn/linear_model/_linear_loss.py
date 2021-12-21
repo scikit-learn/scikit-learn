@@ -145,10 +145,8 @@ class LinearModelLoss:
         )
         loss = loss.sum()
 
-        if w.ndim == 1:
-            return loss + 0.5 * l2_reg_strength * (w @ w)
-        else:
-            return loss + 0.5 * l2_reg_strength * squared_norm(w)
+        norm2_w = w @ w if w.ndim == 1 else squared_norm(w)
+        return loss + 0.5 * l2_reg_strength * norm2_w
 
     def loss_gradient(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
