@@ -18,11 +18,13 @@ from sklearn.datasets._openml import (
     _open_openml_url,
     _arff,
     _DATA_FILE,
-    _convert_arff_data,
-    _convert_arff_data_dataframe,
     _get_data_description_by_id,
     _get_local_path,
     _retry_with_clean_cache,
+)
+from sklearn.datasets._arff_parser import (
+    _convert_arff_data,
+    _convert_arff_data_dataframe,
     _feature_to_dtype,
 )
 from sklearn.utils import is_scalar_nan
