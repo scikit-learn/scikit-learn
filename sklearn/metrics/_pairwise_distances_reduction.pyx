@@ -199,7 +199,7 @@ cdef class PairwiseDistancesReduction:
         DatasetsPair datasets_pair,
         chunk_size=None,
         n_threads=None,
-        strategy='auto',
+        strategy=None,
      ):
         cdef:
             ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
@@ -649,7 +649,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         ITYPE_t k,
         chunk_size=None,
         n_threads=None,
-        strategy='auto',
+        strategy=None,
     ):
         super().__init__(datasets_pair, chunk_size, n_threads, strategy)
 
@@ -883,7 +883,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         ITYPE_t k,
         bint use_squared_distances=False,
         chunk_size=None,
-        strategy='auto',
+        strategy=None,
         metric_kwargs=None,
     ):
         if metric_kwargs is not None and len(metric_kwargs) > 0:
