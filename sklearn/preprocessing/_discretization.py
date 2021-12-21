@@ -280,7 +280,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             elif self.strategy == "quantile":
                 # if sample_weight (weight) parameter is defined, then the size
                 # of each bin should be proportional to each weight value (in w)
-                if sample_weight != None:
+                if sample_weight is not None:
                     weights = (
                         sample_weight[jj]
                         if isinstance(sample_weight[0], collections.Sequence)
