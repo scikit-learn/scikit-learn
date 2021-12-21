@@ -32,6 +32,7 @@ from sklearn.base import clone
 from sklearn.utils.metadata_requests import RequestType
 from sklearn.utils.metadata_requests import metadata_request_factory
 from sklearn.utils.metadata_requests import MetadataRouter
+from sklearn.utils.metadata_requests import MethodMapping
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import LinearRegression
 
@@ -78,11 +79,11 @@ class ExampleClassifier(ClassifierMixin, BaseEstimator):
 # The above estimator now has all it needs to consume metadata. This is done
 # by some magic done in :class:`~base.BaseEstimator`. There are now three
 # methods exposed by the above class: ``fit_requests``, ``predict_requests``,
-# and ``get_metadata_request``.
+# and ``get_metadata_routing``.
 #
 # By default, no metadata is requested, which we can see as:
 
-ExampleClassifier().get_metadata_request()
+ExampleClassifier().get_metadata_routing()
 
 # %%
 # The above output means that ``sample_weight`` and ``groups`` are not
@@ -95,7 +96,7 @@ ExampleClassifier().get_metadata_request()
 est = (
     ExampleClassifier().fit_requests(sample_weight=False).predict_requests(groups=True)
 )
-est.get_metadata_request()
+est.get_metadata_routing()
 
 # %%
 # As you can see, now the two metadata have explicit request values, one is
@@ -108,7 +109,7 @@ est = (
     .fit_requests(sample_weight=RequestType.UNREQUESTED)
     .predict_requests(groups=RequestType.REQUESTED)
 )
-est.get_metadata_request()
+est.get_metadata_routing()
 
 # %%
 # Please note that as long as the above estimator is not used in another
@@ -135,35 +136,30 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError("estimator cannot be None!")
 
         # meta-estimators are responsible for validating the given metadata
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, kwargs=fit_params
-        )
+        request_router = metadata_request_factory(self)
+        request_router.validate_metadata(params=fit_params, method="fit")
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator
-        fit_params_ = metadata_request_factory(self.estimator).fit.get_input(
-            ignore_extras=False, kwargs=fit_params
-        )
-        self.estimator_ = clone(self.estimator).fit(X, y, **fit_params_)
+        params = request_router.get_params(params=fit_params, method="fit")
+
+        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         self.classes_ = self.estimator_.classes_
         return self
 
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         # same as in ``fit``, we validate the given metadata
-        metadata_request_factory(self).predict.validate_metadata(
-            ignore_extras=False, kwargs=predict_params
-        )
+        request_router = metadata_request_factory(self)
+        request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying ``predict`` method.
-        predict_params_ = metadata_request_factory(self.estimator_).predict.get_input(
-            ignore_extras=False, kwargs=predict_params
-        )
-        return self.estimator_.predict(X, **predict_params_)
+        params = request_router.get_params(params=predict_params, method="predict")
+        return self.estimator_.predict(X, **params.estimator.predict)
 
-    def get_metadata_request(self):
+    def get_metadata_routing(self):
         router = MetadataRouter().add(
-            self.estimator, mapping="one-to-one", overwrite=False, mask=True
+            estimator=self.estimator, method_mapping="one-to-one"
         )
-        return router.get_metadata_request()
+        return router.to_dict()
 
 
 # %%
@@ -229,7 +225,7 @@ except ValueError as e:
     print(e)
 
 # %%
-# In order to understand the above implementation of ``get_metadata_request``,
+# In order to understand the above implementation of ``get_metadata_routing``,
 # we need to also introduce an aliased metadata. This is when an estimator
 # requests a metadata with a different name than the default value. For
 # instance, in a setting where there are two estimators in a pipeline, one
@@ -255,14 +251,14 @@ except ValueError as e:
     print(e)
 
 # %%
-# This leads us to the ``get_metadata_request``. The way routing works in
+# This leads us to the ``get_metadata_routing``. The way routing works in
 # scikit-learn is that consumers request what they need, and routers pass that
 # along. But another thing a router does, is that it also exposes what it
 # requires so that it can be used as a consumer inside another router, e.g. a
 # pipeline inside a grid search object. However, routers (e.g. our
 # meta-estimator) don't expose the mapping, and only expose what's required for
 # them to do their job. In the above example, it looks like the following:
-est.get_metadata_request()["fit"]
+est.get_metadata_routing()
 
 # %%
 # As you can see, the only metadata requested for method ``fit`` is
@@ -270,7 +266,7 @@ est.get_metadata_request()["fit"]
 # meta-estimator/router to know what needs to be passed to ``est``. In other
 # words, ``sample_weight`` is *masked* . The ``MetadataRouter`` class enables us to
 # easily create the routing object which would create the output we need for
-# our ``get_metadata_request``. In the above implementation,
+# our ``get_metadata_routing``. In the above implementation,
 # ``mapping="one-to-one"`` means all requests are mapped one to one from the
 # sub-estimator to the meta-estimator's methods, and ``mask=True`` indicates
 # that the requests should be masked, as explained. Masking is necessary since
@@ -320,50 +316,44 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
             fit_params["sample_weight"] = sample_weight
 
         # meta-estimators are responsible for validating the given metadata
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, self_metadata=super(), kwargs=fit_params
-        )
+        request_router = metadata_request_factory(self)
+        request_router.validate_metadata(params=fit_params, method="fit")
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator
-        fit_params_ = metadata_request_factory(self.estimator).fit.get_input(
-            ignore_extras=False, kwargs=fit_params
-        )
-        self.estimator_ = clone(self.estimator).fit(X, y, **fit_params_)
+        params = request_router.get_params(params=fit_params, method="fit")
+        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         self.classes_ = self.estimator_.classes_
         return self
 
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         # same as in ``fit``, we validate the given metadata
-        metadata_request_factory(self).predict.validate_metadata(
-            ignore_extras=False, kwargs=predict_params
-        )
+        request_router = metadata_request_factory(self)
+        request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying ``predict`` method.
-        predict_params_ = metadata_request_factory(self.estimator_).predict.get_input(
-            ignore_extras=False, kwargs=predict_params
-        )
-        return self.estimator_.predict(X, **predict_params_)
+        params = request_router.get_params(params=predict_params, method="predict")
+        return self.estimator_.predict(X, **params.estimator.predict)
 
-    def get_metadata_request(self):
+    def get_metadata_routing(self):
         router = (
             MetadataRouter()
-            .add(super(), mapping="one-to-one", overwrite=False, mask=False)
-            .add(self.estimator, mapping="one-to-one", overwrite="smart", mask=True)
+            .add_self(self)
+            .add(estimator=self.estimator, method_mapping="one-to-one")
         )
-        return router.get_metadata_request()
+        return router.to_dict()
 
 
 # %%
 # The two key parts where the above estimator differs from our previous
 # meta-estimator is validation in ``fit``, and generating routing data in
-# ``get_metadata_request``. In ``fit``, we pass ``self_metadata=super()`` to
+# ``get_metadata_routing``. In ``fit``, we pass ``self_metadata=super()`` to
 # ``validate_metadata``. This is important since consumers don't validate how
 # metadata is passed to them, it's only done by routers. In this case, this
 # means validation should be done for the metadata consumed by the
 # sub-estimator, but not for the metadata consumed by the meta-estimator
 # itself.
 #
-# In ``get_metadata_request``, we add what's consumed by this meta-estimator
+# In ``get_metadata_routing``, we add what's consumed by this meta-estimator
 # without masking them, before adding what's requested by the sub-estimator.
 # Passing ``super()`` here means only what's explicitly mentioned in the
 # methods' signature is considered as metadata consumed by this estimator; in
@@ -373,7 +363,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 # %%
 # no metadata requested
 est = RouterConsumerClassifier(estimator=ExampleClassifier())
-est.get_metadata_request()["fit"]
+est.get_metadata_routing()
 
 
 # %%
@@ -381,13 +371,13 @@ est.get_metadata_request()["fit"]
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().fit_requests(sample_weight=True)
 )
-est.get_metadata_request()["fit"]
+est.get_metadata_routing()
 # %%
 # ``sample_weight`` requested by meta-estimator
 est = RouterConsumerClassifier(estimator=ExampleClassifier()).fit_requests(
     sample_weight=True
 )
-est.get_metadata_request()["fit"]
+est.get_metadata_routing()
 
 # %%
 # As you can see, the last two are identical, which is fine since that's what a
@@ -401,7 +391,7 @@ est = RouterConsumerClassifier(
         sample_weight="clf_sample_weight"
     ),
 ).fit_requests(sample_weight="meta_clf_sample_weight")
-est.get_metadata_request()["fit"]
+est.get_metadata_routing()
 
 # %%
 # However, ``fit`` of the meta-estimator only needs the alias for the
@@ -415,7 +405,7 @@ est.fit(X, y, sample_weight=my_weights, clf_sample_weight=my_other_weights)
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().fit_requests(sample_weight="aliased_sample_weight")
 ).fit_requests(sample_weight=True)
-est.get_metadata_request()["fit"]
+est.get_metadata_routing()
 
 # %%
 # Alias only on the meta-estimator. This example raises an error since there
@@ -424,7 +414,7 @@ est = RouterConsumerClassifier(
     estimator=ExampleClassifier().fit_requests(sample_weight=True)
 ).fit_requests(sample_weight="aliased_sample_weight")
 try:
-    est.get_metadata_request()["fit"]
+    est.get_metadata_routing()
 except ValueError as e:
     print(e)
 
@@ -446,53 +436,39 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         self.classifier = classifier
 
     def fit(self, X, y, **fit_params):
-        metadata_request_factory(self).fit.validate_metadata(kwargs=fit_params)
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_metadata(params=fit_params, method="fit")
+        params = request_routing.get_params(params=fit_params, method="fit")
 
-        transformer_fit_params = metadata_request_factory(
-            self.transformer
-        ).fit.get_input(ignore_extras=True, kwargs=fit_params)
-        transformer_transform_params = metadata_request_factory(
-            self.transformer
-        ).transform.get_input(ignore_extras=True, kwargs=fit_params)
-        self.transformer_ = clone(self.transformer).fit(X, y, **transformer_fit_params)
-        X_transformed = self.transformer_.transform(X, **transformer_transform_params)
+        self.transformer_ = clone(self.transformer).fit(X, y, **params.transformer.fit)
+        X_transformed = self.transformer_.transform(X, **params.transformer.transform)
 
-        classifier_fit_params = metadata_request_factory(self.classifier).fit.get_input(
-            ignore_extras=True, kwargs=fit_params
-        )
         self.classifier_ = clone(self.classifier).fit(
-            X_transformed, y, **classifier_fit_params
+            X_transformed, y, **params.classifier.fit
         )
         return self
 
     def predict(self, X, **predict_params):
-        metadata_request_factory(self).predict.validate_metadata(kwargs=predict_params)
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_metadata(params=predict_params, method="predict")
+        params = request_routing.get_params(params=predict_params, method="predict")
 
-        transformer_transform_params = metadata_request_factory(
-            self.transformer
-        ).transform.get_input(ignore_extras=True, kwargs=predict_params)
-        X_transformed = self.transformer_.transform(X, **transformer_transform_params)
+        X_transformed = self.transformer_.transform(X, **params.transformer.transform)
+        return self.classifier_.predict(X_transformed, **params.classifier.predict)
 
-        classifier_predict_params = metadata_request_factory(
-            self.classifier
-        ).predict.get_input(ignore_extras=True, kwargs=predict_params)
-        return self.classifier_.predict(X_transformed, **classifier_predict_params)
-
-    def get_metadata_request(self):
+    def get_metadata_routing(self):
         router = (
             MetadataRouter()
             .add(
-                self.transformer,
-                mapping={
-                    "fit": ["fit", "transform"],
-                    "predict": "transform",
-                },
-                overwrite="smart",
-                mask=True,
+                transformer=self.transformer,
+                method_mapping=MethodMapping()
+                .add(method="fit", used_in="fit")
+                .add(method="transform", used_in="fit")
+                .add(method="transform", used_in="predict"),
             )
-            .add(self.classifier, mapping="one-to-one", overwrite="smart", mask=True)
+            .add(classifier=self.classifier, method_mapping="one-to-one")
         )
-        return router.get_metadata_request()
+        return router.to_dict()
 
 
 # %%
@@ -555,19 +531,16 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator = estimator
 
     def fit(self, X, y, **fit_params):
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, self_metadata=super(), kwargs=fit_params
-        )
-        fit_params_ = metadata_request_factory(self.estimator).fit.get_input(
-            ignore_extras=False, kwargs=fit_params
-        )
-        self.estimator_ = clone(self.estimator).fit(X, y, **fit_params_)
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_metadata(params=fit_params, method="fit")
+        params = request_routing.get_params(params=fit_params, method="fit")
+        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
-    def get_metadata_request(self):
+    def get_metadata_routing(self):
         router = MetadataRouter().add(
-            self.estimator, mapping="one-to-one", overwrite=False, mask=True
+            estimator=self.estimator, method_mapping="one-to-one"
         )
-        return router.get_metadata_request()
+        return router.to_dict()
 
 
 # %%
@@ -591,21 +564,18 @@ class SampledMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     def fit(self, X, y, sample_weight=None, **fit_params):
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, self_metadata=super(), kwargs=fit_params
-        )
-        estimator_fit_params = metadata_request_factory(self.estimator).fit.get_input(
-            ignore_extras=True, kwargs=fit_params
-        )
-        self.estimator_ = clone(self.estimator).fit(X, y, **estimator_fit_params)
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_metadata(params=fit_params, method="fit")
+        params = request_routing.get_params(params=fit_params, method="fit")
+        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
-    def get_metadata_request(self):
+    def get_metadata_routing(self):
         router = (
             MetadataRouter()
-            .add(super(), mapping="one-to-one", overwrite=False, mask=False)
-            .add(self.estimator, mapping="one-to-one", overwrite="smart", mask=True)
+            .add_self(self)
+            .add(estimator=self.estimator, method_mapping="one-to-one")
         )
-        return router.get_metadata_request()
+        return router.to_dict()
 
 
 # %%

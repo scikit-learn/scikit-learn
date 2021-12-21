@@ -13,6 +13,7 @@ from sklearn.utils.metadata_requests import RequestType
 from sklearn.utils.metadata_requests import metadata_request_factory
 from sklearn.utils.metadata_requests import MetadataRouter
 from sklearn.utils.metadata_requests import MethodMetadataRequest
+from sklearn.utils.metadata_requests import MethodMapping
 
 from sklearn.base import _MetadataRequester
 
@@ -30,12 +31,17 @@ def assert_request_is_empty(metadata_request, exclude=None):
     One can exclude a method or a list of methods from the check using the
     ``exclude`` perameter.
     """
+    if isinstance(metadata_request, MetadataRouter):
+        for _, route_mapping in metadata_request:
+            assert_request_is_empty(route_mapping.router)
+        return
+
     if isinstance(metadata_request, MetadataRequest):
         metadata_request = metadata_request.to_dict()
     if exclude is None:
         exclude = []
     for method, request in metadata_request.items():
-        if method in exclude:
+        if method in exclude or method == "_type":
             continue
         props = [
             prop
@@ -88,19 +94,19 @@ class TestSimpleMetaEstimator(MetaEstimatorMixin, ClassifierMixin, BaseEstimator
 
         if sample_weight is not None:
             kwargs["sample_weight"] = sample_weight
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False, self_metadata=super(), kwargs=kwargs
-        )
-        fit_params = metadata_request_factory(self.estimator).fit.get_input(
-            ignore_extras=True, kwargs=kwargs
-        )
-        self.estimator_ = clone(self.estimator).fit(X, y, **fit_params)
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_metadata(params=kwargs, method="fit")
+        params = request_routing.get_params(params=kwargs, method="fit")
+        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 
-    def get_metadata_request(self):
-        router = MetadataRouter().add(super(), mask=False)
-        router.add(self.estimator, mapping={"fit": "fit"}, mask=True, overwrite="smart")
-        return router.get_metadata_request()
+    def get_metadata_routing(self):
+        router = (
+            MetadataRouter()
+            .add_self(self)
+            .add(estimator=self.estimator, method_mapping="fit")
+        )
+        return router.to_dict()
 
 
 class TestTransformer(TransformerMixin, BaseEstimator):
@@ -146,24 +152,30 @@ class TestMetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         self.transformer = transformer
 
     def fit(self, X, y=None, **fit_params):
-        metadata_request_factory(self).fit.validate_metadata(
-            ignore_extras=False,
-            kwargs=fit_params,
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_metadata(
+            method="fit",
+            params=fit_params,
         )
-        fit_params_ = metadata_request_factory(self.transformer).fit.get_input(
-            ignore_extras=False, kwargs=fit_params
-        )
-        self.transformer_ = clone(self.transformer).fit(X, y, **fit_params_)
+        params = request_routing.get_params(method="fit", params=fit_params)
+        self.transformer_ = clone(self.transformer).fit(X, y, **params.transformer.fit)
         return self
 
     def transform(self, X, y=None, **transform_params):
-        metadata_request_factory(self).transform.validate_metadata(
-            ignore_extras=False, kwargs=transform_params
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_metadata(
+            method="transform",
+            params=transform_params,
         )
-        transform_params_ = metadata_request_factory(
-            self.transformer
-        ).transform.get_input(ignore_extras=False, kwargs=transform_params)
-        return self.transformer_.transform(X, **transform_params_)
+        params = request_routing.get_params(method="transform", params=transform_params)
+        return self.transformer_.transform(X, **params.transformer.transform)
+
+    def get_metadata_routing(self):
+        return (
+            MetadataRouter()
+            .add(transformer=self.transformer, method_mapping="one-to-one")
+            .to_dict()
+        )
 
 
 class SimplePipeline(BaseEstimator):
@@ -174,59 +186,47 @@ class SimplePipeline(BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         self.steps_ = []
-        metadata_request_factory(self).fit.validate(
-            ignore_extras=False, kwargs=fit_params
-        )
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_params(params=fit_params, method="fit")
+        params = request_routing.get_params(params=fit_params, method="fit")
         X_transformed = X
-        for step in self.steps[:-1]:
-            requests = metadata_request_factory(step)
-            step_fit_params = requests.fit.get_input(
-                ignore_extras=True, kwargs=fit_params
+        for i, step in enumerate(self.steps[:-1]):
+            transformer = clone(step).fit(
+                X_transformed, y, **params.get(f"step_{i}").fit
             )
-            transformer = clone(step).fit(X_transformed, y, **step_fit_params)
             self.steps_.append(transformer)
-            step_transform_params = requests.transform.get_input(
-                ignore_extras=True, kwargs=fit_params
-            )
             X_transformed = transformer.transform(
-                X_transformed, **step_transform_params
+                X_transformed, **params.get(f"step_{i}").transform
             )
 
-        requests = metadata_request_factory(step)
-        step_fit_params = requests.fit.get_input(ignore_extras=True, kwargs=fit_params)
         self.steps_.append(
-            clone(self.steps[-1]).fit(X_transformed, y, **step_fit_params)
+            clone(self.steps[-1]).fit(X_transformed, y, **params.predictor.fit)
         )
         return self
 
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         X_transformed = X
-        metadata_request_factory(self).predict.validate_metadata(
-            ignore_extras=False, kwargs=predict_params
-        )
-        for step in self.steps_[:-1]:
-            step_transform_params = metadata_request_factory(step).transform.get_input(
-                ignore_extras=True, kwargs=predict_params
-            )
-            X_transformed = step.transform(X, **step_transform_params)
+        request_routing = metadata_request_factory(self)
+        request_routing.validate_params(params=predict_params, method="predict")
+        params = request_routing.get_params(params=predict_params, method="predict")
+        for i, step in enumerate(self.steps_[:-1]):
+            X_transformed = step.transform(X, **params.get(f"step_{i}").transform)
 
-        step_predict_params = metadata_request_factory(
-            self.steps_[-1]
-        ).predict.get_input(ignore_extras=True, kwargs=predict_params)
-        return self.steps_[-1].predict(X_transformed, **step_predict_params)
+        return self.steps_[-1].predict(X_transformed, **params.predictor.transform)
 
-    def get_metadata_request(self):
+    def get_metadata_routing(self):
         router = MetadataRouter()
-        if len(self.steps) > 1:
+        for i, step in enumerate(self.steps[:-1]):
             router.add(
-                self.steps[:-1],
-                mask=True,
-                mapping={"predict": "transform", "fit": ["transform", "fit"]},
-                overwrite="smart",
+                **{f"step_{i}": step},
+                method_mapping=MethodMapping()
+                .add(method="fit", used_in="fit")
+                .add(method="transform", used_in="fit")
+                .add(method="transform", used_in="predict"),
             )
-        router.add(self.steps[-1], overwrite="smart", mapping="one-to-one")
-        return router.get_metadata_request()
+        router.add(predictor=self.steps[-1], mapping="one-to-one")
+        return router.to_dict()
 
 
 def test_assert_request_is_empty():
@@ -267,7 +267,7 @@ def test_default_requests():
 
     # check other test estimators
     assert not len(metadata_request_factory(TestEstimatorNoMetadata()).fit.requests)
-    assert_request_is_empty(TestEstimatorNoMetadata().get_metadata_request())
+    assert_request_is_empty(TestEstimatorNoMetadata().get_metadata_routing())
 
     trs_request = metadata_request_factory(TestTransformer())
     assert trs_request.fit.requests == {
@@ -349,8 +349,8 @@ def test_invalid_metadata():
         ValueError,
         match=(
             re.escape(
-                "Metadata passed which is not understood: ['other_param']. In method:"
-                " transform"
+                "These passed parameters are not understood or requested by any object:"
+                " {'other_param'}"
             )
         ),
     ):
@@ -364,15 +364,15 @@ def test_invalid_metadata():
         ValueError,
         match=(
             re.escape(
-                "Metadata passed which is not understood: ['sample_weight']. In method:"
-                " transform"
+                "These passed parameters are not understood or requested by any object:"
+                " {'sample_weight'}"
             )
         ),
     ):
         trs.fit(X, y).transform(X, sample_weight=my_weights)
 
 
-def test_get_metadata_request():
+def test_get_metadata_routing():
     class TestDefaultsBadMethodName(_MetadataRequester):
         __metadata_request__fit = {
             "sample_weight": RequestType.ERROR_IF_PASSED,
@@ -401,9 +401,10 @@ def test_get_metadata_request():
     with pytest.raises(
         AttributeError, match="'MetadataRequest' object has no attribute 'other_method'"
     ):
-        TestDefaultsBadMethodName().get_metadata_request()
+        TestDefaultsBadMethodName().get_metadata_routing()
 
     expected = {
+        "_type": "request",
         "score": {
             "my_param": RequestType(True),
             "my_other_param": RequestType(None),
@@ -419,10 +420,11 @@ def test_get_metadata_request():
         "inverse_transform": {},
         "split": {},
     }
-    assert TestDefaults().get_metadata_request() == expected
+    assert TestDefaults().get_metadata_routing() == expected
 
     est = TestDefaults().score_requests(my_param="other_param")
     expected = {
+        "_type": "request",
         "score": {
             "my_param": "other_param",
             "my_other_param": RequestType(None),
@@ -438,10 +440,11 @@ def test_get_metadata_request():
         "inverse_transform": {},
         "split": {},
     }
-    assert est.get_metadata_request() == expected
+    assert est.get_metadata_routing() == expected
 
     est = TestDefaults().fit_requests(sample_weight=True)
     expected = {
+        "_type": "request",
         "score": {
             "my_param": RequestType(True),
             "my_other_param": RequestType(None),
@@ -457,7 +460,7 @@ def test_get_metadata_request():
         "inverse_transform": {},
         "split": {},
     }
-    assert est.get_metadata_request() == expected
+    assert est.get_metadata_routing() == expected
 
 
 def test__get_default_requests():
@@ -471,7 +474,7 @@ def test__get_default_requests():
     assert metadata_request_factory(ExplicitRequest()).fit.requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
-    assert_request_is_empty(ExplicitRequest().get_metadata_request(), exclude="fit")
+    assert_request_is_empty(ExplicitRequest().get_metadata_routing(), exclude="fit")
 
     class ExplicitRequestOverwrite(BaseEstimator):
         __metadata_request__fit = {"prop": RequestType.REQUESTED}
@@ -483,7 +486,7 @@ def test__get_default_requests():
         "prop": RequestType.REQUESTED
     }
     assert_request_is_empty(
-        ExplicitRequestOverwrite().get_metadata_request(), exclude="fit"
+        ExplicitRequestOverwrite().get_metadata_routing(), exclude="fit"
     )
 
     class ImplicitRequest(BaseEstimator):
@@ -493,7 +496,7 @@ def test__get_default_requests():
     assert metadata_request_factory(ImplicitRequest()).fit.requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
-    assert_request_is_empty(ImplicitRequest().get_metadata_request(), exclude="fit")
+    assert_request_is_empty(ImplicitRequest().get_metadata_routing(), exclude="fit")
 
     class ImplicitRequestRemoval(BaseEstimator):
         __metadata_request__fit = {"prop": RequestType.UNUSED}
@@ -502,37 +505,20 @@ def test__get_default_requests():
             return self
 
     assert metadata_request_factory(ImplicitRequestRemoval()).fit.requests == {}
-    assert_request_is_empty(ImplicitRequestRemoval().get_metadata_request())
+    assert_request_is_empty(ImplicitRequestRemoval().get_metadata_routing())
 
 
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(name="fit")
-    with pytest.raises(
-        ValueError,
-        match="overwrite can only be one of {True, False, 'smart', 'ignore'}.",
-    ):
-        mmr.add_request(prop="test", alias=None, overwrite="test")
-
-    with pytest.raises(ValueError, match="Expected all metadata to be called test"):
-        mmr.add_request(prop="foo", alias="bar", expected_metadata="test")
-
-    with pytest.raises(ValueError, match="Aliasing is not allowed"):
-        mmr.add_request(prop="foo", alias="bar", allow_aliasing=False)
 
     with pytest.raises(ValueError, match="alias should be either a string or"):
         mmr.add_request(prop="foo", alias=1.4)
 
     mmr.add_request(prop="foo", alias=None)
     assert mmr.requests == {"foo": RequestType.ERROR_IF_PASSED}
-    with pytest.raises(ValueError, match="foo is already requested"):
-        mmr.add_request(prop="foo", alias=True)
-    with pytest.raises(ValueError, match="foo is already requested"):
-        mmr.add_request(prop="foo", alias=True)
-    mmr.add_request(prop="foo", alias=True, overwrite="smart")
+    mmr.add_request(prop="foo", alias=False)
+    mmr.add_request(prop="foo", alias=True)
     assert mmr.requests == {"foo": RequestType.REQUESTED}
-
-    with pytest.raises(ValueError, match="Can only add another MethodMetadataRequest"):
-        mmr.merge_method_request({})
 
     assert MethodMetadataRequest.from_dict(None, name="fit").requests == {}
     assert MethodMetadataRequest.from_dict("foo", name="fit").requests == {
@@ -549,7 +535,8 @@ def test_metadata_request_factory():
         __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
     assert_request_is_empty(metadata_request_factory(None))
-    assert_request_is_empty(metadata_request_factory({}))
+    assert_request_is_empty(metadata_request_factory({"_type": "request"}))
+    assert_request_is_empty(metadata_request_factory({"_type": "router"}))
     assert_request_is_empty(metadata_request_factory(object()))
 
     mr = MetadataRequest({"fit": "foo"}, default="bar")
