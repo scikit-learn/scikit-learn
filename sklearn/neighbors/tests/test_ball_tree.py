@@ -88,10 +88,17 @@ def test_array_object_type():
 
 
 def test_bad_pyfunc_metric():
-    def wrong_distance(x, y):
+    def wrong_returned_value(x, y):
         return "1"
 
+    def one_arg_func(x):
+        return 1.0  # pragma: no cover
+
     X = np.ones((5, 2))
-    msg = "Custom distance function must accept two vectors"
+    msg = "Custom distance function must accept two vectors and return a float."
     with pytest.raises(TypeError, match=msg):
-        BallTree(X, metric=wrong_distance)
+        BallTree(X, metric=wrong_returned_value)
+
+    msg = "takes 1 positional argument but 2 were given"
+    with pytest.raises(TypeError, match=msg):
+        BallTree(X, metric=one_arg_func)
