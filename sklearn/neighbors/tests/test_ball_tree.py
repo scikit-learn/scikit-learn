@@ -92,7 +92,7 @@ def test_bad_pyfunc_metric():
         return "1"
 
     def one_arg_func(x):
-        return 1.0
+        return 1.0  # pragma: no cover
 
     X = np.ones((5, 2))
     msg = "Custom distance function must accept two vectors and return a float."
