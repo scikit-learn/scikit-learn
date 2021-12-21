@@ -758,21 +758,28 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             if len(first_rank_indices) == 1:
                 best_index = first_rank_indices[0]
             else:
-                hyper_params = [i for i in results.keys() if i.startswith('param_')]
+                hyper_params = [i for i in results.keys() if i.startswith("param_")]
                 param_values = []
                 for key in hyper_params:
-                    if key == 'param_regressor':
+                    if key == "param_regressor":
                         value = results.get(key).data.astype(str)
                     else:
-                        value = results.get(key).filled(float('inf'))
+                        value = results.get(key).filled(float("inf"))
                         if value.any() is None:
-                            value = np.asarray([i if i is not None else float('inf') for
-                                                i in value.tolist()])
+                            value = np.asarray(
+                                [
+                                    i if i is not None else float("inf")
+                                    for i in value.tolist()
+                                ]
+                            )
                     param_values.append(value)
                 param_combinations = np.asarray(param_values).transpose()
-                all_best_params = list(zip(first_rank_indices.tolist(),
-                                           param_combinations[first_rank_indices]
-                                           .tolist()))
+                all_best_params = list(
+                    zip(
+                        first_rank_indices.tolist(),
+                        param_combinations[first_rank_indices].tolist(),
+                    )
+                )
                 all_best_params.sort(key=lambda x: x[1])
                 best_index = all_best_params[0][0]
         return best_index
@@ -907,6 +914,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     all_candidate_params, n_splits, all_out, all_more_results
                 )
                 return results
+
             self._run_search(evaluate_candidates)
             # multimetric is determined here because in the case of a callable
             # self.scoring the return type is only known after calling
