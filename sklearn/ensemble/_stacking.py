@@ -63,11 +63,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             self.final_estimator_ = clone(self.final_estimator)
 
             # correctly handle class weight in final estimator
-            label_mapping = {c: i for i, c in enumerate(getattr(self, 'classes_', dict()))}
-            self.final_estimator_ = _update_estimator_class_label(self.final_estimator_, label_mapping)
+            label_mapping = {
+                c: i for i, c in enumerate(getattr(self, "classes_", dict()))
+            }
+            self.final_estimator_ = _update_estimator_class_label(
+                self.final_estimator_, label_mapping
+            )
         else:
             self.final_estimator_ = clone(default)
-
 
     def _concatenate_predictions(self, X, predictions):
         """Concatenate the predictions of each first layer learner and

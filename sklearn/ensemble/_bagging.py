@@ -93,7 +93,9 @@ def _parallel_build_estimators(
             )
 
         random_state = seeds[i]
-        estimator = ensemble._make_estimator(append=False, random_state=random_state, encode_class_weight=True)
+        estimator = ensemble._make_estimator(
+            append=False, random_state=random_state, encode_class_weight=True
+        )
 
         # Draw random feature, sample indices
         features, indices = _generate_bagging_indices(

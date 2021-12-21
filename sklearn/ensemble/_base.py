@@ -44,6 +44,7 @@ def _fit_single_estimator(
 
 
 def _update_estimator_class_label(estimator, label_mapping):
+    """Update the keys for parameter `class_weight` recursively within an estimator"""
     already_clone = False
 
     for k, v in estimator.get_params(deep=True).items():
@@ -163,7 +164,9 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.base_estimator_ is None:
             raise ValueError("base_estimator cannot be None")
 
-    def _make_estimator(self, append=True, random_state=None, encode_class_weight=False):
+    def _make_estimator(
+        self, append=True, random_state=None, encode_class_weight=False
+    ):
         """Make and configure a copy of the `base_estimator_` attribute.
 
         Warning: This method should be used to properly instantiate new
@@ -174,7 +177,9 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         if encode_class_weight:
             # correctly handle class weight in sub-estimators
-            label_mapping = {c: i for i, c in enumerate(getattr(self, 'classes_', dict()))}
+            label_mapping = {
+                c: i for i, c in enumerate(getattr(self, "classes_", dict()))
+            }
             estimator = _update_estimator_class_label(estimator, label_mapping)
 
         # TODO: Remove in v1.2
@@ -277,7 +282,7 @@ class _BaseHeterogeneousEnsemble(
         is_estimator_type = is_classifier if is_classifier(self) else is_regressor
 
         # mapping from original labels to encoded ones, which is stored as `classes_` attribute in subclasses
-        label_mapping = {c: i for i, c in enumerate(getattr(self, 'classes_', dict()))}
+        label_mapping = {c: i for i, c in enumerate(getattr(self, "classes_", dict()))}
 
         estimators = list(estimators)
         for i, est in enumerate(estimators):
