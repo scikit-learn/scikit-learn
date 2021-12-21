@@ -335,9 +335,9 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
-- |Fix| GridSearchCV rank issue. This implementation fixes the ranking issue \
-  and returns the best hyper-parameters combination in consistent manner using \
-  grid search or randomized search cv when mean_test_scores and rank are same. \
+- |Fix| GridSearchCV rank issue. This implementation fixes the ranking issue 
+  and returns the best hyper-parameters combination in consistent manner using 
+  grid search or randomized search cv when mean_test_scores and rank are same. 
   :pr:`21925` by :user:`Nivedita Mishra <Nivi09>`.
 
   Code and Documentation Contributors
