@@ -1457,8 +1457,8 @@ def test_loss_function_epsilon(klass):
 @pytest.mark.parametrize("klass", [SGDRegressor, SparseSGDRegressor])
 def test_loss_function_quantile(klass):
     clf = klass(quantile=0.1, loss="pinball")
-    clf.set_params(quantile=0.95)
-    assert clf.loss_functions["pinball"][1] == 0.95
+    clf.set_params(quantile=0.5)
+    assert clf.loss_functions["pinball"][1] == 0.5
 
 
 ###############################################################################
@@ -2101,7 +2101,7 @@ def test_multi_core_gridsearch_and_early_stopping():
         "alpha": np.logspace(-4, 4, 9),
         "n_iter_no_change": [5, 10, 50],
     }
-
+    # 20132
     clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True, random_state=0)
     search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2, random_state=0)
     search.fit(iris.data, iris.target)

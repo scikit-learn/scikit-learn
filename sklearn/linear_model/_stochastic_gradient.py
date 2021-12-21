@@ -142,7 +142,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
-        if not (0.0 <= self.quantile <= 1.0):
+        if not (0.0 < self.quantile < 1.0):
             raise ValueError("quantile must be in [0, 1]")
         if not isinstance(self, SGDOneClassSVM) and self.alpha < 0.0:
             raise ValueError("alpha must be >= 0")
@@ -1710,7 +1710,7 @@ class SGDRegressor(BaseSGDRegressor):
         linear past that; this is the loss function used in SVR.
         'squared_epsilon_insensitive' is the same but becomes squared loss past
         a tolerance of epsilon.
-        'pinball' loss refers to qunatile regression.
+        'pinball' loss refers to quantile regression.
 
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
@@ -1769,6 +1769,12 @@ class SGDRegressor(BaseSGDRegressor):
         important to get the prediction exactly right.
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
+
+    quantile : float, default=0.5
+        This parameter will be used only when the loss is `pinball`.
+        The quantile that the SGDRegressor tries to predict. It must be strictly
+        between 0 and 1. If 0.5 (default), the model predicts the 50%
+        quantile, i.e. the median.
 
     random_state : int, RandomState instance, default=None
         Used for shuffling the data, when ``shuffle`` is set to ``True``.
