@@ -341,7 +341,7 @@ Changelog
   :pr:`21925` by :user:`Nivedita Mishra <Nivi09>`.
 
   Code and Documentation Contributors
------------------------------------
+-------------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.0, including:
