@@ -706,7 +706,7 @@ def test_dict_learning_numerical_consistency(method):
     # and (column permutated U*, row permutated V*) are also optional
     # as long as holding UV.
     # So here UV, ||U||_1,1 and sum(||V_k||_2^2) are verified
-    # instead of comparing directory U and V.
+    # instead of comparing directly U and V.
     assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
     assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
     assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol)
@@ -767,7 +767,7 @@ def test_dict_learning_online_numerical_consistency(method):
     # and (column permutated U*, row permutated V*) are also optional
     # as long as holding UV.
     # So here UV, ||U||_1,1 and sum(||V_k||_2) are verified
-    # instead of comparing directory U and V.
+    # instead of comparing directly U and V.
     assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
     assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
     assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol)
