@@ -281,7 +281,8 @@ class _BaseHeterogeneousEnsemble(
 
         is_estimator_type = is_classifier if is_classifier(self) else is_regressor
 
-        # mapping from original labels to encoded ones, which is stored as `classes_` attribute in subclasses
+        # mapping from original labels to encoded ones
+        # which is stored as `classes_` attribute in subclasses
         label_mapping = {c: i for i, c in enumerate(getattr(self, "classes_", dict()))}
 
         estimators = list(estimators)
