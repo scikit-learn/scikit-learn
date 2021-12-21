@@ -283,9 +283,6 @@ Changelog
 :mod:`sklearn.semi_supervised`
 ..............................
 
-- |Fix| :meth:`BaseLabelPropagation.fit` now accepts sparse matrices.
-  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
-
 - |API| The option for using the squared error via ``loss`` and
   ``criterion`` parameters was made more consistent. The preferred way is by
   setting the value to `"squared_error"`. Old option names are still valid,
