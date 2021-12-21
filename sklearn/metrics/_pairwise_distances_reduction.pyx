@@ -20,6 +20,7 @@ import scipy.sparse
 
 from .. import get_config
 from libc.stdlib cimport free, malloc
+from libc.stdio cimport printf
 from libc.float cimport DBL_MAX
 from cython cimport final
 from cython.parallel cimport parallel, prange
@@ -675,7 +676,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             sizeof(ITYPE_t *) * self.effective_n_threads
         )
 
-        # Main heaps used by PairwiseDistancesArgKmin.compute to return results.
+        # Main heaps used by PairwiseDistancesArgKmin._compute to return results.
         self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=DTYPE)
 
@@ -719,8 +720,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         ITYPE_t thread_num,
         ITYPE_t X_start,
     ) nogil:
-        # As this strategy is embarrassingly parallel, we can set the
-        # thread heaps pointers to the proper position on the main heaps
+        # As this strategy is embarrassingly parallel, we can set each
+        # thread's heaps pointer to the proper position on the main heaps.
         self.heaps_r_distances_chunks[thread_num] = &self.argkmin_distances[X_start, 0]
         self.heaps_indices_chunks[thread_num] = &self.argkmin_indices[X_start, 0]
 
@@ -784,8 +785,11 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         cdef:
             ITYPE_t idx, jdx, thread_num
         with nogil, parallel(num_threads=self.available_n_threads):
-            # Synchronising the thread heaps with the main heaps
-            # This is done in parallel samples-wise (no need for locks)
+            # Synchronising the thread heaps with the main heaps.
+            # This is done in parallel sample-wise (no need for locks).
+            # This might break each thread's data locality a bit but
+            # but this is negligible and this parallel pattern has
+            # shown to be efficient in practice.
             for idx in prange(X_end - X_start, schedule="static"):
                 for thread_num in range(self.effective_n_threads):
                     for jdx in range(self.k):
