@@ -20,7 +20,7 @@ cdef int simultaneous_sort(
 ) nogil:
     """
     Perform a recursive quicksort on the values array as to sort them ascendingly.
-    This simultaneously perform the swaps on both the values and the indices arrays.
+    This simultaneously performs the swaps on both the values and the indices arrays.
 
     The numpy equivalent is:
 
