@@ -333,15 +333,11 @@ Changelog
   bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.model_selection`
-...................
+..............................
 
-- |Fix| GridSearchCV rank issue. This implementation fixes the ranking issue
-  and returns the best hyper-parameters combination in consistent manner using
-  grid search or randomized search cv when mean_test_scores and rank are same.
-  Since "best_params_" in all search algorithms is supposed to return only one
-  combination of hyper-parameters, keeping that in mind, my approach was to sort
-  the hyper-parameters combination having same mean test score and rank 1 in
-  lexicographical order and return the top most.
+- |Fix| GridSearchCV rank issue. This implementation fixes the ranking issue \
+  and returns the best hyper-parameters combination in consistent manner using \
+  grid search or randomized search cv when mean_test_scores and rank are same. \
   :pr:`21925` by :user:`Nivedita Mishra <Nivi09>`.
 
   Code and Documentation Contributors
