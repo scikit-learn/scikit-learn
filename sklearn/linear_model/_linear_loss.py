@@ -182,7 +182,7 @@ class LinearModelLoss:
              The gradient of the loss.
         """
         n_features, n_classes = X.shape[1], self._loss.n_classes
-        n_dof = n_features + self.fit_intercept
+        n_dof = n_features + int(self.fit_intercept)
         w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
         loss, gradient_per_sample = self._loss.loss_gradient(
@@ -199,18 +199,17 @@ class LinearModelLoss:
             grad[:n_features] = X.T @ gradient_per_sample + l2_reg_strength * w
             if self.fit_intercept:
                 grad[-1] = gradient_per_sample.sum()
-            return loss, grad
         else:
             loss += 0.5 * l2_reg_strength * squared_norm(w)
             grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
-            # gradient.shape = (n_samples, n_classes)
+            # gradient_per_sample.shape = (n_samples, n_classes)
             grad[:, :n_features] = gradient_per_sample.T @ X + l2_reg_strength * w
             if self.fit_intercept:
                 grad[:, -1] = gradient_per_sample.sum(axis=0)
             if coef.ndim == 1:
-                return loss, grad.ravel(order="F")
-            else:
-                return loss, grad
+                grad = grad.ravel(order="F")
+
+        return loss, grad
 
     def gradient(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
@@ -241,7 +240,7 @@ class LinearModelLoss:
              The gradient of the loss.
         """
         n_features, n_classes = X.shape[1], self._loss.n_classes
-        n_dof = n_features + self.fit_intercept
+        n_dof = n_features + int(self.fit_intercept)
         w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
         gradient_per_sample = self._loss.gradient(
@@ -268,7 +267,7 @@ class LinearModelLoss:
             else:
                 return grad
 
-    def gradient_hessp(
+    def gradient_hessian_product(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
     ):
         """Computes gradient and hessp (hessian product function).
@@ -301,7 +300,7 @@ class LinearModelLoss:
             and returns matrix-vector product with hessian.
         """
         (n_samples, n_features), n_classes = X.shape, self._loss.n_classes
-        n_dof = n_features + self.fit_intercept
+        n_dof = n_features + int(self.fit_intercept)
         w, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
         if not self._loss.is_multiclass:
@@ -332,7 +331,7 @@ class LinearModelLoss:
             # res = (X, 1)' @ diag(h) @ (X, 1) @ s
             #     = (X, 1)' @ (hX @ s[:n_features], sum(h) * s[-1])
             # res[:n_features] = X' @ hX @ s[:n_features] + sum(h) * s[-1]
-            # res[:-1] = 1' @ hX @ s[:n_features] + sum(h) * s[-1]
+            # res[-1] = 1' @ hX @ s[:n_features] + sum(h) * s[-1]
             def hessp(s):
                 ret = np.empty_like(s)
                 if sparse.issparse(X):
@@ -388,7 +387,7 @@ class LinearModelLoss:
                 s = s.reshape((n_classes, -1), order="F")  # shape = (n_classes, n_dof)
                 if self.fit_intercept:
                     s_intercept = s[:, -1]
-                    s = s[:, :-1]
+                    s = s[:, :-1]  # shape = (n_classes, n_features)
                 else:
                     s_intercept = 0
                 tmp = X @ s.T + s_intercept  # X_{im} * s_k_m
@@ -396,7 +395,9 @@ class LinearModelLoss:
                 tmp *= proba  # * p_i_k
                 if sample_weight is not None:
                     tmp *= sample_weight[:, np.newaxis]
-                hess_prod = np.empty_like(grad, order="F")
+                # hess_prod = empty_like(grad), but we ravel grad below and this
+                # function is run after that.
+                hess_prod = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
                 hess_prod[:, :n_features] = tmp.T @ X + l2_reg_strength * s
                 if self.fit_intercept:
                     hess_prod[:, -1] = tmp.sum(axis=0)
@@ -405,7 +406,7 @@ class LinearModelLoss:
                 else:
                     return hess_prod
 
-        if coef.ndim == 1:
-            return grad.ravel(order="F"), hessp
-        else:
-            return grad, hessp
+            if coef.ndim == 1:
+                return grad.ravel(order="F"), hessp
+
+        return grad, hessp

@@ -408,7 +408,7 @@ def _logistic_regression_path(
         elif solver == "newton-cg":
             func = loss.loss
             grad = loss.gradient
-            hess = loss.gradient_hessp  # hess = [gradient, hessp]
+            hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         warm_start_sag = {"coef": w0.T}
     else:
         target = y_bin
@@ -419,7 +419,7 @@ def _logistic_regression_path(
             loss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
             func = loss.loss
             grad = loss.gradient
-            hess = loss.gradient_hessp  # hess = [gradient, hessp]
+            hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
     coefs = list()

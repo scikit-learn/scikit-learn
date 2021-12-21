@@ -101,7 +101,7 @@ def test_loss_gradients_are_the_same(
     l2, g2 = loss.loss_gradient(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
-    g3, h3 = loss.gradient_hessp(
+    g3, h3 = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
 
@@ -120,7 +120,7 @@ def test_loss_gradients_are_the_same(
     l2_sp, g2_sp = loss.loss_gradient(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
-    g3_sp, h3_sp = loss.gradient_hessp(
+    g3_sp, h3_sp = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
 
@@ -160,13 +160,13 @@ def test_loss_gradients_hessp_intercept(
     l, g = loss.loss_gradient(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
-    _, hessp = loss.gradient_hessp(
+    _, hessp = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     l_inter, g_inter = loss_inter.loss_gradient(
         coef, X_inter, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
-    _, hessp_inter = loss_inter.gradient_hessp(
+    _, hessp_inter = loss_inter.gradient_hessian_product(
         coef, X_inter, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
 
@@ -211,7 +211,7 @@ def test_gradients_hessians_numerically(
 
     # 1. Check gradients numerically
     eps = 1e-6
-    g, hessp = loss.gradient_hessp(
+    g, hessp = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
     # Use a trick to get central finte difference of accuracy 4 (five-point stencil)
@@ -280,7 +280,7 @@ def test_multinomial_coef_shape(fit_intercept):
 
     l, g = loss.loss_gradient(coef, X, y)
     g1 = loss.gradient(coef, X, y)
-    g2, hessp = loss.gradient_hessp(coef, X, y)
+    g2, hessp = loss.gradient_hessian_product(coef, X, y)
     h = hessp(s)
     assert g.shape == coef.shape
     assert h.shape == coef.shape
@@ -291,7 +291,7 @@ def test_multinomial_coef_shape(fit_intercept):
     s_r = s.ravel(order="F")
     l_r, g_r = loss.loss_gradient(coef_r, X, y)
     g1_r = loss.gradient(coef_r, X, y)
-    g2_r, hessp_r = loss.gradient_hessp(coef_r, X, y)
+    g2_r, hessp_r = loss.gradient_hessian_product(coef_r, X, y)
     h_r = hessp_r(s_r)
     assert g_r.shape == coef_r.shape
     assert h_r.shape == coef_r.shape
