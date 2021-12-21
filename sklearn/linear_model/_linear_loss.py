@@ -325,7 +325,7 @@ class LinearModelLoss:
             if self.fit_intercept:
                 # Calculate the double derivative with respect to intercept.
                 # Note: In case hX is sparse, hX.sum is a matrix object.
-                hh_intercept = np.squeeze(np.array(hX.sum(axis=0)))
+                hh_intercept = np.squeeze(np.asarray(hX.sum(axis=0)))
 
             # With intercept included and l2_reg_strength = 0, hessp returns
             # res = (X, 1)' @ diag(h) @ (X, 1) @ s
