@@ -39,6 +39,12 @@ random sampling procedures.
   using the `'amg'` or `'lobpcg'` solver. This change  improves numerical
   stability of the solver, but may result in a different model.
 
+- |Fix| :func:`feature_selection.f_regression` and
+  :func:`feature_selection.r_regression` will now returned finite score by
+  default instead of `np.nan` and `np.inf` for some corner case. You can use
+  `force_finite=False` if you really want to get non-finite values and keep
+  the old behavior.
+
 Changelog
 ---------
 
@@ -169,6 +175,17 @@ Changelog
   The default value of its `whiten` argument will change from `True`
   (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
   :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and :user:`Julien Jerphanion <jjerphan>`
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| Add a parameter `force_finite` to
+  :func:`feature_selection.f_regression` and
+  :func:`feature_selection.r_regression`. This parameter allows to force the
+  output to be finite in the case where a feature or a the target is constant
+  or that the feature and target are perfectly correlated (only for the
+  F-statistic).
+  :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.ensemble`
 .......................
