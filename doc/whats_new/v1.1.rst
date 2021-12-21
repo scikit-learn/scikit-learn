@@ -318,6 +318,13 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
+:mod:`sklearn.svm`
+...................
+
+- |Enhancement| :class:`svm.OneClassSVM`, :class:`svm.NuSVC`,
+  :class:`svm.NuSVR`, :class:`svm.SVC` and :class:`svm.SVR` now expose
+  `n_iter_`, the number of iterations of the libsvm optimization routine.
+  :pr:`21408` by :user:`Juan Martín Loyola <jmloyola>`.
 - |Fix| :class: `pipeline.Pipeline` now does not validate hyper-parameters in
   `__init__` but in `.fit()`.
   :pr:`21888` by :user:`iofall <iofall>` and :user: `Arisa Y. <arisayosh>`.
