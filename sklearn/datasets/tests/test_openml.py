@@ -18,11 +18,13 @@ from sklearn.datasets._openml import (
     _open_openml_url,
     _arff,
     _DATA_FILE,
-    _convert_arff_data,
-    _convert_arff_data_dataframe,
     _get_data_description_by_id,
     _get_local_path,
     _retry_with_clean_cache,
+)
+from sklearn.datasets._arff_parser import (
+    _convert_arff_data,
+    _convert_arff_data_dataframe,
     _feature_to_dtype,
 )
 from sklearn.utils import is_scalar_nan
@@ -1476,7 +1478,9 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     def swap_file_mock(request):
         url = request.get_full_url()
         if url.endswith("data/v1/download/1666876"):
-            return _MockHTTPResponse(open(corrupt_copy_path, "rb"), is_gzip=True)
+            with open(corrupt_copy_path, "rb") as f:
+                corrupted_data = f.read()
+            return _MockHTTPResponse(BytesIO(corrupted_data), is_gzip=True)
         else:
             return mocked_openml_url(request)
 
