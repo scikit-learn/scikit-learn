@@ -1469,7 +1469,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
     ...     random_state=42,
     ... )
-    >>> X = X.transpose()
+    >>> X, dictionary, code = X.T, dictionary.T, code.T
     >>> dict_learner = DictionaryLearning(
     ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
     ... )
