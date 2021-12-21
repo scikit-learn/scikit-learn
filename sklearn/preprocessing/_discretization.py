@@ -52,7 +52,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         - 'uniform': All bins in each feature have identical widths.
         - 'quantile': If sample_weight parameter in fit method is None, all
           bins in each feature have the same number of points. Else,
-          the number of points in each bin is proportional to each provided 
+          the number of points in each bin is proportional to each provided
           weight value.
         - 'kmeans': Values in each bin have the same nearest center of a 1D
           k-means cluster.
@@ -188,12 +188,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
-        sample_weight : array-like of shape (n_bins,) or (n_feature, n_bins) or 
-            None.
-            Weights that represent the proportion of data to be associated with 
-            each bins. The sum of each weight value for a given number of bins 
-            should be equal to 1. 
-            This parameter is taken into account only for ``strategy = 'quantile'``
+        sample_weight : ndarray of shape (n_bins_,) or (n_features, n_bins_)
+            Weights (values between 0 and 1) that represent the proportion of
+            data to be associated with each bins. The sum of each weight value
+            for a given number of bins should be equal to 1.
+            This parameter is taken into account only for ``strategy =
+            'quantile'``
 
         Returns
         -------
@@ -281,12 +281,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 # if sample_weight (weight) parameter is defined, then the size
                 # of each bin should be proportional to each weight value (in w)
                 if sample_weight != None:
-                    weights = sample_weight[jj] if isinstance(
-                        sample_weight[0], collections.Sequence) else sample_weight
+                    weights = (
+                        sample_weight[jj]
+                        if isinstance(sample_weight[0], collections.Sequence)
+                        else sample_weight
+                    )
                     if sum(weights) != 1:
-                        raise ValueError("Sum of weights in fit method should "
-                                         "be equal to 1 (current value : {})"
-                                         .format(sum(weights)))
+                        raise ValueError(
+                            "Sum of weights in fit method should "
+                            "be equal to 1 (current value : {})".format(sum(weights))
+                        )
                     quantiles = [0]
                     wt = 0
                     for wi in weights:
