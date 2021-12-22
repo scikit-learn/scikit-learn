@@ -16,6 +16,8 @@ from numbers import Integral
 
 import numpy as np
 
+from typing import NamedTuple
+
 from ..utils.validation import check_is_fitted
 from ..base import is_classifier
 
@@ -209,7 +211,6 @@ class _BaseTreeExporter:
         rounded=False,
         precision=3,
         fontsize=None,
-        add_holizontal_line_in_node=False,
     ):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -222,7 +223,18 @@ class _BaseTreeExporter:
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
-        self.add_holizontal_line_in_node = add_holizontal_line_in_node
+
+    # Strings used in BaseTreeExporter
+    #
+    class Characters(NamedTuple):
+        sharp: str = ""
+        open_square_brackets: str = ""
+        close_square_brackets: str = ""
+        less_than: str = ""
+        end_line: str = ""
+        node_label_end: str = ""
+        node_label_start: str = ""
+        separator: str = ""
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -269,6 +281,7 @@ class _BaseTreeExporter:
         return self.get_color(node_val)
 
     def node_to_str(self, tree, node_id, criterion):
+        characters = self.characters
         # Generate the node content string
         if tree.n_outputs == 1:
             value = tree.value[node_id][0, :]
@@ -278,16 +291,13 @@ class _BaseTreeExporter:
         # Should labels be shown?
         labels = (self.label == "root" and node_id == 0) or self.label == "all"
 
-        characters = self.characters
-        node_string = characters[-1] + ("{" if self.add_holizontal_line_in_node else "")
-
-        separator = "|" if self.add_holizontal_line_in_node else ""
+        node_string = characters.node_label_start
 
         # Write node ID
         if self.node_ids:
             if labels:
                 node_string += "node "
-            node_string += characters[0] + str(node_id) + characters[4]
+            node_string += characters.sharp + str(node_id) + characters.end_line
 
         # Write decision criteria
         if tree.children_left[node_id] != _tree.TREE_LEAF:
@@ -296,18 +306,18 @@ class _BaseTreeExporter:
                 feature = self.feature_names[tree.feature[node_id]]
             else:
                 feature = "X%s%s%s" % (
-                    characters[1],
+                    characters.open_square_brackets,
                     tree.feature[node_id],
-                    characters[2],
+                    characters.close_square_brackets,
                 )
             node_string += "%s %s %s%s" % (
                 feature,
-                characters[3],
+                characters.less_than,
                 round(tree.threshold[node_id], self.precision),
-                characters[4],
+                characters.end_line,
             )
             # Put separator to split criteria and other strings for visibility
-            node_string += separator
+            node_string += characters.separator
 
         # Write impurity
         if self.impurity:
@@ -320,7 +330,7 @@ class _BaseTreeExporter:
             if labels:
                 node_string += "%s = " % criterion
             node_string += (
-                str(round(tree.impurity[node_id], self.precision)) + characters[4]
+                str(round(tree.impurity[node_id], self.precision)) + characters.end_line
             )
 
         # Write node sample count
@@ -330,9 +340,9 @@ class _BaseTreeExporter:
             percent = (
                 100.0 * tree.n_node_samples[node_id] / float(tree.n_node_samples[0])
             )
-            node_string += str(round(percent, 1)) + "%" + characters[4]
+            node_string += str(round(percent, 1)) + "%" + characters.end_line
         else:
-            node_string += str(tree.n_node_samples[node_id]) + characters[4]
+            node_string += str(tree.n_node_samples[node_id]) + characters.end_line
 
         # Write node class distribution / regression value
         if self.proportion and tree.n_classes[0] != 1:
@@ -357,8 +367,8 @@ class _BaseTreeExporter:
         value_text = value_text.replace("' '", ", ").replace("'", "")
         if tree.n_classes[0] == 1 and tree.n_outputs == 1:
             value_text = value_text.replace("[", "").replace("]", "")
-        value_text = value_text.replace("\n ", characters[4])
-        node_string += value_text + characters[4]
+        value_text = value_text.replace("\n ", characters.end_line)
+        node_string += value_text + characters.end_line
 
         # Write node majority class
         if (
@@ -373,21 +383,17 @@ class _BaseTreeExporter:
                 class_name = self.class_names[np.argmax(value)]
             else:
                 class_name = "y%s%s%s" % (
-                    characters[1],
+                    characters.open_square_brackets,
                     np.argmax(value),
-                    characters[2],
+                    characters.close_square_brackets,
                 )
             node_string += class_name
 
         # Clean up any trailing newlines
-        if node_string.endswith(characters[4]):
-            node_string = node_string[: -len(characters[4])]
+        if node_string.endswith(characters.end_line):
+            node_string = node_string[: -len(characters.end_line)]
 
-        return (
-            node_string
-            + ("}" if self.add_holizontal_line_in_node else "")
-            + characters[5]
-        )
+        return node_string + characters.node_label_end
 
 
 class _DOTTreeExporter(_BaseTreeExporter):
@@ -408,7 +414,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         special_characters=False,
         precision=3,
         fontname="helvetica",
-        add_holizontal_line_in_node=False,
+        add_separator=False,
     ):
 
         super().__init__(
@@ -422,28 +428,37 @@ class _DOTTreeExporter(_BaseTreeExporter):
             proportion=proportion,
             rounded=rounded,
             precision=precision,
-            add_holizontal_line_in_node=add_holizontal_line_in_node,
         )
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
         self.fontname = fontname
         self.rotate = rotate
-        self.add_holizontal_line_in_node = add_holizontal_line_in_node
+        self.add_separator = add_separator
 
         # PostScript compatibility for special characters
         if special_characters:
-            self.characters = ["&#35;", "<SUB>", "</SUB>", "&le;", "<br/>", ">", "<"]
+            self.characters = _BaseTreeExporter.Characters(
+                "&#35;",
+                "<SUB>",
+                "</SUB>",
+                "&le;",
+                "<br/>",
+                ">",
+                "<",
+                "|" if self.add_separator else "",
+            )
         else:
-            self.characters = [
+            self.characters = _BaseTreeExporter.Characters(
                 "#",
                 "[",
                 "]",
-                r"\<=" if self.add_holizontal_line_in_node else "<=",
+                r"\<=" if self.add_separator else "<=",
                 "\\n",
-                '"',
-                '"',
-            ]
+                '}"' if self.add_separator else '"',
+                '"{' if self.add_separator else '"',
+                "|" if self.add_separator else "",
+            )
 
         # validate
         if isinstance(precision, Integral):
@@ -497,7 +512,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         self.out_file.write("digraph Tree {\n")
 
         # Specify node aesthetics
-        shape = "record" if self.add_holizontal_line_in_node else "box"
+        shape = "record" if self.add_separator else "box"
         self.out_file.write("node [shape=" + shape)
         rounded_filled = []
         if self.filled:
@@ -641,7 +656,9 @@ class _MPLTreeExporter(_BaseTreeExporter):
         # The colors to render each node with
         self.colors = {"bounds": None}
 
-        self.characters = ["#", "[", "]", "<=", "\n", "", ""]
+        self.characters = _BaseTreeExporter.Characters(
+            "#", "[", "]", "<=", "\n", "", "", ""
+        )
         self.bbox_args = dict()
         if self.rounded:
             self.bbox_args["boxstyle"] = "round"
@@ -778,7 +795,7 @@ def export_graphviz(
     special_characters=False,
     precision=3,
     fontname="helvetica",
-    add_holizontal_line_in_node=False,
+    add_separator=False,
 ):
     """Export a decision tree in DOT format.
 
@@ -859,7 +876,7 @@ def export_graphviz(
     fontname : str, default='helvetica'
         Name of font used to render text.
 
-    add_holizontal_line_in_node : bool, default=False
+    add_separator : bool, default=False
         When set to ``True``, add a splitter line between a criteria and remaining
         contents in a node.
 
@@ -912,7 +929,7 @@ def export_graphviz(
             special_characters=special_characters,
             precision=precision,
             fontname=fontname,
-            add_holizontal_line_in_node=add_holizontal_line_in_node,
+            add_separator=add_separator,
         )
         exporter.export(decision_tree)
 

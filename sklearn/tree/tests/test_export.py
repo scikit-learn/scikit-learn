@@ -159,7 +159,7 @@ def test_graphviz_toy():
     assert contents1 == contents2
 
     # Test export code with holizontal line in node
-    contents1 = export_graphviz(clf, out_file=None, add_holizontal_line_in_node=True)
+    contents1 = export_graphviz(clf, out_file=None, add_separator=True)
     contents2 = (
         "digraph Tree {\n"
         'node [shape=record, fontname="helvetica"] ;\n'
