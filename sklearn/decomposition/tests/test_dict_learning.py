@@ -654,6 +654,93 @@ def test_warning_default_transform_alpha(Estimator):
         dl.fit_transform(X)
 
 
+# TODO: preserve numpy.float32 for omp transform_algorithm
+@pytest.mark.parametrize("algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold"))
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+    ),
+)
+# Note: do not check integer input because `lasso_lars` and `lars` fail with
+# `ValueError` in `_lars_path_solver`
+def test_sparse_encode_dtype_match(data_type, expected_type, algorithm):
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    assert (
+        sparse_encode(
+            X.astype(data_type), dictionary.astype(data_type), algorithm=algorithm
+        ).dtype
+        == expected_type
+    )
+
+
+# TODO: preserve numpy.float32 for omp transform_algorithm
+@pytest.mark.parametrize(
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold")
+)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+    ),
+)
+# Note: do not check integer input because `lasso_lars` and `lars` fail with
+# `ValueError` in `_lars_path_solver`
+def test_sparse_coder_dtype_match(data_type, expected_type, transform_algorithm):
+    # Verify preserving dtype for transform in sparse coder
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    assert (
+        SparseCoder(
+            dictionary.astype(data_type), transform_algorithm=transform_algorithm
+        )
+        .transform(X.astype(data_type))
+        .dtype
+        == expected_type
+    )
+
+
+@pytest.mark.parametrize(
+    "dictionary_learning_transformer", (DictionaryLearning, MiniBatchDictionaryLearning)
+)
+@pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
+# TODO: preserve numpy.float32 for omp transform_algorithm
+@pytest.mark.parametrize(
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold")
+)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_dictionary_learning_dtype_match(
+    data_type,
+    expected_type,
+    dictionary_learning_transformer,
+    fit_algorithm,
+    transform_algorithm,
+):
+    # Verify preserving dtype for fit and transform in dictionary learning class
+    dict_learner = dictionary_learning_transformer(
+        n_components=8,
+        fit_algorithm=fit_algorithm,
+        transform_algorithm=transform_algorithm,
+        random_state=0,
+    )
+    dict_learner.fit(X.astype(data_type))
+    assert dict_learner.components_.dtype == expected_type
+    assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
+
+
 @pytest.mark.parametrize("method", ("lars", "cd"))
 @pytest.mark.parametrize(
     "data_type, expected_type",
