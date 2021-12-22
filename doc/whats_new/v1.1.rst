@@ -122,8 +122,7 @@ Changelog
 - |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
   and :func:`decomposition.sparse_encode` preserve dtype for `numpy.float32`.
   :class:`decomposition.DictionaryLearning`, :class:`decompsition.MiniBatchDictionaryLearning`
-  and :class:`decomposition.SparseCoder` preserve dtype for `numpy.float32` except
-  when `transform_algorithm` is specified as `omp`.
+  and :class:`decomposition.SparseCoder` preserve dtype for `numpy.float32`.
   :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
