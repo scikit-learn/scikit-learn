@@ -655,7 +655,9 @@ def test_warning_default_transform_alpha(Estimator):
 
 
 # TODO: preserve numpy.float32 for omp transform_algorithm
-@pytest.mark.parametrize("algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold"))
+@pytest.mark.parametrize(
+    "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
 @pytest.mark.parametrize(
     "data_type, expected_type",
     (
@@ -693,9 +695,8 @@ def test_sparse_encode_numerical_consistency(algorithm):
     assert_allclose(code_32, code_64, rtol=rtol)
 
 
-# TODO: preserve numpy.float32 for omp transform_algorithm
 @pytest.mark.parametrize(
-    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold")
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
 )
 @pytest.mark.parametrize(
     "data_type, expected_type",
@@ -722,9 +723,8 @@ def test_sparse_coder_dtype_match(data_type, expected_type, transform_algorithm)
     "dictionary_learning_transformer", (DictionaryLearning, MiniBatchDictionaryLearning)
 )
 @pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
-# TODO: preserve numpy.float32 for omp transform_algorithm
 @pytest.mark.parametrize(
-    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold")
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
 )
 @pytest.mark.parametrize(
     "data_type, expected_type",
