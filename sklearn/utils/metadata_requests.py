@@ -1,3 +1,4 @@
+import functools
 import inspect
 from copy import deepcopy
 from enum import Enum
@@ -145,6 +146,22 @@ class MethodMetadataRequest:
             )
         )
 
+    def check_warnings(self, *, params):
+        params = {} if params is None else params
+        warn_params = {
+            prop
+            for prop, alias in self.requests.items()
+            if alias == RequestType.WARN and prop in params
+        }
+        for param in warn_params:
+            warn(
+                f"Support for {param} has recently been added to this class. "
+                "To maintain backward compatibility, it is ignored now. "
+                "You can set the request value to RequestType.UNREQUESTED "
+                "to silence this warning, or to RequestType.REQUESTED to "
+                "consume and use the metadata."
+            )
+
     def get_params(self, params=None):
         """Return the input parameters requested by the method.
 
@@ -162,6 +179,7 @@ class MethodMetadataRequest:
             A dictionary of {prop: value} which can be given to the
             corresponding method.
         """
+        self.check_warnings(params=params)
         params = {} if params is None else params
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
@@ -169,15 +187,7 @@ class MethodMetadataRequest:
             if not isinstance(alias, str):
                 alias = RequestType(alias)
 
-            if alias == RequestType.WARN:
-                warn(
-                    f"Support for {prop} has recently been added to this class. "
-                    "To maintain backward compatibility, it is ignored now. "
-                    "You can set the request value to RequestType.UNREQUESTED "
-                    "to silence this warning, or to RequestType.REQUESTED to "
-                    "consume and use the metadata."
-                )
-            elif alias == RequestType.UNREQUESTED:
+            if alias == RequestType.UNREQUESTED or alias == RequestType.WARN:
                 continue
             elif alias == RequestType.REQUESTED and prop in args:
                 res[prop] = args[prop]
@@ -280,6 +290,9 @@ class MetadataRequest:
 
     def get_params(self, *, method, params):
         return getattr(self, method).get_params(params=params)
+
+    def check_warnings(self, *, method, params):
+        getattr(self, method).check_warnings(params=params)
 
     def add_requests(
         self,
@@ -509,12 +522,13 @@ class MetadataRouter:
         for name, route_mapping in self._route_mappings.items():
             router, mapping = route_mapping.routing, route_mapping.mapping
             if name == "me":
-                # "me" is reserved for `self` and routing is not handled by `self`,
-                # it's handled by meta-estimators. Therefore we ignore "me" here.
+                # "me" is reserved for `self` and routing is not handled by
+                # `self`, it's handled by meta-estimators. Therefore we only
+                # check for warnings here.
+                router.check_warnings(params=params, method=method)
                 continue
+
             res[name] = Bunch()
-            for _method in METHODS:
-                res[name][_method] = Bunch()
             for orig_method, used_in in mapping:
                 if used_in == method:
                     if isinstance(router, MetadataRequest):
@@ -612,13 +626,10 @@ class RequestMethod:
             if set(kw) - set(self.keys):
                 raise TypeError(f"Unexpected args: {set(kw) - set(self.keys)}")
 
-            requests = metadata_request_factory(instance)
+            requests = metadata_request_factory(instance._get_metadata_request())
 
             try:
-                if isinstance(requests, MetadataRequest):
-                    method_metadata_request = getattr(requests, self.name)
-                else:
-                    method_metadata_request = getattr(requests.get_self(), self.name)
+                method_metadata_request = getattr(requests, self.name)
             except AttributeError:
                 raise ValueError(f"{self.name} is not a supported method.")
 
@@ -788,3 +799,70 @@ class _MetadataRequester:
             A dict representing a MetadataRouter.
         """
         return self._get_metadata_request()
+
+
+def process_routing(func):
+    """Process input params and handle routing."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        sig = inspect.signature(func)
+        # Create the argument binding so we can determine what
+        # parameters are given what values
+        argument_binding = sig.bind(*args, **kwargs)
+        argument_map = argument_binding.arguments
+
+        # find parameter names which should be passed explicitly, and the kwarg param
+        # which can accept routed parameters.
+        func_params = list(sig.parameters.items())
+        params_to_pass = []
+        kwarg_param = None
+        for pname, param in func_params:
+            if param.kind == param.VAR_KEYWORD:
+                kwarg_param = pname
+                continue
+            params_to_pass.append(pname)
+
+        if kwarg_param is None:
+            raise TypeError("Method must accept kwargs for metadata routing to work.")
+
+        obj = argument_map["self"]
+        if not hasattr(obj, "get_metadata_routing"):
+            raise AttributeError(
+                f"This {repr(obj.__class__.__name__)} has not implemented the routing"
+                " method `get_metadata_routing`."
+            )
+        method_name = func.__name__
+        if method_name not in METHODS:
+            raise TypeError(
+                f"Can only route and process input on these methods: {METHODS}, "
+                f"while the current method is: {method_name}."
+            )
+
+        considered_params = {
+            key: value
+            for key, value in argument_map.items()
+            if key not in ("X", "y", "Y", "self")
+        }
+        # WWe pop the kwarg parameter from the params above, and then update it
+        # with the remaining values. This resembles the code snippets such as:
+        # if sample_weight is not None:
+        #     fit_params["sample_weight"] = sample_weight
+        if kwarg_param in considered_params:
+            routed_params = considered_params.pop(kwarg_param)
+            routed_params.update(considered_params)
+        else:
+            routed_params = considered_params
+
+        request_routing = metadata_request_factory(obj)
+        request_routing.validate_metadata(params=routed_params, method=method_name)
+        params = request_routing.get_params(params=routed_params, method=method_name)
+
+        # create a dict of other parameters and then add 'params' to them
+        explicit_params = {
+            key: value for key, value in argument_map.items() if key in params_to_pass
+        }
+        explicit_params["params"] = params
+        return func(**explicit_params)
+
+    return wrapper
