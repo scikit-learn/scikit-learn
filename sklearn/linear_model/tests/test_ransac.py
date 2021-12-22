@@ -639,3 +639,18 @@ def test_loss_deprecated(old_loss, new_loss):
     est2 = RANSACRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+def test_base_estimator_deprecated():
+    err_msg = (
+        "'base_estimator' was renamed to estimator in version 1.0 and will be removed"
+        " in 1.2."
+    )
+    with pytest.warns(FutureWarning, match=err_msg):
+        ransac_estimator = RANSACRegressor(
+            base_estimator=LinearRegression(),
+            min_samples=2,
+            residual_threshold=5,
+            random_state=0,
+        )
+        ransac_estimator.fit(X, y)
