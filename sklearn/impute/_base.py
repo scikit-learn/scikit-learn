@@ -281,6 +281,7 @@ class SimpleImputer(_BaseImputer):
 
             self._fit_dtype = dtype
         else:
+            # Use the dtype seen in `fit` for non-`fit` validation
             dtype = self._fit_dtype
 
         if _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
