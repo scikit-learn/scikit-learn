@@ -1007,7 +1007,6 @@ def roc_curve(
     return fpr, tpr, thresholds
 
 
-@_deprecate_positional_args
 def cumulative_gain_curve(y_true, y_score, pos_label=None):
     """Compute Cumulative Gain for each ten percent of the sample
     Note: This implementation is restricted to the binary classification task.
