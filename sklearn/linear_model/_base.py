@@ -769,7 +769,9 @@ def _check_precomputed_gram_matrix(
     v1 = (X[:, f1] - X_offset[f1]) * X_scale[f1]
     v2 = (X[:, f2] - X_offset[f2]) * X_scale[f2]
 
-    expected = np.dot(v1, v2)
+    # stack v1 and v2 such that np.dot is always applied to two 2d arrays
+    v1v2 = np.vstack((v1, v2))
+    expected = np.dot(v1v2, v1v2.T)[0, 1]
     actual = precompute[f1, f2]
 
     if not np.isclose(expected, actual, rtol=rtol, atol=atol):
