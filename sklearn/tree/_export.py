@@ -877,7 +877,7 @@ def export_graphviz(
         Name of font used to render text.
 
     add_separator : bool, default=False
-        When set to ``True``, add a splitter line between a criteria and remaining
+        When set to ``True``, add a line between a criteria and remaining
         contents in a node.
 
     Returns
