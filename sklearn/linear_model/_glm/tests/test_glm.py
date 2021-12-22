@@ -167,11 +167,11 @@ def test_glm_solver_argument(solver):
             TypeError,
             "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
         ),
-        (
-            {"tol": 1},
-            TypeError,
-            "tol must be an instance of <class 'numbers.Real'>, not <class 'integral'>",
-        ),
+        # (
+        #    {"tol": 1},
+        #    TypeError,
+        #    "tol must be an instance of <class 'numbers.Real'>",
+        # ),
         (
             {"tol": [1e-3]},
             TypeError,
