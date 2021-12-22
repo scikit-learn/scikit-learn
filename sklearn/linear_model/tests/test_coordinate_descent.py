@@ -1010,7 +1010,7 @@ def test_elasticnet_precompute_gram():
 
     rng = np.random.RandomState(58)
     X = rng.binomial(1, 0.25, (1000, 4)).astype(np.float32)
-    y = rng.random(1000).astype(np.float32)
+    y = rng.rand(1000).astype(np.float32)
 
     X_c = X - np.average(X, axis=0)
     gram = np.dot(X_c.T, X_c)
