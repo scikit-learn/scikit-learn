@@ -669,12 +669,10 @@ def test_sparse_encode_dtype_match(data_type, expected_type, algorithm):
     n_components = 6
     rng = np.random.RandomState(0)
     dictionary = rng.randn(n_components, n_features)
-    assert (
-        sparse_encode(
-            X.astype(data_type), dictionary.astype(data_type), algorithm=algorithm
-        ).dtype
-        == expected_type
+    code = sparse_encode(
+        X.astype(data_type), dictionary.astype(data_type), algorithm=algorithm
     )
+    assert code.dtype == expected_type
 
 
 @pytest.mark.parametrize(
@@ -686,15 +684,13 @@ def test_sparse_encode_numerical_consistency(algorithm):
     n_components = 6
     rng = np.random.RandomState(0)
     dictionary = rng.randn(n_components, n_features)
-    assert_allclose(
-        sparse_encode(
-            X.astype(np.float32), dictionary.astype(np.float32), algorithm=algorithm
-        ),
-        sparse_encode(
-            X.astype(np.float64), dictionary.astype(np.float64), algorithm=algorithm
-        ),
-        rtol=rtol,
+    code_32 = sparse_encode(
+        X.astype(np.float32), dictionary.astype(np.float32), algorithm=algorithm
     )
+    code_64 = sparse_encode(
+        X.astype(np.float64), dictionary.astype(np.float64), algorithm=algorithm
+    )
+    assert_allclose(code_32, code_64, rtol=rtol)
 
 
 # TODO: preserve numpy.float32 for omp transform_algorithm
@@ -715,14 +711,11 @@ def test_sparse_coder_dtype_match(data_type, expected_type, transform_algorithm)
     n_components = 6
     rng = np.random.RandomState(0)
     dictionary = rng.randn(n_components, n_features)
-    assert (
-        SparseCoder(
-            dictionary.astype(data_type), transform_algorithm=transform_algorithm
-        )
-        .transform(X.astype(data_type))
-        .dtype
-        == expected_type
+    coder = SparseCoder(
+        dictionary.astype(data_type), transform_algorithm=transform_algorithm
     )
+    code = coder.transform(X.astype(data_type))
+    assert code.dtype == expected_type
 
 
 @pytest.mark.parametrize(
