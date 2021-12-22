@@ -171,8 +171,8 @@ cdef class PairwiseDistancesReduction:
             "mahalanobis", # is numerically unstable
             # TODO: In order to support discrete distance metrics, we need to have a
             # simultaneous sort which breaks ties on indices when distances are identical.
-            # The best might be using a std::sort and a Comparator which might need
-            # AoS instead of SoA (currently used).
+            # The best might be using std::stable_sort and a Comparator taking an
+            # Arrays of Structures instead of Structure of Arrays (currently used).
             "hamming",
             *BOOL_METRICS,
         }
