@@ -1319,3 +1319,6 @@ def test_gaussian_mixture_precisions_init_diag():
     ).fit(X)
 
     assert gm_without_init.n_iter_ == gm_with_init.n_iter_
+    assert_allclose(
+        gm_with_init.precisions_cholesky_, gm_without_init.precisions_cholesky_
+    )
