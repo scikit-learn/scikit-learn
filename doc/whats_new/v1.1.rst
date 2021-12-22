@@ -128,6 +128,11 @@ Changelog
   tolerance).
   :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
 
+- |Enhancement| :func:`datasets.fetch_openml` now has two optional arguments
+  `n_retries` and `delay`. By default, :func:`datasets.fetch_openml` will retry
+  3 times in case of a network failure with a delay between each try.
+  :pr:`21901` by :user:`Rileran <rileran>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
