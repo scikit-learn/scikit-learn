@@ -19,8 +19,6 @@ from sklearn.datasets._openml import (
     _arff,
     _DATA_FILE,
     _OPENML_PREFIX,
-    _convert_arff_data,
-    _convert_arff_data_dataframe,
     _get_data_description_by_id,
     _get_local_path,
     _retry_with_clean_cache,
@@ -238,7 +236,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
     def _file_name(url, suffix):
         output = (
-            re.sub(r"\W", "-", url[len("https://openml.org/"):]) + suffix + path_suffix
+            re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
         )
         # Shorten the filenames to have better compatibility with windows 10
         # and filenames > 260 characters

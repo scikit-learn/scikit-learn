@@ -100,7 +100,7 @@ def _retry_on_network_error(
 
 
 def _open_openml_url(
-    openml_path: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1
+    openml_path: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
 ):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
