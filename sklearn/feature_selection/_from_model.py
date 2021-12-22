@@ -268,10 +268,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
-        else:
-            self._check_feature_names(X, reset=True)
 
         return self
+
+    def _check_feature_names(self, X, *, reset):
+        # Do not check feature names,
+        # if self.estimator_ has feature_names_in_, it should validate itself
+        return
 
     @property
     def threshold_(self):

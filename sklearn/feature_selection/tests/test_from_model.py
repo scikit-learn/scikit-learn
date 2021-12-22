@@ -438,7 +438,6 @@ def test_estimator_does_not_support_feature_names():
     """
     pytest.importorskip("pandas")
     X, y = datasets.load_iris(as_frame=True, return_X_y=True)
-    all_feature_names = set(X.columns)
 
     def importance_getter(estimator):
         return np.arange(X.shape[1])
@@ -447,12 +446,7 @@ def test_estimator_does_not_support_feature_names():
         MinimalClassifier(), importance_getter=importance_getter
     ).fit(X, y)
 
-    # selector learns the feature names itself
-    assert_array_equal(selector.feature_names_in_, X.columns)
-
-    feature_names_out = set(selector.get_feature_names_out())
-    assert feature_names_out < all_feature_names
-
+    # Do not warn for pandas dataframes
     with pytest.warns(None) as records:
         selector.transform(X.iloc[1:3])
     assert not [str(record.message) for record in records]
