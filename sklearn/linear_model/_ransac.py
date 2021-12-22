@@ -271,14 +271,6 @@ class RANSACRegressor(
         self.loss = loss
         self.base_estimator = base_estimator
 
-        if self.base_estimator != "deprecated":
-            warnings.warn(
-                "'base_estimator' was renamed to estimator in version 1.0 and "
-                "will be removed in 1.2.",
-                FutureWarning,
-            )
-            self.estimator = base_estimator
-
     def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
 
@@ -318,6 +310,14 @@ class RANSACRegressor(
             X, y, validate_separately=(check_X_params, check_y_params)
         )
         check_consistent_length(X, y)
+
+        if self.base_estimator != "deprecated":
+            warnings.warn(
+                "`base_estimator` was renamed to `estimator` in version 1.1 and "
+                "will be removed in 1.3.",
+                FutureWarning,
+            )
+            self.estimator = self.base_estimator
 
         if self.estimator is not None:
             estimator = clone(self.estimator)
