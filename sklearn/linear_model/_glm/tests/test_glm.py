@@ -159,11 +159,23 @@ def test_glm_solver_argument(solver):
             TypeError,
             "alpha must be an instance of <class 'numbers.Real'>, not <class 'str'>",
         ),
-        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
+        ({"tol": -1.0}, ValueError, "tol == -1.0, must be > 0."),
+        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
+        ({"tol": 0}, ValueError, "tol == 0, must be > 0.0"),
         (
             {"tol": "1"},
             TypeError,
             "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+        (
+            {"tol": 1},
+            TypeError,
+            "tol must be an instance of <class 'numbers.Real'>, not <class 'integral'>",
+        ),
+        (
+            {"tol": [1e-3]},
+            TypeError,
+            "tol must be an instance of <class 'numbers.Real'>, not <class 'list'>",
         ),
         ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0."),
         (
@@ -181,7 +193,7 @@ def test_glm_solver_argument(solver):
     ],
 )
 def test_glm_scalar_argument(params, err_type, err_msg):
-    """Test GLM for invalid max_iter argument."""
+    """Test GLM for invalid parameter arguments."""
     y = np.array([1, 2])
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(**params)
