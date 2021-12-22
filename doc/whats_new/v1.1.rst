@@ -311,6 +311,14 @@ Changelog
    now validate input parameters in `fit` instead of `__init__`.
    :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| fix a bug that correctly initialize `precisions_cholesky_` in
+  :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
+  its square root.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
