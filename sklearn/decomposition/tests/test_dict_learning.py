@@ -677,6 +677,26 @@ def test_sparse_encode_dtype_match(data_type, expected_type, algorithm):
     )
 
 
+@pytest.mark.parametrize(
+    "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+def test_sparse_encode_numerical_consistency(algorithm):
+    # verify numerical consistency among np.float32 and np.float64
+    rtol = 1e-5
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    assert_allclose(
+        sparse_encode(
+            X.astype(np.float32), dictionary.astype(np.float32), algorithm=algorithm
+        ),
+        sparse_encode(
+            X.astype(np.float64), dictionary.astype(np.float64), algorithm=algorithm
+        ),
+        rtol=rtol,
+    )
+
+
 # TODO: preserve numpy.float32 for omp transform_algorithm
 @pytest.mark.parametrize(
     "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold")
