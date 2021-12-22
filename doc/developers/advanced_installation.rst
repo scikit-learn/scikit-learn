@@ -209,7 +209,7 @@ First, download the `Build Tools for Visual Studio 2019 installer
 <https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
 Run the downloaded `vs_buildtools.exe` file, during the installation you will
-need to make sure you select "Windows development for C++", similarly to this
+need to make sure you select "Desktop development for C++", similarly to this
 screenshot:
 
 .. image:: ../images/visual-studio-build-tools-selection.png
