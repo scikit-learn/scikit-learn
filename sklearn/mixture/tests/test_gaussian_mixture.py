@@ -1243,6 +1243,7 @@ def test_gaussian_mixture_setting_best_params():
         random_state=rnd,
         n_components=len(weights_init),
         precisions_init=precisions_init,
+        max_iter=1,
     )
     # ensure that no error is thrown during fit
     gmm.fit(X)
