@@ -680,7 +680,7 @@ def test_sparse_encode_dtype_match(data_type, expected_type, algorithm):
 )
 def test_sparse_encode_numerical_consistency(algorithm):
     # verify numerical consistency among np.float32 and np.float64
-    rtol = 1e-5
+    rtol = 1e-4
     n_components = 6
     rng = np.random.RandomState(0)
     dictionary = rng.randn(n_components, n_features)
