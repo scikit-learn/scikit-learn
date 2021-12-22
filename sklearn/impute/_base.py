@@ -264,19 +264,24 @@ class SimpleImputer(_BaseImputer):
                 )
             )
 
-        if self.strategy in ("most_frequent", "constant"):
-            # If input is a list of strings, dtype = object.
-            # Otherwise ValueError is raised in SimpleImputer
-            # with strategy='most_frequent' or 'constant'
-            # because the list is converted to Unicode numpy array
-            if isinstance(X, list) and any(
-                isinstance(elem, str) for row in X for elem in row
-            ):
-                dtype = object
+        if in_fit:
+            if self.strategy in ("most_frequent", "constant"):
+                # If input is a list of strings, dtype = object.
+                # Otherwise ValueError is raised in SimpleImputer
+                # with strategy='most_frequent' or 'constant'
+                # because the list is converted to Unicode numpy array
+                if isinstance(X, list) and any(
+                    isinstance(elem, str) for row in X for elem in row
+                ):
+                    dtype = object
+                else:
+                    dtype = None
             else:
-                dtype = None
+                dtype = FLOAT_DTYPES
+
+            self._fit_dtype = dtype
         else:
-            dtype = FLOAT_DTYPES
+            dtype = self._fit_dtype
 
         if _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"

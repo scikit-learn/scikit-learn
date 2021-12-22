@@ -1617,3 +1617,15 @@ def test_missing_indicator_feature_names_out():
     feature_names = indicator.get_feature_names_out()
     expected_names = ["missingindicator_a", "missingindicator_b", "missingindicator_d"]
     assert_array_equal(expected_names, feature_names)
+
+
+def test_imputer_lists_fit_transform():
+    """Check that transform uses the same dtype as seen in fit.
+
+    Non-regression test for #19572.
+    """
+
+    X = [["a", "b"], ["c", "b"], ["a", "a"]]
+    imp_frequent = SimpleImputer(strategy="most_frequent").fit(X)
+    X_trans = imp_frequent.transform([[np.nan, np.nan]])
+    assert_array_equal(X_trans, [["a", "b"]])

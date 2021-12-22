@@ -244,6 +244,9 @@ Changelog
   `decision_function` instead of returning the multilabel indicator matrix.
   :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`impute.SimpleImputer` now uses the dtype seen in `fit` for
+  `transform`. :pr:`xxxxx` by `Thomas Fan`_.
+
 - |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
   multilabel classification.
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
