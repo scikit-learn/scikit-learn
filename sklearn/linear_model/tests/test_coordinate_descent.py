@@ -1001,6 +1001,29 @@ def test_elasticnet_precompute_gram_weighted_samples():
     assert_allclose(clf1.coef_, clf2.coef_)
 
 
+def test_elasticnet_precompute_gram():
+    # check the equivalence between passing a precomputed Gram matrix and
+    # internal computation in a case where np.dot does not give numerically
+    # the same result if either called with two 2d-arrays (specific element
+    # extracted) or with two 1d-arrays corresponding to that specific element.
+    # Here: (X_c.T, X_c)[2, 3] is not equal to np.dot(X_c[:, 2], X_c[:, 3]).
+
+    rng = np.random.RandomState(58)
+    X = rng.binomial(1, 0.25, (1000, 4)).astype(np.float32)
+    y = rng.random(1000).astype(np.float32)
+
+    X_c = X - np.average(X, axis=0)
+    gram = np.dot(X_c.T, X_c)
+
+    clf1 = ElasticNet(alpha=0.01, precompute=gram)
+    clf1.fit(X_c, y)
+
+    clf2 = ElasticNet(alpha=0.01, precompute=False)
+    clf2.fit(X, y)
+
+    assert_allclose(clf1.coef_, clf2.coef_)
+
+
 def test_warm_start_convergence():
     X, y, _, _ = build_dataset()
     model = ElasticNet(alpha=1e-3, tol=1e-3).fit(X, y)
