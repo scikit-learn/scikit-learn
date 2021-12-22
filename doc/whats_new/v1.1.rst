@@ -245,7 +245,7 @@ Changelog
   :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :class:`impute.SimpleImputer` now uses the dtype seen in `fit` for
-  `transform`. :pr:`xxxxx` by `Thomas Fan`_.
+  `transform`. :pr:`22063` by `Thomas Fan`_.
 
 - |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
   multilabel classification.
