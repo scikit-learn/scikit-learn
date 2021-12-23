@@ -42,14 +42,6 @@ def _get_dummy_metric_params_list(metric: str, n_features: int):
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
 
-    if metric == "mahalanobis":
-        V = rng.random_sample((n_features, n_features))
-        # This makes VI is positive-semidefinite, which is a
-        # necessary condition to get nonsingular precision matrix.
-        VI = np.dot(V, V.T) + 3 * np.eye(n_features)
-
-        return [dict(VI=VI)]
-
     # Case of: "euclidean", "manhattan", "chebyshev", "haversine" or any other metric.
     # In those cases, no kwargs is needed.
     return [{}]
