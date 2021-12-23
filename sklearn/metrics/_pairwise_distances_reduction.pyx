@@ -264,35 +264,6 @@ cdef class PairwiseDistancesReduction:
             self.effective_n_threads,
         )
 
-
-    def _compute(
-        self,
-        bint return_distance=False,
-    ):
-        """Compute the pairwise distances and the reduction of vectors (rows) of X on Y.
-
-        Parameters
-        ----------
-        return_distance : boolean, default=False
-            Return distances between each X vector and its
-            argkmin if set to True.
-
-        Returns
-        -------
-        If True, return the distances between each sample of X and
-        the samples of Y selected by the reduction function.
-        """
-
-        # Limit the number of threads in second level of nested parallelism for BLAS
-        # to avoid threads over-subscription (in GEMM for instance).
-        with threadpool_limits(limits=1, user_api="blas"):
-            if self.execute_in_parallel_on_Y:
-                self._parallel_on_Y()
-            else:
-                self._parallel_on_X()
-
-        return self._finalize_results(return_distance)
-
     @final
     cdef void _parallel_on_X(self) nogil:
         """Compute the pairwise distances of each vector (row) of X on Y
@@ -655,7 +626,15 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 strategy=strategy,
             )
 
-        return pda._compute(return_distance=return_distance)
+        # Limit the number of threads in second level of nested parallelism for BLAS
+        # to avoid threads over-subscription (in GEMM for instance).
+        with threadpool_limits(limits=1, user_api="blas"):
+            if pda.execute_in_parallel_on_Y:
+                pda._parallel_on_Y()
+            else:
+                pda._parallel_on_X()
+
+        return pda._finalize_results(return_distance)
 
     def __init__(
         self,
