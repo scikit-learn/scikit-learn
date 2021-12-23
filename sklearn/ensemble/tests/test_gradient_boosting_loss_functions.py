@@ -333,5 +333,5 @@ def test_exponential_loss():
     y_pred = np.array([0])
     # we expect to have loss = exp(0) = 1
     assert loss(y_true, y_pred) == pytest.approx(1)
-    # we expect to have negative gradient = -1 * (1 * exp(0)) = 1
+    # we expect to have negative gradient = -1 * (1 * exp(0)) = -1
     assert_allclose(loss.negative_gradient(y_true, y_pred), -1)
