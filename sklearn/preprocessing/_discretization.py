@@ -10,10 +10,6 @@ import numbers
 import numpy as np
 import warnings
 
-from numpy.lib.function_base import quantile
-
-from sklearn.utils import validation
-
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
