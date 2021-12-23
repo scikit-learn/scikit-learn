@@ -10,7 +10,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.fixes import parse_version
+from sklearn.utils.fixes import parse_version, sp_version
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -22,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
+from sklearn.linear_model import QuantileRegressor
 from sklearn.model_selection import RandomizedSearchCV
 
 
@@ -2063,14 +2064,14 @@ def test_loss_squared_epsilon_insensitive():
 
 def test_loss_pinball():
     # Test PinBall
-    loss = sgd_fast.PinBall(0.05)
+    loss = sgd_fast.PinBall(0.50)
     cases = [
         # (p, y, expected_loss, expected_dloss)
         (0.0, 0.0, 0.0, 0.0),
-        (0.0, 0.1, 0.005, -0.05),
-        (0.1, 0.0, 0.095, 0.95),
-        (2.2, 2.0, 0.19, 0.95),
-        (2.0, -1.0, 2.85, 0.95),
+        (0.0, 0.1, 0.05, -0.50),
+        (0.1, 0.0, 0.05, 0.50),
+        (2.2, 2.0, 0.10, 0.50),
+        (2.0, -1.0, 1.50, 0.50),
     ]
     _test_loss_common(loss, cases)
 
@@ -2101,7 +2102,6 @@ def test_multi_core_gridsearch_and_early_stopping():
         "alpha": np.logspace(-4, 4, 9),
         "n_iter_no_change": [5, 10, 50],
     }
-    # 20132
     clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True, random_state=0)
     search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2, random_state=0)
     search.fit(iris.data, iris.target)
@@ -2167,19 +2167,33 @@ def test_loss_squared_loss_deprecated(Estimator):
         assert_allclose(est1.predict(X), est2.predict(X))
 
 
-def test_quantile():
-    X, y = datasets.make_regression(
-        n_samples=1000, n_features=10, n_informative=9, random_state=1234
+@pytest.mark.skipif(
+    sp_version <= parse_version("1.6.0"),
+    reason="Solvers are available as of scipy 1.6.0",
+)
+def test_pinball_loss_w_quantile_regressor():
+    X, y, coef = datasets.make_regression(
+        n_samples=1000,
+        n_features=10,
+        n_informative=4,
+        random_state=14,
+        noise=0,
+        coef=True,
     )
-    from .._quantile import QuantileRegressor
 
-    benchmark = QuantileRegressor(alpha=1e-6, solver="highs").fit(X, y).score(X, y)
+    qr = QuantileRegressor(fit_intercept=False, alpha=1e-1, solver="highs").fit(X, y)
 
     est = SGDRegressor(
-        alpha=1e-5,
+        fit_intercept=False,
+        penalty="l1",
+        alpha=1e-1,
         loss="pinball",
         quantile=0.5,
-        max_iter=50,
+        eta0=1,
+        learning_rate="adaptive",
+        tol=None,
         random_state=42,
     ).fit(X, y)
-    assert est.score(X, y) + 0.2 > benchmark
+    assert_almost_equal(est.intercept_, qr.intercept_)
+    assert_allclose(est.coef_, qr.coef_, rtol=1)
+    assert_almost_equal(est.score(X, y), qr.score(X, y), decimal=3)

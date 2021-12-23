@@ -17,7 +17,7 @@ from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils.metaestimators import available_if
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
@@ -50,9 +50,8 @@ LEARNING_RATE_TYPES = {
 
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
-DEFAULT_EPSILON = 0.1
-# Default value of ``epsilon`` parameter.
-DEFAULT_QUANTILE = 0.5
+DEFAULT_EPSILON = 0.1  # Default value of ``epsilon`` parameter.
+DEFAULT_QUANTILE = 0.5  # Default value of ``quantile`` parameter.
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -142,6 +141,14 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
+        check_scalar(
+            self.quantile,
+            name="quantile",
+            target_type=float,
+            min_val=0,
+            max_val=1,
+            include_boundaries="neither",
+        )
         if not (0.0 < self.quantile < 1.0):
             raise ValueError("quantile must be in [0, 1]")
         if not isinstance(self, SGDOneClassSVM) and self.alpha < 0.0:
@@ -1700,7 +1707,7 @@ class SGDRegressor(BaseSGDRegressor):
     ----------
     loss : str, default='squared_error'
         The loss function to be used. The possible values are 'squared_error',
-        'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'
+        'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive',
         or 'pinball'
 
         The 'squared_error' refers to the ordinary least squares fit.
@@ -1772,8 +1779,9 @@ class SGDRegressor(BaseSGDRegressor):
 
     quantile : float, default=0.5
         This parameter will be used only when the loss is `pinball`.
-        The quantile that the SGDRegressor tries to predict. It must be strictly
-        between 0 and 1. If 0.5 (default), the model predicts the 50%
+        It corresponds to the quantile that the model tries to predict.
+        It must be strictly between 0 and 1 (i.e. interval `(0, 1)`).
+        If 0.5 (default), the model predicts the 50%
         quantile, i.e. the median.
 
     random_state : int, RandomState instance, default=None

@@ -318,8 +318,8 @@ cdef class EpsilonInsensitive(Regression):
         self.epsilon = epsilon
 
     cdef double loss(self, double p, double y) nogil:
-        cdef double ret = fabs(y - p) - self.epsilon
-        return ret if ret > 0 else 0
+        cdef double residual = fabs(y - p) - self.epsilon
+        return residual if residual > 0 else 0
 
     cdef double dloss(self, double p, double y) nogil:
         if y - p > self.epsilon:
@@ -345,8 +345,8 @@ cdef class SquaredEpsilonInsensitive(Regression):
         self.epsilon = epsilon
 
     cdef double loss(self, double p, double y) nogil:
-        cdef double ret = fabs(y - p) - self.epsilon
-        return ret * ret if ret > 0 else 0
+        cdef double residual = fabs(y - p) - self.epsilon
+        return residual * residual if residual > 0 else 0
 
     cdef double dloss(self, double p, double y) nogil:
         cdef double z
@@ -363,7 +363,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
 
 
 cdef class PinBall(Regression):
-    """Pin ball loss used for quantile regression.
+    """Pinball loss used for quantile regression.
 
     loss = q * max(y - p, 0) + (1 - q) * max(p - y, 0)
     """
@@ -374,15 +374,18 @@ cdef class PinBall(Regression):
         self.quantile = quantile
 
     cdef double loss(self, double p, double y) nogil:
-        cdef double ret = y - p
-        return self.quantile * ret if ret > 0\
-         else (1 - self.quantile) * -ret
+        cdef double residual = y - p
+        if residual >= 0:
+            return self.quantile * residual
+        else:
+            return -(1.0 - self.quantile) * residual
+
 
     cdef double dloss(self, double p, double y) nogil:
-        if y - p > 0:
+        if y > p:
             return -self.quantile
-        elif y - p < 0:
-            return 1- self.quantile
+        elif y < p:
+            return 1.0 - self.quantile
         else:
             return 0
 
