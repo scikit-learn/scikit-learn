@@ -1985,8 +1985,8 @@ class TfidfVectorizer(CountVectorizer):
             min_df=min_df,
             max_features=max_features,
             vocabulary=vocabulary,
-            binary=binary,
             count_vocabulary=count_vocabulary,
+            binary=binary,
             dtype=dtype,
         )
         self.norm = norm
