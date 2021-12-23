@@ -2172,7 +2172,7 @@ def test_loss_squared_loss_deprecated(Estimator):
     sp_version <= parse_version("1.6.0"),
     reason="Solvers are available as of scipy 1.6.0",
 )
-@pytest.mark.parametrize("quantile", [0.05, 0.1, 0.5, 0.09, 0.95])
+@pytest.mark.parametrize("quantile", [0.05, 0.1, 0.5, 0.90, 0.95])
 def test_pinball_loss_w_quantile_regressor(quantile):
     X, y = datasets.make_regression(
         n_samples=1000,
