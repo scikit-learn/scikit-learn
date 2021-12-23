@@ -99,20 +99,6 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_heap",
         sources=["_heap.pyx"],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
-
-    config.add_extension(
-        "_typedefs",
-        sources=["_typedefs.pyx"],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
-
-    config.add_extension(
-        "_heap",
-        sources=["_heap.pyx"],
         libraries=libraries,
     )
 
