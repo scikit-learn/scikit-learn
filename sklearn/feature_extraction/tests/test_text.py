@@ -1690,7 +1690,7 @@ def test_nonnegative_hashing_vectorizer_result_indices():
 
 
 def test_vocabulary_count():
-    bad_vec = CountVectorizer(count_vocabulary=True).fit(JUNK_FOOD_DOCS)
+    bad_vec = CountVectorizer(count_vocabulary=False).fit(JUNK_FOOD_DOCS)
 
     vec = CountVectorizer(count_vocabulary=True).fit(JUNK_FOOD_DOCS)
     vocabulary_count = vec.vocabulary_count_
@@ -1703,7 +1703,9 @@ def test_vocabulary_count():
         "coke": 3,
     }
 
-    ngram_vec = CountVectorizer(ngram_range=(1, 2),count_vocabulary=True).fit(JUNK_FOOD_DOCS)
+    ngram_vec = CountVectorizer(ngram_range=(1, 2), count_vocabulary=True).fit(
+        JUNK_FOOD_DOCS
+    )
     ngram_vocabulary_count = ngram_vec.vocabulary_count_
     ngram_vocabulary_count_truth = {
         "beer": 6,
