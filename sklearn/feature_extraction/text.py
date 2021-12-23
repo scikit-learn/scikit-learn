@@ -1023,7 +1023,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     count_vocabulary : bool, default=False
         If True, creates a mapping of vocabulary terms to a count of their occurence
         in the training data. Note: This will increase model size, which may be of
-        concern during pickling; select only if memory usage is acceptable.
+        concern during pickling.
 
     dtype : type, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
@@ -1034,7 +1034,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         A mapping of terms to feature indices.
 
     vocabulary_count_ : dict
-        A mapping of terms to a count of their occurrence.
+        A mapping of terms to a count of their occurrence. Only available when
+        `count_vocabulary` is set during initialization.
 
     fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping
@@ -1854,7 +1855,7 @@ class TfidfVectorizer(CountVectorizer):
     count_vocabulary : bool, default=False
         If True, creates a mapping of vocabulary terms to a count of their occurence
         in the training data. Note: This will increase model size, which may be of
-        concern during pickling; select only if memory usage is acceptable.
+        concern during pickling.
 
     binary : bool, default=False
         If True, all non-zero term counts are set to 1. This does not mean
@@ -1890,7 +1891,8 @@ class TfidfVectorizer(CountVectorizer):
         A mapping of terms to feature indices.
 
     vocabulary_count_ : dict
-        A mapping of terms to a count of their occurrence.
+        A mapping of terms to a count of their occurrence. Only available when
+        `count_vocabulary` is set during initialization.
 
     fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping
