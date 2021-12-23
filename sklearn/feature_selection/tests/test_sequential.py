@@ -155,7 +155,7 @@ def test_unsupervised_model_fit(n_features_to_select):
 
     X, y = make_blobs(n_features=4)
     sfs = SequentialFeatureSelector(
-        KMeans(),
+        KMeans(n_init=1),
         n_features_to_select=n_features_to_select,
     )
     sfs.fit(X)
