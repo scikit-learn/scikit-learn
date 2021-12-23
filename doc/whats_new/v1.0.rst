@@ -38,9 +38,8 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
-- |Fix| :class:`feature_selection.SelectFromModel` no longer warns
-  when fit with a DataFrame and transform on a DataFrame when base estimator
-  does not support `feature_names_in_`. :pr:`21991` by `Thomas Fan`_.
+- |Fix| Fixed :class:`feature_selection.SelectFromModel` to improve support
+  for estimators that set `feature_names_in_`. :pr:`21991` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
