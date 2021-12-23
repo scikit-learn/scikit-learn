@@ -149,8 +149,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             max_val=1,
             include_boundaries="neither",
         )
-        if not (0.0 < self.quantile < 1.0):
-            raise ValueError("quantile must be in [0, 1]")
         if not isinstance(self, SGDOneClassSVM) and self.alpha < 0.0:
             raise ValueError("alpha must be >= 0")
         if self.n_iter_no_change < 1:
