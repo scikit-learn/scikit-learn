@@ -85,7 +85,6 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_readonly_array_wrapper",
         sources=["_readonly_array_wrapper.pyx"],
-        include_dirs=[numpy.get_include()],
         libraries=libraries,
     )
 
