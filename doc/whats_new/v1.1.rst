@@ -272,6 +272,11 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
+- |Enhancement| Rename parameter `base_estimator` to `estimator` in 
+  :class:`linear_model.RANSACRegressor` to improve readability and consistency.
+  `base_estimator` is deprecated and will be removed in 1.3.
+  :pr:`22062` by :user:`Adrian Trujillo <trujillo9616>`.
+
 :mod:`sklearn.metrics`
 ......................
 
