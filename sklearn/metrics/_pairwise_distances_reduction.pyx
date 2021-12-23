@@ -4,8 +4,8 @@
 #    Author: Julien Jerphanion <git@jjerphan.xyz>
 #
 #
-# The routines defined here are used in various algorithms performing
-# the same structure of operations on distances between vectors
+# The abstractions defined here are used in various algorithms performing
+# the same structure of operations on distances between row vectors
 # of a datasets pair (X, Y).
 #
 # Importantly, the core of the computation is chunked to make sure that the pairwise
@@ -37,7 +37,7 @@ from ..utils._cython_blas cimport (
 )
 from ..utils._heap cimport simultaneous_sort, heap_push
 from ..utils._openmp_helpers cimport _openmp_thread_num
-from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
+from ..utils._typedefs cimport ITYPE_t, DTYPE_t
 
 from numbers import Integral, Real
 from typing import List
@@ -48,7 +48,9 @@ from ..utils.fixes import threadpool_limits
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 
+
 np.import_array()
+
 
 cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
     const DTYPE_t[:, ::1] X,
@@ -62,26 +64,27 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
         # Casting for X to remove the const qualifier is needed because APIs
         # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
         # const qualifier.
+        # See: https://github.com/scipy/scipy/issues/1426
         DTYPE_t * X_ptr = <DTYPE_t *> &X[0, 0]
         ITYPE_t idx = 0
         ITYPE_t n = X.shape[0]
         ITYPE_t d = X.shape[1]
-        DTYPE_t[::1] row_norms = np.empty(n, dtype=DTYPE)
+        DTYPE_t[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
 
     for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
-        row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
+        squared_row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
 
-    return row_norms
+    return squared_row_norms
 
 cdef class PairwiseDistancesReduction:
-    """Abstract base class for pairwise distance computation & reduction
+    """Abstract base class for pairwise distance computation & reduction.
 
     Subclasses of this class compute pairwise distances between a set of
-    vectors (rows) X and another set of vectors (rows) Y and apply a
-    reduction on top. The reduction takes a matrix of pairwise distances
-    between rows of X and Y as input and outputs an aggregate data-structure
-    for each row of X. The aggregate values are typically smaller than the number
-    of rows in Y, hence the term reduction.
+    row vectors of X and another set of row vectors pf Y and apply a reduction on top.
+    The reduction takes a matrix of pairwise distances between rows of X and Y
+    as input and outputs an aggregate data-structure for each row of X.
+    The aggregate values are typically smaller than the number of rows in Y,
+    hence the term reduction.
 
     For computational reasons, it is interesting to perform the reduction on
     the fly on chunks of rows of X and Y so as to keep intermediate
@@ -104,7 +107,7 @@ cdef class PairwiseDistancesReduction:
     datasets_pair: DatasetsPair
         The pair of dataset to use.
 
-    chunk_size: int, default=None,
+    chunk_size: int, default=None
         The number of vectors per chunk. If None (default) looks-up in
         scikit-learn configuration for `pairwise_dist_chunk_size`,
         and use 256 if it is not set.
@@ -176,7 +179,7 @@ cdef class PairwiseDistancesReduction:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(set(METRIC_MAPPING.keys()).difference(excluded))
+        return sorted(set(METRIC_MAPPING.keys()) - excluded)
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -266,7 +269,7 @@ cdef class PairwiseDistancesReduction:
 
     @final
     cdef void _parallel_on_X(self) nogil:
-        """Compute the pairwise distances of each vector (row) of X on Y
+        """Compute the pairwise distances of each row vector of X on Y
         by parallelizing computation on chunks of X and reduce them.
 
         This strategy dispatches chunks of X uniformly on threads.
@@ -326,7 +329,7 @@ cdef class PairwiseDistancesReduction:
 
     @final
     cdef void _parallel_on_Y(self) nogil:
-        """Compute the pairwise distances of each vector (row) of X on Y
+        """Compute the pairwise distances of each row vector of X on Y
         by parallelizing computation on chunks of Y and reduce them.
 
         This strategy dispatches chunks of Y uniformly on threads.
@@ -399,8 +402,8 @@ cdef class PairwiseDistancesReduction:
     ) nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
-        This is the core critical region of PairwiseDistanceReductions' computations
-        which must be implemented in subclasses.
+        This is THE core computational method of PairwiseDistanceReductions.
+        This must be implemented in subclasses.
         """
         return
 
@@ -476,7 +479,7 @@ cdef class PairwiseDistancesReduction:
         return
 
 cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
-    """Compute the argkmin of vectors (rows) of X on the ones of Y.
+    """Compute the argkmin of row vectors of X on the ones of Y.
 
     Parameters
     ----------
