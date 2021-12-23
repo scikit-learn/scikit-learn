@@ -826,6 +826,23 @@ class OrdinalEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[1, 0], [0, 1]])
     array([['Male', 1],
            ['Female', 2]], dtype=object)
+
+    By default, :class:`OrdinalEncoder` is lenient towards missing values by
+    propagating them.
+
+    >>> import numpy as np
+    >>> X = [['Male', 1], ['Female', 3], ['Female', np.nan]]
+    >>> enc.fit_transform(X)
+    array([[ 1.,  0.],
+           [ 0.,  1.],
+           [ 0., nan]])
+
+    You can use the parameter `encoded_missing_value` to encode missing values.
+
+    >>> enc.set_params(encoded_missing_value=-1).fit_transform(X)
+    array([[ 1.,  0.],
+           [ 0.,  1.],
+           [ 0., -1.]])
     """
 
     def __init__(
