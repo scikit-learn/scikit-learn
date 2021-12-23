@@ -174,6 +174,13 @@ class RANSACRegressor(
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    base_estimator : object, default="deprecated"
+        Use `estimator` instead.
+
+        .. deprecated:: 1.1
+            `base_estimator` is deprecated and will be removed in 1.3.
+            Use `estimator` instead.
+
     Attributes
     ----------
     estimator_ : object
