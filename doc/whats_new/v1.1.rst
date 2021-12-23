@@ -128,6 +128,11 @@ Changelog
   tolerance).
   :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
 
+- |Enhancement| :func:`datasets.fetch_openml` now has two optional arguments
+  `n_retries` and `delay`. By default, :func:`datasets.fetch_openml` will retry
+  3 times in case of a network failure with a delay between each try.
+  :pr:`21901` by :user:`Rileran <rileran>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -205,6 +210,11 @@ Changelog
   changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
+- |Fix| Solve a bug in :class:`ensemble.GradientBoostingClassifier` where the
+  exponential loss was computing the positive gradient instead of the
+  negative one.
+  :pr:`22050` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_extraction.text`
 ......................................
@@ -310,6 +320,14 @@ Changelog
 - |Fix| :class:`model_selection.GridSearchCV`, :class:`model_selection.HalvingGridSearchCV`
    now validate input parameters in `fit` instead of `__init__`.
    :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| Fix a bug that correctly initialize `precisions_cholesky_` in
+  :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
+  its square root.
+  :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.pipeline`
 .......................
