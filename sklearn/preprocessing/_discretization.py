@@ -232,8 +232,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     X = _safe_indexing(X, subsample_idx)
         elif self.strategy != "quantile" and sample_weight is not None:
             raise ValueError(
-                f"Invalid parameter for `strategy`: {self.strategy}. "
-                '`sample_weight` must be used with `strategy="quantile"`'
+                "`sample_weight` was provided but it can be only used with"
+                f"strategy='quantile'. Got strategy={self.strategy!r} instead."
             )
         elif self.strategy != "quantile" and isinstance(
             self.subsample, numbers.Integral
