@@ -287,7 +287,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
                 else:
                     bin_edges[jj] = np.asarray(
-                        [_weighted_percentile(column, weights, q) for q in quantiles]
+                        [_weighted_percentile(column, weights, q) for q in quantiles],
+                        dtype=np.float64,
                     )
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
