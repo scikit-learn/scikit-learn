@@ -1184,7 +1184,8 @@ cdef class DatasetsPair:
     aggregation logic from metric-specific computation as much as
     possible.
 
-    X and Y can be stored as np.ndarrays or CSR matrices in subclasses.
+    X and Y can be stored as C-contiguous np.ndarrays or CSR matrices
+    in subclasses.
 
     This class avoids the overhead of dispatching distance computations
     to :class:`sklearn.metrics.DistanceMetric` based on the physical
@@ -1240,7 +1241,7 @@ cdef class DatasetsPair:
                 **(metric_kwargs or {})
             )
 
-        if X.dtype != np.float64 or Y.dtype != np.float64:
+        if not(X.dtype == Y.dtype == np.float64):
             raise ValueError("Only 64bit float datasets are supported for X and Y.")
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
@@ -1252,34 +1253,35 @@ cdef class DatasetsPair:
 
         return DenseDenseDatasetsPair(X, Y, distance_metric)
 
-    @classmethod
-    def unpack_csr_matrix(cls, X: csr_matrix):
-        """Ensure getting ITYPE instead of int internally used for CSR matrices."""
-        X_data = np.asarray(X.data, dtype=DTYPE)
-        X_indices = np.asarray(X.indices, dtype=ITYPE)
-        X_indptr = np.asarray(X.indptr, dtype=ITYPE)
-        return X_data, X_indptr, X_indptr
-
     def __init__(self, DistanceMetric distance_metric):
         self.distance_metric = distance_metric
 
     cdef ITYPE_t n_samples_X(self) nogil:
         """Number of samples in X."""
+        # This is a abstract method.
+        # This _must_ always be overwritten in subclasses.
+        # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -999
 
     cdef ITYPE_t n_samples_Y(self) nogil:
         """Number of samples in Y."""
+        # This is a abstract method.
+        # This _must_ always be overwritten in subclasses.
+        # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -999
 
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.dist(i, j)
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        # This is a abstract method.
+        # This _must_ always be overwritten in subclasses.
+        # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -1
 
 @final
 cdef class DenseDenseDatasetsPair(DatasetsPair):
-    """Compute distances between vectors of two arrays.
+    """Compute distances between row vectors of two arrays.
 
     Parameters
     ----------
@@ -1291,7 +1293,7 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
 
     distance_metric: DistanceMetric
         The distance metric responsible for computing distances
-        between two vectors of (X, Y).
+        between two row vectors of (X, Y).
     """
 
     def __init__(self, X, Y, DistanceMetric distance_metric):
