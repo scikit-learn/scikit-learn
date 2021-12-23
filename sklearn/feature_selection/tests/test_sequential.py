@@ -148,14 +148,14 @@ def test_pipeline_support():
     pipe.transform(X)
 
 
-@pytest.mark.parametrize("n_features_to_select", (2, 3, 4))
+@pytest.mark.parametrize("n_features_to_select", (2, 3))
 def test_unsupervised_model_fit(n_features_to_select):
     # Make sure that models without classification labels are not being
     # validated
 
-    X, y = make_blobs(n_features=6)
+    X, y = make_blobs(n_features=4)
     sfs = SequentialFeatureSelector(
-        KMeans(),
+        KMeans(n_init=1),
         n_features_to_select=n_features_to_select,
     )
     sfs.fit(X)
