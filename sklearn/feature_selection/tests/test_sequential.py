@@ -115,7 +115,7 @@ def test_nan_support():
     # Make sure nans are OK if the underlying estimator supports nans
 
     rng = np.random.RandomState(0)
-    n_samples, n_features = 100, 10
+    n_samples, n_features = 40, 4
     X, y = make_regression(n_samples, n_features, random_state=0)
     nan_mask = rng.randint(0, 2, size=(n_samples, n_features), dtype=bool)
     X[nan_mask] = np.nan
@@ -148,14 +148,14 @@ def test_pipeline_support():
     pipe.transform(X)
 
 
-@pytest.mark.parametrize("n_features_to_select", (2, 3, 4))
+@pytest.mark.parametrize("n_features_to_select", (2, 3))
 def test_unsupervised_model_fit(n_features_to_select):
     # Make sure that models without classification labels are not being
     # validated
 
-    X, y = make_blobs(n_features=6)
+    X, y = make_blobs(n_features=4)
     sfs = SequentialFeatureSelector(
-        KMeans(),
+        KMeans(n_init=1),
         n_features_to_select=n_features_to_select,
     )
     sfs.fit(X)
