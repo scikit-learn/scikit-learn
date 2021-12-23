@@ -74,9 +74,9 @@ default_base = {
     "eps": 0.3,
     "damping": 0.9,
     "preference": -200,
-    "n_neighbors": 10,
+    "n_neighbors": 3,
     "n_clusters": 3,
-    "min_samples": 20,
+    "min_samples": 7,
     "xi": 0.05,
     "min_cluster_size": 0.1,
 }
@@ -89,18 +89,27 @@ datasets = [
             "preference": -240,
             "quantile": 0.2,
             "n_clusters": 2,
-            "min_samples": 20,
-            "xi": 0.25,
+            "min_samples": 7,
+            "xi": 0.08,
         },
     ),
-    (noisy_moons, {"damping": 0.75, "preference": -220, "n_clusters": 2}),
+    (
+        noisy_moons,
+        {
+            "damping": 0.75,
+            "preference": -220,
+            "n_clusters": 2,
+            "min_samples": 7,
+            "xi": 0.1,
+        }
+    ),
     (
         varied,
         {
             "eps": 0.18,
             "n_neighbors": 2,
             "min_samples": 5,
-            "xi": 0.035,
+            "xi": 0.05,
             "min_cluster_size": 0.2,
         },
     ),
