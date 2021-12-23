@@ -657,23 +657,17 @@ def test_warning_default_transform_alpha(Estimator):
 @pytest.mark.parametrize(
     "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
 )
-@pytest.mark.parametrize(
-    "data_type, expected_type",
-    (
-        (np.float32, np.float32),
-        (np.float64, np.float64),
-    ),
-)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
 # Note: do not check integer input because `lasso_lars` and `lars` fail with
 # `ValueError` in `_lars_path_solver`
-def test_sparse_encode_dtype_match(data_type, expected_type, algorithm):
+def test_sparse_encode_dtype_match(data_type, algorithm):
     n_components = 6
     rng = np.random.RandomState(0)
     dictionary = rng.randn(n_components, n_features)
     code = sparse_encode(
         X.astype(data_type), dictionary.astype(data_type), algorithm=algorithm
     )
-    assert code.dtype == expected_type
+    assert code.dtype == data_type
 
 
 @pytest.mark.parametrize(
@@ -697,16 +691,10 @@ def test_sparse_encode_numerical_consistency(algorithm):
 @pytest.mark.parametrize(
     "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
 )
-@pytest.mark.parametrize(
-    "data_type, expected_type",
-    (
-        (np.float32, np.float32),
-        (np.float64, np.float64),
-    ),
-)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
 # Note: do not check integer input because `lasso_lars` and `lars` fail with
 # `ValueError` in `_lars_path_solver`
-def test_sparse_coder_dtype_match(data_type, expected_type, transform_algorithm):
+def test_sparse_coder_dtype_match(data_type, transform_algorithm):
     # Verify preserving dtype for transform in sparse coder
     n_components = 6
     rng = np.random.RandomState(0)
@@ -715,7 +703,7 @@ def test_sparse_coder_dtype_match(data_type, expected_type, transform_algorithm)
         dictionary.astype(data_type), transform_algorithm=transform_algorithm
     )
     code = coder.transform(X.astype(data_type))
-    assert code.dtype == expected_type
+    assert code.dtype == data_type
 
 
 @pytest.mark.parametrize(

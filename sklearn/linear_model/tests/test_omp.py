@@ -272,21 +272,17 @@ def test_omp_reaches_least_squares():
     assert_array_almost_equal(omp.coef_, lstsq.coef_)
 
 
-@pytest.mark.parametrize(
-    "data_type, expected_type",
-    (
-        (np.float32, np.float32),
-        (np.float64, np.float64),
-    ),
-)
-def test_omp_gram_dtype_match(data_type, expected_type):
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+def test_omp_gram_dtype_match(data_type):
+    # verify matching input data type and output data type
     coef = orthogonal_mp_gram(
         G.astype(data_type), Xy.astype(data_type), n_nonzero_coefs=5
     )
-    assert coef.dtype == expected_type
+    assert coef.dtype == data_type
 
 
 def test_omp_gram_numerical_consistency():
+    # verify numericaly consistency among np.float32 and np.float64
     coef_32 = orthogonal_mp_gram(
         G.astype(np.float32), Xy.astype(np.float32), n_nonzero_coefs=5
     )
