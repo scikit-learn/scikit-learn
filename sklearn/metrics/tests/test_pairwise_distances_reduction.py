@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from collections import defaultdict
 from numpy.testing import assert_array_equal, assert_allclose
 from scipy.sparse import csr_matrix
 
@@ -18,42 +17,44 @@ from sklearn.utils._testing import fails_if_unstable_openblas
 def _get_dummy_metric_params_list(metric: str, n_features: int):
     """Return list of dummy DistanceMetric kwargs for tests."""
 
+    # Distinguishing on cases not to compute unneeded datastructures.
     rng = np.random.RandomState(1)
-    weights = rng.random_sample(n_features)
-    weights /= weights.sum()
 
-    V = rng.random_sample((n_features, n_features))
+    if metric == "minkowski":
+        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
+        if sp_version >= parse_version("1.8.0.dev0"):
+            # TODO: remove the test once we no longer support scipy < 1.8.0.
+            # Recent scipy versions accept weights in the Minkowski metric directly:
+            # type: ignore
+            minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
 
-    # VI is positive-semidefinite, preferred for precision matrix
-    VI = np.dot(V, V.T) + 3 * np.eye(n_features)
+        return minkowski_kwargs
 
-    METRICS_PARAMS = defaultdict(
-        list,
-        {
-            "euclidean": [{}],
-            "manhattan": [{}],
-            "minkowski": [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)],
-            "chebyshev": [{}],
-            "seuclidean": [dict(V=rng.rand(n_features))],
-            "haversine": [{}],
-            "wminkowski": [dict(p=1.5, w=weights)],
-            "mahalanobis": [dict(VI=VI)],
-        },
-    )
+    # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
+    if metric == "wminkowski":
+        weights = rng.random_sample(n_features)
+        weights /= weights.sum()
+        wminkowski_kwargs = [dict(p=1.5, w=weights)]
+        if sp_version < parse_version("1.8.0.dev0"):
+            # wminkowski was removed in scipy 1.8.0 but should work for previous
+            # versions.
+            wminkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
+        return wminkowski_kwargs
 
-    wminkowski_kwargs = dict(p=3, w=rng.rand(n_features))
+    if metric == "seuclidean":
+        return [dict(V=rng.rand(n_features))]
 
-    if sp_version < parse_version("1.8.0.dev0"):
-        # TODO: remove once we no longer support scipy < 1.8.0.
-        # wminkowski was removed in scipy 1.8.0 but should work for previous
-        # versions.
-        METRICS_PARAMS["wminkowski"].append(wminkowski_kwargs)  # type: ignore
-    else:
-        # Recent scipy versions accept weights in the Minkowski metric directly:
-        # type: ignore
-        METRICS_PARAMS["minkowski"].append(wminkowski_kwargs)  # type: ignore
+    if metric == "mahalanobis":
+        V = rng.random_sample((n_features, n_features))
+        # This makes VI is positive-semidefinite, which is a
+        # necessary condition to get nonsingular precision matrix.
+        VI = np.dot(V, V.T) + 3 * np.eye(n_features)
 
-    return METRICS_PARAMS.get(metric, [{}])
+        return [dict(VI=VI)]
+
+    # Case of: "euclidean", "manhattan", "chebyshev", "haversine" or any other metric.
+    # In those cases, no kwargs is needed.
+    return [{}]
 
 
 def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
