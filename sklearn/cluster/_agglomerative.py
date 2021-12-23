@@ -506,7 +506,7 @@ def linkage_tree(
             # by sklearn.metrics.pairwise_distances.
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
-                    "Distance matrix should be square, Got matrix of shape {X.shape}"
+                    f"Distance matrix should be square, got matrix of shape {X.shape}"
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
@@ -914,7 +914,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2, estimator=self)
+        X = self._validate_data(X, ensure_min_samples=2)
         return self._fit(X)
 
     def _fit(self, X):
@@ -1234,7 +1234,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, ensure_min_features=2, estimator=self)
+        X = self._validate_data(X, ensure_min_features=2)
         super()._fit(X.T)
         return self
 

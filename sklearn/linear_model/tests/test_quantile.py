@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from pytest import approx
 from scipy.optimize import minimize
+from scipy import sparse
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
@@ -43,6 +44,21 @@ def test_init_parameters_validation(X_y_data, params, err_msg):
     X, y = X_y_data
     with pytest.raises(ValueError, match=err_msg):
         QuantileRegressor(**params).fit(X, y)
+
+
+@pytest.mark.skipif(
+    sp_version < parse_version("1.3.0"),
+    reason="Solver 'revised simplex' is only available with of scipy>=1.3.0",
+)
+@pytest.mark.parametrize("solver", ["interior-point", "revised simplex"])
+def test_incompatible_solver_for_sparse_input(X_y_data, solver):
+    X, y = X_y_data
+    X_sparse = sparse.csc_matrix(X)
+    err_msg = (
+        f"Solver {solver} does not support sparse X. Use solver 'highs' for example."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        QuantileRegressor(solver=solver).fit(X_sparse, y)
 
 
 @pytest.mark.parametrize("solver", ("highs-ds", "highs-ipm", "highs"))
@@ -128,12 +144,15 @@ def test_quantile_sample_weight():
     assert weighted_fraction_below == approx(0.5, abs=3e-2)
 
 
+@pytest.mark.skipif(
+    sp_version < parse_version("1.6.0"),
+    reason="The `highs` solver is available from the 1.6.0 scipy version",
+)
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
 def test_asymmetric_error(quantile):
     """Test quantile regression for asymmetric distributed targets."""
     n_samples = 1000
     rng = np.random.RandomState(42)
-    # take care that X @ coef + intercept > 0
     X = np.concatenate(
         (
             np.abs(rng.randn(n_samples)[:, None]),
@@ -143,22 +162,27 @@ def test_asymmetric_error(quantile):
     )
     intercept = 1.23
     coef = np.array([0.5, -2])
+    #  Take care that X @ coef + intercept > 0
+    assert np.min(X @ coef + intercept) > 0
     # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
     # the quantile at level q is:
     #   quantile(q) = - log(1 - q) / lambda
-    #   scale = 1/lambda = -quantile(q) / log(1-q)
+    #   scale = 1/lambda = -quantile(q) / log(1 - q)
     y = rng.exponential(
         scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
     )
     model = QuantileRegressor(
         quantile=quantile,
         alpha=0,
-        solver="interior-point",
-        solver_options={"tol": 1e-5},
+        solver="highs",
     ).fit(X, y)
+    # This test can be made to pass with any solver but in the interest
+    # of sparing continuous integration resources, the test is performed
+    # with the fastest solver only.
+
     assert model.intercept_ == approx(intercept, rel=0.2)
     assert_allclose(model.coef_, coef, rtol=0.6)
-    assert_allclose(np.mean(model.predict(X) > y), quantile)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
 
     # Now compare to Nelder-Mead optimization with L1 penalty
     alpha = 0.01
@@ -178,10 +202,10 @@ def test_asymmetric_error(quantile):
         options={"maxiter": 2000},
     )
 
-    assert func(model_coef) == approx(func(res.x), rel=1e-3)
-    assert_allclose(model.intercept_, res.x[0], rtol=1e-3)
-    assert_allclose(model.coef_, res.x[1:], rtol=1e-3)
-    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=8e-3)
+    assert func(model_coef) == approx(func(res.x))
+    assert_allclose(model.intercept_, res.x[0])
+    assert_allclose(model.coef_, res.x[1:])
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
 
 
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
@@ -242,3 +266,28 @@ def test_linprog_failure():
     msg = "Linear programming for QuantileRegressor did not succeed."
     with pytest.warns(ConvergenceWarning, match=msg):
         reg.fit(X, y)
+
+
+@pytest.mark.skipif(
+    sp_version <= parse_version("1.6.0"),
+    reason="Solvers are available as of scipy 1.6.0",
+)
+@pytest.mark.parametrize(
+    "sparse_format", [sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix]
+)
+@pytest.mark.parametrize("solver", ["highs", "highs-ds", "highs-ipm"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_sparse_input(sparse_format, solver, fit_intercept):
+    """Test that sparse and dense X give same results."""
+    X, y = make_regression(n_samples=100, n_features=20, random_state=1, noise=1.0)
+    X_sparse = sparse_format(X)
+    alpha = 1e-4
+    quant_dense = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(X, y)
+    quant_sparse = QuantileRegressor(
+        alpha=alpha, fit_intercept=fit_intercept, solver=solver
+    ).fit(X_sparse, y)
+    assert_allclose(quant_sparse.coef_, quant_dense.coef_, rtol=1e-2)
+    if fit_intercept:
+        assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
+        # check that we still predict fraction
+        assert 0.45 <= np.mean(y < quant_sparse.predict(X_sparse)) <= 0.55

@@ -175,23 +175,75 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
 
 
 @pytest.mark.parametrize(
-    "value, force_all_finite, match_msg",
+    "value, input_name, force_all_finite, match_msg",
     [
-        (np.inf, True, "Input contains NaN, infinity"),
-        (np.inf, "allow-nan", "Input contains infinity"),
-        (np.nan, True, "Input contains NaN, infinity"),
-        (np.nan, "allow-inf", 'force_all_finite should be a bool or "allow-nan"'),
-        (np.nan, 1, "Input contains NaN, infinity"),
+        (np.inf, "", True, "Input contains infinity"),
+        (np.inf, "X", True, "Input X contains infinity"),
+        (np.inf, "sample_weight", True, "Input sample_weight contains infinity"),
+        (np.inf, "X", "allow-nan", "Input X contains infinity"),
+        (np.nan, "", True, "Input contains NaN"),
+        (np.nan, "X", True, "Input X contains NaN"),
+        (np.nan, "y", True, "Input y contains NaN"),
+        (
+            np.nan,
+            "",
+            "allow-inf",
+            'force_all_finite should be a bool or "allow-nan"',
+        ),
+        (np.nan, "", 1, "Input contains NaN"),
     ],
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
 def test_check_array_force_all_finiteinvalid(
-    value, force_all_finite, match_msg, retype
+    value, input_name, force_all_finite, match_msg, retype
 ):
-    X = retype(np.arange(4).reshape(2, 2).astype(float))
+    X = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     X[0, 0] = value
     with pytest.raises(ValueError, match=match_msg):
-        check_array(X, force_all_finite=force_all_finite, accept_sparse=True)
+        check_array(
+            X,
+            input_name=input_name,
+            force_all_finite=force_all_finite,
+            accept_sparse=True,
+        )
+
+
+@pytest.mark.parametrize("input_name", ["X", "y", "sample_weight"])
+@pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
+def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
+    data = retype(np.arange(4).reshape(2, 2).astype(np.float64))
+    data[0, 0] = np.nan
+    estimator = SVR()
+    extended_msg = (
+        f"\n{estimator.__class__.__name__} does not accept missing values"
+        " encoded as NaN natively. For supervised learning, you might want"
+        " to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor"
+        " which accept missing values encoded as NaNs natively."
+        " Alternatively, it is possible to preprocess the"
+        " data, for instance by using an imputer transformer in a pipeline"
+        " or drop samples with missing values. See"
+        " https://scikit-learn.org/stable/modules/impute.html"
+    )
+
+    with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
+        check_array(
+            data,
+            estimator=estimator,
+            input_name=input_name,
+            accept_sparse=True,
+        )
+
+    if input_name == "X":
+        assert extended_msg in ctx.value.args[0]
+    else:
+        assert extended_msg not in ctx.value.args[0]
+
+    if input_name == "X":
+        # Veriy that _validate_data is automatically called with the right argument
+        # to generate the same exception:
+        with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
+            SVR().fit(data, np.ones(data.shape[0]))
+        assert extended_msg in ctx.value.args[0]
 
 
 def test_check_array_force_all_finite_object():
@@ -212,15 +264,15 @@ def test_check_array_force_all_finite_object():
     [
         (
             np.array([[1, np.nan]]),
-            "Input contains NaN, infinity or a value too large for.*int",
+            "Input contains NaN.",
         ),
         (
             np.array([[1, np.nan]]),
-            "Input contains NaN, infinity or a value too large for.*int",
+            "Input contains NaN.",
         ),
         (
             np.array([[1, np.inf]]),
-            "Input contains NaN, infinity or a value too large for.*int",
+            "Input contains infinity or a value too large for.*int",
         ),
         (np.array([[1, np.nan]], dtype=object), "cannot convert float NaN to integer"),
     ],
@@ -425,7 +477,7 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     assert_allclose(X_checked, X_np)
     assert X_checked.dtype == expected_dtype
 
-    msg = "Input contains NaN, infinity"
+    msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
         check_array(X, force_all_finite=True)
 
