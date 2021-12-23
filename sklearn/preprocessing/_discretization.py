@@ -210,6 +210,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
 
+        valid_strategy = ("uniform", "quantile", "kmeans")
+        if self.strategy not in valid_strategy:
+            raise ValueError(
+                "Valid options for 'strategy' are {}. "
+                "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
+            )
+
         if self.strategy == "quantile" and self.subsample is not None:
             if self.subsample == "warn":
                 if n_samples > 2e5:
@@ -230,18 +237,17 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         n_samples, size=self.subsample, replace=False
                     )
                     X = _safe_indexing(X, subsample_idx)
-        elif self.strategy != "quantile" and sample_weight is not None:
-            raise ValueError(
-                "`sample_weight` was provided but it can be only used with"
-                f"strategy='quantile'. Got strategy={self.strategy!r} instead."
-            )
-        elif self.strategy != "quantile" and isinstance(
-            self.subsample, numbers.Integral
-        ):
-            raise ValueError(
-                f"Invalid parameter for `strategy`: {self.strategy}. "
-                '`subsample` must be used with `strategy="quantile"`.'
-            )
+        elif self.strategy != "quantile":
+            if isinstance(self.subsample, numbers.Integral):
+                raise ValueError(
+                    f"Invalid parameter for `strategy`: {self.strategy}. "
+                    '`subsample` must be used with `strategy="quantile"`.'
+                )
+            if sample_weight is not None:
+                raise ValueError(
+                    "`sample_weight` was provided but it can be only used with"
+                    f"strategy='quantile'. Got strategy={self.strategy!r} instead."
+                )
 
         valid_encode = ("onehot", "onehot-dense", "ordinal")
         if self.encode not in valid_encode:
@@ -249,12 +255,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 "Valid options for 'encode' are {}. Got encode={!r} instead.".format(
                     valid_encode, self.encode
                 )
-            )
-        valid_strategy = ("uniform", "quantile", "kmeans")
-        if self.strategy not in valid_strategy:
-            raise ValueError(
-                "Valid options for 'strategy' are {}. "
-                "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
             )
 
         n_features = X.shape[1]
