@@ -741,3 +741,5 @@ This is currently implemented in the following classes:
     ensemble.ExtraTreesRegressor
     ensemble.GradientBoostingClassifier
     ensemble.GradientBoostingRegressor
+    ensemble.HistGradientBoostingClassifier
+    ensemble.HistGradientBoostingRegressor
