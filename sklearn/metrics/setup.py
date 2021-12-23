@@ -26,6 +26,12 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
     )
 
+    config.add_extension(
+        "_pairwise_distances_reduction",
+        sources=["_pairwise_distances_reduction.pyx"],
+        libraries=libraries,
+    )
+
     config.add_subpackage("tests")
 
     return config
