@@ -278,6 +278,7 @@ def _yield_outliers_checks(estimator):
         # test if NotFittedError is raised
         if _safe_tags(estimator, key="requires_fit"):
             yield check_estimators_unfitted
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_all_checks(estimator):
@@ -3261,11 +3262,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # labeled, hence n_iter_ = 0 is valid.
     not_run_check_n_iter = [
         "Ridge",
-        "SVR",
-        "NuSVR",
-        "NuSVC",
         "RidgeClassifier",
-        "SVC",
         "RandomizedLasso",
         "LogisticRegressionCV",
         "LinearSVC",
@@ -3290,9 +3287,11 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 
         set_random_state(estimator, 0)
 
+        X = _pairwise_estimator_convert_X(X, estimator_orig)
+
         estimator.fit(X, y_)
 
-        assert estimator.n_iter_ >= 1
+        assert np.all(estimator.n_iter_ >= 1)
 
 
 @ignore_warnings(category=FutureWarning)

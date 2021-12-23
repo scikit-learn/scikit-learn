@@ -51,6 +51,12 @@ Changelog
   are always consistent with `scipy.spatial.distance.cdist`.
   :pr:`21741` by :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| :meth:`multiclass.OneVsRestClassifier.predict_proba` does not error when
+  fitted on constant integer targets. :pr:`21871` by `Thomas Fan`_.
+
 :mod:`sklearn.neighbors`
 ........................
 
