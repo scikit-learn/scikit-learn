@@ -265,7 +265,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = self._validate_n_bins(n_features)
 
         if sample_weight is not None:
-            weights = np.array(_check_sample_weight(sample_weight, X, dtype=X.dtype))
+            weights = np.array(
+                _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
+            )
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
@@ -288,7 +290,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 if sample_weight is None:
                     bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
                 else:
-                    bin_edges[jj] = np.asarray([_weighted_percentile(column, weights, q) for q in quantiles])
+                    bin_edges[jj] = np.asarray(
+                        [_weighted_percentile(column, weights, q) for q in quantiles]
+                    )
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 
