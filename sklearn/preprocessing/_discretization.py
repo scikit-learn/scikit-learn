@@ -6,10 +6,13 @@
 # License: BSD
 
 
-import collections
 import numbers
 import numpy as np
 import warnings
+
+from numpy.lib.function_base import quantile
+
+from sklearn.utils import validation
 
 from . import OneHotEncoder
 
@@ -18,7 +21,9 @@ from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
 from ..utils.validation import _check_feature_names_in
+from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_scalar
+from ..utils.stats import _weighted_percentile
 from ..utils import _safe_indexing
 
 
@@ -50,10 +55,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         Strategy used to define the widths of the bins.
 
         - 'uniform': All bins in each feature have identical widths.
-        - 'quantile': If sample_weight parameter in fit method is None, all
-          bins in each feature have the same number of points. Else,
-          the number of points in each bin is proportional to each provided
-          weight value.
+        - 'quantile': All bins in each feature have the same number of points.
         - 'kmeans': Values in each bin have the same nearest center of a 1D
           k-means cluster.
 
@@ -188,12 +190,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
 
-        sample_weight : ndarray of shape (n_bins_,) or (n_features, n_bins_)
-            Weights (values between 0 and 1) that represent the proportion of
-            data to be associated with each bins. The sum of each weight value
-            for a given number of bins should be equal to 1.
-            This parameter is taken into account only for ``strategy =
-            'quantile'``
+        sample_weight : ndarray of shape (n_samples,)
+            Contains weight values to be associated with each sample.
 
         Returns
         -------
@@ -236,6 +234,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         n_samples, size=self.subsample, replace=False
                     )
                     X = _safe_indexing(X, subsample_idx)
+        elif self.strategy != "quantile" and sample_weight is not None:
+            raise ValueError(
+                f"Invalid parameter for `strategy`: {self.strategy}. "
+                '`sample_weight` must be used with `strategy="quantile"`'
+            )
         elif self.strategy != "quantile" and isinstance(
             self.subsample, numbers.Integral
         ):
@@ -261,6 +264,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
 
+        if sample_weight is not None:
+            weights = np.array(_check_sample_weight(sample_weight, X, dtype=X.dtype))
+
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
             column = X[:, jj]
@@ -278,30 +284,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
 
             elif self.strategy == "quantile":
-                # if sample_weight (weight) parameter is defined, then the size
-                # of each bin should be proportional to each weight value (in w)
-                if sample_weight is not None:
-                    weights = (
-                        sample_weight[jj]
-                        if isinstance(sample_weight[0], collections.Sequence)
-                        else sample_weight
-                    )
-                    if sum(weights) != 1:
-                        raise ValueError(
-                            "Sum of weights in fit method should "
-                            "be equal to 1 (current value : {})".format(sum(weights))
-                        )
-                    quantiles = [0]
-                    wt = 0
-                    for wi in weights:
-                        wt += wi
-                        quantiles.append(100 * wt)
-                # if sample_weight parameter is None then each bin should have
-                # the same number of samples
+                quantiles = np.linspace(0, 100, n_bins[jj] + 1)
+                if sample_weight is None:
+                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
                 else:
-                    quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
-
+                    bin_edges[jj] = np.asarray([_weighted_percentile(column, weights, q) for q in quantiles])
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 
