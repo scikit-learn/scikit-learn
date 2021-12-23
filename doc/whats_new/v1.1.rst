@@ -211,6 +211,11 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+- |Fix| Solve a bug in :class:`ensemble.GradientBoostingClassifier` where the
+  exponential loss was computing the positive gradient instead of the
+  negative one.
+  :pr:`22050` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction.text`
 ......................................
 
