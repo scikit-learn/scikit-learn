@@ -9,9 +9,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     _sqeuclidean_row_norms,
 )
 
-from sklearn.utils import _in_unstable_openblas_configuration
 from sklearn.utils.fixes import sp_version, parse_version
-from sklearn.utils._testing import fails_if_unstable_openblas
 
 
 def _get_dummy_metric_params_list(metric: str, n_features: int):
@@ -140,7 +138,6 @@ def test_argkmin_factory_method_wrong_usages():
         )
 
 
-@fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
@@ -187,7 +184,6 @@ def test_chunk_size_agnosticism(
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
 
-@fails_if_unstable_openblas
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
@@ -245,11 +241,6 @@ def test_strategies_consistency(
     n_features=10,
     dtype=np.float64,
 ):
-    # Results obtained using both parallelization strategies must be identical
-    if _in_unstable_openblas_configuration() and metric in ("sqeuclidean", "euclidean"):
-        pytest.xfail(
-            "OpenBLAS (used for '(sq)euclidean') is unstable in this configuration"
-        )
 
     rng = np.random.RandomState(seed)
     spread = 100
@@ -302,7 +293,6 @@ def test_strategies_consistency(
     )
 
 
-@fails_if_unstable_openblas
 @pytest.mark.parametrize("n_features", [50, 500])
 @pytest.mark.parametrize("translation", [10 ** i for i in [4, 8]])
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
