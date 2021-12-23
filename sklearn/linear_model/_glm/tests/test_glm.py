@@ -131,6 +131,10 @@ def test_glm_solver_argument(solver):
 
 
 @pytest.mark.parametrize(
+    "estimator",
+    [GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
+)
+@pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
         ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1"),
@@ -192,11 +196,11 @@ def test_glm_solver_argument(solver):
         ),
     ],
 )
-def test_glm_scalar_argument(params, err_type, err_msg):
+def test_glm_scalar_argument(estimator, params, err_type, err_msg):
     """Test GLM for invalid parameter arguments."""
     y = np.array([1, 2])
     X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(**params)
+    glm = estimator(**params)
     with pytest.raises(err_type, match=err_msg):
         glm.fit(X, y)
 
