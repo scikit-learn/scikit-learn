@@ -538,10 +538,9 @@ class SVC(BaseSVC):
         inversely proportional to C. Must be strictly positive. The penalty
         is a squared l2 penalty.
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
         Specifies the kernel type to be used in the algorithm.
-        It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-        a callable.
         If none is given, 'rbf' will be used. If a callable is given it is
         used to pre-compute the kernel matrix from data matrices; that matrix
         should be an array of shape ``(n_samples, n_samples)``.
@@ -802,10 +801,9 @@ class NuSVC(BaseSVC):
         <nu_svc>`) and a lower bound of the fraction of support vectors.
         Should be in the interval (0, 1].
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1067,10 +1065,9 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1271,10 +1268,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     C : float, default=1.0
         Penalty parameter C of the error term.
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1454,10 +1450,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
