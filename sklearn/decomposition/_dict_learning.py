@@ -1292,7 +1292,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return super()._transform(X, self.dictionary)
 
     def _more_tags(self):
-        return {"requires_fit": False}
+        return {
+            "requires_fit": False,
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
     @property
     def n_components_(self):
@@ -1585,6 +1588,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1930,3 +1938,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
