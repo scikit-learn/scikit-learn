@@ -679,7 +679,7 @@ Implementation notes:
 - With the current implementation full shuffle is not possible in most
   scenarios. When shuffle=True, the following happens:
 
-  1. All groups a shuffled.
+  1. All groups are shuffled.
   2. Groups are sorted by standard deviation of classes using stable sort.
   3. Sorted groups are iterated over and assigned to folds.
 
