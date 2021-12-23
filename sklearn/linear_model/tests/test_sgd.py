@@ -248,6 +248,7 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
             r"validation_fraction must be in range \(0, 1\)",
         ),
         ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
+        ({"quantile": 1.2}, "quantile == 1.2, must be < 1."),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
