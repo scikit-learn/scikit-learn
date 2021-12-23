@@ -654,7 +654,6 @@ def test_warning_default_transform_alpha(Estimator):
         dl.fit_transform(X)
 
 
-# TODO: preserve numpy.float32 for omp transform_algorithm
 @pytest.mark.parametrize(
     "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
 )
