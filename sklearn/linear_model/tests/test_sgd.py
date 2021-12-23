@@ -2172,18 +2172,49 @@ def test_loss_squared_loss_deprecated(Estimator):
     sp_version <= parse_version("1.6.0"),
     reason="Solvers are available as of scipy 1.6.0",
 )
-def test_pinball_loss_w_quantile_regressor():
-    X, y, coef = datasets.make_regression(
+@pytest.mark.parametrize("quantile", [0.05, 0.1, 0.5, 0.09, 0.95])
+def test_pinball_loss_w_quantile_regressor(quantile):
+    X, y = datasets.make_regression(
         n_samples=1000,
         n_features=10,
         n_informative=4,
         random_state=14,
-        noise=0,
+        noise=3,
+    )
+    qr = QuantileRegressor(
+        fit_intercept=False, alpha=1e-1, solver="highs", quantile=quantile
+    ).fit(X, y)
+    est = SGDRegressor(
+        fit_intercept=False,
+        penalty="l1",
+        alpha=1e-1,
+        loss="pinball",
+        quantile=quantile,
+        eta0=1,
+        learning_rate="adaptive",
+        tol=None,
+        random_state=42,
+    ).fit(X, y)
+
+    assert_allclose(est.coef_, qr.coef_, rtol=1)
+    assert_almost_equal(est.score(X, y), qr.score(X, y), decimal=3)
+
+
+@pytest.mark.skipif(
+    sp_version <= parse_version("1.6.0"),
+    reason="Solvers are available as of scipy 1.6.0",
+)
+def test_pinball_loss_w_partial_fit():
+    n_samples = 10_000
+    ind_chunks = np.split(np.arange(n_samples), 10)
+    X, y, coef = datasets.make_regression(
+        n_samples=n_samples,
+        n_features=100,
+        n_informative=10,
+        random_state=14,
+        noise=200,
         coef=True,
     )
-
-    qr = QuantileRegressor(fit_intercept=False, alpha=1e-1, solver="highs").fit(X, y)
-
     est = SGDRegressor(
         fit_intercept=False,
         penalty="l1",
@@ -2194,7 +2225,9 @@ def test_pinball_loss_w_quantile_regressor():
         learning_rate="adaptive",
         tol=None,
         random_state=42,
-    ).fit(X, y)
-    assert_almost_equal(est.intercept_, qr.intercept_)
-    assert_allclose(est.coef_, qr.coef_, rtol=1)
-    assert_almost_equal(est.score(X, y), qr.score(X, y), decimal=3)
+    )
+
+    for inds in ind_chunks:
+        est.partial_fit(X[inds], y[inds])
+
+    assert_allclose(est.coef_, coef, rtol=2)
