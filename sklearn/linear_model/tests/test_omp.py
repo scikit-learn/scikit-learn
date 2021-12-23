@@ -4,6 +4,7 @@
 import numpy as np
 import pytest
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
@@ -269,3 +270,27 @@ def test_omp_reaches_least_squares():
     omp.fit(X, Y)
     lstsq.fit(X, Y)
     assert_array_almost_equal(omp.coef_, lstsq.coef_)
+
+
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+    ),
+)
+def test_omp_gram_dtype_match(data_type, expected_type):
+    coef = orthogonal_mp_gram(
+        G.astype(data_type), Xy.astype(data_type), n_nonzero_coefs=5
+    )
+    assert coef.dtype == expected_type
+
+
+def test_omp_gram_numerical_consistency():
+    coef_32 = orthogonal_mp_gram(
+        G.astype(np.float32), Xy.astype(np.float32), n_nonzero_coefs=5
+    )
+    coef_64 = orthogonal_mp_gram(
+        G.astype(np.float32), Xy.astype(np.float64), n_nonzero_coefs=5
+    )
+    assert_allclose(coef_32, coef_64)
