@@ -38,8 +38,9 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
-- |Fix| Fixed :class:`feature_selection.SelectFromModel` to improve support
-  for estimators that set `feature_names_in_`. :pr:`21991` by `Thomas Fan`_.
+- |Fix| Fixed :class:`feature_selection.SelectFromModel` by improving support
+  for base estimators that do not set `feature_names_in_`. :pr:`21991` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
