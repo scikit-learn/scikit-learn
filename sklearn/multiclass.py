@@ -161,8 +161,8 @@ class _ConstantPredictor(BaseEstimator):
             ensure_2d=False,
             reset=False,
         )
-
-        return np.repeat([np.hstack([1 - self.y_, self.y_])], _num_samples(X), axis=0)
+        y_ = self.y_.astype(np.float64)
+        return np.repeat([np.hstack([1 - y_, y_])], _num_samples(X), axis=0)
 
 
 def _estimators_has(attr):
