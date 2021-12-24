@@ -41,6 +41,7 @@ Changelog
 - |Fix| Fixed :class:`feature_selection.SelectFromModel` by improving support
   for base estimators that do not set `feature_names_in_`. :pr:`21991` by
   `Thomas Fan`_.
+
 :mod:`sklearn.manifold`
 .......................
 
