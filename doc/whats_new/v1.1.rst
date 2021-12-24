@@ -347,6 +347,10 @@ Changelog
   then `get_output_feature_names` is not defined.
   :pr:`21569` by :user:`Aurélien Geron <ageron>`.
 
+- |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
+ `fit` instead of `__init__`.
+  :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
 :mod:`sklearn.random_projection`
 ................................
 
