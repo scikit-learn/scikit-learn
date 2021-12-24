@@ -269,7 +269,7 @@ Changelog
 
 - |API| Parameters ``sample_weight`` and ``multioutput`` of :func:`metrics.
   mean_absolute_percentage_error` are now keyword-only, in accordance with `SLEP009
-  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`.
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_.
   A deprecation cycle was introduced.
   :pr:`21576` by :user:`Paul-Emile Dugnat <pedugnat>`.
 
@@ -352,7 +352,7 @@ Changelog
   :pr:`21569` by :user:`Aurélien Geron <ageron>`.
 
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
- `fit` instead of `__init__`.
+  `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
 
 :mod:`sklearn.random_projection`
@@ -365,7 +365,7 @@ Changelog
   :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.svm`
-...................
+..................
 
 - |Enhancement| :class:`svm.OneClassSVM`, :class:`svm.NuSVC`,
   :class:`svm.NuSVR`, :class:`svm.SVC` and :class:`svm.SVR` now expose
