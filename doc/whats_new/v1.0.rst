@@ -42,20 +42,6 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit`
-  instead of `__init__`.
-  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and
-  :user:`Maren Westermann <marenwestermann>`.
-
-- |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
-  in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
-  :user:`Krum Arnaudov <krumeto>`.
-
-- |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
-  `fit` instead of `__init__`.
-  :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
-
 :mod:`sklearn.ensemble`
 .......................
 
@@ -70,13 +56,6 @@ Changelog
   exponential loss was computing the positive gradient instead of the
   negative one.
   :pr:`22050` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
-  in `transform` instead of `__init__`. :pr:`21573` by
-  :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -131,23 +110,11 @@ Changelog
 - |Fix| :meth:`multiclass.OneVsRestClassifier.predict_proba` does not error when
   fitted on constant integer targets. :pr:`21871` by `Thomas Fan`_.
 
-:mod:`sklearn.model_selection`
-..............................
-
-- |Fix| :class:`model_selection.GridSearchCV`,
-  :class:`model_selection.HalvingGridSearchCV`
-  now validate input parameters in `fit` instead of `__init__`.
-  :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
-
 :mod:`sklearn.neighbors`
 ........................
 
 - |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly supports
   read-only buffer attributes. :pr:`21845` by `Thomas Fan`_.
-
-- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
-  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
-  :user:`Lucy Jimenez <LucyJimenez>`.
 
 :mod:`sklearn.pipeline`
 .......................
