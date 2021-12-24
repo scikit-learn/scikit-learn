@@ -35,6 +35,13 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| Fixed :class:`feature_selection.SelectFromModel` by improving support
+  for base estimators that do not set `feature_names_in_`. :pr:`21991` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.manifold`
 .......................
 
