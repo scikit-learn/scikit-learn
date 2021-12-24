@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn._config.config_context",
     "sklearn._config.get_config",
     "sklearn.base.clone",
     "sklearn.cluster._affinity_propagation.affinity_propagation",
