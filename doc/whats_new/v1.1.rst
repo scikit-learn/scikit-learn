@@ -128,10 +128,6 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
-- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
-  to a temporary subfolder and then renamed.
-  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
-
 - |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
   ``scaled``, to allow loading unscaled data. The scaled version of this
   dataset is now computed from the unscaled data, and can produce slightly
@@ -152,18 +148,6 @@ Changelog
   get accurate results when the number of features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
-- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
-  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-
-- |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
-  in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
-  :user:`Krum Arnaudov <krumeto>`.
-
-- |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
-  `fit` instead of `__init__`.
-  :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
-
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
   :class:`~sklearn.decomposition.DictionaryLearning`,
@@ -180,17 +164,52 @@ Changelog
   and :class:`~sklearn.decomposition.TruncatedSVD`. :pr:`21334` by
   `Thomas Fan`_.
 
+- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit`
+  instead of `__init__`.
+  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and
+  :user:`Maren Westermann <marenwestermann>`.
+
+- |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
+  in `fit` instead of `__init__`.
+  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
+  :user:`Krum Arnaudov <krumeto>`.
+
+- |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
+  `fit` instead of `__init__`.
+  :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |API| Changed the default of :func:`max_features` to 1.0 for
+  :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
+  :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
+  results as before, but are much easier to understand. The old default value
+  `"auto"` has been deprecated and will be removed in version 1.3. The same
+  changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
+  :class:`ensemble.ExtraTreesClassifier`.
+  :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
+
+- |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
+  The default value of its `whiten` argument will change from `True`
+  (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
+  :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and
+  :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
   :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 
-- |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
-  The default value of its `whiten` argument will change from `True`
-  (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
-  :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and :user:`Julien Jerphanion <jjerphan>`
+:mod:`sklearn.feature_extraction.text`
+......................................
+
+- |Fix| :class:`feature_extraction.text.TfidfVectorizer` now does not create
+  a :class:`feature_extraction.text.TfidfTransformer` at `__init__` as required
+  by our API.
+  :pr:`21832` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -202,38 +221,6 @@ Changelog
   or that the feature and target are perfectly correlated (only for the
   F-statistic).
   :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
-
-:mod:`sklearn.ensemble`
-.......................
-
-- |Fix| :class:`ensemble.RandomForestClassifier`,
-  :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
-  and :class:`ensemble.RandomTreesEmbedding` now raise a ``ValueError`` when
-  ``bootstrap=False`` and ``max_samples`` is not ``None``.
-  :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
-
-- |API| Changed the default of :func:`max_features` to 1.0 for
-  :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
-  :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
-  results as before, but are much easier to understand. The old default value
-  `"auto"` has been deprecated and will be removed in version 1.3. The same
-  changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
-  :class:`ensemble.ExtraTreesClassifier`.
-  :pr:`20803` by :user:`Brian Sun <bsun94>`.
-
-- |Fix| Solve a bug in :class:`ensemble.GradientBoostingClassifier` where the
-  exponential loss was computing the positive gradient instead of the
-  negative one.
-  :pr:`22050` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-:mod:`sklearn.feature_extraction.text`
-......................................
-
-- |Fix| :class:`feature_extraction.text.TfidfVectorizer` now does not create
-  a :class:`feature_extraction.text.TfidfTransformer` at `__init__` as required
-  by our API.
-  :pr:`21832` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -254,11 +241,6 @@ Changelog
   when features which are skipped due to the lack of any observed
   values in the training set.
   :pr:`21617` by :user:`Christian Ritter <chritter>`.
-
-- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
-  `predict` was performing an `argmax` on the scores obtained from
-  `decision_function` instead of returning the multilabel indicator matrix.
-  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
   multilabel classification.
@@ -287,12 +269,6 @@ Changelog
   for the highs based solvers.
   :pr:`21086` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
 
-- |Fix| :class:`linear_model.LassoLarsIC` now correctly computes AIC
-  and BIC. An error is now raised when `n_features > n_samples` and
-  when the noise variance is not provided.
-  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Andrés Babino <ababino>`.
-
 :mod:`sklearn.metrics`
 ......................
 
@@ -304,7 +280,7 @@ Changelog
 
 - |API| Parameters ``sample_weight`` and ``multioutput`` of :func:`metrics.
   mean_absolute_percentage_error` are now keyword-only, in accordance with `SLEP009
-  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`.
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_.
   A deprecation cycle was introduced.
   :pr:`21576` by :user:`Paul-Emile Dugnat <pedugnat>`.
 
@@ -328,9 +304,10 @@ Changelog
   splits failed. Similarly raise an error during grid-search when the fits for
   all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
 
-- |Fix| :class:`model_selection.GridSearchCV`, :class:`model_selection.HalvingGridSearchCV`
-   now validate input parameters in `fit` instead of `__init__`.
-   :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
+- |Fix| :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.HalvingGridSearchCV`
+  now validate input parameters in `fit` instead of `__init__`.
+  :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
 
 :mod:`sklearn.mixture`
 ......................
@@ -340,70 +317,8 @@ Changelog
   its square root.
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.pipeline`
-.......................
-
-- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
-  Setting a transformer to "passthrough" will pass the features unchanged.
-  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
-
-:mod:`sklearn.svm`
-...................
-
-- |Enhancement| :class:`svm.OneClassSVM`, :class:`svm.NuSVC`,
-  :class:`svm.NuSVR`, :class:`svm.SVC` and :class:`svm.SVR` now expose
-  `n_iter_`, the number of iterations of the libsvm optimization routine.
-  :pr:`21408` by :user:`Juan Martín Loyola <jmloyola>`.
-- |Fix| :class: `pipeline.Pipeline` now does not validate hyper-parameters in
-  `__init__` but in `.fit()`.
-  :pr:`21888` by :user:`iofall <iofall>` and :user: `Arisa Y. <arisayosh>`.
-
-:mod:`sklearn.preprocessing`
-............................
-
-- |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
-  This allows specifying a maximum number of samples to be used while fitting
-  the model. The option is only available when `strategy` is set to `quantile`.
-  :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
-
-- |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
-  instead of `__init__`.
-  :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
-
-- |Enhancement| Added the `get_feature_names_out` method and a new parameter
-  `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
-  `feature_names_out` to 'one-to-one' to use the input features names as the
-  output feature names, or you can set it to a callable that returns the output
-  feature names. This is especially useful when the transformer changes the
-  number of features. If `feature_names_out` is None (which is the default),
-  then `get_output_feature_names` is not defined.
-  :pr:`21569` by :user:`Aurélien Geron <ageron>`.
-
-:mod:`sklearn.svm`
-..................
-
-- |Fix| :class:`smv.NuSVC`, :class:`svm.NuSVR`, :class:`svm.SVC`,
-  :class:`svm.SVR`, :class:`svm.OneClassSVM` now validate input
-  parameters in `fit` instead of `__init__`.
-  :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
-
-:mod:`sklearn.utils`
-....................
-
-- |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
-  message when running in a jupyter notebook that is not trusted. :pr:`21316`
-  by `Thomas Fan`_.
-
-- |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
-  left corner of the HTML representation to show how the elements are
-  clickable. :pr:`21298` by `Thomas Fan`_.
-
 :mod:`sklearn.neighbors`
 ........................
-
-- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
-  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
-  :user:`Lucy Jimenez <LucyJimenez>`.
 
 - |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
   now accept an `input_name` parameter to make the error message more
@@ -415,6 +330,42 @@ Changelog
   ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
   array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
+- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
+  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
+  :user:`Lucy Jimenez <LucyJimenez>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
+  Setting a transformer to "passthrough" will pass the features unchanged.
+  :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
+
+- |Fix| :class:`pipeline.Pipeline` now does not validate hyper-parameters in
+  `__init__` but in `.fit()`.
+  :pr:`21888` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
+  This allows specifying a maximum number of samples to be used while fitting
+  the model. The option is only available when `strategy` is set to `quantile`.
+  :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
+
+- |Enhancement| Added the `get_feature_names_out` method and a new parameter
+  `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
+  `feature_names_out` to 'one-to-one' to use the input features names as the
+  output feature names, or you can set it to a callable that returns the output
+  feature names. This is especially useful when the transformer changes the
+  number of features. If `feature_names_out` is None (which is the default),
+  then `get_output_feature_names` is not defined.
+  :pr:`21569` by :user:`Aurélien Geron <ageron>`.
+
+- |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
+  `fit` instead of `__init__`.
+  :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
 :mod:`sklearn.random_projection`
 ................................
 
@@ -424,13 +375,24 @@ Changelog
   :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
   :user:`Loïc Estève <lesteve>`.
 
-:mod:`sklearn.tree`
-...................
+:mod:`sklearn.svm`
+..................
 
-- |Fix| Support loading pickles of decision tree models when the pickle has
-  been generated on a platform with a different bitness. A typical example is
-  to train and pickle the model on 64 bit machine and load the model on a 32
-  bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
+- |Enhancement| :class:`svm.OneClassSVM`, :class:`svm.NuSVC`,
+  :class:`svm.NuSVR`, :class:`svm.SVC` and :class:`svm.SVR` now expose
+  `n_iter_`, the number of iterations of the libsvm optimization routine.
+  :pr:`21408` by :user:`Juan Martín Loyola <jmloyola>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.estimator_html_repr` shows a more helpful error
+  message when running in a jupyter notebook that is not trusted. :pr:`21316`
+  by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
+  left corner of the HTML representation to show how the elements are
+  clickable. :pr:`21298` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
