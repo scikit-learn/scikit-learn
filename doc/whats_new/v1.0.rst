@@ -24,7 +24,14 @@ Changelog
 
 - |Fix| Fixed an infinite loop in :func:`cluster.SpectralClustering` by
   moving an iteration counter from try to except.
-  :pr:`21271` by :user:`Tyler Martin <martintb>`
+  :pr:`21271` by :user:`Tyler Martin <martintb>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first
+  downloaded to a temporary subfolder and then renamed.
+  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -35,12 +42,44 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
+  and :class:`ensemble.RandomTreesEmbedding` now raise a ``ValueError`` when
+  ``bootstrap=False`` and ``max_samples`` is not ``None``.
+  :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
+
+- |Fix| Solve a bug in :class:`ensemble.GradientBoostingClassifier` where the
+  exponential loss was computing the positive gradient instead of the
+  negative one.
+  :pr:`22050` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
 - |Fix| Fixed :class:`feature_selection.SelectFromModel` by improving support
   for base estimators that do not set `feature_names_in_`. :pr:`21991` by
   `Thomas Fan`_.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
+  `predict` was performing an `argmax` on the scores obtained from
+  `decision_function` instead of returning the multilabel indicator matrix.
+  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.LassoLarsIC` now correctly computes AIC
+  and BIC. An error is now raised when `n_features > n_samples` and
+  when the noise variance is not provided.
+  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Andrés Babino <ababino>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -83,11 +122,24 @@ Changelog
 - |Fix| Fixes compatibility bug with NumPy 1.22 in :class:`preprocessing.OneHotEncoder`.
   :pr:`21517` by `Thomas Fan`_.
 
+:mod:`sklearn.svm`
+..................
+
+- |Fix| :class:`smv.NuSVC`, :class:`svm.NuSVR`, :class:`svm.SVC`,
+  :class:`svm.SVR`, :class:`svm.OneClassSVM` now validate input
+  parameters in `fit` instead of `__init__`.
+  :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
+
 :mod:`sklearn.tree`
 ...................
 
 - |Fix| Prevents :func:`tree.plot_tree` from drawing out of the boundary of
   the figure. :pr:`21917` by `Thomas Fan`_.
+
+- |Fix| Support loading pickles of decision tree models when the pickle has
+  been generated on a platform with a different bitness. A typical example is
+  to train and pickle the model on 64 bit machine and load the model on a 32
+  bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.utils`
 ....................
