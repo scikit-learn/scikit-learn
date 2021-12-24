@@ -7,7 +7,7 @@
 Version 1.0.2
 =============
 
-**In Development**
+**December 2021**
 
 - |Fix| :class:`cluster.Birch`,
   :class:`feature_selection.RFECV`, :class:`ensemble.RandomForestRegressor`,
