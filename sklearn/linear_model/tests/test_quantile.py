@@ -13,6 +13,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils.fixes import parse_version, sp_version
 
 
@@ -268,6 +269,7 @@ def test_linprog_failure():
         reg.fit(X, y)
 
 
+@skip_if_32bit
 @pytest.mark.skipif(
     sp_version <= parse_version("1.6.0"),
     reason="Solvers are available as of scipy 1.6.0",
