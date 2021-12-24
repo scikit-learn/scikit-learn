@@ -116,13 +116,6 @@ Changelog
 - |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly supports
   read-only buffer attributes. :pr:`21845` by `Thomas Fan`_.
 
-:mod:`sklearn.pipeline`
-.......................
-
-- |Fix| :class:`pipeline.Pipeline` now does not validate hyper-parameters in
-  `__init__` but in `.fit()`.
-  :pr:`21888` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
-
 :mod:`sklearn.preprocessing`
 ............................
 
