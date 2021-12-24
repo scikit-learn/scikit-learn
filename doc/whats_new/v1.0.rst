@@ -152,9 +152,9 @@ Changelog
 :mod:`sklearn.pipeline`
 .......................
 
-- |Fix| :class: `pipeline.Pipeline` now does not validate hyper-parameters in
+- |Fix| :class:`pipeline.Pipeline` now does not validate hyper-parameters in
   `__init__` but in `.fit()`.
-  :pr:`21888` by :user:`iofall <iofall>` and :user: `Arisa Y. <arisayosh>`.
+  :pr:`21888` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
 
 :mod:`sklearn.preprocessing`
 ............................
