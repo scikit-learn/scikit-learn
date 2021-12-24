@@ -75,9 +75,9 @@ def test_invalid_sample_weight():
     for s in strategy:
         est = KBinsDiscretizer(n_bins=3, strategy=s)
         err_msg = (
-                "`sample_weight` was provided but it can be only used with"
-                f"strategy='quantile'. Got strategy={s!r} instead."
-            )
+            "`sample_weight` was provided but it can be only used with"
+            f"strategy='quantile'. Got strategy={s!r} instead."
+        )
         with pytest.raises(ValueError, match=err_msg):
             est.fit_transform(X, sample_weight=sample_weight)
 
