@@ -154,6 +154,7 @@ Changelog
 
 - |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
+  
 
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
@@ -183,6 +184,8 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
+- |Enhancement| Adds `vocabulary_count_` to :class:`feature_extraction.text.CountVectorizer`, which maps
+  each vocabulary term to a count of its occurrence. :pr:`21458` by :user:`Christian Allinson <caallinson>`
 - |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
   in `transform` instead of `__init__`. :pr:`21573` by
   :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.

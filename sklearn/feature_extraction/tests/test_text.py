@@ -1687,3 +1687,49 @@ def test_nonnegative_hashing_vectorizer_result_indices():
     hashing = HashingVectorizer(n_features=1000000, ngram_range=(2, 3))
     indices = hashing.transform(["22pcs efuture"]).indices
     assert indices[0] >= 0
+
+
+def test_vocabulary_count():
+    bad_vec = CountVectorizer(count_vocabulary=False).fit(JUNK_FOOD_DOCS)
+
+    vec = CountVectorizer(count_vocabulary=True).fit(JUNK_FOOD_DOCS)
+    vocabulary_count = vec.vocabulary_count_
+    vocabulary_count_truth = {
+        "the": 7,
+        "pizza": 4,
+        "beer": 6,
+        "copyright": 5,
+        "burger": 5,
+        "coke": 3,
+    }
+
+    ngram_vec = CountVectorizer(ngram_range=(1, 2), count_vocabulary=True).fit(
+        JUNK_FOOD_DOCS
+    )
+    ngram_vocabulary_count = ngram_vec.vocabulary_count_
+    ngram_vocabulary_count_truth = {
+        "beer": 6,
+        "beer beer": 2,
+        "beer copyright": 4,
+        "burger": 5,
+        "burger beer": 2,
+        "burger burger": 1,
+        "burger coke": 1,
+        "coke": 3,
+        "coke burger": 2,
+        "coke copyright": 1,
+        "copyright": 5,
+        "pizza": 4,
+        "pizza beer": 2,
+        "pizza burger": 1,
+        "pizza pizza": 1,
+        "the": 7,
+        "the burger": 1,
+        "the coke": 2,
+        "the pizza": 3,
+        "the the": 1,
+    }
+    with pytest.raises(AttributeError):
+        bad_vec.vocabulary_count_
+    assert vocabulary_count == vocabulary_count_truth
+    assert ngram_vocabulary_count == ngram_vocabulary_count_truth

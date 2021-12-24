@@ -1020,6 +1020,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         probabilistic models that model binary events rather than integer
         counts.
 
+    count_vocabulary : bool, default=False
+        If True, creates a mapping of vocabulary terms to a count of their occurence
+        in the training data. Note: This will increase model size, which may be of
+        concern during pickling.
+
     dtype : type, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
 
@@ -1027,6 +1032,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     ----------
     vocabulary_ : dict
         A mapping of terms to feature indices.
+
+    vocabulary_count_ : dict
+        A mapping of terms to a count of their occurrence. Only available when
+        `count_vocabulary` is set during initialization.
 
     fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping
@@ -1106,6 +1115,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         max_features=None,
         vocabulary=None,
         binary=False,
+        count_vocabulary=False,
         dtype=np.int64,
     ):
         self.input = input
@@ -1124,6 +1134,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
+        self.count_vocabulary = count_vocabulary
         self.dtype = dtype
 
     def _sort_features(self, X, vocabulary):
@@ -1350,6 +1361,14 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             if max_features is None:
                 X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
+
+        if self.count_vocabulary:
+            self.vocabulary_count_ = dict(
+                zip(
+                    [t for t, _ in sorted(self.vocabulary_.items(), key=itemgetter(1))],
+                    X.sum(axis=0).A.ravel(),
+                )
+            )
 
         return X
 
@@ -1833,6 +1852,11 @@ class TfidfVectorizer(CountVectorizer):
         indices in the feature matrix, or an iterable over terms. If not
         given, a vocabulary is determined from the input documents.
 
+    count_vocabulary : bool, default=False
+        If True, creates a mapping of vocabulary terms to a count of their occurence
+        in the training data. Note: This will increase model size, which may be of
+        concern during pickling.
+
     binary : bool, default=False
         If True, all non-zero term counts are set to 1. This does not mean
         outputs will have only 0/1 values, only that the tf term in tf-idf
@@ -1865,6 +1889,10 @@ class TfidfVectorizer(CountVectorizer):
     ----------
     vocabulary_ : dict
         A mapping of terms to feature indices.
+
+    vocabulary_count_ : dict
+        A mapping of terms to a count of their occurrence. Only available when
+        `count_vocabulary` is set during initialization.
 
     fixed_vocabulary_ : bool
         True if a fixed vocabulary of term to indices mapping
@@ -1932,6 +1960,7 @@ class TfidfVectorizer(CountVectorizer):
         min_df=1,
         max_features=None,
         vocabulary=None,
+        count_vocabulary=False,
         binary=False,
         dtype=np.float64,
         norm="l2",
@@ -1956,6 +1985,7 @@ class TfidfVectorizer(CountVectorizer):
             min_df=min_df,
             max_features=max_features,
             vocabulary=vocabulary,
+            count_vocabulary=count_vocabulary,
             binary=binary,
             dtype=dtype,
         )
