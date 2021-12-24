@@ -41,6 +41,12 @@ Changelog
 - |Fix| Fixed :class:`feature_selection.SelectFromModel` by improving support
   for base estimators that do not set `feature_names_in_`. :pr:`21991` by
   `Thomas Fan`_.
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Fixed an unnecessary error when fitting :class:`manifold.Isomap` with a
+  precomputed dense distance matrix where the neighbors graph has multiple
+  disconnected components. :pr:`21915` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
