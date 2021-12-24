@@ -373,3 +373,20 @@ def test_random_projection_feature_names_out(random_projection_cls):
     )
 
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+@pytest.mark.parametrize(
+    "input_dtype, expected_dtype",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_random_projection_dtype_match(
+    random_projection_cls, input_dtype, expected_dtype
+):
+    rp = random_projection_cls(n_components="auto", eps=0.5, random_state=0)
+    assert rp.fit_transform(data.astype(input_dtype)).dtype == expected_dtype
