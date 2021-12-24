@@ -237,17 +237,18 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         n_samples, size=self.subsample, replace=False
                     )
                     X = _safe_indexing(X, subsample_idx)
-        elif self.strategy != "quantile":
-            if isinstance(self.subsample, numbers.Integral):
-                raise ValueError(
-                    f"Invalid parameter for `strategy`: {self.strategy}. "
-                    '`subsample` must be used with `strategy="quantile"`.'
-                )
-            if sample_weight is not None:
-                raise ValueError(
-                    "`sample_weight` was provided but it can be only used with"
-                    f"strategy='quantile'. Got strategy={self.strategy!r} instead."
-                )
+
+        if self.strategy != "quantile" and isinstance(self.subsample, numbers.Integral):
+            raise ValueError(
+                f"Invalid parameter for `strategy`: {self.strategy}. "
+                '`subsample` must be used with `strategy="quantile"`.'
+            )
+
+        if self.strategy != "quantile" and sample_weight is not None:
+            raise ValueError(
+                "`sample_weight` was provided but it can be only used with"
+                f"strategy='quantile'. Got strategy={self.strategy!r} instead."
+            )
 
         valid_encode = ("onehot", "onehot-dense", "ordinal")
         if self.encode not in valid_encode:
