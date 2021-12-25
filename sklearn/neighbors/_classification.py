@@ -69,6 +69,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. For a list of available metrics, see the documentation of
         :class:`~sklearn.metrics.DistanceMetric`.
+        Note that for cosine similarity 'cosine', its distance
+        (1.0-similarity) is used instead of similarity to consistently
+        represent proximity of neighbors using ascending-order ranking
+        along with other metrics.
+        See
+        `~sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS['cosine']`.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
