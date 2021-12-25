@@ -94,7 +94,8 @@ class ParameterGrid:
     def __init__(self, param_grid):
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter grid is not a dict or a list ({!r})".format(param_grid)
+                f"Parameter grid should be a dict or a list, got: {param_grid!r} of"
+                f" type {type(param_grid).__name__}"
             )
 
         if isinstance(param_grid, Mapping):
@@ -105,12 +106,26 @@ class ParameterGrid:
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError("Parameter grid is not a dict ({!r})".format(grid))
-            for key in grid:
-                if not isinstance(grid[key], Iterable):
+                raise TypeError(f"Parameter grid is not a dict ({grid!r})")
+            for key, value in grid.items():
+                if isinstance(value, np.ndarray) and value.ndim > 1:
+                    raise ValueError(
+                        f"Parameter array for {key!r} should be one-dimensional, got:"
+                        f" {value!r} with shape {value.shape}"
+                    )
+                if isinstance(value, str) or not isinstance(
+                    value, (np.ndarray, Sequence)
+                ):
                     raise TypeError(
-                        "Parameter grid value is not iterable "
-                        "(key={!r}, value={!r})".format(key, grid[key])
+                        f"Parameter grid for parameter {key!r} needs to be a list or a"
+                        f" numpy array, but got {value!r} (of type "
+                        f"{type(value).__name__}) instead. Single values "
+                        "need to be wrapped in a list with one element."
+                    )
+                if len(value) == 0:
+                    raise ValueError(
+                        f"Parameter grid for parameter {key!r} need "
+                        f"to be a non-empty sequence, got: {value!r}"
                     )
 
         self.param_grid = param_grid
@@ -244,9 +259,9 @@ class ParameterSampler:
     def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter distribution is not a dict or a list ({!r})".format(
-                    param_distributions
-                )
+                "Parameter distribution is not a dict or a list,"
+                f" got: {param_distributions!r} of type "
+                f"{type(param_distributions).__name__}"
             )
 
         if isinstance(param_distributions, Mapping):
@@ -264,8 +279,8 @@ class ParameterSampler:
                     dist[key], "rvs"
                 ):
                     raise TypeError(
-                        "Parameter value is not iterable "
-                        "or distribution (key={!r}, value={!r})".format(key, dist[key])
+                        f"Parameter grid for parameter {key!r} is not iterable "
+                        f"or a distribution (value={dist[key]})"
                     )
         self.n_iter = n_iter
         self.random_state = random_state
@@ -319,30 +334,6 @@ class ParameterSampler:
             return min(self.n_iter, grid_size)
         else:
             return self.n_iter
-
-
-def _check_param_grid(param_grid):
-    if hasattr(param_grid, "items"):
-        param_grid = [param_grid]
-
-    for p in param_grid:
-        for name, v in p.items():
-            if isinstance(v, np.ndarray) and v.ndim > 1:
-                raise ValueError("Parameter array should be one-dimensional.")
-
-            if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
-                raise ValueError(
-                    "Parameter grid for parameter ({0}) needs to"
-                    " be a list or numpy array, but got ({1})."
-                    " Single values need to be wrapped in a list"
-                    " with one element.".format(name, type(v))
-                )
-
-            if len(v) == 0:
-                raise ValueError(
-                    "Parameter values for parameter ({0}) need "
-                    "to be a non-empty sequence.".format(name)
-                )
 
 
 def _check_refit(search_cv, attr):
@@ -1385,7 +1376,6 @@ class GridSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
         self.param_grid = param_grid
-        _check_param_grid(param_grid)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""

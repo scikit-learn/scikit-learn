@@ -425,8 +425,6 @@ def test_transformers_get_feature_names_out(transformer):
 VALIDATE_ESTIMATOR_INIT = [
     "ColumnTransformer",
     "FeatureUnion",
-    "GridSearchCV",
-    "HalvingGridSearchCV",
     "SGDOneClassSVM",
     "TheilSenRegressor",
     "TweedieRegressor",
