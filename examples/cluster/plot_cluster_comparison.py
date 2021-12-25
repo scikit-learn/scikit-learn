@@ -108,8 +108,8 @@ datasets = [
         {
             "eps": 0.18,
             "n_neighbors": 2,
-            "min_samples": 5,
-            "xi": 0.05,
+            "min_samples": 7,
+            "xi": 0.01,
             "min_cluster_size": 0.2,
         },
     ),
@@ -118,12 +118,19 @@ datasets = [
         {
             "eps": 0.15,
             "n_neighbors": 2,
-            "min_samples": 20,
+            "min_samples": 7,
             "xi": 0.1,
             "min_cluster_size": 0.2,
         },
     ),
-    (blobs, {}),
+    (
+        blobs,
+        {
+            "min_samples": 7,
+            "xi": 0.1,
+            "min_cluster_size": 0.2,
+        }
+    ),
     (no_structure, {}),
 ]
 
