@@ -101,7 +101,7 @@ datasets = [
             "n_clusters": 2,
             "min_samples": 7,
             "xi": 0.1,
-        }
+        },
     ),
     (
         varied,
@@ -123,14 +123,7 @@ datasets = [
             "min_cluster_size": 0.2,
         },
     ),
-    (
-        blobs,
-        {
-            "min_samples": 7,
-            "xi": 0.1,
-            "min_cluster_size": 0.2,
-        }
-    ),
+    (blobs, {"min_samples": 7, "xi": 0.1, "min_cluster_size": 0.2}),
     (no_structure, {}),
 ]
 
