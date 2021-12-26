@@ -245,7 +245,7 @@ class IterativeImputer(_BaseImputer):
         self.sample_posterior = sample_posterior
         self.max_iter = max_iter
         self.max_overfit_round_tolerance = max_overfit_round_tolerance
-        self.n_splits = (n_splits,)
+        self.n_splits = n_splits
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
