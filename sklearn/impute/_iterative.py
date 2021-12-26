@@ -228,7 +228,7 @@ class IterativeImputer(_BaseImputer):
         sample_posterior=False,
         max_iter=10,
         max_overfit_round_tolerance=5,
-        cv_splits=3,
+        n_splits=3,
         n_nearest_features=None,
         initial_strategy="mean",
         imputation_order="ascending",
@@ -245,7 +245,7 @@ class IterativeImputer(_BaseImputer):
         self.sample_posterior = sample_posterior
         self.max_iter = max_iter
         self.max_overfit_round_tolerance = max_overfit_round_tolerance
-        self.cv_splits = (cv_splits,)
+        self.n_splits = (n_splits,)
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
@@ -320,7 +320,7 @@ class IterativeImputer(_BaseImputer):
                 estimator,
                 X_train,
                 y_train,
-                cv=self.cv_splits,
+                cv=self.n_splits,
                 scoring="neg_mean_absolute_percentage_error",
                 return_train_score=False,
                 return_estimator=True,
