@@ -72,6 +72,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values should be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -99,12 +100,14 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values should be in the range `[1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values should be in the range `(0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -112,6 +115,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values should be in the range `[1, inf)`.
 
     Attributes
     ----------
@@ -445,6 +449,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values should be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -452,12 +457,14 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values should be in the range `[1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values should be in the range `(0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -465,6 +472,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values should be in the range `[1, inf)`.
 
     Attributes
     ----------
@@ -562,6 +570,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values should be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -569,12 +578,14 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values should be in the range `[1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values should be in the range `(0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -582,6 +593,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values should be in the range `[1, inf)`.
 
     Attributes
     ----------
@@ -700,6 +712,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values should be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -715,12 +728,14 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values should be in the range `[1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values should be in the range `(0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -728,6 +743,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values should be in the range `[1, inf)`.
 
     Attributes
     ----------
