@@ -617,7 +617,7 @@ class IterativeImputer(_BaseImputer):
         if self.max_overfit_round_tolerance < 0:
             raise ValueError(
                 "'max_overfit_round_tolerance' should be an integer smaller than"
-                " max_iter. Got {} instead.".format(self.tol)
+                " max_iter. Got {} instead.".format(self.max_overfit_round_tolerance)
             )
 
         if self.estimator is None:
