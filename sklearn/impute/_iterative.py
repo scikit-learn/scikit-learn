@@ -228,6 +228,7 @@ class IterativeImputer(_BaseImputer):
         sample_posterior=False,
         max_iter=10,
         max_overfit_round_tolerance=5,
+        cv_splits=3,
         n_nearest_features=None,
         initial_strategy="mean",
         imputation_order="ascending",
@@ -244,6 +245,7 @@ class IterativeImputer(_BaseImputer):
         self.sample_posterior = sample_posterior
         self.max_iter = max_iter
         self.max_overfit_round_tolerance = max_overfit_round_tolerance
+        self.cv_splits = (cv_splits,)
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
@@ -312,13 +314,13 @@ class IterativeImputer(_BaseImputer):
         control_score = 0.0
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
-            X_full = _safe_indexing(X_filled[:, neighbor_feat_idx], ~missing_row_mask)
-            y_full = _safe_indexing(X_filled[:, feat_idx], ~missing_row_mask)
+            X_train = _safe_indexing(X_filled[:, neighbor_feat_idx], ~missing_row_mask)
+            y_train = _safe_indexing(X_filled[:, feat_idx], ~missing_row_mask)
             data = cross_validate(
                 estimator,
-                X_full,
-                y_full,
-                cv=3,
+                X_train,
+                y_train,
+                cv=self.cv_splits,
                 scoring="neg_mean_absolute_percentage_error",
                 return_train_score=False,
                 return_estimator=True,
