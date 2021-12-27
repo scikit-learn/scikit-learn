@@ -494,6 +494,21 @@ class MethodMapping:
             yield (route.method, route.used_in)
 
     def add(self, *, method, used_in):
+        """Add a method mapping.
+
+        Parameters
+        ----------
+        method : str
+            Child object's method name.
+
+        used_in : str
+            Parent estimator's method name in which the `"method"` is used.
+
+        Returns
+        -------
+        self : MethodMapping
+            Returns self.
+        """
         if method not in METHODS:
             raise ValueError(f"Given method:{method} is not valid.")
         if used_in not in METHODS:
