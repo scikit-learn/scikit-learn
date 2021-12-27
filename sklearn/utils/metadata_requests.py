@@ -704,7 +704,7 @@ class MetadataRouter:
             **{key: value for key, value in params.items() if key in param_names}
         )
 
-    def get_params(self, *, params, method):
+    def get_params(self, *, method, params):
         """Return the input parameters requested by a child objects.
 
         The output of this method is a bunch, which includes the inputs for all
