@@ -1,3 +1,10 @@
+"""
+Metadata Routing Utility
+"""
+
+# Author: Adrin Jalali <adrin.jalali@gmail.com>
+# License: BSD 3 clause
+
 import functools
 import inspect
 from copy import deepcopy
@@ -8,13 +15,31 @@ from typing import Union, Optional
 from ..externals._sentinels import sentinel  # type: ignore # mypy error!!!
 from ._bunch import Bunch
 
+# This namedtuple is used to store a (mapping, routing) pair. Mapping is a
+# MethodMapping object, and routing is the output of `get_metadata_routing`.
+# MetadataRouter stores a collection of these namedtuples.
 RouteMappingPair = namedtuple("RouteMappingPair", ["mapping", "routing"])
+
+# A namedtuple storing a single method route. A collection of these namedtuples
+# is stored in a MetadataRouter.
 Route = namedtuple("Route", ["method", "used_in"])
 
 
 class RequestType(Enum):
+    """A metadata is requested either with a string alias or this enum.
+
+    .. versionadded: 1.1
+    """
+
+    # Metadata is not requested. It will not be routed to the object having the
+    # request value as UNREQUESTED.
     UNREQUESTED = False
+    # Metadata is requested, and will be routed to the requesting object. There
+    # will be no error if the metadata is not provided.
     REQUESTED = True
+    # Default metadata request configuration. It should not be passed, and if
+    # present, an error is raised for the user to explicitly set the request
+    # value.
     ERROR_IF_PASSED = None
     # this sentinel is used in `__metadata_request__*` attributes to indicate
     # that a metadata is not present even though it may be present in the
@@ -31,6 +56,8 @@ class RequestType(Enum):
 # no change requested by the user.
 UNCHANGED = sentinel("UNCHANGED")
 
+# Only the following methods are supported in the routing mechanism. Adding new
+# methods at the moment involves monkeypatching this list.
 METHODS = [
     "fit",
     "partial_fit",
@@ -77,6 +104,8 @@ REQUESTER_DOC_RETURN = """        Returns
 
 class MethodMetadataRequest:
     """Contains the metadata request info for a single method.
+
+    Refer to :class:`MetadataRequest` for how this class is used.
 
     .. versionadded:: 1.1
 
@@ -132,13 +161,27 @@ class MethodMetadataRequest:
         else:
             self.requests[prop] = alias
 
-    def get_param_names(self, original_self_names):
+    def _get_param_names(self, original_names):
+        """Get the names of all available metadata.
+
+        This method returns the names of all metadata, even the UNREQUESTED
+        ones.
+
+        Parameters
+        ----------
+        original_names : bool
+            Controls whether original or aliased names should be returned. If
+            ``True``, aliases are ignored and original names are returned.
+
+        Returns
+        -------
+        names : set of str
+            Returns a set of strings with the names of all parameters.
+        """
         return set(
             sorted(
                 [
-                    alias
-                    if not original_self_names and isinstance(alias, str)
-                    else prop
+                    alias if not original_names and isinstance(alias, str) else prop
                     for prop, alias in self.requests.items()
                     if isinstance(alias, str)
                     or RequestType(alias) != RequestType.UNREQUESTED
@@ -146,7 +189,16 @@ class MethodMetadataRequest:
             )
         )
 
-    def check_warnings(self, *, params):
+    def _check_warnings(self, *, params):
+        """Check whether metadata is passed which is marked as WARN.
+
+        If any metadata is passed which is marked as WARN, a warning is raised.
+
+        Parameters
+        ----------
+        params : dict
+            The metadata passed to a method.
+        """
         params = {} if params is None else params
         warn_params = {
             prop
@@ -162,7 +214,7 @@ class MethodMetadataRequest:
                 "consume and use the metadata."
             )
 
-    def get_params(self, params=None):
+    def _get_params(self, params=None):
         """Return the input parameters requested by the method.
 
         The output of this method can be used directly as the input to the
@@ -175,11 +227,11 @@ class MethodMetadataRequest:
 
         Returns
         -------
-        params : dict
-            A dictionary of {prop: value} which can be given to the
+        params : Bunch
+            A :class:`~utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
-        self.check_warnings(params=params)
+        self._check_warnings(params=params)
         params = {} if params is None else params
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
@@ -241,7 +293,13 @@ class MethodMetadataRequest:
 
 
 class MetadataRequest:
-    """Contains the metadata request info of an object.
+    """Contains the metadata request info of a consumer.
+
+    Instances of :class:`MethodMetadataRequest` are used in this class for each
+    available method under `metadatarequest.{method}`.
+
+    Consumers-only classes such as simple estimators return a serialized
+    version of this class as the output of `get_metadata_routing()`.
 
     .. versionadded:: 1.1
 
@@ -283,80 +341,65 @@ class MetadataRequest:
                 ),
             )
 
-    def get_param_names(self, method, original_self_names):
-        return getattr(self, method).get_param_names(
-            original_self_names=original_self_names
-        )
+    def _get_param_names(self, method, original_names):
+        """Get the names of all available metadata for a method.
 
-    def get_params(self, *, method, params):
-        return getattr(self, method).get_params(params=params)
-
-    def check_warnings(self, *, method, params):
-        getattr(self, method).check_warnings(params=params)
-
-    def add_requests(
-        self,
-        obj,
-        mapping="one-to-one",
-        overwrite=False,
-        expected_metadata=None,
-    ):
-        """Add request info from the given object with the desired mapping.
+        This method returns the names of all metadata, even the UNREQUESTED
+        ones.
 
         Parameters
         ----------
-        obj : object
-            An object from which a MetadataRequest can be constructed.
+        method : str
+            The name of the method for which metadata names are requested.
 
-        mapping : dict or str, default="one-to-one"
-            The mapping between the ``obj``'s methods and this object's
-            methods. If ``"one-to-one"`` all methods' requests from ``obj`` are
-            merged into this instance's methods. If a dict, the mapping is of
-            the form ``{"destination_method": "source_method"}`` or
-            ``{"destination_method": ["source_method1", ...]}``.
+        original_names : bool
+            Controls whether original or aliased names should be returned. If
+            ``True``, aliases are ignored and original names are returned.
 
-        overwrite : bool or str, default=False
-
-            - True: ``alias`` replaces the existing routing.
-
-            - False: a ``ValueError`` is raised if the given value conflicts
-              with an existing one.
-
-            - "smart": overwrite in this order:
-              ``RequestType.REQUESTED`` over ``RequestType.UNREQUESTED`` over
-              ``RequestType.ERROR_IF_PASSED``, and error if existing value is
-              a string.
-
-            - "ignore": ignore the requested metadata if it already exists.
-
-        expected_metadata : str, default=None
-            If provided, all props should be the same as this value. It used to
-            handle default values.
+        Returns
+        -------
+        names : set of str
+            Returns a set of strings with the names of all parameters.
         """
-        if not isinstance(mapping, dict) and mapping != "one-to-one":
-            raise ValueError(
-                "mapping can only be a dict or the literal 'one-to-one'. "
-                f"Given value: {mapping}"
-            )
-        if mapping == "one-to-one":
-            mapping = [(method, method) for method in METHODS]
-        else:
-            _mapping = []
-            for destination, sources in mapping.items():
-                if isinstance(sources, list):
-                    _mapping.extend([(destination, source) for source in sources])
-                else:
-                    _mapping.append((destination, sources))
-            mapping = _mapping
-        other = metadata_request_factory(obj)
-        for destination, source in mapping:
-            my_method = getattr(self, destination)
-            other_method = getattr(other, source)
-            my_method.merge_method_request(
-                other_method,
-                overwrite=overwrite,
-                expected_metadata=expected_metadata,
-            )
+        return getattr(self, method)._get_param_names(original_names=original_names)
+
+    def _get_params(self, *, method, params):
+        """Return the input parameters requested by a method.
+
+        The output of this method can be used directly as the input to the
+        corresponding method as extra props.
+
+        Parameters
+        ----------
+        method : str
+            The name of the method for which the parameters are requested and
+            routed.
+
+        params : dict
+            A dictionary of provided metadata.
+
+        Returns
+        -------
+        params : Bunch
+            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            corresponding method.
+        """
+        return getattr(self, method)._get_params(params=params)
+
+    def _check_warnings(self, *, method, params):
+        """Check whether metadata is passed which is marked as WARN.
+
+        If any metadata is passed which is marked as WARN, a warning is raised.
+
+        Parameters
+        ----------
+        method : str
+            The name of the method for which the warnings should be checked.
+
+        params : dict
+            The metadata passed to a method.
+        """
+        getattr(self, method)._check_warnings(params=params)
 
     def to_dict(self):
         """Return dictionary representation of this object."""
@@ -418,6 +461,14 @@ def metadata_request_factory(obj=None):
 
 
 class MethodMapping:
+    """Stores the mapping from an object's methods to a router's methods.
+
+    This class is primarily used in a ``get_metadata_routing()`` of a router
+    object when defining the mapping between a sub-object (a sub-estimator or a
+    scorer) to the router's methods. It stores a collection of ``Route``
+    namedtuples.
+    """
+
     def __init__(self):
         self._routes = []
 
@@ -450,6 +501,22 @@ class MethodMapping:
 
     @classmethod
     def from_str(cls, route):
+        """Construct an instance from a string.
+
+        Parameters
+        ----------
+        route : str
+            A string representing the mapping, it can be:
+
+              - `"one-to-one"`: a one to one mapping for all methods.
+              - `"method"`: the name of a single method.
+
+        Returns
+        -------
+        obj : MethodMapping
+            A :class:`~utils.metadata_requests.MethodMapping` instance
+            constructed from the given string.
+        """
         routing = cls()
         if route == "one-to-one":
             for method in METHODS:
@@ -465,13 +532,34 @@ class MethodMapping:
 
 
 class MetadataRouter:
-    """The thing that routers and consumers return."""
+    """Stores and handles metadata routing for a router object.
+
+    This class is used by router objects to store and handle metadata routing.
+    Routing information is stored as a dictionary of the form ``{"object_name":
+    RouteMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
+    is an instance of :class:`~utils.metadata_requests.MethodMapping` and
+    ``routing_info`` is either a
+    :class:`~utils.metadata_requests.MetadataRequest` or a
+    :class:`~utils.metadata_requests.MetadataRouter` instance.
+    """
 
     def __init__(self):
         self._route_mappings = dict()
 
     def _add(self, *, method_mapping, **objs):
-        """Add route mappings w/o name validation."""
+        """Add a route mapping w/o name validation.
+
+        Parameters
+        ----------
+        method_mapping : MethodMapping or str
+            The mapping between the child and the parent's methods. If str, the
+            output of :func:`~utils.metadata_requests.MethodMapping.from_str`
+            is used.
+
+        **objs : dict
+            A dictionary of objects from which metadata is extracted by calling
+            :func:`~utils.metadata_requests.metadata_request_factory` on them.
+        """
         if isinstance(method_mapping, str):
             method_mapping = MethodMapping.from_str(method_mapping)
         for name, obj in objs.items():
@@ -480,44 +568,139 @@ class MetadataRouter:
             )
 
     def add_self(self, obj):
-        """Add self to routing using."""
+        """Add `self` to the routing map.
+
+        A "one-to-one" method map is used for method mapping.
+
+        Parameters
+        ----------
+        obj : object
+            This is typically `self` in a `get_metadata_routing()`.
+        """
         self._add(method_mapping="one-to-one", me=obj._get_metadata_request())
         return self
 
-    def get_self(self):
-        if "me" in self._route_mappings:
-            return self._route_mappings["me"].routing
-        else:
-            return MetadataRouter()
-
     def add(self, *, method_mapping, **objs):
-        """Add named objects with their corresponding method mapping."""
+        """Add named objects with their corresponding method mapping.
+
+        The objects cannot be called `"me"` since that's reserved for `self`.
+
+        Parameters
+        ----------
+        method_mapping : MethodMapping or str
+            The mapping between the child and the parent's methods. If str, the
+            output of :func:`~utils.metadata_requests.MethodMapping.from_str`
+            is used.
+
+        **objs : dict
+            A dictionary of objects from which metadata is extracted by calling
+            :func:`~utils.metadata_requests.metadata_request_factory` on them.
+        """
         if "me" in objs.keys():
             raise ValueError("'me' is reserved for `self`! Use a different keyword")
         self._add(method_mapping=method_mapping, **objs)
         return self
 
-    def get_param_names(self, *, method, original_self_names):
-        """Return available param names."""
+    def _get_self(self):
+        """Return the self metadata request if available.
+
+        If a router is also a consumer, this information is stored under the
+        reserved key `"me"`.
+        """
+        if "me" in self._route_mappings:
+            return self._route_mappings["me"].routing
+        else:
+            return MetadataRequest()
+
+    def _get_param_names(self, *, method, original_names):
+        """Get the names of all available metadata for a method.
+
+        This method returns the names of all metadata, even the UNREQUESTED
+        ones.
+
+        Parameters
+        ----------
+        method : str
+            The name of the method for which metadata names are requested.
+
+        original_names : bool
+            Controls whether original or aliased names should be returned. If
+            ``True``, aliases are ignored and original names are returned.
+
+        Returns
+        -------
+        names : set of str
+            Returns a set of strings with the names of all parameters.
+        """
         res = set()
         for name, route_mapping in self._route_mappings.items():
-            # if original self names are required, that only applies to "me"
-            orig_names = original_self_names and name == "me"
+            # if original names are required, that only applies to "me"
+            orig_names = original_names and name == "me"
             for orig_method, used_in in route_mapping.mapping:
                 if used_in == method:
                     res = res.union(
-                        route_mapping.routing.get_param_names(
-                            method=orig_method, original_self_names=orig_names
+                        route_mapping.routing._get_param_names(
+                            method=orig_method, original_names=orig_names
                         )
                     )
         return set(sorted(res))
 
     def _get_squashed_params(self, *, params, method):
-        param_names = self.get_param_names(method=method, original_self_names=False)
-        return {key: value for key, value in params.items() if key in param_names}
+        """Get input for a method of a router w/o validation.
+
+        This is used when a router is used as a child object of another router.
+        The parent router then passes all parameters understood by the child
+        object to it and delegates their validation to the child.
+
+        The output of this method can be used directly as the input to the
+        corresponding method as extra props.
+
+        Parameters
+        ----------
+        method : str
+            The name of the method for which the parameters are requested and
+            routed.
+
+        params : dict
+            A dictionary of provided metadata.
+
+        Returns
+        -------
+        params : Bunch
+            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            corresponding method.
+        """
+        param_names = self._get_param_names(method=method, original_names=False)
+        return Bunch(
+            **{key: value for key, value in params.items() if key in param_names}
+        )
 
     def get_params(self, *, params, method):
-        """Return param input to a method."""
+        """Return the input parameters requested by a child objects.
+
+        The output of this method is a bunch, which includes the inputs for all
+        methods of each child object that are used in the router's `"method"`.
+
+        If the router is also a consumer, it also checks for warnings of
+        `self`'s requested metadata.
+
+        Parameters
+        ----------
+        method : str
+            The name of the method for which the parameters are requested and
+            routed.
+
+        params : dict
+            A dictionary of provided metadata.
+
+        Returns
+        -------
+        params : Bunch
+            A :class:`~utils.Bunch` of the form
+            ``{"object_name": {"method_name": {prop: value}}}`` which can be
+            used to pass the required metadata to corresponding methods or
+            corresponding child objects.
+        """
         res = Bunch()
         for name, route_mapping in self._route_mappings.items():
             router, mapping = route_mapping.routing, route_mapping.mapping
@@ -525,14 +708,14 @@ class MetadataRouter:
                 # "me" is reserved for `self` and routing is not handled by
                 # `self`, it's handled by meta-estimators. Therefore we only
                 # check for warnings here.
-                router.check_warnings(params=params, method=method)
+                router._check_warnings(params=params, method=method)
                 continue
 
             res[name] = Bunch()
             for orig_method, used_in in mapping:
                 if used_in == method:
                     if isinstance(router, MetadataRequest):
-                        res[name][orig_method] = router.get_params(
+                        res[name][orig_method] = router._get_params(
                             params=params, method=orig_method
                         )
                     else:
@@ -541,11 +724,24 @@ class MetadataRouter:
                         )
         return res
 
-    def validate_metadata(self, *, params, method):
-        """Validate given metadata for a method."""
-        param_names = self.get_param_names(method=method, original_self_names=True)
-        self_params = self.get_self().get_param_names(
-            method=method, original_self_names=True
+    def validate_metadata(self, *, method, params):
+        """Validate given metadata for a method.
+
+        This raises a ``ValueError`` if some of the passed metadata are not
+        understood by child objects.
+
+        Parameters
+        ----------
+        method : str
+            The name of the method for which the parameters are requested and
+            routed.
+
+        params : dict
+            A dictionary of provided metadata.
+        """
+        param_names = self._get_param_names(method=method, original_names=True)
+        self_params = self._get_self()._get_param_names(
+            method=method, original_names=True
         )
         extra_keys = set(sorted(set(params.keys()) - param_names - self_params))
         if extra_keys:

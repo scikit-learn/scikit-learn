@@ -1,3 +1,10 @@
+"""
+Metadata Routing Utility Tests
+"""
+
+# Author: Adrin Jalali <adrin.jalali@gmail.com>
+# License: BSD 3 clause
+
 import re
 import numpy as np
 import pytest
