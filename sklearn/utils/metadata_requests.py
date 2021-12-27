@@ -261,6 +261,9 @@ class MethodMetadataRequest:
         obj : dict
             A serialized version of an instance of this object.
 
+        name : str
+            The name of the method to which `obj` belongs.
+
         Returns
         -------
         result : MethodMetdataRequest
