@@ -479,6 +479,8 @@ class MethodMapping:
     object when defining the mapping between a sub-object (a sub-estimator or a
     scorer) to the router's methods. It stores a collection of ``Route``
     namedtuples.
+
+    .. versionadded: 1.1
     """
 
     def __init__(self):
@@ -566,6 +568,8 @@ class MetadataRouter:
     ``routing_info`` is either a
     :class:`~utils.metadata_requests.MetadataRequest` or a
     :class:`~utils.metadata_requests.MetadataRouter` instance.
+
+    .. versionadded: 1.1
     """
 
     def __init__(self):
@@ -1040,7 +1044,23 @@ class _MetadataRequester:
 
 
 def process_routing(func):
-    """Process input params and handle routing."""
+    """Decorator to process input params and handle routing.
+
+    This decorator wraps around a router estimator's method, such as ``fit``,
+    and handles routing and and validation of the metadata passed to it.
+
+    .. versionadded: 1.1
+
+    Parameters
+    ----------
+    func : method
+        A router estimator's method such as ``fit``.
+
+    Returns
+    -------
+    decorator : method
+        The estimator's method, after validation and routing of the metadata.
+    """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
