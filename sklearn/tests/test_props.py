@@ -44,11 +44,11 @@ def assert_request_is_empty(metadata_request, exclude=None):
         return
 
     if isinstance(metadata_request, MetadataRequest):
-        metadata_request = metadata_request.to_dict()
+        metadata_request = metadata_request.serialize()
     if exclude is None:
         exclude = []
     for method, request in metadata_request.items():
-        if method in exclude or method == "_type":
+        if method in exclude or method == "^type":
             continue
         props = [
             prop
@@ -113,7 +113,7 @@ class TestSimpleMetaEstimator(MetaEstimatorMixin, ClassifierMixin, BaseEstimator
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="fit")
         )
-        return router.to_dict()
+        return router.serialize()
 
 
 class TestTransformer(TransformerMixin, BaseEstimator):
@@ -181,7 +181,7 @@ class TestMetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         return (
             MetadataRouter()
             .add(transformer=self.transformer, method_mapping="one-to-one")
-            .to_dict()
+            .serialize()
         )
 
 
@@ -233,13 +233,13 @@ class SimplePipeline(BaseEstimator):
                 .add(method="transform", used_in="predict"),
             )
         router.add(predictor=self.steps[-1], mapping="one-to-one")
-        return router.to_dict()
+        return router.serialize()
 
 
 def test_assert_request_is_empty():
     requests = MetadataRequest()
     assert_request_is_empty(requests)
-    assert_request_is_empty(requests.to_dict())
+    assert_request_is_empty(requests.serialize())
 
     requests.fit.add_request(prop="foo", alias=RequestType.ERROR_IF_PASSED)
     # this should still work, since ERROR_IF_PASSED is the default value
@@ -270,25 +270,25 @@ def test_default_requests():
         }  # type: ignore
 
     odd_request = metadata_request_factory(OddEstimator())
-    assert odd_request.fit.requests == {"sample_weight": RequestType.REQUESTED}
+    assert odd_request.fit._requests == {"sample_weight": RequestType.REQUESTED}
 
     # check other test estimators
-    assert not len(metadata_request_factory(TestEstimatorNoMetadata()).fit.requests)
+    assert not len(metadata_request_factory(TestEstimatorNoMetadata()).fit._requests)
     assert_request_is_empty(TestEstimatorNoMetadata().get_metadata_routing())
 
     trs_request = metadata_request_factory(TestTransformer())
-    assert trs_request.fit.requests == {
+    assert trs_request.fit._requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
         "new_param": RequestType(None),
     }
-    assert trs_request.transform.requests == {
+    assert trs_request.transform._requests == {
         "sample_weight": RequestType(None),
     }
     assert_request_is_empty(trs_request)
 
     est_request = metadata_request_factory(TestEstimatorFitMetadata())
-    assert est_request.fit.requests == {
+    assert est_request.fit._requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
     }
@@ -411,18 +411,18 @@ def test_get_metadata_routing():
         TestDefaultsBadMethodName().get_metadata_routing()
 
     expected = {
-        "_type": "request",
+        "^type": "request",
         "score": {
-            "my_param": RequestType(True),
-            "my_other_param": RequestType(None),
-            "sample_weight": RequestType(None),
+            "my_param": True,
+            "my_other_param": None,
+            "sample_weight": None,
         },
         "fit": {
-            "my_other_param": RequestType(None),
-            "sample_weight": RequestType(None),
+            "my_other_param": None,
+            "sample_weight": None,
         },
         "partial_fit": {},
-        "predict": {"my_param": RequestType(True)},
+        "predict": {"my_param": True},
         "transform": {},
         "inverse_transform": {},
         "split": {},
@@ -431,18 +431,18 @@ def test_get_metadata_routing():
 
     est = TestDefaults().score_requests(my_param="other_param")
     expected = {
-        "_type": "request",
+        "^type": "request",
         "score": {
             "my_param": "other_param",
-            "my_other_param": RequestType(None),
-            "sample_weight": RequestType(None),
+            "my_other_param": None,
+            "sample_weight": None,
         },
         "fit": {
-            "my_other_param": RequestType(None),
-            "sample_weight": RequestType(None),
+            "my_other_param": None,
+            "sample_weight": None,
         },
         "partial_fit": {},
-        "predict": {"my_param": RequestType(True)},
+        "predict": {"my_param": True},
         "transform": {},
         "inverse_transform": {},
         "split": {},
@@ -451,18 +451,18 @@ def test_get_metadata_routing():
 
     est = TestDefaults().fit_requests(sample_weight=True)
     expected = {
-        "_type": "request",
+        "^type": "request",
         "score": {
-            "my_param": RequestType(True),
-            "my_other_param": RequestType(None),
-            "sample_weight": RequestType(None),
+            "my_param": True,
+            "my_other_param": None,
+            "sample_weight": None,
         },
         "fit": {
-            "my_other_param": RequestType(None),
-            "sample_weight": RequestType(True),
+            "my_other_param": None,
+            "sample_weight": True,
         },
         "partial_fit": {},
-        "predict": {"my_param": RequestType(True)},
+        "predict": {"my_param": True},
         "transform": {},
         "inverse_transform": {},
         "split": {},
@@ -478,7 +478,7 @@ def test__get_default_requests():
         def fit(self, X, y):
             return self
 
-    assert metadata_request_factory(ExplicitRequest()).fit.requests == {
+    assert metadata_request_factory(ExplicitRequest()).fit._requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
     assert_request_is_empty(ExplicitRequest().get_metadata_routing(), exclude="fit")
@@ -489,7 +489,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert metadata_request_factory(ExplicitRequestOverwrite()).fit.requests == {
+    assert metadata_request_factory(ExplicitRequestOverwrite()).fit._requests == {
         "prop": RequestType.REQUESTED
     }
     assert_request_is_empty(
@@ -500,7 +500,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert metadata_request_factory(ImplicitRequest()).fit.requests == {
+    assert metadata_request_factory(ImplicitRequest()).fit._requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
     assert_request_is_empty(ImplicitRequest().get_metadata_routing(), exclude="fit")
@@ -511,7 +511,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert metadata_request_factory(ImplicitRequestRemoval()).fit.requests == {}
+    assert metadata_request_factory(ImplicitRequestRemoval()).fit._requests == {}
     assert_request_is_empty(ImplicitRequestRemoval().get_metadata_routing())
 
 
@@ -522,16 +522,18 @@ def test_method_metadata_request():
         mmr.add_request(prop="foo", alias=1.4)
 
     mmr.add_request(prop="foo", alias=None)
-    assert mmr.requests == {"foo": RequestType.ERROR_IF_PASSED}
+    assert mmr._requests == {"foo": RequestType.ERROR_IF_PASSED}
     mmr.add_request(prop="foo", alias=False)
     mmr.add_request(prop="foo", alias=True)
-    assert mmr.requests == {"foo": RequestType.REQUESTED}
+    assert mmr._requests == {"foo": RequestType.REQUESTED}
 
-    assert MethodMetadataRequest.from_dict(None, name="fit").requests == {}
-    assert MethodMetadataRequest.from_dict("foo", name="fit").requests == {
+    assert MethodMetadataRequest.deserialize(None, name="fit")._requests == {}
+    assert MethodMetadataRequest.deserialize({"foo": None}, name="fit")._requests == {
         "foo": RequestType.ERROR_IF_PASSED
     }
-    assert MethodMetadataRequest.from_dict(["foo", "bar"], name="fit").requests == {
+    assert MethodMetadataRequest.deserialize(
+        {"foo": None, "bar": None}, name="fit"
+    )._requests == {
         "foo": RequestType.ERROR_IF_PASSED,
         "bar": RequestType.ERROR_IF_PASSED,
     }
@@ -542,15 +544,15 @@ def test_metadata_request_factory():
         __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
     assert_request_is_empty(metadata_request_factory(None))
-    assert_request_is_empty(metadata_request_factory({"_type": "request"}))
-    assert_request_is_empty(metadata_request_factory({"_type": "router"}))
+    assert_request_is_empty(metadata_request_factory({"^type": "request"}))
+    assert_request_is_empty(metadata_request_factory({"^type": "router"}))
     assert_request_is_empty(metadata_request_factory(object()))
 
-    mr = MetadataRequest({"fit": "foo"}, default="bar")
+    mr = MetadataRequest.deserialize({"^type": "request", "fit": {"foo": "bar"}})
     mr_factory = metadata_request_factory(mr)
     assert_request_is_empty(mr_factory, exclude="fit")
-    assert mr_factory.fit.requests == {"foo": "bar"}
+    assert mr_factory.fit._requests == {"foo": "bar"}
 
     mr = metadata_request_factory(Consumer())
     assert_request_is_empty(mr, exclude="fit")
-    assert mr.fit.requests == {"prop": RequestType.ERROR_IF_PASSED}
+    assert mr.fit._requests == {"prop": RequestType.ERROR_IF_PASSED}

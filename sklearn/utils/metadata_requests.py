@@ -116,7 +116,7 @@ class MethodMetadataRequest:
     """
 
     def __init__(self, name):
-        self.requests = dict()
+        self._requests = dict()
         self.name = name
 
     def add_request(
@@ -156,10 +156,10 @@ class MethodMetadataRequest:
         if alias == prop:
             alias = RequestType.REQUESTED
 
-        if alias == RequestType.UNUSED and prop in self.requests:
-            del self.requests[prop]
+        if alias == RequestType.UNUSED and prop in self._requests:
+            del self._requests[prop]
         else:
-            self.requests[prop] = alias
+            self._requests[prop] = alias
 
     def _get_param_names(self, original_names):
         """Get the names of all available metadata.
@@ -182,7 +182,7 @@ class MethodMetadataRequest:
             sorted(
                 [
                     alias if not original_names and isinstance(alias, str) else prop
-                    for prop, alias in self.requests.items()
+                    for prop, alias in self._requests.items()
                     if isinstance(alias, str)
                     or RequestType(alias) != RequestType.UNREQUESTED
                 ]
@@ -202,7 +202,7 @@ class MethodMetadataRequest:
         params = {} if params is None else params
         warn_params = {
             prop
-            for prop, alias in self.requests.items()
+            for prop, alias in self._requests.items()
             if alias == RequestType.WARN and prop in params
         }
         for param in warn_params:
@@ -235,7 +235,7 @@ class MethodMetadataRequest:
         params = {} if params is None else params
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
-        for prop, alias in self.requests.items():
+        for prop, alias in self._requests.items():
             if not isinstance(alias, str):
                 alias = RequestType(alias)
 
@@ -253,43 +253,54 @@ class MethodMetadataRequest:
         return res
 
     @classmethod
-    def from_dict(cls, requests, name, default=RequestType.ERROR_IF_PASSED):
-        """Construct a MethodMetadataRequest from a given dictionary.
+    def deserialize(cls, obj, name):
+        """Deserialize an instance from the given object.
 
         Parameters
         ----------
-        requests : dict
-            A dictionary representing the requests.
-
-        name : str
-            The name of the method to which these requests belong.
-
-        default : RequestType, True, False, None, or str, \
-            default=RequestType.ERROR_IF_PASSED
-            The default value to be used if parameters are provided as a string
-            or list instead of the fully specifying dict.
+        obj : dict
+            A serialized version of an instance of this object.
 
         Returns
         -------
-        requests: MethodMetadataRequest
-            A :class:`MethodMetadataRequest` object.
+        result : MethodMetdataRequest
+            An instance of this class constructed from the input.
         """
+        # never change what's passed here.
+        requests = deepcopy(obj)
         if requests is None:
             requests = dict()
-        elif isinstance(requests, str):
-            requests = {requests: default}
-        elif isinstance(requests, (list, set)):
-            requests = {r: default for r in requests}
         result = cls(name=name)
         for prop, alias in requests.items():
             result.add_request(prop=prop, alias=alias)
         return result
 
+    def serialize(self):
+        """Serialize the object."""
+        result = dict()
+        # Then parameters with string aliases
+        result.update(
+            {
+                prop: alias
+                for prop, alias in self._requests.items()
+                if isinstance(alias, str)
+            }
+        )
+        # And at last the parameters with RequestType routing info
+        result.update(
+            {
+                prop: RequestType(alias).value
+                for prop, alias in self._requests.items()
+                if not isinstance(alias, str)
+            }
+        )
+        return result
+
     def __repr__(self):
-        return str(self.requests)
+        return str(self.serialize())
 
     def __str__(self):
-        return str(self.requests)
+        return str(repr(self))
 
 
 class MetadataRequest:
@@ -302,44 +313,11 @@ class MetadataRequest:
     version of this class as the output of `get_metadata_routing()`.
 
     .. versionadded:: 1.1
-
-    Parameters
-    ----------
-    requests : dict of dict of {str: str}, default=None
-        A dictionary where the keys are the names of the methods, and the values are
-        a dictionary of the form ``{"required_metadata": "provided_metadata"}``.
-        ``"provided_metadata"`` can also be a ``RequestType`` or {True, False, None}.
-
-    default : RequestType, True, False, None, or str, \
-        default=RequestType.ERROR_IF_PASSED
-        The default value to be used if parameters are provided as a string instead of
-        the usual second layer dict.
     """
 
-    def __init__(self, requests=None, default=RequestType.ERROR_IF_PASSED):
+    def __init__(self):
         for method in METHODS:
             setattr(self, method, MethodMetadataRequest(name=method))
-
-        if requests is None:
-            return
-        elif not isinstance(requests, dict):
-            raise ValueError(
-                "Can only construct an instance from a dict. Please call "
-                "metadata_request_factory for other types of input."
-            )
-
-        for method, method_requests in requests.items():
-            if method == "_type":
-                continue
-            if method not in METHODS:
-                raise ValueError(f"{method} is not supported as a method.")
-            setattr(
-                self,
-                method,
-                MethodMetadataRequest.from_dict(
-                    method_requests, name=method, default=default
-                ),
-            )
 
     def _get_param_names(self, method, original_names):
         """Get the names of all available metadata for a method.
@@ -401,18 +379,52 @@ class MetadataRequest:
         """
         getattr(self, method)._check_warnings(params=params)
 
-    def to_dict(self):
+    def serialize(self):
         """Return dictionary representation of this object."""
-        output = {"_type": "request"}
+        output = {"^type": "request"}
         for method in METHODS:
-            output[method] = getattr(self, method).requests
+            output[method] = getattr(self, method).serialize()
         return output
 
+    @classmethod
+    def deserialize(cls, obj):
+        """Deserialize an instance from the given object.
+
+        Parameters
+        ----------
+        obj : dict
+            A serialized version of an instance of this object.
+
+        Returns
+        -------
+        result : MetdataRequest
+            An instance of this class constructed from the input.
+        """
+        # never change what's passed here.
+        requests = deepcopy(obj)
+        result = cls()
+        obj_type = requests.pop("^type", None)
+        if obj_type != "request":
+            raise ValueError(
+                "Can only create a router of type 'router', given `_type` is:"
+                f" {obj_type}."
+            )
+
+        for method, method_requests in requests.items():
+            if method not in METHODS:
+                raise ValueError(f"{method} is not supported as a method.")
+            setattr(
+                result,
+                method,
+                MethodMetadataRequest.deserialize(method_requests, name=method),
+            )
+        return result
+
     def __repr__(self):
-        return str(self.to_dict())
+        return str(self.serialize())
 
     def __str__(self):
-        return str(self.to_dict())
+        return str(repr(self))
 
 
 def metadata_request_factory(obj=None):
@@ -449,11 +461,11 @@ def metadata_request_factory(obj=None):
         return deepcopy(obj)
 
     if isinstance(obj, dict):
-        obj_type = obj.get("_type", None)
+        obj_type = obj.get("^type", None)
         if obj_type == "request":
-            return MetadataRequest(obj)
+            return MetadataRequest.deserialize(obj)
         elif obj_type == "router":
-            return MetadataRouter.from_dict(obj)
+            return MetadataRouter.deserialize(obj)
         else:
             raise ValueError(f"Cannot understand object type: {obj_type}")
 
@@ -484,18 +496,31 @@ class MethodMapping:
         self._routes.append(Route(method=method, used_in=used_in))
         return self
 
-    def to_dict(self):
-        result = {"routes": []}
+    def serialize(self):
+        """Serialize the instance."""
+        result = list()
         for route in self._routes:
-            result["routes"].append({"method": route.method, "used_in": route.used_in})
+            result.append({"method": route.method, "used_in": route.used_in})
         return result
 
     @classmethod
-    def from_dict(cls, obj):
-        if not isinstance(obj, dict):
-            raise ValueError("Given object has to be a dict.")
+    def deserialize(cls, obj):
+        """Deserialize an instance from the given object.
+
+        Parameters
+        ----------
+        obj : dict
+            A serialized version of an instance of this object.
+
+        Returns
+        -------
+        result : MethodMapping
+            An instance of this class constructed from the input.
+        """
+        # never change what's passed here.
+        obj = deepcopy(obj)
         result = cls()
-        for route in obj["routes"]:
+        for route in obj:
             result.add(method=route["method"], used_in=route["used_in"])
         return result
 
@@ -528,7 +553,7 @@ class MethodMapping:
         return routing
 
     def __repr__(self):
-        return str(self.to_dict())
+        return str(self.serialize())
 
 
 class MetadataRouter:
@@ -750,18 +775,33 @@ class MetadataRouter:
                 f" {extra_keys}"
             )
 
-    def to_dict(self):
-        res = {"_type": "router"}
+    def serialize(self):
+        """Serialize the instance."""
+        res = {"^type": "router"}
         for name, route_mapping in self._route_mappings.items():
             res[name] = dict()
-            res[name]["mapping"] = route_mapping.mapping.to_dict()
-            res[name]["routing"] = route_mapping.routing.to_dict()
+            res[name]["mapping"] = route_mapping.mapping.serialize()
+            res[name]["routing"] = route_mapping.routing.serialize()
 
         return res
 
     @classmethod
-    def from_dict(cls, obj):
-        obj_type = obj.get("_type", None)
+    def deserialize(cls, obj):
+        """Deserialize an instance from the given object.
+
+        Parameters
+        ----------
+        obj : dict
+            A serialized version of an instance of this object.
+
+        Returns
+        -------
+        result : MetadataRouter
+            An instance of this class constructed from the input.
+        """
+        # never change what's passed here.
+        obj = deepcopy(obj)
+        obj_type = obj.pop("^type", None)
         if obj_type != "router":
             raise ValueError(
                 "Can only create a router of type 'router', given `_type` is:"
@@ -770,10 +810,8 @@ class MetadataRouter:
 
         res = cls()
         for name, route_mapping in obj.items():
-            if name == "_type":
-                continue
             res._add(
-                method_mapping=MethodMapping.from_dict(route_mapping["mapping"]),
+                method_mapping=MethodMapping.deserialize(route_mapping["mapping"]),
                 **{name: metadata_request_factory(route_mapping["routing"])},
             )
         return res
@@ -832,7 +870,7 @@ class RequestMethod:
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
                     method_metadata_request.add_request(prop=prop, alias=alias)
-            instance._metadata_request = requests.to_dict()
+            instance._metadata_request = requests.serialize()
 
             return instance
 
@@ -887,15 +925,19 @@ class _MetadataRequester:
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
         try:
-            requests = cls._get_default_requests().to_dict()
+            requests = cls._get_default_requests().serialize()
         except Exception:
             # if there are any issues in the default values, it will be raised
-            # when ``get_metadata_request`` is called. Here we are going to
-            # ignore all the issues such as bad defaults etc.`
+            # when ``get_metadata_routing`` is called. Here we are going to
+            # ignore all the issues such as bad defaults etc.
             super().__init_subclass__(**kwargs)
             return
 
         for request_method, request_keys in requests.items():
+            # ignore everything which is not a valid method, including
+            # serialized metadata such as ^type
+            if request_method not in METHODS:
+                continue
             # set ``{method}_requests``` methods
             if not len(request_keys):
                 continue
@@ -981,7 +1023,7 @@ class _MetadataRequester:
         else:
             requests = self._get_default_requests()
 
-        return requests.to_dict()
+        return requests.serialize()
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
