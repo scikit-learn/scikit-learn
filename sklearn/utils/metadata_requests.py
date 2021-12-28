@@ -28,7 +28,7 @@ Route = namedtuple("Route", ["method", "used_in"])
 class RequestType(Enum):
     """A metadata is requested either with a string alias or this enum.
 
-    .. versionadded: 1.1
+    .. versionadded:: 1.1
     """
 
     # Metadata is not requested. It will not be routed to the object having the
@@ -483,7 +483,7 @@ class MethodMapping:
     scorer) to the router's methods. It stores a collection of ``Route``
     namedtuples.
 
-    .. versionadded: 1.1
+    .. versionadded:: 1.1
     """
 
     def __init__(self):
@@ -587,7 +587,7 @@ class MetadataRouter:
     :class:`~utils.metadata_requests.MetadataRequest` or a
     :class:`~utils.metadata_requests.MetadataRouter` instance.
 
-    .. versionadded: 1.1
+    .. versionadded:: 1.1
     """
 
     def __init__(self):
@@ -1067,7 +1067,7 @@ def process_routing(func):
     This decorator wraps around a router estimator's method, such as ``fit``,
     and handles routing and and validation of the metadata passed to it.
 
-    .. versionadded: 1.1
+    .. versionadded:: 1.1
 
     Parameters
     ----------
