@@ -551,10 +551,10 @@ class BaseEstimator:
 
             `estimator=self` is automatically added to these params to generate
             more informative error message in case of invalid input data.
-            
-            `force_all_finite=False` is added for fitted estimator with 
+
+            `force_all_finite=False` is added for fitted estimator with
             warm_start=True unless a value is specified.
-            
+
         Returns
         -------
         out : {ndarray, sparse matrix} or tuple of these
