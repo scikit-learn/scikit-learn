@@ -573,10 +573,10 @@ class BaseEstimator:
         no_val_y = y is None or isinstance(y, str) and y == "no_validation"
 
         default_check_params = {"estimator": self}
-        if hasattr(self, 'warm_start') and self.warm_start:
+        if hasattr(self, "warm_start") and self.warm_start:
             try:
                 check_is_fitted(self)
-                default_check_params['force_all_finite'] = False
+                default_check_params["force_all_finite"] = False
             except Exception:
                 pass
         check_params = {**default_check_params, **check_params}

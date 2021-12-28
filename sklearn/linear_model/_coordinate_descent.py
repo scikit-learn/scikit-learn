@@ -949,7 +949,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                     copy=False,
                     dtype=X.dtype.type,
                     ensure_2d=False,
-                    force_all_finite=False
+                    force_all_finite=False,
                 )
             else:
                 y = check_array(
