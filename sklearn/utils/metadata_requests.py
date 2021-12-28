@@ -903,7 +903,7 @@ class RequestMethod:
             inspect.Parameter(
                 name="self",
                 kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                annotation=type(instance),
+                annotation=owner,
             )
         ]
         params.extend(
@@ -919,7 +919,7 @@ class RequestMethod:
         )
         func.__signature__ = inspect.Signature(
             params,
-            return_annotation=type(instance),
+            return_annotation=owner,
         )
         doc = REQUESTER_DOC.format(method=self.name)
         for metadata in self.keys:
