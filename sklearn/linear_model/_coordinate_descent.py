@@ -2397,7 +2397,7 @@ class MultiTaskElasticNet(Lasso):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
-        # Doesn't check if values are finite if warm_start=True 
+        # Doesn't check if values are finite if warm_start=True
         # and the estimator is already fitted
         force_all_finite = False if self.warm_start and hasattr(self, "coef_") else True
 
