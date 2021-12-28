@@ -546,27 +546,6 @@ def test_max_features():
         est.fit(iris.data, iris.target)
         assert est.max_features_ == iris.data.shape[1]
 
-        # use values of max_features that are invalid
-        est = TreeEstimator(max_features=10)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
-        est = TreeEstimator(max_features=-1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
-        est = TreeEstimator(max_features=0.0)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
-        est = TreeEstimator(max_features=1.5)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
-        est = TreeEstimator(max_features="foobar")
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
 
 def test_error():
     # Test that it gives proper exception on deficient input.
@@ -604,8 +583,8 @@ def test_error():
         #     TreeEstimator(min_samples_split=2.5).fit(X, y)
         # with pytest.raises(ValueError):
         #     TreeEstimator(max_depth=-1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(max_features=42).fit(X, y)
+        # with pytest.raises(ValueError):
+        #     TreeEstimator(max_features=42).fit(X, y)
         # with pytest.raises(ValueError):
         #     TreeEstimator(min_impurity_decrease=-1.0).fit(X, y)
 
@@ -723,6 +702,11 @@ def test_error():
             TypeError,
             "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
         ),
+        ({"max_features": 0}, ValueError, "max_features == 0, must be > 0"),
+        ({"max_features": 1_000}, ValueError, "max_features == 1000, must be <="),
+        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
+        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
+        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
         ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
         (
             {"max_leaf_nodes": 1.5},
