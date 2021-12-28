@@ -282,7 +282,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "min_samples_split",
                 target_type=numbers.Real,
                 min_val=0.0,
-                max_val=1.0,
+                max_val=0.5,
                 include_boundaries="right",
             )
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
