@@ -686,9 +686,9 @@ def test_error():
             "min_weight_fraction_leaf == -1, must be >= 0",
         ),
         (
-            {"min_weight_fraction_leaf": 1.1},
+            {"min_weight_fraction_leaf": 0.6},
             ValueError,
-            "min_weight_fraction_leaf == 1.1, must be < 1",
+            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
         ),
         (
             {"min_weight_fraction_leaf": "foo"},

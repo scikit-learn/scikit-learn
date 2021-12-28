@@ -344,8 +344,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             "min_weight_fraction_leaf",
             target_type=numbers.Real,
             min_val=0.0,
-            max_val=1.0,
-            include_boundaries="left",
+            max_val=0.5,
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
