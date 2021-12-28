@@ -14,8 +14,6 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel, effective_n_jobs
 
-from sklearn.exceptions import NotFittedError
-
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize

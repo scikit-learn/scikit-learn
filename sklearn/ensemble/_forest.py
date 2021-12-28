@@ -41,7 +41,6 @@ Single and multi-output problems are both handled.
 
 
 import numbers
-import traceback
 from warnings import catch_warnings, simplefilter, warn
 import threading
 
@@ -63,7 +62,7 @@ from ..tree import (
 )
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, compute_sample_weight, deprecated
-from ..exceptions import DataConversionWarning, NotFittedError
+from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
@@ -325,16 +324,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
-        check_array_params = {}
-        if self.warm_start:
-            try:
-                check_is_fitted(self)
-                check_array_params['force_all_finite'] = False
-            except NotFittedError:
-                pass
         X, y = self._validate_data(
-            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE,
-            **check_array_params
+            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
