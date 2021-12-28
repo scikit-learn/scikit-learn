@@ -578,7 +578,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # The requirements of _decision_function (called in two lines
             # below) are more constrained than fit. It accepts only CSR
             # matrices.
-            X = check_array(X, dtype=DTYPE, order="C", accept_sparse="csr")
+            if self.warm_start:
+                X = check_array(X, dtype=DTYPE, order="C", accept_sparse="csr", force_all_finite=False)
+            else:
+                X = check_array(X, dtype=DTYPE, order="C", accept_sparse="csr")
             raw_predictions = self._raw_predict(X)
             self._resize_state()
 

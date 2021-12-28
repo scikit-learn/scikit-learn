@@ -551,7 +551,10 @@ class BaseEstimator:
 
             `estimator=self` is automatically added to these params to generate
             more informative error message in case of invalid input data.
-
+            
+            `force_all_finite=False` is added for fitted estimator with 
+            warm_start=True unless a value is specified.
+            
         Returns
         -------
         out : {ndarray, sparse matrix} or tuple of these
@@ -570,6 +573,12 @@ class BaseEstimator:
         no_val_y = y is None or isinstance(y, str) and y == "no_validation"
 
         default_check_params = {"estimator": self}
+        if hasattr(self, 'warm_start') and self.warm_start:
+            try:
+                check_is_fitted(self)
+                default_check_params['force_all_finite'] = False
+            except Exception:
+                pass
         check_params = {**default_check_params, **check_params}
 
         if no_val_X and no_val_y:
