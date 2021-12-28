@@ -247,18 +247,23 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
         if isinstance(self.min_samples_leaf, numbers.Integral):
-            if not 1 <= self.min_samples_leaf:
-                raise ValueError(
-                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
-                    % self.min_samples_leaf
-                )
+            check_scalar(
+                self.min_samples_leaf,
+                "min_samples_leaf",
+                target_type=numbers.Integral,
+                min_val=1,
+                max_val=n_samples,
+            )
             min_samples_leaf = self.min_samples_leaf
         else:  # float
-            if not 0.0 < self.min_samples_leaf <= 0.5:
-                raise ValueError(
-                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
-                    % self.min_samples_leaf
-                )
+            check_scalar(
+                self.min_samples_leaf,
+                "min_samples_leaf",
+                target_type=numbers.Real,
+                min_val=0.0,
+                max_val=0.5,
+                include_boundaries="right",
+            )
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, numbers.Integral):
