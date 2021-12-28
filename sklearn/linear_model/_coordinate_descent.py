@@ -2409,9 +2409,10 @@ class MultiTaskElasticNet(Lasso):
             copy=self.copy_X and self.fit_intercept,
             force_all_finite=force_all_finite
         )
-        check_y_params = dict(ensure_2d=False,
-                              order="F",
-                              force_all_finite=force_all_finite
+        check_y_params = dict(
+            ensure_2d=False,
+            order="F",
+            force_all_finite=force_all_finite
         )
         X, y = self._validate_data(
             X, y, validate_separately=(check_X_params, check_y_params)
