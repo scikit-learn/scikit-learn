@@ -944,8 +944,12 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             )
             if self.warm_start and hasattr(self, "coef_"):
                 y = check_array(
-                    y, order="F", copy=False, dtype=X.dtype.type,
-                    ensure_2d=False, force_all_finite=False
+                    y,
+                    order="F",
+                    copy=False,
+                    dtype=X.dtype.type,
+                    ensure_2d=False,
+                    force_all_finite=False
                 )
             else:
                 y = check_array(
@@ -2407,12 +2411,10 @@ class MultiTaskElasticNet(Lasso):
             dtype=[np.float64, np.float32],
             order="F",
             copy=self.copy_X and self.fit_intercept,
-            force_all_finite=force_all_finite
+            force_all_finite=force_all_finite,
         )
         check_y_params = dict(
-            ensure_2d=False,
-            order="F",
-            force_all_finite=force_all_finite
+            ensure_2d=False, order="F", force_all_finite=force_all_finite
         )
         X, y = self._validate_data(
             X, y, validate_separately=(check_X_params, check_y_params)

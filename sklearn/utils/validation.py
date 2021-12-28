@@ -1079,11 +1079,7 @@ def check_X_y(
 
 
 def _check_y(
-    y,
-    multi_output=False,
-    y_numeric=False,
-    estimator=None,
-    force_all_finite=True
+    y, multi_output=False, y_numeric=False, estimator=None, force_all_finite=True
 ):
     """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
