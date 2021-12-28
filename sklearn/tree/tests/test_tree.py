@@ -1329,17 +1329,6 @@ def test_max_leaf_nodes():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
         assert est.get_n_leaves() == k + 1
 
-        # max_leaf_nodes in (0, 1) should raise ValueError
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
 
 def test_max_leaf_nodes_max_depth():
     # Test precedence of max_leaf_nodes over max_depth.
