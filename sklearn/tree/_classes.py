@@ -14,7 +14,6 @@ randomized trees. Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
-from io import IncrementalNewlineDecoder
 import numbers
 import warnings
 import copy
