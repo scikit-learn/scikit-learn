@@ -70,6 +70,10 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| Added an extension in doc/conf.py to automatically generate
+ the list of estimators that handle NaN values. 
+ :pr:`22096` by `Lise Kleiber <lisekleiber>`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -398,6 +402,7 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
+
 
 Code and Documentation Contributors
 -----------------------------------
