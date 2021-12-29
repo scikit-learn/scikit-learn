@@ -188,7 +188,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
         If ``X`` is the distance array itself, use "precomputed" as the metric.
         Precomputed distance matrices must have 0 along the diagonal.
 
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -208,7 +208,6 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
-
     """
     X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
 
