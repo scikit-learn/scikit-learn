@@ -440,6 +440,20 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             self._fit_lbfgs(
                 X, y, activations, deltas, coef_grads, intercept_grads, layer_units
             )
+
+        # validate parameter weights
+        check_weights = (
+            lambda coefs, intercept: np.isfinite(coefs).all()
+            and np.isfinite(intercept).all()
+        )
+        if not np.all(
+            [
+                check_weights(coef, inter)
+                for coef, inter in zip(self.coefs_, self.intercepts_)
+            ]
+        ):
+            raise ValueError("Solver produced non-finite parameter weights.")
+
         return self
 
     def _validate_hyperparameters(self):
