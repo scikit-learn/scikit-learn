@@ -694,7 +694,8 @@ def test_feature_names_in():
 
 
 def test_base_estimator_pickle_version():
-    """Check that the original sklearn version with which a base estimator has been pickled with is present"""
+    """Check that the original sklearn version with which a base estimator
+    has been pickled with is present"""
     old_ver = sklearn.__version__
     pickle_ver = old_ver + ".test1"
     original_estimator = MyEstimator()
@@ -703,9 +704,12 @@ def test_base_estimator_pickle_version():
     assert hasattr(first_pickle_estimator, "_sklearn_pickle_version")
     assert first_pickle_estimator._sklearn_pickle_version == old_ver
 
-    sklearn.__version__ = pickle_ver  # Change Sklearn version to check if the original version is still present in the next pickle. Kinda hacky so if anyone knows another way to test that feel free to change this
+    # Change Sklearn version to simulate repickling with a newer version.
+    # Kinda hacky so if anyone knows another way to test that feel free to change this
+    sklearn.__version__ = pickle_ver
     second_pickle_estimator = pickle.loads(pickle.dumps(first_pickle_estimator))
     assert hasattr(second_pickle_estimator, "_sklearn_pickle_version")
     assert second_pickle_estimator._sklearn_pickle_version == old_ver
 
-    sklearn.__version__ = old_ver  # Manually reset modified Sklearn version to the original one to avoid any possible issues.
+    # Manually reset modified Sklearn version to the original one.
+    sklearn.__version__ = old_ver
