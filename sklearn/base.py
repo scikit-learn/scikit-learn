@@ -319,7 +319,15 @@ class BaseEstimator:
             state = self.__dict__.copy()
 
         if type(self).__module__.startswith("sklearn."):
-            return dict(state.items(), _sklearn_version=__version__)
+            if "_sklearn_pickle_version" in state.keys():
+                pickle_version = state["_sklearn_pickle_version"]
+            else:
+                pickle_version = __version__
+            return dict(
+                state.items(),
+                _sklearn_version=__version__,
+                _sklearn_pickle_version=pickle_version,
+            )
         else:
             return state
 
