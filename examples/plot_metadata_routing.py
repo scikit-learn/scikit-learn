@@ -31,7 +31,7 @@ from sklearn.base import MetaEstimatorMixin
 from sklearn.base import TransformerMixin
 from sklearn.base import clone
 from sklearn.utils.metadata_requests import RequestType
-from sklearn.utils.metadata_requests import metadata_request_factory
+from sklearn.utils.metadata_requests import metadata_router_factory
 from sklearn.utils.metadata_requests import MetadataRouter
 from sklearn.utils.metadata_requests import MethodMapping
 from sklearn.utils.metadata_requests import process_routing
@@ -159,9 +159,9 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError("estimator cannot be None!")
 
         # meta-estimators are responsible for validating the given metadata
-        # `metadata_request_factory` is a safe way to construct a
+        # `metadata_router_factory` is a safe way to construct a
         # `MetadataRouter` from the given object.
-        request_router = metadata_request_factory(self)
+        request_router = metadata_router_factory(self)
         request_router.validate_metadata(params=fit_params, method="fit")
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator
@@ -176,7 +176,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         # same as in `fit`, we validate the given metadata
-        request_router = metadata_request_factory(self)
+        request_router = metadata_router_factory(self)
         request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying `predict` method.
         params = request_router.get_params(params=predict_params, method="predict")
@@ -186,7 +186,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # %%
 # Let's break down different parts of the above code.
 #
-# First, the :method:`~utils.metadata_requests.metadata_request_factory` takes
+# First, the :method:`~utils.metadata_requests.metadata_router_factory` takes
 # an object from which a :class:`~utils.metadata_requests.MetadataRouting` or a
 # :class:`~utils.metadata_requests.MetadataRequest` can be constructed. This
 # may be an estimator, or a dictionary representing a ``MetadataRequest`` or
@@ -323,7 +323,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
             fit_params["sample_weight"] = sample_weight
 
         # meta-estimators are responsible for validating the given metadata
-        request_router = metadata_request_factory(self)
+        request_router = metadata_router_factory(self)
         request_router.validate_metadata(params=fit_params, method="fit")
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator
@@ -335,7 +335,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         # same as in ``fit``, we validate the given metadata
-        request_router = metadata_request_factory(self)
+        request_router = metadata_router_factory(self)
         request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying ``predict`` method.
         params = request_router.get_params(params=predict_params, method="predict")

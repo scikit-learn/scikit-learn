@@ -43,7 +43,7 @@ from .validation import (
 from .. import get_config
 from .metadata_requests import MetadataRequest
 from .metadata_requests import MethodMetadataRequest
-from .metadata_requests import metadata_request_factory
+from .metadata_requests import metadata_router_factory
 from .metadata_requests import MetadataRouter
 from ._bunch import Bunch
 
@@ -81,7 +81,7 @@ __all__ = [
     "DataConversionWarning",
     "estimator_html_repr",
     "MetadataRequest",
-    "metadata_request_factory",
+    "metadata_router_factory",
     "MetadataRouter",
     "MethodMetadataRequest",
     "Bunch",

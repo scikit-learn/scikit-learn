@@ -430,51 +430,6 @@ class MetadataRequest:
         return str(repr(self))
 
 
-def metadata_request_factory(obj=None):
-    """Get a MetadataRequest instance from the given object.
-
-    This function always returns a copy or an instance constructed from the
-    intput, such that changing the output of this function will not change the
-    original object.
-
-    .. versionadded:: 1.1
-
-    Parameters
-    ----------
-    obj : object
-        If the object is already a MetadataRequest, return that.
-        If the object is an estimator, try to call `get_metadata_request` and get
-        an instance from that method.
-        If the object is a dict, create a MetadataRequest from that.
-
-    Returns
-    -------
-    metadata_requests : MetadataRequest
-        A ``MetadataRequest`` taken or created from the given object.
-    """
-    if obj is None:
-        return MetadataRequest()
-
-    # doing this instead of a try/except since an AttributeError could be raised
-    # for other reasons.
-    if hasattr(obj, "get_metadata_routing"):
-        return metadata_request_factory(obj.get_metadata_routing())
-
-    if isinstance(obj, (MetadataRouter, MetadataRequest)):
-        return deepcopy(obj)
-
-    if isinstance(obj, dict):
-        obj_type = obj.get("^type", None)
-        if obj_type == "request":
-            return MetadataRequest.deserialize(obj)
-        elif obj_type == "router":
-            return MetadataRouter.deserialize(obj)
-        else:
-            raise ValueError(f"Cannot understand object type: {obj_type}")
-
-    return MetadataRequest()
-
-
 class MethodMapping:
     """Stores the mapping from an object's methods to a router's methods.
 
@@ -605,13 +560,13 @@ class MetadataRouter:
 
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
-            :func:`~utils.metadata_requests.metadata_request_factory` on them.
+            :func:`~utils.metadata_requests.metadata_router_factory` on them.
         """
         if isinstance(method_mapping, str):
             method_mapping = MethodMapping.from_str(method_mapping)
         for name, obj in objs.items():
             self._route_mappings[name] = RouteMappingPair(
-                mapping=method_mapping, routing=metadata_request_factory(obj)
+                mapping=method_mapping, routing=metadata_router_factory(obj)
             )
 
     def add_self(self, obj):
@@ -641,7 +596,7 @@ class MetadataRouter:
 
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
-            :func:`~utils.metadata_requests.metadata_request_factory` on them.
+            :func:`~utils.metadata_requests.metadata_router_factory` on them.
         """
         if "me" in objs.keys():
             raise ValueError("'me' is reserved for `self`! Use a different keyword")
@@ -834,13 +789,64 @@ class MetadataRouter:
         for name, route_mapping in obj.items():
             res._add(
                 method_mapping=MethodMapping.deserialize(route_mapping["mapping"]),
-                **{name: metadata_request_factory(route_mapping["routing"])},
+                **{name: metadata_router_factory(route_mapping["routing"])},
             )
         return res
 
     def __iter__(self):
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
+
+
+def metadata_router_factory(obj=None):
+    """Get a ``Metadata{Router, Request}`` instance from the given object.
+
+    This factory function returns a
+    :class:`~utils.metadata_request.MetadataRouter` or a
+    :class:`~utils.metadata_request.MetadataRequest` from the given input.
+
+    This function always returns a copy or an instance constructed from the
+    intput, such that changing the output of this function will not change the
+    original object.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    obj : object
+        - If the object is already a `MetadataRequest` or a `MetadataRouter`,
+            return a copy that.
+        - If the object provides a `get_metadata_routing` method, return a copy
+            of the output of the method.
+        - If the object is a dict, return the deserialized instance from it.
+
+    Returns
+    -------
+    obj : MetadataRequest or MetadataRouting
+        A ``MetadataRequest`` or a ``MetadataRouting`` taken or created from
+        the given object.
+    """
+    if obj is None:
+        return MetadataRequest()
+
+    # doing this instead of a try/except since an AttributeError could be raised
+    # for other reasons.
+    if hasattr(obj, "get_metadata_routing"):
+        return metadata_router_factory(obj.get_metadata_routing())
+
+    if isinstance(obj, (MetadataRouter, MetadataRequest)):
+        return deepcopy(obj)
+
+    if isinstance(obj, dict):
+        obj_type = obj.get("^type", None)
+        if obj_type == "request":
+            return MetadataRequest.deserialize(obj)
+        elif obj_type == "router":
+            return MetadataRouter.deserialize(obj)
+        else:
+            raise ValueError(f"Cannot understand object type: {obj_type}")
+
+    return MetadataRequest()
 
 
 class RequestMethod:
@@ -882,7 +888,7 @@ class RequestMethod:
             if set(kw) - set(self.keys):
                 raise TypeError(f"Unexpected args: {set(kw) - set(self.keys)}")
 
-            requests = metadata_request_factory(instance._get_metadata_request())
+            requests = metadata_router_factory(instance._get_metadata_request())
 
             try:
                 method_metadata_request = getattr(requests, self.name)
@@ -1041,7 +1047,7 @@ class _MetadataRequester:
             argument requested by the method.
         """
         if hasattr(self, "_metadata_request"):
-            requests = metadata_request_factory(self._metadata_request)
+            requests = metadata_router_factory(self._metadata_request)
         else:
             requests = self._get_default_requests()
 
@@ -1130,7 +1136,7 @@ def process_routing(func):
         else:
             routed_params = considered_params
 
-        request_routing = metadata_request_factory(obj)
+        request_routing = metadata_router_factory(obj)
         request_routing.validate_metadata(params=routed_params, method=method_name)
         params = request_routing.get_params(params=routed_params, method=method_name)
 

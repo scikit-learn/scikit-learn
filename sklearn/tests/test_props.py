@@ -17,7 +17,7 @@ from sklearn.base import clone
 from sklearn.utils import MetadataRequest
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.metadata_requests import RequestType
-from sklearn.utils.metadata_requests import metadata_request_factory
+from sklearn.utils.metadata_requests import metadata_router_factory
 from sklearn.utils.metadata_requests import MetadataRouter
 from sklearn.utils.metadata_requests import MethodMetadataRequest
 from sklearn.utils.metadata_requests import MethodMapping
@@ -101,7 +101,7 @@ class TestSimpleMetaEstimator(MetaEstimatorMixin, ClassifierMixin, BaseEstimator
 
         if sample_weight is not None:
             kwargs["sample_weight"] = sample_weight
-        request_routing = metadata_request_factory(self)
+        request_routing = metadata_router_factory(self)
         request_routing.validate_metadata(params=kwargs, method="fit")
         params = request_routing.get_params(params=kwargs, method="fit")
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
@@ -159,7 +159,7 @@ class TestMetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         self.transformer = transformer
 
     def fit(self, X, y=None, **fit_params):
-        request_routing = metadata_request_factory(self)
+        request_routing = metadata_router_factory(self)
         request_routing.validate_metadata(
             method="fit",
             params=fit_params,
@@ -169,7 +169,7 @@ class TestMetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y=None, **transform_params):
-        request_routing = metadata_request_factory(self)
+        request_routing = metadata_router_factory(self)
         request_routing.validate_metadata(
             method="transform",
             params=transform_params,
@@ -193,7 +193,7 @@ class SimplePipeline(BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         self.steps_ = []
-        request_routing = metadata_request_factory(self)
+        request_routing = metadata_router_factory(self)
         request_routing.validate_params(params=fit_params, method="fit")
         params = request_routing.get_params(params=fit_params, method="fit")
         X_transformed = X
@@ -214,7 +214,7 @@ class SimplePipeline(BaseEstimator):
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         X_transformed = X
-        request_routing = metadata_request_factory(self)
+        request_routing = metadata_router_factory(self)
         request_routing.validate_params(params=predict_params, method="predict")
         params = request_routing.get_params(params=predict_params, method="predict")
         for i, step in enumerate(self.steps_[:-1]):
@@ -269,14 +269,14 @@ def test_default_requests():
             "sample_weight": RequestType.REQUESTED
         }  # type: ignore
 
-    odd_request = metadata_request_factory(OddEstimator())
+    odd_request = metadata_router_factory(OddEstimator())
     assert odd_request.fit._requests == {"sample_weight": RequestType.REQUESTED}
 
     # check other test estimators
-    assert not len(metadata_request_factory(TestEstimatorNoMetadata()).fit._requests)
+    assert not len(metadata_router_factory(TestEstimatorNoMetadata()).fit._requests)
     assert_request_is_empty(TestEstimatorNoMetadata().get_metadata_routing())
 
-    trs_request = metadata_request_factory(TestTransformer())
+    trs_request = metadata_router_factory(TestTransformer())
     assert trs_request.fit._requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
@@ -287,7 +287,7 @@ def test_default_requests():
     }
     assert_request_is_empty(trs_request)
 
-    est_request = metadata_request_factory(TestEstimatorFitMetadata())
+    est_request = metadata_router_factory(TestEstimatorFitMetadata())
     assert est_request.fit._requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
@@ -478,7 +478,7 @@ def test__get_default_requests():
         def fit(self, X, y):
             return self
 
-    assert metadata_request_factory(ExplicitRequest()).fit._requests == {
+    assert metadata_router_factory(ExplicitRequest()).fit._requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
     assert_request_is_empty(ExplicitRequest().get_metadata_routing(), exclude="fit")
@@ -489,7 +489,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert metadata_request_factory(ExplicitRequestOverwrite()).fit._requests == {
+    assert metadata_router_factory(ExplicitRequestOverwrite()).fit._requests == {
         "prop": RequestType.REQUESTED
     }
     assert_request_is_empty(
@@ -500,7 +500,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert metadata_request_factory(ImplicitRequest()).fit._requests == {
+    assert metadata_router_factory(ImplicitRequest()).fit._requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
     assert_request_is_empty(ImplicitRequest().get_metadata_routing(), exclude="fit")
@@ -511,7 +511,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert metadata_request_factory(ImplicitRequestRemoval()).fit._requests == {}
+    assert metadata_router_factory(ImplicitRequestRemoval()).fit._requests == {}
     assert_request_is_empty(ImplicitRequestRemoval().get_metadata_routing())
 
 
@@ -539,20 +539,20 @@ def test_method_metadata_request():
     }
 
 
-def test_metadata_request_factory():
+def test_metadata_router_factory():
     class Consumer(BaseEstimator):
         __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
-    assert_request_is_empty(metadata_request_factory(None))
-    assert_request_is_empty(metadata_request_factory({"^type": "request"}))
-    assert_request_is_empty(metadata_request_factory({"^type": "router"}))
-    assert_request_is_empty(metadata_request_factory(object()))
+    assert_request_is_empty(metadata_router_factory(None))
+    assert_request_is_empty(metadata_router_factory({"^type": "request"}))
+    assert_request_is_empty(metadata_router_factory({"^type": "router"}))
+    assert_request_is_empty(metadata_router_factory(object()))
 
     mr = MetadataRequest.deserialize({"^type": "request", "fit": {"foo": "bar"}})
-    mr_factory = metadata_request_factory(mr)
+    mr_factory = metadata_router_factory(mr)
     assert_request_is_empty(mr_factory, exclude="fit")
     assert mr_factory.fit._requests == {"foo": "bar"}
 
-    mr = metadata_request_factory(Consumer())
+    mr = metadata_router_factory(Consumer())
     assert_request_is_empty(mr, exclude="fit")
     assert mr.fit._requests == {"prop": RequestType.ERROR_IF_PASSED}
