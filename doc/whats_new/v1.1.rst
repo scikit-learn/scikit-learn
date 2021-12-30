@@ -326,7 +326,27 @@ Changelog
   its square root.
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.neighbors`
+........................
 
+- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
+  now accept an `input_name` parameter to make the error message more
+  informative when passed invalid input data (e.g. with NaN or infinite
+  values).
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :func:`utils.validation.check_array` returns a float
+  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
+
+- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
+  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
+  :user:`Lucy Jimenez <LucyJimenez>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
