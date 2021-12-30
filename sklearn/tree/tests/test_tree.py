@@ -660,7 +660,7 @@ def test_error():
         (
             {"min_weight_fraction_leaf": -1},
             ValueError,
-            "min_weight_fraction_leaf == -1, must be >= 0",
+            "min_weight_fraction_leaf == -1, must be >= 0.0",
         ),
         (
             {"min_weight_fraction_leaf": 0.6},
@@ -673,7 +673,7 @@ def test_error():
             "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
         ),
         ({"max_features": 0}, ValueError, "max_features == 0, must be > 0"),
-        ({"max_features": 1_000}, ValueError, "max_features == 1000, must be <="),
+        ({"max_features": 1000}, ValueError, "max_features == 1000, must be <="),
         ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
         ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
         ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
@@ -684,9 +684,9 @@ def test_error():
             "max_leaf_nodes must be an instance of <class 'numbers.Integral'>",
         ),
         (
-            {"min_impurity_decrease": -1.0},
+            {"min_impurity_decrease": -1},
             ValueError,
-            "min_impurity_decrease == -1.0, must be >= 0",
+            "min_impurity_decrease == -1, must be >= 0.0",
         ),
         (
             {"min_impurity_decrease": "foo"},
