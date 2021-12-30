@@ -623,7 +623,12 @@ def test_error():
             TypeError,
             "max_depth must be an instance of <class 'numbers.Integral'>",
         ),
-        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be > 1"),
+        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
+        (
+            {"min_samples_split": 900},
+            ValueError,
+            "min_samples_split == 900, must be <=",
+        ),
         (
             {"min_samples_split": 0.0},
             ValueError,
