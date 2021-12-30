@@ -560,34 +560,6 @@ def test_error():
         with pytest.raises(ValueError):
             est.predict_proba(X2)
 
-    for name, TreeEstimator in ALL_TREES.items():
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_leaf=-1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_leaf=0.6).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_leaf=0.0).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_leaf=3.0).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(min_weight_fraction_leaf=-1).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(min_weight_fraction_leaf=0.51).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(min_samples_split=-1).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(min_samples_split=0.0).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(min_samples_split=1.1).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(min_samples_split=2.5).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(max_depth=-1).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(max_features=42).fit(X, y)
-        # with pytest.raises(ValueError):
-        #     TreeEstimator(min_impurity_decrease=-1.0).fit(X, y)
-
         # Wrong dimensions
         est = TreeEstimator()
         y2 = y[:-1]
@@ -649,7 +621,7 @@ def test_error():
         (
             {"max_depth": 1.1},
             TypeError,
-            "max_depth must be an instance of <class 'numbers.Integral'>, not",
+            "max_depth must be an instance of <class 'numbers.Integral'>",
         ),
         ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be > 1"),
         (
