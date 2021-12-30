@@ -547,9 +547,35 @@ class MetadataRouter:
 
     def __init__(self):
         self._route_mappings = dict()
+        self._self = None
 
-    def _add(self, *, method_mapping, **objs):
-        """Add a route mapping w/o name validation.
+    def add_self(self, obj):
+        """Add `self` to the routing.
+
+        Parameters
+        ----------
+        obj : object
+            This is typically `self` in a `get_metadata_routing()`.
+
+        Returns
+        -------
+        self : MetadataRouter
+            Returns `self`.
+        """
+        if isinstance(obj, MetadataRequest):
+            self._self = deepcopy(obj)
+        elif hasattr(obj, "_get_metadata_request"):
+            self._self = obj._get_metadata_request()
+        else:
+            raise ValueError(
+                "Given object is neither a MetadataRequest nor does it implement the"
+                " require API. Inheriting from `BaseEstimator` implements the required"
+                " API."
+            )
+        return self
+
+    def add(self, *, method_mapping, **objs):
+        """Add named objects with their corresponding method mapping.
 
         Parameters
         ----------
@@ -561,6 +587,11 @@ class MetadataRouter:
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
             :func:`~utils.metadata_requests.metadata_router_factory` on them.
+
+        Returns
+        -------
+        self : MetadataRouter
+            Returns `self`.
         """
         if isinstance(method_mapping, str):
             method_mapping = MethodMapping.from_str(method_mapping)
@@ -568,51 +599,7 @@ class MetadataRouter:
             self._route_mappings[name] = RouteMappingPair(
                 mapping=method_mapping, routing=metadata_router_factory(obj)
             )
-
-    def add_self(self, obj):
-        """Add `self` to the routing map.
-
-        A "one-to-one" method map is used for method mapping.
-
-        Parameters
-        ----------
-        obj : object
-            This is typically `self` in a `get_metadata_routing()`.
-        """
-        self._add(method_mapping="one-to-one", me=obj._get_metadata_request())
         return self
-
-    def add(self, *, method_mapping, **objs):
-        """Add named objects with their corresponding method mapping.
-
-        The objects cannot be called `"me"` since that's reserved for `self`.
-
-        Parameters
-        ----------
-        method_mapping : MethodMapping or str
-            The mapping between the child and the parent's methods. If str, the
-            output of :func:`~utils.metadata_requests.MethodMapping.from_str`
-            is used.
-
-        **objs : dict
-            A dictionary of objects from which metadata is extracted by calling
-            :func:`~utils.metadata_requests.metadata_router_factory` on them.
-        """
-        if "me" in objs.keys():
-            raise ValueError("'me' is reserved for `self`! Use a different keyword")
-        self._add(method_mapping=method_mapping, **objs)
-        return self
-
-    def _get_self(self):
-        """Return the self metadata request if available.
-
-        If a router is also a consumer, this information is stored under the
-        reserved key `"me"`.
-        """
-        if "me" in self._route_mappings:
-            return self._route_mappings["me"].routing
-        else:
-            return MetadataRequest()
 
     def _get_param_names(self, *, method, original_names):
         """Get the names of all available metadata for a method.
@@ -626,8 +613,9 @@ class MetadataRouter:
             The name of the method for which metadata names are requested.
 
         original_names : bool
-            Controls whether original or aliased names should be returned. If
-            ``True``, aliases are ignored and original names are returned.
+            Controls whether original or aliased names should be returned,
+            which only applies to the stored `self`. If no `self` routing
+            object is stored, this parameter has no effect.
 
         Returns
         -------
@@ -635,14 +623,19 @@ class MetadataRouter:
             Returns a set of strings with the names of all parameters.
         """
         res = set()
+        if self._self:
+            res = res.union(
+                self._self._get_param_names(
+                    method=method, original_names=original_names
+                )
+            )
+
         for name, route_mapping in self._route_mappings.items():
-            # if original names are required, that only applies to "me"
-            orig_names = original_names and name == "me"
             for orig_method, used_in in route_mapping.mapping:
                 if used_in == method:
                     res = res.union(
                         route_mapping.routing._get_param_names(
-                            method=orig_method, original_names=orig_names
+                            method=orig_method, original_names=False
                         )
                     )
         return set(sorted(res))
@@ -684,7 +677,7 @@ class MetadataRouter:
         methods of each child object that are used in the router's `"method"`.
 
         If the router is also a consumer, it also checks for warnings of
-        `self`'s requested metadata.
+        `self`'s/consumer's requested metadata.
 
         Parameters
         ----------
@@ -703,15 +696,12 @@ class MetadataRouter:
             used to pass the required metadata to corresponding methods or
             corresponding child objects.
         """
+        if self._self:
+            self._self._check_warnings(params=params, method=method)
+
         res = Bunch()
         for name, route_mapping in self._route_mappings.items():
             router, mapping = route_mapping.routing, route_mapping.mapping
-            if name == "me":
-                # "me" is reserved for `self` and routing is not handled by
-                # `self`, it's handled by meta-estimators. Therefore we only
-                # check for warnings here.
-                router._check_warnings(params=params, method=method)
-                continue
 
             res[name] = Bunch()
             for orig_method, used_in in mapping:
@@ -742,9 +732,12 @@ class MetadataRouter:
             A dictionary of provided metadata.
         """
         param_names = self._get_param_names(method=method, original_names=True)
-        self_params = self._get_self()._get_param_names(
-            method=method, original_names=True
-        )
+        if self._self:
+            self_params = self._self._get_param_names(
+                method=method, original_names=True
+            )
+        else:
+            self_params = set()
         extra_keys = set(sorted(set(params.keys()) - param_names - self_params))
         if extra_keys:
             raise ValueError(
@@ -755,6 +748,8 @@ class MetadataRouter:
     def serialize(self):
         """Serialize the instance."""
         res = {"^type": "router"}
+        if self._self:
+            res["^self"] = self._self.serialize()
         for name, route_mapping in self._route_mappings.items():
             res[name] = dict()
             res[name]["mapping"] = route_mapping.mapping.serialize()
@@ -786,14 +781,23 @@ class MetadataRouter:
             )
 
         res = cls()
+
+        _self = obj.pop("^self", None)
+        if _self:
+            res.add_self(metadata_router_factory(_self))
+
         for name, route_mapping in obj.items():
-            res._add(
+            res.add(
                 method_mapping=MethodMapping.deserialize(route_mapping["mapping"]),
-                **{name: metadata_router_factory(route_mapping["routing"])},
+                **{name: route_mapping["routing"]},
             )
         return res
 
     def __iter__(self):
+        if self._self:
+            yield "^self", RouteMappingPair(
+                mapping=MethodMapping.from_str("one-to-one"), routing=self._self
+            )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
 
@@ -888,7 +892,7 @@ class RequestMethod:
             if set(kw) - set(self.keys):
                 raise TypeError(f"Unexpected args: {set(kw) - set(self.keys)}")
 
-            requests = metadata_router_factory(instance._get_metadata_request())
+            requests = instance._get_metadata_request()
 
             try:
                 method_metadata_request = getattr(requests, self.name)
@@ -1041,17 +1045,15 @@ class _MetadataRequester:
 
         Returns
         -------
-        request : dict
-            A dict of dict of str->value. The key to the first dict is the name
-            of the method, and the key to the second dict is the name of the
-            argument requested by the method.
+        request : MetadataRequest
+            A :class:`~.utils.metadata_requests.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
             requests = metadata_router_factory(self._metadata_request)
         else:
             requests = self._get_default_requests()
 
-        return requests.serialize()
+        return requests
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -1064,7 +1066,7 @@ class _MetadataRequester:
         routing : dict
             A dict representing a MetadataRouter.
         """
-        return self._get_metadata_request()
+        return self._get_metadata_request().serialize()
 
 
 def process_routing(func):
