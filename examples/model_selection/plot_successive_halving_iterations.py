@@ -9,6 +9,7 @@ iteratively chooses the best parameter combination out of
 multiple candidates.
 
 """
+
 import pandas as pd
 from sklearn import datasets
 import matplotlib.pyplot as plt
@@ -20,29 +21,27 @@ from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.ensemble import RandomForestClassifier
 
 
-print(__doc__)
-
 # %%
 # We first define the parameter space and train a
 # :class:`~sklearn.model_selection.HalvingRandomSearchCV` instance.
 
 rng = np.random.RandomState(0)
 
-X, y = datasets.make_classification(n_samples=700, random_state=rng)
+X, y = datasets.make_classification(n_samples=400, n_features=12, random_state=rng)
 
 clf = RandomForestClassifier(n_estimators=20, random_state=rng)
 
-param_dist = {"max_depth": [3, None],
-              "max_features": randint(1, 11),
-              "min_samples_split": randint(2, 11),
-              "bootstrap": [True, False],
-              "criterion": ["gini", "entropy"]}
+param_dist = {
+    "max_depth": [3, None],
+    "max_features": randint(1, 6),
+    "min_samples_split": randint(2, 11),
+    "bootstrap": [True, False],
+    "criterion": ["gini", "entropy"],
+}
 
 rsh = HalvingRandomSearchCV(
-    estimator=clf,
-    param_distributions=param_dist,
-    factor=2,
-    random_state=rng)
+    estimator=clf, param_distributions=param_dist, factor=2, random_state=rng
+)
 rsh.fit(X, y)
 
 # %%
@@ -50,23 +49,23 @@ rsh.fit(X, y)
 # and plot the evolution of the search.
 
 results = pd.DataFrame(rsh.cv_results_)
-results['params_str'] = results.params.apply(str)
-results.drop_duplicates(subset=('params_str', 'iter'), inplace=True)
-mean_scores = results.pivot(index='iter', columns='params_str',
-                            values='mean_test_score')
-ax = mean_scores.plot(legend=False, alpha=.6)
+results["params_str"] = results.params.apply(str)
+results.drop_duplicates(subset=("params_str", "iter"), inplace=True)
+mean_scores = results.pivot(
+    index="iter", columns="params_str", values="mean_test_score"
+)
+ax = mean_scores.plot(legend=False, alpha=0.6)
 
 labels = [
-    f'iter={i}\nn_samples={rsh.n_resources_[i]}\n'
-    f'n_candidates={rsh.n_candidates_[i]}'
+    f"iter={i}\nn_samples={rsh.n_resources_[i]}\nn_candidates={rsh.n_candidates_[i]}"
     for i in range(rsh.n_iterations_)
 ]
 
 ax.set_xticks(range(rsh.n_iterations_))
-ax.set_xticklabels(labels, rotation=45, multialignment='left')
-ax.set_title('Scores of candidates over iterations')
-ax.set_ylabel('mean test score', fontsize=15)
-ax.set_xlabel('iterations', fontsize=15)
+ax.set_xticklabels(labels, rotation=45, multialignment="left")
+ax.set_title("Scores of candidates over iterations")
+ax.set_ylabel("mean test score", fontsize=15)
+ax.set_xlabel("iterations", fontsize=15)
 plt.tight_layout()
 plt.show()
 
