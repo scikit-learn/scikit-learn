@@ -231,8 +231,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.max_depth,
                 "max_depth",
                 target_type=numbers.Integral,
-                min_val=0,
-                include_boundaries="neither",
+                min_val=1,
             )
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
 
@@ -336,7 +335,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "max_leaf_nodes",
                 target_type=numbers.Integral,
                 min_val=2,
-                include_boundaries="left",
             )
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
@@ -345,7 +343,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             "min_impurity_decrease",
             target_type=numbers.Real,
             min_val=0.0,
-            include_boundaries="left",
         )
 
         if len(y) != n_samples:

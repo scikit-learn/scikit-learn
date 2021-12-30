@@ -571,7 +571,7 @@ def test_error():
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
-        ({"max_depth": -1}, ValueError, "max_depth == -1, must be > 0"),
+        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
         (
             {"max_depth": 1.1},
             TypeError,
