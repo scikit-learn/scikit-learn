@@ -236,16 +236,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
 
-        if self.max_leaf_nodes is not None:
-            check_scalar(
-                self.max_leaf_nodes,
-                "max_leaf_nodes",
-                target_type=numbers.Integral,
-                min_val=2,
-                include_boundaries="left",
-            )
-        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
-
         if isinstance(self.min_samples_leaf, numbers.Integral):
             check_scalar(
                 self.min_samples_leaf,
@@ -288,6 +278,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_samples_split = max(2, min_samples_split)
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
+
+        check_scalar(
+            self.min_weight_fraction_leaf,
+            "min_weight_fraction_leaf",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=0.5,
+        )
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
@@ -332,19 +330,30 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         self.max_features_ = max_features
 
+        if self.max_leaf_nodes is not None:
+            check_scalar(
+                self.max_leaf_nodes,
+                "max_leaf_nodes",
+                target_type=numbers.Integral,
+                min_val=2,
+                include_boundaries="left",
+            )
+        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+
+        check_scalar(
+            self.min_impurity_decrease,
+            "min_impurity_decrease",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
         if len(y) != n_samples:
             raise ValueError(
                 "Number of labels=%d does not match number of samples=%d"
                 % (len(y), n_samples)
             )
 
-        check_scalar(
-            self.min_weight_fraction_leaf,
-            "min_weight_fraction_leaf",
-            target_type=numbers.Real,
-            min_val=0.0,
-            max_val=0.5,
-        )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
 
@@ -360,13 +369,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
-        check_scalar(
-            self.min_impurity_decrease,
-            "min_impurity_decrease",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
