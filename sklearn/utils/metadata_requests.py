@@ -69,10 +69,14 @@ METHODS = [
 ]
 
 
+# These strings are used to dynamically generate the docstrings for
+# {method}_requests methods.
 REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
+
+        .. versionadded:: 1.1
 
         Parameters
         ----------
@@ -279,7 +283,13 @@ class MethodMetadataRequest:
         return result
 
     def serialize(self):
-        """Serialize the object."""
+        """Serialize the object.
+
+        Returns
+        -------
+        obj : dict
+            A serialized version of the instance in the form of a dictionary.
+        """
         result = dict()
         # Then parameters with string aliases
         result.update(
@@ -383,7 +393,13 @@ class MetadataRequest:
         getattr(self, method)._check_warnings(params=params)
 
     def serialize(self):
-        """Return dictionary representation of this object."""
+        """Serialize the object.
+
+        Returns
+        -------
+        obj : dict
+            A serialized version of the instance in the form of a dictionary.
+        """
         output = {"^type": "request"}
         for method in METHODS:
             output[method] = getattr(self, method).serialize()
@@ -472,7 +488,13 @@ class MethodMapping:
         return self
 
     def serialize(self):
-        """Serialize the instance."""
+        """Serialize the object.
+
+        Returns
+        -------
+        obj : list
+            A serialized version of the instance in the form of a list.
+        """
         result = list()
         for route in self._routes:
             result.append({"method": route.method, "used_in": route.used_in})
@@ -746,7 +768,13 @@ class MetadataRouter:
             )
 
     def serialize(self):
-        """Serialize the instance."""
+        """Serialize the object.
+
+        Returns
+        -------
+        obj : dict
+            A serialized version of the instance in the form of a dictionary.
+        """
         res = {"^type": "router"}
         if self._self:
             res["^self"] = self._self.serialize()
