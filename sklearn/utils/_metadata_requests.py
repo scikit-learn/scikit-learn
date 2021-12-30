@@ -12,8 +12,8 @@ from enum import Enum
 from warnings import warn
 from collections import namedtuple
 from typing import Union, Optional
-from ...externals._sentinels import sentinel  # type: ignore # mypy error!!!
-from .._bunch import Bunch
+from ..externals._sentinels import sentinel  # type: ignore # mypy error!!!
+from ._bunch import Bunch
 
 # This namedtuple is used to store a (mapping, routing) pair. Mapping is a
 # MethodMapping object, and routing is the output of `get_metadata_routing`.

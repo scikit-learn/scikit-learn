@@ -20,8 +20,8 @@ from sklearn.utils.metadata_routing import MetadataRequest
 from sklearn.utils.metadata_routing import metadata_router_factory
 from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.utils.metadata_routing import MethodMapping
-from sklearn.utils.metadata_routing._metadata_requests import MethodMetadataRequest
-from sklearn.utils.metadata_routing._metadata_requests import _MetadataRequester
+from sklearn.utils._metadata_requests import MethodMetadataRequest
+from sklearn.utils._metadata_requests import _MetadataRequester
 
 N, M = 100, 4
 X = np.random.rand(N, M)
