@@ -237,7 +237,8 @@ class AdamOptimizer(BaseOptimizer):
 
     References
     ----------
-    :arxiv:`Kingma, Diederik, and Jimmy Ba (2014) "Adam: A method for stochastic optimization." <1412.6980>`
+    :arxiv:`Kingma, Diederik, and Jimmy Ba (2014) "Adam: A method for
+        stochastic optimization." <1412.6980>
     """
 
     def __init__(
