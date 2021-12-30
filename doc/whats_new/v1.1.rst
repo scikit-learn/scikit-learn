@@ -175,14 +175,6 @@ Changelog
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and
   :user:`Maren Westermann <marenwestermann>`.
 
-- |Fix| :class:`feature_extraction.FeatureHasher` now validates input parameters
-  in `transform` instead of `__init__`. :pr:`21573` by
-  :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-
-- |API| :func:`decomposition.FastICA` now supports unit variance for whitening.
-  The default value of its `whiten` argument will change from `True`
-  (which behaves like `'arbitrary-variance'`) to `'unit-variance'` in version 1.3.
-  :pr:`19490` by :user:`Facundo Ferrin <fferrin>` and :user:`Julien Jerphanion <jjerphan>`
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
   :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
@@ -334,27 +326,7 @@ Changelog
   its square root.
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.neighbors`
-........................
 
-- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
-  now accept an `input_name` parameter to make the error message more
-  informative when passed invalid input data (e.g. with NaN or infinite
-  values).
-  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
-
-- |Enhancement| :func:`utils.validation.check_array` returns a float
-  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
-  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
-
-- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
-  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
-  :user:`Lucy Jimenez <LucyJimenez>`.
-
-:mod:`sklearn.pipeline`
-.......................
-
-- |Enhancement| Added support for "passthrough" in :class:`FeatureUnion`.
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
@@ -416,32 +388,6 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
-:mod:`sklearn.neighbors`
-........................
-
-- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
-  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
-  :user:`Lucy Jimenez <LucyJimenez>`.
-
-- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
-  now accept an `input_name` parameter to make the error message more
-  informative when passed invalid input data (e.g. with NaN or infinite
-  values).
-  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
-
-- |Enhancement| :func:`utils.validation.check_array` returns a float
-  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
-  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
-
-:mod:`sklearn.random_projection`
-................................
-
-- |API| Adds :term:`get_feature_names_out` to all transformers in the
-  :mod:`~sklearn.random_projection` module:
-  :class:`~sklearn.random_projection.GaussianRandomProjection` and
-  :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
-  :user:`Loïc Estève <lesteve>`.
-
 :mod:`sklearn.tree`
 ...................
 
@@ -449,11 +395,6 @@ Changelog
   When setting the parameter `True`, a separator line between a criteria and other contents
   is displayed in each node for visibility.
   :pr:`Takeshi Oura <takoika>`
-
-- |Fix| Support loading pickles of decision tree models when the pickle has
-  been generated on a platform with a different bitness. A typical example is
-  to train and pickle the model on 64 bit machine and load the model on a 32
-  bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
 
 Code and Documentation Contributors
 -----------------------------------
