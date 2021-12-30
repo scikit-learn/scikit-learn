@@ -30,11 +30,11 @@ from sklearn.base import RegressorMixin
 from sklearn.base import MetaEstimatorMixin
 from sklearn.base import TransformerMixin
 from sklearn.base import clone
-from sklearn.utils.metadata_requests import RequestType
-from sklearn.utils.metadata_requests import metadata_router_factory
-from sklearn.utils.metadata_requests import MetadataRouter
-from sklearn.utils.metadata_requests import MethodMapping
-from sklearn.utils.metadata_requests import process_routing
+from sklearn.utils.metadata_routing import RequestType
+from sklearn.utils.metadata_routing import metadata_router_factory
+from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.utils.metadata_routing import MethodMapping
+from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import LinearRegression
 
@@ -113,7 +113,7 @@ pprint(est.get_metadata_routing())
 # %%
 # As you can see, now the metadata have explicit request values, one is
 # requested and one is not. Instead of ``True`` and ``False``, we could also
-# use the :class:`~sklearn.utils.metadata_requests.RequestType` values.
+# use the :class:`~sklearn.utils.metadata_routing.RequestType` values.
 
 est = (
     ExampleClassifier()
@@ -186,9 +186,9 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # %%
 # Let's break down different parts of the above code.
 #
-# First, the :method:`~utils.metadata_requests.metadata_router_factory` takes
-# an object from which a :class:`~utils.metadata_requests.MetadataRouting` or a
-# :class:`~utils.metadata_requests.MetadataRequest` can be constructed. This
+# First, the :method:`~utils.metadata_routing.metadata_router_factory` takes
+# an object from which a :class:`~utils.metadata_routing.MetadataRouting` or a
+# :class:`~utils.metadata_routing.MetadataRequest` can be constructed. This
 # may be an estimator, or a dictionary representing a ``MetadataRequest`` or
 # ``MetadataRouting`` object. If an estimator is given, it tries to call the
 # estimator's ``get_metadata_routing`` and construct the object from that, and
@@ -268,7 +268,7 @@ except ValueError as e:
 # requires so that it can be used as a consumer inside another router, e.g. a
 # pipeline inside a grid search object. The output of the
 # ``get_metadata_routing`` which is a dictionary representation of a
-# :class:`~utils.metadata_requests.MetadataRouter`, includes the complete tree
+# :class:`~utils.metadata_routing.MetadataRouter`, includes the complete tree
 # of requested metadata by all nested objects and their corresponding method
 # routings, i.e. which method of a sub-estimator is used in which method of a
 # meta-estimator:
@@ -454,18 +454,18 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
 
 # %%
-# Note the usage of :class:`~utils.metadata_requests.MethodMapping` to declare
+# Note the usage of :class:`~utils.metadata_routing.MethodMapping` to declare
 # which methods of the child estimator are used in which methods of the meta
 # estimator. As you can see, we use the transformer's ``transform`` and ``fit``
 # methods in ``fit``, and its ``transform`` method in ``predict``, and that's
 # what you see implemented in the routing structure of the pipeline class.
 #
 # Another difference in the above example with the previous ones is the usage
-# of :func:`~utils.metadata_requests.process_routing` decorator, which
-# processes the input parameters, does the required validation, and passes the
-# `params` which we had created in previous examples as a keyword argument to
-# the corresponding method. As a result, the only thing a developer needs to
-# do is to write the definition of `get_metadata_routing`.
+# of :func:`~utils.metadata_routing.process_routing` decorator, which processes
+# the input parameters, does the required validation, and passes the `params`
+# which we had created in previous examples as a keyword argument to the
+# corresponding method. As a result, the only thing a developer needs to do is
+# to write the definition of `get_metadata_routing`.
 #
 # In order to test the above pipeline, let's add an example transformer.
 

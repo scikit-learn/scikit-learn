@@ -27,7 +27,7 @@ from .utils.validation import _check_feature_names_in
 from .utils.validation import _generate_get_feature_names_out
 from .utils.validation import check_is_fitted
 from .utils._estimator_html_repr import estimator_html_repr
-from .utils.metadata_requests import _MetadataRequester
+from .utils.metadata_routing._metadata_requests import _MetadataRequester
 from .utils.validation import _get_feature_names
 
 

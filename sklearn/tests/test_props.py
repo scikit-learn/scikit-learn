@@ -14,15 +14,14 @@ from sklearn.base import ClassifierMixin
 from sklearn.base import TransformerMixin
 from sklearn.base import MetaEstimatorMixin
 from sklearn.base import clone
-from sklearn.utils import MetadataRequest
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.metadata_requests import RequestType
-from sklearn.utils.metadata_requests import metadata_router_factory
-from sklearn.utils.metadata_requests import MetadataRouter
-from sklearn.utils.metadata_requests import MethodMetadataRequest
-from sklearn.utils.metadata_requests import MethodMapping
-
-from sklearn.base import _MetadataRequester
+from sklearn.utils.metadata_routing import RequestType
+from sklearn.utils.metadata_routing import MetadataRequest
+from sklearn.utils.metadata_routing import metadata_router_factory
+from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.utils.metadata_routing import MethodMapping
+from sklearn.utils.metadata_routing._metadata_requests import MethodMetadataRequest
+from sklearn.utils.metadata_routing._metadata_requests import _MetadataRequester
 
 N, M = 100, 4
 X = np.random.rand(N, M)
