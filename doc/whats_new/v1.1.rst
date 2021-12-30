@@ -148,6 +148,12 @@ Changelog
   get accurate results when the number of features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
+- |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
+  and :func:`decomposition.sparse_encode` preserve dtype for `numpy.float32`.
+  :class:`decomposition.DictionaryLearning`, :class:`decompsition.MiniBatchDictionaryLearning`
+  and :class:`decomposition.SparseCoder` preserve dtype for `numpy.float32`.
+  :pr:`22002` by :user:`Takeshi Oura <takoika>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
   :class:`~sklearn.decomposition.DictionaryLearning`,
@@ -264,6 +270,9 @@ Changelog
   This is particularly relevant when `n_features > n_samples` and the
   estimator of the noise variance cannot be computed.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :func:`orthogonal_mp_gram` preservse dtype for `numpy.float32`.
+  :pr:`22002` by :user:`Takeshi Oura <takoika>`
 
 - |Enhancement| :class:`linear_model.QuantileRegressor` support sparse input
   for the highs based solvers.
