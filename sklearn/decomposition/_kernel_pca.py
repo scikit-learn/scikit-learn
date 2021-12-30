@@ -212,9 +212,9 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     For eigen_solver == 'arpack', refer to `scipy.sparse.linalg.eigsh`.
 
     For eigen_solver == 'randomized', see:
-        Finding structure with randomness: Stochastic algorithms
-        for constructing approximate matrix decompositions Halko, et al., 2009
-        (arXiv:909)
+        :arxiv:`Halko, et al., (2009) "Finding structure with randomness:
+        Stochastic algorithms for constructing approximate matrix decompositions."
+        <0909.4061>`
         A randomized algorithm for the decomposition of matrices
         Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
 
