@@ -501,52 +501,6 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
-def test_max_features():
-    # Check max_features.
-    for name, TreeRegressor in REG_TREES.items():
-        reg = TreeRegressor(max_features="auto")
-        reg.fit(diabetes.data, diabetes.target)
-        assert reg.max_features_ == diabetes.data.shape[1]
-
-    for name, TreeClassifier in CLF_TREES.items():
-        clf = TreeClassifier(max_features="auto")
-        clf.fit(iris.data, iris.target)
-        assert clf.max_features_ == 2
-
-    for name, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(max_features="sqrt")
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == int(np.sqrt(iris.data.shape[1]))
-
-        est = TreeEstimator(max_features="log2")
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == int(np.log2(iris.data.shape[1]))
-
-        est = TreeEstimator(max_features=1)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == 1
-
-        est = TreeEstimator(max_features=3)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == 3
-
-        est = TreeEstimator(max_features=0.01)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == 1
-
-        est = TreeEstimator(max_features=0.5)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == int(0.5 * iris.data.shape[1])
-
-        est = TreeEstimator(max_features=1.0)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == iris.data.shape[1]
-
-        est = TreeEstimator(max_features=None)
-        est.fit(iris.data, iris.target)
-        assert est.max_features_ == iris.data.shape[1]
-
-
 def test_error():
     # Test that it gives proper exception on deficient input.
     for name, TreeEstimator in CLF_TREES.items():
@@ -623,6 +577,19 @@ def test_error():
             TypeError,
             "max_depth must be an instance of <class 'numbers.Integral'>",
         ),
+        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
+        ({"min_samples_leaf": 900}, ValueError, "min_samples_leaf == 900, must be <="),
+        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
+        (
+            {"min_samples_leaf": 0.6},
+            ValueError,
+            "min_samples_leaf == 0.6, must be <= 0.5",
+        ),
+        (
+            {"min_samples_leaf": "foo"},
+            TypeError,
+            "min_samples_leaf must be an instance of <class 'numbers.Real'>",
+        ),
         ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
         (
             {"min_samples_split": 900},
@@ -643,19 +610,6 @@ def test_error():
             {"min_samples_split": "foo"},
             TypeError,
             "min_samples_split must be an instance of <class 'numbers.Real'>",
-        ),
-        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        ({"min_samples_leaf": 900}, ValueError, "min_samples_leaf == 900, must be <="),
-        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
-        (
-            {"min_samples_leaf": 0.6},
-            ValueError,
-            "min_samples_leaf == 0.6, must be <= 0.5",
-        ),
-        (
-            {"min_samples_leaf": "foo"},
-            TypeError,
-            "min_samples_leaf must be an instance of <class 'numbers.Real'>",
         ),
         (
             {"min_weight_fraction_leaf": -1},
@@ -706,6 +660,52 @@ def test_tree_params_validation(name, Tree, params, err_type, err_msg):
     est = Tree(**params)
     with pytest.raises(err_type, match=err_msg):
         est.fit(X, y)
+
+
+def test_max_features():
+    # Check max_features.
+    for name, TreeRegressor in REG_TREES.items():
+        reg = TreeRegressor(max_features="auto")
+        reg.fit(diabetes.data, diabetes.target)
+        assert reg.max_features_ == diabetes.data.shape[1]
+
+    for name, TreeClassifier in CLF_TREES.items():
+        clf = TreeClassifier(max_features="auto")
+        clf.fit(iris.data, iris.target)
+        assert clf.max_features_ == 2
+
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_features="sqrt")
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == int(np.sqrt(iris.data.shape[1]))
+
+        est = TreeEstimator(max_features="log2")
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == int(np.log2(iris.data.shape[1]))
+
+        est = TreeEstimator(max_features=1)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == 1
+
+        est = TreeEstimator(max_features=3)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == 3
+
+        est = TreeEstimator(max_features=0.01)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == 1
+
+        est = TreeEstimator(max_features=0.5)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == int(0.5 * iris.data.shape[1])
+
+        est = TreeEstimator(max_features=1.0)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == iris.data.shape[1]
+
+        est = TreeEstimator(max_features=None)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == iris.data.shape[1]
 
 
 def test_min_samples_split():
