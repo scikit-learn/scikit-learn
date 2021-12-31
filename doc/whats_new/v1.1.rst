@@ -196,6 +196,13 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+- |Efficiency|  Fitting a :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
+  is now faster in a multiprocessing setting, especially for subsequent fits with
+  `warm_start` enabled.
+  :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
