@@ -118,6 +118,7 @@ Changelog
   return a transposed matrix `X` corresponding to a `(n_features, n_samples)`
   shape. The default value will change to `False` in version 1.3. :pr:`21425` by
   :user:`Gabriel Stefanini Vicente <g4brielvs>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
