@@ -13,7 +13,7 @@ from ._text_verbose import TextVerbose
 
 __all__ = [
     "AutoPropagatedMixin",
-    "Basecallback",
+    "BaseCallback",
     "ComputationNode",
     "ComputationTree",
     "load_computation_tree",

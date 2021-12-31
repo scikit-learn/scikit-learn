@@ -617,7 +617,7 @@ class BaseEstimator:
             callbacks = [callbacks]
 
         if not all(isinstance(callback, BaseCallback) for callback in callbacks):
-            raise TypeError(f"callbacks must be subclasses of BaseCallback.")
+            raise TypeError("callbacks must be subclasses of BaseCallback.")
 
         self._callbacks = callbacks
 
@@ -734,7 +734,7 @@ class BaseEstimator:
                 callback.on_fit_end()
 
     def _from_reconstruction_attributes(self, *, reconstruction_attributes):
-        """
+        """Return a as if fitted copy of this estimator
 
         Parameters
         ----------
