@@ -16,12 +16,12 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
         # https://github.com/scipy/scipy/issues/14688
         # We use the same deployment target to match SciPy.
         export MACOSX_DEPLOYMENT_TARGET=12.0
-        wget https://packages.macports.org/libomp/libomp-11.0.1_0.darwin_20.arm64.tbz2 -O libomp.tbz2
+        wget https://packages.macports.org/libomp/libomp-13.0.0_0.darwin_20.arm64.tbz2 -O libomp.tbz2
     else
         # Currently, the oldest supported macos version is: High Sierra / 10.13.
         # Note that Darwin_17 == High Sierra / 10.13.
         export MACOSX_DEPLOYMENT_TARGET=10.13
-        wget https://packages.macports.org/libomp/libomp-11.0.1_0+universal.darwin_17.i386-x86_64.tbz2 -O libomp.tbz2
+        wget https://packages.macports.org/libomp/libomp-13.0.0_0+universal.darwin_17.i386-x86_64.tbz2 -O libomp.tbz2
     fi
     sudo tar -C / -xvjf libomp.tbz2 opt
 
