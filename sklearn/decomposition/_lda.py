@@ -16,7 +16,7 @@ import scipy.sparse as sp
 from scipy.special import gammaln, logsumexp
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
@@ -138,7 +138,9 @@ def _update_doc_distribution(
     return (doc_topic_distr, suff_stats)
 
 
-class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
+class LatentDirichletAllocation(
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Latent Dirichlet Allocation with online variational Bayes algorithm.
 
     The implementation is based on [1]_ and [2]_.
@@ -887,3 +889,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
             X, reset_n_features=True, whom="LatentDirichletAllocation.perplexity"
         )
         return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
