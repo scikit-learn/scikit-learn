@@ -1247,8 +1247,8 @@ def make_sparse_coded_signal(
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = XD, such as  X is (n_samples, n_components),
-    D is (n_components, n_features) and each row of X has exactly
+    Returns a matrix Y = DX, such that D is (n_features, n_components),
+    X is (n_components, n_samples) and each column of X has exactly
     n_nonzero_coefs non-zero elements.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1273,51 +1273,55 @@ def make_sparse_coded_signal(
         See :term:`Glossary <random_state>`.
 
     data_transposed: bool, default=True
-        By default, matrix X is transposed.
+        By default, Y, D and X are transposed.
 
         .. versionadded:: 1.1
 
     Returns
     -------
-    data : ndarray of shape (n_samples, n_features)
-        The encoded signal (Y).
+    data : ndarray of shape (n_features, n_samples)
+        The encoded signal (Y). The shape is (n_samples, n_features) if
+        `data_transposed` is False.
 
-    dictionary : ndarray of shape (n_components, n_features)
-        The dictionary with normalized components (D).
+    dictionary : ndarray of shape (n_features, n_components)
+        The dictionary with normalized components (D). The shape is
+        (n_components, n_features) if `data_transposed` is False.
 
-    code : ndarray of shape (n_samples, n_components)
+    code : ndarray of shape (n_components, n_samples)
         The sparse code such that each row of this matrix has exactly
-        n_nonzero_coefs non-zero items (X).
+        n_nonzero_coefs non-zero items (X). The shape is (n_samples, n_components) if
+        `data_transposed` is False.
 
     """
     generator = check_random_state(random_state)
 
     # generate dictionary
-    D = generator.randn(n_components, n_features)
+    D = generator.randn(n_features, n_components)
     D /= np.sqrt(np.sum((D ** 2), axis=0))
 
     # generate code
-    X = np.zeros((n_samples, n_components))
+    X = np.zeros((n_components, n_samples))
     for i in range(n_samples):
         idx = np.arange(n_components)
         generator.shuffle(idx)
         idx = idx[:n_nonzero_coefs]
-        X[i, idx] = generator.randn(n_nonzero_coefs)
+        X[idx, i] = generator.randn(n_nonzero_coefs)
 
     # encode signal
-    Y = np.dot(X, D)
+    Y = np.dot(D, X)
 
     # raise warning if data_transposed is not passed explicitly
     if data_transposed == "deprecated":
         data_transposed = True
         warnings.warn(
-            "The default value of data_transposed will change from True to False",
+            "The default value of data_transposed will change from True to False in"
+            " version 1.3",
             FutureWarning,
         )
 
     # transpose if needed
-    if data_transposed:
-        (Y, D, X) = map(np.transpose, (Y, D, X))
+    if not data_transposed:
+        Y, D, X = Y.T, D.T, X.T
 
     return map(np.squeeze, (Y, D, X))
 
