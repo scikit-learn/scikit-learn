@@ -330,9 +330,10 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        for (step_idx, name, transformer), node in zip(self._iter(
+        for (step_idx, name, transformer), in self._iter(
             with_final=False, filter_passthrough=False
-        ), root.children[:-1]):
+        ):
+            node = root.children[step_idx]
             if transformer is None or transformer == "passthrough":
                 _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
                 with _print_elapsed_time("Pipeline", self._log_message(step_idx)):

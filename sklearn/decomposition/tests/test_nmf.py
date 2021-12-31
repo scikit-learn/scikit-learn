@@ -746,6 +746,6 @@ def test_nmf_callback_reconstruction_attributes(solver, beta_loss):
 
     # The model saved during the last iteration is the same as the original model
     assert nmf.n_iter_ == loaded_nmf.n_iter_
-    assert_allclose(nmf.components_, loaded_nmf.components_) 
+    assert_allclose(nmf.components_, loaded_nmf.components_)
     assert_allclose(nmf.reconstruction_err_, loaded_nmf.reconstruction_err_)
     assert_allclose(nmf.transform(X), loaded_nmf.transform(X))

@@ -803,7 +803,13 @@ def _logistic_regression_path(
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         # Distinguish between LogReg and LogRegCV
-        node = None if parent_node is None else parent_node if len(Cs) == 1 else parent_node.children
+        node = (
+            None
+            if parent_node is None
+            else parent_node
+            if len(Cs) == 1
+            else parent_node.children
+        )
 
         if solver == "lbfgs":
             iprint = [-1, 50, 1, 100, 101][

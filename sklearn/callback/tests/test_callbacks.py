@@ -34,8 +34,8 @@ class Estimator(BaseEstimator):
                 node=root.children[i],
                 from_reconstruction_attributes=partial(
                     self._from_reconstruction_attributes,
-                    reconstruction_attributes=lambda : {"n_iter_": i + 1},
-                )
+                    reconstruction_attributes=lambda: {"n_iter_": i + 1},
+                ),
             ):
                 break
 
