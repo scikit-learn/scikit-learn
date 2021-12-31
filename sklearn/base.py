@@ -733,6 +733,20 @@ class BaseEstimator:
                 # propagated from a meta-estimator.
                 callback.on_fit_end()
 
+    def _from_reconstruction_attributes(self, *, reconstruction_attributes):
+        """
+
+        Parameters
+        ----------
+        reconstruction_attributes : callable
+            The necessary fitted attributes to create a working fitted estimator from
+            this instance.
+        """
+        new_estimator = copy.copy(self)
+        for key, val in reconstruction_attributes().items():
+            setattr(new_estimator, key, val)
+        return new_estimator
+
     @property
     def _repr_html_(self):
         """HTML representation of estimator.

@@ -1,6 +1,5 @@
 # License: BSD 3 clause
 
-from copy import copy
 from datetime import datetime
 from pathlib import Path
 import pickle
@@ -24,7 +23,7 @@ class Snapshot(BaseCallback):
         the current directory.
     """
 
-    request_reconstruction_attributes = True
+    request_from_reconstruction_attributes = True
 
     def __init__(self, keep_last_n=1, base_dir=None):
         self.keep_last_n = keep_last_n
@@ -41,13 +40,9 @@ class Snapshot(BaseCallback):
         subdir.mkdir()
 
     def on_fit_iter_end(self, *, estimator, node, **kwargs):
-        reconstruction_attributes = kwargs.get("reconstruction_attributes", None)
-        if reconstruction_attributes is None:
+        new_estimator = kwargs.get("from_reconstruction_attributes", None)
+        if new_estimator is None:
             return
-
-        new_estimator = copy(estimator)
-        for key, val in reconstruction_attributes.items():
-            setattr(new_estimator, key, val)
 
         subdir = self._get_subdir(node.computation_tree)
         snapshot_filename = f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')}.pkl"

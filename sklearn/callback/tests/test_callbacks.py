@@ -1,5 +1,6 @@
 # License: BSD 3 clause
 
+from functools import partial
 import pickle
 import pytest
 import tempfile
@@ -31,7 +32,10 @@ class Estimator(BaseEstimator):
             if _eval_callbacks_on_fit_iter_end(
                 estimator=self,
                 node=root.children[i],
-                reconstruction_attributes=lambda: {"n_iter_": i + 1},
+                from_reconstruction_attributes=partial(
+                    self._from_reconstruction_attributes,
+                    reconstruction_attributes=lambda : {"n_iter_": i + 1},
+                )
             ):
                 break
 

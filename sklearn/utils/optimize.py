@@ -171,15 +171,14 @@ def _newton_cg(
     """
     x0 = np.asarray(x0).flatten()
     xk = x0
+    k = 0
 
     if line_search:
         old_fval = func(x0, *args)
         old_old_fval = None
 
-    nodes = parent_node.children if parent_node is not None else [None] * maxiter
-
     # Outer loop: our Newton iteration
-    for k, node in enumerate(nodes, 1):
+    while k < maxiter:
         # Compute a search direction pk by applying the CG method to
         #  del2 f(xk) p = - fgrad f(xk) starting from 0.
         fgrad, fhess_p = grad_hess(xk, *args)
@@ -189,7 +188,7 @@ def _newton_cg(
 
         if _eval_callbacks_on_fit_iter_end(
             estimator=estimator,
-            node=node,
+            node=None if parent_node is None else parent_node.children[k],
             stopping_criterion=lambda: max_absgrad,
             tol=tol,
         ):
@@ -218,6 +217,7 @@ def _newton_cg(
                 break
 
         xk = xk + alphak * xsupi  # upcast if necessary
+        k += 1
 
     if warn and k >= maxiter:
         warnings.warn(

@@ -799,15 +799,12 @@ def _logistic_regression_path(
             hess = _logistic_grad_hess
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
-    # Distinguish between LogReg and LogRegCV
-    if parent_node is not None:
-        nodes = [parent_node] if len(Cs) == 1 else parent_node.children
-    else:
-        nodes = [None] * len(Cs)
-
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
-    for i, (C, node) in enumerate(zip(Cs, nodes)):
+    for i, C in enumerate(Cs):
+        # Distinguish between LogReg and LogRegCV
+        node = None if parent_node is None else parent_node if len(Cs) == 1 else parent_node.children
+
         if solver == "lbfgs":
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)

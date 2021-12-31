@@ -38,11 +38,11 @@ def _eval_callbacks_on_fit_iter_end(**kwargs):
         kwargs["stopping_criterion"] = kwarg
 
     if any(
-        getattr(callback, "request_reconstruction_attributes", False)
+        getattr(callback, "request_from_reconstruction_attributes", False)
         for callback in estimator._callbacks
     ):
-        kwarg = kwargs.pop("reconstruction_attributes", lambda: None)()
-        kwargs["reconstruction_attributes"] = kwarg
+        kwarg = kwargs.pop("from_reconstruction_attributes", lambda: None)()
+        kwargs["from_reconstruction_attributes"] = kwarg
 
     return any(callback.on_fit_iter_end(**kwargs) for callback in estimator._callbacks)
 
@@ -94,11 +94,11 @@ class BaseCallback(ABC):
                 Tolerance for the stopping criterion.
                 This is only provided at the innermost level of iterations.
 
-            - reconstruction_attributes: dict
-                Necessary attributes to construct an estimator (by copying this
-                estimator and setting these as attributes) which will behave as if
-                the fit stopped at this node.
-                This is only provided at the outermost level of iterations.
+            - from_reconstruction_attributes: estimator instance
+                A ready to predict, transform, etc ... estimator as if the fit stopped
+                at this node. Usually it's a copy of the caller estimator with the
+                necessary attributes set but it can sometimes be an instance of another
+                class (e.g. LogisticRegressionCV -> LogisticRegression)
 
             - fit_state: dict
                 Model specific quantities updated during fit. This is not meant to be

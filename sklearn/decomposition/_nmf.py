@@ -6,6 +6,7 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
+from functools import partial
 import numbers
 import numpy as np
 import scipy.sparse as sp
@@ -528,12 +529,15 @@ def _fit_coordinate_descent(
             stopping_criterion=lambda: violation / violation_init,
             tol=tol,
             fit_state={"H": Ht.T, "W": W},
-            reconstruction_attributes=lambda: {
-                "n_components_": Ht.T.shape[0],
-                "components_": H,
-                "n_iter_": n_iter,
-                "reconstruction_err_": _beta_divergence(X, W, Ht.T, 2, True),
-            },
+            from_reconstruction_attributes=partial(
+                estimator._from_reconstruction_attributes,
+                reconstruction_attributes=lambda : {
+                    "n_components_": Ht.T.shape[0],
+                    "components_": H,
+                    "n_iter_": n_iter,
+                    "reconstruction_err_": _beta_divergence(X, W, Ht.T, 2, True),
+                }
+            ),
         ):
             break
 
@@ -874,12 +878,15 @@ def _fit_multiplicative_update(
             ),
             tol=tol,
             fit_state={"H": H, "W": W},
-            reconstruction_attributes=lambda: {
-                "n_components_": H.shape[0],
-                "components_": H,
-                "n_iter_": n_iter,
-                "reconstruction_err_": _beta_divergence(X, W, H, beta_loss, True),
-            },
+            from_reconstruction_attributes=partial(
+                estimator._from_reconstruction_attributes,
+                reconstruction_attributes=lambda {
+                    "n_components_": H.shape[0],
+                    "components_": H,
+                    "n_iter_": n_iter,
+                    "reconstruction_err_": _beta_divergence(X, W, H, beta_loss, True),
+                }
+            ),
         ):
             break
 
