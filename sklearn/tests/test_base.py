@@ -374,7 +374,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
 
 class TreeBadVersion(DecisionTreeClassifier):
     def __getstate__(self):
-        return dict(self.__dict__.items(), _sklearn_version="something")
+        return dict(self.__dict__.items(), _sklearn_pickle_version="something")
 
 
 pickle_error_message = (
@@ -382,7 +382,10 @@ pickle_error_message = (
     "version {old_version} when using version "
     "{current_version}. This might "
     "lead to breaking code or invalid results. "
-    "Use at your own risk."
+    "Use at your own risk. "
+    "For more info please refer to:\\n"
+    "https://scikit-learn.org/stable/modules/model_persistence"
+    ".html#security-maintainability-limitations"
 )
 
 

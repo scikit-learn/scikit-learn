@@ -319,21 +319,16 @@ class BaseEstimator:
             state = self.__dict__.copy()
 
         if type(self).__module__.startswith("sklearn."):
-            if "_sklearn_pickle_version" in state.keys():
-                pickle_version = state["_sklearn_pickle_version"]
-            else:
-                pickle_version = __version__
             return dict(
                 state.items(),
-                _sklearn_version=__version__,
-                _sklearn_pickle_version=pickle_version,
+                _sklearn_pickle_version=__version__,
             )
         else:
             return state
 
     def __setstate__(self, state):
         if type(self).__module__.startswith("sklearn."):
-            pickle_version = state.pop("_sklearn_version", "pre-0.18")
+            pickle_version = state.get("_sklearn_pickle_version", "pre-0.18")
             if pickle_version != __version__:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
