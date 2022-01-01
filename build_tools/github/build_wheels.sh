@@ -24,14 +24,15 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
     fi
 
-    sudo conda install $OPENMP_URL
+    sudo conda create -n build $OPENMP_URL
+    PREFIX="/usr/local/miniconda/envs/build"
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/miniconda/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/miniconda/include"
-    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/miniconda/lib -L/usr/local/miniconda/lib -lomp"
+    export CFLAGS="$CFLAGS -I$PREFIX/include"
+    export CXXFLAGS="$CXXFLAGS -I$PREFIX/include"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
 fi
 
 # The version of the built dependencies are specified
