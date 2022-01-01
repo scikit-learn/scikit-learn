@@ -218,6 +218,7 @@ def test_spca_n_components_(SPCA, n_components):
     ),
 )
 def test_sparse_pca_dtype_match(SPCA, method, data_type, expected_type):
+    # Verify output matrix dtype
     n_samples, n_features, n_components = 12, 10, 3
     rng = np.random.RandomState(0)
     input_array = rng.randn(n_samples, n_features).astype(data_type)
@@ -230,6 +231,7 @@ def test_sparse_pca_dtype_match(SPCA, method, data_type, expected_type):
 @pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
 @pytest.mark.parametrize("method", ("lars", "cd"))
 def test_sparse_pca_numerical_consistency(SPCA, method):
+    # verify numerically consistent among np.float32 and np.float64
     rtol = 1e-3
     alpha = 2
     n_samples, n_features, n_components = 12, 10, 3
