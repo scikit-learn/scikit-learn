@@ -9,7 +9,8 @@ from ..utils.extmath import squared_norm
 class LinearModelLoss:
     """General class for loss functions with raw_prediction = X @ coef + intercept.
 
-    The loss is the sum of per sample losses and includes an L2 term::
+    The loss is the sum of per sample losses and includes a term for L2
+    regularization::
 
         loss = sum_i s_i loss(y_i, X_i @ coef + intercept)
                + 1/2 * l2_reg_strength * ||coef||_2^2
@@ -119,13 +120,13 @@ class LinearModelLoss:
             If shape (n_classes * n_dof,), the classes of one feature are contiguous,
             i.e. one reconstructs the 2d-array via
             coef.reshape((n_classes, -1), order="F").
-        y : contiguous array of shape (n_samples,)
-            Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-        sample_weight : None or contiguous array of shape (n_samples,)
+        y : contiguous array of shape (n_samples,)
+            Observed, true target values.
+        sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
-        l2_reg_strength: float
+        l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
@@ -160,13 +161,13 @@ class LinearModelLoss:
             If shape (n_classes * n_dof,), the classes of one feature are contiguous,
             i.e. one reconstructs the 2d-array via
             coef.reshape((n_classes, -1), order="F").
-        y : contiguous array of shape (n_samples,)
-            Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-        sample_weight : None or contiguous array of shape (n_samples,)
+        y : contiguous array of shape (n_samples,)
+            Observed, true target values.
+        sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
-        l2_reg_strength: float
+        l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
@@ -221,13 +222,13 @@ class LinearModelLoss:
             If shape (n_classes * n_dof,), the classes of one feature are contiguous,
             i.e. one reconstructs the 2d-array via
             coef.reshape((n_classes, -1), order="F").
-        y : contiguous array of shape (n_samples,)
-            Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-        sample_weight : None or contiguous array of shape (n_samples,)
+        y : contiguous array of shape (n_samples,)
+            Observed, true target values.
+        sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
-        l2_reg_strength: float
+        l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.
@@ -277,13 +278,13 @@ class LinearModelLoss:
             If shape (n_classes * n_dof,), the classes of one feature are contiguous,
             i.e. one reconstructs the 2d-array via
             coef.reshape((n_classes, -1), order="F").
-        y : contiguous array of shape (n_samples,)
-            Observed, true target values.
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
-        sample_weight : None or contiguous array of shape (n_samples,)
+        y : contiguous array of shape (n_samples,)
+            Observed, true target values.
+        sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
-        l2_reg_strength: float
+        l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1
             Number of OpenMP threads to use.

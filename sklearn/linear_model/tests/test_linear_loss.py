@@ -1,7 +1,8 @@
 """
 Tests for LinearModelLoss
 
-Note that correctness of losses is already well covered in the _loss module.
+Note that correctness of losses (which compose LinearModelLoss) is already well
+covered in the _loss module.
 """
 import pytest
 import numpy as np
@@ -18,7 +19,7 @@ from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils.extmath import squared_norm
 
 
-# We don not need to test all losses, just what LinearModelLoss does on top of the
+# We do not need to test all losses, just what LinearModelLoss does on top of the
 # base losses.
 LOSSES = [HalfBinomialLoss, HalfMultinomialLoss, HalfPoissonLoss]
 
@@ -49,7 +50,7 @@ def random_X_y_coef(
             raw_prediction = X @ coef.T
         proba = linear_model_loss._loss.link.inverse(raw_prediction)
 
-        # y = rng.choice(np.arange(n_classes), p=proba) does not work, see
+        # y = rng.choice(np.arange(n_classes), p=proba) does not work.
         # See https://stackoverflow.com/a/34190035/16761084
         def choice_vectorized(items, p):
             s = p.cumsum(axis=1)
@@ -129,6 +130,7 @@ def test_loss_gradients_are_the_same(
     assert_allclose(g1, g1_sp)
     assert_allclose(g1, g2_sp)
     assert_allclose(g1, g3_sp)
+    assert_allclose(h3(g1), h3_sp(g1_sp))
 
 
 @pytest.mark.parametrize("base_loss", LOSSES)
@@ -214,9 +216,10 @@ def test_gradients_hessians_numerically(
     g, hessp = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
-    # Use a trick to get central finte difference of accuracy 4 (five-point stencil)
+    # Use a trick to get central finite difference of accuracy 4 (five-point stencil)
     # https://en.wikipedia.org/wiki/Numerical_differentiation
     # https://en.wikipedia.org/wiki/Finite_difference_coefficient
+    # approx_g1 = (f(x + eps) - f(x - eps)) / (2*eps)
     approx_g1 = optimize.approx_fprime(
         coef,
         lambda coef: loss.loss(
@@ -227,7 +230,8 @@ def test_gradients_hessians_numerically(
             l2_reg_strength=l2_reg_strength,
         ),
         2 * eps,
-    )  # (f(x + eps) - f(x - eps)) / (2*eps)
+    )
+    # approx_g2 = (f(x + 2*eps) - f(x - 2*eps)) / (4*eps)
     approx_g2 = optimize.approx_fprime(
         coef,
         lambda coef: loss.loss(
@@ -238,8 +242,10 @@ def test_gradients_hessians_numerically(
             l2_reg_strength=l2_reg_strength,
         ),
         4 * eps,
-    )  # (f(x + 2*eps) - f(x - 2*eps)) / (4*eps)
-    approx_g = 4 / 3 * approx_g1 - 1 / 3 * approx_g2
+    )
+    # Five-point stencil approximation
+    # See: https://en.wikipedia.org/wiki/Five-point_stencil#1D_first_derivative
+    approx_g = (4 * approx_g1 - approx_g2) / 3
     assert_allclose(g, approx_g, rtol=1e-2, atol=1e-8)
 
     # 2. Check hessp numerically along the second direction of the gradient

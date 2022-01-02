@@ -426,6 +426,7 @@ def _logistic_regression_path(
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
+            l2_reg_strength = 1.0 / C
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
@@ -434,7 +435,7 @@ def _logistic_regression_path(
                 w0,
                 method="L-BFGS-B",
                 jac=True,
-                args=(X, target, sample_weight, 1.0 / C, n_threads),
+                args=(X, target, sample_weight, l2_reg_strength, n_threads),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
             )
             n_iter_i = _check_optimize_result(
@@ -445,7 +446,8 @@ def _logistic_regression_path(
             )
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
-            args = (X, target, sample_weight, 1.0 / C, n_threads)
+            l2_reg_strength = 1.0 / C
+            args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )
