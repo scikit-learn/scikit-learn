@@ -117,6 +117,7 @@ def _update_doc_distribution(
         # The next one is a copy, since the inner loop overwrites it.
         exp_doc_topic_d = exp_doc_topic[idx_d, :].copy()
         exp_topic_word_d = exp_topic_word_distr[:, ids]
+
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
         for _ in range(0, max_doc_update_iter):
             last_d = doc_topic_d
@@ -124,6 +125,7 @@ def _update_doc_distribution(
             # The optimal phi_{dwk} is proportional to
             # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
             norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
+
             doc_topic_d = exp_doc_topic_d * np.dot(cnts / norm_phi, exp_topic_word_d.T)
             # Note: adds doc_topic_prior to doc_topic_d, in-place.
             _dirichlet_expectation_1d(doc_topic_d, doc_topic_prior, exp_doc_topic_d)
