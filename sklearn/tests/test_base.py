@@ -696,23 +696,25 @@ def test_feature_names_in():
         trans.transform(df_mixed)
 
 
-def test_base_estimator_pickle_version():
+def test_base_estimator_pickle_version(monkeypatch):
     """Check that the original sklearn version with which a base estimator
     has been pickled with is present"""
-    old_ver = sklearn.__version__
-    pickle_ver = old_ver + ".test1"
+    old_pickle_version = "0.21.3"
+    monkeypatch.setattr(sklearn.base, "__version__", old_pickle_version)
     original_estimator = MyEstimator()
 
     first_pickle_estimator = pickle.loads(pickle.dumps(original_estimator))
     assert hasattr(first_pickle_estimator, "_sklearn_pickle_version")
-    assert first_pickle_estimator._sklearn_pickle_version == old_ver
+    assert first_pickle_estimator._sklearn_pickle_version == old_pickle_version
 
-    # Change Sklearn version to simulate repickling with a newer version.
-    # Kinda hacky so if anyone knows another way to test that feel free to change this
-    sklearn.__version__ = pickle_ver
-    second_pickle_estimator = pickle.loads(pickle.dumps(first_pickle_estimator))
-    assert hasattr(second_pickle_estimator, "_sklearn_pickle_version")
-    assert second_pickle_estimator._sklearn_pickle_version == old_ver
-
-    # Manually reset modified Sklearn version to the original one.
-    sklearn.__version__ = old_ver
+    new_pickle_version = "1.1.0"
+    monkeypatch.setattr(sklearn.base, "__version__", new_pickle_version)
+    message = pickle_error_message.format(
+        estimator="MyEstimator",
+        old_version=old_pickle_version,
+        current_version=new_pickle_version,
+    )
+    with pytest.warns(UserWarning, match=message):
+        second_pickle_estimator = pickle.loads(pickle.dumps(first_pickle_estimator))
+        assert hasattr(second_pickle_estimator, "_sklearn_pickle_version")
+        assert second_pickle_estimator._sklearn_pickle_version == old_pickle_version
