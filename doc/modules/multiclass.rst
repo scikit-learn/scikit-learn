@@ -481,7 +481,7 @@ Below is an example of multiclass-multioutput classification:
     >>> n_outputs = Y.shape[1] # 3
     >>> n_classes = 3
     >>> forest = RandomForestClassifier(random_state=1)
-    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=-1)
+    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=2)
     >>> multi_target_forest.fit(X, Y).predict(X)
     array([[2, 2, 0],
            [1, 2, 1],
