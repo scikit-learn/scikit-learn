@@ -265,8 +265,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             raise NotFittedError("Since 'prefit=True', call transform directly")
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
+
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
+        else:
+            self._check_feature_names(X, reset=True)
+
         return self
 
     @property

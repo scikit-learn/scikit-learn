@@ -169,6 +169,12 @@ def _fix_connected_components(
     graph : sparse matrix of shape (n_samples, n_samples)
         Graph of connection between samples, with a single connected component.
     """
+    if metric == "precomputed" and sparse.issparse(X):
+        raise RuntimeError(
+            "_fix_connected_components with metric='precomputed' requires the "
+            "full distance matrix in X, and does not work with a sparse "
+            "neighbors graph."
+        )
 
     for i in range(n_connected_components):
         idx_i = np.flatnonzero(component_labels == i)
