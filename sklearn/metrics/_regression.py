@@ -1108,5 +1108,35 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     return 1 - numerator / denominator
 
 
-def d2_absolute_error_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"):
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+def d2_absolute_error_score(
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+):
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput
+    )
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    numerator = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
+
+    y_avg = np.average(y_true, weights=sample_weight)
+    denominator = np.average(np.abs(y_avg - y_true), weights=sample_weight, axis=0)
+    
+    nonzero_numerator = numerator != 0
+    nonzero_denominator = denominator != 0
+    valid_score = nonzero_numerator & nonzero_denominator
+    output_scores = np.ones(y_true.shape[1])
+
+    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
+    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            # return scores individually
+            return output_scores
+        elif multioutput == "uniform_average":
+            # passing None as weights to np.average results in uniform mean
+            avg_weights = None
+    else:
+        avg_weights = multioutput
+    
+    return np.average(output_scores, weights=avg_weights)
