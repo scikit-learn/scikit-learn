@@ -166,6 +166,28 @@ def test_lasso_zero():
     assert_array_almost_equal(pred, [0, 0, 0])
     assert_almost_equal(clf.dual_gap_, 0)
 
+def test_enet_nonfinite_params():
+    # Check elasticnet throws ValueError when dealing with non-finite parameter
+    # values
+    X = np.array(
+        [
+            (1.30830774e307, 6.02217328e307),
+            (1.54166067e308, 1.75812744e308),
+            (5.57938866e307, 4.13840113e307),
+            (1.36302835e308, 1.07968131e308),
+            (1.58772669e308, 1.19380571e307),
+            (2.20362426e307, 1.58814671e308),
+            (1.06216028e308, 1.14258583e308),
+            (7.18031911e307, 1.69661213e308),
+            (7.91182553e307, 5.12892426e307),
+            (5.58470885e307, 9.13566765e306),
+        ]
+    )
+    y = np.array([0, 0, 1, 0, 0, 0, 1, 0, 1, 0])
+    clf = ElasticNet(alpha=0.1)
+    msg = "Coordinate descent iterations resulted in 1 non-finite parameter values"
+    with pytest.raises(ValueError, match=msg): #, match=msg):
+        clf.fit(X, y)
 
 def test_lasso_toy():
     # Test Lasso on a toy example for various values of alpha.
