@@ -353,6 +353,7 @@ def test_regression_custom_weights():
     mapew = mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
     evsw = explained_variance_score(y_true, y_pred, multioutput=[0.4, 0.6])
+    d2aesw = d2_absolute_error_score(y_true, y_pred, multioutput=[0.4, 0.6])
 
     assert_almost_equal(msew, 0.39, decimal=2)
     assert_almost_equal(rmsew, 0.59, decimal=2)
@@ -360,6 +361,7 @@ def test_regression_custom_weights():
     assert_almost_equal(mapew, 0.1668, decimal=2)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
+    assert_almost_equal(d2aesw, 0.766, decimal=2)
 
     # Handling msle separately as it does not accept negative inputs.
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
@@ -371,7 +373,9 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score])
+@pytest.mark.parametrize(
+    "metric", [r2_score, d2_tweedie_score, d2_absolute_error_score]
+)
 def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]
