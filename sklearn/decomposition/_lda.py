@@ -85,15 +85,19 @@ def _update_doc_distribution(
     n_topics = exp_topic_word_distr.shape[0]
 
     if random_state:
-        doc_topic_distr = random_state.gamma(100.0, 0.01, (n_samples, n_topics))
+        doc_topic_distr = random_state.gamma(100.0, 0.01, (n_samples, n_topics)).astype(
+            X.dtype
+        )
     else:
-        doc_topic_distr = np.ones((n_samples, n_topics))
+        doc_topic_distr = np.ones((n_samples, n_topics), dtype=X.dtype)
 
     # In the literature, this is `exp(E[log(theta)])`
     exp_doc_topic = np.exp(_dirichlet_expectation_2d(doc_topic_distr))
 
     # diff on `component_` (only calculate it when `cal_diff` is True)
-    suff_stats = np.zeros(exp_topic_word_distr.shape) if cal_sstats else None
+    suff_stats = (
+        np.zeros(exp_topic_word_distr.shape, dtype=X.dtype) if cal_sstats else None
+    )
 
     if is_sparse_x:
         X_data = X.data
@@ -109,10 +113,10 @@ def _update_doc_distribution(
             cnts = X[idx_d, ids]
 
         doc_topic_d = doc_topic_distr[idx_d, :]
+
         # The next one is a copy, since the inner loop overwrites it.
         exp_doc_topic_d = exp_doc_topic[idx_d, :].copy()
         exp_topic_word_d = exp_topic_word_distr[:, ids]
-
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
         for _ in range(0, max_doc_update_iter):
             last_d = doc_topic_d
@@ -120,7 +124,6 @@ def _update_doc_distribution(
             # The optimal phi_{dwk} is proportional to
             # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
             norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
-
             doc_topic_d = exp_doc_topic_d * np.dot(cnts / norm_phi, exp_topic_word_d.T)
             # Note: adds doc_topic_prior to doc_topic_d, in-place.
             _dirichlet_expectation_1d(doc_topic_d, doc_topic_prior, exp_doc_topic_d)
@@ -377,7 +380,7 @@ class LatentDirichletAllocation(
                 "Invalid 'learning_method' parameter: %r" % self.learning_method
             )
 
-    def _init_latent_vars(self, n_features):
+    def _init_latent_vars(self, n_features, dtype=np.float64):
         """Initialize latent variables."""
 
         self.random_state_ = check_random_state(self.random_state)
@@ -399,7 +402,7 @@ class LatentDirichletAllocation(
         # In the literature, this is called `lambda`
         self.components_ = self.random_state_.gamma(
             init_gamma, init_var, (self.n_components, n_features)
-        )
+        ).astype(dtype)
 
         # In the literature, this is `exp(E[log(beta)])`
         self.exp_dirichlet_component_ = np.exp(
@@ -463,7 +466,7 @@ class LatentDirichletAllocation(
         if cal_sstats:
             # This step finishes computing the sufficient statistics for the
             # M-step.
-            suff_stats = np.zeros(self.components_.shape)
+            suff_stats = np.zeros(self.components_.shape, self.components_.dtype)
             for sstats in sstats_list:
                 suff_stats += sstats
             suff_stats *= self.exp_dirichlet_component_
@@ -527,7 +530,10 @@ class LatentDirichletAllocation(
         return
 
     def _more_tags(self):
-        return {"requires_positive_X": True}
+        return {
+            "requires_positive_X": True,
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
     def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format
@@ -539,7 +545,12 @@ class LatentDirichletAllocation(
         X :  array-like or sparse matrix
 
         """
-        X = self._validate_data(X, reset=reset_n_features, accept_sparse="csr")
+        X = self._validate_data(
+            X,
+            reset=reset_n_features,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+        )
         check_non_negative(X, whom)
         return X
 
@@ -569,7 +580,7 @@ class LatentDirichletAllocation(
 
         # initialize parameters or check
         if first_time:
-            self._init_latent_vars(n_features)
+            self._init_latent_vars(n_features, dtype=X.dtype)
 
         if n_features != self.components_.shape[1]:
             raise ValueError(
@@ -621,7 +632,7 @@ class LatentDirichletAllocation(
         batch_size = self.batch_size
 
         # initialize parameters
-        self._init_latent_vars(n_features)
+        self._init_latent_vars(n_features, dtype=X.dtype)
         # change to perplexity later
         last_bound = None
         n_jobs = effective_n_jobs(self.n_jobs)

@@ -439,3 +439,40 @@ def test_lda_feature_names_out():
     assert_array_equal(
         [f"latentdirichletallocation{i}" for i in range(n_components)], names
     )
+
+
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_lda_dtype_match(data_type, expected_type):
+    # Verify output matrix dtype
+    from sklearn.datasets import make_multilabel_classification
+
+    X, _ = make_multilabel_classification(random_state=0)
+    lda = LatentDirichletAllocation(n_components=5, random_state=0)
+    lda.fit(X.astype(data_type))
+    transformed = lda.transform(X[-2:].astype(data_type))
+    assert transformed.dtype == expected_type
+
+
+def test_lda_numerical_consistency():
+    # verify numerical consistency among np.float32 and np.float64
+    rtol = 1e-6
+    from sklearn.datasets import make_multilabel_classification
+
+    X, _ = make_multilabel_classification(random_state=0)
+    lda_32 = LatentDirichletAllocation(n_components=5, random_state=0)
+    lda_64 = LatentDirichletAllocation(n_components=5, random_state=0)
+    lda_32.fit(X.astype(np.float32))
+    lda_64.fit(X.astype(np.float64))
+
+    transformed_32 = lda_32.transform(X[-2:].astype(np.float32))
+    transformed_64 = lda_32.transform(X[-2:].astype(np.float64))
+
+    assert_allclose(transformed_32, transformed_64, rtol=rtol)
