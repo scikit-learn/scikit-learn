@@ -999,6 +999,7 @@ class SGDClassifier(BaseSGDClassifier):
         important to get the prediction exactly right.
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
+        Values should be in the range `[0.0, inf)`.
 
     n_jobs : int, default=None
         The number of CPUs to use to do the OVA (One Versus All, for
@@ -1006,11 +1007,13 @@ class SGDClassifier(BaseSGDClassifier):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+        Values should be in the range `[-1, inf)`.
 
     random_state : int, RandomState instance, default=None
         Used for shuffling the data, when ``shuffle`` is set to ``True``.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+        Values should be in the range `[0, inf)`.
 
     learning_rate : str, default='optimal'
         The learning rate schedule:
@@ -1031,6 +1034,7 @@ class SGDClassifier(BaseSGDClassifier):
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
+        Values should be in the range `(0.0, inf)`.
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate [default 0.5].
