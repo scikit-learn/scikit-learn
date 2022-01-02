@@ -70,6 +70,9 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         'variance_weighted'] or None
         None is accepted due to backward compatibility of r2_score().
 
+    dtype : str or list, default="numeric"
+        the dtype argument passed to check_array.
+
     Returns
     -------
     type_true : one of {'continuous', continuous-multioutput'}
@@ -87,9 +90,6 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
-
-    dtype : str or list, default="numeric"
-        the dtype argument passed to check_array.
     """
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -1106,3 +1106,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     denominator = np.average(dev, weights=sample_weight)
 
     return 1 - numerator / denominator
+
+
+def d2_absolute_error_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"):
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
