@@ -1116,6 +1116,11 @@ def d2_absolute_error_score(
     )
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    if _num_samples(y_pred) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
     numerator = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
 
     y_avg = np.average(y_true, weights=sample_weight, axis=0)
