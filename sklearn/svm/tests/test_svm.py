@@ -730,6 +730,7 @@ def test_bad_input():
     with pytest.raises(ValueError):
         clf.predict(Xt)
 
+
 def test_svc_nonfinite_params():
     # Check SVC throws ValueError when dealing with non-finite parameter values
     X = np.array(
@@ -751,7 +752,6 @@ def test_svc_nonfinite_params():
     msg = "Iterative parameter estimation led to non-finite values"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
-
 
 
 @pytest.mark.parametrize(

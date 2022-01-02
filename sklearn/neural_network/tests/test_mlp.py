@@ -530,7 +530,6 @@ def test_nonfinite_params():
         clf.fit(X, y)
 
 
-
 @pytest.mark.parametrize(
     "args",
     [
