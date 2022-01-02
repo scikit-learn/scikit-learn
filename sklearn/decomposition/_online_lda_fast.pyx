@@ -11,6 +11,10 @@ ctypedef fused numpy_float_t:
     np.float32_t
     np.float64_t
 
+ctypedef fused float_t:
+    float
+    double
+
 def mean_change(np.ndarray[ndim=1, dtype=numpy_float_t] arr_1,
                 np.ndarray[ndim=1, dtype=numpy_float_t] arr_2):
     """Calculate the mean difference between two arrays.
@@ -18,7 +22,7 @@ def mean_change(np.ndarray[ndim=1, dtype=numpy_float_t] arr_1,
     Equivalent to np.abs(arr_1 - arr2).mean().
     """
 
-    cdef numpy_float_t total, diff
+    cdef double total, diff
     cdef np.npy_intp i, size
 
     size = arr_1.shape[0]
@@ -91,12 +95,12 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=numpy_float_t] arr):
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
 # https://www.uv.es/~bernardo/1976AppStatist.pdf
-cdef numpy_float_t psi(numpy_float_t x) nogil:
+cdef float_t psi(float_t x) nogil:
     if x <= 1e-6:
         # psi(x) = -EULER - 1/x + O(x)
         return -EULER - 1. / x
 
-    cdef numpy_float_t r, result = 0
+    cdef float_t r, result = 0
 
     # psi(x + 1) = psi(x) + 1/x
     while x < 6:
