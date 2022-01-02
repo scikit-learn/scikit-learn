@@ -533,8 +533,8 @@ class LatentDirichletAllocation(
 
     def _more_tags(self):
         return {
-            "requires_positive_X": True,
             "preserves_dtype": [np.float64, np.float32],
+            "requires_positive_X": True,
         }
 
     def _check_non_neg_array(self, X, reset_n_features, whom):
