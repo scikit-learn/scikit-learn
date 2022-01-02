@@ -955,11 +955,13 @@ class SGDClassifier(BaseSGDClassifier):
         value, the stronger the regularization.
         Also used to compute the learning rate when set to `learning_rate` is
         set to 'optimal'.
+        Values should be in the range `[0.0, inf)`.
 
     l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
+        Values should be in the range `[0.0, 1.0]`.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -969,6 +971,7 @@ class SGDClassifier(BaseSGDClassifier):
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`partial_fit` method.
+        Values should be in the range `[1, inf)`.
 
         .. versionadded:: 0.19
 
@@ -978,6 +981,7 @@ class SGDClassifier(BaseSGDClassifier):
         epochs.
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
+        Values should be in the range `(0.0, inf)`.
 
         .. versionadded:: 0.19
 
@@ -986,6 +990,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     verbose : int, default=0
         The verbosity level.
+        Values should be in the range `[0, inf)`.
 
     epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
