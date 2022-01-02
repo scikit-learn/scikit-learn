@@ -266,10 +266,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_params(self):
         """Check validity of parameters and raise ValueError if not valid."""
-        # if self.n_estimators <= 0:
-        #     raise ValueError(
-        #         "n_estimators must be greater than 0 but was %r" % self.n_estimators
-        #     )
+
         check_scalar(
             self.n_estimators,
             "n_estimators",
@@ -278,10 +275,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             include_boundaries="left",
         )
 
-        # if self.learning_rate <= 0.0:
-        #     raise ValueError(
-        #         "learning_rate must be greater than 0 but was %r" % self.learning_rate
-        #     )
         check_scalar(
             self.learning_rate,
             "learning_rate",
@@ -328,8 +321,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             self.loss_ = loss_class()
 
-        # if not (0.0 < self.subsample <= 1.0):
-        #     raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
         check_scalar(
             self.subsample,
             "subsample",
@@ -379,11 +370,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 include_boundaries="right",
             )
             max_features = self.max_features
-        # else:  # float
-        # if 0.0 < self.max_features <= 1.0:
-        #     max_features = max(int(self.max_features * self.n_features_in_), 1)
-        # else:
-        #     raise ValueError("max_features must be in (0, n_features]")
         else:  # float
             check_scalar(
                 self.max_features,
@@ -397,11 +383,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         self.max_features_ = max_features
 
-        # if not isinstance(self.n_iter_no_change, (numbers.Integral, type(None))):
-        #     raise ValueError(
-        #         "n_iter_no_change should either be None or an integer. %r was passed"
-        #         % self.n_iter_no_change
-        #     )
         if self.n_iter_no_change is not None:
             check_scalar(
                 self.n_iter_no_change,
