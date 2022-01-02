@@ -156,7 +156,7 @@ Changelog
 
 - |Enhancement| :class:`decomposition.LatentDirichletAllocation`
   preserves dtype for `numpy.float32`.
-  :pr:`` by :user:`Takeshi Oura <takoika>`.
+  :pr:`22113` by :user:`Takeshi Oura <takoika>`.
 
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
