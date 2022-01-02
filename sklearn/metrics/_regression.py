@@ -1118,7 +1118,7 @@ def d2_absolute_error_score(
 
     numerator = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
 
-    y_avg = np.average(y_true, weights=sample_weight)
+    y_avg = np.average(y_true, weights=sample_weight, axis=0)
     denominator = np.average(np.abs(y_avg - y_true), weights=sample_weight, axis=0)
 
     nonzero_numerator = numerator != 0
