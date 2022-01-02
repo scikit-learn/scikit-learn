@@ -441,6 +441,7 @@ def test_lda_feature_names_out():
     )
 
 
+@pytest.mark.parametrize("learning_method", ("batch", "online"))
 @pytest.mark.parametrize(
     "data_type, expected_type",
     (
@@ -450,25 +451,32 @@ def test_lda_feature_names_out():
         (np.int64, np.float64),
     ),
 )
-def test_lda_dtype_match(data_type, expected_type):
+def test_lda_dtype_match(learning_method, data_type, expected_type):
     # Verify output matrix dtype
     from sklearn.datasets import make_multilabel_classification
 
     X, _ = make_multilabel_classification(random_state=0)
-    lda = LatentDirichletAllocation(n_components=5, random_state=0)
+    lda = LatentDirichletAllocation(
+        n_components=5, random_state=0, learning_method=learning_method
+    )
     lda.fit(X.astype(data_type))
     transformed = lda.transform(X[-2:].astype(data_type))
     assert transformed.dtype == expected_type
 
 
-def test_lda_numerical_consistency():
+@pytest.mark.parametrize("learning_method", ("batch", "online"))
+def test_lda_numerical_consistency(learning_method):
     # verify numerical consistency among np.float32 and np.float64
-    rtol = 1e-6
+    rtol = 1e-5
     from sklearn.datasets import make_multilabel_classification
 
     X, _ = make_multilabel_classification(random_state=0)
-    lda_32 = LatentDirichletAllocation(n_components=5, random_state=0)
-    lda_64 = LatentDirichletAllocation(n_components=5, random_state=0)
+    lda_32 = LatentDirichletAllocation(
+        n_components=5, random_state=0, learning_method=learning_method
+    )
+    lda_64 = LatentDirichletAllocation(
+        n_components=5, random_state=0, learning_method=learning_method
+    )
     lda_32.fit(X.astype(np.float32))
     lda_64.fit(X.astype(np.float64))
 
