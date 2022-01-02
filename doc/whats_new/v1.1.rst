@@ -70,6 +70,10 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`SparseRandomProjection` and :func:`GaussianRandomProjection`
+  preserves dtype for `numpy.float32`.
+  :pr:`22114` by :user:`Takeshi Oura <takoika>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
