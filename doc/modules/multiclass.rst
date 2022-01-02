@@ -401,9 +401,11 @@ to be able to estimate a series of target functions (f1,f2,f3...,fn)
 that are trained on a single X predictor matrix to predict a series
 of responses (y1,y2,y3...,yn).
 
-You find an example of a multilabel classification as part of the
-multi-class multi-label classification 
-in :ref:`multiclass_multioutput_classification`.
+You can find a usage example for
+:class:`~sklearn.multioutput.MultiOutputClassifier`
+as part of the section on :ref:`multiclass_multioutput_classification`
+since it is a generalization of multilabel classification to
+multiclass outputs instead of binary outputs.
 
 .. _classifierchain:
 
