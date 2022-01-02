@@ -655,6 +655,215 @@ def test_warning_default_transform_alpha(Estimator):
 
 
 @pytest.mark.parametrize(
+    "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+# Note: do not check integer input because `lasso_lars` and `lars` fail with
+# `ValueError` in `_lars_path_solver`
+def test_sparse_encode_dtype_match(data_type, algorithm):
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    code = sparse_encode(
+        X.astype(data_type), dictionary.astype(data_type), algorithm=algorithm
+    )
+    assert code.dtype == data_type
+
+
+@pytest.mark.parametrize(
+    "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+def test_sparse_encode_numerical_consistency(algorithm):
+    # verify numerical consistency among np.float32 and np.float64
+    rtol = 1e-4
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    code_32 = sparse_encode(
+        X.astype(np.float32), dictionary.astype(np.float32), algorithm=algorithm
+    )
+    code_64 = sparse_encode(
+        X.astype(np.float64), dictionary.astype(np.float64), algorithm=algorithm
+    )
+    assert_allclose(code_32, code_64, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+# Note: do not check integer input because `lasso_lars` and `lars` fail with
+# `ValueError` in `_lars_path_solver`
+def test_sparse_coder_dtype_match(data_type, transform_algorithm):
+    # Verify preserving dtype for transform in sparse coder
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    coder = SparseCoder(
+        dictionary.astype(data_type), transform_algorithm=transform_algorithm
+    )
+    code = coder.transform(X.astype(data_type))
+    assert code.dtype == data_type
+
+
+@pytest.mark.parametrize(
+    "dictionary_learning_transformer", (DictionaryLearning, MiniBatchDictionaryLearning)
+)
+@pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_dictionary_learning_dtype_match(
+    data_type,
+    expected_type,
+    dictionary_learning_transformer,
+    fit_algorithm,
+    transform_algorithm,
+):
+    # Verify preserving dtype for fit and transform in dictionary learning class
+    dict_learner = dictionary_learning_transformer(
+        n_components=8,
+        fit_algorithm=fit_algorithm,
+        transform_algorithm=transform_algorithm,
+        random_state=0,
+    )
+    dict_learner.fit(X.astype(data_type))
+    assert dict_learner.components_.dtype == expected_type
+    assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_dict_learning_dtype_match(data_type, expected_type, method):
+    # Verify output matrix dtype
+    rng = np.random.RandomState(0)
+    n_components = 8
+    code, dictionary, _ = dict_learning(
+        X.astype(data_type),
+        n_components=n_components,
+        alpha=1,
+        random_state=rng,
+        method=method,
+    )
+    assert code.dtype == expected_type
+    assert dictionary.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+def test_dict_learning_numerical_consistency(method):
+    # verify numerically consistent among np.float32 and np.float64
+    rtol = 1e-6
+    n_components = 4
+    alpha = 2
+
+    U_64, V_64, _ = dict_learning(
+        X.astype(np.float64),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=0,
+        method=method,
+    )
+    U_32, V_32, _ = dict_learning(
+        X.astype(np.float32),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=0,
+        method=method,
+    )
+
+    # Optimal solution (U*, V*) is not unique.
+    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
+    # and (column permutated U*, row permutated V*) are also optional
+    # as long as holding UV.
+    # So here UV, ||U||_1,1 and sum(||V_k||_2^2) are verified
+    # instead of comparing directly U and V.
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
+    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol)
+    # verify an obtained solution is not degenerate
+    assert np.mean(U_64 != 0.0) > 0.05
+    assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_dict_learning_online_dtype_match(data_type, expected_type, method):
+    # Verify output matrix dtype
+    rng = np.random.RandomState(0)
+    n_components = 8
+    code, dictionary = dict_learning_online(
+        X.astype(data_type),
+        n_components=n_components,
+        alpha=1,
+        random_state=rng,
+        method=method,
+    )
+    assert code.dtype == expected_type
+    assert dictionary.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+def test_dict_learning_online_numerical_consistency(method):
+    # verify numerically consistent among np.float32 and np.float64
+    rtol = 1e-4
+    n_components = 4
+    alpha = 1
+
+    U_64, V_64 = dict_learning_online(
+        X.astype(np.float64),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=0,
+        method=method,
+    )
+    U_32, V_32 = dict_learning_online(
+        X.astype(np.float32),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=0,
+        method=method,
+    )
+
+    # Optimal solution (U*, V*) is not unique.
+    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
+    # and (column permutated U*, row permutated V*) are also optional
+    # as long as holding UV.
+    # So here UV, ||U||_1,1 and sum(||V_k||_2) are verified
+    # instead of comparing directly U and V.
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
+    assert_allclose(np.sum(V_64 ** 2), np.sum(V_32 ** 2), rtol=rtol)
+    # verify an obtained solution is not degenerate
+    assert np.mean(U_64 != 0.0) > 0.05
+    assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
+
+
+@pytest.mark.parametrize(
     "estimator",
     [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning()],
     ids=lambda x: x.__class__.__name__,

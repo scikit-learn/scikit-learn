@@ -4,13 +4,14 @@ import os
 import shutil
 import hashlib
 from os.path import join
+import time
 from warnings import warn
 from contextlib import closing
 from functools import wraps
 from typing import Callable, Optional, Dict, Tuple, List, Any, Union
 from tempfile import TemporaryDirectory
 from urllib.request import urlopen, Request
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 import numpy as np
 
@@ -49,7 +50,7 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
                 return f(*args, **kw)
             try:
                 return f(*args, **kw)
-            except HTTPError:
+            except URLError:
                 raise
             except Exception:
                 warn("Invalid cache, redownloading file", RuntimeWarning)
@@ -63,7 +64,44 @@ def _retry_with_clean_cache(openml_path: str, data_home: Optional[str]) -> Calla
     return decorator
 
 
-def _open_openml_url(openml_path: str, data_home: Optional[str]):
+def _retry_on_network_error(
+    n_retries: int = 3, delay: float = 1.0, url: str = ""
+) -> Callable:
+    """If the function call results in a network error, call the function again
+    up to ``n_retries`` times with a ``delay`` between each call. If the error
+    has a 412 status code, don't call the function again as this is a specific
+    OpenML error.
+    The url parameter is used to give more information to the user about the
+    error.
+    """
+
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            retry_counter = n_retries
+            while True:
+                try:
+                    return f(*args, **kwargs)
+                except URLError as e:
+                    # 412 is a specific OpenML error code.
+                    if isinstance(e, HTTPError) and e.code == 412:
+                        raise
+                    if retry_counter == 0:
+                        raise
+                    warn(
+                        f"A network error occured while downloading {url}. Retrying..."
+                    )
+                    retry_counter -= 1
+                    time.sleep(delay)
+
+        return wrapper
+
+    return decorator
+
+
+def _open_openml_url(
+    openml_path: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
@@ -76,6 +114,13 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     data_home : str
         Directory to which the files will be cached. If None, no caching will
         be applied.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered. Error with status
+        code 412 won't be retried as they represent OpenML generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
 
     Returns
     -------
@@ -90,7 +135,9 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
-        fsrc = urlopen(req)
+        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
+            req, timeout=delay
+        )
         if is_gzip_encoded(fsrc):
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
@@ -105,7 +152,11 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
             # renaming operation to the final location is atomic to ensure the
             # concurrence safety of the dataset caching mechanism.
             with TemporaryDirectory(dir=dir_name) as tmpdir:
-                with closing(urlopen(req)) as fsrc:
+                with closing(
+                    _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
+                        req, timeout=delay
+                    )
+                ) as fsrc:
                     opener: Callable
                     if is_gzip_encoded(fsrc):
                         opener = open
@@ -131,7 +182,11 @@ class OpenMLError(ValueError):
 
 
 def _get_json_content_from_openml_api(
-    url: str, error_message: Optional[str], data_home: Optional[str]
+    url: str,
+    error_message: Optional[str],
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> Dict:
     """
     Loads json data from the openml api
@@ -149,6 +204,13 @@ def _get_json_content_from_openml_api(
     data_home : str or None
         Location to cache the response. None if no cache is required.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered. Error with status
+        code 412 won't be retried as they represent OpenML generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
     Returns
     -------
     json_data : json
@@ -158,7 +220,9 @@ def _get_json_content_from_openml_api(
 
     @_retry_with_clean_cache(url, data_home)
     def _load_json():
-        with closing(_open_openml_url(url, data_home)) as response:
+        with closing(
+            _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+        ) as response:
             return json.loads(response.read().decode("utf-8"))
 
     try:
@@ -174,7 +238,11 @@ def _get_json_content_from_openml_api(
 
 
 def _get_data_info_by_name(
-    name: str, version: Union[int, str], data_home: Optional[str]
+    name: str,
+    version: Union[int, str],
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ):
     """
     Utilizes the openml dataset listing api to find a dataset by
@@ -196,6 +264,13 @@ def _get_data_info_by_name(
     data_home : str or None
         Location to cache the response. None if no cache is required.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered. Error with status
+        code 412 won't be retried as they represent OpenML generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
     Returns
     -------
     first_dataset : json
@@ -208,7 +283,11 @@ def _get_data_info_by_name(
         url = _SEARCH_NAME.format(name) + "/status/active/"
         error_msg = "No active dataset {} found.".format(name)
         json_data = _get_json_content_from_openml_api(
-            url, error_msg, data_home=data_home
+            url,
+            error_msg,
+            data_home=data_home,
+            n_retries=n_retries,
+            delay=delay,
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
@@ -224,7 +303,11 @@ def _get_data_info_by_name(
     url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
     try:
         json_data = _get_json_content_from_openml_api(
-            url, error_message=None, data_home=data_home
+            url,
+            error_message=None,
+            data_home=data_home,
+            n_retries=n_retries,
+            delay=delay,
         )
     except OpenMLError:
         # we can do this in 1 function call if OpenML does not require the
@@ -234,42 +317,71 @@ def _get_data_info_by_name(
         url += "/status/deactivated"
         error_msg = "Dataset {} with version {} not found.".format(name, version)
         json_data = _get_json_content_from_openml_api(
-            url, error_msg, data_home=data_home
+            url,
+            error_msg,
+            data_home=data_home,
+            n_retries=n_retries,
+            delay=delay,
         )
 
     return json_data["data"]["dataset"][0]
 
 
 def _get_data_description_by_id(
-    data_id: int, data_home: Optional[str]
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> Dict[str, Any]:
     # OpenML API function: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     return json_data["data_set_description"]
 
 
-def _get_data_features(data_id: int, data_home: Optional[str]) -> OpenmlFeaturesType:
+def _get_data_features(
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
+) -> OpenmlFeaturesType:
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     return json_data["data_features"]["feature"]
 
 
-def _get_data_qualities(data_id: int, data_home: Optional[str]) -> OpenmlQualitiesType:
+def _get_data_qualities(
+    data_id: int,
+    data_home: Optional[str],
+    n_retries: int = 3,
+    delay: float = 1.0,
+) -> OpenmlQualitiesType:
     # OpenML API function:
     # https://www.openml.org/api_docs#!/data/get_data_qualities_id
     url = _DATA_QUALITIES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, data_home=data_home
+        url,
+        error_message,
+        data_home=data_home,
+        n_retries=n_retries,
+        delay=delay,
     )
     # the qualities might not be available, but we still try to process
     # the data
@@ -308,9 +420,11 @@ def _load_arff_response(
     col_slice_y: List,
     shape: Tuple,
     md5_checksum: str,
+    n_retries: int = 3,
+    delay: float = 1.0,
 ) -> Tuple:
     """Load arff data with url and parses arff response with parse_arff"""
-    response = _open_openml_url(url, data_home)
+    response = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
 
     with closing(response):
         # Note that if the data is dense, no reading is done until the data
@@ -369,6 +483,8 @@ def _download_data_to_bunch(
     target_columns: List,
     shape: Optional[Tuple[int, int]],
     md5_checksum: str,
+    n_retries: int = 3,
+    delay: float = 1.0,
 ):
     """Download OpenML ARFF and convert to Bunch of data"""
     # NB: this function is long in order to handle retry for any failure
@@ -416,6 +532,8 @@ def _download_data_to_bunch(
         col_slice_y,
         shape,
         md5_checksum=md5_checksum,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     return Bunch(
@@ -481,6 +599,8 @@ def fetch_openml(
     cache: bool = True,
     return_X_y: bool = False,
     as_frame: Union[str, bool] = "auto",
+    n_retries: int = 3,
+    delay: float = 1.0,
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -553,6 +673,13 @@ def fetch_openml(
            The default value of `as_frame` changed from `False` to `'auto'`
            in 0.24.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered. Error with status
+        code 412 won't be retried as they represent OpenML generic errors.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
     Returns
     -------
 
@@ -615,7 +742,9 @@ def fetch_openml(
                 "specify a numeric data_id or a name, not "
                 "both.".format(data_id, name)
             )
-        data_info = _get_data_info_by_name(name, version, data_home)
+        data_info = _get_data_info_by_name(
+            name, version, data_home, n_retries=n_retries, delay=delay
+        )
         data_id = data_info["did"]
     elif data_id is not None:
         # from the previous if statement, it is given that name is None
@@ -721,6 +850,8 @@ def fetch_openml(
         target_columns=target_columns,
         data_columns=data_columns,
         md5_checksum=data_description["md5_checksum"],
+        n_retries=n_retries,
+        delay=delay,
     )
 
     if return_X_y:
