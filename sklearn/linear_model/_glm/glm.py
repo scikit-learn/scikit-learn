@@ -593,7 +593,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
-        Values should be in the range `[1, inf)`.
+        Values should be in the range `[0, inf)`.
 
     Attributes
     ----------
