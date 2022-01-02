@@ -165,6 +165,8 @@ class MethodMetadataRequest:
         else:
             self._requests[prop] = alias
 
+        return self
+
     def _get_param_names(self, original_names):
         """Get the names of all available metadata.
 
@@ -332,7 +334,7 @@ class MetadataRequest:
         for method in METHODS:
             setattr(self, method, MethodMetadataRequest(name=method))
 
-    def _get_param_names(self, method, original_names):
+    def _get_param_names(self, method, original_names, ignore_self=None):
         """Get the names of all available metadata for a method.
 
         This method returns the names of all metadata, even the UNREQUESTED
@@ -346,6 +348,9 @@ class MetadataRequest:
         original_names : bool
             Controls whether original or aliased names should be returned. If
             ``True``, aliases are ignored and original names are returned.
+
+        ignore_self : bool
+            Ignored. Present for API compatibility.
 
         Returns
         -------
@@ -425,8 +430,8 @@ class MetadataRequest:
         obj_type = requests.pop("^type", None)
         if obj_type != "request":
             raise ValueError(
-                "Can only create a router of type 'router', given `_type` is:"
-                f" {obj_type}."
+                "Can only create a metadata request of type 'request', given `_type`"
+                f" is: {obj_type}."
             )
 
         for method, method_requests in requests.items():
@@ -552,6 +557,9 @@ class MethodMapping:
     def __repr__(self):
         return str(self.serialize())
 
+    def __str__(self):
+        return str(repr(self))
+
 
 class MetadataRouter:
     """Stores and handles metadata routing for a router object.
@@ -623,7 +631,7 @@ class MetadataRouter:
             )
         return self
 
-    def _get_param_names(self, *, method, original_names):
+    def _get_param_names(self, *, method, original_names, ignore_self):
         """Get the names of all available metadata for a method.
 
         This method returns the names of all metadata, even the UNREQUESTED
@@ -639,13 +647,18 @@ class MetadataRouter:
             which only applies to the stored `self`. If no `self` routing
             object is stored, this parameter has no effect.
 
+        ignore_self : bool
+            If `self._self` should be ignored. This is used in
+            `_get_squashed_params`. If ``True``, ``original_names`` has no
+            effect.
+
         Returns
         -------
         names : set of str
             Returns a set of strings with the names of all parameters.
         """
         res = set()
-        if self._self:
+        if self._self and not ignore_self:
             res = res.union(
                 self._self._get_param_names(
                     method=method, original_names=original_names
@@ -657,7 +670,7 @@ class MetadataRouter:
                 if used_in == method:
                     res = res.union(
                         route_mapping.routing._get_param_names(
-                            method=orig_method, original_names=False
+                            method=orig_method, original_names=False, ignore_self=False
                         )
                     )
         return set(sorted(res))
@@ -687,10 +700,14 @@ class MetadataRouter:
             A :class:`~utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
-        param_names = self._get_param_names(method=method, original_names=False)
-        return Bunch(
-            **{key: value for key, value in params.items() if key in param_names}
+        res = Bunch()
+        if self._self:
+            res.update(self._self._get_params(params=params, method=method))
+        param_names = self._get_param_names(
+            method=method, original_names=False, ignore_self=True
         )
+        res.update({key: value for key, value in params.items() if key in param_names})
+        return res
 
     def get_params(self, *, method, params):
         """Return the input parameters requested by a child objects.
@@ -753,7 +770,9 @@ class MetadataRouter:
         params : dict
             A dictionary of provided metadata.
         """
-        param_names = self._get_param_names(method=method, original_names=True)
+        param_names = self._get_param_names(
+            method=method, original_names=True, ignore_self=False
+        )
         if self._self:
             self_params = self._self._get_param_names(
                 method=method, original_names=True
@@ -828,6 +847,12 @@ class MetadataRouter:
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
+
+    def __repr__(self):
+        return str(self.serialize())
+
+    def __str__(self):
+        return str(repr(self))
 
 
 def metadata_router_factory(obj=None):
@@ -921,11 +946,7 @@ class RequestMethod:
                 raise TypeError(f"Unexpected args: {set(kw) - set(self.keys)}")
 
             requests = instance._get_metadata_request()
-
-            try:
-                method_metadata_request = getattr(requests, self.name)
-            except AttributeError:
-                raise ValueError(f"{self.name} is not a supported method.")
+            method_metadata_request = getattr(requests, self.name)
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:

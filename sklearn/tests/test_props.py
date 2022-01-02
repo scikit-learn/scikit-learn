@@ -11,15 +11,18 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
+from sklearn.base import RegressorMixin
 from sklearn.base import TransformerMixin
 from sklearn.base import MetaEstimatorMixin
 from sklearn.base import clone
+from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.metadata_routing import RequestType
 from sklearn.utils.metadata_routing import MetadataRequest
 from sklearn.utils.metadata_routing import metadata_router_factory
 from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.utils.metadata_routing import MethodMapping
+from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils._metadata_requests import _MetadataRequester
 
@@ -39,7 +42,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
     """
     if isinstance(metadata_request, MetadataRouter):
         for _, route_mapping in metadata_request:
-            assert_request_is_empty(route_mapping.router)
+            assert_request_is_empty(route_mapping.routing)
         return
 
     if isinstance(metadata_request, MetadataRequest):
@@ -58,7 +61,78 @@ def assert_request_is_empty(metadata_request, exclude=None):
         assert not len(props)
 
 
-class TestEstimatorNoMetadata(ClassifierMixin, BaseEstimator):
+def record_metadata(obj, method, **kwargs):
+    """Utility function to store passed metadata to a method."""
+    if not hasattr(obj, "_records"):
+        setattr(obj, "_records", dict())
+    obj._records[method] = kwargs
+
+
+def check_recorded_metadata(obj, method, **kwargs):
+    """Check whether the expected metadata is passed to the object's method."""
+    records = getattr(obj, "_records", dict()).get(method, dict())
+    assert set(kwargs.keys()) == set(records.keys())
+    for key, value in kwargs.items():
+        assert records[key] is value
+
+
+class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
+    """A meta-regressor which is only a router."""
+
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    @process_routing
+    def fit(self, X, y, **fit_params):
+        params = fit_params["params"]
+        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
+
+    def get_metadata_routing(self):
+        router = MetadataRouter().add(
+            estimator=self.estimator, method_mapping="one-to-one"
+        )
+        return router.serialize()
+
+
+class RegressorMetadata(RegressorMixin, BaseEstimator):
+    """A regressor consuming a metadata."""
+
+    def fit(self, X, y, sample_weight=None):
+        record_metadata(self, "fit", sample_weight=sample_weight)
+        return self
+
+    def predict(self, X):
+        return np.zeros(shape=(len(X)))
+
+
+class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
+    """A meta-regressor which is also a consumer."""
+
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    @process_routing
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        record_metadata(self, "fit", sample_weight=sample_weight)
+        params = fit_params["params"]
+        self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
+        return self
+
+    @process_routing
+    def predict(self, X, **predict_params):
+        params = predict_params["params"]
+        return self.estimator_.predict(X, **params.estimator.predict)
+
+    def get_metadata_routing(self):
+        router = (
+            MetadataRouter()
+            .add_self(self)
+            .add(estimator=self.estimator, method_mapping="one-to-one")
+        )
+        return router.serialize()
+
+
+class ClassifierNoMetadata(ClassifierMixin, BaseEstimator):
     """An estimator which accepts no metadata on any method."""
 
     def fit(self, X, y):
@@ -68,41 +142,27 @@ class TestEstimatorNoMetadata(ClassifierMixin, BaseEstimator):
         return np.ones(len(X))
 
 
-class TestEstimatorFitMetadata(ClassifierMixin, BaseEstimator):
+class ClassifierFitMetadata(ClassifierMixin, BaseEstimator):
     """An estimator accepting two metadata in its ``fit`` method."""
 
-    def __init__(self, sample_weight_none=True, brand_none=True):
-        self.sample_weight_none = sample_weight_none
-        self.brand_none = brand_none
-
     def fit(self, X, y, sample_weight=None, brand=None):
-        assert (
-            sample_weight is None
-        ) == self.sample_weight_none, "sample_weight and sample_weight_none don't agree"
-        assert (brand is None) == self.brand_none, "brand and brand_none don't agree"
+        record_metadata(self, "fit", sample_weight=sample_weight, brand=brand)
         return self
 
     def predict(self, X):
         return np.ones(len(X))
 
 
-class TestSimpleMetaEstimator(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
+class SimpleMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """A meta-estimator which also consumes sample_weight itself in ``fit``."""
 
-    def __init__(self, estimator, sample_weight_none):
-        self.sample_weight_none = sample_weight_none
+    def __init__(self, estimator):
         self.estimator = estimator
 
+    @process_routing
     def fit(self, X, y, sample_weight=None, **kwargs):
-        assert (
-            sample_weight is None
-        ) == self.sample_weight_none, "sample_weight and sample_weight_none don't agree"
-
-        if sample_weight is not None:
-            kwargs["sample_weight"] = sample_weight
-        request_routing = metadata_router_factory(self)
-        request_routing.validate_metadata(params=kwargs, method="fit")
-        params = request_routing.get_params(params=kwargs, method="fit")
+        record_metadata(self, "fit", sample_weight=sample_weight)
+        params = kwargs["params"]
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 
@@ -115,65 +175,33 @@ class TestSimpleMetaEstimator(MetaEstimatorMixin, ClassifierMixin, BaseEstimator
         return router.serialize()
 
 
-class TestTransformer(TransformerMixin, BaseEstimator):
+class TransformerMetadata(TransformerMixin, BaseEstimator):
     """A transformer which accepts metadata on fit and transform."""
 
-    def __init__(
-        self,
-        brand_none=True,
-        new_param_none=True,
-        fit_sample_weight_none=True,
-        transform_sample_weight_none=True,
-    ):
-        self.brand_none = brand_none
-        self.new_param_none = new_param_none
-        self.fit_sample_weight_none = fit_sample_weight_none
-        self.transform_sample_weight_none = transform_sample_weight_none
-
-    def fit(self, X, y=None, brand=None, new_param=None, sample_weight=None):
-        assert (
-            sample_weight is None
-        ) == self.fit_sample_weight_none, (
-            "sample_weight and fit_sample_weight_none don't agree"
-        )
-        assert (
-            new_param is None
-        ) == self.new_param_none, "new_param and new_param_none don't agree"
-        assert (brand is None) == self.brand_none, "brand and brand_none don't agree"
+    def fit(self, X, y=None, brand=None, sample_weight=None):
+        record_metadata(self, "fit", brand=brand, sample_weight=sample_weight)
         return self
 
-    def transform(self, X, y=None, sample_weight=None):
-        assert (
-            sample_weight is None
-        ) == self.transform_sample_weight_none, (
-            "sample_weight and transform_sample_weight_none don't agree"
-        )
+    def transform(self, X, sample_weight=None):
+        record_metadata(self, "transform", sample_weight=sample_weight)
         return X
 
 
-class TestMetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
+class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
     """A simple meta-transformer."""
 
     def __init__(self, transformer):
         self.transformer = transformer
 
+    @process_routing
     def fit(self, X, y=None, **fit_params):
-        request_routing = metadata_router_factory(self)
-        request_routing.validate_metadata(
-            method="fit",
-            params=fit_params,
-        )
-        params = request_routing.get_params(method="fit", params=fit_params)
+        params = fit_params["params"]
         self.transformer_ = clone(self.transformer).fit(X, y, **params.transformer.fit)
         return self
 
+    @process_routing
     def transform(self, X, y=None, **transform_params):
-        request_routing = metadata_router_factory(self)
-        request_routing.validate_metadata(
-            method="transform",
-            params=transform_params,
-        )
-        params = request_routing.get_params(method="transform", params=transform_params)
+        params = transform_params["params"]
         return self.transformer_.transform(X, **params.transformer.transform)
 
     def get_metadata_routing(self):
@@ -190,11 +218,10 @@ class SimplePipeline(BaseEstimator):
     def __init__(self, steps):
         self.steps = steps
 
+    @process_routing
     def fit(self, X, y, **fit_params):
         self.steps_ = []
-        request_routing = metadata_router_factory(self)
-        request_routing.validate_params(params=fit_params, method="fit")
-        params = request_routing.get_params(params=fit_params, method="fit")
+        params = fit_params["params"]
         X_transformed = X
         for i, step in enumerate(self.steps[:-1]):
             transformer = clone(step).fit(
@@ -210,16 +237,15 @@ class SimplePipeline(BaseEstimator):
         )
         return self
 
+    @process_routing
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         X_transformed = X
-        request_routing = metadata_router_factory(self)
-        request_routing.validate_params(params=predict_params, method="predict")
-        params = request_routing.get_params(params=predict_params, method="predict")
+        params = predict_params["params"]
         for i, step in enumerate(self.steps_[:-1]):
             X_transformed = step.transform(X, **params.get(f"step_{i}").transform)
 
-        return self.steps_[-1].predict(X_transformed, **params.predictor.transform)
+        return self.steps_[-1].predict(X_transformed, **params.predictor.predict)
 
     def get_metadata_routing(self):
         router = MetadataRouter()
@@ -231,7 +257,7 @@ class SimplePipeline(BaseEstimator):
                 .add(method="transform", used_in="fit")
                 .add(method="transform", used_in="predict"),
             )
-        router.add(predictor=self.steps[-1], mapping="one-to-one")
+        router.add(predictor=self.steps[-1], method_mapping="one-to-one")
         return router.serialize()
 
 
@@ -260,6 +286,13 @@ def test_assert_request_is_empty():
     # and excluding both fit and score would avoid an exception
     assert_request_is_empty(requests, exclude=["fit", "score"])
 
+    # test if a router is empty
+    assert_request_is_empty(
+        MetadataRouter()
+        .add_self(WeightedMetaRegressor(estimator=None))
+        .add(method_mapping="fit", estimator=RegressorMetadata())
+    )
+
 
 def test_default_requests():
     class OddEstimator(BaseEstimator):
@@ -272,21 +305,20 @@ def test_default_requests():
     assert odd_request.fit._requests == {"sample_weight": RequestType.REQUESTED}
 
     # check other test estimators
-    assert not len(metadata_router_factory(TestEstimatorNoMetadata()).fit._requests)
-    assert_request_is_empty(TestEstimatorNoMetadata().get_metadata_routing())
+    assert not len(metadata_router_factory(ClassifierNoMetadata()).fit._requests)
+    assert_request_is_empty(ClassifierNoMetadata().get_metadata_routing())
 
-    trs_request = metadata_router_factory(TestTransformer())
+    trs_request = metadata_router_factory(TransformerMetadata())
     assert trs_request.fit._requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
-        "new_param": RequestType(None),
     }
     assert trs_request.transform._requests == {
         "sample_weight": RequestType(None),
     }
     assert_request_is_empty(trs_request)
 
-    est_request = metadata_router_factory(TestEstimatorFitMetadata())
+    est_request = metadata_router_factory(ClassifierFitMetadata())
     assert est_request.fit._requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
@@ -296,25 +328,19 @@ def test_default_requests():
 
 def test_simple_metadata_routing():
     # Tests that metadata is properly routed
+
     # The underlying estimator doesn't accept or request metadata
-    cls = TestSimpleMetaEstimator(
-        estimator=TestEstimatorNoMetadata(), sample_weight_none=True
-    )
-    cls.fit(X, y)
+    clf = SimpleMetaClassifier(estimator=ClassifierNoMetadata())
+    clf.fit(X, y)
 
     # Meta-estimator consumes sample_weight, but doesn't forward it to the underlying
     # estimator
-    cls = TestSimpleMetaEstimator(
-        estimator=TestEstimatorNoMetadata(), sample_weight_none=False
-    )
-    cls.fit(X, y, sample_weight=my_weights)
+    clf = SimpleMetaClassifier(estimator=ClassifierNoMetadata())
+    clf.fit(X, y, sample_weight=my_weights)
 
     # If the estimator accepts the metadata but doesn't explicitly say it doesn't
     # need it, there's an error
-    cls = TestSimpleMetaEstimator(
-        estimator=TestEstimatorFitMetadata(),
-        sample_weight_none=False,
-    )
+    clf = SimpleMetaClassifier(estimator=ClassifierFitMetadata())
     with pytest.raises(
         ValueError,
         match=(
@@ -322,34 +348,76 @@ def test_simple_metadata_routing():
             " method: fit"
         ),
     ):
-        cls.fit(X, y, sample_weight=my_weights)
+        clf.fit(X, y, sample_weight=my_weights)
 
     # Explicitly saying the estimator doesn't need it, makes the error go away,
     # but if a metadata is passed which is not requested by any object/estimator,
     # there will be still an error
-    cls = TestSimpleMetaEstimator(
-        estimator=TestEstimatorFitMetadata().fit_requests(sample_weight=False),
-        sample_weight_none=False,
+    clf = SimpleMetaClassifier(
+        estimator=ClassifierFitMetadata().fit_requests(sample_weight=False)
     )
-    # this doesn't raise since TestSimpleMetaEstimator itself is a consumer,
+    # this doesn't raise since SimpleMetaClassifier itself is a consumer,
     # and passing metadata to the consumer directly is fine regardless of its
     # metadata_request values.
-    cls.fit(X, y, sample_weight=my_weights)
+    clf.fit(X, y, sample_weight=my_weights)
+    check_recorded_metadata(clf.estimator_, "fit", sample_weight=None, brand=None)
 
     # Requesting a metadata will make the meta-estimator forward it correctly
-    cls = TestSimpleMetaEstimator(
-        estimator=TestEstimatorFitMetadata(sample_weight_none=False).fit_requests(
-            sample_weight=True
-        ),
-        sample_weight_none=False,
+    clf = SimpleMetaClassifier(
+        estimator=ClassifierFitMetadata().fit_requests(sample_weight=True)
     )
-    cls.fit(X, y, sample_weight=my_weights)
+    clf.fit(X, y, sample_weight=my_weights)
+    check_recorded_metadata(clf.estimator_, "fit", sample_weight=my_weights, brand=None)
+
+    # And requesting it with an alias
+    clf = SimpleMetaClassifier(
+        estimator=ClassifierFitMetadata().fit_requests(
+            sample_weight="alternative_weight"
+        )
+    )
+    clf.fit(X, y, alternative_weight=my_weights)
+    check_recorded_metadata(clf.estimator_, "fit", sample_weight=my_weights, brand=None)
+
+
+def test_nested_routing():
+    # check if metadata is routed in a nested routing situation.
+    pipeline = SimplePipeline(
+        [
+            MetaTransformer(
+                transformer=TransformerMetadata()
+                .fit_requests(brand=True, sample_weight=False)
+                .transform_requests(sample_weight=True)
+            ),
+            WeightedMetaRegressor(
+                estimator=RegressorMetadata().fit_requests(
+                    sample_weight="inner_weights"
+                )
+            ).fit_requests(sample_weight="outer_weights"),
+        ]
+    )
+    w1, w2, w3 = [1], [2], [3]
+    pipeline.fit(
+        X, y, brand=my_groups, sample_weight=w1, outer_weights=w2, inner_weights=w3
+    )
+    check_recorded_metadata(
+        pipeline.steps_[0].transformer_, "fit", brand=my_groups, sample_weight=None
+    )
+    check_recorded_metadata(
+        pipeline.steps_[0].transformer_, "transform", sample_weight=w1
+    )
+    check_recorded_metadata(pipeline.steps_[1], "fit", sample_weight=w2)
+    check_recorded_metadata(pipeline.steps_[1].estimator_, "fit", sample_weight=w3)
+
+    pipeline.predict(X, sample_weight=w3)
+    check_recorded_metadata(
+        pipeline.steps_[0].transformer_, "transform", sample_weight=w3
+    )
 
 
 def test_invalid_metadata():
     # check that passing wrong metadata raises an error
-    trs = TestMetaTransformer(
-        transformer=TestTransformer().transform_requests(sample_weight=True)
+    trs = MetaTransformer(
+        transformer=TransformerMetadata().transform_requests(sample_weight=True)
     )
     with pytest.raises(
         ValueError,
@@ -363,8 +431,8 @@ def test_invalid_metadata():
         trs.fit(X, y).transform(X, other_param=my_weights)
 
     # passing a metadata which is not requested by any estimator should also raise
-    trs = TestMetaTransformer(
-        transformer=TestTransformer().transform_requests(sample_weight=False)
+    trs = MetaTransformer(
+        transformer=TransformerMetadata().transform_requests(sample_weight=False)
     )
     with pytest.raises(
         ValueError,
@@ -523,8 +591,15 @@ def test_method_metadata_request():
     mmr.add_request(prop="foo", alias=None)
     assert mmr._requests == {"foo": RequestType.ERROR_IF_PASSED}
     mmr.add_request(prop="foo", alias=False)
+    assert mmr._requests == {"foo": RequestType.UNREQUESTED}
     mmr.add_request(prop="foo", alias=True)
     assert mmr._requests == {"foo": RequestType.REQUESTED}
+    mmr.add_request(prop="foo", alias="foo")
+    assert mmr._requests == {"foo": RequestType.REQUESTED}
+    mmr.add_request(prop="foo", alias="bar")
+    assert mmr._requests == {"foo": "bar"}
+    assert mmr._get_param_names(original_names=True) == {"foo"}
+    assert mmr._get_param_names(original_names=False) == {"bar"}
 
     assert MethodMetadataRequest.deserialize(None, name="fit")._requests == {}
     assert MethodMetadataRequest.deserialize({"foo": None}, name="fit")._requests == {
@@ -545,6 +620,8 @@ def test_metadata_router_factory():
     assert_request_is_empty(metadata_router_factory(None))
     assert_request_is_empty(metadata_router_factory({"^type": "request"}))
     assert_request_is_empty(metadata_router_factory({"^type": "router"}))
+    with pytest.raises(ValueError, match="Cannot understand object type"):
+        metadata_router_factory({"^type": "invalid"})
     assert_request_is_empty(metadata_router_factory(object()))
 
     mr = MetadataRequest.deserialize({"^type": "request", "fit": {"foo": "bar"}})
@@ -555,3 +632,120 @@ def test_metadata_router_factory():
     mr = metadata_router_factory(Consumer())
     assert_request_is_empty(mr, exclude="fit")
     assert mr.fit._requests == {"prop": RequestType.ERROR_IF_PASSED}
+
+
+def test_metaestimator_warnings():
+    class WeightedMetaRegressorWarn(WeightedMetaRegressor):
+        __metadata_request__fit = {"sample_weight": RequestType.WARN}
+
+    with pytest.warns(
+        UserWarning, match="Support for .* has recently been added to this class"
+    ):
+        WeightedMetaRegressorWarn(
+            estimator=LinearRegression().fit_requests(sample_weight=False)
+        ).fit(X, y, sample_weight=my_weights)
+
+
+def test_estimator_warnings():
+    class RegressorMetadataWarn(RegressorMetadata):
+        __metadata_request__fit = {"sample_weight": RequestType.WARN}
+
+    with pytest.warns(
+        UserWarning, match="Support for .* has recently been added to this class"
+    ):
+        MetaRegressor(estimator=RegressorMetadataWarn()).fit(
+            X, y, sample_weight=my_weights
+        )
+
+
+@pytest.mark.parametrize(
+    "obj, string",
+    [
+        (
+            MethodMetadataRequest("fit").add_request(prop="foo", alias="bar"),
+            "{'foo': 'bar'}",
+        ),
+        (
+            MetadataRequest(),
+            "{'^type': 'request', 'fit': {}, 'partial_fit': {}, 'predict': {}, 'score':"
+            " {}, 'split': {}, 'transform': {}, 'inverse_transform': {}}",
+        ),
+        (MethodMapping.from_str("score"), "[{'method': 'score', 'used_in': 'score'}]"),
+        (
+            MetadataRouter().add(
+                method_mapping="predict", estimator=RegressorMetadata()
+            ),
+            "{'^type': 'router', 'estimator': {'mapping': [{'method': 'predict',"
+            " 'used_in': 'predict'}], 'routing': {'^type': 'request', 'fit':"
+            " {'sample_weight': None}, 'partial_fit': {}, 'predict': {}, 'score':"
+            " {'sample_weight': None}, 'split': {}, 'transform': {},"
+            " 'inverse_transform': {}}}}",
+        ),
+    ],
+)
+def test_string_representations(obj, string):
+    assert str(obj) == string
+
+
+@pytest.mark.parametrize(
+    "obj, method, inputs, err_cls, err_msg",
+    [
+        (
+            MetadataRequest,
+            "deserialize",
+            {"obj": {}},
+            ValueError,
+            "Can only create a metadata request of type",
+        ),
+        (
+            MetadataRequest,
+            "deserialize",
+            {"obj": {"^type": "request", "invalid_method": {}}},
+            ValueError,
+            "is not supported as a method",
+        ),
+        (
+            MetadataRouter,
+            "deserialize",
+            {"obj": {}},
+            ValueError,
+            "Can only create a router of type",
+        ),
+        (
+            MethodMapping(),
+            "add",
+            {"method": "invalid", "used_in": "fit"},
+            ValueError,
+            "Given method",
+        ),
+        (
+            MethodMapping(),
+            "add",
+            {"method": "fit", "used_in": "invalid"},
+            ValueError,
+            "Given used_in",
+        ),
+        (
+            MethodMapping,
+            "from_str",
+            {"route": "invalid"},
+            ValueError,
+            "route should be 'one-to-one' or a single method!",
+        ),
+        (
+            MetadataRouter(),
+            "add_self",
+            {"obj": MetadataRouter()},
+            ValueError,
+            "Given object is neither a MetadataRequest nor does it implement",
+        ),
+    ],
+)
+def test_deserialize_invalid_type(obj, method, inputs, err_cls, err_msg):
+    with pytest.raises(err_cls, match=err_msg):
+        getattr(obj, method)(**inputs)
+
+
+def test_requestmethod():
+    with pytest.raises(TypeError, match="Unexpected args"):
+        ClassifierFitMetadata().fit_requests(invalid=True)

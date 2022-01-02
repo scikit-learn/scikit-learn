@@ -587,6 +587,7 @@ class ExampleRegressor(RegressorMixin, BaseEstimator):
     __metadata_request__fit = {"sample_weight": RequestType.WARN}
 
     def fit(self, X, y, sample_weight=None):
+        check_metadata(self, sample_weight=sample_weight)
         return self
 
     def predict(self, X):
