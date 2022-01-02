@@ -8,6 +8,7 @@ from numpy.testing import assert_array_equal
 
 import pytest
 
+from sklearn.datasets import make_multilabel_classification
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition._lda import (
     _dirichlet_expectation_1d,
@@ -443,7 +444,7 @@ def test_lda_feature_names_out():
 
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
 @pytest.mark.parametrize(
-    "data_type, expected_type",
+    "train_data_type, expected_type",
     (
         (np.float32, np.float32),
         (np.float64, np.float64),
@@ -451,36 +452,36 @@ def test_lda_feature_names_out():
         (np.int64, np.float64),
     ),
 )
-def test_lda_dtype_match(learning_method, data_type, expected_type):
+def test_lda_dtype_match(learning_method, train_data_type, expected_type):
     # Verify output matrix dtype
-    from sklearn.datasets import make_multilabel_classification
+    dataset_X, _ = make_multilabel_classification(random_state=0)
 
-    X, _ = make_multilabel_classification(random_state=0)
     lda = LatentDirichletAllocation(
         n_components=5, random_state=0, learning_method=learning_method
     )
-    lda.fit(X.astype(data_type))
-    transformed = lda.transform(X[-2:].astype(data_type))
-    assert transformed.dtype == expected_type
+    lda.fit(dataset_X.astype(train_data_type))
+    # regardless of input data, transformed data type is determined by trained data
+    for input_data_type in (np.float32, np.float64, np.int32, np.int64):
+        transformed = lda.transform(dataset_X[-2:].astype(input_data_type))
+        assert transformed.dtype == expected_type
 
 
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
 def test_lda_numerical_consistency(learning_method):
     # verify numerical consistency among np.float32 and np.float64
+    dataset_X, _ = make_multilabel_classification(random_state=0)
     rtol = 1e-5
-    from sklearn.datasets import make_multilabel_classification
 
-    X, _ = make_multilabel_classification(random_state=0)
     lda_32 = LatentDirichletAllocation(
         n_components=5, random_state=0, learning_method=learning_method
     )
     lda_64 = LatentDirichletAllocation(
         n_components=5, random_state=0, learning_method=learning_method
     )
-    lda_32.fit(X.astype(np.float32))
-    lda_64.fit(X.astype(np.float64))
+    lda_32.fit(dataset_X.astype(np.float32))
+    lda_64.fit(dataset_X.astype(np.float64))
 
-    transformed_32 = lda_32.transform(X[-2:].astype(np.float32))
-    transformed_64 = lda_32.transform(X[-2:].astype(np.float64))
+    transformed_32 = lda_32.transform(dataset_X[-2:].astype(np.float32))
+    transformed_64 = lda_32.transform(dataset_X[-2:].astype(np.float64))
 
     assert_allclose(transformed_32, transformed_64, rtol=rtol)

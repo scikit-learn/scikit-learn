@@ -554,6 +554,11 @@ class LatentDirichletAllocation(
             dtype=[np.float64, np.float32],
         )
         check_non_negative(X, whom)
+
+        # Ensure input data has same dtype with trained components_
+        if hasattr(self, "components_") and self.components_ is not None:
+            X = X.astype(self.components_.dtype)
+
         return X
 
     def partial_fit(self, X, y=None):
