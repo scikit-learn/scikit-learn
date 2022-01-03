@@ -389,6 +389,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             target_type=bool,
         )
 
+        check_scalar(
+            self.validation_fraction,
+            "validation_fraction",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="neither",
+        )
+
         if self.n_iter_no_change is not None:
             check_scalar(
                 self.n_iter_no_change,
@@ -532,6 +541,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             y = self._validate_y(y)
 
+        self._check_params()
+
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
             X, X_val, y, y_val, sample_weight, sample_weight_val = train_test_split(
@@ -555,8 +566,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     )
         else:
             X_val = y_val = sample_weight_val = None
-
-        self._check_params()
 
         if not self._is_initialized():
             # init state
