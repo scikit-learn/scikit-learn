@@ -832,7 +832,7 @@ def r2_score(
     force_finite : bool, default=True
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
-        perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
+        perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
         for hyperparameters' search procedures (e.g. grid search
         cross-validation).
 
