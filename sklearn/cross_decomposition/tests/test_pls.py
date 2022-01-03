@@ -611,7 +611,7 @@ def test_pls_constant_y():
 
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
 def test_pls_feature_names_out(Klass):
-    """Check `get_feature_names_out` cross_decomposition module"""
+    """Check `get_feature_names_out` cross_decomposition module."""
     X, Y = load_linnerud(return_X_y=True)
 
     est = Klass().fit(X, Y)
