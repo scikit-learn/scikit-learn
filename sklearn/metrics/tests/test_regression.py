@@ -63,10 +63,12 @@ def test_regression_metrics(n_samples=50):
     dev_mean = np.abs(y_true - y_true.mean()).sum()
     assert_array_almost_equal(
         d2_absolute_error_score(y_true, y_pred),
-        1 - np.abs(y_true - y_pred).sum()/dev_mean)
+        1 - np.abs(y_true - y_pred).sum() / dev_mean,
+    )
     assert_array_almost_equal(
         d2_absolute_error_score(y_true, y_pred_2),
-        1 - np.abs(y_true - y_pred_2).sum()/dev_mean)
+        1 - np.abs(y_true - y_pred_2).sum() / dev_mean,
+    )
 
     # Tweedie deviance needs positive y_pred, except for p=0,
     # p>=2 needs positive y_true
@@ -144,16 +146,19 @@ def test_multioutput_regression():
     error = r2_score(y_true, y_pred, multioutput="uniform_average")
     assert_almost_equal(error, -0.875)
 
-    score = d2_absolute_error_score(y_true, y_pred, multioutput='raw_values')
-    raw_expected_score = [1 - np.abs(y_true[:, i] - y_pred[:, i]).sum()
-                          / np.abs(y_true[:, i] - y_true[:, i].mean()).sum()
-                          for i in range(y_true.shape[1])]
+    score = d2_absolute_error_score(y_true, y_pred, multioutput="raw_values")
+    raw_expected_score = [
+        1
+        - np.abs(y_true[:, i] - y_pred[:, i]).sum()
+        / np.abs(y_true[:, i] - y_true[:, i].mean()).sum()
+        for i in range(y_true.shape[1])
+    ]
     # in the last case, the denominator vanishes and hence we get nan,
     # but since the the numerator vanishes as well the expected score is 1.0
     raw_expected_score = np.nan_to_num(raw_expected_score, nan=1.0)
     assert_array_almost_equal(score, raw_expected_score)
 
-    score = d2_absolute_error_score(y_true, y_pred, multioutput='uniform_average')
+    score = d2_absolute_error_score(y_true, y_pred, multioutput="uniform_average")
     assert_almost_equal(score, raw_expected_score.mean())
 
 
@@ -292,7 +297,7 @@ def test_regression_multioutput_array():
     mape = mean_absolute_percentage_error(y_true, y_pred, multioutput="raw_values")
     r = r2_score(y_true, y_pred, multioutput="raw_values")
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
-    d2aes = d2_absolute_error_score(y_true, y_pred, multioutput='raw_values')
+    d2aes = d2_absolute_error_score(y_true, y_pred, multioutput="raw_values")
 
     assert_array_almost_equal(mse, [0.125, 0.5625], decimal=2)
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
