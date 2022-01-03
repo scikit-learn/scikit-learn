@@ -114,7 +114,7 @@ Changelog
 ....................................
 
 - |API| Adds :term:`get_feature_names_out` to
-  :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`xxxxx` by
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
   `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
