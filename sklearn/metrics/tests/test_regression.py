@@ -168,6 +168,7 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(max_error([0.0], [0.0]), 0.0)
     assert_almost_equal(explained_variance_score([0.0], [0.0]), 1.0)
     assert_almost_equal(r2_score([0.0, 1], [0.0, 1]), 1.0)
+    assert_almost_equal(d2_absolute_error_score([0.0, 1], [0.0, 1]), 1.0)
     msg = (
         "Mean Squared Logarithmic Error cannot be used when targets "
         "contain negative values."
@@ -291,6 +292,7 @@ def test_regression_multioutput_array():
     mape = mean_absolute_percentage_error(y_true, y_pred, multioutput="raw_values")
     r = r2_score(y_true, y_pred, multioutput="raw_values")
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
+    d2aes = d2_absolute_error_score(y_true, y_pred, multioutput='raw_values')
 
     assert_array_almost_equal(mse, [0.125, 0.5625], decimal=2)
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
@@ -298,6 +300,7 @@ def test_regression_multioutput_array():
     assert_array_almost_equal(mape, [0.0778, 0.2262], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
+    assert_array_almost_equal(d2aes, [0.833, 0.722], decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
@@ -307,10 +310,12 @@ def test_regression_multioutput_array():
     mae = mean_absolute_error(y_true, y_pred, multioutput="raw_values")
     pbl = mean_pinball_loss(y_true, y_pred, multioutput="raw_values")
     r = r2_score(y_true, y_pred, multioutput="raw_values")
+    d2aes = d2_absolute_error_score(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(mse, [1.0, 1.0], decimal=2)
     assert_array_almost_equal(mae, [1.0, 1.0], decimal=2)
     assert_array_almost_equal(pbl, [0.5, 0.5], decimal=2)
     assert_array_almost_equal(r, [0.0, 0.0], decimal=2)
+    assert_array_almost_equal(d2aes, [0.0, 0.0], decimal=2)
 
     r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput="raw_values")
     assert_array_almost_equal(r, [0, -3.5], decimal=2)
@@ -332,6 +337,8 @@ def test_regression_multioutput_array():
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(evs, [1.0, -3.0], decimal=2)
     assert np.mean(evs) == explained_variance_score(y_true, y_pred)
+    d2aes = d2_absolute_error_score(y_true, y_pred, multioutput="raw_values")
+    assert_array_almost_equal(d2aes, [1.0, -1.0], decimal=2)
 
     # Handling msle separately as it does not accept negative inputs.
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
