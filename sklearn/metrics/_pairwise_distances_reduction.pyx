@@ -162,8 +162,8 @@ cdef class PairwiseDistancesReduction:
 
         ITYPE_t n_samples_chunk, chunk_size
 
-        ITYPE_t n_samples_X, X_n_samples_chunk, X_n_chunks, X_n_samples_remainder
-        ITYPE_t n_samples_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_remainder
+        ITYPE_t n_samples_X, X_n_samples_chunk, X_n_chunks, X_n_samples_last_chunk
+        ITYPE_t n_samples_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_last_chunk
 
         bint execute_in_parallel_on_Y
 
@@ -233,16 +233,24 @@ cdef class PairwiseDistancesReduction:
         self.n_samples_X = datasets_pair.n_samples_X()
         self.X_n_samples_chunk = min(self.n_samples_X, self.chunk_size)
         X_n_full_chunks = self.n_samples_X // self.X_n_samples_chunk
-        self.X_n_samples_remainder = self.n_samples_X % self.X_n_samples_chunk
+        X_n_samples_remainder = self.n_samples_X % self.X_n_samples_chunk
+        self.X_n_chunks = X_n_full_chunks + (X_n_samples_remainder != 0)
+
+        if X_n_samples_remainder != 0:
+            self.X_n_samples_last_chunk = X_n_samples_remainder
+        else:
+            self.X_n_samples_last_chunk = self.X_n_samples_chunk
 
         self.n_samples_Y = datasets_pair.n_samples_Y()
         self.Y_n_samples_chunk = min(self.n_samples_Y, self.chunk_size)
         Y_n_full_chunks = self.n_samples_Y // self.Y_n_samples_chunk
-        self.Y_n_samples_remainder = self.n_samples_Y % self.Y_n_samples_chunk
+        Y_n_samples_remainder = self.n_samples_Y % self.Y_n_samples_chunk
+        self.Y_n_chunks = Y_n_full_chunks + (Y_n_samples_remainder != 0)
 
-        # Counting remainder chunk in total number of chunks
-        self.X_n_chunks = X_n_full_chunks + (self.X_n_samples_remainder != 0)
-        self.Y_n_chunks = Y_n_full_chunks + (self.Y_n_samples_remainder != 0)
+        if Y_n_samples_remainder != 0:
+            self.Y_n_samples_last_chunk = Y_n_samples_remainder
+        else:
+            self.Y_n_samples_last_chunk = self.Y_n_samples_chunk
 
         if strategy is None:
             strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
@@ -293,9 +301,8 @@ cdef class PairwiseDistancesReduction:
 
             for X_chunk_idx in prange(self.X_n_chunks, schedule='static'):
                 X_start = X_chunk_idx * self.X_n_samples_chunk
-                if (X_chunk_idx == self.X_n_chunks - 1
-                    and self.X_n_samples_remainder > 0):
-                    X_end = X_start + self.X_n_samples_remainder
+                if X_chunk_idx == self.X_n_chunks - 1:
+                    X_end = X_start + self.X_n_samples_last_chunk
                 else:
                     X_end = X_start + self.X_n_samples_chunk
 
@@ -304,9 +311,8 @@ cdef class PairwiseDistancesReduction:
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
-                    if (Y_chunk_idx == self.Y_n_chunks - 1
-                        and self.Y_n_samples_remainder > 0):
-                        Y_end = Y_start + self.Y_n_samples_remainder
+                    if Y_chunk_idx == self.Y_n_chunks - 1:
+                        Y_end = Y_start + self.Y_n_samples_last_chunk
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
@@ -351,8 +357,8 @@ cdef class PairwiseDistancesReduction:
 
         for X_chunk_idx in range(self.X_n_chunks):
             X_start = X_chunk_idx * self.X_n_samples_chunk
-            if X_chunk_idx == self.X_n_chunks - 1 and self.X_n_samples_remainder > 0:
-                X_end = X_start + self.X_n_samples_remainder
+            if X_chunk_idx == self.X_n_chunks - 1:
+                X_end = X_start + self.X_n_samples_last_chunk
             else:
                 X_end = X_start + self.X_n_samples_chunk
 
@@ -364,9 +370,8 @@ cdef class PairwiseDistancesReduction:
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
-                    if Y_chunk_idx == self.Y_n_chunks - 1 \
-                            and self.Y_n_samples_remainder > 0:
-                        Y_end = Y_start + self.Y_n_samples_remainder
+                    if Y_chunk_idx == self.Y_n_chunks - 1:
+                        Y_end = Y_start + self.Y_n_samples_last_chunk
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
 
