@@ -98,6 +98,8 @@ the meta-estimator will raise an error if the user provides {metadata}
             - str: {metadata} should be passed to the meta-estimator with this given \
 alias instead of the original name.
 
+            The default (UNCHANGED) retains the existing request. This allows
+            you to change the request for some parameters and not others.
 """
 REQUESTER_DOC_RETURN = """        Returns
         -------
@@ -220,7 +222,7 @@ class MethodMetadataRequest:
                 "consume and use the metadata."
             )
 
-    def _get_params(self, params=None):
+    def _route_params(self, params=None):
         """Return the input parameters requested by the method.
 
         The output of this method can be used directly as the input to the
@@ -359,7 +361,7 @@ class MetadataRequest:
         """
         return getattr(self, method)._get_param_names(original_names=original_names)
 
-    def _get_params(self, *, method, params):
+    def _route_params(self, *, method, params):
         """Return the input parameters requested by a method.
 
         The output of this method can be used directly as the input to the
@@ -380,7 +382,7 @@ class MetadataRequest:
             A :class:`~utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
-        return getattr(self, method)._get_params(params=params)
+        return getattr(self, method)._route_params(params=params)
 
     def _check_warnings(self, *, method, params):
         """Check whether metadata is passed which is marked as WARN.
@@ -616,7 +618,7 @@ class MetadataRouter:
 
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
-            :func:`~utils.metadata_requests.metadata_router_factory` on them.
+            :func:`~utils.metadata_requests.get_router_for_object` on them.
 
         Returns
         -------
@@ -627,7 +629,7 @@ class MetadataRouter:
             method_mapping = MethodMapping.from_str(method_mapping)
         for name, obj in objs.items():
             self._route_mappings[name] = RouteMappingPair(
-                mapping=method_mapping, routing=metadata_router_factory(obj)
+                mapping=method_mapping, routing=get_router_for_object(obj)
             )
         return self
 
@@ -702,18 +704,18 @@ class MetadataRouter:
         """
         res = Bunch()
         if self._self:
-            res.update(self._self._get_params(params=params, method=method))
+            res.update(self._self._route_params(params=params, method=method))
         param_names = self._get_param_names(
             method=method, original_names=False, ignore_self=True
         )
         res.update({key: value for key, value in params.items() if key in param_names})
         return res
 
-    def get_params(self, *, method, params):
-        """Return the input parameters requested by a child objects.
+    def route_params(self, *, method, params):
+        """Return the input parameters requested by child objects.
 
         The output of this method is a bunch, which includes the inputs for all
-        methods of each child object that are used in the router's `"method"`.
+        methods of each child object that are used in the router's `method`.
 
         If the router is also a consumer, it also checks for warnings of
         `self`'s/consumer's requested metadata.
@@ -722,7 +724,8 @@ class MetadataRouter:
         ----------
         method : str
             The name of the method for which the parameters are requested and
-            routed.
+            routed. If called inside the :term:`fit` method of a router, it
+            would be `"fit"`.
 
         params : dict
             A dictionary of provided metadata.
@@ -746,7 +749,7 @@ class MetadataRouter:
             for orig_method, used_in in mapping:
                 if used_in == method:
                     if isinstance(router, MetadataRequest):
-                        res[name][orig_method] = router._get_params(
+                        res[name][orig_method] = router._route_params(
                             params=params, method=orig_method
                         )
                     else:
@@ -765,7 +768,8 @@ class MetadataRouter:
         ----------
         method : str
             The name of the method for which the parameters are requested and
-            routed.
+            routed. If called inside the :term:`fit` method of a router, it
+            would be `"fit"`.
 
         params : dict
             A dictionary of provided metadata.
@@ -831,7 +835,7 @@ class MetadataRouter:
 
         _self = obj.pop("^self", None)
         if _self:
-            res.add_self(metadata_router_factory(_self))
+            res.add_self(get_router_for_object(_self))
 
         for name, route_mapping in obj.items():
             res.add(
@@ -855,7 +859,7 @@ class MetadataRouter:
         return str(repr(self))
 
 
-def metadata_router_factory(obj=None):
+def get_router_for_object(obj=None):
     """Get a ``Metadata{Router, Request}`` instance from the given object.
 
     This factory function returns a
@@ -871,11 +875,15 @@ def metadata_router_factory(obj=None):
     Parameters
     ----------
     obj : object
-        - If the object is already a `MetadataRequest` or a `MetadataRouter`,
-            return a copy that.
+        - If the object is already a
+            :class:`~utils.metadata_requests.MetadataRequest` or a
+            :class:`~utils.metadata_requests.MetadataRouter`, return a copy
+            of that.
         - If the object provides a `get_metadata_routing` method, return a copy
             of the output of the method.
         - If the object is a dict, return the deserialized instance from it.
+        - If ``None``, return an empty
+            :class:`~utils.metadata_requests.MetadataRequest`.
 
     Returns
     -------
@@ -889,7 +897,7 @@ def metadata_router_factory(obj=None):
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
     if hasattr(obj, "get_metadata_routing"):
-        return metadata_router_factory(obj.get_metadata_routing())
+        return get_router_for_object(obj.get_metadata_routing())
 
     if isinstance(obj, (MetadataRouter, MetadataRequest)):
         return deepcopy(obj)
@@ -1098,7 +1106,7 @@ class _MetadataRequester:
             A :class:`~.utils.metadata_requests.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
-            requests = metadata_router_factory(self._metadata_request)
+            requests = get_router_for_object(self._metadata_request)
         else:
             requests = self._get_default_requests()
 
@@ -1187,9 +1195,9 @@ def process_routing(func):
         else:
             routed_params = considered_params
 
-        request_routing = metadata_router_factory(obj)
+        request_routing = get_router_for_object(obj)
         request_routing.validate_metadata(params=routed_params, method=method_name)
-        params = request_routing.get_params(params=routed_params, method=method_name)
+        params = request_routing.route_params(params=routed_params, method=method_name)
 
         # create a dict of other parameters and then add 'params' to them
         explicit_params = {
