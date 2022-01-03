@@ -383,6 +383,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         self.max_features_ = max_features
 
+        check_scalar(
+            self.warm_start,
+            "warm_start",
+            target_type=bool,
+        )
+
         if self.n_iter_no_change is not None:
             check_scalar(
                 self.n_iter_no_change,

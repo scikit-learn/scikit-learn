@@ -116,6 +116,16 @@ def test_classification_toy(loss):
         ({"max_features": 0}, ValueError, "max_features == 0, must be > 0."),
         ({"max_features": 100}, ValueError, "max_features == 100, must be <= "),
         ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be < 1."),
+        (
+            {"warm_start": 1},
+            TypeError,
+            "warm_start must be an instance of <class 'bool'>",
+        ),
+        (
+            {"warm_start": "foo"},
+            TypeError,
+            "warm_start must be an instance of <class 'bool'>",
+        ),
         ({"n_iter_no_change": -1}, ValueError, "n_iter_no_change == -1, must be > 0."),
         ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be > 0."),
         (
