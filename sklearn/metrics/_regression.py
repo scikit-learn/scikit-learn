@@ -1112,7 +1112,7 @@ def d2_absolute_error_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
     """
-    :math:`D^2` regression score function,
+    :math:`D^2` regression score function, \
     fraction of mean absolute error deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
@@ -1147,8 +1147,8 @@ def d2_absolute_error_score(
     Returns
     -------
     score : float or ndarray of floats
-        The :math:`D^2` score with a mean absolute error deviance \
-            or ndarray of scores if 'multioutput' is 'raw_values'.
+        The :math:`D^2` score with a mean absolute error deviance
+        or ndarray of scores if 'multioutput' is 'raw_values'.
 
     Notes
     -----
