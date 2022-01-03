@@ -123,19 +123,27 @@ cdef class PairwiseDistancesReduction:
     strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
         The chunking strategy defining which dataset parallelization are made on.
 
-        Strategies differs on the dispatching they use for chunks on threads:
+        For both strategies the computations happens with two nested loops,
+        respectively on chunks of X and chunks of Y.
+        Strategies differs on which loop (outer or inner) is made to run
+        in parallel with the Cython `prange` construct:
 
           - 'parallel_on_X' dispatches chunks of X uniformly on threads.
           Each thread then iterates on all the chunks of Y. This strategy is
           embarrassingly parallel and comes with no datastructures synchronisation.
 
           - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-          Each thread then iterates on all the chunks of X. This strategy is
-          embarrassingly parallel but uses intermediate datastructures
-          synchronisation.
+          Each thread processes all the chunks of X in turn. This strategy is
+          a sequence of embarrassingly parallel subtasks (the inner loop on Y
+          chunks) with intermediate datastructures synchronisation at each
+          iteration of the sequential outer loop on X chunks.
 
           - 'auto' relies on a simple heuristic to choose between
-          'parallel_on_X' and 'parallel_on_Y'.
+          'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
+          'parallel_on_X' is usually the most efficient strategy. When `X.shape[0]`
+          is small but `Y.shape[0]` is large, 'parallel_on_Y' brings more opportunity
+          for parallelism and is therefore more efficient despite the synchronization
+          step at each iteration of the outer loop on chunks of `X`.
 
           - None (default) looks-up in scikit-learn configuration for
           `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
@@ -278,7 +286,8 @@ cdef class PairwiseDistancesReduction:
     @final
     cdef void _parallel_on_X(self) nogil:
         """Compute the pairwise distances of each row vector of X on Y
-        by parallelizing computation on chunks of X and reduce them.
+        by parallelizing computation on the outer loop on chunks of X
+        and reduce them.
 
         This strategy dispatches chunks of X uniformly on threads.
         Each thread then iterates on all the chunks of Y. This strategy is
@@ -336,7 +345,8 @@ cdef class PairwiseDistancesReduction:
     @final
     cdef void _parallel_on_Y(self) nogil:
         """Compute the pairwise distances of each row vector of X on Y
-        by parallelizing computation on chunks of Y and reduce them.
+        by parallelizing computation on the inner loop on chunks of Y
+        and reduce them.
 
         This strategy dispatches chunks of Y uniformly on threads.
         Each thread then iterates on all the chunks of X. This strategy is
@@ -352,7 +362,7 @@ cdef class PairwiseDistancesReduction:
             ITYPE_t Y_start, Y_end, X_start, X_end, X_chunk_idx, Y_chunk_idx
             ITYPE_t thread_num
 
-        # Allocating datastructures
+        # Allocating datastructures shared by all threads
         self._parallel_on_Y_parallel_init()
 
         for X_chunk_idx in range(self.X_n_chunks):
@@ -659,7 +669,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             sizeof(ITYPE_t *) * self.chunks_n_threads
         )
 
-        # Main heaps used by PairwiseDistancesArgKmin._compute to return results.
+        # Main heaps which will be returned as results by `PairwiseDistancesArgKmin.compute`.
         self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=DTYPE)
 
@@ -685,8 +695,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             DTYPE_t *heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
-        # Pushing the distance and their associated indices on heaps
-        # which keep tracks of the argkmin.
+        # Pushing the distances and their associated indices on a heap
+        # which by construction will keep track of the argkmin.
         for i in range(n_samples_X):
             for j in range(n_samples_Y):
                 heap_push(
@@ -718,7 +728,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         cdef:
             ITYPE_t idx, jdx
 
-        # Sorting indices of the argkmin for each query vector of X
+        # Sorting the main heaps portion associated to `X[X_start:X_end]`
+        # in ascending order w.r.t the distances.
         for idx in range(X_end - X_start):
             simultaneous_sort(
                 self.heaps_r_distances_chunks[thread_num] + idx * self.k,
@@ -736,7 +747,9 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         # The allocation is done in parallel for data locality purposes: this way
         # the heaps used in each threads are allocated in pages which are closer
-        # to processor core used by the thread.
+        # to the CPU core used by the thread.
+        # See comments about First Touch Placement Policy:
+        # https://www.openmp.org/wp-content/uploads/openmp-webinar-vanderPas-20210318.pdf #noqa
         for thread_num in prange(self.chunks_n_threads, schedule='static', nogil=True,
                                  num_threads=self.chunks_n_threads):
             # As chunks of X are shared across threads, so must their
@@ -770,9 +783,11 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Synchronising the thread heaps with the main heaps.
             # This is done in parallel sample-wise (no need for locks).
-            # This might break each thread's data locality a bit but
-            # but this is negligible and this parallel pattern has
-            # shown to be efficient in practice.
+            # 
+            # This might break each thread's data locality as each heap which
+            # was allocated in a thread is being now being used in several threads.
+            # 
+            # Still, this parallel pattern has shown to be efficient in practice.
             for idx in prange(X_end - X_start, schedule="static"):
                 for thread_num in range(self.chunks_n_threads):
                     for jdx in range(self.k):
@@ -796,8 +811,8 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 free(self.heaps_r_distances_chunks[thread_num])
                 free(self.heaps_indices_chunks[thread_num])
 
-            # Sort the main heaps into arrays in parallel
-            # in ascending order w.r.t the distances
+            # Sorting the main in ascending order w.r.t the distances.
+            # This is done in parallel sample-wise (no need for locks). 
             for idx in prange(self.n_samples_X, schedule='static'):
                 simultaneous_sort(
                     &self.argkmin_distances[idx, 0],
