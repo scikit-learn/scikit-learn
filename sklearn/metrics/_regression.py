@@ -1112,13 +1112,13 @@ def d2_absolute_error_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
     """
-    :math: `D^2` regression score function,
+    :math:`D^2` regression score function,
     fraction of mean absolute error deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical mean of `y_true`
     as constant prediction, disregarding the input features,
-    gets a :math: `D^2` score of 0.0.
+    gets a :math:`D^2` score of 0.0.
 
     Read more in the :ref:`User Guide <d2_absolute_error_score>`.
 
@@ -1154,7 +1154,7 @@ def d2_absolute_error_score(
     -----
     This is not a symmetric function.
 
-    Like :math: `R^2`, :math: `D^2` score may be negative
+    Like :math:`R^2`, :math:`D^2` score may be negative
     (it need not actually be the square of a quantity D).
 
     This metric is not well-defined for single samples and will return a NaN
