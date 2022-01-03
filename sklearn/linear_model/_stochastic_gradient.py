@@ -1007,7 +1007,6 @@ class SGDClassifier(BaseSGDClassifier):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        Values should be in the range `[-1, inf)`.
 
     random_state : int, RandomState instance, default=None
         Used for shuffling the data, when ``shuffle`` is set to ``True``.
