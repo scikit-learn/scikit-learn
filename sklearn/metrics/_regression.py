@@ -709,7 +709,8 @@ def explained_variance_score(
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
-        for model optimization procedures (e.g. grid search cross-validation).
+        for hyperparameters' search procedures (e.g. grid search
+        cross-validation).
 
         .. versionadded:: 1.1
 
@@ -832,7 +833,8 @@ def r2_score(
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
         data should be replaced with real numbers (``1.0`` if prediction is
         perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
-        for model optimization procedures (e.g. grid search cross-validation).
+        for hyperparameters' search procedures (e.g. grid search
+        cross-validation).
 
         .. versionadded:: 1.1
 
