@@ -101,6 +101,8 @@ Scoring                                Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
+'d2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
+'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
 
 
@@ -1963,7 +1965,7 @@ The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
 :func:`mean_absolute_error`, :func:`explained_variance_score`,
-:func:`r2_score` and :func:`mean_pinball_loss`.
+:func:`r2_score`, :func:`mean_pinball_loss` and :func:`d2_absolute_error_score`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -2356,33 +2358,65 @@ the difference in errors decreases. Finally, by setting, ``power=2``::
 we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
 
-.. _d2_tweedie_score:
+.. _d2_score:
 
 D² score, the coefficient of determination
 -------------------------------------------
 
-The :func:`d2_tweedie_score` function computes the percentage of deviance
-explained. It is a generalization of R², where the squared error is replaced by
-the Tweedie deviance. D², also known as McFadden's likelihood ratio index, is
-calculated as
+The D² score computes the fraction of deviance explained. 
+It is a generalization of R², where the squared error is generalized and replaced 
+by a measure of choice :math:`\text{D}(y, \hat{y})`
+(e.g., the Tweedie deviance or mean absolute error). It is calculated as
 
 .. math::
 
   D^2(y, \hat{y}) = 1 - \frac{\text{D}(y, \hat{y})}{\text{D}(y, \bar{y})} \,.
-
-The argument ``power`` defines the Tweedie power as for
-:func:`mean_tweedie_deviance`. Note that for `power=0`,
-:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A constant model that always predicts the
 expected value of y, disregarding the input features, would get a D² score
 of 0.0.
 
+D² Tweedie score
+^^^^^^^^^^^^^^^^
+
+:func:`d2_tweedie_score` implements the special case of D² 
+where :math:`\text{D}(y, \hat{y})` is the log-likelihood (Tweedie deviance) 
+also known as D² Tweedie or McFadden's likelihood ratio index.
+
+The argument ``power`` defines the Tweedie power as for
+:func:`mean_tweedie_deviance`. Note that for `power=0`,
+:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+
 A scorer object with a specific choice of ``power`` can be built by::
 
   >>> from sklearn.metrics import d2_tweedie_score, make_scorer
   >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
+
+D² absolute error score
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`d2_absolute_error_score` implements the special case of
+
+.. math::
+
+  D(y, \hat{y}) = \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
+
+Here are some usage examples of the :func:`d2_absolute_error_score` function::
+
+  >>> from sklearn.metrics import d2_absolute_error_score
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  0.764...
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [1, 2, 3]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  1.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [2, 2, 2]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  0.0
 
 .. _pinball_loss:
 

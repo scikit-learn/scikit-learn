@@ -1011,7 +1011,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     arbitrarily worse). A model that always uses the empirical mean of `y_true` as
     constant prediction, disregarding the input features, gets a D^2 score of 0.0.
 
-    Read more in the :ref:`User Guide <d2_tweedie_score>`.
+    Read more in the :ref:`User Guide <d2_score>`.
 
     .. versionadded:: 1.0
 
@@ -1120,7 +1120,7 @@ def d2_absolute_error_score(
     as constant prediction, disregarding the input features,
     gets a :math:`D^2` score of 0.0.
 
-    Read more in the :ref:`User Guide <d2_absolute_error_score>`.
+    Read more in the :ref:`User Guide <d2_score>`.
 
     Parameters
     ----------
