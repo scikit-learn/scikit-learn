@@ -981,7 +981,7 @@ class SGDClassifier(BaseSGDClassifier):
         epochs.
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
-        Values should be in the range `(0.0, inf)`.
+        Values should be in the range `[0.0, inf)`.
 
         .. versionadded:: 0.19
 
