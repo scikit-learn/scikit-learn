@@ -155,7 +155,7 @@ def test_multioutput_regression():
     ]
     # in the last case, the denominator vanishes and hence we get nan,
     # but since the the numerator vanishes as well the expected score is 1.0
-    raw_expected_score = np.nan_to_num(raw_expected_score, nan=1.0)
+    raw_expected_score = np.where(np.isnan(raw_expected_score), 1, raw_expected_score)
     assert_array_almost_equal(score, raw_expected_score)
 
     score = d2_absolute_error_score(y_true, y_pred, multioutput="uniform_average")
