@@ -1012,7 +1012,7 @@ class SGDClassifier(BaseSGDClassifier):
         Used for shuffling the data, when ``shuffle`` is set to ``True``.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-        Values should be in the range `[0, inf)`.
+        Integer values should be in the range `[0, 2**32 - 1]`.
 
     learning_rate : str, default='optimal'
         The learning rate schedule:
