@@ -115,7 +115,7 @@ Changelog
   :class:`cross_decomposition.CCA`,
   :class:`cross_decomposition.PLSSVD`,
   :class:`cross_decomposition.PLSRegression`,
-  and :class:`cross_decomposition.PLSCanonical`. :pr:`xxxxx` by `Thomas Fan`_.
+  and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
