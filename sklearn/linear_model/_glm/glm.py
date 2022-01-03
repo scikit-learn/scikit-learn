@@ -168,28 +168,18 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        if isinstance(self.family, ExponentialDispersionModel):
-            self._family_instance = self.family
-        elif self.family in EDM_DISTRIBUTIONS:
-            self._family_instance = EDM_DISTRIBUTIONS[self.family]()
-        else:
-            raise ValueError(
-                "The family must be an instance of class"
-                " ExponentialDispersionModel or an element of"
-                " ['normal', 'poisson', 'gamma', 'inverse-gaussian']"
-                "; got (family={0})".format(self.family)
-            )
 
+        family_instance = self._get_family_instance()
         # Guarantee that self._link_instance is set to an instance of
         # class BaseLink
         if isinstance(self.link, BaseLink):
             self._link_instance = self.link
         else:
             if self.link == "auto":
-                if isinstance(self._family_instance, TweedieDistribution):
-                    if self._family_instance.power <= 0:
+                if isinstance(family_instance, TweedieDistribution):
+                    if family_instance.power <= 0:
                         self._link_instance = IdentityLink()
-                    if self._family_instance.power >= 1:
+                    if family_instance.power >= 1:
                         self._link_instance = LogLink()
                 else:
                     raise ValueError(
@@ -243,7 +233,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "The argument warm_start must be bool; got {0}".format(self.warm_start)
             )
 
-        family = self._family_instance
         link = self._link_instance
 
         X, y = self._validate_data(
@@ -259,10 +248,10 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         _, n_features = X.shape
 
-        if not np.all(family.in_y_range(y)):
+        if not np.all(family_instance.in_y_range(y)):
             raise ValueError(
                 "Some value(s) of y are out of the valid range for family {0}".format(
-                    family.__class__.__name__
+                    family_instance.__class__.__name__
                 )
             )
         # TODO: if alpha=0 check that X is not rank deficient
@@ -305,7 +294,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 objp[offset:] += coef_scaled
                 return obj, objp
 
-            args = (X, y, weights, self.alpha, family, link)
+            args = (X, y, weights, self.alpha, family_instance, link)
 
             opt_res = scipy.optimize.minimize(
                 func,
@@ -411,22 +400,27 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         #       input validation and so on)
         weights = _check_sample_weight(sample_weight, X)
         y_pred = self.predict(X)
-        dev = self._family_instance.deviance(y, y_pred, weights=weights)
+        family_instance = self._get_family_instance()
+        dev = family_instance.deviance(y, y_pred, weights=weights)
         y_mean = np.average(y, weights=weights)
-        dev_null = self._family_instance.deviance(y, y_mean, weights=weights)
+        dev_null = family_instance.deviance(y, y_mean, weights=weights)
         return 1 - dev / dev_null
 
-    def _more_tags(self):
-        # create the _family_instance if fit wasn't called yet.
-        if hasattr(self, "_family_instance"):
-            _family_instance = self._family_instance
-        elif isinstance(self.family, ExponentialDispersionModel):
-            _family_instance = self.family
+    def _get_family_instance(self):
+        if isinstance(self.family, ExponentialDispersionModel):
+            return self.family
         elif self.family in EDM_DISTRIBUTIONS:
-            _family_instance = EDM_DISTRIBUTIONS[self.family]()
+            return EDM_DISTRIBUTIONS[self.family]()
         else:
-            raise ValueError
-        return {"requires_positive_y": not _family_instance.in_y_range(-1.0)}
+            raise ValueError(
+                "The family must be an instance of class"
+                " ExponentialDispersionModel or an element of"
+                " ['normal', 'poisson', 'gamma', 'inverse-gaussian']"
+                "; got (family={0})".format(self.family)
+            )
+
+    def _more_tags(self):
+        return {"requires_positive_y": not self._get_family_instance().in_y_range(-1.0)}
 
 
 class PoissonRegressor(GeneralizedLinearRegressor):
@@ -787,11 +781,12 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         warm_start=False,
         verbose=0,
     ):
+        self.power = power
 
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            family=TweedieDistribution(power=power),
+            family="tweedie",
             link=link,
             max_iter=max_iter,
             tol=tol,
@@ -802,18 +797,13 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     @property
     def family(self):
         """Return the family of the regressor."""
-        # We use a property with a setter to make sure that the family is
-        # always a Tweedie distribution, and that self.power and
-        # self.family.power are identical by construction.
-        dist = TweedieDistribution(power=self.power)
-        # TODO: make the returned object immutable
-        return dist
+        # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
+        return "tweedie"
 
     @family.setter
     def family(self, value):
-        if isinstance(value, TweedieDistribution):
-            self.power = value.power
-        else:
-            raise TypeError(
-                "TweedieRegressor.family must be of type TweedieDistribution!"
-            )
+        if value != "tweedie":
+            raise ValueError("TweedieRegressor.family must be 'tweedie'!")
+
+    def _get_family_instance(self):
+        return TweedieDistribution(power=self.power)

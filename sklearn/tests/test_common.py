@@ -427,7 +427,6 @@ VALIDATE_ESTIMATOR_INIT = [
     "FeatureUnion",
     "SGDOneClassSVM",
     "TheilSenRegressor",
-    "TweedieRegressor",
 ]
 VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 

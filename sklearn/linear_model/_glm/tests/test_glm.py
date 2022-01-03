@@ -71,7 +71,7 @@ def test_glm_family_argument(name, instance):
     y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(family=name, alpha=0).fit(X, y)
-    assert isinstance(glm._family_instance, instance.__class__)
+    assert isinstance(glm._get_family_instance(), instance.__class__)
 
     glm = GeneralizedLinearRegressor(family="not a family")
     with pytest.raises(ValueError, match="family must be"):
@@ -429,23 +429,22 @@ def test_gamma_regression_family(regression_data):
 
 
 def test_tweedie_regression_family(regression_data):
-    # Make sure the family attribute is always a TweedieDistribution and that
+    # Make sure the family is a TweedieDistribution and that
     # the power attribute is properly updated
     power = 2.0
     est = TweedieRegressor(power=power)
-    assert isinstance(est.family, TweedieDistribution)
-    assert est.family.power == power
+    assert isinstance(est._get_family_instance(), TweedieDistribution)
+    assert est._get_family_instance().power == power
     assert est.power == power
 
     new_power = 0
-    new_family = TweedieDistribution(power=new_power)
-    est.family = new_family
-    assert isinstance(est.family, TweedieDistribution)
-    assert est.family.power == new_power
+    est.power = new_power
+    assert isinstance(est._get_family_instance(), TweedieDistribution)
+    assert est._get_family_instance().power == new_power
     assert est.power == new_power
 
-    msg = "TweedieRegressor.family must be of type TweedieDistribution!"
-    with pytest.raises(TypeError, match=msg):
+    msg = "TweedieRegressor.family must be 'tweedie'!"
+    with pytest.raises(ValueError, match=msg):
         est.family = None
 
 
