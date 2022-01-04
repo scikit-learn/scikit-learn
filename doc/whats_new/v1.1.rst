@@ -168,6 +168,10 @@ Changelog
   and :class:`decomposition.SparseCoder` preserve dtype for `numpy.float32`.
   :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
+- |Enhancement| :class:`decomposition.SparsePCA` and :class:`decomposition.MiniBatchSparsePCA`
+  preserve dtype for `numpy.float32`.
+  :pr:`22111` by :user:`Takeshi Oura <takoika>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
   :class:`~sklearn.decomposition.DictionaryLearning`,
