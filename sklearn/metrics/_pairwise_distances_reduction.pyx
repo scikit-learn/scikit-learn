@@ -575,8 +575,15 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         Returns
         -------
-            Indices of argkmin for each vector in X and its associated distances
-            if return_distance=True.
+            If return_distance=False:
+              - argkmin_indices : ndarray of shape (n_samples_X, k)
+                Indices of the argkmin for each vector in X.
+
+            If return_distance=True:
+              - argkmin_indices : ndarray of shape (n_samples_X, k)
+                Indices of the argkmin for each vector in X.
+              - argkmin_distances : ndarray of shape (n_samples_X, k)
+                Distances to the argkmin for each vector in X.
 
         Notes
         -----
@@ -812,6 +819,6 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             # We need to recompute distances because we relied on
             # surrogate distances for the reduction.
             self.compute_exact_distances()
-            return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
+            return np.asarray(self.argkmin_indices), np.asarray(self.argkmin_distances)
 
         return np.asarray(self.argkmin_indices)

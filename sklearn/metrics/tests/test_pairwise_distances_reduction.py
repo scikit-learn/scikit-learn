@@ -158,14 +158,14 @@ def test_chunk_size_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+    ref_indices, ref_dist = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
         return_distance=True,
     )
 
-    dist, indices = PairwiseDistancesReduction.compute(
+    indices, dist = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -204,14 +204,14 @@ def test_n_threads_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+    ref_indices, ref_dist = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
         return_distance=True,
     )
 
-    dist, indices = PairwiseDistancesReduction.compute(
+    indices, dist = PairwiseDistancesReduction.compute(
         X, Y, parameter, n_threads=1, return_distance=True
     )
 
@@ -251,7 +251,7 @@ def test_strategies_consistency(
         else 10 ** np.log(n_features)
     )
 
-    dist_par_X, indices_par_X = PairwiseDistancesReduction.compute(
+    indices_par_X, dist_par_X = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -264,7 +264,7 @@ def test_strategies_consistency(
         return_distance=True,
     )
 
-    dist_par_Y, indices_par_Y = PairwiseDistancesReduction.compute(
+    indices_par_Y, dist_par_Y = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -318,7 +318,7 @@ def test_euclidean_translation_invariance(
         X = np.ascontiguousarray(X[:, :2])
         Y = np.ascontiguousarray(Y[:, :2])
 
-    reference_dist, reference_indices = PairwiseDistancesReduction.compute(
+    reference_indices, reference_dist = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -327,7 +327,7 @@ def test_euclidean_translation_invariance(
         return_distance=True,
     )
 
-    dist, indices = PairwiseDistancesReduction.compute(
+    indices, dist = PairwiseDistancesReduction.compute(
         X + 0,
         Y + 0,
         parameter,
