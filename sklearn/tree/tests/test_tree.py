@@ -2023,22 +2023,6 @@ def assert_is_subtree(tree, subtree):
             )
 
 
-def test_prune_tree_raises_negative_ccp_alpha():
-    clf = DecisionTreeClassifier()
-    msg = "must be >= 0.0."
-
-    with pytest.raises(ValueError, match=msg):
-        clf.set_params(ccp_alpha=-1.0)
-        clf.fit(X, y)
-
-    clf.set_params(ccp_alpha=0.0)
-    clf.fit(X, y)
-
-    with pytest.raises(ValueError, match=msg):
-        clf.set_params(ccp_alpha=-1.0)
-        clf._prune_tree()
-
-
 def check_apply_path_readonly(name):
     X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE, copy=False))
     y_readonly = create_memmap_backed_data(np.array(y_small, dtype=tree._tree.DTYPE))

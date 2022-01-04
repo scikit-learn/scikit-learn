@@ -573,9 +573,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         """Prune tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self)
 
-        if self.ccp_alpha < 0.0:
-            raise ValueError("must be >= 0.0.")
-
         if self.ccp_alpha == 0.0:
             return
 
