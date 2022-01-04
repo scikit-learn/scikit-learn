@@ -389,6 +389,7 @@ def test_random_projection_feature_names_out(random_projection_cls):
 def test_random_projection_dtype_match(
     random_projection_cls, input_dtype, expected_dtype
 ):
+    # Verify output matrix dtype
     rng = np.random.RandomState(42)
     X = rng.rand(25, 3000)
     rp = random_projection_cls(random_state=0)
@@ -400,6 +401,7 @@ def test_random_projection_dtype_match(
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
 def test_random_projection_numerical_consistency(random_projection_cls):
+    # Verify numerical consistency among np.float32 and np.float64
     atol = 1e-5
     rng = np.random.RandomState(42)
     X = rng.rand(25, 3000)
