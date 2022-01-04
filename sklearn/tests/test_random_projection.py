@@ -392,7 +392,10 @@ def test_random_projection_dtype_match(
     rng = np.random.RandomState(42)
     X = rng.rand(25, 3000)
     rp = random_projection_cls(random_state=0)
-    assert rp.fit_transform(X.astype(input_dtype)).dtype == expected_dtype
+    transformed = rp.fit_transform(X.astype(input_dtype))
+
+    assert rp.components_.dtype == expected_dtype
+    assert transformed.dtype == expected_dtype
 
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
@@ -400,7 +403,15 @@ def test_random_projection_numerical_consistency(random_projection_cls):
     atol = 1e-5
     rng = np.random.RandomState(42)
     X = rng.rand(25, 3000)
-    rp = random_projection_cls(random_state=0)
-    projection_32 = rp.fit_transform(X.astype(np.float32))
-    projection_64 = rp.fit_transform(X.astype(np.float64))
+    rp_32 = random_projection_cls(random_state=0)
+    rp_64 = random_projection_cls(random_state=0)
+
+    projection_32 = rp_32.fit_transform(X.astype(np.float32))
+    projection_64 = rp_64.fit_transform(X.astype(np.float64))
+
     assert_allclose(projection_64, projection_32, atol=atol)
+
+    if random_projection_cls is SparseRandomProjection:
+        assert_allclose(rp_32.components_.todense(), rp_64.components_.todense())
+    else:
+        assert_allclose(rp_32.components_, rp_64.components_)
