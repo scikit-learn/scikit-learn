@@ -110,6 +110,13 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |API| Adds :term:`get_feature_names_out` to
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
