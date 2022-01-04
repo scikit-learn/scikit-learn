@@ -602,9 +602,9 @@ def test_error():
             "min_samples_split == 0.0, must be > 0.0",
         ),
         (
-            {"min_samples_split": 0.6},
+            {"min_samples_split": 1.1},
             ValueError,
-            "min_samples_split == 0.6, must be <= 0.5",
+            "min_samples_split == 1.1, must be <= 1.0",
         ),
         (
             {"min_samples_split": "foo"},
