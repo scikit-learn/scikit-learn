@@ -285,6 +285,10 @@ Changelog
   for the highs based solvers.
   :pr:`21086` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
 
+- |Fix| The input paramter `family` of :class:`linear_model.TweedieRegressor` is not
+  validated in `__init__` anymore. The input parameter `family` is now a string.
+  :pr:`22124` by :user:`Maren Westermann <marenwestermann>`.
+
 :mod:`sklearn.metrics`
 ......................
 
