@@ -110,6 +110,13 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.cross_decomposition` module:
+  :class:`cross_decomposition.CCA`,
+  :class:`cross_decomposition.PLSSVD`,
+  :class:`cross_decomposition.PLSRegression`,
+  and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
