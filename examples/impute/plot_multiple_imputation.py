@@ -378,7 +378,12 @@ plt.figure(figsize=(12, 6))
 ax1 = plt.subplot(111)
 for j in n:
     ax1.barh(
-        j, mse_means[j], xerr=mse_std[j], color=colors[j], alpha=0.6, align="center",
+        j,
+        mse_means[j],
+        xerr=mse_std[j],
+        color=colors[j],
+        alpha=0.6,
+        align="center",
     )
 
 ax1.set_title("MCAR Missingness")
