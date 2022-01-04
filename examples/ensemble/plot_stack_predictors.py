@@ -200,8 +200,6 @@ estimators = [
 # %%
 # While the implicit cv=5 is advisable in general, for the sake
 # of run time speed up we are setting cv=2 here.
-# Note that in the `cross_validate` call below, we keep the implicit
-# cv=5.
 stacking_regressor = StackingRegressor(
     estimators=estimators, cv=2, final_estimator=RidgeCV()
 )
@@ -261,7 +259,7 @@ for ax, (name, est) in zip(
     )
     elapsed_time = time.time() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=2, verbose=0, cv=2)
+    y_pred = cross_val_predict(est, X, y, n_jobs=2, verbose=0)
 
     plot_regression_results(
         ax,
