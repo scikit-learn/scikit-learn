@@ -178,16 +178,13 @@ Changelog
   :pr:`21448` by :user:`Oleh Kozynets <OlehKSS>` and
   :user:`Christian Ritter <chritter>`.
 
-:mod:`sklearn.linear_model`
-............................
-
-- |Fix| :class:`linear_model.TheilSenRegressor` now validates input parameter
-  max_subpopulation in `fit` instead of `__init__`.
-  :pr:`21767` by :user:`Maren Westermann <marenwestermann>`.
 - |Enhancement| :class:`SimpleImputer` now warns with feature names
   when features which are skipped due to the lack of any observed
   values in the training set.
   :pr:`21617` by :user:`Christian Ritter <chritter>`.
+
+:mod:`sklearn.linear_model`
+...........................
 
 - |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
   `predict` was performing an `argmax` on the scores obtained from
@@ -208,9 +205,6 @@ Changelog
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
-:mod:`sklearn.linear_model`
-...........................
-
 - |API| :class:`linear_model.LassoLarsIC` now exposes `noise_variance` as
   a parameter in order to provide an estimate of the noise variance.
   This is particularly relevant when `n_features > n_samples` and the
@@ -222,6 +216,10 @@ Changelog
   when the noise variance is not provided.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
+
+- |Fix| :class:`linear_model.TheilSenRegressor` now validates input parameter
+  max_subpopulation in `fit` instead of `__init__`.
+  :pr:`21767` by :user:`Maren Westermann <marenwestermann>`.
 
 :mod:`sklearn.metrics`
 ......................
