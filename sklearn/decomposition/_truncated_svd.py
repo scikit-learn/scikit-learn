@@ -85,9 +85,6 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     components_ : ndarray of shape (n_components, n_features)
         The right singular vectors of the input data.
 
-    U_ : ndarray of shape (n_samples, n_components)
-        The left singular vectors of the input data.
-
     explained_variance_ : ndarray of shape (n_components,)
         The variance of the training samples transformed by a projection to
         each component.
@@ -243,7 +240,6 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
 
-        self.U_ = U
         self.components_ = VT
 
         # As a result of the SVD approximation error on X ~ U @ Sigma @ V.T,

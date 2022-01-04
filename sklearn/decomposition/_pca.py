@@ -231,10 +231,6 @@ class PCA(_BasePCA):
         vectors of the centered input data, parallel to its eigenvectors.
         The components are sorted by ``explained_variance_``.
 
-    U_ : ndarray of shape (n_samples, n_components)
-        The left singular vectors of the centered input data.
-        The components are sorted by ``explained_variance_``.
-
     explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
         The variance estimation uses `n_samples - 1` degrees of freedom.
@@ -549,7 +545,6 @@ class PCA(_BasePCA):
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_ = components_[:n_components]
-        self.U_ = U[:, :n_components]
         self.n_components_ = n_components
         self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
@@ -618,7 +613,6 @@ class PCA(_BasePCA):
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_ = Vt
-        self.U_ = U
         self.n_components_ = n_components
 
         # Get variance explained by singular values

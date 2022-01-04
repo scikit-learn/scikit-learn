@@ -37,10 +37,6 @@ def test_solvers(X_sparse, solver, kind):
     # All elements are equal, but some elements are more equal than others.
     assert_allclose(comp_a[:9], comp[:9], rtol=1e-3)
     assert_allclose(comp_a[9:], comp[9:], atol=1e-2)
-    U_a = np.abs(svd_a.U_)
-    U = np.abs(svd.U_)
-    assert_allclose(U_a[9:], U[9:], atol=1e-2)
-    assert_allclose(U_a[9:], U[9:], rtol=1e-3)
 
 
 @pytest.mark.parametrize("n_components", (10, 25, 41))
@@ -49,7 +45,6 @@ def test_attributes(n_components, X_sparse):
     tsvd = TruncatedSVD(n_components).fit(X_sparse)
     assert tsvd.n_components == n_components
     assert tsvd.components_.shape == (n_components, n_features)
-    assert tsvd.U_.shape == (n_samples, n_components)
 
 
 @pytest.mark.parametrize("algorithm", SVD_SOLVERS)
