@@ -97,9 +97,9 @@ def ampute(X, missing_rate=0.75, strategy="MCAR"):
     X_out = X.copy()
     n_drop_per_feature = int(missing_rate * X.shape[0])
     for x in np.transpose(X_out):
-        if strategy == 'MCAR':
+        if strategy == "MCAR":
             prob = None
-        elif strategy == 'NMCAR':
+        elif strategy == "NMCAR":
             weights = special.expit(np.abs(x - x.mean()))
             prob = weights / weights.sum()
         drop_idx = np.random.choice(
@@ -141,8 +141,9 @@ def rubins_pooling_rules(m_coefs, m_vars_coefs):
     mean_coefs = np.mean(m_coefs, axis=0)
     mean_vars_coefs = np.mean(m_vars_coefs, axis=0)
     vars_coefs = np.var(m_coefs, axis=0, ddof=1)
-    total_var_coefs = (mean_vars_coefs +
-                       (1 + 1 / vars_coefs.shape[0]) * vars_coefs)
+    total_var_coefs = (
+        mean_vars_coefs + (1 + 1 / vars_coefs.shape[0]) * vars_coefs
+    )
     return mean_coefs, total_var_coefs
 
 
@@ -151,24 +152,28 @@ def rubins_pooling_rules(m_coefs, m_vars_coefs):
 # IMPUTATION IN A LINEAR REGRESSION MODEL.
 
 MAX_ITER = 20  # number of iterations in IterativeImputer
-ESTIMATOR = Pipeline(steps=[('scaler', StandardScaler()),
-                            ('regressor', BayesianRidge())])
+ESTIMATOR = Pipeline(
+    steps=[("scaler", StandardScaler()), ("regressor", BayesianRidge())]
+)
 
 
 def get_results_full_dataset(X, y):
     y_predict = ESTIMATOR.fit(X, y).predict(X)
     # return coefficients and variance of coefficients
-    return (ESTIMATOR.named_steps['regressor'].coef_,
-            variance_model_coef(y, y_predict, X))
+    return (
+        ESTIMATOR.named_steps["regressor"].coef_,
+        variance_model_coef(y, y_predict, X),
+    )
 
 
-def get_results_chained_imputation(X_ampute, y, random_state=0,
-                                   impute_with_y=False):
+def get_results_chained_imputation(
+    X_ampute, y, random_state=0, impute_with_y=False
+):
     # Impute incomplete data with IterativeImputer using single imputation
     # We perform MAX_ITER imputations and only use the last imputation.
-    imputer = IterativeImputer(max_iter=MAX_ITER,
-                               sample_posterior=True,
-                               random_state=random_state)
+    imputer = IterativeImputer(
+        max_iter=MAX_ITER, sample_posterior=True, random_state=random_state
+    )
     if impute_with_y:
         Xy = np.column_stack((X_ampute, y))
         # impute Xy, but exclude last column for subsequent regression
@@ -181,19 +186,21 @@ def get_results_chained_imputation(X_ampute, y, random_state=0,
     y_predict = ESTIMATOR.fit(X_imputed, y).predict(X_imputed)
 
     # Save the beta estimates, the variance of these estimates
-    return (ESTIMATOR.named_steps['regressor'].coef_,
-            variance_model_coef(y, y_predict, X_imputed))
+    return (
+        ESTIMATOR.named_steps["regressor"].coef_,
+        variance_model_coef(y, y_predict, X_imputed),
+    )
 
 
-def coef_var_mice_imputation(X_ampute, y, n_imputations=5,
-                             impute_with_y=False):
+def coef_var_mice_imputation(X_ampute, y, n_imputations=5, impute_with_y=False):
     # Train a model on each of the `m` imputed datasets
     # Estimate the estimates for each model/dataset
     m_coefs = []
     m_vars = []
     for i in range(n_imputations):
         m_coef, m_var = get_results_chained_imputation(
-            X_ampute, y, random_state=i, impute_with_y=impute_with_y)
+            X_ampute, y, random_state=i, impute_with_y=impute_with_y
+        )
         m_coefs.append(m_coef)
         m_vars.append(m_var)
 
@@ -230,33 +237,47 @@ X_ampute = ampute(X, strategy="MCAR")
 full_coefs, full_vars = get_results_full_dataset(X, y)
 chained_coefs, chained_vars = get_results_chained_imputation(X_ampute, y)
 mice_coefs, mice_vars = coef_var_mice_imputation(X_ampute, y)
-mice_y_coefs, mice_y_vars = coef_var_mice_imputation(X_ampute, y,
-                                                     impute_with_y=True)
+mice_y_coefs, mice_y_vars = coef_var_mice_imputation(
+    X_ampute, y, impute_with_y=True
+)
 
 # Combine the results from the four imputation procedures.
 coefs = [full_coefs, chained_coefs, mice_coefs, mice_y_coefs]
-standard_errors = [1.96 * np.sqrt(v) for v in
-                   (full_vars, chained_vars, mice_vars, mice_y_vars)]
+standard_errors = [
+    1.96 * np.sqrt(v) for v in (full_vars, chained_vars, mice_vars, mice_y_vars)
+]
 
 # And plot the results
 n_situations = 4
 n = np.arange(n_situations)
-n_labels = ['Full Data', 'IterativeImputer',
-            'Mice Imputer', 'Mice Imputer with y']
-colors = ['r', 'orange', 'b', 'purple']
+n_labels = [
+    "Full Data",
+    "IterativeImputer",
+    "Mice Imputer",
+    "Mice Imputer with y",
+]
+colors = ["r", "orange", "b", "purple"]
 width = 0.3
 plt.figure(figsize=(6, 8))
 
 plt1 = plt.subplot(211)
 for j in n:
-    plt1.bar(np.arange(len(coefs[j])) + (3*j*(width/n_situations)),
-             coefs[j], width=width, color=colors[j])
+    plt1.bar(
+        np.arange(len(coefs[j])) + (3 * j * (width / n_situations)),
+        coefs[j],
+        width=width,
+        color=colors[j],
+    )
 plt.legend(n_labels)
 
 plt2 = plt.subplot(212)
 for j in n:
-    plt2.bar(np.arange(len(standard_errors[j])) + (3*j*(width/n_situations)),
-             standard_errors[j], width=width, color=colors[j])
+    plt2.bar(
+        np.arange(len(standard_errors[j])) + (3 * j * (width / n_situations)),
+        standard_errors[j],
+        width=width,
+        color=colors[j],
+    )
 
 plt1.set_title("MCAR Missingness")
 plt1.set_ylabel("Beta Coefficients")
@@ -275,17 +296,22 @@ plt.show()
 # imputed dataset, and then calculate the evaluation metric.
 
 N_SIM = 3  # number of simulations in Example 2
-ESTIMATOR_IMPUTER = Pipeline(steps=[('imputer', IterativeImputer()),
-                                    ('scaler', StandardScaler()),
-                                    ('regressor', BayesianRidge())])
+ESTIMATOR_IMPUTER = Pipeline(
+    steps=[
+        ("imputer", IterativeImputer()),
+        ("scaler", StandardScaler()),
+        ("regressor", BayesianRidge()),
+    ]
+)
 
 
 # Use the IterativeImputer as a single imputation procedure.
-def get_mse_single_imputation(X_train, X_test, y_train, y_test,
-                              random_state=0):
-    ESTIMATOR_IMPUTER.set_params(imputer__max_iter=MAX_ITER,
-                                 imputer__sample_posterior=True,
-                                 imputer__random_state=random_state)
+def get_mse_single_imputation(X_train, X_test, y_train, y_test, random_state=0):
+    ESTIMATOR_IMPUTER.set_params(
+        imputer__max_iter=MAX_ITER,
+        imputer__sample_posterior=True,
+        imputer__random_state=random_state,
+    )
     y_predict = ESTIMATOR_IMPUTER.fit(X_train, y_train).predict(X_test)
 
     return mse(y_test, y_predict), y_predict
@@ -297,7 +323,8 @@ def get_mse_multiple_imputation_approach(X_train, X_test, y_train, y_test):
     multiple_predictions = []
     for i in range(num_mice_runs):
         _, y_predict = get_mse_single_imputation(
-            X_train, X_test, y_train, y_test, random_state=i)
+            X_train, X_test, y_train, y_test, random_state=i
+        )
         multiple_predictions.append(y_predict)
 
     # Average the predictions over the m loops
@@ -313,8 +340,14 @@ def perform_simulation(X, y, X_ampute, n_simulation=10):
     outcome = []
     for simulation_idx in range(n_simulation):
         # First, split the data in train and test dataset.
-        X_train, X_test, X_ampute_train, X_ampute_test, y_train, y_test = \
-            train_test_split(X, X_ampute, y, random_state=simulation_idx)
+        (
+            X_train,
+            X_test,
+            X_ampute_train,
+            X_ampute_test,
+            y_train,
+            y_test,
+        ) = train_test_split(X, X_ampute, y, random_state=simulation_idx)
 
         # Second, perform the imputation procedures and calculation of the
         # error metric for every one of the  situations.
@@ -322,9 +355,11 @@ def perform_simulation(X, y, X_ampute, n_simulation=10):
         y_predict = ESTIMATOR.fit(X_train, y_train).predict(X_test)
         mse_full = mse(y_test, y_predict)
         mse_single, _ = get_mse_single_imputation(
-                X_ampute_train, X_ampute_test, y_train, y_test)
+            X_ampute_train, X_ampute_test, y_train, y_test
+        )
         mse_multiple, _ = get_mse_multiple_imputation_approach(
-                X_ampute_train, X_ampute_test, y_train, y_test)
+            X_ampute_train, X_ampute_test, y_train, y_test
+        )
 
         # Save the outcome of every simulation round
         outcome.append((mse_full, mse_single, mse_multiple))
@@ -342,18 +377,24 @@ mse_means, mse_std = perform_simulation(X, y, X_ampute, n_simulation=N_SIM)
 # Plot results
 n_situations = 3
 n = np.arange(n_situations)
-n_labels = ['Full Data', 'Single Imputation', 'Multiple Imputations']
-colors = ['r', 'orange', 'green']
+n_labels = ["Full Data", "Single Imputation", "Multiple Imputations"]
+colors = ["r", "orange", "green"]
 
 plt.figure(figsize=(12, 6))
 ax1 = plt.subplot(111)
 for j in n:
-    ax1.barh(j, mse_means[j], xerr=mse_std[j], color=colors[j], alpha=0.6,
-             align='center')
+    ax1.barh(
+        j,
+        mse_means[j],
+        xerr=mse_std[j],
+        color=colors[j],
+        alpha=0.6,
+        align="center",
+    )
 
-ax1.set_title('MCAR Missingness')
+ax1.set_title("MCAR Missingness")
 ax1.set_yticks(n)
-ax1.set_xlabel('Mean Squared Error')
+ax1.set_xlabel("Mean Squared Error")
 ax1.invert_yaxis()
 ax1.set_yticklabels(n_labels)
 plt.show()
