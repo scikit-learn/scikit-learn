@@ -439,8 +439,3 @@ class MiniBatchSparsePCA(SparsePCA):
         self.n_components_ = len(self.components_)
 
         return self
-
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
