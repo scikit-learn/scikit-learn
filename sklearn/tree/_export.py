@@ -666,8 +666,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         scale_x = ax_width / max_x
         scale_y = ax_height / max_y
-
-        self.recurse(draw_tree, decision_tree.tree_, ax, scale_x, scale_y, ax_height)
+        self.recurse(draw_tree, decision_tree.tree_, ax, max_x, max_y)
 
         anns = [ann for ann in ax.get_children() if isinstance(ann, Annotation)]
 
@@ -693,7 +692,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         return anns
 
-    def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
+    def recurse(self, node, tree, ax, max_x, max_y, depth=0):
         import matplotlib.pyplot as plt
 
         kwargs = dict(
@@ -701,7 +700,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ha="center",
             va="center",
             zorder=100 - 10 * depth,
-            xycoords="axes points",
+            xycoords="axes fraction",
             arrowprops=self.arrow_args.copy(),
         )
         kwargs["arrowprops"]["edgecolor"] = plt.rcParams["text.color"]
@@ -710,7 +709,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             kwargs["fontsize"] = self.fontsize
 
         # offset things by .5 to center them in plot
-        xy = ((node.x + 0.5) * scale_x, height - (node.y + 0.5) * scale_y)
+        xy = ((node.x + 0.5) / max_x, (max_y - node.y - 0.5) / max_y)
 
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
@@ -723,17 +722,17 @@ class _MPLTreeExporter(_BaseTreeExporter):
                 ax.annotate(node.tree.label, xy, **kwargs)
             else:
                 xy_parent = (
-                    (node.parent.x + 0.5) * scale_x,
-                    height - (node.parent.y + 0.5) * scale_y,
+                    (node.parent.x + 0.5) / max_x,
+                    (max_y - node.parent.y - 0.5) / max_y,
                 )
                 ax.annotate(node.tree.label, xy_parent, xy, **kwargs)
             for child in node.children:
-                self.recurse(child, tree, ax, scale_x, scale_y, height, depth=depth + 1)
+                self.recurse(child, tree, ax, max_x, max_y, depth=depth + 1)
 
         else:
             xy_parent = (
-                (node.parent.x + 0.5) * scale_x,
-                height - (node.parent.y + 0.5) * scale_y,
+                (node.parent.x + 0.5) / max_x,
+                (max_y - node.parent.y - 0.5) / max_y,
             )
             kwargs["bbox"]["fc"] = "grey"
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
