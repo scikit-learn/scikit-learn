@@ -13,9 +13,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.cluster._kmeans.kmeans_plusplus",
-    "sklearn.cluster._mean_shift.estimate_bandwidth",
-    "sklearn.cluster._mean_shift.get_bin_seeds",
-    "sklearn.cluster._mean_shift.mean_shift",
     "sklearn.cluster._optics.cluster_optics_xi",
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
@@ -120,7 +117,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.pair_confusion_matrix",
     "sklearn.metrics.cluster._supervised.rand_score",
     "sklearn.metrics.cluster._supervised.v_measure_score",
-    "sklearn.metrics.cluster._unsupervised.silhouette_samples",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.check_paired_arrays",
     "sklearn.metrics.pairwise.check_pairwise_arrays",
@@ -166,7 +162,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
-    "sklearn.utils.extmath.randomized_range_finder",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils.extmath.squared_norm",
