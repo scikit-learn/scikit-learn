@@ -50,7 +50,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
     if exclude is None:
         exclude = []
     for method, request in metadata_request.items():
-        if method in exclude or method == "^type":
+        if method in exclude or method == "$type":
             continue
         props = [
             prop
@@ -470,7 +470,7 @@ def test_get_metadata_routing():
         TestDefaultsBadMethodName().get_metadata_routing()
 
     expected = {
-        "^type": "request",
+        "$type": "request",
         "score": {
             "my_param": True,
             "my_other_param": None,
@@ -490,7 +490,7 @@ def test_get_metadata_routing():
 
     est = TestDefaults().score_requests(my_param="other_param")
     expected = {
-        "^type": "request",
+        "$type": "request",
         "score": {
             "my_param": "other_param",
             "my_other_param": None,
@@ -510,7 +510,7 @@ def test_get_metadata_routing():
 
     est = TestDefaults().fit_requests(sample_weight=True)
     expected = {
-        "^type": "request",
+        "$type": "request",
         "score": {
             "my_param": True,
             "my_other_param": None,
@@ -610,13 +610,13 @@ def test_get_router_for_object():
         __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
     assert_request_is_empty(get_router_for_object(None))
-    assert_request_is_empty(get_router_for_object({"^type": "request"}))
-    assert_request_is_empty(get_router_for_object({"^type": "router"}))
+    assert_request_is_empty(get_router_for_object({"$type": "request"}))
+    assert_request_is_empty(get_router_for_object({"$type": "router"}))
     with pytest.raises(ValueError, match="Cannot understand object type"):
-        get_router_for_object({"^type": "invalid"})
+        get_router_for_object({"$type": "invalid"})
     assert_request_is_empty(get_router_for_object(object()))
 
-    mr = MetadataRequest.deserialize({"^type": "request", "fit": {"foo": "bar"}})
+    mr = MetadataRequest.deserialize({"$type": "request", "fit": {"foo": "bar"}})
     mr_factory = get_router_for_object(mr)
     assert_request_is_empty(mr_factory, exclude="fit")
     assert mr_factory.fit._requests == {"foo": "bar"}
@@ -659,7 +659,7 @@ def test_estimator_warnings():
         ),
         (
             MetadataRequest(),
-            "{'^type': 'request', 'fit': {}, 'partial_fit': {}, 'predict': {}, 'score':"
+            "{'$type': 'request', 'fit': {}, 'partial_fit': {}, 'predict': {}, 'score':"
             " {}, 'split': {}, 'transform': {}, 'inverse_transform': {}}",
         ),
         (MethodMapping.from_str("score"), "[{'method': 'score', 'used_in': 'score'}]"),
@@ -667,8 +667,8 @@ def test_estimator_warnings():
             MetadataRouter().add(
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
-            "{'^type': 'router', 'estimator': {'mapping': [{'method': 'predict',"
-            " 'used_in': 'predict'}], 'routing': {'^type': 'request', 'fit':"
+            "{'$type': 'router', 'estimator': {'mapping': [{'method': 'predict',"
+            " 'used_in': 'predict'}], 'routing': {'$type': 'request', 'fit':"
             " {'sample_weight': None}, 'partial_fit': {}, 'predict': {}, 'score':"
             " {'sample_weight': None}, 'split': {}, 'transform': {},"
             " 'inverse_transform': {}}}}",
@@ -692,7 +692,7 @@ def test_string_representations(obj, string):
         (
             MetadataRequest,
             "deserialize",
-            {"obj": {"^type": "request", "invalid_method": {}}},
+            {"obj": {"$type": "request", "invalid_method": {}}},
             ValueError,
             "is not supported as a method",
         ),

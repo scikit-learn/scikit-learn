@@ -407,7 +407,7 @@ class MetadataRequest:
         obj : dict
             A serialized version of the instance in the form of a dictionary.
         """
-        output = {"^type": "request"}
+        output = {"$type": "request"}
         for method in METHODS:
             output[method] = getattr(self, method).serialize()
         return output
@@ -429,7 +429,7 @@ class MetadataRequest:
         # never change what's passed here.
         requests = deepcopy(obj)
         result = cls()
-        obj_type = requests.pop("^type", None)
+        obj_type = requests.pop("$type", None)
         if obj_type != "request":
             raise ValueError(
                 "Can only create a metadata request of type 'request', given `_type`"
@@ -798,7 +798,7 @@ class MetadataRouter:
         obj : dict
             A serialized version of the instance in the form of a dictionary.
         """
-        res = {"^type": "router"}
+        res = {"$type": "router"}
         if self._self:
             res["^self"] = self._self.serialize()
         for name, route_mapping in self._route_mappings.items():
@@ -824,7 +824,7 @@ class MetadataRouter:
         """
         # never change what's passed here.
         obj = deepcopy(obj)
-        obj_type = obj.pop("^type", None)
+        obj_type = obj.pop("$type", None)
         if obj_type != "router":
             raise ValueError(
                 "Can only create a router of type 'router', given `_type` is:"
@@ -903,7 +903,7 @@ def get_router_for_object(obj=None):
         return deepcopy(obj)
 
     if isinstance(obj, dict):
-        obj_type = obj.get("^type", None)
+        obj_type = obj.get("$type", None)
         if obj_type == "request":
             return MetadataRequest.deserialize(obj)
         elif obj_type == "router":
@@ -1024,7 +1024,7 @@ class _MetadataRequester:
 
         for request_method, request_keys in requests.items():
             # ignore everything which is not a valid method, including
-            # serialized metadata such as ^type
+            # serialized metadata such as $type
             if request_method not in METHODS:
                 continue
             # set ``{method}_requests``` methods
