@@ -268,7 +268,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_val=n_samples,
             )
             min_samples_split = self.min_samples_split
-        else:  # float, string, other
+        else:  # float
             check_scalar(
                 self.min_samples_split,
                 "min_samples_split",
