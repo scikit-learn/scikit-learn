@@ -155,7 +155,7 @@ Changelog
   :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
 - |Enhancement| :class:`decomposition.SparsePCA` and :class:`decomposition.MiniBatchSparsePCA`
-  preserve dtype for `numpy.flaot32`.
+  preserve dtype for `numpy.float32`.
   :pr:`22111` by :user:`Takeshi Oura <takoika>`.
 
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
