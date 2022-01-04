@@ -181,7 +181,7 @@ cdef class PairwiseDistancesReduction:
             "pyfunc",  # is relatively slow because we need to coerce data as np arrays
             "mahalanobis", # is numerically unstable
             # TODO: In order to support discrete distance metrics, we need to have a
-            # simultaneous sort which breaks ties on indices when distances are identical.
+            # stable simultaneous sort which preserves the order of the input.
             # The best might be using std::stable_sort and a Comparator taking an
             # Arrays of Structures instead of Structure of Arrays (currently used).
             "hamming",
@@ -210,13 +210,9 @@ cdef class PairwiseDistancesReduction:
         -------
         True if the PairwiseDistancesReduction can be used, else False.
         """
-        # Coercing to np.array to get the dtype
-        # TODO: what is the best way to get lists' dtype?
-        X = np.asarray(X) if not isinstance(X, (np.ndarray, scipy.sparse.spmatrix)) else X
-        Y = np.asarray(Y) if not isinstance(Y, (np.ndarray, scipy.sparse.spmatrix)) else Y
         # TODO: support sparse arrays and 32 bits
-        return (not issparse(X) and X.dtype == np.float64 and X.ndim == 2 and
-                not issparse(Y) and Y.dtype == np.float64 and Y.ndim == 2 and
+        return (not issparse(X) and X.dtype == np.float64 and
+                not issparse(Y) and Y.dtype == np.float64 and
                 metric in cls.valid_metrics())
 
     def __init__(
@@ -289,9 +285,11 @@ cdef class PairwiseDistancesReduction:
         by parallelizing computation on the outer loop on chunks of X
         and reduce them.
 
-        This strategy dispatches chunks of X uniformly on threads.
-        Each thread then iterates on all the chunks of Y. This strategy is
-        embarrassingly parallel and comes with no datastructures synchronisation.
+        This strategy dispatches chunks of Y uniformly on threads.
+        Each thread processes all the chunks of X in turn. This strategy is
+        a sequence of embarrassingly parallel subtasks (the inner loop on Y
+        chunks) with intermediate datastructures synchronisation at each
+        iteration of the sequential outer loop on X chunks.
 
         Private datastructures are modified internally by threads.
 
@@ -363,7 +361,7 @@ cdef class PairwiseDistancesReduction:
             ITYPE_t thread_num
 
         # Allocating datastructures shared by all threads
-        self._parallel_on_Y_parallel_init()
+        self._parallel_on_Y_init()
 
         for X_chunk_idx in range(self.X_n_chunks):
             X_start = X_chunk_idx * self.X_n_samples_chunk
@@ -376,7 +374,7 @@ cdef class PairwiseDistancesReduction:
                 thread_num = _openmp_thread_num()
 
                 # Initializing datastructures used in this thread
-                self._parallel_on_Y_init(thread_num)
+                self._parallel_on_Y_parallel_init(thread_num)
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -466,13 +464,13 @@ cdef class PairwiseDistancesReduction:
         """Interact with datastructures after executing all the reductions."""
         return
 
-    cdef void _parallel_on_Y_parallel_init(
+    cdef void _parallel_on_Y_init(
         self,
     ) nogil:
         """Allocate datastructures used in all threads."""
         return
 
-    cdef void _parallel_on_Y_init(
+    cdef void _parallel_on_Y_parallel_init(
         self,
         ITYPE_t thread_num,
     ) nogil:
@@ -737,7 +735,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 self.k
             )
 
-    cdef void _parallel_on_Y_parallel_init(
+    cdef void _parallel_on_Y_init(
         self,
     ) nogil:
         cdef:
@@ -763,7 +761,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             )
 
     @final
-    cdef void _parallel_on_Y_init(
+    cdef void _parallel_on_Y_parallel_init(
         self,
         ITYPE_t thread_num,
     ) nogil:

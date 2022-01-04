@@ -1222,10 +1222,10 @@ cdef class DatasetsPair:
             If provided as a sparse matrix, it must be in CSR format.
 
         metric : str, default='euclidean'
-            The distance metric to use for argkmin. The default metric is
-            a fast implementation of the standard Euclidean metric.
-            For a list of available metrics, see the documentation of
-            :class:`~sklearn.metrics.DistanceMetric`.
+            The distance metric to compute between rows of X and Y.
+            The default metric is a fast implementation of the Euclidean
+            metric. For a list of available metrics, see the documentation
+            of :class:`~sklearn.metrics.DistanceMetric`.
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
@@ -1242,12 +1242,16 @@ cdef class DatasetsPair:
             )
 
         if not(X.dtype == Y.dtype == np.float64):
-            raise ValueError("Only 64bit float datasets are supported for X and Y.")
+            raise ValueError(
+                f"Only 64bit float datasets are supported at this time, "
+                f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}"
+            )
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
         distance_metric._validate_data(X)
         distance_metric._validate_data(Y)
 
+        # TODO: dispatch to other dataset pairs for sparse support once available:
         if issparse(X) or issparse(Y):
             raise ValueError("Only dense datasets are supported for X and Y.")
 

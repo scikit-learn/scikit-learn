@@ -76,9 +76,6 @@ def test_pairwise_distances_reduction_is_usable_for():
         X.astype(np.int64), Y.astype(np.int64), metric
     )
 
-    assert not PairwiseDistancesReduction.is_usable_for(X[0], Y, metric)
-    assert not PairwiseDistancesReduction.is_usable_for(X, Y[0], metric)
-
     assert not PairwiseDistancesReduction.is_usable_for(X, Y, metric="pyfunc")
     # TODO: remove once 32 bits datasets are supported
     assert not PairwiseDistancesReduction.is_usable_for(X.astype(np.float32), Y, metric)
@@ -96,16 +93,20 @@ def test_argkmin_factory_method_wrong_usages():
     k = 5
     metric = "euclidean"
 
-    with pytest.raises(
-        ValueError, match="Only 64bit float datasets are supported for X and Y."
-    ):
+    msg = (
+        "Only 64bit float datasets are supported at this time, "
+        "got: X.dtype=float32 and Y.dtype=float64"
+    )
+    with pytest.raises(ValueError, match=msg):
         PairwiseDistancesArgKmin.compute(
             X=X.astype(np.float32), Y=Y, k=k, metric=metric
         )
 
-    with pytest.raises(
-        ValueError, match="Only 64bit float datasets are supported for X and Y."
-    ):
+    msg = (
+        "Only 64bit float datasets are supported at this time, "
+        "got: X.dtype=float64 and Y.dtype=int32"
+    )
+    with pytest.raises(ValueError, match=msg):
         PairwiseDistancesArgKmin.compute(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
