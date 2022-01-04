@@ -433,6 +433,11 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
+- |Enhancement| :func:`check_scalar` raises new errors when inconsistent 
+  boundaries are entered (e.g. `include_boundaries`='left' or 'both' without
+  specifying explicitly `min_val`). 
+  :pr:`22027` by `Marie Lanternier <mlant>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
