@@ -5,7 +5,6 @@ Metadata Routing Utility
 # Author: Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
 
-import functools
 import inspect
 from copy import deepcopy
 from enum import Enum
@@ -1126,84 +1125,63 @@ class _MetadataRequester:
         return self._get_metadata_request().serialize()
 
 
-def process_routing(func):
-    """Decorator to process input params and handle routing.
+def process_routing(obj, method, other_params, **kwargs):
+    """Validate and route input parameters.
 
-    This decorator wraps around a router estimator's method, such as ``fit``,
-    and handles routing and and validation of the metadata passed to it.
+    This function is used inside a router's method, e.g. :term:`fit`,
+    to validate the metadata and handle the routing.
+
+    Assuming this signature: ``fit(self, X, y, sample_weight=None, **fit_params)``,
+    a call to this function would be:
+    ``process_routing(self, fit_params, sample_weight=sample_weight)``.
 
     .. versionadded:: 1.1
 
     Parameters
     ----------
-    func : method
-        A router estimator's method such as ``fit``.
+    obj : object
+        An object implementing ``get_metadata_routing``. Typically a
+        meta-estimator.
+
+    method : str
+        The name of the router's method in which this function is called.
+
+    other_params : dict
+        A dictionary of extra parameters passed to the router's method,
+        e.g. ``**fit_params`` passed to a meta-estimator's :term:`fit`.
+
+    **kwargs : dict
+        Parameters explicitly accepted and included in the router's method
+        signature.
 
     Returns
     -------
-    decorator : method
-        The estimator's method, after validation and routing of the metadata.
+    routed_params : Bunch
+        A :class:`~utils.Bunch` with a key for each object added in
+        ``get_metadata_routing``, and a key for each method of the child object
+        which is used in the router's `method`.
     """
+    if not hasattr(obj, "get_metadata_routing"):
+        raise AttributeError(
+            f"This {repr(obj.__class__.__name__)} has not implemented the routing"
+            " method `get_metadata_routing`."
+        )
+    if method not in METHODS:
+        raise TypeError(
+            f"Can only route and process input on these methods: {METHODS}, "
+            f"while the passed method is: {method}."
+        )
 
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        sig = inspect.signature(func)
-        # Create the argument binding so we can determine what
-        # parameters are given what values
-        argument_binding = sig.bind(*args, **kwargs)
-        argument_map = argument_binding.arguments
+    # We take the extra params (**fit_params) which is passed as `other_params`
+    # and add the explicitly passed parameters (passed as **kwargs) to it. This
+    # is equivalent to a code such as this in a router:
+    # if sample_weight is not None:
+    #     fit_params["sample_weight"] = sample_weight
+    all_params = other_params if other_params is not None else dict()
+    all_params.update(kwargs)
 
-        # find parameter names which should be passed explicitly, and the kwarg param
-        # which can accept routed parameters.
-        func_params = list(sig.parameters.items())
-        params_to_pass = []
-        kwarg_param = None
-        for pname, param in func_params:
-            if param.kind == param.VAR_KEYWORD:
-                kwarg_param = pname
-                continue
-            params_to_pass.append(pname)
+    request_routing = get_router_for_object(obj)
+    request_routing.validate_metadata(params=all_params, method=method)
+    routed_params = request_routing.route_params(params=all_params, method=method)
 
-        if kwarg_param is None:
-            raise TypeError("Method must accept kwargs for metadata routing to work.")
-
-        obj = argument_map["self"]
-        if not hasattr(obj, "get_metadata_routing"):
-            raise AttributeError(
-                f"This {repr(obj.__class__.__name__)} has not implemented the routing"
-                " method `get_metadata_routing`."
-            )
-        method_name = func.__name__
-        if method_name not in METHODS:
-            raise TypeError(
-                f"Can only route and process input on these methods: {METHODS}, "
-                f"while the current method is: {method_name}."
-            )
-
-        considered_params = {
-            key: value
-            for key, value in argument_map.items()
-            if key not in ("X", "y", "Y", "self")
-        }
-        # WWe pop the kwarg parameter from the params above, and then update it
-        # with the remaining values. This resembles the code snippets such as:
-        # if sample_weight is not None:
-        #     fit_params["sample_weight"] = sample_weight
-        if kwarg_param in considered_params:
-            routed_params = considered_params.pop(kwarg_param)
-            routed_params.update(considered_params)
-        else:
-            routed_params = considered_params
-
-        request_routing = get_router_for_object(obj)
-        request_routing.validate_metadata(params=routed_params, method=method_name)
-        params = request_routing.route_params(params=routed_params, method=method_name)
-
-        # create a dict of other parameters and then add 'params' to them
-        explicit_params = {
-            key: value for key, value in argument_map.items() if key in params_to_pass
-        }
-        explicit_params["params"] = params
-        return func(**explicit_params)
-
-    return wrapper
+    return routed_params

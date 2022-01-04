@@ -415,9 +415,8 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         self.transformer = transformer
         self.classifier = classifier
 
-    @process_routing
     def fit(self, X, y, **fit_params):
-        params = fit_params["params"]
+        params = process_routing(self, "fit", fit_params)
 
         self.transformer_ = clone(self.transformer).fit(X, y, **params.transformer.fit)
         X_transformed = self.transformer_.transform(X, **params.transformer.transform)
@@ -427,9 +426,8 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         )
         return self
 
-    @process_routing
     def predict(self, X, **predict_params):
-        params = predict_params["params"]
+        params = process_routing(self, "predict", predict_params)
 
         X_transformed = self.transformer_.transform(X, **params.transformer.transform)
         return self.classifier_.predict(X_transformed, **params.classifier.predict)
@@ -457,11 +455,10 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 # what you see implemented in the routing structure of the pipeline class.
 #
 # Another difference in the above example with the previous ones is the usage
-# of :func:`~utils.metadata_routing.process_routing` decorator, which processes
-# the input parameters, does the required validation, and passes the `params`
-# which we had created in previous examples as a keyword argument to the
-# corresponding method. As a result, the only thing a developer needs to do is
-# to write the definition of `get_metadata_routing`.
+# of :func:`~utils.metadata_routing.process_routing`, which processes the input
+# parameters, does the required validation, and passes the `params` which we
+# had created in previous examples. This reduces the boilerplate code a
+# developer needs to write in each meta-estimator's method.
 #
 # In order to test the above pipeline, let's add an example transformer.
 
@@ -516,9 +513,8 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     def __init__(self, estimator):
         self.estimator = estimator
 
-    @process_routing
     def fit(self, X, y, **fit_params):
-        params = fit_params["params"]
+        params = process_routing(self, "fit", fit_params)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
@@ -546,9 +542,8 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     def __init__(self, estimator):
         self.estimator = estimator
 
-    @process_routing
     def fit(self, X, y, sample_weight=None, **fit_params):
-        params = fit_params["params"]
+        params = process_routing(self, "fit", fit_params, sample_weight=sample_weight)
         check_metadata(self, sample_weight=sample_weight)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 

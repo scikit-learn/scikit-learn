@@ -82,9 +82,8 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     def __init__(self, estimator):
         self.estimator = estimator
 
-    @process_routing
     def fit(self, X, y, **fit_params):
-        params = fit_params["params"]
+        params = process_routing(self, "fit", fit_params)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
@@ -111,16 +110,14 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     def __init__(self, estimator):
         self.estimator = estimator
 
-    @process_routing
     def fit(self, X, y, sample_weight=None, **fit_params):
         record_metadata(self, "fit", sample_weight=sample_weight)
-        params = fit_params["params"]
+        params = process_routing(self, "fit", fit_params, sample_weight=sample_weight)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 
-    @process_routing
     def predict(self, X, **predict_params):
-        params = predict_params["params"]
+        params = process_routing(self, "predict", predict_params)
         return self.estimator_.predict(X, **params.estimator.predict)
 
     def get_metadata_routing(self):
@@ -159,10 +156,9 @@ class SimpleMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def __init__(self, estimator):
         self.estimator = estimator
 
-    @process_routing
     def fit(self, X, y, sample_weight=None, **kwargs):
         record_metadata(self, "fit", sample_weight=sample_weight)
-        params = kwargs["params"]
+        params = process_routing(self, "fit", kwargs, sample_weight=sample_weight)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 
@@ -193,15 +189,13 @@ class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
     def __init__(self, transformer):
         self.transformer = transformer
 
-    @process_routing
     def fit(self, X, y=None, **fit_params):
-        params = fit_params["params"]
+        params = process_routing(self, "fit", fit_params)
         self.transformer_ = clone(self.transformer).fit(X, y, **params.transformer.fit)
         return self
 
-    @process_routing
     def transform(self, X, y=None, **transform_params):
-        params = transform_params["params"]
+        params = process_routing(self, "transform", transform_params)
         return self.transformer_.transform(X, **params.transformer.transform)
 
     def get_metadata_routing(self):
@@ -218,10 +212,9 @@ class SimplePipeline(BaseEstimator):
     def __init__(self, steps):
         self.steps = steps
 
-    @process_routing
     def fit(self, X, y, **fit_params):
         self.steps_ = []
-        params = fit_params["params"]
+        params = process_routing(self, "fit", fit_params)
         X_transformed = X
         for i, step in enumerate(self.steps[:-1]):
             transformer = clone(step).fit(
@@ -237,11 +230,10 @@ class SimplePipeline(BaseEstimator):
         )
         return self
 
-    @process_routing
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         X_transformed = X
-        params = predict_params["params"]
+        params = process_routing(self, "predict", predict_params)
         for i, step in enumerate(self.steps_[:-1]):
             X_transformed = step.transform(X, **params.get(f"step_{i}").transform)
 
