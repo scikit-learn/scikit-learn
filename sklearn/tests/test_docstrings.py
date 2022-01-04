@@ -162,7 +162,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
-    "sklearn.utils.extmath.randomized_range_finder",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils.extmath.squared_norm",
