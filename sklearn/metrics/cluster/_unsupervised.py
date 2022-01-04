@@ -222,7 +222,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
             if np.any(np.abs(np.diagonal(X)) > atol):
                 raise ValueError(error_msg)
         elif np.any(np.diagonal(X) != 0):  # integral dtype
-                raise ValueError(error_msg)
+            raise ValueError(error_msg)
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
