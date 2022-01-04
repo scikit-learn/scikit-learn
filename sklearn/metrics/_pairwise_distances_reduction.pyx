@@ -190,12 +190,14 @@ cdef class PairwiseDistancesReduction:
                 not issparse(Y) and Y.dtype == np.float64 and
                 metric in cls.valid_metrics())
 
-    def __init__(
+    def __cinit__(
         self,
         DatasetsPair datasets_pair,
         chunk_size=None,
         n_threads=None,
         strategy=None,
+        *args,
+        **kwargs,
      ):
         cdef:
             ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
@@ -474,9 +476,6 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     datasets_pair: DatasetsPair
         The dataset pairs (X, Y) for the reduction.
 
-    k: int
-        The k for the argkmin reduction.
-
     chunk_size: int, default=None,
         The number of vectors per chunk. If None (default) looks-up in
         scikit-learn configuration for `pairwise_dist_chunk_size`,
@@ -485,10 +484,14 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     n_threads: int, default=None
         The number of OpenMP threads to use for the reduction.
         Parallelism is done on chunks and the sharding of chunks
-        depends on the `strategy` set on :method:`~ArgKmin.compute`.
+        depends on the `strategy` set on
+        :meth:`~PairwiseDistancesArgKmin.compute`.
 
         See _openmp_effective_n_threads, for details about
         the specification of n_threads.
+
+    k: int, default=1
+        The k for the argkmin reduction.
     """
 
     cdef:
@@ -544,7 +547,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             The number of OpenMP threads to use for the reduction.
             Parallelism is done on chunks and the sharding of chunks
             depends on the `strategy` set on
-            :method:`~PairwiseDistancesArgKmin.compute`.
+            :meth:`~PairwiseDistancesArgKmin.compute`.
 
             See _openmp_effective_n_threads, for details about
             the specification of n_threads.
@@ -621,25 +624,22 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         return pda._finalize_results(return_distance)
 
-    def __init__(
+    def __cinit__(
         self,
         DatasetsPair datasets_pair,
-        ITYPE_t k,
         chunk_size=None,
         n_threads=None,
         strategy=None,
-    ):
-        super().__init__(datasets_pair, chunk_size, n_threads, strategy)
-
-        self.k = check_scalar(k, "k", Integral, min_val=1)
-
+        *args,
+        **kwargs,
+     ):
         # Allocating pointers to datastructures but not the datastructures themselves.
         # There are as many pointers as effective threads.
         #
         # For the sake of explicitness:
-        #   - when parallelizing on X, those heaps pointers are referencing
+        #   - when parallelizing on X, the pointers of those heaps are referencing
         #   (with proper offsets) addresses of the two main heaps (see bellow)
-        #   - when parallelizing on Y, those heaps pointer heaps are referencing
+        #   - when parallelizing on Y, the pointers of those heaps are referencing
         #   small heaps which are thread-wise-allocated and whose content will be
         #   merged with the main heaps'.
         self.heaps_r_distances_chunks = <DTYPE_t **> malloc(
@@ -648,6 +648,16 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         self.heaps_indices_chunks = <ITYPE_t **> malloc(
             sizeof(ITYPE_t *) * self.chunks_n_threads
         )
+
+    def __init__(
+        self,
+        DatasetsPair datasets_pair,
+        chunk_size=None,
+        n_threads=None,
+        strategy=None,
+        ITYPE_t k=1,
+    ):
+        self.k = check_scalar(k, "k", Integral, min_val=1)
 
         # Main heaps which will be returned as results by `PairwiseDistancesArgKmin.compute`.
         self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
@@ -763,10 +773,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Synchronising the thread heaps with the main heaps.
             # This is done in parallel sample-wise (no need for locks).
-            # 
+            #
             # This might break each thread's data locality as each heap which
             # was allocated in a thread is being now being used in several threads.
-            # 
+            #
             # Still, this parallel pattern has shown to be efficient in practice.
             for idx in prange(X_end - X_start, schedule="static"):
                 for thread_num in range(self.chunks_n_threads):
@@ -792,7 +802,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 free(self.heaps_indices_chunks[thread_num])
 
             # Sorting the main in ascending order w.r.t the distances.
-            # This is done in parallel sample-wise (no need for locks). 
+            # This is done in parallel sample-wise (no need for locks).
             for idx in prange(self.n_samples_X, schedule='static'):
                 simultaneous_sort(
                     &self.argkmin_distances[idx, 0],
