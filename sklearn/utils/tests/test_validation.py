@@ -1166,8 +1166,8 @@ def test_check_scalar_valid(x):
             4,
             "left",
             ValueError(
-                "`include_boundaries`='left' or 'both'"
-                "without specifying explicitly `min_val`"
+                "`include_boundaries`='left' or 'both' "
+                "without specifying explicitly `min_val` "
                 "is inconsistent."
             ),
         ),
@@ -1179,8 +1179,8 @@ def test_check_scalar_valid(x):
             None,
             "right",
             ValueError(
-                "`include_boundaries`='right' or 'both'"
-                "without specifying explicitly `max_val`"
+                "`include_boundaries`='right' or 'both' "
+                "without specifying explicitly `max_val` "
                 "is inconsistent."
             ),
         ),
@@ -1192,8 +1192,8 @@ def test_check_scalar_valid(x):
             4,
             "both",
             ValueError(
-                "`include_boundaries`='left' or 'both'"
-                "without specifying explicitly `min_val`"
+                "`include_boundaries`='left' or 'both' "
+                "without specifying explicitly `min_val` "
                 "is inconsistent."
             ),
         ),
@@ -1205,8 +1205,8 @@ def test_check_scalar_valid(x):
             None,
             "both",
             ValueError(
-                "`include_boundaries`='right' or 'both'"
-                "without specifying explicitly `max_val`"
+                "`include_boundaries`='right' or 'both' "
+                "without specifying explicitly `max_val` "
                 "is inconsistent."
             ),
         ),

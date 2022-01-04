@@ -1421,15 +1421,15 @@ def check_scalar(
 
     if max_val is None and include_boundaries in ("right", "both"):
         raise ValueError(
-            "`include_boundaries`='right' or 'both'"
-            "without specifying explicitly `max_val`"
+            "`include_boundaries`='right' or 'both' "
+            "without specifying explicitly `max_val` "
             "is inconsistent."
         )
 
     if min_val is None and include_boundaries in ("left", "both"):
         raise ValueError(
-            "`include_boundaries`='left' or 'both'"
-            "without specifying explicitly `min_val`"
+            "`include_boundaries`='left' or 'both' "
+            "without specifying explicitly `min_val` "
             "is inconsistent."
         )
 
