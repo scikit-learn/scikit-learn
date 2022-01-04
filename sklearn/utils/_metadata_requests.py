@@ -99,10 +99,11 @@ alias instead of the original name.
 
             The default (UNCHANGED) retains the existing request. This allows
             you to change the request for some parameters and not others.
+
 """
 REQUESTER_DOC_RETURN = """        Returns
         -------
-        self
+        self : estimator
             Returns the object itself.
 """
 
