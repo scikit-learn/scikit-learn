@@ -152,8 +152,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         random_state = check_random_state(self.random_state)
 
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
+        check_scalar(
+            self.ccp_alpha,
+            "ccp_alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+        )
 
         if check_input:
             # Need to validate separately here.
@@ -570,7 +574,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
+            raise ValueError("must be >= 0.0.")
 
         if self.ccp_alpha == 0.0:
             return

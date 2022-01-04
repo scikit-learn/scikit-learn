@@ -647,6 +647,12 @@ def test_error():
             TypeError,
             "min_impurity_decrease must be an instance of <class 'numbers.Real'>",
         ),
+        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
+        (
+            {"ccp_alpha": "foo"},
+            TypeError,
+            "ccp_alpha must be an instance of <class 'numbers.Real'>",
+        ),
     ],
 )
 def test_tree_params_validation(name, Tree, params, err_type, err_msg):
@@ -2019,7 +2025,7 @@ def assert_is_subtree(tree, subtree):
 
 def test_prune_tree_raises_negative_ccp_alpha():
     clf = DecisionTreeClassifier()
-    msg = "ccp_alpha must be greater than or equal to 0"
+    msg = "must be >= 0.0."
 
     with pytest.raises(ValueError, match=msg):
         clf.set_params(ccp_alpha=-1.0)
