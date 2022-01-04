@@ -387,16 +387,6 @@ Changelog
   the model. The option is only available when `strategy` is set to `quantile`.
   :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
 
-- |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
-  instead of `__init__`.
-  :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
-
-- |API| Adds :meth:`get_feature_names_out` to
-  :class:`preprocessing.Normalizer`,
-  :class:`preprocessing.KernelCenterer`,
-  :class:`preprocessing.OrdinalEncoder`, and
-  :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
-
 - |Enhancement| Added the `get_feature_names_out` method and a new parameter
   `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
   `feature_names_out` to 'one-to-one' to use the input features names as the
@@ -409,6 +399,12 @@ Changelog
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`preprocessing.Normalizer`,
+  :class:`preprocessing.KernelCenterer`,
+  :class:`preprocessing.OrdinalEncoder`, and
+  :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
 
 :mod:`sklearn.random_projection`
 ................................
