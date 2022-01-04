@@ -197,6 +197,11 @@ estimators = [
     ("Gradient Boosting", gbdt_pipeline),
 ]
 
+# %%
+# While the implicit cv=5 is advisable in general, for the sake
+# of run time speed up we are setting cv=2 here.
+# Note that in the `cross_validate` call below, we keep the implicit
+# cv=5.
 stacking_regressor = StackingRegressor(
     estimators=estimators, cv=2, final_estimator=RidgeCV()
 )
