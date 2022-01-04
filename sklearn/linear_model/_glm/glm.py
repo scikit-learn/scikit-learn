@@ -407,6 +407,16 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         return 1 - dev / dev_null
 
     def _get_family_instance(self):
+        """Return the distribution of a family.
+
+        This method returns an instance of ``ExponentialDispersionModel`` based the
+        value stored in the ``family`` attribute.
+
+        Returns
+        -------
+        family_instance : ExponentialDispersionModel
+            Returns an instance of ExponentialDispersionModel.
+        """
         if isinstance(self.family, ExponentialDispersionModel):
             return self.family
         elif self.family in EDM_DISTRIBUTIONS:
@@ -806,4 +816,11 @@ class TweedieRegressor(GeneralizedLinearRegressor):
             raise ValueError("TweedieRegressor.family must be 'tweedie'!")
 
     def _get_family_instance(self):
+        """Return an instance of ``TweedieDistribution``.
+
+        Returns
+        -------
+        family_instance : TweedieDistribution
+            Returns an instance of TweedieDistribution.
+        """
         return TweedieDistribution(power=self.power)
