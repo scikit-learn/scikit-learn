@@ -381,7 +381,6 @@ def test_pandas_column_name_consistency(estimator):
 # from this list to be tested
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "cluster",
-    "discriminant_analysis",
     "ensemble",
     "isotonic",
     "kernel_approximation",

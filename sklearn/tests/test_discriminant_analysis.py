@@ -650,3 +650,20 @@ def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     clf = LinearDiscriminantAnalysis(solver=solver)
     with pytest.raises(ValueError, match="The number of samples must be more"):
         clf.fit(X, y)
+
+
+def test_get_feature_names_out():
+    """Check get_feature_names_out uses class name as prefix."""
+
+    est = LinearDiscriminantAnalysis().fit(X, y)
+    names_out = est.get_feature_names_out()
+
+    class_name_lower = "LinearDiscriminantAnalysis".lower()
+    expected_names_out = np.array(
+        [
+            f"{class_name_lower}{i}"
+            for i in range(est.explained_variance_ratio_.shape[0])
+        ],
+        dtype=object,
+    )
+    assert_array_equal(names_out, expected_names_out)

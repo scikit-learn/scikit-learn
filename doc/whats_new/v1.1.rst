@@ -117,6 +117,13 @@ Changelog
   :class:`cross_decomposition.PLSRegression`,
   and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
 
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |API| Adds :term:`get_feature_names_out` to
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
