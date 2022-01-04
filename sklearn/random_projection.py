@@ -391,7 +391,7 @@ class BaseRandomProjection(
         # Generate a projection matrix of size [n_components, n_features]
         self.components_ = self._make_random_matrix(
             self.n_components_, n_features
-        ).astype(X.dtype)
+        ).astype(X.dtype, copy=False)
 
         # Check contract
         assert self.components_.shape == (self.n_components_, n_features), (
