@@ -252,7 +252,7 @@ for ax, (name, est) in zip(
 ):
     start_time = time.time()
     score = cross_validate(
-        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=2, verbose=0, cv=2
+        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=2, verbose=0
     )
     elapsed_time = time.time() - start_time
 
