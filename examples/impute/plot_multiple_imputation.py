@@ -141,9 +141,7 @@ def rubins_pooling_rules(m_coefs, m_vars_coefs):
     mean_coefs = np.mean(m_coefs, axis=0)
     mean_vars_coefs = np.mean(m_vars_coefs, axis=0)
     vars_coefs = np.var(m_coefs, axis=0, ddof=1)
-    total_var_coefs = (
-        mean_vars_coefs + (1 + 1 / vars_coefs.shape[0]) * vars_coefs
-    )
+    total_var_coefs = mean_vars_coefs + (1 + 1 / vars_coefs.shape[0]) * vars_coefs
     return mean_coefs, total_var_coefs
 
 
@@ -166,9 +164,7 @@ def get_results_full_dataset(X, y):
     )
 
 
-def get_results_chained_imputation(
-    X_ampute, y, random_state=0, impute_with_y=False
-):
+def get_results_chained_imputation(X_ampute, y, random_state=0, impute_with_y=False):
     # Impute incomplete data with IterativeImputer using single imputation
     # We perform MAX_ITER imputations and only use the last imputation.
     imputer = IterativeImputer(
@@ -237,9 +233,7 @@ X_ampute = ampute(X, strategy="MCAR")
 full_coefs, full_vars = get_results_full_dataset(X, y)
 chained_coefs, chained_vars = get_results_chained_imputation(X_ampute, y)
 mice_coefs, mice_vars = coef_var_mice_imputation(X_ampute, y)
-mice_y_coefs, mice_y_vars = coef_var_mice_imputation(
-    X_ampute, y, impute_with_y=True
-)
+mice_y_coefs, mice_y_vars = coef_var_mice_imputation(X_ampute, y, impute_with_y=True)
 
 # Combine the results from the four imputation procedures.
 coefs = [full_coefs, chained_coefs, mice_coefs, mice_y_coefs]
@@ -384,12 +378,7 @@ plt.figure(figsize=(12, 6))
 ax1 = plt.subplot(111)
 for j in n:
     ax1.barh(
-        j,
-        mse_means[j],
-        xerr=mse_std[j],
-        color=colors[j],
-        alpha=0.6,
-        align="center",
+        j, mse_means[j], xerr=mse_std[j], color=colors[j], alpha=0.6, align="center",
     )
 
 ax1.set_title("MCAR Missingness")
