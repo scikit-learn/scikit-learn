@@ -182,7 +182,7 @@ and tasks.
 
 **Federated Learning**
 
-- `Flower <https://flower.dev/>`_ Is a friendly federated learning framework with a 
+- `Flower <https://flower.dev/>`_ A friendly federated learning framework with a 
   unified approach that can federate any workload, any ML framework, and any programming language.
 
 **Broad scope**
