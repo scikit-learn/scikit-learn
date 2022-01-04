@@ -222,10 +222,11 @@ def test_sparse_pca_dtype_match(SPCA, method, data_type, expected_type):
     n_samples, n_features, n_components = 12, 10, 3
     rng = np.random.RandomState(0)
     input_array = rng.randn(n_samples, n_features).astype(data_type)
-    transformed = SPCA(n_components=n_components, method=method).fit_transform(
-        input_array
-    )
+    transformer = SPCA(n_components=n_components, method=method)
+    transformed = transformer.fit_transform(input_array)
+
     assert transformed.dtype == expected_type
+    assert transformer.components_.dtype == expected_type
 
 
 @pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
@@ -237,13 +238,19 @@ def test_sparse_pca_numerical_consistency(SPCA, method):
     n_samples, n_features, n_components = 12, 10, 3
     rng = np.random.RandomState(0)
     input_array = rng.randn(n_samples, n_features)
-    transformed_32 = SPCA(
+
+    transformer_32 = SPCA(
         n_components=n_components, alpha=alpha, method=method, random_state=0
-    ).fit_transform(input_array.astype(np.float32))
-    transformed_64 = SPCA(
+    )
+    transformed_32 = transformer_32.fit_transform(input_array.astype(np.float32))
+
+    transformer_64 = SPCA(
         n_components=n_components, alpha=alpha, method=method, random_state=0
-    ).fit_transform(input_array.astype(np.float64))
+    )
+    transformed_64 = transformer_64.fit_transform(input_array.astype(np.float64))
+
     assert_allclose(transformed_64, transformed_32, rtol=rtol)
+    assert_allclose(transformer_64.components_, transformer_32.components_, rtol=rtol)
 
 
 @pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
