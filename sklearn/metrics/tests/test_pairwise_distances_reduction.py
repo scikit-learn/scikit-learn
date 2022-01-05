@@ -26,10 +26,6 @@ CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
     "seuclidean",
 ]
 
-# TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
-if sp_version < parse_version("1.8.0.dev0"):
-    CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS.append("wminkowski")
-
 
 def _get_dummy_metric_params_list(metric: str, n_features: int):
     """Return list of dummy DistanceMetric kwargs for tests."""
@@ -338,7 +334,7 @@ def test_pairwise_distances_argkmin(
     # Taking argkmin (indices of the k smallest values)
     argkmin_indices_ref = np.argsort(dist_matrix, axis=1)[:, :k]
     # Getting the associated distances
-    argkmin_distances_ref = np.zeros(argkmin_indices_ref.shape, dtype=np.float)
+    argkmin_distances_ref = np.zeros(argkmin_indices_ref.shape, dtype=np.float64)
     for row_idx in range(argkmin_indices_ref.shape[0]):
         argkmin_distances_ref[row_idx] = dist_matrix[
             row_idx, argkmin_indices_ref[row_idx]
