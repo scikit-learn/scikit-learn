@@ -110,11 +110,11 @@ subject to a two-third majority of all cast votes as well as a simple majority
 approval of all the current TC members. TC members who do not actively engage
 with the TC duties are expected to resign.
 
-The Technical Committee of scikit-learn consists of :user:`Alexandre
-Gramfort <agramfort>`, :user:`Olivier Grisel <ogrisel>`, :user:`Adrin Jalali
-<adrinjalali>`, :user:`Andreas Müller <amueller>`, :user:`Joel Nothman
-<jnothman>`, :user:`Gaël Varoquaux <GaelVaroquaux>`, and
-:user:`Roman Yurchak <rth>`.
+The Technical Committee of scikit-learn consists of :user:`Thomas Fan
+<thomasjpfan>`, :user:`Alexandre Gramfort <agramfort>`, :user:`Olivier Grisel
+<ogrisel>`, :user:`Adrin Jalali <adrinjalali>`, :user:`Andreas Müller
+<amueller>`, :user:`Joel Nothman <jnothman>`, :user:`Gaël Varoquaux
+<GaelVaroquaux>` and :user:`Roman Yurchak <rth>`.
 
 Decision Making Process
 =======================
