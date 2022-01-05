@@ -306,14 +306,10 @@ def test_strategies_consistency(
 
 
 @pytest.mark.parametrize("n_features", [50, 500])
-@pytest.mark.parametrize("translation", [10 ** i for i in [2, 4, 8]])
+@pytest.mark.parametrize("translation", [0, 1e8])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
-@pytest.mark.parametrize(
-    "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin],
-)
-def test_argkmin_translation_invariance(
+def test_pairwise_distances_argkmin(
     n_features,
     translation,
     metric,
@@ -322,22 +318,20 @@ def test_argkmin_translation_invariance(
     k=10,
     dtype=np.float64,
 ):
-    # PairwiseDistancesArgKmin must be translation invariant.
-
     rng = np.random.RandomState(0)
     spread = 1000
-    X_translated = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y_translated = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
-        X_translated = np.ascontiguousarray(X_translated[:, :2])
-        Y_translated = np.ascontiguousarray(Y_translated[:, :2])
+        X = np.ascontiguousarray(X[:, :2])
+        Y = np.ascontiguousarray(Y[:, :2])
 
     metric_kwargs = _get_dummy_metric_params_list(metric, n_features)[0]
 
     # Reference for argkmin results
-    dist_matrix = cdist(X_translated, Y_translated, metric=metric, **metric_kwargs)
+    dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
     # Taking argkmin (indices of the k smallest values)
     argkmin_indices_ref = np.argsort(dist_matrix, axis=1)[:, :k]
     # Getting the associated distances
@@ -347,9 +341,9 @@ def test_argkmin_translation_invariance(
             row_idx, argkmin_indices_ref[row_idx]
         ]
 
-    argkmin_indices, argkmin_distances = PairwiseDistancesReduction.compute(
-        X_translated,
-        Y_translated,
+    argkmin_indices, argkmin_distances = PairwiseDistancesArgKmin.compute(
+        X,
+        Y,
         k,
         metric=metric,
         metric_kwargs=metric_kwargs,
@@ -359,6 +353,6 @@ def test_argkmin_translation_invariance(
         strategy=strategy,
     )
 
-    ASSERT_RESULT[PairwiseDistancesReduction](
+    ASSERT_RESULT[PairwiseDistancesArgKmin](
         argkmin_distances, argkmin_distances_ref, argkmin_indices, argkmin_indices_ref
     )
