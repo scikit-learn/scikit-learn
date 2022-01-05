@@ -148,9 +148,6 @@ Changelog
   faster. It will be used by default if `pandas` is installed.
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
-  to a temporary subfolder and then renamed.
-  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 - |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
   ``scaled``, to allow loading unscaled data. The scaled version of this
   dataset is now computed from the unscaled data, and can produce slightly
