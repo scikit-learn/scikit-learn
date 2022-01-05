@@ -238,13 +238,15 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     )
                     X = _safe_indexing(X, subsample_idx)
 
-        if self.strategy != "quantile" and isinstance(self.subsample, numbers.Integral):
+        elif self.strategy != "quantile" and isinstance(
+            self.subsample, numbers.Integral
+        ):
             raise ValueError(
                 f"Invalid parameter for `strategy`: {self.strategy}. "
                 '`subsample` must be used with `strategy="quantile"`.'
             )
 
-        if self.strategy != "quantile" and sample_weight is not None:
+        elif self.strategy != "quantile" and sample_weight is not None:
             raise ValueError(
                 "`sample_weight` was provided but it can be only used with"
                 f"strategy='quantile'. Got strategy={self.strategy!r} instead."
@@ -262,7 +264,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = self._validate_n_bins(n_features)
 
         if sample_weight is not None:
-            weights = np.array(
+            sample_weight = np.array(
                 _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
             )
 
@@ -288,7 +290,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                     bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
                 else:
                     bin_edges[jj] = np.asarray(
-                        [_weighted_percentile(column, weights, q) for q in quantiles],
+                        [
+                            _weighted_percentile(column, sample_weight, q)
+                            for q in quantiles
+                        ],
                         dtype=np.float64,
                     )
             elif self.strategy == "kmeans":
