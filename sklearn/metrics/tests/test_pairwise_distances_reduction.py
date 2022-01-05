@@ -320,18 +320,18 @@ def test_pairwise_distances_argkmin(
 ):
     rng = np.random.RandomState(0)
     spread = 1000
-    X_translated = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y_translated = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
-        X_translated = np.ascontiguousarray(X_translated[:, :2])
-        Y_translated = np.ascontiguousarray(Y_translated[:, :2])
+        X = np.ascontiguousarray(X[:, :2])
+        Y = np.ascontiguousarray(Y[:, :2])
 
     metric_kwargs = _get_dummy_metric_params_list(metric, n_features)[0]
 
     # Reference for argkmin results
-    dist_matrix = cdist(X_translated, Y_translated, metric=metric, **metric_kwargs)
+    dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
     # Taking argkmin (indices of the k smallest values)
     argkmin_indices_ref = np.argsort(dist_matrix, axis=1)[:, :k]
     # Getting the associated distances
@@ -342,8 +342,8 @@ def test_pairwise_distances_argkmin(
         ]
 
     argkmin_indices, argkmin_distances = PairwiseDistancesArgKmin.compute(
-        X_translated,
-        Y_translated,
+        X,
+        Y,
         k,
         metric=metric,
         metric_kwargs=metric_kwargs,
