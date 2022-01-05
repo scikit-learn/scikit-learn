@@ -24,22 +24,12 @@ from libc.float cimport DBL_MAX
 from cython cimport final
 from cython.parallel cimport parallel, prange
 
-from ._dist_metrics cimport DatasetsPair, DenseDenseDatasetsPair
-from ..utils._cython_blas cimport (
-  BLAS_Order,
-  BLAS_Trans,
-  ColMajor,
-  NoTrans,
-  RowMajor,
-  Trans,
-  _dot,
-  _gemm,
-)
+from ._dist_metrics cimport DatasetsPair
 from ..utils._heap cimport simultaneous_sort, heap_push
 from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t
 
-from numbers import Integral, Real
+from numbers import Integral
 from typing import List
 from scipy.sparse import issparse
 from ._dist_metrics import BOOL_METRICS, METRIC_MAPPING
@@ -472,6 +462,12 @@ cdef class PairwiseDistancesReduction:
 cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
     """Compute the argkmin of row vectors of X on the ones of Y.
 
+    For each row vector of X, computes the indices of k first the rows
+    vectors of Y with the smallest distances.
+
+    PairwiseDistancesArgKmin is typically used to perform
+    bruteforce k-nearest neighbors queries.
+
     Parameters
     ----------
     datasets_pair: DatasetsPair
@@ -556,19 +552,27 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
             The chunking strategy defining which dataset parallelization are made on.
 
-            Strategies differs on the dispatching they use for chunks on threads:
+            For both strategies the computations happens with two nested loops,
+            respectively on chunks of X and chunks of Y.
+            Strategies differs on which loop (outer or inner) is made to run
+            in parallel with the Cython `prange` construct:
 
-              - 'parallel_on__X' dispatches chunks of X uniformly on threads.
+              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
               Each thread then iterates on all the chunks of Y. This strategy is
               embarrassingly parallel and comes with no datastructures synchronisation.
 
               - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
-              Each thread then iterates on all the chunks of X. This strategy is
-              embarrassingly parallel but uses intermediate datastructures
-              synchronisation.
+              Each thread processes all the chunks of X in turn. This strategy is
+              a sequence of embarrassingly parallel subtasks (the inner loop on Y
+              chunks) with intermediate datastructures synchronisation at each
+              iteration of the sequential outer loop on X chunks.
 
               - 'auto' relies on a simple heuristic to choose between
-              'parallel_on__X' and 'parallel_on_Y'.
+              'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
+              'parallel_on_X' is usually the most efficient strategy. When `X.shape[0]`
+              is small but `Y.shape[0]` is large, 'parallel_on_Y' brings more opportunity
+              for parallelism and is therefore more efficient despite the synchronization
+              step at each iteration of the outer loop on chunks of `X`.
 
               - None (default) looks-up in scikit-learn configuration for
               `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
