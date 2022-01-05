@@ -324,6 +324,9 @@ Changelog
   A deprecation cycle was introduced.
   :pr:`21576` by :user:`Paul-Emile Dugnat <pedugnat>`.
 
+- |Fix| :func:`metrics.silhouette_score` now supports integer input for precomputed
+  distances. :pr:`22108` by `Thomas Fan`_.
+
 :mod:`sklearn.manifold`
 .......................
 
