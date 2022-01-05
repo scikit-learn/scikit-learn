@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal, assert_allclose
 from scipy.sparse import csr_matrix
+from scipy.spatial.distance import cdist
 
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
@@ -9,6 +10,22 @@ from sklearn.metrics._pairwise_distances_reduction import (
 )
 
 from sklearn.utils.fixes import sp_version, parse_version
+
+# Common supported metric between scipy.spatial.distance.cdist
+# and PairwiseDistancesReduction.
+# This allows constructing tests to check consistency of results
+# of concrete PairwiseDistancesReduction on some metrics using APIs
+# from scipy and numpy.
+CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "cityblock",
+    "euclidean",
+    "minkowski",
+    "seuclidean",
+    "wminkowski",
+]
 
 
 def _get_dummy_metric_params_list(metric: str, n_features: int):
@@ -285,57 +302,63 @@ def test_strategies_consistency(
     )
 
 
+# Concrete PairwiseDistancesReductions tests
+
+
 @pytest.mark.parametrize("n_features", [50, 500])
-@pytest.mark.parametrize("translation", [10 ** i for i in [4, 8]])
-@pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
+@pytest.mark.parametrize("translation", [10 ** i for i in [2, 4, 8]])
+@pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
+@pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
     [PairwiseDistancesArgKmin],
 )
-def test_euclidean_translation_invariance(
+def test_argkmin_translation_invariance(
     n_features,
     translation,
     metric,
-    PairwiseDistancesReduction,
-    n_samples=1000,
+    strategy,
+    n_samples=100,
+    k=10,
     dtype=np.float64,
 ):
-    # The reduction must be translation invariant.
-    parameter = (
-        10
-        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
-        # Scaling the radius slightly with the numbers of dimensions
-        else 10 ** np.log(n_features)
-    )
+    # PairwiseDistancesArgKmin must be translation invariant.
 
     rng = np.random.RandomState(0)
-    spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+    spread = 1000
+    X_translated = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y_translated = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
-        X = np.ascontiguousarray(X[:, :2])
-        Y = np.ascontiguousarray(Y[:, :2])
+        X_translated = np.ascontiguousarray(X_translated[:, :2])
+        Y_translated = np.ascontiguousarray(Y_translated[:, :2])
 
-    reference_indices, reference_dist = PairwiseDistancesReduction.compute(
-        X,
-        Y,
-        parameter,
-        metric=metric,
-        metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
-        return_distance=True,
-    )
+    metric_kwargs = _get_dummy_metric_params_list(metric, n_features)[0]
 
-    indices, dist = PairwiseDistancesReduction.compute(
-        X + 0,
-        Y + 0,
-        parameter,
+    # Reference for argkmin results
+    dist_matrix = cdist(X_translated, Y_translated, metric=metric, **metric_kwargs)
+    # Taking argkmin (indices of the k smallest values)
+    argkmin_indices_ref = np.argsort(dist_matrix, axis=1)[:, :k]
+    # Getting the associated distances
+    argkmin_distances_ref = np.zeros(argkmin_indices_ref.shape, dtype=np.float)
+    for row_idx in range(argkmin_indices_ref.shape[0]):
+        argkmin_distances_ref[row_idx] = dist_matrix[
+            row_idx, argkmin_indices_ref[row_idx]
+        ]
+
+    argkmin_indices, argkmin_distances = PairwiseDistancesReduction.compute(
+        X_translated,
+        Y_translated,
+        k,
         metric=metric,
-        metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
+        metric_kwargs=metric_kwargs,
         return_distance=True,
+        # So as to have more than a chunk, forcing parallelism.
+        chunk_size=n_samples // 4,
+        strategy=strategy,
     )
 
     ASSERT_RESULT[PairwiseDistancesReduction](
-        reference_dist, dist, reference_indices, indices
+        argkmin_distances, argkmin_distances_ref, argkmin_indices, argkmin_indices_ref
     )
