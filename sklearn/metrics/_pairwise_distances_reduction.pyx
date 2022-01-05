@@ -389,7 +389,7 @@ cdef class PairwiseDistancesReduction:
         return
 
     def _finalize_results(self, bint return_distance):
-        """Call-back adapting datastructures before returning results.
+        """Callback adapting datastructures before returning results.
 
         This must be implemented in subclasses.
         """
