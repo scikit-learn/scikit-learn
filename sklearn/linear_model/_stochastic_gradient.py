@@ -1019,12 +1019,12 @@ class SGDClassifier(BaseSGDClassifier):
 
         - 'constant': `eta = eta0`
         - 'optimal': `eta = 1.0 / (alpha * (t + t0))`
-          where t0 is chosen by a heuristic proposed by Leon Bottou.
+          where `t0` is chosen by a heuristic proposed by Leon Bottou.
         - 'invscaling': `eta = eta0 / pow(t, power_t)`
-        - 'adaptive': eta = eta0, as long as the training keeps decreasing.
+        - 'adaptive': `eta = eta0`, as long as the training keeps decreasing.
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
-          early_stopping is True, the current learning rate is divided by 5.
+          early_stopping is `True`, the current learning rate is divided by 5.
 
             .. versionadded:: 0.20
                 Added 'adaptive' option
@@ -1037,10 +1037,11 @@ class SGDClassifier(BaseSGDClassifier):
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate [default 0.5].
+        Values should be in the range `(-inf, inf)`.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
-        score is not improving. If set to True, it will automatically set aside
+        score is not improving. If set to `True`, it will automatically set aside
         a stratified fraction of training data as validation and terminate
         training when validation score returned by the `score` method is not
         improving by at least tol for n_iter_no_change consecutive epochs.
@@ -1052,6 +1053,7 @@ class SGDClassifier(BaseSGDClassifier):
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if `early_stopping` is True.
+        Values should be in the range `(0.0, 1.0)`.
 
         .. versionadded:: 0.20
             Added 'validation_fraction' option
@@ -1061,6 +1063,7 @@ class SGDClassifier(BaseSGDClassifier):
         fitting.
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
+        Integer values should be in the range `[1, max_iter)`.
 
         .. versionadded:: 0.20
             Added 'n_iter_no_change' option
@@ -1089,11 +1092,12 @@ class SGDClassifier(BaseSGDClassifier):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights across all
+        When set to `True`, computes the averaged SGD weights across all
         updates and stores the result in the ``coef_`` attribute. If set to
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
         averaging after seeing 10 samples.
+        Integer values should be in the range `[1, n_samples]`.
 
     Attributes
     ----------
