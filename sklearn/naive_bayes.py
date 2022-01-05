@@ -775,12 +775,12 @@ class MultinomialNB(_BaseDiscreteNB):
         Class labels known to the classifier
 
     coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting `MultinomialNB`
+        Mirrors ``feature_log_prob_[1]`` for interpreting `MultinomialNB`
         as a linear model.
 
         .. deprecated:: 0.24
             ``coef_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
+            (renaming of 0.26). Already appears as clf.feature_log_prob_[1].
 
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
@@ -792,12 +792,12 @@ class MultinomialNB(_BaseDiscreteNB):
         given a class, ``P(x_i|y)``.
 
     intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` for interpreting `MultinomialNB`
+        Mirrors ``class_log_prior_[1]`` for interpreting `MultinomialNB`
         as a linear model.
 
         .. deprecated:: 0.24
             ``intercept_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
+            (renaming of 0.26). Already appears as clf.class_log_prior_[1].
 
     n_features_ : int
         Number of features of each sample.
