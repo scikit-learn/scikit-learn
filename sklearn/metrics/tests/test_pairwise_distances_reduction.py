@@ -306,14 +306,10 @@ def test_strategies_consistency(
 
 
 @pytest.mark.parametrize("n_features", [50, 500])
-@pytest.mark.parametrize("translation", [10 ** i for i in [2, 4, 8]])
+@pytest.mark.parametrize("translation", [0, 1e8])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
-@pytest.mark.parametrize(
-    "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin],
-)
-def test_argkmin_translation_invariance(
+def test_pairwise_distances_argkmin(
     n_features,
     translation,
     metric,
@@ -322,8 +318,6 @@ def test_argkmin_translation_invariance(
     k=10,
     dtype=np.float64,
 ):
-    # PairwiseDistancesArgKmin must be translation invariant.
-
     rng = np.random.RandomState(0)
     spread = 1000
     X_translated = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -347,7 +341,7 @@ def test_argkmin_translation_invariance(
             row_idx, argkmin_indices_ref[row_idx]
         ]
 
-    argkmin_indices, argkmin_distances = PairwiseDistancesReduction.compute(
+    argkmin_indices, argkmin_distances = PairwiseDistancesArgKmin.compute(
         X_translated,
         Y_translated,
         k,
@@ -359,6 +353,6 @@ def test_argkmin_translation_invariance(
         strategy=strategy,
     )
 
-    ASSERT_RESULT[PairwiseDistancesReduction](
+    ASSERT_RESULT[PairwiseDistancesArgKmin](
         argkmin_distances, argkmin_distances_ref, argkmin_indices, argkmin_indices_ref
     )
