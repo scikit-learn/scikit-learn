@@ -86,7 +86,7 @@ def _update_doc_distribution(
 
     if random_state:
         doc_topic_distr = random_state.gamma(100.0, 0.01, (n_samples, n_topics)).astype(
-            X.dtype
+            X.dtype, copy=False
         )
     else:
         doc_topic_distr = np.ones((n_samples, n_topics), dtype=X.dtype)
@@ -404,7 +404,7 @@ class LatentDirichletAllocation(
         # In the literature, this is called `lambda`
         self.components_ = self.random_state_.gamma(
             init_gamma, init_var, (self.n_components, n_features)
-        ).astype(dtype)
+        ).astype(dtype, copy=False)
 
         # In the literature, this is `exp(E[log(beta)])`
         self.exp_dirichlet_component_ = np.exp(
