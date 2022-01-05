@@ -17,7 +17,8 @@ doc/_build/
 doc/auto_examples/
 doc/modules/generated/
 doc/datasets/generated/
-doc/min_dependency.rst
+doc/min_dependency_table.rst
+doc/min_dependency_substitutions.rst
 *.pdf
 pip-log.txt
 scikit_learn.egg-info/
@@ -75,6 +76,9 @@ _configtest.o.d
 .mypy_cache/
 
 # files generated from a template
+sklearn/_loss/_loss.pyx
 sklearn/utils/_seq_dataset.pyx
 sklearn/utils/_seq_dataset.pxd
+sklearn/utils/_weight_vector.pyx
+sklearn/utils/_weight_vector.pxd
 sklearn/linear_model/_sag_fast.pyx

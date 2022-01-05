@@ -2,6 +2,120 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_23_2:
+
+Version 0.23.2
+==============
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| ``inertia_`` attribute of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans`.
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
+  prevent convergence to be declared when `tol=0`. :pr:`17959` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
+  weighted by the sample weights. :pr:`17848` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
+  the estimated bandwidth is 0, the behavior is equivalent to
+  `bin_seeding=False`.
+  :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
+  gives incorrect clusters when the array dtype is float32.
+  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in
+  :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
+  update the dictionary by iterating only once over a mini-batch.
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| Avoid overflows on Windows in
+  :func:`decomposition.IncrementalPCA.partial_fit` for large ``batch_size`` and
+  ``n_samples`` values.
+  :pr:`17985` by :user:`Alan Butler <aldee153>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
+  average of logloss was incorrectly calculated as sum of logloss.
+  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
+  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
+
+- |Fix| Fixes :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` compatibility with estimators that
+  do not define `n_features_in_`. :pr:`17357` by `Thomas Fan`_.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixes bug in :class:`feature_extraction.text.CountVectorizer` where
+  sample order invariance was broken when `max_features` was set and features
+  had the same count. :pr:`18016` by `Thomas Fan`_, `Roman Yurchak`_, and
+  `Joel Nothman`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :func:`linear_model.lars_path` does not overwrite `X` when
+  `X_copy=True` and `Gram='auto'`. :pr:`17914` by `Thomas Fan`_.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an
+  error if ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
+  :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
+  average of multiple RMSE values was incorrectly calculated as the root of the
+  average of multiple MSE values.
+  :pr:`17309` by :user:`Swier Heeres <swierh>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| :class:`pipeline.FeatureUnion` raises a deprecation warning when
+  `None` is included in `transformer_list`. :pr:`17360` by `Thomas Fan`_.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
+  cases support the `binary_only` estimator tag.
+  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
+
 .. _changes_0_23_1:
 
 Version 0.23.1
@@ -22,6 +136,7 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.KMeans` where the sample weights
   provided by the user were modified in place. :pr:`17204` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 
 Miscellaneous
 .............
@@ -51,8 +166,8 @@ In an effort to promote clear and non-ambiguous use of the library, most
 constructor and function parameters are now expected to be passed as keyword
 arguments (i.e. using the `param=value` syntax) instead of positional. To
 ease the transition, a `FutureWarning` is raised if a keyword-only parameter
-is used as positional. In version 0.25, these parameters will be strictly
-keyword-only, and a `TypeError` will be raised.
+is used as positional. In version 1.0 (renaming of 0.25), these parameters
+will be strictly keyword-only, and a `TypeError` will be raised.
 :issue:`15005` by `Joel Nothman`_, `Adrin Jalali`_, `Thomas Fan`_, and
 `Nicolas Hug`_. See `SLEP009
 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
@@ -79,7 +194,7 @@ random sampling procedures.
   :func:`decomposition.non_negative_factorization` with float32 dtype input.
 - |Fix| :func:`decomposition.KernelPCA.inverse_transform`
 - |API| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegrerssor`
+  :class:`ensemble.HistGradientBoostingRegressor`
 - |Fix| ``estimator_samples_`` in :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
 - |Fix| :class:`ensemble.StackingClassifier` and
@@ -226,7 +341,7 @@ Changelog
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
 - |API| The `StreamHandler` was removed from `sklearn.logger` to avoid
-  double logging of messages in common cases where a hander is attached
+  double logging of messages in common cases where a handler is attached
   to the root logger, and to follow the Python logging documentation
   recommendation for libraries to leave the log message handling to
   users and application code. :pr:`16451` by :user:`Christoph Deil <cdeil>`.
@@ -291,7 +406,7 @@ Changelog
   :user:`Chiara Marmo <cmarmo>`.
 
 - |API| Fixed a bug in :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegrerssor` that would not respect the
+  :class:`ensemble.HistGradientBoostingRegressor` that would not respect the
   `max_leaf_nodes` parameter if the criteria was reached at the same time as
   the `max_depth` criteria. :pr:`16183` by `Nicolas Hug`_.
 
@@ -406,9 +521,9 @@ Changelog
   the wrapped `base_estimator` during the fitting of the final model.
   :pr:`15773` by :user:`Jeremy Alexandre <J-A16>`.
 
-- |Fix| add `best_score_` attribute to :class:`linear_model.RidgeCV` and
+- |Fix| Add `best_score_` attribute to :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV`.
-  :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
+  :pr:`15655` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` to pass a
   specific scoring strategy. Before the internal estimator outputs score
@@ -435,8 +550,8 @@ Changelog
   `Nicolas Hug`_.
 
 - |Fix| Fixed a bug in :class:`linear_model.ElasticNetCV`,
-  :class:`linear_model.MultitaskElasticNetCV`, :class:`linear_model.LassoCV`
-  and :class:`linear_model.MultitaskLassoCV` where fitting would fail when
+  :class:`linear_model.MultiTaskElasticNetCV`, :class:`linear_model.LassoCV`
+  and :class:`linear_model.MultiTaskLassoCV` where fitting would fail when
   using joblib loky backend. :pr:`14264` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
@@ -498,6 +613,11 @@ Changelog
 
 :mod:`sklearn.multioutput`
 ..........................
+
+- |Feature| :func:`multioutput.MultiOutputRegressor.fit` and
+  :func:`multioutput.MultiOutputClassifier.fit` now can accept `fit_params`
+  to pass to the `estimator.fit` method of each step. :issue:`15953`
+  :pr:`15959` by :user:`Ke Huang <huangk10>`.
 
 - |Enhancement| :class:`multioutput.RegressorChain` now supports `fit_params`
   for `base_estimator` during `fit`.

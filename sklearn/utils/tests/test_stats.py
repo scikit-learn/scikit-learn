@@ -6,8 +6,7 @@ from sklearn.utils.stats import _weighted_percentile
 
 
 @pytest.mark.parametrize(
-    "interpolation, expected_median",
-    [("lower", 0), ("linear", 1), ("higher", 1)]
+    "interpolation, expected_median", [("lower", 0), ("linear", 1), ("higher", 1)]
 )
 def test_weighted_percentile(interpolation, expected_median):
     y = np.empty(102, dtype=np.float64)
@@ -18,7 +17,10 @@ def test_weighted_percentile(interpolation, expected_median):
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
     score = _weighted_percentile(
-        y, sw, percentile=50, interpolation=interpolation,
+        y,
+        sw,
+        percentile=50,
+        interpolation=interpolation,
     )
     assert score == pytest.approx(expected_median)
 
@@ -30,10 +32,21 @@ def test_weighted_percentile_constant_data(interpolation):
     y = np.zeros(102, dtype=np.float64)
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(
-        y, sw, percentile=50, interpolation=interpolation
-    )
+    score = _weighted_percentile(y, sw, percentile=50, interpolation=interpolation)
     assert score == 0
+
+
+def test_weighted_percentile_zero_weight_zero_percentile():
+    y = np.array([0, 1, 2, 3, 4, 5])
+    sw = np.array([0, 0, 1, 1, 1, 0])
+    score = _weighted_percentile(y, sw, 0)
+    assert pytest.approx(score) == 2
+
+    score = _weighted_percentile(y, sw, 50)
+    assert pytest.approx(score) == 3
+
+    score = _weighted_percentile(y, sw, 100)
+    assert pytest.approx(score) == 4
 
 
 def test_weighted_median_equal_weights():
@@ -87,8 +100,7 @@ def test_weighted_percentile_2d(interpolation):
 
     w_median = _weighted_percentile(x_2d, w_2d, interpolation=interpolation)
     p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w_2d[:, i],
-                             interpolation=interpolation)
+        _weighted_percentile(x_2d[:, i], w_2d[:, i], interpolation=interpolation)
         for i in range(x_2d.shape[1])
     ]
     assert_allclose(w_median, p_axis_0)
@@ -109,9 +121,7 @@ def test_weighted_percentile_np_median():
     assert sklearn_median == pytest.approx(np_median)
 
 
-@pytest.mark.parametrize(
-    "interpolation", ["linear", "lower", "higher", "nearest"]
-)
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher", "nearest"])
 @pytest.mark.parametrize("percentile", np.arange(0, 101, 2.5))
 def test_weighted_percentile_np_percentile(interpolation, percentile):
     # check that the interpolation between adjacent ranks corresponds to the
@@ -122,7 +132,10 @@ def test_weighted_percentile_np_percentile(interpolation, percentile):
 
     np_percentile = np.percentile(X, percentile, interpolation=interpolation)
     sklearn_percentile = _weighted_percentile(
-        X, sample_weight, percentile=percentile, interpolation=interpolation,
+        X,
+        sample_weight,
+        percentile=percentile,
+        interpolation=interpolation,
     )
 
     assert sklearn_percentile == pytest.approx(np_percentile)
@@ -152,8 +165,8 @@ def test_weighted_percentile_non_unit_weight(percentile):
         X, sample_weight, percentile, interpolation="linear"
     )
     X_percentile_idx = np.searchsorted(X, percentile_value)
-    assert sample_weight[:X_percentile_idx - 1].sum() < percentile
-    assert sample_weight[:X_percentile_idx + 1].sum() > percentile
+    assert sample_weight[: X_percentile_idx - 1].sum() < percentile
+    assert sample_weight[: X_percentile_idx + 1].sum() > percentile
 
 
 @pytest.mark.parametrize("n_features", [None, 2])
@@ -161,8 +174,7 @@ def test_weighted_percentile_non_unit_weight(percentile):
     "interpolation", ["linear", "higher", "lower", "nearest", "weighted"]
 )
 @pytest.mark.parametrize("percentile", np.arange(0, 101, 25))
-def test_weighted_percentile_single_weight(n_features, interpolation,
-                                           percentile):
+def test_weighted_percentile_single_weight(n_features, interpolation, percentile):
     # check for the corner case that a single weight is non-null and that the
     # value of this sample should be given
     rng = np.random.RandomState(42)
@@ -197,11 +209,11 @@ def test_weighted_percentile_equivalence_weights_repeated_samples(percentile):
     interpolation = "nearest"
     X_repeated = np.array([1, 2, 2, 3, 3, 3, 4, 4])
     sample_weight_unit = np.ones(X_repeated.shape[0])
-    p_npy_repeated = np.percentile(
-        X_repeated, percentile, interpolation=interpolation
-    )
+    p_npy_repeated = np.percentile(X_repeated, percentile, interpolation=interpolation)
     p_sklearn_repeated = _weighted_percentile(
-        X_repeated, sample_weight_unit, percentile,
+        X_repeated,
+        sample_weight_unit,
+        percentile,
         interpolation=interpolation,
     )
 
@@ -210,7 +222,10 @@ def test_weighted_percentile_equivalence_weights_repeated_samples(percentile):
     X = np.array([1, 2, 3, 4])
     sample_weight = np.array([1, 2, 3, 2])
     p_sklearn_weighted = _weighted_percentile(
-        X, sample_weight, percentile, interpolation=interpolation,
+        X,
+        sample_weight,
+        percentile,
+        interpolation=interpolation,
     )
 
     assert p_sklearn_weighted == pytest.approx(p_npy_repeated)
@@ -226,10 +241,16 @@ def test_weighted_percentile_equivalence_linear_weighted(percentile):
     sample_weight = np.ones(shape=(X.shape[0],))
 
     p_linear = _weighted_percentile(
-        X, sample_weight, percentile=percentile, interpolation="linear",
+        X,
+        sample_weight,
+        percentile=percentile,
+        interpolation="linear",
     )
     p_weighted = _weighted_percentile(
-        X, sample_weight, percentile=percentile, interpolation="weighted",
+        X,
+        sample_weight,
+        percentile=percentile,
+        interpolation="weighted",
     )
 
     assert_allclose(p_linear, p_weighted)
@@ -242,7 +263,10 @@ def test_weighted_percentile_weighted_interpolation():
     sample_weight = np.array([1, 1, 1, 5])
 
     p_linear = _weighted_percentile(
-        X, sample_weight, percentile=50, interpolation="linear",
+        X,
+        sample_weight,
+        percentile=50,
+        interpolation="linear",
     )
     p_weighted = _weighted_percentile(
         X, sample_weight, percentile=50, interpolation="weighted"
