@@ -213,8 +213,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         valid_strategy = ("uniform", "quantile", "kmeans")
         if self.strategy not in valid_strategy:
             raise ValueError(
-                "Valid options for 'strategy' are {}. "
-                "Got strategy={!r} instead.".format(valid_strategy, self.strategy)
+                f"Valid options for 'strategy' are {valid_strategy}. "
+                f"Got strategy={self.strategy!r} instead."
             )
 
         if self.strategy == "quantile" and self.subsample is not None:
