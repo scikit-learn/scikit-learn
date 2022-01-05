@@ -306,6 +306,12 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| :func:`r2_score` and :func:`explained_variance_score` have a new
+  `force_finite` parameter. Setting this parameter to `False` will return the
+  actual non-finite score in case of perfect predictions or constant `y_true`,
+  instead of the finite approximation (`1.0` and `0.0` respectively) currently
+  returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
+
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
   Using `neighbors.DistanceMetric` for imports is still valid for
