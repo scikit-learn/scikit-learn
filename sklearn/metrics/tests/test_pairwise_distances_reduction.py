@@ -24,8 +24,11 @@ CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
     "euclidean",
     "minkowski",
     "seuclidean",
-    "wminkowski",
 ]
+
+# TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
+if sp_version < parse_version("1.8.0.dev0"):
+    CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS.append("wminkowski")
 
 
 def _get_dummy_metric_params_list(metric: str, n_features: int):
