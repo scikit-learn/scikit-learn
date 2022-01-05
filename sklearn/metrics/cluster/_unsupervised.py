@@ -213,6 +213,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == "precomputed":
+        X = np.array(X, dtype='float')
         atol = np.finfo(X.dtype).eps * 100
         if np.any(np.abs(np.diagonal(X)) > atol):
             raise ValueError(
