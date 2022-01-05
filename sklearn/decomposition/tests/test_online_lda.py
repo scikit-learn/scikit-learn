@@ -460,7 +460,8 @@ def test_lda_dtype_match(learning_method, train_data_type, expected_type):
         n_components=5, random_state=0, learning_method=learning_method
     )
     lda.fit(dataset_X.astype(train_data_type))
-    # regardless of input data, transformed data type is determined by trained data
+    assert lda.components_.dtype == expected_type
+    # Regardless of input data, transformed data type is determined by trained data
     for input_data_type in (np.float32, np.float64, np.int32, np.int64):
         transformed = lda.transform(dataset_X[-2:].astype(input_data_type))
         assert transformed.dtype == expected_type
@@ -468,9 +469,9 @@ def test_lda_dtype_match(learning_method, train_data_type, expected_type):
 
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
 def test_lda_numerical_consistency(learning_method):
-    # verify numerical consistency among np.float32 and np.float64
+    # Verify numerical consistency among np.float32 and np.float64
     dataset_X, _ = make_multilabel_classification(random_state=0)
-    rtol = 1e-5
+    rtol = 1e-3
 
     lda_32 = LatentDirichletAllocation(
         n_components=5, random_state=0, learning_method=learning_method
@@ -481,6 +482,7 @@ def test_lda_numerical_consistency(learning_method):
     lda_32.fit(dataset_X.astype(np.float32))
     lda_64.fit(dataset_X.astype(np.float64))
 
+    assert_allclose(lda_32.components_, lda_64.components_, rtol=rtol)
     transformed_32 = lda_32.transform(dataset_X[-2:].astype(np.float32))
     transformed_64 = lda_32.transform(dataset_X[-2:].astype(np.float64))
 
