@@ -324,9 +324,10 @@ cdef class PairwiseDistancesReduction:
         and reduce them.
 
         This strategy dispatches chunks of Y uniformly on threads.
-        Each thread then iterates on all the chunks of X. This strategy is
-        embarrassingly parallel but uses intermediate datastructures
-        synchronisation.
+        Each thread processes all the chunks of X in turn. This strategy is
+        a sequence of embarrassingly parallel subtasks (the inner loop on Y
+        chunks) with intermediate datastructures synchronisation at each
+        iteration of the sequential outer loop on X chunks.
 
         Private datastructures are modified internally by threads.
 
