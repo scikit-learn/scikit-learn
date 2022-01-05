@@ -407,6 +407,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 include_boundaries="neither",
             )
 
+        check_scalar(
+            self.tol,
+            "tol",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+
     def _init_state(self):
         """Initialize model state and allocate model state data structures."""
 

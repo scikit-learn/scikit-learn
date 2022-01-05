@@ -155,6 +155,12 @@ def test_classification_toy(loss):
             "n_iter_no_change must be an instance of <class 'numbers.Integral'>, not"
             " <class 'str'>.",
         ),
+        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
+        (
+            {"tol": "foo"},
+            TypeError,
+            "tol must be an instance of <class 'numbers.Real'>,",
+        ),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
