@@ -49,7 +49,6 @@ from ..tree._tree import DTYPE, DOUBLE
 from . import _gb_losses
 
 from ..utils import check_random_state
-from ..utils import check_array
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
@@ -484,7 +483,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # trees use different types for X and y, checking them separately.
 
         X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
+            X, y, accept_sparse="csr", dtype=DTYPE, multi_output=True,
+            force_all_finite=not self._is_initialized()
         )
 
         sample_weight_is_none = sample_weight is None
@@ -575,19 +575,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     "warm_start==True" % (self.n_estimators, self.estimators_.shape[0])
                 )
             begin_at_stage = self.estimators_.shape[0]
-            # The requirements of _decision_function (called in two lines
-            # below) are more constrained than fit. It accepts only CSR
-            # matrices.
-            if self.warm_start:
-                X = check_array(
-                    X,
-                    dtype=DTYPE,
-                    order="C",
-                    accept_sparse="csr",
-                    force_all_finite=False,
-                )
-            else:
-                X = check_array(X, dtype=DTYPE, order="C", accept_sparse="csr")
             raw_predictions = self._raw_predict(X)
             self._resize_state()
 
