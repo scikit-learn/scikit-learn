@@ -7,6 +7,7 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
+    _sqeuclidean_row_norms,
 )
 
 from sklearn.utils.fixes import sp_version, parse_version
@@ -355,3 +356,24 @@ def test_pairwise_distances_argkmin(
     ASSERT_RESULT[PairwiseDistancesArgKmin](
         argkmin_distances, argkmin_distances_ref, argkmin_indices, argkmin_indices_ref
     )
+
+
+@pytest.mark.parametrize("seed", range(10))
+@pytest.mark.parametrize("n_samples", [100, 1000])
+@pytest.mark.parametrize("n_features", [5, 10, 100])
+@pytest.mark.parametrize("num_threads", [1, 2, 8])
+def test_sqeuclidean_row_norms(
+    seed,
+    n_samples,
+    n_features,
+    num_threads,
+    dtype=np.float64,
+):
+    rng = np.random.RandomState(seed)
+    spread = 100
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
+    sq_row_norm = np.asarray(_sqeuclidean_row_norms(X, num_threads=num_threads))
+
+    assert_allclose(sq_row_norm_reference, sq_row_norm)
