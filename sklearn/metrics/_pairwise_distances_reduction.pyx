@@ -36,7 +36,7 @@ from ..utils._cython_blas cimport (
 )
 from ..utils._heap cimport simultaneous_sort, heap_push
 from ..utils._openmp_helpers cimport _openmp_thread_num
-from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
+from ..utils._typedefs cimport ITYPE_t, DTYPE_t
 
 from numbers import Integral
 from typing import List
@@ -62,7 +62,7 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
         # Casting for X to remove the const qualifier is needed because APIs
         # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
         # const qualifier.
-        # See: https://github.com/scipy/scipy/issues/1426
+        # See: https://github.com/scipy/scipy/issues/14262
         DTYPE_t * X_ptr = <DTYPE_t *> &X[0, 0]
         ITYPE_t idx = 0
         ITYPE_t n = X.shape[0]
@@ -80,7 +80,7 @@ cdef class PairwiseDistancesReduction:
     """Abstract base class for pairwise distance computation & reduction.
 
     Subclasses of this class compute pairwise distances between a set of
-    row vectors of X and another set of row vectors pf Y and apply a reduction on top.
+    row vectors of X and another set of row vectors of Y and apply a reduction on top.
     The reduction takes a matrix of pairwise distances between rows of X and Y
     as input and outputs an aggregate data-structure for each row of X.
     The aggregate values are typically smaller than the number of rows in Y,
@@ -1030,6 +1030,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             DTYPE_t alpha = - 2.
             # Casting for A and B to remove the const is needed because APIs exposed via
             # scipy.linalg.cython_blas aren't reflecting the arguments' const qualifier.
+            # See: https://github.com/scipy/scipy/issues/14262
             DTYPE_t * A = <DTYPE_t*> & X_c[0, 0]
             ITYPE_t lda = X_c.shape[1]
             DTYPE_t * B = <DTYPE_t*> & Y_c[0, 0]
