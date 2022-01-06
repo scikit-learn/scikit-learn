@@ -171,6 +171,7 @@ Changelog
 - |Enhancement| :class:`decomposition.LatentDirichletAllocation`
   preserves dtype for `numpy.float32`.
   :pr:`22113` by :user:`Takeshi Oura <takoika>`.
+
 - |Enhancement| :class:`decomposition.SparsePCA` and :class:`decomposition.MiniBatchSparsePCA`
   preserve dtype for `numpy.float32`.
   :pr:`22111` by :user:`Takeshi Oura <takoika>`.
