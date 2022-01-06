@@ -70,6 +70,13 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.base`
+...................
+
+- |Enhancement| Warmed up estimators now call :meth:`base.BaseEstimator._validate_data` with
+  parameter `force_all_finite` equals to False.
+  :pr:`22089` by :user:`Geoffrey Paris <Geoffrey-Paris>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
