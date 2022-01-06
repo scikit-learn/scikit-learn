@@ -110,6 +110,20 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
+- |API| Adds :term:`get_feature_names_out` to all transformers in the
+  :mod:`~sklearn.cross_decomposition` module:
+  :class:`cross_decomposition.CCA`,
+  :class:`cross_decomposition.PLSSVD`,
+  :class:`cross_decomposition.PLSRegression`,
+  and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
+
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |API| Adds :term:`get_feature_names_out` to
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -157,6 +171,9 @@ Changelog
 - |Enhancement| :class:`decomposition.LatentDirichletAllocation`
   preserves dtype for `numpy.float32`.
   :pr:`22113` by :user:`Takeshi Oura <takoika>`.
+- |Enhancement| :class:`decomposition.SparsePCA` and :class:`decomposition.MiniBatchSparsePCA`
+  preserve dtype for `numpy.float32`.
+  :pr:`22111` by :user:`Takeshi Oura <takoika>`.
 
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
@@ -199,6 +216,13 @@ Changelog
   changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
+- |Efficiency|  Fitting a :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
+  is now faster in a multiprocessing setting, especially for subsequent fits with
+  `warm_start` enabled.
+  :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -285,6 +309,12 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| :func:`r2_score` and :func:`explained_variance_score` have a new
+  `force_finite` parameter. Setting this parameter to `False` will return the
+  actual non-finite score in case of perfect predictions or constant `y_true`,
+  instead of the finite approximation (`1.0` and `0.0` respectively) currently
+  returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
+
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
   Using `neighbors.DistanceMetric` for imports is still valid for
@@ -296,6 +326,9 @@ Changelog
   <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_.
   A deprecation cycle was introduced.
   :pr:`21576` by :user:`Paul-Emile Dugnat <pedugnat>`.
+
+- |Fix| :func:`metrics.silhouette_score` now supports integer input for precomputed
+  distances. :pr:`22108` by `Thomas Fan`_.
 
 :mod:`sklearn.manifold`
 .......................

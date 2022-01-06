@@ -352,11 +352,13 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+        Values should be in the range `[1, inf)`.
 
     learning_rate : float, default=1.0
         Weight applied to each classifier at each boosting iteration. A higher
         learning rate increases the contribution of each classifier. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
+        Values should be in the range `(0.0, inf)`.
 
     algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
@@ -954,11 +956,13 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+        Values should be in the range `[1, inf)`.
 
     learning_rate : float, default=1.0
         Weight applied to each regressor at each boosting iteration. A higher
         learning rate increases the contribution of each regressor. There is
         a trade-off between the `learning_rate` and `n_estimators` parameters.
+        Values should be in the range `(0.0, inf)`.
 
     loss : {'linear', 'square', 'exponential'}, default='linear'
         The loss function to use when updating the weights after each
