@@ -775,8 +775,8 @@ class MultinomialNB(_BaseDiscreteNB):
         Class labels known to the classifier
 
     coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` with a multiclass target, and 
-        ``feature_log_prob_[1]`` with a binary target for interpreting
+        Mirrors ``feature_log_prob_`` with a multiclass target, and
+         ``feature_log_prob_[1]`` with a binary target for interpreting
         `MultinomialNB`
 
         .. deprecated:: 0.24
@@ -793,10 +793,9 @@ class MultinomialNB(_BaseDiscreteNB):
         given a class, ``P(x_i|y)``.
 
     intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` with a multiclass target, and 
+        Mirrors ``class_log_prior_`` with a multiclass target, and
         ``class_log_prior_[1]`` with a binary target for interpreting
         `MultinomialNB`
-        
 
         .. deprecated:: 0.24
             ``intercept_`` is deprecated in 0.24 and will be removed in 1.1
