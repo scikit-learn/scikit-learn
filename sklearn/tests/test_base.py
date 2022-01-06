@@ -105,6 +105,14 @@ class VargEstimator(BaseEstimator):
     def __init__(self, *vargs):
         pass
 
+class WarmStartEstimator(BaseEstimator):
+    def __init__(self):
+        self.warm_start = True
+
+    def fit(self, X=None, y=None):
+        self._validate_data(X, y)
+        self.n_fit_ = self.n_fit_ + 1 if hasattr(self, 'n_fit_') else 1
+        return self
 
 #############################################################################
 # The tests
@@ -691,3 +699,21 @@ def test_feature_names_in():
     # transform on feature names that are mixed also warns:
     with pytest.warns(FutureWarning, match=msg) as record:
         trans.transform(df_mixed)
+
+def test_uncheck_finite_after_warm_up():
+    """Check that validate_data is called with force_all_finite==False
+    on second fit call for warm start estimators."""
+    warm_start_estimator = WarmStartEstimator()
+    X = [[0]]
+    warm_start_estimator.fit(X)
+    X[0][0] = np.inf
+    warm_start_estimator.fit(X)
+    assert warm_start_estimator.n_fit_ == 2
+
+def test_check_finite_before_warm_up():
+    """Check that validate_data is called with force_all_finite==True
+    on the first call to fit for warm start estimators."""
+    warm_start_estimator = WarmStartEstimator()
+    X = [[np.inf]]
+    with pytest.raises(ValueError):
+        warm_start_estimator.fit(X)
