@@ -437,6 +437,11 @@ class BaseRandomProjection(
         """
         return self.n_components
 
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
+
 
 class GaussianRandomProjection(BaseRandomProjection):
     """Reduce dimensionality through Gaussian random projection.
@@ -541,11 +546,6 @@ class GaussianRandomProjection(BaseRandomProjection):
         return _gaussian_random_matrix(
             n_components, n_features, random_state=random_state
         )
-
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
 
 
 class SparseRandomProjection(BaseRandomProjection):
@@ -710,8 +710,3 @@ class SparseRandomProjection(BaseRandomProjection):
         return _sparse_random_matrix(
             n_components, n_features, density=self.density_, random_state=random_state
         )
-
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
