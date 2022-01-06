@@ -115,6 +115,7 @@ class WarmStartEstimator(BaseEstimator):
         self.n_fit_ = self.n_fit_ + 1 if hasattr(self, "n_fit_") else 1
         return self
 
+
 #############################################################################
 # The tests
 
