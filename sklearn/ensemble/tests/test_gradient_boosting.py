@@ -116,6 +116,12 @@ def test_classification_toy(loss):
         ({"max_features": 0}, ValueError, "max_features == 0, must be > 0."),
         ({"max_features": 100}, ValueError, "max_features == 100, must be <= "),
         ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be < 1."),
+        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
+        (
+            {"verbose": "foo"},
+            TypeError,
+            "verbose must be an instance of <class 'numbers.Integral'>",
+        ),
         (
             {"warm_start": 1},
             TypeError,

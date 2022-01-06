@@ -384,6 +384,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_features_ = max_features
 
         check_scalar(
+            self.verbose,
+            "verbose",
+            target_type=numbers.Integral,
+            min_val=0,
+        )
+
+        check_scalar(
             self.warm_start,
             "warm_start",
             target_type=bool,
