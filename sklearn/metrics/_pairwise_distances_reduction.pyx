@@ -62,16 +62,18 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
         # Casting for X to remove the const qualifier is needed because APIs
         # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
         # const qualifier.
+        # See: https://github.com/scipy/scipy/issues/1426
         DTYPE_t * X_ptr = <DTYPE_t *> &X[0, 0]
         ITYPE_t idx = 0
         ITYPE_t n = X.shape[0]
         ITYPE_t d = X.shape[1]
-        DTYPE_t[::1] row_norms_squared = np.empty(n, dtype=DTYPE)
+        DTYPE_t[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
 
     for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
-        row_norms_squared[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
+        squared_row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
 
-    return row_norms_squared
+    return squared_row_norms
+
 
 
 cdef class PairwiseDistancesReduction:
