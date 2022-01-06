@@ -105,6 +105,7 @@ class VargEstimator(BaseEstimator):
     def __init__(self, *vargs):
         pass
 
+
 class WarmStartEstimator(BaseEstimator):
     def __init__(self):
         self.warm_start = True
@@ -700,6 +701,7 @@ def test_feature_names_in():
     with pytest.warns(FutureWarning, match=msg) as record:
         trans.transform(df_mixed)
 
+
 def test_uncheck_finite_after_warm_up():
     """Check that validate_data is called with force_all_finite==False
     on second fit call for warm start estimators."""
@@ -709,6 +711,7 @@ def test_uncheck_finite_after_warm_up():
     X[0][0] = np.inf
     warm_start_estimator.fit(X)
     assert warm_start_estimator.n_fit_ == 2
+
 
 def test_check_finite_before_warm_up():
     """Check that validate_data is called with force_all_finite==True
