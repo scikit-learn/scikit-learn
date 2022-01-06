@@ -264,8 +264,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = self._validate_n_bins(n_features)
 
         if sample_weight is not None:
-            sample_weight = np.array(
-                _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, copy=True
             )
 
         bin_edges = np.zeros(n_features, dtype=object)
