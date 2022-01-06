@@ -142,12 +142,12 @@ def test_invalid_n_bins_array():
         #     [1, 1, 1, 1],
         # ),
         #
-        # TODO: This test case above aims to test if the case where an array of  
-        #       ones passed in sample_weight parameter is equal to the case when 
+        # TODO: This test case above aims to test if the case where an array of
+        #       ones passed in sample_weight parameter is equal to the case when
         #       sample_weight is None.
-        #       Unfortunately, the behavior of `_weighted_percentile` when 
-        #       `sample_weight = [1, 1, 1, 1]` are currently not equivalent. 
-        #       This problem has been adressed in issue : 
+        #       Unfortunately, the behavior of `_weighted_percentile` when
+        #       `sample_weight = [1, 1, 1, 1]` are currently not equivalent.
+        #       This problem has been adressed in issue :
         #       https://github.com/scikit-learn/scikit-learn/issues/17370
     ],
 )
