@@ -484,8 +484,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # trees use different types for X and y, checking them separately.
 
         X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True,
-            force_all_finite=not self._is_initialized()
+            X,
+            y,
+            accept_sparse=["csr", "csc", "coo"],
+            dtype=DTYPE,
+            multi_output=True,
+            force_all_finite=not self._is_initialized(),
         )
 
         sample_weight_is_none = sample_weight is None
