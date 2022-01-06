@@ -39,7 +39,7 @@ def mean_change(np.ndarray[ndim=1, dtype=numpy_float_t] arr_1,
     return total / size
 
 
-    def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=numpy_float_t] doc_topic,
+def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=numpy_float_t] doc_topic,
                               double doc_topic_prior,
                               np.ndarray[ndim=1, dtype=numpy_float2_t] out):
     """Dirichlet expectation for a single sample:
