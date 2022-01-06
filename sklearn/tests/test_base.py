@@ -112,7 +112,7 @@ class WarmStartEstimator(BaseEstimator):
 
     def fit(self, X=None, y=None):
         self._validate_data(X, y)
-        self.n_fit_ = self.n_fit_ + 1 if hasattr(self, 'n_fit_') else 1
+        self.n_fit_ = self.n_fit_ + 1 if hasattr(self, "n_fit_") else 1
         return self
 
 #############################################################################
