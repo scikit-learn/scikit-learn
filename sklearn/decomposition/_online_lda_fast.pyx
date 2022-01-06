@@ -11,18 +11,23 @@ ctypedef fused numpy_float_t:
     np.float32_t
     np.float64_t
 
+
+ctypedef fused numpy_float2_t:
+    np.float32_t
+    np.float64_t
+
 ctypedef fused float_t:
     float
     double
 
 def mean_change(np.ndarray[ndim=1, dtype=numpy_float_t] arr_1,
-                np.ndarray[ndim=1, dtype=numpy_float_t] arr_2):
+                np.ndarray[ndim=1, dtype=numpy_float2_t] arr_2):
     """Calculate the mean difference between two arrays.
 
     Equivalent to np.abs(arr_1 - arr2).mean().
     """
 
-    cdef double total, diff
+    cdef np.float64_t total, diff
     cdef np.npy_intp i, size
 
     size = arr_1.shape[0]
@@ -36,7 +41,7 @@ def mean_change(np.ndarray[ndim=1, dtype=numpy_float_t] arr_1,
 
 def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=numpy_float_t] doc_topic,
                               double doc_topic_prior,
-                              np.ndarray[ndim=1, dtype=numpy_float_t] out):
+                              np.ndarray[ndim=1, dtype=numpy_float2_t] out):
     """Dirichlet expectation for a single sample:
         exp(E[log(theta)]) for theta ~ Dir(doc_topic)
     after adding doc_topic_prior to doc_topic, in-place.
@@ -47,19 +52,36 @@ def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=numpy_float_t] doc_topic,
     """
 
     cdef numpy_float_t dt, psi_total, total
+    cdef np.float64_t dt_64, psi_total_64, total_64
     cdef np.npy_intp i, size
 
     size = doc_topic.shape[0]
 
-    total = 0.0
-    for i in range(size):
-        dt = doc_topic[i] + doc_topic_prior
-        doc_topic[i] = dt
-        total += dt
-    psi_total = psi(total)
 
-    for i in range(size):
-        out[i] = exp(psi(doc_topic[i]) - psi_total)
+    if numpy_float_t == numpy_float2_t:
+        # Type of doc_topic and out are identical.
+        # So use the type for calculation
+        total = 0.0
+        for i in range(size):
+            dt = doc_topic[i] + doc_topic_prior
+            doc_topic[i] = dt
+            total += dt
+        psi_total = psi(total)
+
+        for i in range(size):
+            out[i] = exp(psi(doc_topic[i]) - psi_total)
+    else:
+        # Type of doc_topic and out are differenct.
+        # So use np.float64 explicitly for calculation
+        total_64 = 0.0
+        for i in range(size):
+            dt_64 = doc_topic[i] + doc_topic_prior
+            doc_topic[i] = dt_64
+            total_64 += dt_64
+        psi_total_64 = psi(total)
+
+        for i in range(size):
+            out[i] = exp(psi(doc_topic[i]) - psi_total_64)
 
 
 def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=numpy_float_t] arr):

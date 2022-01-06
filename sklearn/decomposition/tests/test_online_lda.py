@@ -461,10 +461,15 @@ def test_lda_dtype_match(learning_method, train_data_type, expected_type):
     )
     lda.fit(dataset_X.astype(train_data_type))
     assert lda.components_.dtype == expected_type
-    # Regardless of input data, transformed data type is determined by trained data
-    for input_data_type in (np.float32, np.float64, np.int32, np.int64):
+
+    for input_data_type, expected_transformed_data_type in (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ):
         transformed = lda.transform(dataset_X[-2:].astype(input_data_type))
-        assert transformed.dtype == expected_type
+        assert transformed.dtype == expected_transformed_data_type
 
 
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
