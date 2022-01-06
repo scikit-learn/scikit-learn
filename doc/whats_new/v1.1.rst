@@ -287,6 +287,14 @@ Changelog
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |API| Adds :term:`get_feature_names_out` to the transformers following
+  :mod:`~sklearn.kernel_approximation` module:
+  :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
+  :pr:`22137` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
