@@ -272,7 +272,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             "n_estimators",
             target_type=numbers.Integral,
             min_val=1,
-            include_boundaries="left",
         )
 
         check_scalar(
@@ -287,7 +286,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.loss not in self._SUPPORTED_LOSS
             or self.loss not in _gb_losses.LOSS_FUNCTIONS
         ):
-            raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
+            raise ValueError(f"Loss {self.loss!r} not supported. ")
 
         # TODO: Remove in v1.2
         if self.loss == "ls":
@@ -337,7 +336,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             elif not (isinstance(self.init, str) and self.init == "zero"):
                 raise ValueError(
                     "The init parameter must be an estimator or 'zero'. "
-                    "Got init={}".format(self.init)
+                    f"Got init={self.init!r}"
                 )
 
         if not (0.0 < self.alpha < 1.0):
@@ -355,7 +354,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_features = max(1, int(np.log2(self.n_features_in_)))
             else:
                 raise ValueError(
-                    f"Invalid value for max_features: {self.max_features}. "
+                    f"Invalid value for max_features: {self.max_features!r}. "
                     "Allowed string values are 'auto', 'sqrt' or 'log2'."
                 )
         elif self.max_features is None:
