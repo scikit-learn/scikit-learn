@@ -391,12 +391,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
 
         check_scalar(
-            self.warm_start,
-            "warm_start",
-            target_type=bool,
-        )
-
-        check_scalar(
             self.validation_fraction,
             "validation_fraction",
             target_type=numbers.Real,
@@ -534,6 +528,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             )
 
         # if not warmstart - clear the estimator state
+        check_scalar(
+            self.warm_start,
+            "warm_start",
+            target_type=bool,
+        )
         if not self.warm_start:
             self._clear_state()
 
