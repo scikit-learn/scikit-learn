@@ -81,6 +81,8 @@ def test_classification_toy(loss):
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
+        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
+        ({"learning_rate": -1.0}, ValueError, "learning_rate == -1.0, must be > 0."),
         ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1."),
         ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1."),
         (
@@ -89,8 +91,6 @@ def test_classification_toy(loss):
             "n_estimators must be an instance of <class 'numbers.Integral'>, not <class"
             " 'float'>",
         ),
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
-        ({"learning_rate": -1.0}, ValueError, "learning_rate == -1.0, must be > 0."),
         ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
         # ({"min_samples_split": 0.0}, "min_samples_split must be an integer"),
         # ({"min_samples_split": -1.0}, "min_samples_split must be an integer"),

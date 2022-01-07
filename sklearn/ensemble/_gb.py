@@ -268,18 +268,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check validity of parameters and raise ValueError if not valid."""
 
         check_scalar(
-            self.n_estimators,
-            "n_estimators",
-            target_type=numbers.Integral,
-            min_val=1,
-        )
-
-        check_scalar(
             self.learning_rate,
             "learning_rate",
             target_type=numbers.Real,
             min_val=0.0,
             include_boundaries="neither",
+        )
+
+        check_scalar(
+            self.n_estimators,
+            "n_estimators",
+            target_type=numbers.Integral,
+            min_val=1,
         )
 
         if (
