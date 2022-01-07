@@ -1121,17 +1121,31 @@ def d2_pinball_loss_score(
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    numerator = mean_pinball_loss(y_true, y_pred, sample_weight=sample_weight,
-                                  alpha=alpha, multioutput="raw_values")
+    numerator = mean_pinball_loss(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        alpha=alpha,
+        multioutput="raw_values",
+    )
 
     if sample_weight is None:
         y_quantile = [np.quantile(y_true, q=alpha, axis=0)] * len(y_true)
     else:
         sample_weight = _check_sample_weight(sample_weight, y_true)
-        y_quantile = [_weighted_percentile(y_true, sample_weight=sample_weight, percentile=alpha*100)] * len(y_true)
+        y_quantile = [
+            _weighted_percentile(
+                y_true, sample_weight=sample_weight, percentile=alpha * 100
+            )
+        ] * len(y_true)
 
-    denominator = mean_pinball_loss(y_true, y_quantile, sample_weight=sample_weight,
-                                    alpha=alpha, multioutput="raw_values")
+    denominator = mean_pinball_loss(
+        y_true,
+        y_quantile,
+        sample_weight=sample_weight,
+        alpha=alpha,
+        multioutput="raw_values",
+    )
 
     nonzero_numerator = numerator != 0
     nonzero_denominator = denominator != 0
@@ -1157,7 +1171,7 @@ def d2_pinball_loss_score(
     else:
         avg_weights = multioutput
 
-    return np.average(output_scores, weights=avg_weights) 
+    return np.average(output_scores, weights=avg_weights)
 
 
 def d2_absolute_error_score(
