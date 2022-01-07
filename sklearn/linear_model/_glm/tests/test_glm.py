@@ -195,7 +195,7 @@ def test_glm_scalar_argument(Estimator, params, err_type, err_msg):
     """Test GLM for invalid parameter arguments."""
     y = np.array([1, 2])
     X = np.array([[1], [2]])
-    glm = estimator(**params)
+    glm = Estimator(**params)
     with pytest.raises(err_type, match=err_msg):
         glm.fit(X, y)
 
