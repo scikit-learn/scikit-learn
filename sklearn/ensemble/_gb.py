@@ -370,9 +370,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.max_features,
                 "max_features",
                 target_type=numbers.Integral,
-                min_val=0,
+                min_val=1,
                 max_val=self.n_features_in_,
-                include_boundaries="right",
             )
             max_features = self.max_features
         else:  # float
@@ -382,7 +381,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 target_type=numbers.Real,
                 min_val=0.0,
                 max_val=1.0,
-                include_boundaries="neither",
+                include_boundaries="right",
             )
             max_features = max(1, int(self.max_features * self.n_features_in_))
 

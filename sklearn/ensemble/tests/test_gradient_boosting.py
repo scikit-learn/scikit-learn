@@ -92,13 +92,6 @@ def test_classification_toy(loss):
             " 'float'>",
         ),
         ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
-        # ({"min_samples_split": 0.0}, "min_samples_split must be an integer"),
-        # ({"min_samples_split": -1.0}, "min_samples_split must be an integer"),
-        # ({"min_samples_split": 1.1}, "min_samples_split must be an integer"),
-        # ({"min_samples_leaf": 0}, "min_samples_leaf must be at least 1 or"),
-        # ({"min_samples_leaf": -1.0}, "min_samples_leaf must be at least 1 or"),
-        # ({"min_weight_fraction_leaf": -1.0}, "min_weight_fraction_leaf must in"),
-        # ({"min_weight_fraction_leaf": 0.6}, "min_weight_fraction_leaf must in"),
         ({"subsample": 0.0}, ValueError, "subsample == 0.0, must be > 0."),
         ({"subsample": 1.1}, ValueError, "subsample == 1.1, must be <= 1."),
         ({"subsample": -0.1}, ValueError, "subsample == -0.1, must be > 0."),
@@ -108,14 +101,12 @@ def test_classification_toy(loss):
             "subsample must be an instance of <class 'numbers.Real'>, not <class"
             " 'str'>",
         ),
-        # ({"max_depth": -0.1}, "max_depth must be greater than zero"),
-        # ({"max_depth": 0}, "max_depth must be greater than zero"),
         ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
-        ({"max_features": "invalid"}, ValueError, "Invalid value for max_features:"),
-        ({"max_features": -0.1}, ValueError, "max_features == -0.1, must be > 0."),
-        ({"max_features": 0}, ValueError, "max_features == 0, must be > 0."),
-        ({"max_features": 100}, ValueError, "max_features == 100, must be <= "),
-        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be < 1."),
+        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
+        ({"max_features": 1000}, ValueError, "max_features == 1000, must be <="),
+        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
+        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
+        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
         ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
         (
             {"verbose": "foo"},
@@ -181,8 +172,10 @@ def test_classification_toy(loss):
 )
 def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg):
     # Check input parameter validation for GradientBoosting
+
+    est = GradientBoosting(**params)
     with pytest.raises(err_type, match=err_msg):
-        GradientBoosting(**params).fit(X, y)
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize(
