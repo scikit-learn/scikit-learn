@@ -799,9 +799,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
+        Array containing vectors.
 
     Y : array-like of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        Array containing vectors. If `None`, uses `Y=X`.
 
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
