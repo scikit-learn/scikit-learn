@@ -158,6 +158,77 @@ def test_classification_toy(loss):
             TypeError,
             "tol must be an instance of <class 'numbers.Real'>,",
         ),
+        # ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
+        # ({"min_samples_leaf": 900}, ValueError, "min_samples_leaf == 900, must be <="),
+        # ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
+        # (
+        #     {"min_samples_leaf": 0.6},
+        #     ValueError,
+        #     "min_samples_leaf == 0.6, must be <= 0.5",
+        # ),
+        # (
+        #     {"min_samples_leaf": "foo"},
+        #     TypeError,
+        #     "min_samples_leaf must be an instance of <class 'numbers.Real'>",
+        # ),
+        # ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
+        # (
+        #     {"min_samples_split": 900},
+        #     ValueError,
+        #     "min_samples_split == 900, must be <=",
+        # ),
+        # (
+        #     {"min_samples_split": 0.0},
+        #     ValueError,
+        #     "min_samples_split == 0.0, must be > 0.0",
+        # ),
+        # (
+        #     {"min_samples_split": 1.1},
+        #     ValueError,
+        #     "min_samples_split == 1.1, must be <= 1.0",
+        # ),
+        # (
+        #     {"min_samples_split": "foo"},
+        #     TypeError,
+        #     "min_samples_split must be an instance of <class 'numbers.Real'>",
+        # ),
+        # (
+        #     {"min_weight_fraction_leaf": -1},
+        #     ValueError,
+        #     "min_weight_fraction_leaf == -1, must be >= 0.0",
+        # ),
+        # (
+        #     {"min_weight_fraction_leaf": 0.6},
+        #     ValueError,
+        #     "min_weight_fraction_leaf == 0.6, must be <= 0.5",
+        # ),
+        # (
+        #     {"min_weight_fraction_leaf": "foo"},
+        #     TypeError,
+        #     "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
+        # ),
+        # ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
+        # (
+        #     {"max_depth": 1.1},
+        #     TypeError,
+        #     "max_depth must be an instance of <class 'numbers.Integral'>",
+        # ),
+        # (
+        #     {"min_impurity_decrease": -1},
+        #     ValueError,
+        #     "min_impurity_decrease == -1, must be >= 0.0",
+        # ),
+        # (
+        #     {"min_impurity_decrease": "foo"},
+        #     TypeError,
+        #     "min_impurity_decrease must be an instance of <class 'numbers.Real'>",
+        # ),
+        # ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
+        # (
+        #     {"ccp_alpha": "foo"},
+        #     TypeError,
+        #     "ccp_alpha must be an instance of <class 'numbers.Real'>",
+        # ),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
