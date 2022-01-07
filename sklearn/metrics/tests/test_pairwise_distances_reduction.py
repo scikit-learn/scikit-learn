@@ -10,6 +10,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     _sqeuclidean_row_norms,
 )
 
+from sklearn.metrics import euclidean_distances
 from sklearn.utils.fixes import sp_version, parse_version
 
 # Common supported metric between scipy.spatial.distance.cdist
@@ -306,7 +307,7 @@ def test_strategies_consistency(
 
 
 @pytest.mark.parametrize("n_features", [50, 500])
-@pytest.mark.parametrize("translation", [0, 1e8])
+@pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
 def test_pairwise_distances_argkmin(
@@ -331,7 +332,11 @@ def test_pairwise_distances_argkmin(
     metric_kwargs = _get_dummy_metric_params_list(metric, n_features)[0]
 
     # Reference for argkmin results
-    dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
+    if metric == "euclidean":
+        # Compare to scikit-learn GEMM optimized implementation
+        dist_matrix = euclidean_distances(X, Y)
+    else:
+        dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
     # Taking argkmin (indices of the k smallest values)
     argkmin_indices_ref = np.argsort(dist_matrix, axis=1)[:, :k]
     # Getting the associated distances
