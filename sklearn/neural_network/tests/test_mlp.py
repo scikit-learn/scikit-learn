@@ -507,7 +507,7 @@ def test_partial_fit_errors():
 
 
 def test_nonfinite_params():
-    # Check MLPRegressor throws ValueError when dealing with non-finite
+    # MLPRegressor must throw ValueError when dealing with non-finite
     # parameter values
     X = np.array(
         [

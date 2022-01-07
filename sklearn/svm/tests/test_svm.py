@@ -732,7 +732,7 @@ def test_bad_input():
 
 
 def test_svc_nonfinite_params():
-    # Check SVC throws ValueError when dealing with non-finite parameter values
+    # SVC must throw ValueError when dealing with non-finite parameter values
     X = np.array(
         [
             (1.30830774e307, 6.02217328e307),
