@@ -131,7 +131,7 @@ def test_glm_solver_argument(solver):
 
 
 @pytest.mark.parametrize(
-    "estimator",
+    "Estimator",
     [GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
 )
 @pytest.mark.parametrize(
