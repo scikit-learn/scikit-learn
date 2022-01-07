@@ -68,7 +68,7 @@ cdef class IntFloatDict:
     #    while it != end:
     #        yield deref(it).first, deref(it).second
     #        inc(it)
-    
+
     def __iter__(self):
         cdef int size = self.my_map.size()
         cdef ITYPE_t [:] keys = np.empty(size, dtype=np.intp)
@@ -126,14 +126,13 @@ cdef class IntFloatDict:
         return out_obj
 
     def append(self, ITYPE_t key, DTYPE_t value):
-        cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
-        # Decrement the iterator
-        dec(end)
         # Construct our arguments
         cdef pair[ITYPE_t, DTYPE_t] args
         args.first = key
         args.second = value
-        self.my_map.insert(end, args)
+
+        # Decrement the iterator and insert the new argument
+        self.my_map.insert(dec(self.my_map.const_end()), args)
 
 
 ###############################################################################
@@ -150,4 +149,3 @@ def argmin(IntFloatDict d):
             min_key = deref(it).first
         inc(it)
     return min_key, min_value
-
