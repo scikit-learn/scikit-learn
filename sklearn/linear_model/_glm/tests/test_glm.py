@@ -191,7 +191,7 @@ def test_glm_solver_argument(solver):
         ),
     ],
 )
-def test_glm_scalar_argument(estimator, params, err_type, err_msg):
+def test_glm_scalar_argument(Estimator, params, err_type, err_msg):
     """Test GLM for invalid parameter arguments."""
     y = np.array([1, 2])
     X = np.array([[1], [2]])
