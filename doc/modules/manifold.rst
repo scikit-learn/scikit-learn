@@ -50,11 +50,7 @@ interesting structure within the data will be lost.
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
-.. |projected_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_002.png
-    :target: ../auto_examples/manifold/plot_lle_digits.html
-    :scale: 50
-
-.. centered:: |digits_img| |projected_img|
+.. centered:: |digits_img|
 
 
 To address this concern, a number of supervised and unsupervised linear
@@ -66,15 +62,11 @@ These methods can be powerful, but often miss important non-linear
 structure in the data.
 
 
-.. |PCA_img| image:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_003.png
+.. |projected_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_002.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
-.. |LDA_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_004.png
-    :target: ../auto_examples/manifold/plot_lle_digits.html
-    :scale: 50
-
-.. centered:: |PCA_img| |LDA_img|
+.. centered:: |projected_img|
 
 Manifold Learning can be thought of as an attempt to generalize linear
 frameworks like PCA to be sensitive to non-linear structure in data. Though
@@ -105,11 +97,6 @@ extension of Multi-dimensional Scaling (MDS) or Kernel PCA.
 Isomap seeks a lower-dimensional embedding which maintains geodesic
 distances between all points.  Isomap can be performed with the object
 :class:`Isomap`.
-
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_005.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
 
 Complexity
 ----------
@@ -163,11 +150,6 @@ Locally linear embedding can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`.
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_006.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
-
 Complexity
 ----------
 
@@ -217,11 +199,6 @@ linear embedding* (MLLE).  MLLE can be  performed with function
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'modified'``.
 It requires ``n_neighbors > n_components``.
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_007.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
-
 Complexity
 ----------
 
@@ -266,11 +243,6 @@ for small output dimension.  HLLE can be  performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'hessian'``.
 It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
-
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_008.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
 
 Complexity
 ----------
@@ -359,11 +331,6 @@ tangent spaces to learn the embedding.  LTSA can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'ltsa'``.
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_009.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
-
 Complexity
 ----------
 
@@ -417,12 +384,6 @@ version, the algorithms will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
 space and the similarities/dissimilarities.
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
-
-
 Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
 :math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
 the similarities chosen in some optimal ways. The objective, called the
@@ -450,13 +411,6 @@ in the same order as :math:`S_{ij}`.
 
 A trivial solution to this problem is to set all the points on the origin. In
 order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
-
-
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
-   :target: ../auto_examples/manifold/plot_mds.html
-   :align: center
-   :scale: 60
-
 
 .. topic:: References:
 
@@ -511,12 +465,6 @@ The disadvantages to using t-SNE are roughly:
   embedding with the least error.
 * Global structure is not explicitly preserved. This problem is mitigated by
   initializing points with PCA (using `init='pca'`).
-
-
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_013.png
-   :target: ../auto_examples/manifold/plot_lle_digits.html
-   :align: center
-   :scale: 50
 
 Optimizing t-SNE
 ----------------
