@@ -215,9 +215,20 @@ cdef class PairwiseDistancesReduction:
                 not issparse(Y) and Y.dtype == np.float64 and
                 metric in cls.valid_metrics())
 
+    # About __cinit__ and __init__ signatures:
+    #
+    #    - __cinit__ is responsible for C-level allocations and initializations
+    #    - __init__ is responsible for PyObject initialization
+    #    - for a given class, __cinit__ and __init__ must have a matching signatures
+    #      (up to *args and **kwargs)
+    #    - for a given class hiearchy __cinit__'s must have a matching signatures
+    #      (up to *args and **kwargs)
+    #
+    # See: https://cython.readthedocs.io/en/latest/src/userguide/special_methods.html#initialisation-methods-cinit-and-init #noqa
     def __cinit__(
         self,
-        DatasetsPair datasets_pair,
+        n_samples_X,
+        n_samples_Y,
         chunk_size=None,
         n_threads=None,
         strategy=None,
@@ -234,9 +245,7 @@ cdef class PairwiseDistancesReduction:
 
         self.effective_n_threads = _openmp_effective_n_threads(n_threads)
 
-        self.datasets_pair = datasets_pair
-
-        self.n_samples_X = datasets_pair.n_samples_X()
+        self.n_samples_X = n_samples_X
         self.X_n_samples_chunk = min(self.n_samples_X, self.chunk_size)
         X_n_full_chunks = self.n_samples_X // self.X_n_samples_chunk
         X_n_samples_remainder = self.n_samples_X % self.X_n_samples_chunk
@@ -247,7 +256,7 @@ cdef class PairwiseDistancesReduction:
         else:
             self.X_n_samples_last_chunk = self.X_n_samples_chunk
 
-        self.n_samples_Y = datasets_pair.n_samples_Y()
+        self.n_samples_Y = n_samples_Y
         self.Y_n_samples_chunk = min(self.n_samples_Y, self.chunk_size)
         Y_n_full_chunks = self.n_samples_Y // self.Y_n_samples_chunk
         Y_n_samples_remainder = self.n_samples_Y % self.Y_n_samples_chunk
@@ -280,6 +289,17 @@ cdef class PairwiseDistancesReduction:
             self.Y_n_chunks if self.execute_in_parallel_on_Y else self.X_n_chunks,
             self.effective_n_threads,
         )
+
+    def __init__(
+        self,
+        n_samples_X,
+        n_samples_Y,
+        chunk_size=None,
+        n_threads=None,
+        strategy=None,
+        DatasetsPair datasets_pair=None,
+    ):
+        self.datasets_pair = datasets_pair
 
     @final
     cdef void _parallel_on_X(self) nogil:
@@ -647,12 +667,30 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         # for various back-end and/or hardware and/or datatypes, and/or fused
         # {sparse, dense}-datasetspair etc.
 
-        pda = PairwiseDistancesArgKmin(
-            datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
-            k=k,
-            chunk_size=chunk_size,
-            strategy=strategy,
-        )
+        if metric in ("euclidean", "sqeuclidean") and not issparse(X) and not issparse(Y):
+            use_squared_distances = metric == "sqeuclidean"
+            pda = FastEuclideanPairwiseDistancesArgKmin(
+                n_samples_X=X.shape[0],
+                n_samples_Y=Y.shape[0],
+                chunk_size=chunk_size,
+                n_threads=n_threads,
+                strategy=strategy,
+                X=X,
+                Y=Y,
+                k=k,
+                use_squared_distances=use_squared_distances,
+                metric_kwargs=metric_kwargs,
+            )
+        else:
+            pda = PairwiseDistancesArgKmin(
+                n_samples_X=X.shape[0],
+                n_samples_Y=Y.shape[0],
+                chunk_size=chunk_size,
+                n_threads=n_threads,
+                strategy=strategy,
+                k=k,
+                datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
+            )
 
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in GEMM for instance).
@@ -664,16 +702,16 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         return pda._finalize_results(return_distance)
 
-    def __init__(
+    def __cinit__(
         self,
-        DatasetsPair datasets_pair,
+        n_samples_X,
+        n_samples_Y,
         chunk_size=None,
         n_threads=None,
         strategy=None,
-        ITYPE_t k=1,
-    ):
-        self.k = check_scalar(k, "k", Integral, min_val=1)
-
+        *args,
+        **kwargs,
+     ):
         # Allocating pointers to datastructures but not the datastructures themselves.
         # There are as many pointers as effective threads.
         #
@@ -689,6 +727,26 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         self.heaps_indices_chunks = <ITYPE_t **> malloc(
             sizeof(ITYPE_t *) * self.chunks_n_threads
         )
+
+    def __init__(
+        self,
+        n_samples_X,
+        n_samples_Y,
+        chunk_size=None,
+        n_threads=None,
+        strategy=None,
+        DatasetsPair datasets_pair=None,
+        ITYPE_t k=1,
+    ):
+        super().__init__(
+            n_samples_X=n_samples_X,
+            n_samples_Y=n_samples_Y,
+            chunk_size=chunk_size,
+            n_threads=n_threads,
+            strategy=strategy,
+            datasets_pair=datasets_pair,
+        )
+        self.k = check_scalar(k, "k", Integral, min_val=1)
 
         # Main heaps which will be returned as results by `PairwiseDistancesArgKmin.compute`.
         self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
@@ -900,14 +958,32 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         return (PairwiseDistancesArgKmin.is_usable_for(X, Y, metric) and
                 not _in_unstable_openblas_configuration())
 
+    def __cinit__(
+        self,
+        n_samples_X,
+        n_samples_Y,
+        chunk_size=None,
+        n_threads=None,
+        strategy=None,
+        *args,
+        **kwargs,
+     ):
+        # Temporary datastructures used in threads
+        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
+            sizeof(DTYPE_t *) * self.chunks_n_threads
+        )
+
     def __init__(
         self,
-        X,
-        Y,
-        ITYPE_t k,
-        bint use_squared_distances=False,
+        n_samples_X,
+        n_samples_Y,
         chunk_size=None,
+        n_threads=None,
         strategy=None,
+        X=None,
+        Y=None,
+        ITYPE_t k=1,
+        bint use_squared_distances=False,
         metric_kwargs=None,
     ):
         if metric_kwargs is not None and len(metric_kwargs) > 0:
@@ -919,10 +995,14 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             )
 
         super().__init__(
+            n_samples_X=n_samples_X,
+            n_samples_Y=n_samples_Y,
+            chunk_size=chunk_size,
+            n_threads=n_threads,
+            strategy=strategy,
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             k=k,
-            chunk_size=chunk_size,
         )
         # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
         cdef:
@@ -940,11 +1020,6 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             _sqeuclidean_row_norms(self.X, self.effective_n_threads)
         )
         self.use_squared_distances = use_squared_distances
-
-        # Temporary datastructures used in threads
-        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
-            sizeof(DTYPE_t *) * self.chunks_n_threads
-        )
 
     def __dealloc__(self):
         if self.dist_middle_terms_chunks is not NULL:
