@@ -16,8 +16,7 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state, as_float_array
-from ..utils import check_scalar
+from ..utils import as_float_array, check_random_state, check_scalar
 from ..utils.deprecation import deprecated
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
