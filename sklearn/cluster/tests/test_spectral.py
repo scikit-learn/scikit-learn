@@ -149,8 +149,9 @@ def test_spectral_unknown_assign_labels():
 )
 def test_spectral_params_validation(input, params, err_type, err_msg):
     """Check the parameters validation in `SpectralClustering`."""
+    est = SpectralClustering(**params)
     with pytest.raises(err_type, match=err_msg):
-        SpectralClustering(**params).fit(input)
+        est.fit(input)
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
