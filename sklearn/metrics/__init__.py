@@ -77,6 +77,7 @@ from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
 from ._regression import d2_tweedie_score
+from ._regression import d2_pinball_loss_score
 from ._regression import d2_absolute_error_score
 
 
@@ -115,6 +116,7 @@ __all__ = [
     "coverage_error",
     "d2_tweedie_score",
     "d2_absolute_error_score",
+    "d2_pinball_loss_score",
     "dcg_score",
     "davies_bouldin_score",
     "DetCurveDisplay",

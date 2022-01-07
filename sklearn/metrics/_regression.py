@@ -1108,6 +1108,54 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     return 1 - numerator / denominator
 
 
+def d2_pinball_loss_score(
+    y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
+):
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput
+    )
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if _num_samples(y_pred) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    numerator = mean_pinball_loss(y_true, y_pred, sample_weight=sample_weight,
+                                  alpha=alpha, multioutput="raw_values")
+
+    y_quantile = [np.quantile(y_true, q=alpha, axis=0)] * len(y_true)
+
+    denominator = mean_pinball_loss(y_true, y_quantile, sample_weight=sample_weight,
+                                    alpha=alpha, multioutput="raw_values")
+
+    nonzero_numerator = numerator != 0
+    nonzero_denominator = denominator != 0
+    valid_score = nonzero_numerator & nonzero_denominator
+    output_scores = np.ones(y_true.shape[1])
+
+    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
+    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            # return scores individually
+            return output_scores
+        elif multioutput == "uniform_average":
+            # passing None as weights to np.average results in uniform mean
+            avg_weights = None
+        else:
+            raise ValueError(
+                "multioutput is expected to be 'raw_values' "
+                "or 'uniform_average' but we got %r"
+                " instead." % multioutput
+            )
+    else:
+        avg_weights = multioutput
+
+    return np.average(output_scores, weights=avg_weights) 
+
+
 def d2_absolute_error_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -1124,10 +1172,10 @@ def d2_absolute_error_score(
 
     Parameters
     ----------
-    y_true : array-like of shape (n_samples,)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape (n_samples,)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
     sample_weight : array-like of shape (n_samples,), optional
