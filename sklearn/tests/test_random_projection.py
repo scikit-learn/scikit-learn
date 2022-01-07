@@ -14,6 +14,7 @@ from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import GaussianRandomProjection
 
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -413,7 +414,4 @@ def test_random_projection_numerical_consistency(random_projection_cls):
 
     assert_allclose(projection_64, projection_32, atol=atol)
 
-    if random_projection_cls is SparseRandomProjection:
-        assert_allclose(rp_32.components_.todense(), rp_64.components_.todense())
-    else:
-        assert_allclose(rp_32.components_, rp_64.components_)
+    assert_allclose_dense_sparse(rp_32.components_, rp_64.components_)
