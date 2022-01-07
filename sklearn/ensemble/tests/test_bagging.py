@@ -959,3 +959,31 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+def test_bagging_clf_base_estimator_deprecated():
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    clf = BaggingClassifier(base_estimator=DecisionTreeClassifier(), n_estimators=10)
+
+    err_msg = (
+        "`base_estimator` was renamed to `estimator` in version 1.1 and "
+        "will be removed in 1.3."
+    )
+
+    with pytest.warns(FutureWarning, match=err_msg):
+        clf.fit(X, y)
+
+
+def test_bagging_regr_base_estimator_deprecated():
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    regr = BaggingRegressor(base_estimator=DecisionTreeRegressor(), n_estimators=10)
+
+    err_msg = (
+        "`base_estimator` was renamed to `estimator` in version 1.1 and "
+        "will be removed in 1.3."
+    )
+
+    with pytest.warns(FutureWarning, match=err_msg):
+        regr.fit(X, y)
