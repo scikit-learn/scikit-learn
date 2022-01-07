@@ -518,7 +518,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     Parameters
     ----------
-    base_estimator : object, default=None
+    estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
         If None, then the base estimator is a
         :class:`~sklearn.tree.DecisionTreeClassifier`.
@@ -576,6 +576,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
+
+    base_estimator : object, default="deprecated"
+        Use `estimator` instead.
+        .. deprecated:: 1.1
+            `base_estimator` is deprecated and will be removed in 1.3.
+            Use `estimator` instead.
 
     Attributes
     ----------
@@ -655,7 +661,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     >>> X, y = make_classification(n_samples=100, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = BaggingClassifier(base_estimator=SVC(),
+    >>> clf = BaggingClassifier(estimator=SVC(),
     ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
@@ -663,7 +669,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         n_estimators=10,
         *,
         max_samples=1.0,
@@ -675,10 +681,11 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
+        base_estimator="deprecated",
     ):
 
         super().__init__(
-            base_estimator,
+            estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
             max_features=max_features,
@@ -689,6 +696,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
+            base_estimator=base_estimator,
         )
 
     def _validate_estimator(self):
