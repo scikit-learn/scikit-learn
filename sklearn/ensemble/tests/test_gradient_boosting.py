@@ -188,8 +188,10 @@ def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"loss": "huber", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
-        ({"loss": "quantile", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
+        ({"loss": "huber", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
+        ({"loss": "quantile", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
+        ({"loss": "huber", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
+        ({"loss": "quantile", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
     ],
 )
 def test_gbdt_loss_alpha_error(params, err_msg):

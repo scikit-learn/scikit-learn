@@ -339,8 +339,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     f"Got init={self.init!r}"
                 )
 
-        if not (0.0 < self.alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0) but was %r" % self.alpha)
+        check_scalar(
+            self.alpha,
+            name="alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="neither",
+        )
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
