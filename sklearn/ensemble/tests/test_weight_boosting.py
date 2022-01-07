@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import re
 
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
@@ -274,15 +275,19 @@ def test_error():
     # Test that it gives proper exception on deficient input.
 
     reg = AdaBoostRegressor(loss="foo")
-    with pytest.raises(ValueError):
+    msg = "loss must be 'linear', 'square', or 'exponential'. Got 'foo' instead."
+    with pytest.raises(ValueError, match=msg):
         reg.fit(X, y_class)
 
     clf = AdaBoostClassifier(algorithm="foo")
-    with pytest.raises(ValueError):
+    msg = "Algorithm must be 'SAMME' or 'SAMME.R'. Got 'foo' instead."
+    with pytest.raises(ValueError, match=msg):
         clf.fit(X, y_class)
 
-    with pytest.raises(ValueError):
-        AdaBoostClassifier().fit(X, y_class, sample_weight=np.asarray([-1]))
+    clf = AdaBoostClassifier()
+    msg = re.escape("sample_weight.shape == (1,), expected (6,)")
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y_class, sample_weight=np.asarray([-1]))
 
 
 def test_base_estimator():
