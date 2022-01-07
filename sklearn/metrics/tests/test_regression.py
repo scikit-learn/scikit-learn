@@ -64,11 +64,14 @@ def test_regression_metrics(n_samples=50):
     assert_almost_equal(
         d2_tweedie_score(y_true, y_pred, power=0), r2_score(y_true, y_pred)
     )
-
     dev_median = np.abs(y_true - np.median(y_true)).sum()
     assert_array_almost_equal(
         d2_pinball_loss_score(y_true, y_pred, alpha=0.5),
         1 - np.abs(y_true - y_pred).sum() / dev_median,
+    )
+    assert_almost_equal(
+        d2_absolute_error_score(y_true, y_pred),
+        d2_pinball_loss_score(y_true, y_pred, alpha=0.5),
     )
 
     # Tweedie deviance needs positive y_pred, except for p=0,
@@ -159,7 +162,9 @@ def test_multioutput_regression():
     raw_expected_score = np.where(np.isnan(raw_expected_score), 1, raw_expected_score)
     assert_array_almost_equal(score, raw_expected_score)
 
-    score = d2_pinball_loss_score(y_true, y_pred, alpha=0.5, multioutput="uniform_average")
+    score = d2_pinball_loss_score(
+        y_true, y_pred, alpha=0.5, multioutput="uniform_average"
+    )
     assert_almost_equal(score, raw_expected_score.mean())
     # constant `y_true` with force_finite=True leads to 1. or 0.
     yc = [5.0, 5.0]
@@ -463,9 +468,7 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-@pytest.mark.parametrize(
-    "metric", [r2_score, d2_tweedie_score, d2_pinball_loss_score]
-)
+@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score, d2_pinball_loss_score])
 def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]

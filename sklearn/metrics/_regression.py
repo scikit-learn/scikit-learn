@@ -1333,9 +1333,9 @@ def d2_absolute_error_score(
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> d2_absolute_error_score(y_true, y_pred, multioutput='uniform_average')
-    0.761...
+    0.691...
     >>> d2_absolute_error_score(y_true, y_pred, multioutput='raw_values')
-    array([0.84482759, 0.67857143])
+    array([0.8125    , 0.57142857])
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 2, 3]
     >>> d2_absolute_error_score(y_true, y_pred)
@@ -1349,37 +1349,6 @@ def d2_absolute_error_score(
     >>> d2_absolute_error_score(y_true, y_pred)
     -1.0
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    return d2_pinball_loss_score(
+        y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
     )
-    check_consistent_length(y_true, y_pred, sample_weight)
-
-    if _num_samples(y_pred) < 2:
-        msg = "D^2 score is not well-defined with less than two samples."
-        warnings.warn(msg, UndefinedMetricWarning)
-        return float("nan")
-
-    numerator = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
-
-    y_avg = np.average(y_true, weights=sample_weight, axis=0)
-    denominator = np.average(np.abs(y_avg - y_true), weights=sample_weight, axis=0)
-
-    nonzero_numerator = numerator != 0
-    nonzero_denominator = denominator != 0
-    valid_score = nonzero_numerator & nonzero_denominator
-    output_scores = np.ones(y_true.shape[1])
-
-    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
-    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
-
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            # return scores individually
-            return output_scores
-        elif multioutput == "uniform_average":
-            # passing None as weights to np.average results in uniform mean
-            avg_weights = None
-    else:
-        avg_weights = multioutput
-
-    return np.average(output_scores, weights=avg_weights)
