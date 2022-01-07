@@ -127,13 +127,12 @@ cdef class IntFloatDict:
 
     def append(self, ITYPE_t key, DTYPE_t value):
         cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
+        # Decrement the iterator
         dec(end)
         # Construct our arguments
         cdef pair[ITYPE_t, DTYPE_t] args
         args.first = key
         args.second = value
-
-        # Decrement the iterator and insert the new argument
         self.my_map.insert(cpp_map[ITYPE_t, DTYPE_t].const_iterator(end), args)
 
 
