@@ -103,6 +103,11 @@ Changelog
   is faster on many datasets, and its results are identical, hence the change.
   :pr:`21735` by :user:`Aurélien Geron <ageron>`.
 
+- |Enhancement| :class:`cluster.SpectralClustering` now raises consistent
+  error messages when passed invalid values for `n_clusters`, `n_init`,
+  `gamma`, `n_neighbors`, `eigen_tol` or `degree`.
+  :pr:`21881` by :user:`Hugo Vassard <hvassard>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
