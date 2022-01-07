@@ -682,7 +682,6 @@ def test_pca_randomized_svd_n_oversamples():
     pca_arpack = PCA(n_components=1, svd_solver="arpack", random_state=0).fit(X)
 
     assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
-
     assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
 
 

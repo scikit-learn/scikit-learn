@@ -210,7 +210,7 @@ Changelog
   approximation difficult.
   :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
 
-  - |Enhancement| :class:`decomposition.TruncatedSVD` exposes the parameter
+- |Enhancement| :class:`decomposition.PCA` exposes the parameter
   `power_iteration_normalizer` to tune
   :func:`sklearn.decomposition.randomized_svd` and
   get more accurate results when low rank approximation is difficult.
