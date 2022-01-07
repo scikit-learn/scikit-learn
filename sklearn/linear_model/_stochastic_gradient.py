@@ -1024,7 +1024,7 @@ class SGDClassifier(BaseSGDClassifier):
         - 'adaptive': `eta = eta0`, as long as the training keeps decreasing.
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
-          early_stopping is `True`, the current learning rate is divided by 5.
+          `early_stopping` is `True`, the current learning rate is divided by 5.
 
             .. versionadded:: 0.20
                 Added 'adaptive' option
