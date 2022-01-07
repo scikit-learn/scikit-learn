@@ -607,3 +607,19 @@ def test_pls_constant_y():
         pls.fit(x, y)
 
     assert_allclose(pls.x_rotations_, 0)
+
+
+@pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
+def test_pls_feature_names_out(Klass):
+    """Check `get_feature_names_out` cross_decomposition module."""
+    X, Y = load_linnerud(return_X_y=True)
+
+    est = Klass().fit(X, Y)
+    names_out = est.get_feature_names_out()
+
+    class_name_lower = Klass.__name__.lower()
+    expected_names_out = np.array(
+        [f"{class_name_lower}{i}" for i in range(est.x_weights_.shape[1])],
+        dtype=object,
+    )
+    assert_array_equal(names_out, expected_names_out)

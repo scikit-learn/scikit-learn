@@ -22,6 +22,7 @@ the lower the better.
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
 #          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
 #          Uttam kumar <bajiraouttamsinha@gmail.com>
+#          Sylvain Marie <sylvain.marie@se.com>
 # License: BSD 3 clause
 
 import warnings
@@ -608,12 +609,73 @@ def median_absolute_error(
     return np.average(output_errors, weights=multioutput)
 
 
+def _assemble_r2_explained_variance(
+    numerator, denominator, n_outputs, multioutput, force_finite
+):
+    """Common part used by explained variance score and :math:`R^2` score."""
+
+    nonzero_denominator = denominator != 0
+
+    if not force_finite:
+        # Standard formula, that may lead to NaN or -Inf
+        output_scores = 1 - (numerator / denominator)
+    else:
+        nonzero_numerator = numerator != 0
+        # Default = Zero Numerator = perfect predictions. Set to 1.0
+        # (note: even if denominator is zero, thus avoiding NaN scores)
+        output_scores = np.ones([n_outputs])
+        # Non-zero Numerator and Non-zero Denominator: use the formula
+        valid_score = nonzero_denominator & nonzero_numerator
+        output_scores[valid_score] = 1 - (
+            numerator[valid_score] / denominator[valid_score]
+        )
+        # Non-zero Numerator and Zero Denominator:
+        # arbitrary set to 0.0 to avoid -inf scores
+        output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
+
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            # return scores individually
+            return output_scores
+        elif multioutput == "uniform_average":
+            # Passing None as weights to np.average results is uniform mean
+            avg_weights = None
+        elif multioutput == "variance_weighted":
+            avg_weights = denominator
+            if not np.any(nonzero_denominator):
+                # All weights are zero, np.average would raise a ZeroDiv error.
+                # This only happens when all y are constant (or 1-element long)
+                # Since weights are all equal, fall back to uniform weights.
+                avg_weights = None
+    else:
+        avg_weights = multioutput
+
+    return np.average(output_scores, weights=avg_weights)
+
+
 def explained_variance_score(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    force_finite=True,
 ):
     """Explained variance regression score function.
 
     Best possible score is 1.0, lower values are worse.
+
+    In the particular case when ``y_true`` is constant, the explained variance
+    score is not finite: it is either ``NaN`` (perfect predictions) or
+    ``-Inf`` (imperfect predictions). To prevent such non-finite numbers to
+    pollute higher-level experiments such as a grid search cross-validation,
+    by default these cases are replaced with 1.0 (perfect predictions) or 0.0
+    (imperfect predictions) respectively. If ``force_finite``
+    is set to ``False``, this score falls back on the original :math:`R^2`
+    definition.
+
+    Note: when the prediction residuals have zero mean, the Explained Variance
+    score is identical to the :func:`R^2 score <r2_score>`.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
 
@@ -643,6 +705,15 @@ def explained_variance_score(
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
 
+    force_finite : bool, default=True
+        Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
+        data should be replaced with real numbers (``1.0`` if prediction is
+        perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
+        for hyperparameters' search procedures (e.g. grid search
+        cross-validation).
+
+        .. versionadded:: 1.1
+
     Returns
     -------
     score : float or ndarray of floats
@@ -663,6 +734,18 @@ def explained_variance_score(
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='uniform_average')
     0.983...
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2]
+    >>> explained_variance_score(y_true, y_pred)
+    1.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    nan
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2 + 1e-8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    -inf
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -677,35 +760,41 @@ def explained_variance_score(
     y_true_avg = np.average(y_true, weights=sample_weight, axis=0)
     denominator = np.average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
 
-    nonzero_numerator = numerator != 0
-    nonzero_denominator = denominator != 0
-    valid_score = nonzero_numerator & nonzero_denominator
-    output_scores = np.ones(y_true.shape[1])
-
-    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
-    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            # return scores individually
-            return output_scores
-        elif multioutput == "uniform_average":
-            # passing to np.average() None as weights results is uniform mean
-            avg_weights = None
-        elif multioutput == "variance_weighted":
-            avg_weights = denominator
-    else:
-        avg_weights = multioutput
-
-    return np.average(output_scores, weights=avg_weights)
+    return _assemble_r2_explained_variance(
+        numerator=numerator,
+        denominator=denominator,
+        n_outputs=y_true.shape[1],
+        multioutput=multioutput,
+        force_finite=force_finite,
+    )
 
 
-def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"):
+def r2_score(
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    force_finite=True,
+):
     """:math:`R^2` (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
-    model can be arbitrarily worse). A constant model that always
-    predicts the expected value of y, disregarding the input features,
-    would get a :math:`R^2` score of 0.0.
+    model can be arbitrarily worse). In the general case when the true y is
+    non-constant, a constant model that always predicts the average y
+    disregarding the input features would get a :math:`R^2` score of 0.0.
+
+    In the particular case when ``y_true`` is constant, the :math:`R^2` score
+    is not finite: it is either ``NaN`` (perfect predictions) or ``-Inf``
+    (imperfect predictions). To prevent such non-finite numbers to pollute
+    higher-level experiments such as a grid search cross-validation, by default
+    these cases are replaced with 1.0 (perfect predictions) or 0.0 (imperfect
+    predictions) respectively. You can set ``force_finite`` to ``False`` to
+    prevent this fix from happening.
+
+    Note: when the prediction residuals have zero mean, the :math:`R^2` score
+    is identical to the
+    :func:`Explained Variance score <explained_variance_score>`.
 
     Read more in the :ref:`User Guide <r2_score>`.
 
@@ -739,6 +828,15 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
 
         .. versionchanged:: 0.19
             Default value of multioutput is 'uniform_average'.
+
+    force_finite : bool, default=True
+        Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
+        data should be replaced with real numbers (``1.0`` if prediction is
+        perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
+        for hyperparameters' search procedures (e.g. grid search
+        cross-validation).
+
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -785,6 +883,18 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
     >>> y_pred = [3, 2, 1]
     >>> r2_score(y_true, y_pred)
     -3.0
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2]
+    >>> r2_score(y_true, y_pred)
+    1.0
+    >>> r2_score(y_true, y_pred, force_finite=False)
+    nan
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2 + 1e-8]
+    >>> r2_score(y_true, y_pred)
+    0.0
+    >>> r2_score(y_true, y_pred, force_finite=False)
+    -inf
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -806,33 +916,14 @@ def r2_score(y_true, y_pred, *, sample_weight=None, multioutput="uniform_average
     denominator = (
         weight * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
     ).sum(axis=0, dtype=np.float64)
-    nonzero_denominator = denominator != 0
-    nonzero_numerator = numerator != 0
-    valid_score = nonzero_denominator & nonzero_numerator
-    output_scores = np.ones([y_true.shape[1]])
-    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
-    # arbitrary set to zero to avoid -inf scores, having a constant
-    # y_true is not interesting for scoring a regression anyway
-    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            # return scores individually
-            return output_scores
-        elif multioutput == "uniform_average":
-            # passing None as weights results is uniform mean
-            avg_weights = None
-        elif multioutput == "variance_weighted":
-            avg_weights = denominator
-            # avoid fail on constant y or one-element arrays
-            if not np.any(nonzero_denominator):
-                if not np.any(nonzero_numerator):
-                    return 1.0
-                else:
-                    return 0.0
-    else:
-        avg_weights = multioutput
 
-    return np.average(output_scores, weights=avg_weights)
+    return _assemble_r2_explained_variance(
+        numerator=numerator,
+        denominator=denominator,
+        n_outputs=y_true.shape[1],
+        multioutput=multioutput,
+        force_finite=force_finite,
+    )
 
 
 def max_error(y_true, y_pred):
