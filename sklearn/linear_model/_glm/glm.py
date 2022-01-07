@@ -252,11 +252,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             target_type=numbers.Integral,
             min_val=0,
         )
-        # if not isinstance(self.tol, numbers.Number) or self.tol <= 0:
-        #     raise ValueError(
-        #         "Tolerance for stopping criteria must be "
-        #         "positive; got (tol={0!r})".format(self.tol)
-        #     )
         if not isinstance(self.warm_start, bool):
             raise ValueError(
                 "The argument warm_start must be bool; got {0}".format(self.warm_start)
