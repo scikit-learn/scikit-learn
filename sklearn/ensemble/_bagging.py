@@ -209,7 +209,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         n_estimators=10,
         *,
         max_samples=1.0,
@@ -221,9 +221,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         n_jobs=None,
         random_state=None,
         verbose=0,
+        base_estimator="deprecated",
     ):
-        super().__init__(base_estimator=base_estimator, n_estimators=n_estimators)
+        super().__init__(base_estimator=estimator, n_estimators=n_estimators)
 
+        self.estimator = estimator
         self.max_samples = max_samples
         self.max_features = max_features
         self.bootstrap = bootstrap
@@ -233,6 +235,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
+        self.base_estimator = base_estimator
 
     def fit(self, X, y, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training set (X, y).
@@ -266,7 +269,23 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             force_all_finite=False,
             multi_output=True,
         )
+        if self.base_estimator != "deprecated" and self.estimator is None:
+            warn(
+                "`base_estimator` was renamed to `estimator` in version 1.1 and "
+                "will be removed in 1.3.",
+                FutureWarning,
+            )
+            self.estimator = self.base_estimator
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
+
+    def _validate_estimator(self, default=None):
+        self.base_estimator = self.estimator
+        super()._validate_estimator(default=default)
+
+    def set_params(self, **params):
+        self.base_estimator = self.estimator
+        super().set_params(**params)
+        return self
 
     def _parallel_args(self):
         return {}
