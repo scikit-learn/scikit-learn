@@ -216,6 +216,8 @@ class PCA(_BasePCA):
         Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
         for more details.
 
+        .. versionadded:: 1.1
+
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.

@@ -41,7 +41,7 @@ def test_solvers(X_sparse, solver, kind):
 
 @pytest.mark.parametrize("n_components", (10, 25, 41))
 def test_attributes(n_components, X_sparse):
-    n_samples, n_features = X_sparse.shape
+    n_features = X_sparse.shape[1]
     tsvd = TruncatedSVD(n_components).fit(X_sparse)
     assert tsvd.n_components == n_components
     assert tsvd.components_.shape == (n_components, n_features)
