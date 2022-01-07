@@ -1076,12 +1076,12 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         self.coef_ = np.asarray(self.coef_, dtype=X.dtype)
 
         # check for finiteness of coefficients
-        if not (np.isfinite(self.coef_).all() and np.isfinite(self.intercept_).all()):
-            num_notfinite = (~np.isfinite(self.coef_)).sum() + (
-                ~np.isfinite(self.intercept_)
-            ).sum()
+        num_nonfinite = (~np.isfinite(self.coef_)).sum() + (
+            ~np.isfinite(self.intercept_)
+        ).sum()
+        if num_nonfinite > 0:
             raise ValueError(
-                f"Coordinate descent iterations resulted in {num_notfinite} non-finite"
+                f"Coordinate descent iterations resulted in {num_nonfinite} non-finite"
                 " parameter values."
             )
 
