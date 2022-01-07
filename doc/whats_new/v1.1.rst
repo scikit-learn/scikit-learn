@@ -423,6 +423,10 @@ Changelog
 :mod:`sklearn.random_projection`
 ................................
 
+- |Enhancement| :class:`random_projection.SparseRandomProjection` and
+  :class:`random_projection.GaussianRandomProjection` preserves dtype for
+  `numpy.float32`. :pr:`22114` by :user:`Takeshi Oura <takoika>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.random_projection` module:
   :class:`~sklearn.random_projection.GaussianRandomProjection` and
