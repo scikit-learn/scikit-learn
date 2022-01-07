@@ -73,7 +73,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values should be in the range `[0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
