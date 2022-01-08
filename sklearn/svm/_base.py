@@ -274,6 +274,17 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
 
+        # check for finiteness of coefficientss
+        coef_finiteness = (
+            np.isfinite(self._dual_coef_.data).all()
+            if self._sparse
+            else np.isfinite(self._dual_coef_).all()
+        )
+        intercept_finiteness = np.isfinite(self._intercept_).all()
+        if not (coef_finiteness and intercept_finiteness):
+            # maybe check which coeff/feature is non-finite?
+            raise ValueError("Iterative parameter estimation led to non-finite values.")
+
         # Since, in the case of SVC and NuSVC, the number of models optimized by
         # libSVM could be greater than one (depending on the input), `n_iter_`
         # stores an ndarray.
