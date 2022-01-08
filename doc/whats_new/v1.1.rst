@@ -203,7 +203,7 @@ Changelog
   :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
 
 - |Enhancement| :class:`decomposition.TruncatedSVD` exposes the parameter
- `n_oversamples` and `power_iteration_normalizer` to tune
+  `n_oversamples` and `power_iteration_normalizer` to tune
   :func:`sklearn.decomposition.randomized_svd` and
   get accurate results when the number of features is large, the rank of
   the matrix is high, or other features of the matrix make low rank
