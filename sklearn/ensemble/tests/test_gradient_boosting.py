@@ -243,7 +243,6 @@ def test_classification_toy(loss):
 )
 def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg):
     # Check input parameter validation for GradientBoosting
-
     est = GradientBoosting(**params)
     with pytest.raises(err_type, match=err_msg):
         est.fit(X, y)
@@ -1478,7 +1477,7 @@ def test_early_stopping_n_classes():
     X = [[1]] * 10
     y = [0, 0] + [1] * 8  # only 2 negative class over 10 samples
     gb = GradientBoostingClassifier(
-        n_iter_no_change=8, random_state=0, validation_fraction=0.8
+        n_iter_no_change=5, random_state=0, validation_fraction=0.8
     )
     with pytest.raises(
         ValueError, match="The training data after the early stopping split"
