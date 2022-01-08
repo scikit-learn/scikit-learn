@@ -318,10 +318,7 @@ class BaseEstimator:
         except AttributeError:
             state = self.__dict__.copy()
 
-        if (
-            type(self).__module__.startswith("sklearn.")
-            and "_sklearn_pickle_version" not in state.keys()
-        ):
+        if type(self).__module__.startswith("sklearn."):
             return dict(
                 state.items(),
                 _sklearn_pickle_version=__version__,
@@ -331,7 +328,8 @@ class BaseEstimator:
 
     def __setstate__(self, state):
         if type(self).__module__.startswith("sklearn."):
-            pickle_version = state.get("_sklearn_pickle_version", "pre-0.18")
+            pickle_version = state.pop("_sklearn_version", "pre-0.18")  # compat
+            pickle_version = state.setdefault("_sklearn_pickle_version", pickle_version)
             if pickle_version != __version__:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "

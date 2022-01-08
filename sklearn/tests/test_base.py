@@ -697,24 +697,21 @@ def test_feature_names_in():
 
 
 def test_base_estimator_pickle_version(monkeypatch):
-    """Check that the original sklearn version with which a base estimator
-    has been pickled with is present"""
-    old_pickle_version = "0.21.3"
-    monkeypatch.setattr(sklearn.base, "__version__", old_pickle_version)
+    """The version should be embedded at dump time and checked at load time"""
+    old_version = "0.21.3"
+    monkeypatch.setattr(sklearn.base, "__version__", old_version)
     original_estimator = MyEstimator()
-
-    first_pickle_estimator = pickle.loads(pickle.dumps(original_estimator))
-    assert hasattr(first_pickle_estimator, "_sklearn_pickle_version")
-    assert first_pickle_estimator._sklearn_pickle_version == old_pickle_version
-
-    new_pickle_version = "1.1.0"
-    monkeypatch.setattr(sklearn.base, "__version__", new_pickle_version)
+    old_pickle = pickle.dumps(original_estimator)
+    loaded_estimator = pickle.loads(old_pickle)
+    assert loaded_estimator._sklearn_pickle_version == old_version
+    assert not hasattr(original_estimator, "_sklearn_pickle_version")
+    new_version = "1.1.0"
+    monkeypatch.setattr(sklearn.base, "__version__", new_version)
     message = pickle_error_message.format(
         estimator="MyEstimator",
-        old_version=old_pickle_version,
-        current_version=new_pickle_version,
+        old_version=old_version,
+        current_version=new_version,
     )
     with pytest.warns(UserWarning, match=message):
-        second_pickle_estimator = pickle.loads(pickle.dumps(first_pickle_estimator))
-        assert hasattr(second_pickle_estimator, "_sklearn_pickle_version")
-        assert second_pickle_estimator._sklearn_pickle_version == old_pickle_version
+        reloaded_estimator = pickle.loads(old_pickle)
+        assert reloaded_estimator._sklearn_pickle_version == old_version

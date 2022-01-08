@@ -69,10 +69,11 @@ Changelog
 - |Enhancement| All scikit-learn models now generate a more informative
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
-  
-- |Enhancement| All scikit-learn estimators now include the sklearn version
-  with which they have first been pickled when saving them with the pickle.
-  library.
+
+- |Enhancement| All scikit-learn estimators now save the sklearn version
+  with which they have been pickled on a private attribute to avoid having
+  to parse the warning message to programmatically access this information
+  to introspect this.
   :pr:`22094` by :user:`Gawein Le Goff <Edern76>`.
 
 :mod:`sklearn.calibration`
