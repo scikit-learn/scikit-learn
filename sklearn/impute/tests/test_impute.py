@@ -116,6 +116,37 @@ def test_imputation_deletion_warning(strategy):
         imputer.transform(X)
 
 
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+def test_imputation_deletion_warning_feature_names(strategy):
+
+    pd = pytest.importorskip("pandas")
+
+    missing_values = np.nan
+    feature_names = np.array(["a", "b", "c", "d"], dtype=object)
+    X = pd.DataFrame(
+        [
+            [missing_values, missing_values, 1, missing_values],
+            [4, missing_values, 2, 10],
+        ],
+        columns=feature_names,
+    )
+
+    imputer = SimpleImputer(strategy=strategy, verbose=1)
+
+    # TODO: Remove in 1.3
+    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
+        imputer.fit(X)
+
+    # check SimpleImputer returning feature name attribute correctly
+    assert_array_equal(imputer.feature_names_in_, feature_names)
+
+    # ensure that skipped feature warning includes feature name
+    with pytest.warns(
+        UserWarning, match=r"Skipping features without any observed values: \['b'\]"
+    ):
+        imputer.transform(X)
+
+
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
 def test_imputation_error_sparse_0(strategy):
     # check that error are raised when missing_values = 0 and input is sparse
