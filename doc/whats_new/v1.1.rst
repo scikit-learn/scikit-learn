@@ -451,6 +451,11 @@ Changelog
   parameters in `fit` instead of `__init__`.
   :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
 
+- |Enhancement| :func:`svm.SVR`, :func:`svm.SVC` and other support vector
+  based classes which use dual gap estimation shows error
+  messages when estimation produce non-finite parameter weights. :pr:`22149`
+  by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
+
 :mod:`sklearn.utils`
 ....................
 
