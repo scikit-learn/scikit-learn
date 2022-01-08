@@ -468,7 +468,7 @@ Changelog
 - |Enhancement| :func:`neural_network.MLPClassifier` and 
   :func:`neural_network.MLPRegressor` shows error
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
-  by :user:`Christian Ritter <chritter>`.
+  by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
 
 
 Code and Documentation Contributors
