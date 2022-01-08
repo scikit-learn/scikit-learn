@@ -328,6 +328,8 @@ class BaseEstimator:
 
     def __setstate__(self, state):
         if type(self).__module__.startswith("sklearn."):
+            # Before 1.1, `_sklearn_version` was used to store the sklearn version
+            # when the estimator was pickled
             pickle_version = state.pop("_sklearn_version", "pre-0.18")  # compat
             pickle_version = state.setdefault("_sklearn_pickle_version", pickle_version)
             if pickle_version != __version__:
