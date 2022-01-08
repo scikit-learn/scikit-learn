@@ -154,7 +154,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_scalar(
             self.ccp_alpha,
-            "ccp_alpha",
+            name="ccp_alpha",
             target_type=numbers.Real,
             min_val=0.0,
         )
@@ -233,7 +233,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.max_depth is not None:
             check_scalar(
                 self.max_depth,
-                "max_depth",
+                name="max_depth",
                 target_type=numbers.Integral,
                 min_val=1,
             )
@@ -242,7 +242,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if isinstance(self.min_samples_leaf, numbers.Integral):
             check_scalar(
                 self.min_samples_leaf,
-                "min_samples_leaf",
+                name="min_samples_leaf",
                 target_type=numbers.Integral,
                 min_val=1,
                 max_val=n_samples,
@@ -251,7 +251,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:  # float
             check_scalar(
                 self.min_samples_leaf,
-                "min_samples_leaf",
+                name="min_samples_leaf",
                 target_type=numbers.Real,
                 min_val=0.0,
                 max_val=0.5,
@@ -262,7 +262,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if isinstance(self.min_samples_split, numbers.Integral):
             check_scalar(
                 self.min_samples_split,
-                "min_samples_split",
+                name="min_samples_split",
                 target_type=numbers.Integral,
                 min_val=2,
                 max_val=n_samples,
@@ -271,7 +271,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:  # float
             check_scalar(
                 self.min_samples_split,
-                "min_samples_split",
+                name="min_samples_split",
                 target_type=numbers.Real,
                 min_val=0.0,
                 max_val=1.0,
@@ -284,7 +284,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_scalar(
             self.min_weight_fraction_leaf,
-            "min_weight_fraction_leaf",
+            name="min_weight_fraction_leaf",
             target_type=numbers.Real,
             min_val=0.0,
             max_val=0.5,
@@ -311,7 +311,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         elif isinstance(self.max_features, numbers.Integral):
             check_scalar(
                 self.max_features,
-                "max_features",
+                name="max_features",
                 target_type=numbers.Integral,
                 min_val=1,
                 max_val=self.n_features_in_,
@@ -320,7 +320,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:  # float
             check_scalar(
                 self.max_features,
-                "max_features",
+                name="max_features",
                 target_type=numbers.Real,
                 min_val=0.0,
                 max_val=1.0,
@@ -336,7 +336,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.max_leaf_nodes is not None:
             check_scalar(
                 self.max_leaf_nodes,
-                "max_leaf_nodes",
+                name="max_leaf_nodes",
                 target_type=numbers.Integral,
                 min_val=2,
             )
@@ -344,7 +344,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_scalar(
             self.min_impurity_decrease,
-            "min_impurity_decrease",
+            name="min_impurity_decrease",
             target_type=numbers.Real,
             min_val=0.0,
         )
