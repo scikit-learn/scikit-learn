@@ -269,7 +269,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         check_scalar(
             self.learning_rate,
-            "learning_rate",
+            name="learning_rate",
             target_type=numbers.Real,
             min_val=0.0,
             include_boundaries="neither",
@@ -277,7 +277,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         check_scalar(
             self.n_estimators,
-            "n_estimators",
+            name="n_estimators",
             target_type=numbers.Integral,
             min_val=1,
         )
@@ -322,7 +322,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         check_scalar(
             self.subsample,
-            "subsample",
+            name="subsample",
             target_type=numbers.Real,
             min_val=0.0,
             max_val=1.0,
@@ -368,7 +368,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         elif isinstance(self.max_features, numbers.Integral):
             check_scalar(
                 self.max_features,
-                "max_features",
+                name="max_features",
                 target_type=numbers.Integral,
                 min_val=1,
                 max_val=self.n_features_in_,
@@ -377,7 +377,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:  # float
             check_scalar(
                 self.max_features,
-                "max_features",
+                name="max_features",
                 target_type=numbers.Real,
                 min_val=0.0,
                 max_val=1.0,
@@ -389,14 +389,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         check_scalar(
             self.verbose,
-            "verbose",
+            name="verbose",
             target_type=numbers.Integral,
             min_val=0,
         )
 
         check_scalar(
             self.validation_fraction,
-            "validation_fraction",
+            name="validation_fraction",
             target_type=numbers.Real,
             min_val=0.0,
             max_val=1.0,
@@ -406,14 +406,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.n_iter_no_change is not None:
             check_scalar(
                 self.n_iter_no_change,
-                "n_iter_no_change",
+                name="n_iter_no_change",
                 target_type=numbers.Integral,
                 min_val=1,
             )
 
         check_scalar(
             self.tol,
-            "tol",
+            name="tol",
             target_type=numbers.Real,
             min_val=0.0,
             include_boundaries="neither",
@@ -533,7 +533,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # if not warmstart - clear the estimator state
         check_scalar(
             self.warm_start,
-            "warm_start",
+            name="warm_start",
             target_type=bool,
         )
         if not self.warm_start:
