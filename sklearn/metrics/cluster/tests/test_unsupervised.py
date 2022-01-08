@@ -354,3 +354,20 @@ def test_davies_bouldin_score():
     X = [[0, 0], [2, 2], [3, 3], [5, 5]]
     labels = [0, 0, 1, 2]
     pytest.approx(davies_bouldin_score(X, labels), (5.0 / 4) / 3)
+
+
+def test_silhouette_score_integer_precomputed():
+    """Check that silhouette_score works for precomputed metrics that are integers.
+
+    Non-regression test for #22107.
+    """
+    result = silhouette_score(
+        [[0, 1, 2], [1, 0, 1], [2, 1, 0]], [0, 0, 1], metric="precomputed"
+    )
+    assert result == pytest.approx(1 / 6)
+
+    # non-zero on diagonal for ints raises an error
+    with pytest.raises(ValueError, match="contains non-zero"):
+        silhouette_score(
+            [[1, 1, 2], [1, 0, 1], [2, 1, 0]], [0, 0, 1], metric="precomputed"
+        )
