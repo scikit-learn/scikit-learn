@@ -462,6 +462,15 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
+:mod:`sklearn.neural_network`
+..........................
+
+- |Enhancement| :func:`neural_network.MLPClassifier` and 
+  :func:`neural_network.MLPRegressor` shows error
+  messages when optimizers produce non-finite parameter weights. :pr:`22150`
+  by :user:`Christian Ritter <chritter>`.
+
+
 Code and Documentation Contributors
 -----------------------------------
 
