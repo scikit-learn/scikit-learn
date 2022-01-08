@@ -190,12 +190,6 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self : object
             Returns the transformer object.
         """
-        check_scalar(
-            self.n_oversamples,
-            "n_oversamples",
-            min_val=1,
-            target_type=numbers.Integral,
-        )
         self.fit_transform(X)
         return self
 
@@ -215,6 +209,13 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
+        check_scalar(
+            self.n_oversamples,
+            "n_oversamples",
+            min_val=1,
+            target_type=numbers.Integral,
+        )
+
         X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
