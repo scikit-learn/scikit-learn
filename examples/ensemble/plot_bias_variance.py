@@ -12,14 +12,14 @@ the regression problem, the bias term measures the average amount by which the
 predictions of the estimator differ from the predictions of the best possible
 estimator for the problem (i.e., the Bayes model). The variance term measures
 the variability of the predictions of the estimator when fit over different
-instances LS of the problem. Finally, the noise measures the irreducible part
+instances (S) of the problem. Finally, the noise measures the irreducible part
 of the error which is due the variability in the data.
 
 The upper left figure illustrates the predictions (in dark red) of a single
-decision tree trained over a random dataset LS (the blue dots) of a toy 1d
+decision tree trained over a random dataset (S) (the blue dots) of a toy 1d
 regression problem. It also illustrates the predictions (in light red) of other
 single decision trees trained over other (and different) randomly drawn
-instances LS of the problem. Intuitively, the variance term here corresponds to
+instances (S) of the problem. Intuitively, the variance term here corresponds to
 the width of the beam of predictions (in light red) of the individual
 estimators. The larger the variance, the more sensitive are the predictions for
 `x` to small changes in the training set. The bias term corresponds to the
@@ -158,7 +158,7 @@ for n, (name, estimator) in enumerate(estimators):
     # Plot figures
     plt.subplot(2, n_estimators, n + 1)
     plt.plot(X_test, f(X_test), "b", label="$f(x)$")
-    plt.plot(X_train[0], y_train[0], ".b", label="LS ~ $y = f(x)+noise$")
+    plt.plot(X_train[0], y_train[0], ".b", label="S ~ $y = f(x)+noise$")
 
     for i in range(n_repeat):
         if i == 0:
@@ -166,7 +166,7 @@ for n, (name, estimator) in enumerate(estimators):
         else:
             plt.plot(X_test, y_predict[:, i], "r", alpha=0.05)
 
-    plt.plot(X_test, np.mean(y_predict, axis=1), "c", label=r"$\mathbb{E}_{LS} \^y(x)$")
+    plt.plot(X_test, np.mean(y_predict, axis=1), "c", label=r"$\mathbb{E}_{S} \^y(x)$")
 
     plt.xlim([-5, 5])
     plt.title(name)
