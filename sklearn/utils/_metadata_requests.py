@@ -206,14 +206,12 @@ class MethodMetadataRequest:
             Returns a set of strings with the names of all parameters.
         """
         return set(
-            sorted(
-                [
-                    alias if not original_names and alias not in RequestType else prop
-                    for prop, alias in self._requests.items()
-                    if alias not in RequestType
-                    or RequestType(alias) != RequestType.UNREQUESTED
-                ]
-            )
+            [
+                alias if not original_names and alias not in RequestType else prop
+                for prop, alias in self._requests.items()
+                if alias not in RequestType
+                or RequestType(alias) != RequestType.UNREQUESTED
+            ]
         )
 
     def _check_warnings(self, *, params):
@@ -626,7 +624,7 @@ class MetadataRouter:
                             method=orig_method, original_names=False, ignore_self=False
                         )
                     )
-        return set(sorted(res))
+        return set(res)
 
     def _get_squashed_params(self, *, params, method):
         """Get input for a method of a router w/o validation.
@@ -734,7 +732,7 @@ class MetadataRouter:
             )
         else:
             self_params = set()
-        extra_keys = set(sorted(set(params.keys()) - param_names - self_params))
+        extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
             raise ValueError(
                 "These passed parameters are not understood or requested by any object:"
