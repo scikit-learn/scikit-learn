@@ -1224,9 +1224,9 @@ def d2_pinball_loss_score(
     sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
-    alpha: float, default=0.5,
+    alpha : float, default=0.5
         Pinball loss quantile parameter, determines the slope of the pinball_loss.
-        Equivalent to :ref:`d2_absolute_error_score` when `alpha=0.5`.
+        Equivalent to `d2_absolute_error_score` when `alpha=0.5`.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'

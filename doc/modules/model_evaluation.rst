@@ -1967,7 +1967,7 @@ functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
 :func:`mean_absolute_error`, :func:`explained_variance_score`,
 :func:`r2_score`, :func:`mean_pinball_loss`, :func:`d2_pinball_loss_score`
- and :func:`d2_absolute_error_score`.
+and :func:`d2_absolute_error_score`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
