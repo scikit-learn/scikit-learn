@@ -181,8 +181,9 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Enhancement| :class:`BaseGradientBoosting` now calls :meth:`base.BaseEstimator._validate_data` with
-  parameter `force_all_finite` equals to False when it is already initialized.
+- |Efficiency| :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
+  does not check if `X` is finite during the second call to `fit` when the estimator was
+  warm started. 
   :pr:`22089` by :user:`Geoffrey Paris <Geoffrey-Paris>`.
 
 - |API| Changed the default of :func:`max_features` to 1.0 for
