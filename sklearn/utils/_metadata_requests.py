@@ -7,7 +7,7 @@ Metadata Routing Utility
 
 import inspect
 from copy import deepcopy
-from enum import Enum
+from enum import Enum, EnumMeta
 from warnings import warn
 from collections import namedtuple
 from typing import Union, Optional
@@ -23,7 +23,23 @@ RouteMappingPair = namedtuple("RouteMappingPair", ["mapping", "routing"])
 Route = namedtuple("Route", ["method", "used_in"])
 
 
-class RequestType(Enum):
+class MemberCheckEnumMeta(EnumMeta):
+    """Enum metaclass adding __contains__ to Enum.
+
+    This allows us to check whether something is a valid alias later in the
+    code w/o having to code the try/except everywhere.
+    """
+
+    def __contains__(cls, item):
+        try:
+            cls(item)
+        except ValueError:
+            return False
+        else:
+            return True
+
+
+class RequestType(Enum, metaclass=MemberCheckEnumMeta):
     """A metadata is requested either with a string alias or this enum.
 
     .. versionadded:: 1.1
@@ -153,12 +169,12 @@ class MethodMetadataRequest:
 
             - None or RequestType.ERROR_IF_PASSED: error if passed
         """
-        if not isinstance(alias, str):
-            try:
-                alias = RequestType(alias)
-            except ValueError:
+        try:
+            alias = RequestType(alias)
+        except ValueError:
+            if not (isinstance(alias, str) and alias.isidentifier()):
                 raise ValueError(
-                    "alias should be either a string or one of "
+                    "alias should be either a valid identifier or one of "
                     "{None, True, False}, or a RequestType."
                 )
 
@@ -192,9 +208,9 @@ class MethodMetadataRequest:
         return set(
             sorted(
                 [
-                    alias if not original_names and isinstance(alias, str) else prop
+                    alias if not original_names and alias not in RequestType else prop
                     for prop, alias in self._requests.items()
-                    if isinstance(alias, str)
+                    if alias not in RequestType
                     or RequestType(alias) != RequestType.UNREQUESTED
                 ]
             )
@@ -247,8 +263,11 @@ class MethodMetadataRequest:
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
         for prop, alias in self._requests.items():
-            if not isinstance(alias, str):
+            try:
                 alias = RequestType(alias)
+            except ValueError:
+                # we leave alias as is (str) if it's not a RequestType
+                pass
 
             if alias == RequestType.UNREQUESTED or alias == RequestType.WARN:
                 continue
@@ -277,7 +296,7 @@ class MethodMetadataRequest:
             {
                 prop: alias
                 for prop, alias in self._requests.items()
-                if isinstance(alias, str)
+                if alias not in RequestType
             }
         )
         # And at last the parameters with RequestType routing info
@@ -285,7 +304,7 @@ class MethodMetadataRequest:
             {
                 prop: RequestType(alias).value
                 for prop, alias in self._requests.items()
-                if not isinstance(alias, str)
+                if alias in RequestType
             }
         )
         return result

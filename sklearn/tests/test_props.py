@@ -568,7 +568,9 @@ def test__get_default_requests():
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(name="fit")
 
-    with pytest.raises(ValueError, match="alias should be either a string or"):
+    with pytest.raises(
+        ValueError, match="alias should be either a valid identifier or"
+    ):
         mmr.add_request(prop="foo", alias=1.4)
 
     mmr.add_request(prop="foo", alias=None)
