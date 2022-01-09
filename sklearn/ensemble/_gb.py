@@ -575,9 +575,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     "warm_start==True" % (self.n_estimators, self.estimators_.shape[0])
                 )
             begin_at_stage = self.estimators_.shape[0]
-            # The requirements of _raw_predict (called in seven lines
-            # below) are more constrained than fit. It accepts only CSR
-            # matrices. Finite values have already been checked.
+            # The requirements of _raw_predict
+            # are more constrained than fit. It accepts only CSR
+            # matrices. Finite values have already been checked in _validate_data.
             X = check_array(
                 X,
                 dtype=DTYPE,
