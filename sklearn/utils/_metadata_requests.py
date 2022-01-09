@@ -16,11 +16,11 @@ from ._bunch import Bunch
 # This namedtuple is used to store a (mapping, routing) pair. Mapping is a
 # MethodMapping object, and routing is the output of `get_metadata_routing`.
 # MetadataRouter stores a collection of these namedtuples.
-RouteMappingPair = namedtuple("RouteMappingPair", ["mapping", "routing"])
+RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 
 # A namedtuple storing a single method route. A collection of these namedtuples
 # is stored in a MetadataRouter.
-Route = namedtuple("Route", ["method", "used_in"])
+MethodPair = namedtuple("MethodPair", ["method", "used_in"])
 
 
 class MemberCheckEnumMeta(EnumMeta):
@@ -458,7 +458,7 @@ class MethodMapping:
             raise ValueError(f"Given method:{method} is not valid.")
         if used_in not in METHODS:
             raise ValueError(f"Given used_in method:{used_in} is not valid.")
-        self._routes.append(Route(method=method, used_in=used_in))
+        self._routes.append(MethodPair(method=method, used_in=used_in))
         return self
 
     def _serialize(self):
@@ -579,8 +579,8 @@ class MetadataRouter:
         if isinstance(method_mapping, str):
             method_mapping = MethodMapping.from_str(method_mapping)
         for name, obj in objs.items():
-            self._route_mappings[name] = RouteMappingPair(
-                mapping=method_mapping, routing=get_router_for_object(obj)
+            self._route_mappings[name] = RouterMappingPair(
+                mapping=method_mapping, router=get_router_for_object(obj)
             )
         return self
 
@@ -622,7 +622,7 @@ class MetadataRouter:
             for orig_method, used_in in route_mapping.mapping:
                 if used_in == method:
                     res = res.union(
-                        route_mapping.routing._get_param_names(
+                        route_mapping.router._get_param_names(
                             method=orig_method, original_names=False, ignore_self=False
                         )
                     )
@@ -694,7 +694,7 @@ class MetadataRouter:
 
         res = Bunch()
         for name, route_mapping in self._route_mappings.items():
-            router, mapping = route_mapping.routing, route_mapping.mapping
+            router, mapping = route_mapping.router, route_mapping.mapping
 
             res[name] = Bunch()
             for orig_method, used_in in mapping:
@@ -755,14 +755,14 @@ class MetadataRouter:
         for name, route_mapping in self._route_mappings.items():
             res[name] = dict()
             res[name]["mapping"] = route_mapping.mapping._serialize()
-            res[name]["routing"] = route_mapping.routing._serialize()
+            res[name]["router"] = route_mapping.router._serialize()
 
         return res
 
     def __iter__(self):
         if self._self:
-            yield "$self", RouteMappingPair(
-                mapping=MethodMapping.from_str("one-to-one"), routing=self._self
+            yield "$self", RouterMappingPair(
+                mapping=MethodMapping.from_str("one-to-one"), router=self._self
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)

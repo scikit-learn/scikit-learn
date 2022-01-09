@@ -43,7 +43,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
     """
     if isinstance(metadata_request, MetadataRouter):
         for _, route_mapping in metadata_request:
-            assert_request_is_empty(route_mapping.routing)
+            assert_request_is_empty(route_mapping.router)
         return
 
     exclude = [] if exclude is None else exclude
@@ -647,7 +647,7 @@ def test_estimator_warnings():
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
             "{'estimator': {'mapping': [{'method': 'predict',"
-            " 'used_in': 'predict'}], 'routing': {'fit':"
+            " 'used_in': 'predict'}], 'router': {'fit':"
             " {'sample_weight': None}, 'partial_fit': {}, 'predict': {}, 'score':"
             " {'sample_weight': None}, 'split': {}, 'transform': {},"
             " 'inverse_transform': {}}}}",
