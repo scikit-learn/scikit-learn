@@ -148,7 +148,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         router = MetadataRouter().add(
             estimator=self.estimator, method_mapping="one-to-one"
         )
-        return router.serialize()
+        return router
 
     def fit(self, X, y, **fit_params):
         # meta-estimators are responsible for validating the given metadata
@@ -343,7 +343,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="one-to-one")
         )
-        return router.serialize()
+        return router
 
 
 # %%
@@ -444,7 +444,7 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
             )
             .add(classifier=self.classifier, method_mapping="one-to-one")
         )
-        return router.serialize()
+        return router
 
 
 # %%
@@ -521,7 +521,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         router = MetadataRouter().add(
             estimator=self.estimator, method_mapping="one-to-one"
         )
-        return router.serialize()
+        return router
 
 
 # %%
@@ -553,7 +553,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="one-to-one")
         )
-        return router.serialize()
+        return router
 
 
 # %%

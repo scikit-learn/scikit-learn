@@ -25,6 +25,7 @@ from sklearn.utils.metadata_routing import MethodMapping
 from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils._metadata_requests import _MetadataRequester
+from sklearn.utils._metadata_requests import METHODS
 
 N, M = 100, 4
 X = np.random.rand(N, M)
@@ -45,20 +46,28 @@ def assert_request_is_empty(metadata_request, exclude=None):
             assert_request_is_empty(route_mapping.routing)
         return
 
-    if isinstance(metadata_request, MetadataRequest):
-        metadata_request = metadata_request.serialize()
-    if exclude is None:
-        exclude = []
-    for method, request in metadata_request.items():
-        if method in exclude or method == "$type":
+    exclude = [] if exclude is None else exclude
+    for method in METHODS:
+        if method in exclude:
             continue
+        mmr = getattr(metadata_request, method)
         props = [
             prop
-            for prop, alias in request.items()
+            for prop, alias in mmr.requests.items()
             if isinstance(alias, str)
             or RequestType(alias) != RequestType.ERROR_IF_PASSED
         ]
         assert not len(props)
+
+
+def assert_request_equal(request, dictionary):
+    for method, requests in dictionary.items():
+        mmr = getattr(request, method)
+        assert mmr.requests == requests
+
+    empty_methods = [method for method in METHODS if method not in dictionary]
+    for method in empty_methods:
+        assert not len(getattr(request, method).requests)
 
 
 def record_metadata(obj, method, **kwargs):
@@ -90,7 +99,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         router = MetadataRouter().add(
             estimator=self.estimator, method_mapping="one-to-one"
         )
-        return router.serialize()
+        return router
 
 
 class RegressorMetadata(RegressorMixin, BaseEstimator):
@@ -126,7 +135,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="one-to-one")
         )
-        return router.serialize()
+        return router
 
 
 class ClassifierNoMetadata(ClassifierMixin, BaseEstimator):
@@ -168,7 +177,7 @@ class SimpleMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="fit")
         )
-        return router.serialize()
+        return router
 
 
 class TransformerMetadata(TransformerMixin, BaseEstimator):
@@ -199,10 +208,8 @@ class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         return self.transformer_.transform(X, **params.transformer.transform)
 
     def get_metadata_routing(self):
-        return (
-            MetadataRouter()
-            .add(transformer=self.transformer, method_mapping="one-to-one")
-            .serialize()
+        return MetadataRouter().add(
+            transformer=self.transformer, method_mapping="one-to-one"
         )
 
 
@@ -250,13 +257,12 @@ class SimplePipeline(BaseEstimator):
                 .add(method="transform", used_in="predict"),
             )
         router.add(predictor=self.steps[-1], method_mapping="one-to-one")
-        return router.serialize()
+        return router
 
 
 def test_assert_request_is_empty():
     requests = MetadataRequest()
     assert_request_is_empty(requests)
-    assert_request_is_empty(requests.serialize())
 
     requests.fit.add_request(prop="foo", alias=RequestType.ERROR_IF_PASSED)
     # this should still work, since ERROR_IF_PASSED is the default value
@@ -294,24 +300,24 @@ def test_default_requests():
         }  # type: ignore
 
     odd_request = get_router_for_object(OddEstimator())
-    assert odd_request.fit._requests == {"sample_weight": RequestType.REQUESTED}
+    assert odd_request.fit.requests == {"sample_weight": RequestType.REQUESTED}
 
     # check other test estimators
-    assert not len(get_router_for_object(ClassifierNoMetadata()).fit._requests)
+    assert not len(get_router_for_object(ClassifierNoMetadata()).fit.requests)
     assert_request_is_empty(ClassifierNoMetadata().get_metadata_routing())
 
     trs_request = get_router_for_object(TransformerMetadata())
-    assert trs_request.fit._requests == {
+    assert trs_request.fit.requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
     }
-    assert trs_request.transform._requests == {
+    assert trs_request.transform.requests == {
         "sample_weight": RequestType(None),
     }
     assert_request_is_empty(trs_request)
 
     est_request = get_router_for_object(ClassifierFitMetadata())
-    assert est_request.fit._requests == {
+    assert est_request.fit.requests == {
         "sample_weight": RequestType(None),
         "brand": RequestType(None),
     }
@@ -470,63 +476,48 @@ def test_get_metadata_routing():
         TestDefaultsBadMethodName().get_metadata_routing()
 
     expected = {
-        "$type": "request",
         "score": {
-            "my_param": True,
-            "my_other_param": None,
-            "sample_weight": None,
+            "my_param": RequestType.REQUESTED,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "sample_weight": RequestType.ERROR_IF_PASSED,
         },
         "fit": {
-            "my_other_param": None,
-            "sample_weight": None,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "sample_weight": RequestType.ERROR_IF_PASSED,
         },
-        "partial_fit": {},
-        "predict": {"my_param": True},
-        "transform": {},
-        "inverse_transform": {},
-        "split": {},
+        "predict": {"my_param": RequestType.REQUESTED},
     }
-    assert TestDefaults().get_metadata_routing() == expected
+    assert_request_equal(TestDefaults().get_metadata_routing(), expected)
 
     est = TestDefaults().score_requests(my_param="other_param")
     expected = {
-        "$type": "request",
         "score": {
             "my_param": "other_param",
-            "my_other_param": None,
-            "sample_weight": None,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "sample_weight": RequestType.ERROR_IF_PASSED,
         },
         "fit": {
-            "my_other_param": None,
-            "sample_weight": None,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "sample_weight": RequestType.ERROR_IF_PASSED,
         },
-        "partial_fit": {},
-        "predict": {"my_param": True},
-        "transform": {},
-        "inverse_transform": {},
-        "split": {},
+        "predict": {"my_param": RequestType.REQUESTED},
     }
-    assert est.get_metadata_routing() == expected
+    assert_request_equal(est.get_metadata_routing(), expected)
 
     est = TestDefaults().fit_requests(sample_weight=True)
     expected = {
-        "$type": "request",
         "score": {
-            "my_param": True,
-            "my_other_param": None,
-            "sample_weight": None,
+            "my_param": RequestType.REQUESTED,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "sample_weight": RequestType.ERROR_IF_PASSED,
         },
         "fit": {
-            "my_other_param": None,
-            "sample_weight": True,
+            "my_other_param": RequestType.ERROR_IF_PASSED,
+            "sample_weight": RequestType.REQUESTED,
         },
-        "partial_fit": {},
-        "predict": {"my_param": True},
-        "transform": {},
-        "inverse_transform": {},
-        "split": {},
+        "predict": {"my_param": RequestType.REQUESTED},
     }
-    assert est.get_metadata_routing() == expected
+    assert_request_equal(est.get_metadata_routing(), expected)
 
 
 def test__get_default_requests():
@@ -537,7 +528,7 @@ def test__get_default_requests():
         def fit(self, X, y):
             return self
 
-    assert get_router_for_object(ExplicitRequest()).fit._requests == {
+    assert get_router_for_object(ExplicitRequest()).fit.requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
     assert_request_is_empty(ExplicitRequest().get_metadata_routing(), exclude="fit")
@@ -548,7 +539,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert get_router_for_object(ExplicitRequestOverwrite()).fit._requests == {
+    assert get_router_for_object(ExplicitRequestOverwrite()).fit.requests == {
         "prop": RequestType.REQUESTED
     }
     assert_request_is_empty(
@@ -559,7 +550,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert get_router_for_object(ImplicitRequest()).fit._requests == {
+    assert get_router_for_object(ImplicitRequest()).fit.requests == {
         "prop": RequestType.ERROR_IF_PASSED
     }
     assert_request_is_empty(ImplicitRequest().get_metadata_routing(), exclude="fit")
@@ -570,7 +561,7 @@ def test__get_default_requests():
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert get_router_for_object(ImplicitRequestRemoval()).fit._requests == {}
+    assert get_router_for_object(ImplicitRequestRemoval()).fit.requests == {}
     assert_request_is_empty(ImplicitRequestRemoval().get_metadata_routing())
 
 
@@ -581,28 +572,17 @@ def test_method_metadata_request():
         mmr.add_request(prop="foo", alias=1.4)
 
     mmr.add_request(prop="foo", alias=None)
-    assert mmr._requests == {"foo": RequestType.ERROR_IF_PASSED}
+    assert mmr.requests == {"foo": RequestType.ERROR_IF_PASSED}
     mmr.add_request(prop="foo", alias=False)
-    assert mmr._requests == {"foo": RequestType.UNREQUESTED}
+    assert mmr.requests == {"foo": RequestType.UNREQUESTED}
     mmr.add_request(prop="foo", alias=True)
-    assert mmr._requests == {"foo": RequestType.REQUESTED}
+    assert mmr.requests == {"foo": RequestType.REQUESTED}
     mmr.add_request(prop="foo", alias="foo")
-    assert mmr._requests == {"foo": RequestType.REQUESTED}
+    assert mmr.requests == {"foo": RequestType.REQUESTED}
     mmr.add_request(prop="foo", alias="bar")
-    assert mmr._requests == {"foo": "bar"}
+    assert mmr.requests == {"foo": "bar"}
     assert mmr._get_param_names(original_names=True) == {"foo"}
     assert mmr._get_param_names(original_names=False) == {"bar"}
-
-    assert MethodMetadataRequest.deserialize(None, name="fit")._requests == {}
-    assert MethodMetadataRequest.deserialize({"foo": None}, name="fit")._requests == {
-        "foo": RequestType.ERROR_IF_PASSED
-    }
-    assert MethodMetadataRequest.deserialize(
-        {"foo": None, "bar": None}, name="fit"
-    )._requests == {
-        "foo": RequestType.ERROR_IF_PASSED,
-        "bar": RequestType.ERROR_IF_PASSED,
-    }
 
 
 def test_get_router_for_object():
@@ -610,20 +590,17 @@ def test_get_router_for_object():
         __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
     assert_request_is_empty(get_router_for_object(None))
-    assert_request_is_empty(get_router_for_object({"$type": "request"}))
-    assert_request_is_empty(get_router_for_object({"$type": "router"}))
-    with pytest.raises(ValueError, match="Cannot understand object type"):
-        get_router_for_object({"$type": "invalid"})
     assert_request_is_empty(get_router_for_object(object()))
 
-    mr = MetadataRequest.deserialize({"$type": "request", "fit": {"foo": "bar"}})
+    mr = MetadataRequest()
+    mr.fit.add_request(prop="foo", alias="bar")
     mr_factory = get_router_for_object(mr)
     assert_request_is_empty(mr_factory, exclude="fit")
-    assert mr_factory.fit._requests == {"foo": "bar"}
+    assert mr_factory.fit.requests == {"foo": "bar"}
 
     mr = get_router_for_object(Consumer())
     assert_request_is_empty(mr, exclude="fit")
-    assert mr.fit._requests == {"prop": RequestType.ERROR_IF_PASSED}
+    assert mr.fit.requests == {"prop": RequestType.ERROR_IF_PASSED}
 
 
 def test_metaestimator_warnings():
@@ -659,7 +636,7 @@ def test_estimator_warnings():
         ),
         (
             MetadataRequest(),
-            "{'$type': 'request', 'fit': {}, 'partial_fit': {}, 'predict': {}, 'score':"
+            "{'fit': {}, 'partial_fit': {}, 'predict': {}, 'score':"
             " {}, 'split': {}, 'transform': {}, 'inverse_transform': {}}",
         ),
         (MethodMapping.from_str("score"), "[{'method': 'score', 'used_in': 'score'}]"),
@@ -667,8 +644,8 @@ def test_estimator_warnings():
             MetadataRouter().add(
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
-            "{'$type': 'router', 'estimator': {'mapping': [{'method': 'predict',"
-            " 'used_in': 'predict'}], 'routing': {'$type': 'request', 'fit':"
+            "{'estimator': {'mapping': [{'method': 'predict',"
+            " 'used_in': 'predict'}], 'routing': {'fit':"
             " {'sample_weight': None}, 'partial_fit': {}, 'predict': {}, 'score':"
             " {'sample_weight': None}, 'split': {}, 'transform': {},"
             " 'inverse_transform': {}}}}",
@@ -682,27 +659,6 @@ def test_string_representations(obj, string):
 @pytest.mark.parametrize(
     "obj, method, inputs, err_cls, err_msg",
     [
-        (
-            MetadataRequest,
-            "deserialize",
-            {"obj": {}},
-            ValueError,
-            "Can only create a metadata request of type",
-        ),
-        (
-            MetadataRequest,
-            "deserialize",
-            {"obj": {"$type": "request", "invalid_method": {}}},
-            ValueError,
-            "is not supported as a method",
-        ),
-        (
-            MetadataRouter,
-            "deserialize",
-            {"obj": {}},
-            ValueError,
-            "Can only create a router of type",
-        ),
         (
             MethodMapping(),
             "add",
@@ -733,7 +689,7 @@ def test_string_representations(obj, string):
         ),
     ],
 )
-def test_deserialize_invalid_type(obj, method, inputs, err_cls, err_msg):
+def test_validations(obj, method, inputs, err_cls, err_msg):
     with pytest.raises(err_cls, match=err_msg):
         getattr(obj, method)(**inputs)
 
