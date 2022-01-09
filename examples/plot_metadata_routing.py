@@ -600,7 +600,3 @@ for w in record:
 # scikit-learn, and internally (re)implement or vendor the functionality
 # required to present the dictionary representation of the routing data to
 # other classes inside and outside scikit-learn.
-#
-# However, please note that this only applies to ``True``, ``False``, and
-# ``None`` routing values and not ``RequestType.WARN`` and
-# ``RequestType.UNUSED`` each of which is a sentinel.

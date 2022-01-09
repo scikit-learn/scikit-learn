@@ -11,7 +11,6 @@ from enum import Enum
 from warnings import warn
 from collections import namedtuple
 from typing import Union, Optional
-from ..externals._sentinels import sentinel  # type: ignore # mypy error!!!
 from ._bunch import Bunch
 
 # This namedtuple is used to store a (mapping, routing) pair. Mapping is a
@@ -40,20 +39,20 @@ class RequestType(Enum):
     # present, an error is raised for the user to explicitly set the request
     # value.
     ERROR_IF_PASSED = None
-    # this sentinel is used in `__metadata_request__*` attributes to indicate
-    # that a metadata is not present even though it may be present in the
+    # this is used in `__metadata_request__*` attributes to indicate that a
+    # metadata is not present even though it may be present in the
     # corresponding method's signature.
-    UNUSED = sentinel("UNUSED")
-    # this sentinel is used whenever a default value is changed, and therefore
-    # the user should explicitly set the value, otherwise a warning is shown.
-    # An example is when a meta-estimator is only a router, but then becomes
-    # also a consumer.
-    WARN = sentinel("WARN")
+    UNUSED = "$UNUSED$"
+    # this is used whenever a default value is changed, and therefore the user
+    # should explicitly set the value, otherwise a warning is shown. An example
+    # is when a meta-estimator is only a router, but then becomes also a
+    # consumer.
+    WARN = "$WARN$"
 
 
-# this sentinel is the default used in `{method}_requests` methods to indicate
-# no change requested by the user.
-UNCHANGED = sentinel("UNCHANGED")
+# this is the default used in `{method}_requests` methods to indicate no change
+# requested by the user.
+UNCHANGED = "$UNCHANGED$"
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.

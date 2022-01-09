@@ -204,8 +204,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",
     "sklearn.utils.validation.check_random_state",
-    # Never fix this one, it's vendored code
-    "sklearn.externals._sentinels.sentinel",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
