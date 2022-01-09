@@ -1285,7 +1285,7 @@ def test_enet_l1_ratio():
         "Coordinate descent without L1 regularization may "
         "lead to unexpected results and is discouraged. "
         "Set l1_ratio > 0 to add L1 regularization."
-   )
+    )
     with pytest.warns(UserWarning, match=warning_message):
         ElasticNetCV(l1_ratio=[0], alphas=[1]).fit(X, y)
 
