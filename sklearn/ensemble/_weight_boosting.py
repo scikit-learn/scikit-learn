@@ -1082,7 +1082,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         # Check loss
         if self.loss not in ("linear", "square", "exponential"):
             raise ValueError(
-                "loss must be 'linear', 'square', or 'exponential'"
+                "loss must be 'linear', 'square', or 'exponential'."
                 f" Got {self.loss!r} instead."
             )
 
