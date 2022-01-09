@@ -70,13 +70,6 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
-:mod:`sklearn.base`
-...................
-
-- |Enhancement| Warmed up estimators now call :meth:`base.BaseEstimator._validate_data` with
-  parameter `force_all_finite` equals to False.
-  :pr:`22089` by :user:`Geoffrey Paris <Geoffrey-Paris>`.
-
 :mod:`sklearn.calibration`
 ..........................
 
@@ -187,6 +180,10 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+
+- |Enhancement| :class:`BaseGradientBoosting` now calls :meth:`base.BaseEstimator._validate_data` with
+  parameter `force_all_finite` equals to False when it is already initialized.
+  :pr:`22089` by :user:`Geoffrey Paris <Geoffrey-Paris>`.
 
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for

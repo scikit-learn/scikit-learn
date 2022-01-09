@@ -942,19 +942,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 multi_output=True,
                 y_numeric=True,
             )
-            if self.warm_start and hasattr(self, "coef_"):
-                y = check_array(
-                    y,
-                    order="F",
-                    copy=False,
-                    dtype=X.dtype.type,
-                    ensure_2d=False,
-                    force_all_finite=False,
-                )
-            else:
-                y = check_array(
-                    y, order="F", copy=False, dtype=X.dtype.type, ensure_2d=False
-                )
+            y = check_array(
+                y, order="F", copy=False, dtype=X.dtype.type, ensure_2d=False
+            )
 
         n_samples, n_features = X.shape
         alpha = self.alpha
@@ -2401,21 +2391,14 @@ class MultiTaskElasticNet(Lasso):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
-        # Doesn't check if values are finite if warm_start=True
-        # and the estimator is already fitted
-        force_all_finite = False if self.warm_start and hasattr(self, "coef_") else True
-
         # Need to validate separately here.
         # We can't pass multi_ouput=True because that would allow y to be csr.
         check_X_params = dict(
             dtype=[np.float64, np.float32],
             order="F",
             copy=self.copy_X and self.fit_intercept,
-            force_all_finite=force_all_finite,
         )
-        check_y_params = dict(
-            ensure_2d=False, order="F", force_all_finite=force_all_finite
-        )
+        check_y_params = dict(ensure_2d=False, order="F")
         X, y = self._validate_data(
             X, y, validate_separately=(check_X_params, check_y_params)
         )
