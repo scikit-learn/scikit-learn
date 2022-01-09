@@ -181,6 +181,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Enhancement| :method:`fit` of :class:`ensemble.BaseGradientBoosting` now
+  calls :func:`check_array` with :parameter:`force_all_finite=False` for non
+  initial warm-start runs as it has already been checked before.
+  :pr:`22159` by :user:`Geoffrey Paris <Geoffrey-Paris>`
+
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
   :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
