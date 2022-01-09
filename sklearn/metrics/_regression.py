@@ -1202,6 +1202,79 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
 def d2_pinball_loss_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
+    """
+    :math:`D^2` regression score function, \
+    fraction of pinball loss deviance explained.
+
+    Best possible score is 1.0 and it can be negative (because the model can be
+    arbitrarily worse). A model that always uses the empirical median of `y_true`
+    as constant prediction, disregarding the input features,
+    gets a :math:`D^2` score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), optional
+        Sample weights.
+
+    alpha: float, default=0.5,
+        Pinball loss quantile parameter, determines the slope of the pinball_loss.
+        Equivalent to :ref:`d2_absolute_error_score` when `alpha=0.5`.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average scores.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Scores of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    score : float or ndarray of floats
+        The :math:`D^2` score with a pinball loss deviance
+        or ndarray of scores if `multioutput='raw_values'`.
+
+    Notes
+    -----
+    This is not a symmetric function.
+
+    Like :math:`R^2`, :math:`D^2` score may be negative
+    (it need not actually be the square of a quantity D).
+
+    This metric is not well-defined for single samples and will return a NaN
+    value if n_samples is less than two.
+
+     References
+    ----------
+    .. [1] Eq. (3.11) of Hastie, Trevor J., Robert Tibshirani and Martin J.
+           Wainwright. "Statistical Learning with Sparsity: The Lasso and
+           Generalizations." (2015). https://trevorhastie.github.io
+
+    Examples
+    --------
+    >>> from sklearn.metrics import d2_pinball_loss_score
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [1, 3, 3]
+    >>> d2_pinball_loss_score(y_true, y_pred)
+    0.5
+    >>> d2_pinball_loss_score(y_true, y_pred, alpha=0.9)
+    0.772...
+    >>> d2_pinball_loss_score(y_true, y_pred, alpha=0.1)
+    -1.045...
+    >>> d2_pinball_loss_score(y_true, y_true, alpha=0.1)
+    1.0
+    """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
@@ -1273,7 +1346,7 @@ def d2_absolute_error_score(
     fraction of mean absolute error deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
-    arbitrarily worse). A model that always uses the empirical mean of `y_true`
+    arbitrarily worse). A model that always uses the empirical median of `y_true`
     as constant prediction, disregarding the input features,
     gets a :math:`D^2` score of 0.0.
 

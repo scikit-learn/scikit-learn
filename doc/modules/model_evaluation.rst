@@ -102,6 +102,7 @@ Scoring                                Function                                 
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
 'd2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
+'d2_pinball_loss_score'                :func:`metrics.d2_pinball_loss_score`
 'd2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
 
@@ -1965,7 +1966,8 @@ The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
 :func:`mean_absolute_error`, :func:`explained_variance_score`,
-:func:`r2_score`, :func:`mean_pinball_loss` and :func:`d2_absolute_error_score`.
+:func:`r2_score`, :func:`mean_pinball_loss`, :func:`d2_pinball_loss_score`
+ and :func:`d2_absolute_error_score`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -2413,11 +2415,16 @@ D² score, the coefficient of determination
 The D² score computes the fraction of deviance explained. 
 It is a generalization of R², where the squared error is generalized and replaced 
 by a measure of choice :math:`\text{D}(y, \hat{y})`
-(e.g., the Tweedie deviance or mean absolute error). It is calculated as
+(e.g., the Tweedie deviance, pinball loss or mean absolute error).
+It is calculated as
 
 .. math::
 
   D^2(y, \hat{y}) = 1 - \frac{\text{D}(y, \hat{y})}{\text{D}(y, \bar{y})} \,.
+
+Where :math:`\bar{y}` is the optimal intercept-only model's prediction 
+(e.g., the mean of `y_true` for the Tweedie case, the median for absolute 
+error and the alpha-quantile for pinball loss).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A constant model that always predicts the
@@ -2427,7 +2434,7 @@ of 0.0.
 D² Tweedie score
 ^^^^^^^^^^^^^^^^
 
-:func:`d2_tweedie_score` implements the special case of D² 
+The :func:`d2_tweedie_score` function implements the special case of D² 
 where :math:`\text{D}(y, \hat{y})` is the log-likelihood (Tweedie deviance) 
 also known as D² Tweedie or McFadden's likelihood ratio index.
 
@@ -2440,10 +2447,29 @@ A scorer object with a specific choice of ``power`` can be built by::
   >>> from sklearn.metrics import d2_tweedie_score, make_scorer
   >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
 
+D² pinball loss score
+^^^^^^^^^^^^^^^^^^^^^
+
+The :func:`d2_pinball_loss_score` function implements the special case
+of D² with a pinball loss daviance, i.e.:
+
+.. math::
+
+  D(y, \hat{y}) = \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0).
+
+The argument ``alpha`` defines the quantile parameter as for
+:func:`mean_pinball_loss`. Note that for `alpha=0.5` (the defualt)
+:func:`d2_pinball_loss_score` equals :func:`d2_absolute_error_score`.
+
+A scorer object with a specific choice of ``alpha`` can be built by::
+
+  >>> from sklearn.metrics import d2_pinball_loss_score, make_scorer
+  >>> d2_pinball_loss_score_08 = make_scorer(d2_pinball_loss_score, alpha=0.8)
+
 D² absolute error score
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`d2_absolute_error_score` implements the special case of
+The :func:`d2_absolute_error_score` function implements the special case of
 
 .. math::
 
