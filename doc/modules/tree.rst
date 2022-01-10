@@ -500,11 +500,11 @@ Entropy:
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-HellingerDistance
+HellingerDistance:
 
 .. math::
 
-    H(X_m) = \sqrt{(\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{left_1}}{N_{parent_1}}})^2+(\sqrt{\frac{N_{right_0}}{N_{parent_0}}}-\sqrt{\frac{N_{right_1}}{N_{parent_1}}})^2 }
+    H(X_m) = \sqrt{\left(\sqrt{\frac{N^{left}_0}{N^{parent}_0}}-\sqrt{\frac{N^{left}_1}{N^{parent}_1}}\right)^2+\left(\sqrt{\frac{N^{right}_0}{N^{parent}_0}}-\sqrt{\frac{N^{right}_1}{N^{parent}_1}}\right)^2 }
 
 left child class 0 samples fraction of parent class 0 samples :math:`\frac{N_{left_0}}{N_{parent_0}}`
 
