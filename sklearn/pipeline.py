@@ -204,12 +204,11 @@ class Pipeline(_BaseComposition):
                 continue
             if (not hasattr(t, "fit_transform") and
                     (not hasattr(t, "fit") and hasattr(t, "transform"))):
-                raise TypeError(
-                    "All intermediate steps should be "
-                    "transform, fit_transform or be the string "
-                    "'passthrough'. '%s' (type %s) doesn't"
-                    % (t, type(t))
-                )
+                raise TypeError("All intermediate steps should be "
+                                "transformers and implement fit and "
+                                "transform, fit_transform or be the string "
+                                "'passthrough'. '%s' (type %s) doesn't"
+                                % (t, type(t)))
 
         # We allow last estimator to be None as an identity transformation
         if (
@@ -220,8 +219,7 @@ class Pipeline(_BaseComposition):
             raise TypeError(
                 "Last step of Pipeline should implement fit, "
                 "fit_transform or be the string 'passthrough'. "
-                "'%s' (type %s) doesn't" % (estimator, type(estimator))
-            )
+                "'%s' (type %s) doesn't" % (estimator, type(estimator)))
 
     def _iter(self, with_final=True, filter_passthrough=True):
         """
