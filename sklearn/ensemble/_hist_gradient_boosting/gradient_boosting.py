@@ -52,14 +52,14 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     """Update the leaf values to be predicted by the tree.
 
     Update equals:
-        loss.fit_intercept_only(y_true - raw_predictions)
+        loss.fit_intercept_only(y_true - raw_prediction)
 
     This is only applied if loss.need_update_leaves_values is True.
     Note: It only works, if the loss is a function of the residual, as is the
     case for AbsoluteError and PinballLoss. Otherwise, one would need to get
     the minimum of loss(y_true, raw_prediction + x) in x. A few examples:
-      - AbsoluteError: median(y_true - raw_predictions).
-      - PinballLoss: quantile(y_true - raw_predictions).
+      - AbsoluteError: median(y_true - raw_prediction).
+      - PinballLoss: quantile(y_true - raw_prediction).
     See also notes about need_update_leaves_values in BaseLoss.
     """
     # TODO: Ideally this should be computed in parallel over the leaves using something
@@ -412,7 +412,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._clear_state()
 
             # initialize raw_predictions: those are the accumulated values
-            # predicted by the trees for the training data. raw_prediction has
+            # predicted by the trees for the training data. raw_predictions has
             # shape (n_samples, n_trees_per_iteration) where
             # n_trees_per_iterations is n_classes in multiclass classification,
             # else 1.
@@ -1355,7 +1355,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         check_is_fitted(self)
         # Return inverse link of raw predictions after converting
         # shape (n_samples, 1) to (n_samples,)
-        # loss.link.inverse is the inverse link function
         return self._loss.link.inverse(self._raw_predict(X).ravel())
 
     def staged_predict(self, X):
@@ -1792,9 +1791,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         if self.loss == "categorical_crossentropy":
             if self.n_trees_per_iteration_ == 1:
                 raise ValueError(
-                    "'categorical_crossentropy' is not suitable for "
+                    "loss='categorical_crossentropy' is not suitable for "
                     "a binary classification problem. Please use "
-                    "'auto' or 'binary_crossentropy' instead."
+                    "loss='auto' or loss='binary_crossentropy' instead."
                 )
             else:
                 return _LOSSES[self.loss](
@@ -1806,7 +1805,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
                     "loss='binary_crossentropy' is not defined for multiclass"
                     " classification with n_classes="
                     f"{self.n_trees_per_iteration_}, use loss="
-                    "'categorical_crossentropy' instead"
+                    "'categorical_crossentropy' instead."
                 )
             else:
                 return _LOSSES[self.loss](sample_weight=sample_weight)

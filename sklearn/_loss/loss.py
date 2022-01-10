@@ -491,7 +491,7 @@ class BaseLoss:
         """
         if dtype not in (np.float32, np.float64):
             raise ValueError(
-                "Valid options for 'dtype' are np.float32 and np.flaot64. "
+                "Valid options for 'dtype' are np.float32 and np.float64. "
                 f"Got dtype={dtype} instead."
             )
 
