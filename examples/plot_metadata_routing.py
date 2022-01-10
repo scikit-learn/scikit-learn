@@ -456,9 +456,11 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 #
 # Another difference in the above example with the previous ones is the usage
 # of :func:`~utils.metadata_routing.process_routing`, which processes the input
-# parameters, does the required validation, and passes the `params` which we
+# parameters, does the required validation, and returns the `params` which we
 # had created in previous examples. This reduces the boilerplate code a
-# developer needs to write in each meta-estimator's method.
+# developer needs to write in each meta-estimator's method. Developers are
+# strongly recommended to use this function unless there is a good reason
+# against it.
 #
 # In order to test the above pipeline, let's add an example transformer.
 
