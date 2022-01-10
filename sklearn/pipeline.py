@@ -202,6 +202,7 @@ class Pipeline(_BaseComposition):
             if t is None or t == "passthrough":
                 continue
 <<<<<<< HEAD
+<<<<<<< HEAD
             if (not hasattr(t, "fit_transform") and
                     (not hasattr(t, "fit") and hasattr(t, "transform"))):
                 raise TypeError("All intermediate steps should be "
@@ -210,6 +211,8 @@ class Pipeline(_BaseComposition):
                                 "'passthrough'. '%s' (type %s) doesn't"
                                 % (t, type(t)))
 =======
+=======
+>>>>>>> parent of 3b294b20d... [fix]allow-when-only-fit-transform
             if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
                 t, "transform"
             ):
@@ -229,10 +232,13 @@ class Pipeline(_BaseComposition):
         ):
             raise TypeError(
 <<<<<<< HEAD
+<<<<<<< HEAD
                 "Last step of Pipeline should implement fit, "
                 "fit_transform or be the string 'passthrough'. "
                 "'%s' (type %s) doesn't" % (estimator, type(estimator)))
 =======
+=======
+>>>>>>> parent of 3b294b20d... [fix]allow-when-only-fit-transform
                 "Last step of Pipeline should implement fit "
                 "or be the string 'passthrough'. "
                 "'%s' (type %s) doesn't" % (estimator, type(estimator))
