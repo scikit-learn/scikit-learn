@@ -1213,6 +1213,8 @@ def d2_pinball_loss_score(
 
     Read more in the :ref:`User Guide <d2_score>`.
 
+    .. versionadded:: 1.0.3
+
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -1294,7 +1296,7 @@ def d2_pinball_loss_score(
     )
 
     if sample_weight is None:
-        y_quantile = [np.quantile(y_true, q=alpha, axis=0)] * len(y_true)
+        y_quantile = [np.percentile(y_true, q=alpha * 100, axis=0)] * len(y_true)
     else:
         sample_weight = _check_sample_weight(sample_weight, y_true)
         y_quantile = [
@@ -1351,6 +1353,8 @@ def d2_absolute_error_score(
     gets a :math:`D^2` score of 0.0.
 
     Read more in the :ref:`User Guide <d2_score>`.
+
+    .. versionadded:: 1.0.3
 
     Parameters
     ----------
