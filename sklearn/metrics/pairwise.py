@@ -959,12 +959,12 @@ def paired_cosine_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features) 
-        An array where each row is a sample and each column is a feature. 
+    X : array-like of shape (n_samples_X, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Y : array-like of shape=(n_samples_Y, n_features), default=None
-        An array where each row is a sample and each column is a feature. 
-        If `None`, method uses `Y=X`. 
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
 
     Returns
     -------
