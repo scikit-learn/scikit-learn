@@ -1,6 +1,6 @@
 name: Bug Report
 description: Create a report to help us reproduce and correct the bug
-labels: ['Bug: triage']
+labels: ['Bug', 'Needs Triage']
 
 body:
 - type: markdown
