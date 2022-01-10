@@ -510,7 +510,6 @@ left child class 0 samples fraction of parent class 0 samples :math:`\frac{N_{le
 
 Misclassification:
 
-
 .. math::
 
     H(Q_m) = 1 - \max(p_{mk})
