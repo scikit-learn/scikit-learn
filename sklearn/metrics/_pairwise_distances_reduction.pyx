@@ -897,9 +897,6 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
     better running time when the alternative is IO bound, but it can suffer
     from numerical instability caused by catastrophic cancellation potentially
     introduced by the subtraction in the arithmetic expression above.
-
-    PairwiseDistancesArgKmin with EuclideanDistance must be used when higher
-    numerical precision is needed.
     """
 
     cdef:
