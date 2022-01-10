@@ -1,5 +1,7 @@
 cimport cython
 cimport numpy as np
+from cython cimport floating
+
 import numpy as np
 
 np.import_array()
@@ -16,9 +18,6 @@ ctypedef fused numpy_float2_t:
     np.float32_t
     np.float64_t
 
-ctypedef fused float_t:
-    float
-    double
 
 def mean_change(np.ndarray[ndim=1, dtype=numpy_float_t] arr_1,
                 np.ndarray[ndim=1, dtype=numpy_float2_t] arr_2):
@@ -84,7 +83,7 @@ def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=numpy_float_t] doc_topic,
             out[i] = exp(psi(doc_topic[i]) - psi_total_64)
 
 
-def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=numpy_float_t] arr):
+def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=floating] arr):
     """Dirichlet expectation for multiple samples:
     E[log(theta)] for theta ~ Dir(arr).
 
@@ -93,8 +92,8 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=numpy_float_t] arr):
     Note that unlike _dirichlet_expectation_1d, this function doesn't compute
     the exp and doesn't add in the prior.
     """
-    cdef numpy_float_t row_total, psi_row_total
-    cdef np.ndarray[ndim=2, dtype=numpy_float_t] d_exp
+    cdef floating row_total, psi_row_total
+    cdef np.ndarray[ndim=2, dtype=floating] d_exp
     cdef np.npy_intp i, j, n_rows, n_cols
 
     n_rows = arr.shape[0]
@@ -117,12 +116,12 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=numpy_float_t] arr):
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
 # https://www.uv.es/~bernardo/1976AppStatist.pdf
-cdef float_t psi(float_t x) nogil:
+cdef floating psi(floating x) nogil:
     if x <= 1e-6:
         # psi(x) = -EULER - 1/x + O(x)
         return -EULER - 1. / x
 
-    cdef float_t r, result = 0
+    cdef floating r, result = 0
 
     # psi(x + 1) = psi(x) + 1/x
     while x < 6:
