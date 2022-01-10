@@ -1418,13 +1418,13 @@ def check_scalar(
             f"Possible values are: {expected_include_boundaries}."
         )
 
-    if include_boundaries in ("left","both") and min_val==None:
+    if include_boundaries in ("left", "both") and min_val is None:
         raise ValueError(
-            f"Invalid combination of `include_boundaries` and `min_val`"
+            f"Invalid combination of `{include_boundaries}` and `{min_val}`"
         )
-    if include_boundaries in ("right","both") and max_val==None:
+    if include_boundaries in ("right", "both") and max_val is None:
         raise ValueError(
-            f"Invalid combination of `include_boundaries` and `min_val`"
+            f"Invalid combination of `{include_boundaries}` and `{max_val}`"
         )
 
     comparison_operator = (
