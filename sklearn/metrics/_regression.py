@@ -23,6 +23,7 @@ the lower the better.
 #          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
 #          Uttam kumar <bajiraouttamsinha@gmail.com>
 #          Sylvain Marie <sylvain.marie@se.com>
+#          Ohad Michel <ohadmich@gmail.com>
 # License: BSD 3 clause
 
 import warnings
@@ -1216,7 +1217,7 @@ def d2_pinball_loss_score(
 
     Read more in the :ref:`User Guide <d2_score>`.
 
-    .. versionadded:: 1.0.3
+    .. versionadded:: 1.1
 
     Parameters
     ----------
@@ -1357,7 +1358,7 @@ def d2_absolute_error_score(
 
     Read more in the :ref:`User Guide <d2_score>`.
 
-    .. versionadded:: 1.0.3
+    .. versionadded:: 1.1
 
     Parameters
     ----------
