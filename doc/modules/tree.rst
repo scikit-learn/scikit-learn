@@ -504,7 +504,7 @@ HellingerDistance
 
 .. math::
 
-    H(X_m) = \sqrt{(\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{1_left}}{N_{1_parent}}})^2+(\sqrt{\frac{N_{0_right}}{N_{0_parent}}}-\sqrt{\frac{N_{1_right}}{N_{1_parent}}})^2 }
+    H(X_m) = \sqrt{\left(\sqrt{\frac{N^{left}_0}{N^{parent}_0}}-\sqrt{\frac{N^{left}_1}{N^{parent}_1}}\right)^2+\left(\sqrt{\frac{N^{right}_0}{N^{parent}_0}}-\sqrt{\frac{N^{right}_1}{N^{parent}_1}}\right)^2 }
 
 Misclassification:
 
