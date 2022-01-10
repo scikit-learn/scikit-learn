@@ -55,6 +55,9 @@ __ALL__ = [
     "mean_tweedie_deviance",
     "mean_poisson_deviance",
     "mean_gamma_deviance",
+    "d2_tweedie_score",
+    "d2_pinball_loss_score",
+    "d2_absolute_error_score",
 ]
 
 
@@ -1096,7 +1099,7 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
 
 
 def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
-    """D^2 regression score function, percentage of Tweedie deviance explained.
+    """D^2 regression score function, fraction of Tweedie deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical mean of `y_true` as
