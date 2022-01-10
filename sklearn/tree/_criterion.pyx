@@ -652,8 +652,8 @@ cdef class HellingerDistance(ClassificationCriterion):
 
             hellinger_right += 1 - pow((count_k1  - count_k2), 2)
 
-        impurity_left[0]  = hellinger_left  / self.n_outputs
-        impurity_right[0] = hellinger_right / self.n_outputs
+        deref(impurity_left)  = hellinger_left  / self.n_outputs
+        deref(impurity_right) = hellinger_right / self.n_outputs
 
 
 cdef class RegressionCriterion(Criterion):
