@@ -2005,6 +2005,19 @@ then the explained variance is estimated as follow:
 
 The best possible score is 1.0, lower values are worse.
 
+Note: when the prediction residuals have zero mean, the Explained Variance
+score and the :ref:`r2_score` are identical.
+
+In the particular case where the true target is constant, the Explained
+Variance score is not finite: it is either ``NaN`` (perfect predictions) or
+``-Inf`` (imperfect predictions). Such non-finite scores may prevent correct
+model optimization such as grid-search cross-validation to be performed
+correctly. For this reason the default behaviour of
+:func:`explained_variance_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). You can set the ``force_finite``
+parameter to ``False`` to prevent this fix from happening and fallback on the
+original Explained Variance score.
+
 Here is a small example of usage of the :func:`explained_variance_score`
 function::
 
@@ -2019,6 +2032,18 @@ function::
     array([0.967..., 1.        ])
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
     0.990...
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2]
+    >>> explained_variance_score(y_true, y_pred)
+    1.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    nan
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2 + 1e-8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    -inf
 
 .. _max_error:
 
@@ -2241,8 +2266,11 @@ predicted by the model, through the proportion of explained variance.
 As such variance is dataset dependent, R² may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
-predicts the expected value of y, disregarding the input features, would get a
-R² score of 0.0.
+predicts the expected (average) value of y, disregarding the input features,
+would get an :math:`R^2` score of 0.0.
+
+Note: when the prediction residuals have zero mean, the :math:`R^2` score and
+the :ref:`explained_variance_score` are identical.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,
@@ -2256,6 +2284,14 @@ where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n}
 
 Note that :func:`r2_score` calculates unadjusted R² without correcting for
 bias in sample variance of y.
+
+In the particular case where the true target is constant, the :math:`R^2` score is
+not finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+predictions). Such non-finite scores may prevent correct model optimization
+such as grid-search cross-validation to be performed correctly. For this reason
+the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). If ``force_finite``
+is set to ``False``, this score falls back on the original :math:`R^2` definition.
 
 Here is a small example of usage of the :func:`r2_score` function::
 
@@ -2276,7 +2312,18 @@ Here is a small example of usage of the :func:`r2_score` function::
   array([0.965..., 0.908...])
   >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
   0.925...
-
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2]
+  >>> r2_score(y_true, y_pred)
+  1.0
+  >>> r2_score(y_true, y_pred, force_finite=False)
+  nan
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2 + 1e-8]
+  >>> r2_score(y_true, y_pred)
+  0.0
+  >>> r2_score(y_true, y_pred, force_finite=False)
+  -inf
 
 .. topic:: Example:
 

@@ -260,9 +260,6 @@ the `base_estimator` passed to :class:`CalibratedClassifierCV`.
 Alternatively, if `cv="prefit"` is set, the samples are not split and are
 all used to fit the regressor in a balanced manner.
 
-The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate the
-quality of a classifier's calibration.
-
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`

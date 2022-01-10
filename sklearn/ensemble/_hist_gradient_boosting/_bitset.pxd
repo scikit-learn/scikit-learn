@@ -1,4 +1,3 @@
-# cython: language_level=3
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
