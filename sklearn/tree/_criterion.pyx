@@ -593,6 +593,24 @@ cdef class Gini(ClassificationCriterion):
 cdef class HellingerDistance(ClassificationCriterion):
     r"""Hellinger distance criterion.
 
+    This handles cases where the target is a classification taking values 0 and 1.
+    If k represents a node before split, k1 and k2 represent the children nodes after split,
+    left_0 represents observations of class 0 in node k1, right_0 represents observations of class 0 in node k2,
+    left_1 represents observations of class 1 in node k1, right_1 represents observations of class 1 in node k2,
+    parent_0 represents observations of class 0 in node k, parent_1 represents observations of class 1 in node k,
+    then let
+
+        count_k1 = (\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{left_1}}{N_{parent_1}}})^2
+
+    be the partial hellinger distance score for the k1 node.
+
+        count_k2 = (\sqrt{\frac{N_{right_0}}{N_{parent_0}}}-\sqrt{\frac{N_{right_1}}{N_{parent_1}}})^2
+
+    be the partial hellinger distance score for the k2 node.
+
+    Hellinger distance score is then defined as:
+
+        hellinger_distance = \sqrt{count_k1+count_k2}
     """
 
     cdef double proxy_impurity_improvement(self) nogil:
