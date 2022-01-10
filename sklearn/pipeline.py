@@ -146,7 +146,6 @@ class Pipeline(_BaseComposition):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
-        self._validate_steps()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -202,14 +201,25 @@ class Pipeline(_BaseComposition):
         for t in transformers:
             if t is None or t == "passthrough":
                 continue
+<<<<<<< HEAD
             if (not hasattr(t, "fit_transform") and
                     (not hasattr(t, "fit") and hasattr(t, "transform"))):
+                raise TypeError("All intermediate steps should be "
+                                "transformers and implement fit and "
+                                "transform, fit_transform or be the string "
+                                "'passthrough'. '%s' (type %s) doesn't"
+                                % (t, type(t)))
+=======
+            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
+                t, "transform"
+            ):
                 raise TypeError(
                     "All intermediate steps should be "
-                    "transform, fit_transform or be the string "
-                    "'passthrough'. '%s' (type %s) doesn't"
-                    % (t, type(t))
+                    "transformers and implement fit and transform "
+                    "or be the string 'passthrough' "
+                    "'%s' (type %s) doesn't" % (t, type(t))
                 )
+>>>>>>> parent of 3b294b20d... [fix]allow-when-only-fit-transform
 
         # We allow last estimator to be None as an identity transformation
         if (
@@ -218,10 +228,16 @@ class Pipeline(_BaseComposition):
             and not hasattr(estimator, "fit")
         ):
             raise TypeError(
+<<<<<<< HEAD
                 "Last step of Pipeline should implement fit, "
                 "fit_transform or be the string 'passthrough'. "
+                "'%s' (type %s) doesn't" % (estimator, type(estimator)))
+=======
+                "Last step of Pipeline should implement fit "
+                "or be the string 'passthrough'. "
                 "'%s' (type %s) doesn't" % (estimator, type(estimator))
             )
+>>>>>>> parent of 3b294b20d... [fix]allow-when-only-fit-transform
 
     def _iter(self, with_final=True, filter_passthrough=True):
         """
