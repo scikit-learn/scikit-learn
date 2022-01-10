@@ -52,8 +52,11 @@ def test_too_many_components(algorithm, X_sparse):
     n_features = X_sparse.shape[1]
     for n_components in (n_features, n_features + 1):
         tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
-        with pytest.raises(ValueError):
+        if n_components == n_features and algorithm == "randomized":
             tsvd.fit(X_sparse)
+        else:
+            with pytest.raises(ValueError):
+                tsvd.fit(X_sparse)
 
 
 @pytest.mark.parametrize("fmt", ("array", "csr", "csc", "coo", "lil"))

@@ -44,7 +44,8 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     ----------
     n_components : int, default=2
         Desired dimensionality of output data.
-        Must be strictly less than the number of features.
+        If algorithm='arpack', must be strictly less than the number of features.
+        If algorithm='randomized', must be less than or equal to the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
