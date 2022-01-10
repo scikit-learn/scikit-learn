@@ -411,11 +411,12 @@ def nan_euclidean_distances(
 
     Parameters
     ----------
-    X : array-like of shape=(n_samples_X, n_features)
-        Array of vectors.
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features) 
+        An array where each row is a sample and each column is a feature. 
 
     Y : array-like of shape=(n_samples_Y, n_features), default=None
-        Array of vectors. If `None`, uses `Y=X`.
+        An array where each row is a sample and each column is a feature. 
+        If `None`, method uses `Y=X`. 
 
     squared : bool, default=False
         Return squared Euclidean distances.
