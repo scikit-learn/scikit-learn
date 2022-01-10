@@ -408,7 +408,9 @@ class MetadataRequest:
         """
         output = dict()
         for method in METHODS:
-            output[method] = getattr(self, method)._serialize()
+            mmr = getattr(self, method)
+            if len(mmr.requests):
+                output[method] = mmr._serialize()
         return output
 
     def __repr__(self):

@@ -23,6 +23,7 @@ First a few imports and some random data for the rest of the script.
 # %%
 
 import numpy as np
+import ast
 import warnings
 from pprint import pprint
 from sklearn.base import BaseEstimator
@@ -61,6 +62,12 @@ def check_metadata(obj, **kwargs):
 
 
 # %%
+# A utility function to nicely print the routing information of an object
+def print_routing(obj):
+    pprint(ast.literal_eval(repr(obj.get_metadata_routing())))
+
+
+# %%
 # Estimators
 # ----------
 # Here we demonstrate how an estimator can expose the required API to support
@@ -91,7 +98,7 @@ class ExampleClassifier(ClassifierMixin, BaseEstimator):
 #
 # By default, no metadata is requested, which we can see as:
 
-pprint(ExampleClassifier().get_metadata_routing())
+print_routing(ExampleClassifier())
 
 # %%
 # The above output means that ``sample_weight`` and ``groups`` are not
@@ -107,7 +114,7 @@ est = (
     .predict_requests(groups=True)
     .score_requests(sample_weight=False)
 )
-pprint(est.get_metadata_routing())
+print_routing(est)
 
 # %%
 # As you can see, now the metadata have explicit request values, one is
@@ -120,7 +127,7 @@ est = (
     .predict_requests(groups=RequestType.REQUESTED)
     .score_requests(sample_weight=RequestType.UNREQUESTED)
 )
-pprint(est.get_metadata_routing())
+print_routing(est)
 
 # %%
 # Please note that as long as the above estimator is not used in another
@@ -269,7 +276,7 @@ except ValueError as e:
 # routings, i.e. which method of a sub-estimator is used in which method of a
 # meta-estimator:
 
-pprint(est.get_metadata_routing())
+print_routing(est)
 
 # %%
 # As you can see, the only metadata requested for method ``fit`` is
@@ -358,7 +365,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 # %%
 # no metadata requested
 est = RouterConsumerClassifier(estimator=ExampleClassifier())
-est.get_metadata_routing()
+print_routing(est)
 
 
 # %%
@@ -366,13 +373,14 @@ est.get_metadata_routing()
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().fit_requests(sample_weight=True)
 )
-est.get_metadata_routing()
+print_routing(est)
+
 # %%
 # ``sample_weight`` requested by meta-estimator
 est = RouterConsumerClassifier(estimator=ExampleClassifier()).fit_requests(
     sample_weight=True
 )
-est.get_metadata_routing()
+print_routing(est)
 
 # %%
 # Note the difference in the requested meatada representations above.
@@ -382,7 +390,7 @@ est.get_metadata_routing()
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().fit_requests(sample_weight="clf_sample_weight"),
 ).fit_requests(sample_weight="meta_clf_sample_weight")
-est.get_metadata_routing()
+print_routing(est)
 
 # %%
 # However, ``fit`` of the meta-estimator only needs the alias for the
@@ -396,7 +404,7 @@ est.fit(X, y, sample_weight=my_weights, clf_sample_weight=my_other_weights)
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().fit_requests(sample_weight="aliased_sample_weight")
 ).fit_requests(sample_weight=True)
-est.get_metadata_routing()
+print_routing(est)
 
 
 # %%
