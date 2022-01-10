@@ -5,7 +5,7 @@
 import numpy as np
 
 
-def compute_class_weight(class_weight, *, classes, y):
+def compute_class_weight(class_weight, classes, y):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
