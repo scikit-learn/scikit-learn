@@ -411,9 +411,12 @@ def nan_euclidean_distances(
 
     Parameters
     ----------
-    X : array-like of shape=(n_samples_X, n_features)
+    X : array-like of shape (n_samples_X, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Y : array-like of shape=(n_samples_Y, n_features), default=None
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
 
     squared : bool, default=False
         Return squared Euclidean distances.
@@ -427,10 +430,19 @@ def nan_euclidean_distances(
     Returns
     -------
     distances : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`.
 
     See Also
     --------
     paired_distances : Distances between pairs of elements of X and Y.
+
+    References
+    ----------
+    * John K. Dixon, "Pattern Recognition with Partly Missing Data",
+      IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
+      10, pp. 617 - 621, Oct. 1979.
+      http://ieeexplore.ieee.org/abstract/document/4310090/
 
     Examples
     --------
@@ -445,13 +457,6 @@ def nan_euclidean_distances(
     >>> nan_euclidean_distances(X, [[0, 0]])
     array([[1.        ],
            [1.41421356]])
-
-    References
-    ----------
-    * John K. Dixon, "Pattern Recognition with Partly Missing Data",
-      IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
-      10, pp. 617 - 621, Oct. 1979.
-      http://ieeexplore.ieee.org/abstract/document/4310090/
     """
 
     force_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
