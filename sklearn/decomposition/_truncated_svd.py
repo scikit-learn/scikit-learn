@@ -6,7 +6,7 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
-import numbers
+from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
@@ -207,7 +207,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
             check_scalar(
                 k,
                 "n_components",
-                target_type=numbers.Integral,
+                target_type=Integral,
                 min_val=1,
                 max_val=n_features,
             )
