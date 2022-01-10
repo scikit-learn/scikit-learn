@@ -645,13 +645,17 @@ cdef class HellingerDistance(ClassificationCriterion):
             return
 
         for k in range(self.n_outputs):
+            count_k1 = 0.0
+            count_k2 = 0.0
             if(sum_left[0] + sum_right[0] > 0):
                 count_k1 = sqrt(sum_left[0] / (sum_left[0] + sum_right[0]))
             if(sum_left[1] + sum_right[1] > 0):
                 count_k2 = sqrt(sum_left[1] / (sum_left[1] + sum_right[1]))
 
             hellinger_left += pow((count_k1  - count_k2), 2)
-
+            
+            count_k1 = 0.0
+            count_k2 = 0.0
             if(sum_left[0] + sum_right[0] > 0):
                 count_k1 = sqrt(sum_right[0] / (sum_left[0] + sum_right[0]))
             if(sum_left[1] + sum_right[1] > 0):
