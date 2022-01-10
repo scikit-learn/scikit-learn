@@ -100,7 +100,6 @@ def clone(estimator, * , safe=True):
             )
     return new_object
 
-
 def _pprint(params, offset=0, printer=repr):
     """Pretty print the dictionary 'params'
 
@@ -155,13 +154,12 @@ class BaseEstimator:
     """Base class for all estimators in scikit-learn.
 
                             Notes
-                     -----------------------
-                     
+                     -----------------------              
     All estimators should specify all the parameters that can be set
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
-
+    
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
@@ -219,7 +217,6 @@ class BaseEstimator:
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
-
         The method works on simple estimators as well as on nested objects
         (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
         parameters of the form ``<component>__<parameter>`` so that it's
@@ -363,8 +360,7 @@ class BaseEstimator:
         """Set the `n_features_in_` attribute, or check against it.
 
                                 Parameters
-                         -----------------------
-                         
+                         -----------------------              
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The input samples.
         reset : bool
@@ -410,12 +406,10 @@ class BaseEstimator:
         """Set or check the `feature_names_in_` attribute.
 
         .. versionadded:: 1.0
-
                             Parameters
                        -----------------------
         X : {ndarray, dataframe} of shape (n_samples, n_features)
             The input samples.
-
         reset : bool
             Whether to reset the `feature_names_in_` attribute.
             If False, the input will be checked for consistency with
@@ -505,7 +499,6 @@ class BaseEstimator:
         **check_params,
     ):
         """Validate input data and set or check the `n_features_in_` attribute.
-
                                 Parameters
                           -----------------------
         X : {array-like, sparse matrix, dataframe} of shape \
@@ -649,10 +642,8 @@ class ClassifierMixin:
         which is a harsh metric since you require for each sample that
         each label set be correctly predicted.
 
-
                                 Parameters
-                          -----------------------
-                          
+                          -----------------------        
         X : array-like of shape (n_samples, n_features)
             Test samples.
 
@@ -661,11 +652,9 @@ class ClassifierMixin:
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
-
-
+            
                                 Returns
-                          -----------------------
-                          
+                          -----------------------                 
         score : float
             Mean accuracy of ``self.predict(X)`` wrt. `y`.
         """
@@ -694,10 +683,8 @@ class RegressorMixin:
         the expected value of `y`, disregarding the input features, would get
         a :math:`R^2` score of 0.0.
 
-
                                 Parameters
-                          -----------------------
-                          
+                          -----------------------                        
         X : array-like of shape (n_samples, n_features)
             Test samples. For some estimators this may be a precomputed
             kernel matrix or a list of generic objects instead with shape
@@ -743,10 +730,8 @@ class ClusterMixin:
         """
         Perform clustering on `X` and returns cluster labels.
 
-
                                 Parameters
-                          -----------------------
-                          
+                          -----------------------                  
         X : array-like of shape (n_samples, n_features)
             Input data.
 
@@ -783,7 +768,6 @@ class BiclusterMixin:
 
         Only works if ``rows_`` and ``columns_`` attributes exist.
 
-
                                 Parameters
                           -----------------------
         i : int
@@ -802,7 +786,6 @@ class BiclusterMixin:
 
     def get_shape(self, i):
         """Shape of the `i`'th bicluster.
-
 
                                 Parameters
                           -----------------------
@@ -823,14 +806,13 @@ class BiclusterMixin:
     def get_submatrix(self, i, data):
         """Return the submatrix corresponding to bicluster `i`.
 
-
                                 Parameters
                           -----------------------
         i : int
             The index of the cluster.
         data : array-like of shape (n_samples, n_features)
             The data.
-
+            
                                 Returns
                          -----------------------
         submatrix : ndarray of shape (n_rows, n_cols)
@@ -858,10 +840,8 @@ class TransformerMixin:
         Fits transformer to `X` and `y` with optional parameters `fit_params`
         and returns a transformed version of `X`.
 
-
                                 Parameters
-                          -----------------------
-                          
+                          -----------------------                      
         X : array-like of shape (n_samples, n_features)
             Input samples.
 
@@ -897,10 +877,8 @@ class _OneToOneFeatureMixin:
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
-
                                 Parameters
-                          -----------------------
-                          
+                          -----------------------                    
         input_features : array-like of str or None, default=None
             Input features.
 
@@ -927,10 +905,8 @@ class _ClassNamePrefixFeaturesOutMixin:
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
-
                                 Parameters
-                          ----------------------- 
-                          
+                          -----------------------                       
         input_features : array-like of str or None, default=None
             Only used to validate feature names with the names seen in :meth:`fit`.
 
@@ -953,10 +929,8 @@ class DensityMixin:
     def score(self, X, y=None):
         """Return the score of the model on the data `X`.
 
-
                                 Parameters
-                          -----------------------
-                          
+                          -----------------------                       
         X : array-like of shape (n_samples, n_features)
             Test samples.
 
@@ -981,8 +955,7 @@ class OutlierMixin:
         Returns -1 for outliers and 1 for inliers.
 
                                 Parameters
-                          -----------------------
-                          
+                          -----------------------                     
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
@@ -1024,10 +997,8 @@ class _UnstableArchMixin:
 def is_classifier(estimator):
     """Return True if the given estimator is (probably) a classifier.
 
-
                                 Parameters
-                          -----------------------
-                          
+                          ----------------------                      
     estimator : object
         Estimator object to test.
 
@@ -1042,10 +1013,8 @@ def is_classifier(estimator):
 def is_regressor(estimator):
     """Return True if the given estimator is (probably) a regressor.
 
-
                                 Parameters
-                          -----------------------
-                          
+                          -----------------------                      
     estimator : estimator instance
         Estimator object to test.
 
@@ -1084,7 +1053,6 @@ def _is_pairwise(estimator):
       warning.
     - If only the `_pairwise` attribute is present and it is not False,
       issue a deprecation warning and use the `_pairwise` value.
-
 
                                 Parameters
                           -----------------------
