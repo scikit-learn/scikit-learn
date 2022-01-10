@@ -23,7 +23,6 @@ np.import_array()
 from numpy.math cimport INFINITY
 
 from scipy.special.cython_special cimport xlogy
-from cython.operator cimport dereference as deref
 
 from ._utils cimport log
 from ._utils cimport WeightedMedianCalculator
@@ -653,8 +652,8 @@ cdef class HellingerDistance(ClassificationCriterion):
 
             hellinger_right += 1 - pow((count_k1  - count_k2), 2)
 
-        deref(impurity_left)  = hellinger_left  / self.n_outputs
-        deref(impurity_right) = hellinger_right / self.n_outputs
+        impurity_left[0]  = hellinger_left  / self.n_outputs
+        impurity_right[0] = hellinger_right / self.n_outputs
 
 
 cdef class RegressionCriterion(Criterion):
