@@ -215,14 +215,12 @@ cdef class PairwiseDistancesReduction:
                 not issparse(Y) and Y.dtype == np.float64 and
                 metric in cls.valid_metrics())
 
-    def __cinit__(
+    def __init__(
         self,
         DatasetsPair datasets_pair,
         chunk_size=None,
         n_threads=None,
         strategy=None,
-        *args,
-        **kwargs,
      ):
         cdef:
             ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
@@ -646,13 +644,26 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         # For future work, this might can be an entrypoint to specialise operations
         # for various back-end and/or hardware and/or datatypes, and/or fused
         # {sparse, dense}-datasetspair etc.
-
-        pda = PairwiseDistancesArgKmin(
-            datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
-            k=k,
-            chunk_size=chunk_size,
-            strategy=strategy,
-        )
+        if (
+            metric in ("euclidean", "sqeuclidean")
+            and not issparse(X)
+            and not issparse(Y)
+        ):
+            use_squared_distances = metric == "sqeuclidean"
+            pda = FastEuclideanPairwiseDistancesArgKmin(
+                X=X, Y=Y, k=k,
+                use_squared_distances=use_squared_distances,
+                chunk_size=chunk_size,
+                strategy=strategy,
+                metric_kwargs=metric_kwargs,
+            )
+        else:  # Fall back on the default
+            pda = PairwiseDistancesArgKmin(
+                datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
+                k=k,
+                chunk_size=chunk_size,
+                strategy=strategy,
+            )
 
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in GEMM for instance).
@@ -672,6 +683,12 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         strategy=None,
         ITYPE_t k=1,
     ):
+        super().__init__(
+            datasets_pair=datasets_pair,
+            chunk_size=chunk_size,
+            n_threads=n_threads,
+            strategy=strategy,
+        )
         self.k = check_scalar(k, "k", Integral, min_val=1)
 
         # Allocating pointers to datastructures but not the datastructures themselves.
@@ -907,6 +924,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         ITYPE_t k,
         bint use_squared_distances=False,
         chunk_size=None,
+        n_threads=None,
         strategy=None,
         metric_kwargs=None,
     ):
@@ -921,8 +939,10 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         super().__init__(
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
-            k=k,
             chunk_size=chunk_size,
+            n_threads=n_threads,
+            strategy=strategy,
+            k=k,
         )
         # X and Y are checked by the DatasetsPair implemented as a DenseDenseDatasetsPair
         cdef:
