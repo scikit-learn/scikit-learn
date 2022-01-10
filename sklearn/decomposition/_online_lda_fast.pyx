@@ -9,10 +9,14 @@ np.import_array()
 from libc.math cimport exp, fabs, log
 from numpy.math cimport EULER
 
+
+# numpy_float_t and numpy_float2_t are defined in order to accept two different
+# dtypes for mean_change and _dirichlet_expectation_1d methods.
+# By accepting two different two dtypes, unnecessary memory allocation is
+# suppressed along with type conversion in prediction time.
 ctypedef fused numpy_float_t:
     np.float32_t
     np.float64_t
-
 
 ctypedef fused numpy_float2_t:
     np.float32_t
