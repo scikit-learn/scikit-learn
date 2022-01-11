@@ -534,7 +534,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         check_scalar(
             self.warm_start,
             name="warm_start",
-            target_type=bool,
+            target_type=(numbers.Integral, np.bool_),
         )
         if not self.warm_start:
             self._clear_state()

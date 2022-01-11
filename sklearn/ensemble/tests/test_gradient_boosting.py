@@ -113,16 +113,7 @@ def test_classification_toy(loss):
             TypeError,
             "verbose must be an instance of <class 'numbers.Integral'>",
         ),
-        (
-            {"warm_start": 1},
-            TypeError,
-            "warm_start must be an instance of <class 'bool'>",
-        ),
-        (
-            {"warm_start": "foo"},
-            TypeError,
-            "warm_start must be an instance of <class 'bool'>",
-        ),
+        ({"warm_start": "foo"}, TypeError, "warm_start must be an instance of"),
         (
             {"validation_fraction": 0.0},
             ValueError,
