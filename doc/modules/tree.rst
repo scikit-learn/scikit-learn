@@ -500,7 +500,7 @@ Entropy:
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-HellingerDistance
+HellingerDistance:
 
 .. math::
 
