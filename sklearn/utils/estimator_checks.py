@@ -569,8 +569,8 @@ def check_estimator(
         Estimator instance to check.
 
         .. deprecated:: 1.1
-        ``Estimator`` was deprecated in favor of ``estimator`` in version 1.1
-        and will be removed in version 1.3.
+            ``Estimator`` was deprecated in favor of ``estimator`` in version 1.1
+            and will be removed in version 1.3.
 
     Returns
     -------
