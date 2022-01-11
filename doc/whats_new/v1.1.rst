@@ -214,6 +214,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` is faster,
+  for binary and in particular for multiclass problems thanks to the new private loss
+  function module.
+  :pr:`20811`, :pr:`20567` and :pr:`21814` by
+  :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
   :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
