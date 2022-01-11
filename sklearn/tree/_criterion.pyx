@@ -21,7 +21,6 @@ cimport numpy as np
 np.import_array()
 from numpy.math cimport INFINITY
 
-from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
 
 from ._utils cimport log
