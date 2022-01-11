@@ -85,4 +85,4 @@ cd /tmp
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
 # Test using as many workers as available cores
-pytest --pyargs -n $N_CORES sklearn
+# pytest --pyargs -n $N_CORES sklearn
