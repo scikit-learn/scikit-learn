@@ -177,6 +177,10 @@ Changelog
   preserve dtype for `numpy.float32`.
   :pr:`22111` by :user:`Takeshi Oura <takoika>`.
 
+- |Enhancement| :class:`decomposition.TruncatedSVD` now allows n_components == n_features, if
+  `algorithm='randomized'`.
+  :pr:`22181` by :user:`Zach Deane-Mayer <zachmayer>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
   :class:`~sklearn.decomposition.DictionaryLearning`,
