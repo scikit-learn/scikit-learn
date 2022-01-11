@@ -380,7 +380,7 @@ def check_importances(name, criterion, tolerance, X, y):
 @pytest.mark.parametrize(
     "name, criterion",
     itertools.chain(
-        product(FOREST_CLASSIFIERS, ["gini", "entropy", "hellinger"]),
+        product(FOREST_CLASSIFIERS, ["gini", "entropy"]),
         product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
     ),
 )
