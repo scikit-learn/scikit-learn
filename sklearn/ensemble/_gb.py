@@ -1062,7 +1062,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution. See :term:`the Glossary <warm_start>`.
+        previous solution. Values must be `True` or `False`.
+        See :term:`the Glossary <warm_start>`.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -1652,7 +1653,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution. See :term:`the Glossary <warm_start>`.
+        previous solution. Values must be `True` or `False`.
+        See :term:`the Glossary <warm_start>`.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
