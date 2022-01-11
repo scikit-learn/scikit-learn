@@ -88,8 +88,7 @@ def test_classification_toy(loss):
         (
             {"n_estimators": 1.5},
             TypeError,
-            "n_estimators must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>",
+            "n_estimators must be an instance of <class 'numbers.Integral'>,"
         ),
         ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
         ({"subsample": 0.0}, ValueError, "subsample == 0.0, must be > 0."),
@@ -98,8 +97,7 @@ def test_classification_toy(loss):
         (
             {"subsample": "1"},
             TypeError,
-            "subsample must be an instance of <class 'numbers.Real'>, not <class"
-            " 'str'>",
+            "subsample must be an instance of <class 'numbers.Real'>,"
         ),
         ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
         ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
@@ -134,14 +132,12 @@ def test_classification_toy(loss):
         (
             {"n_iter_no_change": 1.5},
             TypeError,
-            "n_iter_no_change must be an instance of <class 'numbers.Integral'>, not"
-            " <class 'float'>.",
+            "n_iter_no_change must be an instance of <class 'numbers.Integral'>,"
         ),
         (
             {"n_iter_no_change": "invalid"},
             TypeError,
-            "n_iter_no_change must be an instance of <class 'numbers.Integral'>, not"
-            " <class 'str'>.",
+            "n_iter_no_change must be an instance of <class 'numbers.Integral'>,"
         ),
         ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
         (
