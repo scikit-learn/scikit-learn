@@ -976,7 +976,8 @@ def paired_cosine_distances(X, Y):
     -------
     distances : ndarray of shape (n_samples,)
         Returns the distances between the row vectors of `X`
-        and the row vectors of `Y`.
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     Notes
     -----
