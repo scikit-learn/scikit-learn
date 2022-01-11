@@ -590,12 +590,7 @@ def test_error():
             TypeError,
             "min_samples_leaf must be an instance of <class 'numbers.Real'>",
         ),
-        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
-        (
-            {"min_samples_split": 900},
-            ValueError,
-            "min_samples_split == 900, must be <=",
-        ),
+        ({"min_samples_split": 0}, ValueError, "min_samples_split == 0, must be >= 1"),
         (
             {"min_samples_split": 0.0},
             ValueError,
