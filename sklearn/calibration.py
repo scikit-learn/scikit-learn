@@ -147,7 +147,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         .. versionadded:: 0.24
 
     class_weight : dict or 'balanced', default=None
-        Classes weights used for the calibration.
+        Class weights used for the calibration.
         If a dict, it must be provided in this form: ``{class_label: weight}``.
 
         Those weights won't be used for the underlying estimator training.

@@ -250,8 +250,10 @@ positive floating point, or as ``class_weight='balanced'`` which will
 automatically adjust weights inversely proportional to class frequencies in
 the input data.
 
-**Setting ``class_weight`` parameter in :class:`CalibratedClassifierCV`,
-will only affect the training of the chosen regressor (`'isotonic'` or `'sigmoid'`).**
+.. note::
+   Setting ``class_weight`` parameter in :class:`CalibratedClassifierCV`,
+   will only affect the training of the chosen regressor (`'isotonic'` or `'sigmoid'`).
+
 For instance, if ``class_weight='balanced'`` is passed to
 :class:`CalibratedClassifierCV`, only the samples used to fit the calibrator
 will be balanced. If one also wants the samples used to fit the estimator
