@@ -638,19 +638,16 @@ def test_estimator_warnings():
         ),
         (
             MetadataRequest(),
-            "{'fit': {}, 'partial_fit': {}, 'predict': {}, 'score':"
-            " {}, 'split': {}, 'transform': {}, 'inverse_transform': {}}",
+            "{}",
         ),
         (MethodMapping.from_str("score"), "[{'method': 'score', 'used_in': 'score'}]"),
         (
             MetadataRouter().add(
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
-            "{'estimator': {'mapping': [{'method': 'predict',"
-            " 'used_in': 'predict'}], 'router': {'fit':"
-            " {'sample_weight': None}, 'partial_fit': {}, 'predict': {}, 'score':"
-            " {'sample_weight': None}, 'split': {}, 'transform': {},"
-            " 'inverse_transform': {}}}}",
+            "{'estimator': {'mapping': [{'method': 'predict', 'used_in': 'predict'}],"
+            " 'router': {'fit': {'sample_weight': None}, 'score': {'sample_weight':"
+            " None}}}}",
         ),
     ],
 )
