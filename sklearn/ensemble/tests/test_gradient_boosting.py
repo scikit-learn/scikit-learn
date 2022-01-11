@@ -111,7 +111,7 @@ def test_classification_toy(loss):
         (
             {"verbose": "foo"},
             TypeError,
-            "verbose must be an instance of <class 'numbers.Integral'>",
+            "verbose must be an instance of",
         ),
         ({"warm_start": "foo"}, TypeError, "warm_start must be an instance of"),
         (
