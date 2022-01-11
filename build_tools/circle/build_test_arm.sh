@@ -72,7 +72,7 @@ export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
 # Disable the build isolation and build in the tree so that the same folder can be
 # cached between CI runs.
 # TODO: remove the '--use-feature' flag when made obsolete in pip 21.3.
-time pip install --verbose --no-build-isolation --use-feature=in-tree-build .
+pip install --verbose --no-build-isolation --use-feature=in-tree-build .
 
 # Report cache usage
 ccache -s --verbose
@@ -85,4 +85,4 @@ cd /tmp
 python -c "import sklearn; sklearn.show_versions()"
 python -m threadpoolctl --import sklearn
 # Test using as many workers as available cores
-# pytest --pyargs -n $N_CORES sklearn
+pytest --pyargs -n $N_CORES sklearn
