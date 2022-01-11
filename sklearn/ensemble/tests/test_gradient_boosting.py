@@ -138,8 +138,8 @@ def test_classification_toy(loss):
             TypeError,
             "validation_fraction must be an instance of <class 'numbers.Real'>",
         ),
-        ({"n_iter_no_change": -1}, ValueError, "n_iter_no_change == -1, must be > 0."),
-        ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be > 0."),
+        ({"n_iter_no_change": -1}, ValueError, "n_iter_no_change == -1, must be >= 1"),
+        ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be >= 1"),
         (
             {"n_iter_no_change": 1.5},
             TypeError,
