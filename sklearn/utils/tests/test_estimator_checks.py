@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 import joblib
+import pytest
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import make_multilabel_classification
@@ -1042,3 +1043,8 @@ def test_check_fit_check_is_fitted():
 
     check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
     check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
+
+
+def test_deprecated_Estimator_check_estimator():
+    with pytest.warns(FutureWarning, match="deprecated"):
+        check_estimator(Estimator=NuSVC())

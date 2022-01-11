@@ -528,7 +528,8 @@ def parametrize_with_checks(estimators):
     )
 
 
-def check_estimator(estimator, generate_only=False, Estimator="deprecated"):
+def check_estimator(
+        estimator=None, generate_only=False, Estimator="deprecated"):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -584,7 +585,7 @@ def check_estimator(estimator, generate_only=False, Estimator="deprecated"):
     """
     if Estimator != "deprecated":
         msg = (
-            "'Estimator' was renamed to 'estimator' in version 1.1 "
+            "'Estimator' was deprecated in favor of 'estimator' in version 1.1 "
             "and will be removed in version 1.3.")
         warnings.warn(msg, FutureWarning)
         estimator = Estimator
