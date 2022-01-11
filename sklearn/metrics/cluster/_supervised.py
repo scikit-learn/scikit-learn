@@ -17,7 +17,6 @@ better.
 
 
 import warnings
-from math import log
 
 import numpy as np
 from scipy import sparse as sp
@@ -807,9 +806,9 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     outer = pi.take(nzx).astype(np.int64, copy=False) * pj.take(nzy).astype(
         np.int64, copy=False
     )
-    log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
+    log_outer = -np.log(outer) + np.log(pi.sum()) + np.log(pj.sum())
     mi = (
-        contingency_nm * (log_contingency_nm - log(contingency_sum))
+        contingency_nm * (log_contingency_nm - np.log(contingency_sum))
         + contingency_nm * log_outer
     )
     mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
@@ -1140,4 +1139,4 @@ def entropy(labels):
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
-    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
+    return -np.sum((pi / pi_sum) * (np.log(pi) - np.log(pi_sum)))
