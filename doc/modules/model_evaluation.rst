@@ -2451,15 +2451,17 @@ D² pinball loss score
 ^^^^^^^^^^^^^^^^^^^^^
 
 The :func:`d2_pinball_loss_score` function implements the special case
-of D² with a pinball loss daviance, i.e.:
+of D² with a pinball loss, i.e.:
 
 .. math::
 
   D(y, \hat{y}) = \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0).
 
-The argument ``alpha`` defines the quantile parameter as for
-:func:`mean_pinball_loss`. Note that for `alpha=0.5` (the defualt)
-:func:`d2_pinball_loss_score` equals :func:`d2_absolute_error_score`.
+The argument ``alpha`` defines the slope of the pinball loss
+:func:`mean_pinball_loss`. It determines the quantile level ``alpha``
+for which the pinball loss and also D2 are optimal.
+Note that for `alpha=0.5` (the defualt) :func:`d2_pinball_loss_score`
+equals :func:`d2_absolute_error_score`.
 
 A scorer object with a specific choice of ``alpha`` can be built by::
 

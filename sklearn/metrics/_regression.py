@@ -1207,11 +1207,10 @@ def d2_pinball_loss_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
     """
-    :math:`D^2` regression score function, \
-    fraction of pinball loss deviance explained.
+    :math:`D^2` regression score function, fraction of pinball loss explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
-    arbitrarily worse). A model that always uses the empirical median of `y_true`
+    arbitrarily worse). A model that always uses the empirical alpha-quantile of `y_true`
     as constant prediction, disregarding the input features,
     gets a :math:`D^2` score of 0.0.
 
@@ -1231,8 +1230,9 @@ def d2_pinball_loss_score(
         Sample weights.
 
     alpha : float, default=0.5
-        Pinball loss quantile parameter, determines the slope of the pinball_loss.
-        Equivalent to `d2_absolute_error_score` when `alpha=0.5`.
+        Slope of the pinball loss. It determines the quantile level alpha 
+        for which the pinball loss and also D2 are optimal.
+        The default `alpha=0.5` is equivalent to `d2_absolute_error_score`.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1258,7 +1258,7 @@ def d2_pinball_loss_score(
     Like :math:`R^2`, :math:`D^2` score may be negative
     (it need not actually be the square of a quantity D).
 
-    This metric is not well-defined for single samples and will return a NaN
+    This metric is not well-defined for a single point and will return a NaN
     value if n_samples is less than two.
 
      References
@@ -1300,7 +1300,9 @@ def d2_pinball_loss_score(
     )
 
     if sample_weight is None:
-        y_quantile = [np.percentile(y_true, q=alpha * 100, axis=0)] * len(y_true)
+        y_quantile = np.tile(
+            np.percentile(y_true, q=alpha * 100, axis=0), (len(y_true), 1)
+        )
     else:
         sample_weight = _check_sample_weight(sample_weight, y_true)
         y_quantile = [
