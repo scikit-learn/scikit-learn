@@ -216,13 +216,6 @@ Changelog
   :pr:`20811`, :pr:`20567` and :pr:`21814` by
   :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Fix| :class:`ensemble.RandomForestClassifier`,
-  :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
-  and :class:`ensemble.RandomTreesEmbedding` now raise a ``ValueError`` when
-  ``bootstrap=False`` and ``max_samples`` is not ``None``.
-  :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
-
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
   :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
