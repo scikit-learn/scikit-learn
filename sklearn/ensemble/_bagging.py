@@ -650,7 +650,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         n_estimators=10,
         *,
         max_samples=1.0,
@@ -662,6 +662,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
+        base_estimator="deprecated",
     ):
 
         super().__init__(
@@ -678,9 +679,27 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             verbose=verbose,
         )
 
+        self.estimator = estimator
+
+    def fit(self, X, y, sample_weight=None):
+        if self.base_estimator != "deprecated":
+            warn(
+                "`base_estimator` was renamed to `estimator` in version 1.1 and "
+                "will be removed in 1.3.",
+                FutureWarning,
+            )
+            self.estimator = self.base_estimator
+        return super().fit(X, y, sample_weight=sample_weight)
+
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
+        self.base_estimator = self.estimator
         super()._validate_estimator(default=DecisionTreeClassifier())
+
+    def set_params(self, **params):
+        self.base_estimator = self.estimator
+        super().set_params(**params)
+        return self
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -995,6 +1014,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     base_estimator : object, default="deprecated"
         Use `estimator` instead.
+
         .. deprecated:: 1.1
             `base_estimator` is deprecated and will be removed in 1.3.
             Use `estimator` instead.
@@ -1079,7 +1099,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         n_estimators=10,
         *,
         max_samples=1.0,
@@ -1091,6 +1111,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
+        base_estimator="deprecated",
     ):
         super().__init__(
             base_estimator,
@@ -1105,6 +1126,23 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             random_state=random_state,
             verbose=verbose,
         )
+
+        self.estimator = estimator
+
+    def fit(self, X, y, sample_weight=None):
+        if self.base_estimator != "deprecated":
+            warn(
+                "`base_estimator` was renamed to `estimator` in version 1.1 and "
+                "will be removed in 1.3.",
+                FutureWarning,
+            )
+            self.estimator = self.base_estimator
+        return super().fit(X, y, sample_weight=sample_weight)
+
+    def set_params(self, **params):
+        self.base_estimator = self.estimator
+        super().set_params(**params)
+        return self
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1154,6 +1192,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
+        self.base_estimator = self.estimator
         super()._validate_estimator(default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):
