@@ -1,3 +1,7 @@
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
+
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
@@ -22,7 +26,6 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 from numpy.math cimport INFINITY
-
 from scipy.special.cython_special cimport xlogy
 
 from ._utils cimport log
@@ -757,7 +760,7 @@ cdef class HellingerDistance(ClassificationCriterion):
                 count_k2 = sqrt(sum_left[1] / (sum_left[1] + sum_right[1]))
 
             hellinger_left += pow((count_k1  - count_k2), 2)
-            
+
             count_k1 = 0.0
             count_k2 = 0.0
             if(sum_left[0] + sum_right[0] > 0):
