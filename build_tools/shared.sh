@@ -19,7 +19,7 @@ show_installed_libraries(){
     # use conda list when inside a conda environment. conda list shows more
     # info than pip list, e.g. whether OpenBLAS or MKL is installed as well as
     # the version of OpenBLAS or MKL
-    if [[ -n "$CONDA_DEFAULT_ENV" ]]; then
+    if [[ -n "$CONDA_PREFIX" ]]; then
         conda list
     else
         python -m pip list
