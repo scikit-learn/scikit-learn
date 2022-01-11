@@ -190,7 +190,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     >>> # row independently.
     >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
-           [0.5, 0.5, 0. , 1. ]]).
+           [0.5, 0.5, 0. , 1. ]])
     """
 
     _required_parameters = ["transformers"]
@@ -278,6 +278,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If fitted=True, use the fitted transformers, else use the
         user specified transformers updated with converted column names
         and potentially appended with transformer for remainder.
+
         """
         if fitted:
             transformers = self.transformers_
@@ -339,7 +340,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 )
 
     def _validate_column_callables(self, X):
-        """Converts callable column specifications."""
+        """
+        Converts callable column specifications.
+        """
         all_columns = []
         transformer_to_input_indices = {}
         for name, _, columns in self.transformers:
@@ -352,8 +355,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._transformer_to_input_indices = transformer_to_input_indices
 
     def _validate_remainder(self, X):
-        """Validates ``remainder`` and defines ``_remainder`` targeting the
-        remaining columns."""
+        """
+        Validates ``remainder`` and defines ``_remainder`` targeting
+        the remaining columns.
+        """
         is_transformer = (
             hasattr(self.remainder, "fit") or hasattr(self.remainder, "fit_transform")
         ) and hasattr(self.remainder, "transform")
@@ -373,6 +378,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     @property
     def named_transformers_(self):
         """Access the fitted transformer by name.
+
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
@@ -421,6 +427,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self, name, trans, column, feature_names_in
     ):
         """Gets feature names of transformer.
+
         Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
         """
         if trans == "drop" or _is_empty_column_selection(column):
@@ -761,7 +768,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        Xs : list of {array-like, sparse matrix, dataframe}.
+        Xs : list of {array-like, sparse matrix, dataframe}
         """
         if self.sparse_output_:
             try:
@@ -807,15 +814,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
 
 def _check_X(X):
-    """Use check_array only on lists and other non-array-likes / sparse."""
+    """Use check_array only on lists and other non-array-likes / sparse"""
     if hasattr(X, "__array__") or sparse.issparse(X):
         return X
     return check_array(X, force_all_finite="allow-nan", dtype=object)
 
 
 def _is_empty_column_selection(column):
-    """Return True if the column selection is empty
-    (empty list or all-False boolean array)."""
+    """
+    Return True if the column selection is empty (empty list or all-False
+    boolean array).
+
+    """
     if hasattr(column, "dtype") and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
     elif hasattr(column, "__len__"):
@@ -829,7 +839,10 @@ def _is_empty_column_selection(column):
 
 
 def _get_transformer_list(estimators):
-    """Construct (name, trans, column) tuples from list."""
+    """
+    Construct (name, trans, column) tuples from list
+
+    """
     transformers, columns = zip(*estimators)
     names, _ = zip(*_name_estimators(transformers))
 
@@ -850,7 +863,7 @@ def make_column_transformer(
     This is a shorthand for the ColumnTransformer constructor; it does not
     require, and does not permit, naming the transformers. Instead, they will
     be given names automatically based on their types. It also does not allow
-    weighting with `transformer_weights`.
+    weighting with ``transformer_weights``.
 
     Read more in the :ref:`User Guide <make_column_transformer>`.
 
@@ -1002,7 +1015,7 @@ class make_column_selector:
     array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
            [-1.50755672,  1.        ,  0.        ,  0.        ],
            [-0.30151134,  0.        ,  1.        ,  0.        ],
-           [ 0.90453403,  0.        ,  0.        ,  1.        ]]).
+           [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
 
     def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None):
