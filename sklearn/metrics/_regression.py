@@ -1305,11 +1305,12 @@ def d2_pinball_loss_score(
         )
     else:
         sample_weight = _check_sample_weight(sample_weight, y_true)
-        y_quantile = [
+        y_quantile = np.tile(
             _weighted_percentile(
                 y_true, sample_weight=sample_weight, percentile=alpha * 100
-            )
-        ] * len(y_true)
+            ),
+            (len(y_true), 1),
+        )
 
     denominator = mean_pinball_loss(
         y_true,
