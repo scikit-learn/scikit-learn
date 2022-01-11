@@ -1210,8 +1210,8 @@ def d2_pinball_loss_score(
     :math:`D^2` regression score function, fraction of pinball loss explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
-    arbitrarily worse). A model that always uses the empirical alpha-quantile of `y_true`
-    as constant prediction, disregarding the input features,
+    arbitrarily worse). A model that always uses the empirical alpha-quantile of
+    `y_true` as constant prediction, disregarding the input features,
     gets a :math:`D^2` score of 0.0.
 
     Read more in the :ref:`User Guide <d2_score>`.
@@ -1230,7 +1230,7 @@ def d2_pinball_loss_score(
         Sample weights.
 
     alpha : float, default=0.5
-        Slope of the pinball loss. It determines the quantile level alpha 
+        Slope of the pinball loss. It determines the quantile level alpha
         for which the pinball loss and also D2 are optimal.
         The default `alpha=0.5` is equivalent to `d2_absolute_error_score`.
 
