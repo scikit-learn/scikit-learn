@@ -528,10 +528,10 @@ def parametrize_with_checks(estimators):
     )
 
 
-def check_estimator(estimator, generate_only=False):
+def check_estimator(estimator, generate_only=False, Estimator="deprecated"):
     """Check if estimator adheres to scikit-learn conventions.
 
-    This function will run an extensive test-suite for input validation,
+    This estimator will run an extensive test-suite for input validation,
     shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
@@ -564,6 +564,13 @@ def check_estimator(estimator, generate_only=False):
 
         .. versionadded:: 0.22
 
+    Estimator : estimator object
+        Estimator instance to check.
+
+        .. deprecated:: 1.1
+        ``Estimator`` was deprecated in favor of ``estimator`` in version 1.1
+        and will be removed in version 1.3.
+
     Returns
     -------
     checks_generator : generator
@@ -575,6 +582,12 @@ def check_estimator(estimator, generate_only=False):
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
     """
+    if Estimator != "deprecated":
+        msg = (
+            "'Estimator' was renamed to 'estimator' in version 1.1 "
+            "and will be removed in version 1.3.")
+        warnings.warn(msg, FutureWarning)
+        estimator = Estimator
     if isinstance(estimator, type):
         msg = (
             "Passing a class was deprecated in version 0.23 "
