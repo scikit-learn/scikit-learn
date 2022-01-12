@@ -329,6 +329,10 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
+- |Fix| :class:`linear_model.ElasticNetCV` now produces correct
+  warning when `l1_ratio=0`.
+  :pr:`21724` by :user:`Yar Khine Phyo <yarkhinephyo>`.
+
 :mod:`sklearn.metrics`
 ......................
 
