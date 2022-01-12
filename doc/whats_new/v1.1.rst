@@ -275,7 +275,7 @@ Changelog
   :class:`sklearn.gaussian_process.GaussianProcessRegressor` now return
   arrays of the correct shape in single-target and multi-target cases, and for
   both `normalize_y=False` and `normalize_y=True`.
-  by :user:`Tenavi Nakamura-Zimmerer <Tenavi>`.
+  :pr:`22199` by :user:`Tenavi Nakamura-Zimmerer <Tenavi>`.
 
 :mod:`sklearn.impute`
 .....................
