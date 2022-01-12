@@ -991,6 +991,63 @@ def test_predict_proba(loss):
             )
 
 
+@pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize("sample_weight", [None, "range"])
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+@pytest.mark.parametrize("order", ("C", "F"))
+def test_init_gradient_and_hessians(loss, sample_weight, dtype, order):
+    """Test that init_gradient_and_hessian works as expected.
+
+    passing sample_weight to a loss correctly influences the constant_hessian
+    attribute, and consequently the shape of the hessian array.
+    """
+    n_samples = 5
+    if sample_weight == "range":
+        sample_weight = np.ones(n_samples)
+    loss = loss(sample_weight=sample_weight)
+    gradient, hessian = loss.init_gradient_and_hessian(
+        n_samples=n_samples,
+        dtype=dtype,
+        order=order,
+    )
+    if loss.constant_hessian:
+        assert gradient.shape == (n_samples,)
+        assert hessian.shape == (1,)
+    elif loss.is_multiclass:
+        assert gradient.shape == (n_samples, loss.n_classes)
+        assert hessian.shape == (n_samples, loss.n_classes)
+    else:
+        assert hessian.shape == (n_samples,)
+        assert hessian.shape == (n_samples,)
+
+    assert gradient.dtype == dtype
+    assert hessian.dtype == dtype
+
+    if order == "C":
+        assert gradient.flags.c_contiguous
+        assert hessian.flags.c_contiguous
+    else:
+        assert gradient.flags.f_contiguous
+        assert hessian.flags.f_contiguous
+
+
+@pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {"dtype": np.int64},
+            f"Valid options for 'dtype' are .* Got dtype={np.int64} instead.",
+        ),
+    ],
+)
+def test_init_gradient_and_hessian_raises(loss, params, err_msg):
+    """Test that init_gradient_and_hessian raises errors for invalid input."""
+    loss = loss()
+    with pytest.raises((ValueError, TypeError), match=err_msg):
+        gradient, hessian = loss.init_gradient_and_hessian(n_samples=5, **params)
+
+
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 def test_loss_pickle(loss):
     """Test that losses can be pickled."""
