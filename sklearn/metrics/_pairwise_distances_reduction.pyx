@@ -649,6 +649,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             and not issparse(X)
             and not issparse(Y)
         ):
+            # Specialized implementation with improved arithmetic intensity
+            # and vector instructions (SIMD) by processing several vectors
+            # at time to leverage a call to the BLAS GEMM routine as explained
+            # in more details in the docstring.
             use_squared_distances = metric == "sqeuclidean"
             pda = FastEuclideanPairwiseDistancesArgKmin(
                 X=X, Y=Y, k=k,
@@ -657,7 +661,9 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 strategy=strategy,
                 metric_kwargs=metric_kwargs,
             )
-        else:  # Fall back on the default
+        else:
+             # Fall back on a generic implementation that handles most scipy
+             # metrics by computing the distances between 2 vectors at a time.
             pda = PairwiseDistancesArgKmin(
                 datasets_pair=DatasetsPair.get_for(X, Y, metric, metric_kwargs),
                 k=k,
