@@ -377,6 +377,7 @@ sphinx_gallery_conf = {
     # avoid generating too many cross links
     "inspect_global_variables": False,
     "remove_config_comments": True,
+    "plot_gallery" : True,
 }
 
 
@@ -542,3 +543,6 @@ ogp_site_url = "https://scikit-learn/stable/"
 ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
+
+#root_doc
+root_doc = 'contents'

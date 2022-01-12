@@ -417,7 +417,7 @@ version, the algorithms will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
 space and the similarities/dissimilarities.
 
-.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_002.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
