@@ -150,8 +150,9 @@ def test_classification_toy(loss):
 )
 def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg):
     # Check input parameter validation for GradientBoosting
+    est = GradientBoosting(**params)
     with pytest.raises(err_type, match=err_msg):
-        GradientBoosting(**params).fit(X, y)
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize(
