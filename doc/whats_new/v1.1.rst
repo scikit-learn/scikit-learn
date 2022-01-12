@@ -462,8 +462,8 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
-- |API| :func:`utils.check_estimator`'s argument is now called `estimator` s
-  (previous name was `Estimator`). :pr:`22188` by
+- |API| :func:`utils.estimator_checks.check_estimator`'s argument is now called 
+  `estimator` (previous name was `Estimator`). :pr:`22188` by
   :user:`Mathurin Massias <mathurinm>`.
 
 Code and Documentation Contributors
