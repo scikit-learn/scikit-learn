@@ -1044,7 +1044,7 @@ def test_check_fit_check_is_fitted():
     check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
 
 
-# TODO: Remove in 1.3 when Estimator is deprecated
+# TODO: Remove in 1.3 when Estimator is removed
 def test_deprecated_Estimator_check_estimator():
     with warnings.catch_warnings(record=True) as record:
         check_estimator(Estimator=NuSVC())
