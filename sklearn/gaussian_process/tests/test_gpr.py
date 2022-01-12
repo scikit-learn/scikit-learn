@@ -361,8 +361,9 @@ def test_y_multioutput():
     assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
 
     # Standard deviation and covariance do not depend on output
-    assert_almost_equal(y_std_1d, y_std_2d)
-    assert_almost_equal(y_cov_1d, y_cov_2d)
+    for d in range(2):
+        assert_almost_equal(y_std_1d, y_std_2d[..., d])
+        assert_almost_equal(y_cov_1d, y_cov_2d[..., d])
 
     y_sample_1d = gpr.sample_y(X2, n_samples=10)
     y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
@@ -682,3 +683,43 @@ def test_y_std_with_multitarget_normalized():
     assert y_pred.shape == (n_samples, n_targets)
     assert y_std.shape == (n_samples, n_targets)
     assert y_cov.shape == (n_samples, n_samples, n_targets)
+
+
+def test_y_std_cov_with_multitarget():
+    """Check the shapes of `y_std` and `y_cov` in multi-target scene.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/22174
+    """
+
+    rng = np.random.RandomState(123)
+
+    n_features, n_targets = 3, 2
+    n_samples_train, n_samples_test = 9, 7
+
+    X_train = rng.randn(n_samples_train, n_features)
+    X_test = rng.randn(n_samples_test, n_features)
+
+    # Test different target shapes
+    for y_train_shape in ((), (1,), (n_targets,)):
+        y_train = rng.randn(n_samples_train, *y_train_shape)
+
+        y_test_shape = (n_samples_test,) + y_train.shape[1:]
+        # If n_targets = 1, convention is to squeeze the predictions
+        if len(y_test_shape) > 1 and y_test_shape[1] == 1:
+            y_test_shape = y_test_shape[:1]
+
+        # Test normalized and non-normalized models
+        models = [
+            GaussianProcessRegressor(normalize_y=True),
+            GaussianProcessRegressor(normalize_y=False),
+        ]
+
+        for model in models:
+            model.fit(X_train, y_train)
+            y_pred, y_std = model.predict(X_test, return_std=True)
+            _, y_cov = model.predict(X_test, return_cov=True)
+
+            assert y_pred.shape == y_test_shape
+            assert y_std.shape == y_test_shape
+            assert y_cov.shape == (n_samples_test,) + y_test_shape

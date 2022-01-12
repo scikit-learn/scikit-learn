@@ -240,7 +240,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         else:
             self._y_train_mean = np.zeros(1)
-            self._y_train_std = 1
+            # Ensure that there is one entry in _y_train_std for each target
+            self._y_train_std = np.ones(y.shape[1:])
 
         if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
             if self.alpha.shape[0] == 1:
@@ -394,6 +395,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
+            # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
+            if len(y_mean.shape) > 1 and y_mean.shape[1] == 1:
+                y_mean = np.squeeze(y_mean, axis=1)
+
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
             V = solve_triangular(
                 self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
@@ -407,7 +412,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 y_cov = np.outer(y_cov, self._y_train_std ** 2).reshape(
                     *y_cov.shape, -1
                 )
-
                 # if y_cov has shape (n_samples, n_samples, 1), reshape to
                 # (n_samples, n_samples)
                 if y_cov.shape[2] == 1:
@@ -475,7 +479,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
         else:
             y_samples = [
-                rng.multivariate_normal(y_mean[:, i], y_cov, n_samples).T[:, np.newaxis]
+                rng.multivariate_normal(y_mean[:, i], y_cov[..., i], n_samples).T[
+                    :, np.newaxis
+                ]
                 for i in range(y_mean.shape[1])
             ]
             y_samples = np.hstack(y_samples)
