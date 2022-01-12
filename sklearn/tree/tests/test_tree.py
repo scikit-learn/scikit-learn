@@ -501,6 +501,52 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
+def test_max_features():
+    # Check max_features.
+    for name, TreeRegressor in REG_TREES.items():
+        reg = TreeRegressor(max_features="auto")
+        reg.fit(diabetes.data, diabetes.target)
+        assert reg.max_features_ == diabetes.data.shape[1]
+
+    for name, TreeClassifier in CLF_TREES.items():
+        clf = TreeClassifier(max_features="auto")
+        clf.fit(iris.data, iris.target)
+        assert clf.max_features_ == 2
+
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_features="sqrt")
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == int(np.sqrt(iris.data.shape[1]))
+
+        est = TreeEstimator(max_features="log2")
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == int(np.log2(iris.data.shape[1]))
+
+        est = TreeEstimator(max_features=1)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == 1
+
+        est = TreeEstimator(max_features=3)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == 3
+
+        est = TreeEstimator(max_features=0.01)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == 1
+
+        est = TreeEstimator(max_features=0.5)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == int(0.5 * iris.data.shape[1])
+
+        est = TreeEstimator(max_features=1.0)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == iris.data.shape[1]
+
+        est = TreeEstimator(max_features=None)
+        est.fit(iris.data, iris.target)
+        assert est.max_features_ == iris.data.shape[1]
+
+
 def test_error():
     # Test that it gives proper exception on deficient input.
     for name, TreeEstimator in CLF_TREES.items():
