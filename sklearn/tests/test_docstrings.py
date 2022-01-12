@@ -12,6 +12,7 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
+    "sklearn.cluster._kmeans.kmeans_plusplus",
     "sklearn.cluster._optics.cluster_optics_xi",
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
@@ -125,6 +126,8 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.laplacian_kernel",
+    "sklearn.metrics.pairwise.manhattan_distances",
+    "sklearn.metrics.pairwise.nan_euclidean_distances",
     "sklearn.metrics.pairwise.paired_cosine_distances",
     "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
