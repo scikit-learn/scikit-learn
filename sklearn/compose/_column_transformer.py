@@ -930,7 +930,7 @@ def make_column_transformer(
     Returns
     -------
     ct : ColumnTransformer
-        It returns the Columntransformer object.
+        Returns a :class:`ColumnTransformer` object.
 
     See Also
     --------
