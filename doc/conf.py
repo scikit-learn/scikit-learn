@@ -544,5 +544,3 @@ ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
 
-#root_doc
-root_doc = 'contents'
