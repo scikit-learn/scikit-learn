@@ -96,7 +96,7 @@ Changelog
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
 
 - |Fix| :class:`cluster.KMeans`'s `init` parameter now properly supports
-  array-like input and NumPy string scalars. :pr:`xxxxx` by `Thomas Fan`_.
+  array-like input and NumPy string scalars. :pr:`22154` by `Thomas Fan`_.
 
 - |Efficiency| In :class:`cluster.KMeans`, the default ``algorithm`` is now
   ``"lloyd"`` which is the full classical EM-style algorithm. Both ``"auto"``
