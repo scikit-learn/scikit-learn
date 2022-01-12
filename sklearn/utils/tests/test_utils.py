@@ -29,7 +29,10 @@ from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
+from sklearn.utils import _approximate_mode
+from sklearn.utils.fixes import parse_version
 from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._testing import SkipTest
 from sklearn import config_context
 
 # toy array
@@ -464,6 +467,23 @@ def test_safe_indexing_container_axis_0_unsupported_type():
         _safe_indexing(array, indices, axis=0)
 
 
+def test_safe_indexing_pandas_no_settingwithcopy_warning():
+    # Using safe_indexing with an array-like indexer gives a copy of the
+    # DataFrame -> ensure it doesn't raise a warning if modified
+    pd = pytest.importorskip("pandas")
+    if parse_version(pd.__version__) < parse_version("0.25.0"):
+        raise SkipTest(
+            "Older pandas version still raise a SettingWithCopyWarning warning"
+        )
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
+    subset = _safe_indexing(X, [0, 1], axis=0)
+    with pytest.warns(None) as record:
+        subset.iloc[0, 0] = 10
+    assert len(record) == 0, f"{[str(rec.message) for rec in record]}"
+    # The original dataframe is unaffected by the assignment on the subset:
+    assert X.iloc[0, 0] == 1
+
+
 @pytest.mark.parametrize(
     "key, err_msg",
     [
@@ -655,10 +675,30 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
         ("", False),
         ("nan", False),
         ([np.nan], False),
+        (9867966753463435747313673, False),  # Python int that overflows with C type
     ],
 )
 def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
+    # make sure that we are returning a Python bool
+    assert isinstance(is_scalar_nan(value), bool)
+
+
+def test_approximate_mode():
+    """Make sure sklearn.utils._approximate_mode returns valid
+    results for cases where "class_counts * n_draws" is enough
+    to overflow 32-bit signed integer.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
+    X = np.array([99000, 1000], dtype=np.int32)
+    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
+
+    # Draws 25% of the total population, so in this case a fair draw means:
+    # 25% * 99.000 = 24.750
+    # 25% *  1.000 =    250
+    assert_array_equal(ret, [24750, 250])
 
 
 def dummy_func():

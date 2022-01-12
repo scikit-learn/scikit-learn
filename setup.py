@@ -183,7 +183,7 @@ def configuration(parent_package="", top_path=None):
 
     config = Configuration(None, parent_package, top_path)
 
-    # Avoid non-useful msg:
+    # Avoid useless msg:
     # "Ignoring attempt to set 'name' (from ... "
     config.set_options(
         ignore_setup_xxx_py=True,

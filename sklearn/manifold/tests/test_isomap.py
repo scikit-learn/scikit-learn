@@ -8,6 +8,7 @@ from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
+from sklearn.metrics.pairwise import pairwise_distances
 
 from scipy.sparse import rand as sparse_rand
 
@@ -94,7 +95,7 @@ def test_transform():
     X, y = datasets.make_s_curve(n_samples, random_state=0)
 
     # Compute isomap embedding
-    iso = manifold.Isomap(n_components=n_components, n_neighbors=2)
+    iso = manifold.Isomap(n_components=n_components)
     X_iso = iso.fit_transform(X)
 
     # Re-embed a noisy version of the points
@@ -190,6 +191,32 @@ def test_sparse_input():
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
             clf = manifold.Isomap(
-                n_components=2, eigen_solver=eigen_solver, path_method=path_method
+                n_components=2,
+                eigen_solver=eigen_solver,
+                path_method=path_method,
+                n_neighbors=8,
             )
             clf.fit(X)
+
+
+def test_multiple_connected_components():
+    # Test that a warning is raised when the graph has multiple components
+    X = np.array([0, 1, 2, 5, 6, 7])[:, None]
+    with pytest.warns(UserWarning, match="number of connected components"):
+        manifold.Isomap(n_neighbors=2).fit(X)
+
+
+def test_multiple_connected_components_metric_precomputed():
+    # Test that an error is raised when the graph has multiple components
+    # and when X is a precomputed neighbors graph.
+    X = np.array([0, 1, 2, 5, 6, 7])[:, None]
+
+    # works with a precomputed distance matrix (dense)
+    X_distances = pairwise_distances(X)
+    with pytest.warns(UserWarning, match="number of connected components"):
+        manifold.Isomap(n_neighbors=1, metric="precomputed").fit(X_distances)
+
+    # does not work with a precomputed neighbors graph (sparse)
+    X_graph = neighbors.kneighbors_graph(X, n_neighbors=2, mode="distance")
+    with pytest.raises(RuntimeError, match="number of connected components"):
+        manifold.Isomap(n_neighbors=1, metric="precomputed").fit(X_graph)

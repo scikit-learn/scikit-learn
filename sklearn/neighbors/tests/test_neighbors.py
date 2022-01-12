@@ -482,6 +482,21 @@ def test_radius_neighbors_classifier(
             assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
+# TODO: Remove in v1.2
+def test_radius_neighbors_classifier_kwargs_is_deprecated():
+    extra_kwargs = {
+        "unused_param": "",
+        "extra_param": None,
+    }
+    msg = (
+        "Passing additional keyword parameters has no effect and is deprecated "
+        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
+        f"keyword parameter(s) are: {extra_kwargs.keys()}."
+    )
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        neighbors.RadiusNeighborsClassifier(**extra_kwargs)
+
+
 def test_radius_neighbors_classifier_when_no_neighbors():
     # Test radius-based classifier when no neighbors found.
     # In this case it should rise an informative exception
@@ -727,6 +742,21 @@ def test_radius_neighbors_returns_array_of_objects():
 
     assert_array_equal(neigh_dist, expected_dist)
     assert_array_equal(neigh_ind, expected_ind)
+
+
+@pytest.mark.parametrize("algorithm", ["ball_tree", "kd_tree", "brute"])
+def test_query_equidistant_kth_nn(algorithm):
+    # For several candidates for the k-th nearest neighbor position,
+    # the first candidate should be chosen
+    query_point = np.array([[0, 0]])
+    equidistant_points = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
+    # The 3rd and 4th points should not replace the 2nd point
+    # for the 2th nearest neighbor position
+    k = 2
+    knn_indices = np.array([[0, 1]])
+    nn = neighbors.NearestNeighbors(algorithm=algorithm).fit(equidistant_points)
+    indices = np.sort(nn.kneighbors(query_point, n_neighbors=k, return_distance=False))
+    assert_array_equal(indices, knn_indices)
 
 
 @pytest.mark.parametrize(
@@ -1058,7 +1088,12 @@ def test_kneighbors_regressor_sparse(
             assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric="euclidean"))
-            assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
+            if sparsev in {dok_matrix, bsr_matrix}:
+                msg = "not supported due to its handling of explicit zeros"
+                with pytest.raises(TypeError, match=msg):
+                    knn_pre.predict(X2_pre)
+            else:
+                assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
 
 
 def test_neighbors_iris():
@@ -1255,24 +1290,36 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
         ("minkowski", dict(p=np.inf)),
         ("chebyshev", {}),
         ("seuclidean", dict(V=rng.rand(n_features))),
-        ("wminkowski", dict(p=3, w=rng.rand(n_features))),
         ("mahalanobis", dict(VI=VI)),
         ("haversine", {}),
     ]
+    if sp_version < parse_version("1.8.0.dev0"):
+        # TODO: remove once we no longer support scipy < 1.8.0.
+        # wminkowski was removed in scipy 1.8.0 but should work for previous
+        # versions.
+        metrics.append(
+            ("wminkowski", dict(p=3, w=rng.rand(n_features))),
+        )
+    else:
+        # Recent scipy versions accept weights in the Minkowski metric directly:
+        metrics.append(
+            ("minkowski", dict(p=3, w=rng.rand(n_features))),
+        )
+
     algorithms = ["brute", "ball_tree", "kd_tree"]
     X = rng.rand(n_samples, n_features)
 
     test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
-        if metric == "wminkowski" and sp_version >= parse_version("1.8.0"):
-            # wminkowski will be removed in SciPy 1.8.0
-            continue
         results = {}
         p = metric_params.pop("p", 2)
+        w = metric_params.get("w", None)
         for algorithm in algorithms:
             # KD tree doesn't support all metrics
-            if algorithm == "kd_tree" and metric not in neighbors.KDTree.valid_metrics:
+            if algorithm == "kd_tree" and (
+                metric not in neighbors.KDTree.valid_metrics or w is not None
+            ):
                 est = neighbors.NearestNeighbors(
                     algorithm=algorithm, metric=metric, metric_params=metric_params
                 )
@@ -1788,3 +1835,15 @@ def test_pairwise_deprecated(NearestNeighbors):
     msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         nn._pairwise
+
+
+# TODO: Remove in 1.3
+def test_neighbors_distance_metric_deprecation():
+    from sklearn.neighbors import DistanceMetric
+    from sklearn.metrics import DistanceMetric as ActualDistanceMetric
+
+    msg = r"This import path will be removed in 1\.3"
+    with pytest.warns(FutureWarning, match=msg):
+        dist_metric = DistanceMetric.get_metric("euclidean")
+
+    assert isinstance(dist_metric, ActualDistanceMetric)

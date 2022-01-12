@@ -263,7 +263,7 @@ def test_multilabel():
 def test_gridsearch():
     """Check GridSearch support."""
     clf1 = LogisticRegression(random_state=1)
-    clf2 = RandomForestClassifier(random_state=1)
+    clf2 = RandomForestClassifier(random_state=1, n_estimators=3)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="soft"
@@ -275,7 +275,7 @@ def test_gridsearch():
         "weights": [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]],
     }
 
-    grid = GridSearchCV(estimator=eclf, param_grid=params)
+    grid = GridSearchCV(estimator=eclf, param_grid=params, cv=2)
     grid.fit(iris.data, iris.target)
 
 

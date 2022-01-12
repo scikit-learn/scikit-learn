@@ -59,6 +59,8 @@ def test_pls_canonical_basics():
     # Check that inverse_transform works
     X_back = pls.inverse_transform(Xt)
     assert_array_almost_equal(X_back, X)
+    _, Y_back = pls.inverse_transform(Xt, Yt)
+    assert_array_almost_equal(Y_back, Y)
 
 
 def test_sanity_check_pls_regression():
@@ -432,7 +434,7 @@ def _generate_test_scale_and_stability_datasets():
     X *= 1000
     yield X, Y
 
-    # Data set where one of the features is constaint
+    # Data set where one of the features is constraint
     X, Y = load_linnerud(return_X_y=True)
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0
@@ -605,3 +607,19 @@ def test_pls_constant_y():
         pls.fit(x, y)
 
     assert_allclose(pls.x_rotations_, 0)
+
+
+@pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
+def test_pls_feature_names_out(Klass):
+    """Check `get_feature_names_out` cross_decomposition module."""
+    X, Y = load_linnerud(return_X_y=True)
+
+    est = Klass().fit(X, Y)
+    names_out = est.get_feature_names_out()
+
+    class_name_lower = Klass.__name__.lower()
+    expected_names_out = np.array(
+        [f"{class_name_lower}{i}" for i in range(est.x_weights_.shape[1])],
+        dtype=object,
+    )
+    assert_array_equal(names_out, expected_names_out)
