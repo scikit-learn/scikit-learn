@@ -326,6 +326,7 @@ Changelog
   The more classes, the larger the benefit.
   :pr:`21808`, :pr:`20567` and :pr:`21814` by
   :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| Rename parameter `base_estimator` to `estimator` in
   :class:`linear_model.RANSACRegressor` to improve readability and consistency.
   `base_estimator` is deprecated and will be removed in 1.3.
