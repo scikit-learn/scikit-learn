@@ -214,14 +214,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         #     min_x c x
         #           A_eq x = b_eq
         #                0 <= x
-        # x = (s0, s, t0, t, u, v) = slack variables
+        # x = (s0, s, t0, t, u, v) = slack variables >= 0
         # intercept = s0 - t0
         # coef = s - t
-        # c = (alpha * 1_p, alpha * 1_p, quantile * 1_n, (1-quantile) * 1_n)
+        # c = (0, alpha * 1_p, 0, alpha * 1_p, quantile * 1_n, (1-quantile) * 1_n)
         # residual = y - X@coef - intercept = u - v
         # A_eq = (1_n, X, -1_n, -X, diag(1_n), -diag(1_n))
         # b_eq = y
-        # p = n_features + fit_intercept
+        # p = n_features
         # n = n_samples
         # 1_n = vector of length n with entries equal one
         # see https://stats.stackexchange.com/questions/384909/
