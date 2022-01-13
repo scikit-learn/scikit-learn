@@ -115,7 +115,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
-        Values must be in the range `[1, inf)`.
+        Values must be in the range `[0, inf)`.
 
     Attributes
     ----------
@@ -472,7 +472,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
-        Values must be in the range `[1, inf)`.
+        Values must be in the range `[0, inf)`.
 
     Attributes
     ----------
@@ -593,7 +593,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
-        Values must be in the range `[1, inf)`.
+        Values must be in the range `[0, inf)`.
 
     Attributes
     ----------
@@ -743,7 +743,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
-        Values must be in the range `[1, inf)`.
+        Values must be in the range `[0, inf)`.
 
     Attributes
     ----------
