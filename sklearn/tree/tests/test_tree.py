@@ -2100,7 +2100,7 @@ def test_poisson_vs_mse():
         # score can be better than Poisson. This is no longer the case for the
         # test set.
         if val == "test":
-            assert metric_poi < 0.5 * metric_mse
+            assert metric_poi < 0.6 * metric_mse
         assert metric_poi < 0.75 * metric_dummy
 
 
