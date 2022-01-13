@@ -81,7 +81,7 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=floating] arr):
     Note that unlike _dirichlet_expectation_1d, this function doesn't compute
     the exp and doesn't add in the prior.
     """
-    cdef floating row_total, psi_row_total
+    cdef np.float64_t row_total, psi_row_total
     cdef np.ndarray[ndim=2, dtype=floating] d_exp
     cdef np.npy_intp i, j, n_rows, n_cols
 
