@@ -180,6 +180,11 @@ and tasks.
   Keras to interface it with scikit-learn. SciKeras is the successor
   of `tf.keras.wrappers.scikit_learn`.
 
+**Federated Learning**
+
+- `Flower <https://flower.dev/>`_ A friendly federated learning framework with a 
+  unified approach that can federate any workload, any ML framework, and any programming language.
+
 **Broad scope**
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
