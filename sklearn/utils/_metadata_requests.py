@@ -20,7 +20,7 @@ RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 
 # A namedtuple storing a single method route. A collection of these namedtuples
 # is stored in a MetadataRouter.
-MethodPair = namedtuple("MethodPair", ["method", "used_in"])
+MethodPair = namedtuple("MethodPair", ["callee", "caller"])
 
 
 class MemberCheckEnumMeta(EnumMeta):
@@ -436,29 +436,29 @@ class MethodMapping:
 
     def __iter__(self):
         for route in self._routes:
-            yield (route.method, route.used_in)
+            yield (route.callee, route.caller)
 
-    def add(self, *, method, used_in):
+    def add(self, *, callee, caller):
         """Add a method mapping.
 
         Parameters
         ----------
-        method : str
-            Child object's method name.
+        callee : str
+            Child object's method name. This method is called in ``caller``.
 
-        used_in : str
-            Parent estimator's method name in which the `"method"` is used.
+        caller : str
+            Parent estimator's method name in which the ``callee`` is called.
 
         Returns
         -------
         self : MethodMapping
             Returns self.
         """
-        if method not in METHODS:
-            raise ValueError(f"Given method:{method} is not valid.")
-        if used_in not in METHODS:
-            raise ValueError(f"Given used_in method:{used_in} is not valid.")
-        self._routes.append(MethodPair(method=method, used_in=used_in))
+        if callee not in METHODS:
+            raise ValueError(f"Given callee:{callee} is not a valid method.")
+        if caller not in METHODS:
+            raise ValueError(f"Given caller:{caller} is not a valid method.")
+        self._routes.append(MethodPair(callee=callee, caller=caller))
         return self
 
     def _serialize(self):
@@ -471,7 +471,7 @@ class MethodMapping:
         """
         result = list()
         for route in self._routes:
-            result.append({"method": route.method, "used_in": route.used_in})
+            result.append({"callee": route.callee, "caller": route.caller})
         return result
 
     @classmethod
@@ -495,9 +495,9 @@ class MethodMapping:
         routing = cls()
         if route == "one-to-one":
             for method in METHODS:
-                routing.add(method=method, used_in=method)
+                routing.add(callee=method, caller=method)
         elif route in METHODS:
-            routing.add(method=route, used_in=route)
+            routing.add(callee=route, caller=route)
         else:
             raise ValueError("route should be 'one-to-one' or a single method!")
         return routing
@@ -619,11 +619,11 @@ class MetadataRouter:
             )
 
         for name, route_mapping in self._route_mappings.items():
-            for orig_method, used_in in route_mapping.mapping:
-                if used_in == method:
+            for callee, caller in route_mapping.mapping:
+                if caller == method:
                     res = res.union(
                         route_mapping.router._get_param_names(
-                            method=orig_method, original_names=False, ignore_self=False
+                            method=callee, original_names=False, ignore_self=False
                         )
                     )
         return set(res)
@@ -662,7 +662,7 @@ class MetadataRouter:
         res.update({key: value for key, value in params.items() if key in param_names})
         return res
 
-    def route_params(self, *, method, params):
+    def route_params(self, *, caller, params):
         """Return the input parameters requested by child objects.
 
         The output of this method is a bunch, which includes the inputs for all
@@ -673,7 +673,7 @@ class MetadataRouter:
 
         Parameters
         ----------
-        method : str
+        caller : str
             The name of the method for which the parameters are requested and
             routed. If called inside the :term:`fit` method of a router, it
             would be `"fit"`.
@@ -690,22 +690,22 @@ class MetadataRouter:
             corresponding child objects.
         """
         if self._self:
-            self._self._check_warnings(params=params, method=method)
+            self._self._check_warnings(params=params, method=caller)
 
         res = Bunch()
         for name, route_mapping in self._route_mappings.items():
             router, mapping = route_mapping.router, route_mapping.mapping
 
             res[name] = Bunch()
-            for orig_method, used_in in mapping:
-                if used_in == method:
+            for _callee, _caller in mapping:
+                if _caller == caller:
                     if router.type == "request":
-                        res[name][orig_method] = router._route_params(
-                            params=params, method=orig_method
+                        res[name][_callee] = router._route_params(
+                            params=params, method=_callee
                         )
                     else:
-                        res[name][orig_method] = router._get_squashed_params(
-                            params=params, method=orig_method
+                        res[name][_callee] = router._get_squashed_params(
+                            params=params, method=_callee
                         )
         return res
 
@@ -1086,6 +1086,6 @@ def process_routing(obj, method, other_params, **kwargs):
 
     request_routing = get_router_for_object(obj)
     request_routing.validate_metadata(params=all_params, method=method)
-    routed_params = request_routing.route_params(params=all_params, method=method)
+    routed_params = request_routing.route_params(params=all_params, caller=method)
 
     return routed_params

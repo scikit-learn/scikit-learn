@@ -252,9 +252,9 @@ class SimplePipeline(BaseEstimator):
             router.add(
                 **{f"step_{i}": step},
                 method_mapping=MethodMapping()
-                .add(method="fit", used_in="fit")
-                .add(method="transform", used_in="fit")
-                .add(method="transform", used_in="predict"),
+                .add(callee="fit", caller="fit")
+                .add(callee="transform", caller="fit")
+                .add(callee="transform", caller="predict"),
             )
         router.add(predictor=self.steps[-1], method_mapping="one-to-one")
         return router
@@ -640,12 +640,12 @@ def test_estimator_warnings():
             MetadataRequest(),
             "{}",
         ),
-        (MethodMapping.from_str("score"), "[{'method': 'score', 'used_in': 'score'}]"),
+        (MethodMapping.from_str("score"), "[{'callee': 'score', 'caller': 'score'}]"),
         (
             MetadataRouter().add(
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
-            "{'estimator': {'mapping': [{'method': 'predict', 'used_in': 'predict'}],"
+            "{'estimator': {'mapping': [{'callee': 'predict', 'caller': 'predict'}],"
             " 'router': {'fit': {'sample_weight': None}, 'score': {'sample_weight':"
             " None}}}}",
         ),
@@ -661,16 +661,16 @@ def test_string_representations(obj, string):
         (
             MethodMapping(),
             "add",
-            {"method": "invalid", "used_in": "fit"},
+            {"callee": "invalid", "caller": "fit"},
             ValueError,
-            "Given method",
+            "Given callee",
         ),
         (
             MethodMapping(),
             "add",
-            {"method": "fit", "used_in": "invalid"},
+            {"callee": "fit", "caller": "invalid"},
             ValueError,
-            "Given used_in",
+            "Given caller",
         ),
         (
             MethodMapping,

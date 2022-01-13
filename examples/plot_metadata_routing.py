@@ -166,7 +166,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator. Here `method` refers to the
         # parent's method, i.e. `fit` in this example.
-        routed_params = request_router.route_params(params=fit_params, method="fit")
+        routed_params = request_router.route_params(params=fit_params, caller="fit")
 
         # the output has a key for each object's method which is used here,
         # i.e. parent's `fit` method, containing the metadata which should be
@@ -182,7 +182,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         request_router = get_router_for_object(self)
         request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying `predict` method.
-        params = request_router.route_params(params=predict_params, method="predict")
+        params = request_router.route_params(params=predict_params, caller="predict")
         return self.estimator_.predict(X, **params.estimator.predict)
 
 
@@ -330,7 +330,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         request_router.validate_metadata(params=fit_params, method="fit")
         # we can use provided utility methods to map the given metadata to what
         # is required by the underlying estimator
-        params = request_router.route_params(params=fit_params, method="fit")
+        params = request_router.route_params(params=fit_params, caller="fit")
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         self.classes_ = self.estimator_.classes_
         return self
@@ -341,7 +341,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         request_router = get_router_for_object(self)
         request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying ``predict`` method.
-        params = request_router.route_params(params=predict_params, method="predict")
+        params = request_router.route_params(params=predict_params, caller="predict")
         return self.estimator_.predict(X, **params.estimator.predict)
 
     def get_metadata_routing(self):
@@ -446,9 +446,9 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
             .add(
                 transformer=self.transformer,
                 method_mapping=MethodMapping()
-                .add(method="fit", used_in="fit")
-                .add(method="transform", used_in="fit")
-                .add(method="transform", used_in="predict"),
+                .add(callee="fit", caller="fit")
+                .add(callee="transform", caller="fit")
+                .add(callee="transform", caller="predict"),
             )
             .add(classifier=self.classifier, method_mapping="one-to-one")
         )
@@ -457,10 +457,11 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
 # %%
 # Note the usage of :class:`~utils.metadata_routing.MethodMapping` to declare
-# which methods of the child estimator are used in which methods of the meta
-# estimator. As you can see, we use the transformer's ``transform`` and ``fit``
-# methods in ``fit``, and its ``transform`` method in ``predict``, and that's
-# what you see implemented in the routing structure of the pipeline class.
+# which methods of the child estimator (callee) are used in which methods of
+# the meta estimator (caller). As you can see, we use the transformer's
+# ``transform`` and ``fit`` methods in ``fit``, and its ``transform`` method in
+# ``predict``, and that's what you see implemented in the routing structure of
+# the pipeline class.
 #
 # Another difference in the above example with the previous ones is the usage
 # of :func:`~utils.metadata_routing.process_routing`, which processes the input
