@@ -54,37 +54,22 @@ def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=numpy_float_t] doc_topic,
         out[:] = np.exp(psi(doc_topic) - psi(np.sum(doc_topic)))
     """
 
-    cdef numpy_float_t dt, psi_total, total
-    cdef np.float64_t dt_64, psi_total_64, total_64
+    cdef np.float64_t dt, psi_total, total
     cdef np.npy_intp i, size
 
     size = doc_topic.shape[0]
 
+    # Type of doc_topic and out are identical.
+    # So use the type for calculation
+    total = 0.0
+    for i in range(size):
+        dt = doc_topic[i] + doc_topic_prior
+        doc_topic[i] = dt
+        total += dt
+    psi_total = psi(total)
 
-    if numpy_float_t == numpy_float2_t:
-        # Type of doc_topic and out are identical.
-        # So use the type for calculation
-        total = 0.0
-        for i in range(size):
-            dt = doc_topic[i] + doc_topic_prior
-            doc_topic[i] = dt
-            total += dt
-        psi_total = psi(total)
-
-        for i in range(size):
-            out[i] = exp(psi(doc_topic[i]) - psi_total)
-    else:
-        # Type of doc_topic and out are differenct.
-        # So use np.float64 explicitly for calculation
-        total_64 = 0.0
-        for i in range(size):
-            dt_64 = doc_topic[i] + doc_topic_prior
-            doc_topic[i] = dt_64
-            total_64 += dt_64
-        psi_total_64 = psi(total_64)
-
-        for i in range(size):
-            out[i] = exp(psi(doc_topic[i]) - psi_total_64)
+    for i in range(size):
+        out[i] = exp(psi(doc_topic[i]) - psi_total)
 
 
 def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=floating] arr):
