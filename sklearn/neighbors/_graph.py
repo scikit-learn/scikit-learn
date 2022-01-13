@@ -69,7 +69,9 @@ def kneighbors_graph(
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric.
         For a list of available metrics, see the documentation of
-        :class:`~sklearn.metrics.DistanceMetric`.
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -162,7 +164,9 @@ def radius_neighbors_graph(
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric.
         For a list of available metrics, see the documentation of
-        :class:`~sklearn.metrics.DistanceMetric`.
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
