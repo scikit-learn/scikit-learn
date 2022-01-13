@@ -953,7 +953,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         self.X, self.Y = datasets_pair.X, datasets_pair.Y
 
         if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
-            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared", None)
+            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared")
         else:
             self.Y_norm_squared = _sqeuclidean_row_norms(self.Y, self.effective_n_threads)
 
@@ -1059,11 +1059,10 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             DTYPE_t * B = <DTYPE_t*> & Y_c[0, 0]
             ITYPE_t ldb = X_c.shape[1]
             DTYPE_t beta = 0.
-            DTYPE_t * C = dist_middle_terms
             ITYPE_t ldc = Y_c.shape[0]
 
         # dist_middle_terms = `-2 * X_c @ Y_c.T`
-        _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)
+        _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, dist_middle_terms, ldc)
 
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.
