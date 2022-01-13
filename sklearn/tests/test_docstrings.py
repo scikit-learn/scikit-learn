@@ -16,7 +16,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.cluster._optics.cluster_optics_xi",
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
-    "sklearn.compose._column_transformer.make_column_transformer",
     "sklearn.covariance._graph_lasso.graphical_lasso",
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",

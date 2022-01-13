@@ -182,6 +182,10 @@ Changelog
   preserve dtype for `numpy.float32`.
   :pr:`22111` by :user:`Takeshi Oura <takoika>`.
 
+- |Enhancement| :class:`decomposition.TruncatedSVD` now allows n_components == n_features, if
+  `algorithm='randomized'`.
+  :pr:`22181` by :user:`Zach Deane-Mayer <zachmayer>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
   :class:`~sklearn.decomposition.DictionaryLearning`,
@@ -214,6 +218,12 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` is faster,
+  for binary and in particular for multiclass problems thanks to the new private loss
+  function module.
+  :pr:`20811`, :pr:`20567` and :pr:`21814` by
+  :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
@@ -323,6 +333,10 @@ Changelog
   when the noise variance is not provided.
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
+
+- |Fix| :class:`linear_model.ElasticNetCV` now produces correct
+  warning when `l1_ratio=0`.
+  :pr:`21724` by :user:`Yar Khine Phyo <yarkhinephyo>`.
 
 :mod:`sklearn.metrics`
 ......................
