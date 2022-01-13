@@ -955,13 +955,13 @@ class SGDClassifier(BaseSGDClassifier):
         value, the stronger the regularization.
         Also used to compute the learning rate when set to `learning_rate` is
         set to 'optimal'.
-        Values should be in the range `[0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
-        Values should be in the range `[0.0, 1.0]`.
+        Values must be in the range `[0.0, 1.0]`.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -971,7 +971,7 @@ class SGDClassifier(BaseSGDClassifier):
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`partial_fit` method.
-        Values should be in the range `[1, inf)`.
+        Values must be in the range `[1, inf)`.
 
         .. versionadded:: 0.19
 
@@ -981,7 +981,7 @@ class SGDClassifier(BaseSGDClassifier):
         epochs.
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
-        Values should be in the range `[0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
         .. versionadded:: 0.19
 
@@ -990,7 +990,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     verbose : int, default=0
         The verbosity level.
-        Values should be in the range `[0, inf)`.
+        Values must be in the range `[0, inf)`.
 
     epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
@@ -999,7 +999,7 @@ class SGDClassifier(BaseSGDClassifier):
         important to get the prediction exactly right.
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
-        Values should be in the range `[0.0, inf)`.
+        Values must be in the range `[0.0, inf)`.
 
     n_jobs : int, default=None
         The number of CPUs to use to do the OVA (One Versus All, for
@@ -1012,7 +1012,7 @@ class SGDClassifier(BaseSGDClassifier):
         Used for shuffling the data, when ``shuffle`` is set to ``True``.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-        Integer values should be in the range `[0, 2**32 - 1]`.
+        Integer values must be in the range `[0, 2**32 - 1]`.
 
     learning_rate : str, default='optimal'
         The learning rate schedule:
@@ -1033,11 +1033,11 @@ class SGDClassifier(BaseSGDClassifier):
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
-        Values should be in the range `(0.0, inf)`.
+        Values must be in the range `(0.0, inf)`.
 
     power_t : float, default=0.5
         The exponent for inverse scaling learning rate [default 0.5].
-        Values should be in the range `(-inf, inf)`.
+        Values must be in the range `(-inf, inf)`.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1053,7 +1053,7 @@ class SGDClassifier(BaseSGDClassifier):
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if `early_stopping` is True.
-        Values should be in the range `(0.0, 1.0)`.
+        Values must be in the range `(0.0, 1.0)`.
 
         .. versionadded:: 0.20
             Added 'validation_fraction' option
@@ -1063,7 +1063,7 @@ class SGDClassifier(BaseSGDClassifier):
         fitting.
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
-        Integer values should be in the range `[1, max_iter)`.
+        Integer values must be in the range `[1, max_iter)`.
 
         .. versionadded:: 0.20
             Added 'n_iter_no_change' option
@@ -1097,7 +1097,7 @@ class SGDClassifier(BaseSGDClassifier):
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
         averaging after seeing 10 samples.
-        Integer values should be in the range `[1, n_samples]`.
+        Integer values must be in the range `[1, n_samples]`.
 
     Attributes
     ----------
