@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.cluster._optics.cluster_optics_xi",
     "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
     "sklearn.covariance._graph_lasso.graphical_lasso",
