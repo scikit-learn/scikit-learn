@@ -33,7 +33,7 @@ setup_ccache() {
     ccache -M 256M
 }
 
-# imports get_dep
+# defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
@@ -164,7 +164,8 @@ except ImportError:
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
 
-python -m pip list
+show_installed_libraries
+
 if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # Check that pip can automatically build scikit-learn with the build
     # dependencies specified in pyproject.toml using an isolated build
