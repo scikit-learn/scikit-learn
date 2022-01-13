@@ -48,7 +48,12 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.utils import IS_PYPY, _IS_32BIT, deprecated
+from sklearn.utils import (
+    IS_PYPY,
+    _IS_32BIT,
+    deprecated,
+    _in_unstable_openblas_configuration,
+)
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -448,6 +453,10 @@ try:
         os.environ.get("TRAVIS") == "true", reason="skip on travis"
     )
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
+    fails_if_unstable_openblas = pytest.mark.xfail(
+        _in_unstable_openblas_configuration(),
+        reason="OpenBLAS is unstable for this configuration",
+    )
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"
     )
