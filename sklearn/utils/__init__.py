@@ -41,6 +41,7 @@ from .validation import (
     check_scalar,
 )
 from .. import get_config
+from ._bunch import Bunch
 
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
@@ -75,6 +76,7 @@ __all__ = [
     "all_estimators",
     "DataConversionWarning",
     "estimator_html_repr",
+    "Bunch",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"

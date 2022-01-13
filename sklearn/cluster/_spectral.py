@@ -6,6 +6,8 @@
 #         Wei LI <kuantkid@gmail.com>
 #         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
+
+import numbers
 import warnings
 
 import numpy as np
@@ -14,7 +16,7 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state, as_float_array
+from ..utils import as_float_array, check_random_state, check_scalar
 from ..utils.deprecation import deprecated
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
@@ -661,6 +663,55 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 " a custom affinity matrix, "
                 "set ``affinity=precomputed``."
             )
+
+        check_scalar(
+            self.n_clusters,
+            "n_clusters",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.n_init,
+            "n_init",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.gamma,
+            "gamma",
+            target_type=numbers.Real,
+            min_val=1.0,
+            include_boundaries="left",
+        )
+
+        check_scalar(
+            self.n_neighbors,
+            "n_neighbors",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
+
+        if self.eigen_solver == "arpack":
+            check_scalar(
+                self.eigen_tol,
+                "eigen_tol",
+                target_type=numbers.Real,
+                min_val=0,
+                include_boundaries="left",
+            )
+
+        check_scalar(
+            self.degree,
+            "degree",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
 
         if self.affinity == "nearest_neighbors":
             connectivity = kneighbors_graph(
