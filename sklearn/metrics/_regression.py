@@ -1253,8 +1253,6 @@ def d2_pinball_loss_score(
 
     Notes
     -----
-    This is not a symmetric function.
-
     Like :math:`R^2`, :math:`D^2` score may be negative
     (it need not actually be the square of a quantity D).
 
@@ -1393,8 +1391,6 @@ def d2_absolute_error_score(
 
     Notes
     -----
-    This is not a symmetric function.
-
     Like :math:`R^2`, :math:`D^2` score may be negative
     (it need not actually be the square of a quantity D).
 
