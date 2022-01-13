@@ -214,6 +214,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
+  calls :func:`check_array` with parameter `force_all_finite=False` for non
+  initial warm-start runs as it has already been checked before.
+  :pr:`22159` by :user:`Geoffrey Paris <Geoffrey-Paris>`
+
 - |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the new private loss
   function module.
