@@ -88,7 +88,7 @@ def test_classification_toy(loss):
         (
             {"n_estimators": 1.5},
             TypeError,
-            "n_estimators must be an instance of <class 'numbers.Integral'>,"
+            "n_estimators must be an instance of <class 'numbers.Integral'>,",
         ),
         ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
         ({"subsample": 0.0}, ValueError, "subsample == 0.0, must be > 0."),
@@ -97,7 +97,7 @@ def test_classification_toy(loss):
         (
             {"subsample": "1"},
             TypeError,
-            "subsample must be an instance of <class 'numbers.Real'>,"
+            "subsample must be an instance of <class 'numbers.Real'>,",
         ),
         ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
         ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
@@ -132,12 +132,12 @@ def test_classification_toy(loss):
         (
             {"n_iter_no_change": 1.5},
             TypeError,
-            "n_iter_no_change must be an instance of <class 'numbers.Integral'>,"
+            "n_iter_no_change must be an instance of <class 'numbers.Integral'>,",
         ),
         (
             {"n_iter_no_change": "invalid"},
             TypeError,
-            "n_iter_no_change must be an instance of <class 'numbers.Integral'>,"
+            "n_iter_no_change must be an instance of <class 'numbers.Integral'>,",
         ),
         ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
         (
@@ -193,6 +193,12 @@ def test_classification_toy(loss):
         #     {"min_weight_fraction_leaf": "foo"},
         #     TypeError,
         #     "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
+        # ),
+        #     ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
+        # (
+        #     {"max_leaf_nodes": 1.5},
+        #     TypeError,
+        #     "max_leaf_nodes must be an instance of <class 'numbers.Integral'>",
         # ),
         # ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
         # (
