@@ -50,7 +50,9 @@ jobs:
       condition: startsWith(variables['DISTRIB'], 'conda')
     - task: Cache@2
       inputs:
-        key: '"$(Agent.JobName)"'
+        key: 'ccache | "$(Agent.JobName)"'
+        restoreKeys: |
+          ccache | "$(Agent.JobName)"
         path: $(CCACHE_DIR)
       displayName: ccache
       continueOnError: true
