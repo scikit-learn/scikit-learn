@@ -332,7 +332,7 @@ chosen 1) greater than the minimum number of objects a cluster has to contain,
 so that other objects can be local outliers relative to this cluster, and 2)
 smaller than the maximum number of close by objects that can potentially be
 local outliers.
-In practice, such informations are generally not available, and taking
+In practice, such information is generally not available, and taking
 n_neighbors=20 appears to work well in general.
 When the proportion of outliers is high (i.e. greater than 10 \%, as in the
 example below), n_neighbors should be greater (n_neighbors=35 in the example
@@ -356,7 +356,7 @@ on new unseen data when LOF is applied for novelty detection, i.e. when the
 This strategy is illustrated below.
 
 .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_outlier_detection_001.png
-   :target: ../auto_examples/neighbors/sphx_glr_plot_lof_outlier_detection.html
+   :target: ../auto_examples/neighbors/plot_lof_outlier_detection.html
    :align: center
    :scale: 75%
 
@@ -401,6 +401,6 @@ Note that ``fit_predict`` is not available in this case.
 Novelty detection with Local Outlier Factor is illustrated below.
 
   .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
-     :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
+     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
      :align: center
      :scale: 75%

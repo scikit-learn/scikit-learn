@@ -1,9 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: nonecheck=False
-# cython: language_level=3
-
 # Author: Nicolas Hug
 
 cimport cython
@@ -22,6 +16,7 @@ np.import_array()
 def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,
                  const unsigned char missing_values_bin_idx,
+                 int n_threads,
                  X_BINNED_DTYPE_C [::1, :] binned):
     """Bin continuous and categorical values to discrete integer-coded levels.
 
@@ -35,6 +30,8 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
+    n_threads : int
+        Number of OpenMP threads to use.
     binned : ndarray, shape (n_samples, n_features)
         Output array, must be fortran aligned.
     """
@@ -45,12 +42,14 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
         _map_col_to_bins(data[:, feature_idx],
                              binning_thresholds[feature_idx],
                              missing_values_bin_idx,
+                             n_threads,
                              binned[:, feature_idx])
 
 
 cdef void _map_col_to_bins(const X_DTYPE_C [:] data,
                                const X_DTYPE_C [:] binning_thresholds,
                                const unsigned char missing_values_bin_idx,
+                               int n_threads,
                                X_BINNED_DTYPE_C [:] binned):
     """Binary search to find the bin index for each value in the data."""
     cdef:
@@ -59,8 +58,8 @@ cdef void _map_col_to_bins(const X_DTYPE_C [:] data,
         int right
         int middle
 
-    for i in prange(data.shape[0], schedule='static', nogil=True):
-
+    for i in prange(data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         if isnan(data[i]):
             binned[i] = missing_values_bin_idx
         else:

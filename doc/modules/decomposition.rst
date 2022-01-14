@@ -166,32 +166,16 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
 .. topic:: References:
 
-    * `"Finding structure with randomness: Stochastic algorithms for
+    * Algorithm 4.3 in
+      :arxiv:`"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <https://arxiv.org/abs/0909.4061>`_
+      <0909.4061>`
       Halko, et al., 2009
 
-
-.. _kernel_PCA:
-
-Kernel PCA
-----------
-
-:class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It
-has many applications including denoising, compression and structured
-prediction (kernel dependency estimation). :class:`KernelPCA` supports both
-``transform`` and ``inverse_transform``.
-
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
-    :target: ../auto_examples/decomposition/plot_kernel_pca.html
-    :align: center
-    :scale: 75%
-
-.. topic:: Examples:
-
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
-
+    * `"An implementation of a randomized algorithm for principal component
+      analysis"
+      <https://arxiv.org/pdf/1412.3510.pdf>`_
+      A. Szlam et al. 2014
 
 .. _SparsePCA:
 
@@ -246,12 +230,14 @@ problem solved is a PCA problem (dictionary learning) with an
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||V||_1 \\
-                \text{subject to } & ||U_k||_2 = 1 \text{ for all }
+                ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
+                \text{subject to } & ||U_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{components}
 
-
-The sparsity-inducing :math:`\ell_1` norm also prevents learning
+:math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
+stands for the entry-wise matrix norm which is the sum of the absolute values
+of all the entries in the matrix.
+The sparsity-inducing :math:`||.||_{1,1}` matrix norm also prevents learning
 components from noise when few training samples are available. The degree
 of penalization (and thus sparsity) can be adjusted through the
 hyperparameter ``alpha``. Small values lead to a gently regularized
@@ -276,6 +262,113 @@ factorization, while larger values shrink many coefficients to zero.
   .. [Jen09] `"Structured Sparse Principal Component Analysis"
      <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
+
+
+.. _kernel_PCA:
+
+Kernel Principal Component Analysis (kPCA)
+==========================================
+
+Exact Kernel PCA
+----------------
+
+:class:`KernelPCA` is an extension of PCA which achieves non-linear
+dimensionality reduction through the use of kernels (see :ref:`metrics`) [Scholkopf1997]_. It
+has many applications including denoising, compression and structured
+prediction (kernel dependency estimation). :class:`KernelPCA` supports both
+``transform`` and ``inverse_transform``.
+
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_002.png
+    :target: ../auto_examples/decomposition/plot_kernel_pca.html
+    :align: center
+    :scale: 75%
+
+.. note::
+    :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
+    function mapping samples from the PCA basis into the original feature
+    space [Bakir2004]_. Thus, the reconstruction obtained with
+    :meth:`KernelPCA.inverse_transform` is an approximation. See the example
+    linked below for more details.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
+
+.. topic:: References:
+
+    .. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       `"Kernel principal component analysis."
+       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+       International conference on artificial neural networks.
+       Springer, Berlin, Heidelberg, 1997.
+
+    .. [Bakir2004] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+       `"Learning to find pre-images."
+       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
+       Advances in neural information processing systems 16 (2004): 449-456.
+
+.. _kPCA_Solvers:
+
+Choice of solver for Kernel PCA
+-------------------------------
+
+While in :class:`PCA` the number of components is bounded by the number of
+features, in :class:`KernelPCA` the number of components is bounded by the
+number of samples. Many real-world datasets have large number of samples! In
+these cases finding *all* the components with a full kPCA is a waste of
+computation time, as data is mostly described by the first few components
+(e.g. ``n_components<=100``). In other words, the centered Gram matrix that
+is eigendecomposed in the Kernel PCA fitting process has an effective rank that
+is much smaller than its size. This is a situation where approximate
+eigensolvers can provide speedup with very low precision loss.
+
+The optional parameter ``eigen_solver='randomized'`` can be used to
+*significantly* reduce the computation time when the number of requested
+``n_components`` is small compared with the number of samples. It relies on
+randomized decomposition methods to find an approximate solution in a shorter
+time.
+
+The time complexity of the randomized :class:`KernelPCA` is
+:math:`O(n_{\mathrm{samples}}^2 \cdot n_{\mathrm{components}})`
+instead of :math:`O(n_{\mathrm{samples}}^3)` for the exact method
+implemented with ``eigen_solver='dense'``.
+
+The memory footprint of randomized :class:`KernelPCA` is also proportional to
+:math:`2 \cdot n_{\mathrm{samples}} \cdot n_{\mathrm{components}}` instead of
+:math:`n_{\mathrm{samples}}^2` for the exact method.
+
+Note: this technique is the same as in :ref:`RandomizedPCA`.
+
+In addition to the above two solvers, ``eigen_solver='arpack'`` can be used as
+an alternate way to get an approximate decomposition. In practice, this method
+only provides reasonable execution times when the number of components to find
+is extremely small. It is enabled by default when the desired number of
+components is less than 10 (strict) and the number of samples is more than 200
+(strict). See :class:`KernelPCA` for details.
+
+.. topic:: References:
+
+    * *dense* solver:
+      `scipy.linalg.eigh documentation
+      <https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.eigh.html>`_
+
+    * *randomized* solver:
+
+        * Algorithm 4.3 in
+          :arxiv:`"Finding structure with randomness: Stochastic algorithms for
+          constructing approximate matrix decompositions"
+          <0909.4061>`
+          Halko, et al., 2009
+
+        * `"An implementation of a randomized algorithm for principal component
+          analysis"
+          <https://arxiv.org/pdf/1412.3510.pdf>`_
+          A. Szlam et al. 2014
+
+    * *arpack* solver:
+      `scipy.sparse.linalg.eigsh documentation
+      <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
+      R. B. Lehoucq, D. C. Sorensen, and C. Yang, 1998
 
 
 .. _LSA:
@@ -432,8 +525,8 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||U||_1 \\
-                \text{subject to } & ||V_k||_2 = 1 \text{ for all }
+                ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
+                \text{subject to } & ||V_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 
@@ -447,7 +540,9 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. centered:: |pca_img2| |dict_img2|
 
-
+:math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
+stands for the entry-wise matrix norm which is the sum of the absolute values
+of all the entries in the matrix.
 After using such a procedure to fit the dictionary, the transform is simply a
 sparse coding step that shares the same implementation with all dictionary
 learning objects (see :ref:`SparseCoder`).
@@ -743,25 +838,23 @@ In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
 to regularize the model. The L2 prior uses the Frobenius norm, while the L1
 prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
 combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
-and the intensity of the regularization with the :attr:`alpha`
-(:math:`\alpha`) parameter. Then the priors terms are:
+and the intensity of the regularization with the :attr:`alpha_W` and :attr:`alpha_H`
+(:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are scaled by the number
+of samples (:math:`n\_samples`) for `H` and the number of features (:math:`n\_features`)
+for `W` to keep their impact balanced with respect to one another and to the data fit
+term as independent as possible of the size of the training set. Then the priors terms
+are:
 
 .. math::
-    \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
+    (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 and the regularized objective function is:
 
 .. math::
     d_{\mathrm{Fro}}(X, WH)
-    + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
-
-:class:`NMF` regularizes both W and H by default. The :attr:`regularization`
-parameter allows for finer control, with which only W, only H,
-or both can be regularized.
+    + (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
+    + (\alpha_H \rho ||H||_1 + \frac{\alpha_H(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2) * n\_samples
 
 NMF with a beta-divergence
 --------------------------

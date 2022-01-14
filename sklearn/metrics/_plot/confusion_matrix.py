@@ -6,7 +6,6 @@ from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils import deprecated
 from ...utils.multiclass import unique_labels
-from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
 
@@ -56,6 +55,7 @@ class ConfusionMatrixDisplay:
 
     Examples
     --------
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
     >>> from sklearn.model_selection import train_test_split
@@ -70,17 +70,25 @@ class ConfusionMatrixDisplay:
     >>> cm = confusion_matrix(y_test, predictions, labels=clf.classes_)
     >>> disp = ConfusionMatrixDisplay(confusion_matrix=cm,
     ...                               display_labels=clf.classes_)
-    >>> disp.plot() # doctest: +SKIP
+    >>> disp.plot()
+    <...>
+    >>> plt.show()
     """
-    @_deprecate_positional_args
+
     def __init__(self, confusion_matrix, *, display_labels=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
 
-    @_deprecate_positional_args
-    def plot(self, *, include_values=True, cmap='viridis',
-             xticks_rotation='horizontal', values_format=None,
-             ax=None, colorbar=True):
+    def plot(
+        self,
+        *,
+        include_values=True,
+        cmap="viridis",
+        xticks_rotation="horizontal",
+        values_format=None,
+        ax=None,
+        colorbar=True,
+    ):
         """Plot visualization.
 
         Parameters
@@ -120,9 +128,9 @@ class ConfusionMatrixDisplay:
 
         cm = self.confusion_matrix
         n_classes = cm.shape[0]
-        self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+        self.im_ = ax.imshow(cm, interpolation="nearest", cmap=cmap)
         self.text_ = None
-        cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(256)
+        cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(1.0)
 
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
@@ -134,18 +142,17 @@ class ConfusionMatrixDisplay:
                 color = cmap_max if cm[i, j] < thresh else cmap_min
 
                 if values_format is None:
-                    text_cm = format(cm[i, j], '.2g')
-                    if cm.dtype.kind != 'f':
-                        text_d = format(cm[i, j], 'd')
+                    text_cm = format(cm[i, j], ".2g")
+                    if cm.dtype.kind != "f":
+                        text_d = format(cm[i, j], "d")
                         if len(text_d) < len(text_cm):
                             text_cm = text_d
                 else:
                     text_cm = format(cm[i, j], values_format)
 
                 self.text_[i, j] = ax.text(
-                    j, i, text_cm,
-                    ha="center", va="center",
-                    color=color)
+                    j, i, text_cm, ha="center", va="center", color=color
+                )
 
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
@@ -153,12 +160,14 @@ class ConfusionMatrixDisplay:
             display_labels = self.display_labels
         if colorbar:
             fig.colorbar(self.im_, ax=ax)
-        ax.set(xticks=np.arange(n_classes),
-               yticks=np.arange(n_classes),
-               xticklabels=display_labels,
-               yticklabels=display_labels,
-               ylabel="True label",
-               xlabel="Predicted label")
+        ax.set(
+            xticks=np.arange(n_classes),
+            yticks=np.arange(n_classes),
+            xticklabels=display_labels,
+            yticklabels=display_labels,
+            ylabel="True label",
+            xlabel="Predicted label",
+        )
 
         ax.set_ylim((n_classes - 0.5, -0.5))
         plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
@@ -260,7 +269,7 @@ class ConfusionMatrixDisplay:
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.metrics import ConfusionMatrixDisplay
         >>> from sklearn.model_selection import train_test_split
@@ -272,8 +281,9 @@ class ConfusionMatrixDisplay:
         >>> clf.fit(X_train, y_train)
         SVC(random_state=0)
         >>> ConfusionMatrixDisplay.from_estimator(
-        ...     clf, X_test, y_test)  # doctest: +SKIP
-        >>> plt.show()  # doctest: +SKIP
+        ...     clf, X_test, y_test)
+        <...>
+        >>> plt.show()
         """
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
@@ -385,7 +395,7 @@ class ConfusionMatrixDisplay:
 
         Examples
         --------
-        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.metrics import ConfusionMatrixDisplay
         >>> from sklearn.model_selection import train_test_split
@@ -398,8 +408,9 @@ class ConfusionMatrixDisplay:
         SVC(random_state=0)
         >>> y_pred = clf.predict(X_test)
         >>> ConfusionMatrixDisplay.from_predictions(
-        ...    y_test, y_pred)  # doctest: +SKIP
-        >>> plt.show()  # doctest: +SKIP
+        ...    y_test, y_pred)
+        <...>
+        >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_predictions")
 
@@ -430,18 +441,27 @@ class ConfusionMatrixDisplay:
 
 
 @deprecated(
-    "Function plot_confusion_matrix is deprecated in 1.0 and will be "
+    "Function `plot_confusion_matrix` is deprecated in 1.0 and will be "
     "removed in 1.2. Use one of the class methods: "
     "ConfusionMatrixDisplay.from_predictions or "
     "ConfusionMatrixDisplay.from_estimator."
 )
-@_deprecate_positional_args
-def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
-                          sample_weight=None, normalize=None,
-                          display_labels=None, include_values=True,
-                          xticks_rotation='horizontal',
-                          values_format=None,
-                          cmap='viridis', ax=None, colorbar=True):
+def plot_confusion_matrix(
+    estimator,
+    X,
+    y_true,
+    *,
+    labels=None,
+    sample_weight=None,
+    normalize=None,
+    display_labels=None,
+    include_values=True,
+    xticks_rotation="horizontal",
+    values_format=None,
+    cmap="viridis",
+    ax=None,
+    colorbar=True,
+):
     """Plot Confusion Matrix.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -523,7 +543,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.metrics import plot_confusion_matrix
     >>> from sklearn.model_selection import train_test_split
@@ -535,7 +555,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     >>> clf.fit(X_train, y_train)
     SVC(random_state=0)
     >>> plot_confusion_matrix(clf, X_test, y_test)  # doctest: +SKIP
-    >>> plt.show()  # doctest: +SKIP
+    >>> plt.show()
     """
     check_matplotlib_support("plot_confusion_matrix")
 
@@ -543,8 +563,9 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
         raise ValueError("plot_confusion_matrix only supports classifiers")
 
     y_pred = estimator.predict(X)
-    cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
-                          labels=labels, normalize=normalize)
+    cm = confusion_matrix(
+        y_true, y_pred, sample_weight=sample_weight, labels=labels, normalize=normalize
+    )
 
     if display_labels is None:
         if labels is None:
@@ -552,8 +573,12 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
         else:
             display_labels = labels
 
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm,
-                                  display_labels=display_labels)
-    return disp.plot(include_values=include_values,
-                     cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
-                     values_format=values_format, colorbar=colorbar)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=display_labels)
+    return disp.plot(
+        include_values=include_values,
+        cmap=cmap,
+        ax=ax,
+        xticks_rotation=xticks_rotation,
+        values_format=values_format,
+        colorbar=colorbar,
+    )

@@ -12,7 +12,6 @@ from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.validation import _deprecate_positional_args
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -21,8 +20,9 @@ def _calculate_threshold(estimator, importances, threshold):
     if threshold is None:
         # determine default from estimator
         est_name = estimator.__class__.__name__
-        if ((hasattr(estimator, "penalty") and estimator.penalty == "l1") or
-                "Lasso" in est_name):
+        if (
+            hasattr(estimator, "penalty") and estimator.penalty == "l1"
+        ) or "Lasso" in est_name:
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
         else:
@@ -50,8 +50,9 @@ def _calculate_threshold(estimator, importances, threshold):
             threshold = np.mean(importances)
 
         else:
-            raise ValueError("Expected threshold='mean' or threshold='median' "
-                             "got %s" % threshold)
+            raise ValueError(
+                "Expected threshold='mean' or threshold='median' got %s" % threshold
+            )
 
     else:
         threshold = float(threshold)
@@ -75,7 +76,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         ``feature_importances_`` or ``coef_`` attribute after fitting.
         Otherwise, the ``importance_getter`` parameter should be used.
 
-    threshold : string or float, default=None
+    threshold : str or float, default=None
         The threshold value to use for feature selection. Features whose
         importance is greater or equal are kept while the others are
         discarded. If "median" (resp. "mean"), then the ``threshold`` value is
@@ -128,8 +129,28 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         This is stored only when a non-fitted estimator is passed to the
         ``SelectFromModel``, i.e when prefit is False.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`. Only defined if the
+        underlying estimator exposes such an attribute when fit.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     threshold_ : float
         The threshold value used for feature selection.
+
+    See Also
+    --------
+    RFE : Recursive feature elimination based on importance weights.
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
 
     Notes
     -----
@@ -156,19 +177,18 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.02],
            [-0.48],
            [ 1.48]])
-
-    See Also
-    --------
-    RFE : Recursive feature elimination based on importance weights.
-    RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features.
-    SequentialFeatureSelector : Sequential cross-validation based feature
-        selection. Does not rely on importance weights.
     """
-    @_deprecate_positional_args
-    def __init__(self, estimator, *, threshold=None, prefit=False,
-                 norm_order=1, max_features=None,
-                 importance_getter='auto'):
+
+    def __init__(
+        self,
+        estimator,
+        *,
+        threshold=None,
+        prefit=False,
+        norm_order=1,
+        max_features=None,
+        importance_getter="auto",
+    ):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
@@ -180,20 +200,26 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         # SelectFromModel can directly call on transform.
         if self.prefit:
             estimator = self.estimator
-        elif hasattr(self, 'estimator_'):
+        elif hasattr(self, "estimator_"):
             estimator = self.estimator_
         else:
-            raise ValueError('Either fit the model before transform or set'
-                             ' "prefit=True" while passing the fitted'
-                             ' estimator to the constructor.')
+            raise ValueError(
+                "Either fit the model before transform or set"
+                ' "prefit=True" while passing the fitted'
+                " estimator to the constructor."
+            )
         scores = _get_feature_importances(
-            estimator=estimator, getter=self.importance_getter,
-            transform_func='norm', norm_order=self.norm_order)
+            estimator=estimator,
+            getter=self.importance_getter,
+            transform_func="norm",
+            norm_order=self.norm_order,
+        )
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
-            candidate_indices = \
-                np.argsort(-scores, kind='mergesort')[:self.max_features]
+            candidate_indices = np.argsort(-scores, kind="mergesort")[
+                : self.max_features
+            ]
             mask[candidate_indices] = True
         else:
             mask = np.ones_like(scores, dtype=bool)
@@ -212,38 +238,53 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        **fit_params : Other estimator specific parameters
+        **fit_params : dict
+            Other estimator specific parameters.
 
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.max_features is not None:
             if not isinstance(self.max_features, numbers.Integral):
-                raise TypeError("'max_features' should be an integer between"
-                                " 0 and {} features. Got {!r} instead."
-                                .format(X.shape[1], self.max_features))
+                raise TypeError(
+                    "'max_features' should be an integer between"
+                    " 0 and {} features. Got {!r} instead.".format(
+                        X.shape[1], self.max_features
+                    )
+                )
             elif self.max_features < 0 or self.max_features > X.shape[1]:
-                raise ValueError("'max_features' should be 0 and {} features."
-                                 "Got {} instead."
-                                 .format(X.shape[1], self.max_features))
+                raise ValueError(
+                    "'max_features' should be 0 and {} features.Got {} instead.".format(
+                        X.shape[1], self.max_features
+                    )
+                )
 
         if self.prefit:
-            raise NotFittedError(
-                "Since 'prefit=True', call transform directly")
+            raise NotFittedError("Since 'prefit=True', call transform directly")
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
+
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
+        else:
+            self._check_feature_names(X, reset=True)
+
         return self
 
     @property
     def threshold_(self):
-        scores = _get_feature_importances(estimator=self.estimator_,
-                                          getter=self.importance_getter,
-                                          transform_func='norm',
-                                          norm_order=self.norm_order)
+        """Threshold value used for feature selection."""
+        scores = _get_feature_importances(
+            estimator=self.estimator_,
+            getter=self.importance_getter,
+            transform_func="norm",
+            norm_order=self.norm_order,
+        )
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
-    @if_delegate_has_method('estimator')
+    @if_delegate_has_method("estimator")
     def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 
@@ -256,15 +297,16 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        **fit_params : Other estimator specific parameters
+        **fit_params : dict
+            Other estimator specific parameters.
 
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.prefit:
-            raise NotFittedError(
-                "Since 'prefit=True', call transform directly")
+            raise NotFittedError("Since 'prefit=True', call transform directly")
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
@@ -272,19 +314,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during `fit`."""
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__
+                )
             ) from nfe
 
         return self.estimator_.n_features_in_
 
     def _more_tags(self):
-        return {
-            'allow_nan': _safe_tags(self.estimator, key="allow_nan")
-        }
+        return {"allow_nan": _safe_tags(self.estimator, key="allow_nan")}
