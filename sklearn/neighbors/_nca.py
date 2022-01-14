@@ -219,6 +219,7 @@ class NeighborhoodComponentsAnalysis(
         # Verify inputs X and y and NCA parameters, and transform a copy if
         # needed
         X, y, init = self._validate_params(X, y)
+        self._n_features_out = self._n_features_out or X.shape[1]
 
         # Initialize the random generator
         self.random_state_ = check_random_state(self.random_state)
