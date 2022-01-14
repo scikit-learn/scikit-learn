@@ -132,13 +132,17 @@ class MethodMetadataRequest:
 
     Parameters
     ----------
-    name : str
+    owner : str
+        The name of the object owning these requests.
+
+    method : str
         The name of the method to which these requests belong.
     """
 
-    def __init__(self, name):
+    def __init__(self, owner, method):
         self._requests = dict()
-        self.name = name
+        self.owner = owner
+        self.method = method
 
     @property
     def requests(self):
@@ -274,7 +278,7 @@ class MethodMetadataRequest:
             elif alias == RequestType.ERROR_IF_PASSED and prop in args:
                 raise ValueError(
                     f"{prop} is passed but is not explicitly set as "
-                    f"requested or not. In method: {self.name}"
+                    f"requested or not for {self.owner}.{self.method}"
                 )
             elif alias in args:
                 res[prop] = args[alias]
@@ -324,6 +328,11 @@ class MetadataRequest:
     version of this class as the output of `get_metadata_routing()`.
 
     .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    owner : str
+        The name of the object to which these reqeusts belong.
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -331,9 +340,9 @@ class MetadataRequest:
     # this file instad of using it directly from scikit-learn.
     type = "request"
 
-    def __init__(self):
+    def __init__(self, owner):
         for method in METHODS:
-            setattr(self, method, MethodMetadataRequest(name=method))
+            setattr(self, method, MethodMetadataRequest(owner=owner, method=method))
 
     def _get_param_names(self, method, original_names, ignore_self=None):
         """Get the names of all available metadata for a method.
@@ -455,9 +464,15 @@ class MethodMapping:
             Returns self.
         """
         if callee not in METHODS:
-            raise ValueError(f"Given callee:{callee} is not a valid method.")
+            raise ValueError(
+                f"Given callee:{callee} is not a valid method. Valid methods are:"
+                f" {METHODS}"
+            )
         if caller not in METHODS:
-            raise ValueError(f"Given caller:{caller} is not a valid method.")
+            raise ValueError(
+                f"Given caller:{caller} is not a valid method. Valid methods are:"
+                f" {METHODS}"
+            )
         self._routes.append(MethodPair(callee=callee, caller=caller))
         return self
 
@@ -551,7 +566,7 @@ class MetadataRouter:
             self._self = deepcopy(obj._get_metadata_request())
         else:
             raise ValueError(
-                "Given object is neither a MetadataRequest nor does it implement the"
+                "Given object is neither a `MetadataRequest` nor does it implement the"
                 " require API. Inheriting from `BaseEstimator` implements the required"
                 " API."
             )
@@ -807,7 +822,7 @@ def get_router_for_object(obj=None):
         the given object.
     """
     if obj is None:
-        return MetadataRequest()
+        return MetadataRequest(owner=None)
 
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
@@ -817,7 +832,7 @@ def get_router_for_object(obj=None):
     if getattr(obj, "type", None) in ["request", "router"]:
         return deepcopy(obj)
 
-    return MetadataRequest()
+    return MetadataRequest(owner=None)
 
 
 class RequestMethod:
@@ -857,7 +872,10 @@ class RequestMethod:
         # we would want to have a method which accepts only the expected args
         def func(**kw):
             if set(kw) - set(self.keys):
-                raise TypeError(f"Unexpected args: {set(kw) - set(self.keys)}")
+                raise TypeError(
+                    f"Unexpected args: {set(kw) - set(self.keys)}. Accepted arguments"
+                    f" are: {set(self.keys())}"
+                )
 
             requests = instance._get_metadata_request()
             method_metadata_request = getattr(requests, self.name)
@@ -948,7 +966,7 @@ class _MetadataRequester:
         class attributes.
         """
 
-        requests = MetadataRequest()
+        requests = MetadataRequest(owner=cls.__name__)
 
         # need to go through the MRO since this is a class attribute and
         # ``vars`` doesn't report the parent class attributes. We go through

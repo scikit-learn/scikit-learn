@@ -261,7 +261,7 @@ class SimplePipeline(BaseEstimator):
 
 
 def test_assert_request_is_empty():
-    requests = MetadataRequest()
+    requests = MetadataRequest(owner="test")
     assert_request_is_empty(requests)
 
     requests.fit.add_request(prop="foo", alias=RequestType.ERROR_IF_PASSED)
@@ -342,8 +342,8 @@ def test_simple_metadata_routing():
     with pytest.raises(
         ValueError,
         match=(
-            "sample_weight is passed but is not explicitly set as requested or not. In"
-            " method: fit"
+            "sample_weight is passed but is not explicitly set as requested or not for"
+            " ClassifierFitMetadata.fit"
         ),
     ):
         clf.fit(X, y, sample_weight=my_weights)
@@ -566,7 +566,7 @@ def test__get_default_requests():
 
 
 def test_method_metadata_request():
-    mmr = MethodMetadataRequest(name="fit")
+    mmr = MethodMetadataRequest(owner="test", method="fit")
 
     with pytest.raises(
         ValueError, match="alias should be either a valid identifier or"
@@ -594,7 +594,7 @@ def test_get_router_for_object():
     assert_request_is_empty(get_router_for_object(None))
     assert_request_is_empty(get_router_for_object(object()))
 
-    mr = MetadataRequest()
+    mr = MetadataRequest(owner="test")
     mr.fit.add_request(prop="foo", alias="bar")
     mr_factory = get_router_for_object(mr)
     assert_request_is_empty(mr_factory, exclude="fit")
@@ -633,11 +633,13 @@ def test_estimator_warnings():
     "obj, string",
     [
         (
-            MethodMetadataRequest("fit").add_request(prop="foo", alias="bar"),
+            MethodMetadataRequest(owner="test", method="fit").add_request(
+                prop="foo", alias="bar"
+            ),
             "{'foo': 'bar'}",
         ),
         (
-            MetadataRequest(),
+            MetadataRequest(owner="test"),
             "{}",
         ),
         (MethodMapping.from_str("score"), "[{'callee': 'score', 'caller': 'score'}]"),
