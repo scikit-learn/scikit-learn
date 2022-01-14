@@ -193,6 +193,12 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 f"with scipy>=1.6.0, got {sp_version}"
             )
 
+        if sparse.issparse(X) and self.solver not in ["highs", "highs-ds", "highs-ipm"]:
+            raise ValueError(
+                f"Solver {self.solver} does not support sparse X. "
+                "Use solver 'highs' for example."
+            )
+
         if self.solver_options is not None and not isinstance(
             self.solver_options, dict
         ):
@@ -247,11 +253,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[n_params] = 0
 
         if sparse.issparse(X) or self.solver in ["highs", "highs-ds", "highs-ipm"]:
-            if self.solver not in ["highs", "highs-ds", "highs-ipm"]:
-                raise ValueError(
-                    f"Solver {self.solver} does not support sparse X. "
-                    "Use solver 'highs' for example."
-                )
             # Note that highs methods always use a sparse CSC memory layout internally,
             # even for optimization problems parametrized using dense numpy arrays.
             # Therefore, we work with CSC matrices as early as possible to limit
