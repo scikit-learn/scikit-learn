@@ -348,6 +348,7 @@ class NeighborsBase(
         self.metric_params = metric_params
         self.p = p
         self.n_jobs = n_jobs
+        self._n_features_out = None
 
     def _check_algorithm_metric(self):
         if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
@@ -471,6 +472,7 @@ class NeighborsBase(
             self._tree = X._tree
             self._fit_method = X._fit_method
             self.n_samples_fit_ = X.n_samples_fit_
+            self._n_features_out = self.n_samples_fit_
             return self
 
         elif isinstance(X, BallTree):
@@ -478,6 +480,7 @@ class NeighborsBase(
             self._tree = X
             self._fit_method = "ball_tree"
             self.n_samples_fit_ = X.data.shape[0]
+            self._n_features_out = self.n_samples_fit_
             return self
 
         elif isinstance(X, KDTree):
@@ -485,6 +488,7 @@ class NeighborsBase(
             self._tree = X
             self._fit_method = "kd_tree"
             self.n_samples_fit_ = X.data.shape[0]
+            self._n_features_out = self.n_samples_fit_
             return self
 
         if self.metric == "precomputed":
@@ -518,12 +522,13 @@ class NeighborsBase(
             self._tree = None
             self._fit_method = "brute"
             self.n_samples_fit_ = X.shape[0]
+            self._n_features_out = self.n_samples_fit_
             return self
 
         self._fit_method = self.algorithm
         self._fit_X = X
         self.n_samples_fit_ = X.shape[0]
-
+        self._n_features_out = self.n_samples_fit_
         if self._fit_method == "auto":
             # A tree approach is better for small number of neighbors or small
             # number of features, with KDTree generally faster when available
