@@ -23,6 +23,9 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics._pairwise_distances_reduction import (
+    PairwiseDistancesArgKmin,
+)
 from ..utils import (
     check_array,
     gen_even_slices,
@@ -351,31 +354,33 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
             raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
+        self._metric = self.metric
+
         if self.algorithm == "auto":
-            if self.metric == "precomputed":
+            if self._metric == "precomputed":
                 alg_check = "brute"
-            elif callable(self.metric) or self.metric in VALID_METRICS["ball_tree"]:
+            elif callable(self._metric) or self._metric in VALID_METRICS["ball_tree"]:
                 alg_check = "ball_tree"
             else:
                 alg_check = "brute"
         else:
             alg_check = self.algorithm
 
-        if callable(self.metric):
+        if callable(self._metric):
             if self.algorithm == "kd_tree":
                 # callable metric is only valid for brute force and ball_tree
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
                     "in very poor performance."
-                    % self.metric
+                    % self._metric
                 )
-        elif self.metric not in VALID_METRICS[alg_check]:
+        elif self._metric not in VALID_METRICS[alg_check]:
             raise ValueError(
                 "Metric '%s' not valid. Use "
                 "sorted(sklearn.neighbors.VALID_METRICS['%s']) "
                 "to get valid options. "
-                "Metric can also be a callable function." % (self.metric, alg_check)
+                "Metric can also be a callable function." % (self._metric, alg_check)
             )
 
         if self.metric_params is not None and "p" in self.metric_params:
@@ -391,7 +396,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             effective_p = self.p
 
-        if self.metric in ["wminkowski", "minkowski"] and effective_p < 1:
+        if self._metric in ["wminkowski", "minkowski"] and effective_p < 1:
             raise ValueError("p must be greater or equal to one for minkowski metric")
 
     def _fit(self, X, y=None):
@@ -441,12 +446,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.effective_metric_params_ = self.metric_params.copy()
 
         effective_p = self.effective_metric_params_.get("p", self.p)
-        if self.metric in ["wminkowski", "minkowski"]:
+        if self._metric in ["wminkowski", "minkowski"]:
             self.effective_metric_params_["p"] = effective_p
 
-        self.effective_metric_ = self.metric
+        self.effective_metric_ = self._metric
         # For minkowski distance, use more efficient methods where available
-        if self.metric == "minkowski":
+        if self._metric == "minkowski":
             p = self.effective_metric_params_.pop("p", 2)
             w = self.effective_metric_params_.pop("w", None)
             if p < 1:
@@ -485,7 +490,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_samples_fit_ = X.data.shape[0]
             return self
 
-        if self.metric == "precomputed":
+        if self._metric == "precomputed":
             X = _check_precomputed(X)
             # Precomputed matrix X must be squared
             if X.shape[0] != X.shape[1]:
@@ -502,6 +507,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
+
             if self.effective_metric_ not in VALID_METRICS_SPARSE[
                 "brute"
             ] and not callable(self.effective_metric_):
@@ -526,7 +532,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # A tree approach is better for small number of neighbors or small
             # number of features, with KDTree generally faster when available
             if (
-                self.metric == "precomputed"
+                self._metric == "precomputed"
                 or self._fit_X.shape[1] > 15
                 or (
                     self.n_neighbors is not None
@@ -636,10 +642,7 @@ class KNeighborsMixin:
         # argpartition doesn't guarantee sorted order, so we sort again
         neigh_ind = neigh_ind[sample_range, np.argsort(dist[sample_range, neigh_ind])]
         if return_distance:
-            if self.effective_metric_ == "euclidean":
-                result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
-            else:
-                result = dist[sample_range, neigh_ind], neigh_ind
+            result = dist[sample_range, neigh_ind], neigh_ind
         else:
             result = neigh_ind
         return result
@@ -709,18 +712,37 @@ class KNeighborsMixin:
                 % type(n_neighbors)
             )
 
-        if X is not None:
-            query_is_train = False
-            if self.metric == "precomputed":
-                X = _check_precomputed(X)
-            else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False)
-        else:
-            query_is_train = True
+        use_pairwise_distances_reductions = (
+            self._fit_method == "brute"
+            and PairwiseDistancesArgKmin.is_usable_for(
+                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
+            )
+        )
+
+        query_is_train = X is None
+        if query_is_train:
+            if use_pairwise_distances_reductions:
+                # We force the C-contiguity even if it creates a copy for F-ordered
+                # arrays because PairwiseDistancesArgKmin is more efficient.
+                self._fit_X = self._validate_data(
+                    self._fit_X, accept_sparse="csr", reset=False, order="C"
+                )
             X = self._fit_X
             # Include an extra neighbor to account for the sample itself being
             # returned, which is removed later
             n_neighbors += 1
+        else:
+            if use_pairwise_distances_reductions:
+                # We force the C-contiguity even if it creates a copy for F-ordered
+                # arrays because PairwiseDistancesArgKmin is more efficient.
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                self._fit_X = self._validate_data(
+                    self._fit_X, accept_sparse="csr", reset=False, order="C"
+                )
+            elif self._metric == "precomputed":
+                X = _check_precomputed(X)
+            else:
+                X = self._validate_data(X, accept_sparse="csr", reset=False)
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -731,23 +753,35 @@ class KNeighborsMixin:
 
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
-        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
+        if use_pairwise_distances_reductions:
+            results = PairwiseDistancesArgKmin.compute(
+                X=X,
+                Y=self._fit_X,
+                k=n_neighbors,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+                n_threads=self.n_jobs,
+                strategy="auto",
+                return_distance=return_distance,
+            )
+
+        elif (
+            self._fit_method == "brute"
+            and self._metric == "precomputed"
+            and issparse(X)
+        ):
             results = _kneighbors_from_graph(
                 X, n_neighbors=n_neighbors, return_distance=return_distance
             )
 
         elif self._fit_method == "brute":
+            # TODO: support sparse matrices
+
             reduce_func = partial(
                 self._kneighbors_reduce_func,
                 n_neighbors=n_neighbors,
                 return_distance=return_distance,
             )
-
-            # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == "euclidean":
-                kwds = {"squared": True}
-            else:
-                kwds = self.effective_metric_params_
 
             chunked_results = list(
                 pairwise_distances_chunked(
@@ -756,7 +790,7 @@ class KNeighborsMixin:
                     reduce_func=reduce_func,
                     metric=self.effective_metric_,
                     n_jobs=n_jobs,
-                    **kwds,
+                    **self.effective_metric_params_,
                 )
             )
 
@@ -1052,6 +1086,8 @@ class RadiusNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
+            # TODO: support sparse matrices
+
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == "euclidean":
                 radius *= radius

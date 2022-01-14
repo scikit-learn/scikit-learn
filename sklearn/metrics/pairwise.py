@@ -19,6 +19,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 from joblib import Parallel, effective_n_jobs
 
+from .. import config_context
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
 from ..utils import check_array
@@ -31,6 +32,7 @@ from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
 from ..utils.fixes import sp_version, parse_version
 
+from ._pairwise_distances_reduction import PairwiseDistancesArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 
@@ -582,6 +584,10 @@ def _argmin_min_reduce(dist, start):
     return indices, values
 
 
+def _argmin_reduce(dist, start):
+    return dist.argmin(axis=1)
+
+
 def pairwise_distances_argmin_min(
     X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
@@ -654,19 +660,38 @@ def pairwise_distances_argmin_min(
     """
     X, Y = check_pairwise_arrays(X, Y)
 
-    if metric_kwargs is None:
-        metric_kwargs = {}
-
     if axis == 0:
         X, Y = Y, X
 
-    indices, values = zip(
-        *pairwise_distances_chunked(
-            X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
+    if metric_kwargs is None:
+        metric_kwargs = {}
+
+    if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
+        values, indices = PairwiseDistancesArgKmin.compute(
+            X=X,
+            Y=Y,
+            k=1,
+            metric=metric,
+            metric_kwargs=metric_kwargs,
+            strategy="auto",
+            return_distance=True,
         )
-    )
-    indices = np.concatenate(indices)
-    values = np.concatenate(values)
+        values = values.flatten()
+        indices = indices.flatten()
+    else:
+        # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
+        # we won't need to fallback to pairwise_distances_chunked anymore.
+
+        # Turn off check for finiteness because this is costly and because arrays
+        # have already been validated.
+        with config_context(assume_finite=True):
+            indices, values = zip(
+                *pairwise_distances_chunked(
+                    X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
+                )
+            )
+        indices = np.concatenate(indices)
+        values = np.concatenate(values)
 
     return indices, values
 
@@ -738,9 +763,43 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    return pairwise_distances_argmin_min(
-        X, Y, axis=axis, metric=metric, metric_kwargs=metric_kwargs
-    )[0]
+    X, Y = check_pairwise_arrays(X, Y)
+
+    if axis == 0:
+        X, Y = Y, X
+
+    if metric_kwargs is None:
+        metric_kwargs = {}
+
+    if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
+        indices = PairwiseDistancesArgKmin.compute(
+            X=X,
+            Y=Y,
+            k=1,
+            metric=metric,
+            metric_kwargs=metric_kwargs,
+            strategy="auto",
+            return_distance=False,
+        )
+        indices = indices.flatten()
+    else:
+        # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
+        # we won't need to fallback to pairwise_distances_chunked anymore.
+
+        # Turn off check for finiteness because this is costly and because arrays
+        # have already been validated.
+        with config_context(assume_finite=True):
+            indices = np.concatenate(
+                list(
+                    # This returns a np.ndarray generator whose arrays we need
+                    # to flatten into one.
+                    pairwise_distances_chunked(
+                        X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
+                    )
+                )
+            )
+
+    return indices
 
 
 def haversine_distances(X, Y=None):
