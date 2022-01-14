@@ -705,18 +705,12 @@ cdef class HellingerDistance(ClassificationCriterion):
     """
     cdef double node_impurity(self) nogil:
         cdef:
-            SIZE_t* n_classes = self.n_classes
-            double* sum_total = self.sum_total
-            double hellinger = 0.0
-            double sq_count
-            double count_k
-            SIZE_t k, c
+            double impurity_left
+            double impurity_right
 
-        for k in range(self.n_outputs):
-            for c in range(n_classes[k]):
-                hellinger += 1.0
+        self.children_impurity(&impurity_left, &impurity_right)
 
-        return hellinger / self.n_outputs
+        return impurity_right + impurity_left
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
