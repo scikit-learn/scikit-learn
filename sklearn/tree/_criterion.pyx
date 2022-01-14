@@ -632,13 +632,6 @@ cdef class HellingerDistance(ClassificationCriterion):
             double count_k2 = 0.0
             SIZE_t k, c
 
-        # stop splitting in case reached pure node with 0 samples of second
-        # class
-        if sum_left[1] + sum_right[1] == 0:
-            impurity_left[0] = -INFINITY
-            impurity_right[0] = -INFINITY
-            return
-
         for k in range(self.n_outputs):
             count_k1 = 0.0
             count_k2 = 0.0
