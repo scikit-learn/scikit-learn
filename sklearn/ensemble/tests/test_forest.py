@@ -170,7 +170,7 @@ def check_iris_criterion(name, criterion):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-@pytest.mark.parametrize("criterion", ("gini", "entropy", "hellinger"))
+@pytest.mark.parametrize("criterion", ("gini", "entropy"))
 def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
