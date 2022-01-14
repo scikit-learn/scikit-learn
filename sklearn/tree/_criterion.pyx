@@ -611,22 +611,6 @@ cdef class HellingerDistance(ClassificationCriterion):
 
         hellinger_distance = \sqrt{count_k1+count_k2}
     """
-
-    cdef double proxy_impurity_improvement(self) nogil:
-        cdef:
-            double impurity_left
-            double impurity_right
-
-        self.children_impurity(&impurity_left, &impurity_right)
-
-        return impurity_right + impurity_left
-
-    cdef double impurity_improvement(self, double impurity_parent,
-                                     double impurity_left,
-                                     double impurity_right) nogil:
-
-        return impurity_right + impurity_left
-
     cdef double node_impurity(self) nogil:
         cdef:
             SIZE_t* n_classes = self.n_classes
