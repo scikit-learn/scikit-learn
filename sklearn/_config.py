@@ -197,6 +197,7 @@ def config_context(
         working_memory=working_memory,
         print_changed_only=print_changed_only,
         display=display,
+        pairwise_dist_chunk_size=pairwise_dist_chunk_size,
     )
 
     try:
