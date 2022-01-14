@@ -300,7 +300,7 @@ class MethodMetadataRequest:
         # And at last the parameters with RequestType routing info
         result.update(
             {
-                prop: RequestType(alias).value
+                prop: RequestType(alias)
                 for prop, alias in self._requests.items()
                 if alias in RequestType
             }

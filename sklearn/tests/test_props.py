@@ -646,8 +646,8 @@ def test_estimator_warnings():
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
             "{'estimator': {'mapping': [{'callee': 'predict', 'caller': 'predict'}],"
-            " 'router': {'fit': {'sample_weight': None}, 'score': {'sample_weight':"
-            " None}}}}",
+            " 'router': {'fit': {'sample_weight': <RequestType.ERROR_IF_PASSED: None>},"
+            " 'score': {'sample_weight': <RequestType.ERROR_IF_PASSED: None>}}}}",
         ),
     ],
 )

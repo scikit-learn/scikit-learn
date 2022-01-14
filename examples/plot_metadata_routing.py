@@ -23,7 +23,6 @@ First a few imports and some random data for the rest of the script.
 # %%
 
 import numpy as np
-import ast
 import warnings
 from pprint import pprint
 from sklearn.base import BaseEstimator
@@ -64,7 +63,7 @@ def check_metadata(obj, **kwargs):
 # %%
 # A utility function to nicely print the routing information of an object
 def print_routing(obj):
-    pprint(ast.literal_eval(repr(obj.get_metadata_routing())))
+    pprint(obj.get_metadata_routing()._serialize())
 
 
 # %%
