@@ -12,8 +12,8 @@ the regression problem, the bias term measures the average amount by which the
 predictions of the estimator differ from the predictions of the best possible
 estimator for the problem (i.e., the Bayes model). The variance term measures
 the variability of the predictions of the estimator when fit over different
-instances (S) of the problem. Finally, the noise measures the irreducible part
-of the error which is due the variability in the data.
+instances (LS) of the problem, where LS are learning samples. Finally, the noise
+measures the irreducible part of the error which is due the variability in the data.
 
 The upper left figure illustrates the predictions (in dark red) of a single
 decision tree trained over a random dataset (S) (the blue dots) of a toy 1d
