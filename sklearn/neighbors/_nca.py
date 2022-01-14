@@ -197,7 +197,6 @@ class NeighborhoodComponentsAnalysis(
         self.callback = callback
         self.verbose = verbose
         self.random_state = random_state
-        self._n_features_out = n_components
 
     def fit(self, X, y):
         """Fit the model according to the given training data.
@@ -219,7 +218,7 @@ class NeighborhoodComponentsAnalysis(
         # Verify inputs X and y and NCA parameters, and transform a copy if
         # needed
         X, y, init = self._validate_params(X, y)
-        self._n_features_out = self._n_features_out or X.shape[1]
+        self._n_features_out = self.n_components or X.shape[1]
 
         # Initialize the random generator
         self.random_state_ = check_random_state(self.random_state)
