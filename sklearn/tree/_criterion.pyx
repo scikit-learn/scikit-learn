@@ -26,8 +26,6 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 from numpy.math cimport INFINITY
-
-from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
 
 from ._utils cimport log
@@ -739,8 +737,8 @@ cdef class HellingerDistance(ClassificationCriterion):
             if(sum_left[1] + sum_right[1] > 0):
                 count_k2 = sqrt(sum_left[1] / (sum_left[1] + sum_right[1]))
 
-            hellinger_left += pow((count_k1  - count_k2), 2)
-            
+            hellinger_left += 1 - pow((count_k1  - count_k2), 2)
+
             count_k1 = 0.0
             count_k2 = 0.0
             if(sum_left[0] + sum_right[0] > 0):
@@ -748,7 +746,7 @@ cdef class HellingerDistance(ClassificationCriterion):
             if(sum_left[1] + sum_right[1] > 0):
                 count_k2 = sqrt(sum_right[1] / (sum_left[1] + sum_right[1]))
 
-            hellinger_right += pow((count_k1  - count_k2), 2)
+            hellinger_right += 1 - pow((count_k1  - count_k2), 2)
 
         impurity_left[0]  = hellinger_left  / self.n_outputs
         impurity_right[0] = hellinger_right / self.n_outputs
