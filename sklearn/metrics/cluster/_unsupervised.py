@@ -188,7 +188,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
         If ``X`` is the distance array itself, use "precomputed" as the metric.
         Precomputed distance matrices must have 0 along the diagonal.
 
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -208,18 +208,21 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
-
     """
     X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
 
     # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == "precomputed":
-        atol = np.finfo(X.dtype).eps * 100
-        if np.any(np.abs(np.diagonal(X)) > atol):
-            raise ValueError(
-                "The precomputed distance matrix contains non-zero "
-                "elements on the diagonal. Use np.fill_diagonal(X, 0)."
-            )
+        error_msg = ValueError(
+            "The precomputed distance matrix contains non-zero "
+            "elements on the diagonal. Use np.fill_diagonal(X, 0)."
+        )
+        if X.dtype.kind == "f":
+            atol = np.finfo(X.dtype).eps * 100
+            if np.any(np.abs(np.diagonal(X)) > atol):
+                raise ValueError(error_msg)
+        elif np.any(np.diagonal(X) != 0):  # integral dtype
+            raise ValueError(error_msg)
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)

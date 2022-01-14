@@ -338,8 +338,10 @@ def sparse_encode(
     """
     if check_input:
         if algorithm == "lasso_cd":
-            dictionary = check_array(dictionary, order="C", dtype="float64")
-            X = check_array(X, order="C", dtype="float64")
+            dictionary = check_array(
+                dictionary, order="C", dtype=[np.float64, np.float32]
+            )
+            X = check_array(X, order="C", dtype=[np.float64, np.float32])
         else:
             dictionary = check_array(dictionary)
             X = check_array(X)
@@ -905,10 +907,14 @@ def dict_learning_online(
 
     # Fortran-order dict better suited for the sparse coding which is the
     # bottleneck of this algorithm.
-    dictionary = check_array(dictionary, order="F", dtype=np.float64, copy=False)
+    dictionary = check_array(
+        dictionary, order="F", dtype=[np.float64, np.float32], copy=False
+    )
     dictionary = np.require(dictionary, requirements="W")
 
-    X_train = check_array(X_train, order="C", dtype=np.float64, copy=False)
+    X_train = check_array(
+        X_train, order="C", dtype=[np.float64, np.float32], copy=False
+    )
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
@@ -1286,7 +1292,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return super()._transform(X, self.dictionary)
 
     def _more_tags(self):
-        return {"requires_fit": False}
+        return {
+            "requires_fit": False,
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
     @property
     def n_components_(self):
@@ -1579,6 +1588,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1924,3 +1938,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
