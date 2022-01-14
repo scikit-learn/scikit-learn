@@ -34,6 +34,16 @@ X, y = iris.data[:, 1:3], iris.target
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 
+def test_error():
+    # Test that proper excetions are raise given invalid input
+    voter = VotingClassifier(
+        estimators=[("lr", LogisticRegression())], flatten_transform="foo"
+    )
+    err_msg = "flatten_transform must be an instance of"
+    with pytest.raises(TypeError, match=err_msg):
+        voter.fit(X_r, y_r)
+
+
 @pytest.mark.parametrize(
     "X, y, voter, learner",
     [
@@ -51,7 +61,7 @@ X_r, y_r = datasets.load_diabetes(return_X_y=True)
 def test_voting_estimators_param_validation(
     X, y, voter, learner, params, err_type, err_msg
 ):
-    # Test scalar parameters that are invalid
+    # Test that proper excetions are raise given invalid input
     params.update(learner)
     est = voter(**params)
     with pytest.raises(err_type, match=err_msg):

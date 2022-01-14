@@ -80,6 +80,16 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 % (len(self.weights), len(self.estimators))
             )
 
+        # if self.n_jobs is not None:
+        #     if isinstance(self.n_jobs, numbers.Integral):
+        #         if self.n_jobs < 0:
+        #             check_scalar(
+        #                 self.n_jobs,
+        #                 name="n_jobs",
+        #                 target_type=numbers.Integral,
+        #                 max_val=-1,
+        #             )
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_single_estimator)(
                 clone(clf),
@@ -320,6 +330,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             raise NotImplementedError(
                 "Multilabel and multi-output classification is not supported."
             )
+
+        check_scalar(
+            self.flatten_transform,
+            name="flatten_transform",
+            target_type=(numbers.Integral, np.bool_),
+        )
 
         if self.voting not in ("soft", "hard"):
             raise ValueError(
