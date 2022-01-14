@@ -96,7 +96,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
-        router = MetadataRouter().add(
+        router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator, method_mapping="one-to-one"
         )
         return router
@@ -131,7 +131,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter()
+            MetadataRouter(owner=self.__class__.__name__)
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="one-to-one")
         )
@@ -173,7 +173,7 @@ class SimpleMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter()
+            MetadataRouter(owner=self.__class__.__name__)
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="fit")
         )
@@ -208,7 +208,7 @@ class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         return self.transformer_.transform(X, **params.transformer.transform)
 
     def get_metadata_routing(self):
-        return MetadataRouter().add(
+        return MetadataRouter(owner=self.__class__.__name__).add(
             transformer=self.transformer, method_mapping="one-to-one"
         )
 
@@ -247,7 +247,7 @@ class SimplePipeline(BaseEstimator):
         return self.steps_[-1].predict(X_transformed, **params.predictor.predict)
 
     def get_metadata_routing(self):
-        router = MetadataRouter()
+        router = MetadataRouter(owner=self.__class__.__name__)
         for i, step in enumerate(self.steps[:-1]):
             router.add(
                 **{f"step_{i}": step},
@@ -286,7 +286,7 @@ def test_assert_request_is_empty():
 
     # test if a router is empty
     assert_request_is_empty(
-        MetadataRouter()
+        MetadataRouter(owner="test")
         .add_self(WeightedMetaRegressor(estimator=None))
         .add(method_mapping="fit", estimator=RegressorMetadata())
     )
@@ -410,6 +410,35 @@ def test_nested_routing():
     check_recorded_metadata(
         pipeline.steps_[0].transformer_, "transform", sample_weight=w3
     )
+
+
+def test_nested_routing_conflict():
+    # check if an error is raised if there's a conflict between keys
+    pipeline = SimplePipeline(
+        [
+            MetaTransformer(
+                transformer=TransformerMetadata()
+                .fit_requests(brand=True, sample_weight=False)
+                .transform_requests(sample_weight=True)
+            ),
+            WeightedMetaRegressor(
+                estimator=RegressorMetadata().fit_requests(sample_weight=True)
+            ).fit_requests(sample_weight="outer_weights"),
+        ]
+    )
+    w1, w2 = [1], [2]
+    with pytest.raises(
+        ValueError,
+        match=(
+            re.escape(
+                "In WeightedMetaRegressor, there is a conflict on sample_weight between"
+                " what is requested for this estimator and what is requested by its"
+                " children. You can resolve this conflict by using an alias for the"
+                " child estimator(s) requested metadata."
+            )
+        ),
+    ):
+        pipeline.fit(X, y, brand=my_groups, sample_weight=w1, outer_weights=w2)
 
 
 def test_invalid_metadata():
@@ -644,7 +673,7 @@ def test_estimator_warnings():
         ),
         (MethodMapping.from_str("score"), "[{'callee': 'score', 'caller': 'score'}]"),
         (
-            MetadataRouter().add(
+            MetadataRouter(owner="test").add(
                 method_mapping="predict", estimator=RegressorMetadata()
             ),
             "{'estimator': {'mapping': [{'callee': 'predict', 'caller': 'predict'}],"
@@ -682,11 +711,11 @@ def test_string_representations(obj, string):
             "route should be 'one-to-one' or a single method!",
         ),
         (
-            MetadataRouter(),
+            MetadataRouter(owner="test"),
             "add_self",
-            {"obj": MetadataRouter()},
+            {"obj": MetadataRouter(owner="test")},
             ValueError,
-            "Given object is neither a MetadataRequest nor does it implement",
+            "Given object is neither a `MetadataRequest` nor does it implement",
         ),
     ],
 )

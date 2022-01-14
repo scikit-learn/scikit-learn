@@ -536,6 +536,11 @@ class MetadataRouter:
     :class:`~utils.metadata_requests.MetadataRouter` instance.
 
     .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    owner : str
+        The name of the object to which these requests belong.
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -543,9 +548,10 @@ class MetadataRouter:
     # this file instad of using it directly from scikit-learn.
     type = "router"
 
-    def __init__(self):
+    def __init__(self, owner):
         self._route_mappings = dict()
         self._self = None
+        self.owner = owner
 
     def add_self(self, obj):
         """Add `self` to the routing.
@@ -671,10 +677,25 @@ class MetadataRouter:
         res = Bunch()
         if self._self:
             res.update(self._self._route_params(params=params, method=method))
+
         param_names = self._get_param_names(
             method=method, original_names=False, ignore_self=True
         )
-        res.update({key: value for key, value in params.items() if key in param_names})
+        child_params = {
+            key: value for key, value in params.items() if key in param_names
+        }
+        for key in set(res.keys()).intersection(child_params.keys()):
+            # conflicts are okay if the passed objects are the same, but it's
+            # an issue if they're different objects.
+            if child_params[key] is not res[key]:
+                raise ValueError(
+                    f"In {self.owner}, there is a conflict on {key} between what is"
+                    " requested for this estimator and what is requested by its"
+                    " children. You can resolve this conflict by using an alias for"
+                    " the child estimator(s) requested metadata."
+                )
+
+        res.update(child_params)
         return res
 
     def route_params(self, *, caller, params):
@@ -874,7 +895,7 @@ class RequestMethod:
             if set(kw) - set(self.keys):
                 raise TypeError(
                     f"Unexpected args: {set(kw) - set(self.keys)}. Accepted arguments"
-                    f" are: {set(self.keys())}"
+                    f" are: {set(self.keys)}"
                 )
 
             requests = instance._get_metadata_request()

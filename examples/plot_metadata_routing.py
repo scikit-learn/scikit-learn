@@ -151,7 +151,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # This method defines the routing for this meta-estimator.
         # In order to do so, a `MetadataRouter` instance is created, and the
         # right routing is added to it. More explanation follows.
-        router = MetadataRouter().add(
+        router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator, method_mapping="one-to-one"
         )
         return router
@@ -345,7 +345,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter()
+            MetadataRouter(owner=self.__class__.__name__)
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="one-to-one")
         )
@@ -441,7 +441,7 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter()
+            MetadataRouter(owner=self.__class__.__name__)
             .add(
                 transformer=self.transformer,
                 method_mapping=MethodMapping()
@@ -528,7 +528,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
-        router = MetadataRouter().add(
+        router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator, method_mapping="one-to-one"
         )
         return router
@@ -559,7 +559,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter()
+            MetadataRouter(owner=self.__class__.__name__)
             .add_self(self)
             .add(estimator=self.estimator, method_mapping="one-to-one")
         )
