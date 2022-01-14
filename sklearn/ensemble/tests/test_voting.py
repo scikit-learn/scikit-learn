@@ -35,7 +35,7 @@ X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 
 def test_error():
-    # Test that proper excetions are raise given invalid input
+    # Test that invalid input raises the proper exception
     voter = VotingClassifier(
         estimators=[("lr", LogisticRegression())], flatten_transform="foo"
     )
@@ -61,7 +61,7 @@ def test_error():
 def test_voting_estimators_param_validation(
     X, y, voter, learner, params, err_type, err_msg
 ):
-    # Test that proper excetions are raise given invalid input
+    # Test that invalid imput raises the proper exception
     params.update(learner)
     est = voter(**params)
     with pytest.raises(err_type, match=err_msg):
