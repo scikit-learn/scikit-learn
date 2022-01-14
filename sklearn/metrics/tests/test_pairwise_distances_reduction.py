@@ -176,14 +176,14 @@ def test_chunk_size_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_indices, ref_dist = PairwiseDistancesReduction.compute(
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
         return_distance=True,
     )
 
-    indices, dist = PairwiseDistancesReduction.compute(
+    dist, indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -222,14 +222,14 @@ def test_n_threads_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_indices, ref_dist = PairwiseDistancesReduction.compute(
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
         return_distance=True,
     )
 
-    indices, dist = PairwiseDistancesReduction.compute(
+    dist, indices = PairwiseDistancesReduction.compute(
         X, Y, parameter, n_threads=1, return_distance=True
     )
 
@@ -269,7 +269,7 @@ def test_strategies_consistency(
         else 10 ** np.log(n_features)
     )
 
-    indices_par_X, dist_par_X = PairwiseDistancesReduction.compute(
+    dist_par_X, indices_par_X = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -282,7 +282,7 @@ def test_strategies_consistency(
         return_distance=True,
     )
 
-    indices_par_Y, dist_par_Y = PairwiseDistancesReduction.compute(
+    dist_par_Y, indices_par_Y = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -324,11 +324,6 @@ def test_pairwise_distances_argkmin(
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    # Haversine distance only accepts 2D data
-    if metric == "haversine":
-        X = np.ascontiguousarray(X[:, :2])
-        Y = np.ascontiguousarray(Y[:, :2])
-
     metric_kwargs = _get_dummy_metric_params_list(metric, n_features)[0]
 
     # Reference for argkmin results
@@ -346,7 +341,7 @@ def test_pairwise_distances_argkmin(
             row_idx, argkmin_indices_ref[row_idx]
         ]
 
-    argkmin_indices, argkmin_distances = PairwiseDistancesArgKmin.compute(
+    argkmin_distances, argkmin_indices = PairwiseDistancesArgKmin.compute(
         X,
         Y,
         k,

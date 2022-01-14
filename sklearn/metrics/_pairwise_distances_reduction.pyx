@@ -883,7 +883,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             # We need to recompute distances because we relied on
             # surrogate distances for the reduction.
             self.compute_exact_distances()
-            return np.asarray(self.argkmin_indices), np.asarray(self.argkmin_distances)
+            return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
 
