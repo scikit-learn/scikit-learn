@@ -15,7 +15,7 @@ import numbers
 from scipy.optimize import minimize
 from ..utils.extmath import softmax
 from ..metrics import pairwise_distances
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
@@ -24,7 +24,9 @@ from ..utils.validation import check_is_fitted, check_array, check_scalar
 from ..exceptions import ConvergenceWarning
 
 
-class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
+class NeighborhoodComponentsAnalysis(
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Neighborhood Components Analysis.
 
     Neighborhood Component Analysis (NCA) is a machine learning algorithm for
@@ -195,6 +197,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         self.callback = callback
         self.verbose = verbose
         self.random_state = random_state
+        self._n_features_out = n_components
 
     def fit(self, X, y):
         """Fit the model according to the given training data.

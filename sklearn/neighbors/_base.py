@@ -19,7 +19,7 @@ from joblib import Parallel, effective_n_jobs
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
-from ..base import BaseEstimator, MultiOutputMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
@@ -322,9 +322,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
         return neigh_ind
 
 
-class NeighborsBase(
-    _ClassNamePrefixFeaturesOutMixin, MultiOutputMixin, BaseEstimator, metaclass=ABCMeta
-):
+class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
     @abstractmethod

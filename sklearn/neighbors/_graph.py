@@ -7,7 +7,7 @@
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
-from ..base import TransformerMixin
+from ..base import TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
 
 
@@ -223,7 +223,9 @@ def radius_neighbors_graph(
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
+class KNeighborsTransformer(
+    _ClassNamePrefixFeaturesOutMixin, KNeighborsMixin, TransformerMixin, NeighborsBase
+):
     """Transform X into a (weighted) graph of k nearest neighbors.
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
@@ -445,7 +447,12 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         }
 
 
-class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, NeighborsBase):
+class RadiusNeighborsTransformer(
+    _ClassNamePrefixFeaturesOutMixin,
+    RadiusNeighborsMixin,
+    TransformerMixin,
+    NeighborsBase,
+):
     """Transform X into a (weighted) graph of neighbors nearer than a radius.
 
     The transformed data is a sparse graph as returned by
