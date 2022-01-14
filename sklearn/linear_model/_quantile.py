@@ -252,8 +252,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                     f"Solver {self.solver} does not support sparse X. "
                     "Use solver 'highs' for example."
                 )
-            # Note that highs methods do convert to csc.
-            # Therefore, we work with csc matrices as much as possible.
+            # Note that highs methods always use a sparse CSC memory layout internally,
+            # even for optimization problems parametrized using dense numpy arrays.
+            # Therefore, we work with CSC matrices as early as possible to limit
+            # unnecessary repeated memory copies.
             eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
                 ones = sparse.csc_matrix(np.ones(shape=(n_indices, 1), dtype=X.dtype))
