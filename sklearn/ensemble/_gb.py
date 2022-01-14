@@ -390,7 +390,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         check_scalar(
             self.verbose,
             name="verbose",
-            target_type=(numbers.Integral, np.bool),
+            target_type=(numbers.Integral, np.bool_),
             min_val=0,
         )
 
