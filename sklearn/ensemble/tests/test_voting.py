@@ -39,16 +39,18 @@ X_r, y_r = datasets.load_diabetes(return_X_y=True)
     [
         (X, y, VotingClassifier, {"estimators": [("lr", LogisticRegression())]}),
         (X_r, y_r, VotingRegressor, {"estimators": [("lr", LinearRegression())]}),
-    ]
+    ],
 )
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
         ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
         ({"verbose": "foo"}, TypeError, "verbose must be an instance of"),
-    ]
+    ],
 )
-def test_voting_estimators_param_validation(X, y, voter, learner, params, err_type, err_msg):
+def test_voting_estimators_param_validation(
+    X, y, voter, learner, params, err_type, err_msg
+):
     # Test scalar parameters that are invalid
     params.update(learner)
     est = voter(**params)
