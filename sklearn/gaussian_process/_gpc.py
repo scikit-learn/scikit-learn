@@ -504,7 +504,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting. Also kernel
-        cannot be a CompoundKernel as it is a private API.
+        cannot be a `CompoundKernel`.
 
     optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing

@@ -268,7 +268,7 @@ def test_warning_bounds():
 
 
 @pytest.mark.parametrize(
-    "params, TypeError, err_msg",
+    "params, error_type, err_msg",
     [
         (
             {"kernel": CompoundKernel(0)},
@@ -277,8 +277,8 @@ def test_warning_bounds():
         )
     ],
 )
-def test_gpc_fit_error(params, TypeError, err_msg):
+def test_gpc_fit_error(params, error_type, err_msg):
     """Check that expected error are raised during fit."""
     gpc = GaussianProcessClassifier(**params)
-    with pytest.raises(TypeError, match=err_msg):
+    with pytest.raises(error_type, match=err_msg):
         gpc.fit(X, y)
