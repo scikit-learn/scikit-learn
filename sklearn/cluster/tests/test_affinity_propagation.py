@@ -185,7 +185,7 @@ def test_affinity_propagation_predict_non_convergence():
 def test_affinity_propagation_non_convergence_regressiontest():
     X = np.array([[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]])
     af = AffinityPropagation(affinity="euclidean", max_iter=2, random_state=34).fit(X)
-    assert_array_equal(np.array([-1, -1, -1]), af.labels_)
+    assert_array_equal(np.array([0, 0, 0]), af.labels_)
 
 
 def test_equal_similarities_and_preferences():
