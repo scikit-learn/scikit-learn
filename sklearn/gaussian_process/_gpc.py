@@ -503,7 +503,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
-        the kernel's hyperparameters are optimized during fitting.
+        the kernel's hyperparameters are optimized during fitting. Also kernel
+        cannot be a CompoundKernel as it is a private API.
 
     optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
@@ -673,12 +674,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
-        if isinstance(
-            self.kernel, CompoundKernel
-        ):  # CompoundKernel is only used internally in scikit-learn
-            raise ValueError(
-                "Incompatible Kernel is used, %s" % (self.kernel.__class__)
-            )
+        if isinstance(self.kernel, CompoundKernel):
+            raise ValueError("kernel cannot be a CompoundKernel")
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X, y = self._validate_data(

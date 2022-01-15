@@ -273,8 +273,7 @@ def test_warning_bounds():
         (
             {"kernel": CompoundKernel(0)},
             ValueError,
-            "Incompatible Kernel is used, <class"
-            " 'sklearn.gaussian_process.kernels.CompoundKernel'>",
+            "kernel cannot be a CompoundKernel",
         )
     ],
 )
