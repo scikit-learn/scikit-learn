@@ -155,8 +155,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         if self.cv == "prefit":
             self.estimators_ = []
             for estimator in all_estimators:
-                check_is_fitted(estimator)
-                self.estimators_.append(estimator)
+                if estimator != "drop":
+                    check_is_fitted(estimator)
+                    self.estimators_.append(estimator)
         else:
             # Fit the base estimators on the whole training data. Those
             # base estimators will be used in transform, predict, and
