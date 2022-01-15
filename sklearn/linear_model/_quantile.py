@@ -232,6 +232,17 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # 1_n = vector of length n with entries equal one
         # see https://stats.stackexchange.com/questions/384909/
         #
+        # Now, in order to store X only once in A_eq and save memory, we re-introduce
+        # intercept and coef by adding p rows to A_eq and bounds other than >=0.
+        # We thus have:
+        # x = (intercept, coef,           s,           t,       u,           v)
+        # c = (        0,  0_p, alpha * 1_p, alpha * 1_p, q * 1_n, (1-q) * 1_n)
+        # A_eq = [[1,         X,       0_p,        0_p, diag(1_n), -diag(1_n)]]
+        #         [0, diag(1_p), diag(1_p), -diag(1_p),         0,          0]]
+        #
+        # q = quantile level
+        # Bounds are: intercept, coef unbounded, s,t,u,v >= 0.
+        #
         # Filtering out zero sample weights from the beginning makes life
         # easier for the linprog solver.
         indices = np.nonzero(sample_weight)[0]
@@ -240,30 +251,61 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             sample_weight = sample_weight[indices]
             X = _safe_indexing(X, indices)
             y = _safe_indexing(y, indices)
-        c = np.concatenate(
-            [
-                np.full(2 * n_params, fill_value=alpha),
-                sample_weight * self.quantile,
-                sample_weight * (1 - self.quantile),
-            ]
-        )
-        if self.fit_intercept:
-            # do not penalize the intercept
-            c[0] = 0
-            c[n_params] = 0
 
         if self.solver in ["highs", "highs-ds", "highs-ipm"]:
             # Note that highs methods always use a sparse CSC memory layout internally,
             # even for optimization problems parametrized using dense numpy arrays.
             # Therefore, we work with CSC matrices as early as possible to limit
             # unnecessary repeated memory copies.
-            eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
+
+            # x = (intercept, coef, s0, s, t0, t, u, v)
+            bounds = [[None, None]] * n_params  # (intercept +) coef
+            bounds += [[0, None]] * (2 * n_features + 2 * n_indices)  # s, t, u, v
+            c = np.concatenate(
+                [
+                    np.zeros(n_params),
+                    np.full(2 * n_features, fill_value=alpha),
+                    sample_weight * self.quantile,
+                    sample_weight * (1 - self.quantile),
+                ]
+            )
+            eye_n = sparse.eye(n_indices, dtype=X.dtype, format="csc")
+            eye_p = sparse.eye(n_features, dtype=X.dtype, format="csc")
             if self.fit_intercept:
                 ones = sparse.csc_matrix(np.ones(shape=(n_indices, 1), dtype=X.dtype))
-                A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
+                # TODO: Note that X can still be dense. Mabye, first convert X to
+                # sparse.
+                A_eq = sparse.bmat(
+                    [
+                        [ones, X, None, None, eye_n, -eye_n],
+                        [None, eye_p, eye_p, -eye_p, None, None],
+                    ],
+                    format="csc",
+                )
             else:
-                A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")
+                A_eq = sparse.bmat(
+                    [
+                        [X, None, None, eye_n, -eye_n],
+                        [eye_p, eye_p, -eye_p, None, None],
+                    ],
+                    format="csc",
+                )
+
+            b_eq = np.r_[y, np.zeros(n_features)]
         else:
+            # x = (s0, s, t0, t, u, v)
+            bounds = None  # all variables are >= 0
+            c = np.concatenate(
+                [
+                    np.full(2 * n_params, fill_value=alpha),
+                    sample_weight * self.quantile,
+                    sample_weight * (1 - self.quantile),
+                ]
+            )
+            if self.fit_intercept:
+                # do not penalize the intercept
+                c[0] = 0
+                c[n_params] = 0
             eye = np.eye(n_indices)
             if self.fit_intercept:
                 ones = np.ones((n_indices, 1))
@@ -271,12 +313,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             else:
                 A_eq = np.concatenate([X, -X, eye, -eye], axis=1)
 
-        b_eq = y
+            b_eq = y
 
         result = linprog(
             c=c,
             A_eq=A_eq,
             b_eq=b_eq,
+            bounds=bounds,
             method=self.solver,
             options=solver_options,
         )
@@ -298,16 +341,23 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 ConvergenceWarning,
             )
 
-        # positive slack - negative slack
-        # solution is an array with (params_pos, params_neg, u, v)
-        params = solution[:n_params] - solution[n_params : 2 * n_params]
-
         self.n_iter_ = result.nit
 
-        if self.fit_intercept:
-            self.coef_ = params[1:]
-            self.intercept_ = params[0]
+        if self.solver in ["highs", "highs-ds", "highs-ipm"]:
+            if self.fit_intercept:
+                self.coef_ = solution[1:n_params]
+                self.intercept_ = solution[0]
+            else:
+                self.coef_ = solution[0:n_params]
+                self.intercept_ = 0.0
         else:
-            self.coef_ = params
-            self.intercept_ = 0.0
+            # positive slack - negative slack
+            # solution is an array with (params_pos, params_neg, u, v)
+            params = solution[:n_params] - solution[n_params : 2 * n_params]
+            if self.fit_intercept:
+                self.coef_ = params[1:]
+                self.intercept_ = params[0]
+            else:
+                self.coef_ = params
+                self.intercept_ = 0.0
         return self
