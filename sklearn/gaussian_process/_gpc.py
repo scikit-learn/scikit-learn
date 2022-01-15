@@ -673,6 +673,13 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        if isinstance(
+            self.kernel, CompoundKernel
+        ):  # CompoundKernel is only used internally in scikit-learn
+            raise ValueError(
+                "Incompatible Kernel is used, %s" % (self.kernel.__class__)
+            )
+
         if self.kernel is None or self.kernel.requires_vector_input:
             X, y = self._validate_data(
                 X, y, multi_output=False, ensure_2d=True, dtype="numeric"

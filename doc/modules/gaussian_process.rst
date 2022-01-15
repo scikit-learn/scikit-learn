@@ -484,6 +484,8 @@ Note that magic methods ``__add__``, ``__mul___`` and ``__pow__`` are
 overridden on the Kernel objects, so one can use e.g. ``RBF() + RBF()`` as
 a shortcut for ``Sum(RBF(), RBF())``.
 
+Note: CompoundKernel cannot be used in `GaussianProcessClassifier`
+
 Radial-basis function (RBF) kernel
 ----------------------------------
 The :class:`RBF` kernel is a stationary kernel. It is also known as the "squared
