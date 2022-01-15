@@ -45,13 +45,10 @@ from sklearn.utils._testing import ignore_warnings
 
 from sklearn.exceptions import NotFittedError
 
+from unittest.mock import Mock
+
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
-np.random.seed(42)
-X_classification = np.random.rand(100, 2)
-y_classification = np.random.choice([0, 1], size=(100, 1), p=[0.2, 0.8])
-X_regression = np.random.rand(100, 2)
-y_regression = np.random.choice([0, 0.7], size=(100, 1), p=[0.2, 0.8])
 
 
 @pytest.mark.parametrize(
@@ -537,61 +534,56 @@ def test_stacking_cv_influence(stacker, X, y):
         )
 
 
-class NoFitRegressor(DummyRegressor):
-    def __init__(self, X, y, constant=0):
-        super().__init__(strategy="constant", constant=constant)
-        super().fit(X, y)
-
-    def fit(self, X, y, sample_weight=None):
-        raise AttributeError("fit is not allowed by this estimator!")
-
-
-class NoFitClassifier(DummyClassifier):
-    def __init__(self, X, y):
-        super().__init__(strategy="most_frequent")
-        super().fit(X, y)
-
-    def fit(self, X, y, sample_weight=None):
-        raise AttributeError("fit is not allowed by this estimator!")
-
-
 @pytest.mark.parametrize(
-    "stacker, X, y, acceptable_score",
+    "Stacker, Estimator, stack_method, final_estimator, X, y",
     [
         (
-            StackingClassifier(
-                estimators=[
-                    ("d0", NoFitClassifier(X=X_classification, y=y_classification)),
-                    ("d1", NoFitClassifier(X=X_classification, y=y_classification)),
-                ],
-                cv="prefit",
-                final_estimator=LogisticRegression(),
-            ),
-            X_classification,
-            y_classification,
-            0.8,
+            StackingClassifier,
+            DummyClassifier,
+            "predict_proba",
+            LogisticRegression(random_state=42),
+            X_iris,
+            y_iris,
         ),
         (
-            StackingRegressor(
-                estimators=[
-                    ("d0", NoFitRegressor(X=X_regression, y=y_regression)),
-                    ("d1", NoFitRegressor(X=X_regression, y=y_regression, constant=1)),
-                ],
-                cv="prefit",
-                final_estimator=LinearRegression(),
-            ),
-            X_regression,
-            y_regression,
-            0,
+            StackingRegressor,
+            DummyRegressor,
+            "predict",
+            LinearRegression(),
+            X_diabetes,
+            y_diabetes,
         ),
     ],
-    ids=["StackingClassifier", "StackingRegressor"],
 )
-def test_stacking_prefit(stacker, X, y, acceptable_score):
+def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y):
     # check if fit is not called when using prefit models
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-    stacker.fit(X_train, y_train)
-    assert np.isclose(stacker.score(X_test, y_test), acceptable_score, atol=0.05)
+    X_train1, X_train2, y_train1, y_train2 = train_test_split(
+        X, y, random_state=42, test_size=0.5
+    )
+    estimators = [
+        ("d0", Estimator().fit(X_train1, y_train1)),
+        ("d1", Estimator().fit(X_train1, y_train1)),
+    ]
+
+    # mock out fit and stack_method to be asserted later
+    for _, estimator in estimators:
+        estimator.fit = Mock()
+        stack_func = getattr(estimator, stack_method)
+        setattr(estimator, stack_method, Mock(side_effect=stack_func))
+
+    stacker = Stacker(
+        estimators=estimators, cv="prefit", final_estimator=final_estimator
+    )
+    stacker.fit(X_train2, y_train2)
+
+    assert stacker.estimators_ == [estimator for _, estimator in estimators]
+    # fit was not called again
+    assert all(estimator.fit.call_count == 0 for estimator in stacker.estimators_)
+
+    # stack method is called with the proper inputs
+    for estimator in stacker.estimators_:
+        stack_func_mock = getattr(estimator, stack_method)
+        stack_func_mock.assert_called_with(X_train2)
 
 
 @pytest.mark.parametrize(
@@ -602,8 +594,8 @@ def test_stacking_prefit(stacker, X, y, acceptable_score):
                 estimators=[("lr", LogisticRegression()), ("svm", SVC(max_iter=5e4))],
                 cv="prefit",
             ),
-            X_classification,
-            y_classification,
+            X_iris,
+            y_iris,
         ),
         (
             StackingRegressor(
@@ -613,8 +605,8 @@ def test_stacking_prefit(stacker, X, y, acceptable_score):
                 ],
                 cv="prefit",
             ),
-            X_regression,
-            y_regression,
+            X_diabetes,
+            y_diabetes,
         ),
     ],
 )
