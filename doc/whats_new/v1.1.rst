@@ -277,7 +277,7 @@ Changelog
 ...............................
 
 - |Fix| Raise better error if `CompoundKernel is passed to 
-  `GaussianProcessClassifier` as kernel .
+  :class:`gaussian_process.GaussianProcessClassifier` as kernel .
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
 
 :mod:`sklearn.impute`
