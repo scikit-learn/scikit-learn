@@ -256,7 +256,7 @@ def affinity_propagation(
     else:
         warnings.warn(
             "Affinity propagation did not converge and this model "
-            "does not have any exemplars, i.e. clusters.",
+            "will not have any cluster centers.",
             ConvergenceWarning,
         )
         labels = np.array([-1] * n_samples)
