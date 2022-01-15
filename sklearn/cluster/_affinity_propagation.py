@@ -253,7 +253,7 @@ def affinity_propagation(
         # Reduce labels to a sorted, gapless, list
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
-    elif K > 0:
+    else:
         warnings.warn(
             "Affinity propagation did not converge and this model "
             "does not have any exemplars, i.e. clusters.",
