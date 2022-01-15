@@ -461,3 +461,9 @@ def test_adjusted_rand_score_overflow():
     with pytest.warns(None) as record:
         adjusted_rand_score(y_true, y_pred)
     assert len(record) == 0
+
+def test_entropy_single_class():
+    """With a single class, the entropy should be 0. (regression test for #22185)"""
+    n = 200
+    l = np.zeros((n,))
+    assert all([entropy(l[:i])==0 for i in range(1, n)])
