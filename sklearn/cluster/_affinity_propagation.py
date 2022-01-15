@@ -366,9 +366,14 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
-    When ``fit`` does not converge, ``cluster_centers_`` becomes an empty
-    array and all training samples will be labelled as ``-1``. In addition,
-    ``predict`` will then label every sample as ``-1``.
+    When the algorithm does not converge, it will still return a arrays of
+    ``cluster_center_indices`` and labels if there are any exemplars/clusters,
+    however they may be degenerate and should be used with caution.
+
+    When ``fit`` does not converge, ``cluster_centers_`` is still populated
+    however it may be degenerate. In such a case, proceed with caution.
+    If ``fit`` does not converge and fails to produce any ``cluster_centers_``
+    then ``predict`` will label every sample as ``-1``.
 
     When all training samples have equal similarities and equal preferences,
     the assignment of cluster centers and labels depends on the preference.
