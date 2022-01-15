@@ -17,10 +17,10 @@ better.
 
 
 import warnings
+from math import log
 
 import numpy as np
 from scipy import sparse as sp
-from math import log
 
 from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.fixes import _astype_copy_false
