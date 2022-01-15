@@ -20,6 +20,7 @@ import warnings
 
 import numpy as np
 from scipy import sparse as sp
+from math import log
 
 from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.fixes import _astype_copy_false
@@ -800,15 +801,15 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
     pj = np.ravel(contingency.sum(axis=0))
-    log_contingency_nm = np.log(nz_val)
+    log_contingency_nm = log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
     outer = pi.take(nzx).astype(np.int64, copy=False) * pj.take(nzy).astype(
         np.int64, copy=False
     )
-    log_outer = -np.log(outer) + np.log(pi.sum()) + np.log(pj.sum())
+    log_outer = -log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (
-        contingency_nm * (log_contingency_nm - np.log(contingency_sum))
+        contingency_nm * (log_contingency_nm - log(contingency_sum))
         + contingency_nm * log_outer
     )
     mi = np.where(np.abs(mi) < np.finfo(mi.dtype).eps, 0.0, mi)
@@ -1139,4 +1140,4 @@ def entropy(labels):
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
-    return -np.sum((pi / pi_sum) * (np.log(pi) - np.log(pi_sum)))
+    return -np.sum((pi / pi_sum) * (log(pi) - log(pi_sum)))
