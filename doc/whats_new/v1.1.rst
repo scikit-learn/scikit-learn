@@ -463,7 +463,7 @@ Changelog
   clickable. :pr:`21298` by `Thomas Fan`_.
 
 :mod:`sklearn.neural_network`
-..........................
+.............................
 
 - |Enhancement| :func:`neural_network.MLPClassifier` and 
   :func:`neural_network.MLPRegressor` shows error
