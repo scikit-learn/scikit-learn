@@ -112,8 +112,9 @@ def affinity_propagation(
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
     <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
 
-    When the algorithm does not converge, it returns an empty array as
-    ``cluster_center_indices`` and ``-1`` as label for each training sample.
+    When the algorithm does not converge, it will still return a arrays of
+    ``cluster_center_indices`` and labels, however they may be degenerate
+    and should be used with caution.
 
     When all training samples have equal similarities and equal preferences,
     the assignment of cluster centers and labels depends on the preference.
@@ -231,29 +232,26 @@ def affinity_propagation(
     I = np.flatnonzero(E)
     K = I.size  # Identify exemplars
 
-    if K > 0 and not never_converged:
-        c = np.argmax(S[:, I], axis=1)
-        c[I] = np.arange(K)  # Identify clusters
-        # Refine the final set of exemplars and clusters and return results
-        for k in range(K):
-            ii = np.where(c == k)[0]
-            j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
-            I[k] = ii[j]
-
-        c = np.argmax(S[:, I], axis=1)
-        c[I] = np.arange(K)
-        labels = I[c]
-        # Reduce labels to a sorted, gapless, list
-        cluster_centers_indices = np.unique(labels)
-        labels = np.searchsorted(cluster_centers_indices, labels)
-    else:
+    if not K > 0 or never_converged:
         warnings.warn(
             "Affinity propagation did not converge, this model "
-            "will not have any cluster centers.",
+            "may return degenerate cluster centers and labels.",
             ConvergenceWarning,
         )
-        labels = np.array([-1] * n_samples)
-        cluster_centers_indices = []
+    c = np.argmax(S[:, I], axis=1)
+    c[I] = np.arange(K)  # Identify clusters
+    # Refine the final set of exemplars and clusters and return results
+    for k in range(K):
+        ii = np.where(c == k)[0]
+        j = np.argmax(np.sum(S[ii[:, np.newaxis], ii], axis=0))
+        I[k] = ii[j]
+
+    c = np.argmax(S[:, I], axis=1)
+    c[I] = np.arange(K)
+    labels = I[c]
+    # Reduce labels to a sorted, gapless, list
+    cluster_centers_indices = np.unique(labels)
+    labels = np.searchsorted(cluster_centers_indices, labels)
 
     if return_n_iter:
         return cluster_centers_indices, labels, it + 1
