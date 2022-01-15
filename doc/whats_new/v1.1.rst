@@ -273,6 +273,13 @@ Changelog
   F-statistic).
   :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Raise better error if `CompoundKernel is passed to 
+  `GaussianProcessClassifier` as kernel .
+  :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
+
 :mod:`sklearn.impute`
 .....................
 
