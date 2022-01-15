@@ -516,7 +516,10 @@ def test_nonfinite_params():
     y = rng.standard_normal(size=n_samples)
 
     clf = MLPRegressor()
-    msg = "Solver produced non-finite parameter weights"
+    msg = (
+        "Solver produced non-finite parameter weights. The input data may contain large"
+        " values and need to be preprocessed."
+    )
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
 

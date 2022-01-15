@@ -445,7 +445,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # validate parameter weights
         weights = chain(self.coefs_, self.intercepts_)
         if not all(np.isfinite(w).all() for w in weights):
-            raise ValueError("Solver produced non-finite parameter weights.")
+            raise ValueError(
+                "Solver produced non-finite parameter weights. The input data may"
+                " contain large values and need to be preprocessed."
+            )
 
         return self
 
