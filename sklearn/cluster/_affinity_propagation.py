@@ -112,8 +112,9 @@ def affinity_propagation(
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
     <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
 
-    When the algorithm does not converge, it returns an empty array as
-    ``cluster_center_indices`` and ``-1`` as label for each training sample.
+    When the algorithm does not converge, it will still return a arrays of
+    ``cluster_center_indices`` and labels if there are any exemplars/clusters,
+    however they may be degenerate and should be used with caution.
 
     When all training samples have equal similarities and equal preferences,
     the assignment of cluster centers and labels depends on the preference.
@@ -231,7 +232,13 @@ def affinity_propagation(
     I = np.flatnonzero(E)
     K = I.size  # Identify exemplars
 
-    if K > 0 and not never_converged:
+    if K > 0:
+        if never_converged:
+            warnings.warn(
+                "Affinity propagation did not converge, this model "
+                "may return degenerate cluster centers and labels.",
+                ConvergenceWarning,
+            )
         c = np.argmax(S[:, I], axis=1)
         c[I] = np.arange(K)  # Identify clusters
         # Refine the final set of exemplars and clusters and return results
@@ -246,10 +253,10 @@ def affinity_propagation(
         # Reduce labels to a sorted, gapless, list
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
-    else:
+    elif K > 0:
         warnings.warn(
-            "Affinity propagation did not converge, this model "
-            "will not have any cluster centers.",
+            "Affinity propagation did not converge and this model "
+            "does not have any exemplars, i.e. clusters.",
             ConvergenceWarning,
         )
         labels = np.array([-1] * n_samples)
