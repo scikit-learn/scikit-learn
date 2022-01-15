@@ -10,6 +10,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 import warnings
+from itertools import chain
 
 import scipy.optimize
 
@@ -442,16 +443,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             )
 
         # validate parameter weights
-        check_weights = (
-            lambda coefs, intercept: np.isfinite(coefs).all()
-            and np.isfinite(intercept).all()
-        )
-        if not np.all(
-            [
-                check_weights(coef, inter)
-                for coef, inter in zip(self.coefs_, self.intercepts_)
-            ]
-        ):
+        weights = chain(self.coefs_, self.intercepts_)
+        if not all(np.isfinite(w).all() for w in weights):
             raise ValueError("Solver produced non-finite parameter weights.")
 
         return self
