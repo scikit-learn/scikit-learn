@@ -322,6 +322,9 @@ Changelog
 - |Enhancement| :class:`linear_model.QuantileRegressor` support sparse input
   for the highs based solvers.
   :pr:`21086` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
+  In addition, those solvers now use the CSC matrix right from the
+  beginning which speeds up fitting.
+  :pr:`22206` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| Rename parameter `base_estimator` to `estimator` in
   :class:`linear_model.RANSACRegressor` to improve readability and consistency.
