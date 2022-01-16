@@ -393,8 +393,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`. When `cv`="prefit", it is assumed
-        that the `estimators_` have already been pre-fit, and will skip
-        cross validation during `fit`.
+        that the `estimators_` have already been pre-fit, and will neither be
+        fit nor cross validated during `fit`.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
@@ -654,7 +654,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         cross-validation strategies that can be used here.
 
         If “prefit” is passed, it is assumed that all `estimators` have
-        been fitted already.
+        been fitted already. Please note that if the models have been trained
+        on the same data to train the stacking model, there is a very high
+        risk of overfitting.
         .. versionadded:: 1.1
 
         .. note::
@@ -680,9 +682,11 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     Attributes
     ----------
     estimators_ : list of estimator
-        The elements of the estimators parameter, having been fitted on the
+        The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`.
+        will not appear in `estimators_`. When `cv`="prefit", it is assumed
+        that the `estimators_` have already been pre-fit, and will neither be
+        fit nor cross validated during `fit`.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
