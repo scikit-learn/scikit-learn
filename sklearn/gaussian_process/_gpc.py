@@ -266,18 +266,30 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         return self
 
-    def predict(self, X):
+    def predict(self, X, return_std_of_f=False):
         """Perform classification on an array of test vectors X.
+
+        In addition to the predicted classes, this method can also
+        return the standard deviation of the test values of the
+        latent variable f (`return_std_of_f=True`).
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
 
+        return_std_of_f: bool, default=False
+            If True, returns predictions and the standard deviation of the
+            latent function f.
+
         Returns
         -------
         C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``
+
+        f_std : ndarray of shape (n_samples,), optional
+            Standard deviation of the latent variable f after conditioning
+            on data and test vectors.
         """
         check_is_fitted(self)
 
@@ -286,16 +298,32 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         # pass it through the link function
         K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Algorithm 3.2,Line 4
+        predictions = np.where(f_star > 0, self.classes_[1], self.classes_[0])
 
-        return np.where(f_star > 0, self.classes_[1], self.classes_[0])
+        if return_std_of_f:
+            # Computes and returns the std of the latent function f
+            # Lines 5 and 6 of Algorithm 3.2. in GPML.
+            v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)
+            var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
 
-    def predict_proba(self, X):
+            return predictions, np.sqrt(var_f_star)
+
+        return predictions
+
+    def predict_proba(self, X, return_std_of_f=False):
         """Return probability estimates for the test vector X.
+
+        In addition to the probability estimates, this method can also
+        return the standard deviation of the test values of the
+        latent variable f (`return_std_of_f=True`).
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
+
+        return_std_of_f: bool, default=False
+            Return the standard deviation of the latent variable f.
 
         Returns
         -------
@@ -303,6 +331,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute ``classes_``.
+
+        f_std: array-like of shape (n_samples,), optional
+            Standard deviation of the latent variable f after conditioning
+            on data and test vectors.
         """
         check_is_fitted(self)
 
@@ -329,7 +361,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()
 
-        return np.vstack((1 - pi_star, pi_star)).T
+        probs = np.vstack((1 - pi_star, pi_star)).T
+
+        if return_std_of_f:
+            return probs, np.sqrt(var_f_star)
+
+        return probs
 
     def log_marginal_likelihood(
         self, theta=None, eval_gradient=False, clone_kernel=True
@@ -756,35 +793,68 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         return self
 
-    def predict(self, X):
+    def predict(self, X, return_std_of_f=False):
         """Perform classification on an array of test vectors X.
+
+        In addition to the predicted classes, this method can also
+        return the standard deviation of the test values of the
+        latent variable f (`return_std_of_f=True`) for binary
+        classification.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
 
+        return_std_of_f: bool, optional (default=False)
+            Returns the standard deviation of the latent variable f.
+            Only works for binary classification.
+
         Returns
         -------
         C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``.
+
+        f_std: ndarray of shape (n_samples,), optional
+            Standard deviation of the latent function f at the test vectors X.
         """
         check_is_fitted(self)
+        if self.n_classes_ > 2 and return_std_of_f:
+            assert isinstance(
+                self.base_estimator_, _BinaryGaussianProcessClassifierLaplace
+            )
+            raise ValueError(
+                "Returning the standard deviation of "
+                "the latent function f is not supported for "
+                "more than 2 classes."
+            )
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
             X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
-        return self.base_estimator_.predict(X)
+        if isinstance(self.base_estimator_, _BinaryGaussianProcessClassifierLaplace):
+            return self.base_estimator_.predict(X, return_std_of_f=return_std_of_f)
+        else:
+            return self.base_estimator_.predict(X)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, return_std_of_f=False):
         """Return probability estimates for the test vector X.
+
+        In addition to the probability estimates, this method can also
+        return the standard deviation of the test values of the
+        latent variable f (`return_std_of_f=True`) for binary
+        classification.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
+
+        return_std_of_f: bool, optional (default=False)
+            Returns the standard deviation of the latent variable f.
+            Only works for binary classification.
 
         Returns
         -------
@@ -792,6 +862,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
+
+        f_std: ndarray of shape (n_samples,), optional
+            Standard deviation of the latent function f at the test vectors X.
         """
         check_is_fitted(self)
         if self.n_classes_ > 2 and self.multi_class == "one_vs_one":
@@ -800,13 +873,28 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                 "predicting probability estimates. Use "
                 "one_vs_rest mode instead."
             )
+        if self.n_classes_ > 2 and return_std_of_f:
+            error_msg = (
+                "Returning the standard deviation of the "
+                "latent function f is only supported for GPCs "
+                "that use the Laplace Approximation."
+            )
+            if not isinstance(
+                self.base_estimator_, _BinaryGaussianProcessClassifierLaplace
+            ):
+                raise ValueError(error_msg)
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
             X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
-        return self.base_estimator_.predict_proba(X)
+        if isinstance(self.base_estimator_, _BinaryGaussianProcessClassifierLaplace):
+            return self.base_estimator_.predict_proba(
+                X, return_std_of_f=return_std_of_f
+            )
+        else:
+            return self.base_estimator_.predict_proba(X)
 
     @property
     def kernel_(self):
