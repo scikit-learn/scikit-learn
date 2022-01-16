@@ -873,23 +873,24 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                 "predicting probability estimates. Use "
                 "one_vs_rest mode instead."
             )
-        if self.n_classes_ > 2 and return_std_of_f:
+
+        can_return_f_std = isinstance(
+            self.base_estimator_, _BinaryGaussianProcessClassifierLaplace
+        )
+        if not can_return_f_std and return_std_of_f:
             error_msg = (
                 "Returning the standard deviation of the "
                 "latent function f is only supported for GPCs "
                 "that use the Laplace Approximation."
             )
-            if not isinstance(
-                self.base_estimator_, _BinaryGaussianProcessClassifierLaplace
-            ):
-                raise ValueError(error_msg)
+            raise ValueError(error_msg)
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
             X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
-        if isinstance(self.base_estimator_, _BinaryGaussianProcessClassifierLaplace):
+        if can_return_f_std:
             return self.base_estimator_.predict_proba(
                 X, return_std_of_f=return_std_of_f
             )
