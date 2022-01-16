@@ -34,6 +34,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   base.MetaEstimatorMixin
    feature_selection.SelectorMixin
 
 Functions

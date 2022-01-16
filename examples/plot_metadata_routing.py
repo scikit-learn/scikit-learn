@@ -93,7 +93,9 @@ class ExampleClassifier(ClassifierMixin, BaseEstimator):
 # some magic done in :class:`~base.BaseEstimator`. There are now three methods
 # exposed by the above class: ``fit_requests``, ``predict_requests``, and
 # ``get_metadata_routing``. There is also a ``score_requests`` for
-# ``sample_weight`` which is provided by :class:`~base.ClassifierMixin`.
+# ``sample_weight`` which is present since :class:`~base.ClassifierMixin`
+# implements a ``score``` method accepting ``sample_weight``. The same applies
+# to regressors which inherit from :class:`~base.RegressorMixin`.
 #
 # By default, no metadata is requested, which we can see as:
 
@@ -129,10 +131,12 @@ est = (
 print_routing(est)
 
 # %%
-# Please note that as long as the above estimator is not used in another
-# meta-estimator, the user does not need to set any requests for the metadata
-# and the set values are ignored, since a consumer does not validate or route
-# given metadata. A simple usage of the above estimator would work as expected.
+# .. note ::
+#     Please note that as long as the above estimator is not used in another
+#     meta-estimator, the user does not need to set any requests for the
+#     metadata and the set values are ignored, since a consumer does not
+#     validate or route given metadata. A simple usage of the above estimator
+#     would work as expected.
 
 est = ExampleClassifier()
 est.fit(X, y, sample_weight=my_weights)
@@ -189,10 +193,10 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # Let's break down different parts of the above code.
 #
 # First, the :meth:`~utils.metadata_routing.get_router_for_object` takes
-# an object from which a :class:`~utils.metadata_routing.MetadataRouting` or a
+# an object from which a :class:`~utils.metadata_routing.MetadataRouter` or a
 # :class:`~utils.metadata_routing.MetadataRequest` can be constructed. This
 # may be an estimator, or a dictionary representing a ``MetadataRequest`` or
-# ``MetadataRouting`` object. If an estimator is given, it tries to call the
+# ``MetadataRouter`` object. If an estimator is given, it tries to call the
 # estimator's ``get_metadata_routing`` and construct the object from that, and
 # if the estimator doesn't have such a method, then a default empty
 # ``MetadataRequest`` is returned.
