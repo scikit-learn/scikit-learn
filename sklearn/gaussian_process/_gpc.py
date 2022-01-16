@@ -278,7 +278,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
 
-        return_std_of_f: bool, default=False
+        return_std_of_f : bool, default=False
             If True, returns predictions and the standard deviation of the
             latent function f.
 
@@ -806,7 +806,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
 
-        return_std_of_f: bool, optional (default=False)
+        return_std_of_f : bool, optional (default=False)
             Returns the standard deviation of the latent variable f.
             Only works for binary classification.
 
@@ -815,7 +815,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``.
 
-        f_std: ndarray of shape (n_samples,), optional
+        f_std : ndarray of shape (n_samples,), optional
             Standard deviation of the latent function f at the test vectors X.
         """
         check_is_fitted(self)
@@ -852,7 +852,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
 
-        return_std_of_f: bool, optional (default=False)
+        return_std_of_f : bool, optional (default=False)
             Returns the standard deviation of the latent variable f.
             Only works for binary classification.
 
@@ -863,7 +863,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
 
-        f_std: ndarray of shape (n_samples,), optional
+        f_std : ndarray of shape (n_samples,), optional
             Standard deviation of the latent function f at the test vectors X.
         """
         check_is_fitted(self)
