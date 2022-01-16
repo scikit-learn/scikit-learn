@@ -48,7 +48,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return "(%d of %d) Processing %s" % (idx, total, name)
+        return f"({idx} of {total}) Processing {name}"
 
     @property
     def _weights_not_none(self):
@@ -75,9 +75,8 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
         if self.weights is not None and len(self.weights) != len(self.estimators):
             raise ValueError(
-                "Number of `estimators` and weights must be equal"
-                "; got %d weights, %d estimators"
-                % (len(self.weights), len(self.estimators))
+                "Number of `estimators` and weights must be equal; got"
+                f" {len(self.weights)} weights, {len(self.estimators)} estimators"
             )
 
         if self.n_jobs is not None:
@@ -341,7 +340,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         if self.voting not in ("soft", "hard"):
             raise ValueError(
-                "Voting must be 'soft' or 'hard'; got (voting=%r)" % self.voting
+                f"Voting must be 'soft' or 'hard'; got (voting={self.voting!r})"
             )
 
         self.le_ = LabelEncoder().fit(y)
