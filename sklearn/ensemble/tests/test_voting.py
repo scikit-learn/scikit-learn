@@ -36,12 +36,12 @@ X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 def test_error():
     # Test that invalid input raises the proper exception
-    voter = VotingClassifier(
+    ensemble = VotingClassifier(
         estimators=[("lr", LogisticRegression())], flatten_transform="foo"
     )
     err_msg = "flatten_transform must be an instance of"
     with pytest.raises(TypeError, match=err_msg):
-        voter.fit(X, y)
+        ensemble.fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -73,9 +73,9 @@ def test_voting_estimators_param_validation(
 ):
     # Test that invalid imput raises the proper exception
     params.update(learner)
-    est = voter(**params)
+    ensemble = voter(**params)
     with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
+        ensemble.fit(X, y)
 
 
 @pytest.mark.parametrize(
