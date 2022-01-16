@@ -820,14 +820,14 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
         if self.n_classes_ > 2 and return_std_of_f:
-            assert isinstance(
+            if not isinstance(
                 self.base_estimator_, _BinaryGaussianProcessClassifierLaplace
-            )
-            raise ValueError(
-                "Returning the standard deviation of "
-                "the latent function f is not supported for "
-                "more than 2 classes."
-            )
+            ):
+                raise ValueError(
+                    "Returning the standard deviation of "
+                    "the latent function f is not supported for "
+                    "more than 2 classes."
+                )
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
