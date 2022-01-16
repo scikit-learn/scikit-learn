@@ -185,9 +185,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             for name, est, meth in zip(names, all_estimators, stack_method)
         ]
 
-        # To train the meta-classifier using the most data as possible, we use
-        # a cross-validation to obtain the output of the stacked estimators.
-
         if self.cv == "prefit":
             # Generate predictions from prefit models
             def _predict_single_estimator(estimator, X, method):
@@ -200,6 +197,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 if est != "drop"
             ]
         else:
+            # To train the meta-classifier using the most data as possible, we use
+            # a cross-validation to obtain the output of the stacked estimators.
             # To ensure that the data provided to each estimator are the same,
             # we need to set the random state of the cv if there is one and we
             # need to take a copy.
@@ -335,6 +334,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
+        * "prefit" to assume the `estimators` are prefit, and skip cross validation
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -346,10 +346,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If “prefit” is passed, it is assumed that all base_estimators have
+        If “prefit” is passed, it is assumed that all `estimators` have
         been fitted already. Please note that if the models have been trained
         on the same data to train the stacking model, there is a very high
         risk of overfitting.
+
+        .. versionadded:: 1.1
 
         .. note::
            A larger number of split will provide no benefits if the number
@@ -388,9 +390,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Class labels.
 
     estimators_ : list of estimators
-        The elements of the estimators parameter, having been fitted on the
+        The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`.
+        will not appear in `estimators_`. When `cv`="prefit", it is assumed
+        that the `estimators_` have already been pre-fit, and will skip
+        cross validation during `fit`.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
@@ -637,6 +641,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
+        * "prefit" to assume the `estimators` are prefit, and skip cross validation
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -648,8 +653,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If “prefit” is passed, it is assumed that all base_estimators have
+        If “prefit” is passed, it is assumed that all `estimators` have
         been fitted already.
+        .. versionadded:: 1.1
 
         .. note::
            A larger number of split will provide no benefits if the number

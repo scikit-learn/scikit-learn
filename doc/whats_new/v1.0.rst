@@ -680,7 +680,8 @@ Changelog
 
 - |Enhancement| add support to use pre-fit model in :class:`ensemble.StackingClassifier`
   and :class:`ensemble.StackingRegressor`.
-  :pr:`16748` by :user:`Siqi He <siqi-he>`.
+  :pr:`16748` by :user:`Siqi He <siqi-he>` and
+  :pr:`22215` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
