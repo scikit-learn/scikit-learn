@@ -41,7 +41,7 @@ def test_error():
     )
     err_msg = "flatten_transform must be an instance of"
     with pytest.raises(TypeError, match=err_msg):
-        voter.fit(X_r, y_r)
+        voter.fit(X, y)
 
 
 @pytest.mark.parametrize(
