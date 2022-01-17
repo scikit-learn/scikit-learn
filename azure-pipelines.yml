@@ -255,29 +255,29 @@ jobs:
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         CPU_COUNT: '3'
 
-- template: build_tools/azure/windows.yml
-  parameters:
-    name: Windows
-    vmImage: windows-latest
-    dependsOn: [linting, git_commit]
-    condition: |
-      and(
-        succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        ne(variables['Build.Reason'], 'Schedule')
-      )
-    matrix:
-      py37_conda_forge_mkl:
-        DISTRIB: 'conda'
-        CONDA_CHANNEL: 'conda-forge'
-        PYTHON_VERSION: '3.7'
-        CHECK_WARNINGS: 'true'
-        PYTHON_ARCH: '64'
-        PYTEST_VERSION: '*'
-        COVERAGE: 'true'
-        # Temporary fix for setuptools to use disutils from standard lib
-        # https://github.com/numpy/numpy/issues/17216
-        SETUPTOOLS_USE_DISTUTILS: 'stdlib'
-      py37_pip_openblas_32bit:
-        PYTHON_VERSION: '3.7'
-        PYTHON_ARCH: '32'
+# - template: build_tools/azure/windows.yml
+#   parameters:
+#     name: Windows
+#     vmImage: windows-latest
+#     dependsOn: [linting, git_commit]
+#     condition: |
+#       and(
+#         succeeded(),
+#         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
+#         ne(variables['Build.Reason'], 'Schedule')
+#       )
+#     matrix:
+#       py37_conda_forge_mkl:
+#         DISTRIB: 'conda'
+#         CONDA_CHANNEL: 'conda-forge'
+#         PYTHON_VERSION: '3.7'
+#         CHECK_WARNINGS: 'true'
+#         PYTHON_ARCH: '64'
+#         PYTEST_VERSION: '*'
+#         COVERAGE: 'true'
+#         # Temporary fix for setuptools to use disutils from standard lib
+#         # https://github.com/numpy/numpy/issues/17216
+#         SETUPTOOLS_USE_DISTUTILS: 'stdlib'
+#       py37_pip_openblas_32bit:
+#         PYTHON_VERSION: '3.7'
+#         PYTHON_ARCH: '32'

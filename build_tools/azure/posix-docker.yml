@@ -36,11 +36,21 @@ jobs:
     DISTRIB: ''
     DOCKER_CONTAINER: ''
     SHOW_SHORT_SUMMARY: 'false'
+    CCACHE_DIR: $(Pipeline.Workspace)/ccache
+    CCACHE_COMPRESS: '1'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    - task: Cache@2
+      inputs:
+        key: '"ccache-v1" | "$(Agent.JobName)" | "$(Build.BuildNumber)"'
+        restoreKeys: |
+          "ccache-v1" | "$(Agent.JobName)"
+        path: $(CCACHE_DIR)
+      displayName: ccache
+      continueOnError: true
     # Container is detached and sleeping, allowing steps to run commands
     # in the container. The TEST_DIR is mapped allowing the host to access
     # the JUNITXML file
@@ -48,6 +58,7 @@ jobs:
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
         --volume $PWD:/io
+        --volume/ccache $PWD:/io/ccache
         -w /io
         --detach
         --name skcontainer
@@ -71,21 +82,23 @@ jobs:
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
         -e BLAS=$BLAS
         -e CPU_COUNT=$CPU_COUNT
+        -e CACHEDIR=$CACHEDIR
+        -e CCACHE_COMPRESS=$CCACHE_COMPRESS
         $DOCKER_CONTAINER
         sleep 1000000
       displayName: 'Start container'
     - script: >
         docker exec skcontainer ./build_tools/azure/install.sh
       displayName: 'Install'
-    - script: >
-        docker exec skcontainer ./build_tools/azure/test_script.sh
-      displayName: 'Test Library'
-    - task: PublishTestResults@2
-      inputs:
-        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
-        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
-      displayName: 'Publish Test Results'
-      condition: succeededOrFailed()
+    # - script: >
+    #     docker exec skcontainer ./build_tools/azure/test_script.sh
+    #   displayName: 'Test Library'
+    # - task: PublishTestResults@2
+    #   inputs:
+    #     testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+    #     testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+    #   displayName: 'Publish Test Results'
+    #   condition: succeededOrFailed()
     - script: >
         docker container stop skcontainer
       displayName: 'Stop container'
