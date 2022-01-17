@@ -64,16 +64,6 @@ else:
     )
 
 
-# TODO: remove this test in 1.3
-def test_neighbors_distance_metric_deprecation():
-    from sklearn.neighbors import DistanceMetric as DeprecatedDistanceMetric
-
-    with pytest.warns(
-        FutureWarning, match="sklearn.neighbors.DistanceMetric has been moved"
-    ):
-        DeprecatedDistanceMetric.get_metric("euclidean")
-
-
 @pytest.mark.parametrize("metric", METRICS_DEFAULT_PARAMS)
 def check_cdist(metric, kwargs, X1, X2):
     if metric == "wminkowski":
