@@ -391,7 +391,9 @@ class KNeighborsTransformer(
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
-        return self._fit(X)
+        self._fit(X)
+        self._n_features_out = self.n_samples_fit_
+        return self
 
     def transform(self, X):
         """Compute the (weighted) graph of Neighbors for points in X.
@@ -621,7 +623,9 @@ class RadiusNeighborsTransformer(
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
-        return self._fit(X)
+        self._fit(X)
+        self._n_features_out = self.n_samples_fit_
+        return self
 
     def transform(self, X):
         """Compute the (weighted) graph of Neighbors for points in X.
