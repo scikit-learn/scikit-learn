@@ -963,7 +963,11 @@ def test_check_array_series():
     assert_array_equal(res, np.array(["a", "b", "c"], dtype=object))
 
 
-def test_check_dataframe_mixed_float_dtypes():
+@pytest.mark.parametrize(
+    "dtype", ((np.float64, np.float32), np.float64, None, "numeric")
+)
+@pytest.mark.parametrize("bool_dtype", ("bool", "boolean"))
+def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
     # pandas dataframe will coerce a boolean into a object, this is a mismatch
     # with np.result_type which will return a float
     # check_array needs to explicitly check for bool dtype in a dataframe for
@@ -972,15 +976,48 @@ def test_check_dataframe_mixed_float_dtypes():
 
     pd = importorskip("pandas")
     df = pd.DataFrame(
-        {"int": [1, 2, 3], "float": [0, 0.1, 2.1], "bool": [True, False, True]},
+        {
+            "int": [1, 2, 3],
+            "float": [0, 0.1, 2.1],
+            "bool": pd.Series([True, False, True], dtype=bool_dtype),
+        },
         columns=["int", "float", "bool"],
     )
 
-    array = check_array(df, dtype=(np.float64, np.float32, np.float16))
+    array = check_array(df, dtype=dtype)
     expected_array = np.array(
         [[1.0, 0.0, 1.0], [2.0, 0.1, 0.0], [3.0, 2.1, 1.0]], dtype=float
     )
     assert_allclose_dense_sparse(array, expected_array)
+
+
+def test_check_dataframe_with_bools():
+    """Check that dataframe with bools return a numerical arrays."""
+    pd = importorskip("pandas")
+    df = pd.DataFrame({"bool": [True, False, True]})
+
+    array = check_array(df, dtype=None)
+    assert array.dtype == np.bool_
+    assert_array_equal(array, [[True], [False], [True]])
+
+    # common dtype is int
+    df = pd.DataFrame(
+        {"bool": [True, False, True], "int": [1, 2, 3]},
+        columns=["bool", "int"],
+    )
+    array = check_array(df, dtype="numeric")
+    assert array.dtype == np.int64
+    assert_array_equal(array, [[1, 1], [0, 2], [1, 3]])
+
+
+def test_check_dataframe_with_boolean():
+    """Check that dataframe with boolean return a float array with dtype=None"""
+    pd = importorskip("pandas", minversion="1.0")
+    df = pd.DataFrame({"bool": pd.Series([True, False, True], dtype="boolean")})
+
+    array = check_array(df, dtype=None)
+    assert array.dtype == np.float64
+    assert_array_equal(array, [[True], [False], [True]])
 
 
 class DummyMemory:

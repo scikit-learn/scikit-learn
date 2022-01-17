@@ -489,6 +489,11 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
+- |Enhancement| :func:`utils.check_array` with `dtype=None` returns numeric
+  arrays when passed in a pandas DataFrame with mixed dtypes. `dtype="numeric"`
+  will also make better infer the dtype when the DataFrame has mixed dtypes.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
