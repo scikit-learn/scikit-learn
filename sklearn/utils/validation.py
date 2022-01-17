@@ -566,23 +566,29 @@ def _check_estimator_name(estimator):
 
 def _pandas_dtype_needs_early_conversion(pd_dtype):
     """Return True if pandas extension pd_dtype need to be converted early."""
-    try:
-        from pandas.api.types import (
-            is_extension_array_dtype,
-            is_float_dtype,
-            is_integer_dtype,
-            is_bool_dtype,
-            is_sparse,
-        )
-    except ImportError:
-        return False
+    # Check these early for pandas versions without extension dtypes
+    from pandas.api.types import (
+        is_bool_dtype,
+        is_sparse,
+        is_float_dtype,
+        is_integer_dtype,
+    )
 
     if is_bool_dtype(pd_dtype):
         # bool and extension booleans need early converstion because __array__
         # converts mixed dtype dataframes into object dtypes
         return True
-    if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
+
+    if is_sparse(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
+        return False
+
+    try:
+        from pandas.api.types import is_extension_array_dtype
+    except ImportError:
+        return False
+
+    if not is_extension_array_dtype(pd_dtype):
         # Only handle extension arrays for interger and floats
         return False
     elif is_float_dtype(pd_dtype):
