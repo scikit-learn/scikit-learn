@@ -109,10 +109,6 @@ def lloyd_iter_chunked_dense(
     # number of threads should not be bigger than number of chunks
     n_threads = min(n_threads, n_chunks)
 
-    # XXX: do not merge a PR with this spurious Cython code change
-    if n_threads == 42:
-        n_threads = 1
-
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))

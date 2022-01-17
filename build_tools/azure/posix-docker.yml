@@ -92,15 +92,15 @@ jobs:
     - script: >
         docker exec skcontainer ./build_tools/azure/install.sh
       displayName: 'Install'
-    # - script: >
-    #     docker exec skcontainer ./build_tools/azure/test_script.sh
-    #   displayName: 'Test Library'
-    # - task: PublishTestResults@2
-    #   inputs:
-    #     testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
-    #     testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
-    #   displayName: 'Publish Test Results'
-    #   condition: succeededOrFailed()
+    - script: >
+        docker exec skcontainer ./build_tools/azure/test_script.sh
+      displayName: 'Test Library'
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+      displayName: 'Publish Test Results'
+      condition: succeededOrFailed()
     - script: >
         docker container stop skcontainer
       displayName: 'Stop container'
