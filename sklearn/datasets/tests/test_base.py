@@ -26,6 +26,7 @@ from sklearn.datasets._base import (
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
+from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
 from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
@@ -167,7 +168,7 @@ def test_load_csv_data_with_descr():
 @pytest.mark.parametrize(
     "filename, kwargs, expected_shape",
     [
-        ("diabetes_data.csv.gz", {}, [442, 10]),
+        ("diabetes_data_raw.csv.gz", {}, [442, 10]),
         ("diabetes_target.csv.gz", {}, [442]),
         ("digits.csv.gz", {"delimiter": ","}, [1797, 65]),
     ],
@@ -222,6 +223,22 @@ def test_load_missing_sample_image_error():
             load_sample_image("blop.jpg")
     else:
         warnings.warn("Could not load sample images, PIL is not available.")
+
+
+def test_load_diabetes_raw():
+    """Test to check that we load a scaled version by default but that we can
+    get an unscaled version when setting `scaled=False`."""
+    diabetes_raw = load_diabetes(scaled=False)
+    assert diabetes_raw.data.shape == (442, 10)
+    assert diabetes_raw.target.size, 442
+    assert len(diabetes_raw.feature_names) == 10
+    assert diabetes_raw.DESCR
+
+    diabetes_default = load_diabetes()
+
+    np.testing.assert_allclose(
+        scale(diabetes_raw.data) / (442 ** 0.5), diabetes_default.data, atol=1e-04
+    )
 
 
 @pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
