@@ -462,7 +462,7 @@ def test_adjusted_rand_score_overflow():
         adjusted_rand_score(y_true, y_pred)
     assert len(record) == 0
 
-    
+
 def test_entropy_single_class():
     """With a single class, the entropy should be 0. (regression test for #22185)"""
     n = 200
