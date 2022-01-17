@@ -82,7 +82,7 @@ jobs:
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
         -e BLAS=$BLAS
         -e CPU_COUNT=$CPU_COUNT
-        -e CACHEDIR=/ccache
+        -e CCACHE_DIR=/ccache
         -e CCACHE_COMPRESS=$CCACHE_COMPRESS
         $DOCKER_CONTAINER
         sleep 1000000
