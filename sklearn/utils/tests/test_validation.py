@@ -24,6 +24,7 @@ from sklearn.utils._testing import _convert_container
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
+from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils.fixes import parse_version
 from sklearn.utils.estimator_checks import _NotAnArray
@@ -974,7 +975,11 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
     # this situation
     # https://github.com/scikit-learn/scikit-learn/issues/15787
 
-    pd = importorskip("pandas")
+    if bool_dtype == "boolean":
+        pd = importorskip("pandas", minversion="1.0")
+    else:
+        pd = importorskip("pandas")
+
     df = pd.DataFrame(
         {
             "int": [1, 2, 3],
@@ -985,14 +990,15 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
     )
 
     array = check_array(df, dtype=dtype)
+    assert array.dtype == np.float64
     expected_array = np.array(
         [[1.0, 0.0, 1.0], [2.0, 0.1, 0.0], [3.0, 2.1, 1.0]], dtype=float
     )
     assert_allclose_dense_sparse(array, expected_array)
 
 
-def test_check_dataframe_with_bools():
-    """Check that dataframe with bools return a numerical arrays."""
+def test_check_dataframe_with_only_bool():
+    """Check that dataframe with bool return a boolean arrays."""
     pd = importorskip("pandas")
     df = pd.DataFrame({"bool": [True, False, True]})
 
@@ -1000,6 +1006,11 @@ def test_check_dataframe_with_bools():
     assert array.dtype == np.bool_
     assert_array_equal(array, [[True], [False], [True]])
 
+
+@skip_if_32bit
+def test_check_dataframe_with_bools_and_ints():
+    """Check that dataframe with bools return a numerical arrays."""
+    pd = importorskip("pandas")
     # common dtype is int
     df = pd.DataFrame(
         {"bool": [True, False, True], "int": [1, 2, 3]},
