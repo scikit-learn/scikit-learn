@@ -58,7 +58,7 @@ jobs:
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
         --volume $PWD:/io
-        --volume/ccache $PWD:/io/ccache
+        --volume $PWD/ccache:/io/ccache
         -w /io
         --detach
         --name skcontainer
