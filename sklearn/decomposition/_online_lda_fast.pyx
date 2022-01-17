@@ -59,8 +59,6 @@ def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=numpy_float_t] doc_topic,
 
     size = doc_topic.shape[0]
 
-    # Type of doc_topic and out are identical.
-    # So use the type for calculation
     total = 0.0
     for i in range(size):
         dt = doc_topic[i] + doc_topic_prior
