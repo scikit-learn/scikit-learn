@@ -292,7 +292,7 @@ some missing values to it.
 
 Now we create a :class:`FeatureUnion`. All features will be imputed using
 :class:`SimpleImputer`, in order to enable classifiers to work with this data.
-Additionally, it adds the the indicator variables from
+Additionally, it adds the indicator variables from
 :class:`MissingIndicator`.
 
   >>> transformer = FeatureUnion(
