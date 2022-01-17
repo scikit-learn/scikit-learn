@@ -10,21 +10,17 @@ from libc.math cimport exp, fabs, log
 from numpy.math cimport EULER
 
 
-# numpy_float_t and numpy_float2_t are defined in order to accept two different
+# floating2 is introduced in order to accept two different
 # dtypes for mean_change and _dirichlet_expectation_1d methods.
 # By accepting two different two dtypes, unnecessary memory allocation is
 # suppressed along with type conversion in prediction time.
-ctypedef fused numpy_float_t:
-    np.float32_t
-    np.float64_t
-
-ctypedef fused numpy_float2_t:
-    np.float32_t
-    np.float64_t
+ctypedef fused floating2:
+    float
+    double
 
 
-def mean_change(np.ndarray[ndim=1, dtype=numpy_float_t] arr_1,
-                np.ndarray[ndim=1, dtype=numpy_float2_t] arr_2):
+def mean_change(np.ndarray[ndim=1, dtype=floating] arr_1,
+                np.ndarray[ndim=1, dtype=floating2] arr_2):
     """Calculate the mean difference between two arrays.
 
     Equivalent to np.abs(arr_1 - arr2).mean().
@@ -42,9 +38,9 @@ def mean_change(np.ndarray[ndim=1, dtype=numpy_float_t] arr_1,
     return total / size
 
 
-def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=numpy_float_t] doc_topic,
+def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=floating] doc_topic,
                               double doc_topic_prior,
-                              np.ndarray[ndim=1, dtype=numpy_float2_t] out):
+                              np.ndarray[ndim=1, dtype=floating2] out):
     """Dirichlet expectation for a single sample:
         exp(E[log(theta)]) for theta ~ Dir(doc_topic)
     after adding doc_topic_prior to doc_topic, in-place.
