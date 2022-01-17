@@ -621,10 +621,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 Indices of the argkmin for each vector in X.
 
             If return_distance=True:
-              - argkmin_indices : ndarray of shape (n_samples_X, k)
-                Indices of the argkmin for each vector in X.
               - argkmin_distances : ndarray of shape (n_samples_X, k)
                 Distances to the argkmin for each vector in X.
+              - argkmin_indices : ndarray of shape (n_samples_X, k)
+                Indices of the argkmin for each vector in X.
 
         Notes
         -----
