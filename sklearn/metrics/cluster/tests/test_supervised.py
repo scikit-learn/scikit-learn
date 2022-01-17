@@ -466,5 +466,5 @@ def test_adjusted_rand_score_overflow():
 def test_entropy_single_class():
     """With a single class, the entropy should be 0. (regression test for #22185)"""
     n = 200
-    l = np.zeros((n,))
-    assert all([entropy(l[:i]) == 0 for i in range(1, n)])
+    zeros = np.zeros((n,))
+    assert all([entropy(zeros[:i]) == 0 for i in range(1, n)])
