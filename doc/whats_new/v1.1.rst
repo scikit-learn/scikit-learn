@@ -492,7 +492,7 @@ Changelog
 - |Enhancement| :func:`utils.check_array` with `dtype=None` returns numeric
   arrays when passed in a pandas DataFrame with mixed dtypes. `dtype="numeric"`
   will also make better infer the dtype when the DataFrame has mixed dtypes.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`22237` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
