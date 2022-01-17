@@ -55,10 +55,11 @@ jobs:
     # in the container. The TEST_DIR is mapped allowing the host to access
     # the JUNITXML file
     - script: >
+        mkdir -p $CCACHE_DIR
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
         --volume $PWD:/io
-        --volume $PWD/ccache:/ccache
+        --volume $CCACHE_DIR:/ccache
         -w /io
         --detach
         --name skcontainer
