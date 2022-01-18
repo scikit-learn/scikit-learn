@@ -325,7 +325,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         The default classifier is a
         :class:`~sklearn.linear_model.LogisticRegression`.
 
-    cv : int, cross-validation generator, iterable, or "prefit", default=None
+    cv : int, cross-validation generator, iterable, or 'prefit', default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
