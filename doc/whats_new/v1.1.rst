@@ -144,7 +144,7 @@ Changelog
 ................................
 
 - |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
-  with boolean arrays. :pr:`xxxxx` by `Thomas Fan`_.
+  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
