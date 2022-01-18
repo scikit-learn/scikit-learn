@@ -187,12 +187,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         if self.cv == "prefit":
             # Generate predictions from prefit models
-            def _predict_single_estimator(estimator, X, method):
-                func = getattr(estimator, method)
-                return func(X)
-
             predictions = [
-                _predict_single_estimator(est, X, method=meth)
+                getattr(est, meth)(X)
                 for est, meth in zip(all_estimators, self.stack_method_)
                 if est != "drop"
             ]
