@@ -658,7 +658,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         been fitted already. Please note that if the models have been trained
         on the same data to train the stacking model, there is a very high
         risk of overfitting.
+
         .. versionadded:: 1.1
+            The 'prefit' option was added in 1.1
 
         .. note::
            A larger number of split will provide no benefits if the number
