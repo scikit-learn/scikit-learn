@@ -42,7 +42,6 @@ def _get_dummy_metric_params_list(metric: str, n_features: int):
             # Recent scipy versions accept weights in the Minkowski metric directly:
             # type: ignore
             minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
-
         return minkowski_kwargs
 
     # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
@@ -58,6 +57,12 @@ def _get_dummy_metric_params_list(metric: str, n_features: int):
 
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
+
+    if metric == "mahalanobis":
+        A = rng.rand(n_features, n_features)
+        # Make the matrix symmetric positive definite
+        VI = A + A.T + 3 * np.eye(n_features)
+        return [dict(VI=VI)]
 
     # Case of: "euclidean", "manhattan", "chebyshev", "haversine" or any other metric.
     # In those cases, no kwargs is needed.
