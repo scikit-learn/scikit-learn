@@ -553,12 +553,28 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 **self.effective_metric_params_,
             )
         elif self._fit_method == "kd_tree":
-            self._tree = KDTree(
-                X,
-                self.leaf_size,
-                metric=self.effective_metric_,
-                **self.effective_metric_params_,
-            )
+            if (
+                self.effective_metric_ == "minkowski"
+                and "w" in self.effective_metric_params_
+            ):
+                # Be consistent with scipy 1.8 conventions: in scipy 1.8,
+                # 'wminkowski' was removed in favor of passing a
+                # weight vector directly to 'minkowski'.
+                #
+                # 'wminkowski' is not part of valid metrics for KDTree but
+                # the weights-less 'minkowski' is.
+                #
+                # Hence, we detect this case here and choose bruteforce instead.
+                self._fit_method = "brute"
+                self._tree = None
+
+            else:
+                self._tree = KDTree(
+                    X,
+                    self.leaf_size,
+                    metric=self.effective_metric_,
+                    **self.effective_metric_params_,
+                )
         elif self._fit_method == "brute":
             self._tree = None
         else:

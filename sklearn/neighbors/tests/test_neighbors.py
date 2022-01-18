@@ -22,11 +22,14 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.neighbors import VALID_METRICS_SPARSE
 from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import sp_version, parse_version
@@ -50,12 +53,55 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix, lil_
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
+COMMON_VALID_METRICS = sorted(
+    set.intersection(*map(set, neighbors.VALID_METRICS.values()))
+)
 P = (1, 2, 3, 4, np.inf)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
 neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
 neighbors.radius_neighbors_graph = ignore_warnings(neighbors.radius_neighbors_graph)
+
+
+def _get_dummy_metric_params_list(metric: str, n_features: int):
+    """Return list of dummy DistanceMetric kwargs for tests."""
+
+    # Distinguishing on cases not to compute unneeded datastructures.
+    rng = np.random.RandomState(1)
+
+    if metric == "minkowski":
+        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
+        if sp_version >= parse_version("1.8.0.dev0"):
+            # TODO: remove the test once we no longer support scipy < 1.8.0.
+            # Recent scipy versions accept weights in the Minkowski metric directly:
+            # type: ignore
+            minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
+        return minkowski_kwargs
+
+    # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
+    if metric == "wminkowski":
+        weights = rng.random_sample(n_features)
+        weights /= weights.sum()
+        wminkowski_kwargs = [dict(p=1.5, w=weights)]
+        if sp_version < parse_version("1.8.0.dev0"):
+            # wminkowski was removed in scipy 1.8.0 but should work for previous
+            # versions.
+            wminkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
+        return wminkowski_kwargs
+
+    if metric == "seuclidean":
+        return [dict(V=rng.rand(n_features))]
+
+    if metric == "mahalanobis":
+        A = rng.rand(n_features, n_features)
+        # Make the matrix symmetric positive definite
+        VI = A + A.T + 3 * np.eye(n_features)
+        return [dict(VI=VI)]
+
+    # Case of: "euclidean", "manhattan", "chebyshev", "haversine" or any other metric.
+    # In those cases, no kwargs is needed.
+    return [{}]
 
 
 def _weight_func(dist):
@@ -1275,57 +1321,22 @@ def test_neighbors_badargs():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
-def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5):
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+def test_neighbors_metrics(
+    metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
+):
     # Test computing the neighbors for various metrics
     # create a symmetric matrix
-    V = rng.rand(n_features, n_features)
-    VI = np.dot(V, V.T)
-
-    metrics = [
-        ("euclidean", {}),
-        ("manhattan", {}),
-        ("minkowski", dict(p=1)),
-        ("minkowski", dict(p=2)),
-        ("minkowski", dict(p=3)),
-        ("minkowski", dict(p=np.inf)),
-        ("chebyshev", {}),
-        ("seuclidean", dict(V=rng.rand(n_features))),
-        ("mahalanobis", dict(VI=VI)),
-        ("haversine", {}),
-    ]
-    if sp_version < parse_version("1.8.0.dev0"):
-        # TODO: remove once we no longer support scipy < 1.8.0.
-        # wminkowski was removed in scipy 1.8.0 but should work for previous
-        # versions.
-        metrics.append(
-            ("wminkowski", dict(p=3, w=rng.rand(n_features))),
-        )
-    else:
-        # Recent scipy versions accept weights in the Minkowski metric directly:
-        metrics.append(
-            ("minkowski", dict(p=3, w=rng.rand(n_features))),
-        )
-
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    X = rng.rand(n_samples, n_features)
+    X_train = rng.rand(n_samples, n_features)
+    X_test = rng.rand(n_query_pts, n_features)
 
-    test = rng.rand(n_query_pts, n_features)
+    metric_params_list = _get_dummy_metric_params_list(metric, n_features)
 
-    for metric, metric_params in metrics:
+    for metric_params in metric_params_list:
         results = {}
         p = metric_params.pop("p", 2)
-        w = metric_params.get("w", None)
         for algorithm in algorithms:
-            # KD tree doesn't support all metrics
-            if algorithm == "kd_tree" and (
-                metric not in neighbors.KDTree.valid_metrics or w is not None
-            ):
-                est = neighbors.NearestNeighbors(
-                    algorithm=algorithm, metric=metric, metric_params=metric_params
-                )
-                with pytest.raises(ValueError):
-                    est.fit(X)
-                continue
             neigh = neighbors.NearestNeighbors(
                 n_neighbors=n_neighbors,
                 algorithm=algorithm,
@@ -1334,10 +1345,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
                 metric_params=metric_params,
             )
 
-            # Haversine distance only accepts 2D data
-            feature_sl = slice(None, 2) if metric == "haversine" else slice(None)
-
-            neigh.fit(X[:, feature_sl])
+            neigh.fit(X_train)
 
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
             ExceptionToAssert = None
@@ -1349,15 +1357,20 @@ def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbor
                 ExceptionToAssert = DeprecationWarning
 
             with pytest.warns(ExceptionToAssert):
-                results[algorithm] = neigh.kneighbors(
-                    test[:, feature_sl], return_distance=True
-                )
+                results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
-        assert_array_almost_equal(results["brute"][0], results["ball_tree"][0])
-        assert_array_almost_equal(results["brute"][1], results["ball_tree"][1])
-        if "kd_tree" in results:
-            assert_array_almost_equal(results["brute"][0], results["kd_tree"][0])
-            assert_array_almost_equal(results["brute"][1], results["kd_tree"][1])
+        brute_dst, brute_idx = results["brute"]
+        kd_tree_dst, kd_tree_idx = results["kd_tree"]
+        ball_tree_dst, ball_tree_idx = results["ball_tree"]
+
+        assert_allclose(brute_dst, ball_tree_dst)
+        assert_array_equal(brute_idx, ball_tree_idx)
+
+        assert_allclose(brute_dst, kd_tree_dst)
+        assert_array_equal(brute_idx, kd_tree_idx)
+
+        assert_allclose(ball_tree_dst, kd_tree_dst)
+        assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
 def test_callable_metric():
@@ -1381,58 +1394,47 @@ def test_callable_metric():
     assert_array_almost_equal(dist1, dist2)
 
 
-def test_valid_brute_metric_for_auto_algorithm():
-    X = rng.rand(12, 12)
+@pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
+def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=12):
+    X = rng.rand(n_samples, n_features)
     Xcsr = csr_matrix(X)
 
-    # check that there is a metric that is valid for brute
-    # but not ball_tree (so we actually test something)
-    assert "cosine" in VALID_METRICS["brute"]
-    assert "cosine" not in VALID_METRICS["ball_tree"]
+    metric_params_list = _get_dummy_metric_params_list(metric, n_features)
 
-    # Metric which don't required any additional parameter
-    require_params = ["mahalanobis", "wminkowski", "seuclidean"]
-    for metric in VALID_METRICS["brute"]:
-        if metric != "precomputed" and metric not in require_params:
+    if metric == "precomputed":
+        X_precomputed = rng.random_sample((10, 4))
+        Y_precomputed = rng.random_sample((3, 4))
+        DXX = metrics.pairwise_distances(X_precomputed, metric="euclidean")
+        DYX = metrics.pairwise_distances(
+            Y_precomputed, X_precomputed, metric="euclidean"
+        )
+        nb_p = neighbors.NearestNeighbors(n_neighbors=3, metric="precomputed")
+        nb_p.fit(DXX)
+        nb_p.kneighbors(DYX)
+
+    else:
+        for metric_params in metric_params_list:
             nn = neighbors.NearestNeighbors(
-                n_neighbors=3, algorithm="auto", metric=metric
+                n_neighbors=3,
+                algorithm="auto",
+                metric=metric,
+                metric_params=metric_params,
             )
-            if metric != "haversine":
-                nn.fit(X)
-                nn.kneighbors(X)
+            # Haversine distance only accepts 2D data
+            if metric == "haversine":
+                feature_sl = slice(None, 2)
+                X = np.ascontiguousarray(X[:, feature_sl])
             else:
-                nn.fit(X[:, :2])
-                nn.kneighbors(X[:, :2])
-        elif metric == "precomputed":
-            X_precomputed = rng.random_sample((10, 4))
-            Y_precomputed = rng.random_sample((3, 4))
-            DXX = metrics.pairwise_distances(X_precomputed, metric="euclidean")
-            DYX = metrics.pairwise_distances(
-                Y_precomputed, X_precomputed, metric="euclidean"
-            )
-            nb_p = neighbors.NearestNeighbors(n_neighbors=3)
-            nb_p.fit(DXX)
-            nb_p.kneighbors(DYX)
+                X = X
 
-    for metric in VALID_METRICS_SPARSE["brute"]:
-        if metric != "precomputed" and metric not in require_params:
-            nn = neighbors.NearestNeighbors(
-                n_neighbors=3, algorithm="auto", metric=metric
-            ).fit(Xcsr)
-            nn.kneighbors(Xcsr)
+            nn.fit(X)
+            nn.kneighbors(X)
 
-    # Metric with parameter
-    VI = np.dot(X, X.T)
-    list_metrics = [
-        ("seuclidean", dict(V=rng.rand(12))),
-        ("wminkowski", dict(w=rng.rand(12))),
-        ("mahalanobis", dict(VI=VI)),
-    ]
-    for metric, params in list_metrics:
-        nn = neighbors.NearestNeighbors(
-            n_neighbors=3, algorithm="auto", metric=metric, metric_params=params
-        ).fit(X)
-        nn.kneighbors(X)
+            if metric in VALID_METRICS_SPARSE["brute"]:
+                nn = neighbors.NearestNeighbors(
+                    n_neighbors=3, algorithm="auto", metric=metric
+                ).fit(Xcsr)
+                nn.kneighbors(Xcsr)
 
 
 def test_metric_params_interface():
