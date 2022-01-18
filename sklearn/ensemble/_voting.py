@@ -510,8 +510,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> print(er.fit(X, y).predict(X))
     [ 6.8...  8.4... 12.5... 17.8... 26...  34...]
 
-    To drop an estimator, :meth:`set_params` can be used to remove it. Here we
-    dropped one of the estimators, resulting in 2 fitted estimators:
+    In the following example, we drop the `'lr'` estimator with
+    :meth:`~VotingRegressor.set_params` and fit the remaining two estimators:
 
     >>> er = er.set_params(lr='drop')
     >>> er = er.fit(X, y)
