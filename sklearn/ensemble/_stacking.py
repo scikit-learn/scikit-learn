@@ -352,6 +352,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         risk of overfitting.
 
         .. versionadded:: 1.1
+            The 'prefit' option was added in 1.1
 
         .. note::
            A larger number of split will provide no benefits if the number
