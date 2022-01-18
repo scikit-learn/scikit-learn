@@ -47,7 +47,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         programming formulation. Note that the highs methods are recommended
         for usage with `scipy>=1.6.0` because they are the fastest ones.
         Solvers "highs-ds", "highs-ipm" and "highs" support
-        sparse input data.
+        sparse input data and, in fact, always convert to sparse csc.
 
     solver_options : dict, default=None
         Additional parameters passed to :func:`scipy.optimize.linprog` as
@@ -193,6 +193,12 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 f"with scipy>=1.6.0, got {sp_version}"
             )
 
+        if sparse.issparse(X) and self.solver not in ["highs", "highs-ds", "highs-ipm"]:
+            raise ValueError(
+                f"Solver {self.solver} does not support sparse X. "
+                "Use solver 'highs' for example."
+            )
+
         if self.solver_options is not None and not isinstance(
             self.solver_options, dict
         ):
@@ -214,14 +220,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         #     min_x c x
         #           A_eq x = b_eq
         #                0 <= x
-        # x = (s0, s, t0, t, u, v) = slack variables
+        # x = (s0, s, t0, t, u, v) = slack variables >= 0
         # intercept = s0 - t0
         # coef = s - t
-        # c = (alpha * 1_p, alpha * 1_p, quantile * 1_n, (1-quantile) * 1_n)
+        # c = (0, alpha * 1_p, 0, alpha * 1_p, quantile * 1_n, (1-quantile) * 1_n)
         # residual = y - X@coef - intercept = u - v
         # A_eq = (1_n, X, -1_n, -X, diag(1_n), -diag(1_n))
         # b_eq = y
-        # p = n_features + fit_intercept
+        # p = n_features
         # n = n_samples
         # 1_n = vector of length n with entries equal one
         # see https://stats.stackexchange.com/questions/384909/
@@ -246,14 +252,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             c[0] = 0
             c[n_params] = 0
 
-        if sparse.issparse(X):
-            if self.solver not in ["highs-ds", "highs-ipm", "highs"]:
-                raise ValueError(
-                    f"Solver {self.solver} does not support sparse X. "
-                    "Use solver 'highs' for example."
-                )
-            # Note that highs methods do convert to csc.
-            # Therefore, we work with csc matrices as much as possible.
+        if self.solver in ["highs", "highs-ds", "highs-ipm"]:
+            # Note that highs methods always use a sparse CSC memory layout internally,
+            # even for optimization problems parametrized using dense numpy arrays.
+            # Therefore, we work with CSC matrices as early as possible to limit
+            # unnecessary repeated memory copies.
             eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
                 ones = sparse.csc_matrix(np.ones(shape=(n_indices, 1), dtype=X.dtype))
