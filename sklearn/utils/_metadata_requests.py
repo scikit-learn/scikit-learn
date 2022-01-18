@@ -590,7 +590,7 @@ class MetadataRouter:
 
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
-            :func:`~utils.metadata_requests.get_router_for_object` on them.
+            :func:`~utils.metadata_requests.get_routing_for_object` on them.
 
         Returns
         -------
@@ -601,7 +601,7 @@ class MetadataRouter:
             method_mapping = MethodMapping.from_str(method_mapping)
         for name, obj in objs.items():
             self._route_mappings[name] = RouterMappingPair(
-                mapping=method_mapping, router=get_router_for_object(obj)
+                mapping=method_mapping, router=get_routing_for_object(obj)
             )
         return self
 
@@ -810,7 +810,7 @@ class MetadataRouter:
         return str(repr(self))
 
 
-def get_router_for_object(obj=None):
+def get_routing_for_object(obj=None):
     """Get a ``Metadata{Router, Request}`` instance from the given object.
 
     This factory function returns a
@@ -1048,7 +1048,7 @@ class _MetadataRequester:
             A :class:`~.utils.metadata_requests.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
-            requests = get_router_for_object(self._metadata_request)
+            requests = get_routing_for_object(self._metadata_request)
         else:
             requests = self._get_default_requests()
 
@@ -1123,7 +1123,7 @@ def process_routing(obj, method, other_params, **kwargs):
     all_params = other_params if other_params is not None else dict()
     all_params.update(kwargs)
 
-    request_routing = get_router_for_object(obj)
+    request_routing = get_routing_for_object(obj)
     request_routing.validate_metadata(params=all_params, method=method)
     routed_params = request_routing.route_params(params=all_params, caller=method)
 

@@ -9,7 +9,7 @@ circular import issue.
 # License: BSD 3 clause
 
 from ._metadata_requests import RequestType  # noqa
-from ._metadata_requests import get_router_for_object  # noqa
+from ._metadata_requests import get_routing_for_object  # noqa
 from ._metadata_requests import MetadataRouter  # noqa
 from ._metadata_requests import MetadataRequest  # noqa
 from ._metadata_requests import MethodMapping  # noqa
