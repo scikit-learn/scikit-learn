@@ -168,7 +168,7 @@ def test_lasso_zero():
 
 
 def test_enet_nonfinite_params():
-    # Check elasticnet throws ValueError when dealing with non-finite parameter
+    # Check ElasticNet throws ValueError when dealing with non-finite parameter
     # values
     rng = np.random.RandomState(0)
     n_samples = 10

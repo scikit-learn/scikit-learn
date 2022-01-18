@@ -1080,7 +1080,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             raise ValueError(
                 "Coordinate descent iterations resulted in non-finite parameter"
                 " values. The input data may contain large values and need to"
-                " bepreprocessed."
+                " be preprocessed."
             )
 
         # return self for chaining fit and predict calls
