@@ -176,14 +176,16 @@ lasso_pipeline
 # %%
 from sklearn.ensemble import RandomForestRegressor
 
-rf_pipeline = make_pipeline(tree_preprocessor, RandomForestRegressor(random_state=42))
+rf_pipeline = make_pipeline(
+    tree_preprocessor, RandomForestRegressor(random_state=42, n_estimators=50)
+)
 rf_pipeline
 
 # %%
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 gbdt_pipeline = make_pipeline(
-    tree_preprocessor, HistGradientBoostingRegressor(random_state=0)
+    tree_preprocessor, HistGradientBoostingRegressor(random_state=0, max_iter=50)
 )
 gbdt_pipeline
 
@@ -261,24 +263,24 @@ for ax, (name, est) in zip(
 
     y_pred = cross_val_predict(est, X, y, n_jobs=2, verbose=0)
 
-    plot_regression_results(
-        ax,
-        y,
-        y_pred,
-        name,
-        (r"$R^2={:.2f} \pm {:.2f}$" + "\n" + r"$MAE={:.2f} \pm {:.2f}$").format(
-            np.mean(score["test_r2"]),
-            np.std(score["test_r2"]),
-            -np.mean(score["test_neg_mean_absolute_error"]),
-            np.std(score["test_neg_mean_absolute_error"]),
-        ),
-        elapsed_time,
-    )
+    # plot_regression_results(
+    #     ax,
+    #     y,
+    #     y_pred,
+    #     name,
+    #     (r"$R^2={:.2f} \pm {:.2f}$" + "\n" + r"$MAE={:.2f} \pm {:.2f}$").format(
+    #         np.mean(score["test_r2"]),
+    #         np.std(score["test_r2"]),
+    #         -np.mean(score["test_neg_mean_absolute_error"]),
+    #         np.std(score["test_neg_mean_absolute_error"]),
+    #     ),
+    #     elapsed_time,
+    # )
 
-plt.suptitle("Single predictors versus stacked predictors")
-plt.tight_layout()
-plt.subplots_adjust(top=0.9)
-plt.show()
+# plt.suptitle("Single predictors versus stacked predictors")
+# plt.tight_layout()
+# plt.subplots_adjust(top=0.9)
+# plt.show()
 
 # %%
 # The stacked regressor will combine the strengths of the different regressors.
