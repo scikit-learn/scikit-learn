@@ -124,7 +124,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.laplacian_kernel",
-    "sklearn.metrics.pairwise.paired_cosine_distances",
     "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
