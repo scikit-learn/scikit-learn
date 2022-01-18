@@ -346,7 +346,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If “prefit” is passed, it is assumed that all `estimators` have
+        If 'prefit' is passed, it is assumed that all `estimators` have
         been fitted already. Please note that if the models have been trained
         on the same data to train the stacking model, there is a very high
         risk of overfitting.
