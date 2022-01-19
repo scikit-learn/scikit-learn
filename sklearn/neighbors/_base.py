@@ -521,6 +521,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self._fit_method = self.algorithm
         self._fit_X = X
         self.n_samples_fit_ = X.shape[0]
+
         if self._fit_method == "auto":
             # A tree approach is better for small number of neighbors or small
             # number of features, with KDTree generally faster when available
