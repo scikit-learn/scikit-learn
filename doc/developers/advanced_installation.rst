@@ -205,14 +205,14 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, install `Build Tools for Visual Studio 2019
-<https://visualstudio.microsoft.com/downloads/>`_.
+First, download the `Build Tools for Visual Studio 2019 installer
+<https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
-.. warning::
+Run the downloaded `vs_buildtools.exe` file, during the installation you will
+need to make sure you select "Desktop development with C++", similarly to this
+screenshot:
 
-    You DO NOT need to install Visual Studio 2019. You only need the "Build
-    Tools for Visual Studio 2019", under "All downloads" -> "Tools for Visual
-    Studio 2019".
+.. image:: ../images/visual-studio-build-tools-selection.png
 
 Secondly, find out if you are running 64-bit or 32-bit Python. The building
 command depends on the architecture of the Python interpreter. You can check

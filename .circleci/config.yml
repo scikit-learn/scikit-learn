@@ -140,8 +140,6 @@ jobs:
             - ~/.cache/ccache
             - ~/.cache/pip
             - ~/scikit_learn_data
-            # The source build folder.
-            - ~/project/build
   deploy:
     docker:
       - image: circleci/python:3.7
