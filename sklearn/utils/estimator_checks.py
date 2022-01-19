@@ -584,9 +584,7 @@ def check_estimator(estimator=None, generate_only=False, Estimator="deprecated")
     """
 
     if estimator is None and Estimator == "deprecated":
-        msg = (
-            "Either estimator or Estimator should be passed to check_estimator."
-        )
+        msg = "Either estimator or Estimator should be passed to check_estimator."
         raise ValueError(msg)
 
     if Estimator != "deprecated":
