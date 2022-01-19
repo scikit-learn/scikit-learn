@@ -678,11 +678,6 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor`. Please use `tol=0` for
   the same behavior. :pr:`19296` by `Thomas Fan`_.
 
-- |Enhancement| add support to use pre-fit model in :class:`ensemble.StackingClassifier`
-  and :class:`ensemble.StackingRegressor`.
-  :pr:`16748` by :user:`Siqi He <siqi-he>` and
-  :pr:`22215` by :user:`Meekail Zain <micky774>`.
-
 :mod:`sklearn.feature_extraction`
 .................................
 
