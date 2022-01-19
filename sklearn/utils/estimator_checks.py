@@ -582,6 +582,13 @@ def check_estimator(estimator=None, generate_only=False, Estimator="deprecated")
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
     """
+
+    if estimator is None and Estimator == "deprecated":
+        msg = (
+            "Either estimator or Estimator should be passed to check_estimator."
+        )
+        raise ValueError(msg)
+
     if Estimator != "deprecated":
         msg = (
             "'Estimator' was deprecated in favor of 'estimator' in version 1.1 "
