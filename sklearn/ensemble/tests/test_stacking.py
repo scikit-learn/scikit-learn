@@ -592,18 +592,17 @@ def test_stacking_classifier_multilabel(stack_method, passthrough):
     clf.predict(X_test)
     clf.predict_proba(X_test)
     sc = clf.score(X_test, y_test)
-
     # (passthrough & stack_method == "predict") => (sc == 0.44)
     assert not passthrough or stack_method != "predict" or sc == pytest.approx(0.44)
 
-    # (passthrough & stack_method != "predict") => (sc == 0.48)
-    assert not passthrough or stack_method == "predict" or sc == pytest.approx(0.48)
+    # (passthrough & stack_method != "predict") => (sc == 0.6)
+    assert not passthrough or stack_method == "predict" or sc == pytest.approx(0.6)
 
-    # (not passthrough & stack_method == "predict") => (sc == 0.24)
-    assert passthrough or stack_method != "predict" or sc == pytest.approx(0.24)
+    # (not passthrough & stack_method == "predict") => (sc == 0.2)
+    assert passthrough or stack_method != "predict" or sc == pytest.approx(0.2)
 
-    # (not passthrough & stack_method != "predict") => (sc == 0.2)
-    assert passthrough or stack_method == "predict" or sc == pytest.approx(0.2)
+    # (not passthrough & stack_method != "predict") => (sc == 0.4)
+    assert passthrough or stack_method == "predict" or sc == pytest.approx(0.4)
 
     X_trans = clf.transform(X_test)
     expected_column = X_trans.shape[1]

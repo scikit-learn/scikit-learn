@@ -540,7 +540,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             The class probabilities of the input samples.
         """
         check_is_fitted(self)
-        return self.final_estimator_.predict_proba(self.transform(X))
+        y_pred = self.final_estimator_.predict_proba(self.transform(X))
+
+        if self._type_of_target == "multilabel-indicator":
+            y_pred = np.array([e[:, 0] for e in y_pred]).T
+        return y_pred
 
     @if_delegate_has_method(delegate="final_estimator_")
     def decision_function(self, X):
