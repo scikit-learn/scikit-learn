@@ -25,10 +25,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import VALID_METRICS_SPARSE
 from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_array_equal,
-)
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import sp_version, parse_version
