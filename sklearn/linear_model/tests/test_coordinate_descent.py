@@ -138,8 +138,9 @@ def test_param_invalid(params, err_type, err_msg):
     X = np.array([[-1.0], [0.0], [1.0]])
     y = [-1, 0, 1]  # just a straight line
 
+    enet = ElasticNet(**params)
     with pytest.raises(err_type, match=err_msg):
-        ElasticNet(**params).fit(X, y)
+        enet.fit(X, y)
 
 
 @pytest.mark.parametrize("order", ["C", "F"])
