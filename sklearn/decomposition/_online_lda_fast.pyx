@@ -10,8 +10,8 @@ from libc.math cimport exp, fabs, log
 from numpy.math cimport EULER
 
 
-# floating2 is introduced in order to accept two different
-# dtypes for mean_change and _dirichlet_expectation_1d methods.
+# floating2 is introduced in order to accept parameters with two different
+# dtypes for `mean_change` and `_dirichlet_expectation_1d`.
 # By accepting two different two dtypes, unnecessary memory allocation is
 # suppressed along with type conversion in prediction time.
 ctypedef fused floating2:

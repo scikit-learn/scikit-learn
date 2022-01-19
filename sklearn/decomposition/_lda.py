@@ -467,7 +467,7 @@ class LatentDirichletAllocation(
         if cal_sstats:
             # This step finishes computing the sufficient statistics for the
             # M-step.
-            suff_stats = np.zeros(self.components_.shape, self.components_.dtype)
+            suff_stats = np.zeros(self.components_.shape, dtype=self.components_.dtype)
             for sstats in sstats_list:
                 suff_stats += sstats
             suff_stats *= self.exp_dirichlet_component_
