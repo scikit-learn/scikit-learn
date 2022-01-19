@@ -556,7 +556,7 @@ def test_parameters_valid_types(param, value):
     nca.fit(X, y)
 
 
-def test_pls_feature_names_out():
+def test_nca_feature_names_out():
     Klass = NeighborhoodComponentsAnalysis
     """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`."""
 

@@ -82,7 +82,7 @@ def test_explicit_diagonal():
 
 
 @pytest.mark.parametrize("Klass", [KNeighborsTransformer, RadiusNeighborsTransformer])
-def test_pls_feature_names_out(Klass):
+def test_graph_feature_names_out(Klass):
     """Check `get_feature_names_out` for transformers defined in `_graph.py`."""
 
     n_samples_fit = 20
