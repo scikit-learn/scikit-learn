@@ -909,7 +909,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             "alpha",
             target_type=numbers.Real,
             min_val=0.0,
-            # include_boundaries="neither",
         )
 
         if self.alpha == 0:
