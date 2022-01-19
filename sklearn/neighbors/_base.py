@@ -535,7 +535,21 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ):
                 self._fit_method = "brute"
             else:
-                if self.effective_metric_ in VALID_METRICS["kd_tree"]:
+                if (
+                    self.effective_metric_ == "minkowski"
+                    and "w" in self.effective_metric_params_
+                ):
+                    # Be consistent with scipy 1.8 conventions: in scipy 1.8,
+                    # 'wminkowski' was removed in favor of passing a
+                    # weight vector directly to 'minkowski'.
+                    #
+                    # 'wminkowski' is not part of valid metrics for KDTree but
+                    # the weights-less 'minkowski' is.
+                    #
+                    # Hence, we detect this case here and choose BallTree
+                    # which supports 'wminkowski'.
+                    self._fit_method = "ball_tree"
+                elif self.effective_metric_ in VALID_METRICS["kd_tree"]:
                     self._fit_method = "kd_tree"
                 elif (
                     callable(self.effective_metric_)
@@ -557,16 +571,17 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.effective_metric_ == "minkowski"
                 and "w" in self.effective_metric_params_
             ):
-                # Be consistent with scipy 1.8 conventions: in scipy 1.8,
-                # 'wminkowski' was removed in favor of passing a
-                # weight vector directly to 'minkowski'.
-                #
-                # 'wminkowski' is not part of valid metrics for KDTree but
-                # the weights-less 'minkowski' is.
-                #
-                # Hence, we detect this case here and choose bruteforce instead.
-                self._fit_method = "brute"
-                self._tree = None
+                warnings.warn(
+                    "KDTree does not support Weighted Minkowski. "
+                    "Falling back on BallTree."
+                )
+                self._fit_method = "ball_tree"
+                self._tree = BallTree(
+                    X,
+                    self.leaf_size,
+                    metric=self.effective_metric_,
+                    **self.effective_metric_params_,
+                )
 
             else:
                 self._tree = KDTree(
