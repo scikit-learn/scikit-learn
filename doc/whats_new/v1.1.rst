@@ -427,6 +427,14 @@ Changelog
   instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
   :user:`Lucy Jimenez <LucyJimenez>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Enhancement| :func:`neural_network.MLPClassifier` and 
+  :func:`neural_network.MLPRegressor` show error
+  messages when optimizers produce non-finite parameter weights. :pr:`22150`
+  by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
