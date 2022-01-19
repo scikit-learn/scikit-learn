@@ -26,7 +26,6 @@ from sklearn.neighbors import VALID_METRICS_SPARSE
 from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
-    assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
 )
@@ -1321,22 +1320,57 @@ def test_neighbors_badargs():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
-def test_neighbors_metrics(
-    metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
-):
+def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5):
     # Test computing the neighbors for various metrics
     # create a symmetric matrix
+    V = rng.rand(n_features, n_features)
+    VI = np.dot(V, V.T)
+
+    metrics = [
+        ("euclidean", {}),
+        ("manhattan", {}),
+        ("minkowski", dict(p=1)),
+        ("minkowski", dict(p=2)),
+        ("minkowski", dict(p=3)),
+        ("minkowski", dict(p=np.inf)),
+        ("chebyshev", {}),
+        ("seuclidean", dict(V=rng.rand(n_features))),
+        ("mahalanobis", dict(VI=VI)),
+        ("haversine", {}),
+    ]
+    if sp_version < parse_version("1.8.0.dev0"):
+        # TODO: remove once we no longer support scipy < 1.8.0.
+        # wminkowski was removed in scipy 1.8.0 but should work for previous
+        # versions.
+        metrics.append(
+            ("wminkowski", dict(p=3, w=rng.rand(n_features))),
+        )
+    else:
+        # Recent scipy versions accept weights in the Minkowski metric directly:
+        metrics.append(
+            ("minkowski", dict(p=3, w=rng.rand(n_features))),
+        )
+
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    X_train = rng.rand(n_samples, n_features)
-    X_test = rng.rand(n_query_pts, n_features)
+    X = rng.rand(n_samples, n_features)
 
-    metric_params_list = _generate_test_params_for(metric, n_features)
+    test = rng.rand(n_query_pts, n_features)
 
-    for metric_params in metric_params_list:
+    for metric, metric_params in metrics:
         results = {}
         p = metric_params.pop("p", 2)
+        w = metric_params.get("w", None)
         for algorithm in algorithms:
+            # KD tree doesn't support all metrics
+            if algorithm == "kd_tree" and (
+                metric not in neighbors.KDTree.valid_metrics or w is not None
+            ):
+                est = neighbors.NearestNeighbors(
+                    algorithm=algorithm, metric=metric, metric_params=metric_params
+                )
+                with pytest.raises(ValueError):
+                    est.fit(X)
+                continue
             neigh = neighbors.NearestNeighbors(
                 n_neighbors=n_neighbors,
                 algorithm=algorithm,
@@ -1344,6 +1378,9 @@ def test_neighbors_metrics(
                 p=p,
                 metric_params=metric_params,
             )
+
+            # Haversine distance only accepts 2D data
+            feature_sl = slice(None, 2) if metric == "haversine" else slice(None)
 
             if (
                 metric == "minkowski"
@@ -1357,7 +1394,7 @@ def test_neighbors_metrics(
                     "or algorithm='brute' instead"
                 )
 
-            neigh.fit(X_train)
+            neigh.fit(X[:, feature_sl])
 
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
             ExceptionToAssert = None
@@ -1369,20 +1406,15 @@ def test_neighbors_metrics(
                 ExceptionToAssert = DeprecationWarning
 
             with pytest.warns(ExceptionToAssert):
-                results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+                results[algorithm] = neigh.kneighbors(
+                    test[:, feature_sl], return_distance=True
+                )
 
-        brute_dst, brute_idx = results["brute"]
-        kd_tree_dst, kd_tree_idx = results["kd_tree"]
-        ball_tree_dst, ball_tree_idx = results["ball_tree"]
-
-        assert_allclose(brute_dst, ball_tree_dst)
-        assert_array_equal(brute_idx, ball_tree_idx)
-
-        assert_allclose(brute_dst, kd_tree_dst)
-        assert_array_equal(brute_idx, kd_tree_idx)
-
-        assert_allclose(ball_tree_dst, kd_tree_dst)
-        assert_array_equal(ball_tree_idx, kd_tree_idx)
+        assert_array_almost_equal(results["brute"][0], results["ball_tree"][0])
+        assert_array_almost_equal(results["brute"][1], results["ball_tree"][1])
+        if "kd_tree" in results:
+            assert_array_almost_equal(results["brute"][0], results["kd_tree"][0])
+            assert_array_almost_equal(results["brute"][1], results["kd_tree"][1])
 
 
 def test_callable_metric():
