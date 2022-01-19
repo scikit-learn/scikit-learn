@@ -580,8 +580,9 @@ cdef class MinkowskiDistance(DistanceMetric):
 
     def _validate_data(self, X):
         if self.size > 0 and X.shape[1] != self.size:
-            raise ValueError('MinkowskiDistance: size of w %d should match '
-                             'col of input %d' % (self.size, X.shape[1]))
+            raise ValueError("MinkowskiDistance: the size of w must match "
+                             f"the number of features ({X.shape[1]}). "
+                             f"Currently len(w)={self.size}.")
 
     cdef inline DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
@@ -637,7 +638,11 @@ cdef class WMinkowskiDistance(DistanceMetric):
         warn("WMinkowskiDistance is deprecated in version 1.1 and will be "
             "removed in version 1.3. Use MinkowskiDistance instead. Note "
             "that in MinkowskiDistance, the weights are applied to the "
-            "absolute differences raised to the p power.", FutureWarning)
+            "absolute differences raised to the p power. This is different "
+            "from WMinkowskiDistance where weights are applied to the "
+            "absolute differences before raising to the p power. "
+            "The deprecation aims to remain consistent with SciPy 1.8 "
+            "convention.", FutureWarning)
 
         if p < 1:
             raise ValueError("p must be greater than 1")

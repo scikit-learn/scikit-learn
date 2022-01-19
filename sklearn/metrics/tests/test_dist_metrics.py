@@ -298,9 +298,10 @@ def test_minkowski_metric_validate_weights():
 
     w2 = rng.random_sample(d + 1)
     dm = DistanceMetric.get_metric("minkowski", p=3, w=w2)
-    msg = "MinkowskiDistance: size of w %d should match col of input %d" % (
-        w2.shape[0],
-        X1.shape[1],
+    msg = (
+        "MinkowskiDistance: the size of w must match "
+        f"the number of features \\({X1.shape[1]}\\). "
+        f"Currently len\\(w\\)={w2.shape[0]}."
     )
     with pytest.raises(ValueError, match=msg):
         dm.pairwise(X1, X2)
@@ -319,6 +320,7 @@ def test_wminkowski_deprecated():
 @pytest.mark.parametrize("p", [1, 1.5, 3])
 def test_wminkowski_minkowski_equivalence(p):
     w = rng.random_sample(d)
+    # Weights are rescaled for consistency w.r.t scipy 1.8 refactoring of 'minkowski'
     dm_wmks = DistanceMetric.get_metric("wminkowski", p=p, w=(w) ** (1 / p))
     dm_mks = DistanceMetric.get_metric("minkowski", p=p, w=w)
     D_wmks = dm_wmks.pairwise(X1, X2)
