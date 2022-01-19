@@ -470,7 +470,6 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
-
 Code and Documentation Contributors
 -----------------------------------
 
