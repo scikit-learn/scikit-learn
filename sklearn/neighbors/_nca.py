@@ -251,7 +251,7 @@ class NeighborhoodComponentsAnalysis(
 
         # Reshape the solution found by the optimizer
         self.components_ = opt_result.x.reshape(-1, X.shape[1])
-        self._n_features_out = self.components_
+        self._n_features_out = self.components_.shape[1]
 
         # Stop timer
         t_train = time.time() - t_train
