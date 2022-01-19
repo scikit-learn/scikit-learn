@@ -557,16 +557,15 @@ def test_parameters_valid_types(param, value):
 
 
 def test_nca_feature_names_out():
-    Klass = NeighborhoodComponentsAnalysis
     """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`."""
 
     X = iris_data
     y = iris_target
 
-    est = Klass().fit(X, y)
+    est = NeighborhoodComponentsAnalysis().fit(X, y)
     names_out = est.get_feature_names_out()
 
-    class_name_lower = Klass.__name__.lower()
+    class_name_lower = est.__class__.__name__.lower()
     expected_names_out = np.array(
         [f"{class_name_lower}{i}" for i in range(est.components_.shape[1])],
         dtype=object,
