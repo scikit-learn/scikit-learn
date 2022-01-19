@@ -64,7 +64,7 @@ neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
 neighbors.radius_neighbors_graph = ignore_warnings(neighbors.radius_neighbors_graph)
 
 
-def _get_dummy_metric_params_list(metric: str, n_features: int):
+def _generate_test_params_for(metric: str, n_features: int):
     """Return list of dummy DistanceMetric kwargs for tests."""
 
     # Distinguishing on cases not to compute unneeded datastructures.
@@ -1331,7 +1331,7 @@ def test_neighbors_metrics(
     X_train = rng.rand(n_samples, n_features)
     X_test = rng.rand(n_query_pts, n_features)
 
-    metric_params_list = _get_dummy_metric_params_list(metric, n_features)
+    metric_params_list = _generate_test_params_for(metric, n_features)
 
     for metric_params in metric_params_list:
         results = {}
@@ -1396,10 +1396,15 @@ def test_callable_metric():
 
 @pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
 def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=12):
+    # Any valid metric for algorithm="brute" should be valid for algorithm="auto"
+    # it's the responsibility of the estimator to select which algorithm is likely
+    # to be the most efficient from the subset of the algorithm compatible with
+    # that metric (and params). If the worst case, algorithm="brute" is the ultimate
+    # fallback.
     X = rng.rand(n_samples, n_features)
     Xcsr = csr_matrix(X)
 
-    metric_params_list = _get_dummy_metric_params_list(metric, n_features)
+    metric_params_list = _generate_test_params_for(metric, n_features)
 
     if metric == "precomputed":
         X_precomputed = rng.random_sample((10, 4))
@@ -1422,10 +1427,7 @@ def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=
             )
             # Haversine distance only accepts 2D data
             if metric == "haversine":
-                feature_sl = slice(None, 2)
-                X = np.ascontiguousarray(X[:, feature_sl])
-            else:
-                X = X
+                X = np.ascontiguousarray(X[:, :2])
 
             nn.fit(X)
             nn.kneighbors(X)
