@@ -273,6 +273,13 @@ Changelog
   F-statistic).
   :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| :class:`gaussian_process.GaussianProcessClassifier` raises
+  a more informative error if `CompoundKernel` is passed via `kernel`.
+  :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -416,14 +423,22 @@ Changelog
   ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
   array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
 
+- |Enhancement| Adds :term:`get_feature_names_out` to
+  :class:`neighbors.RadiusNeighborsTransformer`, :class:`neighbors.KNeighborsTransformer`
+  and :class:`neighbors.NeighborhoodComponentsAnalysis`. :pr:`22212` by
+  :user : `Meekail Zain <micky774>`.
+
 - |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
   instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
   :user:`Lucy Jimenez <LucyJimenez>`.
 
-- |API| Adds :term:`get_feature_names_out` to
-  :class:`neighbors.RadiusNeighborsTransformer`, :class:`neighbors.KNeighborsTransformer`
-  and :class:`neighbors.NeighborhoodComponentsAnalysis`. :pr:`22212` by
-  :user : `Meekail Zain <micky774>`.
+:mod:`sklearn.neural_network`
+.............................
+
+- |Enhancement| :func:`neural_network.MLPClassifier` and 
+  :func:`neural_network.MLPRegressor` show error
+  messages when optimizers produce non-finite parameter weights. :pr:`22150`
+  by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
 
 :mod:`sklearn.pipeline`
 .......................
