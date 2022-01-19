@@ -1345,6 +1345,18 @@ def test_neighbors_metrics(
                 metric_params=metric_params,
             )
 
+            if (
+                metric == "minkowski"
+                and metric_params.get("w") is not None
+                and algorithm == "kd_tree"
+            ):
+                pytest.skip(
+                    "algorithm='kd_tree' is not valid for "
+                    "metric='minkowski' with a weight parameter 'w': "
+                    "try algorithm='ball_tree' "
+                    "or algorithm='brute' instead"
+                )
+
             neigh.fit(X_train)
 
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0

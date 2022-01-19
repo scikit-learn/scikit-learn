@@ -537,7 +537,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 if (
                     self.effective_metric_ == "minkowski"
-                    and "w" in self.effective_metric_params_
+                    and self.effective_metric_params_.get("w") is not None
                 ):
                     # Be consistent with scipy 1.8 conventions: in scipy 1.8,
                     # 'wminkowski' was removed in favor of passing a
@@ -569,18 +569,13 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         elif self._fit_method == "kd_tree":
             if (
                 self.effective_metric_ == "minkowski"
-                and "w" in self.effective_metric_params_
+                and self.effective_metric_params_.get("w") is not None
             ):
-                warnings.warn(
-                    "KDTree does not support Weighted Minkowski. "
-                    "Falling back on BallTree."
-                )
-                self._fit_method = "ball_tree"
-                self._tree = BallTree(
-                    X,
-                    self.leaf_size,
-                    metric=self.effective_metric_,
-                    **self.effective_metric_params_,
+                raise ValueError(
+                    "algorithm='kd_tree' is not valid for "
+                    "metric='minkowski' with a weight parameter 'w': "
+                    "try algorithm='ball_tree' "
+                    "or algorithm='brute' instead."
                 )
 
             else:
