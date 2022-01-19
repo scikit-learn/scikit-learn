@@ -113,7 +113,6 @@ def _update_doc_distribution(
             cnts = X[idx_d, ids]
 
         doc_topic_d = doc_topic_distr[idx_d, :]
-
         # The next one is a copy, since the inner loop overwrites it.
         exp_doc_topic_d = exp_doc_topic[idx_d, :].copy()
         exp_topic_word_d = exp_topic_word_distr[:, ids]
