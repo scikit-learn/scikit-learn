@@ -165,7 +165,7 @@ def safe_sparse_dot(a, b, *, dense_output=False):
 def randomized_range_finder(
     A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
 ):
-    """Computes an orthonormal matrix whose range approximates the range of A.
+    """Compute an orthonormal matrix whose range approximates the range of A.
 
     Parameters
     ----------

@@ -147,7 +147,7 @@ def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
 
 def _parallel_build_trees(
     tree,
-    forest,
+    bootstrap,
     X,
     y,
     sample_weight,
@@ -162,7 +162,7 @@ def _parallel_build_trees(
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
-    if forest.bootstrap:
+    if bootstrap:
         n_samples = X.shape[0]
         if sample_weight is None:
             curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
@@ -475,7 +475,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )(
                 delayed(_parallel_build_trees)(
                     t,
-                    self,
+                    self.bootstrap,
                     X,
                     y,
                     sample_weight,
@@ -1309,6 +1309,7 @@ class RandomForestClassifier(ForestClassifier):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
@@ -1650,6 +1651,7 @@ class RandomForestRegressor(ForestRegressor):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
@@ -1992,6 +1994,7 @@ class ExtraTreesClassifier(ForestClassifier):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
@@ -2309,6 +2312,7 @@ class ExtraTreesRegressor(ForestRegressor):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
@@ -2352,7 +2356,7 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg = ExtraTreesRegressor(n_estimators=100, random_state=0).fit(
     ...    X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.2708...
+    0.2727...
     """
 
     def __init__(
@@ -2546,6 +2550,7 @@ class RandomTreesEmbedding(BaseForest):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
