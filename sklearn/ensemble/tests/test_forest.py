@@ -244,7 +244,6 @@ def test_poisson_vs_mse():
         # As squared_error might correctly predict 0 in train set, its train
         # score can be better than Poisson. This is no longer the case for the
         # test set. But keep the above comment for clipping in mind.
-        print(val, metric_poi, metric_mse, metric_dummy)
         if val == "test":
             assert metric_poi < metric_mse
         assert metric_poi < 0.5 * metric_dummy
