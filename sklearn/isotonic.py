@@ -416,6 +416,22 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         """
         return self.transform(T)
 
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Ignored.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            An ndarray with one string i.e. ["isotonicregression0"]
+        """
+        class_name = self.__class__.__name__.lower()
+        return np.asarray([f"{class_name}0"], dtype=object)
+
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator."""
         state = super().__getstate__()

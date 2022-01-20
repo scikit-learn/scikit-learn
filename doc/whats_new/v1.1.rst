@@ -314,6 +314,12 @@ Changelog
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+:mod:`sklearn.isotonic`
+.......................
+
+- |Enhancement| Adds `get_feature_names_out` to `IsotonicRegression`.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
