@@ -2805,7 +2805,6 @@ def tpr_fpr_tnr_fnr_score(
     specificity_score : Specificity, selectivity or true negative rate (TNR).
     multilabel_confusion_matrix : Confusion matrices for each class or sample.
     balanced_accuracy_score : Accuracy metric for imbalanced datasets.
-    tpr_fpr_tnr_fnr_score : Four basic (mis-)classification rates.
     npv_score : Negative predictive value (NPV).
 
     References
@@ -2821,6 +2820,7 @@ def tpr_fpr_tnr_fnr_score(
     Examples
     --------
     >>> import numpy as np
+    >>> from sklearn.metrics import tpr_fpr_tnr_fnr_score
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> tpr_fpr_tnr_fnr_score(y_true, y_pred, average='macro')
