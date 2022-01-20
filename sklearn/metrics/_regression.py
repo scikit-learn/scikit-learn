@@ -57,7 +57,7 @@ __ALL__ = [
     "mean_poisson_deviance",
     "mean_gamma_deviance",
     "d2_tweedie_score",
-    "d2_pinball_loss_score",
+    "d2_pinball_score",
     "d2_absolute_error_score",
 ]
 
@@ -1203,11 +1203,11 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     return 1 - numerator / denominator
 
 
-def d2_pinball_loss_score(
+def d2_pinball_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
     """
-    :math:`D^2` regression score function, fraction of pinball loss explained.
+    :math:`D^2` regression score function, fraction of pinball deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical alpha-quantile of
@@ -1248,7 +1248,7 @@ def d2_pinball_loss_score(
     Returns
     -------
     score : float or ndarray of floats
-        The :math:`D^2` score with a pinball loss deviance
+        The :math:`D^2` score with a pinball deviance
         or ndarray of scores if `multioutput='raw_values'`.
 
     Notes
@@ -1267,16 +1267,16 @@ def d2_pinball_loss_score(
 
     Examples
     --------
-    >>> from sklearn.metrics import d2_pinball_loss_score
+    >>> from sklearn.metrics import d2_pinball_score
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 3, 3]
-    >>> d2_pinball_loss_score(y_true, y_pred)
+    >>> d2_pinball_score(y_true, y_pred)
     0.5
-    >>> d2_pinball_loss_score(y_true, y_pred, alpha=0.9)
+    >>> d2_pinball_score(y_true, y_pred, alpha=0.9)
     0.772...
-    >>> d2_pinball_loss_score(y_true, y_pred, alpha=0.1)
+    >>> d2_pinball_score(y_true, y_pred, alpha=0.1)
     -1.045...
-    >>> d2_pinball_loss_score(y_true, y_true, alpha=0.1)
+    >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -1429,6 +1429,6 @@ def d2_absolute_error_score(
     >>> d2_absolute_error_score(y_true, y_pred)
     -1.0
     """
-    return d2_pinball_loss_score(
+    return d2_pinball_score(
         y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
     )

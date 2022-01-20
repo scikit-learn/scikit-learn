@@ -102,7 +102,7 @@ Scoring                                Function                                 
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
 'd2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
-'d2_pinball_loss_score'                :func:`metrics.d2_pinball_loss_score`
+'d2_pinball_score'                     :func:`metrics.d2_pinball_score`
 'd2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
 
@@ -1966,7 +1966,7 @@ The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
 :func:`mean_absolute_error`, :func:`explained_variance_score`,
-:func:`r2_score`, :func:`mean_pinball_loss`, :func:`d2_pinball_loss_score`
+:func:`r2_score`, :func:`mean_pinball_loss`, :func:`d2_pinball_score`
 and :func:`d2_absolute_error_score`.
 
 
@@ -2447,11 +2447,11 @@ A scorer object with a specific choice of ``power`` can be built by::
   >>> from sklearn.metrics import d2_tweedie_score, make_scorer
   >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
 
-D² pinball loss score
+D² pinball score
 ^^^^^^^^^^^^^^^^^^^^^
 
-The :func:`d2_pinball_loss_score` function implements the special case
-of D² with a pinball loss, i.e.:
+The :func:`d2_pinball_score` function implements the special case
+of D² with a pinball deviance, i.e.:
 
 .. math::
 
@@ -2460,13 +2460,13 @@ of D² with a pinball loss, i.e.:
 The argument ``alpha`` defines the slope of the pinball loss
 :func:`mean_pinball_loss`. It determines the quantile level ``alpha``
 for which the pinball loss and also D2 are optimal.
-Note that for `alpha=0.5` (the defualt) :func:`d2_pinball_loss_score`
+Note that for `alpha=0.5` (the defualt) :func:`d2_pinball_score`
 equals :func:`d2_absolute_error_score`.
 
 A scorer object with a specific choice of ``alpha`` can be built by::
 
-  >>> from sklearn.metrics import d2_pinball_loss_score, make_scorer
-  >>> d2_pinball_loss_score_08 = make_scorer(d2_pinball_loss_score, alpha=0.8)
+  >>> from sklearn.metrics import d2_pinball_score, make_scorer
+  >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
 
 D² absolute error score
 ^^^^^^^^^^^^^^^^^^^^^^^
