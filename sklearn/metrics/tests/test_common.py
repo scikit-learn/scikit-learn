@@ -187,9 +187,7 @@ CLASSIFICATION_METRICS = {
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
     "samples_jaccard_score": partial(jaccard_score, average="samples"),
-    "samples_tpr_fpr_tnr_fnr_score": partial(
-        tpr_fpr_tnr_fnr_score, average="samples"
-    ),
+    "samples_tpr_fpr_tnr_fnr_score": partial(tpr_fpr_tnr_fnr_score, average="samples"),
     "samples_specificity_score": partial(specificity_score, average="samples"),
     "samples_npv_score": partial(npv_score, average="samples"),
     "cohen_kappa_score": cohen_kappa_score,
