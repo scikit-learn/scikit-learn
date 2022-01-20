@@ -231,10 +231,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.0
         # Getting column names if monotonic_cst is a dict
-        if hasattr(X, "columns"):
-            column_names = np.asarray(X.columns, dtype=object)
-        else:
-            column_names = None
+        column_names = np.asarray(X.columns, dtype=object) if hasattr(X, "columns") else None
 
         X, y = self._validate_data(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
