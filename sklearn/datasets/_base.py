@@ -1144,7 +1144,6 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         import pandas as pd
         import numpy as np
 
-
         data_url = "http://lib.stat.cmu.edu/datasets/boston"
         raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
         data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
@@ -1162,8 +1161,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         from sklearn.datasets import fetch_openml
         housing = fetch_openml(name="house_prices", as_frame=True)
 
-    for the Ames housing dataset.
-    """
+    for the Ames housing dataset."""
 )
 def load_boston(*, return_X_y=False):
     r"""Load and return the boston house-prices dataset (regression).
@@ -1200,7 +1198,6 @@ def load_boston(*, return_X_y=False):
 
             import pandas as pd  # doctest: +SKIP
             import numpy as np
-
 
             data_url = "http://lib.stat.cmu.edu/datasets/boston"
             raw_df = pd.read_csv(data_url, sep="s+", skiprows=22, header=None)
