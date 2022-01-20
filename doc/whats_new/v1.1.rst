@@ -234,6 +234,12 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+
+:mod:`sklearn.feature_selection`
+................................
+- |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
+  :pr:`21837` by :user:`Louis Wagner <lrwagner>`
+
 - |Efficiency|  Fitting a :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`, and :class:`ensemble.RandomTreesEmbedding`
