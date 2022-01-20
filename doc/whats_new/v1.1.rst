@@ -374,6 +374,11 @@ Changelog
   A deprecation cycle was introduced.
   :pr:`21576` by :user:`Paul-Emile Dugnat <pedugnat>`.
 
+- |API| The `"wminkowski"` metric of :class:`sklearn.metrics.DistanceMetric` is deprecated
+  and will be removed in version 1.3. Instead the existing `"minkowski"` metric now takes
+  in an optional `w` parameter for weights. This deprecation aims at remaining consistent
+  with SciPy 1.8 convention. :pr:`21873` by :user:`Yar Khine Phyo <yarkhinephyo>`
+
 - |Fix| :func:`metrics.silhouette_score` now supports integer input for precomputed
   distances. :pr:`22108` by `Thomas Fan`_.
 
