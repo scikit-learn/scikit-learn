@@ -387,7 +387,6 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "preprocessing",
     "manifold",
     "neighbors",
-    "neural_network",
 ]
 
 
