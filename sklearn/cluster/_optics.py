@@ -673,13 +673,13 @@ def cluster_optics_xi(
     Parameters
     ----------
     reachability : ndarray of shape (n_samples,)
-        Reachability distances calculated by OPTICS (`reachability_`)
+        Reachability distances calculated by OPTICS (`reachability_`).
 
     predecessor : ndarray of shape (n_samples,)
         Predecessors calculated by OPTICS.
 
     ordering : ndarray of shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
+        OPTICS ordered point indices (`ordering_`).
 
     min_samples : int > 1 or float between 0 and 1
         The same as the min_samples given to OPTICS. Up and down steep regions

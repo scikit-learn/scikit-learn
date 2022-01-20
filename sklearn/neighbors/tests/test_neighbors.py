@@ -1315,6 +1315,8 @@ def test_neighbors_badargs():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 def test_neighbors_metrics(n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5):
     # Test computing the neighbors for various metrics
     # create a symmetric matrix
@@ -1421,6 +1423,8 @@ def test_callable_metric():
     assert_array_almost_equal(dist1, dist2)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
 def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=12):
     # Any valid metric for algorithm="brute" should be valid for algorithm="auto"
