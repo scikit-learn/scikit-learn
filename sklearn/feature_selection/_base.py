@@ -6,12 +6,19 @@
 
 from abc import ABCMeta, abstractmethod
 from warnings import warn
+from operator import attrgetter
 
 import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import check_array, safe_mask
+from ..utils import (
+    check_array,
+    safe_mask,
+    safe_sqr,
+)
+from ..utils._tags import _safe_tags
+from ..utils.validation import _check_feature_names_in
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -25,11 +32,11 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
     def get_support(self, indices=False):
         """
-        Get a mask, or integer index, of the features selected
+        Get a mask, or integer index, of the features selected.
 
         Parameters
         ----------
-        indices : boolean (default False)
+        indices : bool, default=False
             If True, the return value will be an array of integers, rather
             than a boolean mask.
 
@@ -71,22 +78,33 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        tags = self._get_tags()
-        X = check_array(X, dtype=None, accept_sparse='csr',
-                        force_all_finite=not tags.get('allow_nan', True))
+        # note: we use _safe_tags instead of _get_tags because this is a
+        # public Mixin.
+        X = self._validate_data(
+            X,
+            dtype=None,
+            accept_sparse="csr",
+            force_all_finite=not _safe_tags(self, key="allow_nan"),
+            reset=False,
+        )
+        return self._transform(X)
+
+    def _transform(self, X):
+        """Reduce X to the selected features."""
         mask = self.get_support()
         if not mask.any():
-            warn("No features were selected: either the data is"
-                 " too noisy or the selection test too strict.",
-                 UserWarning)
+            warn(
+                "No features were selected: either the data is"
+                " too noisy or the selection test too strict.",
+                UserWarning,
+            )
             return np.empty(0).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
         return X[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
-        """
-        Reverse the transformation operation
+        """Reverse the transformation operation.
 
         Parameters
         ----------
@@ -107,8 +125,11 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             it = self.inverse_transform(np.diff(X.indptr).reshape(1, -1))
             col_nonzeros = it.ravel()
             indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
-            Xt = csc_matrix((X.data, X.indices, indptr),
-                            shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
+            Xt = csc_matrix(
+                (X.data, X.indices, indptr),
+                shape=(X.shape[0], len(indptr) - 1),
+                dtype=X.dtype,
+            )
             return Xt
 
         support = self.get_support()
@@ -121,3 +142,95 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         Xt = np.zeros((X.shape[0], support.size), dtype=X.dtype)
         Xt[:, support] = X
         return Xt
+
+    def get_feature_names_out(self, input_features=None):
+        """Mask feature names according to selected features.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(self, input_features)
+        return input_features[self.get_support()]
+
+
+def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):
+    """
+    Retrieve and aggregate (ndim > 1)  the feature importances
+    from an estimator. Also optionally applies transformation.
+
+    Parameters
+    ----------
+    estimator : estimator
+        A scikit-learn estimator from which we want to get the feature
+        importances.
+
+    getter : "auto", str or callable
+        An attribute or a callable to get the feature importance. If `"auto"`,
+        `estimator` is expected to expose `coef_` or `feature_importances`.
+
+    transform_func : {"norm", "square"}, default=None
+        The transform to apply to the feature importances. By default (`None`)
+        no transformation is applied.
+
+    norm_order : int, default=1
+        The norm order to apply when `transform_func="norm"`. Only applied
+        when `importances.ndim > 1`.
+
+    Returns
+    -------
+    importances : ndarray of shape (n_features,)
+        The features importances, optionally transformed.
+    """
+    if isinstance(getter, str):
+        if getter == "auto":
+            if hasattr(estimator, "coef_"):
+                getter = attrgetter("coef_")
+            elif hasattr(estimator, "feature_importances_"):
+                getter = attrgetter("feature_importances_")
+            else:
+                raise ValueError(
+                    "when `importance_getter=='auto'`, the underlying "
+                    f"estimator {estimator.__class__.__name__} should have "
+                    "`coef_` or `feature_importances_` attribute. Either "
+                    "pass a fitted estimator to feature selector or call fit "
+                    "before calling transform."
+                )
+        else:
+            getter = attrgetter(getter)
+    elif not callable(getter):
+        raise ValueError("`importance_getter` has to be a string or `callable`")
+    importances = getter(estimator)
+
+    if transform_func is None:
+        return importances
+    elif transform_func == "norm":
+        if importances.ndim == 1:
+            importances = np.abs(importances)
+        else:
+            importances = np.linalg.norm(importances, axis=0, ord=norm_order)
+    elif transform_func == "square":
+        if importances.ndim == 1:
+            importances = safe_sqr(importances)
+        else:
+            importances = safe_sqr(importances).sum(axis=0)
+    else:
+        raise ValueError(
+            "Valid values for `transform_func` are "
+            + "None, 'norm' and 'square'. Those two "
+            + "transformation are only supported now"
+        )
+
+    return importances

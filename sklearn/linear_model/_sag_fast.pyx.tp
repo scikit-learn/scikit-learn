@@ -19,22 +19,14 @@ Authors: Danny Sullivan <dbsullivan23@gmail.com>
 License: BSD 3 clause
 """
 
-# name, c_type
+# name_suffix, c_type, np_type
 dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
-
-def get_dispatch(dtypes):
-    for name, c_type, np_type in dtypes:
-        yield name, c_type, np_type
 
 }}
 
 #------------------------------------------------------------------------------
 
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-#
 # Authors: Danny Sullivan <dbsullivan23@gmail.com>
 #          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #          Arthur Mensch <arthur.mensch@m4x.org
@@ -58,19 +50,20 @@ from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 from libc.stdio cimport printf
 
+np.import_array()
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
 cdef extern from "_sgd_fast_helpers.h":
-    bint skl_isfinite{{name}}({{c_type}}) nogil
+    bint skl_isfinite{{name_suffix}}({{c_type}}) nogil
 
 
 {{endfor}}
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
-cdef inline {{c_type}} fmax{{name}}({{c_type}} x, {{c_type}} y) nogil:
+cdef inline {{c_type}} fmax{{name_suffix}}({{c_type}} x, {{c_type}} y) nogil:
     if x > y:
         return x
     return y
@@ -78,9 +71,9 @@ cdef inline {{c_type}} fmax{{name}}({{c_type}} x, {{c_type}} y) nogil:
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
-cdef {{c_type}} _logsumexp{{name}}({{c_type}}* arr, int n_classes) nogil:
+cdef {{c_type}} _logsumexp{{name_suffix}}({{c_type}}* arr, int n_classes) nogil:
     """Computes the sum of arr assuming arr is in the log domain.
 
     Returns log(sum(exp(arr))) while minimizing the possibility of
@@ -104,9 +97,9 @@ cdef {{c_type}} _logsumexp{{name}}({{c_type}}* arr, int n_classes) nogil:
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
-cdef class MultinomialLogLoss{{name}}:
+cdef class MultinomialLogLoss{{name_suffix}}:
     cdef {{c_type}} _loss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
                       {{c_type}} sample_weight) nogil:
         r"""Multinomial Logistic regression loss.
@@ -144,14 +137,14 @@ cdef class MultinomialLogLoss{{name}}:
         Bishop, C. M. (2006). Pattern recognition and machine learning.
         Springer. (Chapter 4.3.4)
         """
-        cdef {{c_type}} logsumexp_prediction = _logsumexp{{name}}(prediction, n_classes)
+        cdef {{c_type}} logsumexp_prediction = _logsumexp{{name_suffix}}(prediction, n_classes)
         cdef {{c_type}} loss
 
         # y is the indice of the correct class of current sample.
         loss = (logsumexp_prediction - prediction[int(y)]) * sample_weight
         return loss
 
-    cdef void _dloss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
+    cdef void dloss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
                      {{c_type}} sample_weight, {{c_type}}* gradient_ptr) nogil:
         r"""Multinomial Logistic regression gradient of the loss.
 
@@ -190,7 +183,7 @@ cdef class MultinomialLogLoss{{name}}:
         Bishop, C. M. (2006). Pattern recognition and machine learning.
         Springer. (Chapter 4.3.4)
         """
-        cdef {{c_type}} logsumexp_prediction = _logsumexp{{name}}(prediction, n_classes)
+        cdef {{c_type}} logsumexp_prediction = _logsumexp{{name_suffix}}(prediction, n_classes)
         cdef int class_ind
 
         for class_ind in range(n_classes):
@@ -204,21 +197,21 @@ cdef class MultinomialLogLoss{{name}}:
             gradient_ptr[class_ind] *= sample_weight
 
     def __reduce__(self):
-        return MultinomialLogLoss{{name}}, ()
+        return MultinomialLogLoss{{name_suffix}}, ()
 
 {{endfor}}
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
-cdef inline {{c_type}} _soft_thresholding{{name}}({{c_type}} x, {{c_type}} shrinkage) nogil:
-    return fmax{{name}}(x - shrinkage, 0) - fmax{{name}}(- x - shrinkage, 0)
+cdef inline {{c_type}} _soft_thresholding{{name_suffix}}({{c_type}} x, {{c_type}} shrinkage) nogil:
+    return fmax{{name_suffix}}(x - shrinkage, 0) - fmax{{name_suffix}}(- x - shrinkage, 0)
 
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
-def sag{{name}}(SequentialDataset{{name}} dataset,
+def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
         np.ndarray[{{c_type}}, ndim=2, mode='c'] weights_array,
         np.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_array,
         int n_samples,
@@ -263,7 +256,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
     # the number of non-zero features for current sample
     cdef int xnnz = -1
     # the label value for current sample
-    # the label value for curent sample
+    # the label value for current sample
     cdef {{c_type}} y
     # the sample weight
     cdef {{c_type}} sample_weight
@@ -356,14 +349,14 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 
     # Loss function to optimize
     cdef LossFunction loss
-    # Wether the loss function is multinomial
+    # Whether the loss function is multinomial
     cdef bint multinomial = False
     # Multinomial loss function
-    cdef MultinomialLogLoss{{name}} multiloss
+    cdef MultinomialLogLoss{{name_suffix}} multiloss
 
     if loss_function == "multinomial":
         multinomial = True
-        multiloss = MultinomialLogLoss{{name}}()
+        multiloss = MultinomialLogLoss{{name_suffix}}()
     elif loss_function == "log":
         loss = Log()
     elif loss_function == "squared":
@@ -398,7 +391,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 
                 # make the weight updates
                 if sample_itr > 0:
-                   status = lagged_update{{name}}(weights, wscale, xnnz,
+                   status = lagged_update{{name_suffix}}(weights, wscale, xnnz,
                                                   n_samples, n_classes,
                                                   sample_itr,
                                                   cumulative_sums,
@@ -413,15 +406,15 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
                        break
 
                 # find the current prediction
-                predict_sample{{name}}(x_data_ptr, x_ind_ptr, xnnz, weights, wscale,
+                predict_sample{{name_suffix}}(x_data_ptr, x_ind_ptr, xnnz, weights, wscale,
                                        intercept, prediction, n_classes)
 
                 # compute the gradient for this sample, given the prediction
                 if multinomial:
-                    multiloss._dloss(prediction, y, n_classes, sample_weight,
+                    multiloss.dloss(prediction, y, n_classes, sample_weight,
                                      gradient)
                 else:
-                    gradient[0] = loss._dloss(prediction[0], y) * sample_weight
+                    gradient[0] = loss.dloss(prediction[0], y) * sample_weight
 
                 # L2 regularization by simply rescaling the weights
                 wscale *= wscale_update
@@ -458,7 +451,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
                                  num_seen * intercept_decay)
 
                         # check to see that the intercept is not inf or NaN
-                        if not skl_isfinite{{name}}(intercept[class_ind]):
+                        if not skl_isfinite{{name_suffix}}(intercept[class_ind]):
                             status = -1
                             break
                     # Break from the n_samples outer loop if an error happened
@@ -487,7 +480,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
                     if verbose:
                         with gil:
                             print("rescaling...")
-                    status = scale_weights{{name}}(
+                    status = scale_weights{{name_suffix}}(
                         weights, &wscale, n_features, n_samples, n_classes,
                         sample_itr, cumulative_sums,
                         cumulative_sums_prox,
@@ -503,7 +496,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 
             # we scale the weights every n_samples iterations and reset the
             # just-in-time update system for numerical stability.
-            status = scale_weights{{name}}(weights, &wscale, n_features,
+            status = scale_weights{{name_suffix}}(weights, &wscale, n_features,
                                            n_samples,
                                            n_classes, n_samples - 1,
                                            cumulative_sums,
@@ -517,8 +510,8 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
             max_change = 0.0
             max_weight = 0.0
             for idx in range(n_features * n_classes):
-                max_weight = fmax{{name}}(max_weight, fabs(weights[idx]))
-                max_change = fmax{{name}}(max_change,
+                max_weight = fmax{{name_suffix}}(max_weight, fabs(weights[idx]))
+                max_change = fmax{{name_suffix}}(max_change,
                                   fabs(weights[idx] -
                                        previous_weights[idx]))
                 previous_weights[idx] = weights[idx]
@@ -552,9 +545,9 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
-cdef int scale_weights{{name}}({{c_type}}* weights, {{c_type}}* wscale,
+cdef int scale_weights{{name_suffix}}({{c_type}}* weights, {{c_type}}* wscale,
                                int n_features,
                                int n_samples, int n_classes, int sample_itr,
                                {{c_type}}* cumulative_sums,
@@ -573,7 +566,7 @@ cdef int scale_weights{{name}}({{c_type}}* weights, {{c_type}}* wscale,
     """
 
     cdef int status
-    status = lagged_update{{name}}(weights, wscale[0], n_features,
+    status = lagged_update{{name_suffix}}(weights, wscale[0], n_features,
                                    n_samples, n_classes, sample_itr + 1,
                                    cumulative_sums,
                                    cumulative_sums_prox,
@@ -591,9 +584,9 @@ cdef int scale_weights{{name}}({{c_type}}* weights, {{c_type}}* wscale,
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
-cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
+cdef int lagged_update{{name_suffix}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                                int n_samples, int n_classes, int sample_itr,
                                {{c_type}}* cumulative_sums,
                                {{c_type}}* cumulative_sums_prox,
@@ -629,7 +622,7 @@ cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                 weights[idx] -= cum_sum * sum_gradient[idx]
                 if reset:
                     weights[idx] *= wscale
-                    if not skl_isfinite{{name}}(weights[idx]):
+                    if not skl_isfinite{{name_suffix}}(weights[idx]):
                         # returning here does not require the gil as the return
                         # type is a C integer
                         return -1
@@ -642,7 +635,7 @@ cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                     # efficient than unrolling all the lagged updates.
                     # Idea taken from scikit-learn-contrib/lightning.
                     weights[idx] -= cum_sum * sum_gradient[idx]
-                    weights[idx] = _soft_thresholding{{name}}(weights[idx],
+                    weights[idx] = _soft_thresholding{{name_suffix}}(weights[idx],
                                                       cum_sum_prox)
                 else:
                     last_update_ind = feature_hist[feature_ind]
@@ -659,13 +652,13 @@ cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                             grad_step = cumulative_sums[lagged_ind]
                             prox_step = cumulative_sums_prox[lagged_ind]
                         weights[idx] -= sum_gradient[idx] * grad_step
-                        weights[idx] = _soft_thresholding{{name}}(weights[idx],
+                        weights[idx] = _soft_thresholding{{name_suffix}}(weights[idx],
                                                           prox_step)
 
                 if reset:
                     weights[idx] *= wscale
                     # check to see that the weight is not inf or NaN
-                    if not skl_isfinite{{name}}(weights[idx]):
+                    if not skl_isfinite{{name_suffix}}(weights[idx]):
                         return -1
         if reset:
             feature_hist[feature_ind] = sample_itr % n_samples
@@ -682,9 +675,9 @@ cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
 {{endfor}}
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
-cdef void predict_sample{{name}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnnz,
+cdef void predict_sample{{name_suffix}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnnz,
                                  {{c_type}}* w_data_ptr, {{c_type}} wscale,
                                  {{c_type}}* intercept, {{c_type}}* prediction,
                                  int n_classes) nogil:
@@ -782,7 +775,7 @@ def _multinomial_grad_loss_all_samples(
                            intercept, prediction, n_classes)
 
             # compute the gradient for this sample, given the prediction
-            multiloss._dloss(prediction, y, n_classes, sample_weight, gradient)
+            multiloss.dloss(prediction, y, n_classes, sample_weight, gradient)
 
             # compute the loss for this sample, given the prediction
             sum_loss += multiloss._loss(prediction, y, n_classes, sample_weight)

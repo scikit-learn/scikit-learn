@@ -5,9 +5,9 @@ Developing scikit-learn estimators
 ==================================
 
 Whether you are proposing an estimator for inclusion in scikit-learn,
-developing a separate package compatible with scikit-learn, or 
-implementing custom components for your own projects, this chapter 
-details how to develop objects that safely interact with scikit-learn 
+developing a separate package compatible with scikit-learn, or
+implementing custom components for your own projects, this chapter
+details how to develop objects that safely interact with scikit-learn
 Pipelines and model selection tools.
 
 .. currentmodule:: sklearn
@@ -148,19 +148,19 @@ The ``fit()`` method takes the training data as arguments, which can be one
 array in the case of unsupervised learning, or two arrays in the case
 of supervised learning.
 
-Note that the model is fitted using X and y, but the object holds no
-reference to X and y. There are, however, some exceptions to this, as in
+Note that the model is fitted using ``X`` and ``y``, but the object holds no
+reference to ``X`` and ``y``. There are, however, some exceptions to this, as in
 the case of precomputed kernels where this data must be stored for use by
 the predict method.
 
 ============= ======================================================
 Parameters
 ============= ======================================================
-X             array-like, shape (n_samples, n_features)
+X             array-like of shape (n_samples, n_features)
 
-y             array, shape (n_samples,)
+y             array-like of shape (n_samples,)
 
-kwargs        optional data-dependent parameters.
+kwargs        optional data-dependent parameters
 ============= ======================================================
 
 ``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
@@ -226,6 +226,22 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
+.. deprecated:: 0.24
+
+    The _pairwise attribute is deprecated in 0.24. From 1.1 (renaming of 0.26)
+    onward, the `pairwise` estimator tag should be used instead.
+
+Universal attributes
+^^^^^^^^^^^^^^^^^^^^
+
+Estimators that expect tabular input should set a `n_features_in_`
+attribute at `fit` time to indicate the number of features that the estimator
+expects for subsequent calls to `predict` or `transform`.
+See
+`SLEP010
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+for details.
+
 .. _rolling_your_own_estimator:
 
 Rolling your own estimator
@@ -235,39 +251,19 @@ whether it is just for you or for contributing it to scikit-learn, there are
 several internals of scikit-learn that you should be aware of in addition to
 the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
-:func:`utils.estimator_checks.check_estimator` on the class::
+:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
+decorator can also be used (see its docstring for details and possible
+interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
   >>> from sklearn.svm import LinearSVC
-  >>> check_estimator(LinearSVC)  # passes
+  >>> check_estimator(LinearSVC())  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
-
-Setting `generate_only=True` returns a generator that yields (estimator, check)
-tuples where the check can be called independently from each other, i.e.
-`check(estimator)`. This allows all checks to be run independently and report
-the checks that are failing. scikit-learn provides a pytest specific decorator, 
-:func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
-multiple estimators::
-
-  from sklearn.utils.estimator_checks import parametrize_with_checks
-  from sklearn.linear_model import LogisticRegression
-  from sklearn.tree import DecisionTreeRegressor
-
-  @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
-  def test_sklearn_compatible_estimator(estimator, check):
-      check(estimator)
-
-This decorator sets the `id` keyword in `pytest.mark.parameterize` exposing
-the name of the underlying estimator and check in the test name. This allows
-`pytest -k` to be used to specify which tests to run.
-
-.. code-block: bash
-   
-   pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
 Before detailing the required interface below, we describe two ways to achieve
 the correct interface more easily.
@@ -339,11 +335,54 @@ get_params and set_params
 All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
-It must take one keyword argument, ``deep``,
-which receives a boolean value that determines
-whether the method should return the parameters of sub-estimators
-(for most estimators, this can be ignored).
-The default value for ``deep`` should be true.
+
+It must take one keyword argument, ``deep``, which receives a boolean value
+that determines whether the method should return the parameters of
+sub-estimators (for most estimators, this can be ignored). The default value
+for ``deep`` should be `True`. For instance considering the following
+estimator::
+
+    >>> from sklearn.base import BaseEstimator
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> class MyEstimator(BaseEstimator):
+    ...     def __init__(self, subestimator=None, my_extra_param="random"):
+    ...         self.subestimator = subestimator
+    ...         self.my_extra_param = my_extra_param
+
+The parameter `deep` will control whether or not the parameters of the
+`subsestimator` should be reported. Thus when `deep=True`, the output will be::
+
+    >>> my_estimator = MyEstimator(subestimator=LogisticRegression())
+    >>> for param, value in my_estimator.get_params(deep=True).items():
+    ...     print(f"{param} -> {value}")
+    my_extra_param -> random
+    subestimator__C -> 1.0
+    subestimator__class_weight -> None
+    subestimator__dual -> False
+    subestimator__fit_intercept -> True
+    subestimator__intercept_scaling -> 1
+    subestimator__l1_ratio -> None
+    subestimator__max_iter -> 100
+    subestimator__multi_class -> auto
+    subestimator__n_jobs -> None
+    subestimator__penalty -> l2
+    subestimator__random_state -> None
+    subestimator__solver -> lbfgs
+    subestimator__tol -> 0.0001
+    subestimator__verbose -> 0
+    subestimator__warm_start -> False
+    subestimator -> LogisticRegression()
+
+Often, the `subestimator` has a name (as e.g. named steps in a
+:class:`~sklearn.pipeline.Pipeline` object), in which case the key should
+become `<name>__C`, `<name>__class_weight`, etc.
+
+While when `deep=False`, the output will be::
+
+    >>> for param, value in my_estimator.get_params(deep=False).items():
+    ...     print(f"{param} -> {value}")
+    my_extra_param -> random
+    subestimator -> LogisticRegression()
 
 The ``set_params`` on the other hand takes as input a dict of the form
 ``'parameter': value`` and sets the parameter of the estimator using this dict.
@@ -472,40 +511,58 @@ Scikit-learn introduced estimator tags in version 0.21. These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods. The
 estimator tags are a dictionary returned by the method ``_get_tags()``. These
-tags are used by the common tests and the
-:func:`sklearn.utils.estimator_checks.check_estimator` function to decide what
-tests to run and what input data is appropriate. Tags can depend on estimator
-parameters or even system architecture and can in general only be determined at
-runtime. The default values for the estimator tags are defined in the
-``BaseEstimator`` class.
+tags are used in the common checks run by the
+:func:`~sklearn.utils.estimator_checks.check_estimator` function and the
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator.
+Tags determine which checks to run and what input data is appropriate. Tags
+can depend on estimator parameters or even system architecture and can in
+general only be determined at runtime.
 
 The current set of estimator tags are:
 
-allow_nan (default=``False``)
+allow_nan (default=False)
     whether the estimator supports data with missing values encoded as np.NaN
 
-binary_only (default=``False``)
+binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class
     classification support.
 
-multilabel (default=``False``)
+multilabel (default=False)
     whether the estimator supports multilabel output
 
-multioutput (default=``False``)
+multioutput (default=False)
     whether a regressor supports multi-target outputs or a classifier supports
     multi-class multi-output.
 
-multioutput_only (default=``False``)
+multioutput_only (default=False)
     whether estimator supports only multi-output classification or regression.
 
-no_validation (default=``False``)
+no_validation (default=False)
     whether the estimator skips input-validation. This is only meant for
     stateless and dummy transformers!
 
-non_deterministic (default=``False``)
+non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
 
-poor_score (default=``False``)
+pairwise (default=False)
+    This boolean attribute indicates whether the data (`X`) :term:`fit` and
+    similar methods consists of pairwise measures over samples rather than a
+    feature representation for each sample.  It is usually `True` where an
+    estimator has a `metric` or `affinity` or `kernel` parameter with value
+    'precomputed'. Its primary purpose is that when a :term:`meta-estimator`
+    extracts a sub-sample of data intended for a pairwise estimator, the data
+    needs to be indexed on both axes, while other data is indexed only on the
+    first axis.
+
+preserves_dtype (default=``[np.float64]``)
+    applies only on transformers. It corresponds to the data types which will
+    be preserved such that `X_trans.dtype` is the same as `X.dtype` after
+    calling `transformer.transform(X)`. If this list is empty, then the
+    transformer is not expected to preserve the data type. The first value in
+    the list is considered as the default data type, corresponding to the data
+    type of the output when the input data type is not going to be preserved.
+
+poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
     dataset, and for classification an accuracy of 0.83 on
@@ -513,26 +570,44 @@ poor_score (default=``False``)
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
 
-requires_fit (default=``True``)
+requires_fit (default=True)
     whether the estimator requires to be fitted before calling one of
     `transform`, `predict`, `predict_proba`, or `decision_function`.
 
-requires_positive_X (default=``False``)
+requires_positive_X (default=False)
     whether the estimator requires positive X.
 
-requires_positive_y (default=``False``)
+requires_y (default=False)
+    whether the estimator requires y to be passed to `fit`, `fit_predict` or
+    `fit_transform` methods. The tag is True for estimators inheriting from
+    `~sklearn.base.RegressorMixin` and `~sklearn.base.ClassifierMixin`.
+
+requires_positive_y (default=False)
     whether the estimator requires a positive y (only applicable for regression).
 
-_skip_test (default=``False``)
+_skip_test (default=False)
     whether to skip common tests entirely. Don't use this unless you have a
     *very good* reason.
 
-stateless (default=``False``)
+_xfail_checks (default=False)
+    dictionary ``{check_name: reason}`` of common checks that will be marked
+    as `XFAIL` for pytest, when using
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
+    checks will be simply ignored and not run by
+    :func:`~sklearn.utils.estimator_checks.check_estimator`, but a
+    `SkipTestWarning` will be raised.
+    Don't use this unless there is a *very good* reason for your estimator
+    not to pass the check.
+    Also note that the usage of this tag is highly subject to change because
+    we are trying to make it more flexible: be prepared for breaking changes
+    in the future.
+
+stateless (default=False)
     whether the estimator needs access to data for fitting. Even though an
     estimator is stateless, it might still need a call to ``fit`` for
     initialization.
 
-X_types (default=``['2darray']``)
+X_types (default=['2darray'])
     Supported input types for X as list of strings. Tests are currently only
     run if '2darray' is contained in the list, signifying that the estimator
     takes continuous 2d numpy arrays as input. The default value is
@@ -543,9 +618,10 @@ X_types (default=``['2darray']``)
     ``'categorical'`` data. For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
-
-To override the tags of a child class, one must define the `_more_tags()`
-method and return a dict with the desired tags, e.g::
+It is unlikely that the default values for each tag will suit the needs of your
+specific estimator. Additional tags can be created or default tags can be
+overridden by defining a `_more_tags()` method which returns a dict with the
+desired overridden tags or new tags. For example::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
@@ -553,11 +629,19 @@ method and return a dict with the desired tags, e.g::
             return {'multioutput_only': True,
                     'non_deterministic': True}
 
+Any tag that is not in `_more_tags()` will just fall-back to the default values
+documented above.
+
+Even if it is not recommended, it is possible to override the method
+`_get_tags()`. Note however that **all tags must be present in the dict**. If
+any of the keys documented above is not present in the output of `_get_tags()`,
+an error will occur.
+
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
 which is a list or tuple.  If ``_required_parameters`` is only
 ``["estimator"]`` or ``["base_estimator"]``, then the estimator will be
-instantiated with an instance of ``LinearDiscriminantAnalysis`` (or
+instantiated with an instance of ``LogisticRegression`` (or
 ``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
 of these two models is somewhat idiosyncratic but both should provide robust
 closed-form solutions.
@@ -567,10 +651,10 @@ closed-form solutions.
 Coding guidelines
 =================
 
-The following are some guidelines on how new code should be written for 
-inclusion in scikit-learn, and which may be appropriate to adopt in external 
-projects. Of course, there are special cases and there will be exceptions to 
-these rules. However, following these rules when submitting new code makes 
+The following are some guidelines on how new code should be written for
+inclusion in scikit-learn, and which may be appropriate to adopt in external
+projects. Of course, there are special cases and there will be exceptions to
+these rules. However, following these rules when submitting new code makes
 the review easier so new code can be integrated in less time.
 
 Uniformly formatted code makes it easier to share code ownership. The
@@ -644,21 +728,22 @@ Here's a simple example of code using some of the above guidelines::
     from sklearn.utils import check_array, check_random_state
 
     def choose_random_sample(X, random_state=0):
-        """
-        Choose a random point from X
+        """Choose a random point from X.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            array representing the data
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance to define the state of the
-            random permutations generator.
+        X : array-like of shape (n_samples, n_features)
+            An array representing the data.
+        random_state : int or RandomState instance, default=0
+            The seed of the pseudo random number generator that selects a
+            random sample. Pass an int for reproducible output across multiple
+            function calls.
+            See :term:`Glossary <random_state>`.
 
         Returns
         -------
-        x : numpy array, shape (n_features,)
-            A random point selected from X
+        x : ndarray of shape (n_features,)
+            A random point selected from X.
         """
         X = check_array(X)
         random_state = check_random_state(random_state)
@@ -687,6 +772,7 @@ The following example should make this clear::
 
         def __init__(self, n_components=100, random_state=None):
             self.random_state = random_state
+            self.n_components = n_components
 
         # the arguments are ignored anyway, so we make them optional
         def fit(self, X=None, y=None):
@@ -694,7 +780,7 @@ The following example should make this clear::
 
         def transform(self, X):
             n_samples = X.shape[0]
-            return self.random_state_.randn(n_samples, n_components)
+            return self.random_state_.randn(n_samples, self.n_components)
 
 The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,

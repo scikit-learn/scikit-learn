@@ -1,0 +1,162 @@
+{
+    // The version of the config file format.  Do not change, unless
+    // you know what you are doing.
+    "version": 1,
+
+    // The name of the project being benchmarked
+    "project": "scikit-learn",
+
+    // The project's homepage
+    "project_url": "scikit-learn.org/",
+
+    // The URL or local path of the source code repository for the
+    // project being benchmarked
+    "repo": "..",
+
+    // The Python project's subdirectory in your repo.  If missing or
+    // the empty string, the project is assumed to be located at the root
+    // of the repository.
+    // "repo_subdir": "",
+
+    // Customizable commands for building, installing, and
+    // uninstalling the project. See asv.conf.json documentation.
+    //
+    // "install_command": ["python -mpip install {wheel_file}"],
+    // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
+    // "build_command": [
+    //     "python setup.py build",
+    //     "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
+    // ],
+
+    // List of branches to benchmark. If not provided, defaults to "master
+    // (for git) or "default" (for mercurial).
+    "branches": ["main"],
+    // "branches": ["default"],    // for mercurial
+
+    // The DVCS being used.  If not set, it will be automatically
+    // determined from "repo" by looking at the protocol in the URL
+    // (if remote), or by looking for special directories, such as
+    // ".git" (if local).
+    // "dvcs": "git",
+
+    // The tool to use to create environments.  May be "conda",
+    // "virtualenv" or other value depending on the plugins in use.
+    // If missing or the empty string, the tool will be automatically
+    // determined by looking for tools on the PATH environment
+    // variable.
+    "environment_type": "conda",
+
+    // timeout in seconds for installing any dependencies in environment
+    // defaults to 10 min
+    //"install_timeout": 600,
+
+    // the base URL to show a commit for the project.
+    "show_commit_url": "https://github.com/scikit-learn/scikit-learn/commit/",
+
+    // The Pythons you'd like to test against. If not provided, defaults
+    // to the current version of Python used to run `asv`.
+    // "pythons": ["3.6"],
+
+    // The list of conda channel names to be searched for benchmark
+    // dependency packages in the specified order
+    // "conda_channels": ["conda-forge", "defaults"]
+
+    // The matrix of dependencies to test. Each key is the name of a
+    // package (in PyPI) and the values are version numbers. An empty
+    // list or empty string indicates to just test against the default
+    // (latest) version. null indicates that the package is to not be
+    // installed. If the package to be tested is only available from
+    // PyPi, and the 'environment_type' is conda, then you can preface
+    // the package name by 'pip+', and the package will be installed via
+    // pip (with all the conda available packages installed first,
+    // followed by the pip installed packages).
+    //
+    "matrix": {
+        "numpy": [],
+        "scipy": [],
+        "cython": [],
+        "joblib": [],
+        "threadpoolctl": []
+    },
+
+    // Combinations of libraries/python versions can be excluded/included
+    // from the set to test. Each entry is a dictionary containing additional
+    // key-value pairs to include/exclude.
+    //
+    // An exclude entry excludes entries where all values match. The
+    // values are regexps that should match the whole string.
+    //
+    // An include entry adds an environment. Only the packages listed
+    // are installed. The 'python' key is required. The exclude rules
+    // do not apply to includes.
+    //
+    // In addition to package names, the following keys are available:
+    //
+    // - python
+    //     Python version, as in the *pythons* variable above.
+    // - environment_type
+    //     Environment type, as above.
+    // - sys_platform
+    //     Platform, as in sys.platform. Possible values for the common
+    //     cases: 'linux2', 'win32', 'cygwin', 'darwin'.
+    //
+    // "exclude": [
+    //     {"python": "3.2", "sys_platform": "win32"}, // skip py3.2 on windows
+    //     {"environment_type": "conda", "six": null}, // don't run without six on conda
+    // ],
+    //
+    // "include": [
+    //     // additional env for python2.7
+    //     {"python": "2.7", "numpy": "1.8"},
+    //     // additional env if run on windows+conda
+    //     {"platform": "win32", "environment_type": "conda", "python": "2.7", "libpython": ""},
+    // ],
+
+    // The directory (relative to the current directory) that benchmarks are
+    // stored in.  If not provided, defaults to "benchmarks"
+    // "benchmark_dir": "benchmarks",
+
+    // The directory (relative to the current directory) to cache the Python
+    // environments in.  If not provided, defaults to "env"
+    // "env_dir": "env",
+
+    // The directory (relative to the current directory) that raw benchmark
+    // results are stored in.  If not provided, defaults to "results".
+    // "results_dir": "results",
+
+    // The directory (relative to the current directory) that the html tree
+    // should be written to.  If not provided, defaults to "html".
+    // "html_dir": "html",
+
+    // The number of characters to retain in the commit hashes.
+    // "hash_length": 8,
+
+    // `asv` will cache results of the recent builds in each
+    // environment, making them faster to install next time.  This is
+    // the number of builds to keep, per environment.
+    // "build_cache_size": 2,
+
+    // The commits after which the regression search in `asv publish`
+    // should start looking for regressions. Dictionary whose keys are
+    // regexps matching to benchmark names, and values corresponding to
+    // the commit (exclusive) after which to start looking for
+    // regressions.  The default is to start from the first commit
+    // with results. If the commit is `null`, regression detection is
+    // skipped for the matching benchmark.
+    //
+    // "regressions_first_commits": {
+    //    "some_benchmark": "352cdf",  // Consider regressions only after this commit
+    //    "another_benchmark": null,   // Skip regression detection altogether
+    // },
+
+    // The thresholds for relative change in results, after which `asv
+    // publish` starts reporting regressions. Dictionary of the same
+    // form as in ``regressions_first_commits``, with values
+    // indicating the thresholds.  If multiple entries match, the
+    // maximum is taken. If no entry matches, the default is 5%.
+    //
+    // "regressions_thresholds": {
+    //    "some_benchmark": 0.01,     // Threshold of 1%
+    //    "another_benchmark": 0.5,   // Threshold of 50%
+    // },
+}

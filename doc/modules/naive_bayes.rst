@@ -16,7 +16,7 @@ vector :math:`x_1` through :math:`x_n`, :
 
 .. math::
 
-   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
+   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots, x_n \mid y)}
                                     {P(x_1, \dots, x_n)}
 
 Using the naive conditional independence assumption that

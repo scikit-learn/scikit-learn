@@ -2,6 +2,53 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_22_2:
+
+Version 0.22.2.post1
+====================
+
+**March 3 2020**
+
+The 0.22.2.post1 release includes a packaging fix for the source distribution
+but the content of the packages is otherwise identical to the content of the
+wheels with the 0.22.2 version (without the .post1 suffix). Both contain the
+following changes.
+
+Changelog
+---------
+
+:mod:`sklearn.impute`
+.....................
+
+- |Efficiency| Reduce :func:`impute.KNNImputer` asymptotic memory usage by
+  chunking pairwise distance computation.
+  :pr:`16397` by `Joel Nothman`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
+  the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
+  instead of the parameter `name`. It results in a different plot when calling
+  :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
+  :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
+  name of the estimator was passed in the
+  :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
+  results in a different plot when calling
+  :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.
+  :pr:`16505` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neighbors`
+..............................
+
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+  array instead of a 1-D array containing NumPy arrays. This bug
+  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :user:`Alex Shacked <alexshacked>`.
+
 .. _changes_0_22_1:
 
 Version 0.22.1
@@ -103,14 +150,6 @@ Changelog
   as "fitted" markers. The ``all_or_any`` argument is also no longer
   deprecated. This change is made to restore some backward compatibility with
   the behavior of this utility in version 0.21. :pr:`15947` by `Thomas Fan`_.
-
-:mod:`sklearn.multioutput`
-..........................
-
-- |Feature| :func:`multioutput.MultiOutputRegressor.fit` and
-  :func:`multioutput.MultiOutputClassifier.fit` now can accept `fit_params`
-  to pass to the `estimator.fit` method of each step. :issue:`15953`
-  :pr:`15959` by :user:`Ke Huang <huangk10>`.
 
 .. _changes_0_22:
 
@@ -401,11 +440,11 @@ Changelog
   <glemaitre>` and :user:`Caio Oliveira <caioaao>` and :pr:`15138` by
   :user:`Jon Cusick <jcusick13>`..
 
-- Many improvements were made to
+- |MajorFeature| Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`:
 
-  - |MajorFeature| Estimators now natively support dense data with missing
+  - |Feature| Estimators now natively support dense data with missing
     values both for training and predicting. They also support infinite
     values. :pr:`13911` and :pr:`14406` by `Nicolas Hug`_, `Adrin Jalali`_
     and `Olivier Grisel`_.
@@ -1067,7 +1106,7 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
-project since version 0.20, including:
+project since version 0.21, including:
 
 Aaron Alphonsus, Abbie Popa, Abdur-Rahmaan Janhangeer, abenbihi, Abhinav Sagar,
 Abhishek Jana, Abraham K. Lagat, Adam J. Stewart, Aditya Vyas, Adrin Jalali,
