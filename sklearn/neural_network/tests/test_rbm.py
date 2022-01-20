@@ -242,7 +242,7 @@ def test_convergence_dtype_consistency():
 
 @pytest.mark.parametrize("method", ["fit", "partial_fit"])
 def test_feature_names_out(method):
-    """Check feature names out for BernoulliRBM."""
+    """Check `get_feature_names_out` for `BernoulliRBM`."""
     n_components = 10
     rbm = BernoulliRBM(n_components=n_components)
     getattr(rbm, method)(Xdigits)
