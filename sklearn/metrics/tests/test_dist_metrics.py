@@ -293,31 +293,15 @@ def test_readonly_kwargs():
 @pytest.mark.parametrize(
     "w, err_type, err_msg",
     [
-        (
-            np.array([1, 1.5, -13]),
-            ValueError,
-            "w cannot contain negative weights"
-        ),
-        (
-            np.array([1, 1.5, np.nan]),
-            ValueError,
-            "w contains NaN"
-        ),
+        (np.array([1, 1.5, -13]), ValueError, "w cannot contain negative weights"),
+        (np.array([1, 1.5, np.nan]), ValueError, "w contains NaN"),
         (
             sp.csr_matrix([1, 1.5, 1]),
             TypeError,
-            "A sparse matrix was passed, but dense data is required"
+            "A sparse matrix was passed, but dense data is required",
         ),
-        (
-            np.array(["a", "b", "c"]),
-            ValueError,
-            "could not convert string to float"
-        ),
-        (
-            np.array([]),
-            ValueError,
-            "a minimum of 1 is required"
-        ),
+        (np.array(["a", "b", "c"]), ValueError, "could not convert string to float"),
+        (np.array([]), ValueError, "a minimum of 1 is required"),
     ],
 )
 def test_minkowski_metric_validate_weights_values(w, err_type, err_msg):
