@@ -955,11 +955,13 @@ class SGDClassifier(BaseSGDClassifier):
         value, the stronger the regularization.
         Also used to compute the learning rate when set to `learning_rate` is
         set to 'optimal'.
+        Values must be in the range `[0.0, inf)`.
 
     l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Only used if `penalty` is 'elasticnet'.
+        Values must be in the range `[0.0, 1.0]`.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -969,6 +971,7 @@ class SGDClassifier(BaseSGDClassifier):
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`partial_fit` method.
+        Values must be in the range `[1, inf)`.
 
         .. versionadded:: 0.19
 
@@ -978,6 +981,7 @@ class SGDClassifier(BaseSGDClassifier):
         epochs.
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
+        Values must be in the range `[0.0, inf)`.
 
         .. versionadded:: 0.19
 
@@ -986,6 +990,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     verbose : int, default=0
         The verbosity level.
+        Values must be in the range `[0, inf)`.
 
     epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
@@ -994,6 +999,7 @@ class SGDClassifier(BaseSGDClassifier):
         important to get the prediction exactly right.
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
+        Values must be in the range `[0.0, inf)`.
 
     n_jobs : int, default=None
         The number of CPUs to use to do the OVA (One Versus All, for
@@ -1006,33 +1012,36 @@ class SGDClassifier(BaseSGDClassifier):
         Used for shuffling the data, when ``shuffle`` is set to ``True``.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+        Integer values must be in the range `[0, 2**32 - 1]`.
 
     learning_rate : str, default='optimal'
         The learning rate schedule:
 
         - 'constant': `eta = eta0`
         - 'optimal': `eta = 1.0 / (alpha * (t + t0))`
-          where t0 is chosen by a heuristic proposed by Leon Bottou.
+          where `t0` is chosen by a heuristic proposed by Leon Bottou.
         - 'invscaling': `eta = eta0 / pow(t, power_t)`
-        - 'adaptive': eta = eta0, as long as the training keeps decreasing.
+        - 'adaptive': `eta = eta0`, as long as the training keeps decreasing.
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
-          early_stopping is True, the current learning rate is divided by 5.
+          `early_stopping` is `True`, the current learning rate is divided by 5.
 
             .. versionadded:: 0.20
                 Added 'adaptive' option
 
-    eta0 : double, default=0.0
+    eta0 : float, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
+        Values must be in the range `(0.0, inf)`.
 
-    power_t : double, default=0.5
+    power_t : float, default=0.5
         The exponent for inverse scaling learning rate [default 0.5].
+        Values must be in the range `(-inf, inf)`.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
-        score is not improving. If set to True, it will automatically set aside
+        score is not improving. If set to `True`, it will automatically set aside
         a stratified fraction of training data as validation and terminate
         training when validation score returned by the `score` method is not
         improving by at least tol for n_iter_no_change consecutive epochs.
@@ -1044,6 +1053,7 @@ class SGDClassifier(BaseSGDClassifier):
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if `early_stopping` is True.
+        Values must be in the range `(0.0, 1.0)`.
 
         .. versionadded:: 0.20
             Added 'validation_fraction' option
@@ -1053,6 +1063,7 @@ class SGDClassifier(BaseSGDClassifier):
         fitting.
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
+        Integer values must be in the range `[1, max_iter)`.
 
         .. versionadded:: 0.20
             Added 'n_iter_no_change' option
@@ -1081,11 +1092,12 @@ class SGDClassifier(BaseSGDClassifier):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights across all
+        When set to `True`, computes the averaged SGD weights across all
         updates and stores the result in the ``coef_`` attribute. If set to
         an int greater than 1, averaging will begin once the total number of
         samples seen reaches `average`. So ``average=10`` will begin
         averaging after seeing 10 samples.
+        Integer values must be in the range `[1, n_samples]`.
 
     Attributes
     ----------
@@ -1776,11 +1788,11 @@ class SGDRegressor(BaseSGDRegressor):
             .. versionadded:: 0.20
                 Added 'adaptive' option
 
-    eta0 : double, default=0.01
+    eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
 
-    power_t : double, default=0.25
+    power_t : float, default=0.25
         The exponent for inverse scaling learning rate.
 
     early_stopping : bool, default=False
@@ -1954,64 +1966,60 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     Parameters
     ----------
-    nu : float, optional
+    nu : float, default=0.5
         The nu parameter of the One Class SVM: an upper bound on the
         fraction of training errors and a lower bound of the fraction of
         support vectors. Should be in the interval (0, 1]. By default 0.5
         will be taken.
 
-    fit_intercept : bool
+    fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. Defaults to True.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`. Defaults to 1000.
 
-    tol : float or None, optional
+    tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol). Defaults to 1e-3.
 
-    shuffle : bool, optional
+    shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : int, optional
+    verbose : int, default=0
         The verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : str, optional
+    learning_rate : {'constant', 'optimal', 'invscaling', 'adaptive'}, default='optimal'
         The learning rate schedule to use with `fit`. (If using `partial_fit`,
         learning rate must be controlled directly).
 
-        'constant':
-            eta = eta0
-        'optimal': [default]
-            eta = 1.0 / (alpha * (t + t0))
-            where t0 is chosen by a heuristic proposed by Leon Bottou.
-        'invscaling':
-            eta = eta0 / pow(t, power_t)
-        'adaptive':
-            eta = eta0, as long as the training keeps decreasing.
-            Each time n_iter_no_change consecutive epochs fail to decrease the
-            training loss by tol or fail to increase validation score by tol if
-            early_stopping is True, the current learning rate is divided by 5.
+        - 'constant': `eta = eta0`
+        - 'optimal': `eta = 1.0 / (alpha * (t + t0))`
+          where t0 is chosen by a heuristic proposed by Leon Bottou.
+        - 'invscaling': `eta = eta0 / pow(t, power_t)`
+        - 'adaptive': eta = eta0, as long as the training keeps decreasing.
+          Each time n_iter_no_change consecutive epochs fail to decrease the
+          training loss by tol or fail to increase validation score by tol if
+          early_stopping is True, the current learning rate is divided by 5.
 
-    eta0 : double
+    eta0 : float, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
 
-    power_t : double
+    power_t : float, default=0.5
         The exponent for inverse scaling learning rate [default 0.5].
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -2024,7 +2032,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         this counter, while ``partial_fit``  will result in increasing the
         existing counter.
 
-    average : bool or int, optional
+    average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
@@ -2033,10 +2041,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (1, n_features)
+    coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features.
 
-    offset_ : array, shape (1,)
+    offset_ : ndarray of shape (1,)
         Offset used to define the decision function from the raw scores.
         We have the relation: decision_function = score_samples - offset.
 

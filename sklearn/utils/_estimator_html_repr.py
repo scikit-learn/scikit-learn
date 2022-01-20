@@ -69,13 +69,15 @@ def _write_label_html(
     name = html.escape(name)
 
     if name_details is not None:
+        name_details = html.escape(str(name_details))
+        label_class = "sk-toggleable__label sk-toggleable__label-arrow"
+
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
-            f'<label class="sk-toggleable__label" for="{est_id}">'
-            f"{name}</label>"
+            f'<label for="{est_id}" class="{label_class}">{name}</label>'
             f'<div class="sk-toggleable__content"><pre>{name_details}'
             "</pre></div>"
         )
@@ -178,6 +180,18 @@ _STYLE = """
   box-sizing: border-box;
   text-align: center;
 }
+#$id label.sk-toggleable__label-arrow:before {
+  content: "▸";
+  float: left;
+  margin-right: 0.25em;
+  color: #696969;
+}
+#$id label.sk-toggleable__label-arrow:hover:before {
+  color: black;
+}
+#$id div.sk-estimator:hover label.sk-toggleable__label-arrow:before {
+  color: black;
+}
 #$id div.sk-toggleable__content {
   max-height: 0;
   max-width: 0;
@@ -195,6 +209,9 @@ _STYLE = """
   max-height: 200px;
   max-width: 100%;
   overflow: auto;
+}
+#$id input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
+  content: "▾";
 }
 #$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
   background-color: #d4ebff;
@@ -306,7 +323,12 @@ _STYLE = """
   text-align: center;
 }
 #$id div.sk-container {
-  display: inline-block;
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org.
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+  display: inline-block !important;
   position: relative;
 }
 #$id div.sk-text-repr-fallback {
@@ -354,7 +376,7 @@ def estimator_html_repr(estimator):
         )
         out.write(
             f"<style>{style_with_id}</style>"
-            f'<div id="{container_id}" class"sk-top-container">'
+            f'<div id="{container_id}" class="sk-top-container">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"

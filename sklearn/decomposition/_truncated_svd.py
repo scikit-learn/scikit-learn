@@ -6,22 +6,22 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
+from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import check_is_fitted
-
+from ..utils.validation import check_is_fitted, check_scalar
 
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(TransformerMixin, BaseEstimator):
+class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -44,7 +44,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     ----------
     n_components : int, default=2
         Desired dimensionality of output data.
-        Must be strictly less than the number of features.
+        If algorithm='arpack', must be strictly less than the number of features.
+        If algorithm='randomized', must be less than or equal to the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
@@ -203,10 +204,13 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         elif self.algorithm == "randomized":
             k = self.n_components
             n_features = X.shape[1]
-            if k >= n_features:
-                raise ValueError(
-                    "n_components must be < n_features; got %d >= %d" % (k, n_features)
-                )
+            check_scalar(
+                k,
+                "n_components",
+                target_type=Integral,
+                min_val=1,
+                max_val=n_features,
+            )
             U, Sigma, VT = randomized_svd(
                 X, self.n_components, n_iter=self.n_iter, random_state=random_state
             )
@@ -273,3 +277,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"preserves_dtype": [np.float64, np.float32]}
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

@@ -15,6 +15,7 @@ from scipy import linalg
 from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
+from .base import _ClassNamePrefixFeaturesOutMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
@@ -165,7 +166,10 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
 
 
 class LinearDiscriminantAnalysis(
-    LinearClassifierMixin, TransformerMixin, BaseEstimator
+    _ClassNamePrefixFeaturesOutMixin,
+    LinearClassifierMixin,
+    TransformerMixin,
+    BaseEstimator,
 ):
     """Linear Discriminant Analysis.
 
@@ -542,7 +546,7 @@ class LinearDiscriminantAnalysis(
             Fitted estimator.
         """
         X, y = self._validate_data(
-            X, y, ensure_min_samples=2, estimator=self, dtype=[np.float64, np.float32]
+            X, y, ensure_min_samples=2, dtype=[np.float64, np.float32]
         )
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
@@ -614,6 +618,7 @@ class LinearDiscriminantAnalysis(
             self.intercept_ = np.array(
                 self.intercept_[1] - self.intercept_[0], ndmin=1, dtype=X.dtype
             )
+        self._n_features_out = self._max_components
         return self
 
     def transform(self, X):
