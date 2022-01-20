@@ -97,7 +97,7 @@ Changelog
 
 - |Enhancement| Adds `get_feature_names_out` to :class:`cluster.Birch`,
   :class:`cluster.FeatureAgglomeration`, :class:`cluster.KMeans`,
-  :class:`cluster.MiniBatchKMeans`. :pr:`xxxxx` by `Thomas Fan`_.
+  :class:`cluster.MiniBatchKMeans`. :pr:`22255` by `Thomas Fan`_.
 
 - |Efficiency| In :class:`cluster.KMeans`, the default ``algorithm`` is now
   ``"lloyd"`` which is the full classical EM-style algorithm. Both ``"auto"``
