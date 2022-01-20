@@ -39,6 +39,8 @@ from ._classification import tpr_fpr_tnr_fnr_scores
 from ._classification import specificity_score
 from ._classification import npv_score
 
+from ._dist_metrics import DistanceMetric
+
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
@@ -118,6 +120,7 @@ __all__ = [
     "davies_bouldin_score",
     "DetCurveDisplay",
     "det_curve",
+    "DistanceMetric",
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",

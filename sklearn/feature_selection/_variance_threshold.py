@@ -58,6 +58,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     The following dataset has integer features, two of which are the same
     in every sample. These are removed with the default setting for threshold::
 
+        >>> from sklearn.feature_selection import VarianceThreshold
         >>> X = [[0, 2, 0, 3], [0, 1, 4, 3], [0, 1, 1, 3]]
         >>> selector = VarianceThreshold()
         >>> selector.fit_transform(X)

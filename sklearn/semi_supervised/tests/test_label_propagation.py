@@ -183,7 +183,7 @@ def test_predict_sparse_callable_kernel():
 
     # Custom sparse kernel (top-K RBF)
     def topk_rbf(X, Y=None, n_neighbors=10, gamma=1e-5):
-        nn = NearestNeighbors(n_neighbors=10, metric="euclidean", n_jobs=-1)
+        nn = NearestNeighbors(n_neighbors=10, metric="euclidean", n_jobs=2)
         nn.fit(X)
         W = -1 * nn.kneighbors_graph(Y, mode="distance").power(2) * gamma
         np.exp(W.data, out=W.data)

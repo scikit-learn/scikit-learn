@@ -146,7 +146,6 @@ class Pipeline(_BaseComposition):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
-        self._validate_steps()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -746,6 +745,7 @@ class Pipeline(_BaseComposition):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        feature_names_out = input_features
         for _, name, transform in self._iter():
             if not hasattr(transform, "get_feature_names_out"):
                 raise AttributeError(
@@ -753,8 +753,8 @@ class Pipeline(_BaseComposition):
                     "Did you mean to call pipeline[:-1].get_feature_names_out"
                     "()?".format(name)
                 )
-            feature_names = transform.get_feature_names_out(input_features)
-        return feature_names
+            feature_names_out = transform.get_feature_names_out(feature_names_out)
+        return feature_names_out
 
     @property
     def n_features_in_(self):
@@ -864,6 +864,7 @@ def make_pipeline(*steps, memory=None, verbose=False):
     --------
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.pipeline import make_pipeline
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('gaussiannb', GaussianNB())])

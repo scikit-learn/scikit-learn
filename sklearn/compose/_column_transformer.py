@@ -930,6 +930,7 @@ def make_column_transformer(
     Returns
     -------
     ct : ColumnTransformer
+        Returns a :class:`ColumnTransformer` object.
 
     See Also
     --------
@@ -948,7 +949,6 @@ def make_column_transformer(
                                      ['numerical_column']),
                                     ('onehotencoder', OneHotEncoder(...),
                                      ['categorical_column'])])
-
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
@@ -1002,6 +1002,7 @@ class make_column_selector:
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> from sklearn.compose import make_column_selector
+    >>> import numpy as np
     >>> import pandas as pd  # doctest: +SKIP
     >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
     ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP

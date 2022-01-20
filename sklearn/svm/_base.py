@@ -1,7 +1,9 @@
+import warnings
+import numbers
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 import scipy.sparse as sp
-import warnings
-from abc import ABCMeta, abstractmethod
 
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
@@ -97,13 +99,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "impl should be one of %s, %s was given" % (LIBSVM_IMPL, self._impl)
             )
-
-        if gamma == 0:
-            msg = (
-                "The gamma value of 0.0 is invalid. Use 'auto' to set"
-                " gamma to a value of 1 / n_features."
-            )
-            raise ValueError(msg)
 
         self.kernel = kernel
         self.degree = degree
@@ -242,10 +237,23 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             else:
                 raise ValueError(
                     "When 'gamma' is a string, it should be either 'scale' or "
-                    "'auto'. Got '{}' instead.".format(self.gamma)
+                    f"'auto'. Got '{self.gamma!r}' instead."
                 )
-        else:
+        elif isinstance(self.gamma, numbers.Real):
+            if self.gamma <= 0:
+                msg = (
+                    f"gamma value must be > 0; {self.gamma!r} is invalid. Use"
+                    " a positive number or use 'auto' to set gamma to a"
+                    " value of 1 / n_features."
+                )
+                raise ValueError(msg)
             self._gamma = self.gamma
+        else:
+            msg = (
+                "The gamma value should be set to 'scale', 'auto' or a"
+                f" positive float value. {self.gamma!r} is not a valid option"
+            )
+            raise ValueError(msg)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
@@ -265,6 +273,17 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if self._impl in ["c_svc", "nu_svc"] and len(self.classes_) == 2:
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
+
+        # Since, in the case of SVC and NuSVC, the number of models optimized by
+        # libSVM could be greater than one (depending on the input), `n_iter_`
+        # stores an ndarray.
+        # For the other sub-classes (SVR, NuSVR, and OneClassSVM), the number of
+        # models optimized by libSVM is always one, so `n_iter_` stores an
+        # integer.
+        if self._impl in ["c_svc", "nu_svc"]:
+            self.n_iter_ = self._num_iter
+        else:
+            self.n_iter_ = self._num_iter.item()
 
         return self
 
@@ -312,6 +331,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
+            self._num_iter,
         ) = libsvm.fit(
             X,
             y,
@@ -352,6 +372,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
+            self._num_iter,
         ) = libsvm_sparse.libsvm_sparse_train(
             X.shape[1],
             X.data,
@@ -616,6 +637,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                     "the number of samples at training time"
                     % (X.shape[1], self.shape_fit_[0])
                 )
+        # Fixes https://nvd.nist.gov/vuln/detail/CVE-2020-28975
+        # Check that _n_support is consistent with support_vectors
+        sv = self.support_vectors_
+        if not self._sparse and sv.size > 0 and self.n_support_.sum() != sv.shape[0]:
+            raise ValueError(
+                f"The internal representation of {self.__class__.__name__} was altered"
+            )
         return X
 
     @property

@@ -6,6 +6,7 @@ import warnings
 
 import numpy as np
 import scipy
+from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
@@ -217,13 +218,14 @@ class Isomap(TransformerMixin, BaseEstimator):
         # Similar fix to cluster._agglomerative._fix_connectivity.
         n_connected_components, labels = connected_components(kng)
         if n_connected_components > 1:
-            if self.metric == "precomputed":
+            if self.metric == "precomputed" and issparse(X):
                 raise RuntimeError(
                     "The number of connected components of the neighbors graph"
                     f" is {n_connected_components} > 1. The graph cannot be "
                     "completed with metric='precomputed', and Isomap cannot be"
                     "fitted. Increase the number of neighbors to avoid this "
-                    "issue."
+                    "issue, or precompute the full distance matrix instead "
+                    "of passing a sparse neighbors graph."
                 )
             warnings.warn(
                 "The number of connected components of the neighbors graph "
