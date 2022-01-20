@@ -31,6 +31,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     top_k_accuracy_score,
+    matthews_corrcoef,
     specificity_score,
     npv_score,
 )

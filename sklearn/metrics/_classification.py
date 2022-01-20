@@ -2690,7 +2690,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def tpr_fpr_tnr_fnr_scores(
+def tpr_fpr_tnr_fnr_score(
     y_true,
     y_pred,
     *,
@@ -2805,7 +2805,7 @@ def tpr_fpr_tnr_fnr_scores(
     specificity_score : Specificity, selectivity or true negative rate (TNR).
     multilabel_confusion_matrix : Confusion matrices for each class or sample.
     balanced_accuracy_score : Accuracy metric for imbalanced datasets.
-    tpr_fpr_tnr_fnr_scores : Four basic (mis-)classification rates.
+    tpr_fpr_tnr_fnr_score : Four basic (mis-)classification rates.
     npv_score : Negative predictive value (NPV).
 
     References
@@ -2823,17 +2823,17 @@ def tpr_fpr_tnr_fnr_scores(
     >>> import numpy as np
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
-    >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='macro')
+    >>> tpr_fpr_tnr_fnr_score(y_true, y_pred, average='macro')
     (0.33..., 0.33..., 0.66..., 0.66...)
-    >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='micro')
+    >>> tpr_fpr_tnr_fnr_score(y_true, y_pred, average='micro')
     (0.33..., 0.33..., 0.66..., 0.66...)
-    >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='weighted')
+    >>> tpr_fpr_tnr_fnr_score(y_true, y_pred, average='weighted')
     (0.33..., 0.33..., 0.66..., 0.66...)
 
     It is possible to compute per-label FPR, FNR, TNR, TPR and
     supports instead of averaging:
 
-    >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None,
+    >>> tpr_fpr_tnr_fnr_score(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     (array([0., 0., 1.]), array([0.25, 0.5 , 0.25]),
     array([0.75, 0.5 , 0.75]), array([1., 1., 0.]))
@@ -3038,7 +3038,7 @@ def specificity_score(
     >>> specificity_score(y_true, y_pred, average=None, zero_division=1)
     array([1. , 0.66..., 0.83...])
     """
-    _, _, tnr, _ = tpr_fpr_tnr_fnr_scores(
+    _, _, tnr, _ = tpr_fpr_tnr_fnr_score(
         y_true,
         y_pred,
         labels=labels,

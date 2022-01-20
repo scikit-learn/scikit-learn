@@ -39,7 +39,7 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-from sklearn.metrics import tpr_fpr_tnr_fnr_scores
+from sklearn.metrics import tpr_fpr_tnr_fnr_score
 from sklearn.metrics import specificity_score
 from sklearn.metrics import npv_score
 from sklearn.metrics import zero_one_loss
@@ -351,12 +351,12 @@ def test_precision_recall_f_ignored_labels():
             assert recall_13(average=average) != recall_all(average=average)
 
 
-def test_tpr_fpr_tnr_fnr_scores_binary_averaged():
+def test_tpr_fpr_tnr_fnr_score_binary_averaged():
     # Test TPR, FPR, TNR, FNR scores for binary classification task
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # compute scores with default labels introspection
-    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None)
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score(y_true, y_pred, average=None)
     assert_array_almost_equal(tprs, [0.88, 0.68], 2)
     assert_array_almost_equal(fprs, [0.32, 0.12], 2)
     assert_array_almost_equal(tnrs, [0.68, 0.88], 2)
@@ -368,13 +368,13 @@ def test_tpr_fpr_tnr_fnr_scores_binary_averaged():
     assert_array_almost_equal(tn / (tn + fp), 0.88, 2)
     assert_array_almost_equal(fn / (tp + fn), 0.32, 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="macro")
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="macro")
     assert tpr == np.mean(tprs)
     assert fpr == np.mean(fprs)
     assert tnr == np.mean(tnrs)
     assert fnr == np.mean(fnrs)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="weighted")
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="weighted")
     support = np.bincount(y_true)
     assert tpr == np.average(tprs, weights=support)
     assert fpr == np.average(fprs, weights=support)
@@ -382,41 +382,41 @@ def test_tpr_fpr_tnr_fnr_scores_binary_averaged():
     assert fnr == np.average(fnrs, weights=support)
 
 
-def test_tpr_fpr_tnr_fnr_scores_multiclass():
+def test_tpr_fpr_tnr_fnr_score_multiclass():
     # Test TPR, FPR, TNR, FNR scores for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute scores with default labels introspection
-    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None)
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score(y_true, y_pred, average=None)
     assert_array_almost_equal(tprs, [0.79, 0.1, 0.9], 2)
     assert_array_almost_equal(fprs, [0.08, 0.14, 0.45], 2)
     assert_array_almost_equal(tnrs, [0.92, 0.86, 0.55], 2)
     assert_array_almost_equal(fnrs, [0.21, 0.9, 0.1], 2)
 
     # averaging tests
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="micro")
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="micro")
     assert_array_almost_equal(tpr, 0.53, 2)
     assert_array_almost_equal(fpr, 0.23, 2)
     assert_array_almost_equal(tnr, 0.77, 2)
     assert_array_almost_equal(fnr, 0.47, 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="macro")
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="macro")
     assert_array_almost_equal(tpr, 0.6, 2)
     assert_array_almost_equal(fpr, 0.22, 2)
     assert_array_almost_equal(tnr, 0.78, 2)
     assert_array_almost_equal(fnr, 0.4, 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="weighted")
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(y_true, y_pred, average="weighted")
     assert_array_almost_equal(tpr, 0.53, 2)
     assert_array_almost_equal(fpr, 0.2, 2)
     assert_array_almost_equal(tnr, 0.8, 2)
     assert_array_almost_equal(fnr, 0.47, 2)
 
     with pytest.raises(ValueError):
-        tpr_fpr_tnr_fnr_scores(y_true, y_pred, average="samples")
+        tpr_fpr_tnr_fnr_score(y_true, y_pred, average="samples")
 
     # same prediction but with and explicit label ordering
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
         y_true, y_pred, labels=[0, 2, 1], average=None
     )
     assert_array_almost_equal(tpr, [0.79, 0.9, 0.1], 2)
@@ -426,14 +426,14 @@ def test_tpr_fpr_tnr_fnr_scores_multiclass():
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1])
-def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
+def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
 
     pytest.warns(Warning if zero_division == "warn" else None)
 
     zero_division_value = 1.0 if zero_division == 1.0 else 0.0
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
         y_true, y_pred, average=None, zero_division=zero_division
     )
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0, zero_division_value], 2)
@@ -441,7 +441,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     assert_array_almost_equal(tnr, [1.0, 1.0, 1.0, 2 / 3.0], 2)
     assert_array_almost_equal(fnr, [1.0, 0.5, 0.0, zero_division_value], 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
         y_true, y_pred, average="macro", zero_division=zero_division
     )
     assert_almost_equal(tpr, 0.625 if zero_division_value else 0.375)
@@ -449,7 +449,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     assert_almost_equal(tnr, 0.91666, 5)
     assert_almost_equal(fnr, 0.625 if zero_division_value else 0.375)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
         y_true, y_pred, average="micro", zero_division=zero_division
     )
     assert_almost_equal(tpr, 0.5)
@@ -457,7 +457,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     assert_almost_equal(tnr, 0.875)
     assert_almost_equal(fnr, 0.5)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
         y_true, y_pred, average="weighted", zero_division=zero_division
     )
     assert_almost_equal(tpr, 0.5)
@@ -465,7 +465,7 @@ def test_tpr_fpr_tnr_fnr_scores_with_an_empty_prediction(zero_division):
     assert_almost_equal(tnr, 1.0)
     assert_almost_equal(fnr, 0.5)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
         y_true,
         y_pred,
         average="samples",

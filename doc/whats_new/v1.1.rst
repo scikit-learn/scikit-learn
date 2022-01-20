@@ -377,7 +377,7 @@ Changelog
 - |Fix| :func:`metrics.silhouette_score` now supports integer input for precomputed
   distances. :pr:`22108` by `Thomas Fan`_.
  
- - |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_scores`,
+ - |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_score`,
   :func:`metrics.specificity_score` and :func:`metrics.npv_score`.
   :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
   and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.

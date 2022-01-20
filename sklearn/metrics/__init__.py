@@ -35,7 +35,7 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
-from ._classification import tpr_fpr_tnr_fnr_scores
+from ._classification import tpr_fpr_tnr_fnr_score
 from ._classification import specificity_score
 from ._classification import npv_score
 
@@ -178,7 +178,7 @@ __all__ = [
     "silhouette_score",
     "specificity_score",
     "top_k_accuracy_score",
-    "tpr_fpr_tnr_fnr_scores",
+    "tpr_fpr_tnr_fnr_score",
     "v_measure_score",
     "zero_one_loss",
     "brier_score_loss",

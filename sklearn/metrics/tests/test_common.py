@@ -59,7 +59,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import specificity_score
-from sklearn.metrics import tpr_fpr_tnr_fnr_scores
+from sklearn.metrics import tpr_fpr_tnr_fnr_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import dcg_score
@@ -146,8 +146,8 @@ CLASSIFICATION_METRICS = {
     "f2_score": partial(fbeta_score, beta=2),
     "f0.5_score": partial(fbeta_score, beta=0.5),
     "matthews_corrcoef_score": matthews_corrcoef,
-    "tpr_fpr_tnr_fnr_scores": tpr_fpr_tnr_fnr_scores,
-    "binary_tpr_fpr_tnr_fnr_scores": partial(tpr_fpr_tnr_fnr_scores, average="binary"),
+    "tpr_fpr_tnr_fnr_score": tpr_fpr_tnr_fnr_score,
+    "binary_tpr_fpr_tnr_fnr_score": partial(tpr_fpr_tnr_fnr_score, average="binary"),
     "specificity_score": specificity_score,
     "binary_specificity_score": partial(specificity_score, average="binary"),
     "npv_score": npv_score,
@@ -158,8 +158,8 @@ CLASSIFICATION_METRICS = {
     "weighted_precision_score": partial(precision_score, average="weighted"),
     "weighted_recall_score": partial(recall_score, average="weighted"),
     "weighted_jaccard_score": partial(jaccard_score, average="weighted"),
-    "weighted_tpr_fpr_tnr_fnr_scores": partial(
-        tpr_fpr_tnr_fnr_scores, average="weighted"
+    "weighted_tpr_fpr_tnr_fnr_score": partial(
+        tpr_fpr_tnr_fnr_score, average="weighted"
     ),
     "weighted_specificity_score": partial(specificity_score, average="weighted"),
     "weighted_npv_score": partial(npv_score, average="weighted"),
@@ -169,7 +169,7 @@ CLASSIFICATION_METRICS = {
     "micro_precision_score": partial(precision_score, average="micro"),
     "micro_recall_score": partial(recall_score, average="micro"),
     "micro_jaccard_score": partial(jaccard_score, average="micro"),
-    "micro_tpr_fpr_tnr_fnr_scores": partial(tpr_fpr_tnr_fnr_scores, average="micro"),
+    "micro_tpr_fpr_tnr_fnr_score": partial(tpr_fpr_tnr_fnr_score, average="micro"),
     "micro_specificity_score": partial(specificity_score, average="micro"),
     "micro_npv_score": partial(npv_score, average="micro"),
     "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
@@ -178,7 +178,7 @@ CLASSIFICATION_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
     "macro_jaccard_score": partial(jaccard_score, average="macro"),
-    "macro_tpr_fpr_tnr_fnr_scores": partial(tpr_fpr_tnr_fnr_scores, average="macro"),
+    "macro_tpr_fpr_tnr_fnr_score": partial(tpr_fpr_tnr_fnr_score, average="macro"),
     "macro_specificity_score": partial(specificity_score, average="macro"),
     "macro_npv_score": partial(npv_score, average="macro"),
     "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
@@ -187,8 +187,8 @@ CLASSIFICATION_METRICS = {
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
     "samples_jaccard_score": partial(jaccard_score, average="samples"),
-    "samples_tpr_fpr_tnr_fnr_scores": partial(
-        tpr_fpr_tnr_fnr_scores, average="samples"
+    "samples_tpr_fpr_tnr_fnr_score": partial(
+        tpr_fpr_tnr_fnr_score, average="samples"
     ),
     "samples_specificity_score": partial(specificity_score, average="samples"),
     "samples_npv_score": partial(npv_score, average="samples"),
@@ -290,7 +290,7 @@ METRIC_UNDEFINED_BINARY = {
     "samples_precision_score",
     "samples_recall_score",
     "samples_jaccard_score",
-    "samples_tpr_fpr_tnr_fnr_scores",
+    "samples_tpr_fpr_tnr_fnr_score",
     "samples_specificity_score",
     "samples_npv_score",
     "coverage_error",
@@ -320,10 +320,10 @@ METRIC_UNDEFINED_MULTICLASS = {
     "f1_score",
     "f2_score",
     "f0.5_score",
-    "tpr_fpr_tnr_fnr_scores",
+    "tpr_fpr_tnr_fnr_score",
     "specificity_score",
     "npv_score",
-    "binary_tpr_fpr_tnr_fnr_scores",
+    "binary_tpr_fpr_tnr_fnr_score",
     "binary_specificity_score",
     "binary_npv_score",
     # curves
@@ -372,7 +372,7 @@ METRICS_WITH_POS_LABEL = {
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "samples_average_precision_score",
-    "tpr_fpr_tnr_fnr_scores",
+    "tpr_fpr_tnr_fnr_score",
     "specificity_score",
     "npv_score",
 }
@@ -392,7 +392,7 @@ METRICS_WITH_LABELS = {
     "f2_score",
     "f0.5_score",
     "jaccard_score",
-    "tpr_fpr_tnr_fnr_scores",
+    "tpr_fpr_tnr_fnr_score",
     "specificity_score",
     "npv_score",
     "weighted_f0.5_score",
@@ -401,7 +401,7 @@ METRICS_WITH_LABELS = {
     "weighted_precision_score",
     "weighted_recall_score",
     "weighted_jaccard_score",
-    "weighted_tpr_fpr_tnr_fnr_scores",
+    "weighted_tpr_fpr_tnr_fnr_score",
     "weighted_specificity_score",
     "weighted_npv_score",
     "micro_f0.5_score",
@@ -410,7 +410,7 @@ METRICS_WITH_LABELS = {
     "micro_precision_score",
     "micro_recall_score",
     "micro_jaccard_score",
-    "micro_tpr_fpr_tnr_fnr_scores",
+    "micro_tpr_fpr_tnr_fnr_score",
     "micro_specificity_score",
     "micro_npv_score",
     "macro_f0.5_score",
@@ -419,7 +419,7 @@ METRICS_WITH_LABELS = {
     "macro_precision_score",
     "macro_recall_score",
     "macro_jaccard_score",
-    "macro_tpr_fpr_tnr_fnr_scores",
+    "macro_tpr_fpr_tnr_fnr_score",
     "macro_specificity_score",
     "macro_npv_score",
     "unnormalized_multilabel_confusion_matrix",
@@ -467,7 +467,7 @@ MULTILABELS_METRICS = {
     "weighted_precision_score",
     "weighted_recall_score",
     "weighted_jaccard_score",
-    "weighted_tpr_fpr_tnr_fnr_scores",
+    "weighted_tpr_fpr_tnr_fnr_score",
     "weighted_specificity_score",
     "weighted_npv_score",
     "macro_f0.5_score",
@@ -476,7 +476,7 @@ MULTILABELS_METRICS = {
     "macro_precision_score",
     "macro_recall_score",
     "macro_jaccard_score",
-    "macro_tpr_fpr_tnr_fnr_scores",
+    "macro_tpr_fpr_tnr_fnr_score",
     "macro_specificity_score",
     "macro_npv_score",
     "micro_f0.5_score",
@@ -485,7 +485,7 @@ MULTILABELS_METRICS = {
     "micro_precision_score",
     "micro_recall_score",
     "micro_jaccard_score",
-    "micro_tpr_fpr_tnr_fnr_scores",
+    "micro_tpr_fpr_tnr_fnr_score",
     "micro_specificity_score",
     "micro_npv_score",
     "unnormalized_multilabel_confusion_matrix",
@@ -495,7 +495,7 @@ MULTILABELS_METRICS = {
     "samples_precision_score",
     "samples_recall_score",
     "samples_jaccard_score",
-    "samples_tpr_fpr_tnr_fnr_scores",
+    "samples_tpr_fpr_tnr_fnr_score",
     "samples_specificity_score",
     "samples_npv_score",
 }
@@ -532,7 +532,7 @@ SYMMETRIC_METRICS = {
     "micro_f2_score",
     "micro_precision_score",
     "micro_recall_score",
-    "micro_tpr_fpr_tnr_fnr_scores",
+    "micro_tpr_fpr_tnr_fnr_score",
     "micro_specificity_score",
     "micro_npv_score",
     "matthews_corrcoef_score",
@@ -562,7 +562,7 @@ NOT_SYMMETRIC_METRICS = {
     "recall_score",
     "f2_score",
     "f0.5_score",
-    "tpr_fpr_tnr_fnr_scores",
+    "tpr_fpr_tnr_fnr_score",
     "specificity_score",
     "npv_score",
     "weighted_f0.5_score",
@@ -570,7 +570,7 @@ NOT_SYMMETRIC_METRICS = {
     "weighted_f2_score",
     "weighted_precision_score",
     "weighted_jaccard_score",
-    "weighted_tpr_fpr_tnr_fnr_scores",
+    "weighted_tpr_fpr_tnr_fnr_score",
     "weighted_specificity_score",
     "weighted_npv_score",
     "unnormalized_multilabel_confusion_matrix",
@@ -578,7 +578,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_f2_score",
     "macro_precision_score",
     "macro_recall_score",
-    "macro_tpr_fpr_tnr_fnr_scores",
+    "macro_tpr_fpr_tnr_fnr_score",
     "macro_specificity_score",
     "macro_npv_score",
     "log_loss",

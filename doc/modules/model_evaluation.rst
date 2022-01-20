@@ -813,14 +813,14 @@ precision-recall curve as follows.
 
 Precision can also be referred to as the `positive predictive value (PPV)
 <https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_,
-e.g. in the context of bioscience. A closely related metric is 
+e.g. in the context of bioscience. A closely related metric is
 `negative predictive value (NPV) <https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_
 , implemented by the :func:`npv_score`.
 
 Recall can also be called the hit rate, or true positive rate (TPR). Especially
 in biostatistics, it is also known as `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
 , which is related to `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_.
-In turn, specificity is also referred to as selectivity, or true negative rate (TNR), 
+In turn, specificity is also referred to as selectivity, or true negative rate (TNR),
 and is implemented by the :func:`specificity_score`.
 
 .. topic:: Examples:
