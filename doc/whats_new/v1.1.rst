@@ -318,7 +318,7 @@ Changelog
 .......................
 
 - |Enhancement| Adds `get_feature_names_out` to `IsotonicRegression`.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`22249` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
