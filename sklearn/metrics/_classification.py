@@ -2807,6 +2807,14 @@ def tpr_fpr_tnr_fnr_score(
     balanced_accuracy_score : Accuracy metric for imbalanced datasets.
     npv_score : Negative predictive value (NPV).
 
+    Notes
+    -----
+    When `true positive + false negative == 0`, TPR, FNR are undefined;
+    When `true negative + false positive == 0`, FPR, TNR are undefined.
+    In such cases, by default the metric will be set to 0, as will F-score,
+    and `UndefinedMetricWarning` will be raised. This behavior can be
+    modified with `zero_division`.
+
     References
     ----------
     .. [1] `Wikipedia entry for confusion matrix
@@ -2837,14 +2845,6 @@ def tpr_fpr_tnr_fnr_score(
     ... labels=['pig', 'dog', 'cat'])
     (array([0., 0., 1.]), array([0.25, 0.5 , 0.25]),
     array([0.75, 0.5 , 0.75]), array([1., 1., 0.]))
-
-    Notes
-    -----
-    When `true positive + false negative == 0`, TPR, FNR are undefined;
-    When `true negative + false positive == 0`, FPR, TNR are undefined.
-    In such cases, by default the metric will be set to 0, as will F-score,
-    and `UndefinedMetricWarning` will be raised. This behavior can be
-    modified with `zero_division`.
     """
     _check_zero_division(zero_division)
 
