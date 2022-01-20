@@ -2664,8 +2664,6 @@ def tpr_fpr_tnr_fnr_scores(
 ):
     """Compute the TPR, FPR, TNR, FNR for each class.
 
-    .. versionadded:: 1.1
-
     The true positive rate (TPR) is the ratio `TP / (TP + FN)` where `TP`
     is the number of true positives and `FN` the number of false negatives.
 
@@ -2684,6 +2682,8 @@ def tpr_fpr_tnr_fnr_scores(
     `"weighted"` or `"samples"`.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
+    .. versionadded:: 1.1
 
     Parameters
     ----------
@@ -2710,8 +2710,8 @@ def tpr_fpr_tnr_fnr_scores(
         setting `labels=[pos_label]` and `average != "binary"` will report
         scores for that label only.
 
-    average : str, {None, "binary", "micro", "macro", "samples", "weighted"}, \
-        default=None
+    average : {"binary", "micro", "macro", "samples", "weighted"} or None, \
+            default=None
         If `None`, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
@@ -2811,7 +2811,6 @@ def tpr_fpr_tnr_fnr_scores(
 
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
-    # Calculate tp_sum, fp_sum, tn_sum, fn_sum, pos_sum, neg_sum
     samplewise = average == "samples"
     MCM = multilabel_confusion_matrix(
         y_true,
@@ -2869,7 +2868,7 @@ def tpr_fpr_tnr_fnr_scores(
         weights = None
 
     if average is not None:
-        assert average != "binary" or len(fpr) == 1
+        assert average != "binary" or len(fpr) == 1, "Non-binary target."
         tpr = np.average(tpr, weights=weights)
         fpr = np.average(fpr, weights=weights)
         tnr = np.average(tnr, weights=weights)
@@ -2889,8 +2888,6 @@ def specificity_score(
 ):
     """Compute the specificity, also known as the true negative rate (TNR).
 
-    .. versionadded:: 1.1
-
     The specificity is the ratio `TN / (TN + FP)` where `TN` is the number
     of true negatives and `FP` is the number of false positives.
     The specificity is intuitively the ability of the classifier to find
@@ -2899,6 +2896,8 @@ def specificity_score(
     The best value is 1 and the worst value is 0.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
+    .. versionadded:: 1.1
 
     Parameters
     ----------
@@ -2925,7 +2924,7 @@ def specificity_score(
         setting `labels=[pos_label]` and `average != "binary"` will report
         scores for that label only.
 
-    average : str, {None, "binary", "micro", "macro", "samples", "weighted"} \
+    average : {"binary", "micro", "macro", "samples", "weighted"} or None \
             default="binary"
         This parameter is required for multiclass/multilabel targets.
         If `None`, the scores for each class are returned. Otherwise, this
@@ -2967,14 +2966,8 @@ def specificity_score(
 
     See Also
     --------
-    classification_report : A text report showing the key classification metrics.
-    precision_recall_fscore_support : The key classification metrics.
     precision_score : Precision or positive predictive value (PPV).
     recall_score : Recall, sensitivity, hit rate, or true positive rate (TPR).
-    multilabel_confusion_matrix : Confusion matrices for each class or sample.
-    balanced_accuracy_score : Accuracy metric for imbalanced datasets.
-    tpr_fpr_tnr_fnr_scores : Four basic (mis-)classification rates.
-    npv_score : Negative predictive value (NPV).
 
     Notes
     -----
@@ -3030,8 +3023,6 @@ def npv_score(
 ):
     """Compute the negative predictive value (NPV).
 
-    .. versionadded:: 1.1
-
     The NPV is the ratio `TN / (TN + FN)` where `TN` is the number of true
     negatives and `FN` is the number of false negatives. The NPV is intuitively
     the ability of the classifier to mark the negative samples correctly.
@@ -3039,6 +3030,8 @@ def npv_score(
     The best value is 1 and the worst value is 0.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
+    .. versionadded:: 1.1
 
     Parameters
     ----------
@@ -3065,7 +3058,7 @@ def npv_score(
         setting `labels=[pos_label]` and `average != "binary"` will report
         scores for that label only.
 
-    average : str, {None, "binary", "micro", "macro", "samples", "weighted"} \
+    average : {"binary", "micro", "macro", "samples", "weighted"}, None \
             default="binary"
         This parameter is required for multiclass/multilabel targets.
         If `None`, the scores for each class are returned. Otherwise, this
@@ -3107,14 +3100,8 @@ def npv_score(
 
     See Also
     --------
-    classification_report : A text report showing the key classification metrics.
-    precision_recall_fscore_support : The key classification metrics.
     precision_score : Precision or positive predictive value (PPV).
     recall_score : Recall, sensitivity, hit rate, or true positive rate (TPR).
-    specificity_score : Specificity, selectivity or true negative rate (TNR).
-    multilabel_confusion_matrix : Confusion matrices for each class or sample.
-    balanced_accuracy_score : Accuracy metric for imbalanced datasets.
-    tpr_fpr_tnr_fnr_scores : Four basic (mis-)classification rates.
 
     Notes
     -----
@@ -3189,7 +3176,7 @@ def npv_score(
     else:
         weights = None
     if average is not None:
-        assert average != "binary" or len(NPV) == 1
+        assert average != "binary" or len(NPV) == 1, "Non-binary target."
         NPV = np.average(NPV, weights=weights)
 
     return NPV
