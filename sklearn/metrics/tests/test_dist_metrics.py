@@ -7,6 +7,7 @@ from numpy.testing import assert_array_almost_equal
 
 import pytest
 
+import scipy.sparse as sp
 from scipy.spatial.distance import cdist
 from sklearn.metrics import DistanceMetric
 from sklearn.utils import check_random_state
@@ -289,13 +290,42 @@ def test_readonly_kwargs():
     DistanceMetric.get_metric("mahalanobis", VI=VI)
 
 
-def test_minkowski_metric_validate_weights():
-    w1 = rng.random_sample(d)
-    w1[0] = -1337
-    msg = "w cannot contain negative weights"
-    with pytest.raises(ValueError, match=msg):
-        DistanceMetric.get_metric("minkowski", p=3, w=w1)
+@pytest.mark.parametrize(
+    "w, err_type, err_msg",
+    [
+        (
+            np.array([1, 1.5, -13]),
+            ValueError,
+            "w cannot contain negative weights"
+        ),
+        (
+            np.array([1, 1.5, np.nan]),
+            ValueError,
+            "w contains NaN"
+        ),
+        (
+            sp.csr_matrix([1, 1.5, 1]),
+            TypeError,
+            "A sparse matrix was passed, but dense data is required"
+        ),
+        (
+            np.array(["a", "b", "c"]),
+            ValueError,
+            "could not convert string to float"
+        ),
+        (
+            np.array([]),
+            ValueError,
+            "a minimum of 1 is required"
+        ),
+    ],
+)
+def test_minkowski_metric_validate_weights_values(w, err_type, err_msg):
+    with pytest.raises(err_type, match=err_msg):
+        DistanceMetric.get_metric("minkowski", p=3, w=w)
 
+
+def test_minkowski_metric_validate_weights_size():
     w2 = rng.random_sample(d + 1)
     dm = DistanceMetric.get_metric("minkowski", p=3, w=w2)
     msg = (

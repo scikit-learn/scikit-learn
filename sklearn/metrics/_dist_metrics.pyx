@@ -30,6 +30,7 @@ cdef DTYPE_t INF = np.inf
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
+from ..utils import check_array
 
 ######################################################################
 # newObj function
@@ -569,7 +570,9 @@ cdef class MinkowskiDistance(DistanceMetric):
 
         self.p = p
         if w is not None:
-            w_array = np.asarray(w, dtype=DTYPE)
+            w_array = check_array(
+                w, ensure_2d=False, dtype=DTYPE, input_name="w"
+            )
             if (w_array < 0).any():
                 raise ValueError("w cannot contain negative weights")
             self.vec = ReadonlyArrayWrapper(w_array)
