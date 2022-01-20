@@ -904,7 +904,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
-        self.alpha = check_scalar(
+        check_scalar(
             self.alpha,
             "alpha",
             target_type=numbers.Real,
@@ -925,7 +925,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 % self.precompute
             )
 
-        self.l1_ratio = check_scalar(
+        check_scalar(
             self.l1_ratio,
             "l1_ratio",
             target_type=numbers.Real,
@@ -934,11 +934,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         )
 
         if self.max_iter is not None:
-            self.max_iter = check_scalar(
+            check_scalar(
                 self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
             )
 
-        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
+        check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # Remember if X is copied
         X_copied = False
