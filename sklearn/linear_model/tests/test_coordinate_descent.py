@@ -167,6 +167,21 @@ def test_lasso_zero():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
+def test_enet_nonfinite_params():
+    # Check ElasticNet throws ValueError when dealing with non-finite parameter
+    # values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+
+    clf = ElasticNet(alpha=0.1)
+    msg = "Coordinate descent iterations resulted in non-finite parameter values"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
 def test_lasso_toy():
     # Test Lasso on a toy example for various values of alpha.
     # When validating this against glmnet notice that glmnet divides it
