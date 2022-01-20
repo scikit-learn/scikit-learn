@@ -190,7 +190,8 @@ def spectral_embedding(
         'amg'`, and for the K-Means initialization. Use an int to make
         the results deterministic across calls (See
         :term:`Glossary <random_state>`). If None, the random number
-        generator is the ``RandomState`` instance used by ``np.random``.
+        generator is the ``RandomState`` instance used by ``np.random``,
+        that is ``np.random.default_rng()``.
 
         .. note::
             When using `eigen_solver == 'amg'`,
