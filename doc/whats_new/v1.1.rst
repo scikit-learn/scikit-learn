@@ -344,6 +344,11 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
+- |Enhancement| :func:`linear_model.ElasticNet` and 
+  and other linear model classes using coordinate descent show error
+  messages when non-finite parameter weights are produced. :pr:`22148`
+  by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
+
 - |Fix| :class:`linear_model.ElasticNetCV` now produces correct
   warning when `l1_ratio=0`.
   :pr:`21724` by :user:`Yar Khine Phyo <yarkhinephyo>`.
