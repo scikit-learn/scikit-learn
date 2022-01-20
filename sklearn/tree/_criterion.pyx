@@ -1384,7 +1384,7 @@ cdef class Poisson(RegressionCriterion):
         The Poisson proxy is derived from:
 
               sum_{i left }(y_i * log(y_i / y_pred_L))
-            + sum_{i right}(y_i * log(y_i / y_pred_R)
+            + sum_{i right}(y_i * log(y_i / y_pred_R))
             = sum(y_i * log(y_i) - n_L * mean_{i left}(y_i) * log(mean_{i left}(y_i))
                                  - n_R * mean_{i right}(y_i) * log(mean_{i right}(y_i))
 
