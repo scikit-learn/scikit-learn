@@ -1246,9 +1246,12 @@ def load_boston(*, return_X_y=False):
             The names of features
 
     (data, target) : tuple if ``return_X_y`` is True
-
+        A tuple of two ndarrays. The first contains a 2D array of shape (506, 13) 
+        with each row representing one sample and each column representing the features. 
+        The second array of shape (506,) contains the target samples.
+        
         .. versionadded:: 0.18
-
+    
     Notes
     -----
         .. versionchanged:: 0.20
