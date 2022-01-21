@@ -702,6 +702,9 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        Returns a tuple of two ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
 
@@ -981,9 +984,10 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
             The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
-        Returns a tuple of two ndarray of shape (n_samples, n_features)
-        A 2D array with each row representing one sample and each column
-        representing the features and/or target of a given sample.
+        A tuple of two ndarrays. The first contains a 2D array of shape (442, 10) 
+        with each row representing one sample and each column representing the features. 
+        The second array of shape (442,) contains the target samples.
+
         .. versionadded:: 0.18
     """
     data_filename = "diabetes_data_raw.csv.gz"
