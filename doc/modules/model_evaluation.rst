@@ -1018,7 +1018,7 @@ In the binary case::
 
 In the 2D comparison case (e.g. image similarity):
 
-  >>> jaccard_score(y_true.flatten(), y_pred.flatten())
+  >>> jaccard_score(y_true, y_pred, average="micro")
   0.6
 
 In the multilabel case with binary label indicators::
