@@ -1130,55 +1130,9 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
 
 @deprecated(
     r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.
-
-    The Boston housing prices dataset has an ethical problem. You can refer to
-    the documentation of this function for further details.
-
-    The scikit-learn maintainers therefore strongly discourage the use of this
-    dataset unless the purpose of the code is to study and educate about
-    ethical issues in data science and machine learning.
-
-    In this special case, you can fetch the dataset from the original
-    source::
-
-        import pandas as pd
-        import numpy as np
-
-        data_url = "http://lib.stat.cmu.edu/datasets/boston"
-        raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
-        data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
-        target = raw_df.values[1::2, 2]
-
-    Alternative datasets include the California housing dataset (i.e.
-    :func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
-    dataset. You can load the datasets as follows::
-
-        from sklearn.datasets import fetch_california_housing
-        housing = fetch_california_housing()
-
-    for the California housing dataset and::
-
-        from sklearn.datasets import fetch_openml
-        housing = fetch_openml(name="house_prices", as_frame=True)
-
-    for the Ames housing dataset."""
-)
-def load_boston(*, return_X_y=False):
-    r"""Load and return the boston house-prices dataset (regression).
-
-    ==============   ==============
-    Samples total               506
-    Dimensionality               13
-    Features         real, positive
-    Targets           real 5. - 50.
-    ==============   ==============
-
-    Read more in the :ref:`User Guide <boston_dataset>`.
-
-    .. deprecated:: 1.0
-       This function is deprecated in 1.0 and will be removed in 1.2. See the
-       warning message below for further details regarding the alternative
-       datasets.
+    
+    See the warning message below for further details regarding the
+    alternative datasets.
 
     .. warning::
         The Boston housing prices dataset has an ethical problem: as
@@ -1216,7 +1170,19 @@ def load_boston(*, return_X_y=False):
             from sklearn.datasets import fetch_openml
             housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
 
-        for the Ames housing dataset.
+        for the Ames housing dataset."""
+)
+def load_boston(*, return_X_y=False):
+    r"""Load and return the boston house-prices dataset (regression).
+
+    ==============   ==============
+    Samples total               506
+    Dimensionality               13
+    Features         real, positive
+    Targets           real 5. - 50.
+    ==============   ==============
+
+    Read more in the :ref:`User Guide <boston_dataset>`.
 
     Parameters
     ----------
@@ -1246,10 +1212,10 @@ def load_boston(*, return_X_y=False):
             The names of features
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays. The first contains a 2D array of shape (506, 13) 
-        with each row representing one sample and each column representing the features. 
+        A tuple of two ndarrays. The first contains a 2D array of shape (506, 13)
+        with each row representing one sample and each column representing the features.
         The second array of shape (506,) contains the target samples.
-        
+
         .. versionadded:: 0.18
 
     Notes
