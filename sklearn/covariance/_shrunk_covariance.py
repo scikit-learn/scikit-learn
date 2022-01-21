@@ -45,11 +45,11 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Notes
     -----
-    The regularized (shrunk) covariance is given by:
+    The regularized (shrunk) covariance is given by::
 
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+        (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
-    where mu = trace(cov) / n_features
+    where `mu = trace(cov) / n_features`.
     """
     emp_cov = check_array(emp_cov)
     n_features = emp_cov.shape[0]
