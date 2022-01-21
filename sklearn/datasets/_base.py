@@ -1251,7 +1251,7 @@ def load_boston(*, return_X_y=False):
         The second array of shape (506,) contains the target samples.
         
         .. versionadded:: 0.18
-    
+
     Notes
     -----
         .. versionchanged:: 0.20
