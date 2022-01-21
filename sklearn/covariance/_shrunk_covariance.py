@@ -25,7 +25,7 @@ from ..utils import check_array
 
 
 def shrunk_covariance(emp_cov, shrinkage=0.1):
-    """Calculates a covariance matrix shrunk on the diagonal
+    """Calculate a covariance matrix shrunk on the diagonal
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
