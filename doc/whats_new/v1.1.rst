@@ -140,6 +140,12 @@ Changelog
   `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
   :user:`murata-yu`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
+  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
