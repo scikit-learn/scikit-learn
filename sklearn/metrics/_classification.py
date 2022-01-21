@@ -2789,12 +2789,20 @@ def tpr_fpr_tnr_fnr_score(
     Returns
     -------
     tpr : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The true positive rate (TPR) is the ratio `TP / (TP + FN)` where `TP`
+        is the number of true positives and `FN` the number of false negatives.
 
     fpr : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The false positive rate (FPR) is the ratio `FP / (TN + FP)` where `TN`
+        is the number of true negatives and `FP` the number of false positives.
 
     tnr : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The true negative rate (TNR) is the ratio `TN / (TN + FP)` where `TN`
+        is the number of true negatives and `FP` the number of false positives.
 
     fnr : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The false negative rate (FNR) is the ratio `FN / (TP + FN)` where `TP`
+        is the number of true positives and `FN` the number of false negatives.
 
     See Also
     --------
