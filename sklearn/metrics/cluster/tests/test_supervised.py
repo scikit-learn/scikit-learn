@@ -261,6 +261,11 @@ def test_entropy():
     assert_almost_equal(ent, 0.6365141, 5)
     assert_almost_equal(entropy([]), 1)
 
+    # With a single class, the entropy should be 0. (regression test for #22185)
+    n = 200
+    zeros = np.zeros((n,))
+    assert all([entropy(zeros[:i]) == 0 for i in range(1, n)])
+
 
 def test_contingency_matrix():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
@@ -461,10 +466,3 @@ def test_adjusted_rand_score_overflow():
     with pytest.warns(None) as record:
         adjusted_rand_score(y_true, y_pred)
     assert len(record) == 0
-
-
-def test_entropy_single_class():
-    """With a single class, the entropy should be 0. (regression test for #22185)"""
-    n = 200
-    zeros = np.zeros((n,))
-    assert all([entropy(zeros[:i]) == 0 for i in range(1, n)])
