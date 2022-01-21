@@ -1128,11 +1128,18 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     )
 
 
-@deprecated(
-    r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.
-    
-    See the warning message below for further details regarding the
-    alternative datasets.
+@deprecated(r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.""")
+def load_boston(*, return_X_y=False):
+    r"""Load and return the Boston house-prices dataset (regression).
+
+    ==============   ==============
+    Samples total               506
+    Dimensionality               13
+    Features         real, positive
+    Targets           real 5. - 50.
+    ==============   ==============
+
+    Read more in the :ref:`User Guide <boston_dataset>`.
 
     .. warning::
         The Boston housing prices dataset has an ethical problem: as
@@ -1154,7 +1161,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
             import numpy as np
 
             data_url = "http://lib.stat.cmu.edu/datasets/boston"
-            raw_df = pd.read_csv(data_url, sep="s+", skiprows=22, header=None)
+            raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
             data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
             target = raw_df.values[1::2, 2]
 
@@ -1170,19 +1177,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
             from sklearn.datasets import fetch_openml
             housing = fetch_openml(name="house_prices", as_frame=True)  # noqa
 
-        for the Ames housing dataset."""
-)
-def load_boston(*, return_X_y=False):
-    r"""Load and return the boston house-prices dataset (regression).
-
-    ==============   ==============
-    Samples total               506
-    Dimensionality               13
-    Features         real, positive
-    Targets           real 5. - 50.
-    ==============   ==============
-
-    Read more in the :ref:`User Guide <boston_dataset>`.
+        for the Ames housing dataset.
 
     Parameters
     ----------
