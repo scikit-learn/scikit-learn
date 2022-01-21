@@ -682,29 +682,29 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        target: {ndarray, Series} of shape (569,)
+        target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names: list
+        feature_names : list
             The names of the dataset columns.
-        target_names: list
+        target_names : list
             The names of target classes.
-        frame: DataFrame of shape (569, 31)
+        frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
             .. versionadded:: 0.23
-        DESCR: str
+        DESCR : str
             The full description of the dataset.
-        filename: str
+        filename : str
             The path to the location of the data.
 
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
-        Returns a tuple of two ndarray of shape (n_samples, n_features)
-        A 2D array with each row representing one sample and each column
-        representing the features and/or target of a given sample.
+        A tuple of two ndarrays. The first contains a 2D array of shape (569, 30) 
+        with each row representing one sample and each column representing the features. 
+        The second array of shape (569,) contains the target samples.
 
         .. versionadded:: 0.18
 
@@ -984,9 +984,9 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
             The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays. The first contains a 2D array of shape (442, 10) 
-        with each row representing one sample and each column representing the features. 
-        The second array of shape (442,) contains the target samples.
+        Returns a tuple of two ndarray of shape (n_samples, n_features)
+        A 2D array with each row representing one sample and each column
+        representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
     """
