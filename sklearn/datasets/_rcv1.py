@@ -136,8 +136,8 @@ def fetch_rcv1(
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object. Returned only if `return_X_y` is False. Has
-        the following attributes.
+        Dictionary-like object. Returned only if `return_X_y` is False. 
+        `dataset` has the following attributes:
 
         data : sparse matrix of shape (804414, 47236), dtype=np.float64
             The array has 0.16% of non zero values. Will be of CSR format.
