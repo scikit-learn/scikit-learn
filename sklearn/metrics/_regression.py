@@ -1230,8 +1230,8 @@ def d2_pinball_score(
         Sample weights.
 
     alpha : float, default=0.5
-        Slope of the pinball loss. It determines the quantile level alpha
-        for which the pinball loss and also D2 are optimal.
+        Slope of the pinball deviance. It determines the quantile level alpha
+        for which the pinball deviance and also D2 are optimal.
         The default `alpha=0.5` is equivalent to `d2_absolute_error_score`.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
@@ -1350,7 +1350,7 @@ def d2_absolute_error_score(
 ):
     """
     :math:`D^2` regression score function, \
-    fraction of mean absolute error deviance explained.
+    fraction of absolute error deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical median of `y_true`
@@ -1386,7 +1386,7 @@ def d2_absolute_error_score(
     Returns
     -------
     score : float or ndarray of floats
-        The :math:`D^2` score with a mean absolute error deviance
+        The :math:`D^2` score with an absolute error deviance
         or ndarray of scores if 'multioutput' is 'raw_values'.
 
     Notes

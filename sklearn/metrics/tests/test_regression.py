@@ -353,7 +353,7 @@ def test_regression_multioutput_array():
     mape = mean_absolute_percentage_error(y_true, y_pred, multioutput="raw_values")
     r = r2_score(y_true, y_pred, multioutput="raw_values")
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
-    d2pls = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput="raw_values")
+    d2ps = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput="raw_values")
     evs2 = explained_variance_score(
         y_true, y_pred, multioutput="raw_values", force_finite=False
     )
@@ -364,7 +364,7 @@ def test_regression_multioutput_array():
     assert_array_almost_equal(mape, [0.0778, 0.2262], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
-    assert_array_almost_equal(d2pls, [0.833, 0.722], decimal=2)
+    assert_array_almost_equal(d2ps, [0.833, 0.722], decimal=2)
     assert_array_almost_equal(evs2, [0.95, 0.93], decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
@@ -375,12 +375,12 @@ def test_regression_multioutput_array():
     mae = mean_absolute_error(y_true, y_pred, multioutput="raw_values")
     pbl = mean_pinball_loss(y_true, y_pred, multioutput="raw_values")
     r = r2_score(y_true, y_pred, multioutput="raw_values")
-    d2pls = d2_pinball_score(y_true, y_pred, multioutput="raw_values")
+    d2ps = d2_pinball_score(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(mse, [1.0, 1.0], decimal=2)
     assert_array_almost_equal(mae, [1.0, 1.0], decimal=2)
     assert_array_almost_equal(pbl, [0.5, 0.5], decimal=2)
     assert_array_almost_equal(r, [0.0, 0.0], decimal=2)
-    assert_array_almost_equal(d2pls, [0.0, 0.0], decimal=2)
+    assert_array_almost_equal(d2ps, [0.0, 0.0], decimal=2)
 
     r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput="raw_values")
     assert_array_almost_equal(r, [0, -3.5], decimal=2)
@@ -416,8 +416,8 @@ def test_regression_multioutput_array():
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(evs, [1.0, -3.0], decimal=2)
     assert np.mean(evs) == explained_variance_score(y_true, y_pred)
-    d2pls = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput="raw_values")
-    assert_array_almost_equal(d2pls, [1.0, -1.0], decimal=2)
+    d2ps = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput="raw_values")
+    assert_array_almost_equal(d2ps, [1.0, -1.0], decimal=2)
     evs2 = explained_variance_score(
         y_true, y_pred, multioutput="raw_values", force_finite=False
     )
@@ -446,7 +446,7 @@ def test_regression_custom_weights():
     mapew = mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
     evsw = explained_variance_score(y_true, y_pred, multioutput=[0.4, 0.6])
-    d2plsw = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput=[0.4, 0.6])
+    d2psw = d2_pinball_score(y_true, y_pred, alpha=0.5, multioutput=[0.4, 0.6])
     evsw2 = explained_variance_score(
         y_true, y_pred, multioutput=[0.4, 0.6], force_finite=False
     )
@@ -457,7 +457,7 @@ def test_regression_custom_weights():
     assert_almost_equal(mapew, 0.1668, decimal=2)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
-    assert_almost_equal(d2plsw, 0.766, decimal=2)
+    assert_almost_equal(d2psw, 0.766, decimal=2)
     assert_almost_equal(evsw2, 0.94, decimal=2)
 
     # Handling msle separately as it does not accept negative inputs.
