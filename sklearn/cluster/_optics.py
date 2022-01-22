@@ -405,9 +405,9 @@ def compute_optics_graph(
     Parameters
     ----------
     X : ndarray of shape (n_samples, n_features), or \
-            (n_samples, n_samples) if metric=’precomputed’.
+            (n_samples, n_samples) if metric='precomputed'
         A feature array, or array of distances between samples if
-        metric='precomputed'
+        metric='precomputed'.
 
     min_samples : int > 1 or float between 0 and 1
         The number of samples in a neighborhood for a point to be considered

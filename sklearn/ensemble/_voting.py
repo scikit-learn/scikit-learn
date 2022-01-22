@@ -157,8 +157,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     estimators : list of (str, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``'drop'``
-        using ``set_params``.
+        ``self.estimators_``. An estimator can be set to ``'drop'`` using
+        :meth:`set_params`.
 
         .. versionchanged:: 0.21
             ``'drop'`` is accepted. Using None was deprecated in 0.22 and
@@ -254,6 +254,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     >>> eclf2 = eclf2.fit(X, y)
     >>> print(eclf2.predict(X))
     [1 1 1 2 2 2]
+
+    To drop an estimator, :meth:`set_params` can be used to remove it. Here we
+    dropped one of the estimators, resulting in 2 fitted estimators:
+
+    >>> eclf2 = eclf2.set_params(lr='drop')
+    >>> eclf2 = eclf2.fit(X, y)
+    >>> len(eclf2.estimators_)
+    2
+
+    Setting `flatten_transform=True` with `voting='soft'` flattens output shape of
+    `transform`:
+
     >>> eclf3 = VotingClassifier(estimators=[
     ...        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
     ...        voting='soft', weights=[2,1,1],
@@ -434,7 +446,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
-        ``set_params``.
+        :meth:`set_params`.
 
         .. versionchanged:: 0.21
             ``'drop'`` is accepted. Using None was deprecated in 0.22 and
@@ -488,13 +500,23 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.ensemble import VotingRegressor
+    >>> from sklearn.neighbors import KNeighborsRegressor
     >>> r1 = LinearRegression()
     >>> r2 = RandomForestRegressor(n_estimators=10, random_state=1)
+    >>> r3 = KNeighborsRegressor()
     >>> X = np.array([[1, 1], [2, 4], [3, 9], [4, 16], [5, 25], [6, 36]])
     >>> y = np.array([2, 6, 12, 20, 30, 42])
-    >>> er = VotingRegressor([('lr', r1), ('rf', r2)])
+    >>> er = VotingRegressor([('lr', r1), ('rf', r2), ('r3', r3)])
     >>> print(er.fit(X, y).predict(X))
-    [ 3.3  5.7 11.8 19.7 28.  40.3]
+    [ 6.8...  8.4... 12.5... 17.8... 26...  34...]
+
+    In the following example, we drop the `'lr'` estimator with
+    :meth:`~VotingRegressor.set_params` and fit the remaining two estimators:
+
+    >>> er = er.set_params(lr='drop')
+    >>> er = er.fit(X, y)
+    >>> len(er.estimators_)
+    2
     """
 
     def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
