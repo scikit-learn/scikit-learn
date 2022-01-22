@@ -236,13 +236,8 @@ def r_regression(X, y, *, center=True, force_finite=True):
     This is a scoring function to be used in a feature selection procedure, not
     a free standing feature selection procedure.
 
-    This is done in 2 steps:
-
-    1. The correlation between each regressor and the target is computed,
-       that is, mean((X[:, i] - mean(X[:, i])) * (y - mean(y))) / (std(X[:, i])
-       * std(y)).
-
-    2. It is converted to an F score then to a p-value.
+    The cross correlation between each regressor and the target is computed
+    as ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) * std(y)).
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -322,8 +317,9 @@ def f_regression(X, y, *, center=True, force_finite=True):
     This is done in 2 steps:
 
     1. The cross correlation between each regressor and the target is computed,
-       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
-       std(y)) using r_regression function.
+       that is, mean((X[:, i] - mean(X[:, i])) * (y - mean(y))) / (std(X[:, i])
+       * std(y)) using :func:`r_regression`.
+
     2. It is converted to an F score and then to a p-value.
 
     :func:`f_regression` is derived from :func:`r_regression` and will rank
