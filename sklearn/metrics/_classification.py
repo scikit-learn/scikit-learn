@@ -2819,7 +2819,7 @@ def tpr_fpr_tnr_fnr_score(
     -----
     When `true positive + false negative == 0`, TPR, FNR are undefined;
     When `true negative + false positive == 0`, FPR, TNR are undefined.
-    In such cases, by default the metric will be set to 0, as will F-score,
+    In such cases, by default the metric will be set to 0,
     and `UndefinedMetricWarning` will be raised. This behavior can be
     modified with `zero_division`.
 

@@ -2199,19 +2199,34 @@ def test_specificity_warnings(zero_division):
         average="micro",
         zero_division=zero_division,
     )
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        specificity_score(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            zero_division=zero_division,
+        )
+        if zero_division == "warn":
+            assert (
+                str(record.pop().message)
+                == "TNR is ill-defined and "
+                "being set to 0.0 due to no negatives."
+                "Use `zero_division` parameter to control"
+                " this behavior."
+            )
+        else:
+            assert len(record) == 0
 
-    specificity_score(
-        np.array([[1, 1], [1, 1]]),
-        np.array([[0, 0], [0, 0]]),
-        average="micro",
-        zero_division=zero_division,
-    )
-    if zero_division == "warn":
-        pytest.warns(Warning if zero_division == "warn" else None)
-
-    specificity_score([1, 1], [1, 1])
-    if zero_division == "warn":
-        pytest.warns(Warning if zero_division == "warn" else None)
+        specificity_score([1, 1], [1, 1])
+        if zero_division == "warn":
+            assert (
+                str(record.pop().message)
+                == "TNR is ill-defined and "
+                "being set to 0.0 due to no negatives."
+                "Use `zero_division` parameter to control"
+                " this behavior."
+            )
 
 
 def test_npv_score_binary_averaged():
