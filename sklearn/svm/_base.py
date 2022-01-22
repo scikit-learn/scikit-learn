@@ -274,10 +274,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
 
-        # check for finiteness of coefficientss
         dual_coef = self._dual_coef_.data if self._sparse else self._dual_coef_
-        if not all(np.isfinite(w).all() for w in [dual_coef, self._intercept_]):
-            # maybe check which coeff/feature is non-finite?
+        intercept_finiteness = np.isfinite(self._intercept_).all()
+        dual_coef_finiteness = np.isfinite(dual_coef).all()
+        if not (intercept_finiteness and dual_coef_finiteness):
             raise ValueError(
                 "The dual coefficients or intercepts are not finite. "
                 "The input data may contain large values and need to be"
