@@ -731,6 +731,20 @@ def test_bad_input():
         clf.predict(Xt)
 
 
+def test_svc_nonfinite_params():
+    # Check SVC throws ValueError when dealing with non-finite parameter values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+
+    clf = svm.SVC()
+    msg = "The dual coefficients or intercepts are not finite"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
 @pytest.mark.parametrize(
     "Estimator, data",
     [
