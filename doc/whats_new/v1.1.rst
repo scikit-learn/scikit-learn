@@ -356,7 +356,7 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
-- |Enhancement| :func:`linear_model.ElasticNet` and 
+- |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
@@ -437,6 +437,16 @@ Changelog
   its square root.
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.naive_bayes`
+..........................
+- |Fix| A new parameter `force_alpha` was added to
+  :class:`naive_bayes.BernoulliNB`, :class:`naive_bayes.ComplementNB`,
+  :class:`naive_bayes.CategoricalNB`, and :class:`naive_bayes.MultinomialNB`,
+  allowing user to set parameter alpha to a very small number, greater or equal
+  0, which was earlier automatically changed to `1e-10` instead.
+  :pr:`16747`, :pr:`18805`, :pr:`22269` by :user:`arka204`, :user:`hongshaoyang`,
+  and :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -462,7 +472,7 @@ Changelog
 :mod:`sklearn.neural_network`
 .............................
 
-- |Enhancement| :func:`neural_network.MLPClassifier` and 
+- |Enhancement| :func:`neural_network.MLPClassifier` and
   :func:`neural_network.MLPRegressor` show error
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.

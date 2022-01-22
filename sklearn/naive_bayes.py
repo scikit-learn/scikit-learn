@@ -552,17 +552,11 @@ class _BaseDiscreteNB(_BaseNB):
                     "alpha should be a scalar or a numpy array with shape [n_features]"
                 )
         if np.min(self.alpha) < _ALPHA_MIN:
-            if self.force_alpha:
-                warnings.warn(
-                    "alpha too small will result in numeric errors. "
-                    "Proceeding with alpha = %.1e, as "
-                    "force_alpha was set to True."
-                    % self.alpha
-                )
-            else:
+            if not self.force_alpha:
                 warnings.warn(
                     "alpha too small will result in numeric errors, "
-                    "setting alpha = %.1e" % _ALPHA_MIN
+                    f"setting alpha = {_ALPHA_MIN:.1e}. Use set_alpha ="
+                    "True to keep alpha unchanged."
                 )
                 return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
@@ -767,7 +761,7 @@ class MultinomialNB(_BaseDiscreteNB):
         `_ALPHA_MIN`. If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -918,7 +912,7 @@ class ComplementNB(_BaseDiscreteNB):
         `_ALPHA_MIN`. If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     fit_prior : bool, default=True
         Only used in edge case with a single class in the training set.
@@ -1083,7 +1077,7 @@ class BernoulliNB(_BaseDiscreteNB):
         `_ALPHA_MIN`. If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     binarize : float or None, default=0.0
         Threshold for binarizing (mapping to booleans) of sample features.
@@ -1256,10 +1250,10 @@ class CategoricalNB(_BaseDiscreteNB):
 
     force_alpha : bool, default=False
         If False and alpha is too close to 0, it will set alpha to
-        `_ALPHA_MIN`. If True, warn user about potential numeric errors
+        1e-10. If True, warn user about potential numeric errors
         and proceed with alpha unchanged.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.

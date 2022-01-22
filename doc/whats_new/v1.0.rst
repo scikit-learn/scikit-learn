@@ -994,11 +994,6 @@ Changelog
 
 :mod:`sklearn.naive_bayes`
 ..........................
-- |Fix| A new parameter `force_alpha` was added to :class:`BernoulliNB` and
-  class:`MultinomialNB`, allowing user to set parameter alpha to a very
-  small number, greater or equal 0, which was earlier automatically changed
-  to `_ALPHA_MIN` instead.
-  :pr:`16747`, :pr:`18805` by :user:`arka204` and :user:`hongshaoyang`.
 
 - |Fix| The `fit` and `partial_fit` methods of the discrete naive Bayes
   classifiers (:class:`naive_bayes.BernoulliNB`,
