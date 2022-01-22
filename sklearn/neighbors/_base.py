@@ -544,7 +544,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     # weight vector directly to 'minkowski'.
                     #
                     # 'wminkowski' is not part of valid metrics for KDTree but
-                    # the weights-less 'minkowski' is.
+                    # the 'minkowski' without weights is.
                     #
                     # Hence, we detect this case here and choose BallTree
                     # which supports 'wminkowski'.
