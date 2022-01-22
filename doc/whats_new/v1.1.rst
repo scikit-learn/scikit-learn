@@ -520,6 +520,12 @@ Changelog
   parameters in `fit` instead of `__init__`.
   :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
 
+- |Enhancement| :func:`svm.SVR`, :func:`svm.SVC`, :func:`svm.NuSVR`,
+  :func:`svm.OneClassSVM`, :func:`svm.NuSVC` now raise an error
+  when the dual-gap estimation produce non-finite parameter weights.
+  :pr:`22149` by :user:`Christian Ritter <chritter>` and
+  :user:`Norbert Preining <norbusan>`.
+
 :mod:`sklearn.utils`
 ....................
 
