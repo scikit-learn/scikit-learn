@@ -758,8 +758,8 @@ class MultinomialNB(_BaseDiscreteNB):
 
     force_alpha : bool, default=False
         If False and alpha is too close to 0, it will set alpha to
-        1e-10. If True, warn user about potential numeric errors
-        and proceed with alpha unchanged.
+        1e-10. If True, alpha will remain unchanged. This may cause
+        numerical errors if the value of alpha is set too close to 0.
 
         .. versionadded:: 1.1
 
@@ -909,8 +909,8 @@ class ComplementNB(_BaseDiscreteNB):
 
     force_alpha : bool, default=False
         If False and alpha is too close to 0, it will set alpha to
-        1e-10. If True, warn user about potential numeric errors
-        and proceed with alpha unchanged.
+        1e-10. If True, alpha will remain unchanged. This may cause
+        numerical errors if the value of alpha is set too close to 0.
 
         .. versionadded:: 1.1
 
@@ -1074,8 +1074,8 @@ class BernoulliNB(_BaseDiscreteNB):
 
     force_alpha : bool, default=False
         If False and alpha is too close to 0, it will set alpha to
-        1e-10. If True, warn user about potential numeric errors
-        and proceed with alpha unchanged.
+        1e-10. If True, alpha will remain unchanged. This may cause
+        numerical errors if the value of alpha is set too close to 0.
 
         .. versionadded:: 1.1
 
@@ -1250,8 +1250,8 @@ class CategoricalNB(_BaseDiscreteNB):
 
     force_alpha : bool, default=False
         If False and alpha is too close to 0, it will set alpha to
-        1e-10. If True, warn user about potential numeric errors
-        and proceed with alpha unchanged.
+        1e-10. If True, alpha will remain unchanged. This may cause
+        numerical errors if the value of alpha is set too close to 0.
 
         .. versionadded:: 1.1
 

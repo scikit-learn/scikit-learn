@@ -902,18 +902,12 @@ def test_check_alpha():
     # https://github.com/scikit-learn/scikit-learn/issues/10772
     # Test force_alpha if alpha < _ALPHA_MIN
     _ALPHA_MIN = 1e-10  # const
-    msg1 = (
-        "alpha too small will result in numeric errors. "
-        "Proceeding with alpha = .+, as "
-        "force_alpha was set to True."
-    )
     msg2 = (
         "alpha too small will result in numeric errors, setting alpha = %.1e"
         % _ALPHA_MIN
     )
     b = BernoulliNB(alpha=0, force_alpha=True)
-    with pytest.warns(UserWarning, match=msg1):
-        assert b._check_alpha() == 0
+    assert b._check_alpha() == 0
     b = BernoulliNB(alpha=0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg2):
         assert b._check_alpha() == _ALPHA_MIN
