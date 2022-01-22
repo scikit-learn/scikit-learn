@@ -74,26 +74,30 @@ if __name__ == "__main__":
     parser.add_argument(
         "--bhtsne",
         action="store_true",
-        help="if set and the reference bhtsne code is "
-        "correctly installed, run it in the benchmark.",
+        help=(
+            "if set and the reference bhtsne code is "
+            "correctly installed, run it in the benchmark."
+        ),
     )
     parser.add_argument(
         "--all",
         action="store_true",
-        help="if set, run the benchmark with the whole MNIST."
-        "dataset. Note that it will take up to 1 hour.",
+        help=(
+            "if set, run the benchmark with the whole MNIST."
+            "dataset. Note that it will take up to 1 hour."
+        ),
     )
     parser.add_argument(
         "--profile",
         action="store_true",
-        help="if set, run the benchmark with a memory " "profiler.",
+        help="if set, run the benchmark with a memory profiler.",
     )
     parser.add_argument("--verbose", type=int, default=0)
     parser.add_argument(
         "--pca-components",
         type=int,
         default=50,
-        help="Number of principal components for " "preprocessing.",
+        help="Number of principal components for preprocessing.",
     )
     args = parser.parse_args()
 

@@ -5,6 +5,7 @@ import copy
 
 import pytest
 
+from sklearn.datasets import make_regression
 from sklearn.isotonic import (
     check_increasing,
     isotonic_regression,
@@ -379,7 +380,7 @@ def test_isotonic_regression_oob_bad():
     ir = IsotonicRegression(increasing="auto", out_of_bounds="xyz")
 
     # Make sure that we throw an error for bad out_of_bounds value
-    msg = "The argument ``out_of_bounds`` must be in 'nan', " "'clip', 'raise'; got xyz"
+    msg = "The argument ``out_of_bounds`` must be in 'nan', 'clip', 'raise'; got xyz"
     with pytest.raises(ValueError, match=msg):
         ir.fit(x, y)
 
@@ -395,7 +396,7 @@ def test_isotonic_regression_oob_bad_after():
     # Make sure that we throw an error for bad out_of_bounds value in transform
     ir.fit(x, y)
     ir.out_of_bounds = "xyz"
-    msg = "The argument ``out_of_bounds`` must be in 'nan', " "'clip', 'raise'; got xyz"
+    msg = "The argument ``out_of_bounds`` must be in 'nan', 'clip', 'raise'; got xyz"
     with pytest.raises(ValueError, match=msg):
         ir.transform(x)
 
@@ -676,3 +677,21 @@ def test_isotonic_2darray_more_than_1_feature():
 
     with pytest.raises(ValueError, match=msg):
         iso_reg.transform(X_2d)
+
+
+def test_isotonic_regression_sample_weight_not_overwritten():
+    """Check that calling fitting function of isotonic regression will not
+    overwrite `sample_weight`.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20508
+    """
+    X, y = make_regression(n_samples=10, n_features=1, random_state=41)
+    sample_weight_original = np.ones_like(y)
+    sample_weight_original[0] = 10
+    sample_weight_fit = sample_weight_original.copy()
+
+    isotonic_regression(y, sample_weight=sample_weight_fit)
+    assert_allclose(sample_weight_fit, sample_weight_original)
+
+    IsotonicRegression().fit(X, y, sample_weight=sample_weight_fit)
+    assert_allclose(sample_weight_fit, sample_weight_original)

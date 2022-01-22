@@ -31,6 +31,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     top_k_accuracy_score,
+    matthews_corrcoef,
 )
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
@@ -102,6 +103,7 @@ CLF_SCORERS = [
     "roc_auc_ovo",
     "roc_auc_ovr_weighted",
     "roc_auc_ovo_weighted",
+    "matthews_corrcoef",
 ]
 
 # All supervised cluster scorers (They behave like classification metric)
@@ -312,14 +314,14 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
 
 
 @pytest.mark.parametrize(
-    "scoring",
+    "scoring, msg",
     [
         (
             (make_scorer(precision_score), make_scorer(accuracy_score)),
             "One or more of the elements were callables",
         ),
         ([5], "Non-string types were found"),
-        ((make_scorer(precision_score),), "One of mor eof the elements were callables"),
+        ((make_scorer(precision_score),), "One or more of the elements were callables"),
         ((), "Empty list was given"),
         (("f1", "f1"), "Duplicate elements were found"),
         ({4: "accuracy"}, "Non-string types were found in the keys"),
@@ -335,14 +337,13 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
         "empty dict",
     ],
 )
-def test_check_scoring_and_check_multimetric_scoring_errors(scoring):
+def test_check_scoring_and_check_multimetric_scoring_errors(scoring, msg):
     # Make sure it raises errors when scoring parameter is not valid.
     # More weird corner cases are tested at test_validation.py
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
 
-    error_message_regexp = ".*must be unique strings.*"
-    with pytest.raises(ValueError, match=error_message_regexp):
+    with pytest.raises(ValueError, match=msg):
         _check_multimetric_scoring(estimator, scoring=scoring)
 
 
@@ -394,6 +395,7 @@ def test_make_scorer():
         ("jaccard_macro", partial(jaccard_score, average="macro")),
         ("jaccard_micro", partial(jaccard_score, average="micro")),
         ("top_k_accuracy", top_k_accuracy_score),
+        ("matthews_corrcoef", matthews_corrcoef),
     ],
 )
 def test_classification_binary_scores(scorer_name, metric):
@@ -639,9 +641,11 @@ def test_classification_scorer_sample_weight():
             assert_almost_equal(
                 weighted,
                 ignored,
-                err_msg=f"scorer {name} behaves differently "
-                f"when ignoring samples and setting "
-                f"sample_weight to 0: {weighted} vs {ignored}",
+                err_msg=(
+                    f"scorer {name} behaves differently "
+                    "when ignoring samples and setting "
+                    f"sample_weight to 0: {weighted} vs {ignored}"
+                ),
             )
 
         except TypeError as e:
@@ -683,9 +687,11 @@ def test_regression_scorer_sample_weight():
             assert_almost_equal(
                 weighted,
                 ignored,
-                err_msg=f"scorer {name} behaves differently "
-                f"when ignoring samples and setting "
-                f"sample_weight to 0: {weighted} vs {ignored}",
+                err_msg=(
+                    f"scorer {name} behaves differently "
+                    "when ignoring samples and setting "
+                    f"sample_weight to 0: {weighted} vs {ignored}"
+                ),
             )
 
         except TypeError as e:
@@ -731,10 +737,8 @@ def test_scoring_is_not_metric():
 
 
 @pytest.mark.parametrize(
-    (
-        "scorers,expected_predict_count,"
-        "expected_predict_proba_count,expected_decision_func_count"
-    ),
+    "scorers,expected_predict_count,"
+    "expected_predict_proba_count,expected_decision_func_count",
     [
         (
             {

@@ -135,7 +135,9 @@ if args.print_params:
     for libname in ["lightgbm", "xgboost", "catboost"]:
         if getattr(args, libname):
             print(libname)
-            est = get_equivalent_estimator(sklearn_est, lib=libname)
+            est = get_equivalent_estimator(
+                sklearn_est, lib=libname, n_classes=args.n_classes
+            )
             pprint(est.get_params())
 
 
@@ -169,7 +171,9 @@ def one_run(n_threads, n_samples):
     lightgbm_score_duration = None
     if args.lightgbm:
         print("Fitting a LightGBM model...")
-        lightgbm_est = get_equivalent_estimator(est, lib="lightgbm")
+        lightgbm_est = get_equivalent_estimator(
+            est, lib="lightgbm", n_classes=args.n_classes
+        )
         lightgbm_est.set_params(num_threads=n_threads)
 
         tic = time()

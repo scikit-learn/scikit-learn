@@ -11,12 +11,14 @@
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
 
-class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
+class _BasePCA(
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, metaclass=ABCMeta
+):
     """Base class for PCA methods.
 
     Warning: This class should not be used directly.
@@ -32,7 +34,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        cov : array, shape=(n_features, n_features)
+        cov : array of shape=(n_features, n_features)
             Estimated covariance of data.
         """
         components_ = self.components_
@@ -84,9 +86,9 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -102,13 +104,15 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            New data, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : array-like of shape (n_samples, n_features)
+            New data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : array-like of shape (n_samples, n_components)
+            Projection of X in the first principal components, where `n_samples`
+            is the number of samples and `n_components` is the number of the components.
         """
         check_is_fitted(self)
 
@@ -123,17 +127,19 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     def inverse_transform(self, X):
         """Transform data back to its original space.
 
-        In other words, return an input X_original whose transform would be X.
+        In other words, return an input `X_original` whose transform would be X.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_components)
-            New data, where n_samples is the number of samples
-            and n_components is the number of components.
+        X : array-like of shape (n_samples, n_components)
+            New data, where `n_samples` is the number of samples
+            and `n_components` is the number of components.
 
         Returns
         -------
-        X_original array-like, shape (n_samples, n_features)
+        X_original array-like of shape (n_samples, n_features)
+            Original data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Notes
         -----
@@ -150,3 +156,8 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             )
         else:
             return np.dot(X, self.components_) + self.mean_
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

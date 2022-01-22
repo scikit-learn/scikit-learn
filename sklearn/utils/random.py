@@ -55,7 +55,7 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
 
         if not np.isclose(np.sum(class_prob_j), 1.0):
             raise ValueError(
-                "Probability array at index {0} does not sum to " "one".format(j)
+                "Probability array at index {0} does not sum to one".format(j)
             )
 
         if class_prob_j.shape[0] != classes[j].shape[0]:

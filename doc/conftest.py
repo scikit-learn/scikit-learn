@@ -53,7 +53,7 @@ def setup_loading_other_datasets():
     if not run_network_tests:
         raise SkipTest(
             "Skipping loading_other_datasets.rst, tests can be "
-            "enabled by settting SKLEARN_SKIP_NETWORK_TESTS=0"
+            "enabled by setting SKLEARN_SKIP_NETWORK_TESTS=0"
         )
 
 
@@ -92,17 +92,27 @@ def setup_unsupervised_learning():
     try:
         import skimage  # noqa
     except ImportError:
-        raise SkipTest(
-            "Skipping unsupervised_learning.rst, scikit-image " "not installed"
-        )
+        raise SkipTest("Skipping unsupervised_learning.rst, scikit-image not installed")
     # ignore deprecation warnings from scipy.misc.face
     warnings.filterwarnings(
         "ignore", "The binary mode of fromstring", DeprecationWarning
     )
 
 
+def skip_if_matplotlib_not_installed(fname):
+    try:
+        import matplotlib  # noqa
+    except ImportError:
+        basename = os.path.basename(fname)
+        raise SkipTest(f"Skipping doctests for {basename}, matplotlib not installed")
+
+
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
+    # normalise filename to use forward slashes on Windows for easier handling
+    # later
+    fname = fname.replace(os.sep, "/")
+
     is_index = fname.endswith("datasets/index.rst")
     if fname.endswith("datasets/labeled_faces.rst") or is_index:
         setup_labeled_faces()
@@ -128,6 +138,16 @@ def pytest_runtest_setup(item):
         setup_preprocessing()
     elif fname.endswith("statistical_inference/unsupervised_learning.rst"):
         setup_unsupervised_learning()
+
+    rst_files_requiring_matplotlib = [
+        "modules/partial_dependence.rst",
+        "modules/tree.rst",
+        "tutorial/statistical_inference/settings.rst",
+        "tutorial/statistical_inference/supervised_learning.rst",
+    ]
+    for each in rst_files_requiring_matplotlib:
+        if fname.endswith(each):
+            skip_if_matplotlib_not_installed(fname)
 
 
 def pytest_configure(config):

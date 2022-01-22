@@ -432,31 +432,32 @@ def _check_solver(solver, penalty, dual):
     all_solvers = ["liblinear", "newton-cg", "lbfgs", "sag", "saga"]
     if solver not in all_solvers:
         raise ValueError(
-            "Logistic Regression supports only solvers in %s, got"
-            " %s." % (all_solvers, solver)
+            "Logistic Regression supports only solvers in %s, got %s."
+            % (all_solvers, solver)
         )
 
     all_penalties = ["l1", "l2", "elasticnet", "none"]
     if penalty not in all_penalties:
         raise ValueError(
-            "Logistic Regression supports only penalties in %s,"
-            " got %s." % (all_penalties, penalty)
+            "Logistic Regression supports only penalties in %s, got %s."
+            % (all_penalties, penalty)
         )
 
     if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none"):
         raise ValueError(
-            "Solver %s supports only 'l2' or 'none' penalties, "
-            "got %s penalty." % (solver, penalty)
+            "Solver %s supports only 'l2' or 'none' penalties, got %s penalty."
+            % (solver, penalty)
         )
     if solver != "liblinear" and dual:
         raise ValueError(
-            "Solver %s supports only " "dual=False, got dual=%s" % (solver, dual)
+            "Solver %s supports only dual=False, got dual=%s" % (solver, dual)
         )
 
     if penalty == "elasticnet" and solver != "saga":
         raise ValueError(
-            "Only 'saga' solver supports elasticnet penalty,"
-            " got solver={}.".format(solver)
+            "Only 'saga' solver supports elasticnet penalty, got solver={}.".format(
+                solver
+            )
         )
 
     if solver == "liblinear" and penalty == "none":
@@ -475,13 +476,11 @@ def _check_multi_class(multi_class, solver, n_classes):
             multi_class = "ovr"
     if multi_class not in ("multinomial", "ovr"):
         raise ValueError(
-            "multi_class should be 'multinomial', 'ovr' or "
-            "'auto'. Got %s." % multi_class
+            "multi_class should be 'multinomial', 'ovr' or 'auto'. Got %s."
+            % multi_class
         )
     if multi_class == "multinomial" and solver == "liblinear":
-        raise ValueError(
-            "Solver %s does not support " "a multinomial backend." % solver
-        )
+        raise ValueError("Solver %s does not support a multinomial backend." % solver)
     return multi_class
 
 
@@ -664,7 +663,7 @@ def _logistic_regression_path(
             X,
             accept_sparse="csr",
             dtype=np.float64,
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
@@ -729,8 +728,8 @@ def _logistic_regression_path(
         if multi_class == "ovr":
             if coef.size not in (n_features, w0.size):
                 raise ValueError(
-                    "Initialization coef is of shape %d, expected shape "
-                    "%d or %d" % (coef.size, n_features, w0.size)
+                    "Initialization coef is of shape %d, expected shape %d or %d"
+                    % (coef.size, n_features, w0.size)
                 )
             w0[: coef.size] = coef
         else:
@@ -1089,7 +1088,7 @@ def _log_reg_scoring_path(
         log_reg.classes_ = np.unique(y_train)
     else:
         raise ValueError(
-            "multi_class should be either multinomial or ovr, " "got %d" % multi_class
+            "multi_class should be either multinomial or ovr, got %d" % multi_class
         )
 
     if pos_class is not None:
@@ -1322,6 +1321,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : ndarray of shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
         it returns only 1 element. For liblinear solver, only the maximum
@@ -1431,8 +1436,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
@@ -1464,8 +1469,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 or self.l1_ratio > 1
             ):
                 raise ValueError(
-                    "l1_ratio must be between 0 and 1;"
-                    " got (l1_ratio=%r)" % self.l1_ratio
+                    "l1_ratio must be between 0 and 1; got (l1_ratio=%r)"
+                    % self.l1_ratio
                 )
         elif self.l1_ratio is not None:
             warnings.warn(
@@ -1476,8 +1481,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.penalty == "none":
             if self.C != 1.0:  # default values
                 warnings.warn(
-                    "Setting penalty='none' will ignore the C and l1_ratio "
-                    "parameters"
+                    "Setting penalty='none' will ignore the C and l1_ratio parameters"
                 )
                 # Note that check for l1_ratio is done right above
             C_ = np.inf
@@ -1487,13 +1491,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             penalty = self.penalty
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError(
-                "Maximum number of iteration must be positive;"
-                " got (max_iter=%r)" % self.max_iter
+                "Maximum number of iteration must be positive; got (max_iter=%r)"
+                % self.max_iter
             )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
-                "Tolerance for stopping criteria must be "
-                "positive; got (tol=%r)" % self.tol
+                "Tolerance for stopping criteria must be positive; got (tol=%r)"
+                % self.tol
             )
 
         if solver == "lbfgs":
@@ -1507,7 +1511,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             accept_sparse="csr",
             dtype=_dtype,
             order="C",
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         check_classification_targets(y)
         self.classes_ = np.unique(y)
@@ -1550,7 +1554,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r" % classes_[0]
+                " class: %r"
+                % classes_[0]
             )
 
         if len(self.classes_) == 2:
@@ -1938,6 +1943,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    LogisticRegression : Logistic regression without tuning the
+        hyperparameter `C`.
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -1950,11 +1966,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     (2, 3)
     >>> clf.score(X, y)
     0.98...
-
-    See Also
-    --------
-    LogisticRegression
-
     """
 
     def __init__(
@@ -2002,8 +2013,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
@@ -2015,18 +2026,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Returns
         -------
         self : object
+            Fitted LogisticRegressionCV estimator.
         """
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError(
-                "Maximum number of iteration must be positive;"
-                " got (max_iter=%r)" % self.max_iter
+                "Maximum number of iteration must be positive; got (max_iter=%r)"
+                % self.max_iter
             )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
-                "Tolerance for stopping criteria must be "
-                "positive; got (tol=%r)" % self.tol
+                "Tolerance for stopping criteria must be positive; got (tol=%r)"
+                % self.tol
             )
         if self.penalty == "elasticnet":
             if (
@@ -2043,7 +2055,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ):
                 raise ValueError(
                     "l1_ratios must be a list of numbers between "
-                    "0 and 1; got (l1_ratios=%r)" % self.l1_ratios
+                    "0 and 1; got (l1_ratios=%r)"
+                    % self.l1_ratios
                 )
             l1_ratios_ = self.l1_ratios
         else:
@@ -2067,7 +2080,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             accept_sparse="csr",
             dtype=np.float64,
             order="C",
-            accept_large_sparse=solver != "liblinear",
+            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         check_classification_targets(y)
 
@@ -2103,7 +2116,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r" % classes[0]
+                " class: %r"
+                % classes[0]
             )
 
         if n_classes == 2:
@@ -2346,8 +2360,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         return self
 
     def score(self, X, y, sample_weight=None):
-        """Returns the score using the `scoring` option on the given
-        test data and labels.
+        """Score using the `scoring` option on the given test data and labels.
 
         Parameters
         ----------
@@ -2364,7 +2377,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         -------
         score : float
             Score of self.predict(X) wrt. y.
-
         """
         scoring = self.scoring or "accuracy"
         scoring = get_scorer(scoring)

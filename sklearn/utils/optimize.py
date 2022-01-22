@@ -15,8 +15,8 @@ significant speedups.
 
 import numpy as np
 import warnings
-from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
+from .fixes import line_search_wolfe1, line_search_wolfe2
 from ..exceptions import ConvergenceWarning
 
 
@@ -208,7 +208,7 @@ def _newton_cg(
 
     if warn and k >= maxiter:
         warnings.warn(
-            "newton-cg failed to converge. Increase the " "number of iterations.",
+            "newton-cg failed to converge. Increase the number of iterations.",
             ConvergenceWarning,
         )
     return xk, k

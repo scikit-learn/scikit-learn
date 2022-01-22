@@ -11,7 +11,12 @@ from scipy.optimize import approx_fprime
 import pytest
 
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
+from sklearn.gaussian_process.kernels import (
+    RBF,
+    CompoundKernel,
+    ConstantKernel as C,
+    WhiteKernel,
+)
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
 
@@ -210,8 +215,9 @@ def test_warning_bounds():
             gpc_sum.fit(X, y)
 
     assert len(record) == 2
-    assert record[0].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[0].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "k1__noise_level is close to the "
         "specified upper bound 0.001. "
@@ -219,8 +225,9 @@ def test_warning_bounds():
         "fit again may find a better value."
     )
 
-    assert record[1].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[1].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "k2__length_scale is close to the "
         "specified lower bound 1000.0. "
@@ -239,8 +246,9 @@ def test_warning_bounds():
             gpc_dims.fit(X_tile, y)
 
     assert len(record) == 2
-    assert record[0].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[0].message.args[0]
+        == "The optimal value found for "
         "dimension 0 of parameter "
         "length_scale is close to the "
         "specified upper bound 100.0. "
@@ -248,11 +256,29 @@ def test_warning_bounds():
         "fit again may find a better value."
     )
 
-    assert record[1].message.args[0] == (
-        "The optimal value found for "
+    assert (
+        record[1].message.args[0]
+        == "The optimal value found for "
         "dimension 1 of parameter "
         "length_scale is close to the "
         "specified upper bound 100.0. "
         "Increasing the bound and calling "
         "fit again may find a better value."
     )
+
+
+@pytest.mark.parametrize(
+    "params, error_type, err_msg",
+    [
+        (
+            {"kernel": CompoundKernel(0)},
+            ValueError,
+            "kernel cannot be a CompoundKernel",
+        )
+    ],
+)
+def test_gpc_fit_error(params, error_type, err_msg):
+    """Check that expected error are raised during fit."""
+    gpc = GaussianProcessClassifier(**params)
+    with pytest.raises(error_type, match=err_msg):
+        gpc.fit(X, y)

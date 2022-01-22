@@ -8,7 +8,7 @@ detection error tradeoff (DET) curves for different classification algorithms
 for the same classification task.
 
 DET curves are commonly plotted in normal deviate scale.
-To achieve this `plot_det_curve` transforms the error rates as returned by the
+To achieve this the DET display transforms the error rates as returned by the
 :func:`~sklearn.metrics.det_curve` and the axis scale using
 :func:`scipy.stats.norm`.
 
@@ -47,12 +47,12 @@ example plot over other classifiers available in scikit-learn.
       example.
 
 """
+
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import plot_det_curve
-from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -68,11 +68,15 @@ classifiers = {
 }
 
 X, y = make_classification(
-    n_samples=N_SAMPLES, n_features=2, n_redundant=0, n_informative=2,
-    random_state=1, n_clusters_per_class=1)
+    n_samples=N_SAMPLES,
+    n_features=2,
+    n_redundant=0,
+    n_informative=2,
+    random_state=1,
+    n_clusters_per_class=1,
+)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=.4, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=0)
 
 # prepare plots
 fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
@@ -80,14 +84,14 @@ fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
 
-    plot_roc_curve(clf, X_test, y_test, ax=ax_roc, name=name)
-    plot_det_curve(clf, X_test, y_test, ax=ax_det, name=name)
+    RocCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_roc, name=name)
+    DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
 
-ax_roc.set_title('Receiver Operating Characteristic (ROC) curves')
-ax_det.set_title('Detection Error Tradeoff (DET) curves')
+ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
+ax_det.set_title("Detection Error Tradeoff (DET) curves")
 
-ax_roc.grid(linestyle='--')
-ax_det.grid(linestyle='--')
+ax_roc.grid(linestyle="--")
+ax_det.grid(linestyle="--")
 
 plt.legend()
 plt.show()

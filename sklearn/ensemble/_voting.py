@@ -27,6 +27,7 @@ from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
@@ -91,6 +92,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             current_est = est if est == "drop" else next(est_iter)
             self.named_estimators_[name] = current_est
 
+            if hasattr(current_est, "feature_names_in_"):
+                self.feature_names_in_ = current_est.feature_names_in_
+
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -102,7 +106,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
-            Input samples
+            Input samples.
 
         y : ndarray of shape (n_samples,), default=None
             Target values (None for unsupervised transformations).
@@ -119,6 +123,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:
@@ -152,8 +157,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     estimators : list of (str, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``'drop'``
-        using ``set_params``.
+        ``self.estimators_``. An estimator can be set to ``'drop'`` using
+        :meth:`set_params`.
 
         .. versionchanged:: 0.21
             ``'drop'`` is accepted. Using None was deprecated in 0.22 and
@@ -215,6 +220,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
+
     See Also
     --------
     VotingRegressor : Prediction voting regressor.
@@ -244,6 +254,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     >>> eclf2 = eclf2.fit(X, y)
     >>> print(eclf2.predict(X))
     [1 1 1 2 2 2]
+
+    To drop an estimator, :meth:`set_params` can be used to remove it. Here we
+    dropped one of the estimators, resulting in 2 fitted estimators:
+
+    >>> eclf2 = eclf2.set_params(lr='drop')
+    >>> eclf2 = eclf2.fit(X, y)
+    >>> len(eclf2.estimators_)
+    2
+
+    Setting `flatten_transform=True` with `voting='soft'` flattens output shape of
+    `transform`:
+
     >>> eclf3 = VotingClassifier(estimators=[
     ...        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
     ...        voting='soft', weights=[2,1,1],
@@ -278,8 +300,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -294,12 +316,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Returns
         -------
         self : object
-
+            Returns the instance itself.
         """
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
-                "Multilabel and multi-output" " classification is not supported."
+                "Multilabel and multi-output classification is not supported."
             )
 
         if self.voting not in ("soft", "hard"):
@@ -346,16 +368,15 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """Collect results from clf.predict calls."""
         return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
-    def _predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting."""
-        check_is_fitted(self)
-        avg = np.average(
-            self._collect_probas(X), axis=0, weights=self._weights_not_none
-        )
-        return avg
+    def _check_voting(self):
+        if self.voting == "hard":
+            raise AttributeError(
+                f"predict_proba is not available when voting={repr(self.voting)}"
+            )
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_voting)
+    def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
         Parameters
@@ -368,11 +389,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         avg : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
-        if self.voting == "hard":
-            raise AttributeError(
-                "predict_proba is not available when" " voting=%r" % self.voting
-            )
-        return self._predict_proba
+        check_is_fitted(self)
+        avg = np.average(
+            self._collect_probas(X), axis=0, weights=self._weights_not_none
+        )
+        return avg
 
     def transform(self, X):
         """Return class labels or probabilities for X for each estimator.
@@ -380,8 +401,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -425,7 +446,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
-        ``set_params``.
+        :meth:`set_params`.
 
         .. versionchanged:: 0.21
             ``'drop'`` is accepted. Using None was deprecated in 0.22 and
@@ -453,7 +474,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
@@ -463,6 +484,11 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         underlying regressor exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -474,13 +500,23 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.ensemble import VotingRegressor
+    >>> from sklearn.neighbors import KNeighborsRegressor
     >>> r1 = LinearRegression()
     >>> r2 = RandomForestRegressor(n_estimators=10, random_state=1)
+    >>> r3 = KNeighborsRegressor()
     >>> X = np.array([[1, 1], [2, 4], [3, 9], [4, 16], [5, 25], [6, 36]])
     >>> y = np.array([2, 6, 12, 20, 30, 42])
-    >>> er = VotingRegressor([('lr', r1), ('rf', r2)])
+    >>> er = VotingRegressor([('lr', r1), ('rf', r2), ('r3', r3)])
     >>> print(er.fit(X, y).predict(X))
-    [ 3.3  5.7 11.8 19.7 28.  40.3]
+    [ 6.8...  8.4... 12.5... 17.8... 26...  34...]
+
+    In the following example, we drop the `'lr'` estimator with
+    :meth:`~VotingRegressor.set_params` and fit the remaining two estimators:
+
+    >>> er = er.set_params(lr='drop')
+    >>> er = er.fit(X, y)
+    >>> len(er.estimators_)
+    2
     """
 
     def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
@@ -495,8 +531,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -543,7 +579,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        predictions: ndarray of shape (n_samples, n_classifiers)
+        predictions : ndarray of shape (n_samples, n_classifiers)
             Values predicted by each regressor.
         """
         check_is_fitted(self)

@@ -46,8 +46,8 @@ def _check_weights(weights, n_components):
     # check normalization
     if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0):
         raise ValueError(
-            "The parameter 'weights' should be normalized, "
-            "but got sum(weights) = %.5f" % np.sum(weights)
+            "The parameter 'weights' should be normalized, but got sum(weights) = %.5f"
+            % np.sum(weights)
         )
     return weights
 
@@ -78,7 +78,7 @@ def _check_means(means, n_components, n_features):
 def _check_precision_positivity(precision, covariance_type):
     """Check a precision vector is positive-definite."""
     if np.any(np.less_equal(precision, 0.0)):
-        raise ValueError("'%s precision' should be " "positive" % covariance_type)
+        raise ValueError("'%s precision' should be positive" % covariance_type)
 
 
 def _check_precision_matrix(precision, covariance_type):
@@ -87,7 +87,7 @@ def _check_precision_matrix(precision, covariance_type):
         np.allclose(precision, precision.T) and np.all(linalg.eigvalsh(precision) > 0.0)
     ):
         raise ValueError(
-            "'%s precision' should be symmetric, " "positive-definite" % covariance_type
+            "'%s precision' should be symmetric, positive-definite" % covariance_type
         )
 
 
@@ -108,7 +108,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
         'diag' : shape of (n_components, n_features)
         'spherical' : shape of (n_components,)
 
-    covariance_type : string
+    covariance_type : str
 
     n_components : int
         Number of components.
@@ -415,7 +415,10 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     """
     n_samples, n_features = X.shape
     n_components, _ = means.shape
-    # det(precision_chol) is half of det(precision)
+    # The determinant of the precision matrix from the Cholesky decomposition
+    # corresponds to the negative half of the determinant of the full precision
+    # matrix.
+    # In short: det(precision_chol) = - det(precision) / 2
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
     if covariance_type == "full":
@@ -445,6 +448,8 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
             - 2 * np.dot(X, means.T * precisions)
             + np.outer(row_norms(X, squared=True), precisions)
         )
+    # Since we are using the precision of the Cholesky decomposition,
+    # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
     return -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
 
 
@@ -468,14 +473,10 @@ class GaussianMixture(BaseMixture):
         String describing the type of covariance parameters to use.
         Must be one of:
 
-        'full'
-            each component has its own general covariance matrix
-        'tied'
-            all components share the same general covariance matrix
-        'diag'
-            each component has its own diagonal covariance matrix
-        'spherical'
-            each component has its own single variance
+        - 'full': each component has its own general covariance matrix.
+        - 'tied': all components share the same general covariance matrix.
+        - 'diag': each component has its own diagonal covariance matrix.
+        - 'spherical': each component has its own single variance.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -604,6 +605,17 @@ class GaussianMixture(BaseMixture):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    BayesianGaussianMixture : Gaussian mixture model fit with a variational
+        inference.
+
     Examples
     --------
     >>> import numpy as np
@@ -615,11 +627,6 @@ class GaussianMixture(BaseMixture):
            [ 1.,  2.]])
     >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
-
-    See Also
-    --------
-    BayesianGaussianMixture : Gaussian mixture model fit with a variational
-        inference.
     """
 
     def __init__(
@@ -665,7 +672,8 @@ class GaussianMixture(BaseMixture):
             raise ValueError(
                 "Invalid value for 'covariance_type': %s "
                 "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']" % self.covariance_type
+                "['spherical', 'tied', 'diag', 'full']"
+                % self.covariance_type
             )
 
         if self.weights_init is not None:
@@ -720,7 +728,7 @@ class GaussianMixture(BaseMixture):
                 self.precisions_init, lower=True
             )
         else:
-            self.precisions_cholesky_ = self.precisions_init
+            self.precisions_cholesky_ = np.sqrt(self.precisions_init)
 
     def _m_step(self, X, log_resp):
         """M step.
@@ -801,9 +809,13 @@ class GaussianMixture(BaseMixture):
     def bic(self, X):
         """Bayesian information criterion for the current model on the input X.
 
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the BIC used.
+
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
+            The input samples.
 
         Returns
         -------
@@ -817,9 +829,13 @@ class GaussianMixture(BaseMixture):
     def aic(self, X):
         """Akaike information criterion for the current model on the input X.
 
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the AIC used.
+
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
+            The input samples.
 
         Returns
         -------

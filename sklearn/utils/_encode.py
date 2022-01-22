@@ -186,9 +186,7 @@ def _encode(values, *, uniques, check_unknown=True):
         if check_unknown:
             diff = _check_unknown(values, uniques)
             if diff:
-                raise ValueError(
-                    f"y contains previously unseen labels: " f"{str(diff)}"
-                )
+                raise ValueError(f"y contains previously unseen labels: {str(diff)}")
         return np.searchsorted(uniques, values)
 
 

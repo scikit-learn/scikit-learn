@@ -15,6 +15,7 @@ from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import ignore_warnings
 
 
 def assert_matrix_orthogonal(M):
@@ -58,6 +59,8 @@ def test_pls_canonical_basics():
     # Check that inverse_transform works
     X_back = pls.inverse_transform(Xt)
     assert_array_almost_equal(X_back, X)
+    _, Y_back = pls.inverse_transform(Xt, Yt)
+    assert_array_almost_equal(Y_back, Y)
 
 
 def test_sanity_check_pls_regression():
@@ -344,7 +347,7 @@ def test_convergence_fail():
         pls_nipals.fit(X, Y)
 
 
-@pytest.mark.filterwarnings("ignore:.*scores_ was deprecated")  # 1.1
+@pytest.mark.filterwarnings("ignore:.*`scores_` was deprecated")  # 1.1
 @pytest.mark.parametrize("Est", (PLSSVD, PLSRegression, PLSCanonical))
 def test_attibutes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
@@ -355,9 +358,13 @@ def test_attibutes_shapes(Est):
     pls = Est(n_components=n_components)
     pls.fit(X, Y)
     assert all(
-        attr.shape[1] == n_components
-        for attr in (pls.x_scores_, pls.y_scores_, pls.x_weights_, pls.y_weights_)
+        attr.shape[1] == n_components for attr in (pls.x_weights_, pls.y_weights_)
     )
+    # TODO: remove in 1.1
+    with ignore_warnings(category=FutureWarning):
+        assert all(
+            attr.shape[1] == n_components for attr in (pls.x_scores_, pls.y_scores_)
+        )
 
 
 @pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
@@ -427,7 +434,7 @@ def _generate_test_scale_and_stability_datasets():
     X *= 1000
     yield X, Y
 
-    # Data set where one of the features is constaint
+    # Data set where one of the features is constraint
     X, Y = load_linnerud(return_X_y=True)
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0
@@ -500,9 +507,9 @@ def test_scores_deprecations(Est):
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     est = Est().fit(X, Y)
-    with pytest.warns(FutureWarning, match="x_scores_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`x_scores_` was deprecated"):
         assert_allclose(est.x_scores_, est.transform(X))
-    with pytest.warns(FutureWarning, match="y_scores_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`y_scores_` was deprecated"):
         assert_allclose(est.y_scores_, est.transform(X, Y)[1])
 
 
@@ -512,7 +519,7 @@ def test_norm_y_weights_deprecation(Est):
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     est = Est().fit(X, Y)
-    with pytest.warns(FutureWarning, match="norm_y_weights was deprecated"):
+    with pytest.warns(FutureWarning, match="`norm_y_weights` was deprecated"):
         est.norm_y_weights
 
 
@@ -524,7 +531,7 @@ def test_mean_and_std_deprecation(Estimator, attribute):
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
     estimator = Estimator().fit(X, Y)
-    with pytest.warns(FutureWarning, match=f"{attribute} was deprecated"):
+    with pytest.warns(FutureWarning, match=f"`{attribute}` was deprecated"):
         getattr(estimator, attribute)
 
 
@@ -579,8 +586,9 @@ def test_loadings_converges():
 
     with pytest.warns(None) as record:
         cca.fit(X, y)
-    # ConvergenceWarning is not raised
-    assert not record
+    # ConvergenceWarning should not be raised
+    if len(record) > 0:
+        pytest.fail(f"Unexpected warning: {str(record[0].message)}")
 
     # Loadings converges to reasonable values
     assert np.all(np.abs(cca.x_loadings_) < 1)
@@ -599,3 +607,19 @@ def test_pls_constant_y():
         pls.fit(x, y)
 
     assert_allclose(pls.x_rotations_, 0)
+
+
+@pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
+def test_pls_feature_names_out(Klass):
+    """Check `get_feature_names_out` cross_decomposition module."""
+    X, Y = load_linnerud(return_X_y=True)
+
+    est = Klass().fit(X, Y)
+    names_out = est.get_feature_names_out()
+
+    class_name_lower = Klass.__name__.lower()
+    expected_names_out = np.array(
+        [f"{class_name_lower}{i}" for i in range(est.x_weights_.shape[1])],
+        dtype=object,
+    )
+    assert_array_equal(names_out, expected_names_out)

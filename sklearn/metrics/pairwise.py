@@ -216,8 +216,8 @@ def check_paired_arrays(X, Y):
     X, Y = check_pairwise_arrays(X, Y)
     if X.shape != Y.shape:
         raise ValueError(
-            "X and Y should be of same shape. They were "
-            "respectively %r and %r long." % (X.shape, Y.shape)
+            "X and Y should be of same shape. They were respectively %r and %r long."
+            % (X.shape, Y.shape)
         )
     return X, Y
 
@@ -227,8 +227,7 @@ def euclidean_distances(
     X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
 ):
     """
-    Considering the rows of X (and Y=X) as vectors, compute the
-    distance matrix between each pair of vectors.
+    Compute the distance matrix between each pair from a vector array X and Y.
 
     For efficiency reasons, the euclidean distance between a pair of row
     vector x and y is computed as::
@@ -250,9 +249,12 @@ def euclidean_distances(
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), \
             default=None
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
 
     Y_norm_squared : array-like of shape (n_samples_Y,) or (n_samples_Y, 1) \
             or (1, n_samples_Y), default=None
@@ -269,18 +271,20 @@ def euclidean_distances(
         ``(X**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.
 
-    Notes
-    -----
-    To achieve better accuracy, `X_norm_squared` and `Y_norm_squared` may be
-    unused if they are passed as ``float32``.
-
     Returns
     -------
     distances : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`.
 
     See Also
     --------
     paired_distances : Distances betweens pairs of elements of X and Y.
+
+    Notes
+    -----
+    To achieve a better accuracy, `X_norm_squared` and `Y_norm_squared` may be
+    unused if they are passed as `np.float32`.
 
     Examples
     --------
@@ -407,9 +411,12 @@ def nan_euclidean_distances(
 
     Parameters
     ----------
-    X : array-like of shape=(n_samples_X, n_features)
+    X : array-like of shape (n_samples_X, n_features)
+        An array where each row is a sample and each column is a feature.
 
-    Y : array-like of shape=(n_samples_Y, n_features), default=None
+    Y : array-like of shape (n_samples_Y, n_features), default=None
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
 
     squared : bool, default=False
         Return squared Euclidean distances.
@@ -423,10 +430,19 @@ def nan_euclidean_distances(
     Returns
     -------
     distances : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`.
 
     See Also
     --------
     paired_distances : Distances between pairs of elements of X and Y.
+
+    References
+    ----------
+    * John K. Dixon, "Pattern Recognition with Partly Missing Data",
+      IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
+      10, pp. 617 - 621, Oct. 1979.
+      http://ieeexplore.ieee.org/abstract/document/4310090/
 
     Examples
     --------
@@ -441,13 +457,6 @@ def nan_euclidean_distances(
     >>> nan_euclidean_distances(X, [[0, 0]])
     array([[1.        ],
            [1.41421356]])
-
-    References
-    ----------
-    * John K. Dixon, "Pattern Recognition with Partly Missing Data",
-      IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
-      10, pp. 617 - 621, Oct. 1979.
-      http://ieeexplore.ieee.org/abstract/document/4310090/
     """
 
     force_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
@@ -779,7 +788,7 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
-    from ..neighbors import DistanceMetric
+    from ..metrics import DistanceMetric
 
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
@@ -795,8 +804,11 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Y : array-like of shape (n_samples_Y, n_features), default=None
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
 
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
@@ -844,8 +856,8 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     if issparse(X) or issparse(Y):
         if not sum_over_features:
             raise TypeError(
-                "sum_over_features=%r not supported"
-                " for sparse matrices" % sum_over_features
+                "sum_over_features=%r not supported for sparse matrices"
+                % sum_over_features
             )
 
         X = csr_matrix(X, copy=False)
@@ -948,19 +960,24 @@ def paired_manhattan_distances(X, Y):
 
 def paired_cosine_distances(X, Y):
     """
-    Computes the paired cosine distances between X and Y.
+    Compute the paired cosine distances between X and Y.
 
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Y : array-like of shape (n_samples, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Returns
     -------
     distances : ndarray of shape (n_samples,)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     Notes
     -----
@@ -1048,8 +1065,10 @@ def linear_kernel(X, Y=None, dense_output=True):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        An optional second feature array. If `None`, uses `Y=X`.
 
     dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
@@ -1060,6 +1079,7 @@ def linear_kernel(X, Y=None, dense_output=True):
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The Gram matrix of the linear kernel, i.e. `X @ Y.T`.
     """
     X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=dense_output)
@@ -1114,6 +1134,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1150,6 +1171,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1185,6 +1207,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     X : ndarray of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1277,6 +1300,7 @@ def additive_chi2_kernel(X, Y=None):
     X : array-like of shape (n_samples_X, n_features)
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        If `None`, uses `Y=X`.
 
     Returns
     -------
@@ -1506,8 +1530,7 @@ def _check_chunk_size(reduced, chunk_size):
         reduced = (reduced,)
     if any(isinstance(r, tuple) or not hasattr(r, "__iter__") for r in reduced):
         raise TypeError(
-            "reduce_func returned %r. "
-            "Expected sequence(s) of length %d."
+            "reduce_func returned %r. Expected sequence(s) of length %d."
             % (reduced if is_tuple else reduced[0], chunk_size)
         )
     if any(_num_samples(r) != chunk_size for r in reduced):
@@ -1832,9 +1855,8 @@ def pairwise_distances(
         and metric != "precomputed"
     ):
         raise ValueError(
-            "Unknown metric %s. "
-            "Valid metrics are %s, or 'precomputed', or a "
-            "callable" % (metric, _VALID_METRICS)
+            "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
+            % (metric, _VALID_METRICS)
         )
 
     if metric == "precomputed":
@@ -1856,7 +1878,7 @@ def pairwise_distances(
         )
     else:
         if issparse(X) or issparse(Y):
-            raise TypeError("scipy distance metrics do not" " support sparse matrices.")
+            raise TypeError("scipy distance metrics do not support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 

@@ -38,7 +38,7 @@ def compute_class_weight(class_weight, *, classes, y):
     from ..preprocessing import LabelEncoder
 
     if set(y) - set(classes):
-        raise ValueError("classes should include all valid labels that can " "be in y")
+        raise ValueError("classes should include all valid labels that can be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
@@ -56,8 +56,7 @@ def compute_class_weight(class_weight, *, classes, y):
         weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
         if not isinstance(class_weight, dict):
             raise ValueError(
-                "class_weight must be dict, 'balanced', or None,"
-                " got: %r" % class_weight
+                "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
             )
         for c in class_weight:
             i = np.searchsorted(classes, c)
@@ -116,13 +115,13 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     if isinstance(class_weight, str):
         if class_weight not in ["balanced"]:
             raise ValueError(
-                "The only valid preset for class_weight is "
-                '"balanced". Given "%s".' % class_weight
+                'The only valid preset for class_weight is "balanced". Given "%s".'
+                % class_weight
             )
     elif indices is not None and not isinstance(class_weight, str):
         raise ValueError(
-            "The only valid class_weight for subsampling is "
-            '"balanced". Given "%s".' % class_weight
+            'The only valid class_weight for subsampling is "balanced". Given "%s".'
+            % class_weight
         )
     elif n_outputs > 1:
         if not hasattr(class_weight, "__iter__") or isinstance(class_weight, dict):

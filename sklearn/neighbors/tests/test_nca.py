@@ -139,7 +139,7 @@ def test_params_validation():
     )
     with pytest.raises(ValueError, match=re.escape(msg)):
         NCA(init=1).fit(X, y)
-    with pytest.raises(ValueError, match="`max_iter`= -1, must be >= 1."):
+    with pytest.raises(ValueError, match="max_iter == -1, must be >= 1."):
         NCA(max_iter=-1).fit(X, y)
     init = rng.rand(5, 3)
     msg = (
@@ -407,7 +407,7 @@ def test_verbose(init_name, capsys):
     assert lines[0] == "[NeighborhoodComponentsAnalysis]"
     header = "{:>10} {:>20} {:>10}".format("Iteration", "Objective Value", "Time(s)")
     assert lines[1] == "[NeighborhoodComponentsAnalysis] {}".format(header)
-    assert lines[2] == ("[NeighborhoodComponentsAnalysis] {}".format("-" * len(header)))
+    assert lines[2] == "[NeighborhoodComponentsAnalysis] {}".format("-" * len(header))
     for line in lines[3:-2]:
         # The following regex will match for instance:
         # '[NeighborhoodComponentsAnalysis]  0    6.988936e+01   0.01'
@@ -554,3 +554,20 @@ def test_parameters_valid_types(param, value):
     y = iris_target
 
     nca.fit(X, y)
+
+
+def test_nca_feature_names_out():
+    """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`."""
+
+    X = iris_data
+    y = iris_target
+
+    est = NeighborhoodComponentsAnalysis().fit(X, y)
+    names_out = est.get_feature_names_out()
+
+    class_name_lower = est.__class__.__name__.lower()
+    expected_names_out = np.array(
+        [f"{class_name_lower}{i}" for i in range(est.components_.shape[1])],
+        dtype=object,
+    )
+    assert_array_equal(names_out, expected_names_out)

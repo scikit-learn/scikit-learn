@@ -46,6 +46,7 @@ from . import (
     brier_score_loss,
     jaccard_score,
     mean_absolute_percentage_error,
+    matthews_corrcoef,
 )
 
 from .cluster import adjusted_rand_score
@@ -175,7 +176,7 @@ class _BaseScorer:
         err_msg = (
             f"Got predict_proba of shape {y_pred.shape}, but need "
             f"classifier with two classes for {self._score_func.__name__} "
-            f"scoring"
+            "scoring"
         )
         raise ValueError(err_msg)
 
@@ -432,6 +433,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
         If no scoring is specified and the estimator has no score function, we
@@ -445,8 +447,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     """
     if not hasattr(estimator, "fit"):
         raise TypeError(
-            "estimator should be an estimator implementing "
-            "'fit' method, %r was passed" % estimator
+            "estimator should be an estimator implementing 'fit' method, %r was passed"
+            % estimator
         )
     if isinstance(scoring, str):
         return get_scorer(scoring)
@@ -485,8 +487,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         )
     else:
         raise ValueError(
-            "scoring value should either be a callable, string or"
-            " None. %r was passed" % scoring
+            "scoring value should either be a callable, string or None. %r was passed"
+            % scoring
         )
 
 
@@ -524,15 +526,12 @@ def _check_multimetric_scoring(estimator, scoring):
 
     if isinstance(scoring, (list, tuple, set)):
         err_msg = (
-            "The list/tuple elements must be unique " "strings of predefined scorers. "
+            "The list/tuple elements must be unique strings of predefined scorers. "
         )
-        invalid = False
         try:
             keys = set(scoring)
-        except TypeError:
-            invalid = True
-        if invalid:
-            raise ValueError(err_msg)
+        except TypeError as e:
+            raise ValueError(err_msg) from e
 
         if len(keys) != len(scoring):
             raise ValueError(
@@ -665,7 +664,7 @@ def make_scorer(
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
         raise ValueError(
-            "Set either needs_proba or needs_threshold to True," " but not both."
+            "Set either needs_proba or needs_threshold to True, but not both."
         )
     if needs_proba:
         cls = _ProbaScorer
@@ -707,6 +706,7 @@ neg_mean_gamma_deviance_scorer = make_scorer(
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
+matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
 # Score functions that need decision values
 top_k_accuracy_scorer = make_scorer(
@@ -751,6 +751,7 @@ SCORERS = dict(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,
     max_error=max_error_scorer,
+    matthews_corrcoef=matthews_corrcoef_scorer,
     neg_median_absolute_error=neg_median_absolute_error_scorer,
     neg_mean_absolute_error=neg_mean_absolute_error_scorer,
     neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
