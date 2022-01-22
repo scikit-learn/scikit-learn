@@ -683,9 +683,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     estimators_ : list of estimator
         The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`. When `cv`="prefit", it is assumed
-        that the `estimators_` have already been pre-fit, and will neither be
-        fit nor cross validated during `fit`.
+        will not appear in `estimators_`. When `cv="prefit"`, `estimators_` 
+        is set to `estimators` and is not fitted again.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
