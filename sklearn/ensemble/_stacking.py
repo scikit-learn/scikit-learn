@@ -342,10 +342,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If 'prefit' is passed, it is assumed that all `estimators` have
-        been fitted already. Please note that if the models have been trained
-        on the same data to train the stacking model, there is a very high
-        risk of overfitting.
+        If “prefit” is passed, it is assumed that all `estimators` have
+        been fitted already. The `final_estimator_` is trained on the `estimators`
+        predictions on the full training set and are **not** cross validated
+        predictions. Please note that if the models have been trained on the same
+        data to train the stacking model, there is a very high risk of overfitting.
 
         .. versionadded:: 1.1
             The 'prefit' option was added in 1.1
@@ -389,9 +390,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     estimators_ : list of estimators
         The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`. When `cv='prefit'`, it is assumed
-        that the `estimators_` have already been pre-fit, and will neither be
-        fit nor cross validated during `fit`.
+        will not appear in `estimators_`. When `cv="prefit"`, `estimators_`
+        is set to `estimators` and is not fitted again.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
@@ -684,7 +684,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     estimators_ : list of estimator
         The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`. When `cv="prefit"`, `estimators_` 
+        will not appear in `estimators_`. When `cv="prefit"`, `estimators_`
         is set to `estimators` and is not fitted again.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
