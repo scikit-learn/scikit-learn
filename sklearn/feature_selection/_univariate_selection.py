@@ -237,7 +237,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     a free standing feature selection procedure.
 
     The cross correlation between each regressor and the target is computed
-    as ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) * std(y)).
+    as E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y)).
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
