@@ -2210,8 +2210,8 @@ def test_specificity_warnings(zero_division):
         if zero_division == "warn":
             assert (
                 str(record.pop().message)
-                == "TNR is ill-defined and "
-                "being set to 0.0 due to no negatives."
+                == "Tnr is ill-defined and "
+                "being set to 0.0 due to no negatives samples."
                 "Use `zero_division` parameter to control"
                 " this behavior."
             )
@@ -2222,11 +2222,13 @@ def test_specificity_warnings(zero_division):
         if zero_division == "warn":
             assert (
                 str(record.pop().message)
-                == "TNR is ill-defined and "
-                "being set to 0.0 due to no negatives."
+                == "Tnr is ill-defined and "
+                "being set to 0.0 due to no negatives samples."
                 "Use `zero_division` parameter to control"
                 " this behavior."
             )
+        else:
+            assert len(record) == 0
 
 
 def test_npv_score_binary_averaged():
