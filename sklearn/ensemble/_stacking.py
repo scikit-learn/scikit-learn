@@ -651,9 +651,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         cross-validation strategies that can be used here.
 
         If “prefit” is passed, it is assumed that all `estimators` have
-        been fitted already. Please note that if the models have been trained
-        on the same data to train the stacking model, there is a very high
-        risk of overfitting.
+        been fitted already. The `final_estimator_` is trained on the `estimators`
+        predictions on the full training set and are **not** cross validated
+        predictions. Please note that if the models have been trained on the same
+        data to train the stacking model, there is a very high risk of overfitting.
 
         .. versionadded:: 1.1
             The 'prefit' option was added in 1.1
