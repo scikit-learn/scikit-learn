@@ -9,7 +9,6 @@ Independent Component Analysis, by  Hyvarinen et al.
 #          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
 # License: BSD 3 clause
 
-from email.mime import base
 import warnings
 
 import numpy as np
@@ -108,7 +107,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_ - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
-        # memory improvements and fast execution with np.einsum than np.dot.
+        # np.einsum allows having the lowest memory footprint.
+        # It is faster than chaining np.dot with np.diag.
         lim = max(abs(abs(np.einsum("ij,ij->i", W1, W)) - 1))
         W = W1
         if lim < tol:
