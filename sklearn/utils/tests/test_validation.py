@@ -1016,7 +1016,7 @@ def test_check_dataframe_with_only_bool():
     assert_array_equal(array, [[1, 1], [0, 2], [1, 3]])
 
 
-def test_check_dataframe_with_boolean():
+def test_check_dataframe_with_only_boolean():
     """Check that dataframe with boolean return a float array with dtype=None"""
     pd = importorskip("pandas", minversion="1.0")
     df = pd.DataFrame({"bool": pd.Series([True, False, True], dtype="boolean")})
