@@ -63,6 +63,7 @@ def _generate_test_params_for(metric: str, n_features: int):
 
     # Distinguishing on cases not to compute unneeded datastructures.
     rng = np.random.RandomState(1)
+    weights = rng.random_sample(n_features)
 
     if metric == "minkowski":
         minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
@@ -75,7 +76,6 @@ def _generate_test_params_for(metric: str, n_features: int):
 
     # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
     if metric == "wminkowski":
-        weights = rng.random_sample(n_features)
         weights /= weights.sum()
         wminkowski_kwargs = [dict(p=1.5, w=weights)]
         if sp_version < parse_version("1.8.0.dev0"):
@@ -94,7 +94,7 @@ def _generate_test_params_for(metric: str, n_features: int):
         return [dict(VI=VI)]
 
     # Case of: "euclidean", "manhattan", "chebyshev", "haversine" or any other metric.
-    # In those cases, no kwargs is needed.
+    # In those cases, no kwargs are needed.
     return [{}]
 
 
@@ -1427,11 +1427,10 @@ def test_callable_metric():
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
 def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=12):
-    # Any valid metric for algorithm="brute" should be valid for algorithm="auto"
-    # it's the responsibility of the estimator to select which algorithm is likely
+    # Any valid metric for algorithm="brute" must be a valid for algorithm="auto".
+    # It's the responsibility of the estimator to select which algorithm is likely
     # to be the most efficient from the subset of the algorithm compatible with
-    # that metric (and params). If the worst case, algorithm="brute" is the ultimate
-    # fallback.
+    # that metric (and params). Worst case is to fallback to algorithm="brute".
     X = rng.rand(n_samples, n_features)
     Xcsr = csr_matrix(X)
 

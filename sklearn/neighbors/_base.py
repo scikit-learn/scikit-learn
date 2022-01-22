@@ -546,7 +546,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     # 'wminkowski' is not part of valid metrics for KDTree but
                     # the 'minkowski' without weights is.
                     #
-                    # Hence, we detect this case here and choose BallTree
+                    # Hence, we detect this case and choose BallTree
                     # which supports 'wminkowski'.
                     self._fit_method = "ball_tree"
                 elif self.effective_metric_ in VALID_METRICS["kd_tree"]:
@@ -577,14 +577,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "try algorithm='ball_tree' "
                     "or algorithm='brute' instead."
                 )
-
-            else:
-                self._tree = KDTree(
-                    X,
-                    self.leaf_size,
-                    metric=self.effective_metric_,
-                    **self.effective_metric_params_,
-                )
+            self._tree = KDTree(
+                X,
+                self.leaf_size,
+                metric=self.effective_metric_,
+                **self.effective_metric_params_,
+            )
         elif self._fit_method == "brute":
             self._tree = None
         else:
