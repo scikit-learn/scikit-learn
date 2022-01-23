@@ -29,6 +29,9 @@ class ConfusionMatrixDisplay:
         Display labels for plot. If None, display labels are set from 0 to
         `n_classes - 1`.
 
+    mask : ndarray of shape (n_classes, n_classes)
+        If passed, data will not be shown in cells where mask is True.
+
     Attributes
     ----------
     im_ : matplotlib AxesImage
@@ -75,9 +78,10 @@ class ConfusionMatrixDisplay:
     >>> plt.show()
     """
 
-    def __init__(self, confusion_matrix, *, display_labels=None):
+    def __init__(self, confusion_matrix, *, display_labels=None, mask=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
+        self.mask = mask
 
     def plot(
         self,
@@ -127,8 +131,12 @@ class ConfusionMatrixDisplay:
             fig = ax.figure
 
         cm = self.confusion_matrix
+        mask = self.mask
         n_classes = cm.shape[0]
-        self.im_ = ax.imshow(cm, interpolation="nearest", cmap=cmap)
+        mask = np.ones(cm.shape, dtype=bool) if mask is None else mask
+        self.im_ = ax.imshow(
+            np.ma.masked_array(cm, ~mask), interpolation="nearest", cmap=cmap
+        )
         self.text_ = None
         cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(1.0)
 
@@ -139,6 +147,8 @@ class ConfusionMatrixDisplay:
             thresh = (cm.max() + cm.min()) / 2.0
 
             for i, j in product(range(n_classes), range(n_classes)):
+                if not mask[i, j]:
+                    continue
                 color = cmap_max if cm[i, j] < thresh else cmap_min
 
                 if values_format is None:
@@ -193,6 +203,7 @@ class ConfusionMatrixDisplay:
         cmap="viridis",
         ax=None,
         colorbar=True,
+        mask=None,
     ):
         """Plot Confusion Matrix given an estimator and some data.
 
@@ -258,6 +269,9 @@ class ConfusionMatrixDisplay:
         colorbar : bool, default=True
             Whether or not to add a colorbar to the plot.
 
+        mask : ndarray of shape (n_classes, n_classes)
+            If passed, data will not be shown in cells where mask is True.
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -304,6 +318,7 @@ class ConfusionMatrixDisplay:
             xticks_rotation=xticks_rotation,
             values_format=values_format,
             colorbar=colorbar,
+            mask=mask,
         )
 
     @classmethod
@@ -322,6 +337,7 @@ class ConfusionMatrixDisplay:
         cmap="viridis",
         ax=None,
         colorbar=True,
+        mask=None,
     ):
         """Plot Confusion Matrix given true and predicted labels.
 
@@ -384,6 +400,9 @@ class ConfusionMatrixDisplay:
         colorbar : bool, default=True
             Whether or not to add a colorbar to the plot.
 
+        mask : ndarray of shape (n_classes, n_classes)
+            If passed, data will not be shown in cells where mask is True.
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -428,7 +447,7 @@ class ConfusionMatrixDisplay:
             normalize=normalize,
         )
 
-        disp = cls(confusion_matrix=cm, display_labels=display_labels)
+        disp = cls(confusion_matrix=cm, display_labels=display_labels, mask=mask)
 
         return disp.plot(
             include_values=include_values,
@@ -461,6 +480,7 @@ def plot_confusion_matrix(
     cmap="viridis",
     ax=None,
     colorbar=True,
+    mask=None,
 ):
     """Plot Confusion Matrix.
 
@@ -531,6 +551,9 @@ def plot_confusion_matrix(
 
         .. versionadded:: 0.24
 
+    mask : ndarray of shape (n_classes, n_classes)
+        If passed, data will not be shown in cells where mask is True.
+
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -573,7 +596,9 @@ def plot_confusion_matrix(
         else:
             display_labels = labels
 
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=display_labels)
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm, display_labels=display_labels, mask=mask
+    )
     return disp.plot(
         include_values=include_values,
         cmap=cmap,

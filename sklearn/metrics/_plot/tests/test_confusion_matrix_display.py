@@ -365,3 +365,17 @@ def test_colormap_max(pyplot):
 
     color = disp.text_[1, 0].get_color()
     assert_allclose(color, [1.0, 1.0, 1.0, 1.0])
+
+
+def test_mask(pyplot):
+    """Check the behaviour of mask"""
+
+    confusion_matrix = np.array([[1.0, 0.0], [0.5, 0.5]])
+    mask = np.array([[True, True], [False, False]])
+
+    disp = ConfusionMatrixDisplay(confusion_matrix, mask=mask)
+    disp.plot()
+
+    expected_text = np.array(["1", "0", None, None])
+    text_text = np.array([t and t.get_text() for t in disp.text_.ravel(order="C")])
+    assert_array_equal(expected_text, text_text)
