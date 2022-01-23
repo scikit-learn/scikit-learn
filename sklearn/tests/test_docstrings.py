@@ -32,7 +32,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._olivetti_faces.fetch_olivetti_faces",
     "sklearn.datasets._openml.fetch_openml",
-    "sklearn.datasets._rcv1.fetch_rcv1",
     "sklearn.datasets._samples_generator.make_biclusters",
     "sklearn.datasets._samples_generator.make_blobs",
     "sklearn.datasets._samples_generator.make_checkerboard",
