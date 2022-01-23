@@ -356,7 +356,7 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
-- |Enhancement| :func:`linear_model.ElasticNet` and 
+- |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
@@ -462,7 +462,7 @@ Changelog
 :mod:`sklearn.neural_network`
 .............................
 
-- |Enhancement| :func:`neural_network.MLPClassifier` and 
+- |Enhancement| :func:`neural_network.MLPClassifier` and
   :func:`neural_network.MLPRegressor` show error
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
@@ -528,9 +528,10 @@ Changelog
 :mod:`sklearn.tree`
 .......................
 
-|Fix| Fix a bug in the Poisson splitting criterion for
-:class:`tree.DecisionTreeRegressor`.
-:pr:`22191` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |Fix| Fix a bug in the Poisson splitting criterion for
+  :class:`tree.DecisionTreeRegressor`.
+  :pr:`22191` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| :func:`svm.SVR`, :func:`svm.SVC`, :func:`svm.NuSVR`,
   :func:`svm.OneClassSVM`, :func:`svm.NuSVC` now raise an error
   when the dual-gap estimation produce non-finite parameter weights.
