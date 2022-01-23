@@ -4,6 +4,9 @@ from ._split import BaseCrossValidator
 from ._split import BaseShuffleSplit
 from ._split import KFold
 from ._split import GroupKFold
+from ._split import PurgedKFold
+from ._split import CombinationalKFold
+from ._split import CombinationalPurgedKFold
 from ._split import StratifiedKFold
 from ._split import TimeSeriesSplit
 from ._split import LeaveOneGroupOut
