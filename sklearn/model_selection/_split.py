@@ -680,7 +680,7 @@ class CombinationalKFold(_BaseKFold):
                 " than the number of groups: %d." % (self.n_splits, len(group_ids))
             )
 
-        test_combs = itertools.combinations(group_ids, test_group_choice)
+        test_combs = combinations(group_ids, test_group_choice)
         self.test_comb_list = list(test_combs)
 
     def _iter_test_indices(self, X, y, groups=None):
