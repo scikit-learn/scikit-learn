@@ -449,6 +449,102 @@ class KFold(_BaseKFold):
             yield indices[start:stop]
             current = stop
 
+class PurgedKFold(_BaseKFold):
+    def __init__(self, n_splits=5):
+        super().__init__(n_splits, shuffle=False, random_state=None)
+
+    def divide_array(self, org_array):
+        end_flag = False
+
+        for i, ai in enumerate(org_array):
+            if i == org_array.size - 1:
+                end_flag = True
+                a_cropped = np.empty(0)
+                a_remained = org_array
+
+            else:
+                if org_array[i + 1] - ai != 1:
+                    a_cropped, a_remained = np.split(org_array, [i + 1])
+                    break
+
+        return a_cropped, a_remained, end_flag
+
+    def divide_array_lst(self, org_array):
+        divide_array_lst = []
+
+        end_flag = False
+        a_remained = org_array
+
+        while not end_flag:
+            a_cropped, a_remained, end_flag = self.divide_array(a_remained)
+
+            if a_cropped.size == 0:
+                divide_array_lst.append(a_remained)
+
+            else:
+                divide_array_lst.append(a_cropped)
+
+        return divide_array_lst
+
+    def split(self, X, y, y_know_futures):
+        kfold = KFold()
+
+        for ii, (train, test) in enumerate(kfold.split(X=X, y=y)):
+            # Fill in indices with the training/test groups
+
+            divide_index_lst = []
+            divide_train_lst = self.divide_array_lst(train)
+
+            for divide_train in divide_train_lst:
+                divide_index_lst.append(divide_train)
+
+            divide_test_lst = self.divide_array_lst(test)
+
+            for divide_test in divide_test_lst:
+                divide_index_lst.append(divide_test)
+            divide_index_include_future_lst = []
+
+            for divide_index in divide_index_lst:
+                y_know_future_index = divide_index + y_know_futures[divide_index]
+                divide_index_include_future = np.arange(
+                    divide_index.min(), y_know_future_index.max() + 1
+                )
+                divide_index_include_future_lst.append(divide_index_include_future)
+
+            divide_index_mins = [
+                divide_index_include_future.min()
+                for divide_index_include_future in divide_index_include_future_lst
+            ]
+
+            divide_index_orders = np.argsort(divide_index_mins)
+
+            divide_index_include_future_sorted_lst = []
+            for i in divide_index_orders:
+                divide_index_include_future_sorted_lst.append(
+                    divide_index_include_future_lst[i]
+                )
+
+            overlap_index_lst = []
+            for i, divide_index_include_future_sorted in enumerate(
+                divide_index_include_future_sorted_lst
+            ):
+                if i == len(divide_index_include_future_sorted_lst) - 1:
+                    break
+
+                else:
+                    overlap_indexs = np.intersect1d(
+                        divide_index_include_future_sorted,
+                        divide_index_include_future_sorted_lst[i + 1],
+                    )
+
+                    for overlap_index in overlap_indexs:
+                        overlap_index_lst.append(overlap_index)
+
+            overlap = np.array(overlap_index_lst)
+
+            train = np.setdiff1d(train, overlap)
+            test = np.setdiff1d(test, overlap)
+            yield train, test, overlap
 
 class GroupKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
@@ -569,6 +665,181 @@ class GroupKFold(_BaseKFold):
         """
         return super().split(X, y, groups)
 
+class CombinationalKFold(_BaseKFold):
+    def __init__(self, groups, n_splits=5, test_group_choice=2):
+        super().__init__(n_splits, shuffle=False, random_state=None)
+        if groups is None:
+            raise ValueError("The 'groups' parameter should not be None.")
+        self.groups = groups
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
+        group_ids = np.unique(groups)
+
+        if self.n_splits > len(group_ids):
+            raise ValueError(
+                "Cannot have number of splits n_splits=%d greater"
+                " than the number of groups: %d." % (self.n_splits, len(group_ids))
+            )
+
+        test_combs = itertools.combinations(group_ids, test_group_choice)
+        self.test_comb_list = list(test_combs)
+
+    def _iter_test_indices(self, X, y, groups=None):
+
+        indices_lst = []
+
+        for test_comb in self.test_comb_list:
+            indices = []  # testのindeces
+            for i in self.groups:
+                if i in test_comb:
+                    indices.append(1)
+                else:
+                    indices.append(0)
+
+            indices_arr = np.array(indices)
+            indices_lst.append(indices_arr)
+
+        for indices in indices_lst:
+            yield np.where(indices == 1)[0]
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        y : array-like of shape (n_samples,), default=None
+            The target variable for supervised learning problems.
+        groups : array-like of shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super().split(X, y, groups)
+
+
+# CPCV
+class CombinationalPurgedKFold(_BaseKFold):
+    def __init__(self, groups, n_splits=5, test_group_choice=2):
+        super().__init__(n_splits, shuffle=False, random_state=None)
+        if groups is None:
+            raise ValueError("The 'groups' parameter should not be None.")
+        self.groups = groups
+        self.test_group_choice = test_group_choice
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
+        group_ids = np.unique(groups)
+
+        if self.n_splits > len(group_ids):
+            raise ValueError(
+                "Cannot have number of splits n_splits=%d greater"
+                " than the number of groups: %d." % (self.n_splits, len(group_ids))
+            )
+
+        test_combs = itertools.combinations(group_ids, test_group_choice)
+        self.test_comb_list = list(test_combs)
+
+    def divide_array(self, org_array):
+        end_flag = False
+
+        for i, ai in enumerate(org_array):
+            if i == org_array.size - 1:
+                end_flag = True
+                a_cropped = np.empty(0)
+                a_remained = org_array
+
+            else:
+                # 不連続判定
+                if org_array[i + 1] - ai != 1:
+                    a_cropped, a_remained = np.split(org_array, [i + 1])
+                    break
+
+        return a_cropped, a_remained, end_flag
+
+    def divide_array_lst(self, org_array):
+        divide_array_lst = []
+
+        end_flag = False
+        a_remained = org_array
+
+        while not end_flag:
+            a_cropped, a_remained, end_flag = self.divide_array(a_remained)
+
+            if a_cropped.size == 0:
+                divide_array_lst.append(a_remained)
+
+            else:
+                divide_array_lst.append(a_cropped)
+
+        return divide_array_lst
+
+    def split(self, X, y, y_know_futures):
+        comb_kfold = CombinationalKFold(
+            self.groups,
+            n_splits=self.n_splits,
+            test_group_choice=self.test_group_choice,
+        )
+
+        for ii, (train, test) in enumerate(comb_kfold.split(X=X, y=y)):
+            # Fill in indices with the training/test groups
+
+            divide_index_lst = []
+            divide_train_lst = self.divide_array_lst(train)
+
+            for divide_train in divide_train_lst:
+                divide_index_lst.append(divide_train)
+
+            divide_test_lst = self.divide_array_lst(test)
+
+            for divide_test in divide_test_lst:
+                divide_index_lst.append(divide_test)
+            divide_index_include_future_lst = []
+
+            for divide_index in divide_index_lst:
+                y_know_future_index = divide_index + y_know_futures[divide_index]
+                divide_index_include_future = np.arange(
+                    divide_index.min(), y_know_future_index.max() + 1
+                )
+                divide_index_include_future_lst.append(divide_index_include_future)
+
+            divide_index_mins = [
+                divide_index_include_future.min()
+                for divide_index_include_future in divide_index_include_future_lst
+            ]
+
+            divide_index_orders = np.argsort(divide_index_mins)
+
+            divide_index_include_future_sorted_lst = []
+            for i in divide_index_orders:
+                divide_index_include_future_sorted_lst.append(
+                    divide_index_include_future_lst[i]
+                )
+
+            overlap_index_lst = []
+            for i, divide_index_include_future_sorted in enumerate(
+                divide_index_include_future_sorted_lst
+            ):
+                if i == len(divide_index_include_future_sorted_lst) - 1:
+                    break
+
+                else:
+                    overlap_indexs = np.intersect1d(
+                        divide_index_include_future_sorted,
+                        divide_index_include_future_sorted_lst[i + 1],
+                    )
+
+                    for overlap_index in overlap_indexs:
+                        overlap_index_lst.append(overlap_index)
+
+            overlap = np.array(overlap_index_lst)
+
+            train = np.setdiff1d(train, overlap)
+            test = np.setdiff1d(test, overlap)
+            yield train, test, overlap
 
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross-validator.
