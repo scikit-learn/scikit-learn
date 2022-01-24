@@ -356,7 +356,7 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
-- |Enhancement| :func:`linear_model.ElasticNet` and
+- |Enhancement| :func:`linear_model.ElasticNet` and 
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
@@ -380,7 +380,7 @@ Changelog
   returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
 
 - |Enhancement| :func:`metrics.top_k_accuracy_score` now supports 2d `y_score` with
-  `y_score.shape[1] == 2` when `label` is passed in. :pr:`xxxxx` by `Thomas Fan`_.
+  `y_score.shape[1] == 2` when `label` is passed in. :pr:`22285` by `Thomas Fan`_.
 
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
@@ -465,7 +465,7 @@ Changelog
 :mod:`sklearn.neural_network`
 .............................
 
-- |Enhancement| :func:`neural_network.MLPClassifier` and
+- |Enhancement| :func:`neural_network.MLPClassifier` and 
   :func:`neural_network.MLPRegressor` show error
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
