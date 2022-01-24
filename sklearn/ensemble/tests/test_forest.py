@@ -35,6 +35,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
+from sklearn.utils.fixes import parse_version
 
 from sklearn.exceptions import NotFittedError
 
@@ -74,14 +75,13 @@ X_large, y_large = datasets.make_classification(
 )
 
 # Imbalanced classification sample used for testing imbalanced criterions
-imbl_minority_class_ratio = 0.05
 X_large_imbl, y_large_imbl = datasets.make_classification(
     n_samples=500,
     n_features=10,
     n_informative=5,
     n_redundant=0,
     n_repeated=0,
-    weights=[1 - imbl_minority_class_ratio],
+    weights=[0.95, 0.05],
     shuffle=False,
     random_state=0,
 )
@@ -175,30 +175,6 @@ def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
 
-def check_imbalanced_criterion(name, criterion):
-    ForestClassifier = FOREST_CLASSIFIERS[name]
-
-    clf = ForestClassifier(n_estimators=10, criterion=criterion, random_state=1)
-    clf.fit(X_large_imbl, y_large_imbl)
-
-    # score is a mean of minority class predict_proba
-    score = clf.predict_proba(X_large_imbl)[:, 1].mean()
-
-    assert (
-        score > imbl_minority_class_ratio
-    ), "Failed with imbalanced criterion %s, score = %f, minority class ratio = %f" % (
-        criterion,
-        score,
-        imbl_minority_class_ratio,
-    )
-
-
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-@pytest.mark.parametrize("criterion", ["hellinger"])
-def test_imbalanced_criterions(name, criterion):
-    check_imbalanced_criterion(name, criterion)
-
-
 def check_regression_criterion(name, criterion):
     # Check consistency on regression dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
@@ -234,23 +210,21 @@ def test_regression(name, criterion):
 
 def test_poisson_vs_mse():
     """Test that random forest with poisson criterion performs better than
-    mse for a poisson target.
-
-    There is a similar test for DecisionTreeRegressor.
-    """
+    mse for a poisson target."""
     rng = np.random.RandomState(42)
     n_train, n_test, n_features = 500, 500, 10
     X = datasets.make_low_rank_matrix(
         n_samples=n_train + n_test, n_features=n_features, random_state=rng
     )
-    #  We create a log-linear Poisson model and downscale coef as it will get
-    # exponentiated.
-    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
+    X = np.abs(X)
+    X /= np.max(np.abs(X), axis=0)
+    # We create a log-linear Poisson model
+    coef = rng.uniform(low=-4, high=1, size=n_features)
     y = rng.poisson(lam=np.exp(X @ coef))
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=n_test, random_state=rng
     )
-    # We prevent some overfitting by setting min_samples_split=10.
+
     forest_poi = RandomForestRegressor(
         criterion="poisson", min_samples_leaf=10, max_features="sqrt", random_state=rng
     )
@@ -265,14 +239,14 @@ def test_poisson_vs_mse():
     forest_mse.fit(X_train, y_train)
     dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
 
-    for X, y, data_name in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
+    for X, y, val in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
         metric_poi = mean_poisson_deviance(y, forest_poi.predict(X))
         # squared_error forest might produce non-positive predictions => clip
         # If y = 0 for those, the poisson deviance gets too good.
         # If we drew more samples, we would eventually get y > 0 and the
         # poisson deviance would explode, i.e. be undefined. Therefore, we do
-        # not clip to a tiny value like 1e-15, but to 1e-6. This acts like a
-        # small penalty to the non-positive predictions.
+        # not clip to a tiny value like 1e-15, but to 0.1. This acts like a
+        # mild penalty to the non-positive predictions.
         metric_mse = mean_poisson_deviance(
             y, np.clip(forest_mse.predict(X), 1e-6, None)
         )
@@ -280,9 +254,9 @@ def test_poisson_vs_mse():
         # As squared_error might correctly predict 0 in train set, its train
         # score can be better than Poisson. This is no longer the case for the
         # test set. But keep the above comment for clipping in mind.
-        if data_name == "test":
+        if val == "test":
             assert metric_poi < metric_mse
-        assert metric_poi < 0.8 * metric_dummy
+        assert metric_poi < metric_dummy
 
 
 @pytest.mark.parametrize("criterion", ("poisson", "squared_error"))
@@ -342,7 +316,11 @@ def test_probability(name):
     check_probability(name)
 
 
-def check_importances(name, criterion, tolerance, X, y):
+def check_importances(name, criterion, dtype, tolerance):
+    # cast as dype
+    X = X_large.astype(dtype, copy=False)
+    y = y_large.astype(dtype, copy=False)
+
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     est = ForestEstimator(n_estimators=10, criterion=criterion, random_state=0)
@@ -354,7 +332,7 @@ def check_importances(name, criterion, tolerance, X, y):
     n_important = np.sum(importances > 0.1)
     assert importances.shape[0] == 10
     assert n_important == 3
-    assert np.all(importances[:3] > 0.09)
+    assert np.all(importances[:3] > 0.1)
 
     # Check with parallel
     importances = est.feature_importances_
@@ -388,17 +366,7 @@ def test_importances(dtype, name, criterion):
     tolerance = 0.01
     if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
-
-    # cast as dtype
-    # use imbalanced data for testing imbalanced criterion
-    if criterion == "hellinger":
-        X = X_large_imbl.astype(dtype, copy=False)
-        y = y_large_imbl.astype(dtype, copy=False)
-    else:
-        X = X_large.astype(dtype, copy=False)
-        y = y_large.astype(dtype, copy=False)
-
-    check_importances(name, criterion, tolerance, X, y)
+    check_importances(name, criterion, dtype, tolerance)
 
 
 def test_importances_asymptotic():
@@ -494,7 +462,7 @@ def test_importances_asymptotic():
 
     # Estimate importances with totally randomized trees
     clf = ExtraTreesClassifier(
-        n_estimators=500, max_features=1, criterion="log_loss", random_state=0
+        n_estimators=500, max_features=1, criterion="entropy", random_state=0
     ).fit(X, y)
 
     importances = (
@@ -894,7 +862,7 @@ def test_random_trees_dense_type():
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
-    # Assert that type is ndarray, not scipy.sparse.csr_matrix
+    # Assert that type is ndarray, not scipy.sparse.csr.csr_matrix
     assert type(X_transformed) == np.ndarray
 
 
@@ -1299,7 +1267,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf1.fit(iris.data, iris.target, sample_weight ** 2)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -1619,6 +1587,10 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
 joblib.register_parallel_backend("testing", MyBackend)
 
 
+@pytest.mark.skipif(
+    parse_version(joblib.__version__) < parse_version("0.12"),
+    reason="tests not yet supported in joblib <0.12",
+)
 @skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
@@ -1850,23 +1822,23 @@ def test_max_features_deprecation(Estimator):
         est.fit(X, y)
 
 
+# TODO: Remove in v1.2
 @pytest.mark.parametrize(
-    "old_criterion, new_criterion, Estimator",
+    "old_criterion, new_criterion",
     [
-        # TODO(1.2): Remove "mse" and "mae"
-        ("mse", "squared_error", RandomForestRegressor),
-        ("mae", "absolute_error", RandomForestRegressor),
+        ("mse", "squared_error"),
+        ("mae", "absolute_error"),
     ],
 )
-def test_criterion_deprecated(old_criterion, new_criterion, Estimator):
-    est1 = Estimator(criterion=old_criterion, random_state=0)
+def test_criterion_deprecated(old_criterion, new_criterion):
+    est1 = RandomForestRegressor(criterion=old_criterion, random_state=0)
 
     with pytest.warns(
         FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
     ):
         est1.fit(X, y)
 
-    est2 = Estimator(criterion=new_criterion, random_state=0)
+    est2 = RandomForestRegressor(criterion=new_criterion, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 
@@ -1885,29 +1857,3 @@ def test_mse_criterion_object_segfault_smoke_test(Forest):
     est = FOREST_REGRESSORS[Forest](n_estimators=2, n_jobs=2, criterion=mse_criterion)
 
     est.fit(X_reg, y)
-
-
-def test_random_trees_embedding_feature_names_out():
-    """Check feature names out for Random Trees Embedding."""
-    random_state = np.random.RandomState(0)
-    X = np.abs(random_state.randn(100, 4))
-    hasher = RandomTreesEmbedding(
-        n_estimators=2, max_depth=2, sparse_output=False, random_state=0
-    ).fit(X)
-    names = hasher.get_feature_names_out()
-    expected_names = [
-        f"randomtreesembedding_{tree}_{leaf}"
-        # Note: nodes with indices 0, 1 and 4 are internal split nodes and
-        # therefore do not appear in the expected output feature names.
-        for tree, leaf in [
-            (0, 2),
-            (0, 3),
-            (0, 5),
-            (0, 6),
-            (1, 2),
-            (1, 3),
-            (1, 5),
-            (1, 6),
-        ]
-    ]
-    assert_array_equal(expected_names, names)
