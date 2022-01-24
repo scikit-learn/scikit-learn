@@ -13,6 +13,8 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import GaussianRandomProjection
 
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -373,3 +375,43 @@ def test_random_projection_feature_names_out(random_projection_cls):
     )
 
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+@pytest.mark.parametrize(
+    "input_dtype, expected_dtype",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_random_projection_dtype_match(
+    random_projection_cls, input_dtype, expected_dtype
+):
+    # Verify output matrix dtype
+    rng = np.random.RandomState(42)
+    X = rng.rand(25, 3000)
+    rp = random_projection_cls(random_state=0)
+    transformed = rp.fit_transform(X.astype(input_dtype))
+
+    assert rp.components_.dtype == expected_dtype
+    assert transformed.dtype == expected_dtype
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+def test_random_projection_numerical_consistency(random_projection_cls):
+    # Verify numerical consistency among np.float32 and np.float64
+    atol = 1e-5
+    rng = np.random.RandomState(42)
+    X = rng.rand(25, 3000)
+    rp_32 = random_projection_cls(random_state=0)
+    rp_64 = random_projection_cls(random_state=0)
+
+    projection_32 = rp_32.fit_transform(X.astype(np.float32))
+    projection_64 = rp_64.fit_transform(X.astype(np.float64))
+
+    assert_allclose(projection_64, projection_32, atol=atol)
+
+    assert_allclose_dense_sparse(rp_32.components_, rp_64.components_)
