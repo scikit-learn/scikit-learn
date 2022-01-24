@@ -54,16 +54,6 @@ def test_error():
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
-        (
-            {"n_jobs": 0},
-            ValueError,
-            "n_jobs == 0, must be less than 0 or greater than 0.",
-        ),
-        (
-            {"n_jobs": "foo"},
-            TypeError,
-            "n_jobs must be an instance of <class 'numbers.Integral'>,",
-        ),
         ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
         ({"verbose": "foo"}, TypeError, "verbose must be an instance of"),
     ],

@@ -79,18 +79,6 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 f" {len(self.weights)} weights, {len(self.estimators)} estimators"
             )
 
-        if self.n_jobs is not None:
-            if not isinstance(self.n_jobs, numbers.Integral):
-                raise TypeError(
-                    "n_jobs must be an instance of <class 'numbers.Integral'>, not"
-                    f" {type(self.n_jobs)}"
-                )
-            else:
-                if self.n_jobs == 0:
-                    raise ValueError(
-                        "n_jobs == 0, must be less than 0 or greater than 0."
-                    )
-
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_single_estimator)(
                 clone(clf),
