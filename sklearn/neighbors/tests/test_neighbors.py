@@ -1444,7 +1444,7 @@ def test_neighbors_metrics(
     for metric_params in metric_params_list:
         # Some metric (e.g. Weighted minkowski) are not
         # supported by KDTree
-        exclude_kdtree = metric == "minkowski" and "w" in metric_params
+        exclude_kd_tree = "minkowski" in metric and "w" in metric_params
         results = {}
         p = metric_params.pop("p", 2)
         for algorithm in algorithms:
@@ -1456,7 +1456,7 @@ def test_neighbors_metrics(
                 metric_params=metric_params,
             )
 
-            if exclude_kdtree and algorithm == "kd_tree":
+            if exclude_kd_tree and algorithm == "kd_tree":
                 continue
 
             neigh.fit(X_train)
@@ -1479,7 +1479,7 @@ def test_neighbors_metrics(
         assert_allclose(brute_dst, ball_tree_dst)
         assert_array_equal(brute_idx, ball_tree_idx)
 
-        if not exclude_kdtree:
+        if not exclude_kd_tree:
             kd_tree_dst, kd_tree_idx = results["kd_tree"]
             assert_allclose(brute_dst, kd_tree_dst)
             assert_array_equal(brute_idx, kd_tree_idx)
@@ -1529,6 +1529,9 @@ def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=
 
     else:
         for metric_params in metric_params_list:
+            # Some metric (e.g. Weighted minkowski) are not
+            # supported by KDTree
+            exclude_kd_tree = "minkowski" in metric and "w" in metric_params
             nn = neighbors.NearestNeighbors(
                 n_neighbors=3,
                 algorithm="auto",
@@ -1539,8 +1542,9 @@ def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=
             if metric == "haversine":
                 feature_sl = slice(None, 2)
                 X = np.ascontiguousarray(X[:, feature_sl])
-            else:
-                X = X
+
+            if exclude_kd_tree:
+                continue
 
             nn.fit(X)
             nn.kneighbors(X)
