@@ -240,7 +240,7 @@ def cross_validate(
     [0.28009951 0.3908844  0.22784907]
 
     See Also
-    ---------
+    --------
     cross_val_score : Run cross-validation for single metric evaluation.
 
     cross_val_predict : Get predictions from each split of cross-validation for
@@ -500,7 +500,7 @@ def cross_val_score(
     [0.3315057  0.08022103 0.03531816]
 
     See Also
-    ---------
+    --------
     cross_validate : To run cross-validation on multiple metrics and also to
         return train scores, fit times and score times.
 

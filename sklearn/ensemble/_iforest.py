@@ -174,7 +174,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
            Data (TKDD) 6.1 (2012): 3.
 
     See Also
-    ----------
+    --------
     sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
         Gaussian distributed dataset.
     sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.

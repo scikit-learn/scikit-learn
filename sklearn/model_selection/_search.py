@@ -1321,7 +1321,7 @@ class GridSearchCV(BaseSearchCV):
     n_jobs`.
 
     See Also
-    ---------
+    --------
     ParameterGrid : Generates all the combinations of a hyperparameter grid.
     train_test_split : Utility function to split the data into a development
         set usable for fitting a GridSearchCV instance and an evaluation set

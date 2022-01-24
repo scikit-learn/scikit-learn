@@ -1246,7 +1246,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The training input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted regression values.
         """
