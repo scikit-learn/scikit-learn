@@ -178,7 +178,7 @@ def test_iris(name, criterion):
 def check_imbalanced_criterion(name, criterion):
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    clf = ForestClassifier(n_estimators=10, criterion=criterion_obj, random_state=1)
+    clf = ForestClassifier(n_estimators=10, criterion=criterion, random_state=1)
     clf.fit(X_large_imbl, y_large_imbl)
 
     # score is a mean of minority class predict_proba
