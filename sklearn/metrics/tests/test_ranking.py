@@ -1854,6 +1854,15 @@ def test_top_k_accuracy_score_ties(y_true, k, true_score):
     assert top_k_accuracy_score(y_true, y_score, k=k) == pytest.approx(true_score)
 
 
+def test_top_k_accuracy_y_score_binary():
+    """Support y_score.shape[1] == 2 when labels is passed in for binary problems."""
+    y_score = np.asarray([[0.1, 0.9], [0.25, 0.75], [0.2, 0.8]])
+    y_true = [0, 1, 0]
+    score_2d = top_k_accuracy_score(y_true, y_score, k=1, labels=[0, 1])
+    score_1d = top_k_accuracy_score(y_true, y_score[:, 1], k=1)
+    assert score_2d == pytest.approx(score_1d)
+
+
 @pytest.mark.parametrize(
     "y_true, k",
     [
