@@ -22,9 +22,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import (
-    VALID_METRICS_SPARSE,
-)
+from sklearn.neighbors import VALID_METRICS_SPARSE
 from sklearn.neighbors._base import (
     _is_sorted_by_data,
     _check_precomputed,
