@@ -1493,7 +1493,7 @@ def test_neighbors_metrics(
                 and algorithm == "brute"
                 and sp_version >= parse_version("1.6.0")
             ):
-                ExceptionToAssert = DeprecationWarning
+                ExceptionToAssert = FutureWarning
 
             with pytest.warns(ExceptionToAssert):
                 results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
