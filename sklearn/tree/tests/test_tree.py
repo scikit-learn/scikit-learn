@@ -624,13 +624,7 @@ def test_error():
             "max_depth must be an instance of <class 'numbers.Integral'>",
         ),
         ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        ({"min_samples_leaf": 900}, ValueError, "min_samples_leaf == 900, must be <="),
         ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
-        (
-            {"min_samples_leaf": 0.6},
-            ValueError,
-            "min_samples_leaf == 0.6, must be <= 0.5",
-        ),
         (
             {"min_samples_leaf": "foo"},
             TypeError,
