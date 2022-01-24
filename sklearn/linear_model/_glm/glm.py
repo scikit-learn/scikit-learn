@@ -13,6 +13,7 @@ import scipy.optimize
 
 from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
+from ...utils import check_scalar
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ..._loss.glm_distribution import (
     ExponentialDispersionModel,
@@ -209,12 +210,13 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "got (link={0})".format(self.link)
                 )
 
-        if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
-            raise ValueError(
-                "Penalty term must be a non-negative number; got (alpha={0})".format(
-                    self.alpha
-                )
-            )
+        check_scalar(
+            self.alpha,
+            name="alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
                 "The argument fit_intercept must be bool; got {0}".format(
@@ -227,17 +229,25 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "'lbfgs'; got {0}".format(self.solver)
             )
         solver = self.solver
-        if not isinstance(self.max_iter, numbers.Integral) or self.max_iter <= 0:
-            raise ValueError(
-                "Maximum number of iteration must be a positive "
-                "integer;"
-                " got (max_iter={0!r})".format(self.max_iter)
-            )
-        if not isinstance(self.tol, numbers.Number) or self.tol <= 0:
-            raise ValueError(
-                "Tolerance for stopping criteria must be "
-                "positive; got (tol={0!r})".format(self.tol)
-            )
+        check_scalar(
+            self.max_iter,
+            name="max_iter",
+            target_type=numbers.Integral,
+            min_val=1,
+        )
+        check_scalar(
+            self.tol,
+            name="tol",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.verbose,
+            name="verbose",
+            target_type=numbers.Integral,
+            min_val=0,
+        )
         if not isinstance(self.warm_start, bool):
             raise ValueError(
                 "The argument warm_start must be bool; got {0}".format(self.warm_start)
