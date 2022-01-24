@@ -18,6 +18,7 @@ from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array
+from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
@@ -903,6 +904,13 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
+        check_scalar(
+            self.alpha,
+            "alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+        )
+
         if self.alpha == 0:
             warnings.warn(
                 "With alpha=0, this algorithm does not converge "
@@ -917,14 +925,20 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 % self.precompute
             )
 
-        if (
-            not isinstance(self.l1_ratio, numbers.Number)
-            or self.l1_ratio < 0
-            or self.l1_ratio > 1
-        ):
-            raise ValueError(
-                f"l1_ratio must be between 0 and 1; got l1_ratio={self.l1_ratio}"
+        check_scalar(
+            self.l1_ratio,
+            "l1_ratio",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+        )
+
+        if self.max_iter is not None:
+            check_scalar(
+                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
             )
+
+        check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # Remember if X is copied
         X_copied = False
