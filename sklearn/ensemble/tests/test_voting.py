@@ -61,7 +61,7 @@ def test_invalid_type_for_flatten_transform():
 def test_voting_estimators_param_validation(
     X, y, voter, learner, params, err_type, err_msg
 ):
-    # Test that invalid imput raises the proper exception
+    # Test that invalid input raises the proper exception
     params.update(learner)
     ensemble = voter(**params)
     with pytest.raises(err_type, match=err_msg):
