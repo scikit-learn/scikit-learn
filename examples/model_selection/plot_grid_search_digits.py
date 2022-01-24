@@ -35,8 +35,7 @@ n_samples = len(digits.images)
 X = digits.images.reshape((n_samples, -1))
 y = digits.target
 print(
-    f"The number of images is {X.shape[0]} and each image contains "
-    f"{X.shape[1]} pixels"
+    f"The number of images is {X.shape[0]} and each image contains {X.shape[1]} pixels"
 )
 
 # %%
@@ -44,9 +43,7 @@ print(
 # and evaluation set of equal size.
 from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.5, random_state=0
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
 
 # %%
 # Define our grid-search framework
@@ -61,7 +58,7 @@ tuned_parameters = [
     {"kernel": ["linear"], "C": [1, 10, 100, 1000]},
 ]
 
-scores = ['precision_macro', 'recall_macro']
+scores = ["precision_macro", "recall_macro"]
 
 # %%
 # We can also define a function that will implement the strategy to use to
@@ -120,7 +117,7 @@ def refit_strategy(cv_results):
     mask_best_precision = cv_results_["rank_test_precision_macro"] == 1
     mask_combined = mask_best_recall & mask_best_precision
     print(
-        f"The following models are the most performance in terms of "
+        "The following models are the most performance in terms of "
         f"recall/precision:\n\n {cv_results_[mask_combined]}"
     )
 
@@ -128,8 +125,8 @@ def refit_strategy(cv_results):
     best_index = cv_results_.loc[mask_combined, "mean_score_time"].idxmin()
 
     print(
-        f"\nWe selected the model with the following parameters which maximize"
-        f" the performance metric and minimize the scoring time:\n\n"
+        "\nWe selected the model with the following parameters which maximize"
+        " the performance metric and minimize the scoring time:\n\n"
         f"{cv_results_.loc[best_index]}"
     )
 
@@ -142,9 +139,7 @@ def refit_strategy(cv_results):
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 
-clf = GridSearchCV(
-    SVC(), tuned_parameters, scoring=scores, refit=refit_strategy
-)
+clf = GridSearchCV(SVC(), tuned_parameters, scoring=scores, refit=refit_strategy)
 
 print("# Tuning hyper-parameters \n")
 clf.fit(X_train, y_train)
@@ -156,7 +151,7 @@ from sklearn.metrics import classification_report
 
 y_pred = clf.predict(X_test)
 print(
-    f"\nOur selected model will have the following performance on the "
+    "\nOur selected model will have the following performance on the "
     f"evaluation set:\n\n {classification_report(y_test, y_pred)}"
 )
 
