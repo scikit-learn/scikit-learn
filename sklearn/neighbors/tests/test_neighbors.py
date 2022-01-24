@@ -1534,6 +1534,7 @@ def test_callable_metric():
     assert_array_almost_equal(dist1, dist2)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
 def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=12):
