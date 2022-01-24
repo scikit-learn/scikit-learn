@@ -56,7 +56,7 @@ def get_data_home(data_home=None) -> str:
     Returns
     -------
     data_home: str
-        Path of the scikit-learn data directory.
+        The path to scikit-learn data directory.
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
