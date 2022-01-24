@@ -433,7 +433,7 @@ def test_tpr_fpr_tnr_fnr_score_extra_labels():
 
         # Further tests
         for average in ["macro", "micro", "weighted", "samples"]:
-            if average in ["micro", "samples"] and i == 0:
+            if average in ["macro", "micro", "samples"] and i == 0:
                 continue
             assert_almost_equal(
                 tpr_fpr_tnr_fnr_score(
