@@ -470,15 +470,11 @@ def test_tpr_fpr_tnr_fnr_score_ignored_labels():
         assert_array_almost_equal(
             ([0.5, 1.0], [0.0, 0.67], [1.0, 0.33], [0.5, 0.0]),
             scores_13(average=None),
-            2
+            2,
         )
-        assert_almost_equal(
-            [0.75, 0.33, 0.67, 0.25], scores_13(average="macro"), 2
-        )
+        assert_almost_equal([0.75, 0.33, 0.67, 0.25], scores_13(average="macro"), 2)
         assert_almost_equal([0.67, 0.4, 0.6, 0.33], scores_13(average="micro"), 2)
-        assert_almost_equal(
-            [0.67, 0.22, 0.78, 0.33], scores_13(average="weighted"), 2
-        )
+        assert_almost_equal([0.67, 0.22, 0.78, 0.33], scores_13(average="weighted"), 2)
 
         # ensure the above were meaningful tests:
         for average in ["macro", "weighted", "micro"]:
