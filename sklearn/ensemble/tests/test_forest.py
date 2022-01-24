@@ -186,12 +186,16 @@ def check_imbalanced_criterion(name, criterion):
 
     # minority class relative size
     classes_balance = np.unique(y_large_imbl, return_counts=True)[1]
-    classes_ratio = classes_balance/np.linalg.norm(classes_balance)
+    classes_ratio = classes_balance / np.linalg.norm(classes_balance)
     minority_class_ratio = classes_ratio[1]
 
-    assert score > minority_class_ratio, \
-        "Failed with imbalanced criterion %s, score = %f, minority class ratio = %f" %\
-        (criterion, score, minority_class_ratio)
+    assert (
+        score > minority_class_ratio
+    ), "Failed with imbalanced criterion %s, score = %f, minority class ratio = %f" % (
+        criterion,
+        score,
+        minority_class_ratio,
+    )
 
 
 @pytest.mark.parametrize("name", ('RandomForestClassifier'))
