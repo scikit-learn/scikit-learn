@@ -1429,6 +1429,7 @@ def test_neighbors_badargs():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 def test_neighbors_metrics(
     metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
@@ -1509,6 +1510,7 @@ def test_callable_metric():
     assert_array_almost_equal(dist1, dist2)
 
 
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
 def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=12):
     X = rng.rand(n_samples, n_features)
