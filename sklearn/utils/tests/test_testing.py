@@ -631,7 +631,6 @@ def test_check_docstring_parameters(mock_meta):
         ],
     ):
         incorrect = check_docstring_parameters(f)
-        print(incorrect)
         assert msg == incorrect, '\n"%s"\n not in \n"%s"' % (msg, incorrect)
 
 
