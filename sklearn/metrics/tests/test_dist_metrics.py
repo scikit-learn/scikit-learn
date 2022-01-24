@@ -39,6 +39,7 @@ V = rng.random_sample((d, d))
 VI = np.dot(V, V.T)
 
 BOOL_METRICS = [
+    "hamming",
     "matching",
     "jaccard",
     "dice",

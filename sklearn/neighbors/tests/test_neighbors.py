@@ -20,6 +20,7 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import EfficiencyWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import VALID_METRICS_SPARSE
@@ -120,10 +121,13 @@ def _weight_func(dist):
     return retval ** 2
 
 
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("n_features", [5, 100])
-@pytest.mark.parametrize("n_query_pts", [10, 100])
-@pytest.mark.parametrize("n_neighbors", [1, 10, 100])
+@pytest.mark.parametrize(
+    "n_samples, n_features, n_query_pts, n_neighbors",
+    [
+        (100, 100, 10, 100),
+        (1000, 5, 100, 1),
+    ],
+)
 @pytest.mark.parametrize("query_is_train", [False, True])
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 def test_unsupervised_kneighbors(
@@ -190,9 +194,13 @@ def test_unsupervised_kneighbors(
         )
 
 
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("n_features", [5, 100])
-@pytest.mark.parametrize("n_query_pts", [10, 100])
+@pytest.mark.parametrize(
+    "n_samples, n_features, n_query_pts",
+    [
+        (100, 100, 10),
+        (1000, 5, 100),
+    ],
+)
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
@@ -1427,8 +1435,17 @@ def test_neighbors_badargs():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+@pytest.mark.parametrize(
+    "metric",
+    sorted(
+        set(neighbors.VALID_METRICS["ball_tree"]).intersection(
+            neighbors.VALID_METRICS["brute"]
+        )
+        - set(["pyfunc", *BOOL_METRICS])
+    ),
+)
 def test_neighbors_metrics(
     metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
 ):
@@ -1441,9 +1458,10 @@ def test_neighbors_metrics(
     metric_params_list = _generate_test_params_for(metric, n_features)
 
     for metric_params in metric_params_list:
-        # Some metric (e.g. Weighted minkowski) are not
-        # supported by KDTree
-        exclude_kd_tree = "minkowski" in metric and "w" in metric_params
+        # Some metric (e.g. Weighted minkowski) are not supported by KDTree
+        exclude_kd_tree = metric not in neighbors.VALID_METRICS["kd_tree"] or (
+            "minkowski" in metric and "w" in metric_params
+        )
         results = {}
         p = metric_params.pop("p", 2)
         for algorithm in algorithms:
@@ -1456,7 +1474,15 @@ def test_neighbors_metrics(
             )
 
             if exclude_kd_tree and algorithm == "kd_tree":
+                with pytest.raises(ValueError):
+                    neigh.fit(X_train)
                 continue
+
+            # Haversine distance only accepts 2D data
+            if metric == "haversine":
+                feature_sl = slice(None, 2)
+                X_train = np.ascontiguousarray(X_train[:, feature_sl])
+                X_test = np.ascontiguousarray(X_test[:, feature_sl])
 
             neigh.fit(X_train)
 
@@ -1529,9 +1555,6 @@ def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=
 
     else:
         for metric_params in metric_params_list:
-            # Some metric (e.g. Weighted minkowski) are not
-            # supported by KDTree
-            exclude_kd_tree = "minkowski" in metric and "w" in metric_params
             nn = neighbors.NearestNeighbors(
                 n_neighbors=3,
                 algorithm="auto",
@@ -1542,9 +1565,6 @@ def test_valid_brute_metric_for_auto_algorithm(metric, n_samples=20, n_features=
             if metric == "haversine":
                 feature_sl = slice(None, 2)
                 X = np.ascontiguousarray(X[:, feature_sl])
-
-            if exclude_kd_tree:
-                continue
 
             nn.fit(X)
             nn.kneighbors(X)
