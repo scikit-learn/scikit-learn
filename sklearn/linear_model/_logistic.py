@@ -1232,7 +1232,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. See :term:`Glossary <random_state>` for details.
 
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
+    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga', 'trust-ncg'}, \
             default='lbfgs'
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
@@ -1253,6 +1253,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            - 'liblinear'   -   ['l1', 'l2']
            - 'sag'         -   ['l2', 'none']
            - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
+           - 'trust-ncg'   -   ['l2', 'none']
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on
@@ -1274,6 +1275,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            SAGA solver.
         .. versionchanged:: 0.22
             The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
+        .. versionchanged:: 1.1
+            Newton conjugate gradient trust-region (trust-ncg) solver.
 
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
