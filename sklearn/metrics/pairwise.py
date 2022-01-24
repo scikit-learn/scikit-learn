@@ -826,7 +826,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
         the pairwise L1 distances.
 
     Notes
-    --------
+    -----
     When X and/or Y are CSR sparse matrices and they are not already
     in canonical format, this function modifies them in-place to
     make them canonical.
@@ -960,19 +960,24 @@ def paired_manhattan_distances(X, Y):
 
 def paired_cosine_distances(X, Y):
     """
-    Computes the paired cosine distances between X and Y.
+    Compute the paired cosine distances between X and Y.
 
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Y : array-like of shape (n_samples, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Returns
     -------
     distances : ndarray of shape (n_samples,)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     Notes
     -----
