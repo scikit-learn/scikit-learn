@@ -1118,7 +1118,7 @@ def column_or_1d(y, *, warn=False):
        Output data.
 
     Raises
-    -------
+    ------
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
@@ -1377,7 +1377,7 @@ def check_scalar(
         The minimum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
-    max_val : float or int, default=False
+    max_val : float or int, default=None
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
