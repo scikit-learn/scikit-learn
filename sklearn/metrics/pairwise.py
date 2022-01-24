@@ -826,7 +826,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
         the pairwise L1 distances.
 
     Notes
-    --------
+    -----
     When X and/or Y are CSR sparse matrices and they are not already
     in canonical format, this function modifies them in-place to
     make them canonical.
