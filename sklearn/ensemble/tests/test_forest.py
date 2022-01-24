@@ -73,6 +73,18 @@ X_large, y_large = datasets.make_classification(
     random_state=0,
 )
 
+# Imbalanced classification sample used for testing imbalanced criterions
+X_large_imbl, y_large_imbl = datasets.make_classification(
+    n_samples=500,
+    n_features=10,
+    n_informative=5,
+    n_redundant=0,
+    n_repeated=0,
+    weights=[0.95, 0.05],
+    shuffle=False,
+    random_state=0,
+)
+
 # also load the iris dataset
 # and randomly permute it
 iris = datasets.load_iris()
