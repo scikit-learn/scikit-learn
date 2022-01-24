@@ -771,6 +771,11 @@ def jaccard_score(
     >>> jaccard_score(y_true[0], y_pred[0])
     0.6666...
 
+    In the 2D comparison case (e.g. image similarity):
+
+    >>> jaccard_score(y_true, y_pred, average="micro")
+    0.6
+
     In the multilabel case:
 
     >>> jaccard_score(y_true, y_pred, average='samples')

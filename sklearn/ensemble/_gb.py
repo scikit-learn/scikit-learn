@@ -1380,7 +1380,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             to a sparse ``csr_matrix``.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted value of the input samples.
         """
