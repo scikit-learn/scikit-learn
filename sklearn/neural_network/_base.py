@@ -16,8 +16,8 @@ def inplace_identity(X):
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Data, where n_samples is the number of samples
-        and n_features is the number of features.
+        Data, where `n_samples` is the number of samples
+        and `n_features` is the number of features.
     """
     # Nothing to do
 
@@ -68,11 +68,13 @@ def inplace_softmax(X):
     X /= X.sum(axis=1)[:, np.newaxis]
 
 
-ACTIVATIONS = {'identity': inplace_identity,
-               'tanh': inplace_tanh,
-               'logistic': inplace_logistic,
-               'relu': inplace_relu,
-               'softmax': inplace_softmax}
+ACTIVATIONS = {
+    "identity": inplace_identity,
+    "tanh": inplace_tanh,
+    "logistic": inplace_logistic,
+    "relu": inplace_relu,
+    "softmax": inplace_softmax,
+}
 
 
 def inplace_identity_derivative(Z, delta):
@@ -106,7 +108,7 @@ def inplace_logistic_derivative(Z, delta):
          The backpropagated error signal to be modified inplace.
     """
     delta *= Z
-    delta *= (1 - Z)
+    delta *= 1 - Z
 
 
 def inplace_tanh_derivative(Z, delta):
@@ -124,7 +126,7 @@ def inplace_tanh_derivative(Z, delta):
     delta : {array-like}, shape (n_samples, n_features)
          The backpropagated error signal to be modified inplace.
     """
-    delta *= (1 - Z ** 2)
+    delta *= 1 - Z ** 2
 
 
 def inplace_relu_derivative(Z, delta):
@@ -145,10 +147,12 @@ def inplace_relu_derivative(Z, delta):
     delta[Z == 0] = 0
 
 
-DERIVATIVES = {'identity': inplace_identity_derivative,
-               'tanh': inplace_tanh_derivative,
-               'logistic': inplace_logistic_derivative,
-               'relu': inplace_relu_derivative}
+DERIVATIVES = {
+    "identity": inplace_identity_derivative,
+    "tanh": inplace_tanh_derivative,
+    "logistic": inplace_logistic_derivative,
+    "relu": inplace_relu_derivative,
+}
 
 
 def squared_loss(y_true, y_pred):
@@ -195,7 +199,7 @@ def log_loss(y_true, y_prob):
     if y_true.shape[1] == 1:
         y_true = np.append(1 - y_true, y_true, axis=1)
 
-    return - xlogy(y_true, y_prob).sum() / y_prob.shape[0]
+    return -xlogy(y_true, y_prob).sum() / y_prob.shape[0]
 
 
 def binary_log_loss(y_true, y_prob):
@@ -220,9 +224,14 @@ def binary_log_loss(y_true, y_prob):
     """
     eps = np.finfo(y_prob.dtype).eps
     y_prob = np.clip(y_prob, eps, 1 - eps)
-    return -(xlogy(y_true, y_prob).sum() +
-             xlogy(1 - y_true, 1 - y_prob).sum()) / y_prob.shape[0]
+    return (
+        -(xlogy(y_true, y_prob).sum() + xlogy(1 - y_true, 1 - y_prob).sum())
+        / y_prob.shape[0]
+    )
 
 
-LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss,
-                  'binary_log_loss': binary_log_loss}
+LOSS_FUNCTIONS = {
+    "squared_error": squared_loss,
+    "log_loss": log_loss,
+    "binary_log_loss": binary_log_loss,
+}

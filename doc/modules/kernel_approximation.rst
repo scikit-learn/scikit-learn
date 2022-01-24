@@ -246,8 +246,8 @@ or store training examples.
     .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
       <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
       Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
-    .. [PP2013] `"Fast and scalable polynomial kernels via explicit feature maps"
-      <https://doi.org/10.1145/2487575.2487591>`_
+    .. [PP2013] :doi:`"Fast and scalable polynomial kernels via explicit feature maps"
+      <10.1145/2487575.2487591>`
       Pham, N., & Pagh, R. - 2013
     .. [CCF2002] `"Finding frequent items in data streams"
       <http://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_

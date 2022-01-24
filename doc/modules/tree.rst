@@ -130,14 +130,16 @@ Using the Iris dataset, we can construct a tree as follows::
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-    >>> X, y = load_iris(return_X_y=True)
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, y)
 
 Once trained, you can plot the tree with the :func:`plot_tree` function::
 
 
-    >>> tree.plot_tree(clf) # doctest: +SKIP
+    >>> tree.plot_tree(clf)
+    [...]
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
    :target: ../auto_examples/tree/plot_iris_dtc.html
@@ -362,6 +364,11 @@ Tips on practical use
     low-variance, over-fit leaf nodes in regression problems.  For
     classification with few classes, ``min_samples_leaf=1`` is often the best
     choice.
+
+    Note that ``min_samples_split`` considers samples directly and independent of
+    ``sample_weight``, if provided (e.g. a node with m weighted samples is still
+    treated as having exactly m samples). Consider ``min_weight_fraction_leaf`` or
+    ``min_impurity_decrease`` if accounting for sample weights is required at splits.
 
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by

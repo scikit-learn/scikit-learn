@@ -23,6 +23,7 @@ recursive-exclude benchmarks *
 recursive-exclude .binder *
 recursive-exclude .circleci *
 exclude .codecov.yml
+exclude .git-blame-ignore-revs
 exclude .mailmap
 exclude .pre-commit-config.yaml
 exclude azure-pipelines.yml

@@ -55,10 +55,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 # We will fine-tune a classifier by searching the best hyper-parameters on the
 # development dataset. We need to define the values of the hyper-parameters
 # and the scores to compute to later on select the best candidate.
+
 tuned_parameters = [
     {"kernel": ["rbf"], "gamma": [1e-3, 1e-4], "C": [1, 10, 100, 1000]},
     {"kernel": ["linear"], "C": [1, 10, 100, 1000]},
 ]
+
 scores = ['precision_macro', 'recall_macro']
 
 # %%
@@ -73,7 +75,6 @@ scores = ['precision_macro', 'recall_macro']
 #
 # Note that these choices are completely arbitrary.
 import pandas as pd
-
 
 def refit_strategy(cv_results):
     """Define the strategy to select the best estimator.
