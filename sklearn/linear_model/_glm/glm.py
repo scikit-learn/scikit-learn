@@ -489,8 +489,13 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
 
+    See Also
+    --------
+    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson
+        distribution.
+
     Examples
-    ----------
+    --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.PoissonRegressor()
     >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
@@ -505,11 +510,6 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     2.088...
     >>> clf.predict([[1, 1], [3, 4]])
     array([10.676..., 21.875...])
-
-    See Also
-    ----------
-    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson
-        distribution.
     """
 
     def __init__(
@@ -758,7 +758,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     GammaRegressor : Generalized Linear Model with a Gamma distribution.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.TweedieRegressor()
     >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
