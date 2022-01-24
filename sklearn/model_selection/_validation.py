@@ -488,17 +488,6 @@ def cross_val_score(
     scores : ndarray of float of shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
 
-    Examples
-    --------
-    >>> from sklearn import datasets, linear_model
-    >>> from sklearn.model_selection import cross_val_score
-    >>> diabetes = datasets.load_diabetes()
-    >>> X = diabetes.data[:150]
-    >>> y = diabetes.target[:150]
-    >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y, cv=3))
-    [0.3315057  0.08022103 0.03531816]
-
     See Also
     --------
     cross_validate : To run cross-validation on multiple metrics and also to
@@ -509,6 +498,17 @@ def cross_val_score(
 
     sklearn.metrics.make_scorer : Make a scorer from a performance metric or
         loss function.
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.model_selection import cross_val_score
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> print(cross_val_score(lasso, X, y, cv=3))
+    [0.3315057  0.08022103 0.03531816]
     """
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)

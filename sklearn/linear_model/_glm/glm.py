@@ -489,6 +489,11 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
 
+    See Also
+    --------
+    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson
+        distribution.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -505,11 +510,6 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     2.088...
     >>> clf.predict([[1, 1], [3, 4]])
     array([10.676..., 21.875...])
-
-    See Also
-    --------
-    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson
-        distribution.
     """
 
     def __init__(
