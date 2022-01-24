@@ -696,7 +696,7 @@ def test_pca_randomized_svd_n_oversamples():
         (
             {"n_oversamples": 1.5},
             TypeError,
-            "n_oversamples must be an instance of numbers.Integral",
+            "n_oversamples must be an instance of int",
         ),
     ],
 )
