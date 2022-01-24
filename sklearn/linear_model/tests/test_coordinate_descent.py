@@ -106,17 +106,41 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
     assert len(record) == n_warnings
 
 
-@pytest.mark.parametrize("l1_ratio", (-1, 2, None, 10, "something_wrong"))
-def test_l1_ratio_param_invalid(l1_ratio):
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
+        ({"l1_ratio": -1}, ValueError, "l1_ratio == -1, must be >= 0.0"),
+        ({"l1_ratio": 2}, ValueError, "l1_ratio == 2, must be <= 1.0"),
+        (
+            {"l1_ratio": "1"},
+            TypeError,
+            "l1_ratio must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
+        (
+            {"tol": "1"},
+            TypeError,
+            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
+        (
+            {"max_iter": "1"},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'str'>",
+        ),
+    ],
+)
+def test_param_invalid(params, err_type, err_msg):
     # Check that correct error is raised when l1_ratio in ElasticNet
     # is outside the correct range
     X = np.array([[-1.0], [0.0], [1.0]])
-    Y = [-1, 0, 1]  # just a straight line
+    y = [-1, 0, 1]  # just a straight line
 
-    msg = "l1_ratio must be between 0 and 1; got l1_ratio="
-    clf = ElasticNet(alpha=0.1, l1_ratio=l1_ratio)
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X, Y)
+    enet = ElasticNet(**params)
+    with pytest.raises(err_type, match=err_msg):
+        enet.fit(X, y)
 
 
 @pytest.mark.parametrize("order", ["C", "F"])

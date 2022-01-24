@@ -365,6 +365,11 @@ Changelog
   warning when `l1_ratio=0`.
   :pr:`21724` by :user:`Yar Khine Phyo <yarkhinephyo>`.
 
+- |Enhancement| :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso`
+  now raise consistent error messages when passed invalid values for `l1_ratio`,
+  `alpha`, `max_iter` and `tol`.
+  :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -519,6 +524,12 @@ Changelog
   :class:`svm.SVR`, :class:`svm.OneClassSVM` now validate input
   parameters in `fit` instead of `__init__`.
   :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
+
+- |Enhancement| :func:`svm.SVR`, :func:`svm.SVC`, :func:`svm.NuSVR`,
+  :func:`svm.OneClassSVM`, :func:`svm.NuSVC` now raise an error
+  when the dual-gap estimation produce non-finite parameter weights.
+  :pr:`22149` by :user:`Christian Ritter <chritter>` and
+  :user:`Norbert Preining <norbusan>`.
 
 :mod:`sklearn.utils`
 ....................
