@@ -34,7 +34,7 @@ X, y = iris.data[:, 1:3], iris.target
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 
-def test_error():
+def test_invalid_type_for_flatten_transform():
     # Test that invalid input raises the proper exception
     ensemble = VotingClassifier(
         estimators=[("lr", LogisticRegression())], flatten_transform="foo"
