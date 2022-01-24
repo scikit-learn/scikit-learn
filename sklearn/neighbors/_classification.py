@@ -214,7 +214,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             Class labels for each data sample.
         """
         if self.weights == "uniform":
-            # In that case, we do not need the distance so we do not compute them.
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
             neigh_dist = None
         else:
@@ -262,7 +263,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             by lexicographic order.
         """
         if self.weights == "uniform":
-            # In that case, we do not need the distance so we do not compute them.
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
             neigh_dist = None
         else:

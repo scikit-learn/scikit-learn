@@ -229,7 +229,8 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
             Target values.
         """
         if self.weights == "uniform":
-            # In that case, we do not need the distance so we do not compute them.
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
             neigh_dist = None
         else:
