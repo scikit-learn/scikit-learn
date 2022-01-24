@@ -32,7 +32,7 @@ from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
-from ..utils.fixes import delayed
+from ..utils.fixes import delayed, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
@@ -63,11 +63,15 @@ VALID_METRICS = dict(
             "sokalsneath",
             "sqeuclidean",
             "yule",
-            "wminkowski",
         ]
     ),
 )
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+if sp_version < parse_version("1.8.0.dev0"):
+    # Before scipy 1.8.0.dev0, wminkowski was the key to use
+    # the weighted minkowski metric.
+    VALID_METRICS["brute"].append("wminkowski")
 
 VALID_METRICS_SPARSE = dict(
     ball_tree=[],
