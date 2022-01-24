@@ -174,6 +174,31 @@ def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
 
+def check_imbalanced_criterion(name, criterion):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(n_estimators=10, criterion=criterion_obj, random_state=1)
+    clf.fit(X_large_imbl, y_large_imbl)
+
+    # score is a mean of minority class predict_proba
+    score = clf.predict_proba(X_large_imbl)[:, 1].mean()
+
+    # minority class relative size
+    classes_balance = np.unique(y_large_imbl, return_counts=True)[1]
+    classes_ratio = classes_balance/np.linalg.norm(classes_balance)
+    minority_class_ratio = classes_ratio[1]
+
+    assert score > minority_class_ratio, \
+        "Failed with imbalanced criterion %s, score = %f, minority class ratio = %f" %\
+        (criterion, score, minority_class_ratio)
+
+
+@pytest.mark.parametrize("name", ('RandomForestClassifier'))
+@pytest.mark.parametrize("criterion", ("hellinger"))
+def test_imbalanced_criterions(name):
+    check_imbalanced_criterion(name, critetion)
+
+
 def check_regression_criterion(name, criterion):
     # Check consistency on regression dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
