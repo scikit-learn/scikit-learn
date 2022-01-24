@@ -76,6 +76,7 @@ scores = ['precision_macro', 'recall_macro']
 # Note that these choices are completely arbitrary.
 import pandas as pd
 
+
 def refit_strategy(cv_results):
     """Define the strategy to select the best estimator.
 
