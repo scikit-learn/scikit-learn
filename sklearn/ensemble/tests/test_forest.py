@@ -198,8 +198,8 @@ def check_imbalanced_criterion(name, criterion):
     )
 
 
-@pytest.mark.parametrize("name", ('RandomForestClassifier'))
-@pytest.mark.parametrize("criterion", ("hellinger"))
+@pytest.mark.parametrize("name", "RandomForestClassifier")
+@pytest.mark.parametrize("criterion", "hellinger")
 def test_imbalanced_criterions(name, criterion):
     check_imbalanced_criterion(name, criterion)
 
