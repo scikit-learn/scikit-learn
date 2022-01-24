@@ -974,8 +974,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
-        - If int, values must be in the range `[1, n_samples]`.
-        - If float, values must be in the range `(0, 0.5]` and `min_samples_leaf`
+        - If int, values must be in the range `[1, inf)`.
+        - If float, values must be in the range `(0, inf)` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
 
         .. versionchanged:: 0.18
@@ -1559,8 +1559,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
-        - If int, values must be in the range `[1, n_samples]`.
-        - If float, values must be in the range `(0, 0.5]` and `min_samples_leaf`
+        - If int, values must be in the range `[1, inf)`.
+        - If float, values must be in the range `(0, inf)` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
 
         .. versionchanged:: 0.18
