@@ -382,6 +382,109 @@ def test_tpr_fpr_tnr_fnr_score_binary_averaged():
     assert fnr == np.average(fnrs, weights=support)
 
 
+@ignore_warnings
+def test_tpr_fpr_tnr_fnr_score_binary_single_class():
+    # Test how the scores behave with a single positive or
+    # negative class
+    # Such a case may occur with non-stratified cross-validation
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score([1, 1], [1, 1])
+    assert 1.0 == tprs[0]
+    assert 0.0 == fprs[0]
+    assert 0.0 == tnrs[0]
+    assert 0.0 == fnrs[0]
+
+    tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score([-1, -1], [-1, -1])
+    assert 1.0 == tprs[0]
+    assert 0.0 == fprs[0]
+    assert 0.0 == tnrs[0]
+    assert 0.0 == fnrs[0]
+
+
+@ignore_warnings
+def test_tpr_fpr_tnr_fnr_score_extra_labels():
+    # Test handling of explicit additional (not in input) labels
+    y_true = [1, 3, 3, 2]
+    y_pred = [1, 1, 3, 2]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        # No averaging
+        tprs, fprs, tnrs, fnrs = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, labels=[0, 1, 2, 3, 4], average=None
+        )
+        assert_array_almost_equal(tprs, [0.0, 1.0, 1.0, 0.5, 0.0], 2)
+        assert_array_almost_equal(fprs, [0.0, 0.33, 0.0, 0.0, 0.0], 2)
+        assert_array_almost_equal(tnrs, [1.0, 0.67, 1.0, 1.0, 1.0], 2)
+        assert_array_almost_equal(fnrs, [0.0, 0.0, 0.0, 0.5, 0.0], 2)
+
+        # Macro average
+        scores = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, labels=[0, 1, 2, 3, 4], average="macro"
+        )
+        assert_array_almost_equal(scores, [0.5, 0.07, 0.93, 0.1], 2)
+
+        # Micro average
+        scores = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, labels=[0, 1, 2, 3, 4], average="micro"
+        )
+        assert_array_almost_equal(scores, [0.75, 0.0625, 0.9375, 0.25], 4)
+
+        # Further tests
+        for average in ["macro", "micro", "weighted", "samples"]:
+            if average in ["micro", "samples"] and i == 0:
+                continue
+            assert_almost_equal(
+                tpr_fpr_tnr_fnr_score(
+                    y_true, y_pred, labels=[0, 1, 2, 3, 4], average=average
+                ),
+                tpr_fpr_tnr_fnr_score(y_true, y_pred, labels=None, average=average),
+            )
+
+    # Error when introducing invalid label in multilabel case
+    for average in [None, "macro", "micro", "samples"]:
+        with pytest.raises(ValueError):
+            tpr_fpr_tnr_fnr_score(
+                y_true_bin, y_pred_bin, labels=np.arange(6), average=average
+            )
+        with pytest.raises(ValueError):
+            tpr_fpr_tnr_fnr_score(
+                y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average
+            )
+
+
+@ignore_warnings
+def test_tpr_fpr_tnr_fnr_score_ignored_labels():
+    # Test handling of a subset of labels
+    y_true = [1, 1, 2, 3]
+    y_pred = [1, 3, 3, 3]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        scores_13 = partial(tpr_fpr_tnr_fnr_score, y_true, y_pred, labels=[1, 3])
+        scores_all = partial(tpr_fpr_tnr_fnr_score, y_true, y_pred, labels=None)
+
+        assert_array_almost_equal(
+            ([0.5, 1.0], [0.0, 0.67], [1.0, 0.33], [0.5, 0.0]),
+            scores_13(average=None),
+            2
+        )
+        assert_almost_equal(
+            [0.75, 0.33, 0.67, 0.25], scores_13(average="macro"), 2
+        )
+        assert_almost_equal([0.67, 0.4, 0.6, 0.33], scores_13(average="micro"), 2)
+        assert_almost_equal(
+            [0.67, 0.22, 0.78, 0.33], scores_13(average="weighted"), 2
+        )
+
+        # ensure the above were meaningful tests:
+        for average in ["macro", "weighted", "micro"]:
+            assert scores_13(average=average) != scores_all(average=average)
+
+
 def test_tpr_fpr_tnr_fnr_score_multiclass():
     # Test TPR, FPR, TNR, FNR scores for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)
@@ -415,7 +518,7 @@ def test_tpr_fpr_tnr_fnr_score_multiclass():
     with pytest.raises(ValueError):
         tpr_fpr_tnr_fnr_score(y_true, y_pred, average="samples")
 
-    # same prediction but with and explicit label ordering
+    # same prediction but with explicit label ordering
     tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
         y_true, y_pred, labels=[0, 2, 1], average=None
     )
@@ -2264,7 +2367,7 @@ def test_npv_score_multiclass():
     with pytest.raises(ValueError):
         npv_score(y_true, y_pred, average="samples")
 
-    # same prediction but with and explicit label ordering
+    # same prediction but with explicit label ordering
     assert_array_almost_equal(
         npv_score(y_true, y_pred, labels=[0, 2, 1], average=None), [0.9, 0.94, 0.58], 2
     )
