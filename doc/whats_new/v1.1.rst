@@ -254,9 +254,9 @@ Changelog
   :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
 - |Enhancement| Adds support to use pre-fit models with `cv="prefit"`
-   in :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
-  :pr:`16748` by :user:`Siqi He <siqi-he>` and
-  :pr:`22215` by :user:`Meekail Zain <micky774>`.
+  in :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
+  :pr:`16748` by :user:`Siqi He <siqi-he>` and :pr:`22215` by
+  :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -361,7 +361,7 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
-- |Enhancement| :func:`linear_model.ElasticNet` and 
+- |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
@@ -467,7 +467,7 @@ Changelog
 :mod:`sklearn.neural_network`
 .............................
 
-- |Enhancement| :func:`neural_network.MLPClassifier` and 
+- |Enhancement| :func:`neural_network.MLPClassifier` and
   :func:`neural_network.MLPRegressor` show error
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
