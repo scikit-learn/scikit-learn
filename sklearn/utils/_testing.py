@@ -662,6 +662,9 @@ def check_docstring_parameters(func, doc=None, ignore=None):
                 doc = docscrape.FunctionDoc(func)
             except UserWarning as exp:
                 if "potentially wrong underline length" in str(exp):
+                    # Catch warning raised as of numpydoc 1.2 when
+                    # the underline length for a section of a docstring
+                    # is not consistent.
                     message = str(exp).split("\n")[:4]
                     incorrect += [f"In function: {func_name}"] + message
                     return incorrect
