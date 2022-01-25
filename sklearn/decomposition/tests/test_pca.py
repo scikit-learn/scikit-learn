@@ -474,10 +474,12 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
     pca = PCA(n_components=p, svd_solver=svd_solver)
     pca.fit(X)
     assert pca.noise_variance_ == 0
+    # ensure no divide-by-zero error for n_components == n_features < n_samples
+    pca.score(X)
 
     pca.fit(X.T)
     assert pca.noise_variance_ == 0
-    # ensure pca.score works for n_components == n_samples < n_features
+    # ensure no divide-by-zero error for n_components == n_samples < n_features
     pca.score(X.T)
 
 

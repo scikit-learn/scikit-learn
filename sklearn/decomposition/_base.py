@@ -62,12 +62,10 @@ class _BasePCA(
         # handle corner cases first
         if self.n_components_ == 0:
             return np.eye(n_features) / self.noise_variance_
-        if hasattr(self, 'n_samples_'):
-            if self.n_components_ == min(self.n_samples_, n_features):
-                return linalg.inv(self.get_covariance())
-        else:
-            if self.n_components == n_features:
-                return linalg.inv(self.get_covariance())
+
+        # This occurs on edge cases such as n_components = min(n_features, n_samples)
+        if self.noise_variance_ == 0:
+            return linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
         components_ = self.components_
