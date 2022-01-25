@@ -444,22 +444,16 @@ def test_tpr_fpr_tnr_fnr_score_extra_labels():
             )
 
     # Error when introducing invalid label in multilabel case
-    msg = "All labels must be in [0, n labels) for multilabel targets."
+    err_msg = "All labels must be in [0, n labels) for multilabel targets."
     for average in [None, "macro", "micro", "samples"]:
-        with pytest.raises(ValueError) as record:
+        with pytest.raises(ValueError, match=err_msg):
             tpr_fpr_tnr_fnr_score(
                 y_true_bin, y_pred_bin, labels=np.arange(6), average=average
             )
-            assert len(record) > 0
-            for item in record:
-                assert msg in str(item.message)
-        with pytest.raises(ValueError) as record:
+        with pytest.raises(ValueError, match=err_msg):
             tpr_fpr_tnr_fnr_score(
                 y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average
             )
-            assert len(record) > 0
-            for item in record:
-                assert msg in str(item.message)
 
 
 @ignore_warnings
@@ -519,7 +513,8 @@ def test_tpr_fpr_tnr_fnr_score_multiclass():
     assert_almost_equal(tnr, 0.8, 2)
     assert_almost_equal(fnr, 0.47, 2)
 
-    with pytest.raises(ValueError):
+    err_msg = "All labels must be in [0, n labels) for multilabel targets."
+    with pytest.raises(ValueError, match=err_msg):
         tpr_fpr_tnr_fnr_score(y_true, y_pred, average="samples")
 
     # same prediction but with explicit label ordering
@@ -2393,10 +2388,11 @@ def test_npv_extra_labels():
             )
 
     # Error when introducing invalid label in multilabel case
+    err_msg = "All labels must be in [0, n labels) for multilabel targets."
     for average in [None, "macro", "micro", "samples"]:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=err_msg):
             npv_score(y_true_bin, y_pred_bin, labels=np.arange(6), average=average)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=err_msg):
             npv_score(y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average)
 
 
@@ -2441,7 +2437,8 @@ def test_npv_multiclass():
 
     assert_array_almost_equal(npv_score(y_true, y_pred, average="weighted"), 0.78, 2)
 
-    with pytest.raises(ValueError):
+    err_msg = "All labels must be in [0, n labels) for multilabel targets."
+    with pytest.raises(ValueError, match=err_msg):
         npv_score(y_true, y_pred, average="samples")
 
     # same prediction but with explicit label ordering
