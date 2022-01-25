@@ -670,7 +670,10 @@ class KNeighborsMixin:
         # argpartition doesn't guarantee sorted order, so we sort again
         neigh_ind = neigh_ind[sample_range, np.argsort(dist[sample_range, neigh_ind])]
         if return_distance:
-            result = dist[sample_range, neigh_ind], neigh_ind
+            if self.effective_metric_ == "euclidean":
+                result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
+            else:
+                result = dist[sample_range, neigh_ind], neigh_ind
         else:
             result = neigh_ind
         return result
@@ -795,6 +798,12 @@ class KNeighborsMixin:
                 return_distance=return_distance,
             )
 
+            # for efficiency, use squared euclidean distances
+            if self.effective_metric_ == "euclidean":
+                kwds = {"squared": True}
+            else:
+                kwds = self.effective_metric_params_
+
             chunked_results = list(
                 pairwise_distances_chunked(
                     X,
@@ -802,7 +811,7 @@ class KNeighborsMixin:
                     reduce_func=reduce_func,
                     metric=self.effective_metric_,
                     n_jobs=n_jobs,
-                    **self.effective_metric_params_,
+                    **kwds,
                 )
             )
 
