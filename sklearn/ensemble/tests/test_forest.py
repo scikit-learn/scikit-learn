@@ -358,7 +358,7 @@ def check_importances(name, criterion, dtype, tolerance):
     n_important = np.sum(importances > 0.1)
     assert importances.shape[0] == 10
     assert n_important == 3
-    assert np.all(importances[:3] > 0.1)
+    assert np.all(importances[:3] > 0.09)
 
     # Check with parallel
     importances = est.feature_importances_
