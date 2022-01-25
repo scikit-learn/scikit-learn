@@ -158,6 +158,25 @@ def test_graphviz_toy():
 
     assert contents1 == contents2
 
+    # Test export code with holizontal line in node
+    contents1 = export_graphviz(clf, out_file=None, add_separator=True)
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=record, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        r'0 [label="{X[0] \<= 0.0\n|gini = 0.5\nsamples = 6\n'
+        'value = [3, 3]}"] ;\n'
+        '1 [label="{gini = 0.0\\nsamples = 3\\nvalue = [3, 0]}"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="{gini = 0.0\\nsamples = 3\\nvalue = [0, 3]}"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
     # Test multi-output with weighted samples
     clf = DecisionTreeClassifier(
         max_depth=2, min_samples_split=2, criterion="gini", random_state=2
@@ -247,6 +266,8 @@ def test_graphviz_toy():
         'fillcolor="#ffffff"] ;\n'
         "}"
     )
+
+    assert contents1 == contents2
 
 
 def test_graphviz_errors():

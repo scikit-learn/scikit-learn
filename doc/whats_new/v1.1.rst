@@ -542,6 +542,14 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| Added a new parameter `add_separator` to :func:`tree.export_graphviz`.
+  When setting the parameter `True`, a separator line between a criteria and other contents
+  is displayed in each node for visibility.
+  :pr:`Takeshi Oura <takoika>`
+
 Code and Documentation Contributors
 -----------------------------------
 
