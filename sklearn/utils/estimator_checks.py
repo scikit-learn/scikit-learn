@@ -168,7 +168,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
     # Checks that the Estimator targets are not NaN.
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(888)
-    X = rng.randn(10, 5)
+    X = rng.standard_normal(size=(10, 5))
 
     for value in [np.nan, np.inf]:
         y = np.full(10, value)
