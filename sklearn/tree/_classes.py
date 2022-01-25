@@ -32,6 +32,7 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
+from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -151,8 +152,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         random_state = check_random_state(self.random_state)
 
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
+        check_scalar(
+            self.ccp_alpha,
+            name="ccp_alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+        )
 
         if check_input:
             # Need to validate separately here.
@@ -225,45 +230,62 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
+        if self.max_depth is not None:
+            check_scalar(
+                self.max_depth,
+                name="max_depth",
+                target_type=numbers.Integral,
+                min_val=1,
+            )
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
-        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
         if isinstance(self.min_samples_leaf, numbers.Integral):
-            if not 1 <= self.min_samples_leaf:
-                raise ValueError(
-                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
-                    % self.min_samples_leaf
-                )
+            check_scalar(
+                self.min_samples_leaf,
+                name="min_samples_leaf",
+                target_type=numbers.Integral,
+                min_val=1,
+            )
             min_samples_leaf = self.min_samples_leaf
         else:  # float
-            if not 0.0 < self.min_samples_leaf <= 0.5:
-                raise ValueError(
-                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
-                    % self.min_samples_leaf
-                )
+            check_scalar(
+                self.min_samples_leaf,
+                name="min_samples_leaf",
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="right",
+            )
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, numbers.Integral):
-            if not 2 <= self.min_samples_split:
-                raise ValueError(
-                    "min_samples_split must be an integer "
-                    "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the integer %s"
-                    % self.min_samples_split
-                )
+            check_scalar(
+                self.min_samples_split,
+                name="min_samples_split",
+                target_type=numbers.Integral,
+                min_val=2,
+            )
             min_samples_split = self.min_samples_split
         else:  # float
-            if not 0.0 < self.min_samples_split <= 1.0:
-                raise ValueError(
-                    "min_samples_split must be an integer "
-                    "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the float %s"
-                    % self.min_samples_split
-                )
+            check_scalar(
+                self.min_samples_split,
+                name="min_samples_split",
+                target_type=numbers.Real,
+                min_val=0.0,
+                max_val=1.0,
+                include_boundaries="right",
+            )
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
+
+        check_scalar(
+            self.min_weight_fraction_leaf,
+            name="min_weight_fraction_leaf",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=0.5,
+        )
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
@@ -284,8 +306,23 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         elif self.max_features is None:
             max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
+            check_scalar(
+                self.max_features,
+                name="max_features",
+                target_type=numbers.Integral,
+                min_val=1,
+                max_val=self.n_features_in_,
+            )
             max_features = self.max_features
         else:  # float
+            check_scalar(
+                self.max_features,
+                name="max_features",
+                target_type=numbers.Real,
+                min_val=0.0,
+                max_val=1.0,
+                include_boundaries="right",
+            )
             if self.max_features > 0.0:
                 max_features = max(1, int(self.max_features * self.n_features_in_))
             else:
@@ -293,26 +330,26 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         self.max_features_ = max_features
 
+        if self.max_leaf_nodes is not None:
+            check_scalar(
+                self.max_leaf_nodes,
+                name="max_leaf_nodes",
+                target_type=numbers.Integral,
+                min_val=2,
+            )
+        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+
+        check_scalar(
+            self.min_impurity_decrease,
+            name="min_impurity_decrease",
+            target_type=numbers.Real,
+            min_val=0.0,
+        )
+
         if len(y) != n_samples:
             raise ValueError(
                 "Number of labels=%d does not match number of samples=%d"
                 % (len(y), n_samples)
-            )
-        if not 0 <= self.min_weight_fraction_leaf <= 0.5:
-            raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
-        if max_depth <= 0:
-            raise ValueError("max_depth must be greater than zero. ")
-        if not (0 < max_features <= self.n_features_in_):
-            raise ValueError("max_features must be in (0, n_features]")
-        if not isinstance(max_leaf_nodes, numbers.Integral):
-            raise ValueError(
-                "max_leaf_nodes must be integral number but was %r" % max_leaf_nodes
-            )
-        if -1 < max_leaf_nodes < 2:
-            raise ValueError(
-                ("max_leaf_nodes {0} must be either None or larger than 1").format(
-                    max_leaf_nodes
-                )
             )
 
         if sample_weight is not None:
@@ -329,9 +366,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * n_samples
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
-
-        if self.min_impurity_decrease < 0.0:
-            raise ValueError("min_impurity_decrease must be greater than or equal to 0")
 
         # Build tree
         criterion = self.criterion
@@ -535,9 +569,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _prune_tree(self):
         """Prune tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self)
-
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
 
         if self.ccp_alpha == 0.0:
             return
