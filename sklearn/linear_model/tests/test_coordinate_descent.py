@@ -106,17 +106,41 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
     assert len(record) == n_warnings
 
 
-@pytest.mark.parametrize("l1_ratio", (-1, 2, None, 10, "something_wrong"))
-def test_l1_ratio_param_invalid(l1_ratio):
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
+        ({"l1_ratio": -1}, ValueError, "l1_ratio == -1, must be >= 0.0"),
+        ({"l1_ratio": 2}, ValueError, "l1_ratio == 2, must be <= 1.0"),
+        (
+            {"l1_ratio": "1"},
+            TypeError,
+            "l1_ratio must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
+        (
+            {"tol": "1"},
+            TypeError,
+            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
+        (
+            {"max_iter": "1"},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'str'>",
+        ),
+    ],
+)
+def test_param_invalid(params, err_type, err_msg):
     # Check that correct error is raised when l1_ratio in ElasticNet
     # is outside the correct range
     X = np.array([[-1.0], [0.0], [1.0]])
-    Y = [-1, 0, 1]  # just a straight line
+    y = [-1, 0, 1]  # just a straight line
 
-    msg = "l1_ratio must be between 0 and 1; got l1_ratio="
-    clf = ElasticNet(alpha=0.1, l1_ratio=l1_ratio)
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X, Y)
+    enet = ElasticNet(**params)
+    with pytest.raises(err_type, match=err_msg):
+        enet.fit(X, y)
 
 
 @pytest.mark.parametrize("order", ["C", "F"])
@@ -165,6 +189,21 @@ def test_lasso_zero():
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
     assert_almost_equal(clf.dual_gap_, 0)
+
+
+def test_enet_nonfinite_params():
+    # Check ElasticNet throws ValueError when dealing with non-finite parameter
+    # values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+
+    clf = ElasticNet(alpha=0.1)
+    msg = "Coordinate descent iterations resulted in non-finite parameter values"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_lasso_toy():
@@ -1280,6 +1319,16 @@ def test_enet_l1_ratio():
     with pytest.raises(ValueError, match=msg):
         MultiTaskElasticNetCV(l1_ratio=0, random_state=42).fit(X, y[:, None])
 
+    # Test that l1_ratio=0 with alpha>0 produces user warning
+    warning_message = (
+        "Coordinate descent without L1 regularization may "
+        "lead to unexpected results and is discouraged. "
+        "Set l1_ratio > 0 to add L1 regularization."
+    )
+    est = ElasticNetCV(l1_ratio=[0], alphas=[1])
+    with pytest.warns(UserWarning, match=warning_message):
+        est.fit(X, y)
+
     # Test that l1_ratio=0 is allowed if we supply a grid manually
     alphas = [0.1, 10]
     estkwds = {"alphas": alphas, "random_state": 42}
@@ -1632,23 +1681,21 @@ def test_enet_cv_sample_weight_sparse(estimator):
         reg.fit(X, y, sample_weight=sw)
 
 
-@pytest.mark.parametrize("backend", ["loky", "threading"])
-@pytest.mark.parametrize(
-    "estimator", [ElasticNetCV, MultiTaskElasticNetCV, LassoCV, MultiTaskLassoCV]
-)
-def test_linear_models_cv_fit_for_all_backends(backend, estimator):
-    # LinearModelsCV.fit performs inplace operations on input data which is
-    # memmapped when using loky backend, causing an error due to unexpected
+@pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
+def test_linear_models_cv_fit_with_loky(estimator):
+    # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
+    # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
+    if parse_version(joblib.__version__) < parse_version("0.12"):
         pytest.skip("loky backend does not exist in joblib <0.12")
 
     # Create a problem sufficiently large to cause memmapping (1MB).
-    n_targets = 1 + (estimator in (MultiTaskElasticNetCV, MultiTaskLassoCV))
-    X, y = make_regression(20000, 10, n_targets=n_targets)
-
-    with joblib.parallel_backend(backend=backend):
+    # Unfortunately the scikit-learn and joblib APIs do not make it possible to
+    # change the max_nbyte of the inner Parallel call.
+    X, y = make_regression(int(1e6) // 8 + 1, 1)
+    assert X.nbytes > 1e6  # 1 MB
+    with joblib.parallel_backend("loky"):
         estimator(n_jobs=2, cv=3).fit(X, y)
 
 

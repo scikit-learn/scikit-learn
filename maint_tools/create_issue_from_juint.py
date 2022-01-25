@@ -84,12 +84,7 @@ for item in tree.iter("testcase"):
     if failure is None:
         continue
 
-    failure_cases.append(
-        {
-            "title": item.attrib["name"],
-            "body": failure.text,
-        }
-    )
+    failure_cases.append(item.attrib["name"])
 
 if not failure_cases:
     print("Test has no failures!")
@@ -106,9 +101,6 @@ if not failure_cases:
     sys.exit()
 
 # Create content for issue
-issue_summary = (
-    "<details><summary>{title}</summary>\n\n```python\n{body}\n```\n</details>\n"
-)
-body_list = [issue_summary.format(**case) for case in failure_cases]
+body_list = [f"- {case}" for case in failure_cases]
 body = "\n".join(body_list)
 create_or_update_issue(body)

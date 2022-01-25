@@ -15,7 +15,6 @@ from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ..utils import deprecated
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
@@ -339,8 +338,10 @@ def sparse_encode(
     """
     if check_input:
         if algorithm == "lasso_cd":
-            dictionary = check_array(dictionary, order="C", dtype="float64")
-            X = check_array(X, order="C", dtype="float64")
+            dictionary = check_array(
+                dictionary, order="C", dtype=[np.float64, np.float32]
+            )
+            X = check_array(X, order="C", dtype=[np.float64, np.float32])
         else:
             dictionary = check_array(dictionary)
             X = check_array(X)
@@ -906,10 +907,14 @@ def dict_learning_online(
 
     # Fortran-order dict better suited for the sparse coding which is the
     # bottleneck of this algorithm.
-    dictionary = check_array(dictionary, order="F", dtype=np.float64, copy=False)
+    dictionary = check_array(
+        dictionary, order="F", dtype=[np.float64, np.float32], copy=False
+    )
     dictionary = np.require(dictionary, requirements="W")
 
-    X_train = check_array(X_train, order="C", dtype=np.float64, copy=False)
+    X_train = check_array(
+        X_train, order="C", dtype=[np.float64, np.float32], copy=False
+    )
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
@@ -1172,13 +1177,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     Attributes
     ----------
-    components_ : ndarray of shape (n_components, n_features)
-        The unchanged dictionary atoms.
-
-        .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in
-           1.1 (renaming of 0.26). Use `dictionary` instead.
-
     n_components_ : int
         Number of atoms.
 
@@ -1271,15 +1269,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return self
 
-    @deprecated(  # type: ignore
-        "The attribute `components_` is deprecated "
-        "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
-        "`dictionary` instead."
-    )
-    @property
-    def components_(self):
-        return self.dictionary
-
     def transform(self, X, y=None):
         """Encode the data as a sparse combination of the dictionary atoms.
 
@@ -1303,7 +1292,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return super()._transform(X, self.dictionary)
 
     def _more_tags(self):
-        return {"requires_fit": False}
+        return {
+            "requires_fit": False,
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
     @property
     def n_components_(self):
@@ -1596,6 +1588,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1941,3 +1938,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
