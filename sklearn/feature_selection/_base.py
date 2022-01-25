@@ -197,44 +197,26 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     """
     if isinstance(getter, str):
         if getter == "auto":
-            with warnings.catch_warnings():
-                # FIXME: remove this in version 1.3
-                warnings.filterwarnings(
-                    "ignore",
-                    message="The attribute `coef_` will be transposed in version 1.3",
-                    category=FutureWarning,
+            if isinstance(estimator, _PLS):
+                getter = attrgetter("_coef_")
+            elif hasattr(estimator, "coef_"):
+                getter = attrgetter("coef_")
+            elif hasattr(estimator, "feature_importances_"):
+                getter = attrgetter("feature_importances_")
+            else:
+                raise ValueError(
+                    "when `importance_getter=='auto'`, the underlying "
+                    f"estimator {estimator.__class__.__name__} should have "
+                    "`coef_` or `feature_importances_` attribute. Either "
+                    "pass a fitted estimator to feature selector or call fit "
+                    "before calling transform."
                 )
-                if hasattr(estimator, "coef_"):
-                    getter = attrgetter("coef_")
-                elif hasattr(estimator, "feature_importances_"):
-                    getter = attrgetter("feature_importances_")
-                else:
-                    raise ValueError(
-                        "when `importance_getter=='auto'`, the underlying "
-                        f"estimator {estimator.__class__.__name__} should have "
-                        "`coef_` or `feature_importances_` attribute. Either "
-                        "pass a fitted estimator to feature selector or call fit "
-                        "before calling transform."
-                    )
         else:
             getter = attrgetter(getter)
     elif not callable(getter):
         raise ValueError("`importance_getter` has to be a string or `callable`")
 
-    with warnings.catch_warnings():
-        # FIXME: remove this in version 1.3
-        warnings.filterwarnings(
-            "ignore",
-            message="The attribute `coef_` will be transposed in version 1.3",
-            category=FutureWarning,
-        )
-        importances = getter(estimator)
-
-    # FIXME: remove this in version 1.3
-    if isinstance(estimator, _PLS):
-        # PLS `coef_` is not consistent with other linear models and needs
-        # to be transposed
-        importances = importances.T
+    importances = getter(estimator)
 
     if transform_func is None:
         return importances
