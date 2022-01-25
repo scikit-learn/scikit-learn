@@ -376,30 +376,30 @@ def check_importances(name, criterion, tolerance, X, y):
         assert np.abs(importances - importances_bis).mean() < tolerance
 
 
-# @pytest.mark.parametrize("dtype", (np.float64, np.float32))
-# @pytest.mark.parametrize(
-#     "name, criterion",
-#     itertools.chain(
-#         product(FOREST_CLASSIFIERS, ["gini", "entropy", "hellinger"]),
-#         product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
-#     ),
-# )
-# def test_importances(dtype, name, criterion):
-#     tolerance = 0.01
-#     if name in FOREST_REGRESSORS and criterion == "absolute_error":
-#         tolerance = 0.05
-#
-#     # cast as dtype
-#     X = X_large.astype(dtype, copy=False)
-#     y = y_large.astype(dtype, copy=False)
-#
-#     if criterion == "hellinger":
-#         # use imbalanced data for testing imbalanced criterion
-#         # cast as dtype
-#         X = X_large_imbl.astype(dtype, copy=False)
-#         y = y_large_imbl.astype(dtype, copy=False)
-#
-#     check_importances(name, criterion, tolerance, X, y)
+@pytest.mark.parametrize("dtype", (np.float64, np.float32))
+@pytest.mark.parametrize(
+    "name, criterion",
+    itertools.chain(
+        product(FOREST_CLASSIFIERS, ["gini", "entropy", "hellinger"]),
+        product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
+    ),
+)
+def test_importances(dtype, name, criterion):
+    tolerance = 0.01
+    if name in FOREST_REGRESSORS and criterion == "absolute_error":
+        tolerance = 0.05
+
+    # cast as dtype
+    X = X_large.astype(dtype, copy=False)
+    y = y_large.astype(dtype, copy=False)
+
+    if criterion == "hellinger":
+        # use imbalanced data for testing imbalanced criterion
+        # cast as dtype
+        X = X_large_imbl.astype(dtype, copy=False)
+        y = y_large_imbl.astype(dtype, copy=False)
+
+    check_importances(name, criterion, tolerance, X, y)
 
 
 def test_importances_asymptotic():
