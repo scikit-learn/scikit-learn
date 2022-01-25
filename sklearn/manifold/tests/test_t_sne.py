@@ -304,7 +304,7 @@ def test_optimization_minimizes_kl_divergence():
     for n_iter in [250, 300, 350]:
         tsne = TSNE(
             n_components=2,
-            init="pca",
+            init="random",
             perplexity=10,
             learning_rate=100.0,
             n_iter=n_iter,
