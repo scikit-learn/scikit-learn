@@ -342,11 +342,7 @@ def test_probability(name):
     check_probability(name)
 
 
-def check_importances(name, criterion, dtype, tolerance):
-    # cast as dype
-    X = X_large.astype(dtype, copy=False)
-    y = y_large.astype(dtype, copy=False)
-
+def check_importances(name, criterion, tolerance, X, y):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     est = ForestEstimator(n_estimators=10, criterion=criterion, random_state=0)
@@ -384,7 +380,7 @@ def check_importances(name, criterion, dtype, tolerance):
 @pytest.mark.parametrize(
     "name, criterion",
     itertools.chain(
-        product(FOREST_CLASSIFIERS, ["gini", "entropy"]),
+        product(FOREST_CLASSIFIERS, ["gini", "entropy", "hellinger"]),
         product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
     ),
 )
@@ -392,7 +388,18 @@ def test_importances(dtype, name, criterion):
     tolerance = 0.01
     if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
-    check_importances(name, criterion, dtype, tolerance)
+
+    # cast as dtype
+    X = X_large.astype(dtype, copy=False)
+    y = y_large.astype(dtype, copy=False)
+
+    if criterion == "hellinger":
+        # use imbalanced data for testing imbalanced criterion
+        # cast as dtype
+        X = X_large_imbl.astype(dtype, copy=False)
+        y = y_large_imbl.astype(dtype, copy=False)
+
+    check_importances(name, criterion, tolerance, X, y)
 
 
 def test_importances_asymptotic():
