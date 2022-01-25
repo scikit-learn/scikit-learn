@@ -626,8 +626,8 @@ def test_rfe_pls(ClsRFE, PLSEstimator):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = PLSEstimator(n_components=1)
     selector = ClsRFE(estimator, step=1)
+    # We must not warn by accessing `coef_` attribute of PLSEstimator
     with pytest.warns(None) as records:
         selector.fit(X, y)
-    # we should not warn by accessing `coef_` of the PLS estimators
     assert len(records) == 0
     assert selector.score(X, y) > 0.5

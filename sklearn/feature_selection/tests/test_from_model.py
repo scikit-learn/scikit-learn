@@ -443,9 +443,9 @@ def test_select_from_model_pls(PLSEstimator):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = PLSEstimator(n_components=1)
     model = make_pipeline(SelectFromModel(estimator), estimator)
+    # We must not warn by accessing the `coef_` attribute of PLSEstimator
     with pytest.warns(None) as records:
         model.fit(X, y)
-    # we should not warn by accessing `coef_` of the PLS estimators
     assert len(records) == 0
     assert model.score(X, y) > 0.5
 

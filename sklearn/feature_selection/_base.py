@@ -198,6 +198,7 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     if isinstance(getter, str):
         if getter == "auto":
             if isinstance(estimator, _PLS):
+                # FIXME: remove this branch in 1.3
                 getter = attrgetter("_coef_")
             elif hasattr(estimator, "coef_"):
                 getter = attrgetter("coef_")
