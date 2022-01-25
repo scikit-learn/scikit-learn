@@ -402,7 +402,8 @@ def test_tpr_fpr_tnr_fnr_score_binary_single_class():
 
 @ignore_warnings
 def test_tpr_fpr_tnr_fnr_score_extra_labels():
-    # Test handling of explicit additional (not in input) labels
+    # Test TPR, FPR, TNR, FNR handling of explicit additional (not in input)
+    # labels
     y_true = [1, 3, 3, 2]
     y_pred = [1, 1, 3, 2]
     y_true_bin = label_binarize(y_true, classes=np.arange(5))
@@ -456,7 +457,7 @@ def test_tpr_fpr_tnr_fnr_score_extra_labels():
 
 @ignore_warnings
 def test_tpr_fpr_tnr_fnr_score_ignored_labels():
-    # Test handling of a subset of labels
+    # Test TPR, FPR, TNR, FNR handling of a subset of labels
     y_true = [1, 1, 2, 3]
     y_pred = [1, 3, 3, 3]
     y_true_bin = label_binarize(y_true, classes=np.arange(5))
@@ -2318,17 +2319,16 @@ def test_specificity_warnings(zero_division):
             assert len(record) == 0
 
         specificity_score([1, 1], [1, 1])
-        if zero_division == "warn":
-            assert (
-                str(record.pop().message)
-                == "Tnr is ill-defined and "
-                "being set to 0.0 due to no negatives samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
+        assert (
+            str(record.pop().message)
+            == "Tnr is ill-defined and "
+            "being set to 0.0 due to no negatives samples."
+            " Use `zero_division` parameter to control"
+            " this behavior."
+        )
 
 
-def test_npv_score_binary_averaged():
+def test_npv_binary_averaged():
     # Test NPV score for binary classification task
     y_true, y_pred, _ = make_prediction(binary=True)
 
@@ -2344,7 +2344,92 @@ def test_npv_score_binary_averaged():
     assert npw_weighted == np.average(npv_none, weights=support)
 
 
-def test_npv_score_multiclass():
+@ignore_warnings
+def test_npv_binary_single_class():
+    # Test how the NPV score behaves with a single positive or
+    # negative class
+    # Such a case may occur with non-stratified cross-validation
+    assert 0.0 == npv_score([1, 1], [1, 1])
+    assert 1.0 == npv_score([-1, -1], [-1, -1])
+
+
+@ignore_warnings
+def test_npv_extra_labels():
+    # Test NPV handling of explicit additional (not in input) labels
+    y_true = [1, 3, 3, 2]
+    y_pred = [1, 1, 3, 2]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        print(i)
+        # No averaging
+        npvs = npv_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average=None)
+        assert_array_almost_equal(npvs, [1.0, 1.0, 1.0, 0.67, 1.0], 2)
+
+        # Macro average
+        npv = npv_score(
+            y_true, y_pred, labels=[0, 1, 2, 3, 4], average="macro"
+        )
+        assert_almost_equal(npv, 0.93, 2)
+
+        # Micro average
+        npv = npv_score(
+            y_true, y_pred, labels=[0, 1, 2, 3, 4], average="micro"
+        )
+        assert_almost_equal(npv, 0.9375, 4)
+
+        # Further tests
+        for average in ["macro", "micro", "weighted", "samples"]:
+            print(average)
+            if average in ["macro", "micro", "samples"] and i == 0:
+                continue
+            assert_almost_equal(
+                npv_score(
+                    y_true, y_pred, labels=[0, 1, 2, 3, 4], average=average
+                ),
+                npv_score(y_true, y_pred, labels=None, average=average),
+            )
+
+    # Error when introducing invalid label in multilabel case
+    for average in [None, "macro", "micro", "samples"]:
+        with pytest.raises(ValueError):
+            npv_score(
+                y_true_bin, y_pred_bin, labels=np.arange(6), average=average
+            )
+        with pytest.raises(ValueError):
+            npv_score(
+                y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average
+            )
+
+
+@ignore_warnings
+def test_npv_ignored_labels():
+    # Test NPV handling of a subset of labels
+    y_true = [1, 1, 2, 3]
+    y_pred = [1, 3, 3, 3]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred), (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        npv_13 = partial(npv_score, y_true, y_pred, labels=[1, 3])
+        npv_all = partial(npv_score, y_true, y_pred, labels=None)
+
+        assert_almost_equal([0.67, 1.0], npv_13(average=None), 2)
+        assert_almost_equal(0.83, npv_13(average="macro"), 2)
+        assert_almost_equal(0.75, npv_13(average="micro"), 2)
+        assert_almost_equal(0.78, npv_13(average="weighted"), 2)
+
+        # ensure the above were meaningful tests:
+        for average in ["macro", "weighted", "micro"]:
+            if average == "micro" and i == 0:
+                continue
+            assert npv_13(average=average) != npv_all(average=average)
+
+
+def test_npv_multiclass():
     # Test NPV score for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)
 
@@ -2378,19 +2463,33 @@ def test_npv_warnings(zero_division):
         average="micro",
         zero_division=zero_division,
     )
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        npv_score(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            zero_division=zero_division,
+        )
+        if zero_division == "warn":
+            assert (
+                str(record.pop().message)
+                == "Npv is ill-defined and "
+                "being set to 0.0 due to no negative call samples."
+                " Use `zero_division` parameter to control"
+                " this behavior."
+            )
+        else:
+            assert len(record) == 0
 
-    npv_score(
-        np.array([[0, 0], [0, 0]]),
-        np.array([[1, 1], [1, 1]]),
-        average="micro",
-        zero_division=zero_division,
-    )
-    if zero_division == "warn":
-        pytest.warns(Warning if zero_division == "warn" else None)
-
-    npv_score([1, 1], [1, 1])
-    if zero_division == "warn":
-        pytest.warns(Warning if zero_division == "warn" else None)
+        npv_score([1, 1], [1, 1])
+        assert (
+            str(record.pop().message)
+            == "Npv is ill-defined and "
+            "being set to 0.0 due to no negative call samples."
+            " Use `zero_division` parameter to control"
+            " this behavior."
+        )
 
 
 def test_prf_average_binary_data_non_binary():
