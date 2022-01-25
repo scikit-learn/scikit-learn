@@ -638,11 +638,10 @@ def test_check_docstring_parameters(mock_meta):
             mock_meta.predict,
             mock_meta.predict_proba,
             mock_meta.score,
-            # mock_meta.fit,
+            mock_meta.fit,
         ],
     ):
         incorrect = check_docstring_parameters(f)
-        print(incorrect)
         assert msg == incorrect, '\n"%s"\n not in \n"%s"' % (msg, incorrect)
 
 

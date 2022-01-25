@@ -147,8 +147,6 @@ fi
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     # numpydoc requires sphinx
     python -m pip install sphinx
-    # TODO: update the docstring checks to be compatible with new
-    # numpydoc versions
     python -m pip install numpydoc
 fi
 
