@@ -714,8 +714,9 @@ dl.field-list > dt:after {
 
 .classifier::before {
   font-style: normal;
-  margin: 0.3em;
+  margin: 0 0.3em;
   content: ":";
+  display: inline-block;
 }
 
 dd {
