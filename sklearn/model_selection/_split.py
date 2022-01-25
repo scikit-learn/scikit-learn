@@ -925,7 +925,6 @@ class CombinationalPurgedKFold(_BaseKFold):
                 a_remained = org_array
 
             else:
-                # 不連続判定
                 if org_array[i + 1] - ai != 1:
                     a_cropped, a_remained = np.split(org_array, [i + 1])
                     break
