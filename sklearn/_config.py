@@ -48,6 +48,7 @@ def set_config(
     print_changed_only=None,
     display=None,
     pairwise_dist_chunk_size=None,
+    use_pairwise_dist_activate=None,
 ):
     """Set global scikit-learn configuration
 
@@ -93,6 +94,12 @@ def set_config(
 
         .. versionadded:: 1.1
 
+    use_pairwise_dist_activate : bool, default=None
+        Use PairwiseDistancesReduction when possible.
+        Default is True.
+
+        .. versionadded:: 1.1
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -110,6 +117,8 @@ def set_config(
         local_config["display"] = display
     if pairwise_dist_chunk_size is not None:
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
+    if use_pairwise_dist_activate is not None:
+        local_config["use_pairwise_dist_activate"] = use_pairwise_dist_activate
 
 
 @contextmanager
@@ -120,6 +129,7 @@ def config_context(
     print_changed_only=None,
     display=None,
     pairwise_dist_chunk_size=None,
+    use_pairwise_dist_activate=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -164,6 +174,12 @@ def config_context(
 
         .. versionadded:: 1.1
 
+    use_pairwise_dist_activate : bool, default=None
+        Use PairwiseDistancesReduction when possible.
+        Default is True.
+
+        .. versionadded:: 1.1
+
     Yields
     ------
     None.
@@ -198,6 +214,7 @@ def config_context(
         print_changed_only=print_changed_only,
         display=display,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
+        use_pairwise_dist_activate=use_pairwise_dist_activate,
     )
 
     try:

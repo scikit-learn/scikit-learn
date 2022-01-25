@@ -17,6 +17,7 @@ cimport numpy as np
 import numpy as np
 import warnings
 
+import sklearn
 from .. import get_config
 from libc.stdlib cimport free, malloc
 from libc.float cimport DBL_MAX
@@ -211,7 +212,8 @@ cdef class PairwiseDistancesReduction:
         True if the PairwiseDistancesReduction can be used, else False.
         """
         # TODO: support sparse arrays and 32 bits
-        return (not issparse(X) and X.dtype == np.float64 and
+        return (sklearn.get_config().get("use_pairwise_dist_activate", True) and
+                not issparse(X) and X.dtype == np.float64 and
                 not issparse(Y) and Y.dtype == np.float64 and
                 metric in cls.valid_metrics())
 
