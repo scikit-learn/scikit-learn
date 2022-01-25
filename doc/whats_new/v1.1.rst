@@ -217,6 +217,14 @@ Changelog
   `fit` instead of `__init__`.
   :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
 
+- |FIX| :class:`decomposition._base` more safely calculates precision by first
+  checking whether `self.noise_variance` is zero through explicitly checking
+  if `n_components = min(observed_samples, n_features)` where `observed_samples`
+  is either `n_samples_` in the case of :class:`decomposition.PCA` or
+  `n_samples_seen` in the case of :class:`decomposition.IncrementalPCA`.
+  :pr:`22300` by :user:`Meekail Zain <micky774>` and :pr:`15948` by
+  :user:`sysuresh`
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -356,7 +364,7 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
-- |Enhancement| :func:`linear_model.ElasticNet` and 
+- |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
@@ -462,7 +470,7 @@ Changelog
 :mod:`sklearn.neural_network`
 .............................
 
-- |Enhancement| :func:`neural_network.MLPClassifier` and 
+- |Enhancement| :func:`neural_network.MLPClassifier` and
   :func:`neural_network.MLPRegressor` show error
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
