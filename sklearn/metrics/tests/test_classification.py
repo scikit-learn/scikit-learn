@@ -2369,15 +2369,11 @@ def test_npv_extra_labels():
         assert_array_almost_equal(npvs, [1.0, 1.0, 1.0, 0.67, 1.0], 2)
 
         # Macro average
-        npv = npv_score(
-            y_true, y_pred, labels=[0, 1, 2, 3, 4], average="macro"
-        )
+        npv = npv_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average="macro")
         assert_almost_equal(npv, 0.93, 2)
 
         # Micro average
-        npv = npv_score(
-            y_true, y_pred, labels=[0, 1, 2, 3, 4], average="micro"
-        )
+        npv = npv_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average="micro")
         assert_almost_equal(npv, 0.9375, 4)
 
         # Further tests
