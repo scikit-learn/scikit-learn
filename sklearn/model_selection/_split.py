@@ -449,6 +449,7 @@ class KFold(_BaseKFold):
             yield indices[start:stop]
             current = stop
 
+
 class PurgedKFold(_BaseKFold):
     """K-Folds cross-validator
 
@@ -614,6 +615,7 @@ class PurgedKFold(_BaseKFold):
             test = np.setdiff1d(test, overlap)
             yield train, test, overlap
 
+
 class GroupKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
@@ -733,6 +735,7 @@ class GroupKFold(_BaseKFold):
         """
         return super().split(X, y, groups)
 
+
 class CombinationalKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
@@ -784,7 +787,7 @@ class CombinationalKFold(_BaseKFold):
     LeaveOneGroupOut : For splitting the data according to explicit
         domain-specific stratification of the dataset.
     """
-    
+
     def __init__(self, groups, n_splits=5, test_group_choice=2):
         super().__init__(n_splits, shuffle=False, random_state=None)
         if groups is None:
@@ -843,7 +846,7 @@ class CombinationalKFold(_BaseKFold):
 
 
 class CombinationalPurgedKFold(_BaseKFold):
-        """K-fold iterator variant with non-overlapping groups.
+    """K-fold iterator variant with non-overlapping groups.
 
     The same group will not appear in two different folds (the number of
     distinct groups has to be at least equal to the number of folds).
@@ -893,6 +896,7 @@ class CombinationalPurgedKFold(_BaseKFold):
     LeaveOneGroupOut : For splitting the data according to explicit
         domain-specific stratification of the dataset.
     """
+
     def __init__(self, groups, n_splits=5, test_group_choice=2):
         super().__init__(n_splits, shuffle=False, random_state=None)
         if groups is None:
@@ -1008,6 +1012,7 @@ class CombinationalPurgedKFold(_BaseKFold):
             train = np.setdiff1d(train, overlap)
             test = np.setdiff1d(test, overlap)
             yield train, test, overlap
+
 
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross-validator.
