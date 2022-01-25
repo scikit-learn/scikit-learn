@@ -63,8 +63,11 @@ class _BasePCA(
         if self.n_components_ == 0:
             return np.eye(n_features) / self.noise_variance_
 
-        # This occurs on edge cases such as n_components = min(n_features, n_samples)
-        if self.noise_variance_ == 0:
+        # This accounts for both PCA and IPCA
+        observed_samples = (
+            self.n_samples_ if hasattr(self, "n_samples_") else self.n_samples_seen_
+        )
+        if self.n_components_ == min(observed_samples, n_features):
             return linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
