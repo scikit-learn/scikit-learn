@@ -2378,26 +2378,19 @@ def test_npv_extra_labels():
 
         # Further tests
         for average in ["macro", "micro", "weighted", "samples"]:
-            print(average)
             if average in ["macro", "micro", "samples"] and i == 0:
                 continue
             assert_almost_equal(
-                npv_score(
-                    y_true, y_pred, labels=[0, 1, 2, 3, 4], average=average
-                ),
+                npv_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average=average),
                 npv_score(y_true, y_pred, labels=None, average=average),
             )
 
     # Error when introducing invalid label in multilabel case
     for average in [None, "macro", "micro", "samples"]:
         with pytest.raises(ValueError):
-            npv_score(
-                y_true_bin, y_pred_bin, labels=np.arange(6), average=average
-            )
+            npv_score(y_true_bin, y_pred_bin, labels=np.arange(6), average=average)
         with pytest.raises(ValueError):
-            npv_score(
-                y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average
-            )
+            npv_score(y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average)
 
 
 @ignore_warnings
