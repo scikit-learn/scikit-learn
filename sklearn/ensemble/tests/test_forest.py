@@ -74,13 +74,14 @@ X_large, y_large = datasets.make_classification(
 )
 
 # Imbalanced classification sample used for testing imbalanced criterions
+imbl_minority_class_ratio = 0.05
 X_large_imbl, y_large_imbl = datasets.make_classification(
     n_samples=500,
     n_features=10,
     n_informative=5,
     n_redundant=0,
     n_repeated=0,
-    weights=[0.95, 0.05],
+    weights=[1 - imbl_minority_class_ratio, imbl_minority_class_ratio],
     shuffle=False,
     random_state=0,
 )
