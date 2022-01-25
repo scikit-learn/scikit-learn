@@ -1,10 +1,12 @@
-# cython: boundscheck=False
-
 from libc cimport math
 cimport cython
 import numpy as np
 cimport numpy as np
 from libc.stdio cimport printf
+
+np.import_array()
+
+
 cdef extern from "numpy/npy_math.h":
     float NPY_INFINITY
 
@@ -47,18 +49,18 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     cdef long n_neighbors = sqdistances.shape[1]
     cdef int using_neighbors = n_neighbors < n_samples
     # Precisions of conditional Gaussian distributions
-    cdef float beta
-    cdef float beta_min
-    cdef float beta_max
-    cdef float beta_sum = 0.0
+    cdef double beta
+    cdef double beta_min
+    cdef double beta_max
+    cdef double beta_sum = 0.0
 
     # Use log scale
-    cdef float desired_entropy = math.log(desired_perplexity)
-    cdef float entropy_diff
+    cdef double desired_entropy = math.log(desired_perplexity)
+    cdef double entropy_diff
 
-    cdef float entropy
-    cdef float sum_Pi
-    cdef float sum_disti_Pi
+    cdef double entropy
+    cdef double sum_Pi
+    cdef double sum_disti_Pi
     cdef long i, j, k, l
 
     # This array is later used as a 32bit array. It has multiple intermediate

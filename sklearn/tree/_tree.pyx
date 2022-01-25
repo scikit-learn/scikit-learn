@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
@@ -24,12 +20,13 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
 
+import struct
+
 import numpy as np
 cimport numpy as np
 np.import_array()
 
 from scipy.sparse import issparse
-from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 
 from ._utils cimport Stack
@@ -44,6 +41,7 @@ cdef extern from "numpy/arrayobject.h":
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
 
 # =============================================================================
 # Types and constants
@@ -67,22 +65,12 @@ cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
-# Repeat struct definition for numpy
-NODE_DTYPE = np.dtype({
-    'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_node_samples', 'weighted_n_node_samples'],
-    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
-                np.float64],
-    'offsets': [
-        <Py_ssize_t> &(<Node*> NULL).left_child,
-        <Py_ssize_t> &(<Node*> NULL).right_child,
-        <Py_ssize_t> &(<Node*> NULL).feature,
-        <Py_ssize_t> &(<Node*> NULL).threshold,
-        <Py_ssize_t> &(<Node*> NULL).impurity,
-        <Py_ssize_t> &(<Node*> NULL).n_node_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
-    ]
-})
+# Build the corresponding numpy dtype for Node.
+# This works by casting `dummy` to an array of Node of length 1, which numpy
+# can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
+# for a more detailed explanation.
+cdef Node dummy;
+NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
 # =============================================================================
 # TreeBuilder
@@ -92,8 +80,7 @@ cdef class TreeBuilder:
     """Interface for different tree building strategies."""
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         pass
 
@@ -133,19 +120,16 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  SIZE_t max_depth, double min_impurity_decrease,
-                  double min_impurity_split):
+                  SIZE_t max_depth, double min_impurity_decrease):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -172,10 +156,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
         cdef double min_impurity_decrease = self.min_impurity_decrease
-        cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -229,8 +212,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     impurity = splitter.node_impurity()
                     first = 0
 
-                is_leaf = (is_leaf or
-                           (impurity <= min_impurity_split))
+                # impurity == 0 with tolerance due to rounding errors
+                is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
@@ -303,7 +286,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf,  min_weight_leaf,
                   SIZE_t max_depth, SIZE_t max_leaf_nodes,
-                  double min_impurity_decrease, double min_impurity_split):
+                  double min_impurity_decrease):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -311,11 +294,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -333,7 +314,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr)
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
@@ -438,7 +419,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t n_constant_features = 0
         cdef double weighted_n_samples = splitter.weighted_n_samples
         cdef double min_impurity_decrease = self.min_impurity_decrease
-        cdef double min_impurity_split = self.min_impurity_split
         cdef double weighted_n_node_samples
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
@@ -454,7 +434,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    n_node_samples < self.min_samples_split or
                    n_node_samples < 2 * self.min_samples_leaf or
                    weighted_n_node_samples < 2 * self.min_weight_leaf or
-                   impurity <= min_impurity_split)
+                   impurity <= EPSILON  # impurity == 0 with tolerance
+                   )
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
@@ -604,9 +585,13 @@ cdef class Tree:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
 
-    def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
-                  int n_outputs):
+    def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs):
         """Constructor."""
+        cdef SIZE_t dummy = 0
+        size_t_dtype = np.array(dummy).dtype
+
+        n_classes = _check_n_classes(n_classes, size_t_dtype)
+
         # Input/Output layout
         self.n_features = n_features
         self.n_outputs = n_outputs
@@ -664,13 +649,13 @@ cdef class Tree:
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
-        if (node_ndarray.ndim != 1 or
-                node_ndarray.dtype != NODE_DTYPE or
-                not node_ndarray.flags.c_contiguous or
-                value_ndarray.shape != value_shape or
-                not value_ndarray.flags.c_contiguous or
-                value_ndarray.dtype != np.float64):
-            raise ValueError('Did not recognise loaded array layout')
+
+        node_ndarray = _check_node_ndarray(node_ndarray, expected_dtype=NODE_DTYPE)
+        value_ndarray = _check_value_ndarray(
+            value_ndarray,
+            expected_dtype=np.dtype(np.float64),
+            expected_shape=value_shape
+        )
 
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
@@ -792,7 +777,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef DTYPE_t[:, :] X_ndarray = X
+        cdef const DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -912,7 +897,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef DTYPE_t[:, :] X_ndarray = X
+        cdef const DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -1100,7 +1085,8 @@ cdef class Tree:
         cdef np.ndarray arr
         arr = np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array.")
         return arr
 
     cdef np.ndarray _get_node_ndarray(self):
@@ -1121,7 +1107,8 @@ cdef class Tree:
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array.")
         return arr
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
@@ -1229,6 +1216,134 @@ cdef class Tree:
             if not (0.999 < total_weight < 1.001):
                 raise ValueError("Total weight should be 1.0 but was %.9f" %
                                  total_weight)
+
+
+def _check_n_classes(n_classes, expected_dtype):
+    if n_classes.ndim != 1:
+        raise ValueError(
+            f"Wrong dimensions for n_classes from the pickle: "
+            f"expected 1, got {n_classes.ndim}"
+        )
+
+    if n_classes.dtype == expected_dtype:
+        return n_classes
+
+    # Handles both different endianness and different bitness
+    if n_classes.dtype.kind == "i" and n_classes.dtype.itemsize in [4, 8]:
+        return n_classes.astype(expected_dtype, casting="same_kind")
+
+    raise ValueError(
+        "n_classes from the pickle has an incompatible dtype:\n"
+        f"- expected: {expected_dtype}\n"
+        f"- got:      {n_classes.dtype}"
+    )
+
+
+def _check_value_ndarray(value_ndarray, expected_dtype, expected_shape):
+    if value_ndarray.shape != expected_shape:
+        raise ValueError(
+            "Wrong shape for value array from the pickle: "
+            f"expected {expected_shape}, got {value_ndarray.shape}"
+        )
+
+    if not value_ndarray.flags.c_contiguous:
+        raise ValueError(
+            "value array from the pickle should be a C-contiguous array"
+        )
+
+    if value_ndarray.dtype == expected_dtype:
+        return value_ndarray
+
+    # Handles different endianness
+    if value_ndarray.dtype.str.endswith('f8'):
+        return value_ndarray.astype(expected_dtype, casting='equiv')
+
+    raise ValueError(
+        "value array from the pickle has an incompatible dtype:\n"
+        f"- expected: {expected_dtype}\n"
+        f"- got:      {value_ndarray.dtype}"
+    )
+
+
+def _dtype_to_dict(dtype):
+    return {name: dt.str for name, (dt, *rest) in dtype.fields.items()}
+
+
+def _dtype_dict_with_modified_bitness(dtype_dict):
+    # field names in Node struct with SIZE_t types (see sklearn/tree/_tree.pxd)
+    indexing_field_names = ["left_child", "right_child", "feature", "n_node_samples"]
+
+    expected_dtype_size = str(struct.calcsize("P"))
+    allowed_dtype_size = "8" if expected_dtype_size == "4" else "4"
+
+    allowed_dtype_dict = dtype_dict.copy()
+    for name in indexing_field_names:
+        allowed_dtype_dict[name] = allowed_dtype_dict[name].replace(
+            expected_dtype_size, allowed_dtype_size
+        )
+
+    return allowed_dtype_dict
+
+
+def _all_compatible_dtype_dicts(dtype):
+    # The Cython code for decision trees uses platform-specific SIZE_t
+    # typed indexing fields that correspond to either i4 or i8 dtypes for
+    # the matching fields in the numpy array depending on the bitness of
+    # the platform (32 bit or 64 bit respectively).
+    #
+    # We need to cast the indexing fields of the NODE_DTYPE-dtyped array at
+    # pickle load time to enable cross-bitness deployment scenarios. We
+    # typically want to make it possible to run the expensive fit method of
+    # a tree estimator on a 64 bit server platform, pickle the estimator
+    # for deployment and run the predict method of a low power 32 bit edge
+    # platform.
+    #
+    # A similar thing happens for endianness, the machine where the pickle was
+    # saved can have a different endianness than the machine where the pickle
+    # is loaded
+
+    dtype_dict = _dtype_to_dict(dtype)
+    dtype_dict_with_modified_bitness = _dtype_dict_with_modified_bitness(dtype_dict)
+    dtype_dict_with_modified_endianness = _dtype_to_dict(dtype.newbyteorder())
+    dtype_dict_with_modified_bitness_and_endianness = _dtype_dict_with_modified_bitness(
+        dtype_dict_with_modified_endianness
+    )
+
+    return [
+        dtype_dict,
+        dtype_dict_with_modified_bitness,
+        dtype_dict_with_modified_endianness,
+        dtype_dict_with_modified_bitness_and_endianness,
+    ]
+
+
+def _check_node_ndarray(node_ndarray, expected_dtype):
+    if node_ndarray.ndim != 1:
+        raise ValueError(
+            "Wrong dimensions for node array from the pickle: "
+            f"expected 1, got {node_ndarray.ndim}"
+        )
+
+    if not node_ndarray.flags.c_contiguous:
+        raise ValueError(
+            "node array from the pickle should be a C-contiguous array"
+        )
+
+    node_ndarray_dtype = node_ndarray.dtype
+    if node_ndarray_dtype == expected_dtype:
+        return node_ndarray
+
+    node_ndarray_dtype_dict = _dtype_to_dict(node_ndarray_dtype)
+    all_compatible_dtype_dicts = _all_compatible_dtype_dicts(expected_dtype)
+
+    if node_ndarray_dtype_dict not in all_compatible_dtype_dicts:
+        raise ValueError(
+            "node array from the pickle has an incompatible dtype:\n"
+            f"- expected: {expected_dtype}\n"
+            f"- got     : {node_ndarray_dtype}"
+        )
+
+    return node_ndarray.astype(expected_dtype, casting="same_kind")
 
 
 # =============================================================================

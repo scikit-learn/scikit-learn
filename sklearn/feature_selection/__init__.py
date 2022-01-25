@@ -8,6 +8,7 @@ from ._univariate_selection import chi2
 from ._univariate_selection import f_classif
 from ._univariate_selection import f_oneway
 from ._univariate_selection import f_regression
+from ._univariate_selection import r_regression
 from ._univariate_selection import SelectPercentile
 from ._univariate_selection import SelectKBest
 from ._univariate_selection import SelectFpr
@@ -22,22 +23,31 @@ from ._rfe import RFECV
 
 from ._from_model import SelectFromModel
 
+from ._sequential import SequentialFeatureSelector
+
 from ._mutual_info import mutual_info_regression, mutual_info_classif
 
+from ._base import SelectorMixin
 
-__all__ = ['GenericUnivariateSelect',
-           'RFE',
-           'RFECV',
-           'SelectFdr',
-           'SelectFpr',
-           'SelectFwe',
-           'SelectKBest',
-           'SelectFromModel',
-           'SelectPercentile',
-           'VarianceThreshold',
-           'chi2',
-           'f_classif',
-           'f_oneway',
-           'f_regression',
-           'mutual_info_classif',
-           'mutual_info_regression']
+
+__all__ = [
+    "GenericUnivariateSelect",
+    "SequentialFeatureSelector",
+    "RFE",
+    "RFECV",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectFromModel",
+    "SelectPercentile",
+    "VarianceThreshold",
+    "chi2",
+    "f_classif",
+    "f_oneway",
+    "f_regression",
+    "r_regression",
+    "mutual_info_classif",
+    "mutual_info_regression",
+    "SelectorMixin",
+]
