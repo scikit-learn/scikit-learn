@@ -399,6 +399,109 @@ array of class labels, multilabel data is specified as an indicator matrix,
 in which cell ``[i, j]`` has value 1 if sample ``i`` has label ``j`` and value
 0 otherwise.
 
+.. _confusion_matrix:
+
+Confusion matrix
+----------------
+
+The :func:`confusion_matrix` function evaluates
+classification accuracy by computing the `confusion matrix
+<https://en.wikipedia.org/wiki/Confusion_matrix>`_ with each row corresponding
+to the true class (Wikipedia and other references may use different convention
+for axes).
+
+By definition, entry :math:`i, j` in a confusion matrix is
+the number of observations actually in group :math:`i`, but
+predicted to be in group :math:`j`. Here is an example::
+
+  >>> from sklearn.metrics import confusion_matrix
+  >>> y_true = [2, 0, 2, 2, 0, 1]
+  >>> y_pred = [0, 0, 2, 2, 0, 2]
+  >>> confusion_matrix(y_true, y_pred)
+  array([[2, 0, 0],
+         [0, 0, 1],
+         [1, 0, 2]])
+
+:class:`ConfusionMatrixDisplay` can be used to visually represent a confusion
+matrix as shown in the
+:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+example, which creates the following figure:
+
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
+   :target: ../auto_examples/model_selection/plot_confusion_matrix.html
+   :scale: 75
+   :align: center
+
+The parameter ``normalize`` allows to report ratios instead of counts. The
+confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
+and ``'all'`` which will divide the counts by the sum of each columns, rows, or
+the entire matrix, respectively.
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> confusion_matrix(y_true, y_pred, normalize='all')
+  array([[0.25 , 0.125],
+         [0.25 , 0.375]])
+
+For binary problems, we can get counts of true negatives, false positives,
+false negatives and true positives as follows::
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+  >>> tn, fp, fn, tp
+  (2, 1, 2, 3)
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+    for an example of using a confusion matrix to evaluate classifier output
+    quality.
+
+  * See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
+    for an example of using a confusion matrix to classify
+    hand-written digits.
+
+  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+    for an example of using a confusion matrix to classify text
+    documents.
+
+.. _tpr_fpr_tnr_fnr_score:
+
+TPR FPR TNR FNR score
+---------------------
+
+The :func:`tpr_fpr_tnr_fnr_score` function computes the true positive rate (TPR),
+false positive rate (FPR), true negative rate (TNR) and false negative rate (FNR)
+of predictions, based on the `confusion matrix <https://en.wikipedia.org/wiki/Confusion_matrix>`_.
+The rates are defined as
+
+.. math::
+
+  \texttt{TPR}(y, \hat{y}) = \frac{TP}{P}} = \frac{TP}{TP + FN}} = 1 - FNR
+
+  \texttt{FPR}(y, \hat{y}) = \frac{FP}{N}} = \frac{FP}{TN + FP}} = 1 - TNR
+
+  \texttt{TNR}(y, \hat{y}) = \frac{TN}{N}} = \frac{TN}{TN + FP}} = 1 - FPR
+
+  \texttt{FNR}(y, \hat{y}) = \frac{FN}{P}} = \frac{FN}{TP + FN}} = 1 - TPR
+
+  >>> from sklearn.metrics import tpr_fpr_tnr_fnr_score
+  >>> y_true = [2, 0, 2, 2, 0, 1]
+  >>> y_pred = [0, 0, 2, 2, 0, 2]
+  >>> tpr_fpr_tnr_fnr_score(y_true, y_pred)
+  (array([1.        , 0.        , 0.66666667]),
+  array([0.25      , 0.        , 0.33333333]),
+  array([0.75      , 1.        , 0.66666667]),
+  array([0.        , 1.        , 0.33333333]))
+
+.. note::
+
+    * True positive rate (TPR) is also called recall, sensitivity, or hit rate.
+    * False positive rate (FPR) is also called fall-out.
+    * True negative rate (TNR) is also called specificity, or selectivity.
+    * false negative rate (FNR) is also called miss rate.
+
 .. _accuracy_score:
 
 Accuracy score
@@ -407,7 +510,6 @@ Accuracy score
 The :func:`accuracy_score` function computes the
 `accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, either the fraction
 (default) or the count (normalize=False) of correct predictions.
-
 
 In multilabel classification, the function returns the subset accuracy. If
 the entire set of predicted labels for a sample strictly match with the true
@@ -547,7 +649,7 @@ or *informedness*.
 
     * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
       [Guyon2015]_ adopt the adjusted version to ensure that random predictions
-      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
@@ -594,73 +696,6 @@ and not for more than two annotators.
   >>> y_pred = [0, 0, 2, 2, 0, 2]
   >>> cohen_kappa_score(y_true, y_pred)
   0.4285714285714286
-
-.. _confusion_matrix:
-
-Confusion matrix
-----------------
-
-The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the `confusion matrix
-<https://en.wikipedia.org/wiki/Confusion_matrix>`_ with each row corresponding
-to the true class (Wikipedia and other references may use different convention
-for axes).
-
-By definition, entry :math:`i, j` in a confusion matrix is
-the number of observations actually in group :math:`i`, but
-predicted to be in group :math:`j`. Here is an example::
-
-  >>> from sklearn.metrics import confusion_matrix
-  >>> y_true = [2, 0, 2, 2, 0, 1]
-  >>> y_pred = [0, 0, 2, 2, 0, 2]
-  >>> confusion_matrix(y_true, y_pred)
-  array([[2, 0, 0],
-         [0, 0, 1],
-         [1, 0, 2]])
-
-:class:`ConfusionMatrixDisplay` can be used to visually represent a confusion
-matrix as shown in the
-:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
-example, which creates the following figure:
-
-.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
-   :target: ../auto_examples/model_selection/plot_confusion_matrix.html
-   :scale: 75
-   :align: center
-
-The parameter ``normalize`` allows to report ratios instead of counts. The
-confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
-and ``'all'`` which will divide the counts by the sum of each columns, rows, or
-the entire matrix, respectively.
-
-  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
-  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
-  >>> confusion_matrix(y_true, y_pred, normalize='all')
-  array([[0.25 , 0.125],
-         [0.25 , 0.375]])
-
-For binary problems, we can get counts of true negatives, false positives,
-false negatives and true positives as follows::
-
-  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
-  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
-  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-  >>> tn, fp, fn, tp
-  (2, 1, 2, 3)
-
-.. topic:: Example:
-
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
-    for an example of using a confusion matrix to evaluate classifier output
-    quality.
-
-  * See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
-    for an example of using a confusion matrix to classify
-    hand-written digits.
-
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of using a confusion matrix to classify text
-    documents.
 
 .. _classification_report:
 
