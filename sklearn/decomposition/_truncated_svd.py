@@ -6,8 +6,7 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
-import numbers
-
+from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
@@ -17,8 +16,7 @@ from ..utils import check_array, check_random_state, check_scalar
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import check_is_fitted
-
+from ..utils.validation import check_is_fitted, check_scalar
 
 __all__ = ["TruncatedSVD"]
 
@@ -46,7 +44,8 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     ----------
     n_components : int, default=2
         Desired dimensionality of output data.
-        Must be strictly less than the number of features.
+        If algorithm='arpack', must be strictly less than the number of features.
+        If algorithm='randomized', must be less than or equal to the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
@@ -213,7 +212,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
             self.n_oversamples,
             "n_oversamples",
             min_val=1,
-            target_type=numbers.Integral,
+            target_type=Integral,
         )
 
         X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
@@ -230,10 +229,13 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         elif self.algorithm == "randomized":
             k = self.n_components
             n_features = X.shape[1]
-            if k >= n_features:
-                raise ValueError(
-                    "n_components must be < n_features; got %d >= %d" % (k, n_features)
-                )
+            check_scalar(
+                k,
+                "n_components",
+                target_type=Integral,
+                min_val=1,
+                max_val=n_features,
+            )
             U, Sigma, VT = randomized_svd(
                 X,
                 self.n_components,

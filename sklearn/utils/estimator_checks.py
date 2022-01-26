@@ -531,7 +531,7 @@ def parametrize_with_checks(estimators):
 def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
-    This estimator will run an extensive test-suite for input validation,
+    This function will run an extensive test-suite for input validation,
     shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers

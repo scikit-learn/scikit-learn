@@ -39,7 +39,7 @@ def test_solvers(X_sparse, solver, kind):
     assert_allclose(comp_a[9:], comp[9:], atol=1e-2)
 
 
-@pytest.mark.parametrize("n_components", (10, 25, 41))
+@pytest.mark.parametrize("n_components", (10, 25, 41, 55))
 def test_attributes(n_components, X_sparse):
     n_features = X_sparse.shape[1]
     tsvd = TruncatedSVD(n_components).fit(X_sparse)
@@ -47,13 +47,18 @@ def test_attributes(n_components, X_sparse):
     assert tsvd.components_.shape == (n_components, n_features)
 
 
-@pytest.mark.parametrize("algorithm", SVD_SOLVERS)
-def test_too_many_components(algorithm, X_sparse):
-    n_features = X_sparse.shape[1]
-    for n_components in (n_features, n_features + 1):
-        tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
-        with pytest.raises(ValueError):
-            tsvd.fit(X_sparse)
+@pytest.mark.parametrize(
+    "algorithm, n_components",
+    [
+        ("arpack", 55),
+        ("arpack", 56),
+        ("randomized", 56),
+    ],
+)
+def test_too_many_components(X_sparse, algorithm, n_components):
+    tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
+    with pytest.raises(ValueError):
+        tsvd.fit(X_sparse)
 
 
 @pytest.mark.parametrize("fmt", ("array", "csr", "csc", "coo", "lil"))
