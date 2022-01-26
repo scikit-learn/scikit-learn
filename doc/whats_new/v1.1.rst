@@ -520,23 +520,23 @@ Changelog
   `n_iter_`, the number of iterations of the libsvm optimization routine.
   :pr:`21408` by :user:`Juan Martín Loyola <jmloyola>`.
 
+- |Enhancement| :func:`svm.SVR`, :func:`svm.SVC`, :func:`svm.NuSVR`,
+  :func:`svm.OneClassSVM`, :func:`svm.NuSVC` now raise an error
+  when the dual-gap estimation produce non-finite parameter weights.
+  :pr:`22149` by :user:`Christian Ritter <chritter>` and
+  :user:`Norbert Preining <norbusan>`.
+
 - |Fix| :class:`smv.NuSVC`, :class:`svm.NuSVR`, :class:`svm.SVC`,
   :class:`svm.SVR`, :class:`svm.OneClassSVM` now validate input
   parameters in `fit` instead of `__init__`.
   :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
 
 :mod:`sklearn.tree`
-.......................
+...................
 
 - |Fix| Fix a bug in the Poisson splitting criterion for
   :class:`tree.DecisionTreeRegressor`.
   :pr:`22191` by :user:`Christian Lorentzen <lorentzenchr>`.
-
-- |Enhancement| :func:`svm.SVR`, :func:`svm.SVC`, :func:`svm.NuSVR`,
-  :func:`svm.OneClassSVM`, :func:`svm.NuSVC` now raise an error
-  when the dual-gap estimation produce non-finite parameter weights.
-  :pr:`22149` by :user:`Christian Ritter <chritter>` and
-  :user:`Norbert Preining <norbusan>`.
 
 :mod:`sklearn.utils`
 ....................
