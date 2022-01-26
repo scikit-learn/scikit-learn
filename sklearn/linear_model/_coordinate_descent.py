@@ -9,6 +9,7 @@ import sys
 import warnings
 import numbers
 from abc import ABC, abstractmethod
+from functools import partial
 
 import numpy as np
 from scipy import sparse
@@ -1634,6 +1635,14 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
+
+        check_scalar_alpha = partial(
+            check_scalar,
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+
         if alphas is None:
             alphas = [
                 _alpha_grid(
@@ -1649,8 +1658,20 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 for l1_ratio in l1_ratios
             ]
         else:
+            # Making sure alphas entries are scalars.
+            if isinstance(alphas, (np.ndarray, list, tuple)):
+                n_alphas = 1 if np.ndim(alphas) == 0 else len(alphas)
+                if n_alphas != 1:
+                    for index, alpha in enumerate(alphas):
+                        alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
+                else:
+                    alphas[0] = check_scalar_alpha(alphas[0], "alphas")
+            else:
+                # check for single non-iterable item.
+                alphas = check_scalar_alpha(alphas, "alphas")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
+
         # We want n_alphas to be the number of alphas used for each l1_ratio.
         n_alphas = len(alphas[0])
         path_params.update({"n_alphas": n_alphas})
