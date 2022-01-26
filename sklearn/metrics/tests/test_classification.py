@@ -2531,7 +2531,7 @@ def test_npv_warnings(zero_division):
         if expected_type_warning is None:
             assert len(record) == 0
         else:
-            assert str(record[-1].message == msg
+            assert str(record[-1].message) == msg
 
     with pytest.warns(UndefinedMetricWarning, match=msg):
         npv_score([1, 1], [1, 1])
