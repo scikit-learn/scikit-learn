@@ -651,7 +651,7 @@ def fetch_openml(
         can handle all types of multi-output combinations)
 
     cache : bool, default=True
-        Whether to cache downloaded datasets using joblib.
+        Whether to cache downloaded datasets.
 
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
