@@ -444,12 +444,19 @@ def test_tpr_fpr_tnr_fnr_score_extra_labels():
             )
 
     # Error when introducing invalid label in multilabel case
-    err_msg = r"All labels must be in \[0, n labels\) for multilabel targets.*"
     for average in [None, "macro", "micro", "samples"]:
+        err_msg = (
+            r"All labels must be in \[0, n labels\) for multilabel targets\."
+            " Got 5 > 4"
+        )
         with pytest.raises(ValueError, match=err_msg):
             tpr_fpr_tnr_fnr_score(
                 y_true_bin, y_pred_bin, labels=np.arange(6), average=average
             )
+        err_msg = (
+            r"All labels must be in \[0, n labels\) for multilabel targets\."
+            " Got -1 < 0"
+        )
         with pytest.raises(ValueError, match=err_msg):
             tpr_fpr_tnr_fnr_score(
                 y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average
@@ -513,7 +520,10 @@ def test_tpr_fpr_tnr_fnr_score_multiclass():
     assert_almost_equal(tnr, 0.8, 2)
     assert_almost_equal(fnr, 0.47, 2)
 
-    err_msg = r"Samplewise metrics are not available outside of multilabel.*"
+    err_msg = (
+        "Samplewise metrics are not available outside of multilabel"
+        r" classification\."
+    )
     with pytest.raises(ValueError, match=err_msg):
         tpr_fpr_tnr_fnr_score(y_true, y_pred, average="samples")
 
@@ -532,48 +542,86 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
 
-    pytest.warns(Warning if zero_division == "warn" else None)
+    expected_type_warning = UndefinedMetricWarning if zero_division == "warn" else None
 
     zero_division_value = 1.0 if zero_division == 1.0 else 0.0
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
-        y_true, y_pred, average=None, zero_division=zero_division
-    )
+
+    with pytest.warns(expected_type_warning) as record:
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, average=None, zero_division=zero_division
+        )
+        if expected_type_warning is None:
+            assert len(record) == 0
+        else:
+            assert (
+                str(record.pop().message)
+                == "Fnr is ill-defined and "
+                "being set to 0.0 in labels due to no positives samples."
+                " Use `zero_division` parameter to control"
+                " this behavior."
+            )
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0, zero_division_value], 2)
     assert_array_almost_equal(fpr, [0.0, 0.0, 0.0, 1 / 3.0], 2)
     assert_array_almost_equal(tnr, [1.0, 1.0, 1.0, 2 / 3.0], 2)
     assert_array_almost_equal(fnr, [1.0, 0.5, 0.0, zero_division_value], 2)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
-        y_true, y_pred, average="macro", zero_division=zero_division
-    )
+    with pytest.warns(expected_type_warning) as record:
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, average="macro", zero_division=zero_division
+        )
+        if expected_type_warning is None:
+            assert len(record) == 0
+        else:
+            assert (
+                str(record.pop().message)
+                == "Fnr is ill-defined and "
+                "being set to 0.0 in labels due to no positives samples."
+                " Use `zero_division` parameter to control"
+                " this behavior."
+            )
     assert_almost_equal(tpr, 0.625 if zero_division_value else 0.375)
     assert_almost_equal(fpr, 1 / 3.0 / 4.0)
     assert_almost_equal(tnr, 0.91666, 5)
     assert_almost_equal(fnr, 0.625 if zero_division_value else 0.375)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
-        y_true, y_pred, average="micro", zero_division=zero_division
-    )
+    with pytest.warns(expected_type_warning) as record:
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, average="micro", zero_division=zero_division
+        )
+        assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.125)
     assert_almost_equal(tnr, 0.875)
     assert_almost_equal(fnr, 0.5)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
-        y_true, y_pred, average="weighted", zero_division=zero_division
-    )
+    with pytest.warns(expected_type_warning) as record:
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true, y_pred, average="weighted", zero_division=zero_division
+        )
+        if expected_type_warning is None:
+            assert len(record) == 0
+        else:
+            assert (
+                str(record.pop().message)
+                == "Fnr is ill-defined and "
+                "being set to 0.0 in labels due to no positives samples."
+                " Use `zero_division` parameter to control"
+                " this behavior."
+            )
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0)
     assert_almost_equal(tnr, 1.0)
     assert_almost_equal(fnr, 0.5)
 
-    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
-        y_true,
-        y_pred,
-        average="samples",
-        sample_weight=[1, 1, 2],
-        zero_division=zero_division,
-    )
+    with pytest.warns(expected_type_warning) as record:
+        tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
+            y_true,
+            y_pred,
+            average="samples",
+            sample_weight=[1, 1, 2],
+            zero_division=zero_division,
+        )
+        assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.08333, 5)
     assert_almost_equal(tnr, 0.91666, 5)
@@ -2388,10 +2436,17 @@ def test_npv_extra_labels():
             )
 
     # Error when introducing invalid label in multilabel case
-    err_msg = r"All labels must be in \[0, n labels\) for multilabel targets.*"
     for average in [None, "macro", "micro", "samples"]:
+        err_msg = (
+            r"All labels must be in \[0, n labels\) for multilabel targets\."
+            " Got 5 > 4"
+        )
         with pytest.raises(ValueError, match=err_msg):
             npv_score(y_true_bin, y_pred_bin, labels=np.arange(6), average=average)
+        err_msg = (
+            r"All labels must be in \[0, n labels\) for multilabel targets\."
+            " Got -1 < 0"
+        )
         with pytest.raises(ValueError, match=err_msg):
             npv_score(y_true_bin, y_pred_bin, labels=np.arange(-1, 4), average=average)
 
@@ -2437,7 +2492,10 @@ def test_npv_multiclass():
 
     assert_array_almost_equal(npv_score(y_true, y_pred, average="weighted"), 0.78, 2)
 
-    err_msg = r"Samplewise metrics are not available outside of multilabel.*"
+    err_msg = (
+        "Samplewise metrics are not available outside of multilabel"
+        r" classification\."
+    )
     with pytest.raises(ValueError, match=err_msg):
         npv_score(y_true, y_pred, average="samples")
 
@@ -2456,15 +2514,19 @@ def test_npv_warnings(zero_division):
         average="micro",
         zero_division=zero_division,
     )
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+
+    expected_type_warning = UndefinedMetricWarning if zero_division == "warn" else None
+
+    with pytest.warns(expected_type_warning) as record:
         npv_score(
             np.array([[0, 0], [0, 0]]),
             np.array([[1, 1], [1, 1]]),
             average="micro",
             zero_division=zero_division,
         )
-        if zero_division == "warn":
+        if expected_type_warning is None:
+            assert len(record) == 0
+        else:
             assert (
                 str(record.pop().message)
                 == "Npv is ill-defined and "
@@ -2472,9 +2534,8 @@ def test_npv_warnings(zero_division):
                 " Use `zero_division` parameter to control"
                 " this behavior."
             )
-        else:
-            assert len(record) == 0
 
+    with pytest.warns(UndefinedMetricWarning) as record:
         npv_score([1, 1], [1, 1])
         assert (
             str(record.pop().message)
