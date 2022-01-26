@@ -555,8 +555,8 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
         else:
             assert (
                 str(record.pop().message)
-                == "Fnr is ill-defined and "
-                "being set to 0.0 in labels due to no positives samples."
+                == "Tpr is ill-defined and "
+                "being set to 0.0 in labels with no positives samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
             )
@@ -2515,6 +2515,10 @@ def test_npv_warnings(zero_division):
         zero_division=zero_division,
     )
 
+    msg = (
+        "Npv is ill-defined and being set to 0.0 due to no negative call samples."
+        " Use `zero_division` parameter to control this behavior."
+    )
     expected_type_warning = UndefinedMetricWarning if zero_division == "warn" else None
 
     with pytest.warns(expected_type_warning) as record:
@@ -2527,23 +2531,10 @@ def test_npv_warnings(zero_division):
         if expected_type_warning is None:
             assert len(record) == 0
         else:
-            assert (
-                str(record.pop().message)
-                == "Npv is ill-defined and "
-                "being set to 0.0 due to no negative call samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
+            assert str(record[-1].message == msg
 
-    with pytest.warns(UndefinedMetricWarning) as record:
+    with pytest.warns(UndefinedMetricWarning, match=msg):
         npv_score([1, 1], [1, 1])
-        assert (
-            str(record.pop().message)
-            == "Npv is ill-defined and "
-            "being set to 0.0 due to no negative call samples."
-            " Use `zero_division` parameter to control"
-            " this behavior."
-        )
 
 
 def test_prf_average_binary_data_non_binary():
