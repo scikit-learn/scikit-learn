@@ -451,15 +451,17 @@ class KFold(_BaseKFold):
 
 
 class PurgedKFold(_BaseKFold):
-    """K-Folds cross-validator
+    """Purged K-Folds cross-validator for time-series
 
     Provides train/test indices to split data in train/test sets. Split
-    dataset into k consecutive folds (without shuffling by default).
+    dataset into k consecutive folds.
+    If target knows the future, then data leakage happens.
+    Thus overlap data should be purged.
 
     Each fold is then used once as a validation while the k - 1 remaining
     folds form the training set.
 
-    Read more in the :ref:`User Guide <k_fold>`.
+    Read more in the :ref:`User Guide <purged_k_fold>`.
 
     Parameters
     ----------
@@ -468,17 +470,6 @@ class PurgedKFold(_BaseKFold):
 
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
-
-    shuffle : bool, default=False
-        Whether to shuffle the data before splitting into batches.
-        Note that the samples within each split will not be shuffled.
-
-    random_state : int, RandomState instance or None, default=None
-        When `shuffle` is True, `random_state` affects the ordering of the
-        indices, which controls the randomness of each fold. Otherwise, this
-        parameter has no effect.
-        Pass an int for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -737,7 +728,7 @@ class GroupKFold(_BaseKFold):
 
 
 class CombinationalKFold(_BaseKFold):
-    """K-fold iterator variant with non-overlapping groups.
+    """Combinational K-Folds cross-validator.
 
     The same group will not appear in two different folds (the number of
     distinct groups has to be at least equal to the number of folds).
@@ -745,7 +736,7 @@ class CombinationalKFold(_BaseKFold):
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
 
-    Read more in the :ref:`User Guide <group_k_fold>`.
+    Read more in the :ref:`User Guide <combinational_k_fold>`.
 
     Parameters
     ----------
@@ -846,7 +837,7 @@ class CombinationalKFold(_BaseKFold):
 
 
 class CombinationalPurgedKFold(_BaseKFold):
-    """K-fold iterator variant with non-overlapping groups.
+    """Combinational purged K-Folds cross-validator.
 
     The same group will not appear in two different folds (the number of
     distinct groups has to be at least equal to the number of folds).
@@ -854,7 +845,7 @@ class CombinationalPurgedKFold(_BaseKFold):
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
 
-    Read more in the :ref:`User Guide <group_k_fold>`.
+    Read more in the :ref:`User Guide <combinational_rurged_k_fold>`.
 
     Parameters
     ----------
