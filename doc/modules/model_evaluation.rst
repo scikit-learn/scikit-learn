@@ -478,13 +478,13 @@ The rates are defined as
 
 .. math::
 
-  \texttt{TPR}(y, \hat{y}) = \frac{TP}{P}} = \frac{TP}{TP + FN}} = 1 - FNR
+  \texttt{TPR} = \frac{TP}{P}} = \frac{TP}{TP + FN}} = 1 - FNR
 
-  \texttt{FPR}(y, \hat{y}) = \frac{FP}{N}} = \frac{FP}{TN + FP}} = 1 - TNR
+  \texttt{FPR} = \frac{FP}{N}} = \frac{FP}{TN + FP}} = 1 - TNR
 
-  \texttt{TNR}(y, \hat{y}) = \frac{TN}{N}} = \frac{TN}{TN + FP}} = 1 - FPR
+  \texttt{TNR} = \frac{TN}{N}} = \frac{TN}{TN + FP}} = 1 - FPR
 
-  \texttt{FNR}(y, \hat{y}) = \frac{FN}{P}} = \frac{FN}{TP + FN}} = 1 - TPR
+  \texttt{FNR} = \frac{FN}{P}} = \frac{FN}{TP + FN}} = 1 - TPR
 
   >>> from sklearn.metrics import tpr_fpr_tnr_fnr_score
   >>> y_true = [2, 0, 2, 2, 0, 1]
@@ -872,7 +872,6 @@ and is implemented by the :func:`specificity_score`.
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
-
 .. topic:: References:
 
   .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
@@ -888,7 +887,6 @@ and is implemented by the :func:`specificity_score`.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
      NIPS 2015.
-
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -913,11 +911,11 @@ In this context, we can define the notions of precision, recall and F-measure:
 
 .. math::
 
-   \text{precision} = \frac{tp}{tp + fp},
+   \text{precision} = \frac{TP}{TP + FP},
 
 .. math::
 
-   \text{recall} = \frac{tp}{tp + fn},
+   \text{recall} = \frac{TP}{TP + FN},
 
 .. math::
 
@@ -959,10 +957,9 @@ Here are some small examples in binary classification::
   >>> average_precision_score(y_true, y_scores)
   0.83...
 
-
-
 Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 In multiclass and multilabel classification task, the notions of precision,
 recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
@@ -1797,6 +1794,59 @@ the same does a lower Brier score loss always mean better calibration"
   .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
     and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+
+.. _true_negatives_metrics:
+
+Specificity and negative predictive value (NPV)
+-----------------------------------------------
+
+`Specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(also called selectivity or true negative rate) and
+`NPV <https://en.wikipedia.org/wiki/Positive_and_negative_predictive_values>`_
+are both ratios of true negatives to, respectively, actual negatives and
+predicted negatives in a classification task.
+
+Binary classification
+^^^^^^^^^^^^^^^^^^^^^
+
+In a binary classification task, specificity and NPV are defined simply as
+
+..math::
+
+  \text{specificity} = \frac{TN}{N}} = \frac{TN}{TN + FP}}
+
+  \text{NPV} = \frac{TN}{TN + FN}}
+
+Multiclass and multilabel classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In a multiclass or multilabel classification task, the notions of specificity
+and NPV can be applied to each label independently. There are a few ways
+to combine results across labels, specified by the ``average`` argument
+to the :func:`specificity_score` and :func:`npv_score` functions, as described
+:ref:`above <average>`.
+
+To make this more explicit, consider the following examples:
+  >>> from sklearn.metrics import specificity_score
+  >>> from sklearn.metrics import npv_score
+  >>> y_true = [2, 0, 2, 2, 0, 1]
+  >>> y_pred = [0, 0, 2, 2, 0, 2]
+  >>> specificity_score(y_true, y_pred, average=None)
+  >>> array([0.75, 1.0, 0.66...])
+  >>> npv_score(y_true, y_pred, average=None)
+  >>> array([1.0, 0.83..., 0.66...])
+  >>> specificity_score(y_true, y_pred, average='macro')
+  >>> 0.8055...
+  >>> npv_score(y_true, y_pred, average='macro')
+  >>> 0.83...
+  >>> specificity_score(y_true, y_pred, average='micro')
+  >>> 0.83...
+  >>> npv_score(y_true, y_pred, average='micro')
+  >>> 0.83...
+  >>> specificity_score(y_true, y_pred, average='weighted')
+  >>> 0.75
+  >>> npv_score(y_true, y_pred, average='weighted')
+  >>> 0.8055...
 
 .. _multilabel_ranking_metrics:
 
