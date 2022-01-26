@@ -7,6 +7,10 @@ schedules:
     - main
   always: true
 
+# Disable pytest-xdist as it can stall builds
+variables:
+  PYTEST_XDIST_VERSION: "none"
+
 jobs:
 - job: git_commit
   displayName: Get Git Commit
