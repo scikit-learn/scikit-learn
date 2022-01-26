@@ -542,6 +542,10 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
 
+    msg = (
+        "Tpr is ill-defined and being set to 0.0 in labels with no positives samples."
+        " Use `zero_division` parameter to control this behavior."
+    )
     expected_type_warning = UndefinedMetricWarning if zero_division == "warn" else None
 
     zero_division_value = 1.0 if zero_division == 1.0 else 0.0
@@ -553,13 +557,7 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
         if expected_type_warning is None:
             assert len(record) == 0
         else:
-            assert (
-                str(record.pop().message)
-                == "Tpr is ill-defined and "
-                "being set to 0.0 in labels with no positives samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
+            assert str(record.pop().message) == msg
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0, zero_division_value], 2)
     assert_array_almost_equal(fpr, [0.0, 0.0, 0.0, 1 / 3.0], 2)
     assert_array_almost_equal(tnr, [1.0, 1.0, 1.0, 2 / 3.0], 2)
@@ -572,23 +570,16 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
         if expected_type_warning is None:
             assert len(record) == 0
         else:
-            assert (
-                str(record.pop().message)
-                == "Fnr is ill-defined and "
-                "being set to 0.0 in labels due to no positives samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
+            assert str(record.pop().message) == msg
     assert_almost_equal(tpr, 0.625 if zero_division_value else 0.375)
     assert_almost_equal(fpr, 1 / 3.0 / 4.0)
     assert_almost_equal(tnr, 0.91666, 5)
     assert_almost_equal(fnr, 0.625 if zero_division_value else 0.375)
 
-    with pytest.warns(expected_type_warning) as record:
+    with pytest.does_not_warn():
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true, y_pred, average="micro", zero_division=zero_division
         )
-        assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.125)
     assert_almost_equal(tnr, 0.875)
@@ -601,19 +592,13 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
         if expected_type_warning is None:
             assert len(record) == 0
         else:
-            assert (
-                str(record.pop().message)
-                == "Fnr is ill-defined and "
-                "being set to 0.0 in labels due to no positives samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
+            assert str(record.pop().message) == msg
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0)
     assert_almost_equal(tnr, 1.0)
     assert_almost_equal(fnr, 0.5)
 
-    with pytest.warns(expected_type_warning) as record:
+    with pytest.does_not_warn():
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true,
             y_pred,
@@ -621,7 +606,6 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
             sample_weight=[1, 1, 2],
             zero_division=zero_division,
         )
-        assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.08333, 5)
     assert_almost_equal(tnr, 0.91666, 5)
