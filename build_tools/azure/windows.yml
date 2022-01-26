@@ -17,8 +17,8 @@ jobs:
     JUNITXML: 'test-data.xml'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     PYTEST_VERSION: '5.2.1'
-    PYTEST_XDIST: 'true'
-    PYTEST_XDIST_VERSION: 'latest'
+    # Disable pytest-xdist as it can stall builds
+    PYTEST_XDIST_VERSION: 'none'
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     SHOW_SHORT_SUMMARY: 'false'
     CPU_COUNT: '2'
