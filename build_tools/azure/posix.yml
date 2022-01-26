@@ -31,7 +31,8 @@ jobs:
     PILLOW_VERSION: 'latest'
     MATPLOTLIB_VERSION: 'latest'
     PYTEST_VERSION: 'latest'
-    PYTEST_XDIST_VERSION: 'latest'
+    # Disable pytest-xdist as it can stall builds
+    PYTEST_XDIST_VERSION: 'none'
     THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
