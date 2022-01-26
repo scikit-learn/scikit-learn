@@ -148,6 +148,7 @@ jobs:
         BLAS: 'mkl'
         COVERAGE: 'true'
         SHOW_SHORT_SUMMARY: 'true'
+        PYTEST_XDIST_VERSION: 'none'
 
 # Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
 - template: build_tools/azure/posix.yml
@@ -258,6 +259,7 @@ jobs:
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         CPU_COUNT: '3'
+        PYTEST_XDIST_VERSION: 'none'
 
 - template: build_tools/azure/windows.yml
   parameters:
