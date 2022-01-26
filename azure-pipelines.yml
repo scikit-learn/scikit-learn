@@ -102,6 +102,7 @@ jobs:
         DISTRIB: 'conda'
         CONDA_CHANNEL: 'conda-forge'
         PYTHON_VERSION: '*'
+        PYTEST_XDIST_VERSION: 'none'
         BLAS: 'mkl'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'true'
@@ -199,6 +200,7 @@ jobs:
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
+        PYTEST_XDIST_VERSION: 'none'
         THREADPOOLCTL_VERSION: '2.2.0'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
       # Linux environment to test the latest available dependencies.
@@ -206,6 +208,7 @@ jobs:
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         PYTHON_VERSION: '3.9'
+        PYTEST_XDIST_VERSION: 'none'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
@@ -248,6 +251,7 @@ jobs:
         BLAS: 'mkl'
         CONDA_CHANNEL: 'conda-forge'
         CPU_COUNT: '3'
+        PYTEST_XDIST_VERSION: 'none'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'

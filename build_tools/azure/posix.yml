@@ -31,7 +31,7 @@ jobs:
     PILLOW_VERSION: 'latest'
     MATPLOTLIB_VERSION: 'latest'
     PYTEST_VERSION: 'latest'
-    PYTEST_XDIST_VERSION: 'none'
+    PYTEST_XDIST_VERSION: 'latest'
     THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
