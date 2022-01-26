@@ -1158,6 +1158,30 @@ def test_check_scalar_valid(x):
                 "Possible values are: ('left', 'right', 'both', 'neither')."
             ),
         ),
+        (
+            4,
+            "test_name7",
+            int,
+            None,
+            4,
+            "left",
+            ValueError(
+                "`include_boundaries`='left' without specifying explicitly `min_val` "
+                "is inconsistent."
+            ),
+        ),
+        (
+            4,
+            "test_name8",
+            int,
+            2,
+            None,
+            "right",
+            ValueError(
+                "`include_boundaries`='right' without specifying explicitly `max_val` "
+                "is inconsistent."
+            ),
+        ),
     ],
 )
 def test_check_scalar_invalid(
