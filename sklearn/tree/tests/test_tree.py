@@ -2081,8 +2081,6 @@ def test_poisson_vs_mse():
     # than squared error measured in Poisson deviance as metric.
     # We have a similar test, test_poisson(), in
     # sklearn/ensemble/_hist_gradient_boosting/tests/test_gradient_boosting.py
-    # Note: Some fine tuning was needed to have metric_poi < metric_dummy on
-    # the test set!
     rng = np.random.RandomState(42)
     n_train, n_test, n_features = 500, 500, 10
     X = datasets.make_low_rank_matrix(
@@ -2116,8 +2114,8 @@ def test_poisson_vs_mse():
         # score can be better than Poisson. This is no longer the case for the
         # test set.
         if val == "test":
-            assert metric_poi < metric_mse
-        assert metric_poi < metric_dummy
+            assert metric_poi < 0.5 * metric_mse
+        assert metric_poi < 0.75 * metric_dummy
 
 
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
