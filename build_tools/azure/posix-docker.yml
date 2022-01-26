@@ -27,7 +27,7 @@ jobs:
     PILLOW_VERSION: 'latest'
     MATPLOTLIB_VERSION: 'latest'
     PYTEST_VERSION: 'latest'
-    PYTEST_XDIST_VERSION: 'latest'
+    PYTEST_XDIST_VERSION: 'none'
     THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'false'
     TEST_DOCSTRINGS: 'false'
