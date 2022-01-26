@@ -333,6 +333,11 @@ def test_pairwise_distances_argkmin(
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
+    # Haversine distance only accept 2D data
+    if metric == "haversine":
+        X = np.ascontiguousarray(X[:, :2])
+        Y = np.ascontiguousarray(Y[:, :2])
+
     metric_kwargs = _get_dummy_metric_params_list(metric, n_features)[0]
 
     # Reference for argkmin results
