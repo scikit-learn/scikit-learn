@@ -33,12 +33,12 @@ RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "check
 
 
 def get_data_home(data_home=None) -> str:
-    """Return the path of the scikit-learn data dir.
+    """Return the path of the scikit-learn data directory.
 
     This folder is used by some large dataset loaders to avoid downloading the
     data several times.
 
-    By default the data dir is set to a folder named 'scikit_learn_data' in the
+    By default the data directory is set to a folder named 'scikit_learn_data' in the
     user home folder.
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
@@ -52,6 +52,11 @@ def get_data_home(data_home=None) -> str:
     data_home : str, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
+
+    Returns
+    -------
+    data_home: str
+        The path to scikit-learn data directory.
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
