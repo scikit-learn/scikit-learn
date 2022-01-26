@@ -24,6 +24,7 @@ CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
     "chebyshev",
     "cityblock",
     "euclidean",
+    "haversine",
     "minkowski",
     "seuclidean",
 ]
