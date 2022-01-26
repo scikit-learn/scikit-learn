@@ -576,10 +576,11 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     assert_almost_equal(tnr, 0.91666, 5)
     assert_almost_equal(fnr, 0.625 if zero_division_value else 0.375)
 
-    with pytest.does_not_warn():
+    with pytest.warns(None) as record:
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true, y_pred, average="micro", zero_division=zero_division
         )
+        assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.125)
     assert_almost_equal(tnr, 0.875)
@@ -598,7 +599,7 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     assert_almost_equal(tnr, 1.0)
     assert_almost_equal(fnr, 0.5)
 
-    with pytest.does_not_warn():
+    with pytest.warns(None) as record:
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true,
             y_pred,
@@ -606,6 +607,7 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
             sample_weight=[1, 1, 2],
             zero_division=zero_division,
         )
+        assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.08333, 5)
     assert_almost_equal(tnr, 0.91666, 5)
