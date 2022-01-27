@@ -825,7 +825,8 @@ def test_logistic_regression_solvers_multiclass():
     params = dict(fit_intercept=False, tol=tol, random_state=42, multi_class="ovr")
     solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga", "trust-ncg")
 
-    # Override max iteration count for specific solvers
+    # Override max iteration count for specific solvers to allow for
+    # proper convergence.
     solver_max_iter = {"sag": 1000, "saga": 10000}
 
     regressors = {
