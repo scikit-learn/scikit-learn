@@ -1954,7 +1954,7 @@ def test_top_k_accuracy_score_warning(y_true, k):
             [0, 1],
             [[0.5, 0.2, 0.2], [0.3, 0.4, 0.2]],
             None,
-            "`y_true` is binary while y_score is 2d with more than one class. If"
+            "`y_true` is binary while y_score is 2d with 3 classes. If"
             " `y_true` does not contain all the labels, `labels` must be provided",
         ),
     ],

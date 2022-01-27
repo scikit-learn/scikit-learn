@@ -1711,8 +1711,9 @@ def top_k_accuracy_score(
     if y_type == "binary":
         if y_score.ndim == 2 and y_score.shape[1] != 1:
             raise ValueError(
-                "`y_true` is binary while y_score is 2d with more than one class. If"
-                " `y_true` does not contain all the labels, `labels` must be provided."
+                "`y_true` is binary while y_score is 2d with"
+                f" {y_score.shape[1]} classes. If `y_true` does not contain all the"
+                " labels, `labels` must be provided."
             )
         y_score = column_or_1d(y_score)
 
