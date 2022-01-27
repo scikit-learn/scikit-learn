@@ -154,6 +154,12 @@ def main() -> pd.DataFrame:
             y=y_option,
             color="solver",
         )
+        .properties(
+            title=(
+                f"{y_option} vs. n_samples using the {dset_option}-style dataset with"
+                f" {n_classes_option} classes."
+            )
+        )
     )
 
     st.altair_chart(chart)
