@@ -799,11 +799,7 @@ def test_ovr_multinomial_iris():
 
 
 def test_logistic_regression_solvers():
-    """
-    Test that available logistic solvers converge to the same result on a fixed
-    synthetic dataset. The solvers are compared unordered pairwise omitting self-
-    comparisons.
-    """
+    """Test solvers converge to the same result."""
     X, y = make_classification(n_features=10, n_informative=5, random_state=0)
 
     params = dict(fit_intercept=False, random_state=42, multi_class="ovr")
