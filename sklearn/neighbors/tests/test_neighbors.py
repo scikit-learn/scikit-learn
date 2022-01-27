@@ -1524,7 +1524,7 @@ def test_neighbors_metrics(
 def test_kneighbors_brute_backend(
     metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
 ):
-    # Both backend for the 'brute' algorithm of kneighbors must gives identical results.
+    # Both backend for the 'brute' algorithm of kneighbors must give identical results.
     X_train = rng.rand(n_samples, n_features)
     X_test = rng.rand(n_query_pts, n_features)
 

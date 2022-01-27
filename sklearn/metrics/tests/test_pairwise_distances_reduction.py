@@ -24,7 +24,6 @@ CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
     "chebyshev",
     "cityblock",
     "euclidean",
-    "haversine",
     "minkowski",
     "seuclidean",
 ]
@@ -334,7 +333,7 @@ def test_pairwise_distances_argkmin(
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    # Haversine distance only accept 2D data
+    # Haversine distance only accepts 2D data
     if metric == "haversine":
         X = np.ascontiguousarray(X[:, :2])
         Y = np.ascontiguousarray(Y[:, :2])
