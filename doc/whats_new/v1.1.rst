@@ -338,6 +338,7 @@ Changelog
   `kind` to accept a list of strings to specify for each feature interaction
   which type of plot a user wants to draw.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Enhancement| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now raise consistent error message
   when passed invalid values for `alphas`.
