@@ -137,7 +137,9 @@ python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
                       $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
+    # XXX: coverage is temporary pinned to 6.2 because 6.3 multiprocessing fork-safe
+    # cf. https://github.com/nedbat/coveragepy/issues/1310
+    python -m pip install codecov pytest-cov coverage==6.2
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
