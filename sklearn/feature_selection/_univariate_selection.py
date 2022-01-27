@@ -251,7 +251,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     The cross correlation between each regressor and the target is computed
     as::
 
-        E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y)).
+        E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y))
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
