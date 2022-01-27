@@ -217,6 +217,12 @@ Changelog
   `fit` instead of `__init__`.
   :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
 
+- |Fix| :class:`decomposition.PCA` and :class:`decomposition.IncrementalPCA`
+  more safely calculate precision using the inverse of the covariance matrix
+  if `self.noise_variance_` is zero.
+  :pr:`22300` by :user:`Meekail Zain <micky774>` and :pr:`15948` by
+  :user:`sysuresh`
+
 :mod:`sklearn.ensemble`
 .......................
 
