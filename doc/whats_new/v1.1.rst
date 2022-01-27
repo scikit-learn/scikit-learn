@@ -231,6 +231,13 @@ Changelog
   get more accurate results when low rank approximation is difficult.
   :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
 
+- |Fix| :class:`decomposition.PCA` and :class:`decomposition.IncrementalPCA`
+  more safely calculate precision using the inverse of the covariance matrix
+  if `self.noise_variance_` is zero.
+  :pr:`22300` by :user:`Meekail Zain <micky774>` and :pr:`15948` by
+  :user:`sysuresh`
+
+
 :mod:`sklearn.ensemble`
 .......................
 

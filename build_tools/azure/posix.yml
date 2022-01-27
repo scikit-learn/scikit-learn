@@ -32,7 +32,7 @@ jobs:
     MATPLOTLIB_VERSION: 'latest'
     PYTEST_VERSION: 'latest'
     # Disable pytest-xdist as it can stall builds
-    PYTEST_XDIST_VERSION: 'none'
+    PYTEST_XDIST_VERSION: 'latest'
     THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
