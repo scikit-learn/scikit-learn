@@ -9,8 +9,9 @@ import time
 import functools
 from joblib import Memory
 import pandas as pd
-import hvplot.pandas
 import argparse
+import streamlit as st
+import altair as alt
 
 parser = argparse.ArgumentParser(
     description="Determine whether to save/load the dataframe."
@@ -28,6 +29,11 @@ parser.add_argument(
     default="",
     metavar="l",
     help="Loads the dataframe at the path if provided",
+)
+parser.add_argument(
+    "--val",
+    action="store_true",
+    help="Validates convergence of trust-ncg against lbfgs",
 )
 
 args = parser.parse_args()
@@ -73,7 +79,7 @@ def main() -> pd.DataFrame:
 
     # %%
     MULTI_CLASS = ("ovr", "multinomial")
-    SOLVER = ("trust-ncg", "lbfgs", "sag", "saga", "newton-cg")
+    SOLVER = ("lbfgs", "trust-ncg", "sag", "saga", "newton-cg")
     PENALTY = ("l2", "none")
     CONFIG = tuple(
         {"multi_class": mc, "solver": s, "penalty": p}
@@ -102,13 +108,76 @@ def main() -> pd.DataFrame:
         }
 
     # %%
-    data = []
-    for i, dset in enumerate(DSETS):
-        print(f"Progress: {i*100./len(DSETS):.2f}")
-        X, y = make_dset(dset)
-        X = scaler.fit_transform(X)
-        data.extend([build_row(X, y, conf, dset) for conf in CONFIG])
-    return pd.DataFrame(data)
+    df = None
+    if args.load:
+        df = on_load(args.load)
+    else:
+        data = []
+        for i, dset in enumerate(DSETS):
+            print(f"Progress: {i*100./len(DSETS):.2f}")
+            X, y = make_dset(dset)
+            X = scaler.fit_transform(X)
+            data.extend([build_row(X, y, conf, dset) for conf in CONFIG])
+        df = pd.DataFrame(data)
+
+    if args.save and not args.load:
+        df.to_pickle(args.save)
+        print(f"Dataframe saved to {args.save}")
+
+    dset_option = st.selectbox(
+        "Which dataset would you like to view?", ("base", "dense", "sparse")
+    )
+    y_option = st.selectbox(
+        "Which metric would you like charted?", ("NLL", "cpu_time", "n_iter_")
+    )
+    n_classes_option = st.selectbox(
+        "Choose the number of classes in the dataset.", ("2", "5", "15")
+    )
+    multi_class_option = st.selectbox(
+        "Which multi_class strategy should the solvers use?", ("ovr", "multinomial")
+    )
+    penalty_option = st.selectbox(
+        "Which penalty should the solvers use?", ("none", "l2")
+    )
+
+    conditions = (
+        (df["n_classes"] == n_classes_option)
+        & (df["multi_class"] == multi_class_option)
+        & (df["penalty"] == penalty_option)
+        & (df["dset"] == dset_option)
+    )
+    chart = (
+        alt.Chart(df[conditions], height=500, width=900)
+        .mark_line()
+        .encode(
+            x="n_samples",
+            y=y_option,
+            color="solver",
+        )
+    )
+
+    st.altair_chart(chart)
+
+    def validate():
+        count_match = 0
+        count = 0
+        for dset in DSETS:
+            X, y = make_dset(dset)
+            for conf in CONFIG:
+                count += 1
+                conf_ = dict(conf)
+                del conf_["solver"]
+                lr_trust = LogisticRegression(solver="trust-ncg", **conf_)
+                lr_lbfgs = LogisticRegression(solver="lbfgs", **conf_)
+                lr_trust.fit(X, y)
+                lr_lbfgs.fit(X, y)
+                if np.isclose(lr_trust.coef_, lr_lbfgs.coef_).min():
+                    count_match += 1
+        return count_match, count
+
+    if args.val:
+        count_match, count = validate()
+        print(count_match * 100.0 / count)
 
 
 def on_load(pth: str) -> pd.DataFrame:
@@ -117,17 +186,4 @@ def on_load(pth: str) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-
-    df = main() if not args.load else on_load(args.load)
-
-    if args.save and not args.load:
-        df.to_pickle(args.save)
-        print(f"Dataframe saved to {args.save}")
-    plot = df.hvplot.bar(
-        stacked=False,
-        x=["n_samples", "solver"],
-        y="NLL",
-        groupby=["n_classes", "multi_class", "penalty", "dset"],
-        legend="top_right",
-    )
-    hvplot.show(plot)
+    main()
