@@ -49,33 +49,33 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          - os: windows-latest
+          - os: windows-2022
             python: 37
             bitness: 64
             platform_id: win_amd64
-          - os: windows-latest
+          - os: windows-2022
             python: 38
             bitness: 64
             platform_id: win_amd64
-          - os: windows-latest
+          - os: windows-2022
             python: 39
             bitness: 64
             platform_id: win_amd64
-          - os: windows-latest
+          - os: windows-2022
             python: 310
             bitness: 64
             platform_id: win_amd64
 
           # Window 32 bit
-          - os: windows-latest
+          - os: windows-2022
             python: 37
             bitness: 32
             platform_id: win32
-          - os: windows-latest
+          - os: windows-2022
             python: 38
             bitness: 32
             platform_id: win32
-          - os: windows-latest
+          - os: windows-2022
             python: 39
             bitness: 32
             platform_id: win32
