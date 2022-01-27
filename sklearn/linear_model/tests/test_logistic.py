@@ -825,9 +825,14 @@ def test_logistic_regression_solvers_multiclass():
     params = dict(fit_intercept=False, tol=tol, random_state=42, multi_class="ovr")
     solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga", "trust-ncg")
 
+    # Override max iteration count for specific solvers
+    solver_max_iter = {"sag": 1000, "saga": 10000}
+
     # dict of fitted logistic regressors
     regressors = {
-        solver: LogisticRegression(solver=solver, **params).fit(X, y)
+        solver: LogisticRegression(
+            solver=solver, max_iter=solver_max_iter.get(solver, 100), **params
+        ).fit(X, y)
         for solver in solvers
     }
 
