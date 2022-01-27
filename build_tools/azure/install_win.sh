@@ -24,7 +24,9 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage codecov pytest-cov
+    # XXX: coverage is temporary pinned to 6.2 because 6.3 multiprocessing fork-safe
+    # cf. https://github.com/nedbat/coveragepy/issues/1310
+    pip install coverage codecov pytest-cov coverage==6.2
 fi
 
 python --version
