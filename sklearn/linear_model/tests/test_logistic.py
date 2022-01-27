@@ -799,18 +799,21 @@ def test_ovr_multinomial_iris():
 
 
 def test_logistic_regression_solvers():
+    """
+    Test that available logistic solvers converge to the same result on a fixed
+    synthetic dataset. The solvers are compared unordered pairwise omitting self-
+    comparisons.
+    """
     X, y = make_classification(n_features=10, n_informative=5, random_state=0)
 
     params = dict(fit_intercept=False, random_state=42, multi_class="ovr")
     solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga", "trust-ncg")
 
-    # dict of fitted logistic regressors
     regressors = {
         solver: LogisticRegression(solver=solver, **params).fit(X, y)
         for solver in solvers
     }
 
-    # test over unordered pairs of distinct solvers
     for solver_1, solver_2 in itertools.combinations(regressors):
         assert_array_almost_equal(
             regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=3
@@ -818,6 +821,12 @@ def test_logistic_regression_solvers():
 
 
 def test_logistic_regression_solvers_multiclass():
+    """
+    Test that available logistic solvers converge to the same result on a fixed
+    synthetic dataset. The solvers are compared unordered pairwise omitting self-
+    comparisons. Specific solvers have increased `max_iter` values to allow for
+    proper convergence.
+    """
     X, y = make_classification(
         n_samples=20, n_features=20, n_informative=10, n_classes=3, random_state=0
     )
@@ -828,7 +837,6 @@ def test_logistic_regression_solvers_multiclass():
     # Override max iteration count for specific solvers
     solver_max_iter = {"sag": 1000, "saga": 10000}
 
-    # dict of fitted logistic regressors
     regressors = {
         solver: LogisticRegression(
             solver=solver, max_iter=solver_max_iter.get(solver, 100), **params
@@ -836,7 +844,6 @@ def test_logistic_regression_solvers_multiclass():
         for solver in solvers
     }
 
-    # test over unordered pairs of distinct solvers
     for solver_1, solver_2 in itertools.combinations(regressors):
         assert_array_almost_equal(
             regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=4
