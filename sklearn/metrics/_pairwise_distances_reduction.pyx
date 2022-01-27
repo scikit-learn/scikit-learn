@@ -212,7 +212,7 @@ cdef class PairwiseDistancesReduction:
         True if the PairwiseDistancesReduction can be used, else False.
         """
         # TODO: support sparse arrays and 32 bits
-        return (sklearn.get_config().get("use_pairwise_dist", True) and
+        return (sklearn.get_config().get("enable_cython_pairwise_dist", True) and
                 not issparse(X) and X.dtype == np.float64 and
                 not issparse(Y) and Y.dtype == np.float64 and
                 metric in cls.valid_metrics())

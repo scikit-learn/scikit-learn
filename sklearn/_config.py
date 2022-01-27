@@ -12,7 +12,7 @@ _global_config = {
     "pairwise_dist_chunk_size": int(
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
-    "use_pairwise_dist": True,
+    "enable_cython_pairwise_dist": True,
 }
 _threadlocal = threading.local()
 
@@ -49,7 +49,7 @@ def set_config(
     print_changed_only=None,
     display=None,
     pairwise_dist_chunk_size=None,
-    use_pairwise_dist=None,
+    enable_cython_pairwise_dist=None,
 ):
     """Set global scikit-learn configuration
 
@@ -93,11 +93,19 @@ def set_config(
         The number of vectors per chunk for PairwiseDistancesReduction.
         Default is 256 (suitable for most of modern laptops' caches and architectures).
 
+        Intended for easier benchmarking and testing of scikit-learn internals.
+        End users are not expected to benefit from customizing this configuration
+        setting.
+
         .. versionadded:: 1.1
 
-    use_pairwise_dist : bool, default=None
+    enable_cython_pairwise_dist : bool, default=None
         Use PairwiseDistancesReduction when possible.
         Default is True.
+
+        Intended for easier benchmarking and testing of scikit-learn internals.
+        End users are not expected to benefit from customizing this configuration
+        setting.
 
         .. versionadded:: 1.1
 
@@ -118,8 +126,8 @@ def set_config(
         local_config["display"] = display
     if pairwise_dist_chunk_size is not None:
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
-    if use_pairwise_dist is not None:
-        local_config["use_pairwise_dist"] = use_pairwise_dist
+    if enable_cython_pairwise_dist is not None:
+        local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
 
 
 @contextmanager
@@ -130,7 +138,7 @@ def config_context(
     print_changed_only=None,
     display=None,
     pairwise_dist_chunk_size=None,
-    use_pairwise_dist=None,
+    enable_cython_pairwise_dist=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -173,11 +181,19 @@ def config_context(
         The number of vectors per chunk for PairwiseDistancesReduction.
         Default is 256 (suitable for most of modern laptops' caches and architectures).
 
+        Intended for easier benchmarking and testing of scikit-learn internals.
+        End users are not expected to benefit from customizing this configuration
+        setting.
+
         .. versionadded:: 1.1
 
-    use_pairwise_dist : bool, default=None
+    enable_cython_pairwise_dist : bool, default=None
         Use PairwiseDistancesReduction when possible.
         Default is True.
+
+        Intended for easier benchmarking and testing of scikit-learn internals.
+        End users are not expected to benefit from customizing this configuration
+        setting.
 
         .. versionadded:: 1.1
 
@@ -215,7 +231,7 @@ def config_context(
         print_changed_only=print_changed_only,
         display=display,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
-        use_pairwise_dist=use_pairwise_dist,
+        enable_cython_pairwise_dist=enable_cython_pairwise_dist,
     )
 
     try:

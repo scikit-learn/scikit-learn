@@ -17,7 +17,7 @@ def test_config_context():
         "print_changed_only": True,
         "display": "text",
         "pairwise_dist_chunk_size": 256,
-        "use_pairwise_dist": True,
+        "enable_cython_pairwise_dist": True,
     }
 
     # Not using as a context manager affects nothing
@@ -31,7 +31,7 @@ def test_config_context():
             "print_changed_only": True,
             "display": "text",
             "pairwise_dist_chunk_size": 256,
-            "use_pairwise_dist": True,
+            "enable_cython_pairwise_dist": True,
         }
     assert get_config()["assume_finite"] is False
 
@@ -62,7 +62,7 @@ def test_config_context():
         "print_changed_only": True,
         "display": "text",
         "pairwise_dist_chunk_size": 256,
-        "use_pairwise_dist": True,
+        "enable_cython_pairwise_dist": True,
     }
 
     # No positional arguments
