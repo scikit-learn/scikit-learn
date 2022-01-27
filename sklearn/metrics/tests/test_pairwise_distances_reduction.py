@@ -43,6 +43,7 @@ def _get_dummy_metric_params_list(metric: str, n_features: int):
             # Recent scipy versions accept weights in the Minkowski metric directly:
             # type: ignore
             minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
+
         return minkowski_kwargs
 
     # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.

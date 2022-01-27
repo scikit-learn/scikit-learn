@@ -790,7 +790,8 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: support sparse matrices
+            # TODO: should no longer be needed once PairwiseDistancesArgKmin
+            # is extended to accept sparse and/or float32 inputs.
 
             reduce_func = partial(
                 self._kneighbors_reduce_func,
@@ -1107,7 +1108,9 @@ class RadiusNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: support sparse matrices
+            # TODO: should no longer be needed once we have Cython-optimized
+            # implementation for radius queries, with support for sparse and/or
+            # float32 inputs.
 
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == "euclidean":
