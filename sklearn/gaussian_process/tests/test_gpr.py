@@ -677,68 +677,40 @@ def test_gpr_predict_error():
 
 
 @pytest.mark.parametrize("normalize_y", [True, False])
-def test_multitarget_std_cov_shape(normalize_y):
-    """Check the shape of std. dev. and covariance in multi-output setting.
+@pytest.mark.parametrize("n_targets", [0, 1, 10])
+def test_multitarget_shape(normalize_y, n_targets):
+    """Check the shapes of y_mean, y_std, and y_cov in single-output
+    (n_targets=0) and multi-output settings, including the edge case when
+    n_targets=1, where the sklearn convention is to squeeze the predictions.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/17394
     https://github.com/scikit-learn/scikit-learn/issues/18065
+    https://github.com/scikit-learn/scikit-learn/issues/22174
     """
     rng = np.random.RandomState(1234)
 
-    n_samples, n_features, n_targets = 12, 10, 6
+    n_features, n_samples_train, n_samples_test = 6, 9, 7
 
-    X_train = rng.randn(n_samples, n_features)
-    y_train = rng.randn(n_samples, n_targets)
-    X_test = rng.randn(n_samples, n_features)
+    y_train_shape = (n_samples_train,)
+    if n_targets >= 1:
+        y_train_shape = y_train_shape + (n_targets,)
 
-    # Generic kernel
-    kernel = WhiteKernel(1.0, (1e-1, 1e3)) * C(10.0, (1e-3, 1e3))
-
-    model = GaussianProcessRegressor(
-        kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=normalize_y
-    )
-    model.fit(X_train, y_train)
-    y_pred, y_std = model.predict(X_test, return_std=True)
-    _, y_cov = model.predict(X_test, return_cov=True)
-
-    assert y_pred.shape == (n_samples, n_targets)
-    assert y_std.shape == (n_samples, n_targets)
-    assert y_cov.shape == (n_samples, n_samples, n_targets)
-
-
-@pytest.mark.parametrize("normalize_y", [True, False])
-def test_y_std_cov_with_multitarget(normalize_y):
-    """Check the shapes of `y_std` and `y_cov` in multi-target scene.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/22174
-    """
-
-    rng = np.random.RandomState(123)
-
-    n_features, n_targets = 3, 2
-    n_samples_train, n_samples_test = 9, 7
+    # By convention single-output data is squeezed upon prediction
+    y_test_shape = (n_samples_test,)
+    if n_targets > 1:
+        y_test_shape = y_test_shape + (n_targets,)
 
     X_train = rng.randn(n_samples_train, n_features)
     X_test = rng.randn(n_samples_test, n_features)
+    y_train = rng.randn(*y_train_shape)
 
-    # Test different target shapes
-    for y_train_shape in ((), (1,), (n_targets,)):
-        y_train = rng.randn(n_samples_train, *y_train_shape)
+    model = GaussianProcessRegressor(normalize_y=normalize_y)
+    model.fit(X_train, y_train)
 
-        y_test_shape = (n_samples_test,) + y_train.shape[1:]
-        # If n_targets = 1, convention is to squeeze the predictions
-        if len(y_test_shape) > 1 and y_test_shape[1] == 1:
-            y_test_shape = y_test_shape[:1]
+    y_pred, y_std = model.predict(X_test, return_std=True)
+    _, y_cov = model.predict(X_test, return_cov=True)
 
-        # Test normalized and non-normalized models
-        model = GaussianProcessRegressor(normalize_y=normalize_y)
-        model.fit(X_train, y_train)
-
-        y_pred, y_std = model.predict(X_test, return_std=True)
-        _, y_cov = model.predict(X_test, return_cov=True)
-
-        assert y_pred.shape == y_test_shape
-        assert y_std.shape == y_test_shape
-        assert y_cov.shape == (n_samples_test,) + y_test_shape
+    assert y_pred.shape == y_test_shape
+    assert y_std.shape == y_test_shape
+    assert y_cov.shape == (n_samples_test,) + y_test_shape
