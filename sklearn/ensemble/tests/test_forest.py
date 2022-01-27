@@ -229,7 +229,7 @@ def test_poisson_vs_mse():
     forest_mse.fit(X_train, y_train)
     dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
 
-    for X, y, val in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
+    for X, y, data_name in [(X_train, y_train, "train"), (X_test, y_test, "test")]:
         metric_poi = mean_poisson_deviance(y, forest_poi.predict(X))
         # squared_error forest might produce non-positive predictions => clip
         # If y = 0 for those, the poisson deviance gets too good.
@@ -244,9 +244,9 @@ def test_poisson_vs_mse():
         # As squared_error might correctly predict 0 in train set, its train
         # score can be better than Poisson. This is no longer the case for the
         # test set. But keep the above comment for clipping in mind.
-        if val == "test":
+        if data_name == "test":
             assert metric_poi < metric_mse
-        assert metric_poi < 0.5 * metric_dummy
+        assert metric_poi < 0.8 * metric_dummy
 
 
 @pytest.mark.parametrize("criterion", ("poisson", "squared_error"))
