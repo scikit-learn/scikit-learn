@@ -278,6 +278,7 @@ def _yield_outliers_checks(estimator):
         # test if NotFittedError is raised
         if _safe_tags(estimator, key="requires_fit"):
             yield check_estimators_unfitted
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_all_checks(estimator):
@@ -530,7 +531,7 @@ def parametrize_with_checks(estimators):
 def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
-    This estimator will run an extensive test-suite for input validation,
+    This function will run an extensive test-suite for input validation,
     shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
@@ -3261,11 +3262,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # labeled, hence n_iter_ = 0 is valid.
     not_run_check_n_iter = [
         "Ridge",
-        "SVR",
-        "NuSVR",
-        "NuSVC",
         "RidgeClassifier",
-        "SVC",
         "RandomizedLasso",
         "LogisticRegressionCV",
         "LinearSVC",
@@ -3290,9 +3287,11 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 
         set_random_state(estimator, 0)
 
+        X = _pairwise_estimator_convert_X(X, estimator_orig)
+
         estimator.fit(X, y_)
 
-        assert estimator.n_iter_ >= 1
+        assert np.all(estimator.n_iter_ >= 1)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3791,7 +3790,16 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
-    estimator.fit(X, y)
+
+    # Check that calling `fit` does not raise any warnings about feature names.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "error",
+            message="X does not have valid feature names",
+            category=UserWarning,
+            module="sklearn",
+        )
+        estimator.fit(X, y)
 
     if not hasattr(estimator, "feature_names_in_"):
         raise ValueError(
@@ -3853,6 +3861,12 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
         ),
     ]
+    params = {
+        key: value
+        for key, value in estimator.get_params().items()
+        if "early_stopping" in key
+    }
+    early_stopping_enabled = any(value is True for value in params.values())
 
     for invalid_name, additional_message in invalid_names:
         X_bad = pd.DataFrame(X, columns=invalid_name)
@@ -3876,7 +3890,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
                     method(X_bad)
 
         # partial_fit checks on second call
-        if not hasattr(estimator, "partial_fit"):
+        # Do not call partial fit if early_stopping is on
+        if not hasattr(estimator, "partial_fit") or early_stopping_enabled:
             continue
 
         estimator = clone(estimator_orig)
@@ -3929,6 +3944,7 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     feature_names_out = transformer.get_feature_names_out(input_features)
     assert feature_names_out is not None
     assert isinstance(feature_names_out, np.ndarray)
+    assert feature_names_out.dtype == object
     assert all(isinstance(name, str) for name in feature_names_out)
 
     if isinstance(X_transform, tuple):
