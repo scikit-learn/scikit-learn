@@ -239,9 +239,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y = (y - self._y_train_mean) / self._y_train_std
 
         else:
-            self._y_train_mean = np.zeros(1)
-            # Ensure that there is one entry in _y_train_std for each target
-            self._y_train_std = np.ones(y.shape[1:])
+            shape_y_stats = (y.shape[1],) if y.ndim == 2 else 1
+            self._y_train_mean = np.zeros(shape=shape_y_stats)
+            self._y_train_std = np.ones(shape=shape_y_stats)
 
         if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
             if self.alpha.shape[0] == 1:
@@ -479,10 +479,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
         else:
             y_samples = [
-                rng.multivariate_normal(y_mean[:, i], y_cov[..., i], n_samples).T[
-                    :, np.newaxis
-                ]
-                for i in range(y_mean.shape[1])
+                rng.multivariate_normal(
+                    y_mean[:, target], y_cov[..., target], n_samples
+                ).T[:, np.newaxis]
+                for target in range(y_mean.shape[1])
             ]
             y_samples = np.hstack(y_samples)
         return y_samples

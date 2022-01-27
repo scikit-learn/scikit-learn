@@ -268,15 +268,6 @@ Changelog
   F-statistic).
   :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
-:mod:`sklearn.gaussian_process`
-...............................
-
-- |Fix| `predict` and `sample_y` functions of
-  :class:`sklearn.gaussian_process.GaussianProcessRegressor` now return
-  arrays of the correct shape in single-target and multi-target cases, and for
-  both `normalize_y=False` and `normalize_y=True`.
-  :pr:`22199` by :user:`Tenavi Nakamura-Zimmerer <Tenavi>`.
-
 :mod:`sklearn.impute`
 .....................
 

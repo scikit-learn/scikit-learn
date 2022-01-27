@@ -18,7 +18,6 @@ from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKern
 from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
-
 from sklearn.utils._testing import (
     assert_array_less,
     assert_almost_equal,
@@ -361,13 +360,17 @@ def test_y_multioutput():
     assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
 
     # Standard deviation and covariance do not depend on output
-    for d in range(2):
-        assert_almost_equal(y_std_1d, y_std_2d[..., d])
-        assert_almost_equal(y_cov_1d, y_cov_2d[..., d])
+    for target in range(y_2d.shape[1]):
+        assert_almost_equal(y_std_1d, y_std_2d[..., target])
+        assert_almost_equal(y_cov_1d, y_cov_2d[..., target])
 
     y_sample_1d = gpr.sample_y(X2, n_samples=10)
     y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
-    assert_almost_equal(y_sample_1d, y_sample_2d[:, 0])
+
+    assert y_sample_1d.shape == (5, 10)
+    assert y_sample_2d.shape == (5, 2, 10)
+    # Only the first target will be equal
+    assert_almost_equal(y_sample_1d, y_sample_2d[:, 0, :])
 
     # Test hyperparameter optimization
     for kernel in kernels:
@@ -547,8 +550,6 @@ def test_bound_check_fixed_hyperparameter():
     GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
 
-# FIXME: we should test for multitargets as well. However, GPR is broken:
-# see: https://github.com/scikit-learn/scikit-learn/pull/19706
 @pytest.mark.parametrize("kernel", kernels)
 def test_constant_target(kernel):
     """Check that the std. dev. is affected to 1 when normalizing a constant
@@ -568,6 +569,26 @@ def test_constant_target(kernel):
     assert_allclose(y_pred, y_constant)
     # set atol because we compare to zero
     assert_allclose(np.diag(y_cov), 0.0, atol=1e-9)
+
+    # Test multi-target data
+    n_samples, n_targets = X.shape[0], 2
+    rng = np.random.RandomState(0)
+    y = np.concatenate(
+        [
+            rng.normal(size=(n_samples, 1)),  # non-constant target
+            np.full(shape=(n_samples, 1), fill_value=2),  # constant target
+        ],
+        axis=1,
+    )
+
+    gpr.fit(X, y)
+    Y_pred, Y_cov = gpr.predict(X, return_cov=True)
+
+    assert_allclose(Y_pred[:, 1], 2)
+    assert_allclose(np.diag(Y_cov[..., 1]), 0.0, atol=1e-9)
+
+    assert Y_pred.shape == (n_samples, n_targets)
+    assert Y_cov.shape == (n_samples, n_samples, n_targets)
 
 
 def test_gpr_consistency_std_cov_non_invertible_kernel():
@@ -655,8 +676,9 @@ def test_gpr_predict_error():
         gpr.predict(X, return_cov=True, return_std=True)
 
 
-def test_y_std_with_multitarget_normalized():
-    """Check the proper normalization of `y_std` and `y_cov` in multi-target scene.
+@pytest.mark.parametrize("normalize_y", [True, False])
+def test_multitarget_std_cov_shape(normalize_y):
+    """Check the shape of std. dev. and covariance in multi-output setting.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/17394
@@ -674,7 +696,7 @@ def test_y_std_with_multitarget_normalized():
     kernel = WhiteKernel(1.0, (1e-1, 1e3)) * C(10.0, (1e-3, 1e3))
 
     model = GaussianProcessRegressor(
-        kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=True
+        kernel=kernel, n_restarts_optimizer=10, alpha=0.1, normalize_y=normalize_y
     )
     model.fit(X_train, y_train)
     y_pred, y_std = model.predict(X_test, return_std=True)
@@ -685,7 +707,8 @@ def test_y_std_with_multitarget_normalized():
     assert y_cov.shape == (n_samples, n_samples, n_targets)
 
 
-def test_y_std_cov_with_multitarget():
+@pytest.mark.parametrize("normalize_y", [True, False])
+def test_y_std_cov_with_multitarget(normalize_y):
     """Check the shapes of `y_std` and `y_cov` in multi-target scene.
 
     Non-regression test for:
@@ -710,16 +733,12 @@ def test_y_std_cov_with_multitarget():
             y_test_shape = y_test_shape[:1]
 
         # Test normalized and non-normalized models
-        models = [
-            GaussianProcessRegressor(normalize_y=True),
-            GaussianProcessRegressor(normalize_y=False),
-        ]
+        model = GaussianProcessRegressor(normalize_y=normalize_y)
+        model.fit(X_train, y_train)
 
-        for model in models:
-            model.fit(X_train, y_train)
-            y_pred, y_std = model.predict(X_test, return_std=True)
-            _, y_cov = model.predict(X_test, return_cov=True)
+        y_pred, y_std = model.predict(X_test, return_std=True)
+        _, y_cov = model.predict(X_test, return_cov=True)
 
-            assert y_pred.shape == y_test_shape
-            assert y_std.shape == y_test_shape
-            assert y_cov.shape == (n_samples_test,) + y_test_shape
+        assert y_pred.shape == y_test_shape
+        assert y_std.shape == y_test_shape
+        assert y_cov.shape == (n_samples_test,) + y_test_shape

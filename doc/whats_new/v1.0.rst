@@ -88,6 +88,17 @@ Changelog
   precomputed dense distance matrix where the neighbors graph has multiple
   disconnected components. :pr:`21915` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| `predict` and `sample_y` functions of
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` now return
+  arrays of the correct shape in single-target and multi-target cases, and for
+  both `normalize_y=False` and `normalize_y=True`.
+  :pr:`21996` by :user:`Guillaume Lemaitre <glemaitre>`,
+  :user:`Aidar Shakerimoff <AidarShakerimoff>` and
+  :user:`Tenavi Nakamura-Zimmerer <Tenavi>`.
+
 :mod:`sklearn.metrics`
 ......................
 
