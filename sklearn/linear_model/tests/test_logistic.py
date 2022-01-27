@@ -1,3 +1,4 @@
+import itertools
 import os
 import re
 import warnings
@@ -801,26 +802,19 @@ def test_logistic_regression_solvers():
     X, y = make_classification(n_features=10, n_informative=5, random_state=0)
 
     params = dict(fit_intercept=False, random_state=42, multi_class="ovr")
-    ncg = LogisticRegression(solver="newton-cg", **params)
-    lbf = LogisticRegression(solver="lbfgs", **params)
-    lib = LogisticRegression(solver="liblinear", **params)
-    sag = LogisticRegression(solver="sag", **params)
-    saga = LogisticRegression(solver="saga", **params)
-    ncg.fit(X, y)
-    lbf.fit(X, y)
-    sag.fit(X, y)
-    saga.fit(X, y)
-    lib.fit(X, y)
-    assert_array_almost_equal(ncg.coef_, lib.coef_, decimal=3)
-    assert_array_almost_equal(lib.coef_, lbf.coef_, decimal=3)
-    assert_array_almost_equal(ncg.coef_, lbf.coef_, decimal=3)
-    assert_array_almost_equal(sag.coef_, lib.coef_, decimal=3)
-    assert_array_almost_equal(sag.coef_, ncg.coef_, decimal=3)
-    assert_array_almost_equal(sag.coef_, lbf.coef_, decimal=3)
-    assert_array_almost_equal(saga.coef_, sag.coef_, decimal=3)
-    assert_array_almost_equal(saga.coef_, lbf.coef_, decimal=3)
-    assert_array_almost_equal(saga.coef_, ncg.coef_, decimal=3)
-    assert_array_almost_equal(saga.coef_, lib.coef_, decimal=3)
+    solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga", "trust-ncg")
+
+    # dict of fitted logistic regressors
+    regressors = {
+        solver: LogisticRegression(solver=solver, **params).fit(X, y)
+        for solver in solvers
+    }
+
+    # test over unordered pairs of distinct solvers
+    for solver_1, solver_2 in itertools.combinations(regressors):
+        assert_array_almost_equal(
+            regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=3
+        )
 
 
 def test_logistic_regression_solvers_multiclass():
@@ -829,26 +823,19 @@ def test_logistic_regression_solvers_multiclass():
     )
     tol = 1e-7
     params = dict(fit_intercept=False, tol=tol, random_state=42, multi_class="ovr")
-    ncg = LogisticRegression(solver="newton-cg", **params)
-    lbf = LogisticRegression(solver="lbfgs", **params)
-    lib = LogisticRegression(solver="liblinear", **params)
-    sag = LogisticRegression(solver="sag", max_iter=1000, **params)
-    saga = LogisticRegression(solver="saga", max_iter=10000, **params)
-    ncg.fit(X, y)
-    lbf.fit(X, y)
-    sag.fit(X, y)
-    saga.fit(X, y)
-    lib.fit(X, y)
-    assert_array_almost_equal(ncg.coef_, lib.coef_, decimal=4)
-    assert_array_almost_equal(lib.coef_, lbf.coef_, decimal=4)
-    assert_array_almost_equal(ncg.coef_, lbf.coef_, decimal=4)
-    assert_array_almost_equal(sag.coef_, lib.coef_, decimal=4)
-    assert_array_almost_equal(sag.coef_, ncg.coef_, decimal=4)
-    assert_array_almost_equal(sag.coef_, lbf.coef_, decimal=4)
-    assert_array_almost_equal(saga.coef_, sag.coef_, decimal=4)
-    assert_array_almost_equal(saga.coef_, lbf.coef_, decimal=4)
-    assert_array_almost_equal(saga.coef_, ncg.coef_, decimal=4)
-    assert_array_almost_equal(saga.coef_, lib.coef_, decimal=4)
+    solvers = ("newton-cg", "lbfgs", "liblinear", "sag", "saga", "trust-ncg")
+
+    # dict of fitted logistic regressors
+    regressors = {
+        solver: LogisticRegression(solver=solver, **params).fit(X, y)
+        for solver in solvers
+    }
+
+    # test over unordered pairs of distinct solvers
+    for solver_1, solver_2 in itertools.combinations(regressors):
+        assert_array_almost_equal(
+            regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=4
+        )
 
 
 def test_logistic_regressioncv_class_weights():
