@@ -52,7 +52,7 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 def kmeans_plusplus(
     X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
 ):
-    """Init n_clusters seeds according to k-means++
+    """Init n_clusters seeds according to k-means++.
 
     .. versionadded:: 0.24
 
@@ -62,7 +62,7 @@ def kmeans_plusplus(
         The data to pick seeds from.
 
     n_clusters : int
-        The number of centroids to initialize
+        The number of centroids to initialize.
 
     x_squared_norms : array-like of shape (n_samples,), default=None
         Squared Euclidean norm of each data point.

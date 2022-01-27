@@ -214,6 +214,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
+  calls :func:`check_array` with parameter `force_all_finite=False` for non
+  initial warm-start runs as it has already been checked before.
+  :pr:`22159` by :user:`Geoffrey Paris <Geoffrey-Paris>`
+
 - |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the new private loss
   function module.
@@ -268,6 +273,17 @@ Changelog
   F-statistic).
   :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+- |Fix| `predict` and `sample_y` functions of
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` now return
+  arrays of the correct shape in single-target and multi-target cases, and for
+  both `normalize_y=False` and `normalize_y=True`.
+  :pr:`22199` by :user:`Tenavi Nakamura-Zimmerer <Tenavi>`.
+- |Fix| :class:`gaussian_process.GaussianProcessClassifier` raises
+  a more informative error if `CompoundKernel` is passed via `kernel`.
+  :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -317,6 +333,9 @@ Changelog
 - |Enhancement| :class:`linear_model.QuantileRegressor` support sparse input
   for the highs based solvers.
   :pr:`21086` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
+  In addition, those solvers now use the CSC matrix right from the
+  beginning which speeds up fitting.
+  :pr:`22206` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| Rename parameter `base_estimator` to `estimator` in
   :class:`linear_model.RANSACRegressor` to improve readability and consistency.
@@ -376,6 +395,11 @@ Changelog
 - |Enhancement| raise an error during cross-validation when the fits for all the
   splits failed. Similarly raise an error during grid-search when the fits for
   all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.
+
+- |Enhancement| it is now possible to pass `scoring="matthews_corrcoef"` to all
+  model selection tools with a `scoring` argument to use the Matthews
+  correlation coefficient (MCC). :pr:`22203` by :user:`Olivier Grisel
+  <ogrisel>`.
 
 - |Fix| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.HalvingGridSearchCV`

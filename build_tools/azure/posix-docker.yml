@@ -36,11 +36,23 @@ jobs:
     DISTRIB: ''
     DOCKER_CONTAINER: ''
     SHOW_SHORT_SUMMARY: 'false'
+    CCACHE_DIR: $(Pipeline.Workspace)/ccache
+    CCACHE_COMPRESS: '1'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    - task: Cache@2
+      inputs:
+        key: '"ccache-v1" | "$(Agent.JobName)" | "$(Build.BuildNumber)"'
+        restoreKeys: |
+          "ccache-v1" | "$(Agent.JobName)"
+        path: $(CCACHE_DIR)
+      displayName: ccache
+      continueOnError: true
+    - script: >
+        mkdir -p $CCACHE_DIR
     # Container is detached and sleeping, allowing steps to run commands
     # in the container. The TEST_DIR is mapped allowing the host to access
     # the JUNITXML file
@@ -48,6 +60,7 @@ jobs:
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
         --volume $PWD:/io
+        --volume $CCACHE_DIR:/ccache
         -w /io
         --detach
         --name skcontainer
@@ -71,6 +84,8 @@ jobs:
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
         -e BLAS=$BLAS
         -e CPU_COUNT=$CPU_COUNT
+        -e CCACHE_DIR=/ccache
+        -e CCACHE_COMPRESS=$CCACHE_COMPRESS
         $DOCKER_CONTAINER
         sleep 1000000
       displayName: 'Start container'
