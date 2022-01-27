@@ -54,6 +54,8 @@ mamba install --verbose -y  ccache \
 setup_ccache
 
 if [[ "$COVERAGE" == "true" ]]; then
+    # coverage is pinned to 6.2 because 6.3 multiprocessing fork-safe
+    # cf. https://github.com/nedbat/coveragepy/issues/1310
     mamba install --verbose -y codecov pytest-cov coverage==6.2
 fi
 
