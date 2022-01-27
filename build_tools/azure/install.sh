@@ -137,7 +137,7 @@ python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
                       $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
+    python -m pip install codecov pytest-cov coverage==6.2
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then

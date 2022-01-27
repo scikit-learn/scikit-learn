@@ -24,7 +24,7 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage codecov pytest-cov
+    pip install coverage codecov pytest-cov coverage==6.2
 fi
 
 python --version

@@ -54,7 +54,7 @@ mamba install --verbose -y  ccache \
 setup_ccache
 
 if [[ "$COVERAGE" == "true" ]]; then
-    mamba install --verbose -y codecov pytest-cov
+    mamba install --verbose -y codecov pytest-cov coverage==6.2
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
