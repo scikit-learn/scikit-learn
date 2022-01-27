@@ -1000,7 +1000,7 @@ class CalibrationDisplay:
     .. versionadded:: 1.0
 
     Parameters
-    -----------
+    ----------
     prob_true : ndarray of shape (n_bins,)
         The proportion of samples whose class is the positive class (fraction
         of positives), in each bin.

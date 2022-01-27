@@ -3944,6 +3944,7 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     feature_names_out = transformer.get_feature_names_out(input_features)
     assert feature_names_out is not None
     assert isinstance(feature_names_out, np.ndarray)
+    assert feature_names_out.dtype == object
     assert all(isinstance(name, str) for name in feature_names_out)
 
     if isinstance(X_transform, tuple):
