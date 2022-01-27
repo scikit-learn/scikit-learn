@@ -817,12 +817,7 @@ def test_logistic_regression_solvers():
 
 
 def test_logistic_regression_solvers_multiclass():
-    """
-    Test that available logistic solvers converge to the same result on a fixed
-    synthetic dataset. The solvers are compared unordered pairwise omitting self-
-    comparisons. Specific solvers have increased `max_iter` values to allow for
-    proper convergence.
-    """
+    """Test solvers converge to the same result for multiclass problems."""
     X, y = make_classification(
         n_samples=20, n_features=20, n_informative=10, n_classes=3, random_state=0
     )
