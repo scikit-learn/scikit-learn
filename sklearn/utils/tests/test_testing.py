@@ -446,7 +446,7 @@ class MockMetaEstimator:
         """This is available only if delegate has score.
 
         Parameters
-        ----------
+        ---------
         y : ndarray
             Parameter y
         """
@@ -495,7 +495,7 @@ class MockMetaEstimatorDeprecatedDelegation:
         """This is available only if delegate has score.
 
         Parameters
-        ----------
+        ---------
         y : ndarray
             Parameter y
         """
@@ -605,18 +605,13 @@ def test_check_docstring_parameters(mock_meta):
             "potentially wrong underline length... ",
             "Parameters ",
             "--------- in ",
-            "This is available only if delegate has predict_proba.",
         ],
         [
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
-            "There's a parameter name mismatch in function docstring w.r.t. function"
-            " signature, at index 0 diff: 'X' != 'y'",
-            "Full diff:",
-            "- ['X']",
-            "?   ^",
-            "+ ['y']",
-            "?   ^",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
             "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",

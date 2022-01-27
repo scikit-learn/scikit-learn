@@ -665,7 +665,7 @@ def check_docstring_parameters(func, doc=None, ignore=None):
                     # Catch warning raised as of numpydoc 1.2 when
                     # the underline length for a section of a docstring
                     # is not consistent.
-                    message = str(exp).split("\n")[:4]
+                    message = str(exp).split("\n")[:3]
                     incorrect += [f"In function: {func_name}"] + message
                     return incorrect
                 records.append(str(exp))
