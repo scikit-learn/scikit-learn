@@ -221,11 +221,26 @@ Changelog
   `fit` instead of `__init__`.
   :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
 
+- |Enhancement| :class:`decomposition.TruncatedSVD` exposes the parameter
+  `n_oversamples` and `power_iteration_normalizer` to tune
+  :func:`sklearn.decomposition.randomized_svd` and
+  get accurate results when the number of features is large, the rank of
+  the matrix is high, or other features of the matrix make low rank
+  approximation difficult.
+  :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
+
+- |Enhancement| :class:`decomposition.PCA` exposes the parameter
+  `power_iteration_normalizer` to tune
+  :func:`sklearn.decomposition.randomized_svd` and
+  get more accurate results when low rank approximation is difficult.
+  :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
+
 - |Fix| :class:`decomposition.PCA` and :class:`decomposition.IncrementalPCA`
   more safely calculate precision using the inverse of the covariance matrix
   if `self.noise_variance_` is zero.
   :pr:`22300` by :user:`Meekail Zain <micky774>` and :pr:`15948` by
   :user:`sysuresh`
+
 
 :mod:`sklearn.ensemble`
 .......................
