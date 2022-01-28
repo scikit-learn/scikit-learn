@@ -411,9 +411,12 @@ def nan_euclidean_distances(
 
     Parameters
     ----------
-    X : array-like of shape=(n_samples_X, n_features)
+    X : array-like of shape (n_samples_X, n_features)
+        An array where each row is a sample and each column is a feature.
 
-    Y : array-like of shape=(n_samples_Y, n_features), default=None
+    Y : array-like of shape (n_samples_Y, n_features), default=None
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
 
     squared : bool, default=False
         Return squared Euclidean distances.
@@ -427,10 +430,19 @@ def nan_euclidean_distances(
     Returns
     -------
     distances : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`.
 
     See Also
     --------
     paired_distances : Distances between pairs of elements of X and Y.
+
+    References
+    ----------
+    * John K. Dixon, "Pattern Recognition with Partly Missing Data",
+      IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
+      10, pp. 617 - 621, Oct. 1979.
+      http://ieeexplore.ieee.org/abstract/document/4310090/
 
     Examples
     --------
@@ -445,13 +457,6 @@ def nan_euclidean_distances(
     >>> nan_euclidean_distances(X, [[0, 0]])
     array([[1.        ],
            [1.41421356]])
-
-    References
-    ----------
-    * John K. Dixon, "Pattern Recognition with Partly Missing Data",
-      IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
-      10, pp. 617 - 621, Oct. 1979.
-      http://ieeexplore.ieee.org/abstract/document/4310090/
     """
 
     force_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
@@ -799,9 +804,11 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     Parameters
     ----------
     X : array-like of shape (n_samples_X, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Y : array-like of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
 
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
@@ -819,7 +826,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
         the pairwise L1 distances.
 
     Notes
-    --------
+    -----
     When X and/or Y are CSR sparse matrices and they are not already
     in canonical format, this function modifies them in-place to
     make them canonical.
@@ -953,19 +960,24 @@ def paired_manhattan_distances(X, Y):
 
 def paired_cosine_distances(X, Y):
     """
-    Computes the paired cosine distances between X and Y.
+    Compute the paired cosine distances between X and Y.
 
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Y : array-like of shape (n_samples, n_features)
+        An array where each row is a sample and each column is a feature.
 
     Returns
     -------
     distances : ndarray of shape (n_samples,)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`, where `distances[i]` is the
+        distance between `X[i]` and `Y[i]`.
 
     Notes
     -----
@@ -1053,9 +1065,10 @@ def linear_kernel(X, Y=None, dense_output=True):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
@@ -1066,6 +1079,7 @@ def linear_kernel(X, Y=None, dense_output=True):
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The Gram matrix of the linear kernel, i.e. `X @ Y.T`.
     """
     X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=dense_output)

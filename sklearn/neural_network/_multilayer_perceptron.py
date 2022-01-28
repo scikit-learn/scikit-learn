@@ -10,6 +10,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 import warnings
+from itertools import chain
 
 import scipy.optimize
 
@@ -440,6 +441,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             self._fit_lbfgs(
                 X, y, activations, deltas, coef_grads, intercept_grads, layer_units
             )
+
+        # validate parameter weights
+        weights = chain(self.coefs_, self.intercepts_)
+        if not all(np.isfinite(w).all() for w in weights):
+            raise ValueError(
+                "Solver produced non-finite parameter weights. The input data may"
+                " contain large values and need to be preprocessed."
+            )
+
         return self
 
     def _validate_hyperparameters(self):
@@ -1018,7 +1028,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
 
-    :arxiv: `He, Kaiming, et al (2015). "Delving deep into rectifiers: Surpassing human-level
+    :arxiv:`He, Kaiming, et al (2015).
+        "Delving deep into rectifiers:Surpassing human-level
         performance on imagenet classification." <1502.01852>`
 
     :arxiv:`Kingma, Diederik, and Jimmy Ba (2014) "Adam: A method for

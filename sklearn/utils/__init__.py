@@ -15,6 +15,7 @@ import platform
 import struct
 import timeit
 from pathlib import Path
+from contextlib import suppress
 
 import warnings
 import numpy as np
@@ -40,6 +41,7 @@ from .validation import (
     check_scalar,
 )
 from .. import get_config
+from ._bunch import Bunch
 
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
@@ -74,60 +76,11 @@ __all__ = [
     "all_estimators",
     "DataConversionWarning",
     "estimator_html_repr",
+    "Bunch",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
-
-
-class Bunch(dict):
-    """Container object exposing keys as attributes.
-
-    Bunch objects are sometimes used as an output for functions and methods.
-    They extend dictionaries by enabling values to be accessed by key,
-    `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
-
-    Examples
-    --------
-    >>> from sklearn.utils import Bunch
-    >>> b = Bunch(a=1, b=2)
-    >>> b['b']
-    2
-    >>> b.b
-    2
-    >>> b.a = 3
-    >>> b['a']
-    3
-    >>> b.c = 6
-    >>> b['c']
-    6
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(kwargs)
-
-    def __setattr__(self, key, value):
-        self[key] = value
-
-    def __dir__(self):
-        return self.keys()
-
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError(key)
-
-    def __setstate__(self, state):
-        # Bunch pickles generated with scikit-learn 0.16.* have an non
-        # empty __dict__. This causes a surprising behaviour when
-        # loading these pickles scikit-learn 0.17: reading bunch.key
-        # uses __dict__ but assigning to bunch.key use __setattr__ and
-        # only changes bunch['key']. More details can be found at:
-        # https://github.com/scikit-learn/scikit-learn/issues/6196.
-        # Overriding __setstate__ to be a noop has the effect of
-        # ignoring the pickled __dict__
-        pass
 
 
 def safe_mask(X, mask):
@@ -986,6 +939,30 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     return chunk_n_rows
 
 
+def _is_pandas_na(x):
+    """Test if x is pandas.NA.
+
+    We intentionally do not use this function to return `True` for `pd.NA` in
+    `is_scalar_nan`, because estimators that support `pd.NA` are the exception
+    rather than the rule at the moment. When `pd.NA` is more universally
+    supported, we may reconsider this decision.
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+    """
+    with suppress(ImportError):
+        from pandas import NA
+
+        return x is NA
+
+    return False
+
+
 def is_scalar_nan(x):
     """Tests if x is NaN.
 
@@ -1108,8 +1085,7 @@ def check_matplotlib_support(caller_name):
 
 
 def check_pandas_support(caller_name):
-    """Raise ImportError with detailed error message if pandas is not
-    installed.
+    """Raise ImportError with detailed error message if pandas is not installed.
 
     Plot utilities like :func:`fetch_openml` should lazily import
     pandas and call this helper before any computation.
@@ -1118,6 +1094,11 @@ def check_pandas_support(caller_name):
     ----------
     caller_name : str
         The name of the caller that requires pandas.
+
+    Returns
+    -------
+    pandas
+        The pandas package.
     """
     try:
         import pandas  # noqa

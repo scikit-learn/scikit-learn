@@ -1107,6 +1107,7 @@ def column_or_1d(y, *, warn=False):
     Parameters
     ----------
     y : array-like
+       Input data.
 
     warn : bool, default=False
        To control display of warnings.
@@ -1114,7 +1115,12 @@ def column_or_1d(y, *, warn=False):
     Returns
     -------
     y : ndarray
+       Output data.
 
+    Raises
+    ------
+    ValueError
+        If `y` is not a 1D array or a 2D array with a single row or column.
     """
     y = np.asarray(y)
     shape = np.shape(y)
@@ -1159,7 +1165,7 @@ def check_random_state(seed):
 
 
 def has_fit_parameter(estimator, parameter):
-    """Checks whether the estimator's fit method supports the given parameter.
+    """Check whether the estimator's fit method supports the given parameter.
 
     Parameters
     ----------
@@ -1171,7 +1177,7 @@ def has_fit_parameter(estimator, parameter):
 
     Returns
     -------
-    is_parameter: bool
+    is_parameter : bool
         Whether the parameter was found to be a named parameter of the
         estimator's fit method.
 
@@ -1181,7 +1187,6 @@ def has_fit_parameter(estimator, parameter):
     >>> from sklearn.utils.validation import has_fit_parameter
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
-
     """
     return parameter in signature(estimator.fit).parameters
 
@@ -1372,7 +1377,7 @@ def check_scalar(
         The minimum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
-    max_val : float or int, default=False
+    max_val : float or int, default=None
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
@@ -1380,11 +1385,14 @@ def check_scalar(
         Whether the interval defined by `min_val` and `max_val` should include
         the boundaries. Possible choices are:
 
-        - `"left"`: only `min_val` is included in the valid interval;
-        - `"right"`: only `max_val` is included in the valid interval;
-        - `"both"`: `min_val` and `max_val` are included in the valid interval;
+        - `"left"`: only `min_val` is included in the valid interval.
+          It is equivalent to the interval `[ min_val, max_val )`.
+        - `"right"`: only `max_val` is included in the valid interval.
+          It is equivalent to the interval `( min_val, max_val ]`.
+        - `"both"`: `min_val` and `max_val` are included in the valid interval.
+          It is equivalent to the interval `[ min_val, max_val ]`.
         - `"neither"`: neither `min_val` nor `max_val` are included in the
-          valid interval.
+          valid interval. It is equivalent to the interval `( min_val, max_val )`.
 
     Returns
     -------
@@ -1398,6 +1406,7 @@ def check_scalar(
 
     ValueError
         If the parameter's value violates the given bounds.
+        If `min_val`, `max_val` and `include_boundaries` are inconsistent.
     """
 
     if not isinstance(x, target_type):
@@ -1408,6 +1417,18 @@ def check_scalar(
         raise ValueError(
             f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
             f"Possible values are: {expected_include_boundaries}."
+        )
+
+    if max_val is None and include_boundaries == "right":
+        raise ValueError(
+            "`include_boundaries`='right' without specifying explicitly `max_val` "
+            "is inconsistent."
+        )
+
+    if min_val is None and include_boundaries == "left":
+        raise ValueError(
+            "`include_boundaries`='left' without specifying explicitly `min_val` "
+            "is inconsistent."
         )
 
     comparison_operator = (
