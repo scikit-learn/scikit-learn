@@ -1500,9 +1500,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def fit(self, X, y, sample_weight=None):
         """Fit linear model with coordinate descent.
 
-        Fit is on grid of alphas to get best alpha.
-        Model is finally refit on the params estimated by cross-validation,
-        best alpha and best l1_ratio.
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
 
         Parameters
         ----------

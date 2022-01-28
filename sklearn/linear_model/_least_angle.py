@@ -1658,8 +1658,6 @@ class LarsCV(Lars):
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
-        Model is finally refit on best alpha obtained from cross-validation.
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
