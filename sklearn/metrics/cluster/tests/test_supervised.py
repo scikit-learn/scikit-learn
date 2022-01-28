@@ -456,8 +456,8 @@ def test_adjusted_rand_score_overflow():
     https://github.com/scikit-learn/scikit-learn/issues/20305
     """
     rng = np.random.RandomState(0)
-    y_true = rng.randint(0, 2, 10_000_000, dtype=np.int8)
-    y_pred = rng.randint(0, 2, 10_000_000, dtype=np.int8)
+    y_true = rng.randint(0, 2, 100_000, dtype=np.int8)
+    y_pred = rng.randint(0, 2, 100_000, dtype=np.int8)
     with pytest.warns(None) as record:
         adjusted_rand_score(y_true, y_pred)
     assert len(record) == 0

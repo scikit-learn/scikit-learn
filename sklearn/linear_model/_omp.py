@@ -554,9 +554,9 @@ def orthogonal_mp_gram(
         )
 
     if return_path:
-        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)))
+        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)), dtype=Gram.dtype)
     else:
-        coef = np.zeros((len(Gram), Xy.shape[1]))
+        coef = np.zeros((len(Gram), Xy.shape[1]), dtype=Gram.dtype)
 
     n_iters = []
     for k in range(Xy.shape[1]):
