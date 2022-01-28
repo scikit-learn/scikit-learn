@@ -50,9 +50,10 @@ Conclusion
 
 References
 ----------
-(1) :arxiv:`Halko, et al., (2009) "Finding structure with randomness:
+(1) :arxiv:`"Finding structure with randomness:
     Stochastic algorithms for constructing approximate matrix decompositions."
     <0909.4061>`
+    Halko, et al., (2009)
 
 (2) A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
