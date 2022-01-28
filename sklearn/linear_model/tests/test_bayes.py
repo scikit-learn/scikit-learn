@@ -60,8 +60,8 @@ def test_bayesian_ridge_score_values():
     n_samples = X.shape[0]
     # check with initial values of alpha and lambda (see code for the values)
     eps = np.finfo(np.float64).eps
-    alpha_ = 1. / (np.var(y) + eps)
-    lambda_ = 1.
+    alpha_ = 1.0 / (np.var(y) + eps)
+    lambda_ = 1.0
 
     # value of the parameters of the Gamma hyperpriors
     alpha_1 = 0.1
@@ -72,15 +72,22 @@ def test_bayesian_ridge_score_values():
     # compute score using formula of docstring
     score = lambda_1 * log(lambda_) - lambda_2 * lambda_
     score += alpha_1 * log(alpha_) - alpha_2 * alpha_
-    M = 1. / alpha_ * np.eye(n_samples) + 1. / lambda_ * np.dot(X, X.T)
+    M = 1.0 / alpha_ * np.eye(n_samples) + 1.0 / lambda_ * np.dot(X, X.T)
     M_inv = pinvh(M)
-    score += - 0.5 * (fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) +
-                      n_samples * log(2 * np.pi))
+    score += -0.5 * (
+        fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) + n_samples * log(2 * np.pi)
+    )
 
     # compute score with BayesianRidge
-    clf = BayesianRidge(alpha_1=alpha_1, alpha_2=alpha_2,
-                        lambda_1=lambda_1, lambda_2=lambda_2,
-                        n_iter=1, fit_intercept=False, compute_score=True)
+    clf = BayesianRidge(
+        alpha_1=alpha_1,
+        alpha_2=alpha_2,
+        lambda_1=lambda_1,
+        lambda_2=lambda_2,
+        n_iter=1,
+        fit_intercept=False,
+        compute_score=True,
+    )
     clf.fit(X, y)
 
     assert_almost_equal(clf.scores_[0], score, decimal=9)
@@ -109,7 +116,8 @@ def test_bayesian_sample_weights():
     # lambda_ and alpha_ from the Bayesian Ridge model must be identical
     br_model = BayesianRidge(compute_score=True).fit(X, y, sample_weight=w)
     rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(
-        X, y, sample_weight=w)
+        X, y, sample_weight=w
+    )
     assert_array_almost_equal(rr_model.coef_, br_model.coef_)
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
@@ -129,14 +137,14 @@ def test_toy_bayesian_ridge_object():
 def test_bayesian_initial_params():
     # Test BayesianRidge with initial values (alpha_init, lambda_init)
     X = np.vander(np.linspace(0, 4, 5), 4)
-    y = np.array([0., 1., 0., -1., 0.])    # y = (x^3 - 6x^2 + 8x) / 3
+    y = np.array([0.0, 1.0, 0.0, -1.0, 0.0])  # y = (x^3 - 6x^2 + 8x) / 3
 
     # In this case, starting from the default initial values will increase
     # the bias of the fitted curve. So, lambda_init should be small.
-    reg = BayesianRidge(alpha_init=1., lambda_init=1e-3)
+    reg = BayesianRidge(alpha_init=1.0, lambda_init=1e-3)
     # Check the R2 score nearly equals to one.
     r2 = reg.fit(X, y).score(X, y)
-    assert_almost_equal(r2, 1.)
+    assert_almost_equal(r2, 1.0)
 
 
 def test_prediction_bayesian_ridge_ard_with_constant_input():
@@ -147,10 +155,8 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value,
-                dtype=np.array(constant_value).dtype)
-    expected = np.full(n_samples, constant_value,
-                       dtype=np.array(constant_value).dtype)
+    y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
+    expected = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
 
     for clf in [BayesianRidge(), ARDRegression()]:
         y_pred = clf.fit(X, y).predict(X)
@@ -166,8 +172,7 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value,
-                dtype=np.array(constant_value).dtype)
+    y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
     expected_upper_boundary = 0.01
 
     for clf in [BayesianRidge(), ARDRegression()]:
@@ -178,8 +183,7 @@ def test_std_bayesian_ridge_ard_with_constant_input():
 def test_update_of_sigma_in_ard():
     # Checks that `sigma_` is updated correctly after the last iteration
     # of the ARDRegression algorithm. See issue #10128.
-    X = np.array([[1, 0],
-                  [0, 0]])
+    X = np.array([[1, 0], [0, 0]])
     y = np.array([0, 0])
     clf = ARDRegression(n_iter=1)
     clf.fit(X, y)
@@ -202,8 +206,8 @@ def test_toy_ard_object():
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 
-@pytest.mark.parametrize('seed', range(100))
-@pytest.mark.parametrize('n_samples, n_features', ((10, 100), (100, 10)))
+@pytest.mark.parametrize("seed", range(100))
+@pytest.mark.parametrize("n_samples, n_features", ((10, 100), (100, 10)))
 def test_ard_accuracy_on_easy_problem(seed, n_samples, n_features):
     # Check that ARD converges with reasonable accuracy on an easy problem
     # (Github issue #14055)
@@ -249,7 +253,7 @@ def test_return_std():
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
 
 
-@pytest.mark.parametrize('seed', range(10))
+@pytest.mark.parametrize("seed", range(10))
 def test_update_sigma(seed):
     # make sure the two update_sigma() helpers are equivalent. The woodbury
     # formula is used when n_samples < n_features, and the other one is used

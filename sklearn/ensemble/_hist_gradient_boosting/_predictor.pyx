@@ -1,8 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
-
 # Author: Nicolas Hug
 
 cimport cython
@@ -30,12 +25,14 @@ def _predict_from_raw_data(  # raw data = non-binned data
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
         const unsigned int [::1] f_idx_map,
+        int n_threads,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
-    for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
+    for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         out[i] = _predict_one_from_raw_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
@@ -95,12 +92,14 @@ def _predict_from_binned_data(
         const X_BINNED_DTYPE_C [:, :] binned_data,
         BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const unsigned char missing_values_bin_idx,
+        int n_threads,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
-    for i in prange(binned_data.shape[0], schedule='static', nogil=True):
+    for i in prange(binned_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         out[i] = _predict_one_from_binned_data(nodes,
                                                binned_data,
                                                binned_left_cat_bitsets, i,

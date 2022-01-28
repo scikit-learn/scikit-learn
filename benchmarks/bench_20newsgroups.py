@@ -16,10 +16,8 @@ from sklearn.naive_bayes import MultinomialNB
 
 ESTIMATORS = {
     "dummy": DummyClassifier(),
-    "random_forest": RandomForestClassifier(max_features="sqrt",
-                                            min_samples_split=10),
-    "extra_trees": ExtraTreesClassifier(max_features="sqrt",
-                                        min_samples_split=10),
+    "random_forest": RandomForestClassifier(max_features="sqrt", min_samples_split=10),
+    "extra_trees": ExtraTreesClassifier(max_features="sqrt", min_samples_split=10),
     "logistic_regression": LogisticRegression(),
     "naive_bayes": MultinomialNB(),
     "adaboost": AdaBoostClassifier(n_estimators=10),
@@ -32,14 +30,14 @@ ESTIMATORS = {
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-e', '--estimators', nargs="+", required=True,
-                        choices=ESTIMATORS)
+    parser.add_argument(
+        "-e", "--estimators", nargs="+", required=True, choices=ESTIMATORS
+    )
     args = vars(parser.parse_args())
 
     data_train = fetch_20newsgroups_vectorized(subset="train")
     data_test = fetch_20newsgroups_vectorized(subset="test")
-    X_train = check_array(data_train.data, dtype=np.float32,
-                          accept_sparse="csc")
+    X_train = check_array(data_train.data, dtype=np.float32, accept_sparse="csc")
     X_test = check_array(data_test.data, dtype=np.float32, accept_sparse="csr")
     y_train = data_train.target
     y_test = data_test.target
@@ -80,13 +78,17 @@ if __name__ == "__main__":
     print("Classification performance:")
     print("===========================")
     print()
-    print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time",
-                           "Accuracy"))
+    print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time", "Accuracy"))
     print("-" * 44)
     for name in sorted(accuracy, key=accuracy.get):
-        print("%s %s %s %s" % (name.ljust(16),
-                               ("%.4fs" % train_time[name]).center(10),
-                               ("%.4fs" % test_time[name]).center(10),
-                               ("%.4f" % accuracy[name]).center(10)))
+        print(
+            "%s %s %s %s"
+            % (
+                name.ljust(16),
+                ("%.4fs" % train_time[name]).center(10),
+                ("%.4fs" % test_time[name]).center(10),
+                ("%.4f" % accuracy[name]).center(10),
+            )
+        )
 
     print()

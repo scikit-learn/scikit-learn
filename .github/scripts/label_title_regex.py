@@ -15,15 +15,9 @@ issue = repo.get_issue(number=pr_number)
 title = issue.title
 
 
-regex_to_labels = [
-    (r"\bDOC\b", "Documentation"),
-    (r"\bCI\b", "Build / CI")
-]
+regex_to_labels = [(r"\bDOC\b", "Documentation"), (r"\bCI\b", "Build / CI")]
 
-labels_to_add = [
-    label for regex, label in regex_to_labels
-    if re.search(regex, title)
-]
+labels_to_add = [label for regex, label in regex_to_labels if re.search(regex, title)]
 
 if labels_to_add:
     issue.add_to_labels(*labels_to_add)
