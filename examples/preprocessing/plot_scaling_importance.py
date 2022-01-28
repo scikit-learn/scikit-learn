@@ -22,7 +22,8 @@ direction of maximal variance more closely corresponds with the
 height of one meter can be considered much more important than the
 change in weight of one kilogram, this is clearly incorrect.
 
-To illustrate this, PCA is performed comparing the use of data with
+To illustrate this, :class:`PCA <sklearn.decomposition.PCA>`
+is performed comparing the use of data with
 :class:`StandardScaler <sklearn.preprocessing.StandardScaler>` applied,
 to unscaled data. The results are visualized and a clear difference noted.
 The 1st principal component in the unscaled set can be seen. It can be seen
@@ -33,20 +34,20 @@ version, the orders of magnitude are roughly the same across all the features.
 
 The dataset used is the Wine Dataset available at UCI. This dataset
 has continuous features that are heterogeneous in scale due to differing
-properties that they measure (i.e alcohol content, and malic acid).
+properties that they measure (i.e. alcohol content and malic acid).
 
 The transformed data is then used to train a naive Bayes classifier, and a
 clear difference in prediction accuracies is observed wherein the dataset
 which is scaled before PCA vastly outperforms the unscaled version.
 
 """
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.naive_bayes import GaussianNB
-from sklearn import metrics
-import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
 from sklearn.datasets import load_wine
 from sklearn.pipeline import make_pipeline
 
@@ -66,58 +67,62 @@ X_train, X_test, y_train, y_test = train_test_split(
     features, target, test_size=0.30, random_state=RANDOM_STATE
 )
 
-# Fit to data and predict using pipelined GNB and PCA.
+# Fit to data and predict using pipelined GNB and PCA
 unscaled_clf = make_pipeline(PCA(n_components=2), GaussianNB())
 unscaled_clf.fit(X_train, y_train)
 pred_test = unscaled_clf.predict(X_test)
 
-# Fit to data and predict using pipelined scaling, GNB and PCA.
+# Fit to data and predict using pipelined scaling, GNB and PCA
 std_clf = make_pipeline(StandardScaler(), PCA(n_components=2), GaussianNB())
 std_clf.fit(X_train, y_train)
 pred_test_std = std_clf.predict(X_test)
 
 # Show prediction accuracies in scaled and unscaled data.
 print("\nPrediction accuracy for the normal test dataset with PCA")
-print("{:.2%}\n".format(metrics.accuracy_score(y_test, pred_test)))
+print(f"{accuracy_score(y_test, pred_test):.2%}\n")
 
 print("\nPrediction accuracy for the standardized test dataset with PCA")
-print("{:.2%}\n".format(metrics.accuracy_score(y_test, pred_test_std)))
+print(f"{accuracy_score(y_test, pred_test_std):.2%}\n")
 
 # Extract PCA from pipeline
 pca = unscaled_clf.named_steps["pca"]
 pca_std = std_clf.named_steps["pca"]
 
 # Show first principal components
-print("\nPC 1 without scaling:\n", pca.components_[0])
-print("\nPC 1 with scaling:\n", pca_std.components_[0])
+print(f"\nPC 1 without scaling:\n{pca.components_[0]}")
+print(f"\nPC 1 with scaling:\n{pca_std.components_[0]}")
 
 # Use PCA without and with scale on X_train data for visualization.
 X_train_transformed = pca.transform(X_train)
+
 scaler = std_clf.named_steps["standardscaler"]
-X_train_std_transformed = pca_std.transform(scaler.transform(X_train))
+scaled_X_train = scaler.transform(X_train)
+X_train_std_transformed = pca_std.transform(scaled_X_train)
 
 # visualize standardized vs. untouched dataset with PCA performed
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=FIG_SIZE)
 
+target_classes = range(0, 3)
+colors = ("blue", "red", "green")
+markers = ("^", "s", "o")
 
-for l, c, m in zip(range(0, 3), ("blue", "red", "green"), ("^", "s", "o")):
+for target_class, color, marker in zip(target_classes, colors, markers):
     ax1.scatter(
-        X_train_transformed[y_train == l, 0],
-        X_train_transformed[y_train == l, 1],
-        color=c,
-        label="class %s" % l,
+        x=X_train_transformed[y_train == target_class, 0],
+        y=X_train_transformed[y_train == target_class, 1],
+        color=color,
+        label=f"class {target_class}",
         alpha=0.5,
-        marker=m,
+        marker=marker,
     )
 
-for l, c, m in zip(range(0, 3), ("blue", "red", "green"), ("^", "s", "o")):
     ax2.scatter(
-        X_train_std_transformed[y_train == l, 0],
-        X_train_std_transformed[y_train == l, 1],
-        color=c,
-        label="class %s" % l,
+        x=X_train_std_transformed[y_train == target_class, 0],
+        y=X_train_std_transformed[y_train == target_class, 1],
+        color=color,
+        label=f"class {target_class}",
         alpha=0.5,
-        marker=m,
+        marker=marker,
     )
 
 ax1.set_title("Training dataset after PCA")
