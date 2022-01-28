@@ -471,8 +471,8 @@ def test_stacking_with_sample_weight(stacker, X, y):
 def test_stacking_classifier_sample_weight_fit_param():
     # check sample_weight is passed to all invocations of fit
     stacker = StackingClassifier(
-        estimators=[("lr", CheckingClassifier(expected_fit_params=["sample_weight"]))],
-        final_estimator=CheckingClassifier(expected_fit_params=["sample_weight"]),
+        estimators=[("lr", CheckingClassifier(expected_sample_weight=True))],
+        final_estimator=CheckingClassifier(expected_sample_weight=True),
     )
     stacker.fit(X_iris, y_iris, sample_weight=np.ones(X_iris.shape[0]))
 

@@ -302,8 +302,8 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> from sklearn.multioutput import MultiOutputRegressor
     >>> from sklearn.linear_model import Ridge
     >>> X, y = load_linnerud(return_X_y=True)
-    >>> clf = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
-    >>> clf.predict(X[[0]])
+    >>> regr = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
+    >>> regr.predict(X[[0]])
     array([[176..., 35..., 57...]])
     """
 
@@ -395,11 +395,12 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
-    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
-    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y)
+    >>> clf = MultiOutputClassifier(LogisticRegression()).fit(X, y)
     >>> clf.predict(X[-2:])
-    array([[1, 1, 0], [1, 1, 1]])
+    array([[1, 1, 1],
+           [1, 0, 1]])
     """
 
     def __init__(self, estimator, *, n_jobs=None):
