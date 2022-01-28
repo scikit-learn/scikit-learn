@@ -1,7 +1,7 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = [
-    "setuptools",
+    "setuptools<60.0",
     "wheel",
     "Cython>=0.28.5",
 
