@@ -5,6 +5,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import MinimalClassifier
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
@@ -428,3 +429,30 @@ def test_importance_getter(estimator, importance_getter):
     )
     selector.fit(data, y)
     assert selector.transform(data).shape[1] == 1
+
+
+def test_estimator_does_not_support_feature_names():
+    """SelectFromModel works with estimators that do not support feature_names_in_.
+
+    Non-regression test for #21949.
+    """
+    pytest.importorskip("pandas")
+    X, y = datasets.load_iris(as_frame=True, return_X_y=True)
+    all_feature_names = set(X.columns)
+
+    def importance_getter(estimator):
+        return np.arange(X.shape[1])
+
+    selector = SelectFromModel(
+        MinimalClassifier(), importance_getter=importance_getter
+    ).fit(X, y)
+
+    # selector learns the feature names itself
+    assert_array_equal(selector.feature_names_in_, X.columns)
+
+    feature_names_out = set(selector.get_feature_names_out())
+    assert feature_names_out < all_feature_names
+
+    with pytest.warns(None) as records:
+        selector.transform(X.iloc[1:3])
+    assert not [str(record.message) for record in records]

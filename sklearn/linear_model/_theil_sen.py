@@ -248,7 +248,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     max_iter : int, default=300
         Maximum number of iterations for the calculation of spatial median.
 
-    tol : float, default=1.e-3
+    tol : float, default=1e-3
         Tolerance when calculating spatial median.
 
     random_state : int, RandomState instance or None, default=None

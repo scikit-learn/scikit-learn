@@ -350,10 +350,10 @@ class RocCurveDisplay:
 
 
 @deprecated(
-    "Function `plot_roc_curve` is deprecated in 1.0 and will be "
+    "Function :func:`plot_roc_curve` is deprecated in 1.0 and will be "
     "removed in 1.2. Use one of the class methods: "
-    "RocCurveDisplay.from_predictions or "
-    "RocCurveDisplay.from_estimator."
+    ":meth:`sklearn.metric.RocCurveDisplay.from_predictions` or "
+    ":meth:`sklearn.metric.RocCurveDisplay.from_estimator`."
 )
 def plot_roc_curve(
     estimator,
@@ -373,12 +373,6 @@ def plot_roc_curve(
     Extra keyword arguments will be passed to matplotlib's `plot`.
 
     Read more in the :ref:`User Guide <visualizations>`.
-
-    .. deprecated:: 1.0
-      `plot_roc_curve` is deprecated in 1.0 and will be removed in
-       1.2. Use one of the following class methods:
-       :func:`~sklearn.metrics.RocCurveDisplay.from_predictions` or
-       :func:`~sklearn.metrics.RocCurveDisplay.from_estimator`.
 
     Parameters
     ----------
@@ -418,6 +412,9 @@ def plot_roc_curve(
         The class considered as the positive class when computing the roc auc
         metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
+
+    **kwargs : dict
+        Additional keywords arguments passed to matplotlib `plot` function.
 
         .. versionadded:: 0.24
 

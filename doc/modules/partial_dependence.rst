@@ -94,10 +94,10 @@ the plots, you can use the
 
     >>> from sklearn.inspection import partial_dependence
 
-    >>> pdp, axes = partial_dependence(clf, X, [0])
-    >>> pdp
+    >>> results = partial_dependence(clf, X, [0])
+    >>> results["average"]
     array([[ 2.466...,  2.466..., ...
-    >>> axes
+    >>> results["values"]
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly

@@ -209,6 +209,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         """
         y = check_array(
             y,
+            input_name="y",
             accept_sparse=False,
             force_all_finite=True,
             ensure_2d=False,

@@ -56,6 +56,7 @@ cdef extern from "libsvm_helper.c":
                          char *, char *, char *, char *)
 
     void copy_sv_coef   (char *, svm_model *)
+    void copy_n_iter  (char *, svm_model *)
     void copy_intercept (char *, svm_model *, np.npy_intp *)
     void copy_SV        (char *, svm_model *, np.npy_intp *)
     int copy_support (char *data, svm_model *model)
