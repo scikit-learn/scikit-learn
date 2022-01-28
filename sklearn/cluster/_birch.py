@@ -11,7 +11,12 @@ from math import sqrt
 
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
-from ..base import TransformerMixin, ClusterMixin, BaseEstimator
+from ..base import (
+    TransformerMixin,
+    ClusterMixin,
+    BaseEstimator,
+    _ClassNamePrefixFeaturesOutMixin,
+)
 from ..utils.extmath import row_norms
 from ..utils import check_scalar, deprecated
 from ..utils.validation import check_is_fitted
@@ -342,7 +347,9 @@ class _CFSubcluster:
         return sqrt(max(0, sq_radius))
 
 
-class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
+class Birch(
+    _ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
+):
     """Implements the BIRCH clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
@@ -599,6 +606,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         centroids = np.concatenate([leaf.centroids_ for leaf in self._get_leaves()])
         self.subcluster_centers_ = centroids
+        self._n_features_out = self.subcluster_centers_.shape[0]
 
         self._global_clustering(X)
         return self

@@ -16,7 +16,12 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, ClusterMixin, TransformerMixin
+from ..base import (
+    BaseEstimator,
+    ClusterMixin,
+    TransformerMixin,
+    _ClassNamePrefixFeaturesOutMixin,
+)
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
@@ -767,7 +772,9 @@ def _labels_inertia_threadpool_limit(
     return labels, inertia
 
 
-class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
+class KMeans(
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator
+):
     """K-Means clustering.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -1240,6 +1247,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             )
 
         self.cluster_centers_ = best_centers
+        self._n_features_out = self.cluster_centers_.shape[0]
         self.labels_ = best_labels
         self.inertia_ = best_inertia
         self.n_iter_ = best_n_iter
@@ -2020,6 +2028,7 @@ class MiniBatchKMeans(KMeans):
                     break
 
         self.cluster_centers_ = centers
+        self._n_features_out = self.cluster_centers_.shape[0]
 
         self.n_steps_ = i + 1
         self.n_iter_ = int(np.ceil(((i + 1) * self._batch_size) / n_samples))
@@ -2134,6 +2143,7 @@ class MiniBatchKMeans(KMeans):
             )
 
         self.n_steps_ += 1
+        self._n_features_out = self.cluster_centers_.shape[0]
 
         return self
 
