@@ -52,13 +52,13 @@ sample_weight_constant = np.ones(len(X))
 sample_weight_last_ten[15:] *= 5
 sample_weight_last_ten[9] *= 15
 
-# fit the models
+# Fit the models.
 
-# this model does not take into account sample weights
+# This model does not take into account sample weights.
 clf_no_weights = svm.SVC(gamma=1)
 clf_no_weights.fit(X, y)
 
-# this other model takes into account some dedicated sample weights
+# This other model takes into account some dedicated sample weights.
 clf_weights = svm.SVC(gamma=1)
 clf_weights.fit(X, y, sample_weight=sample_weight_last_ten)
 
