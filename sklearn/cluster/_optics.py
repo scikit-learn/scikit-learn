@@ -68,7 +68,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         should take two arrays as input and return one value indicating the
         distance between them. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string. If metric is
-        "precomputed", 'X' is assumed to be a distance matrix and must be square.
+        "precomputed", `X` is assumed to be a distance matrix and must be
+        square.
 
         Valid values for metric are:
 
@@ -127,8 +128,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         - 'ball_tree' will use :class:`BallTree`.
         - 'kd_tree' will use :class:`KDTree`.
         - 'brute' will use a brute-force search.
-        - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method. (default)
+        - 'auto' (default) will attempt to decide the most appropriate
+          algorithm based on the values passed to :meth:`fit` method.
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
@@ -405,7 +406,7 @@ def compute_optics_graph(
     Parameters
     ----------
     X : ndarray of shape (n_samples, n_features), or \
-            (n_samples, n_samples) if metric=’precomputed’
+            (n_samples, n_samples) if metric='precomputed'
         A feature array, or array of distances between samples if
         metric='precomputed'.
 

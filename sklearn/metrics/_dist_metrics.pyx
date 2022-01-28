@@ -30,6 +30,7 @@ cdef DTYPE_t INF = np.inf
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
+from ..utils import check_array
 
 ######################################################################
 # newObj function
@@ -119,9 +120,12 @@ cdef class DistanceMetric:
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
 
-    Note that "minkowski" with a non-None `w` parameter actually calls
-    `WMinkowskiDistance` with `w=w ** (1/p)` in order to be consistent with the
-    parametrization of scipy 1.8 and later.
+    .. deprecated:: 1.1
+        `WMinkowskiDistance` is deprecated in version 1.1 and will be removed in version 1.3.
+        Use `MinkowskiDistance` instead. Note that in `MinkowskiDistance`, the weights are
+        applied to the absolute differences already raised to the p power. This is different from
+        `WMinkowskiDistance` where weights are applied to the absolute differences before raising
+        to the p power. The deprecation aims to remain consistent with SciPy 1.8 convention.
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
     distance metric requires data in the form of [latitude, longitude] and both
@@ -257,25 +261,14 @@ cdef class DistanceMetric:
         if metric is MinkowskiDistance:
             p = kwargs.pop('p', 2)
             w = kwargs.pop('w', None)
-            if w is not None:
-                # Be consistent with scipy 1.8 conventions: in scipy 1.8,
-                # 'wminkowski' was removed in favor of passing a
-                # weight vector directly to 'minkowski', however
-                # the new weights apply to the absolute differences raised to
-                # the p power instead of the absolute difference as in
-                # previous versions of scipy.
-                # WMinkowskiDistance in sklearn implements the weighting
-                # scheme of the old 'wminkowski' in scipy < 1.8, hence the
-                # following adaptation:
-                return WMinkowskiDistance(p, w ** (1/p), **kwargs)
-            if p == 1:
+            if p == 1 and w is None:
                 return ManhattanDistance(**kwargs)
-            elif p == 2:
+            elif p == 2 and w is None:
                 return EuclideanDistance(**kwargs)
-            elif np.isinf(p):
+            elif np.isinf(p) and w is None:
                 return ChebyshevDistance(**kwargs)
             else:
-                return MinkowskiDistance(p, **kwargs)
+                return MinkowskiDistance(p, w, **kwargs)
         else:
             return metric(**kwargs)
 
@@ -554,27 +547,64 @@ cdef class MinkowskiDistance(DistanceMetric):
     r"""Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i |x_i - y_i|^p] ^ (1/p)
+        D(x, y) = {||u-v||}_p
+
+    when w is None.
+
+    Here is the more general expanded expression for the weighted case:
+
+    .. math::
+        D(x, y) = [\sum_i w_i *|x_i - y_i|^p] ^ (1/p)
+
+    Parameters
+    ----------
+    p : int
+        The order of the p-norm of the difference (see above).
+    w : (N,) array-like (optional)
+        The weight vector.
 
     Minkowski Distance requires p >= 1 and finite. For p = infinity,
     use ChebyshevDistance.
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
     """
-    def __init__(self, p):
+    def __init__(self, p, w=None):
         if p < 1:
             raise ValueError("p must be greater than 1")
         elif np.isinf(p):
             raise ValueError("MinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
+
         self.p = p
+        if w is not None:
+            w_array = check_array(
+                w, ensure_2d=False, dtype=DTYPE, input_name="w"
+            )
+            if (w_array < 0).any():
+                raise ValueError("w cannot contain negative weights")
+            self.vec = ReadonlyArrayWrapper(w_array)
+            self.size = self.vec.shape[0]
+        else:
+            self.vec = ReadonlyArrayWrapper(np.asarray([], dtype=DTYPE))
+            self.size = 0
+
+    def _validate_data(self, X):
+        if self.size > 0 and X.shape[1] != self.size:
+            raise ValueError("MinkowskiDistance: the size of w must match "
+                             f"the number of features ({X.shape[1]}). "
+                             f"Currently len(w)={self.size}.")
 
     cdef inline DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
         cdef DTYPE_t d=0
         cdef np.intp_t j
-        for j in range(size):
-            d += pow(fabs(x1[j] - x2[j]), self.p)
+        cdef bint has_w = self.size > 0
+        if has_w:
+            for j in range(size):
+                d += self.vec[j] * pow(fabs(x1[j] - x2[j]), self.p)
+        else:
+            for j in range(size):
+                d += pow(fabs(x1[j] - x2[j]), self.p)
         return d
 
     cdef inline DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
@@ -595,6 +625,7 @@ cdef class MinkowskiDistance(DistanceMetric):
 
 
 #------------------------------------------------------------
+# TODO: Remove in 1.3 - WMinkowskiDistance class
 # W-Minkowski Distance
 cdef class WMinkowskiDistance(DistanceMetric):
     r"""Weighted Minkowski Distance
@@ -613,6 +644,16 @@ cdef class WMinkowskiDistance(DistanceMetric):
 
     """
     def __init__(self, p, w):
+        from warnings import warn
+        warn("WMinkowskiDistance is deprecated in version 1.1 and will be "
+            "removed in version 1.3. Use MinkowskiDistance instead. Note "
+            "that in MinkowskiDistance, the weights are applied to the "
+            "absolute differences raised to the p power. This is different "
+            "from WMinkowskiDistance where weights are applied to the "
+            "absolute differences before raising to the p power. "
+            "The deprecation aims to remain consistent with SciPy 1.8 "
+            "convention.", FutureWarning)
+
         if p < 1:
             raise ValueError("p must be greater than 1")
         elif np.isinf(p):

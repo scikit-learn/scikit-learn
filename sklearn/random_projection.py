@@ -347,7 +347,9 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
-        X = self._validate_data(X, accept_sparse=["csr", "csc"])
+        X = self._validate_data(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
 
         n_samples, n_features = X.shape
 
@@ -387,7 +389,9 @@ class BaseRandomProjection(
             self.n_components_ = self.n_components
 
         # Generate a projection matrix of size [n_components, n_features]
-        self.components_ = self._make_random_matrix(self.n_components_, n_features)
+        self.components_ = self._make_random_matrix(
+            self.n_components_, n_features
+        ).astype(X.dtype, copy=False)
 
         # Check contract
         assert self.components_.shape == (self.n_components_, n_features), (
@@ -411,7 +415,9 @@ class BaseRandomProjection(
             Projected array.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+        X = self._validate_data(
+            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        )
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
@@ -430,6 +436,11 @@ class BaseRandomProjection(
         Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
         """
         return self.n_components
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
 
 class GaussianRandomProjection(BaseRandomProjection):
