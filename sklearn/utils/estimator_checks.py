@@ -317,8 +317,9 @@ def _yield_all_checks(estimator):
         for check in _yield_outliers_checks(estimator):
             yield check
     yield check_parameters_default_constructible
-    yield check_methods_sample_order_invariance
-    yield check_methods_subset_invariance
+    if not tags["non_deterministic"]:
+        yield check_methods_sample_order_invariance
+        yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_get_params_invariance
