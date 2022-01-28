@@ -11,43 +11,14 @@ import sklearn
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-# List of modules ignored when checking for numpydoc validation.
-DOCSTRING_IGNORE_LIST = [
-    "SpectralCoclustering",
-    "SpectralEmbedding",
-    "StackingRegressor",
-]
-
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn._config.config_context",
-    "sklearn._config.get_config",
-    "sklearn.base.clone",
-    "sklearn.cluster._affinity_propagation.affinity_propagation",
-    "sklearn.cluster._agglomerative.linkage_tree",
-    "sklearn.cluster._kmeans.k_means",
-    "sklearn.cluster._kmeans.kmeans_plusplus",
-    "sklearn.cluster._mean_shift.estimate_bandwidth",
-    "sklearn.cluster._mean_shift.get_bin_seeds",
-    "sklearn.cluster._mean_shift.mean_shift",
-    "sklearn.cluster._optics.cluster_optics_dbscan",
-    "sklearn.cluster._optics.cluster_optics_xi",
-    "sklearn.cluster._optics.compute_optics_graph",
     "sklearn.cluster._spectral.spectral_clustering",
-    "sklearn.compose._column_transformer.make_column_transformer",
-    "sklearn.covariance._empirical_covariance.empirical_covariance",
-    "sklearn.covariance._empirical_covariance.log_likelihood",
     "sklearn.covariance._graph_lasso.graphical_lasso",
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf_shrinkage",
-    "sklearn.covariance._shrunk_covariance.shrunk_covariance",
-    "sklearn.datasets._base.get_data_home",
-    "sklearn.datasets._base.load_boston",
     "sklearn.datasets._base.load_breast_cancer",
-    "sklearn.datasets._base.load_diabetes",
     "sklearn.datasets._base.load_digits",
-    "sklearn.datasets._base.load_files",
-    "sklearn.datasets._base.load_iris",
     "sklearn.datasets._base.load_linnerud",
     "sklearn.datasets._base.load_sample_image",
     "sklearn.datasets._base.load_wine",
@@ -58,7 +29,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._olivetti_faces.fetch_olivetti_faces",
     "sklearn.datasets._openml.fetch_openml",
-    "sklearn.datasets._rcv1.fetch_rcv1",
     "sklearn.datasets._samples_generator.make_biclusters",
     "sklearn.datasets._samples_generator.make_blobs",
     "sklearn.datasets._samples_generator.make_checkerboard",
@@ -100,26 +70,18 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.linear_model._ridge.ridge_regression",
     "sklearn.manifold._locally_linear.locally_linear_embedding",
     "sklearn.manifold._t_sne.trustworthiness",
-    "sklearn.metrics._classification.accuracy_score",
-    "sklearn.metrics._classification.balanced_accuracy_score",
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.classification_report",
     "sklearn.metrics._classification.cohen_kappa_score",
-    "sklearn.metrics._classification.confusion_matrix",
     "sklearn.metrics._classification.f1_score",
     "sklearn.metrics._classification.fbeta_score",
-    "sklearn.metrics._classification.hamming_loss",
     "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
     "sklearn.metrics._classification.precision_recall_fscore_support",
-    "sklearn.metrics._classification.precision_score",
-    "sklearn.metrics._classification.recall_score",
-    "sklearn.metrics._classification.zero_one_loss",
     "sklearn.metrics._plot.confusion_matrix.plot_confusion_matrix",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
-    "sklearn.metrics._plot.roc_curve.plot_roc_curve",
     "sklearn.metrics._ranking.auc",
     "sklearn.metrics._ranking.average_precision_score",
     "sklearn.metrics._ranking.coverage_error",
@@ -131,7 +93,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._ranking.roc_auc_score",
     "sklearn.metrics._ranking.roc_curve",
     "sklearn.metrics._ranking.top_k_accuracy_score",
-    "sklearn.metrics._regression.max_error",
     "sklearn.metrics._regression.mean_absolute_error",
     "sklearn.metrics._regression.mean_pinball_loss",
     "sklearn.metrics._scorer.make_scorer",
@@ -148,9 +109,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.pair_confusion_matrix",
     "sklearn.metrics.cluster._supervised.rand_score",
     "sklearn.metrics.cluster._supervised.v_measure_score",
-    "sklearn.metrics.cluster._unsupervised.davies_bouldin_score",
-    "sklearn.metrics.cluster._unsupervised.silhouette_samples",
-    "sklearn.metrics.cluster._unsupervised.silhouette_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.check_paired_arrays",
     "sklearn.metrics.pairwise.check_pairwise_arrays",
@@ -158,14 +116,9 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.cosine_distances",
     "sklearn.metrics.pairwise.cosine_similarity",
     "sklearn.metrics.pairwise.distance_metrics",
-    "sklearn.metrics.pairwise.euclidean_distances",
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.laplacian_kernel",
-    "sklearn.metrics.pairwise.linear_kernel",
-    "sklearn.metrics.pairwise.manhattan_distances",
-    "sklearn.metrics.pairwise.nan_euclidean_distances",
-    "sklearn.metrics.pairwise.paired_cosine_distances",
     "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
@@ -177,9 +130,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.rbf_kernel",
     "sklearn.metrics.pairwise.sigmoid_kernel",
     "sklearn.model_selection._split.check_cv",
-    "sklearn.model_selection._split.train_test_split",
-    "sklearn.model_selection._validation.cross_val_predict",
-    "sklearn.model_selection._validation.cross_val_score",
     "sklearn.model_selection._validation.cross_validate",
     "sklearn.model_selection._validation.learning_curve",
     "sklearn.model_selection._validation.permutation_test_score",
@@ -199,11 +149,8 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
-    "sklearn.utils.check_pandas_support",
-    "sklearn.utils.extmath.cartesian",
     "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
-    "sklearn.utils.extmath.randomized_range_finder",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils.extmath.squared_norm",
@@ -242,14 +189,10 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.mean_variance_axis",
     "sklearn.utils.sparsefuncs.min_max_axis",
     "sklearn.utils.tosequence",
-    "sklearn.utils.validation.as_float_array",
     "sklearn.utils.validation.assert_all_finite",
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",
     "sklearn.utils.validation.check_random_state",
-    "sklearn.utils.validation.column_or_1d",
-    "sklearn.utils.validation.has_fit_parameter",
-    "sklearn.utils.validation.indexable",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
@@ -385,7 +328,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     if estimator is not None:
         obj = getattr(estimator, method)
         try:
-            obj_signature = signature(obj)
+            obj_signature = str(signature(obj))
         except TypeError:
             # In particular we can't parse the signature of properties
             obj_signature = (
@@ -401,7 +344,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     msg = "\n\n" + "\n\n".join(
         [
             str(res["file"]),
-            obj_name + str(obj_signature),
+            obj_name + obj_signature,
             res["docstring"],
             "# Errors",
             "\n".join(
@@ -438,11 +381,6 @@ def test_docstring(Estimator, method, request):
         import_path.append(method)
 
     import_path = ".".join(import_path)
-
-    if Estimator.__name__ in DOCSTRING_IGNORE_LIST:
-        request.applymarker(
-            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
-        )
 
     res = numpydoc_validation.validate(import_path)
 

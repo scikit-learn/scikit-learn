@@ -554,9 +554,9 @@ def orthogonal_mp_gram(
         )
 
     if return_path:
-        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)))
+        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)), dtype=Gram.dtype)
     else:
-        coef = np.zeros((len(Gram), Xy.shape[1]))
+        coef = np.zeros((len(Gram), Xy.shape[1]), dtype=Gram.dtype)
 
     n_iters = []
     for k in range(Xy.shape[1]):
@@ -1022,9 +1022,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
 
-        X, y = self._validate_data(
-            X, y, y_numeric=True, ensure_min_features=2, estimator=self
-        )
+        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         max_iter = (

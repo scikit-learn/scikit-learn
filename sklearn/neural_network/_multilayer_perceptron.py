@@ -10,6 +10,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 import warnings
+from itertools import chain
 
 import scipy.optimize
 
@@ -440,6 +441,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             self._fit_lbfgs(
                 X, y, activations, deltas, coef_grads, intercept_grads, layer_units
             )
+
+        # validate parameter weights
+        weights = chain(self.coefs_, self.intercepts_)
+        if not all(np.isfinite(w).all() for w in weights):
+            raise ValueError(
+                "Solver produced non-finite parameter weights. The input data may"
+                " contain large values and need to be preprocessed."
+            )
+
         return self
 
     def _validate_hyperparameters(self):
@@ -851,11 +861,11 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Only used when ``solver='sgd'``.
 
-    learning_rate_init : double, default=0.001
+    learning_rate_init : float, default=0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
 
-    power_t : double, default=0.5
+    power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.
@@ -1325,11 +1335,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         Only used when solver='sgd'.
 
-    learning_rate_init : double, default=0.001
+    learning_rate_init : float, default=0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
 
-    power_t : double, default=0.5
+    power_t : float, default=0.5
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.

@@ -13,6 +13,7 @@ from scipy.linalg import svd
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
+from ..base import _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
@@ -156,7 +157,12 @@ def _svd_flip_1d(u, v):
 
 
 class _PLS(
-    TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator, metaclass=ABCMeta
+    _ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    RegressorMixin,
+    MultiOutputMixin,
+    BaseEstimator,
+    metaclass=ABCMeta,
 ):
     """Partial Least Squares (PLS)
 
@@ -212,7 +218,9 @@ class _PLS(
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
-        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y = check_array(
+            Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
+        )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -359,6 +367,7 @@ class _PLS(
 
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
         self.coef_ = self.coef_ * self._y_std
+        self._n_features_out = self.x_rotations_.shape[1]
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -388,7 +397,9 @@ class _PLS(
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES)
+            Y = check_array(
+                Y, input_name="Y", ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES
+            )
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Y -= self._y_mean
@@ -424,7 +435,7 @@ class _PLS(
         This transformation will only be exact if `n_components=n_features`.
         """
         check_is_fitted(self)
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        X = check_array(X, input_name="X", dtype=FLOAT_DTYPES)
         # From pls space to original space
         X_reconstructed = np.matmul(X, self.x_loadings_.T)
         # Denormalize
@@ -432,7 +443,7 @@ class _PLS(
         X_reconstructed += self._x_mean
 
         if Y is not None:
-            Y = check_array(Y, dtype=FLOAT_DTYPES)
+            Y = check_array(Y, input_name="Y", dtype=FLOAT_DTYPES)
             # From pls space to original space
             Y_reconstructed = np.matmul(Y, self.y_loadings_.T)
             # Denormalize
@@ -927,7 +938,7 @@ class CCA(_PLS):
         )
 
 
-class PLSSVD(TransformerMixin, BaseEstimator):
+class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
     This transformer simply performs a SVD on the cross-covariance matrix
@@ -1036,7 +1047,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
-        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y = check_array(
+            Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
+        )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -1073,6 +1086,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         self._y_scores = np.dot(Y, V)  # TODO: remove in 1.1
         self.x_weights_ = U
         self.y_weights_ = V
+        self._n_features_out = self.x_weights_.shape[1]
         return self
 
     # mypy error: Decorated property not supported
@@ -1151,7 +1165,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, dtype=np.float64)
+            Y = check_array(Y, input_name="Y", ensure_2d=False, dtype=np.float64)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Yr = (Y - self._y_mean) / self._y_std
