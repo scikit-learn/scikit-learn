@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.cluster._spectral.spectral_clustering",
     "sklearn.covariance._graph_lasso.graphical_lasso",
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
