@@ -12,27 +12,12 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.base.clone",
-    "sklearn.cluster._affinity_propagation.affinity_propagation",
-    "sklearn.cluster._kmeans.kmeans_plusplus",
-    "sklearn.cluster._mean_shift.estimate_bandwidth",
-    "sklearn.cluster._mean_shift.get_bin_seeds",
-    "sklearn.cluster._mean_shift.mean_shift",
-    "sklearn.cluster._optics.cluster_optics_xi",
-    "sklearn.cluster._optics.compute_optics_graph",
-    "sklearn.cluster._spectral.spectral_clustering",
-    "sklearn.compose._column_transformer.make_column_transformer",
     "sklearn.covariance._graph_lasso.graphical_lasso",
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf_shrinkage",
-    "sklearn.covariance._shrunk_covariance.shrunk_covariance",
-    "sklearn.datasets._base.get_data_home",
-    "sklearn.datasets._base.load_boston",
     "sklearn.datasets._base.load_breast_cancer",
     "sklearn.datasets._base.load_digits",
-    "sklearn.datasets._base.load_files",
-    "sklearn.datasets._base.load_iris",
     "sklearn.datasets._base.load_linnerud",
     "sklearn.datasets._base.load_sample_image",
     "sklearn.datasets._base.load_wine",
@@ -43,7 +28,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._olivetti_faces.fetch_olivetti_faces",
     "sklearn.datasets._openml.fetch_openml",
-    "sklearn.datasets._rcv1.fetch_rcv1",
     "sklearn.datasets._samples_generator.make_biclusters",
     "sklearn.datasets._samples_generator.make_blobs",
     "sklearn.datasets._samples_generator.make_checkerboard",
@@ -97,7 +81,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._plot.confusion_matrix.plot_confusion_matrix",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
-    "sklearn.metrics._plot.roc_curve.plot_roc_curve",
     "sklearn.metrics._ranking.auc",
     "sklearn.metrics._ranking.average_precision_score",
     "sklearn.metrics._ranking.coverage_error",
@@ -124,9 +107,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.pair_confusion_matrix",
     "sklearn.metrics.cluster._supervised.rand_score",
     "sklearn.metrics.cluster._supervised.v_measure_score",
-    "sklearn.metrics.cluster._unsupervised.davies_bouldin_score",
-    "sklearn.metrics.cluster._unsupervised.silhouette_samples",
-    "sklearn.metrics.cluster._unsupervised.silhouette_score",
     "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.pairwise.check_paired_arrays",
     "sklearn.metrics.pairwise.check_pairwise_arrays",
@@ -137,9 +117,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.haversine_distances",
     "sklearn.metrics.pairwise.kernel_metrics",
     "sklearn.metrics.pairwise.laplacian_kernel",
-    "sklearn.metrics.pairwise.manhattan_distances",
-    "sklearn.metrics.pairwise.nan_euclidean_distances",
-    "sklearn.metrics.pairwise.paired_cosine_distances",
     "sklearn.metrics.pairwise.paired_distances",
     "sklearn.metrics.pairwise.paired_euclidean_distances",
     "sklearn.metrics.pairwise.paired_manhattan_distances",
@@ -172,7 +149,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
-    "sklearn.utils.extmath.randomized_range_finder",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils.extmath.squared_norm",
@@ -350,7 +326,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     if estimator is not None:
         obj = getattr(estimator, method)
         try:
-            obj_signature = signature(obj)
+            obj_signature = str(signature(obj))
         except TypeError:
             # In particular we can't parse the signature of properties
             obj_signature = (
@@ -366,7 +342,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     msg = "\n\n" + "\n\n".join(
         [
             str(res["file"]),
-            obj_name + str(obj_signature),
+            obj_name + obj_signature,
             res["docstring"],
             "# Errors",
             "\n".join(
