@@ -17,7 +17,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf_shrinkage",
-    "sklearn.covariance._shrunk_covariance.shrunk_covariance",
     "sklearn.datasets._base.load_breast_cancer",
     "sklearn.datasets._base.load_digits",
     "sklearn.datasets._base.load_linnerud",
