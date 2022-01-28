@@ -170,8 +170,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 
-    See also
-    ----------
+    See Also
+    --------
     sklearn.svm.OneClassSVM: Unsupervised Outlier Detection using
         Support Vector Machine.
 
