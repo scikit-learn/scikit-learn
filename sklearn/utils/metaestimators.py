@@ -243,12 +243,6 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     we slice rows using ``indices`` (assumed the test set) and columns
     using ``train_indices``, indicating the training set.
 
-    .. deprecated:: 0.24
-
-        The _pairwise attribute is deprecated in 0.24. From 1.1
-        (renaming of 0.26) and onward, this function will check for the
-        pairwise estimator tag.
-
     Labels y will always be indexed only along the first axis.
 
     Parameters

@@ -146,7 +146,6 @@ class Pipeline(_BaseComposition):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
-        self._validate_steps()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

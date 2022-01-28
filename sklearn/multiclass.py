@@ -160,8 +160,8 @@ class _ConstantPredictor(BaseEstimator):
             ensure_2d=False,
             reset=False,
         )
-
-        return np.repeat([np.hstack([1 - self.y_, self.y_])], _num_samples(X), axis=0)
+        y_ = self.y_.astype(np.float64)
+        return np.repeat([np.hstack([1 - y_, y_])], _num_samples(X), axis=0)
 
 
 def _estimators_has(attr):
@@ -903,7 +903,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         An estimator object implementing :term:`fit` and one of
         :term:`decision_function` or :term:`predict_proba`.
 
-    code_size : float
+    code_size : float, default=1.5
         Percentage of the number of classes to be used to create the code book.
         A number between 0 and 1 will require fewer classifiers than
         one-vs-the-rest. A number greater than 1 will require more classifiers
