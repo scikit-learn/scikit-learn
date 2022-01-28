@@ -967,6 +967,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     sklearn.decomposition.sparse_encode : Generic sparse coding.
         Each column of the result is the solution to a Lasso problem.
 
+    Notes
+    -----
+    In `fit`, once the optimal number of non-zero coefficients is found through
+    cross-validation, the model is fit again using the entire training set.
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV

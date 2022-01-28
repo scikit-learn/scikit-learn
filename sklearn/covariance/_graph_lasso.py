@@ -778,15 +778,18 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Notes
     -----
-    The search for the optimal penalization parameter (alpha) is done on an
+    The search for the optimal penalization parameter (`alpha`) is done on an
     iteratively refined grid: first the cross-validated scores on a grid are
     computed, then a new refined grid is centered around the maximum, and so
     on.
 
     One of the challenges which is faced here is that the solvers can
     fail to converge to a well-conditioned estimate. The corresponding
-    values of alpha then come out as missing values, but the optimum may
+    values of `alpha` then come out as missing values, but the optimum may
     be close to these missing values.
+
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------
