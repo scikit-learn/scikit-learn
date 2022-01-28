@@ -119,9 +119,6 @@ def test_sanity_check_pls_regression():
     assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip)
     assert_array_almost_equal(y_loadings_sign_flip, y_weights_sign_flip)
 
-    assert_allclose(X_trans, pls.x_scores_)
-    assert_allclose(Y_trans, pls.y_scores_)
-
 
 def test_sanity_check_pls_regression_constant_column_Y():
     # Check behavior when the first column of Y is constant
