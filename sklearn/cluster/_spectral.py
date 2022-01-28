@@ -294,7 +294,7 @@ def spectral_clustering(
     The graph should contain only one connected component, elsewhere
     the results make little sense.
 
-    This algorithm solves the normalized cut for k=2: it is a
+    This algorithm solves the normalized cut for `k=2`: it is a
     normalized spectral clustering.
 
     References
