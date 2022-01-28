@@ -40,7 +40,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
         Input points.
 
     quantile : float, default=0.3
-        should be between [0, 1]
+        Should be between [0, 1]
         0.5 means that the median of all pairwise distances is used.
 
     n_samples : int, default=None
@@ -186,7 +186,6 @@ def mean_shift(
     -----
     For an example, see :ref:`examples/cluster/plot_mean_shift.py
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
-
     """
     model = MeanShift(
         bandwidth=bandwidth,
@@ -201,7 +200,7 @@ def mean_shift(
 
 
 def get_bin_seeds(X, bin_size, min_bin_freq=1):
-    """Finds seeds for mean_shift.
+    """Find seeds for mean_shift.
 
     Finds seeds by first binning data onto a grid whose lines are
     spaced bin_size apart, and then choosing those bins with at least
@@ -331,19 +330,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    Examples
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
     --------
-    >>> from sklearn.cluster import MeanShift
-    >>> import numpy as np
-    >>> X = np.array([[1, 1], [2, 1], [1, 0],
-    ...               [4, 7], [3, 5], [3, 6]])
-    >>> clustering = MeanShift(bandwidth=2).fit(X)
-    >>> clustering.labels_
-    array([1, 1, 1, 0, 0, 0])
-    >>> clustering.predict([[0, 0], [5, 5]])
-    array([1, 0])
-    >>> clustering
-    MeanShift(bandwidth=2)
+    KMeans : K-Means clustering.
 
     Notes
     -----
@@ -369,6 +364,19 @@ class MeanShift(ClusterMixin, BaseEstimator):
     feature space analysis". IEEE Transactions on Pattern Analysis and
     Machine Intelligence. 2002. pp. 603-619.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import MeanShift
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = MeanShift(bandwidth=2).fit(X)
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering.predict([[0, 0], [5, 5]])
+    array([1, 0])
+    >>> clustering
+    MeanShift(bandwidth=2)
     """
 
     def __init__(
@@ -399,7 +407,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Samples to cluster.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
+        Returns
+        -------
+        self : object
+               Fitted instance.
         """
         X = self._validate_data(X)
         bandwidth = self.bandwidth
@@ -487,7 +500,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             New data to predict.
 
         Returns

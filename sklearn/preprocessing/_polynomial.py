@@ -15,7 +15,10 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.fixes import linspace
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
+from ..utils.validation import _check_feature_names_in
+from ..utils.stats import _weighted_percentile
+
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 
@@ -39,27 +42,27 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     ----------
     degree : int or tuple (min_degree, max_degree), default=2
         If a single int is given, it specifies the maximal degree of the
-        polynomial features. If a tuple ``(min_degree, max_degree)`` is
-        passed, then ``min_degree`` is the minimum and ``max_degree`` is the
-        maximum polynomial degree of the generated features. Note that
-        min_degree=0 and 1 are equivalent as outputting the degree zero term
-        is determined by ``include_bias``.
+        polynomial features. If a tuple `(min_degree, max_degree)` is passed,
+        then `min_degree` is the minimum and `max_degree` is the maximum
+        polynomial degree of the generated features. Note that `min_degree=0`
+        and `min_degree=1` are equivalent as outputting the degree zero term is
+        determined by `include_bias`.
 
     interaction_only : bool, default=False
-        If true, only interaction features are produced: features that are
-        products of at most ``degree`` *distinct* input features, i.e. terms
-        with power of 2 or higher of the same input feature are excluded:
+        If `True`, only interaction features are produced: features that are
+        products of at most `degree` *distinct* input features, i.e. terms with
+        power of 2 or higher of the same input feature are excluded:
 
-            - included: ``x[0]``, `x[1]`, ``x[0] * x[1]``, etc.
-            - exluded: ``x[0] ** 2``, ``x[0] ** 2 * x[1]``, etc.
+            - included: `x[0]`, `x[1]`, `x[0] * x[1]`, etc.
+            - excluded: `x[0] ** 2`, `x[0] ** 2 * x[1]`, etc.
 
     include_bias : bool, default=True
-        If True (default), then include a bias column, the feature in which
+        If `True` (default), then include a bias column, the feature in which
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
 
     order : {'C', 'F'}, default='C'
-        Order of output array in the dense case. 'F' order is faster to
+        Order of output array in the dense case. `'F'` order is faster to
         compute, but may slow down subsequent estimators.
 
         .. versionadded:: 0.21
@@ -67,7 +70,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     powers_ : ndarray of shape (`n_output_features_`, `n_features_in_`)
-        powers_[i, j] is the exponent of the jth input in the ith output.
+        `powers_[i, j]` is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
         The total number of input features.
@@ -81,6 +84,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_output_features_ : int
         The total number of polynomial output features. The number of output
         features is computed by iterating over all suitably sized combinations
@@ -89,7 +98,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     See Also
     --------
     SplineTransformer : Transformer that generates univariate B-spline bases
-        for features
+        for features.
 
     Notes
     -----
@@ -172,6 +181,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     @property
     def powers_(self):
+        """Exponent for each of the inputs in the output."""
         check_is_fitted(self)
 
         combinations = self._combinations(
@@ -185,9 +195,12 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             [np.bincount(c, minlength=self.n_features_in_) for c in combinations]
         )
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self, input_features=None):
-        """
-        Return feature names for output features
+        """Return feature names for output features.
 
         Parameters
         ----------
@@ -198,6 +211,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Returns
         -------
         output_feature_names : list of str of shape (n_output_features,)
+            Transformed feature names.
         """
         powers = self.powers_
         if input_features is None:
@@ -217,18 +231,53 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             feature_names.append(name)
         return feature_names
 
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features is None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        powers = self.powers_
+        input_features = _check_feature_names_in(self, input_features)
+        feature_names = []
+        for row in powers:
+            inds = np.where(row)[0]
+            if len(inds):
+                name = " ".join(
+                    "%s^%d" % (input_features[ind], exp)
+                    if exp != 1
+                    else input_features[ind]
+                    for ind, exp in zip(inds, row[inds])
+                )
+            else:
+                name = "1"
+            feature_names.append(name)
+        return np.asarray(feature_names, dtype=object)
+
     def fit(self, X, y=None):
         """
         Compute number of output features.
-
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data.
 
-        y : None
-            Ignored.
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -310,10 +359,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Returns
         -------
         XP : {ndarray, sparse matrix} of shape (n_samples, NP)
-            The matrix of features, where NP is the number of polynomial
+            The matrix of features, where `NP` is the number of polynomial
             features generated from the combination of inputs. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csr_matrix``.
+            `csr_matrix`.
         """
         check_is_fitted(self)
 
@@ -520,6 +569,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     n_features_in_ : int
         The total number of input features.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_features_out_ : int
         The total number of output features, which is computed as
         `n_features * n_splines`, where `n_splines` is
@@ -576,7 +631,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self.order = order
 
     @staticmethod
-    def _get_base_knot_positions(X, n_knots=10, knots="uniform"):
+    def _get_base_knot_positions(X, n_knots=10, knots="uniform", sample_weight=None):
         """Calculate base knot positions.
 
         Base knots such that first knot <= feature <= last knot. For the
@@ -589,17 +644,29 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Knot positions (points) of base interval.
         """
         if knots == "quantile":
-            knots = np.percentile(
-                X,
-                100 * np.linspace(start=0, stop=1, num=n_knots, dtype=np.float64),
-                axis=0,
+            percentiles = 100 * np.linspace(
+                start=0, stop=1, num=n_knots, dtype=np.float64
             )
+
+            if sample_weight is None:
+                knots = np.percentile(X, percentiles, axis=0)
+            else:
+                knots = np.array(
+                    [
+                        _weighted_percentile(X, sample_weight, percentile)
+                        for percentile in percentiles
+                    ]
+                )
+
         else:
             # knots == 'uniform':
             # Note that the variable `knots` has already been validated and
             # `else` is therefore safe.
-            x_min = np.amin(X, axis=0)
-            x_max = np.amax(X, axis=0)
+            # Disregard observations with zero weight.
+            mask = slice(None, None, 1) if sample_weight is None else sample_weight > 0
+            x_min = np.amin(X[mask], axis=0)
+            x_max = np.amax(X[mask], axis=0)
+
             knots = linspace(
                 start=x_min,
                 stop=x_max,
@@ -610,6 +677,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         return knots
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self, input_features=None):
         """Return feature names for output features.
 
@@ -622,6 +693,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         output_feature_names : list of str of shape (n_output_features,)
+            Transformed feature names.
         """
         n_splines = self.bsplines_[0].c.shape[0]
         if input_features is None:
@@ -632,7 +704,34 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
         return feature_names
 
-    def fit(self, X, y=None):
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        n_splines = self.bsplines_[0].c.shape[0]
+        input_features = _check_feature_names_in(self, input_features)
+        feature_names = []
+        for i in range(self.n_features_in_):
+            for j in range(n_splines - 1 + self.include_bias):
+                feature_names.append(f"{input_features[i]}_sp_{j}")
+        return np.asarray(feature_names, dtype=object)
+
+    def fit(self, X, y=None, sample_weight=None):
         """Compute knot positions of splines.
 
         Parameters
@@ -642,6 +741,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         y : None
             Ignored.
+
+        sample_weight : array-like of shape (n_samples,), default = None
+            Individual weights for each sample. Used to calculate quantiles if
+            `knots="quantile"`. For `knots="uniform"`, zero weighted
+            observations are ignored for finding the min and max of `X`.
 
         Returns
         -------
@@ -655,7 +759,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             ensure_min_samples=2,
             ensure_2d=True,
         )
-        n_samples, n_features = X.shape
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        _, n_features = X.shape
 
         if not (isinstance(self.degree, numbers.Integral) and self.degree >= 0):
             raise ValueError(
@@ -672,7 +779,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 )
 
             base_knots = self._get_base_knot_positions(
-                X, n_knots=self.n_knots, knots=self.knots
+                X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
             )
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
@@ -866,6 +973,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         mask,
                         ((i + 1) * n_splines - degree) : ((i + 1) * n_splines),
                     ] = f_max[-degree:]
+
             elif self.extrapolation == "linear":
                 # Continue the degree first and degree last spline bases
                 # linearly beyond the boundaries, with slope = derivative at

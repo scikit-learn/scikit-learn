@@ -21,6 +21,7 @@ def test_olivetti_faces(fetch_olivetti_faces_fxt):
     assert data.images.shape == (400, 64, 64)
     assert data.target.shape == (400,)
     assert_array_equal(np.unique(np.sort(data.target)), np.arange(40))
+    assert data.DESCR.startswith(".. _olivetti_faces_dataset:")
 
     # test the return_X_y option
     check_return_X_y(data, fetch_olivetti_faces_fxt)

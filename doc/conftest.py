@@ -53,7 +53,7 @@ def setup_loading_other_datasets():
     if not run_network_tests:
         raise SkipTest(
             "Skipping loading_other_datasets.rst, tests can be "
-            "enabled by settting SKLEARN_SKIP_NETWORK_TESTS=0"
+            "enabled by setting SKLEARN_SKIP_NETWORK_TESTS=0"
         )
 
 

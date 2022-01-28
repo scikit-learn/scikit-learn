@@ -479,9 +479,11 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     metric : str or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples
         from the original input space. If metric is 'precomputed', X must be a
-        matrix of pairwise distances or squared distances. Otherwise, see the
-        documentation of argument metric in sklearn.pairwise.pairwise_distances
-        for a list of available metrics.
+        matrix of pairwise distances or squared distances. Otherwise, for a list
+        of available metrics, see the documentation of argument metric in
+        `sklearn.pairwise.pairwise_distances` and metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
 
         .. versionadded:: 0.20
 
@@ -522,7 +524,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
 
 
 class TSNE(BaseEstimator):
-    """t-distributed Stochastic Neighbor Embedding.
+    """T-distributed Stochastic Neighbor Embedding.
 
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
     similarities between data points to joint probabilities and tries
@@ -619,7 +621,7 @@ class TSNE(BaseEstimator):
         Determines the random number generator. Pass an int for reproducible
         results across multiple function calls. Note that different
         initializations might result in different local minima of the cost
-        function. See :term: `Glossary <random_state>`.
+        function. See :term:`Glossary <random_state>`.
 
     method : str, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
@@ -652,18 +654,13 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.22
 
-    square_distances : True or 'legacy', default='legacy'
-        Whether TSNE should square the distance values. ``'legacy'`` means
-        that distance values are squared only when ``metric="euclidean"``.
-        ``True`` means that distance values are squared for all metrics.
+    square_distances : True, default='deprecated'
+        This parameter has no effect since distance values are always squared
+        since 1.1.
 
-        .. versionadded:: 0.24
-           Added to provide backward compatibility during deprecation of
-           legacy squaring behavior.
-        .. deprecated:: 0.24
-           Legacy squaring behavior was deprecated in 0.24. The ``'legacy'``
-           value will be removed in 1.1 (renaming of 0.26), at which point the
-           default value will change to ``True``.
+        .. deprecated:: 1.1
+             `square_distances` has no effect from 1.1 and will be removed in
+             1.3.
 
     Attributes
     ----------
@@ -678,19 +675,25 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Number of iterations run.
 
-    Examples
+    See Also
     --------
-
-    >>> import numpy as np
-    >>> from sklearn.manifold import TSNE
-    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
-    ...                   init='random').fit_transform(X)
-    >>> X_embedded.shape
-    (4, 2)
+    sklearn.decomposition.PCA : Principal component analysis that is a linear
+        dimensionality reduction method.
+    sklearn.decomposition.KernelPCA : Non-linear dimensionality reduction using
+        kernels and PCA.
+    MDS : Manifold learning using multidimensional scaling.
+    Isomap : Manifold learning based on Isometric Mapping.
+    LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality.
 
     References
     ----------
@@ -712,6 +715,16 @@ class TSNE(BaseEstimator):
 
     [5] Kobak, D., & Berens, P. (2019). The art of using t-SNE for single-cell
         transcriptomics. Nature Communications, 10(1), 1-14.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.manifold import TSNE
+    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
+    >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
+    ...                   init='random').fit_transform(X)
+    >>> X_embedded.shape
+    (4, 2)
     """
 
     # Control the number of exploration iterations with early_exaggeration on
@@ -737,7 +750,7 @@ class TSNE(BaseEstimator):
         method="barnes_hut",
         angle=0.5,
         n_jobs=None,
-        square_distances="legacy",
+        square_distances="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
@@ -753,7 +766,6 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
-        # TODO Revisit deprecation of square_distances for 1.1-1.3 (#12401)
         self.square_distances = square_distances
 
     def _fit(self, X, skip_num_points=0):
@@ -782,7 +794,7 @@ class TSNE(BaseEstimator):
 
         if isinstance(self._init, str) and self._init == "pca" and issparse(X):
             raise TypeError(
-                "PCA initialization is currently not suported "
+                "PCA initialization is currently not supported "
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )
@@ -790,8 +802,12 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
-        if self.square_distances not in [True, "legacy"]:
-            raise ValueError("'square_distances' must be True or 'legacy'.")
+        if self.square_distances != "deprecated":
+            warnings.warn(
+                "The parameter `square_distances` has not effect and will be "
+                "removed in version 1.3.",
+                FutureWarning,
+            )
         if self._learning_rate == "auto":
             # See issue #18018
             self._learning_rate = X.shape[0] / self.early_exaggeration / 4
@@ -799,17 +815,6 @@ class TSNE(BaseEstimator):
         else:
             if not (self._learning_rate > 0):
                 raise ValueError("'learning_rate' must be a positive number or 'auto'.")
-        if self.metric != "euclidean" and self.square_distances is not True:
-            warnings.warn(
-                "'square_distances' has been introduced in 0.24 to help phase "
-                "out legacy squaring behavior. The 'legacy' setting will be "
-                "removed in 1.1 (renaming of 0.26), and the default setting "
-                "will be changed to True. In 1.3, 'square_distances' will be "
-                "removed altogether, and distances will be squared by "
-                "default. Set 'square_distances'=True to silence this "
-                "warning.",
-                FutureWarning,
-            )
         if self.method == "barnes_hut":
             X = self._validate_data(
                 X,
@@ -889,7 +894,7 @@ class TSNE(BaseEstimator):
                     "All distances should be positive, the metric given is not correct"
                 )
 
-            if self.metric != "euclidean" and self.square_distances is True:
+            if self.metric != "euclidean":
                 distances **= 2
 
             # compute the joint probability distribution for the input space
@@ -940,13 +945,12 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if self.square_distances is True or self.metric == "euclidean":
-                # knn return the euclidean distance but we need it squared
-                # to be consistent with the 'exact' method. Note that the
-                # the method was derived using the euclidean method as in the
-                # input space. Not sure of the implication of using a different
-                # metric.
-                distances_nn.data **= 2
+            # knn return the euclidean distance but we need it squared
+            # to be consistent with the 'exact' method. Note that the
+            # the method was derived using the euclidean method as in the
+            # input space. Not sure of the implication of using a different
+            # metric.
+            distances_nn.data **= 2
 
             # compute the joint probability distribution for the input space
             P = _joint_probabilities_nn(distances_nn, self.perplexity, self.verbose)
@@ -1070,8 +1074,7 @@ class TSNE(BaseEstimator):
         return X_embedded
 
     def fit_transform(self, X, y=None):
-        """Fit X into an embedded space and return that transformed
-        output.
+        """Fit X into an embedded space and return that transformed output.
 
         Parameters
         ----------
@@ -1082,7 +1085,8 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : Ignored
+        y : None
+            Ignored.
 
         Returns
         -------
@@ -1105,7 +1109,13 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : Ignored
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        X_new : array of shape (n_samples, n_components)
+            Embedding of the training data in low-dimensional space.
         """
         self.fit_transform(X)
         return self

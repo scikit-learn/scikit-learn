@@ -48,7 +48,7 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.utils import IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT, deprecated
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -82,8 +82,17 @@ assert_raises_regex = _dummy.assertRaisesRegex
 assert_raises_regexp = assert_raises_regex
 
 
+# TODO: Remove in 1.2
+@deprecated(  # type: ignore
+    "`assert_warns` is deprecated in 1.0 and will be removed in 1.2."
+    "Use `pytest.warns` instead."
+)
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
+
+    .. deprecated:: 1.0
+        `assert_warns` is deprecated in 1.0 and will be removed in 1.2.
+        Use `pytest.warns` instead.
 
     Parameters
     ----------
@@ -124,9 +133,18 @@ def assert_warns(warning_class, func, *args, **kw):
     return result
 
 
+# TODO: Remove in 1.2
+@deprecated(  # type: ignore
+    "`assert_warns_message` is deprecated in 1.0 and will be removed in 1.2."
+    "Use `pytest.warns` instead."
+)
 def assert_warns_message(warning_class, message, func, *args, **kw):
     # very important to avoid uncontrolled state propagation
     """Test that a certain warning occurs and with a certain message.
+
+    .. deprecated:: 1.0
+        `assert_warns_message` is deprecated in 1.0 and will be removed in 1.2.
+        Use `pytest.warns` instead.
 
     Parameters
     ----------
@@ -237,6 +255,8 @@ def ignore_warnings(obj=None, category=Warning):
 
     Examples
     --------
+    >>> import warnings
+    >>> from sklearn.utils._testing import ignore_warnings
     >>> with ignore_warnings():
     ...     warnings.warn('buhuhuhu')
 
@@ -500,19 +520,36 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
-def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
+def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=False):
     """
     Parameters
     ----------
     data
     mmap_mode : str, default='r'
     return_folder :  bool, default=False
+    aligned : bool, default=False
+        If True, if input is a single numpy array and if the input array is aligned,
+        the memory mapped array will also be aligned. This is a workaround for
+        https://github.com/joblib/joblib/issues/563.
     """
     temp_folder = tempfile.mkdtemp(prefix="sklearn_testing_")
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
-    filename = op.join(temp_folder, "data.pkl")
-    joblib.dump(data, filename)
-    memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
+    if aligned:
+        if isinstance(data, np.ndarray) and data.flags.aligned:
+            # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
+            filename = op.join(temp_folder, "data.dat")
+            fp = np.memmap(filename, dtype=data.dtype, mode="w+", shape=data.shape)
+            fp[:] = data[:]  # write data to memmap array
+            fp.flush()
+            memmap_backed_data = np.memmap(
+                filename, dtype=data.dtype, mode=mmap_mode, shape=data.shape
+            )
+        else:
+            raise ValueError("If aligned=True, input must be a single numpy array.")
+    else:
+        filename = op.join(temp_folder, "data.pkl")
+        joblib.dump(data, filename)
+        memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
     result = (
         memmap_backed_data if not return_folder else (memmap_backed_data, temp_folder)
     )
