@@ -1055,7 +1055,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         # FIXME: there are more elaborate methods than generating the codebook
         # randomly.
-        self.code_book_ = random_state.random_sample((n_classes, code_size_))
+        self.code_book_ = random_state.uniform(size=(n_classes, code_size_))
         self.code_book_[self.code_book_ > 0.5] = 1
 
         if hasattr(self.estimator, "decision_function"):
