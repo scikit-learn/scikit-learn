@@ -95,6 +95,10 @@ Changelog
   See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
 
+- |Enhancement| Adds :term:`get_feature_names_out` to :class:`cluster.Birch`,
+  :class:`cluster.FeatureAgglomeration`, :class:`cluster.KMeans`,
+  :class:`cluster.MiniBatchKMeans`. :pr:`22255` by `Thomas Fan`_.
+
 - |Efficiency| In :class:`cluster.KMeans`, the default ``algorithm`` is now
   ``"lloyd"`` which is the full classical EM-style algorithm. Both ``"auto"``
   and ``"full"`` are deprecated and will be removed in version 1.3. They are
