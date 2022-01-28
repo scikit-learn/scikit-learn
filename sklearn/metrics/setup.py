@@ -30,6 +30,7 @@ def configuration(parent_package="", top_path=None):
         "_pairwise_distances_reduction",
         sources=["_pairwise_distances_reduction.pyx"],
         include_dirs=[np.get_include(), os.path.join(np.get_include(), "numpy")],
+        language="c++",
         libraries=libraries,
     )
 

@@ -7,6 +7,7 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
+    PairwiseDistancesRadiusNeighborhood,
     _sqeuclidean_row_norms,
 )
 
@@ -78,8 +79,25 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
     )
 
 
+def assert_radius_neighborhood_results_equality(ref_dist, dist, ref_indices, indices):
+    # We get arrays of arrays and we need to check for individual pairs
+    for i in range(ref_dist.shape[0]):
+        assert_array_equal(
+            ref_indices[i],
+            indices[i],
+            err_msg=f"Query vector #{i} has different neighbors' indices",
+        )
+        assert_allclose(
+            ref_dist[i],
+            dist[i],
+            err_msg=f"Query vector #{i} has different neighbors' distances",
+            rtol=1e-7,
+        )
+
+
 ASSERT_RESULT = {
     PairwiseDistancesArgKmin: assert_argkmin_results_equality,
+    PairwiseDistancesRadiusNeighborhood: assert_radius_neighborhood_results_equality,
 }
 
 
@@ -148,12 +166,62 @@ def test_argkmin_factory_method_wrong_usages():
         )
 
 
+def test_radius_neighborhood_factory_method_wrong_usages():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    radius = 5
+    metric = "euclidean"
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Only 64bit float datasets are supported at this time, "
+            "got: X.dtype=float32 and Y.dtype=float64"
+        ),
+    ):
+        PairwiseDistancesRadiusNeighborhood.compute(
+            X=X.astype(np.float32), Y=Y, radius=radius, metric=metric
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Only 64bit float datasets are supported at this time, "
+            "got: X.dtype=float64 and Y.dtype=int32"
+        ),
+    ):
+        PairwiseDistancesRadiusNeighborhood.compute(
+            X=X, Y=Y.astype(np.int32), radius=radius, metric=metric
+        )
+
+    with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
+        PairwiseDistancesRadiusNeighborhood.compute(X=X, Y=Y, radius=-1, metric=metric)
+
+    with pytest.raises(ValueError, match="Unrecognized metric"):
+        PairwiseDistancesRadiusNeighborhood.compute(
+            X=X, Y=Y, radius=radius, metric="wrong metric"
+        )
+
+    with pytest.raises(
+        ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
+    ):
+        PairwiseDistancesRadiusNeighborhood.compute(
+            X=np.array([1.0, 2.0]), Y=Y, radius=radius, metric=metric
+        )
+
+    with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
+        PairwiseDistancesRadiusNeighborhood.compute(
+            X=np.asfortranarray(X), Y=Y, radius=radius, metric=metric
+        )
+
+
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin],
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
 )
 def test_chunk_size_agnosticism(
     PairwiseDistancesReduction,
@@ -199,7 +267,7 @@ def test_chunk_size_agnosticism(
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin],
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
 )
 def test_n_threads_agnosticism(
     PairwiseDistancesReduction,
@@ -241,7 +309,7 @@ def test_n_threads_agnosticism(
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin],
+    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
 )
 def test_strategies_consistency(
     PairwiseDistancesReduction,
