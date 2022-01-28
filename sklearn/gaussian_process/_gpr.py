@@ -44,7 +44,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     ----------
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed"
+        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed")
         * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
         the kernel hyperparameters are optimized during fitting unless the
         bounds are marked as "fixed".
@@ -94,7 +94,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         run is performed.
 
     normalize_y : bool, default=False
-        Whether or not to normalized the target values `y` by removing the mean
+        Whether or not to normalize the target values `y` by removing the mean
         and scaling to unit-variance. This is recommended for cases where
         zero-mean, unit-variance priors are used. Note that, in this
         implementation, the normalisation is reversed before the GP predictions

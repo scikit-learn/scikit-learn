@@ -110,16 +110,6 @@ def test_glm_link_auto(family, expected_link_class):
     assert isinstance(glm._link_instance, expected_link_class)
 
 
-@pytest.mark.parametrize("alpha", ["not a number", -4.2])
-def test_glm_alpha_argument(alpha):
-    """Test GLM for invalid alpha argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(family="normal", alpha=alpha)
-    with pytest.raises(ValueError, match="Penalty term must be a non-negative"):
-        glm.fit(X, y)
-
-
 @pytest.mark.parametrize("fit_intercept", ["not bool", 1, 0, [True]])
 def test_glm_fit_intercept_argument(fit_intercept):
     """Test GLM for invalid fit_intercept argument."""
@@ -140,23 +130,73 @@ def test_glm_solver_argument(solver):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize("max_iter", ["not a number", 0, -1, 5.5, [1]])
-def test_glm_max_iter_argument(max_iter):
-    """Test GLM for invalid max_iter argument."""
+@pytest.mark.parametrize(
+    "Estimator",
+    [GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
+)
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1"),
+        ({"max_iter": -1}, ValueError, "max_iter == -1, must be >= 1"),
+        (
+            {"max_iter": "not a number"},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'str'>",
+        ),
+        (
+            {"max_iter": [1]},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>,"
+            " not <class 'list'>",
+        ),
+        (
+            {"max_iter": 5.5},
+            TypeError,
+            "max_iter must be an instance of <class 'numbers.Integral'>,"
+            " not <class 'float'>",
+        ),
+        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
+        (
+            {"alpha": "1"},
+            TypeError,
+            "alpha must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+        ({"tol": -1.0}, ValueError, "tol == -1.0, must be > 0."),
+        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
+        ({"tol": 0}, ValueError, "tol == 0, must be > 0.0"),
+        (
+            {"tol": "1"},
+            TypeError,
+            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+        ),
+        (
+            {"tol": [1e-3]},
+            TypeError,
+            "tol must be an instance of <class 'numbers.Real'>, not <class 'list'>",
+        ),
+        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0."),
+        (
+            {"verbose": "1"},
+            TypeError,
+            "verbose must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'str'>",
+        ),
+        (
+            {"verbose": 1.0},
+            TypeError,
+            "verbose must be an instance of <class 'numbers.Integral'>, not <class"
+            " 'float'>",
+        ),
+    ],
+)
+def test_glm_scalar_argument(Estimator, params, err_type, err_msg):
+    """Test GLM for invalid parameter arguments."""
     y = np.array([1, 2])
     X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(max_iter=max_iter)
-    with pytest.raises(ValueError, match="must be a positive integer"):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize("tol", ["not a number", 0, -1.0, [1e-3]])
-def test_glm_tol_argument(tol):
-    """Test GLM for invalid tol argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(tol=tol)
-    with pytest.raises(ValueError, match="stopping criteria must be positive"):
+    glm = Estimator(**params)
+    with pytest.raises(err_type, match=err_msg):
         glm.fit(X, y)
 
 
