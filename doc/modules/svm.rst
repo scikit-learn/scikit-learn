@@ -177,7 +177,7 @@ The columns correspond to the support vectors involved in any
 of the ``n_classes * (n_classes - 1) / 2`` "one-vs-one" classifiers.
 Each support vector ``v`` has a dual coefficient in each of the 
 ``n_classes - 1`` classifiers comparing the class of ``v`` against another class.
-(Note that some, but not all, of these dual coefficients may be zero.)
+Note that some, but not all, of these dual coefficients, may be zero.
 The ``n_classes - 1`` entries in each column are these dual coefficients,
 ordered by the opposing class.
 
