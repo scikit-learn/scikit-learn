@@ -63,7 +63,7 @@ def main() -> pd.DataFrame:
         return DSETS[name]()
 
     # %%
-    MULTI_CLASS = ("ovr", "multinomial")
+    MULTI_CLASS = ("multinomial",)
     SOLVER = ("lbfgs", "trust-ncg")
     PENALTY = ("l2", "none")
     CONFIG = tuple(
@@ -76,14 +76,17 @@ def main() -> pd.DataFrame:
 
     # %%
     def build_row(X, y, conf, dset: str):
+        print(f"{conf=}")
+        print(f"{dset=}")
         lr = _LogisticRegression(**conf)
         t_start = time.perf_counter()
         lr.fit(X, y)
         t_total = time.perf_counter() - t_start
+        y_pred = lr.predict_proba(X)
         return {
             "cpu_time": t_total,
             "n_iter_": np.mean(lr.n_iter_),
-            "NLL": metrics.log_loss(lr.predict(X), y),
+            "NLL": metrics.log_loss(y, y_pred),
             "dset": dset,
             **conf,
         }
@@ -103,29 +106,22 @@ def main() -> pd.DataFrame:
         df.to_pickle(args.save)
         print(f"Dataframe saved to {args.save}")
 
-    dset_option = st.selectbox(
-        "Which dataset would you like to view?", ("dense", "sparse")
-    )
     y_option = st.selectbox(
         "Which metric would you like charted?", ("NLL", "cpu_time", "n_iter_")
     )
+    """
     multi_class_option = st.selectbox(
         "Which multi_class strategy should the solvers use?", ("ovr", "multinomial")
     )
-    penalty_option = st.selectbox(
-        "Which penalty should the solvers use?", ("none", "l2")
-    )
+    """
+    dset_option = st.selectbox("Which dataset should be used?", ("dense", "sparse"))
 
-    conditions = (
-        (df["multi_class"] == multi_class_option)
-        & (df["penalty"] == penalty_option)
-        & (df["dset"] == dset_option)
-    )
+    conditions = df["dset"] == dset_option
     chart = (
-        alt.Chart(df[conditions], height=500, width=900)
+        alt.Chart(df[conditions], width=300)
         .mark_bar()
-        .encode(x="solver", y=y_option, column="multi_class", color="penalty")
-        .properties(title=f"{y_option} using the {dset_option}-style dataset")
+        .encode(x="solver", y=y_option, column="penalty")
+        .properties(title=f"{y_option} on the {dset_option} dataset")
     )
 
     st.altair_chart(chart)
