@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.cluster._spectral.spectral_clustering",
     "sklearn.covariance._graph_lasso.graphical_lasso",
     "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
@@ -93,7 +92,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._ranking.roc_auc_score",
     "sklearn.metrics._ranking.roc_curve",
     "sklearn.metrics._ranking.top_k_accuracy_score",
-    "sklearn.metrics._regression.mean_absolute_error",
     "sklearn.metrics._regression.mean_pinball_loss",
     "sklearn.metrics._scorer.make_scorer",
     "sklearn.metrics.cluster._bicluster.consensus_score",

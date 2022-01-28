@@ -1205,3 +1205,18 @@ def test_is_same_clustering():
     # mapped to a same value
     labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
     assert not _is_same_clustering(labels1, labels3, 3)
+
+
+@pytest.mark.parametrize(
+    "Klass, method",
+    [(KMeans, "fit"), (MiniBatchKMeans, "fit"), (MiniBatchKMeans, "partial_fit")],
+)
+def test_feature_names_out(Klass, method):
+    """Check `feature_names_out` for `KMeans` and `MiniBatchKMeans`."""
+    class_name = Klass.__name__.lower()
+    kmeans = Klass()
+    getattr(kmeans, method)(X)
+    n_clusters = kmeans.cluster_centers_.shape[0]
+
+    names_out = kmeans.get_feature_names_out()
+    assert_array_equal([f"{class_name}{i}" for i in range(n_clusters)], names_out)
