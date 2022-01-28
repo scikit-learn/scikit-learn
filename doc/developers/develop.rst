@@ -538,7 +538,9 @@ pairwise (default=False)
     'precomputed'. Its primary purpose is that when a :term:`meta-estimator`
     extracts a sub-sample of data intended for a pairwise estimator, the data
     needs to be indexed on both axes, while other data is indexed only on the
-    first axis.
+    first axis. Specifically, this tag is used by
+    :func:`~sklearn.utils.metaestimators._safe_split` to slice rows and
+    columns.
 
 preserves_dtype (default=``[np.float64]``)
     applies only on transformers. It corresponds to the data types which will
