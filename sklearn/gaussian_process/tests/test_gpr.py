@@ -678,7 +678,7 @@ def test_gpr_predict_error():
 
 @pytest.mark.parametrize("normalize_y", [True, False])
 @pytest.mark.parametrize("n_targets", [0, 1, 10])
-def test_multitarget_shape(normalize_y, n_targets):
+def test_predict_shapes(normalize_y, n_targets):
     """Check the shapes of y_mean, y_std, and y_cov in single-output
     (n_targets=0) and multi-output settings, including the edge case when
     n_targets=1, where the sklearn convention is to squeeze the predictions.
@@ -714,3 +714,43 @@ def test_multitarget_shape(normalize_y, n_targets):
     assert y_pred.shape == y_test_shape
     assert y_std.shape == y_test_shape
     assert y_cov.shape == (n_samples_test,) + y_test_shape
+
+
+@pytest.mark.parametrize("normalize_y", [True, False])
+@pytest.mark.parametrize("n_targets", [0, 1, 10])
+def test_sample_y_shapes(normalize_y, n_targets):
+    """Check the shapes of y_samples in single-output (n_targets=0) and
+    multi-output settings, including the edge case when n_targets=1, where the
+    sklearn convention is to squeeze the predictions.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/22175
+    """
+    rng = np.random.RandomState(1234)
+
+    n_features, n_samples_train = 6, 9
+    # Number of spatial locations to predict at
+    n_samples_X_test = 7
+    # Number of sample predictions per test point
+    n_samples_y_test = 5
+
+    y_train_shape = (n_samples_train,)
+    if n_targets >= 1:
+        y_train_shape = y_train_shape + (n_targets,)
+
+    # By convention single-output data is squeezed upon prediction
+    if n_targets > 1:
+        y_test_shape = (n_samples_X_test, n_targets, n_samples_y_test)
+    else:
+        y_test_shape = (n_samples_X_test, n_samples_y_test)
+
+    X_train = rng.randn(n_samples_train, n_features)
+    X_test = rng.randn(n_samples_X_test, n_features)
+    y_train = rng.randn(*y_train_shape)
+
+    model = GaussianProcessRegressor(normalize_y=normalize_y)
+    model.fit(X_train, y_train)
+
+    y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
+
+    assert y_samples.shape == y_test_shape
