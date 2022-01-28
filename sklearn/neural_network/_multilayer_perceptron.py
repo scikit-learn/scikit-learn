@@ -10,6 +10,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 import warnings
+from itertools import chain
 
 import scipy.optimize
 
@@ -440,6 +441,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             self._fit_lbfgs(
                 X, y, activations, deltas, coef_grads, intercept_grads, layer_units
             )
+
+        # validate parameter weights
+        weights = chain(self.coefs_, self.intercepts_)
+        if not all(np.isfinite(w).all() for w in weights):
+            raise ValueError(
+                "Solver produced non-finite parameter weights. The input data may"
+                " contain large values and need to be preprocessed."
+            )
+
         return self
 
     def _validate_hyperparameters(self):

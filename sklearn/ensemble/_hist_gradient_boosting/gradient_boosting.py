@@ -996,7 +996,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The input samples.
 
         Yields
-        -------
+        ------
         raw_predictions : generator of ndarray of shape \
             (n_samples, n_trees_per_iteration)
             The raw predictions of the input samples. The order of the
@@ -1371,7 +1371,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             The input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted values of the input samples, for each iteration.
         """
@@ -1674,7 +1674,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted classes of the input samples, for each iteration.
         """
@@ -1710,7 +1710,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The input samples.
 
         Yields
-        -------
+        ------
         y : generator of ndarray of shape (n_samples,)
             The predicted class probabilities of the input samples,
             for each iteration.
@@ -1751,7 +1751,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The input samples.
 
         Yields
-        -------
+        ------
         decision : generator of ndarray of shape (n_samples,) or \
                 (n_samples, n_trees_per_iteration)
             The decision function of the input samples, which corresponds to
