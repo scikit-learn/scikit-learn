@@ -25,7 +25,6 @@ from ..utils.fixes import delayed
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
-from ..utils.deprecation import deprecated
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -696,22 +695,6 @@ class GraphicalLassoCV(GraphicalLasso):
     alpha_ : float
         Penalization parameter selected.
 
-    cv_alphas_ : list of shape (n_alphas,), dtype=float
-        All penalization parameters explored.
-
-        .. deprecated:: 0.24
-            The `cv_alphas_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_['alphas']` and will be removed in version
-            1.1 (renaming of 0.26).
-
-    grid_scores_ : ndarray of shape (n_alphas, n_folds)
-        Log-likelihood score on left-out data across folds.
-
-        .. deprecated:: 0.24
-            The `grid_scores_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_` and will be removed in version
-            1.1 (renaming of 0.26).
-
     cv_results_ : dict of ndarrays
         A dict with keys:
 
@@ -1009,34 +992,3 @@ class GraphicalLassoCV(GraphicalLasso):
             return_n_iter=True,
         )
         return self
-
-    # TODO: Remove in 1.1 when grid_scores_ is deprecated
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The `grid_scores_` attribute is deprecated in version 0.24 in favor "
-        "of `cv_results_` and will be removed in version 1.1 "
-        "(renaming of 0.26)."
-    )
-    @property
-    def grid_scores_(self):
-        n_splits = len(
-            [
-                key
-                for key in self.cv_results_
-                if key.startswith("split") and key.endswith("_test_score")
-            ]
-        )
-        return np.asarray(
-            [self.cv_results_["split{}_test_score".format(i)] for i in range(n_splits)]
-        ).T
-
-    # TODO: Remove in 1.1 when cv_alphas_ is deprecated
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The `cv_alphas_` attribute is deprecated in version 0.24 in favor "
-        "of `cv_results_['alpha']` and will be removed in version 1.1 "
-        "(renaming of 0.26)."
-    )
-    @property
-    def cv_alphas_(self):
-        return self.cv_results_["alphas"].tolist()
