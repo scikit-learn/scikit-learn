@@ -136,7 +136,7 @@ def test_classification_toy(loss):
             ValueError,
             "n_iter_no_change should either be",
         ),
-        ({"criterion": "mae"}, "criterion='mae' is not supported."),
+        ({"criterion": "mae"}, ValueError, "criterion='mae' is not supported."),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
