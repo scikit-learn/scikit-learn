@@ -37,7 +37,7 @@ cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
     return 0
 
 
-cdef int init_node(BinaryTree tree, ITYPE_t i_node,
+cdef int init_node(BinaryTree tree, NodeData_t[::1] node_data, ITYPE_t i_node,
                    ITYPE_t idx_start, ITYPE_t idx_end) except -1:
     """Initialize the node for the dataset stored in tree.data"""
     cdef ITYPE_t n_features = tree.data.shape[1]
@@ -72,13 +72,13 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
             rad += pow(0.5 * abs(upper_bounds[j] - lower_bounds[j]),
                        tree.dist_metric.p)
 
-    tree.node_data[i_node].idx_start = idx_start
-    tree.node_data[i_node].idx_end = idx_end
+    node_data[i_node].idx_start = idx_start
+    node_data[i_node].idx_end = idx_end
 
     # The radius will hold the size of the circumscribed hypersphere measured
     # with the specified metric: in querying, this is used as a measure of the
     # size of each node when deciding which nodes to split.
-    tree.node_data[i_node].radius = pow(rad, 1. / tree.dist_metric.p)
+    node_data[i_node].radius = pow(rad, 1. / tree.dist_metric.p)
     return 0
 
 

@@ -2,6 +2,9 @@
 # new container-based Travis workers
 language: python
 dist: xenial
+# Only used to install cibuildwheel, CIBW_BUILD determines the python version being
+# built in the docker image itself. Also: travis does not have 3.10 yet.
+python: 3.9
 
 cache:
   apt: true
@@ -22,7 +25,7 @@ env:
     # Custom environment variables for the ARM wheel builder
     - CIBW_BUILD_VERBOSITY=1
     - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
-    - CIBW_ENVIRONMENT="CPU_COUNT=2
+    - CIBW_ENVIRONMENT="CPU_COUNT=4
                         OMP_NUM_THREADS=2
                         OPENBLAS_NUM_THREADS=2
                         SKLEARN_BUILD_PARALLEL=10
@@ -37,38 +40,45 @@ jobs:
     # a scheduled task to build the weekly dev build on the main branch. The
     # weekly frequency is meant to avoid depleting the Travis CI credits too
     # fast.
-    - python: 3.7
-      os: linux
+    - os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
-        - BUILD_WHEEL=true
         - CIBW_BUILD=cp37-manylinux_aarch64
+        - BUILD_WHEEL=true
 
-    - python: 3.8
-      os: linux
+    - os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
-        - BUILD_WHEEL=true
         - CIBW_BUILD=cp38-manylinux_aarch64
+        - BUILD_WHEEL=true
 
-    - python: 3.9
-      os: linux
+    - os: linux
       arch: arm64-graviton2
       dist: focal
-      virt: lxd
+      virt: vm
       group: edge
       if: type = cron or commit_message =~ /\[cd build\]/
       env:
-        - BUILD_WHEEL=true
         - CIBW_BUILD=cp39-manylinux_aarch64
+        - BUILD_WHEEL=true
+
+    - os: linux
+      arch: arm64-graviton2
+      dist: focal
+      virt: vm
+      group: edge
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD=cp310-manylinux_aarch64
+        - BUILD_WHEEL=true
 
 install: source build_tools/travis/install.sh || travis_terminate 1
 script: source build_tools/travis/script.sh || travis_terminate 1

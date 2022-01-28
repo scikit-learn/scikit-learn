@@ -25,14 +25,14 @@ from ..utils import check_array
 
 
 def shrunk_covariance(emp_cov, shrinkage=0.1):
-    """Calculates a covariance matrix shrunk on the diagonal
+    """Calculate a covariance matrix shrunk on the diagonal.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
     emp_cov : array-like of shape (n_features, n_features)
-        Covariance matrix to be shrunk
+        Covariance matrix to be shrunk.
 
     shrinkage : float, default=0.1
         Coefficient in the convex combination used for the computation
@@ -45,11 +45,11 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Notes
     -----
-    The regularized (shrunk) covariance is given by:
+    The regularized (shrunk) covariance is given by::
 
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+        (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
-    where mu = trace(cov) / n_features
+    where `mu = trace(cov) / n_features`.
     """
     emp_cov = check_array(emp_cov)
     n_features = emp_cov.shape[0]

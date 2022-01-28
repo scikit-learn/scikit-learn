@@ -95,6 +95,12 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
     )
 
+    config.add_extension(
+        "_heap",
+        sources=["_heap.pyx"],
+        libraries=libraries,
+    )
+
     config.add_subpackage("tests")
 
     return config

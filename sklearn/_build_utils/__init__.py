@@ -70,6 +70,11 @@ def cythonize_extensions(top_path, config):
             # CPU particularly in CI (cf loky#114)
             n_jobs = joblib.cpu_count()
 
+    # Additional checks for Cython
+    cython_enable_debug_directives = (
+        os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
+    )
+
     config.ext_modules = cythonize(
         config.ext_modules,
         nthreads=n_jobs,
@@ -78,7 +83,7 @@ def cythonize_extensions(top_path, config):
         },
         compiler_directives={
             "language_level": 3,
-            "boundscheck": False,
+            "boundscheck": cython_enable_debug_directives,
             "wraparound": False,
             "initializedcheck": False,
             "nonecheck": False,
