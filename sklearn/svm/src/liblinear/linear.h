@@ -49,6 +49,8 @@ struct model
 	int *n_iter;    /* no. of iterations of each class */
 };
 
+void set_seed(unsigned seed);
+
 struct model* train(const struct problem *prob, const struct parameter *param, BlasFunctions *blas_functions);
 void cross_validation(const struct problem *prob, const struct parameter *param, int nr_fold, double *target);
 

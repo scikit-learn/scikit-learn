@@ -17,7 +17,7 @@ ALLSPHINXOPTS   = -T -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
     $(EXAMPLES_PATTERN_OPTS) .
 
 
-.PHONY: help clean html dirhtml pickle json latex latexpdf changes linkcheck doctest optipng
+.PHONY: help clean html dirhtml ziphtml pickle json latex latexpdf changes linkcheck doctest optipng
 
 all: html-noplot
 
@@ -25,6 +25,7 @@ help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
 	@echo "  dirhtml   to make HTML files named index.html in directories"
+	@echo "  ziphtml   to make a ZIP of the HTML"
 	@echo "  pickle    to make pickle files"
 	@echo "  json      to make JSON files"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
@@ -57,6 +58,19 @@ dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
+
+ziphtml:
+	@if [ ! -d "$(BUILDDIR)/html/stable/" ]; then \
+		make html; \
+	fi
+	# Optimize the images to reduce the size of the ZIP
+	optipng $(BUILDDIR)/html/stable/_images/*.png
+	# Exclude the output directory to avoid infinity recursion
+	cd $(BUILDDIR)/html/stable; \
+	zip -q -x _downloads \
+	       -r _downloads/scikit-learn-docs.zip .
+	@echo
+	@echo "Build finished. The ZIP of the HTML is in $(BUILDDIR)/html/stable/_downloads."
 
 pickle:
 	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(BUILDDIR)/pickle
@@ -106,5 +120,4 @@ optipng:
 	find _build auto_examples */generated -name '*.png' -print0 \
 	  | xargs -0 -n 1 -P 4 optipng -o10
 
-dist: html latexpdf
-	cp _build/latex/user_guide.pdf _build/html/stable/_downloads/scikit-learn-docs.pdf
+dist: html ziphtml

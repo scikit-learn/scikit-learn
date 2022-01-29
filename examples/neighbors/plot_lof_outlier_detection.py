@@ -19,15 +19,14 @@ set 1) greater than the minimum number of samples a cluster has to contain,
 so that other samples can be local outliers relative to this cluster, and 2)
 smaller than the maximum number of close by samples that can potentially be
 local outliers.
-In practice, such informations are generally not available, and taking
+In practice, such information is generally not available, and taking
 n_neighbors=20 appears to work well in general.
+
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import LocalOutlierFactor
-
-print(__doc__)
 
 np.random.seed(42)
 
@@ -53,16 +52,22 @@ n_errors = (y_pred != ground_truth).sum()
 X_scores = clf.negative_outlier_factor_
 
 plt.title("Local Outlier Factor (LOF)")
-plt.scatter(X[:, 0], X[:, 1], color='k', s=3., label='Data points')
+plt.scatter(X[:, 0], X[:, 1], color="k", s=3.0, label="Data points")
 # plot circles with radius proportional to the outlier scores
 radius = (X_scores.max() - X_scores) / (X_scores.max() - X_scores.min())
-plt.scatter(X[:, 0], X[:, 1], s=1000 * radius, edgecolors='r',
-            facecolors='none', label='Outlier scores')
-plt.axis('tight')
+plt.scatter(
+    X[:, 0],
+    X[:, 1],
+    s=1000 * radius,
+    edgecolors="r",
+    facecolors="none",
+    label="Outlier scores",
+)
+plt.axis("tight")
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.xlabel("prediction errors: %d" % (n_errors))
-legend = plt.legend(loc='upper left')
+legend = plt.legend(loc="upper left")
 legend.legendHandles[0]._sizes = [10]
 legend.legendHandles[1]._sizes = [20]
 plt.show()
