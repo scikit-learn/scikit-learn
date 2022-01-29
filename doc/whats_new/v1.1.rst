@@ -97,6 +97,7 @@ Changelog
 
 - |Fix| :class:`cluster.KMeans`'s `init` parameter now properly supports
   array-like input and NumPy string scalars. :pr:`22154` by `Thomas Fan`_.
+
 - |Enhancement| Adds :term:`get_feature_names_out` to :class:`cluster.Birch`,
   :class:`cluster.FeatureAgglomeration`, :class:`cluster.KMeans`,
   :class:`cluster.MiniBatchKMeans`. :pr:`22255` by `Thomas Fan`_.
