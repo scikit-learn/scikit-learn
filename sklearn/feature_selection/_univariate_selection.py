@@ -210,15 +210,27 @@ def chi2(X, y):
 
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
-    X = check_array(X, accept_sparse="csr")
+    # Converting X to float allows getting better performance for the
+    # safe_sparse_dot call made bellow.
+    X = check_array(X, accept_sparse="csr", dtype=(np.float64, np.float32))
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
-    Y = LabelBinarizer().fit_transform(y)
+    # Use a sparse representation for Y by default to reduce memory usage when
+    # y has many unique classes.
+    Y = LabelBinarizer(sparse_output=True).fit_transform(y)
     if Y.shape[1] == 1:
+        Y = Y.toarray()
         Y = np.append(1 - Y, Y, axis=1)
 
     observed = safe_sparse_dot(Y.T, X)  # n_classes * n_features
+
+    if issparse(observed):
+        # convert back to a dense array before calling _chisquare
+        # XXX: could _chisquare be reimplement to accept sparse matrices for
+        # cases where both n_classes and n_features are large (and X is
+        # sparse)?
+        observed = observed.toarray()
 
     feature_count = X.sum(axis=0).reshape(1, -1)
     class_prob = Y.mean(axis=0).reshape(1, -1)
@@ -237,7 +249,9 @@ def r_regression(X, y, *, center=True, force_finite=True):
     a free standing feature selection procedure.
 
     The cross correlation between each regressor and the target is computed
-    as ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) * std(y)).
+    as::
+
+        E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y))
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -316,9 +330,11 @@ def f_regression(X, y, *, center=True, force_finite=True):
 
     This is done in 2 steps:
 
-    1. The cross correlation between each regressor and the target is computed,
-       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
-       std(y)) using r_regression function.
+    1. The cross correlation between each regressor and the target is computed
+       using :func:`r_regression` as::
+
+           E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y))
+
     2. It is converted to an F score and then to a p-value.
 
     :func:`f_regression` is derived from :func:`r_regression` and will rank

@@ -4,8 +4,11 @@ Tests for sklearn.cluster._feature_agglomeration
 # Authors: Sergul Aydore 2017
 import numpy as np
 import pytest
+
+from numpy.testing import assert_array_equal
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.datasets import make_blobs
 
 
 def test_feature_agglomeration():
@@ -41,3 +44,16 @@ def test_feature_agglomeration():
 
     assert_array_almost_equal(agglo_mean.transform(X_full_mean), Xt_mean)
     assert_array_almost_equal(agglo_median.transform(X_full_median), Xt_median)
+
+
+def test_feature_agglomeration_feature_names_out():
+    """Check `get_feature_names_out` for `FeatureAgglomeration`."""
+    X, _ = make_blobs(n_features=6, random_state=0)
+    agglo = FeatureAgglomeration(n_clusters=3)
+    agglo.fit(X)
+    n_clusters = agglo.n_clusters_
+
+    names_out = agglo.get_feature_names_out()
+    assert_array_equal(
+        [f"featureagglomeration{i}" for i in range(n_clusters)], names_out
+    )
