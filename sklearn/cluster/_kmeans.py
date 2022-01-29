@@ -28,7 +28,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _is_arraylike
+from ..utils.validation import _is_arraylike_not_scalar
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
@@ -253,11 +253,6 @@ def _tolerance(X, tol):
     else:
         variances = np.var(X, axis=0)
     return np.mean(variances) * tol
-
-
-def _is_arraylike_not_scalar(array):
-    """Return True if array is array-like and not a scalar"""
-    return _is_arraylike(array) and not np.isscalar(array)
 
 
 def k_means(
