@@ -3,6 +3,8 @@ import numpy as np
 
 import numpy as np
 
+import numpy as np
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.metaestimators import available_if
 from ..utils.validation import (

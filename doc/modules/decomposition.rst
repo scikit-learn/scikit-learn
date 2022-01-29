@@ -168,14 +168,16 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
     * Algorithm 4.3 in
       :arxiv:`"Finding structure with randomness: Stochastic algorithms for
+<<<<<<< HEAD
       constructing approximate matrix decompositions"
       <0909.4061>`
+=======
+      constructing approximate matrix decompositions" <0909.4061>`
+>>>>>>> main
       Halko, et al., 2009
 
-    * `"An implementation of a randomized algorithm for principal component
-      analysis"
-      <https://arxiv.org/pdf/1412.3510.pdf>`_
-      A. Szlam et al. 2014
+    * :arxiv:`"An implementation of a randomized algorithm for principal component
+      analysis" <1412.3510>` A. Szlam et al. 2014
 
 .. _SparsePCA:
 
@@ -355,6 +357,7 @@ components is less than 10 (strict) and the number of samples is more than 200
     * *randomized* solver:
 
         * Algorithm 4.3 in
+<<<<<<< HEAD
           :arxiv:`"Finding structure with randomness: Stochastic algorithms for
           constructing approximate matrix decompositions"
           <0909.4061>`
@@ -364,11 +367,20 @@ components is less than 10 (strict) and the number of samples is more than 200
           analysis"
           <https://arxiv.org/pdf/1412.3510.pdf>`_
           A. Szlam et al. 2014
+=======
+          :arxiv:`"Finding structure with randomness: Stochastic
+          algorithms for constructing approximate matrix decompositions" <0909.4061>`
+          Halko, et al. (2009)
+
+        * :arxiv:`"An implementation of a randomized algorithm
+          for principal component analysis" <1412.3510>`
+          A. Szlam et al. (2014)
+>>>>>>> main
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
       <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
-      R. B. Lehoucq, D. C. Sorensen, and C. Yang, 1998
+      R. B. Lehoucq, D. C. Sorensen, and C. Yang, (1998)
 
 
 .. _LSA:
@@ -946,9 +958,9 @@ stored components::
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
       A. Cichocki, A. Phan, 2009
 
-    .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <https://arxiv.org/pdf/1010.1763.pdf>`_
-      C. Fevotte, J. Idier, 2011
+    .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with
+           the beta-divergence" <1010.1763>`
+           C. Fevotte, J. Idier, 2011
 
 
 .. _LatentDirichletAllocation:

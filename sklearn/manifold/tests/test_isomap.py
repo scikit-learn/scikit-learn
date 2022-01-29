@@ -1,6 +1,10 @@
 from itertools import product
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 import pytest
 
 from sklearn import datasets
@@ -220,3 +224,14 @@ def test_multiple_connected_components_metric_precomputed():
     X_graph = neighbors.kneighbors_graph(X, n_neighbors=2, mode="distance")
     with pytest.raises(RuntimeError, match="number of connected components"):
         manifold.Isomap(n_neighbors=1, metric="precomputed").fit(X_graph)
+
+
+def test_get_feature_names_out():
+    """Check get_feature_names_out for Isomap."""
+    X, y = make_blobs(random_state=0, n_features=4)
+    n_components = 2
+
+    iso = manifold.Isomap(n_components=n_components)
+    iso.fit_transform(X)
+    names = iso.get_feature_names_out()
+    assert_array_equal([f"isomap{i}" for i in range(n_components)], names)
