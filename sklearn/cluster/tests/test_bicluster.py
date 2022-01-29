@@ -214,7 +214,7 @@ def test_perfect_checkerboard():
         ({"n_init": 1.5}, TypeError, "n_init must be an instance of"),
         (
             {"n_clusters": "abc"},
-            ValueError,
+            TypeError,
             "Incorrect parameter n_clusters has value: abc",
         ),
         ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
