@@ -1411,7 +1411,7 @@ def make_sparse_spd_matrix(
 
     norm_diag : bool, default=False
         Whether to normalize the output matrix to make the leading diagonal
-        elements all 1
+        elements all 1.
 
     smallest_coef : float, default=0.1
         The value of the smallest coefficient between 0 and 1.
@@ -1429,15 +1429,15 @@ def make_sparse_spd_matrix(
     prec : sparse matrix of shape (dim, dim)
         The generated matrix.
 
+    See Also
+    --------
+    make_spd_matrix : Generate a random symmetric, positive-definite matrix.
+
     Notes
     -----
     The sparsity is actually imposed on the cholesky factor of the matrix.
     Thus alpha does not translate directly into the filling fraction of
     the matrix itself.
-
-    See Also
-    --------
-    make_spd_matrix
     """
     random_state = check_random_state(random_state)
 
