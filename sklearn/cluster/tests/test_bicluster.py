@@ -214,7 +214,7 @@ def test_perfect_checkerboard():
         ({"n_init": 1.5}, TypeError, "n_init must be an instance of"),
         (
             {"n_clusters": "abc"},
-            TypeError,
+            ValueError,
             "Incorrect parameter n_clusters has value: abc",
         ),
         ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
@@ -237,18 +237,6 @@ def test_spectalcoclustering_parameter_validation(params, type_err, err_msg):
             {"n_clusters": (3, 3, 3)},
             ValueError,
             r"Incorrect parameter n_clusters has value: \(3, 3, 3\)",
-        ),
-        (
-            {"n_clusters": (2, 6), "n_samples": 3},
-            ValueError,
-            r"n_clusters can not bigger than n_samples: n_clusters[1] == 6, must be"
-            r" <= 3",
-        ),
-        (
-            {"n_clusters": (6, 2), "n_samples": 3},
-            ValueError,
-            r"n_clusters can not bigger than n_samples: n_clusters[0] == 6, must be"
-            r" <= 3.",
         ),
         (
             {"n_clusters": "abc"},
