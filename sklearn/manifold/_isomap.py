@@ -10,11 +10,7 @@ from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
-<<<<<<< HEAD
-from ..base import BaseEstimator, TransformerMixin
-=======
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
->>>>>>> main
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
@@ -23,11 +19,7 @@ from ..utils.graph import _fix_connected_components
 from ..externals._packaging.version import parse as parse_version
 
 
-<<<<<<< HEAD
-class Isomap(TransformerMixin, BaseEstimator):
-=======
 class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
->>>>>>> main
     """Isomap Embedding.
 
     Non-linear dimensionality reduction through Isometric Mapping

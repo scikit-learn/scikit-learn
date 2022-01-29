@@ -547,16 +547,12 @@ def locally_linear_embedding(
     )
 
 
-<<<<<<< HEAD
-class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator):
-=======
 class LocallyLinearEmbedding(
     _ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _UnstableArchMixin,
     BaseEstimator,
 ):
->>>>>>> main
     """Locally Linear Embedding.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.

@@ -2807,16 +2807,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-<<<<<<< HEAD
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
-=======
     In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
     cross-validation, the model is fit again using the entire training set.
 
     To avoid unnecessary memory duplication the `X` and `y` arguments of the
     `fit` method should be directly passed as Fortran-contiguous numpy arrays.
->>>>>>> main
 
     Examples
     --------
@@ -3047,16 +3042,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-<<<<<<< HEAD
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
-=======
     In `fit`, once the best parameter `alpha` is found through
     cross-validation, the model is fit again using the entire training set.
 
     To avoid unnecessary memory duplication the `X` and `y` arguments of the
     `fit` method should be directly passed as Fortran-contiguous numpy arrays.
->>>>>>> main
 
     Examples
     --------

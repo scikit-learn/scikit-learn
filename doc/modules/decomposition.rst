@@ -169,8 +169,12 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
     * Algorithm 4.3 in
       :arxiv:`"Finding structure with randomness: Stochastic algorithms for
 <<<<<<< HEAD
+<<<<<<< HEAD
       constructing approximate matrix decompositions"
       <0909.4061>`
+=======
+      constructing approximate matrix decompositions" <0909.4061>`
+>>>>>>> main
 =======
       constructing approximate matrix decompositions" <0909.4061>`
 >>>>>>> main
@@ -357,17 +361,6 @@ components is less than 10 (strict) and the number of samples is more than 200
     * *randomized* solver:
 
         * Algorithm 4.3 in
-<<<<<<< HEAD
-          :arxiv:`"Finding structure with randomness: Stochastic algorithms for
-          constructing approximate matrix decompositions"
-          <0909.4061>`
-          Halko, et al., 2009
-
-        * `"An implementation of a randomized algorithm for principal component
-          analysis"
-          <https://arxiv.org/pdf/1412.3510.pdf>`_
-          A. Szlam et al. 2014
-=======
           :arxiv:`"Finding structure with randomness: Stochastic
           algorithms for constructing approximate matrix decompositions" <0909.4061>`
           Halko, et al. (2009)
@@ -375,7 +368,6 @@ components is less than 10 (strict) and the number of samples is more than 200
         * :arxiv:`"An implementation of a randomized algorithm
           for principal component analysis" <1412.3510>`
           A. Szlam et al. (2014)
->>>>>>> main
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation

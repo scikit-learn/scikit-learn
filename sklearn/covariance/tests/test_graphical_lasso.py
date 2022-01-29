@@ -198,55 +198,6 @@ def test_graphical_lasso_cv_scores(suffix):
     assert_allclose(cov.cv_results_[f"std_{suffix}"], expected_std)
 
 
-<<<<<<< HEAD
-# TODO: Remove `score` and `test_score` suffix in 1.2
-@pytest.mark.parametrize("suffix", ["score", "test_score"])
-@pytest.mark.filterwarnings("ignore:Key*:FutureWarning:sklearn")
-def test_graphical_lasso_cv_scores(suffix):
-=======
-# TODO: Remove in 1.2 when mean_score, std_score, and split(k)_score is removed.
-def test_graphical_lasso_cv_scores_deprecated():
-    """Check that the following keys in cv_results_ are deprecated: `mean_score`,
-    `std_score`, and `split(k)_score`."""
->>>>>>> main
-    splits = 4
-    n_alphas = 5
-    n_refinements = 3
-    true_cov = np.array(
-        [
-            [0.8, 0.0, 0.2, 0.0],
-            [0.0, 0.4, 0.0, 0.0],
-            [0.2, 0.0, 0.3, 0.1],
-            [0.0, 0.0, 0.1, 0.7],
-        ]
-    )
-    rng = np.random.RandomState(0)
-    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
-    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
-        X
-    )
-    cv_results = cov.cv_results_
-<<<<<<< HEAD
-    # alpha and one for each split
-
-    total_alphas = n_refinements * n_alphas + 1
-    keys = ["alphas"]
-    split_keys = [f"split{i}_{suffix}" for i in range(splits)]
-    for key in keys + split_keys:
-        assert key in cv_results
-        assert len(cv_results[key]) == total_alphas
-=======
->>>>>>> main
-
-    deprecated_keys = ["mean_score", "std_score"] + [
-        f"split{k}_score" for k in range(splits)
-    ]
-
-<<<<<<< HEAD
-    assert_allclose(cov.cv_results_[f"mean_{suffix}"], expected_mean)
-    assert_allclose(cov.cv_results_[f"std_{suffix}"], expected_std)
-
-
 # TODO: Remove in 1.2 when mean_score, std_score, and split(k)_score is removed.
 def test_graphical_lasso_cv_scores_deprecated():
     """Check that the following keys in cv_results_ are deprecated: `mean_score`,
@@ -273,8 +224,6 @@ def test_graphical_lasso_cv_scores_deprecated():
         f"split{k}_score" for k in range(splits)
     ]
 
-=======
->>>>>>> main
     for deprecated_key in deprecated_keys:
         new_key = deprecated_key.replace("_score", "_test_score")
         msg = (
