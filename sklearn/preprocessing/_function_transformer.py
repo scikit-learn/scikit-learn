@@ -1,12 +1,6 @@
 import warnings
 import numpy as np
 
-import numpy as np
-
-import numpy as np
-
-import numpy as np
-
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
@@ -237,7 +231,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         """Get output feature names for transformation.
 
         This method is only defined if `feature_names_out` is not None.
-<<<<<<< HEAD
 
         Parameters
         ----------
@@ -251,21 +244,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             - If `input_features` is array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
-=======
-
-        Parameters
-        ----------
-        input_features : array-like of str or None, default=None
-            Input feature names.
-
-            - If `input_features` is None, then `feature_names_in_` is
-              used as the input feature names. If `feature_names_in_` is not
-              defined, then names are generated:
-              `[x0, x1, ..., x(n_features_in_)]`.
-            - If `input_features` is array-like, then `input_features` must
-              match `feature_names_in_` if `feature_names_in_` is defined.
-
->>>>>>> main
         Returns
         -------
         feature_names_out : ndarray of str objects
