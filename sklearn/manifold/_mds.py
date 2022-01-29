@@ -365,7 +365,7 @@ def svd_scaler(dissimilarities, n_components=2):
             "dissimilarity='euclidean'."
         )
 
-    # Get ``n_compontent`` greatest eigenvalues and corresponding eigenvectors.
+    # Get ``n_components`` greatest eigenvalues and corresponding eigenvectors.
     # Eigenvalues should be in descending order by convention.
     w = w[::-1][:n_components]
     V = V[:, ::-1][:, :n_components]
@@ -435,10 +435,12 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    solver : {'smacof', 'svd'}, default ='smacof'
-        The solver used for solving the MDS problem.
+    solver : {'auto', 'smacof', 'svd'}, default = 'auto'
+        The solver used for solving the MDS problem. When set to 'auto', MDS
+        will use the ``svd`` solver when ``metric==True`` and the ``smacof``
+        solver when ``metric==False``
 
-        .. versionadded:: 0.23
+        .. versionadded:: 1.1
 
     Attributes
     ----------
@@ -518,7 +520,7 @@ class MDS(BaseEstimator):
         n_jobs=None,
         random_state=None,
         dissimilarity="euclidean",
-        solver="smacof",
+        solver="auto",
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
@@ -603,6 +605,8 @@ class MDS(BaseEstimator):
                 "dissimilarity matrix, set "
                 "``dissimilarity='precomputed'``."
             )
+        if self.solver == "auto":
+            self.solver = "svd" if self.metric else "smacof"
 
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
