@@ -12,6 +12,7 @@ from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
+from sklearn.datasets import make_blobs
 from sklearn.metrics.pairwise import pairwise_distances
 
 from scipy.sparse import rand as sparse_rand
