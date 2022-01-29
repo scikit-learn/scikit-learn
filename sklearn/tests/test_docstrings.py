@@ -31,7 +31,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._samples_generator.make_checkerboard",
     "sklearn.datasets._samples_generator.make_classification",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
-    "sklearn.datasets._samples_generator.make_hastie_10_2",
     "sklearn.datasets._samples_generator.make_multilabel_classification",
     "sklearn.datasets._samples_generator.make_regression",
     "sklearn.datasets._samples_generator.make_sparse_coded_signal",
