@@ -111,7 +111,7 @@ def graphical_lasso(
     eps=np.finfo(np.float64).eps,
     return_n_iter=False,
 ):
-    """l1-penalized covariance estimator
+    """L1-penalized covariance estimator.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -183,7 +183,10 @@ def graphical_lasso(
 
     See Also
     --------
-    GraphicalLasso, GraphicalLassoCV
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with
+        cross-validated choice of the l1 penalty.
 
     Notes
     -----
