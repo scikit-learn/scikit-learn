@@ -556,10 +556,10 @@ The code is written in Cython.
       Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL
       '09.
 
-   .. [#4] `"Towards Optimal One Pass Large Scale Learning with
+   .. [#4] :arxiv:`"Towards Optimal One Pass Large Scale Learning with
       Averaged Stochastic Gradient Descent"
-      <https://arxiv.org/pdf/1107.2490v2.pdf>`_
-      Xu, Wei
+      <1107.2490v2>`
+      Xu, Wei (2011)
 
    .. [#5] `"Regularization and variable selection via the elastic net"
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
