@@ -1049,7 +1049,7 @@ def test_check_fit_check_is_fitted():
 
 def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True
-    # will skip certain tests
+    # will skip certain tests, refer to issue #22313 for details
     for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
         all_tests = list(_yield_all_checks(est()))
         assert check_methods_sample_order_invariance in all_tests
