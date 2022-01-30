@@ -1,0 +1,6 @@
+from typing import Text, Tuple, Union
+
+_SndHeaders = Tuple[str, int, int, int, Union[int, str]]
+
+def what(filename: Text) -> _SndHeaders | None: ...
+def whathdr(filename: Text) -> _SndHeaders | None: ...

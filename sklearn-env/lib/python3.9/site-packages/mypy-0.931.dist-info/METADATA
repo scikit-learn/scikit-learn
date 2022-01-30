@@ -1,0 +1,45 @@
+Metadata-Version: 2.1
+Name: mypy
+Version: 0.931
+Summary: Optional static typing for Python
+Home-page: http://www.mypy-lang.org/
+Author: Jukka Lehtosalo
+Author-email: jukka.lehtosalo@iki.fi
+License: MIT License
+Project-URL: News, http://mypy-lang.org/news.html
+Project-URL: Documentation, https://mypy.readthedocs.io/en/stable/introduction.html
+Project-URL: Repository, https://github.com/python/mypy
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Topic :: Software Development
+Requires-Python: >=3.6
+License-File: LICENSE
+Requires-Dist: typing-extensions (>=3.10)
+Requires-Dist: mypy-extensions (>=0.4.3)
+Requires-Dist: tomli (>=1.1.0)
+Requires-Dist: typed-ast (<2,>=1.4.0) ; python_version < "3.8"
+Provides-Extra: dmypy
+Requires-Dist: psutil (>=4.0) ; extra == 'dmypy'
+Provides-Extra: python2
+Requires-Dist: typed-ast (<2,>=1.4.0) ; extra == 'python2'
+
+Mypy -- Optional Static Typing for Python
+=========================================
+
+Add type annotations to your Python programs, and use mypy to type
+check them.  Mypy is essentially a Python linter on steroids, and it
+can catch many programming errors by analyzing your program, without
+actually having to run it.  Mypy has a powerful type system with
+features such as type inference, gradual typing, generics and union
+types.
+
+

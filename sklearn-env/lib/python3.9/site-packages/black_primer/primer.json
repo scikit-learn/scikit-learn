@@ -1,0 +1,144 @@
+{
+  "configuration_format_version": 20200509,
+  "projects": {
+    "aioexabgp": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": false,
+      "git_clone_url": "https://github.com/cooperlees/aioexabgp.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "attrs": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/python-attrs/attrs.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "bandersnatch": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/pypa/bandersnatch.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "channels": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/django/channels.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "django": {
+      "cli_arguments": [
+        "--experimental-string-processing",
+        "--skip-string-normalization",
+        "--extend-exclude",
+        "/((docs|scripts)/|django/forms/models.py|tests/gis_tests/test_spatialrefsys.py|tests/test_runner_apps/tagged/tests_syntax_error.py)"
+      ],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/django/django.git",
+      "long_checkout": false,
+      "py_versions": ["3.8", "3.9"]
+    },
+    "flake8-bugbear": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": false,
+      "git_clone_url": "https://github.com/PyCQA/flake8-bugbear.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "hypothesis": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/HypothesisWorks/hypothesis.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "pandas": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/pandas-dev/pandas.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "pillow": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/python-pillow/Pillow.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "poetry": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/python-poetry/poetry.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "pyanalyze": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": false,
+      "git_clone_url": "https://github.com/quora/pyanalyze.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "pyramid": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/Pylons/pyramid.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "ptr": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": false,
+      "git_clone_url": "https://github.com/facebookincubator/ptr.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "pytest": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/pytest-dev/pytest.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "sqlalchemy": {
+      "no_cli_args_reason": "breaks black with new string parsing - #2188",
+      "cli_arguments": [],
+      "expect_formatting_changes": false,
+      "git_clone_url": "https://github.com/sqlalchemy/sqlalchemy.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "tox": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/tox-dev/tox.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "typeshed": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/python/typeshed.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "virtualenv": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/pypa/virtualenv.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "warehouse": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/pypa/warehouse.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    }
+  }
+}

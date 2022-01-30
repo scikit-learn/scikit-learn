@@ -1,0 +1,1184 @@
+[case testGetAttribute]
+class A:
+    x: int
+
+def f(a: A) -> int:
+    return a.x
+[out]
+def f(a):
+    a :: __main__.A
+    r0 :: int
+L0:
+    r0 = a.x
+    return r0
+
+[case testSetAttribute]
+class A:
+    x: int
+
+def f(a: A) -> None:
+    a.x = 1
+[out]
+def f(a):
+    a :: __main__.A
+    r0 :: bool
+L0:
+    a.x = 2; r0 = is_error
+    return 1
+
+[case testUserClassInList]
+class C:
+    x: int
+
+def f() -> int:
+    c = C()
+    c.x = 5
+    a = [c]
+    d = a[0]
+    return d.x + 1
+[out]
+def f():
+    r0, c :: __main__.C
+    r1 :: bool
+    r2 :: list
+    r3, r4 :: ptr
+    a :: list
+    r5 :: object
+    r6, d :: __main__.C
+    r7, r8 :: int
+L0:
+    r0 = C()
+    c = r0
+    c.x = 10; r1 = is_error
+    r2 = PyList_New(1)
+    r3 = get_element_ptr r2 ob_item :: PyListObject
+    r4 = load_mem r3 :: ptr*
+    set_mem r4, c :: builtins.object*
+    keep_alive r2
+    a = r2
+    r5 = CPyList_GetItemShort(a, 0)
+    r6 = cast(__main__.C, r5)
+    d = r6
+    r7 = d.x
+    r8 = CPyTagged_Add(r7, 2)
+    return r8
+
+[case testMethodCall]
+class A:
+    def f(self, x: int, y: str) -> int:
+        return x + 10
+
+def g(a: A) -> None:
+    a.f(1, 'hi')
+[out]
+def A.f(self, x, y):
+    self :: __main__.A
+    x :: int
+    y :: str
+    r0 :: int
+L0:
+    r0 = CPyTagged_Add(x, 20)
+    return r0
+def g(a):
+    a :: __main__.A
+    r0 :: str
+    r1 :: int
+L0:
+    r0 = 'hi'
+    r1 = a.f(2, r0)
+    return 1
+
+[case testForwardUse]
+def g(a: A) -> int:
+    return a.n
+
+class A:
+    n : int
+
+[out]
+def g(a):
+    a :: __main__.A
+    r0 :: int
+L0:
+    r0 = a.n
+    return r0
+
+[case testOptionalMember]
+from typing import Optional
+class Node:
+    next: Optional[Node]
+    def length(self) -> int:
+        if self.next is not None:
+            return 1 + self.next.length()
+        return 1
+[out]
+def Node.length(self):
+    self :: __main__.Node
+    r0 :: union[__main__.Node, None]
+    r1 :: object
+    r2, r3 :: bit
+    r4 :: union[__main__.Node, None]
+    r5 :: __main__.Node
+    r6, r7 :: int
+L0:
+    r0 = self.next
+    r1 = box(None, 1)
+    r2 = r0 == r1
+    r3 = r2 ^ 1
+    if r3 goto L1 else goto L2 :: bool
+L1:
+    r4 = self.next
+    r5 = cast(__main__.Node, r4)
+    r6 = r5.length()
+    r7 = CPyTagged_Add(2, r6)
+    return r7
+L2:
+    return 2
+
+[case testSubclass]
+class A:
+    def __init__(self) -> None:
+        self.x = 10
+class B(A):
+    def __init__(self) -> None:
+        self.x = 20
+        self.y = 30
+[out]
+def A.__init__(self):
+    self :: __main__.A
+    r0 :: bool
+L0:
+    self.x = 20; r0 = is_error
+    return 1
+def B.__init__(self):
+    self :: __main__.B
+    r0, r1 :: bool
+L0:
+    self.x = 40; r0 = is_error
+    self.y = 60; r1 = is_error
+    return 1
+
+[case testAttrLvalue]
+class O(object):
+    def __init__(self) -> None:
+        self.x = 1
+
+def increment(o: O) -> O:
+    o.x += 1
+    return o
+[out]
+def O.__init__(self):
+    self :: __main__.O
+    r0 :: bool
+L0:
+    self.x = 2; r0 = is_error
+    return 1
+def increment(o):
+    o :: __main__.O
+    r0, r1 :: int
+    r2 :: bool
+L0:
+    r0 = o.x
+    r1 = CPyTagged_Add(r0, 2)
+    o.x = r1; r2 = is_error
+    return o
+
+[case testSubclassSpecialize2]
+class A:
+    def foo(self, x: int) -> object:
+        return str(x)
+class B(A):
+    def foo(self, x: object) -> object:
+        return x
+class C(B):
+    def foo(self, x: object) -> int:
+        return id(x)
+
+def use_a(x: A, y: int) -> object:
+    return x.foo(y)
+
+def use_b(x: B, y: object) -> object:
+    return x.foo(y)
+
+def use_c(x: C, y: object) -> int:
+    return x.foo(y)
+[out]
+def A.foo(self, x):
+    self :: __main__.A
+    x :: int
+    r0 :: str
+L0:
+    r0 = CPyTagged_Str(x)
+    return r0
+def B.foo(self, x):
+    self :: __main__.B
+    x :: object
+L0:
+    return x
+def B.foo__A_glue(self, x):
+    self :: __main__.B
+    x :: int
+    r0, r1 :: object
+L0:
+    r0 = box(int, x)
+    r1 = B.foo(self, r0)
+    return r1
+def C.foo(self, x):
+    self :: __main__.C
+    x :: object
+    r0 :: int
+L0:
+    r0 = CPyTagged_Id(x)
+    return r0
+def C.foo__B_glue(self, x):
+    self :: __main__.C
+    x :: object
+    r0 :: int
+    r1 :: object
+L0:
+    r0 = C.foo(self, x)
+    r1 = box(int, r0)
+    return r1
+def C.foo__A_glue(self, x):
+    self :: __main__.C
+    x :: int
+    r0 :: object
+    r1 :: int
+    r2 :: object
+L0:
+    r0 = box(int, x)
+    r1 = C.foo(self, r0)
+    r2 = box(int, r1)
+    return r2
+def use_a(x, y):
+    x :: __main__.A
+    y :: int
+    r0 :: object
+L0:
+    r0 = x.foo(y)
+    return r0
+def use_b(x, y):
+    x :: __main__.B
+    y, r0 :: object
+L0:
+    r0 = x.foo(y)
+    return r0
+def use_c(x, y):
+    x :: __main__.C
+    y :: object
+    r0 :: int
+L0:
+    r0 = x.foo(y)
+    return r0
+
+[case testSubclass_toplevel]
+from typing import TypeVar, Generic
+from mypy_extensions import trait
+T = TypeVar('T')
+class C:
+    pass
+
+@trait
+class S:
+    pass
+
+class D(C, S, Generic[T]):
+    pass
+
+[out]
+def __top_level__():
+    r0, r1 :: object
+    r2 :: bit
+    r3 :: str
+    r4 :: object
+    r5 :: dict
+    r6, r7 :: str
+    r8 :: list
+    r9, r10, r11 :: ptr
+    r12 :: str
+    r13 :: object
+    r14, r15, r16 :: str
+    r17 :: object
+    r18 :: str
+    r19 :: int32
+    r20 :: bit
+    r21, r22, r23 :: str
+    r24 :: object
+    r25 :: str
+    r26 :: int32
+    r27 :: bit
+    r28 :: dict
+    r29 :: str
+    r30 :: list
+    r31, r32 :: ptr
+    r33 :: str
+    r34 :: object
+    r35, r36, r37 :: str
+    r38 :: object
+    r39 :: str
+    r40 :: int32
+    r41 :: bit
+    r42 :: str
+    r43 :: dict
+    r44 :: str
+    r45, r46 :: object
+    r47 :: dict
+    r48 :: str
+    r49 :: int32
+    r50 :: bit
+    r51 :: object
+    r52 :: str
+    r53, r54 :: object
+    r55 :: bool
+    r56 :: str
+    r57 :: tuple
+    r58 :: int32
+    r59 :: bit
+    r60 :: dict
+    r61 :: str
+    r62 :: int32
+    r63 :: bit
+    r64 :: object
+    r65 :: str
+    r66, r67 :: object
+    r68 :: str
+    r69 :: tuple
+    r70 :: int32
+    r71 :: bit
+    r72 :: dict
+    r73 :: str
+    r74 :: int32
+    r75 :: bit
+    r76, r77 :: object
+    r78 :: dict
+    r79 :: str
+    r80 :: object
+    r81 :: dict
+    r82 :: str
+    r83, r84 :: object
+    r85 :: tuple
+    r86 :: str
+    r87, r88 :: object
+    r89 :: bool
+    r90, r91 :: str
+    r92 :: tuple
+    r93 :: int32
+    r94 :: bit
+    r95 :: dict
+    r96 :: str
+    r97 :: int32
+    r98 :: bit
+L0:
+    r0 = builtins :: module
+    r1 = load_address _Py_NoneStruct
+    r2 = r0 != r1
+    if r2 goto L2 else goto L1 :: bool
+L1:
+    r3 = 'builtins'
+    r4 = PyImport_Import(r3)
+    builtins = r4 :: module
+L2:
+    r5 = __main__.globals :: static
+    r6 = 'TypeVar'
+    r7 = 'Generic'
+    r8 = PyList_New(2)
+    r9 = get_element_ptr r8 ob_item :: PyListObject
+    r10 = load_mem r9 :: ptr*
+    set_mem r10, r6 :: builtins.object*
+    r11 = r10 + WORD_SIZE*1
+    set_mem r11, r7 :: builtins.object*
+    keep_alive r8
+    r12 = 'typing'
+    r13 = PyImport_ImportModuleLevelObject(r12, r5, 0, r8, 0)
+    typing = r13 :: module
+    r14 = 'typing'
+    r15 = 'TypeVar'
+    r16 = 'TypeVar'
+    r17 = CPyImport_ImportFrom(r13, r14, r15, r16)
+    r18 = 'TypeVar'
+    r19 = CPyDict_SetItem(r5, r18, r17)
+    r20 = r19 >= 0 :: signed
+    r21 = 'typing'
+    r22 = 'Generic'
+    r23 = 'Generic'
+    r24 = CPyImport_ImportFrom(r13, r21, r22, r23)
+    r25 = 'Generic'
+    r26 = CPyDict_SetItem(r5, r25, r24)
+    r27 = r26 >= 0 :: signed
+    r28 = __main__.globals :: static
+    r29 = 'trait'
+    r30 = PyList_New(1)
+    r31 = get_element_ptr r30 ob_item :: PyListObject
+    r32 = load_mem r31 :: ptr*
+    set_mem r32, r29 :: builtins.object*
+    keep_alive r30
+    r33 = 'mypy_extensions'
+    r34 = PyImport_ImportModuleLevelObject(r33, r28, 0, r30, 0)
+    mypy_extensions = r34 :: module
+    r35 = 'mypy_extensions'
+    r36 = 'trait'
+    r37 = 'trait'
+    r38 = CPyImport_ImportFrom(r34, r35, r36, r37)
+    r39 = 'trait'
+    r40 = CPyDict_SetItem(r28, r39, r38)
+    r41 = r40 >= 0 :: signed
+    r42 = 'T'
+    r43 = __main__.globals :: static
+    r44 = 'TypeVar'
+    r45 = CPyDict_GetItem(r43, r44)
+    r46 = PyObject_CallFunctionObjArgs(r45, r42, 0)
+    r47 = __main__.globals :: static
+    r48 = 'T'
+    r49 = CPyDict_SetItem(r47, r48, r46)
+    r50 = r49 >= 0 :: signed
+    r51 = <error> :: object
+    r52 = '__main__'
+    r53 = __main__.C_template :: type
+    r54 = CPyType_FromTemplate(r53, r51, r52)
+    r55 = C_trait_vtable_setup()
+    r56 = '__mypyc_attrs__'
+    r57 = PyTuple_Pack(0)
+    r58 = PyObject_SetAttr(r54, r56, r57)
+    r59 = r58 >= 0 :: signed
+    __main__.C = r54 :: type
+    r60 = __main__.globals :: static
+    r61 = 'C'
+    r62 = CPyDict_SetItem(r60, r61, r54)
+    r63 = r62 >= 0 :: signed
+    r64 = <error> :: object
+    r65 = '__main__'
+    r66 = __main__.S_template :: type
+    r67 = CPyType_FromTemplate(r66, r64, r65)
+    r68 = '__mypyc_attrs__'
+    r69 = PyTuple_Pack(0)
+    r70 = PyObject_SetAttr(r67, r68, r69)
+    r71 = r70 >= 0 :: signed
+    __main__.S = r67 :: type
+    r72 = __main__.globals :: static
+    r73 = 'S'
+    r74 = CPyDict_SetItem(r72, r73, r67)
+    r75 = r74 >= 0 :: signed
+    r76 = __main__.C :: type
+    r77 = __main__.S :: type
+    r78 = __main__.globals :: static
+    r79 = 'Generic'
+    r80 = CPyDict_GetItem(r78, r79)
+    r81 = __main__.globals :: static
+    r82 = 'T'
+    r83 = CPyDict_GetItem(r81, r82)
+    r84 = PyObject_GetItem(r80, r83)
+    r85 = PyTuple_Pack(3, r76, r77, r84)
+    r86 = '__main__'
+    r87 = __main__.D_template :: type
+    r88 = CPyType_FromTemplate(r87, r85, r86)
+    r89 = D_trait_vtable_setup()
+    r90 = '__mypyc_attrs__'
+    r91 = '__dict__'
+    r92 = PyTuple_Pack(1, r91)
+    r93 = PyObject_SetAttr(r88, r90, r92)
+    r94 = r93 >= 0 :: signed
+    __main__.D = r88 :: type
+    r95 = __main__.globals :: static
+    r96 = 'D'
+    r97 = CPyDict_SetItem(r95, r96, r88)
+    r98 = r97 >= 0 :: signed
+    return 1
+
+[case testIsInstance]
+class A: pass
+class B(A): pass
+
+def f(x: A) -> B:
+    if isinstance(x, B):
+        return x
+    return B()
+[out]
+def f(x):
+    x :: __main__.A
+    r0 :: object
+    r1 :: ptr
+    r2 :: object
+    r3 :: bit
+    r4, r5 :: __main__.B
+L0:
+    r0 = __main__.B :: type
+    r1 = get_element_ptr x ob_type :: PyObject
+    r2 = load_mem r1 :: builtins.object*
+    keep_alive x
+    r3 = r2 == r0
+    if r3 goto L1 else goto L2 :: bool
+L1:
+    r4 = cast(__main__.B, x)
+    return r4
+L2:
+    r5 = B()
+    return r5
+
+[case testIsInstanceTuple]
+from typing import Union
+class R: pass
+class A(R): pass
+class B(R): pass
+class C(R): pass
+
+def f(x: R) -> Union[A, B]:
+    if isinstance(x, (A, B)):
+        return x
+    return A()
+[out]
+def f(x):
+    x :: __main__.R
+    r0 :: object
+    r1 :: ptr
+    r2 :: object
+    r3 :: bit
+    r4 :: bool
+    r5 :: object
+    r6 :: ptr
+    r7 :: object
+    r8 :: bit
+    r9 :: union[__main__.A, __main__.B]
+    r10 :: __main__.A
+L0:
+    r0 = __main__.A :: type
+    r1 = get_element_ptr x ob_type :: PyObject
+    r2 = load_mem r1 :: builtins.object*
+    keep_alive x
+    r3 = r2 == r0
+    if r3 goto L1 else goto L2 :: bool
+L1:
+    r4 = r3
+    goto L3
+L2:
+    r5 = __main__.B :: type
+    r6 = get_element_ptr x ob_type :: PyObject
+    r7 = load_mem r6 :: builtins.object*
+    keep_alive x
+    r8 = r7 == r5
+    r4 = r8
+L3:
+    if r4 goto L4 else goto L5 :: bool
+L4:
+    r9 = cast(union[__main__.A, __main__.B], x)
+    return r9
+L5:
+    r10 = A()
+    return r10
+
+[case testIsInstanceFewSubclasses]
+class R: pass
+class A(R): pass
+
+def f(x: object) -> R:
+    if isinstance(x, R):
+        return x
+    return A()
+[out]
+def f(x):
+    x, r0 :: object
+    r1 :: ptr
+    r2 :: object
+    r3 :: bit
+    r4 :: bool
+    r5 :: object
+    r6 :: ptr
+    r7 :: object
+    r8 :: bit
+    r9 :: __main__.R
+    r10 :: __main__.A
+L0:
+    r0 = __main__.A :: type
+    r1 = get_element_ptr x ob_type :: PyObject
+    r2 = load_mem r1 :: builtins.object*
+    keep_alive x
+    r3 = r2 == r0
+    if r3 goto L1 else goto L2 :: bool
+L1:
+    r4 = r3
+    goto L3
+L2:
+    r5 = __main__.R :: type
+    r6 = get_element_ptr x ob_type :: PyObject
+    r7 = load_mem r6 :: builtins.object*
+    keep_alive x
+    r8 = r7 == r5
+    r4 = r8
+L3:
+    if r4 goto L4 else goto L5 :: bool
+L4:
+    r9 = cast(__main__.R, x)
+    return r9
+L5:
+    r10 = A()
+    return r10
+
+[case testIsInstanceFewSubclassesTrait]
+from mypy_extensions import trait
+class B: pass
+@trait
+class R: pass
+class A(B, R): pass
+class C(B, R): pass
+
+def f(x: object) -> R:
+    if isinstance(x, R):
+        return x
+    return A()
+[out]
+def f(x):
+    x, r0 :: object
+    r1 :: ptr
+    r2 :: object
+    r3 :: bit
+    r4 :: bool
+    r5 :: object
+    r6 :: ptr
+    r7 :: object
+    r8 :: bit
+    r9 :: __main__.R
+    r10 :: __main__.A
+L0:
+    r0 = __main__.A :: type
+    r1 = get_element_ptr x ob_type :: PyObject
+    r2 = load_mem r1 :: builtins.object*
+    keep_alive x
+    r3 = r2 == r0
+    if r3 goto L1 else goto L2 :: bool
+L1:
+    r4 = r3
+    goto L3
+L2:
+    r5 = __main__.C :: type
+    r6 = get_element_ptr x ob_type :: PyObject
+    r7 = load_mem r6 :: builtins.object*
+    keep_alive x
+    r8 = r7 == r5
+    r4 = r8
+L3:
+    if r4 goto L4 else goto L5 :: bool
+L4:
+    r9 = cast(__main__.R, x)
+    return r9
+L5:
+    r10 = A()
+    return r10
+
+[case testIsInstanceManySubclasses]
+class R: pass
+class A(R): pass
+class B(R): pass
+class C(R): pass
+
+def f(x: object) -> R:
+    if isinstance(x, R):
+        return x
+    return B()
+[out]
+def f(x):
+    x, r0 :: object
+    r1 :: bool
+    r2 :: __main__.R
+    r3 :: __main__.B
+L0:
+    r0 = __main__.R :: type
+    r1 = CPy_TypeCheck(x, r0)
+    if r1 goto L1 else goto L2 :: bool
+L1:
+    r2 = cast(__main__.R, x)
+    return r2
+L2:
+    r3 = B()
+    return r3
+
+[case testFakeSuper]
+class A:
+    def __init__(self, x: int) -> None:
+        self.x = x
+class B(A):
+    def __init__(self, x: int, y: int) -> None:
+        A.__init__(self, x)
+        self.y = y
+[out]
+def A.__init__(self, x):
+    self :: __main__.A
+    x :: int
+    r0 :: bool
+L0:
+    self.x = x; r0 = is_error
+    return 1
+def B.__init__(self, x, y):
+    self :: __main__.B
+    x, y :: int
+    r0 :: None
+    r1 :: bool
+L0:
+    r0 = A.__init__(self, x)
+    self.y = y; r1 = is_error
+    return 1
+
+[case testClassMethod]
+class C:
+    @staticmethod
+    def foo(x: int) -> int: return 10 + x
+    @classmethod
+    def bar(cls, x: int) -> int: return 10 + x
+
+def lol() -> int:
+    return C.foo(1) + C.bar(2)
+[out]
+def C.foo(x):
+    x, r0 :: int
+L0:
+    r0 = CPyTagged_Add(20, x)
+    return r0
+def C.bar(cls, x):
+    cls :: object
+    x, r0 :: int
+L0:
+    r0 = CPyTagged_Add(20, x)
+    return r0
+def lol():
+    r0 :: int
+    r1 :: object
+    r2, r3 :: int
+L0:
+    r0 = C.foo(2)
+    r1 = __main__.C :: type
+    r2 = C.bar(r1, 4)
+    r3 = CPyTagged_Add(r0, r2)
+    return r3
+
+[case testSuper1]
+class A:
+    def __init__(self, x: int) -> None:
+        self.x = x
+class B(A):
+    def __init__(self, x: int, y: int) -> None:
+        super().__init__(x)
+        self.y = y
+[out]
+def A.__init__(self, x):
+    self :: __main__.A
+    x :: int
+    r0 :: bool
+L0:
+    self.x = x; r0 = is_error
+    return 1
+def B.__init__(self, x, y):
+    self :: __main__.B
+    x, y :: int
+    r0 :: None
+    r1 :: bool
+L0:
+    r0 = A.__init__(self, x)
+    self.y = y; r1 = is_error
+    return 1
+
+[case testSuper2]
+from mypy_extensions import trait
+@trait
+class T:
+    def foo(self) -> None: pass
+
+class X(T):
+    def foo(self) -> None:
+        super().foo()
+[out]
+def T.foo(self):
+    self :: __main__.T
+L0:
+    return 1
+def X.foo(self):
+    self :: __main__.X
+    r0 :: None
+L0:
+    r0 = T.foo(self)
+    return 1
+
+[case testClassVariable]
+from typing import ClassVar
+class A:
+    x = 10  # type: ClassVar[int]
+
+def f() -> int:
+    return A.x
+[out]
+def f():
+    r0 :: object
+    r1 :: str
+    r2 :: object
+    r3 :: int
+L0:
+    r0 = __main__.A :: type
+    r1 = 'x'
+    r2 = CPyObject_GetAttr(r0, r1)
+    r3 = unbox(int, r2)
+    return r3
+
+[case testNoEqDefined]
+class A:
+    pass
+
+def f(a: A, b: A) -> bool:
+    return a == b
+
+def f2(a: A, b: A) -> bool:
+    return a != b
+
+[out]
+def f(a, b):
+    a, b :: __main__.A
+    r0 :: bit
+L0:
+    r0 = a == b
+    return r0
+def f2(a, b):
+    a, b :: __main__.A
+    r0 :: bit
+L0:
+    r0 = a != b
+    return r0
+
+[case testEqDefined]
+class Base:
+    def __eq__(self, other: object) -> bool:
+        return False
+class Derived(Base):
+    def __eq__(self, other: object) -> bool:
+        return True
+
+def f(a: Base, b: Base) -> bool:
+    return a == b
+
+def f2(a: Base, b: Base) -> bool:
+    return a != b
+
+def fOpt(a: Derived, b: Derived) -> bool:
+    return a == b
+
+def fOpt2(a: Derived, b: Derived) -> bool:
+    return a != b
+
+[out]
+def Base.__eq__(self, other):
+    self :: __main__.Base
+    other, r0 :: object
+L0:
+    r0 = box(bool, 0)
+    return r0
+def Base.__ne__(__mypyc_self__, rhs):
+    __mypyc_self__ :: __main__.Base
+    rhs, r0, r1 :: object
+    r2 :: bit
+    r3 :: int32
+    r4 :: bit
+    r5 :: bool
+    r6 :: object
+L0:
+    r0 = __mypyc_self__.__eq__(rhs)
+    r1 = load_address _Py_NotImplementedStruct
+    r2 = r0 == r1
+    if r2 goto L2 else goto L1 :: bool
+L1:
+    r3 = PyObject_Not(r0)
+    r4 = r3 >= 0 :: signed
+    r5 = truncate r3: int32 to builtins.bool
+    r6 = box(bool, r5)
+    return r6
+L2:
+    return r1
+def Derived.__eq__(self, other):
+    self :: __main__.Derived
+    other, r0 :: object
+L0:
+    r0 = box(bool, 1)
+    return r0
+def f(a, b):
+    a, b :: __main__.Base
+    r0 :: object
+    r1 :: bool
+L0:
+    r0 = PyObject_RichCompare(a, b, 2)
+    r1 = unbox(bool, r0)
+    return r1
+def f2(a, b):
+    a, b :: __main__.Base
+    r0 :: object
+    r1 :: bool
+L0:
+    r0 = PyObject_RichCompare(a, b, 3)
+    r1 = unbox(bool, r0)
+    return r1
+def fOpt(a, b):
+    a, b :: __main__.Derived
+    r0 :: object
+    r1 :: bool
+L0:
+    r0 = a.__eq__(b)
+    r1 = unbox(bool, r0)
+    return r1
+def fOpt2(a, b):
+    a, b :: __main__.Derived
+    r0 :: object
+    r1 :: bool
+L0:
+    r0 = a.__ne__(b)
+    r1 = unbox(bool, r0)
+    return r1
+
+[case testEqDefinedLater]
+def f(a: 'Base', b: 'Base') -> bool:
+    return a == b
+
+def f2(a: 'Base', b: 'Base') -> bool:
+    return a != b
+
+def fOpt(a: 'Derived', b: 'Derived') -> bool:
+    return a == b
+
+def fOpt2(a: 'Derived', b: 'Derived') -> bool:
+    return a != b
+
+class Base:
+    pass
+class Derived(Base):
+    def __eq__(self, other: object) -> bool:
+        return True
+
+[out]
+def f(a, b):
+    a, b :: __main__.Base
+    r0 :: object
+    r1 :: bool
+L0:
+    r0 = PyObject_RichCompare(a, b, 2)
+    r1 = unbox(bool, r0)
+    return r1
+def f2(a, b):
+    a, b :: __main__.Base
+    r0 :: object
+    r1 :: bool
+L0:
+    r0 = PyObject_RichCompare(a, b, 3)
+    r1 = unbox(bool, r0)
+    return r1
+def fOpt(a, b):
+    a, b :: __main__.Derived
+    r0 :: object
+    r1 :: bool
+L0:
+    r0 = a.__eq__(b)
+    r1 = unbox(bool, r0)
+    return r1
+def fOpt2(a, b):
+    a, b :: __main__.Derived
+    r0 :: str
+    r1 :: object
+    r2 :: bool
+L0:
+    r0 = '__ne__'
+    r1 = CPyObject_CallMethodObjArgs(a, r0, b, 0)
+    r2 = unbox(bool, r1)
+    return r2
+def Derived.__eq__(self, other):
+    self :: __main__.Derived
+    other, r0 :: object
+L0:
+    r0 = box(bool, 1)
+    return r0
+def Derived.__ne__(__mypyc_self__, rhs):
+    __mypyc_self__ :: __main__.Derived
+    rhs, r0, r1 :: object
+    r2 :: bit
+    r3 :: int32
+    r4 :: bit
+    r5 :: bool
+    r6 :: object
+L0:
+    r0 = __mypyc_self__.__eq__(rhs)
+    r1 = load_address _Py_NotImplementedStruct
+    r2 = r0 == r1
+    if r2 goto L2 else goto L1 :: bool
+L1:
+    r3 = PyObject_Not(r0)
+    r4 = r3 >= 0 :: signed
+    r5 = truncate r3: int32 to builtins.bool
+    r6 = box(bool, r5)
+    return r6
+L2:
+    return r1
+
+[case testDefaultVars]
+from typing import ClassVar, Optional
+class A:
+    x = 10
+    def lol(self) -> None:
+        self.x = 100
+
+LOL = 'lol'
+class B(A):
+    y = LOL
+    z: Optional[str] = None
+    b = True
+    bogus = None  # type: int
+[out]
+def A.lol(self):
+    self :: __main__.A
+    r0 :: bool
+L0:
+    self.x = 200; r0 = is_error
+    return 1
+def A.__mypyc_defaults_setup(__mypyc_self__):
+    __mypyc_self__ :: __main__.A
+    r0 :: bool
+L0:
+    __mypyc_self__.x = 20; r0 = is_error
+    return 1
+def B.__mypyc_defaults_setup(__mypyc_self__):
+    __mypyc_self__ :: __main__.B
+    r0 :: bool
+    r1 :: dict
+    r2 :: str
+    r3 :: object
+    r4 :: str
+    r5 :: bool
+    r6 :: object
+    r7, r8 :: bool
+L0:
+    __mypyc_self__.x = 20; r0 = is_error
+    r1 = __main__.globals :: static
+    r2 = 'LOL'
+    r3 = CPyDict_GetItem(r1, r2)
+    r4 = cast(str, r3)
+    __mypyc_self__.y = r4; r5 = is_error
+    r6 = box(None, 1)
+    __mypyc_self__.z = r6; r7 = is_error
+    __mypyc_self__.b = 1; r8 = is_error
+    return 1
+
+[case testSubclassDictSpecalized]
+from typing import Dict
+class WelpDict(Dict[str, int]):
+    pass
+def foo(x: WelpDict) -> None:
+    # we care that the specalized op gets used
+    x.update(x)
+[out]
+def foo(x):
+    x :: dict
+    r0 :: int32
+    r1 :: bit
+L0:
+    r0 = CPyDict_Update(x, x)
+    r1 = r0 >= 0 :: signed
+    return 1
+
+[case testNoSpuriousLinearity]
+# Make sure that the non-trait MRO linearity check isn't affected by processing order
+class A(B): pass
+class B(C): pass
+class C: pass
+[out]
+
+[case testDeletableSemanticAnalysis]
+class Err1:
+    __deletable__ = 'x'  # E: "__deletable__" must be initialized with a list or tuple expression
+class Err2:
+    __deletable__ = [
+        1  # E: Invalid "__deletable__" item; string literal expected
+    ]
+class Err3:
+    __deletable__ = ['x', ['y'], 'z']  # E: Invalid "__deletable__" item; string literal expected
+class Err4:
+    __deletable__ = (1,)  # E: Invalid "__deletable__" item; string literal expected
+a = ['x']
+class Err5:
+    __deletable__ = a  # E: "__deletable__" must be initialized with a list or tuple expression
+
+class Ok1:
+    __deletable__ = ('x',)
+    x: int
+class Ok2:
+    __deletable__ = ['x']
+    x: int
+
+[case testInvalidDeletableAttribute]
+class NotDeletable:
+    __deletable__ = ['x']
+    x: int
+    y: int
+
+def g(o: NotDeletable) -> None:
+    del o.x
+    del o.y  # E: "y" cannot be deleted \
+             # N: Using "__deletable__ = ['<attr>']" in the class body enables "del obj.<attr>"
+
+class Base:
+    x: int
+
+class Deriv(Base):
+    __deletable__ = ['x']  # E: Attribute "x" not defined in "Deriv" (defined in "Base")
+
+class UndefinedDeletable:
+    __deletable__ = ['x']  # E: Attribute "x" not defined
+
+class DeletableProperty:
+    __deletable__ = ['prop']  # E: Cannot make property "prop" deletable
+
+    @property
+    def prop(self) -> int:
+        return 5
+
+[case testFinalDeletable]
+from typing import Final
+
+class DeletableFinal1:
+    x: Final[int]  # E: Deletable attribute cannot be final
+
+    __deletable__ = ['x']
+
+    def __init__(self, x: int) -> None:
+        self.x = x
+
+class DeletableFinal2:
+    X: Final = 0  # E: Deletable attribute cannot be final
+
+    __deletable__ = ['X']
+
+[case testNeedAnnotateClassVar]
+from typing import Final, ClassVar, Type
+
+class C:
+    a = 'A'
+    b: str = 'B'
+    f: Final = 'F'
+    c: ClassVar = 'C'
+
+class D(C):
+    pass
+
+def f() -> None:
+    C.a  # E: Cannot access instance attribute "a" through class object \
+         # N: (Hint: Use "x: Final = ..." or "x: ClassVar = ..." to define a class attribute)
+    C.b  # E: Cannot access instance attribute "b" through class object \
+         # N: (Hint: Use "x: Final = ..." or "x: ClassVar = ..." to define a class attribute)
+    C.f
+    C.c
+
+    D.a  # E: Cannot access instance attribute "a" through class object \
+         # N: (Hint: Use "x: Final = ..." or "x: ClassVar = ..." to define a class attribute)
+    D.b  # E: Cannot access instance attribute "b" through class object \
+         # N: (Hint: Use "x: Final = ..." or "x: ClassVar = ..." to define a class attribute)
+    D.f
+    D.c
+
+def g(c: Type[C], d: Type[D]) -> None:
+    c.a  # E: Cannot access instance attribute "a" through class object \
+         # N: (Hint: Use "x: Final = ..." or "x: ClassVar = ..." to define a class attribute)
+    c.f
+    c.c
+
+    d.a  # E: Cannot access instance attribute "a" through class object \
+         # N: (Hint: Use "x: Final = ..." or "x: ClassVar = ..." to define a class attribute)
+    d.f
+    d.c

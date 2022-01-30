@@ -1,0 +1,5 @@
+[console_scripts]
+black = black:patched_main
+black-primer = black_primer.cli:main
+blackd = blackd:patched_main [d]
+

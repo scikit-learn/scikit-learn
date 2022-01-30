@@ -1,0 +1,351 @@
+%
+% sphinx.sty
+%
+% Adapted from the old python.sty, mostly written by Fred Drake,
+% by Georg Brandl.
+%
+
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+\ProvidesPackage{sphinx}[2021/01/27 v4.0.0 LaTeX package (Sphinx markup)]
+
+% provides \ltx@ifundefined
+% (many packages load ltxcmds: graphicx does for pdftex and lualatex but
+% not xelatex, and anyhow kvoptions does, but it may be needed in future to
+% use \sphinxdeprecationwarning earlier, and it needs \ltx@ifundefined)
+\RequirePackage{ltxcmds}
+
+%% for deprecation warnings
+\newcommand\sphinxdeprecationwarning[4]{% #1 the deprecated macro or name,
+% #2 = when deprecated, #3 = when removed, #4 = additional info
+  \edef\spx@tempa{\detokenize{#1}}%
+  \ltx@ifundefined{sphinx_depr_\spx@tempa}{%
+     \global\expandafter\let\csname sphinx_depr_\spx@tempa\endcsname\spx@tempa
+     \expandafter\AtEndDocument\expandafter{\expandafter\let\expandafter
+         \sphinxdeprecatedmacro\csname sphinx_depr_\spx@tempa\endcsname
+         \PackageWarningNoLine{sphinx}{^^J**** SPHINX DEPRECATION WARNING:^^J
+         \sphinxdeprecatedmacro^^J
+         \@spaces- is deprecated at Sphinx #2^^J
+         \@spaces- and removed at Sphinx #3.^^J
+         #4^^J****}}%
+  }{% warning already emitted (at end of latex log), don't repeat
+  }}
+
+
+%% OPTION HANDLING
+%
+
+% We first handle options then load packages, but we need \definecolor from
+% xcolor/color.
+
+% FIXME: we should \RequirePackage{xcolor} always now
+% The xcolor package draws better fcolorboxes around verbatim code
+\IfFileExists{xcolor.sty}{
+    \RequirePackage{xcolor}
+}{
+    \RequirePackage{color}
+}
+
+% Handle options via "kvoptions" (later loaded by hyperref anyhow)
+\RequirePackage{kvoptions}
+\SetupKeyvalOptions{prefix=spx@opt@} % use \spx@opt@ prefix
+
+% Sphinx legacy text layout: 1in margins on all four sides
+\ifx\@jsc@uplatextrue\@undefined
+\DeclareStringOption[1in]{hmargin}
+\DeclareStringOption[1in]{vmargin}
+\DeclareStringOption[.5in]{marginpar}
+\else
+% Japanese standard document classes handle \mag in a special way
+\DeclareStringOption[\inv@mag in]{hmargin}
+\DeclareStringOption[\inv@mag in]{vmargin}
+\DeclareStringOption[.5\dimexpr\inv@mag in\relax]{marginpar}
+\fi
+
+\DeclareStringOption[0]{maxlistdepth}% \newcommand*\spx@opt@maxlistdepth{0}
+\DeclareStringOption[-1]{numfigreset}
+\DeclareBoolOption[false]{nonumfigreset}
+\DeclareBoolOption[false]{mathnumfig}
+\define@key{sphinx}{bookmarksdepth}{\AtBeginDocument{\hypersetup{bookmarksdepth=#1}}}
+\AtBeginDocument{\define@key{sphinx}{bookmarksdepth}{\hypersetup{bookmarksdepth=#1}}}
+% \DeclareBoolOption[false]{usespart}% not used
+% dimensions, we declare the \dimen registers here.
+\newdimen\sphinxverbatimsep
+\newdimen\sphinxverbatimborder
+\newdimen\sphinxshadowsep
+\newdimen\sphinxshadowsize
+\newdimen\sphinxshadowrule
+% \DeclareStringOption is not convenient for the handling of these dimensions
+% because we want to assign the values to the corresponding registers. Even if
+% we added the code to the key handler it would be too late for the initial
+% set-up and we would need to do initial assignments explicitly. We end up
+% using \define@key directly.
+% verbatim
+\sphinxverbatimsep=\fboxsep
+  \define@key{sphinx}{verbatimsep}{\sphinxverbatimsep\dimexpr #1\relax}
+\sphinxverbatimborder=\fboxrule
+  \define@key{sphinx}{verbatimborder}{\sphinxverbatimborder\dimexpr #1\relax}
+% topic boxes
+\sphinxshadowsep =5pt
+  \define@key{sphinx}{shadowsep}{\sphinxshadowsep\dimexpr #1\relax}
+\sphinxshadowsize=4pt
+  \define@key{sphinx}{shadowsize}{\sphinxshadowsize\dimexpr #1\relax}
+\sphinxshadowrule=\fboxrule
+  \define@key{sphinx}{shadowrule}{\sphinxshadowrule\dimexpr #1\relax}
+% verbatim
+\DeclareBoolOption[true]{verbatimwithframe}
+\DeclareBoolOption[true]{verbatimwrapslines}
+\DeclareBoolOption[false]{verbatimforcewraps}
+\DeclareStringOption[3]{verbatimmaxoverfull}
+\DeclareStringOption[100]{verbatimmaxunderfull}
+\DeclareBoolOption[true]{verbatimhintsturnover}
+\DeclareBoolOption[true]{inlineliteralwraps}
+\DeclareStringOption[t]{literalblockcappos}
+\DeclareStringOption[r]{verbatimcontinuedalign}
+\DeclareStringOption[r]{verbatimcontinuesalign}
+% parsed literal
+\DeclareBoolOption[true]{parsedliteralwraps}
+% \textvisiblespace for compatibility with fontspec+XeTeX/LuaTeX
+\DeclareStringOption[\textcolor{red}{\textvisiblespace}]{verbatimvisiblespace}
+\DeclareStringOption % must use braces to hide the brackets
+  [{\makebox[2\fontcharwd\font`\x][r]{\textcolor{red}{\tiny$\m@th\hookrightarrow$}}}]%
+  {verbatimcontinued}
+% notices/admonitions
+% the dimensions for notices/admonitions are kept as macros and assigned to
+% \spx@notice@border at time of use, hence \DeclareStringOption is ok for this
+\newdimen\spx@notice@border
+\DeclareStringOption[0.5pt]{noteborder}
+\DeclareStringOption[0.5pt]{hintborder}
+\DeclareStringOption[0.5pt]{importantborder}
+\DeclareStringOption[0.5pt]{tipborder}
+\DeclareStringOption[1pt]{warningborder}
+\DeclareStringOption[1pt]{cautionborder}
+\DeclareStringOption[1pt]{attentionborder}
+\DeclareStringOption[1pt]{dangerborder}
+\DeclareStringOption[1pt]{errorborder}
+% footnotes
+\DeclareStringOption[\mbox{ }]{AtStartFootnote}
+% we need a public macro name for direct use in latex file
+\newcommand*{\sphinxAtStartFootnote}{\spx@opt@AtStartFootnote}
+% no such need for this one, as it is used inside other macros
+\DeclareStringOption[\leavevmode\unskip]{BeforeFootnote}
+% some font styling.
+\DeclareStringOption[\sffamily\bfseries]{HeaderFamily}
+% colours
+% same problems as for dimensions: we want the key handler to use \definecolor.
+% first, some colours with no prefix, for backwards compatibility
+\newcommand*{\sphinxDeclareColorOption}[2]{%
+   \definecolor{#1}#2%
+   \define@key{sphinx}{#1}{\definecolor{#1}##1}%
+}%
+\sphinxDeclareColorOption{TitleColor}{{rgb}{0.126,0.263,0.361}}
+\sphinxDeclareColorOption{InnerLinkColor}{{rgb}{0.208,0.374,0.486}}
+\sphinxDeclareColorOption{OuterLinkColor}{{rgb}{0.216,0.439,0.388}}
+\sphinxDeclareColorOption{VerbatimColor}{{rgb}{1,1,1}}
+\sphinxDeclareColorOption{VerbatimBorderColor}{{rgb}{0,0,0}}
+% now the colours defined with "sphinx" prefix in their names
+\newcommand*{\sphinxDeclareSphinxColorOption}[2]{%
+   % set the initial default
+   \definecolor{sphinx#1}#2%
+   % set the key handler. The "value" ##1 must be acceptable by \definecolor.
+   \define@key{sphinx}{#1}{\definecolor{sphinx#1}##1}%
+}%
+% Default color chosen to be as in minted.sty LaTeX package!
+\sphinxDeclareSphinxColorOption{VerbatimHighlightColor}{{rgb}{0.878,1,1}}
+% admonition boxes, "light" style
+\sphinxDeclareSphinxColorOption{noteBorderColor}{{rgb}{0,0,0}}
+\sphinxDeclareSphinxColorOption{hintBorderColor}{{rgb}{0,0,0}}
+\sphinxDeclareSphinxColorOption{importantBorderColor}{{rgb}{0,0,0}}
+\sphinxDeclareSphinxColorOption{tipBorderColor}{{rgb}{0,0,0}}
+% admonition boxes, "heavy" style
+\sphinxDeclareSphinxColorOption{warningBorderColor}{{rgb}{0,0,0}}
+\sphinxDeclareSphinxColorOption{cautionBorderColor}{{rgb}{0,0,0}}
+\sphinxDeclareSphinxColorOption{attentionBorderColor}{{rgb}{0,0,0}}
+\sphinxDeclareSphinxColorOption{dangerBorderColor}{{rgb}{0,0,0}}
+\sphinxDeclareSphinxColorOption{errorBorderColor}{{rgb}{0,0,0}}
+\sphinxDeclareSphinxColorOption{warningBgColor}{{rgb}{1,1,1}}
+\sphinxDeclareSphinxColorOption{cautionBgColor}{{rgb}{1,1,1}}
+\sphinxDeclareSphinxColorOption{attentionBgColor}{{rgb}{1,1,1}}
+\sphinxDeclareSphinxColorOption{dangerBgColor}{{rgb}{1,1,1}}
+\sphinxDeclareSphinxColorOption{errorBgColor}{{rgb}{1,1,1}}
+
+\DeclareDefaultOption{\@unknownoptionerror}
+\ProcessKeyvalOptions*
+% don't allow use of maxlistdepth via \sphinxsetup.
+\DisableKeyvalOption{sphinx}{maxlistdepth}
+\DisableKeyvalOption{sphinx}{numfigreset}
+\DisableKeyvalOption{sphinx}{nonumfigreset}
+\DisableKeyvalOption{sphinx}{mathnumfig}
+% FIXME: this is unrelated to an option, move this elsewhere
+% To allow hyphenation of first word in narrow contexts; no option,
+% customization to be done via 'preamble' key
+\newcommand*\sphinxAtStartPar{\leavevmode\nobreak\hskip\z@skip}
+% No need for the \hspace{0pt} trick (\hskip\z@skip) with luatex
+\ifdefined\directlua\let\sphinxAtStartPar\@empty\fi
+% user interface: options can be changed midway in a document!
+\newcommand\sphinxsetup[1]{\setkeys{sphinx}{#1}}
+
+
+%% MISCELLANEOUS CONTEXT
+%
+% flag to be set in a framed environment
+% (defined here as currently needed by three sphinxlatex....sty files and
+% even if not needed if such files are replaced, the definition does no harm)
+\newif\ifspx@inframed
+%
+% \spx@ifcaptionpackage (defined at begin document)
+%     is needed currently in macros from:
+%     sphinxlatexliterals.sty (sphinxVerbatim)
+%     sphinxlatextables.sty   (for some macros used in the table templates)
+%
+% \sphinxcaption is mark-up injected by the tabular and tabulary templates
+%     it is defined in sphinxlatextables.sty
+%
+% store the original \caption macro for usage with figures inside longtable
+% and tabulary cells. Make sure we get the final \caption in presence of
+% caption package, whether the latter was loaded before or after sphinx.
+\AtBeginDocument{%
+    \let\spx@originalcaption\caption
+    \@ifpackageloaded{caption}
+      {\let\spx@ifcaptionpackage\@firstoftwo
+       \caption@AtBeginDocument*{\let\spx@originalcaption\caption}%
+% in presence of caption package, drop our own \sphinxcaption whose aim was to
+% ensure same width of caption to all kinds of tables (tabular(y), longtable),
+% because caption package has its own width (or margin) option
+       \def\sphinxcaption{\caption}%
+      }%
+      {\let\spx@ifcaptionpackage\@secondoftwo}%
+}
+
+%% PASS OPTIONS
+%
+% pass options to hyperref; it must not have been loaded already
+\input{sphinxoptionshyperref.sty}
+% pass options to geometry; it must not have been loaded already
+\input{sphinxoptionsgeometry.sty}
+
+
+%% COLOR (general)
+%
+% FIXME: these two should be deprecated
+%
+% FIXME: \normalcolor should be used and \py@NormalColor never defined
+\def\py@NormalColor{\color{black}}
+% FIXME: \color{TitleColor} should be used directly and \py@TitleColor
+% should never get defined.
+\def\py@TitleColor{\color{TitleColor}}
+
+
+%% PACKAGES
+%
+% as will be indicated below, secondary style files load some more packages
+%
+% For \text macro (sphinx.util.texescape)
+% also for usage of \firstchoice@true(false) in sphinxlatexgraphics.sty
+\RequirePackage{amstext}
+% It was passed "warn" option from latex template in case it is already loaded
+% via some other package before \usepackage{sphinx} in preamble
+\RequirePackage{textcomp}
+% For the H specifier. Do not \restylefloat{figure}, it breaks Sphinx code
+% for allowing figures in tables.
+\RequirePackage{float}
+% For floating figures in the text. Better to load after float.
+\RequirePackage{wrapfig}
+% Provides \captionof, used once by latex writer (\captionof{figure})
+\RequirePackage{capt-of}
+% Support hlist directive
+\RequirePackage{multicol}
+
+
+%% GRAPHICS
+%
+% It will always be needed, so let's load it here
+\RequirePackage{graphicx}
+\input{sphinxlatexgraphics.sty}
+
+
+%% FRAMED ENVIRONMENTS
+%
+\input{sphinxlatexadmonitions.sty}
+\input{sphinxlatexliterals.sty}
+\input{sphinxlatexshadowbox.sty}
+
+
+%% CONTAINERS
+%
+\input{sphinxlatexcontainers.sty}
+
+
+%% PYGMENTS
+% stylesheet for highlighting with pygments
+\RequirePackage{sphinxhighlight}
+
+
+%% TABLES
+%
+\input{sphinxlatextables.sty}
+
+
+%% NUMBERING OF FIGURES, TABLES, AND LITERAL BLOCKS
+%
+\input{sphinxlatexnumfig.sty}
+
+
+%% LISTS
+%
+\input{sphinxlatexlists.sty}
+
+
+%% FOOTNOTES
+%
+% Support scopes for footnote numbering
+\newcounter{sphinxscope}
+\newcommand{\sphinxstepscope}{\stepcounter{sphinxscope}}
+% Explicitly numbered footnotes may be referred to, and for this to be
+% clickable we need to have only one target. So we will step this at each
+% explicit footnote and let \thesphinxscope take it into account
+\newcounter{sphinxexplicit}
+\newcommand{\sphinxstepexplicit}{\stepcounter{sphinxexplicit}}
+% Some babel/polyglossia languages fiddle with \@arabic, so let's be extra
+% cautious and redefine \thesphinxscope with \number not \@arabic.
+% Memo: we expect some subtle redefinition of \thesphinxscope to be a part of page
+% scoping for footnotes, when we shall implement it.
+\renewcommand{\thesphinxscope}{\number\value{sphinxscope}.\number\value{sphinxexplicit}}
+\newcommand\sphinxthefootnotemark[2]{%
+   % this is used to make reference to an explicitly numbered footnote not on same page
+   % #1=label of footnote text, #2=page number where footnote text was printed
+   \ifdefined\pagename
+      \pagename\space#2, % <- space
+    \else
+      p. #2, % <- space
+   \fi #1% no space
+}
+% support large numbered footnotes in minipage; but this is now obsolete
+% from systematic use of savenotes environment around minipages
+\def\thempfootnote{\arabic{mpfootnote}}
+% This package is needed to support hyperlinked footnotes in tables and
+% framed contents, and to allow code-blocks in footnotes.
+\RequirePackage{sphinxpackagefootnote}
+
+
+%% INDEX, BIBLIOGRAPHY, APPENDIX, TABLE OF CONTENTS
+%
+\input{sphinxlatexindbibtoc.sty}
+
+
+%% STYLING
+%
+\input{sphinxlatexstylepage.sty}
+\input{sphinxlatexstyleheadings.sty}
+\input{sphinxlatexstyletext.sty}
+
+
+%% MODULE RELEASE DATA AND OBJECT DESCRIPTIONS
+%
+\input{sphinxlatexobjects.sty}
+
+
+% FIXME: this line should be dropped, as "9" is default anyhow.
+\ifdefined\pdfcompresslevel\pdfcompresslevel = 9 \fi
+
+
+\endinput

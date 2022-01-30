@@ -1,0 +1,3 @@
+from typing import Text
+
+def whichdb(filename: Text) -> str | None: ...

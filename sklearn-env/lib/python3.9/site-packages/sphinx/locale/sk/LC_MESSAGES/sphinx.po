@@ -1,0 +1,3672 @@
+# Translations template for Sphinx.
+# Copyright (C) 2022 ORGANIZATION
+# This file is distributed under the same license as the Sphinx project.
+# 
+# Translators:
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2008
+# Slavko <linux@slavino.sk>, 2013-2019,2021
+# Komiya Takeshi <i.tkomiya@gmail.com>, 2016
+msgid ""
+msgstr ""
+"Project-Id-Version: Sphinx\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2022-01-09 00:12+0000\n"
+"PO-Revision-Date: 2022-01-02 00:12+0000\n"
+"Last-Translator: Komiya Takeshi <i.tkomiya@gmail.com>\n"
+"Language-Team: Slovak (http://www.transifex.com/sphinx-doc/sphinx-1/language/sk/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.1\n"
+"Language: sk\n"
+"Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n == 1 ? 0 : n % 1 == 0 && n >= 2 && n <= 4 ? 1 : n % 1 != 0 ? 2: 3);\n"
+
+#: sphinx/application.py:156
+#, python-format
+msgid "Cannot find source directory (%s)"
+msgstr "Nemožno nájsť zdrojový priečinok (%s)"
+
+#: sphinx/application.py:160
+#, python-format
+msgid "Output directory (%s) is not a directory"
+msgstr "Výstupný adresár (%s) nie je adresár"
+
+#: sphinx/application.py:164
+msgid "Source directory and destination directory cannot be identical"
+msgstr "Zdrojový a cieľový priečinok nemôžu byť rovnaké"
+
+#: sphinx/application.py:195
+#, python-format
+msgid "Running Sphinx v%s"
+msgstr "Spúšťanie Sphinx v%s"
+
+#: sphinx/application.py:221
+#, python-format
+msgid ""
+"This project needs at least Sphinx v%s and therefore cannot be built with "
+"this version."
+msgstr "Tento projekt vyžaduje aspoň Sphinx v%s a preto s touto verziou nemôže byť zostavený."
+
+#: sphinx/application.py:236
+msgid "making output directory"
+msgstr "vytváranie výstupnej zložky"
+
+#: sphinx/application.py:241 sphinx/registry.py:430
+#, python-format
+msgid "while setting up extension %s:"
+msgstr "pri nastavovaní rozšírenia %s:"
+
+#: sphinx/application.py:247
+msgid ""
+"'setup' as currently defined in conf.py isn't a Python callable. Please "
+"modify its definition to make it a callable function. This is needed for "
+"conf.py to behave as a Sphinx extension."
+msgstr "'setup' definovaný v conf.py nie je funkciou. Prosím, upravte jeho definíciu tak, aby to bola funkcia. Je to potrebné, aby sa conf.py mohol správať ako rozšírenie Sphinx."
+
+#: sphinx/application.py:272
+#, python-format
+msgid "loading translations [%s]... "
+msgstr "načítanie prekladov [%s]…"
+
+#: sphinx/application.py:290 sphinx/util/__init__.py:539
+msgid "done"
+msgstr "hotovo"
+
+#: sphinx/application.py:292
+msgid "not available for built-in messages"
+msgstr "nedostupné pre zabudované správy"
+
+#: sphinx/application.py:301
+msgid "loading pickled environment"
+msgstr "načítanie uloženého prostredia "
+
+#: sphinx/application.py:306
+#, python-format
+msgid "failed: %s"
+msgstr "zlyhalo: %s"
+
+#: sphinx/application.py:314
+msgid "No builder selected, using default: html"
+msgstr "Nebol zvolený builder, bude použitý predvolený: html"
+
+#: sphinx/application.py:342
+msgid "succeeded"
+msgstr "úspešné"
+
+#: sphinx/application.py:343
+msgid "finished with problems"
+msgstr "dokončené sproblémami"
+
+#: sphinx/application.py:347
+#, python-format
+msgid "build %s, %s warning (with warnings treated as errors)."
+msgstr "zostavenie %s, %s upozornenia/a (upozornenia považované za chyby)."
+
+#: sphinx/application.py:349
+#, python-format
+msgid "build %s, %s warnings (with warnings treated as errors)."
+msgstr "zostavenie %s, %s upozornenia/a (upozornenia považované za chyby)."
+
+#: sphinx/application.py:352
+#, python-format
+msgid "build %s, %s warning."
+msgstr "zostavenie %s, %s upozornenie."
+
+#: sphinx/application.py:354
+#, python-format
+msgid "build %s, %s warnings."
+msgstr "zostavenie %s, %s upozornenie/a."
+
+#: sphinx/application.py:358
+#, python-format
+msgid "build %s."
+msgstr "zostavenie %s."
+
+#: sphinx/application.py:588
+#, python-format
+msgid "node class %r is already registered, its visitors will be overridden"
+msgstr "trieda uzla %r už je registrovaná, jej metódy (visitors) budú prepísané"
+
+#: sphinx/application.py:666
+#, python-format
+msgid "directive %r is already registered, it will be overridden"
+msgstr "direktíva %r už je registrovaná, bude prepísaná"
+
+#: sphinx/application.py:687 sphinx/application.py:708
+#, python-format
+msgid "role %r is already registered, it will be overridden"
+msgstr "rola %r už je registrovaná, bude prepísaná"
+
+#: sphinx/application.py:1256
+#, python-format
+msgid ""
+"the %s extension does not declare if it is safe for parallel reading, "
+"assuming it isn't - please ask the extension author to check and make it "
+"explicit"
+msgstr "rozšírenie %s nedeklaruje, či je bezpečné pri paralelnom čítaní, predpokladá sa, že nie - prosím, požiadajte autora aby to skontroloval a explicitne to nastavil"
+
+#: sphinx/application.py:1260
+#, python-format
+msgid "the %s extension is not safe for parallel reading"
+msgstr "rozšírenie %s nie je bezpečné pre paralelné zostavenie"
+
+#: sphinx/application.py:1263
+#, python-format
+msgid ""
+"the %s extension does not declare if it is safe for parallel writing, "
+"assuming it isn't - please ask the extension author to check and make it "
+"explicit"
+msgstr "rozšírenie %s nedeklaruje, či je bezpečné pri paralelnom čítaní, predpokladáme, že nie je – prosím, požiadajte autora aby to skontroloval a explicitne to nastavil"
+
+#: sphinx/application.py:1267
+#, python-format
+msgid "the %s extension is not safe for parallel writing"
+msgstr "rozšírenie %s nie je bezpečné pre paralelné zostavenie"
+
+#: sphinx/application.py:1275 sphinx/application.py:1279
+#, python-format
+msgid "doing serial %s"
+msgstr "sériové spracovanie %s"
+
+#: sphinx/config.py:171
+#, python-format
+msgid "config directory doesn't contain a conf.py file (%s)"
+msgstr "konfiguračný priečinok neobsahuje súbor conf.py (%s)"
+
+#: sphinx/config.py:198
+#, python-format
+msgid ""
+"cannot override dictionary config setting %r, ignoring (use %r to set "
+"individual elements)"
+msgstr "nemožno prepísať slovník nastavenia %r, ignorované (použite %r na nastavenie jednotlivých prvkov)"
+
+#: sphinx/config.py:207
+#, python-format
+msgid "invalid number %r for config value %r, ignoring"
+msgstr "neplatný počet %r pre konfiguračnú hodnotu %r, ignorované"
+
+#: sphinx/config.py:212
+#, python-format
+msgid "cannot override config setting %r with unsupported type, ignoring"
+msgstr "nemožno prepísať konfiguračné nastavenie %r s nepodporovaným typom, ignorované"
+
+#: sphinx/config.py:241
+#, python-format
+msgid "unknown config value %r in override, ignoring"
+msgstr "neznáma konfiguračná hodnota %r v prepísaní, ignorované"
+
+#: sphinx/config.py:258
+#, python-format
+msgid "No such config value: %s"
+msgstr "Neznáma konfiguračná hodnota: %s"
+
+#: sphinx/config.py:282
+#, python-format
+msgid "Config value %r already present"
+msgstr "Konfiguračná hodnota %r už existuje"
+
+#: sphinx/config.py:331
+#, python-format
+msgid "There is a syntax error in your configuration file: %s\n"
+msgstr "Vo svojom konfiguračnom súbore máte chybu: %s\n"
+
+#: sphinx/config.py:334
+msgid ""
+"The configuration file (or one of the modules it imports) called sys.exit()"
+msgstr "Konfiguračný súbor (alebo jeden z modulov, ktoré importuje) volal sys.exit()"
+
+#: sphinx/config.py:341
+#, python-format
+msgid ""
+"There is a programmable error in your configuration file:\n"
+"\n"
+"%s"
+msgstr "V konfiguračnom súbore je programová chyba:\n\n%s"
+
+#: sphinx/config.py:367
+#, python-format
+msgid ""
+"The config value `source_suffix' expects a string, list of strings, or "
+"dictionary. But `%r' is given."
+msgstr "Konfiguračná hodnota „source_suffix” očakáva reťazec, zoznam reťazcov alebo slovník, ale zadali ste „%r”."
+
+#: sphinx/config.py:386
+#, python-format
+msgid "Section %s"
+msgstr "Sekcia %s"
+
+#: sphinx/config.py:387
+#, python-format
+msgid "Fig. %s"
+msgstr "Obr. %s"
+
+#: sphinx/config.py:388
+#, python-format
+msgid "Table %s"
+msgstr "Tabuľka %s"
+
+#: sphinx/config.py:389
+#, python-format
+msgid "Listing %s"
+msgstr "Výpis %s"
+
+#: sphinx/config.py:426
+msgid ""
+"The config value `{name}` has to be a one of {candidates}, but `{current}` "
+"is given."
+msgstr "Konfiguračná hodnota `{name}` má byť jedno z {candidates}, ale je zadané `{current}`."
+
+#: sphinx/config.py:444
+msgid ""
+"The config value `{name}' has type `{current.__name__}'; expected "
+"{permitted}."
+msgstr "Konfiguračná hodnota `{name}' má typ `{current.__name__}'; očakávané {permitted}."
+
+#: sphinx/config.py:457
+msgid ""
+"The config value `{name}' has type `{current.__name__}', defaults to "
+"`{default.__name__}'."
+msgstr "Konfiguračná hodnota `{name}' má typ `{current.__name__}', predvolene `{default.__name__}'."
+
+#: sphinx/config.py:467
+#, python-format
+msgid "primary_domain %r not found, ignored."
+msgstr "primary_domain %r nenájdená, ignorované."
+
+#: sphinx/config.py:479
+msgid ""
+"Since v2.0, Sphinx uses \"index\" as root_doc by default. Please add "
+"\"root_doc = 'contents'\" to your conf.py."
+msgstr "Od v2.0 Sphinx predvolene používa „index” ako root_doc. Prosím, pridajte „root_doc = 'contents'” do svojho conf.py."
+
+#: sphinx/events.py:67
+#, python-format
+msgid "Event %r already present"
+msgstr "Udalosť %r už existuje"
+
+#: sphinx/events.py:73
+#, python-format
+msgid "Unknown event name: %s"
+msgstr "Neznáme meno udalosti %s"
+
+#: sphinx/events.py:109
+#, python-format
+msgid "Handler %r for event %r threw an exception"
+msgstr "Obsluha %r udalosti %r vyvolala výnimku"
+
+#: sphinx/extension.py:52
+#, python-format
+msgid ""
+"The %s extension is required by needs_extensions settings, but it is not "
+"loaded."
+msgstr "Rozšírenie %s je vyžadované nastavením needs_extensions, ale nie je načítané."
+
+#: sphinx/extension.py:68
+#, python-format
+msgid ""
+"This project needs the extension %s at least in version %s and therefore "
+"cannot be built with the loaded version (%s)."
+msgstr "Tento projekt vyžaduje rozšírenie %s s verziou minimálne %s, a teda ho nemožno zostaviť s načítanou verziou (%s)."
+
+#: sphinx/highlighting.py:135
+#, python-format
+msgid "Pygments lexer name %r is not known"
+msgstr "Neznáme meno lexera Pygments %r"
+
+#: sphinx/highlighting.py:161
+#, python-format
+msgid "Could not lex literal_block as \"%s\". Highlighting skipped."
+msgstr "Nemožno spracovať literal_block ako \"%s\". Zvýraznenie syntaxe preskočené."
+
+#: sphinx/project.py:53
+#, python-format
+msgid ""
+"multiple files found for the document \"%s\": %r\n"
+"Use %r for the build."
+msgstr "nájdených viacero súborov pre dokument \"%s\": %r\nNa zostavenie použite %r."
+
+#: sphinx/project.py:59
+msgid "document not readable. Ignored."
+msgstr "dokument nie je čitateľný. Ignorované."
+
+#: sphinx/registry.py:139
+#, python-format
+msgid "Builder class %s has no \"name\" attribute"
+msgstr "Trieda builder %s nemá atribút „name”"
+
+#: sphinx/registry.py:141
+#, python-format
+msgid "Builder %r already exists (in module %s)"
+msgstr "Builder %r už existuje (v module %s)"
+
+#: sphinx/registry.py:154
+#, python-format
+msgid "Builder name %s not registered or available through entry point"
+msgstr "Builder s menom %s nie je registrovaný ani dostupný cez vstupný bod"
+
+#: sphinx/registry.py:161
+#, python-format
+msgid "Builder name %s not registered"
+msgstr "Builder s menom %s nie je registrovaný"
+
+#: sphinx/registry.py:168
+#, python-format
+msgid "domain %s already registered"
+msgstr "doména %s už je zaregistrovaná"
+
+#: sphinx/registry.py:191 sphinx/registry.py:204 sphinx/registry.py:215
+#, python-format
+msgid "domain %s not yet registered"
+msgstr "doména %s ešte nie je zaregistrovaná"
+
+#: sphinx/registry.py:195
+#, python-format
+msgid "The %r directive is already registered to domain %s"
+msgstr "Direktíva %r už je registrovaná v doméne %s"
+
+#: sphinx/registry.py:207
+#, python-format
+msgid "The %r role is already registered to domain %s"
+msgstr "Rola %r už je registrovaná v doméne %s"
+
+#: sphinx/registry.py:218
+#, python-format
+msgid "The %r index is already registered to domain %s"
+msgstr "Index %r už je registrovaný v doméne %s"
+
+#: sphinx/registry.py:242
+#, python-format
+msgid "The %r object_type is already registered"
+msgstr " object_type %r už je registrovaný"
+
+#: sphinx/registry.py:262
+#, python-format
+msgid "The %r crossref_type is already registered"
+msgstr "crossref_type %r už je registrovaný"
+
+#: sphinx/registry.py:269
+#, python-format
+msgid "source_suffix %r is already registered"
+msgstr "source_suffix %r  už je registrovaný"
+
+#: sphinx/registry.py:279
+#, python-format
+msgid "source_parser for %r is already registered"
+msgstr "source_parser pre %r už je registrovaný"
+
+#: sphinx/registry.py:288
+#, python-format
+msgid "Source parser for %s not registered"
+msgstr "Analyzátor pre %s nie je registrovaný"
+
+#: sphinx/registry.py:317
+#, python-format
+msgid "Translator for %r already exists"
+msgstr "Translator pre %r už existuje"
+
+#: sphinx/registry.py:330
+#, python-format
+msgid "kwargs for add_node() must be a (visit, depart) function tuple: %r=%r"
+msgstr ""
+
+#: sphinx/registry.py:402
+#, python-format
+msgid "enumerable_node %r already registered"
+msgstr "enumerable_node %r  už je registrovaný"
+
+#: sphinx/registry.py:411
+#, python-format
+msgid "math renderer %s is already registered"
+msgstr ""
+
+#: sphinx/registry.py:424
+#, python-format
+msgid ""
+"the extension %r was already merged with Sphinx since version %s; this "
+"extension is ignored."
+msgstr "rozšírenie %r bolo zlúčené so Sphinx od verzie %s; toto rozšírenie je ignorované."
+
+#: sphinx/registry.py:435
+msgid "Original exception:\n"
+msgstr "Pôvodná výnimka:\n"
+
+#: sphinx/registry.py:436
+#, python-format
+msgid "Could not import extension %s"
+msgstr "Nemožno importovať rozšírenie %s"
+
+#: sphinx/registry.py:441
+#, python-format
+msgid ""
+"extension %r has no setup() function; is it really a Sphinx extension "
+"module?"
+msgstr "rozšírenie %r nemá funkciu setup(); je to naozaj modul rozšírenia Sphinx?"
+
+#: sphinx/registry.py:450
+#, python-format
+msgid ""
+"The %s extension used by this project needs at least Sphinx v%s; it "
+"therefore cannot be built with this version."
+msgstr "Rozšírenie %s použité týmto projektom vyžaduje aspoň Sphinx v%s; takže ho nemožno zostaviť s touto verziou."
+
+#: sphinx/registry.py:458
+#, python-format
+msgid ""
+"extension %r returned an unsupported object from its setup() function; it "
+"should return None or a metadata dictionary"
+msgstr "rozšírenie %r vrátilo so svojej funkcie setup() nepodporovaný objekt; musí vrátiť None alebo slovník metadát"
+
+#: sphinx/roles.py:177
+#, python-format
+msgid "Python Enhancement Proposals; PEP %s"
+msgstr "Python Enhancement Proposals; PEP %s"
+
+#: sphinx/roles.py:193
+#, python-format
+msgid "invalid PEP number %s"
+msgstr ""
+
+#: sphinx/roles.py:227
+#, python-format
+msgid "invalid RFC number %s"
+msgstr ""
+
+#: sphinx/theming.py:80
+#, python-format
+msgid "theme %r doesn't have \"theme\" setting"
+msgstr "téma %r nemá nastavenie „theme”"
+
+#: sphinx/theming.py:82
+#, python-format
+msgid "theme %r doesn't have \"inherit\" setting"
+msgstr "téma %r nemá nastavenie „inherit”"
+
+#: sphinx/theming.py:88
+#, python-format
+msgid "no theme named %r found, inherited by %r"
+msgstr "nebola nájdená téma s menom %r, dedená v %r"
+
+#: sphinx/theming.py:111
+#, python-format
+msgid "setting %s.%s occurs in none of the searched theme configs"
+msgstr "nastavenie %s.%s nenájdené v žiadnom z nastavení témy"
+
+#: sphinx/theming.py:130
+#, python-format
+msgid "unsupported theme option %r given"
+msgstr "zadaná nepodporovaná voľba témy %r"
+
+#: sphinx/theming.py:228
+#, python-format
+msgid "file %r on theme path is not a valid zipfile or contains no theme"
+msgstr "súbor %r v ceste témy nie je platný súbor ZIP alebo neobsahuje tému"
+
+#: sphinx/theming.py:243
+msgid ""
+"sphinx_rtd_theme (< 0.3.0) found. It will not be available since Sphinx-6.0"
+msgstr "nájdená sphinx_rtd_theme (< 0.3.0). Táto nebude dostupná od Sphinx-6.0"
+
+#: sphinx/theming.py:248
+#, python-format
+msgid "no theme named %r found (missing theme.conf?)"
+msgstr "nebola nájdená téma  smenom %r (chýbajúci theme.conf?)"
+
+#: sphinx/builders/__init__.py:192
+#, python-format
+msgid "a suitable image for %s builder not found: %s (%s)"
+msgstr "vhodný obrázok pre zostavovač %s nenájdený: %s (%s)"
+
+#: sphinx/builders/__init__.py:196
+#, python-format
+msgid "a suitable image for %s builder not found: %s"
+msgstr "vhodný obrázok pre zostavovač %s nenájdený: %s"
+
+#: sphinx/builders/__init__.py:216
+msgid "building [mo]: "
+msgstr "zostavenie [mo]: "
+
+#: sphinx/builders/__init__.py:217 sphinx/builders/__init__.py:536
+#: sphinx/builders/__init__.py:562
+msgid "writing output... "
+msgstr "zápis výstupu…"
+
+#: sphinx/builders/__init__.py:226
+#, python-format
+msgid "all of %d po files"
+msgstr "všetky z %d súborov po"
+
+#: sphinx/builders/__init__.py:244
+#, python-format
+msgid "targets for %d po files that are specified"
+msgstr "ciele pre %d po súborov, ktoré boli zadané"
+
+#: sphinx/builders/__init__.py:251
+#, python-format
+msgid "targets for %d po files that are out of date"
+msgstr "ciele pre %d po súborov, ktoré sú zastarané"
+
+#: sphinx/builders/__init__.py:258
+msgid "all source files"
+msgstr "všetky zdrojové súbory"
+
+#: sphinx/builders/__init__.py:270
+#, python-format
+msgid ""
+"file %r given on command line is not under the source directory, ignoring"
+msgstr "súbor %r zadaný v príkazovom riadku nie je v zdrojovom adresári, ignorujem"
+
+#: sphinx/builders/__init__.py:274
+#, python-format
+msgid "file %r given on command line does not exist, ignoring"
+msgstr "súbor %r zadaný v príkazovom riadku neexistuje, ignorujem"
+
+#: sphinx/builders/__init__.py:285
+#, python-format
+msgid "%d source files given on command line"
+msgstr "%d zdrojové súbory zadané v príkazovom riadku"
+
+#: sphinx/builders/__init__.py:295
+#, python-format
+msgid "targets for %d source files that are out of date"
+msgstr "ciele pre %d zdrojových súborov, ktoré sú zastarané"
+
+#: sphinx/builders/__init__.py:304 sphinx/builders/gettext.py:240
+#, python-format
+msgid "building [%s]: "
+msgstr "zostavovanie [%s]: "
+
+#: sphinx/builders/__init__.py:311
+msgid "looking for now-outdated files... "
+msgstr "hľadanie zastaraných súborov…"
+
+#: sphinx/builders/__init__.py:316
+#, python-format
+msgid "%d found"
+msgstr "%d nájdené"
+
+#: sphinx/builders/__init__.py:318
+msgid "none found"
+msgstr "nenájdené"
+
+#: sphinx/builders/__init__.py:323
+msgid "pickling environment"
+msgstr "ukladanie prostredia"
+
+#: sphinx/builders/__init__.py:329
+msgid "checking consistency"
+msgstr "kontrolovanie konzistencie"
+
+#: sphinx/builders/__init__.py:333
+msgid "no targets are out of date."
+msgstr "žiadne ciele nie sú zastarané."
+
+#: sphinx/builders/__init__.py:372
+msgid "updating environment: "
+msgstr "aktualizácia prostredia:"
+
+#: sphinx/builders/__init__.py:393
+#, python-format
+msgid "%s added, %s changed, %s removed"
+msgstr "%s pridané, %s zmenené, %s odstránené"
+
+#: sphinx/builders/__init__.py:431 sphinx/builders/__init__.py:458
+msgid "reading sources... "
+msgstr "čítanie zdrojov…"
+
+#: sphinx/builders/__init__.py:463 sphinx/builders/__init__.py:572
+msgid "waiting for workers..."
+msgstr "čakanie na procesy…"
+
+#: sphinx/builders/__init__.py:514
+#, python-format
+msgid "docnames to write: %s"
+msgstr "mená dokumentov na zapísanie: %s"
+
+#: sphinx/builders/__init__.py:523 sphinx/builders/singlehtml.py:153
+msgid "preparing documents"
+msgstr "príprava dokumentov"
+
+#: sphinx/builders/_epub_base.py:216
+#, python-format
+msgid "duplicated ToC entry found: %s"
+msgstr "nájdená duplicitná položka Obsahu: %s"
+
+#: sphinx/builders/_epub_base.py:405 sphinx/builders/html/__init__.py:730
+#: sphinx/builders/latex/__init__.py:421 sphinx/builders/texinfo.py:176
+msgid "copying images... "
+msgstr "kopírovanie obrázkov…"
+
+#: sphinx/builders/_epub_base.py:412
+#, python-format
+msgid "cannot read image file %r: copying it instead"
+msgstr "nemožno čítať súbor obrázku %r: jeho kopírovanie namiesto toho"
+
+#: sphinx/builders/_epub_base.py:418 sphinx/builders/html/__init__.py:738
+#: sphinx/builders/latex/__init__.py:429 sphinx/builders/texinfo.py:186
+#, python-format
+msgid "cannot copy image file %r: %s"
+msgstr "nemožno kopírovať súbor obrázka %r: %s"
+
+#: sphinx/builders/_epub_base.py:435
+#, python-format
+msgid "cannot write image file %r: %s"
+msgstr "nemožno zapísať súbor obrázka %r: %s"
+
+#: sphinx/builders/_epub_base.py:445
+msgid "Pillow not found - copying image files"
+msgstr "Pillow nenájdené – kopírovanie súborov obrázkov"
+
+#: sphinx/builders/_epub_base.py:471
+msgid "writing mimetype file..."
+msgstr "zapisovanie súboru mimetype…"
+
+#: sphinx/builders/_epub_base.py:476
+msgid "writing META-INF/container.xml file..."
+msgstr "zapisovanie súboru META-INF/container.xml…"
+
+#: sphinx/builders/_epub_base.py:504
+msgid "writing content.opf file..."
+msgstr "zapisovanie súboru content.opf..."
+
+#: sphinx/builders/_epub_base.py:530
+#, python-format
+msgid "unknown mimetype for %s, ignoring"
+msgstr "neznámy typ MIME pre %s, ignorovaný"
+
+#: sphinx/builders/_epub_base.py:677
+msgid "writing toc.ncx file..."
+msgstr "zapisovanie súboru toc.ncx..."
+
+#: sphinx/builders/_epub_base.py:702
+#, python-format
+msgid "writing %s file..."
+msgstr "zapisovanie súboru %s…"
+
+#: sphinx/builders/changes.py:34
+#, python-format
+msgid "The overview file is in %(outdir)s."
+msgstr "Súbor prehľadu je v %(outdir)s."
+
+#: sphinx/builders/changes.py:60
+#, python-format
+msgid "no changes in version %s."
+msgstr "žiadne zmeny vo verzii %s."
+
+#: sphinx/builders/changes.py:62
+msgid "writing summary file..."
+msgstr "zapisovanie súboru prehľadu…"
+
+#: sphinx/builders/changes.py:78
+msgid "Builtins"
+msgstr "Zabudované funkcie"
+
+#: sphinx/builders/changes.py:80
+msgid "Module level"
+msgstr "Úroveň modulu"
+
+#: sphinx/builders/changes.py:124
+msgid "copying source files..."
+msgstr "kopírovanie zdrojových súborov…"
+
+#: sphinx/builders/changes.py:131
+#, python-format
+msgid "could not read %r for changelog creation"
+msgstr "nemožno čítať %r na vytvorenie položky záznamu zmien"
+
+#: sphinx/builders/dummy.py:22
+msgid "The dummy builder generates no files."
+msgstr "Zostavovač dummy negeneruje žiadne súbory."
+
+#: sphinx/builders/epub3.py:67
+#, python-format
+msgid "The ePub file is in %(outdir)s."
+msgstr "Súbory ePub sú v %(outdir)s."
+
+#: sphinx/builders/epub3.py:165
+msgid "writing nav.xhtml file..."
+msgstr "zapisovanie súboru nav.xhtml..."
+
+#: sphinx/builders/epub3.py:191
+msgid "conf value \"epub_language\" (or \"language\") should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „epub_language” (alebo „language”) nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:195
+msgid "conf value \"epub_uid\" should be XML NAME for EPUB3"
+msgstr "konfiguračná hodnota „epub_uid” má byť XML NAME pre EPUB3"
+
+#: sphinx/builders/epub3.py:198
+msgid "conf value \"epub_title\" (or \"html_title\") should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „epub_title” (alebo „html_title”) nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:202
+msgid "conf value \"epub_author\" should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „epub_author” nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:205
+msgid "conf value \"epub_contributor\" should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „epub_contributor” nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:208
+msgid "conf value \"epub_description\" should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „epub_description” nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:211
+msgid "conf value \"epub_publisher\" should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „epub_publisher” nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:214
+msgid "conf value \"epub_copyright\" (or \"copyright\")should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „epub_copyright” (alebo „copyright”) nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:218
+msgid "conf value \"epub_identifier\" should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „epub_identifier” nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:221
+msgid "conf value \"version\" should not be empty for EPUB3"
+msgstr "konfiguračná hodnota „version” nesmie byť prázdna pri EPUB3"
+
+#: sphinx/builders/epub3.py:235 sphinx/builders/html/__init__.py:1121
+#, python-format
+msgid "invalid css_file: %r, ignored"
+msgstr "neplatný css_file: %r, ignorovaný"
+
+#: sphinx/builders/gettext.py:219
+#, python-format
+msgid "The message catalogs are in %(outdir)s."
+msgstr "Katalógy správ sú v %(outdir)s."
+
+#: sphinx/builders/gettext.py:241
+#, python-format
+msgid "targets for %d template files"
+msgstr ""
+
+#: sphinx/builders/gettext.py:245
+msgid "reading templates... "
+msgstr "čítanie šablón… "
+
+#: sphinx/builders/gettext.py:273
+msgid "writing message catalogs... "
+msgstr "zapisovanie katalógov správ…"
+
+#: sphinx/builders/linkcheck.py:119
+#, python-format
+msgid "Look for any errors in the above output or in %(outdir)s/output.txt"
+msgstr "Hľadajte akékoľvek chyby v predošlom výstupe alebo v %(outdir)s/output.txt"
+
+#: sphinx/builders/linkcheck.py:257
+#, python-format
+msgid "broken link: %s (%s)"
+msgstr "poškodený odkaz: %s (%s)"
+
+#: sphinx/builders/linkcheck.py:456
+#, python-format
+msgid "Anchor '%s' not found"
+msgstr "Kotva „%s” nenájdená"
+
+#: sphinx/builders/linkcheck.py:701
+#, python-format
+msgid "Failed to compile regex in linkcheck_allowed_redirects: %r %s"
+msgstr ""
+
+#: sphinx/builders/manpage.py:38
+#, python-format
+msgid "The manual pages are in %(outdir)s."
+msgstr "Manuálové stránky sú v %(outdir)s."
+
+#: sphinx/builders/manpage.py:45
+msgid "no \"man_pages\" config value found; no manual pages will be written"
+msgstr "nebola nájdená konfiguračná voľba „man_pages”; manuálové stránky nebudú zapísané"
+
+#: sphinx/builders/latex/__init__.py:299 sphinx/builders/manpage.py:56
+#: sphinx/builders/singlehtml.py:161 sphinx/builders/texinfo.py:109
+msgid "writing"
+msgstr "zapisovanie"
+
+#: sphinx/builders/manpage.py:67
+#, python-format
+msgid "\"man_pages\" config value references unknown document %s"
+msgstr "konfiguračná voľba „man_pages” odkazuje na neznámy dokument %s"
+
+#: sphinx/builders/singlehtml.py:34
+#, python-format
+msgid "The HTML page is in %(outdir)s."
+msgstr "Stránky HTML sú v %(outdir)s."
+
+#: sphinx/builders/singlehtml.py:156
+msgid "assembling single document"
+msgstr "zostavovanie spoločného dokumentu"
+
+#: sphinx/builders/singlehtml.py:174
+msgid "writing additional files"
+msgstr "zapisovanie dodatočných súborov"
+
+#: sphinx/builders/texinfo.py:45
+#, python-format
+msgid "The Texinfo files are in %(outdir)s."
+msgstr "Súbory Texinfo sú v %(outdir)s."
+
+#: sphinx/builders/texinfo.py:47
+msgid ""
+"\n"
+"Run 'make' in that directory to run these through makeinfo\n"
+"(use 'make info' here to do that automatically)."
+msgstr "\nSpustite v tomto adresári 'make' na ich spustenie pomocou makeinfo\n(použite tu 'make info' aby to bolo spustené automaticky)."
+
+#: sphinx/builders/texinfo.py:75
+msgid "no \"texinfo_documents\" config value found; no documents will be written"
+msgstr "nebola nájdená konfiguračná voľba „texinfo_documents”; dokumenty nebudú zapísané"
+
+#: sphinx/builders/texinfo.py:83
+#, python-format
+msgid "\"texinfo_documents\" config value references unknown document %s"
+msgstr "konfiguračná voľba „texinfo_documents” odkazuje na neznámy dokument %s"
+
+#: sphinx/builders/latex/__init__.py:281 sphinx/builders/texinfo.py:105
+#, python-format
+msgid "processing %s"
+msgstr "spracovanie %s"
+
+#: sphinx/builders/latex/__init__.py:352 sphinx/builders/texinfo.py:152
+msgid "resolving references..."
+msgstr "riešenie odkazov…"
+
+#: sphinx/builders/latex/__init__.py:362 sphinx/builders/texinfo.py:161
+msgid " (in "
+msgstr "(v"
+
+#: sphinx/builders/texinfo.py:191
+msgid "copying Texinfo support files"
+msgstr "kopírovanie podporných súborov Texinfo"
+
+#: sphinx/builders/texinfo.py:195
+#, python-format
+msgid "error writing file Makefile: %s"
+msgstr "chyba zápisu súboru Makefile: %s"
+
+#: sphinx/builders/text.py:30
+#, python-format
+msgid "The text files are in %(outdir)s."
+msgstr "Textové súbory sú  v %(outdir)s."
+
+#: sphinx/builders/html/__init__.py:1074 sphinx/builders/text.py:77
+#: sphinx/builders/xml.py:91
+#, python-format
+msgid "error writing file %s: %s"
+msgstr "chyba zápisu súboru %s: %s"
+
+#: sphinx/builders/xml.py:35
+#, python-format
+msgid "The XML files are in %(outdir)s."
+msgstr "Súbory XML sú v %(outdir)s."
+
+#: sphinx/builders/xml.py:103
+#, python-format
+msgid "The pseudo-XML files are in %(outdir)s."
+msgstr "Súbory pseudo-XML sú v %(outdir)s."
+
+#: sphinx/builders/html/__init__.py:145
+#, python-format
+msgid "build info file is broken: %r"
+msgstr "súbor info zostavenia je poškodený: %r"
+
+#: sphinx/builders/html/__init__.py:177
+#, python-format
+msgid "The HTML pages are in %(outdir)s."
+msgstr "Stránky HTML sú v %(outdir)s."
+
+#: sphinx/builders/html/__init__.py:375
+#, python-format
+msgid "Failed to read build info file: %r"
+msgstr "Čítanie súboru zostavenia info zlyhalo: %r"
+
+#: sphinx/builders/html/__init__.py:469 sphinx/builders/latex/__init__.py:187
+#: sphinx/transforms/__init__.py:116 sphinx/writers/manpage.py:102
+#: sphinx/writers/texinfo.py:234
+#, python-format
+msgid "%b %d, %Y"
+msgstr "%d. %b  %Y"
+
+#: sphinx/builders/html/__init__.py:488 sphinx/themes/basic/defindex.html:30
+msgid "General Index"
+msgstr "Všeobecný index"
+
+#: sphinx/builders/html/__init__.py:488
+msgid "index"
+msgstr "index"
+
+#: sphinx/builders/html/__init__.py:551
+msgid "next"
+msgstr "ďalší"
+
+#: sphinx/builders/html/__init__.py:560
+msgid "previous"
+msgstr "predošlý"
+
+#: sphinx/builders/html/__init__.py:654
+msgid "generating indices"
+msgstr "generovanie indexov"
+
+#: sphinx/builders/html/__init__.py:669
+msgid "writing additional pages"
+msgstr "zapisovanie dodatočných stránok"
+
+#: sphinx/builders/html/__init__.py:748
+msgid "copying downloadable files... "
+msgstr "kopírovanie súborov na stiahnutie…"
+
+#: sphinx/builders/html/__init__.py:756
+#, python-format
+msgid "cannot copy downloadable file %r: %s"
+msgstr "nemožno kopírovať súbor na stiahnutie %r: %s"
+
+#: sphinx/builders/html/__init__.py:788 sphinx/builders/html/__init__.py:800
+#, python-format
+msgid "Failed to copy a file in html_static_file: %s: %r"
+msgstr "Kopírovanie súboru v html_static_file zlyhalo: %s: %r"
+
+#: sphinx/builders/html/__init__.py:821
+msgid "copying static files"
+msgstr "kopírovanie statických súborov"
+
+#: sphinx/builders/html/__init__.py:837
+#, python-format
+msgid "cannot copy static file %r"
+msgstr "nemožno kopírovať statický súbor %r"
+
+#: sphinx/builders/html/__init__.py:842
+msgid "copying extra files"
+msgstr "kopírovanie extra súborov"
+
+#: sphinx/builders/html/__init__.py:848
+#, python-format
+msgid "cannot copy extra file %r"
+msgstr "nemožno kopírovať extra súbor %r"
+
+#: sphinx/builders/html/__init__.py:855
+#, python-format
+msgid "Failed to write build info file: %r"
+msgstr "Zápis súboru zostavenia info zlyhal: %r"
+
+#: sphinx/builders/html/__init__.py:903
+msgid ""
+"search index couldn't be loaded, but not all documents will be built: the "
+"index will be incomplete."
+msgstr "index hľadania nemožno načítať, ale nebudú zostavované všetky dokumenty, takže index nebude kompletný."
+
+#: sphinx/builders/html/__init__.py:964
+#, python-format
+msgid "page %s matches two patterns in html_sidebars: %r and %r"
+msgstr "stránka %s vyhovuje dvom vzorom v html_sidebars: %r a %r"
+
+#: sphinx/builders/html/__init__.py:1057
+#, python-format
+msgid ""
+"a Unicode error occurred when rendering the page %s. Please make sure all "
+"config values that contain non-ASCII content are Unicode strings."
+msgstr "pri spracovaní stránky %s nastala chyba Unicode. Prosím, zaistite, že všetky konfiguračné hodnoty, ktoré obsahujú nieASCII hodnotu sú reťazce Unicode."
+
+#: sphinx/builders/html/__init__.py:1062
+#, python-format
+msgid ""
+"An error happened in rendering the page %s.\n"
+"Reason: %r"
+msgstr "Nastala chyba pri spracovaní stránky %s.\nPríčina: %r"
+
+#: sphinx/builders/html/__init__.py:1091
+msgid "dumping object inventory"
+msgstr "generovanie inventára objektov…"
+
+#: sphinx/builders/html/__init__.py:1096
+#, python-format
+msgid "dumping search index in %s"
+msgstr "generovanie indexu hľadania v %s"
+
+#: sphinx/builders/html/__init__.py:1138
+#, python-format
+msgid "invalid js_file: %r, ignored"
+msgstr "neplatné js_file: %r, ignorované"
+
+#: sphinx/builders/html/__init__.py:1225
+msgid "Many math_renderers are registered. But no math_renderer is selected."
+msgstr "Zaregistrovaných je viac math_renderer, ale žiadny nie je zvolený."
+
+#: sphinx/builders/html/__init__.py:1228
+#, python-format
+msgid "Unknown math_renderer %r is given."
+msgstr "Zdaný neznámy math_renderer %r."
+
+#: sphinx/builders/html/__init__.py:1236
+#, python-format
+msgid "html_extra_path entry %r does not exist"
+msgstr "položka „html_extra_path entry” %r neexistuje"
+
+#: sphinx/builders/html/__init__.py:1240
+#, python-format
+msgid "html_extra_path entry %r is placed inside outdir"
+msgstr "položka html_extra_path %r je umiestnené vo vnútri výstupného adresára"
+
+#: sphinx/builders/html/__init__.py:1249
+#, python-format
+msgid "html_static_path entry %r does not exist"
+msgstr "položka „html_static_path” %r neexistuje"
+
+#: sphinx/builders/html/__init__.py:1253
+#, python-format
+msgid "html_static_path entry %r is placed inside outdir"
+msgstr "položka html_static_path %r je umiestnené vo vnútri výstupného adresára"
+
+#: sphinx/builders/html/__init__.py:1262 sphinx/builders/latex/__init__.py:433
+#, python-format
+msgid "logo file %r does not exist"
+msgstr "súbor loga %r neexistuje"
+
+#: sphinx/builders/html/__init__.py:1271
+#, python-format
+msgid "favicon file %r does not exist"
+msgstr "súbor favicon %r neexistuje"
+
+#: sphinx/builders/html/__init__.py:1291
+msgid ""
+"html_add_permalinks has been deprecated since v3.5.0. Please use "
+"html_permalinks and html_permalinks_icon instead."
+msgstr "html_add_permalinks bolo označené za zastarané od v3.5.0. Prosím, použite namiesto toho html_permalinks a html_permalinks_icon."
+
+#: sphinx/builders/html/__init__.py:1317
+#, python-format
+msgid "%s %s documentation"
+msgstr "Dokumentácia %s %s"
+
+#: sphinx/builders/latex/__init__.py:114
+#, python-format
+msgid "The LaTeX files are in %(outdir)s."
+msgstr "Súbory LaTeX sú v %(outdir)s."
+
+#: sphinx/builders/latex/__init__.py:116
+msgid ""
+"\n"
+"Run 'make' in that directory to run these through (pdf)latex\n"
+"(use `make latexpdf' here to do that automatically)."
+msgstr "\nSpustite v tomto adresári 'make' na ich spustenie pomocou  (pdf)latex\n(použite tu 'make latexpdf' aby to bolo spustené automaticky)."
+
+#: sphinx/builders/latex/__init__.py:152
+msgid "no \"latex_documents\" config value found; no documents will be written"
+msgstr "nebola nájdená konfiguračná voľba „latex_documents”; dokmenty nebudú zapísané"
+
+#: sphinx/builders/latex/__init__.py:160
+#, python-format
+msgid "\"latex_documents\" config value references unknown document %s"
+msgstr "konfiguračná voľba „latex_documents” odkazuje na neznámy dokument %s"
+
+#: sphinx/builders/latex/__init__.py:194 sphinx/domains/std.py:604
+#: sphinx/templates/latex/latex.tex_t:97
+#: sphinx/themes/basic/genindex-single.html:30
+#: sphinx/themes/basic/genindex-single.html:55
+#: sphinx/themes/basic/genindex-split.html:11
+#: sphinx/themes/basic/genindex-split.html:14
+#: sphinx/themes/basic/genindex.html:11 sphinx/themes/basic/genindex.html:34
+#: sphinx/themes/basic/genindex.html:67 sphinx/themes/basic/layout.html:147
+#: sphinx/writers/texinfo.py:499
+msgid "Index"
+msgstr "Index"
+
+#: sphinx/builders/latex/__init__.py:197 sphinx/templates/latex/latex.tex_t:82
+msgid "Release"
+msgstr "Vydanie"
+
+#: sphinx/builders/latex/__init__.py:211 sphinx/writers/latex.py:382
+#, python-format
+msgid "no Babel option known for language %r"
+msgstr "žiadna známa voľba Babel pre jazyk %r"
+
+#: sphinx/builders/latex/__init__.py:379
+msgid "copying TeX support files"
+msgstr "kopírovanie podporných súborov Tex"
+
+#: sphinx/builders/latex/__init__.py:399
+msgid "copying TeX support files..."
+msgstr "kopírovanie podporných súborov Tex…"
+
+#: sphinx/builders/latex/__init__.py:412
+msgid "copying additional files"
+msgstr "kopírovanie dodatočných súborov"
+
+#: sphinx/builders/latex/__init__.py:468
+#, python-format
+msgid "Unknown configure key: latex_elements[%r], ignored."
+msgstr "Neznámy konfiguračný kľúč: latex_elements[%r], ignorovaný."
+
+#: sphinx/builders/latex/__init__.py:476
+#, python-format
+msgid "Unknown theme option: latex_theme_options[%r], ignored."
+msgstr "Neznáma voľba témy: latex_theme_options[%r], ignorovaná."
+
+#: sphinx/builders/latex/theming.py:91
+#, python-format
+msgid "%r doesn't have \"theme\" setting"
+msgstr "%r nemá nastavenia „theme”"
+
+#: sphinx/builders/latex/theming.py:94
+#, python-format
+msgid "%r doesn't have \"%s\" setting"
+msgstr "téma %r nemá nastavenie „1%s”"
+
+#: sphinx/cmd/build.py:38
+msgid "Exception occurred while building, starting debugger:"
+msgstr "Počas zostavenia sa vyskytla výnimka, spúšťam ladenie:"
+
+#: sphinx/cmd/build.py:48
+msgid "Interrupted!"
+msgstr "Prerušené!"
+
+#: sphinx/cmd/build.py:50
+msgid "reST markup error:"
+msgstr "Chyba značky reST:"
+
+#: sphinx/cmd/build.py:56
+msgid "Encoding error:"
+msgstr "Chyba kódovania:"
+
+#: sphinx/cmd/build.py:59 sphinx/cmd/build.py:74
+#, python-format
+msgid ""
+"The full traceback has been saved in %s, if you want to report the issue to "
+"the developers."
+msgstr "Úplný záznam chýb bol zapísaný v  %s, ak chcete nahlásiť problém vývojárom."
+
+#: sphinx/cmd/build.py:63
+msgid "Recursion error:"
+msgstr "Chyba rekurzie:"
+
+#: sphinx/cmd/build.py:66
+msgid ""
+"This can happen with very large or deeply nested source files. You can "
+"carefully increase the default Python recursion limit of 1000 in conf.py "
+"with e.g.:"
+msgstr "Toto môže nastať s veľmi veľkými alebo príliš hlboko vnáranými zdrojovými súbormi. môžete opatrne zvýšiť predvolenú hodnotu limitu rekurzie Python z 1000 v conf.py, napr.:"
+
+#: sphinx/cmd/build.py:71
+msgid "Exception occurred:"
+msgstr "Nastala výnimka:"
+
+#: sphinx/cmd/build.py:77
+msgid ""
+"Please also report this if it was a user error, so that a better error "
+"message can be provided next time."
+msgstr "Prosím, nahláste to, i keď to bola chyba používateľa, aby mohla byť nabudúce poskytnutá lepšia chybová správa."
+
+#: sphinx/cmd/build.py:80
+msgid ""
+"A bug report can be filed in the tracker at <https://github.com/sphinx-"
+"doc/sphinx/issues>. Thanks!"
+msgstr "Hlásenie o chybe možno vyplniť na <https://github.com/sphinx-doc/sphinx/issues>. Ďakujeme!"
+
+#: sphinx/cmd/build.py:96
+msgid "job number should be a positive number"
+msgstr "počet úloh musí byť kladné číslo"
+
+#: sphinx/cmd/build.py:104 sphinx/cmd/quickstart.py:470
+#: sphinx/ext/apidoc.py:307 sphinx/ext/autosummary/generate.py:623
+msgid "For more information, visit <https://www.sphinx-doc.org/>."
+msgstr ""
+
+#: sphinx/cmd/build.py:105
+msgid ""
+"\n"
+"Generate documentation from source files.\n"
+"\n"
+"sphinx-build generates documentation from the files in SOURCEDIR and places it\n"
+"in OUTPUTDIR. It looks for 'conf.py' in SOURCEDIR for the configuration\n"
+"settings. The 'sphinx-quickstart' tool may be used to generate template files,\n"
+"including 'conf.py'\n"
+"\n"
+"sphinx-build can create documentation in different formats. A format is\n"
+"selected by specifying the builder name on the command line; it defaults to\n"
+"HTML. Builders can also perform other tasks related to documentation\n"
+"processing.\n"
+"\n"
+"By default, everything that is outdated is built. Output only for selected\n"
+"files can be built by specifying individual filenames.\n"
+msgstr "\nGeneruje dokumentáciu zo zdrojových súborov.\n\nsphinx-build generuje dokumentáciu zo súborov v SOURCEDIR a umiestni ju\nv OUTPUTDIR. Konfiguračné voľby hľadá v 'conf.py' v SOURCEDIR.\nNa generovanie súborov šablón, vrátane 'conf.py' možno použiť nástroj\n'sphinx-quickstart'\n\nsphinx-build dokáže vytvoriť dokumentáciu v rôznych formátoch. Formát je\nzvolený zadaním mena zostavovača v príkazovom riadku; predvolene\nHTML. Zostavovače môžu vykonávať aj iné úlohy, ktoré súvisia so spracovaním\ndokuemntácie.\n\nPredvolene je zostavené všetko, čo bolo zmenené. Výstup len zvolených súborov\nmôže byť zostavený zadaním jednotlivých mien súborov.\n"
+
+#: sphinx/cmd/build.py:126
+msgid "path to documentation source files"
+msgstr "cesta k zdrojovým súborom dokumentácie"
+
+#: sphinx/cmd/build.py:128
+msgid "path to output directory"
+msgstr "cesta k výstupnej zložke"
+
+#: sphinx/cmd/build.py:130
+msgid "a list of specific files to rebuild. Ignored if -a is specified"
+msgstr "zoznam špecifických súborov na zostavenie, ignorovaný ak je použité -a"
+
+#: sphinx/cmd/build.py:133
+msgid "general options"
+msgstr "všeobecné voľby"
+
+#: sphinx/cmd/build.py:136
+msgid "builder to use (default: html)"
+msgstr "použitý zostavovač (predvolený: html)"
+
+#: sphinx/cmd/build.py:138
+msgid "write all files (default: only write new and changed files)"
+msgstr "zapísať všetky súbory (predvolene: zapísať len nové a zmenené súbory)"
+
+#: sphinx/cmd/build.py:141
+msgid "don't use a saved environment, always read all files"
+msgstr "nepoužívať uložené prostredie, vždy čítať všetky súbory"
+
+#: sphinx/cmd/build.py:144
+msgid ""
+"path for the cached environment and doctree files (default: "
+"OUTPUTDIR/.doctrees)"
+msgstr "cesta uloženého prostredia a súbory doctree (predvolene: OUTPUTDIR/.doctrees)"
+
+#: sphinx/cmd/build.py:147
+msgid ""
+"build in parallel with N processes where possible (special value \"auto\" "
+"will set N to cpu-count)"
+msgstr "zostaviť paralelne s N procesmi možné (špeciálna hodnota „auto” nastaví N na počet CPU)"
+
+#: sphinx/cmd/build.py:151
+msgid ""
+"path where configuration file (conf.py) is located (default: same as "
+"SOURCEDIR)"
+msgstr "cesta k adresáru s konfiguračným súborom (conf.py) (predvolene: rovnaké ako SOURCEDIR)"
+
+#: sphinx/cmd/build.py:154
+msgid "use no config file at all, only -D options"
+msgstr "vôbec nepoužiť konfiguračný súbor, len voľby -D"
+
+#: sphinx/cmd/build.py:157
+msgid "override a setting in configuration file"
+msgstr "prepíše nastavenie konfiguračného súboru"
+
+#: sphinx/cmd/build.py:160
+msgid "pass a value into HTML templates"
+msgstr "pošle hodnotu do šablón HTML"
+
+#: sphinx/cmd/build.py:163
+msgid "define tag: include \"only\" blocks with TAG"
+msgstr ""
+
+#: sphinx/cmd/build.py:165
+msgid "nit-picky mode, warn about all missing references"
+msgstr "hnidopichný režim, upozorniť na všetky chýbajúce prepojenia"
+
+#: sphinx/cmd/build.py:168
+msgid "console output options"
+msgstr "voľby výstupu konzoly"
+
+#: sphinx/cmd/build.py:170
+msgid "increase verbosity (can be repeated)"
+msgstr "zvýšiť rozvláčnosť (možno opakovať)"
+
+#: sphinx/cmd/build.py:172 sphinx/ext/apidoc.py:330
+msgid "no output on stdout, just warnings on stderr"
+msgstr "žiadny výstup, len upozornenia na stderr"
+
+#: sphinx/cmd/build.py:174
+msgid "no output at all, not even warnings"
+msgstr "vôbec žiadny výstup, ani upozornenia"
+
+#: sphinx/cmd/build.py:177
+msgid "do emit colored output (default: auto-detect)"
+msgstr "generovať farebný výstup (predvolene: automaticky detegovať)"
+
+#: sphinx/cmd/build.py:180
+msgid "do not emit colored output (default: auto-detect)"
+msgstr "negenerovať farebný výstup (predvolene: automaticky detegovať)"
+
+#: sphinx/cmd/build.py:183
+msgid "write warnings (and errors) to given file"
+msgstr "zapísať varovania  (a chyby) do zadaného súboru"
+
+#: sphinx/cmd/build.py:185
+msgid "turn warnings into errors"
+msgstr "prepnúť upozornenia na chyby"
+
+#: sphinx/cmd/build.py:187
+msgid "with -W, keep going when getting warnings"
+msgstr "s -W, pokračovať po upozornení"
+
+#: sphinx/cmd/build.py:189
+msgid "show full traceback on exception"
+msgstr "pri výnimke zobraziť úplné chybové hlásenie"
+
+#: sphinx/cmd/build.py:191
+msgid "run Pdb on exception"
+msgstr "pri výnimke spustiť Pdb"
+
+#: sphinx/cmd/build.py:223
+#, python-format
+msgid "cannot find files %r"
+msgstr "nemožno nájsť súbory %r"
+
+#: sphinx/cmd/build.py:226
+msgid "cannot combine -a option and filenames"
+msgstr "nemožno kombinovať voľbu -a a mená súborov"
+
+#: sphinx/cmd/build.py:245
+#, python-format
+msgid "cannot open warning file %r: %s"
+msgstr "nemožno otvoriť súbor varovaní %r: %s"
+
+#: sphinx/cmd/build.py:255
+msgid "-D option argument must be in the form name=value"
+msgstr "argument voľby -D musí byť v tvare meno=hodnota"
+
+#: sphinx/cmd/build.py:262
+msgid "-A option argument must be in the form name=value"
+msgstr "argument voľby -A musí byť v tvare meno=hodnota"
+
+#: sphinx/cmd/quickstart.py:43
+msgid "automatically insert docstrings from modules"
+msgstr "automaticky vložiť dokumentačné reťazce z modulov"
+
+#: sphinx/cmd/quickstart.py:44
+msgid "automatically test code snippets in doctest blocks"
+msgstr "automaticky testovať kúsky kódu v blokoch dokumentačných reťazcov"
+
+#: sphinx/cmd/quickstart.py:45
+msgid "link between Sphinx documentation of different projects"
+msgstr "prepojenie medzi dokumentáciou Sphinx rôznych modulov"
+
+#: sphinx/cmd/quickstart.py:46
+msgid "write \"todo\" entries that can be shown or hidden on build"
+msgstr "písať položky „todo”, ktoré môžu byť zobrazené alebo skryté pri zostavení"
+
+#: sphinx/cmd/quickstart.py:47
+msgid "checks for documentation coverage"
+msgstr ""
+
+#: sphinx/cmd/quickstart.py:48
+msgid "include math, rendered as PNG or SVG images"
+msgstr "zahrnúť math, spracované ako obrázky PNG alebo SVG"
+
+#: sphinx/cmd/quickstart.py:49
+msgid "include math, rendered in the browser by MathJax"
+msgstr "zahrnúť math, spracované prehliadačom pomocou MathJax"
+
+#: sphinx/cmd/quickstart.py:50
+msgid "conditional inclusion of content based on config values"
+msgstr "podmienečné zahrnutie obsahu na základe konfiguračných volieb"
+
+#: sphinx/cmd/quickstart.py:51
+msgid "include links to the source code of documented Python objects"
+msgstr "zahrnúť odkazy na zdrojový kód dokumentovaných objektov Python"
+
+#: sphinx/cmd/quickstart.py:52
+msgid "create .nojekyll file to publish the document on GitHub pages"
+msgstr "vytvoriť súbor .nojekyll na publikovanie dokumentu na GitHub"
+
+#: sphinx/cmd/quickstart.py:94
+msgid "Please enter a valid path name."
+msgstr "Prosím, zadajte platnú cestu."
+
+#: sphinx/cmd/quickstart.py:110
+msgid "Please enter some text."
+msgstr "Prosím, zadajte nejaký text."
+
+#: sphinx/cmd/quickstart.py:117
+#, python-format
+msgid "Please enter one of %s."
+msgstr "Prosím, zadajte jedno z 1%s."
+
+#: sphinx/cmd/quickstart.py:124
+msgid "Please enter either 'y' or 'n'."
+msgstr "Prosím, zadajte buď 'y' alebo 'n'."
+
+#: sphinx/cmd/quickstart.py:130
+msgid "Please enter a file suffix, e.g. '.rst' or '.txt'."
+msgstr "Prosím, zadajte príponu súboru, napr. '.rst' alebo '.txt'."
+
+#: sphinx/cmd/quickstart.py:211
+#, python-format
+msgid "Welcome to the Sphinx %s quickstart utility."
+msgstr "Vitajte v nástroji Sphinx %s quickstart."
+
+#: sphinx/cmd/quickstart.py:213
+msgid ""
+"Please enter values for the following settings (just press Enter to\n"
+"accept a default value, if one is given in brackets)."
+msgstr ""
+
+#: sphinx/cmd/quickstart.py:218
+#, python-format
+msgid "Selected root path: %s"
+msgstr "Zvolená cesta koreňa: %s"
+
+#: sphinx/cmd/quickstart.py:221
+msgid "Enter the root path for documentation."
+msgstr "Zadajte cestu koreňa tejto dokumentácie."
+
+#: sphinx/cmd/quickstart.py:222
+msgid "Root path for the documentation"
+msgstr "Cesta koreňa dokumentácie"
+
+#: sphinx/cmd/quickstart.py:227
+msgid "Error: an existing conf.py has been found in the selected root path."
+msgstr "Chyba: nájdený existujúci conf.py v zadanej ceste koreňa."
+
+#: sphinx/cmd/quickstart.py:229
+msgid "sphinx-quickstart will not overwrite existing Sphinx projects."
+msgstr "sphinx-quickstart neprepíše existujúce projekty Sphinx."
+
+#: sphinx/cmd/quickstart.py:231
+msgid "Please enter a new root path (or just Enter to exit)"
+msgstr "Prosím, zadajte novú cestu koreňa (alebo len Enter na skončenie)"
+
+#: sphinx/cmd/quickstart.py:238
+msgid ""
+"You have two options for placing the build directory for Sphinx output.\n"
+"Either, you use a directory \"_build\" within the root path, or you separate\n"
+"\"source\" and \"build\" directories within the root path."
+msgstr "Sú dve možnosti umiestnenia adresára zostavenia s výstupom Sphinx.\nMôžete použiť buď adresár „_build” v koreni alebo môžete mať oddelené\nadresáre „source” a „build” v ceste koreňa."
+
+#: sphinx/cmd/quickstart.py:241
+msgid "Separate source and build directories (y/n)"
+msgstr "Oddeliť zdrojový a výstupný adresár (y/n)"
+
+#: sphinx/cmd/quickstart.py:245
+msgid ""
+"Inside the root directory, two more directories will be created; \"_templates\"\n"
+"for custom HTML templates and \"_static\" for custom stylesheets and other static\n"
+"files. You can enter another prefix (such as \".\") to replace the underscore."
+msgstr "V koreňovom adresári budú vytvorená dva ďalšie adresáre; \"_templates\"\npre vlastné šablóny HTML a \"_static\" pre vlastné CSS a iné statické súbory\nMôžete zadať inú predponu (napr. „.”), ktorá nahradí podčiarkovník."
+
+#: sphinx/cmd/quickstart.py:248
+msgid "Name prefix for templates and static dir"
+msgstr "Predpona mena adresárov templates a static"
+
+#: sphinx/cmd/quickstart.py:252
+msgid ""
+"The project name will occur in several places in the built documentation."
+msgstr "Meno projektu bude na viacerých miestach zostavenej dokumentácie."
+
+#: sphinx/cmd/quickstart.py:253
+msgid "Project name"
+msgstr "Názov projektu"
+
+#: sphinx/cmd/quickstart.py:255
+msgid "Author name(s)"
+msgstr "Meno(á) autora(ov)"
+
+#: sphinx/cmd/quickstart.py:259
+msgid ""
+"Sphinx has the notion of a \"version\" and a \"release\" for the\n"
+"software. Each version can have multiple releases. For example, for\n"
+"Python the version is something like 2.5 or 3.0, while the release is\n"
+"something like 2.5.1 or 3.0a1. If you don't need this dual structure,\n"
+"just set both to the same value."
+msgstr "Sphinx má predstavu o \"version\" a \"release\" softvéru. Každá\nverzia môže mať viacero vydaní. Napríklad, pre Python je verzia\nniečo ako 2.5 alebo 3.0, zatiaľčo vydanie je niečo ako 2.5.1\nalebo 3.0a1. Ak nepotrebuje dvojitú štruktúru, jednoducho nastavte\noboje na rovnakú hodnotu."
+
+#: sphinx/cmd/quickstart.py:264
+msgid "Project version"
+msgstr "Verzia projektu"
+
+#: sphinx/cmd/quickstart.py:266
+msgid "Project release"
+msgstr "Vydanie projektu"
+
+#: sphinx/cmd/quickstart.py:270
+msgid ""
+"If the documents are to be written in a language other than English,\n"
+"you can select a language here by its language code. Sphinx will then\n"
+"translate text that it generates into that language.\n"
+"\n"
+"For a list of supported codes, see\n"
+"https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-language."
+msgstr "Ak má byť dokumentácia písaná v inom ako Anglickom jazyku,\nmôžete tu zvoliť jazyk pomocou jeho kódu. Sphinx bude potom\nprekladať text, ktorý generuje, do tohoto jazyka.\n\nZoznam podporovaných jazykov nájdete na\nhttps://www.sphinx-doc.org/en/master/usage/configuration.html#confval-language."
+
+#: sphinx/cmd/quickstart.py:276
+msgid "Project language"
+msgstr "Jazyk projektu"
+
+#: sphinx/cmd/quickstart.py:282
+msgid ""
+"The file name suffix for source files. Commonly, this is either \".txt\"\n"
+"or \".rst\". Only files with this suffix are considered documents."
+msgstr "Prípona mena zdrojových súborov. Zvyčajne to je buď „.txt”\nalebo „.rst”. Len súbory s touto príponou sú považované za dokumenty."
+
+#: sphinx/cmd/quickstart.py:284
+msgid "Source file suffix"
+msgstr "Prípona zdrojových súborov"
+
+#: sphinx/cmd/quickstart.py:288
+msgid ""
+"One document is special in that it is considered the top node of the\n"
+"\"contents tree\", that is, it is the root of the hierarchical structure\n"
+"of the documents. Normally, this is \"index\", but if your \"index\"\n"
+"document is a custom template, you can also set this to another filename."
+msgstr "Jeden dokument je špeciálny v tom, že je považovaný za vrcholový uzol\n„stromu obsahu”, čiže je to koreň hierarchickej štruktúry dokumentov.\nBežne to je „index”, ale ak je Váš „index” vlastnou šablónou, môžete\npoužiť aj iné meno súboru."
+
+#: sphinx/cmd/quickstart.py:292
+msgid "Name of your master document (without suffix)"
+msgstr "Meno hlavného dokumentu (bez prípony)"
+
+#: sphinx/cmd/quickstart.py:297
+#, python-format
+msgid ""
+"Error: the master file %s has already been found in the selected root path."
+msgstr "Chyba: nájdený existujúci hlavný súbor %s v zadanej ceste koreňa."
+
+#: sphinx/cmd/quickstart.py:299
+msgid "sphinx-quickstart will not overwrite the existing file."
+msgstr "sphinx-quickstart neprepíše existujúci súbor."
+
+#: sphinx/cmd/quickstart.py:301
+msgid ""
+"Please enter a new file name, or rename the existing file and press Enter"
+msgstr "Prosím, zadajte nové meno súboru alebo premenujte existujúci súbor a stlačte Enter"
+
+#: sphinx/cmd/quickstart.py:305
+msgid "Indicate which of the following Sphinx extensions should be enabled:"
+msgstr "Informuje, ktoré z nasledujúcich rozšírení Sphinx majú byť zapnuté:"
+
+#: sphinx/cmd/quickstart.py:313
+msgid ""
+"Note: imgmath and mathjax cannot be enabled at the same time. imgmath has "
+"been deselected."
+msgstr "Pozor: imgmath a mathjax nemožno zapnúť naraz. výber imgmath bol zrušený."
+
+#: sphinx/cmd/quickstart.py:319
+msgid ""
+"A Makefile and a Windows command file can be generated for you so that you\n"
+"only have to run e.g. `make html' instead of invoking sphinx-build\n"
+"directly."
+msgstr "Súbory Makefile a príkazový súbor Windows môže byť pre Vás vygenerovaný\ntakže stačí spustiť napr. len `make html' namiesto priameho spúšťania sphinx-build."
+
+#: sphinx/cmd/quickstart.py:322
+msgid "Create Makefile? (y/n)"
+msgstr "Vytvoriť Makefile? (y/n)"
+
+#: sphinx/cmd/quickstart.py:325
+msgid "Create Windows command file? (y/n)"
+msgstr "Vytvoriť príkazový súbor Windows? (y/n) "
+
+#: sphinx/cmd/quickstart.py:368 sphinx/ext/apidoc.py:90
+#, python-format
+msgid "Creating file %s."
+msgstr "Vytváranie súboru %s."
+
+#: sphinx/cmd/quickstart.py:373 sphinx/ext/apidoc.py:87
+#, python-format
+msgid "File %s already exists, skipping."
+msgstr "Súbor %s už existuje, preskočené."
+
+#: sphinx/cmd/quickstart.py:415
+msgid "Finished: An initial directory structure has been created."
+msgstr "Dokončené: Počiatočná štruktúra adresára bola vytvorená."
+
+#: sphinx/cmd/quickstart.py:417
+#, python-format
+msgid ""
+"You should now populate your master file %s and create other documentation\n"
+"source files. "
+msgstr "Teraz môže vyplniť svoj hlavný súbor %s a vytvoriť ostatné zdrojové súbory\ndokumentácie. "
+
+#: sphinx/cmd/quickstart.py:420
+msgid ""
+"Use the Makefile to build the docs, like so:\n"
+"   make builder"
+msgstr "Na zostavenie dokumentácie použite Makefile, napr.:\n   make builder"
+
+#: sphinx/cmd/quickstart.py:423
+#, python-format
+msgid ""
+"Use the sphinx-build command to build the docs, like so:\n"
+"   sphinx-build -b builder %s %s"
+msgstr "Na zostavenie dokumentácie použite príkaz sphinx-build, napr.:\n   sphinx-build -b builder %s %s"
+
+#: sphinx/cmd/quickstart.py:425
+msgid ""
+"where \"builder\" is one of the supported builders, e.g. html, latex or "
+"linkcheck."
+msgstr "kde „builder” je jeden z podporovaných formátov, napr. html, latex alebo linkcheck."
+
+#: sphinx/cmd/quickstart.py:460
+msgid ""
+"\n"
+"Generate required files for a Sphinx project.\n"
+"\n"
+"sphinx-quickstart is an interactive tool that asks some questions about your\n"
+"project and then generates a complete documentation directory and sample\n"
+"Makefile to be used with sphinx-build.\n"
+msgstr "\nGenereuje požadované súbory projektu Sphinx.\n\nsphinx-quickstart je interaktívny nástroj, ktorý kladie niekoľko otázok o  Vašom\nprojekte a potom generuje kompletný adresár dokumentácie a vzorový\nMakefile, na použitie so sphinx-build.\n"
+
+#: sphinx/cmd/quickstart.py:475
+msgid "quiet mode"
+msgstr "tichý režim"
+
+#: sphinx/cmd/quickstart.py:480
+msgid "project root"
+msgstr "koreň projektu"
+
+#: sphinx/cmd/quickstart.py:482
+msgid "Structure options"
+msgstr "Voľby štruktúry"
+
+#: sphinx/cmd/quickstart.py:484
+msgid "if specified, separate source and build dirs"
+msgstr "ak je zadané, oddeliť zdrojový a výstupný adresár"
+
+#: sphinx/cmd/quickstart.py:486
+msgid "if specified, create build dir under source dir"
+msgstr "ak je zadané, vytvoriť výstupný adresár v zdrojovom"
+
+#: sphinx/cmd/quickstart.py:488
+msgid "replacement for dot in _templates etc."
+msgstr "náhrada za bodku v _templates apod."
+
+#: sphinx/cmd/quickstart.py:490
+msgid "Project basic options"
+msgstr "Základné voľby projektu"
+
+#: sphinx/cmd/quickstart.py:492
+msgid "project name"
+msgstr "názov projektu"
+
+#: sphinx/cmd/quickstart.py:494
+msgid "author names"
+msgstr "mená autorov"
+
+#: sphinx/cmd/quickstart.py:496
+msgid "version of project"
+msgstr "verzia projektu"
+
+#: sphinx/cmd/quickstart.py:498
+msgid "release of project"
+msgstr "vydanie projektu"
+
+#: sphinx/cmd/quickstart.py:500
+msgid "document language"
+msgstr "jazyk dokumentácie"
+
+#: sphinx/cmd/quickstart.py:502
+msgid "source file suffix"
+msgstr "prípona zdrojových súborov"
+
+#: sphinx/cmd/quickstart.py:504
+msgid "master document name"
+msgstr "meno hlavného dokumentu"
+
+#: sphinx/cmd/quickstart.py:506
+msgid "use epub"
+msgstr "použiť epub"
+
+#: sphinx/cmd/quickstart.py:508
+msgid "Extension options"
+msgstr "Voľby rozšírenia"
+
+#: sphinx/cmd/quickstart.py:512 sphinx/ext/apidoc.py:390
+#, python-format
+msgid "enable %s extension"
+msgstr "zapnúť rozšírenie %s"
+
+#: sphinx/cmd/quickstart.py:514 sphinx/ext/apidoc.py:386
+msgid "enable arbitrary extensions"
+msgstr "zapnúť konkrétne rozšírenia"
+
+#: sphinx/cmd/quickstart.py:516
+msgid "Makefile and Batchfile creation"
+msgstr "Vytvorenie Makefile a Batchfile"
+
+#: sphinx/cmd/quickstart.py:518
+msgid "create makefile"
+msgstr "vytvoriť makefile"
+
+#: sphinx/cmd/quickstart.py:520
+msgid "do not create makefile"
+msgstr "nevytvoriť makefile"
+
+#: sphinx/cmd/quickstart.py:522
+msgid "create batchfile"
+msgstr "vytvoriť batchfile"
+
+#: sphinx/cmd/quickstart.py:525
+msgid "do not create batchfile"
+msgstr "nevytvoriť batchfile"
+
+#: sphinx/cmd/quickstart.py:528
+msgid "use make-mode for Makefile/make.bat"
+msgstr "použiť režim make pre Makefile/make.bat"
+
+#: sphinx/cmd/quickstart.py:531
+msgid "do not use make-mode for Makefile/make.bat"
+msgstr "nepoužiť režim make pre Makefile/make.bat"
+
+#: sphinx/cmd/quickstart.py:533 sphinx/ext/apidoc.py:392
+msgid "Project templating"
+msgstr "Šablóny projektu"
+
+#: sphinx/cmd/quickstart.py:536 sphinx/ext/apidoc.py:395
+msgid "template directory for template files"
+msgstr "adresár šablóny pre súbory šablóny"
+
+#: sphinx/cmd/quickstart.py:539
+msgid "define a template variable"
+msgstr "definovať premennú šablóny"
+
+#: sphinx/cmd/quickstart.py:572
+msgid "\"quiet\" is specified, but any of \"project\" or \"author\" is not specified."
+msgstr "bolo zadané „quiet”, ale nebol zadaný „project” alebo „author”."
+
+#: sphinx/cmd/quickstart.py:586
+msgid ""
+"Error: specified path is not a directory, or sphinx files already exist."
+msgstr "Chyba: zadaná cesta nie je adresár alebo súbory sphinx už existujú."
+
+#: sphinx/cmd/quickstart.py:588
+msgid ""
+"sphinx-quickstart only generate into a empty directory. Please specify a new"
+" root path."
+msgstr "sphinx-quickstart generuje len do prázdneho adresára. Prosím, zadajte novú cestu koreňa."
+
+#: sphinx/cmd/quickstart.py:603
+#, python-format
+msgid "Invalid template variable: %s"
+msgstr "Neplatná premenná šablóny: %s"
+
+#: sphinx/directives/code.py:64
+msgid "non-whitespace stripped by dedent"
+msgstr ""
+
+#: sphinx/directives/code.py:83
+#, python-format
+msgid "Invalid caption: %s"
+msgstr "Neplatný popis: %s"
+
+#: sphinx/directives/code.py:129 sphinx/directives/code.py:274
+#: sphinx/directives/code.py:440
+#, python-format
+msgid "line number spec is out of range(1-%d): %r"
+msgstr "špecifikácia čísla riadku je mimo rozsahu (1-%d): %r"
+
+#: sphinx/directives/code.py:208
+#, python-format
+msgid "Cannot use both \"%s\" and \"%s\" options"
+msgstr "Nemožno použiť obe voľby „%s” a „%s”"
+
+#: sphinx/directives/code.py:220
+#, python-format
+msgid "Include file %r not found or reading it failed"
+msgstr "Súbor na vloženie %r nebol nájdený alebo zlyhalo jeho čítanie"
+
+#: sphinx/directives/code.py:223
+#, python-format
+msgid ""
+"Encoding %r used for reading included file %r seems to be wrong, try giving "
+"an :encoding: option"
+msgstr "Kódovanie %r použité pri čítaní vloženého súboru %r vyzerá ako zlé, skúste zadať voľbu :encoding:"
+
+#: sphinx/directives/code.py:258
+#, python-format
+msgid "Object named %r not found in include file %r"
+msgstr "Objekt s menom %r nebol nájdený vo vloženom súbore %r"
+
+#: sphinx/directives/code.py:283
+msgid "Cannot use \"lineno-match\" with a disjoint set of \"lines\""
+msgstr "Nemožno použiť „lineno-match” s rozdelenou množinou „lines”"
+
+#: sphinx/directives/code.py:288
+#, python-format
+msgid "Line spec %r: no lines pulled from include file %r"
+msgstr "Riadok %r: žiadne riadky z vloženého súboru %r"
+
+#: sphinx/directives/other.py:110
+#, python-format
+msgid "toctree glob pattern %r didn't match any documents"
+msgstr ""
+
+#: sphinx/directives/other.py:131 sphinx/environment/adapters/toctree.py:176
+#, python-format
+msgid "toctree contains reference to excluded document %r"
+msgstr "strom obsahu obsahuje odkaz na vylúčený dokument %r"
+
+#: sphinx/directives/other.py:134 sphinx/environment/adapters/toctree.py:178
+#, python-format
+msgid "toctree contains reference to nonexisting document %r"
+msgstr "strom obsahu obsahuje odkaz na neexistujúci dokument %r"
+
+#: sphinx/directives/other.py:144
+#, python-format
+msgid "duplicated entry found in toctree: %s"
+msgstr ""
+
+#: sphinx/directives/other.py:176
+msgid "Section author: "
+msgstr "Autor sekcie:"
+
+#: sphinx/directives/other.py:178
+msgid "Module author: "
+msgstr "Autor modulu:"
+
+#: sphinx/directives/other.py:180
+msgid "Code author: "
+msgstr "Autor kódu:"
+
+#: sphinx/directives/other.py:182
+msgid "Author: "
+msgstr "Autor:"
+
+#: sphinx/directives/other.py:254
+msgid ".. acks content is not a list"
+msgstr ""
+
+#: sphinx/directives/other.py:279
+msgid ".. hlist content is not a list"
+msgstr ""
+
+#: sphinx/directives/patches.py:117
+msgid ""
+"\":file:\" option for csv-table directive now recognizes an absolute path as"
+" a relative path from source directory. Please update your document."
+msgstr "voľba \":file:\" direktívy csv-table teraz rozpoznáva absolútnu cestu ako relatívnu k zdrojovému adresáru. Prosím, aktualizujte svoj dokument."
+
+#: sphinx/domains/__init__.py:394
+#, python-format
+msgid "%s %s"
+msgstr "%s %s"
+
+#: sphinx/domains/c.py:2000 sphinx/domains/c.py:3306
+#, python-format
+msgid ""
+"Duplicate C declaration, also defined at %s:%s.\n"
+"Declaration is '.. c:%s:: %s'."
+msgstr "Duplicitná deklarácia C, definovaná aj v %s:%s.\nDeklarácia je '.. c:%s:: %s'."
+
+#: sphinx/domains/c.py:3231
+#, python-format
+msgid "%s (C %s)"
+msgstr "%s (C %s)"
+
+#: sphinx/domains/c.py:3352 sphinx/domains/cpp.py:7261
+#: sphinx/domains/python.py:445 sphinx/ext/napoleon/docstring.py:736
+msgid "Parameters"
+msgstr "Parametre"
+
+#: sphinx/domains/c.py:3355 sphinx/domains/cpp.py:7267
+msgid "Return values"
+msgstr ""
+
+#: sphinx/domains/c.py:3358 sphinx/domains/cpp.py:7270
+#: sphinx/domains/javascript.py:231 sphinx/domains/python.py:457
+msgid "Returns"
+msgstr "Vracia"
+
+#: sphinx/domains/c.py:3360 sphinx/domains/javascript.py:233
+#: sphinx/domains/python.py:459
+msgid "Return type"
+msgstr "Návratový typ"
+
+#: sphinx/domains/c.py:3756 sphinx/domains/cpp.py:7675
+msgid "member"
+msgstr "člen"
+
+#: sphinx/domains/c.py:3757
+msgid "variable"
+msgstr "premenná"
+
+#: sphinx/domains/c.py:3758 sphinx/domains/cpp.py:7674
+#: sphinx/domains/javascript.py:340 sphinx/domains/python.py:1203
+msgid "function"
+msgstr "funkcia"
+
+#: sphinx/domains/c.py:3759
+msgid "macro"
+msgstr "makro"
+
+#: sphinx/domains/c.py:3760
+msgid "struct"
+msgstr ""
+
+#: sphinx/domains/c.py:3761 sphinx/domains/cpp.py:7673
+msgid "union"
+msgstr ""
+
+#: sphinx/domains/c.py:3762 sphinx/domains/cpp.py:7678
+msgid "enum"
+msgstr "enum"
+
+#: sphinx/domains/c.py:3763 sphinx/domains/cpp.py:7679
+msgid "enumerator"
+msgstr "enumerátor"
+
+#: sphinx/domains/c.py:3764 sphinx/domains/cpp.py:7676
+msgid "type"
+msgstr "typ"
+
+#: sphinx/domains/c.py:3766 sphinx/domains/cpp.py:7681
+msgid "function parameter"
+msgstr "parameter funkcie"
+
+#: sphinx/domains/changeset.py:28
+#, python-format
+msgid "New in version %s"
+msgstr "Nové vo verzii %s"
+
+#: sphinx/domains/changeset.py:29
+#, python-format
+msgid "Changed in version %s"
+msgstr "Zmenené vo verzii %s"
+
+#: sphinx/domains/changeset.py:30
+#, python-format
+msgid "Deprecated since version %s"
+msgstr "Zastarané od verzie %s"
+
+#: sphinx/domains/citation.py:75
+#, python-format
+msgid "duplicate citation %s, other instance in %s"
+msgstr "duplicitná citácia  %s, ďalší výskyt v %s"
+
+#: sphinx/domains/citation.py:86
+#, python-format
+msgid "Citation [%s] is not referenced."
+msgstr "Citácia [%s] nie je odkazovaná."
+
+#: sphinx/domains/cpp.py:4748 sphinx/domains/cpp.py:7216
+#, python-format
+msgid ""
+"Duplicate C++ declaration, also defined at %s:%s.\n"
+"Declaration is '.. cpp:%s:: %s'."
+msgstr "Duplicitná deklarácia C++, definovaná aj v %s:%s.\nDeklarácia je '.. cpp:%s:: %s'."
+
+#: sphinx/domains/cpp.py:7022
+msgid "Template Parameters"
+msgstr "Parametre šablóny"
+
+#: sphinx/domains/cpp.py:7139
+#, python-format
+msgid "%s (C++ %s)"
+msgstr "%s (C++ %s)"
+
+#: sphinx/domains/cpp.py:7264 sphinx/domains/javascript.py:228
+msgid "Throws"
+msgstr "Vyvoláva"
+
+#: sphinx/domains/cpp.py:7672 sphinx/domains/javascript.py:342
+#: sphinx/domains/python.py:1205
+msgid "class"
+msgstr "trieda"
+
+#: sphinx/domains/cpp.py:7677
+msgid "concept"
+msgstr "koncept"
+
+#: sphinx/domains/cpp.py:7682
+msgid "template parameter"
+msgstr "parameter šablóny"
+
+#: sphinx/domains/javascript.py:146
+#, python-format
+msgid "%s() (built-in function)"
+msgstr "%s() (zabudovaná funkcia)"
+
+#: sphinx/domains/javascript.py:147 sphinx/domains/python.py:842
+#, python-format
+msgid "%s() (%s method)"
+msgstr "%s() (metóda %s)"
+
+#: sphinx/domains/javascript.py:149
+#, python-format
+msgid "%s() (class)"
+msgstr "%s() (trieda)"
+
+#: sphinx/domains/javascript.py:151
+#, python-format
+msgid "%s (global variable or constant)"
+msgstr "%s (globálna premenná alebo konštanta)"
+
+#: sphinx/domains/javascript.py:153 sphinx/domains/python.py:927
+#, python-format
+msgid "%s (%s attribute)"
+msgstr "%s (atribút %s)"
+
+#: sphinx/domains/javascript.py:225
+msgid "Arguments"
+msgstr "Argumenty"
+
+#: sphinx/domains/javascript.py:300
+#, python-format
+msgid "%s (module)"
+msgstr "%s (modul)"
+
+#: sphinx/domains/javascript.py:341 sphinx/domains/python.py:1207
+msgid "method"
+msgstr "metóda"
+
+#: sphinx/domains/javascript.py:343 sphinx/domains/python.py:1204
+msgid "data"
+msgstr "dáta"
+
+#: sphinx/domains/javascript.py:344 sphinx/domains/python.py:1210
+msgid "attribute"
+msgstr "atribút"
+
+#: sphinx/domains/javascript.py:345 sphinx/domains/python.py:58
+#: sphinx/domains/python.py:1212
+msgid "module"
+msgstr "modul"
+
+#: sphinx/domains/javascript.py:376
+#, python-format
+msgid "duplicate %s description of %s, other %s in %s"
+msgstr "duplicitný %s popis %s, ďalší výskyt%s v %s"
+
+#: sphinx/domains/math.py:65
+#, python-format
+msgid "duplicate label of equation %s, other instance in %s"
+msgstr "duplicitná menovka vzorca %s, ďalší výskyt v %s"
+
+#: sphinx/domains/math.py:119 sphinx/writers/latex.py:2071
+#, python-format
+msgid "Invalid math_eqref_format: %r"
+msgstr "neplatný math_eqref_format: %r"
+
+#: sphinx/domains/python.py:59
+msgid "keyword"
+msgstr "kľúč. slovo"
+
+#: sphinx/domains/python.py:60
+msgid "operator"
+msgstr "operátor"
+
+#: sphinx/domains/python.py:61
+msgid "object"
+msgstr "objekt"
+
+#: sphinx/domains/python.py:62 sphinx/domains/python.py:1206
+msgid "exception"
+msgstr "výnimka"
+
+#: sphinx/domains/python.py:63
+msgid "statement"
+msgstr "príkaz"
+
+#: sphinx/domains/python.py:64
+msgid "built-in function"
+msgstr "zabudovaná funkcia"
+
+#: sphinx/domains/python.py:450
+msgid "Variables"
+msgstr "Premenné"
+
+#: sphinx/domains/python.py:454
+msgid "Raises"
+msgstr "Vyzdvihuje"
+
+#: sphinx/domains/python.py:687 sphinx/domains/python.py:831
+#, python-format
+msgid "%s() (in module %s)"
+msgstr "%s() (v module %s)"
+
+#: sphinx/domains/python.py:747 sphinx/domains/python.py:923
+#: sphinx/domains/python.py:974
+#, python-format
+msgid "%s (in module %s)"
+msgstr "%s (v module %s)"
+
+#: sphinx/domains/python.py:749
+#, python-format
+msgid "%s (built-in variable)"
+msgstr "%s (zabudovaná premenná)"
+
+#: sphinx/domains/python.py:774
+#, python-format
+msgid "%s (built-in class)"
+msgstr "%s (zabudovaná trieda)"
+
+#: sphinx/domains/python.py:775
+#, python-format
+msgid "%s (class in %s)"
+msgstr "%s (trieda v %s)"
+
+#: sphinx/domains/python.py:836
+#, python-format
+msgid "%s() (%s class method)"
+msgstr "%s() (metóda triedy %s)"
+
+#: sphinx/domains/python.py:838 sphinx/domains/python.py:978
+#, python-format
+msgid "%s (%s property)"
+msgstr "%s (vlastnosť %s)"
+
+#: sphinx/domains/python.py:840
+#, python-format
+msgid "%s() (%s static method)"
+msgstr "%s() (statická metóda %s)"
+
+#: sphinx/domains/python.py:1132
+msgid "Python Module Index"
+msgstr "Index modulov Python"
+
+#: sphinx/domains/python.py:1133
+msgid "modules"
+msgstr "moduly"
+
+#: sphinx/domains/python.py:1182
+msgid "Deprecated"
+msgstr "Zastarané"
+
+#: sphinx/domains/python.py:1208
+msgid "class method"
+msgstr "metóda triedy"
+
+#: sphinx/domains/python.py:1209
+msgid "static method"
+msgstr "statická metóda"
+
+#: sphinx/domains/python.py:1211
+msgid "property"
+msgstr "vlastnosť"
+
+#: sphinx/domains/python.py:1269
+#, python-format
+msgid ""
+"duplicate object description of %s, other instance in %s, use :noindex: for "
+"one of them"
+msgstr "duplicitný popis objektu  %s, ďalší výskyt v %s, použite :noindex: pre jeden z nich"
+
+#: sphinx/domains/python.py:1389
+#, python-format
+msgid "more than one target found for cross-reference %r: %s"
+msgstr "nájdený viac ako jeden cieľ krížového odkazu %r: %s"
+
+#: sphinx/domains/python.py:1443
+msgid " (deprecated)"
+msgstr " (zastarané)"
+
+#: sphinx/domains/rst.py:104 sphinx/domains/rst.py:165
+#, python-format
+msgid "%s (directive)"
+msgstr "%s (direktíva)"
+
+#: sphinx/domains/rst.py:166 sphinx/domains/rst.py:170
+#, python-format
+msgid ":%s: (directive option)"
+msgstr "%s (voľba direktívy)"
+
+#: sphinx/domains/rst.py:199
+#, python-format
+msgid "%s (role)"
+msgstr "%s (rola)"
+
+#: sphinx/domains/rst.py:208
+msgid "directive"
+msgstr "direktíva"
+
+#: sphinx/domains/rst.py:209
+msgid "directive-option"
+msgstr ""
+
+#: sphinx/domains/rst.py:210
+msgid "role"
+msgstr "rola"
+
+#: sphinx/domains/rst.py:232
+#, python-format
+msgid "duplicate description of %s %s, other instance in %s"
+msgstr "duplicitný popis %s %s, ďalší výskyt v %s"
+
+#: sphinx/domains/std.py:101 sphinx/domains/std.py:118
+#, python-format
+msgid "environment variable; %s"
+msgstr "premenná prostredia; %s"
+
+#: sphinx/domains/std.py:192
+#, python-format
+msgid ""
+"Malformed option description %r, should look like \"opt\", \"-opt args\", \""
+"--opt args\", \"/opt args\" or \"+opt args\""
+msgstr "Nesprávny popis voľby %r, má vyzerať ako „opt”, „-opt argumenty”, „--opt argumenty”, „/opt argumenty” alebo „+opt argumenty”"
+
+#: sphinx/domains/std.py:243
+#, python-format
+msgid "%s command line option"
+msgstr "%s voľba príkazového riadka"
+
+#: sphinx/domains/std.py:245
+msgid "command line option"
+msgstr "voľba príkazového riadka"
+
+#: sphinx/domains/std.py:371
+msgid "glossary term must be preceded by empty line"
+msgstr "položke glosára musí predchádzať prázdny riadok"
+
+#: sphinx/domains/std.py:379
+msgid "glossary terms must not be separated by empty lines"
+msgstr "položky glosára nesmú byť oddelené prázdnymi riadkami"
+
+#: sphinx/domains/std.py:385 sphinx/domains/std.py:398
+msgid "glossary seems to be misformatted, check indentation"
+msgstr "glosár vyzerá byť zle naformátovaný, skontrolujte odsadenie"
+
+#: sphinx/domains/std.py:563
+msgid "glossary term"
+msgstr "termín glosára"
+
+#: sphinx/domains/std.py:564
+msgid "grammar token"
+msgstr "jazykový token"
+
+#: sphinx/domains/std.py:565
+msgid "reference label"
+msgstr "menovka odkazu"
+
+#: sphinx/domains/std.py:567
+msgid "environment variable"
+msgstr "premenná prostredia"
+
+#: sphinx/domains/std.py:568
+msgid "program option"
+msgstr "voľba programu"
+
+#: sphinx/domains/std.py:569
+msgid "document"
+msgstr "dokument"
+
+#: sphinx/domains/std.py:605
+msgid "Module Index"
+msgstr "Index modulov"
+
+#: sphinx/domains/std.py:606 sphinx/themes/basic/defindex.html:25
+msgid "Search Page"
+msgstr "Stránka hľadania"
+
+#: sphinx/domains/std.py:655 sphinx/domains/std.py:764
+#: sphinx/ext/autosectionlabel.py:51
+#, python-format
+msgid "duplicate label %s, other instance in %s"
+msgstr "duplicitná menovka  %s, ďalší výskyt v %s"
+
+#: sphinx/domains/std.py:674
+#, python-format
+msgid "duplicate %s description of %s, other instance in %s"
+msgstr "duplicitný %s popis %s, ďalší výskyt v %s"
+
+#: sphinx/domains/std.py:872
+msgid "numfig is disabled. :numref: is ignored."
+msgstr "numfig je vypnutý, :numref: je ignorované."
+
+#: sphinx/domains/std.py:880
+#, python-format
+msgid "Failed to create a cross reference. Any number is not assigned: %s"
+msgstr "Zlyhalo vytvorenie krížového odkazu. Nie je priradené žiadne číslo: %s"
+
+#: sphinx/domains/std.py:892
+#, python-format
+msgid "the link has no caption: %s"
+msgstr "odkaz nemá popisok: %s"
+
+#: sphinx/domains/std.py:906
+#, python-format
+msgid "invalid numfig_format: %s (%r)"
+msgstr "neplatný numfig_format: %s (%r)"
+
+#: sphinx/domains/std.py:909
+#, python-format
+msgid "invalid numfig_format: %s"
+msgstr "neplatný numfig_format: %s"
+
+#: sphinx/domains/std.py:1122
+#, python-format
+msgid "undefined label: %s"
+msgstr "nedefinovaná menovka: %s"
+
+#: sphinx/domains/std.py:1124
+#, python-format
+msgid "Failed to create a cross reference. A title or caption not found: %s"
+msgstr "Zlyhalo vytvorenie krížového odkazu. nenájdení názov alebo titulok: %s"
+
+#: sphinx/environment/__init__.py:76
+msgid "new config"
+msgstr "nová konfigurácia"
+
+#: sphinx/environment/__init__.py:77
+msgid "config changed"
+msgstr "zmenená konfigurácia"
+
+#: sphinx/environment/__init__.py:78
+msgid "extensions changed"
+msgstr "zmenené rozšírenie"
+
+#: sphinx/environment/__init__.py:205
+msgid "build environment version not current"
+msgstr "prostredie zostavenia nie je aktuálne"
+
+#: sphinx/environment/__init__.py:207
+msgid "source directory has changed"
+msgstr "zdrojový adresár zmenený"
+
+#: sphinx/environment/__init__.py:286
+msgid ""
+"This environment is incompatible with the selected builder, please choose "
+"another doctree directory."
+msgstr "Toto prostredie nie je kompatibilné zo zvoleným zostavovačom, prosím, zvoľte iný adresár doctree."
+
+#: sphinx/environment/__init__.py:385
+#, python-format
+msgid "Failed to scan documents in %s: %r"
+msgstr "Zlyhalo skenovanie dokumentov v %s: %r"
+
+#: sphinx/environment/__init__.py:512
+#, python-format
+msgid "Domain %r is not registered"
+msgstr "Doména %r nie je zaregistrovaná"
+
+#: sphinx/environment/__init__.py:593
+msgid "self referenced toctree found. Ignored."
+msgstr "nájdený na seba odkazujúci strom obsahu. Ignorované."
+
+#: sphinx/environment/__init__.py:635
+msgid "document isn't included in any toctree"
+msgstr "dokument nie je zahrnutý v žiadnom strome obsahu"
+
+#: sphinx/environment/adapters/indexentries.py:78
+#, python-format
+msgid "see %s"
+msgstr "viď %s"
+
+#: sphinx/environment/adapters/indexentries.py:82
+#, python-format
+msgid "see also %s"
+msgstr "viď aj %s"
+
+#: sphinx/environment/adapters/indexentries.py:85
+#, python-format
+msgid "unknown index entry type %r"
+msgstr "neznámy typ položky indexu %r"
+
+#: sphinx/environment/adapters/indexentries.py:174
+#: sphinx/templates/latex/sphinxmessages.sty_t:11
+msgid "Symbols"
+msgstr "Symboly"
+
+#: sphinx/environment/adapters/toctree.py:151
+#, python-format
+msgid "circular toctree references detected, ignoring: %s <- %s"
+msgstr "zistený cirkulárny odkaz stromu obsahu, ignorované: %s <- %s"
+
+#: sphinx/environment/adapters/toctree.py:170
+#, python-format
+msgid ""
+"toctree contains reference to document %r that doesn't have a title: no link"
+" will be generated"
+msgstr "strom obsahu obsahuje odkaz na dokument %r, ktorý nemá názov, odkaz nebude generovaný"
+
+#: sphinx/environment/collectors/asset.py:90
+#, python-format
+msgid "image file not readable: %s"
+msgstr "súbor obrázku nemožno čítať: %s"
+
+#: sphinx/environment/collectors/asset.py:109
+#, python-format
+msgid "image file %s not readable: %s"
+msgstr " Súbor obrázku %s nemožno čítať: %s"
+
+#: sphinx/environment/collectors/asset.py:135
+#, python-format
+msgid "download file not readable: %s"
+msgstr "súbor na stiahnutie nemožno čítať: %s"
+
+#: sphinx/environment/collectors/toctree.py:185
+#, python-format
+msgid "%s is already assigned section numbers (nested numbered toctree?)"
+msgstr "%s už je priradené číslo sekcie (vnorený číslovaný strom obsahu?)"
+
+#: sphinx/ext/apidoc.py:83
+#, python-format
+msgid "Would create file %s."
+msgstr ""
+
+#: sphinx/ext/apidoc.py:308
+msgid ""
+"\n"
+"Look recursively in <MODULE_PATH> for Python modules and packages and create\n"
+"one reST file with automodule directives per package in the <OUTPUT_PATH>.\n"
+"\n"
+"The <EXCLUDE_PATTERN>s can be file and/or directory patterns that will be\n"
+"excluded from generation.\n"
+"\n"
+"Note: By default this script will not overwrite already created files."
+msgstr ""
+
+#: sphinx/ext/apidoc.py:321
+msgid "path to module to document"
+msgstr "cesta k dokumentovanému modulu"
+
+#: sphinx/ext/apidoc.py:323
+msgid ""
+"fnmatch-style file and/or directory patterns to exclude from generation"
+msgstr ""
+
+#: sphinx/ext/apidoc.py:328
+msgid "directory to place all output"
+msgstr "adresár umiestnenia výstupu"
+
+#: sphinx/ext/apidoc.py:333
+msgid "maximum depth of submodules to show in the TOC (default: 4)"
+msgstr "maximálna hĺbka submodulov, ktorá má byť zobrazená v obsahu (predvolene: 4)"
+
+#: sphinx/ext/apidoc.py:336
+msgid "overwrite existing files"
+msgstr "prepísať existujúce súbory"
+
+#: sphinx/ext/apidoc.py:339
+msgid ""
+"follow symbolic links. Powerful when combined with "
+"collective.recipe.omelette."
+msgstr "nasledovať symbolické odkazy. Vhodné v kombinácii s collective.recipe.omelette."
+
+#: sphinx/ext/apidoc.py:342
+msgid "run the script without creating files"
+msgstr "spustí skript bez vytvorenia súborov"
+
+#: sphinx/ext/apidoc.py:345
+msgid "put documentation for each module on its own page"
+msgstr "umiestniť dokumentáciu každého modulu vo vlastnej stránke"
+
+#: sphinx/ext/apidoc.py:348
+msgid "include \"_private\" modules"
+msgstr "zahrnúť ”_súkromné” moduly"
+
+#: sphinx/ext/apidoc.py:350
+msgid "filename of table of contents (default: modules)"
+msgstr "meno súboru obsahu (predvolene: modules)"
+
+#: sphinx/ext/apidoc.py:352
+msgid "don't create a table of contents file"
+msgstr "nevytvárať súbor obsahu"
+
+#: sphinx/ext/apidoc.py:355
+msgid ""
+"don't create headings for the module/package packages (e.g. when the "
+"docstrings already contain them)"
+msgstr ""
+
+#: sphinx/ext/apidoc.py:360
+msgid "put module documentation before submodule documentation"
+msgstr "vložiť dokumentáciu modulu pred dokumentáciou submodulu"
+
+#: sphinx/ext/apidoc.py:364
+msgid ""
+"interpret module paths according to PEP-0420 implicit namespaces "
+"specification"
+msgstr "interpretovať cesty modulov v zmysle implicitnej špecifikácie menných priestorov PEP-0420"
+
+#: sphinx/ext/apidoc.py:368
+msgid "file suffix (default: rst)"
+msgstr "prípona súboru (predvolene: rst)"
+
+#: sphinx/ext/apidoc.py:370
+msgid "generate a full project with sphinx-quickstart"
+msgstr "generovať úplný projekt pomocou sphinx-quickstart"
+
+#: sphinx/ext/apidoc.py:373
+msgid "append module_path to sys.path, used when --full is given"
+msgstr "pripojiť module_path do sys.path, použité pri --full"
+
+#: sphinx/ext/apidoc.py:375
+msgid "project name (default: root module name)"
+msgstr "meno projektu (predvolene: meno koreňového modulu)"
+
+#: sphinx/ext/apidoc.py:377
+msgid "project author(s), used when --full is given"
+msgstr "autor(i) projektu, použité pri --full"
+
+#: sphinx/ext/apidoc.py:379
+msgid "project version, used when --full is given"
+msgstr "verzia projektu, použité pri --full"
+
+#: sphinx/ext/apidoc.py:381
+msgid "project release, used when --full is given, defaults to --doc-version"
+msgstr "vydanie projektu, použité pri --full, predvolene --doc-version"
+
+#: sphinx/ext/apidoc.py:384
+msgid "extension options"
+msgstr "voľby rozšírenia"
+
+#: sphinx/ext/apidoc.py:417
+#, python-format
+msgid "%s is not a directory."
+msgstr "%s nie je adresár."
+
+#: sphinx/ext/coverage.py:43
+#, python-format
+msgid "invalid regex %r in %s"
+msgstr "neplatný regulárny výraz %r v %s"
+
+#: sphinx/ext/coverage.py:52
+#, python-format
+msgid ""
+"Testing of coverage in the sources finished, look at the results in "
+"%(outdir)spython.txt."
+msgstr ""
+
+#: sphinx/ext/coverage.py:66
+#, python-format
+msgid "invalid regex %r in coverage_c_regexes"
+msgstr "neplatný regulárny výraz %r v coverage_c_regexes"
+
+#: sphinx/ext/coverage.py:127
+#, python-format
+msgid "undocumented c api: %s [%s] in file %s"
+msgstr "nedokumentované API C: %s [%s] v súbore %s"
+
+#: sphinx/ext/coverage.py:159
+#, python-format
+msgid "module %s could not be imported: %s"
+msgstr "modul %s nemožno importovať: %s"
+
+#: sphinx/ext/coverage.py:255
+#, python-format
+msgid "undocumented python function: %s :: %s"
+msgstr "nedokumentovaná funkcia Python: %s :: %s"
+
+#: sphinx/ext/coverage.py:271
+#, python-format
+msgid "undocumented python class: %s :: %s"
+msgstr "nedokumentovaná trieda Python: %s :: %s"
+
+#: sphinx/ext/coverage.py:284
+#, python-format
+msgid "undocumented python method: %s :: %s :: %s"
+msgstr "nedokumentovaná metóda Python: %s :: %s :: %s"
+
+#: sphinx/ext/doctest.py:123
+#, python-format
+msgid "missing '+' or '-' in '%s' option."
+msgstr "chýbajúce „+” alebo „-” vo voľbe „%s”."
+
+#: sphinx/ext/doctest.py:128
+#, python-format
+msgid "'%s' is not a valid option."
+msgstr "'%s' nie je platná voľba."
+
+#: sphinx/ext/doctest.py:142
+#, python-format
+msgid "'%s' is not a valid pyversion option"
+msgstr "„%s” nie je platná voľba pyversion"
+
+#: sphinx/ext/doctest.py:225
+msgid "invalid TestCode type"
+msgstr "neplatný typ TestCode"
+
+#: sphinx/ext/doctest.py:283
+#, python-format
+msgid ""
+"Testing of doctests in the sources finished, look at the results in "
+"%(outdir)s/output.txt."
+msgstr ""
+
+#: sphinx/ext/doctest.py:433
+#, python-format
+msgid "no code/output in %s block at %s:%s"
+msgstr ""
+
+#: sphinx/ext/doctest.py:519
+#, python-format
+msgid "ignoring invalid doctest code: %r"
+msgstr ""
+
+#: sphinx/ext/duration.py:79
+msgid ""
+"====================== slowest reading durations ======================="
+msgstr ""
+
+#: sphinx/ext/extlinks.py:76
+#, python-format
+msgid ""
+"hardcoded link %r could be replaced by an extlink (try using %r instead)"
+msgstr ""
+
+#: sphinx/ext/graphviz.py:132
+msgid "Graphviz directive cannot have both content and a filename argument"
+msgstr "Direktíva graphviz nemôže mať naraz argumenty content a filename"
+
+#: sphinx/ext/graphviz.py:142
+#, python-format
+msgid "External Graphviz file %r not found or reading it failed"
+msgstr "Externý súbor Graphviz %r nebol nájdený alebo zlyhalo jeho čítanie"
+
+#: sphinx/ext/graphviz.py:149
+msgid "Ignoring \"graphviz\" directive without content."
+msgstr "Ignorovaná direktíva „graphviz” bez obsahu."
+
+#: sphinx/ext/graphviz.py:257
+#, python-format
+msgid ""
+"dot did not produce an output file:\n"
+"[stderr]\n"
+"%r\n"
+"[stdout]\n"
+"%r"
+msgstr "dot nevytvoril výstupný súbor:\n[stderr]\n%r\n[stdout]\n%r"
+
+#: sphinx/ext/graphviz.py:261
+#, python-format
+msgid ""
+"dot command %r cannot be run (needed for graphviz output), check the "
+"graphviz_dot setting"
+msgstr "príkaz dot %r nemožno spustiť (nutný kvôli výstupu graphviz), skontrolujte nastavenie graphviz_dot"
+
+#: sphinx/ext/graphviz.py:268
+#, python-format
+msgid ""
+"dot exited with error:\n"
+"[stderr]\n"
+"%r\n"
+"[stdout]\n"
+"%r"
+msgstr "dot skončil chybou:\n[stderr]\n%r\n[stdout]\n%r"
+
+#: sphinx/ext/graphviz.py:278
+#, python-format
+msgid "graphviz_output_format must be one of 'png', 'svg', but is %r"
+msgstr "graphviz_output_format musí byť „png” alebo „svg”, ale je %r"
+
+#: sphinx/ext/graphviz.py:282 sphinx/ext/graphviz.py:334
+#: sphinx/ext/graphviz.py:371
+#, python-format
+msgid "dot code %r: %s"
+msgstr "kód dot %r: %s"
+
+#: sphinx/ext/graphviz.py:384 sphinx/ext/graphviz.py:392
+#, python-format
+msgid "[graph: %s]"
+msgstr "[graf: %s]"
+
+#: sphinx/ext/graphviz.py:386 sphinx/ext/graphviz.py:394
+msgid "[graph]"
+msgstr "[graf]"
+
+#: sphinx/ext/imgconverter.py:41
+#, python-format
+msgid ""
+"convert command %r cannot be run, check the image_converter setting: %s"
+msgstr "príkaz convert %r nemožno spustiť, skontrolujte nastavenia image_converter: 1%s"
+
+#: sphinx/ext/imgconverter.py:46 sphinx/ext/imgconverter.py:70
+#, python-format
+msgid ""
+"convert exited with error:\n"
+"[stderr]\n"
+"%r\n"
+"[stdout]\n"
+"%r"
+msgstr "convert skončil chybou:\n[stderr]\n%r\n[stdout]\n%r"
+
+#: sphinx/ext/imgconverter.py:65
+#, python-format
+msgid "convert command %r cannot be run, check the image_converter setting"
+msgstr "príkaz convert %r nemožno spustiť, skontrolujte nastavenie image_converter"
+
+#: sphinx/ext/imgmath.py:141
+#, python-format
+msgid ""
+"LaTeX command %r cannot be run (needed for math display), check the "
+"imgmath_latex setting"
+msgstr "Nemožno spustiť príkaz LaTeX %r (potrebný na zobrazenie math), skontrolujte nastavenia imgmath_latex"
+
+#: sphinx/ext/imgmath.py:155
+#, python-format
+msgid ""
+"%s command %r cannot be run (needed for math display), check the imgmath_%s "
+"setting"
+msgstr ""
+
+#: sphinx/ext/imgmath.py:300
+#, python-format
+msgid "display latex %r: %s"
+msgstr "zobrazený latex %r: %s"
+
+#: sphinx/ext/imgmath.py:326
+#, python-format
+msgid "inline latex %r: %s"
+msgstr "vnorený latex %r: %s"
+
+#: sphinx/ext/imgmath.py:333 sphinx/ext/mathjax.py:52
+msgid "Permalink to this equation"
+msgstr "Trvalý odkaz na tento vzorec"
+
+#: sphinx/ext/intersphinx.py:174
+#, python-format
+msgid "intersphinx inventory has moved: %s -> %s"
+msgstr "inventár intersphinx bol presunutý: %s -> %s"
+
+#: sphinx/ext/intersphinx.py:205
+#, python-format
+msgid "loading intersphinx inventory from %s..."
+msgstr "načítanie inventára intersphinx z %s..."
+
+#: sphinx/ext/intersphinx.py:219
+msgid ""
+"encountered some issues with some of the inventories, but they had working "
+"alternatives:"
+msgstr "nastali problémy s niektorými inventármi, ale boli nájdené funkčné alternatívy:"
+
+#: sphinx/ext/intersphinx.py:225
+msgid "failed to reach any of the inventories with the following issues:"
+msgstr "nemožno získať žiadne inventáre kvôli týmto problémom:"
+
+#: sphinx/ext/intersphinx.py:270
+#, python-format
+msgid "(in %s v%s)"
+msgstr "(v %s v%s)"
+
+#: sphinx/ext/intersphinx.py:272
+#, python-format
+msgid "(in %s)"
+msgstr "(v %s)"
+
+#: sphinx/ext/intersphinx.py:476
+#, python-format
+msgid "intersphinx identifier %r is not string. Ignored"
+msgstr "identifikátor intersphinx %rnie je raťzec, ignorované"
+
+#: sphinx/ext/intersphinx.py:489
+#, python-format
+msgid "Failed to read intersphinx_mapping[%s], ignored: %r"
+msgstr "Zlyhalo čítanie intersphinx_mapping[%s], ignorované: %r"
+
+#: sphinx/ext/linkcode.py:70 sphinx/ext/viewcode.py:188
+msgid "[source]"
+msgstr "[zdroj]"
+
+#: sphinx/ext/todo.py:68
+msgid "Todo"
+msgstr "ToDo"
+
+#: sphinx/ext/todo.py:101
+#, python-format
+msgid "TODO entry found: %s"
+msgstr "Nájdená položka TODO: %s"
+
+#: sphinx/ext/todo.py:159
+msgid "<<original entry>>"
+msgstr "<<pôvodná položka>>"
+
+#: sphinx/ext/todo.py:161
+#, python-format
+msgid "(The <<original entry>> is located in %s, line %d.)"
+msgstr "(<<original entry>> je umiestnená v %s, riadok %d.)"
+
+#: sphinx/ext/todo.py:171
+msgid "original entry"
+msgstr "pôvodná položka"
+
+#: sphinx/ext/viewcode.py:257
+msgid "highlighting module code... "
+msgstr "zvýrazňovanie syntaxe kódu modulu... "
+
+#: sphinx/ext/viewcode.py:289
+msgid "[docs]"
+msgstr "[dokumenty]"
+
+#: sphinx/ext/viewcode.py:303
+msgid "Module code"
+msgstr "Kód modulu"
+
+#: sphinx/ext/viewcode.py:309
+#, python-format
+msgid "<h1>Source code for %s</h1>"
+msgstr "<h1>Zdrojový kód %s</h1>"
+
+#: sphinx/ext/viewcode.py:336
+msgid "Overview: module code"
+msgstr "Prehľad: kód modulu"
+
+#: sphinx/ext/viewcode.py:337
+msgid "<h1>All modules for which code is available</h1>"
+msgstr "<h1>Všetky moduly, pre ktoré je dostupný kód</h1>"
+
+#: sphinx/ext/autodoc/__init__.py:132
+#, python-format
+msgid "invalid value for member-order option: %s"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:140
+#, python-format
+msgid "invalid value for class-doc-from option: %s"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:401
+#, python-format
+msgid "invalid signature for auto%s (%r)"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:518
+#, python-format
+msgid "error while formatting arguments for %s: %s"
+msgstr "chyba formátovania argumentov %s: %s"
+
+#: sphinx/ext/autodoc/__init__.py:663 sphinx/ext/autodoc/__init__.py:1699
+#, python-format
+msgid "missing attribute %s in object %s"
+msgstr "chýba atribút %s objektu %s"
+
+#: sphinx/ext/autodoc/__init__.py:815
+#, python-format
+msgid ""
+"autodoc: failed to determine %s.%s (%r) to be documented, the following exception was raised:\n"
+"%s"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:908
+#, python-format
+msgid ""
+"don't know which module to import for autodocumenting %r (try placing a "
+"\"module\" or \"currentmodule\" directive in the document, or giving an "
+"explicit module name)"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:952
+#, python-format
+msgid "A mocked object is detected: %r"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:971
+#, python-format
+msgid "error while formatting signature for %s: %s"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:1021
+msgid "\"::\" in automodule name doesn't make sense"
+msgstr "„::” v automodule nedáva zmysel"
+
+#: sphinx/ext/autodoc/__init__.py:1028
+#, python-format
+msgid "signature arguments or return annotation given for automodule %s"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:1041
+#, python-format
+msgid ""
+"__all__ should be a list of strings, not %r (in module %s) -- ignoring "
+"__all__"
+msgstr "__all__ má byť zoznam reťazcov, nie %r (v module %s) -- ignorované __all__"
+
+#: sphinx/ext/autodoc/__init__.py:1107
+#, python-format
+msgid ""
+"missing attribute mentioned in :members: option: module %s, attribute %s"
+msgstr "chýbajúci atribút spomenutý vo voľbe :members: : modul %s, atribút %s"
+
+#: sphinx/ext/autodoc/__init__.py:1308 sphinx/ext/autodoc/__init__.py:1385
+#: sphinx/ext/autodoc/__init__.py:2791
+#, python-format
+msgid "Failed to get a function signature for %s: %s"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:1578
+#, python-format
+msgid "Failed to get a constructor signature for %s: %s"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:1686
+#, python-format
+msgid "Bases: %s"
+msgstr "Základ: %s"
+
+#: sphinx/ext/autodoc/__init__.py:1784 sphinx/ext/autodoc/__init__.py:1862
+#: sphinx/ext/autodoc/__init__.py:1885
+#, python-format
+msgid "alias of %s"
+msgstr "alias pre %s"
+
+#: sphinx/ext/autodoc/__init__.py:1931
+#, python-format
+msgid "alias of TypeVar(%s)"
+msgstr "alias pre TypeVar(%s)"
+
+#: sphinx/ext/autodoc/__init__.py:2167 sphinx/ext/autodoc/__init__.py:2264
+#, python-format
+msgid "Failed to get a method signature for %s: %s"
+msgstr ""
+
+#: sphinx/ext/autodoc/__init__.py:2395
+#, python-format
+msgid "Invalid __slots__ found on %s. Ignored."
+msgstr "Neplatné __slots__ nájdené v %s. Ignorované."
+
+#: sphinx/ext/autodoc/__init__.py:2834
+msgid ""
+"autodoc_member_order now accepts \"alphabetical\" instead of \"alphabetic\"."
+" Please update your setting."
+msgstr ""
+
+#: sphinx/ext/autodoc/preserve_defaults.py:106
+#, python-format
+msgid "Failed to parse a default argument value for %r: %s"
+msgstr "Zlyhalo spracovanie predvolenej hodnoty argumentu %r: %s"
+
+#: sphinx/ext/autodoc/type_comment.py:130
+#, python-format
+msgid "Failed to update signature for %r: parameter not found: %s"
+msgstr ""
+
+#: sphinx/ext/autodoc/type_comment.py:133
+#, python-format
+msgid "Failed to parse type_comment for %r: %s"
+msgstr ""
+
+#: sphinx/ext/autosummary/__init__.py:280
+#, python-format
+msgid "autosummary references excluded document %r. Ignored."
+msgstr ""
+
+#: sphinx/ext/autosummary/__init__.py:282
+#, python-format
+msgid ""
+"autosummary: stub file not found %r. Check your autosummary_generate "
+"setting."
+msgstr ""
+
+#: sphinx/ext/autosummary/__init__.py:301
+msgid "A captioned autosummary requires :toctree: option. ignored."
+msgstr "Autosummary s popiskom vyžaduje voľbu :toctree: , ignorované."
+
+#: sphinx/ext/autosummary/__init__.py:352
+#, python-format
+msgid ""
+"autosummary: failed to import %s.\n"
+"Possible hints:\n"
+"%s"
+msgstr ""
+
+#: sphinx/ext/autosummary/__init__.py:366
+#, python-format
+msgid "failed to parse name %s"
+msgstr "zlyhalo spracovanie mena %s"
+
+#: sphinx/ext/autosummary/__init__.py:371
+#, python-format
+msgid "failed to import object %s"
+msgstr "zlyhal import objektu %s"
+
+#: sphinx/ext/autosummary/__init__.py:817
+#, python-format
+msgid "autosummary_generate: file not found: %s"
+msgstr "autosummary_generate: súbor nenájdený: %s"
+
+#: sphinx/ext/autosummary/__init__.py:825
+msgid ""
+"autosummary generats .rst files internally. But your source_suffix does not "
+"contain .rst. Skipped."
+msgstr "autosummary interne generuje súbory .rst. Ale Váš source_suffix neobsahuje .rst. Preskočené."
+
+#: sphinx/ext/autosummary/generate.py:190
+#: sphinx/ext/autosummary/generate.py:254
+#, python-format
+msgid ""
+"autosummary: failed to determine %r to be documented, the following exception was raised:\n"
+"%s"
+msgstr ""
+
+#: sphinx/ext/autosummary/generate.py:401
+#, python-format
+msgid "[autosummary] generating autosummary for: %s"
+msgstr ""
+
+#: sphinx/ext/autosummary/generate.py:405
+#, python-format
+msgid "[autosummary] writing to %s"
+msgstr ""
+
+#: sphinx/ext/autosummary/generate.py:448
+#, python-format
+msgid ""
+"[autosummary] failed to import %s.\n"
+"Possible hints:\n"
+"%s"
+msgstr ""
+
+#: sphinx/ext/autosummary/generate.py:624
+msgid ""
+"\n"
+"Generate ReStructuredText using autosummary directives.\n"
+"\n"
+"sphinx-autogen is a frontend to sphinx.ext.autosummary.generate. It generates\n"
+"the reStructuredText files from the autosummary directives contained in the\n"
+"given input files.\n"
+"\n"
+"The format of the autosummary directive is documented in the\n"
+"``sphinx.ext.autosummary`` Python module and can be read using::\n"
+"\n"
+"  pydoc sphinx.ext.autosummary\n"
+msgstr ""
+
+#: sphinx/ext/autosummary/generate.py:641
+msgid "source files to generate rST files for"
+msgstr ""
+
+#: sphinx/ext/autosummary/generate.py:645
+msgid "directory to place all output in"
+msgstr "adresár umiestnenia výstupu"
+
+#: sphinx/ext/autosummary/generate.py:648
+#, python-format
+msgid "default suffix for files (default: %(default)s)"
+msgstr "predvolená prípona súboru (predvolene: %(default)s)"
+
+#: sphinx/ext/autosummary/generate.py:652
+#, python-format
+msgid "custom template directory (default: %(default)s)"
+msgstr "vlastný adresár šablón (predvolene: %(default)s)"
+
+#: sphinx/ext/autosummary/generate.py:656
+#, python-format
+msgid "document imported members (default: %(default)s)"
+msgstr "dokumentovať importovaných členov (predvolene: %(default)s)"
+
+#: sphinx/ext/autosummary/generate.py:660
+#, python-format
+msgid ""
+"document exactly the members in module __all__ attribute. (default: "
+"%(default)s)"
+msgstr ""
+
+#: sphinx/ext/napoleon/__init__.py:347 sphinx/ext/napoleon/docstring.py:703
+msgid "Keyword Arguments"
+msgstr "Argumenty kľúčových slov"
+
+#: sphinx/ext/napoleon/docstring.py:657
+msgid "Example"
+msgstr "Príklad"
+
+#: sphinx/ext/napoleon/docstring.py:658
+msgid "Examples"
+msgstr "Príklady"
+
+#: sphinx/ext/napoleon/docstring.py:718
+msgid "Notes"
+msgstr "Poznámky"
+
+#: sphinx/ext/napoleon/docstring.py:727
+msgid "Other Parameters"
+msgstr "Ostatné parametre"
+
+#: sphinx/ext/napoleon/docstring.py:763
+msgid "Receives"
+msgstr ""
+
+#: sphinx/ext/napoleon/docstring.py:767
+msgid "References"
+msgstr ""
+
+#: sphinx/ext/napoleon/docstring.py:801
+msgid "Warns"
+msgstr "Varovania"
+
+#: sphinx/ext/napoleon/docstring.py:805
+msgid "Yields"
+msgstr ""
+
+#: sphinx/ext/napoleon/docstring.py:973
+#, python-format
+msgid "invalid value set (missing closing brace): %s"
+msgstr "neplatná hodnota množiny (chýba koncová zátvorka): %s"
+
+#: sphinx/ext/napoleon/docstring.py:980
+#, python-format
+msgid "invalid value set (missing opening brace): %s"
+msgstr "neplatná hodnota množiny (chýba začiatočná zátvorka): %s"
+
+#: sphinx/ext/napoleon/docstring.py:987
+#, python-format
+msgid "malformed string literal (missing closing quote): %s"
+msgstr "neplatná textová konštanta (chýba koncová úvodzovka): %s"
+
+#: sphinx/ext/napoleon/docstring.py:994
+#, python-format
+msgid "malformed string literal (missing opening quote): %s"
+msgstr "neplatná textová konštanta (chýba začiatočná úvodzovka): %s"
+
+#: sphinx/locale/__init__.py:252
+msgid "Attention"
+msgstr "Výstraha"
+
+#: sphinx/locale/__init__.py:253
+msgid "Caution"
+msgstr "Upozornenie"
+
+#: sphinx/locale/__init__.py:254
+msgid "Danger"
+msgstr "Nebezpečné"
+
+#: sphinx/locale/__init__.py:255
+msgid "Error"
+msgstr "Chyba"
+
+#: sphinx/locale/__init__.py:256
+msgid "Hint"
+msgstr "Rada"
+
+#: sphinx/locale/__init__.py:257
+msgid "Important"
+msgstr "Dôležité"
+
+#: sphinx/locale/__init__.py:258
+msgid "Note"
+msgstr "Poznámka"
+
+#: sphinx/locale/__init__.py:259
+msgid "See also"
+msgstr "Viď aj"
+
+#: sphinx/locale/__init__.py:260
+msgid "Tip"
+msgstr "Tip"
+
+#: sphinx/locale/__init__.py:261
+msgid "Warning"
+msgstr "Varovanie"
+
+#: sphinx/templates/latex/longtable.tex_t:23
+#: sphinx/templates/latex/sphinxmessages.sty_t:8
+msgid "continued from previous page"
+msgstr "pokračovanie z predošlej strany"
+
+#: sphinx/templates/latex/longtable.tex_t:29
+#: sphinx/templates/latex/sphinxmessages.sty_t:9
+msgid "continues on next page"
+msgstr "pokračuje na ďalšej strane"
+
+#: sphinx/templates/latex/sphinxmessages.sty_t:10
+msgid "Non-alphabetical"
+msgstr ""
+
+#: sphinx/templates/latex/sphinxmessages.sty_t:12
+msgid "Numbers"
+msgstr "Čísla"
+
+#: sphinx/templates/latex/sphinxmessages.sty_t:13
+msgid "page"
+msgstr "strana"
+
+#: sphinx/themes/agogo/layout.html:38 sphinx/themes/basic/globaltoc.html:10
+#: sphinx/themes/basic/localtoc.html:12 sphinx/themes/scrolls/layout.html:41
+msgid "Table of Contents"
+msgstr "Obsah"
+
+#: sphinx/themes/agogo/layout.html:43 sphinx/themes/basic/layout.html:150
+#: sphinx/themes/basic/search.html:11 sphinx/themes/basic/search.html:22
+msgid "Search"
+msgstr "Hľadať"
+
+#: sphinx/themes/agogo/layout.html:46 sphinx/themes/basic/searchbox.html:16
+msgid "Go"
+msgstr "OK"
+
+#: sphinx/themes/agogo/layout.html:90 sphinx/themes/basic/sourcelink.html:15
+msgid "Show Source"
+msgstr "Zobraziť zdroj"
+
+#: sphinx/themes/basic/defindex.html:11
+msgid "Overview"
+msgstr "Prehľad"
+
+#: sphinx/themes/basic/defindex.html:15
+msgid "Welcome! This is"
+msgstr "Vitajte! Toto je"
+
+#: sphinx/themes/basic/defindex.html:16
+msgid "the documentation for"
+msgstr "dokumentácia"
+
+#: sphinx/themes/basic/defindex.html:17
+msgid "last updated"
+msgstr "posledná aktualizácia"
+
+#: sphinx/themes/basic/defindex.html:20
+msgid "Indices and tables:"
+msgstr "Indexy a tabuľky"
+
+#: sphinx/themes/basic/defindex.html:23
+msgid "Complete Table of Contents"
+msgstr "Celkový obsah"
+
+#: sphinx/themes/basic/defindex.html:24
+msgid "lists all sections and subsections"
+msgstr "zoznam všetkých sekcií a podsekcií"
+
+#: sphinx/themes/basic/defindex.html:26
+msgid "search this documentation"
+msgstr "hľadať v tejto dokumentácii"
+
+#: sphinx/themes/basic/defindex.html:28
+msgid "Global Module Index"
+msgstr "Celkový index modulov"
+
+#: sphinx/themes/basic/defindex.html:29
+msgid "quick access to all modules"
+msgstr "rýchly prístup ku všetkým modulom"
+
+#: sphinx/themes/basic/defindex.html:31
+msgid "all functions, classes, terms"
+msgstr "všetky funkcie, triedy, termíny"
+
+#: sphinx/themes/basic/genindex-single.html:33
+#, python-format
+msgid "Index &ndash; %(key)s"
+msgstr "Index &ndash; %(key)s"
+
+#: sphinx/themes/basic/genindex-single.html:61
+#: sphinx/themes/basic/genindex-split.html:24
+#: sphinx/themes/basic/genindex-split.html:38
+#: sphinx/themes/basic/genindex.html:73
+msgid "Full index on one page"
+msgstr "Celý index na jednej strane"
+
+#: sphinx/themes/basic/genindex-split.html:16
+msgid "Index pages by letter"
+msgstr "Indexové stránky po písmenách"
+
+#: sphinx/themes/basic/genindex-split.html:25
+msgid "can be huge"
+msgstr "môže byť rozsiahle"
+
+#: sphinx/themes/basic/layout.html:29
+msgid "Navigation"
+msgstr "Navigácia"
+
+#: sphinx/themes/basic/layout.html:135
+#, python-format
+msgid "Search within %(docstitle)s"
+msgstr "Hľadať v %(docstitle)s"
+
+#: sphinx/themes/basic/layout.html:144
+msgid "About these documents"
+msgstr "O dokumentácii"
+
+#: sphinx/themes/basic/layout.html:153
+msgid "Copyright"
+msgstr "Autorské právo"
+
+#: sphinx/themes/basic/layout.html:199
+#, python-format
+msgid "&#169; <a href=\"%(path)s\">Copyright</a> %(copyright)s."
+msgstr "&#169; <a href=\"%(path)s\">Copyright</a> %(copyright)s."
+
+#: sphinx/themes/basic/layout.html:201
+#, python-format
+msgid "&#169; Copyright %(copyright)s."
+msgstr "&#169; Copyright %(copyright)s."
+
+#: sphinx/themes/basic/layout.html:205
+#, python-format
+msgid "Last updated on %(last_updated)s."
+msgstr "Naposledy aktualizované %(last_updated)s."
+
+#: sphinx/themes/basic/layout.html:208
+#, python-format
+msgid ""
+"Created using <a href=\"https://www.sphinx-doc.org/\">Sphinx</a> "
+"%(sphinx_version)s."
+msgstr "Vytvorené pomocou <a href=\"https://www.sphinx-doc.org/\">Sphinx</a> %(sphinx_version)s."
+
+#: sphinx/themes/basic/opensearch.xml:4
+#, python-format
+msgid "Search %(docstitle)s"
+msgstr "Hľadať v %(docstitle)s"
+
+#: sphinx/themes/basic/relations.html:12
+msgid "Previous topic"
+msgstr "Predošlá téma"
+
+#: sphinx/themes/basic/relations.html:14
+msgid "previous chapter"
+msgstr "predošlá kapitola"
+
+#: sphinx/themes/basic/relations.html:19
+msgid "Next topic"
+msgstr "Ďalšia téma"
+
+#: sphinx/themes/basic/relations.html:21
+msgid "next chapter"
+msgstr "ďalšia kapitola"
+
+#: sphinx/themes/basic/search.html:27
+msgid ""
+"Please activate JavaScript to enable the search\n"
+"    functionality."
+msgstr "Prosím, na zapnutie funkcie hľadania,aktivujte\nJavaScript ."
+
+#: sphinx/themes/basic/search.html:35
+msgid ""
+"Searching for multiple words only shows matches that contain\n"
+"    all words."
+msgstr "Hľadanie viacerých slov vracia len zhody, ktoré obsahujú\n    všetky slová."
+
+#: sphinx/themes/basic/search.html:42
+msgid "search"
+msgstr "hľadať"
+
+#: sphinx/themes/basic/search.html:48
+#: sphinx/themes/basic/static/searchtools.js:306
+msgid "Search Results"
+msgstr "Výsledky hľadania"
+
+#: sphinx/themes/basic/search.html:50
+#: sphinx/themes/basic/static/searchtools.js:308
+msgid ""
+"Your search did not match any documents. Please make sure that all words are"
+" spelled correctly and that you've selected enough categories."
+msgstr "Vášmu hľadaniu nezodpovedá žiadny dokument. Prosím, skontrolujte, že všetky zadané slová sú správne napísané a že ste zvolili vhodné kategórie."
+
+#: sphinx/themes/basic/searchbox.html:12
+msgid "Quick search"
+msgstr "Rýchle hľadanie"
+
+#: sphinx/themes/basic/sourcelink.html:12
+msgid "This Page"
+msgstr "Táto stránka"
+
+#: sphinx/themes/basic/changes/frameset.html:5
+#: sphinx/themes/basic/changes/versionchanges.html:12
+#, python-format
+msgid "Changes in Version %(version)s &#8212; %(docstitle)s"
+msgstr "Zmeny vo verzii %(version)s &#8212; %(docstitle)s"
+
+#: sphinx/themes/basic/changes/rstsource.html:5
+#, python-format
+msgid "%(filename)s &#8212; %(docstitle)s"
+msgstr "%(filename)s &#8212; %(docstitle)s"
+
+#: sphinx/themes/basic/changes/versionchanges.html:17
+#, python-format
+msgid "Automatically generated list of changes in version %(version)s"
+msgstr "Automaticky generovaný zoznam zmien vo verzii %(version)s"
+
+#: sphinx/themes/basic/changes/versionchanges.html:18
+msgid "Library changes"
+msgstr "Zmeny knižnice"
+
+#: sphinx/themes/basic/changes/versionchanges.html:23
+msgid "C API changes"
+msgstr "Zmeny API C"
+
+#: sphinx/themes/basic/changes/versionchanges.html:25
+msgid "Other changes"
+msgstr "Ostatné zmeny"
+
+#: sphinx/themes/basic/static/doctools.js:199 sphinx/writers/html.py:437
+#: sphinx/writers/html.py:442 sphinx/writers/html5.py:392
+#: sphinx/writers/html5.py:397
+msgid "Permalink to this headline"
+msgstr "Trvalý odkaz na tento nadpis"
+
+#: sphinx/themes/basic/static/doctools.js:205 sphinx/writers/html.py:132
+#: sphinx/writers/html.py:141 sphinx/writers/html5.py:107
+#: sphinx/writers/html5.py:116
+msgid "Permalink to this definition"
+msgstr "Trvalý odkaz na túto definíciu"
+
+#: sphinx/themes/basic/static/doctools.js:238
+msgid "Hide Search Matches"
+msgstr "Skryť výsledky hľadania"
+
+#: sphinx/themes/basic/static/searchtools.js:136
+msgid "Searching"
+msgstr "Hľadanie"
+
+#: sphinx/themes/basic/static/searchtools.js:141
+msgid "Preparing search..."
+msgstr "Príprava hľadania..."
+
+#: sphinx/themes/basic/static/searchtools.js:310
+#, python-format
+msgid "Search finished, found %s page(s) matching the search query."
+msgstr "Hľadanie dokončené, nájdené %s strana(y), ktoré vyhovujú hľadanému výrazu."
+
+#: sphinx/themes/basic/static/searchtools.js:365
+msgid ", in "
+msgstr ", v "
+
+#: sphinx/themes/classic/static/sidebar.js_t:83
+msgid "Expand sidebar"
+msgstr "Rozbaliť bočný panel"
+
+#: sphinx/themes/classic/static/sidebar.js_t:96
+#: sphinx/themes/classic/static/sidebar.js_t:124
+msgid "Collapse sidebar"
+msgstr "Zbaliť bočný panel"
+
+#: sphinx/themes/haiku/layout.html:24
+msgid "Contents"
+msgstr "Obsah"
+
+#: sphinx/transforms/__init__.py:224
+#, python-format
+msgid ""
+"4 column based index found. It might be a bug of extensions you use: %r"
+msgstr ""
+
+#: sphinx/transforms/__init__.py:263
+#, python-format
+msgid "Footnote [%s] is not referenced."
+msgstr "Poznámka pod čiarou [%s] nie je odkazovaná."
+
+#: sphinx/transforms/__init__.py:269
+msgid "Footnote [#] is not referenced."
+msgstr "Poznámka pod čiarou [#] nie je odkazovaná."
+
+#: sphinx/transforms/i18n.py:309 sphinx/transforms/i18n.py:380
+msgid ""
+"inconsistent footnote references in translated message. original: {0}, "
+"translated: {1}"
+msgstr ""
+
+#: sphinx/transforms/i18n.py:352
+msgid ""
+"inconsistent references in translated message. original: {0}, translated: "
+"{1}"
+msgstr ""
+
+#: sphinx/transforms/i18n.py:399
+msgid ""
+"inconsistent citation references in translated message. original: {0}, "
+"translated: {1}"
+msgstr ""
+
+#: sphinx/transforms/i18n.py:419
+msgid ""
+"inconsistent term references in translated message. original: {0}, "
+"translated: {1}"
+msgstr ""
+
+#: sphinx/transforms/post_transforms/__init__.py:118
+msgid ""
+"Could not determine the fallback text for the cross-reference. Might be a "
+"bug."
+msgstr ""
+
+#: sphinx/transforms/post_transforms/__init__.py:158
+#, python-format
+msgid "more than one target found for 'any' cross-reference %r: could be %s"
+msgstr "viac ako jeden cieľ krížového odkazu %r: môže byť %s"
+
+#: sphinx/transforms/post_transforms/__init__.py:206
+#, python-format
+msgid "%s:%s reference target not found: %s"
+msgstr ""
+
+#: sphinx/transforms/post_transforms/__init__.py:209
+#, python-format
+msgid "%r reference target not found: %s"
+msgstr "%r cieľ odkazu nenájdený: %s"
+
+#: sphinx/transforms/post_transforms/images.py:83
+#, python-format
+msgid "Could not fetch remote image: %s [%d]"
+msgstr "Nemožno získať vzdialený obrázok: %s [%d]"
+
+#: sphinx/transforms/post_transforms/images.py:111
+#, python-format
+msgid "Could not fetch remote image: %s [%s]"
+msgstr "Nemožno získať vzdialený obrázok: %s [%s]"
+
+#: sphinx/transforms/post_transforms/images.py:129
+#, python-format
+msgid "Unknown image format: %s..."
+msgstr "Neznámy formát obrázku: %s..."
+
+#: sphinx/util/__init__.py:284
+#, python-format
+msgid "undecodable source characters, replacing with \"?\": %r"
+msgstr "nedekódovateľné zdrojové znaky, nahradené „?”: %r"
+
+#: sphinx/util/__init__.py:532
+msgid "skipped"
+msgstr "preskočené"
+
+#: sphinx/util/__init__.py:537
+msgid "failed"
+msgstr "zlyhalo"
+
+#: sphinx/util/docfields.py:81
+#, python-format
+msgid ""
+"Problem in %s domain: field is supposed to use role '%s', but that role is "
+"not in the domain."
+msgstr ""
+
+#: sphinx/util/docutils.py:213
+#, python-format
+msgid "unknown directive or role name: %s:%s"
+msgstr "neznáma direktíva alebo meno role: %s:%s"
+
+#: sphinx/util/docutils.py:500
+#, python-format
+msgid "unknown node type: %r"
+msgstr "neznámy typ uzla: %r"
+
+#: sphinx/util/i18n.py:67
+#, python-format
+msgid "reading error: %s, %s"
+msgstr "chyba čítania: %s, %s"
+
+#: sphinx/util/i18n.py:74
+#, python-format
+msgid "writing error: %s, %s"
+msgstr "chyba zápisu: %s: %s"
+
+#: sphinx/util/i18n.py:98
+#, python-format
+msgid "locale_dir %s does not exists"
+msgstr ""
+
+#: sphinx/util/i18n.py:192
+#, python-format
+msgid ""
+"Invalid date format. Quote the string by single quote if you want to output "
+"it directly: %s"
+msgstr "Neplatný formát dátumu. Použije jednoduché úvodzovky, ak ho chcete priamo vo výstupe: %s"
+
+#: sphinx/util/nodes.py:437
+#, python-format
+msgid "toctree contains ref to nonexisting file %r"
+msgstr "strom obsahu obsahuje neexistujúci súbor %r"
+
+#: sphinx/util/nodes.py:623
+#, python-format
+msgid "exception while evaluating only directive expression: %s"
+msgstr ""
+
+#: sphinx/util/rst.py:77
+#, python-format
+msgid "default role %s not found"
+msgstr "predvolená rola  %s nenájdená"
+
+#: sphinx/writers/html.py:330 sphinx/writers/html5.py:305
+#, python-format
+msgid "numfig_format is not defined for %s"
+msgstr "nie je definovaný numfig_format pre %s"
+
+#: sphinx/writers/html.py:340 sphinx/writers/html5.py:315
+#, python-format
+msgid "Any IDs not assigned for %s node"
+msgstr "Žiadne ID nie je priradené uzlu %s"
+
+#: sphinx/writers/html.py:414 sphinx/writers/html5.py:369
+msgid "Permalink to this term"
+msgstr "Trvalý odkaz na tento termín"
+
+#: sphinx/writers/html.py:446 sphinx/writers/html5.py:401
+msgid "Permalink to this table"
+msgstr "Trvalý odkaz na túto tabuľku"
+
+#: sphinx/writers/html.py:489 sphinx/writers/html5.py:444
+msgid "Permalink to this code"
+msgstr "Trvalý odkaz na tento kód"
+
+#: sphinx/writers/html.py:491 sphinx/writers/html5.py:446
+msgid "Permalink to this image"
+msgstr "Trvalý odkaz na tento obrázok"
+
+#: sphinx/writers/html.py:493 sphinx/writers/html5.py:448
+msgid "Permalink to this toctree"
+msgstr "Trvalý odkaz na tento strom obsahu"
+
+#: sphinx/writers/html.py:625 sphinx/writers/html5.py:569
+msgid "Could not obtain image size. :scale: option is ignored."
+msgstr "Nemožno získať veľkosť obrázku. voľba :scale: je ignorovaná."
+
+#: sphinx/writers/latex.py:347
+#, python-format
+msgid "unknown %r toplevel_sectioning for class %r"
+msgstr ""
+
+#: sphinx/writers/latex.py:398
+msgid "too large :maxdepth:, ignored."
+msgstr "príliš veľké :maxdepth:, ignorované."
+
+#: sphinx/writers/latex.py:644
+msgid "document title is not a single Text node"
+msgstr "názov dokumentu nie je jeden uzol Text"
+
+#: sphinx/writers/latex.py:676 sphinx/writers/texinfo.py:626
+msgid ""
+"encountered title node not in section, topic, table, admonition or sidebar"
+msgstr ""
+
+#: sphinx/writers/latex.py:846 sphinx/writers/manpage.py:247
+#: sphinx/writers/texinfo.py:641
+msgid "Footnotes"
+msgstr "Poznámky pod čiarou"
+
+#: sphinx/writers/latex.py:905
+msgid ""
+"both tabularcolumns and :widths: option are given. :widths: is ignored."
+msgstr "sú zadané obe, tabularcolumns aj voľba :widths:. :widths: je ignorované."
+
+#: sphinx/writers/latex.py:1236
+#, python-format
+msgid "dimension unit %s is invalid. Ignored."
+msgstr ""
+
+#: sphinx/writers/latex.py:1549
+#, python-format
+msgid "unknown index entry type %s found"
+msgstr ""
+
+#: sphinx/writers/manpage.py:296 sphinx/writers/text.py:803
+#, python-format
+msgid "[image: %s]"
+msgstr "[obrázok: %s]"
+
+#: sphinx/writers/manpage.py:297 sphinx/writers/text.py:804
+msgid "[image]"
+msgstr "[obrázok]"
+
+#: sphinx/writers/texinfo.py:1193
+msgid "caption not inside a figure."
+msgstr "titulok nie je vo vnútri figure."
+
+#: sphinx/writers/texinfo.py:1281
+#, python-format
+msgid "unimplemented node type: %r"
+msgstr "neimplementovaný typ uzla: %r"

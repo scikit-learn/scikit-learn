@@ -1,0 +1,44 @@
+Metadata-Version: 2.1
+Name: seaborn
+Version: 0.11.2
+Summary: seaborn: statistical data visualization
+Home-page: https://seaborn.pydata.org
+Author: Michael Waskom
+Author-email: mwaskom@gmail.com
+Maintainer: Michael Waskom
+Maintainer-email: mwaskom@gmail.com
+License: BSD (3-clause)
+Download-URL: https://github.com/mwaskom/seaborn/
+Platform: UNKNOWN
+Classifier: Intended Audience :: Science/Research
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Classifier: Topic :: Multimedia :: Graphics
+Classifier: Operating System :: OS Independent
+Classifier: Framework :: Matplotlib
+Requires-Python: >=3.6
+Requires-Dist: numpy (>=1.15)
+Requires-Dist: scipy (>=1.0)
+Requires-Dist: pandas (>=0.23)
+Requires-Dist: matplotlib (>=2.2)
+
+Seaborn is a library for making statistical graphics in Python. It is built on top of `matplotlib <https://matplotlib.org/>`_ and closely integrated with `pandas <https://pandas.pydata.org/>`_ data structures.
+
+Here is some of the functionality that seaborn offers:
+
+- A dataset-oriented API for examining relationships between multiple variables
+- Convenient views onto the overall structure of complex datasets
+- Specialized support for using categorical variables to show observations or aggregate statistics
+- Options for visualizing univariate or bivariate distributions and for comparing them between subsets of data
+- Automatic estimation and plotting of linear regression models for different kinds of dependent variables
+- High-level abstractions for structuring multi-plot grids that let you easily build complex visualizations
+- Concise control over matplotlib figure styling with several built-in themes
+- Tools for choosing color palettes that faithfully reveal patterns in your data
+
+Seaborn aims to make visualization a central part of exploring and understanding data. Its dataset-oriented plotting functions operate on dataframes and arrays containing whole datasets and internally perform the necessary semantic mappings and statistical aggregations to produce informative plots.
+
+
