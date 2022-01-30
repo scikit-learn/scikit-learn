@@ -41,7 +41,21 @@ np.random.seed(0)
 # Generate datasets. We choose the size big enough to see the scalability
 # of the algorithms, but not too big to avoid too long running times
 # ============
-n_samples = 1500
+
+np.random.seed(0)
+
+# ============
+# Generate datasets. We choose the size big enough to see the scalability
+# of the algorithms, but not too big to avoid too long running times
+# ============
+
+np.random.seed(0)
+
+# ============
+# Generate datasets. We choose the size big enough to see the scalability
+# of the algorithms, but not too big to avoid too long running times
+# ============
+n_samples = 750
 noisy_circles = datasets.make_circles(n_samples=n_samples, factor=0.5, noise=0.05)
 noisy_moons = datasets.make_moons(n_samples=n_samples, noise=0.05)
 blobs = datasets.make_blobs(n_samples=n_samples, random_state=8)
@@ -85,7 +99,7 @@ datasets = [
     (
         noisy_circles,
         {
-            "damping": 0.77,
+            "damping": 0.85,
             "preference": -240,
             "quantile": 0.2,
             "n_clusters": 2,
