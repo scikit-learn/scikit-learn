@@ -232,7 +232,7 @@ def spectral_clustering(
         Number of clusters to extract.
 
     n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding
+        Number of eigenvectors to use for the spectral embedding.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition method. If None then ``'arpack'`` is used.
@@ -289,6 +289,14 @@ def spectral_clustering(
     labels : array of integers, shape: n_samples
         The labels of the clusters.
 
+    Notes
+    -----
+    The graph should contain only one connected component, elsewhere
+    the results make little sense.
+
+    This algorithm solves the normalized cut for `k=2`: it is a
+    normalized spectral clustering.
+
     References
     ----------
 
@@ -323,14 +331,6 @@ def spectral_clustering(
            streaming graph challenge (Preliminary version at arXiv.)
            David Zhuzhunashvili, Andrew Knyazev
            <:doi:`10.1109/HPEC.2017.8091045`>`_
-
-    Notes
-    -----
-    The graph should contain only one connected component, elsewhere
-    the results make little sense.
-
-    This algorithm solves the normalized cut for k=2: it is a
-    normalized spectral clustering.
     """
     if assign_labels not in ("kmeans", "discretize", "cluster_qr"):
         raise ValueError(
