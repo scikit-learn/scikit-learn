@@ -943,20 +943,6 @@ def test_result_equal_in_diff_n_threads(Estimator):
     assert_array_equal(result_1, result_2)
 
 
-@pytest.mark.parametrize("attr", ["counts_", "init_size_", "random_state_"])
-def test_minibatch_kmeans_deprecated_attributes(attr):
-    # check that we raise a deprecation warning when accessing `init_size_`
-    # FIXME: remove in 1.1
-    depr_msg = (
-        f"The attribute `{attr}` is deprecated in 0.24 and will be removed in 1.1"
-    )
-    km = MiniBatchKMeans(n_clusters=2, n_init=1, init="random", random_state=0)
-    km.fit(X)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        getattr(km, attr)
-
-
 def test_warning_elkan_1_cluster():
     # Check warning messages specific to KMeans
     with pytest.warns(
