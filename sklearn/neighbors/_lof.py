@@ -334,7 +334,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         This method allows to generalize prediction to *new observations* (not
         in the training set). Note that the result of ``clf.fit(X)`` then
         ``clf.predict(X)`` with ``novelty=True`` may differ from the result
-        obtained by ``clf.fit_precit(X)`` with ``novelty=False``.
+        obtained by ``clf.fit_predict(X)`` with ``novelty=False``.
 
         Parameters
         ----------
