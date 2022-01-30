@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.covariance._robust_covariance.fast_mcd",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf_shrinkage",
     "sklearn.datasets._base.load_breast_cancer",
@@ -32,11 +31,9 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._samples_generator.make_checkerboard",
     "sklearn.datasets._samples_generator.make_classification",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
-    "sklearn.datasets._samples_generator.make_hastie_10_2",
     "sklearn.datasets._samples_generator.make_multilabel_classification",
     "sklearn.datasets._samples_generator.make_regression",
     "sklearn.datasets._samples_generator.make_sparse_coded_signal",
-    "sklearn.datasets._samples_generator.make_sparse_spd_matrix",
     "sklearn.datasets._samples_generator.make_spd_matrix",
     "sklearn.datasets._species_distributions.fetch_species_distributions",
     "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
