@@ -12,6 +12,7 @@ from scipy.sparse import (
     lil_matrix,
     issparse,
 )
+import scipy.stats
 
 from sklearn import metrics
 from sklearn import neighbors, datasets
@@ -1993,3 +1994,77 @@ def test_neighbors_distance_metric_deprecation():
         dist_metric = DistanceMetric.get_metric("euclidean")
 
     assert isinstance(dist_metric, ActualDistanceMetric)
+
+
+@pytest.mark.parametrize("weights", ["uniform", "distance", scipy.stats.norm.pdf])
+@pytest.mark.parametrize("sample_weight_constant", [1, 2])
+def test_KNeighborsRegressor_sample_weight_none_is_same_as_uniform(
+    weights,
+    sample_weight_constant,
+    n_samples=40,
+    n_features=5,
+    n_test_pts=10,
+    n_neighbors=3,
+    random_state=0,
+):
+    """
+    Make sure passing no sample_weight to KNeighborsRegressor produces the same
+    output of ``predict`` as passing any uniform weight, e.g. ::
+
+      sample_weight[i] = 1
+      for all i
+
+    1 can be replaced any nonzero constant.
+    """
+    sample_weight = np.ones(n_samples) * sample_weight_constant
+
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features) - 1
+    y = np.sqrt((X ** 2).sum(1))
+
+    epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
+    X_test = X[:n_test_pts] + epsilon
+
+    knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors, weights=weights)
+    knn.fit(X, y)
+    y_pred_sample_weight_none = knn.predict(X_test)
+
+    knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors, weights=weights)
+    knn.fit(X, y, sample_weight)
+    y_pred_sample_weight_constant = knn.predict(X_test)
+
+    assert_allclose(y_pred_sample_weight_none, y_pred_sample_weight_constant)
+
+
+@pytest.mark.parametrize("sample_weight_0", [0, 0.25, 0.5, 0.75, 1])
+def test_KNeighborsRegressor_sample_weight(sample_weight_0):
+    """
+    Consider a simplistic case where
+    - number of samples = 2
+    - K = 2
+    - weights = "uniform"
+
+    Given above, the expected output of ``predict`` must obey the formula ::
+
+      y_pred[i] = product(y[k] * sample_weight[k])
+      for all i
+
+    By verifying the formula above holds, the test makes sure that
+    sample_weight affects ``predict`` output in expected way.
+    """
+    num_samples = 2
+    X = np.array(range(num_samples)).reshape(-1, 1)
+    y = 10 + np.array(range(num_samples))
+
+    num_test = 10
+    X_test = np.linspace(0, num_samples - 1, num=num_test).reshape(-1, 1)
+
+    sample_weight = np.array([sample_weight_0, 1 - sample_weight_0])
+    y_pred_expected = np.ones(num_test) * (
+        y[0] * sample_weight[0] + y[1] * sample_weight[1]
+    )
+
+    knn = neighbors.KNeighborsRegressor(n_neighbors=len(X), weights="uniform")
+    knn.fit(X, y, sample_weight)
+    y_pred = knn.predict(X_test)
+    assert_allclose(y_pred, y_pred_expected)

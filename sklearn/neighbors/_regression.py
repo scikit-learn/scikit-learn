@@ -18,6 +18,7 @@ from ._base import _get_weights, _check_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils.deprecation import deprecated
+from ..utils.validation import _check_sample_weight
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -192,7 +193,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         # For cross-validation routines to split data correctly
         return self.metric == "precomputed"
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the k-nearest neighbors regressor from the training dataset.
 
         Parameters
@@ -205,12 +206,19 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
                 (n_samples, n_outputs)
             Target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
         Returns
         -------
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
         self.weights = _check_weights(self.weights)
+        if sample_weight is not None:
+            self._sample_weight = _check_sample_weight(sample_weight, X)
+        else:
+            self._sample_weight = None
 
         return self._fit(X, y)
 
@@ -242,9 +250,14 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         if _y.ndim == 1:
             _y = _y.reshape((-1, 1))
 
-        if weights is None:
+        if weights is None and self._sample_weight is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
         else:
+            if weights is None:
+                weights = self._sample_weight[neigh_ind]
+            elif self._sample_weight is not None:
+                weights *= self._sample_weight[neigh_ind]
+
             y_pred = np.empty((X.shape[0], _y.shape[1]), dtype=np.float64)
             denom = np.sum(weights, axis=1)
 
