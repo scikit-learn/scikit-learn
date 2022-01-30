@@ -16,7 +16,7 @@ from ..utils import check_array
 __all__ = ["LocalOutlierFactor"]
 
 
-class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
+class LocalOutlierFactor(OutlierMixin, NeighborsBase):
     """Unsupervised Outlier Detection using the Local Outlier Factor (LOF).
 
     The anomaly score of each sample is called the Local Outlier Factor.
@@ -216,6 +216,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         )
         self.contamination = contamination
         self.novelty = novelty
+        self.kn_mixin_obj = KNeighborsMixin()
 
     def _check_novelty_fit_predict(self):
         if self.novelty:
@@ -289,7 +290,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             )
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
-        self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
+        self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kn_mixin_obj.kneighbors(
             n_neighbors=self.n_neighbors_
         )
 
@@ -458,7 +459,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         check_is_fitted(self)
         X = check_array(X, accept_sparse="csr")
 
-        distances_X, neighbors_indices_X = self.kneighbors(
+        distances_X, neighbors_indices_X = self.kn_mixin_obj.kneighbors(
             X, n_neighbors=self.n_neighbors_
         )
         X_lrd = self._local_reachability_density(distances_X, neighbors_indices_X)
