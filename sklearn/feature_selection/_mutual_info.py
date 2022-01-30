@@ -290,12 +290,18 @@ def _estimate_mi(
         X = X.astype(float, **_astype_copy_false(X))
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
         X[:, continuous_mask] += (
-            1e-10 * means * rng.randn(n_samples, np.sum(continuous_mask))
+            1e-10
+            * means
+            * rng.standard_normal(size=(n_samples, np.sum(continuous_mask)))
         )
 
     if not discrete_target:
         y = scale(y, with_mean=False)
-        y += 1e-10 * np.maximum(1, np.mean(np.abs(y))) * rng.randn(n_samples)
+        y += (
+            1e-10
+            * np.maximum(1, np.mean(np.abs(y)))
+            * rng.standard_normal(size=n_samples)
+        )
 
     mi = [
         _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)
