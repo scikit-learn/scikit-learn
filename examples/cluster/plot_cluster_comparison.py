@@ -35,19 +35,6 @@ from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
 from itertools import cycle, islice
 
-np.random.seed(0)
-
-# ============
-# Generate datasets. We choose the size big enough to see the scalability
-# of the algorithms, but not too big to avoid too long running times
-# ============
-
-np.random.seed(0)
-
-# ============
-# Generate datasets. We choose the size big enough to see the scalability
-# of the algorithms, but not too big to avoid too long running times
-# ============
 
 np.random.seed(0)
 
@@ -104,7 +91,7 @@ datasets = [
             "quantile": 0.2,
             "n_clusters": 2,
             "min_samples": 20,
-            "xi": 0.25,
+            "xi": 0.27,
         },
     ),
     (noisy_moons, {"damping": 0.75, "preference": -220, "n_clusters": 2}),
@@ -123,8 +110,8 @@ datasets = [
         {
             "eps": 0.15,
             "n_neighbors": 2,
-            "min_samples": 20,
-            "xi": 0.1,
+            "min_samples": 17,
+            "xi": 0.12,
             "min_cluster_size": 0.2,
         },
     ),
