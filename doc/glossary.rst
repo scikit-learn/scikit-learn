@@ -1604,6 +1604,7 @@ functions or non-estimator constructors.
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
             <https://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            Integer values must be in the range `[0, 2**32 - 1]`.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users

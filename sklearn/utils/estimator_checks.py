@@ -531,7 +531,7 @@ def parametrize_with_checks(estimators):
 def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
-    This estimator will run an extensive test-suite for input validation,
+    This function will run an extensive test-suite for input validation,
     shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
@@ -3944,6 +3944,7 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     feature_names_out = transformer.get_feature_names_out(input_features)
     assert feature_names_out is not None
     assert isinstance(feature_names_out, np.ndarray)
+    assert feature_names_out.dtype == object
     assert all(isinstance(name, str) for name in feature_names_out)
 
     if isinstance(X_transform, tuple):
