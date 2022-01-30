@@ -672,7 +672,6 @@ class KNeighborsMixin:
             result = neigh_ind
         return result
 
-    @deprecated("`kneighbors` is deprecated in 1.0 and will be removed in 1.2.")
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Find the K-neighbors of a point.
 
@@ -848,7 +847,6 @@ class KNeighborsMixin:
                 return neigh_dist, neigh_ind
             return neigh_ind
 
-    @deprecated("`kneighbors_graph` is deprecated in 1.0 and will be removed in 1.2.")
     def kneighbors_graph(self, X=None, n_neighbors=None, mode="connectivity"):
         """Compute the (weighted) graph of k-Neighbors for points in X.
 
