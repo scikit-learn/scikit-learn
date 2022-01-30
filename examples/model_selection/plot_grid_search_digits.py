@@ -15,8 +15,6 @@ More details on tools available for model selection can be found in the
 sections on :ref:`cross_validation` and :ref:`grid_search`.
 """
 
-print(__doc__)
-
 # %%
 # The dataset
 # -----------
