@@ -230,7 +230,7 @@ def make_classification(
         centroids *= generator.rand(1, n_informative)
 
     # Initially draw informative features from the standard normal
-    X[:, :n_informative] = generator.randn(n_samples, n_informative)
+    X[:, :n_informative] = generator.standard_normal(size=(n_samples, n_informative))
 
     # Create each cluster; a variant of make_blobs
     stop = 0
@@ -259,7 +259,7 @@ def make_classification(
 
     # Fill useless features
     if n_useless > 0:
-        X[:, -n_useless:] = generator.randn(n_samples, n_useless)
+        X[:, -n_useless:] = generator.standard_normal(size=(n_samples, n_useless))
 
     # Randomly replace labels
     if flip_y >= 0.0:
@@ -456,8 +456,7 @@ def make_multilabel_classification(
 
 
 def make_hastie_10_2(n_samples=12000, *, random_state=None):
-    """Generates data for binary classification used in
-    Hastie et al. 2009, Example 10.2.
+    """Generate data for binary classification used in Hastie et al. 2009, Example 10.2.
 
     The ten features are standard independent Gaussian and
     the target ``y`` is defined by::
@@ -484,14 +483,14 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     y : ndarray of shape (n_samples,)
         The output values.
 
+    See Also
+    --------
+    make_gaussian_quantiles : A generalization of this dataset approach.
+
     References
     ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
            Learning Ed. 2", Springer, 2009.
-
-    See Also
-    --------
-    make_gaussian_quantiles : A generalization of this dataset approach.
     """
     rs = check_random_state(random_state)
 
@@ -595,7 +594,7 @@ def make_regression(
 
     if effective_rank is None:
         # Randomly generate a well conditioned input set
-        X = generator.randn(n_samples, n_features)
+        X = generator.standard_normal(size=(n_samples, n_features))
 
     else:
         # Randomly generate a low rank, fat tail input set
@@ -1022,7 +1021,7 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
         + 20 * (X[:, 2] - 0.5) ** 2
         + 10 * X[:, 3]
         + 5 * X[:, 4]
-        + noise * generator.randn(n_samples)
+        + noise * generator.standard_normal(size=(n_samples))
     )
 
     return X, y
@@ -1088,7 +1087,7 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
 
     y = (
         X[:, 0] ** 2 + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2
-    ) ** 0.5 + noise * generator.randn(n_samples)
+    ) ** 0.5 + noise * generator.standard_normal(size=(n_samples))
 
     return X, y
 
@@ -1153,7 +1152,7 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
 
     y = np.arctan(
         (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) / X[:, 0]
-    ) + noise * generator.randn(n_samples)
+    ) + noise * generator.standard_normal(size=(n_samples))
 
     return X, y
 
@@ -1218,9 +1217,15 @@ def make_low_rank_matrix(
     n = min(n_samples, n_features)
 
     # Random (ortho normal) vectors
-    u, _ = linalg.qr(generator.randn(n_samples, n), mode="economic", check_finite=False)
+    u, _ = linalg.qr(
+        generator.standard_normal(size=(n_samples, n)),
+        mode="economic",
+        check_finite=False,
+    )
     v, _ = linalg.qr(
-        generator.randn(n_features, n), mode="economic", check_finite=False
+        generator.standard_normal(size=(n_features, n)),
+        mode="economic",
+        check_finite=False,
     )
 
     # Index of the singular values
@@ -1280,7 +1285,7 @@ def make_sparse_coded_signal(
     generator = check_random_state(random_state)
 
     # generate dictionary
-    D = generator.randn(n_features, n_components)
+    D = generator.standard_normal(size=(n_features, n_components))
     D /= np.sqrt(np.sum((D ** 2), axis=0))
 
     # generate code
@@ -1289,7 +1294,7 @@ def make_sparse_coded_signal(
         idx = np.arange(n_components)
         generator.shuffle(idx)
         idx = idx[:n_nonzero_coefs]
-        X[idx, i] = generator.randn(n_nonzero_coefs)
+        X[idx, i] = generator.standard_normal(size=n_nonzero_coefs)
 
     # encode signal
     Y = np.dot(D, X)
@@ -1405,7 +1410,7 @@ def make_sparse_spd_matrix(
 
     norm_diag : bool, default=False
         Whether to normalize the output matrix to make the leading diagonal
-        elements all 1
+        elements all 1.
 
     smallest_coef : float, default=0.1
         The value of the smallest coefficient between 0 and 1.
@@ -1423,15 +1428,15 @@ def make_sparse_spd_matrix(
     prec : sparse matrix of shape (dim, dim)
         The generated matrix.
 
+    See Also
+    --------
+    make_spd_matrix : Generate a random symmetric, positive-definite matrix.
+
     Notes
     -----
     The sparsity is actually imposed on the cholesky factor of the matrix.
     Thus alpha does not translate directly into the filling fraction of
     the matrix itself.
-
-    See Also
-    --------
-    make_spd_matrix
     """
     random_state = check_random_state(random_state)
 
@@ -1519,7 +1524,7 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     z = t * np.sin(t)
 
     X = np.vstack((x, y, z))
-    X += noise * generator.randn(3, n_samples)
+    X += noise * generator.standard_normal(size=(3, n_samples))
     X = X.T
     t = np.squeeze(t)
 
@@ -1561,7 +1566,7 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     z = np.sign(t) * (np.cos(t) - 1)
 
     X = np.concatenate((x, y, z))
-    X += noise * generator.randn(3, n_samples)
+    X += noise * generator.standard_normal(size=(3, n_samples))
     X = X.T
     t = np.squeeze(t)
 
