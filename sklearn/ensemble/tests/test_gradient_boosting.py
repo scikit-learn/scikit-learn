@@ -1030,7 +1030,7 @@ def test_zero_estimator_reg():
     baseline = DummyRegressor(strategy="mean").fit(X_reg, y_reg)
     mse_baseline = mean_squared_error(baseline.predict(X_reg), y_reg)
     est = GradientBoostingRegressor(
-        n_estimators=30, max_depth=1, random_state=1, init="zero", learning_rate=0.5
+        n_estimators=5, max_depth=1, random_state=1, init="zero", learning_rate=0.5
     )
     est.fit(X_reg, y_reg)
     y_pred = est.predict(X_reg)
