@@ -1614,12 +1614,12 @@ better suited.
 
   .. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
      `The DET Curve in Assessment of Detection Task Performance
-     <http://www.dtic.mil/docs/citations/ADA530509>`_,
+     <https://www.researchgate.net/publication/303637188_The_det_curve_in_assessment_of_detection_task_performance>`_,
      NIST 1997.
 
   .. [Navratil2007] J. Navractil and D. Klusacek,
      "`On Linear DETs,
-     <http://www.research.ibm.com/CBG/papers/icassp07_navratil.pdf>`_"
+     <https://www.researchgate.net/publication/4249280_On_Linear_DETs>`_"
      2007 IEEE International Conference on Acoustics,
      Speech and Signal Processing - ICASSP '07, Honolulu,
      HI, 2007, pp. IV-229-IV-232.
