@@ -456,8 +456,7 @@ def make_multilabel_classification(
 
 
 def make_hastie_10_2(n_samples=12000, *, random_state=None):
-    """Generates data for binary classification used in
-    Hastie et al. 2009, Example 10.2.
+    """Generate data for binary classification used in Hastie et al. 2009, Example 10.2.
 
     The ten features are standard independent Gaussian and
     the target ``y`` is defined by::
@@ -484,14 +483,14 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     y : ndarray of shape (n_samples,)
         The output values.
 
+    See Also
+    --------
+    make_gaussian_quantiles : A generalization of this dataset approach.
+
     References
     ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
            Learning Ed. 2", Springer, 2009.
-
-    See Also
-    --------
-    make_gaussian_quantiles : A generalization of this dataset approach.
     """
     rs = check_random_state(random_state)
 
