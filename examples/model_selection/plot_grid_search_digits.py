@@ -75,8 +75,9 @@ import pandas as pd
 def refit_strategy(cv_results):
     """Define the strategy to select the best estimator.
 
-    The strategy defines here is to select the best ranking model in terms of
-    precision and recall. Once these models are selected, we can select the
+    The strategy defined here is to filter-out all results below a precision threshold
+    of 0.98, rank the remaining by recall and keep all models with one standard
+    deviation of the best by recall. Once these models are selected, we can select the
     fastest model to predict.
 
     Parameters
@@ -90,8 +91,9 @@ def refit_strategy(cv_results):
         The index of the best estimator as it appears in `cv_results`.
     """
     # print the info about the grid-search for the different scores
+    precision_threshold = 0.98
     for score in scores:
-        print("\nGrid scores on development set using {score}:\n")
+        print(f"\nGrid scores on development set using {score}:\n")
         for mean, std, params in zip(
             cv_results[f"mean_test_{score}"],
             cv_results[f"std_test_{score}"],
@@ -100,6 +102,12 @@ def refit_strategy(cv_results):
             print(f"{mean:0.3f} (+/-{std * 2:0.03f}) for {params}")
 
     cv_results_ = pd.DataFrame(cv_results)
+
+    # Filter-out all results below the threshold
+    cv_results_ = cv_results_[
+        cv_results_["mean_test_precision_macro"] > precision_threshold
+    ]
+
     cv_results_ = cv_results_[
         [
             "mean_score_time",
@@ -110,17 +118,26 @@ def refit_strategy(cv_results):
         ]
     ]
 
-    # Select the most performant models in terms of precision/recall
+    # Select the most performant models in terms of recall
+    # (within 1 sigma from the best)
     mask_best_recall = cv_results_["rank_test_recall_macro"] == 1
-    mask_best_precision = cv_results_["rank_test_precision_macro"] == 1
-    mask_combined = mask_best_recall & mask_best_precision
+    best_recall_std = cv_results_.std()["mean_test_recall_macro"]
+    best_recall_index = cv_results_.loc[
+        mask_best_recall, "mean_test_recall_macro"
+    ].idxmin()
+    best_recall = cv_results_.loc[best_recall_index, "mean_test_recall_macro"]
+    best_recall_threshold = best_recall - best_recall_std
+
+    cv_results_ = cv_results_[
+        cv_results_["mean_test_recall_macro"] > best_recall_threshold
+    ]
     print(
         "The following models are the most performance in terms of "
-        f"recall/precision:\n\n {cv_results_[mask_combined]}"
+        f"recall:\n\n {cv_results_}"
     )
 
     # From the best candidates, select the fastest model to predict
-    best_index = cv_results_.loc[mask_combined, "mean_score_time"].idxmin()
+    best_index = cv_results_.idxmin(axis="rows")["mean_score_time"]
 
     print(
         "\nWe selected the model with the following parameters which maximize"
