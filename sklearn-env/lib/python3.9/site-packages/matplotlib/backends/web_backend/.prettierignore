@@ -1,7 +1,0 @@
-node_modules/
-
-# Vendored dependencies
-css/boilerplate.css
-css/fbm.css
-css/page.css
-jquery-ui-*/

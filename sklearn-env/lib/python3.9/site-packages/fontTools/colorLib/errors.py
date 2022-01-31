@@ -1,3 +1,0 @@
-
-class ColorLibError(Exception):
-    pass

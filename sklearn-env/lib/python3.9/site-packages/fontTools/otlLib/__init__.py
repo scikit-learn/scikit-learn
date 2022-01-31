@@ -1,1 +1,0 @@
-"""OpenType Layout-related functionality."""
