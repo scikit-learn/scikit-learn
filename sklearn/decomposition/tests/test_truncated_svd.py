@@ -26,7 +26,7 @@ def X_sparse():
 def test_solvers(X_sparse, solver, kind):
     X = X_sparse if kind == "sparse" else X_sparse.toarray()
     svd_a = TruncatedSVD(30, algorithm="arpack")
-    svd = TruncatedSVD(30, algorithm=solver, random_state=42)
+    svd = TruncatedSVD(30, algorithm=solver, random_state=42, n_oversamples=100)
 
     Xa = svd_a.fit_transform(X)[:, :6]
     Xr = svd.fit_transform(X)[:, :6]
