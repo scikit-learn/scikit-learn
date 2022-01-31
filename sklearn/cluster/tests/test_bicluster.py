@@ -215,12 +215,12 @@ def test_perfect_checkerboard():
         (
             {"n_clusters": "abc"},
             TypeError,
-            "Incorrect parameter n_clusters has value: abc",
+            "n_clusters must be an instance of",
         ),
         ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
     ],
 )
-def test_spectalcoclustering_parameter_validation(params, type_err, err_msg):
+def test_spectralcoclustering_parameter_validation(params, type_err, err_msg):
     """Check parameters validation in `SpectralBiClustering`"""
     data = np.arange(25).reshape((5, 5))
     model = SpectralCoclustering(**params)
@@ -232,7 +232,7 @@ def test_spectalcoclustering_parameter_validation(params, type_err, err_msg):
     "params, type_err, err_msg",
     [
         ({"n_init": 0}, ValueError, "n_init == 0, must be >= 1."),
-        ({"n_init": 1.5}, TypeError, "n_init must be an instance of integer"),
+        ({"n_init": 1.5}, TypeError, "n_init must be an instance of"),
         (
             {"n_clusters": (3, 3, 3)},
             ValueError,
@@ -262,7 +262,7 @@ def test_spectalcoclustering_parameter_validation(params, type_err, err_msg):
         ({"svd_method": "unknown"}, ValueError, "Unknown SVD method: 'unknown'"),
     ],
 )
-def test_spectalbiclustering_parameter_validation(params, type_err, err_msg):
+def test_spectralbiclustering_parameter_validation(params, type_err, err_msg):
     """Check parameters validation in `SpectralBiClustering`"""
     data = np.arange(25).reshape((5, 5))
     model = SpectralBiclustering(**params)
