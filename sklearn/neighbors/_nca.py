@@ -451,7 +451,9 @@ class NeighborhoodComponentsAnalysis(
             if init == "identity":
                 transformation = np.eye(n_components, X.shape[1])
             elif init == "random":
-                transformation = self.random_state_.randn(n_components, X.shape[1])
+                transformation = self.random_state_.standard_normal(
+                    size=(n_components, X.shape[1])
+                )
             elif init in {"pca", "lda"}:
                 init_time = time.time()
                 if init == "pca":
