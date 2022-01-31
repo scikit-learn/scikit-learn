@@ -280,6 +280,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             name="n_estimators",
             target_type=numbers.Integral,
             min_val=1,
+            include_boundaries="left",
         )
 
         if (
