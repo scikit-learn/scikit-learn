@@ -409,6 +409,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 name="n_iter_no_change",
                 target_type=numbers.Integral,
                 min_val=1,
+                include_boundaries="left",
             )
 
         check_scalar(
