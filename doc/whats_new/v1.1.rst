@@ -506,6 +506,11 @@ Changelog
   `__init__` but in `.fit()`.
   :pr:`21888` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
 
+- |Fix| :class: `pipeline.FeatureUnion` does not validate hyper-parameters in
+  `__init__`. Validation is now handled in `.fit()` and `.fit_transform()`.
+  :pr:`21954` and :pr:`21888` by :user:`iofall <iofall>` and
+  :user:`Arisa Y. <arisayosh>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
