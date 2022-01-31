@@ -39,7 +39,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_files",
-    "sklearn.datasets._twenty_newsgroups.fetch_20newsgroups",
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.decomposition._dict_learning.dict_learning_online",
     "sklearn.decomposition._dict_learning.sparse_encode",
