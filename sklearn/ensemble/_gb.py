@@ -960,7 +960,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
 
-        - If int, values must be in the range `[2, n_samples]`.
+        - If int, values must be in the range `[2, inf)`.
         - If float, values must be in the range `(0, 1]` and `min_samples_split`
           will be `ceil(min_samples_split * n_samples)`.
 
@@ -975,7 +975,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         especially in regression.
 
         - If int, values must be in the range `[1, inf)`.
-        - If float, values must be in the range `(0, inf)` and `min_samples_leaf`
+        - If float, values must be in the range `(0, 1]` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
 
         .. versionchanged:: 0.18
@@ -1545,7 +1545,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
 
-        - If int, values must be in the range `[2, n_samples]`.
+        - If int, values must be in the range `[2, inf)`.
         - If float, values must be in the range `(0, 1]` and `min_samples_split`
           will be `ceil(min_samples_split * n_samples)`.
 
@@ -1560,7 +1560,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         especially in regression.
 
         - If int, values must be in the range `[1, inf)`.
-        - If float, values must be in the range `(0, inf)` and `min_samples_leaf`
+        - If float, values must be in the range `(0, 1]` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
 
         .. versionchanged:: 0.18
@@ -1636,7 +1636,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     alpha : float, default=0.9
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
-        Values mus be in the range `(0, 1)`.
+        Values must be in the range `(0, 1)`.
 
     verbose : int, default=0
         Enable verbose output. If 1 then it prints progress and performance
