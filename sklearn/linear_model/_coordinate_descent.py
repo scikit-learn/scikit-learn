@@ -1907,12 +1907,15 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
+
+     For an example, see
+     :ref:`examples/linear_model/plot_lasso_model_selection.py
+     <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     Examples
     --------
@@ -2130,14 +2133,13 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
+    cross-validation, the model is fit again using the entire training set.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
 
-    The parameter l1_ratio corresponds to alpha in the glmnet R package
+    The parameter `l1_ratio` corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
 
@@ -2153,6 +2155,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     for::
 
         alpha = a + b and l1_ratio = a / (a + b).
+
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_model_selection.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     Examples
     --------
@@ -2801,8 +2807,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
 
     Examples
     --------
@@ -3033,8 +3042,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
 
     Examples
     --------
