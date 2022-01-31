@@ -133,7 +133,7 @@ def test_post_process_frame(feature_names, target_names):
 def test_load_arff_from_gzip_file_error_parser():
     """An error will be raised if the parser is not known."""
     # None of the input parameters are required to be accurate since the check
-    # of the parser will be carry out first.
+    # of the parser will be carried out first.
 
     err_msg = "Unknown parser: 'xxx'. Should be 'liac-arff' or 'pandas'"
     with pytest.raises(ValueError, match=err_msg):

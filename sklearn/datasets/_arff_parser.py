@@ -139,7 +139,7 @@ def _liac_arff_parser(
 ):
     """ARFF parser using the LIAC-ARFF library coded purely in Python.
 
-    This parser is quite slow but consume a generator.
+    This parser is quite slow but consumes a generator.
 
     Parameters
     ----------
@@ -269,7 +269,9 @@ def _liac_arff_parser(
             y = _sparse_data_to_array(arff_data, target_indices_to_select)
         else:
             # This should never happen
-            raise ValueError("Unexpected Data Type obtained from arff.")
+            raise ValueError(
+                f"Unexpected type for data obtained from arff: {type(arff_data)}"
+            )
 
         is_classification = {
             col_name in nominal_attributes for col_name in target_names_to_select
@@ -313,16 +315,16 @@ def _pandas_arff_parser(
 ):
     """ARFF parser using `pandas.read_csv`.
 
-    The metadata being fetch directly to OpenML, one can skip the metadata from
-    the ARFF file and read the data as a CSV file.
+    This parser uses the metadata fetched directly from OpenML and skips the metadata
+    headers of ARFF file itself. The data is loaded as a CSV file.
 
     Parameters
     ----------
     gzip_file : GzipFile instance
-        The file compressed to be read.
+        The GZip compressed file with the ARFF formatted payload.
 
     output_array_type : {"numpy", "sparse", "pandas"}
-        The type of the arrays that will be returned. The possibilities ara:
+        The type of the arrays that will be returned. The possibilities are:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
         - `"sparse"`: `X` will be sparse matrix and `y` will be a NumPy array;
@@ -334,10 +336,10 @@ def _pandas_arff_parser(
         file.
 
     feature_names_to_select : list of str
-        A list of the feature names to be selected.
+        A list of the feature names to be selected to build `X`.
 
     target_names_to_select : list of str
-        A list of the target names to be selected.
+        A list of the target names to be selected to build `y`.
 
     Returns
     -------
@@ -357,12 +359,12 @@ def _pandas_arff_parser(
     """
     import pandas as pd
 
-    # read the file until the data section
+    # read the file until the data section to skip the ARFF metadata headers
     for line in gzip_file:
         if line.decode("utf-8").lower().startswith("@data"):
             break
 
-    # ARFF represent missing values with "?"
+    # ARFF represents missing values with "?"
     frame = pd.read_csv(
         gzip_file,
         header=None,

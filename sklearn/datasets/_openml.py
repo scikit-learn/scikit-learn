@@ -531,7 +531,7 @@ def _download_data_to_bunch(
         The URL of the ARFF file on OpenML.
 
     sparse : bool
-        Whether or not the dataset will be a sparse ARFF format.
+        Whether the dataset is expected to use the sparse ARFF format.
 
     data_home : str
         The location where to cache the data.
@@ -771,8 +771,8 @@ def fetch_openml(
         parser but requires Pandas to be installed and is only used with
         dense datasets. `"liac-arff"` is a pure Python ARFF parser that
         is less efficient memory- and CPU-wise but it deals with sparse
-        datasets. `"auto"` selects `"pandas"` if Pandas is installed and that
-        the dataset to fetch is dense, otherwise `"liac-arff"`.
+        datasets. `"auto"` selects `"pandas"` if the dataset to fetch is
+        dense, otherwise `"liac-arff"`.
 
         .. versionadded:: 1.1
 
