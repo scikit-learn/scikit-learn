@@ -677,10 +677,10 @@ def test_gpr_predict_error():
 
 
 @pytest.mark.parametrize("normalize_y", [True, False])
-@pytest.mark.parametrize("n_targets", [0, 1, 10])
+@pytest.mark.parametrize("n_targets", [None, 1, 10])
 def test_predict_shapes(normalize_y, n_targets):
     """Check the shapes of y_mean, y_std, and y_cov in single-output
-    (n_targets=0) and multi-output settings, including the edge case when
+    (n_targets=None) and multi-output settings, including the edge case when
     n_targets=1, where the sklearn convention is to squeeze the predictions.
 
     Non-regression test for:
@@ -693,12 +693,12 @@ def test_predict_shapes(normalize_y, n_targets):
     n_features, n_samples_train, n_samples_test = 6, 9, 7
 
     y_train_shape = (n_samples_train,)
-    if n_targets >= 1:
+    if n_targets:
         y_train_shape = y_train_shape + (n_targets,)
 
     # By convention single-output data is squeezed upon prediction
     y_test_shape = (n_samples_test,)
-    if n_targets > 1:
+    if n_targets is not None and n_targets > 1:
         y_test_shape = y_test_shape + (n_targets,)
 
     X_train = rng.randn(n_samples_train, n_features)
@@ -717,7 +717,7 @@ def test_predict_shapes(normalize_y, n_targets):
 
 
 @pytest.mark.parametrize("normalize_y", [True, False])
-@pytest.mark.parametrize("n_targets", [0, 1, 10])
+@pytest.mark.parametrize("n_targets", [None, 1, 10])
 def test_sample_y_shapes(normalize_y, n_targets):
     """Check the shapes of y_samples in single-output (n_targets=0) and
     multi-output settings, including the edge case when n_targets=1, where the
@@ -735,11 +735,11 @@ def test_sample_y_shapes(normalize_y, n_targets):
     n_samples_y_test = 5
 
     y_train_shape = (n_samples_train,)
-    if n_targets >= 1:
+    if n_targets:
         y_train_shape = y_train_shape + (n_targets,)
 
     # By convention single-output data is squeezed upon prediction
-    if n_targets > 1:
+    if n_targets is not None and n_targets > 1:
         y_test_shape = (n_samples_X_test, n_targets, n_samples_y_test)
     else:
         y_test_shape = (n_samples_X_test, n_samples_y_test)
@@ -749,8 +749,12 @@ def test_sample_y_shapes(normalize_y, n_targets):
     y_train = rng.randn(*y_train_shape)
 
     model = GaussianProcessRegressor(normalize_y=normalize_y)
+
+    # Before fitting, model assumes n_targets=1 so output should be 2d array
+    y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
+    assert y_samples.shape == (n_samples_X_test, n_samples_y_test)
+
     model.fit(X_train, y_train)
 
     y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
-
     assert y_samples.shape == y_test_shape
