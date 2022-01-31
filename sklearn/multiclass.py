@@ -215,40 +215,13 @@ class OneVsRestClassifier(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionchanged:: v0.20
+        .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
         Estimators used for predictions.
-
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
-        Coefficient of the features in the decision function. This attribute
-        exists only if the ``estimators_`` defines ``coef_``.
-
-        .. deprecated:: 0.24
-            This attribute is deprecated in 0.24 and will
-            be removed in 1.1 (renaming of 0.26). If you use this attribute
-            in :class:`~sklearn.feature_selection.RFE` or
-            :class:`~sklearn.feature_selection.SelectFromModel`,
-            you may pass a callable to the `importance_getter`
-            parameter that extracts feature the importances
-            from `estimators_`.
-
-    intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
-        If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
-        This attribute exists only if the ``estimators_`` defines
-        ``intercept_``.
-
-        .. deprecated:: 0.24
-            This attribute is deprecated in 0.24 and will
-            be removed in 1.1 (renaming of 0.26). If you use this attribute
-            in :class:`~sklearn.feature_selection.RFE` or
-            :class:`~sklearn.feature_selection.SelectFromModel`,
-            you may pass a callable to the `importance_getter`
-            parameter that extracts feature the importances
-            from `estimators_`.
 
     classes_ : array, shape = [`n_classes`]
         Class labels.
@@ -541,41 +514,6 @@ class OneVsRestClassifier(
     def n_classes_(self):
         """Number of classes."""
         return len(self.classes_)
-
-    # TODO: Remove coef_ attribute in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `coef_` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
-        "If you observe this warning while using RFE "
-        "or SelectFromModel, use the importance_getter "
-        "parameter instead."
-    )
-    @property
-    def coef_(self):
-        check_is_fitted(self)
-        if not hasattr(self.estimators_[0], "coef_"):
-            raise AttributeError("Base estimator doesn't have a coef_ attribute.")
-        coefs = [e.coef_ for e in self.estimators_]
-        if sp.issparse(coefs[0]):
-            return sp.vstack(coefs)
-        return np.vstack(coefs)
-
-    # TODO: Remove intercept_ attribute in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `intercept_` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
-        "If you observe this warning while using RFE "
-        "or SelectFromModel, use the importance_getter "
-        "parameter instead."
-    )
-    @property
-    def intercept_(self):
-        check_is_fitted(self)
-        if not hasattr(self.estimators_[0], "intercept_"):
-            raise AttributeError("Base estimator doesn't have an intercept_ attribute.")
-        return np.array([e.intercept_.ravel() for e in self.estimators_])
 
     # TODO: Remove in 1.1
     # mypy error: Decorated property not supported

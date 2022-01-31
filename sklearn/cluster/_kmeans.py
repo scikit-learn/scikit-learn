@@ -31,7 +31,6 @@ from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils import check_array
 from ..utils import check_random_state
-from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
@@ -1642,20 +1641,6 @@ class MiniBatchKMeans(KMeans):
 
         .. versionadded:: 1.0
 
-    counts_ : ndarray of shape (n_clusters,)
-        Weight sum of each cluster.
-
-        .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in
-           1.1 (renaming of 0.26).
-
-    init_size_ : int
-        The effective number of samples used for the initialization.
-
-        .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in
-           1.1 (renaming of 0.26).
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1740,30 +1725,6 @@ class MiniBatchKMeans(KMeans):
         self.compute_labels = compute_labels
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
-
-    @deprecated(  # type: ignore
-        "The attribute `counts_` is deprecated in 0.24"
-        " and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def counts_(self):
-        return self._counts
-
-    @deprecated(  # type: ignore
-        "The attribute `init_size_` is deprecated in "
-        "0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def init_size_(self):
-        return self._init_size
-
-    @deprecated(  # type: ignore
-        "The attribute `random_state_` is deprecated "
-        "in 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def random_state_(self):
-        return getattr(self, "_random_state", None)
 
     def _check_params(self, X):
         super()._check_params(X)
