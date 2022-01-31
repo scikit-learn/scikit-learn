@@ -93,7 +93,7 @@ Changelog
   that clusters samples in the embedding space as an alternative to the existing
   `'kmeans'` and `'discrete'` methods.
   See :func:`cluster.spectral_clustering` for more details.
-  :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`
+  :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to :class:`cluster.Birch`,
   :class:`cluster.FeatureAgglomeration`, :class:`cluster.KMeans`,
@@ -125,30 +125,6 @@ Changelog
   :class:`cross_decomposition.PLSSVD`,
   :class:`cross_decomposition.PLSRegression`,
   and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
-
-:mod:`sklearn.discriminant_analysis`
-....................................
-
-- |API| Adds :term:`get_feature_names_out` to
-  :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
-  `Thomas Fan`_.
-
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Feature| Added auto mode to
-  :class:`feature_selection.SequentialFeatureSelection`. If the argument
-  `n_features_to_select` is `'auto'`, select features until the score
-  improvement does not exceed the argument `tol`. The default value of
-  `n_features_to_select` changed from `None` to `‘warn’` in 1.1 and will become
-  `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
-  :user:`murata-yu`.
-
-:mod:`sklearn.feature_selection`
-................................
-
-- |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
-  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
@@ -239,8 +215,14 @@ Changelog
   more safely calculate precision using the inverse of the covariance matrix
   if `self.noise_variance_` is zero.
   :pr:`22300` by :user:`Meekail Zain <micky774>` and :pr:`15948` by
-  :user:`sysuresh`
+  :user:`sysuresh`.
 
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |API| Adds :term:`get_feature_names_out` to
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -248,7 +230,7 @@ Changelog
 - |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
   calls :func:`check_array` with parameter `force_all_finite=False` for non
   initial warm-start runs as it has already been checked before.
-  :pr:`22159` by :user:`Geoffrey Paris <Geoffrey-Paris>`
+  :pr:`22159` by :user:`Geoffrey Paris <Geoffrey-Paris>`.
 
 - |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the new private loss
@@ -265,11 +247,27 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Feature| Added auto mode to
+  :class:`feature_selection.SequentialFeatureSelection`. If the argument
+  `n_features_to_select` is `'auto'`, select features until the score
+  improvement does not exceed the argument `tol`. The default value of
+  `n_features_to_select` changed from `None` to `'warn'` in 1.1 and will become
+  `'auto'` in 1.3. `None` and `'warn'` will be removed in 1.3. :pr:`20145` by
+  :user:`murata-yu`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
+  with boolean arrays. :pr:`22235` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_selection`
 ................................
 - |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
-  :pr:`21837` by :user:`Louis Wagner <lrwagner>`
+  :pr:`21837` by :user:`Louis Wagner <lrwagner>`.
 
 - |Efficiency|  Fitting a :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`,
@@ -361,7 +359,7 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :func:`orthogonal_mp_gram` preservse dtype for `numpy.float32`.
-  :pr:`22002` by :user:`Takeshi Oura <takoika>`
+  :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
 - |Enhancement| :class:`linear_model.QuantileRegressor` support sparse input
   for the highs based solvers.
@@ -449,8 +447,8 @@ Changelog
 
 - |Enhancement| it is now possible to pass `scoring="matthews_corrcoef"` to all
   model selection tools with a `scoring` argument to use the Matthews
-  correlation coefficient (MCC). :pr:`22203` by :user:`Olivier Grisel
-  <ogrisel>`.
+  correlation coefficient (MCC).
+  :pr:`22203` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Fix| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.HalvingGridSearchCV`
@@ -481,7 +479,7 @@ Changelog
 - |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`neighbors.RadiusNeighborsTransformer`, :class:`neighbors.KNeighborsTransformer`
   and :class:`neighbors.NeighborhoodComponentsAnalysis`. :pr:`22212` by
-  :user : `Meekail Zain <micky774>`.
+  :user:`Meekail Zain <micky774>`.
 
 - |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
   instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
@@ -506,10 +504,9 @@ Changelog
   `__init__` but in `.fit()`.
   :pr:`21888` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
 
-- |Fix| :class: `pipeline.FeatureUnion` does not validate hyper-parameters in
+- |Fix| :class:`pipeline.FeatureUnion` does not validate hyper-parameters in
   `__init__`. Validation is now handled in `.fit()` and `.fit_transform()`.
-  :pr:`21954` and :pr:`21888` by :user:`iofall <iofall>` and
-  :user:`Arisa Y. <arisayosh>`.
+  :pr:`21954` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
 
 :mod:`sklearn.preprocessing`
 ............................
