@@ -139,7 +139,10 @@ from sklearn.svm import SVC
 
 clf = GridSearchCV(SVC(), tuned_parameters, scoring=scores, refit=refit_strategy)
 
-print("# Tuning hyper-parameters \n")
+# %%
+# Tuning hyper-parameters
+# -----------------------
+
 clf.fit(X_train, y_train)
 print(f"\nThe best set of parameters found are:\n{clf.best_params_}")
 
