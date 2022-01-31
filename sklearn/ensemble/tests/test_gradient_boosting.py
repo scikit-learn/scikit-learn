@@ -141,7 +141,7 @@ def test_classification_toy(loss):
             TypeError,
             "tol must be an instance of <class 'numbers.Real'>,",
         ),
-        # The following paramaters are checked in BaseDecisisonTree
+        # The following paramaters are checked in BaseDecisionTree
         ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
         ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
         (
