@@ -185,6 +185,7 @@ Communication
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - Gitter: https://gitter.im/scikit-learn/scikit-learn
 - Blog: https://blog.scikit-learn.org
+- Calendar: https://blog.scikit-learn.org/calendar/
 - Twitter: https://twitter.com/scikit_learn
 - Twitter (commits): https://twitter.com/sklearn_commits
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
