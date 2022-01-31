@@ -655,6 +655,10 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     Features            real, positive
     =================   ==============
 
+    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
+    downloaded from:
+    https://goo.gl/U2Uwz2
+
     Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
     Parameters
@@ -702,15 +706,11 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays. The first contains a 2D array of shape (569, 30) 
-        with each row representing one sample and each column representing the features. 
+        A tuple of two ndarrays. The first contains a 2D array of shape (569, 30)
+        with each row representing one sample and each column representing the features.
         The second array of shape (569,) contains the target samples.
 
         .. versionadded:: 0.18
-
-    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
-    downloaded from:
-    https://goo.gl/U2Uwz2
 
     Examples
     --------
