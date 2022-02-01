@@ -711,9 +711,11 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays. The first contains a 2D array of shape (569, 30)
-        with each row representing one sample and each column representing the features.
-        The second array of shape (569,) contains the target samples.
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (569, 30) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (569,) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
 
