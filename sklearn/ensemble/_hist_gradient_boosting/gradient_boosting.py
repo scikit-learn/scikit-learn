@@ -89,7 +89,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self,
         loss,
         *,
-        loss_param,
+        quantile,
         learning_rate,
         max_iter,
         max_leaf_nodes,
@@ -109,7 +109,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         random_state,
     ):
         self.loss = loss
-        self.loss_param = loss_param
+        self.quantile = quantile
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.max_leaf_nodes = max_leaf_nodes
@@ -326,7 +326,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if isinstance(self.loss, str):
             self._loss = self._get_loss(
-                sample_weight=sample_weight, loss_param=self.loss_param
+                sample_weight=sample_weight, quantile=self.quantile
             )
         elif isinstance(self.loss, BaseLoss):
             self._loss = self.loss
@@ -1083,7 +1083,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return {"allow_nan": True}
 
     @abstractmethod
-    def _get_loss(self, sample_weight, loss_param):
+    def _get_loss(self, sample_weight, quantile):
         pass
 
     @abstractmethod
@@ -1145,7 +1145,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             be removed in version 1.2. Use `loss='absolute_error'` which is
             equivalent.
 
-    loss_param : float, default=None
+    quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
         and must be between 0 and 1.
     learning_rate : float, default=0.1
@@ -1314,7 +1314,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         self,
         loss="squared_error",
         *,
-        loss_param=None,
+        quantile=None,
         learning_rate=0.1,
         max_iter=100,
         max_leaf_nodes=31,
@@ -1335,7 +1335,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     ):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss,
-            loss_param=loss_param,
+            quantile=quantile,
             learning_rate=learning_rate,
             max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes,
@@ -1406,7 +1406,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 )
         return y
 
-    def _get_loss(self, sample_weight, loss_param):
+    def _get_loss(self, sample_weight, quantile):
         # TODO: Remove in v1.2
         if self.loss == "least_squares":
             warnings.warn(
@@ -1427,7 +1427,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         if self.loss == "quantile":
             return _LOSSES[self.loss](
-                sample_weight=sample_weight, quantile=self.loss_param
+                sample_weight=sample_weight, quantile=self.quantile
             )
         else:
             return _LOSSES[self.loss](sample_weight=sample_weight)
@@ -1645,7 +1645,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     ):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss,
-            loss_param=None,
+            quantile=None,
             learning_rate=learning_rate,
             max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes,
@@ -1800,7 +1800,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
-    def _get_loss(self, sample_weight, loss_param):
+    def _get_loss(self, sample_weight, quantile):
         if self.loss == "auto":
             if self.n_trees_per_iteration_ == 1:
                 return _LOSSES["binary_crossentropy"](sample_weight=sample_weight)

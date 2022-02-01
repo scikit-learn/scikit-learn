@@ -275,7 +275,7 @@ def test_asymmetric_error(quantile):
     )
     model = HistGradientBoostingRegressor(
         loss="quantile",
-        loss_param=quantile,
+        quantile=quantile,
     ).fit(X, y)
     assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=1e-2)
 
