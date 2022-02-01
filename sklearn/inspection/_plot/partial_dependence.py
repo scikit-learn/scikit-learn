@@ -279,6 +279,7 @@ class PartialDependenceDisplay:
         centered=False,
         subsample=1000,
         random_state=None,
+        custom_values=None,
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
@@ -501,6 +502,13 @@ class PartialDependenceDisplay:
             `None` and `kind` is either `'both'` or `'individual'`.
             See :term:`Glossary <random_state>` for details.
 
+        custom_values : dict
+            A dictionary mapping the index of an element of `features` to an array of values where
+            the partial dependence should be calculated for that feature. Setting a range
+            of values for a feature overrides `grid_resolution` and `percentiles`.
+
+            .. versionadded:: 1.3
+
         Returns
         -------
         display : :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -713,6 +721,7 @@ class PartialDependenceDisplay:
                 grid_resolution=grid_resolution,
                 percentiles=percentiles,
                 kind=kind_plot,
+                custom_values=custom_values,
             )
             for kind_plot, fxs in zip(kind_, features)
         )
@@ -763,6 +772,10 @@ class PartialDependenceDisplay:
             pd_line_kw=pd_line_kw,
             contour_kw=contour_kw,
             centered=centered,
+            ax=ax,
+            kind=kind,
+            subsample=subsample,
+            random_state=random_state,
         )
 
     def _get_sample_count(self, n_samples):

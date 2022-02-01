@@ -38,7 +38,6 @@ __all__ = [
 
 def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values):
     """Generate a grid of points based on the percentiles of X.
-
     The grid is a cartesian product between the columns of ``values``. The
     ith column of ``values`` consists in ``grid_resolution`` equally-spaced
     points between the percentiles of the jth column of X.
@@ -46,7 +45,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
     If ``grid_resolution`` is bigger than the number of unique values in the
     j-th column of X or if the feature is a categorical feature (by inspecting
     `is_categorical`) , then those unique values will be used instead.
-
+    
     Parameters
     ----------
     X : array-like of shape (n_samples, n_target_features)
@@ -68,13 +67,12 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
     custom_values: dict
         Mapping from column index of X to an array-like of values where
         the partial dependence should be calculated for that feature
-
+    
     Returns
     -------
     grid : ndarray of shape (n_points, n_target_features)
         A value for each feature at each point in the grid. ``n_points`` is
         always ``<= grid_resolution ** X.shape[1]``.
-
     values : list of 1d ndarrays
         The values with which the grid has been created. The size of each
         array ``values[j]`` is either ``grid_resolution``, the number of
@@ -274,15 +272,11 @@ def partial_dependence(
     custom_values=None,
 ):
     """Partial dependence of ``features``.
-
     Partial dependence of a feature (or a set of features) corresponds to
     the average response of an estimator for each possible value of the
     feature.
-
     Read more in the :ref:`User Guide <partial_dependence>`.
-
     .. warning::
-
         For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
         `'recursion'` method (used by default) will not account for the `init`
@@ -297,20 +291,17 @@ def partial_dependence(
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
         :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
         :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
-
     Parameters
     ----------
     estimator : BaseEstimator
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
-
     X : {array-like or dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
         `method` is 'brute'.
-
     features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
@@ -345,18 +336,14 @@ def partial_dependence(
         and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
-
     percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
-
     grid_resolution : int, default=100
         The number of equally spaced points on the grid, for each target
         feature.
-
     method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
-
         - `'recursion'` is only supported for some tree-based estimators
           (namely
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
@@ -373,13 +360,10 @@ def partial_dependence(
           the average of the Individual Conditional Expectation (ICE) by
           design, it is not compatible with ICE and thus `kind` must be
           `'average'`.
-
         - `'brute'` is supported for any estimator, but is more
           computationally intensive.
-
         - `'auto'`: the `'recursion'` is used for estimators that support it,
           and `'brute'` is used otherwise.
-
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the `'brute'` and `'recursion'` method.
 
@@ -387,15 +371,13 @@ def partial_dependence(
         Whether to return the partial dependence averaged across all the
         samples in the dataset or one value per sample or both.
         See Returns below.
-
         Note that the fast `method='recursion'` option is only available for
         `kind='average'`. Computing individual dependencies requires using the
         slower `method='brute'` option.
-
         .. versionadded:: 0.24
 
     custom_values: dict
-        A dictionary mapping an element of `features` to an array of values where
+        A dictionary mapping the index of an element of `features` to an array of values where
         the partial dependence should be calculated for that feature. Setting a range
         of values for a feature overrides `grid_resolution` and `percentiles`.
 
@@ -445,7 +427,6 @@ def partial_dependence(
     --------
     PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
-
     Examples
     --------
     >>> X = [[0, 0, 2], [1, 0, 0]]
