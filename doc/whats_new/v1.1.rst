@@ -422,6 +422,10 @@ Changelog
 - |Fix| :func:`metrics.silhouette_score` now supports integer input for precomputed
   distances. :pr:`22108` by `Thomas Fan`_.
 
+- |Enhancement| :func:`metrics.roc_auc_score` now supports ``average=None``
+  in the multiclass case when ``multiclass='ovr'`` which will return the score
+  per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -437,13 +441,6 @@ Changelog
   the previous uniform on [0, 1] random initial approximations to eigenvectors
   in eigen_solvers `lobpcg` and `amg` to improve their numerical stability.
   :pr:`21565` by :user:`Andrew Knyazev <lobpcg>`.
-
-:mod:`sklearn.metrics`
-......................
-
-- |Enhancement| :func:`metrics.roc_auc_score` now supports ``average=None``
-  in the multiclass case when ``multiclass='ovr'`` which will return the score
-  per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
 
 :mod:`sklearn.model_selection`
 ..............................
