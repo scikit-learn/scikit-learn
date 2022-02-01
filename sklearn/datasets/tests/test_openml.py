@@ -32,7 +32,7 @@ from sklearn.utils import is_scalar_nan
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.externals._arff import ArffContainerType
+from sklearn.externals._arff import ArffContainerType, _downcast
 from functools import partial
 from sklearn.utils._testing import fails_if_pypy
 
@@ -90,12 +90,16 @@ def _test_features_list(data_id):
 
     data_downloaded = np.array(list(data_arff["data"]), dtype="O")
 
-    for i in range(len(data_bunch.feature_names)):
+    for column_idx, column_name in enumerate(data_bunch.feature_names):
         # XXX: Test per column, as this makes it easier to avoid problems with
         # missing values
 
+        column_downloaded = data_downloaded[:, column_idx]
+        if column_name in data_bunch.categories:
+            column_downloaded = np.array([_downcast(v) for v in column_downloaded])
+
         np.testing.assert_array_equal(
-            data_downloaded[:, i], decode_column(data_bunch, i)
+            column_downloaded, decode_column(data_bunch, column_idx)
         )
 
 
@@ -821,7 +825,7 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
         "boat": object,
         "body": np.float64,
         "home.dest": object,
-        "survived": CategoricalDtype(["0", "1"]),
+        "survived": CategoricalDtype([0, 1]),
     }
 
     frame_columns = [

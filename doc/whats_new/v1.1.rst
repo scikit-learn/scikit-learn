@@ -145,6 +145,10 @@ Changelog
   3 times in case of a network failure with a delay between each try.
   :pr:`21901` by :user:`Rileran <rileran>`.
 
+- |Fix| :func:`datasets.fetch_openml` now downcast whenever possible values
+  that are specified as nominal features instead of storing them as strings.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
