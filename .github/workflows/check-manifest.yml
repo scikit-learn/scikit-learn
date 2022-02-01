@@ -7,7 +7,7 @@ on:
 jobs:
   check:
     # Don't run on forks
-    if: github.repo_owner == 'scikit-learn'
+    if: github.repository == 'scikit-learn/scikit-learn'
 
     runs-on: ubuntu-latest
     steps:
