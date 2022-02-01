@@ -422,10 +422,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self)
 
-    @abstractmethod
-    def _warn_mae_for_criterion(self):
-        pass
-
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -462,9 +458,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        if self.criterion in ("absolute_error", "mae"):
-            # TODO: This should raise an error from 1.1
-            self._warn_mae_for_criterion()
+        possible_criterion = ("friedman_mse", "squared_error", "mse")
+        if self.criterion not in possible_criterion:
+            raise ValueError(
+                f"criterion={self.criterion!r} is not supported. Use "
+                "criterion='friedman_mse' or 'squared_error' instead, as"
+                " trees should use a squared error criterion in Gradient"
+                " Boosting."
+            )
 
         if self.criterion == "mse":
             # TODO: Remove in v1.2. By then it should raise an error.
@@ -939,22 +940,15 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : {'friedman_mse', 'squared_error', 'mse', 'mae'}, \
+    criterion : {'friedman_mse', 'squared_error', 'mse'}, \
             default='friedman_mse'
-        The function to measure the quality of a split. Supported criteria
-        are 'friedman_mse' for the mean squared error with improvement
-        score by Friedman, 'squared_error' for mean squared error, and 'mae'
-        for the mean absolute error. The default value of 'friedman_mse' is
-        generally the best as it can provide a better approximation in some
-        cases.
+        The function to measure the quality of a split. Supported criteria are
+        'friedman_mse' for the mean squared error with improvement score by
+        Friedman, 'squared_error' for mean squared error. The default value of
+        'friedman_mse' is generally the best as it can provide a better
+        approximation in some cases.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 0.24
-            `criterion='mae'` is deprecated and will be removed in version
-            1.1 (renaming of 0.26). Use `criterion='friedman_mse'` or
-            `'squared_error'` instead, as trees should use a squared error
-            criterion in Gradient Boosting.
 
         .. deprecated:: 1.0
             Criterion 'mse' was deprecated in v1.0 and will be removed in
@@ -1285,17 +1279,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         self.n_classes_ = self._n_classes
         return y
 
-    def _warn_mae_for_criterion(self):
-        # TODO: This should raise an error from 1.1
-        warnings.warn(
-            "criterion='mae' was deprecated in version 0.24 and "
-            "will be removed in version 1.1 (renaming of 0.26). Use "
-            "criterion='friedman_mse' or 'squared_error' instead, as"
-            " trees should use a squared error criterion in Gradient"
-            " Boosting.",
-            FutureWarning,
-        )
-
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -1516,21 +1499,15 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : {'friedman_mse', 'squared_error', 'mse', 'mae'}, \
+    criterion : {'friedman_mse', 'squared_error', 'mse'}, \
             default='friedman_mse'
-        The function to measure the quality of a split. Supported criteria
-        are "friedman_mse" for the mean squared error with improvement
-        score by Friedman, "squared_error" for mean squared error, and "mae"
-        for the mean absolute error. The default value of "friedman_mse" is
-        generally the best as it can provide a better approximation in some
-        cases.
+        The function to measure the quality of a split. Supported criteria are
+        "friedman_mse" for the mean squared error with improvement score by
+        Friedman, "squared_error" for mean squared error. The default value of
+        "friedman_mse" is generally the best as it can provide a better
+        approximation in some cases.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 0.24
-            `criterion='mae'` is deprecated and will be removed in version
-            1.1 (renaming of 0.26). The correct way of minimizing the absolute
-            error is to use `loss='absolute_error'` instead.
 
         .. deprecated:: 1.0
             Criterion 'mse' was deprecated in v1.0 and will be removed in
@@ -1714,13 +1691,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
 
-    n_classes_ : int
-        The number of classes, set to 1 for regressors.
-
-        .. deprecated:: 0.24
-            Attribute ``n_classes_`` was deprecated in version 0.24 and
-            will be removed in 1.1 (renaming of 0.26).
-
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
         ``n_iter_no_change`` is specified). Otherwise it is set to
@@ -1855,16 +1825,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             y = y.astype(DOUBLE)
         return y
 
-    def _warn_mae_for_criterion(self):
-        # TODO: This should raise an error from 1.1
-        warnings.warn(
-            "criterion='mae' was deprecated in version 0.24 and "
-            "will be removed in version 1.1 (renaming of 0.26). The "
-            "correct way of minimizing the absolute error is to use "
-            " loss='absolute_error' instead.",
-            FutureWarning,
-        )
-
     def predict(self, X):
         """Predict regression target for X.
 
@@ -1929,19 +1889,3 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
-
-    # FIXME: to be removed in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_classes_` was deprecated "
-        "in version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def n_classes_(self):
-        try:
-            check_is_fitted(self)
-        except NotFittedError as nfe:
-            raise AttributeError(
-                "{} object has no n_classes_ attribute.".format(self.__class__.__name__)
-            ) from nfe
-        return 1
