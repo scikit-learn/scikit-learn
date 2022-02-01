@@ -308,8 +308,8 @@ def _liac_arff_parser(
 
 def _pandas_arff_parser(
     gzip_file,
-    output_arrays_type,
-    columns_info_openml,
+    output_type,
+    openml_columns_info,
     feature_names_to_select,
     target_names_to_select,
 ):
@@ -323,7 +323,7 @@ def _pandas_arff_parser(
     gzip_file : GzipFile instance
         The GZip compressed file with the ARFF formatted payload.
 
-    output_array_type : {"numpy", "sparse", "pandas"}
+    output_type : {"numpy", "sparse", "pandas"}
         The type of the arrays that will be returned. The possibilities are:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
@@ -331,7 +331,7 @@ def _pandas_arff_parser(
         - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
           pandas Series or DataFrame.
 
-    columns_info : dict
+    openml_columns_info : dict
         The information provided by OpenML regarding the columns of the ARFF
         file.
 
@@ -371,13 +371,13 @@ def _pandas_arff_parser(
         na_values=["?"],  # missing values are represented by `?`
         comment="%",  # skip line starting by `%` since they are comments
     )
-    frame.columns = [name for name in columns_info_openml]
+    frame.columns = [name for name in openml_columns_info]
 
     columns_to_select = feature_names_to_select + target_names_to_select
     columns_to_keep = [col for col in frame.columns if col in columns_to_select]
     frame = frame[columns_to_keep]
 
-    frame = _cast_frame(frame, columns_info_openml)
+    frame = _cast_frame(frame, openml_columns_info)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
     nominal_attributes = {
         col_name: frame[col_name].cat.categories.tolist()
@@ -386,7 +386,7 @@ def _pandas_arff_parser(
         and frame[col_name].dtype.is_dtype("category")
     }
 
-    if output_arrays_type == "pandas":
+    if output_type == "pandas":
         return X, y, frame, None
     else:
         # FIXME: we should only use `.to_numpy` when supporting more recent version
@@ -400,8 +400,8 @@ def _pandas_arff_parser(
 def load_arff_from_gzip_file(
     gzip_file,
     parser,
-    output_arrays_type,
-    columns_info_openml,
+    output_type,
+    openml_columns_info,
     feature_names_to_select,
     target_names_to_select,
     shape=None,
@@ -416,7 +416,7 @@ def load_arff_from_gzip_file(
     parser : {"liac-arff", "pandas"}
         The parser used to parse the ARFF file.
 
-    output_array_type : {"numpy", "sparse", "pandas"}
+    output_type : {"numpy", "sparse", "pandas"}
         The type of the arrays that will be returned. The possibilities ara:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
@@ -424,7 +424,7 @@ def load_arff_from_gzip_file(
         - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
           pandas Series or DataFrame.
 
-    columns_info : dict
+    openml_columns_info : dict
         The information provided by OpenML regarding the columns of the ARFF
         file.
 
@@ -453,8 +453,8 @@ def load_arff_from_gzip_file(
     if parser == "liac-arff":
         return _liac_arff_parser(
             gzip_file,
-            output_arrays_type,
-            columns_info_openml,
+            output_type,
+            openml_columns_info,
             feature_names_to_select,
             target_names_to_select,
             shape,
@@ -462,8 +462,8 @@ def load_arff_from_gzip_file(
     elif parser == "pandas":
         return _pandas_arff_parser(
             gzip_file,
-            output_arrays_type,
-            columns_info_openml,
+            output_type,
+            openml_columns_info,
             feature_names_to_select,
             target_names_to_select,
         )

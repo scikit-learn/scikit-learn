@@ -413,8 +413,8 @@ def _load_arff_response(
     url: str,
     data_home: Optional[str],
     parser: str,
-    output_arrays_type: str,
-    columns_info_openml: dict,
+    output_type: str,
+    openml_columns_info: dict,
     feature_names_to_select: List[str],
     target_names_to_select: List[str],
     shape: Optional[Tuple[int, int]],
@@ -438,7 +438,7 @@ def _load_arff_response(
     parser : {"liac-arff", "pandas"}
         The parser used to parse the ARFF file.
 
-    output_arrays_type : {"numpy", "pandas", "sparse"}
+    output_type : {"numpy", "pandas", "sparse"}
         The type of the arrays that will be returned. The possibilities ara:
 
         - `"numpy"`: both `X` and `y` will be NumPy arrays;
@@ -446,7 +446,7 @@ def _load_arff_response(
         - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
           pandas Series or DataFrame.
 
-    columns_info_openml : dict
+    openml_columns_info : dict
         The information provided by OpenML regarding the columns of the ARFF
         file.
 
@@ -496,8 +496,8 @@ def _load_arff_response(
         X, y, frame, nominal_attributes = load_arff_from_gzip_file(
             gzip_file,
             parser=parser,
-            output_arrays_type=output_arrays_type,
-            columns_info_openml=columns_info_openml,
+            output_type=output_type,
+            openml_columns_info=openml_columns_info,
             feature_names_to_select=feature_names_to_select,
             target_names_to_select=target_names_to_select,
             shape=shape,
@@ -588,11 +588,11 @@ def _download_data_to_bunch(
     }
 
     if sparse:
-        output_arrays_type = "sparse"
+        output_type = "sparse"
     elif as_frame:
-        output_arrays_type = "pandas"
+        output_type = "pandas"
     else:
-        output_arrays_type = "numpy"
+        output_type = "numpy"
 
     # XXX: target columns should all be nominal or all numeric
     _verify_target_data_type(features_dict, target_columns)
@@ -611,8 +611,8 @@ def _download_data_to_bunch(
         url,
         data_home,
         parser=parser,
-        output_arrays_type=output_arrays_type,
-        columns_info_openml=features_dict,
+        output_type=output_type,
+        openml_columns_info=features_dict,
         feature_names_to_select=data_columns,
         target_names_to_select=target_columns,
         shape=shape,
@@ -904,7 +904,14 @@ def fetch_openml(
             except ImportError:
                 parser = "liac-arff"
     elif parser == "pandas":
-        check_pandas_support("fetch_openml with parser='pandas'")
+        try:
+            check_pandas_support("fetch_openml with parser='pandas'")
+        except ImportError as exc:
+            raise ImportError(
+                str(exc)
+                + " You should either install pandas or set parser='liac-arff' "
+                "and as_frame=False to get a NumPy arrays."
+            ) from exc
     elif parser != "liac-arff":
         raise ValueError("Invalid value for argument 'parser'. ")
 
