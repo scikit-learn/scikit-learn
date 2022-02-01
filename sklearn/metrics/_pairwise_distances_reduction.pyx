@@ -884,6 +884,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             # We need to recompute distances because we relied on
             # surrogate distances for the reduction.
             self.compute_exact_distances()
+
+            # Values are returned identically to the way `KNeighborsMixin.kneighbors`
+            # returns values. This is counter-intuitive but this allows not using
+            # complex adaptations where `PairwiseDistancesArgKmin.compute` is called.
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
