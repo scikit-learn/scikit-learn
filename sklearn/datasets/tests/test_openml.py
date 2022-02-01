@@ -303,9 +303,15 @@ def test_fetch_openml_as_frame_false(
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-@pytest.mark.parametrize("data_id", [1119, 40945])
+@pytest.mark.parametrize("data_id", [61, 1119])
 def test_fetch_openml_consistency_parser(monkeypatch, data_id):
-    """Check the consistency of the LIAC-ARFF and pandas parser."""
+    """Check the consistency of the LIAC-ARFF and pandas parser.
+
+    In the future, we should test for titanic dataset. However, LIAC-ARFF
+    always use string dtype for nominal features whereas pandas infer the data
+    type and thus can use integer or float dtype. Fixing this bug in LIAC-ARFF
+    would allow to check the consistency in the future.
+    """
     pd = pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
@@ -334,7 +340,7 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser):
     """Check the equivalence of the dataset when using `as_frame=False` and
-    `as_dataframe=True`.
+    `as_frame=True`.
     """
     pytest.importorskip("pandas")
 
@@ -349,7 +355,7 @@ def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser):
 
     bunch_as_frame_false = fetch_openml(
         data_id=data_id,
-        as_frame=True,
+        as_frame=False,
         cache=False,
         parser=parser,
     )
