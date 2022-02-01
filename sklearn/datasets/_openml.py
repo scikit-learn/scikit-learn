@@ -894,7 +894,12 @@ def fetch_openml(
     valid_parser = ("auto", "pandas", "liac-arff")
     if parser not in valid_parser:
         raise ValueError(
-            f"`parser` should be one of {','.join(valid_parser)}. Got {parser} instead."
+            f"`parser` must be one of {','.join(valid_parser)}. Got {parser} instead."
+        )
+
+    if as_frame not in ("auto", True, False):
+        raise ValueError(
+            f"`as_frame` must be one of 'auto', True, or False. Got {as_frame} instead."
         )
 
     return_sparse = data_description["format"].lower() == "sparse_arff"

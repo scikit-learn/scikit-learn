@@ -1088,6 +1088,20 @@ def test_fetch_openml_types_inference(
 
 
 @pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        ({"parser": "unknown"}, "`parser` must be one of"),
+        ({"as_frame": "unknown"}, "`as_frame` must be one of"),
+    ],
+)
+def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
+    data_id = 1119
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    with pytest.raises(ValueError, match=err_msg):
+        fetch_openml(data_id=data_id, **params)
+
+
+@pytest.mark.parametrize(
     "params",
     [
         {"as_frame": True},
@@ -1102,6 +1116,7 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
     try:
         check_pandas_support("test_fetch_openml_requires_pandas")
     except ImportError:
+        _monkey_patch_webbased_functions(monkeypatch, data_id, True)
         err_msg = "requires pandas to be installed. Alternatively, explicitely"
         with pytest.raises(ImportError, match=err_msg):
             fetch_openml(data_id=data_id, **params)
