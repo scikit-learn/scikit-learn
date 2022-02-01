@@ -67,6 +67,11 @@ def test_input_estimator_unchanged():
             "When 'max_features' is a callable, it must take only 'X' as",
         ),
         (
+            lambda X: 0.9,
+            ValueError,
+            "When `max_features` is a callable, it must return an integral",
+        ),
+        (
             lambda X, y: 10,
             TypeError,
             "When 'max_features' is a callable, it must take only 'X' as",
