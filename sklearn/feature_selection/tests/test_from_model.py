@@ -110,7 +110,7 @@ def test_max_features_dim(max_features):
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
-    assert X_trans.shape[1] == max_features
+    assert X_trans.shape[1] == transformer.max_features_
 
 
 class FixedImportanceEstimator(BaseEstimator):
