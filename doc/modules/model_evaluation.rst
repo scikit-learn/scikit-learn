@@ -490,10 +490,10 @@ The rates are defined as
   >>> y_true = [2, 0, 2, 2, 0, 1]
   >>> y_pred = [0, 0, 2, 2, 0, 2]
   >>> tpr_fpr_tnr_fnr_score(y_true, y_pred)
-  (array([1.        , 0.        , 0.66666667]),
-  array([0.25      , 0.        , 0.33333333]),
-  array([0.75      , 1.        , 0.66666667]),
-  array([0.        , 1.        , 0.33333333]))
+  (array([1., 0., 0.66...]),
+  array([0.25, 0., 0.33...]),
+  array([0.75, 1., 0.66...]),
+  array([0., 1., 0.33...]))
 
 .. note::
 
@@ -1832,9 +1832,9 @@ To make this more explicit, consider the following examples:
   >>> y_true = [2, 0, 2, 2, 0, 1]
   >>> y_pred = [0, 0, 2, 2, 0, 2]
   >>> specificity_score(y_true, y_pred, average=None)
-  array([0.75, 1.0, 0.66...])
+  array([0.75, 1., 0.66...])
   >>> npv_score(y_true, y_pred, average=None)
-  array([1.0, 0.83..., 0.66...])
+  array([1., 0.83..., 0.66...])
   >>> specificity_score(y_true, y_pred, average='macro')
   0.805...
   >>> npv_score(y_true, y_pred, average='macro')
