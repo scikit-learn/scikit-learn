@@ -1,6 +1,7 @@
 # Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
 # License: BSD 3 clause
 
+import inspect
 import numpy as np
 import numbers
 
@@ -216,13 +217,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         )
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
-            max_features = (
-                self.max_features()
-                if callable(self.max_features)
-                else self.max_features
-            )
             mask = np.zeros_like(scores, dtype=bool)
-            candidate_indices = np.argsort(-scores, kind="mergesort")[:max_features]
+            candidate_indices = np.argsort(-scores, kind="mergesort")[
+                : self.max_features_
+            ]
             mask[candidate_indices] = True
         else:
             mask = np.ones_like(scores, dtype=bool)
@@ -256,16 +254,28 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                         "When using an integral value, 'max_features' should be"
                         f" between 0 and {X.shape[1]}. Got {self.max_features} instead."
                     )
+                self.max_features_ = self.max_features
             elif isinstance(self.max_features, numbers.Real):
                 if self.max_features < 0 or self.max_features > 1:
                     raise TypeError(
                         "When using a real/float value, 'max_features' should be"
                         f" between 0 and 1. Got {self.max_features} instead."
                     )
-            elif not callable(self.max_features):
+                self.max_features_ = round(self.max_features * X.shape[1])
+            elif callable(self.max_features):
+                try:
+                    self.max_features_ = self.max_features(X)
+                except TypeError:
+                    raise TypeError(
+                        "When 'max_features' is a callable, it must take only 'X' as"
+                        " input -- you passed a function with signature"
+                        f" {inspect.signature(self.max_features)}"
+                    )
+            else:
                 raise TypeError(
                     "'max_features' must be either an integral value, real/float"
-                    f" value, or a callable. Got {self.max_features} instead."
+                    " value, or a callable that takes 'X' as input. Got"
+                    f" {self.max_features} instead."
                 )
 
         if self.prefit:
