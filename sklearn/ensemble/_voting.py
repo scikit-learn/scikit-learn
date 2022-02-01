@@ -184,15 +184,17 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         .. versionadded:: 0.18
 
     flatten_transform : bool, default=True
-        Affects shape of transform output only when voting='soft'
+        Affects shape of transform output only when voting='soft'.
         If voting='soft' and flatten_transform=True, transform method returns
         matrix with shape (n_samples, n_classifiers * n_classes). If
         flatten_transform=False, it returns
         (n_classifiers, n_samples, n_classes).
+        Values must be `True` or `False`.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting will be printed as it
         is completed.
+        Values must be in the range `[0, inf)`, or `True` or `False`.
 
         .. versionadded:: 0.23
 
@@ -465,6 +467,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     verbose : bool, default=False
         If True, the time elapsed while fitting will be printed as it
         is completed.
+        Values must be in the range `[0, inf)`, or `True` or `False`.
+
 
         .. versionadded:: 0.23
 
