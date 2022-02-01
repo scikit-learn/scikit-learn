@@ -226,8 +226,8 @@ def make_classification(
     centroids *= 2 * class_sep
     centroids -= class_sep
     if not hypercube:
-        centroids *= generator.rand(n_clusters, 1)
-        centroids *= generator.rand(1, n_informative)
+        centroids *= generator.uniform(size=(n_clusters, 1))
+        centroids *= generator.uniform(size=(1, n_informative))
 
     # Initially draw informative features from the standard normal
     X[:, :n_informative] = generator.standard_normal(size=(n_samples, n_informative))
@@ -239,14 +239,14 @@ def make_classification(
         y[start:stop] = k % n_classes  # assign labels
         X_k = X[start:stop, :n_informative]  # slice a view of the cluster
 
-        A = 2 * generator.rand(n_informative, n_informative) - 1
+        A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
         X_k[...] = np.dot(X_k, A)  # introduce random covariance
 
         X_k += centroid  # shift the cluster to a vertex
 
     # Create redundant features
     if n_redundant > 0:
-        B = 2 * generator.rand(n_informative, n_redundant) - 1
+        B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
         X[:, n_informative : n_informative + n_redundant] = np.dot(
             X[:, :n_informative], B
         )
@@ -254,7 +254,7 @@ def make_classification(
     # Repeat some features
     if n_repeated > 0:
         n = n_informative + n_redundant
-        indices = ((n - 1) * generator.rand(n_repeated) + 0.5).astype(np.intp)
+        indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
         X[:, n : n + n_repeated] = X[:, indices]
 
     # Fill useless features
@@ -263,16 +263,16 @@ def make_classification(
 
     # Randomly replace labels
     if flip_y >= 0.0:
-        flip_mask = generator.rand(n_samples) < flip_y
+        flip_mask = generator.uniform(size=n_samples) < flip_y
         y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
 
     # Randomly shift and scale
     if shift is None:
-        shift = (2 * generator.rand(n_features) - 1) * class_sep
+        shift = (2 * generator.uniform(size=n_features) - 1) * class_sep
     X += shift
 
     if scale is None:
-        scale = 1 + 100 * generator.rand(n_features)
+        scale = 1 + 100 * generator.uniform(size=n_features)
     X *= scale
 
     if shuffle:
@@ -391,10 +391,10 @@ def make_multilabel_classification(
         )
 
     generator = check_random_state(random_state)
-    p_c = generator.rand(n_classes)
+    p_c = generator.uniform(size=n_classes)
     p_c /= p_c.sum()
     cumulative_p_c = np.cumsum(p_c)
-    p_w_c = generator.rand(n_features, n_classes)
+    p_w_c = generator.uniform(size=(n_features, n_classes))
     p_w_c /= np.sum(p_w_c, axis=0)
 
     def sample_example():
@@ -409,7 +409,7 @@ def make_multilabel_classification(
         y = set()
         while len(y) != y_size:
             # pick a class with probability P(c)
-            c = np.searchsorted(cumulative_p_c, generator.rand(y_size - len(y)))
+            c = np.searchsorted(cumulative_p_c, generator.uniform(size=y_size - len(y)))
             y.update(c)
         y = list(y)
 
@@ -427,7 +427,7 @@ def make_multilabel_classification(
         # sample words with replacement from selected classes
         cumulative_p_w_sample = p_w_c.take(y, axis=1).sum(axis=1).cumsum()
         cumulative_p_w_sample /= cumulative_p_w_sample[-1]
-        words = np.searchsorted(cumulative_p_w_sample, generator.rand(n_words))
+        words = np.searchsorted(cumulative_p_w_sample, generator.uniform(size=n_words))
         return words, y
 
     X_indices = array.array("i")
@@ -610,7 +610,9 @@ def make_regression(
     # zeros (the other features are not correlated to y and should be ignored
     # by a sparsifying regularizers such as L1 or elastic net)
     ground_truth = np.zeros((n_features, n_targets))
-    ground_truth[:n_informative, :] = 100 * generator.rand(n_informative, n_targets)
+    ground_truth[:n_informative, :] = 100 * generator.uniform(
+        size=(n_informative, n_targets)
+    )
 
     y = np.dot(X, ground_truth) + bias
 
@@ -1015,7 +1017,7 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
 
     generator = check_random_state(random_state)
 
-    X = generator.rand(n_samples, n_features)
+    X = generator.uniform(size=(n_samples, n_features))
     y = (
         10 * np.sin(np.pi * X[:, 0] * X[:, 1])
         + 20 * (X[:, 2] - 0.5) ** 2
@@ -1078,7 +1080,7 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     """
     generator = check_random_state(random_state)
 
-    X = generator.rand(n_samples, 4)
+    X = generator.uniform(size=(n_samples, 4))
     X[:, 0] *= 100
     X[:, 1] *= 520 * np.pi
     X[:, 1] += 40 * np.pi
@@ -1143,7 +1145,7 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     """
     generator = check_random_state(random_state)
 
-    X = generator.rand(n_samples, 4)
+    X = generator.uniform(size=(n_samples, 4))
     X[:, 0] *= 100
     X[:, 1] *= 520 * np.pi
     X[:, 1] += 40 * np.pi
@@ -1379,9 +1381,9 @@ def make_spd_matrix(n_dim, *, random_state=None):
     """
     generator = check_random_state(random_state)
 
-    A = generator.rand(n_dim, n_dim)
+    A = generator.uniform(size=(n_dim, n_dim))
     U, _, Vt = linalg.svd(np.dot(A.T, A), check_finite=False)
-    X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), Vt)
+    X = np.dot(np.dot(U, 1.0 + np.diag(generator.uniform(size=n_dim))), Vt)
 
     return X
 
@@ -1441,11 +1443,11 @@ def make_sparse_spd_matrix(
     random_state = check_random_state(random_state)
 
     chol = -np.eye(dim)
-    aux = random_state.rand(dim, dim)
+    aux = random_state.uniform(size=(dim, dim))
     aux[aux < alpha] = 0
     aux[aux > alpha] = smallest_coef + (
         largest_coef - smallest_coef
-    ) * random_state.rand(np.sum(aux > alpha))
+    ) * random_state.uniform(size=np.sum(aux > alpha))
     aux = np.tril(aux, k=-1)
 
     # Permute the lines: we don't want to have asymmetries in the final
@@ -1509,15 +1511,15 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
     generator = check_random_state(random_state)
 
     if not hole:
-        t = 1.5 * np.pi * (1 + 2 * generator.rand(n_samples))
-        y = 21 * generator.rand(n_samples)
+        t = 1.5 * np.pi * (1 + 2 * generator.uniform(size=n_samples))
+        y = 21 * generator.uniform(size=n_samples)
     else:
         corners = np.array(
             [[np.pi * (1.5 + i), j * 7] for i in range(3) for j in range(3)]
         )
         corners = np.delete(corners, 4, axis=0)
         corner_index = generator.choice(8, n_samples)
-        parameters = generator.rand(2, n_samples) * np.array([[np.pi], [7]])
+        parameters = generator.uniform(size=(2, n_samples)) * np.array([[np.pi], [7]])
         t, y = corners[corner_index].T + parameters
 
     x = t * np.cos(t)
@@ -1560,9 +1562,9 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     """
     generator = check_random_state(random_state)
 
-    t = 3 * np.pi * (generator.rand(1, n_samples) - 0.5)
+    t = 3 * np.pi * (generator.uniform(size=(1, n_samples)) - 0.5)
     x = np.sin(t)
-    y = 2.0 * generator.rand(1, n_samples)
+    y = 2.0 * generator.uniform(size=(1, n_samples))
     z = np.sign(t) * (np.cos(t) - 1)
 
     X = np.concatenate((x, y, z))
