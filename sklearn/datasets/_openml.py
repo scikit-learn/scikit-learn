@@ -767,12 +767,16 @@ def fetch_openml(
         Number of seconds between retries.
 
     parser : {"auto", "liac-arff", "pandas"}, default="auto"
-        Parser used to load the ARFF file. `"pandas"` is the most efficient
-        parser but requires Pandas to be installed and is only used with
-        dense datasets. `"liac-arff"` is a pure Python ARFF parser that
-        is less efficient memory- and CPU-wise but it deals with sparse
-        datasets. `"auto"` selects `"pandas"` if the dataset to fetch is
-        dense, otherwise `"liac-arff"`.
+        Parser used to load the ARFF file. Two parsers are implemented:
+
+        - `"pandas"`: this is the most efficient parser. However, it requires
+          pandas to be installed and can only open dense datasets.
+        - `"liac-arff"`: this is a pure Python ARFF parser that is less
+          memory- and CPU-efficient. It deals with sparse ARFF dataset.
+
+        If `"auto"` (default), the parser is chosen automatically such that
+        `"liac-arff"` is selected for sparse ARFF datasets, otherwise
+        `"pandas"` is selected.
 
         .. versionadded:: 1.1
 
@@ -908,7 +912,6 @@ def fetch_openml(
         parser = "liac-arff" if return_sparse else "pandas"
 
     if as_frame or (not as_frame and parser == "pandas"):
-        # pandas is required but we need to raise the most meaningful error message
         try:
             check_pandas_support("`fetch_openml`")
         except ImportError as exc:
