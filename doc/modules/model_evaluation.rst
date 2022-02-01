@@ -2414,15 +2414,15 @@ D² score
 
 The D² score computes the fraction of deviance explained. 
 It is a generalization of R², where the squared error is generalized and replaced 
-by a deviance of choice :math:`\text{D}(y, \hat{y})`
+by a deviance of choice :math:`\text{dev}(y, \hat{y})`
 (e.g., Tweedie, pinball or mean absolute error).
 It is calculated as
 
 .. math::
 
-  D^2(y, \hat{y}) = 1 - \frac{\text{D}(y, \hat{y})}{\text{D}(y, \bar{y})} \,.
+  D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
-Where :math:`\bar{y}` is the optimal intercept-only model's prediction 
+Where :math:`y_{\text{null}}` is the optimal intercept-only model's prediction 
 (e.g., the mean of `y_true` for the Tweedie case, the median for absolute 
 error and the alpha-quantile for pinball loss).
 
@@ -2435,7 +2435,7 @@ D² Tweedie score
 ^^^^^^^^^^^^^^^^
 
 The :func:`d2_tweedie_score` function implements the special case of D² 
-where :math:`\text{D}(y, \hat{y})` is the Tweedie deviance. 
+where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance. 
 It is also known as D² Tweedie or McFadden's likelihood ratio index.
 
 The argument ``power`` defines the Tweedie power as for
@@ -2455,9 +2455,9 @@ of D² with a pinball deviance, i.e.:
 
 .. math::
 
-  D(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0).
+  \text{dev}(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0).
 
-The argument ``alpha`` defines the slope of the pinball deviance as for
+The argument ``alpha`` defines the slope of the pinball loss as for
 :func:`mean_pinball_loss`. It determines the quantile level ``alpha``
 for which the pinball deviance and also D2 are optimal.
 Note that for `alpha=0.5` (the defualt) :func:`d2_pinball_score`
@@ -2475,7 +2475,7 @@ The :func:`d2_absolute_error_score` function implements the special case of
 
 .. math::
 
-  D(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
+  \text{dev}(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
 
 Here are some usage examples of the :func:`d2_absolute_error_score` function::
 
