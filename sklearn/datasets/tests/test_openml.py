@@ -1218,7 +1218,7 @@ def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response):
             name=data_name,
             as_frame=False,
             cache=False,
-            parser="auto",
+            parser="liac-arff",
         )
 
 
@@ -1232,7 +1232,11 @@ def test_fetch_openml_no_target(monkeypatch, gzip_response):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     data = fetch_openml(
-        data_id=data_id, target_column=target_column, cache=False, as_frame=False
+        data_id=data_id,
+        target_column=target_column,
+        cache=False,
+        as_frame=False,
+        parser="liac-arff",
     )
     assert data.data.shape == (expected_observations, expected_features)
     assert data.target is None
@@ -1274,7 +1278,9 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     msg = "Version 1 of dataset glass2 is inactive,"
     with pytest.warns(UserWarning, match=msg):
-        glass2 = fetch_openml(cache=False, as_frame=False, **dataset_params)
+        glass2 = fetch_openml(
+            cache=False, as_frame=False, parser="liac-arff", **dataset_params
+        )
     assert glass2.data.shape == (163, 9)
     assert glass2.details["id"] == "40675"
 
@@ -1372,13 +1378,21 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
     msg = expected_row_id_msg.format(target_col)
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(
-            data_id=data_id, target_column=target_col, cache=False, as_frame=False
+            data_id=data_id,
+            target_column=target_col,
+            cache=False,
+            as_frame=False,
+            parser="liac-arff",
         )
     target_col = "Genotype"
     msg = expected_ignore_msg.format(target_col)
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(
-            data_id=data_id, target_column=target_col, cache=False, as_frame=False
+            data_id=data_id,
+            target_column=target_col,
+            cache=False,
+            as_frame=False,
+            parser="liac-arff",
         )
     # multi column test
     target_col = "MouseID"
@@ -1389,6 +1403,7 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
             target_column=[target_col, "class"],
             cache=False,
             as_frame=False,
+            parser="liac-arff",
         )
     target_col = "Genotype"
     msg = expected_ignore_msg.format(target_col)
@@ -1398,6 +1413,7 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
             target_column=[target_col, "class"],
             cache=False,
             as_frame=False,
+            parser="liac-arff",
         )
 
 
@@ -1407,7 +1423,7 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     msg = "OpenML registered a problem with the dataset. It might be unusable. Error:"
     with pytest.warns(UserWarning, match=msg):
-        fetch_openml(data_id=data_id, cache=False, as_frame=False)
+        fetch_openml(data_id=data_id, cache=False, as_frame=False, parser="liac-arff")
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
@@ -1416,7 +1432,7 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     msg = "OpenML raised a warning on the dataset. It might be unusable. Warning:"
     with pytest.warns(UserWarning, match=msg):
-        fetch_openml(data_id=data_id, cache=False, as_frame=False)
+        fetch_openml(data_id=data_id, cache=False, as_frame=False, parser="liac-arff")
 
 
 ###############################################################################
@@ -1519,6 +1535,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         data_home=cache_directory,
         return_X_y=True,
         as_frame=False,
+        parser="liac-arff",
     )
 
     monkeypatch.setattr(sklearn.datasets._openml, "urlopen", _mock_urlopen_raise)
@@ -1529,6 +1546,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         data_home=cache_directory,
         return_X_y=True,
         as_frame=False,
+        parser="liac-arff",
     )
     np.testing.assert_array_equal(X_fetched, X_cached)
     np.testing.assert_array_equal(y_fetched, y_cached)
@@ -1537,8 +1555,16 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
 @fails_if_pypy
-@pytest.mark.parametrize("as_frame", [True, False])
-def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
+@pytest.mark.parametrize(
+    "as_frame, parser",
+    [
+        (True, "liac-arff"),
+        (False, "liac-arff"),
+        (True, "auto"),
+        (True, "pandas"),
+    ],
+)
+def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, parser):
     """Check that the checksum is working as expected."""
     if as_frame:
         pytest.importorskip("pandas")
@@ -1612,16 +1638,19 @@ def test_open_openml_url_retry_on_network_error(monkeypatch):
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
-def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
+@pytest.mark.parametrize("parser", ("liac-arff", "pandas"))
+def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response, parser):
     """Check that we can load the "zoo" dataset.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/14340
     """
+    if parser == "pandas":
+        pytest.importorskip("pandas")
     data_id = 62
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
     dataset = sklearn.datasets.fetch_openml(
-        data_id=data_id, cache=False, as_frame=False, parser="auto"
+        data_id=data_id, cache=False, as_frame=False, parser=parser
     )
     assert dataset is not None
     # The dataset has 17 features, including 1 ignored (animal),
