@@ -839,7 +839,7 @@ def make_blobs(
         See :term:`Glossary <random_state>`.
 
     return_centers : bool, default=False
-        If True, then return the centers of each cluster
+        If True, then return the centers of each cluster.
 
         .. versionadded:: 0.23
 
@@ -854,6 +854,10 @@ def make_blobs(
     centers : ndarray of shape (n_centers, n_features)
         The centers of each cluster. Only returned if
         ``return_centers=True``.
+
+    See Also
+    --------
+    make_classification : A more intricate variant.
 
     Examples
     --------
@@ -870,10 +874,6 @@ def make_blobs(
     (10, 2)
     >>> y
     array([0, 1, 2, 0, 2, 2, 2, 1, 1, 0])
-
-    See Also
-    --------
-    make_classification : A more intricate variant.
     """
     generator = check_random_state(random_state)
 

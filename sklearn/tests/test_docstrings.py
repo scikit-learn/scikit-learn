@@ -26,7 +26,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._olivetti_faces.fetch_olivetti_faces",
     "sklearn.datasets._openml.fetch_openml",
     "sklearn.datasets._samples_generator.make_biclusters",
-    "sklearn.datasets._samples_generator.make_blobs",
     "sklearn.datasets._samples_generator.make_checkerboard",
     "sklearn.datasets._samples_generator.make_classification",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
