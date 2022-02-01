@@ -100,8 +100,16 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         ``threshold`` in the case where the ``coef_`` attribute of the
         estimator is of dimension 2.
 
-    max_features : int, default=None
-        The maximum number of features to select.
+    max_features : int, float, callable, default=None
+        The maximum number of features to select. ``max_features`` may be a
+        whole number representing the number of maximum features to allow,
+        a float representing the maximum proportion of features to allow, or
+        a callable that takes only ``X`` as an argument and returns the number
+        of maximum features to allow. When ``max_features`` is a float, the
+        number of maximum features is calculated as
+        ``max_features_=round(max_features*X.shape[1])``. When ``max_features``
+        is a callable, the number of maximum features is calculated as
+        ``max_features_=max_features(X)``
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
@@ -257,7 +265,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 self.max_features_ = self.max_features
             elif isinstance(self.max_features, numbers.Real):
                 if self.max_features < 0 or self.max_features > 1:
-                    raise TypeError(
+                    raise ValueError(
                         "When using a real/float value, 'max_features' should be"
                         f" between 0 and 1. Got {self.max_features} instead."
                     )

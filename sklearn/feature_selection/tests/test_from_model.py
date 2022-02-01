@@ -60,10 +60,34 @@ def test_input_estimator_unchanged():
 @pytest.mark.parametrize(
     "max_features, err_type, err_msg",
     [
-        (-1, ValueError, "'max_features' should be 0 and"),
-        (data.shape[1] + 1, ValueError, "'max_features' should be 0 and"),
-        ("gobbledigook", TypeError, "should be an integer"),
-        ("all", TypeError, "should be an integer"),
+        (-1, ValueError, "When using an integral value, 'max_features' should be"),
+        (
+            lambda: 10,
+            TypeError,
+            "When 'max_features' is a callable, it must take only 'X' as",
+        ),
+        (
+            lambda X, y: 10,
+            TypeError,
+            "When 'max_features' is a callable, it must take only 'X' as",
+        ),
+        (-0.4, ValueError, "When using a real/float value, 'max_features' should be"),
+        (1.4, ValueError, "When using a real/float value, 'max_features' should be"),
+        (
+            data.shape[1] + 1,
+            ValueError,
+            "When using an integral value, 'max_features' should be",
+        ),
+        (
+            "gobbledigook",
+            TypeError,
+            "'max_features' must be either an integral value, real/float",
+        ),
+        (
+            "all",
+            TypeError,
+            "'max_features' must be either an integral value, real/float",
+        ),
     ],
 )
 def test_max_features_error(max_features, err_type, err_msg):
@@ -76,7 +100,10 @@ def test_max_features_error(max_features, err_type, err_msg):
         transformer.fit(data, y)
 
 
-@pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
+@pytest.mark.parametrize(
+    "max_features",
+    [0, 2, data.shape[1], 0.0, 0.9, 1.0, lambda X: min(X.shape[1], 10000)],
+)
 def test_max_features_dim(max_features):
     clf = RandomForestClassifier(n_estimators=50, random_state=0)
     transformer = SelectFromModel(
