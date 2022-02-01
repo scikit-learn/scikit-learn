@@ -28,13 +28,13 @@ class LinearModelLoss:
         else:
             n_dof = n_features
 
-        if loss.is_multiclass:
+        if base_loss.is_multiclass:
             coef.shape = (n_classes, n_dof) or ravelled (n_classes * n_dof,)
         else:
             coef.shape = (n_dof,)
 
         The intercept term is at the end of the coef array:
-        if loss.is_multiclass:
+        if base_loss.is_multiclass:
             if coef.shape (n_classes, n_dof):
                 intercept = coef[:, -1]
             if coef.shape (n_classes * n_dof,)
@@ -57,12 +57,12 @@ class LinearModelLoss:
 
     Parameters
     ----------
-    _loss : instance of a loss function from sklearn._loss.
+    base_loss : instance of class BaseLoss from sklearn._loss.
     fit_intercept : bool
     """
 
-    def __init__(self, loss, fit_intercept):
-        self._loss = loss
+    def __init__(self, base_loss, fit_intercept):
+        self.base_loss = base_loss
         self.fit_intercept = fit_intercept
 
     def _w_intercept_raw(self, coef, X):
@@ -87,7 +87,7 @@ class LinearModelLoss:
         raw_prediction : ndarray of shape (n_samples,) or \
             (n_samples, n_classes)
         """
-        if not self._loss.is_multiclass:
+        if not self.base_loss.is_multiclass:
             if self.fit_intercept:
                 intercept = coef[-1]
                 weights = coef[:-1]
@@ -98,7 +98,7 @@ class LinearModelLoss:
         else:
             # reshape to (n_classes, n_dof)
             if coef.ndim == 1:
-                weights = coef.reshape((self._loss.n_classes, -1), order="F")
+                weights = coef.reshape((self.base_loss.n_classes, -1), order="F")
             else:
                 weights = coef
             if self.fit_intercept:
@@ -138,7 +138,7 @@ class LinearModelLoss:
         """
         weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
-        loss = self._loss.loss(
+        loss = self.base_loss.loss(
             y_true=y,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -152,7 +152,7 @@ class LinearModelLoss:
     def loss_gradient(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
     ):
-        """Computes the sum/average of loss and gradient.
+        """Computes the sum of loss and gradient w.r.t. coef.
 
         Parameters
         ----------
@@ -180,11 +180,11 @@ class LinearModelLoss:
         gradient : ndarray of shape coef.shape
              The gradient of the loss.
         """
-        n_features, n_classes = X.shape[1], self._loss.n_classes
+        n_features, n_classes = X.shape[1], self.base_loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
         weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
-        loss, grad_per_sample = self._loss.loss_gradient(
+        loss, grad_per_sample = self.base_loss.loss_gradient(
             y_true=y,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
@@ -192,7 +192,7 @@ class LinearModelLoss:
         )
         loss = loss.sum()
 
-        if not self._loss.is_multiclass:
+        if not self.base_loss.is_multiclass:
             loss += 0.5 * l2_reg_strength * (weights @ weights)
             grad = np.empty_like(coef, dtype=X.dtype)
             grad[:n_features] = X.T @ grad_per_sample + l2_reg_strength * weights
@@ -213,7 +213,7 @@ class LinearModelLoss:
     def gradient(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
     ):
-        """Computes the gradient.
+        """Computes the gradient w.r.t. coef.
 
         Parameters
         ----------
@@ -238,18 +238,18 @@ class LinearModelLoss:
         gradient : ndarray of shape coef.shape
              The gradient of the loss.
         """
-        n_features, n_classes = X.shape[1], self._loss.n_classes
+        n_features, n_classes = X.shape[1], self.base_loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
         weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
-        grad_per_sample = self._loss.gradient(
+        grad_per_sample = self.base_loss.gradient(
             y_true=y,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
             n_threads=n_threads,
         )
 
-        if not self._loss.is_multiclass:
+        if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=X.dtype)
             grad[:n_features] = X.T @ grad_per_sample + l2_reg_strength * weights
             if self.fit_intercept:
@@ -269,7 +269,7 @@ class LinearModelLoss:
     def gradient_hessian_product(
         self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
     ):
-        """Computes gradient and hessp (hessian product function).
+        """Computes gradient and hessp (hessian product function) w.r.t. coef.
 
         Parameters
         ----------
@@ -298,12 +298,12 @@ class LinearModelLoss:
             Function that takes in a vector input of shape of gradient and
             and returns matrix-vector product with hessian.
         """
-        (n_samples, n_features), n_classes = X.shape, self._loss.n_classes
+        (n_samples, n_features), n_classes = X.shape, self.base_loss.n_classes
         n_dof = n_features + int(self.fit_intercept)
         weights, intercept, raw_prediction = self._w_intercept_raw(coef, X)
 
-        if not self._loss.is_multiclass:
-            gradient, hessian = self._loss.gradient_hessian(
+        if not self.base_loss.is_multiclass:
+            gradient, hessian = self.base_loss.gradient_hessian(
                 y_true=y,
                 raw_prediction=raw_prediction,
                 sample_weight=sample_weight,
@@ -350,7 +350,7 @@ class LinearModelLoss:
             # HalfMultinomialLoss computes only the diagonal part of the hessian, i.e.
             # diagonal in the classes. Here, we want the matrix-vector product of the
             # full hessian. Therefore, we call gradient_proba.
-            gradient, proba = self._loss.gradient_proba(
+            gradient, proba = self.base_loss.gradient_proba(
                 y_true=y,
                 raw_prediction=raw_prediction,
                 sample_weight=sample_weight,

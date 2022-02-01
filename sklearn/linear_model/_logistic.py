@@ -399,7 +399,7 @@ def _logistic_regression_path(
             # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
             w0 = w0.ravel(order="F")
             loss = LinearModelLoss(
-                loss=HalfMultinomialLoss(n_classes=classes.size),
+                base_loss=HalfMultinomialLoss(n_classes=classes.size),
                 fit_intercept=fit_intercept,
             )
         target = Y_multi
@@ -413,10 +413,14 @@ def _logistic_regression_path(
     else:
         target = y_bin
         if solver == "lbfgs":
-            loss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
+            loss = LinearModelLoss(
+                base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+            )
             func = loss.loss_gradient
         elif solver == "newton-cg":
-            loss = LinearModelLoss(loss=HalfBinomialLoss(), fit_intercept=fit_intercept)
+            loss = LinearModelLoss(
+                base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+            )
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]

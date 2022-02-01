@@ -85,7 +85,7 @@ def test_loss_gradients_are_the_same(
     base_loss, fit_intercept, sample_weight, l2_reg_strength
 ):
     """Test that loss and gradient are the same across different functions."""
-    loss = LinearModelLoss(loss=base_loss(), fit_intercept=fit_intercept)
+    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
     X, y, coef = random_X_y_coef(
         linear_model_loss=loss, n_samples=10, n_features=5, seed=42
     )
@@ -141,8 +141,8 @@ def test_loss_gradients_hessp_intercept(
     base_loss, sample_weight, l2_reg_strength, X_sparse
 ):
     """Test that loss and gradient handle intercept correctly."""
-    loss = LinearModelLoss(loss=base_loss(), fit_intercept=False)
-    loss_inter = LinearModelLoss(loss=base_loss(), fit_intercept=True)
+    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=False)
+    loss_inter = LinearModelLoss(base_loss=base_loss(), fit_intercept=True)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
         linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
@@ -201,7 +201,7 @@ def test_gradients_hessians_numerically(
     Gradient should equal the numerical derivatives of the loss function.
     Hessians should equal the numerical derivatives of gradients.
     """
-    loss = LinearModelLoss(loss=base_loss(), fit_intercept=fit_intercept)
+    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
         linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
@@ -277,7 +277,7 @@ def test_gradients_hessians_numerically(
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_multinomial_coef_shape(fit_intercept):
     """Test that multinomial LinearModelLoss respects shape of coef."""
-    loss = LinearModelLoss(loss=HalfMultinomialLoss(), fit_intercept=fit_intercept)
+    loss = LinearModelLoss(base_loss=HalfMultinomialLoss(), fit_intercept=fit_intercept)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
         linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
