@@ -1836,7 +1836,7 @@ To make this more explicit, consider the following examples:
   >>> npv_score(y_true, y_pred, average=None)
   >>> array([1.0, 0.83..., 0.66...])
   >>> specificity_score(y_true, y_pred, average='macro')
-  >>> 0.8055...
+  >>> 0.805...
   >>> npv_score(y_true, y_pred, average='macro')
   >>> 0.83...
   >>> specificity_score(y_true, y_pred, average='micro')
@@ -1846,7 +1846,7 @@ To make this more explicit, consider the following examples:
   >>> specificity_score(y_true, y_pred, average='weighted')
   >>> 0.75
   >>> npv_score(y_true, y_pred, average='weighted')
-  >>> 0.8055...
+  >>> 0.805...
 
 .. _multilabel_ranking_metrics:
 
