@@ -144,6 +144,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    max_features_ : int
+        Maximum number of features calculated during :term:`fit`. Only defined
+        if the ``max_features`` is not none. For details on how
+        ``max_features_`` is calculated, see :term:`max_features`.
+
+        .. versionadded:: 1.1
+
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
