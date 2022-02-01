@@ -643,7 +643,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         # Note (jjerphan): Some design thoughts for future extensions.
         # This factory comes to handle specialisations for the given arguments.
         # For future work, this might can be an entrypoint to specialise operations
-        # for various back-end and/or hardware and/or datatypes, and/or fused
+        # for various backend and/or hardware and/or datatypes, and/or fused
         # {sparse, dense}-datasetspair etc.
         if (
             metric in ("euclidean", "sqeuclidean")

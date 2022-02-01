@@ -667,8 +667,8 @@ def pairwise_distances_argmin_min(
         metric_kwargs = {}
 
     if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
-        # This is an adaptation for one "sqeuclidean" specification.
-        # For this back-end, we can directly use "sqeuclidean".
+        # This is an adaptor for one "sqeuclidean" specification.
+        # For this backend, we can directly use "sqeuclidean".
         if metric_kwargs.get("squared", False) and metric == "euclidean":
             metric = "sqeuclidean"
             metric_kwargs = {}
@@ -778,8 +778,8 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         metric_kwargs = {}
 
     if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
-        # This is an adaptation for one "sqeuclidean" specification.
-        # For this back-end, we can directly use "sqeuclidean".
+        # This is an adaptor for one "sqeuclidean" specification.
+        # For this backend, we can directly use "sqeuclidean".
         if metric_kwargs.get("squared", False) and metric == "euclidean":
             metric = "sqeuclidean"
             metric_kwargs = {}

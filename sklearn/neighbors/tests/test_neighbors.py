@@ -1555,12 +1555,12 @@ def test_kneighbors_brute_backend(
         neigh.fit(X_train)
         with pytest.warns(ExceptionToAssert):
             with config_context(enable_cython_pairwise_dist=False):
-                # Use the legacy back-end for brute
+                # Use the legacy backend for brute
                 legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
                     X_test, return_distance=True
                 )
             with config_context(enable_cython_pairwise_dist=True):
-                # Use the PairwiseDistancesReduction as a back-end for brute
+                # Use the PairwiseDistancesReduction as a backend for brute
                 pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
                     X_test, return_distance=True
                 )

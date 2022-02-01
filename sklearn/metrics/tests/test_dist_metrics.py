@@ -65,7 +65,6 @@ else:
     )
 
 
-@pytest.mark.parametrize("metric", METRICS_DEFAULT_PARAMS)
 def check_cdist(metric, kwargs, X1, X2):
     if metric == "wminkowski":
         # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0

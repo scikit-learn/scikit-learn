@@ -585,6 +585,7 @@ Miscellaneous
   can be up to ×20 faster than in the previous versions'.
 
   :pr:`21462` by :user:`Julien Jerphanion <jjerphan>`.
+
 - |Fix| :func:`check_scalar` raises an error when `include_boundaries={"left", "right"}`
   and the boundaries are not set.
   :pr:`22027` by `Marie Lanternier <mlant>`.

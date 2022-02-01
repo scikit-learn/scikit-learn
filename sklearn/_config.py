@@ -90,7 +90,7 @@ def set_config(
         .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
-        The number of vectors per chunk for PairwiseDistancesReduction.
+        The number of row vectors per chunk for PairwiseDistancesReduction.
         Default is 256 (suitable for most of modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
