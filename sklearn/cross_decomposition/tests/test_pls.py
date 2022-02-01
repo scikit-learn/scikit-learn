@@ -71,7 +71,7 @@ def test_sanity_check_pls_regression():
     Y = d.target
 
     pls = PLSRegression(n_components=X.shape[1])
-    X_trans, Y_trans = pls.fit_transform(X, Y)
+    pls.fit_transform(X, Y)
 
     expected_x_weights = np.array(
         [
