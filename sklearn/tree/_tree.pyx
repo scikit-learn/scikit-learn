@@ -1478,7 +1478,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
         # Push root node, using StackRecord.start as node id
-        rc = stack.push(0, 0, 0, -1, 0, 0, 0)
+        rc = stack.push(0, 0, 0, _TREE_UNDEFINED, 0, 0, 0)
         if rc == -1:
             with gil:
                 raise MemoryError("pruning tree")
@@ -1510,11 +1510,11 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
             # bubble up values to ancestor nodes
             current_r = r_node[leaf_idx]
-            while leaf_idx != 0:
-                parent_idx = parent[leaf_idx]
-                r_branch[parent_idx] += current_r
-                n_leaves[parent_idx] += 1
-                leaf_idx = parent_idx
+            node_idx = parent[leaf_idx]
+            while node_idx != _TREE_UNDEFINED:
+                r_branch[node_idx] += current_r
+                n_leaves[node_idx] += 1
+                node_idx = parent[node_idx]
 
         for i in range(leaves_in_subtree.shape[0]):
             candidate_nodes[i] = not leaves_in_subtree[i]
@@ -1578,7 +1578,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
             # bubble up values to ancestors
             node_idx = parent[pruned_branch_node_idx]
-            while node_idx != -1:
+            while node_idx != _TREE_UNDEFINED:
                 n_leaves[node_idx] -= n_pruned_leaves
                 r_branch[node_idx] += r_diff
                 node_idx = parent[node_idx]
