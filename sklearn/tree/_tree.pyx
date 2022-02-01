@@ -1424,7 +1424,7 @@ cdef class _PathFinder(_CCPPruneController):
         self.count += 1
 
 
-cdef struct CCPRecord:
+cdef struct CostComplexityPruningRecord:
     SIZE_t node_idx
     SIZE_t parent
 
@@ -1462,11 +1462,11 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
         SIZE_t[:] child_r = orig_tree.children_right
         SIZE_t[:] parent = np.zeros(shape=n_nodes, dtype=np.intp)
 
-        stack[CCPRecord] ccp_stack
-        CCPRecord stack_record
+        stack[CostComplexityPruningRecord] ccp_stack
+        CostComplexityPruningRecord stack_record
         int rc = 0
         SIZE_t node_idx
-        stack[SIZE_t] size_t_stack
+        stack[SIZE_t] node_indices_stack
 
         SIZE_t[:] n_leaves = np.zeros(shape=n_nodes, dtype=np.intp)
         DOUBLE_t[:] r_branch = np.zeros(shape=n_nodes, dtype=np.float64)
@@ -1496,10 +1496,8 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
             r_node[i] = (
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
+        # Push the root node
         ccp_stack.push({"node_idx": 0, "parent": -1})
-        if rc == -1:
-            with gil:
-                raise MemoryError("pruning tree")
 
         while not ccp_stack.empty():
             stack_record = ccp_stack.top()
@@ -1551,12 +1549,12 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
             if controller.stop_pruning(effective_alpha):
                 break
 
-            size_t_stack.push(pruned_branch_node_idx)
+            node_indices_stack.push(pruned_branch_node_idx)
 
             # descendants of branch are not in subtree
-            while not size_t_stack.empty():
-                node_idx = size_t_stack.top()
-                size_t_stack.pop()
+            while not node_indices_stack.empty():
+                node_idx = node_indices_stack.top()
+                node_indices_stack.pop()
 
                 if not in_subtree[node_idx]:
                     continue # branch has already been marked for pruning
@@ -1566,8 +1564,8 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
                 if child_l[node_idx] != _TREE_LEAF:
                     # ... and child_r[node_idx] != _TREE_LEAF:
-                    size_t_stack.push(child_l[node_idx])
-                    size_t_stack.push(child_r[node_idx])
+                    node_indices_stack.push(child_l[node_idx])
+                    node_indices_stack.push(child_r[node_idx])
             leaves_in_subtree[pruned_branch_node_idx] = 1
             in_subtree[pruned_branch_node_idx] = 1
 
