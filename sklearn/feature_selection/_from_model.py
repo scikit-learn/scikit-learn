@@ -280,6 +280,11 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             elif callable(self.max_features):
                 try:
                     self.max_features_ = self.max_features(X)
+                    if not isinstance(self.max_features_, numbers.Integral):
+                        raise ValueError(
+                            "When `max_features` is a callable, it must return an"
+                            " integral value (e.g. `int`)"
+                        )
                 except TypeError:
                     raise TypeError(
                         "When 'max_features' is a callable, it must take only 'X' as"
