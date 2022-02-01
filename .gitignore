@@ -82,5 +82,3 @@ sklearn/utils/_seq_dataset.pxd
 sklearn/utils/_weight_vector.pyx
 sklearn/utils/_weight_vector.pxd
 sklearn/linear_model/_sag_fast.pyx
-# virtualenv from advanced installation guide
-sklearn-env/
