@@ -798,11 +798,11 @@ def _generate_sparse_matrix(X_csr):
 
 def check_estimator_sparse_data(name, estimator_orig):
     rng = np.random.RandomState(0)
-    X = rng.rand(40, 3)
+    X = rng.uniform(size=(40, 3))
     X[X < 0.8] = 0
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(int)
+    y = (4 * rng.uniform(size=40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
@@ -1088,7 +1088,7 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
+    X = _pairwise_estimator_convert_X(rng.uniform(size=(40, 10)), estimator_orig)
     X = X.astype(object)
     tags = _safe_tags(estimator_orig)
     y = (X[:, 0] * 4).astype(int)
