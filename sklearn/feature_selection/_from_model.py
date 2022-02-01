@@ -216,10 +216,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         )
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
+            max_features = (
+                self.max_features()
+                if callable(self.max_features)
+                else self.max_features
+            )
             mask = np.zeros_like(scores, dtype=bool)
-            candidate_indices = np.argsort(-scores, kind="mergesort")[
-                : self.max_features
-            ]
+            candidate_indices = np.argsort(-scores, kind="mergesort")[:max_features]
             mask[candidate_indices] = True
         else:
             mask = np.ones_like(scores, dtype=bool)
@@ -247,18 +250,22 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             Fitted estimator.
         """
         if self.max_features is not None:
-            if not isinstance(self.max_features, numbers.Integral):
+            if isinstance(self.max_features, numbers.Integral):
+                if self.max_features < 0 or self.max_features > X.shape[1]:
+                    raise ValueError(
+                        "When using an integral value, 'max_features' should be"
+                        f" between 0 and {X.shape[1]}. Got {self.max_features} instead."
+                    )
+            elif isinstance(self.max_features, numbers.Real):
+                if self.max_features < 0 or self.max_features > 1:
+                    raise TypeError(
+                        "When using a real/float value, 'max_features' should be"
+                        f" between 0 and 1. Got {self.max_features} instead."
+                    )
+            elif not callable(self.max_features):
                 raise TypeError(
-                    "'max_features' should be an integer between"
-                    " 0 and {} features. Got {!r} instead.".format(
-                        X.shape[1], self.max_features
-                    )
-                )
-            elif self.max_features < 0 or self.max_features > X.shape[1]:
-                raise ValueError(
-                    "'max_features' should be 0 and {} features.Got {} instead.".format(
-                        X.shape[1], self.max_features
-                    )
+                    "'max_features' must be either an integral value, real/float"
+                    f" value, or a callable. Got {self.max_features} instead."
                 )
 
         if self.prefit:
