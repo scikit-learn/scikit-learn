@@ -31,6 +31,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     top_k_accuracy_score,
+    matthews_corrcoef,
 )
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
@@ -102,6 +103,7 @@ CLF_SCORERS = [
     "roc_auc_ovo",
     "roc_auc_ovr_weighted",
     "roc_auc_ovo_weighted",
+    "matthews_corrcoef",
 ]
 
 # All supervised cluster scorers (They behave like classification metric)
@@ -393,6 +395,7 @@ def test_make_scorer():
         ("jaccard_macro", partial(jaccard_score, average="macro")),
         ("jaccard_micro", partial(jaccard_score, average="micro")),
         ("top_k_accuracy", top_k_accuracy_score),
+        ("matthews_corrcoef", matthews_corrcoef),
     ],
 )
 def test_classification_binary_scores(scorer_name, metric):

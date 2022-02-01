@@ -453,7 +453,6 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             reset=first_pass,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -655,7 +654,7 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     Machines or the L1 and L2 regularizers of linear models) assume that
     all features are centered around 0 and have variance in the same
     order. If a feature has a variance that is orders of magnitude larger
-    that others, it might dominate the objective function and make the
+    than others, it might dominate the objective function and make the
     estimator unable to learn from other features correctly as expected.
 
     This scaler can also be applied to sparse CSR or CSC matrices by passing
@@ -841,7 +840,6 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=("csr", "csc"),
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
             reset=first_call,
@@ -975,7 +973,6 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=False,
             accept_sparse="csr",
             copy=copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1017,7 +1014,6 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csr",
             copy=copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1175,7 +1171,6 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1215,7 +1210,6 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             reset=False,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1244,7 +1238,6 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1488,7 +1481,6 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse="csc",
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1551,7 +1543,6 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             reset=False,
             force_all_finite="allow-nan",
@@ -1585,7 +1576,6 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            estimator=self,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )

@@ -644,9 +644,8 @@ General Concepts
 
         Note that for most distance metrics, we rely on implementations from
         :mod:`scipy.spatial.distance`, but may reimplement for efficiency in
-        our context.  The :mod:`neighbors` module also duplicates some metric
-        implementations for integration with efficient binary tree search data
-        structures.
+        our context. The :class:`metrics.DistanceMetric` interface is used to implement
+        distance metrics for integration with efficient neighbors search.
 
     pd
         A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
@@ -1013,7 +1012,10 @@ such as:
         results in the previous steps of the cross-validation process. This
         generally leads to speed improvements. An exception is the
         :class:`RidgeCV <linear_model.RidgeCV>` class, which can instead
-        perform efficient Leave-One-Out CV.
+        perform efficient Leave-One-Out (LOO) CV. By default, all these
+        estimators, apart from :class:`RidgeCV <linear_model.RidgeCV>` with an
+        LOO-CV, will be refitted on the full training dataset after finding the
+        best combination of hyper-parameters.
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
@@ -1023,7 +1025,7 @@ such as:
 
 Further examples:
 
-* :class:`neighbors.DistanceMetric`
+* :class:`metrics.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
 
@@ -1605,6 +1607,7 @@ functions or non-estimator constructors.
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
             <https://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            Integer values must be in the range `[0, 2**32 - 1]`.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users

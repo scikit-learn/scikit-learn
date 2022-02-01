@@ -15,6 +15,7 @@ from scipy import linalg
 from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
+from .base import _ClassNamePrefixFeaturesOutMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
@@ -165,7 +166,10 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
 
 
 class LinearDiscriminantAnalysis(
-    LinearClassifierMixin, TransformerMixin, BaseEstimator
+    _ClassNamePrefixFeaturesOutMixin,
+    LinearClassifierMixin,
+    TransformerMixin,
+    BaseEstimator,
 ):
     """Linear Discriminant Analysis.
 
@@ -542,7 +546,7 @@ class LinearDiscriminantAnalysis(
             Fitted estimator.
         """
         X, y = self._validate_data(
-            X, y, ensure_min_samples=2, estimator=self, dtype=[np.float64, np.float32]
+            X, y, ensure_min_samples=2, dtype=[np.float64, np.float32]
         )
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
@@ -614,6 +618,7 @@ class LinearDiscriminantAnalysis(
             self.intercept_ = np.array(
                 self.intercept_[1] - self.intercept_[0], ndmin=1, dtype=X.dtype
             )
+        self._n_features_out = self._max_components
         return self
 
     def transform(self, X):
@@ -626,8 +631,10 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_components)
-            Transformed data.
+        X_new : ndarray of shape (n_samples, n_components) or \
+            (n_samples, min(rank, n_components))
+            Transformed data. In the case of the 'svd' solver, the shape
+            is (n_samples, min(rank, n_components)).
         """
         if self.solver == "lsqr":
             raise NotImplementedError(
@@ -707,7 +714,7 @@ class LinearDiscriminantAnalysis(
 
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
-    """Quadratic Discriminant Analysis
+    """Quadratic Discriminant Analysis.
 
     A classifier with a quadratic decision boundary, generated
     by fitting class conditional densities to the data
@@ -790,6 +797,10 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    LinearDiscriminantAnalysis : Linear Discriminant Analysis.
+
     Examples
     --------
     >>> from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
@@ -801,10 +812,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     QuadraticDiscriminantAnalysis()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
-
-    See Also
-    --------
-    LinearDiscriminantAnalysis : Linear Discriminant Analysis.
     """
 
     def __init__(
@@ -832,7 +839,12 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values (integers)
+            Target values (integers).
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         X, y = self._validate_data(X, y)
         check_classification_targets(y)
@@ -935,10 +947,13 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
         C : ndarray of shape (n_samples,)
+            Estimated probabilities.
         """
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))

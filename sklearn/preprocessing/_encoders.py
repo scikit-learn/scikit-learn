@@ -36,7 +36,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         - return list of features (arrays): this list of features is
           constructed feature by feature to preserve the data types
           of pandas DataFrame columns, as otherwise information is lost
-          and cannot be used, eg for the `categories_` attribute.
+          and cannot be used, e.g. for the `categories_` attribute.
 
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
@@ -218,7 +218,7 @@ class OneHotEncoder(_BaseEncoder):
 
         .. versionadded:: 0.20
 
-    drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
+    drop : {'first', 'if_binary'} or an array-like of shape (n_features,), \
             default=None
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
@@ -544,7 +544,7 @@ class OneHotEncoder(_BaseEncoder):
 
         indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
-        np.sum(X_mask, axis=1, out=indptr[1:])
+        np.sum(X_mask, axis=1, out=indptr[1:], dtype=indptr.dtype)
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
@@ -564,7 +564,7 @@ class OneHotEncoder(_BaseEncoder):
 
         When unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category. If the
-        feature with the unknown category has a dropped caregory, the dropped
+        feature with the unknown category has a dropped category, the dropped
         category will be its inverse.
 
         Parameters
@@ -701,9 +701,6 @@ class OneHotEncoder(_BaseEncoder):
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
-
-        Returns `input_features` as this transformation doesn't add or drop
-        features.
 
         Parameters
         ----------

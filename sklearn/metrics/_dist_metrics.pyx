@@ -1,9 +1,3 @@
-#!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: initializedcheck=False
-#cython: cdivision=True
-
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
 # License: BSD
@@ -19,7 +13,7 @@ cdef extern from "arrayobject.h":
                                      int typenum, void* data)
 
 
-cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
+cdef inline np.ndarray _buffer_to_ndarray(const DTYPE_t* x, np.npy_intp n):
     # Wrap a memory buffer with an ndarray. Warning: this is not robust.
     # In particular, if x is deallocated before the returned array goes
     # out of scope, this could cause memory errors.  Since there is not
@@ -33,9 +27,10 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
-from ._typedefs import DTYPE, ITYPE
-
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
+from ..utils._typedefs import DTYPE, ITYPE
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
+from ..utils import check_array
 
 ######################################################################
 # newObj function
@@ -98,7 +93,7 @@ cdef class DistanceMetric:
 
     Examples
     --------
-    >>> from sklearn.neighbors import DistanceMetric
+    >>> from sklearn.metrics import DistanceMetric
     >>> dist = DistanceMetric.get_metric('euclidean')
     >>> X = [[0, 1, 2],
              [3, 4, 5]]
@@ -119,11 +114,18 @@ cdef class DistanceMetric:
     "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
     "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
-    "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
+    "minkowski"     MinkowskiDistance     p, w      ``sum(w * |x - y|^p)^(1/p)``
     "wminkowski"    WMinkowskiDistance    p, w      ``sum(|w * (x - y)|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
+
+    .. deprecated:: 1.1
+        `WMinkowskiDistance` is deprecated in version 1.1 and will be removed in version 1.3.
+        Use `MinkowskiDistance` instead. Note that in `MinkowskiDistance`, the weights are
+        applied to the absolute differences already raised to the p power. This is different from
+        `WMinkowskiDistance` where weights are applied to the absolute differences before raising
+        to the p power. The deprecation aims to remain consistent with SciPy 1.8 convention.
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
     distance metric requires data in the form of [latitude, longitude] and both
@@ -220,8 +222,8 @@ cdef class DistanceMetric:
         set state for pickling
         """
         self.p = state[0]
-        self.vec = state[1]
-        self.mat = state[2]
+        self.vec = ReadonlyArrayWrapper(state[1])
+        self.mat = ReadonlyArrayWrapper(state[2])
         if self.__class__.__name__ == "PyFuncDistance":
             self.func = state[3]
             self.kwargs = state[4]
@@ -235,7 +237,7 @@ cdef class DistanceMetric:
 
         Parameters
         ----------
-        metric : string or class name
+        metric : str or class name
             The distance metric to use
         **kwargs
             additional arguments will be passed to the requested metric
@@ -258,14 +260,15 @@ cdef class DistanceMetric:
         # In Minkowski special cases, return more efficient methods
         if metric is MinkowskiDistance:
             p = kwargs.pop('p', 2)
-            if p == 1:
+            w = kwargs.pop('w', None)
+            if p == 1 and w is None:
                 return ManhattanDistance(**kwargs)
-            elif p == 2:
+            elif p == 2 and w is None:
                 return EuclideanDistance(**kwargs)
-            elif np.isinf(p):
+            elif np.isinf(p) and w is None:
                 return ChebyshevDistance(**kwargs)
             else:
-                return MinkowskiDistance(p, **kwargs)
+                return MinkowskiDistance(p, w, **kwargs)
         else:
             return metric(**kwargs)
 
@@ -291,14 +294,13 @@ cdef class DistanceMetric:
 
     cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                        ITYPE_t size) nogil except -1:
-        """Compute the reduced distance between vectors x1 and x2.
+        """Compute the rank-preserving surrogate distance between vectors x1 and x2.
 
         This can optionally be overridden in a base class.
 
-        The reduced distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the reduced distance is the squared-euclidean
-        distance.
+        The rank-preserving surrogate distance is any measure that yields the same
+        rank as the distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
         """
         return self.dist(x1, x2, size)
 
@@ -323,25 +325,24 @@ cdef class DistanceMetric:
         return 0
 
     cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
-        """Convert the reduced distance to the distance"""
+        """Convert the rank-preserving surrogate distance to the distance"""
         return rdist
 
     cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1:
-        """Convert the distance to the reduced distance"""
+        """Convert the distance to the rank-preserving surrogate distance"""
         return dist
 
     def rdist_to_dist(self, rdist):
-        """Convert the Reduced distance to the true distance.
+        """Convert the rank-preserving surrogate distance to the distance.
 
-        The reduced distance, defined for some metrics, is a computationally
-        more efficient measure which preserves the rank of the true distance.
-        For example, in the Euclidean distance metric, the reduced distance
-        is the squared-euclidean distance.
+        The surrogate distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
 
         Parameters
         ----------
         rdist : double
-            Reduced distance.
+            Surrogate distance.
 
         Returns
         -------
@@ -351,12 +352,11 @@ cdef class DistanceMetric:
         return rdist
 
     def dist_to_rdist(self, dist):
-        """Convert the true distance to the reduced distance.
+        """Convert the true distance to the rank-preserving surrogate distance.
 
-        The reduced distance, defined for some metrics, is a computationally
-        more efficient measure which preserves the rank of the true distance.
-        For example, in the Euclidean distance metric, the reduced distance
-        is the squared-euclidean distance.
+        The surrogate distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute. For example, for the
+        Euclidean metric, the surrogate distance is the squared-euclidean distance.
 
         Parameters
         ----------
@@ -366,7 +366,7 @@ cdef class DistanceMetric:
         Returns
         -------
         double
-            Reduced distance.
+            Surrogate distance.
         """
         return dist
 
@@ -453,7 +453,7 @@ cdef class SEuclideanDistance(DistanceMetric):
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
     """
     def __init__(self, V):
-        self.vec = np.asarray(V, dtype=DTYPE)
+        self.vec = ReadonlyArrayWrapper(np.asarray(V, dtype=DTYPE))
         self.size = self.vec.shape[0]
         self.p = 2
 
@@ -519,7 +519,7 @@ cdef class ChebyshevDistance(DistanceMetric):
 
     Examples
     --------
-    >>> from sklearn.neighbors.dist_metrics import DistanceMetric
+    >>> from sklearn.metrics.dist_metrics import DistanceMetric
     >>> dist = DistanceMetric.get_metric('chebyshev')
     >>> X = [[0, 1, 2],
     ...      [3, 4, 5]]
@@ -543,32 +543,68 @@ cdef class ChebyshevDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # Minkowski Distance
-#  d = sum(x_i^p - y_i^p) ^ (1/p)
 cdef class MinkowskiDistance(DistanceMetric):
     r"""Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i (x_i - y_i)^p] ^ (1/p)
+        D(x, y) = {||u-v||}_p
+
+    when w is None.
+
+    Here is the more general expanded expression for the weighted case:
+
+    .. math::
+        D(x, y) = [\sum_i w_i *|x_i - y_i|^p] ^ (1/p)
+
+    Parameters
+    ----------
+    p : int
+        The order of the p-norm of the difference (see above).
+    w : (N,) array-like (optional)
+        The weight vector.
 
     Minkowski Distance requires p >= 1 and finite. For p = infinity,
     use ChebyshevDistance.
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
     """
-    def __init__(self, p):
+    def __init__(self, p, w=None):
         if p < 1:
             raise ValueError("p must be greater than 1")
         elif np.isinf(p):
             raise ValueError("MinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
+
         self.p = p
+        if w is not None:
+            w_array = check_array(
+                w, ensure_2d=False, dtype=DTYPE, input_name="w"
+            )
+            if (w_array < 0).any():
+                raise ValueError("w cannot contain negative weights")
+            self.vec = ReadonlyArrayWrapper(w_array)
+            self.size = self.vec.shape[0]
+        else:
+            self.vec = ReadonlyArrayWrapper(np.asarray([], dtype=DTYPE))
+            self.size = 0
+
+    def _validate_data(self, X):
+        if self.size > 0 and X.shape[1] != self.size:
+            raise ValueError("MinkowskiDistance: the size of w must match "
+                             f"the number of features ({X.shape[1]}). "
+                             f"Currently len(w)={self.size}.")
 
     cdef inline DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
         cdef DTYPE_t d=0
         cdef np.intp_t j
-        for j in range(size):
-            d += pow(fabs(x1[j] - x2[j]), self.p)
+        cdef bint has_w = self.size > 0
+        if has_w:
+            for j in range(size):
+                d += self.vec[j] * pow(fabs(x1[j] - x2[j]), self.p)
+        else:
+            for j in range(size):
+                d += pow(fabs(x1[j] - x2[j]), self.p)
         return d
 
     cdef inline DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
@@ -589,8 +625,8 @@ cdef class MinkowskiDistance(DistanceMetric):
 
 
 #------------------------------------------------------------
+# TODO: Remove in 1.3 - WMinkowskiDistance class
 # W-Minkowski Distance
-#  d = sum(w_i^p * (x_i^p - y_i^p)) ^ (1/p)
 cdef class WMinkowskiDistance(DistanceMetric):
     r"""Weighted Minkowski Distance
 
@@ -608,13 +644,23 @@ cdef class WMinkowskiDistance(DistanceMetric):
 
     """
     def __init__(self, p, w):
+        from warnings import warn
+        warn("WMinkowskiDistance is deprecated in version 1.1 and will be "
+            "removed in version 1.3. Use MinkowskiDistance instead. Note "
+            "that in MinkowskiDistance, the weights are applied to the "
+            "absolute differences raised to the p power. This is different "
+            "from WMinkowskiDistance where weights are applied to the "
+            "absolute differences before raising to the p power. "
+            "The deprecation aims to remain consistent with SciPy 1.8 "
+            "convention.", FutureWarning)
+
         if p < 1:
             raise ValueError("p must be greater than 1")
         elif np.isinf(p):
             raise ValueError("WMinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
-        self.vec = np.asarray(w, dtype=DTYPE)
+        self.vec = ReadonlyArrayWrapper(np.asarray(w, dtype=DTYPE))
         self.size = self.vec.shape[0]
 
     def _validate_data(self, X):
@@ -674,7 +720,7 @@ cdef class MahalanobisDistance(DistanceMetric):
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
 
-        self.mat = np.asarray(VI, dtype=float, order='C')
+        self.mat = ReadonlyArrayWrapper(np.asarray(VI, dtype=float, order='C'))
 
         self.size = self.mat.shape[0]
 

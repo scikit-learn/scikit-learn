@@ -7,7 +7,7 @@
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
-from ..base import TransformerMixin
+from ..base import TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
 
 
@@ -65,10 +65,13 @@ def kneighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The distance metric used to calculate the k-Neighbors for each sample
-        point. The DistanceMetric class gives a list of available metrics.
-        The default distance is 'euclidean' ('minkowski' metric with the p
-        param equal to 2.)
+        The distance metric to use for the tree. The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric.
+        For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -157,10 +160,13 @@ def radius_neighbors_graph(
         between neighbors according to the given metric.
 
     metric : str, default='minkowski'
-        The distance metric used to calculate the neighbors within a
-        given radius for each sample point. The DistanceMetric class
-        gives a list of available metrics. The default distance is
-        'euclidean' ('minkowski' metric with the param equal to 2.)
+        The distance metric to use for the tree. The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric.
+        For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -217,7 +223,9 @@ def radius_neighbors_graph(
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
+class KNeighborsTransformer(
+    _ClassNamePrefixFeaturesOutMixin, KNeighborsMixin, TransformerMixin, NeighborsBase
+):
     """Transform X into a (weighted) graph of k nearest neighbors.
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
@@ -383,7 +391,9 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
-        return self._fit(X)
+        self._fit(X)
+        self._n_features_out = self.n_samples_fit_
+        return self
 
     def transform(self, X):
         """Compute the (weighted) graph of Neighbors for points in X.
@@ -439,7 +449,12 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         }
 
 
-class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, NeighborsBase):
+class RadiusNeighborsTransformer(
+    _ClassNamePrefixFeaturesOutMixin,
+    RadiusNeighborsMixin,
+    TransformerMixin,
+    NeighborsBase,
+):
     """Transform X into a (weighted) graph of neighbors nearer than a radius.
 
     The transformed data is a sparse graph as returned by
@@ -608,7 +623,9 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
-        return self._fit(X)
+        self._fit(X)
+        self._n_features_out = self.n_samples_fit_
+        return self
 
     def transform(self, X):
         """Compute the (weighted) graph of Neighbors for points in X.

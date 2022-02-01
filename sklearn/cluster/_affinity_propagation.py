@@ -71,7 +71,7 @@ def affinity_propagation(
         of estimated clusters that stops the convergence.
 
     max_iter : int, default=200
-        Maximum number of iterations
+        Maximum number of iterations.
 
     damping : float, default=0.5
         Damping factor between 0.5 and 1.
@@ -171,7 +171,7 @@ def affinity_propagation(
     # Remove degeneracies
     S += (
         np.finfo(S.dtype).eps * S + np.finfo(S.dtype).tiny * 100
-    ) * random_state.randn(n_samples, n_samples)
+    ) * random_state.standard_normal(size=(n_samples, n_samples))
 
     # Execute parallel affinity propagation updates
     e = np.zeros((n_samples, convergence_iter))

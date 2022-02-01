@@ -102,7 +102,7 @@ def fetch_california_housing(
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : list of length 8
             Array of ordered feature names used in the dataset.
-        DESCR : string
+        DESCR : str
             Description of the California housing dataset.
         frame : pandas DataFrame
             Only present when `as_frame=True`. DataFrame with ``data`` and

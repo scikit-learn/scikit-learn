@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+from numpy.testing import assert_allclose
 
 from re import escape
 
@@ -473,63 +474,6 @@ def test_ovr_pipeline():
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_():
-    for base_classifier in [
-        SVC(kernel="linear", random_state=0),
-        LinearSVC(random_state=0),
-    ]:
-        # SVC has sparse coef with sparse input data
-
-        ovr = OneVsRestClassifier(base_classifier)
-        for X in [iris.data, sp.csr_matrix(iris.data)]:
-            # test with dense and sparse coef
-            ovr.fit(X, iris.target)
-            shape = ovr.coef_.shape
-            assert shape[0] == n_classes
-            assert shape[1] == iris.data.shape[1]
-            # don't densify sparse coefficients
-            assert sp.issparse(ovr.estimators_[0].coef_) == sp.issparse(ovr.coef_)
-
-
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_exceptions():
-    # Not fitted exception!
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-
-    with pytest.raises(NotFittedError):
-        ovr.coef_
-
-    # Doesn't have coef_ exception!
-    ovr = OneVsRestClassifier(DecisionTreeClassifier())
-    ovr.fit(iris.data, iris.target)
-    msg = "Base estimator doesn't have a coef_ attribute"
-    with pytest.raises(AttributeError, match=msg):
-        ovr.coef_
-
-
-# TODO: Remove this test in version 1.1 when
-# the coef_ and intercept_ attributes are removed
-def test_ovr_deprecated_coef_intercept():
-    ovr = OneVsRestClassifier(SVC(kernel="linear"))
-    ovr = ovr.fit(iris.data, iris.target)
-
-    msg = (
-        r"Attribute `{0}` was deprecated in version 0.24 "
-        r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
-        r"this warning while using RFE or SelectFromModel, "
-        r"use the importance_getter parameter instead."
-    )
-
-    for att in ["coef_", "intercept_"]:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(ovr, att)
-
-
 def test_ovo_exceptions():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
@@ -971,3 +915,20 @@ def test_support_missing_values(MultiClassClassifier):
     lr = make_pipeline(SimpleImputer(), LogisticRegression(random_state=rng))
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
+
+
+@pytest.mark.parametrize("make_y", [np.ones, np.zeros])
+def test_constant_int_target(make_y):
+    """Check that constant y target does not raise.
+
+    Non-regression test for #21869
+    """
+    X = np.ones((10, 2))
+    y = make_y((10, 1), dtype=np.int32)
+    ovr = OneVsRestClassifier(LogisticRegression())
+
+    ovr.fit(X, y)
+    y_pred = ovr.predict_proba(X)
+    expected = np.zeros((X.shape[0], 2))
+    expected[:, 0] = 1
+    assert_allclose(y_pred, expected)

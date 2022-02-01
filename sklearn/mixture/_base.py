@@ -28,7 +28,7 @@ def _check_shape(param, param_shape, name):
 
     param_shape : tuple
 
-    name : string
+    name : str
     """
     param = np.array(param)
     if param.shape != param_shape:
@@ -456,7 +456,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             X = np.vstack(
                 [
-                    mean + rng.randn(sample, n_features) * np.sqrt(covariance)
+                    mean
+                    + rng.standard_normal(size=(sample, n_features))
+                    * np.sqrt(covariance)
                     for (mean, covariance, sample) in zip(
                         self.means_, self.covariances_, n_samples_comp
                     )
