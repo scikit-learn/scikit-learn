@@ -14,10 +14,14 @@ import pytest
 
 import sklearn
 from sklearn import config_context
-from sklearn.utils import Bunch
+from sklearn.utils import Bunch, check_pandas_support
 from sklearn.utils._mocking import _MockHTTPResponse
-from sklearn.utils._testing import assert_allclose, assert_array_equal
-from sklearn.utils._testing import fails_if_pypy
+from sklearn.utils._testing import (
+    SkipTest,
+    assert_allclose,
+    assert_array_equal,
+    fails_if_pypy,
+)
 
 from sklearn.datasets import fetch_openml as fetch_openml_orig
 from sklearn.datasets._openml import (
@@ -294,6 +298,34 @@ def test_fetch_openml_as_frame_false(
         assert bunch.target.shape == (n_samples, n_targets)
 
     assert isinstance(bunch.categories, dict)
+
+
+# Known failure of PyPy for OpenML. See the following issue:
+# https://github.com/scikit-learn/scikit-learn/issues/18906
+@fails_if_pypy
+@pytest.mark.parametrize("data_id", [1119, 40945])
+def test_fetch_openml_consistency_parser(monkeypatch, data_id):
+    """Check the consistency of the LIAC-ARFF and pandas parser."""
+    pd = pytest.importorskip("pandas")
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
+    bunch_liac = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser="liac-arff",
+    )
+    bunch_pandas = fetch_openml(
+        data_id=data_id,
+        as_frame=True,
+        cache=False,
+        parser="pandas",
+    )
+
+    frame_liac, frame_pandas = bunch_liac.frame, bunch_pandas.frame
+    frame_pandas_casted = frame_pandas.astype(frame_liac.dtypes)
+
+    pd.testing.assert_frame_equal(frame_liac, frame_pandas_casted)
 
 
 # Known failure of PyPy for OpenML. See the following issue:
@@ -1055,41 +1087,51 @@ def test_fetch_openml_types_inference(
 # Test some more specific behaviour
 
 
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"as_frame": True},
+        {"as_frame": "auto"},
+        {"as_frame": False, "parser": "auto"},
+        {"as_frame": False, "parser": "pandas"},
+    ],
+)
+def test_fetch_openml_requires_pandas_error(monkeypatch, params):
+    """Check that we raise the proper errors when we require pandas."""
+    data_id = 1119
+    try:
+        check_pandas_support("test_fetch_openml_requires_pandas")
+    except ImportError:
+        err_msg = "requires pandas to be installed. Alternatively, explicitely"
+        with pytest.raises(ImportError, match=err_msg):
+            fetch_openml(data_id=data_id, **params)
+    else:
+        raise SkipTest("This test requires pandas to not be installed.")
+
+
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
-    """Check that we raise an error if a dataset is sparse and we try to request a
-    dataframe.
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"parser": "pandas"},
+        {"as_frame": True},
+        {"parser": "pandas", "as_frame": True},
+    ],
+)
+def test_fetch_openml_sparse_arff_error(monkeypatch, params):
+    """Check that we raise the expected error for sparse ARFF datasets and
+    a wrong set of incompatible parameters.
     """
-    data_id = 292
-
-    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-
-    msg = "Cannot return dataframe with sparse data. Switch to `as_frame=False`."
-    with pytest.raises(ValueError, match=msg):
-        fetch_openml(
-            data_id=data_id,
-            as_frame=True,
-            cache=False,
-            parser="auto",
-        )
-
-
-@pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-def test_fetch_openml_pandas_parser_error_on_sparse(monkeypatch):
-    """Check that we raise an error using the pandas parser on a sparse dataset."""
     pytest.importorskip("pandas")
     data_id = 292
+
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    msg = (
-        "Cannot use `parser='pandas'` with sparse ARFF file. Switch to "
-        "`parser='liac-arff'`."
-    )
+    msg = "The sparse ARFF format is not supported together with pandas"
     with pytest.raises(ValueError, match=msg):
         fetch_openml(
             data_id=data_id,
-            as_frame=False,
             cache=False,
-            parser="pandas",
+            **params,
         )
 
 

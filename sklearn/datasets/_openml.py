@@ -751,8 +751,8 @@ def fetch_openml(
         data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
         DataFrames or Series as describe above.
 
-        If as_frame is 'auto', the data and target will be converted to
-        DataFrame or Series as if as_frame is set to True, unless the dataset
+        If `as_frame` is 'auto', the data and target will be converted to
+        DataFrame or Series as if `as_frame` is set to True, unless the dataset
         is stored in sparse format.
 
         .. versionchanged:: 0.24
@@ -776,18 +776,8 @@ def fetch_openml(
 
         .. versionadded:: 1.1
 
-        .. note::
-           The data type of the numerical columns might differ between
-           `parser="pandas"` and `parser="liac-arff"`. Indeed, some columns
-           will be inferred as integer with Pandas while float with LIAC-ARFF.
-           It is due to the fact that LIAC-ARFF parser will use the metadata
-           where the data types provided are not sufficient to decide whether
-           or not a column is integer or float (i.e. `numeric` and `real`
-           types).
-
     Returns
     -------
-
     data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
@@ -827,6 +817,21 @@ def fetch_openml(
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None
         (categorical target)
+
+    Notes
+    -----
+    It should be noted that the `"pandas"` and `"liac-arff"` parsers can lead
+    to different data types in the output. The notable differences are the
+    following:
+
+    - The `"liac-arff"` parser always considers nominal features as string.
+      To the contrary, the `"pandas"` parser instead infers the type while
+      reading and numerical categories will be casted into integers or floats
+      whenever possible.
+    - The `"liac-arff"` parser is using floats to encode numerical features
+      tagged as 'REAL' and 'NUMERICAL' in the metadata. To the contrary, the
+      `"pandas"` parser instead infers if these numerical features corresponds
+      to integers.
     """
     if cache is False:
         # no caching will be applied
@@ -886,46 +891,41 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    return_sparse = False
-    if data_description["format"].lower() == "sparse_arff":
-        return_sparse = True
+    valid_parser = ("auto", "pandas", "liac-arff")
+    if parser not in valid_parser:
+        raise ValueError(
+            f"`parser` should be one of {','.join(valid_parser)}. Got {parser} instead."
+        )
 
-    if as_frame == "auto":
-        as_frame = not return_sparse
-
+    return_sparse = data_description["format"].lower() == "sparse_arff"
+    as_frame = not return_sparse if as_frame == "auto" else as_frame
     if parser == "auto":
-        if return_sparse:
-            parser = "liac-arff"
-        else:
-            try:
-                import pandas  # noqa
+        parser = "liac-arff" if return_sparse else "pandas"
 
-                parser = "pandas"
-            except ImportError:
-                parser = "liac-arff"
-    elif parser == "pandas":
+    if as_frame or (not as_frame and parser == "pandas"):
+        # pandas is required but we need to raise the most meaningful error message
         try:
-            check_pandas_support("fetch_openml with parser='pandas'")
+            check_pandas_support("`fetch_openml`")
         except ImportError as exc:
-            raise ImportError(
-                str(exc)
-                + " You should either install pandas or set parser='liac-arff' "
-                "and as_frame=False to get a NumPy arrays."
-            ) from exc
-    elif parser != "liac-arff":
-        raise ValueError("Invalid value for argument 'parser'. ")
+            if as_frame:
+                err_msg = (
+                    "Returning pandas objects requires pandas to be installed. "
+                    "Alternatively, explicitely set `as_frame=False` and "
+                    "`parser='liac-arff'`."
+                )
+            else:
+                err_msg = (
+                    "Using `parser='pandas'` requires pandas to be installed. "
+                    "Alternatively, explicitely set `parser='liac-arff'`."
+                )
+            raise ImportError(err_msg) from exc
 
-    if return_sparse and (parser == "pandas" or as_frame):
-        if as_frame:
-            err_msg = (
-                "Cannot return dataframe with sparse data. Switch to `as_frame=False`."
-            )
-        else:
-            err_msg = (
-                "Cannot use `parser='pandas'` with sparse ARFF file. Switch to "
-                "`parser='liac-arff'`."
-            )
-        raise ValueError(err_msg)
+    if return_sparse and (as_frame or parser == "pandas"):
+        raise ValueError(
+            "The sparse ARFF format is not supported together with pandas. "
+            "Explicitely set `parser='liac-arff'` and either `as_frame='auto'` or "
+            "`as_frame=True`."
+        )
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
