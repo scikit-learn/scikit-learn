@@ -213,16 +213,6 @@ def test_gnb_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
-# TODO: Remove in version 1.1
-@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
-def test_discretenb_deprecated_coef_intercept(DiscreteNaiveBayes):
-    est = DiscreteNaiveBayes().fit(X2, y2)
-
-    for att in ["coef_", "intercept_"]:
-        with pytest.warns(FutureWarning):
-            hasattr(est, att)
-
-
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_prior(DiscreteNaiveBayes):
     # Test whether class priors are properly set.
@@ -332,7 +322,6 @@ def test_discretenb_predict_proba():
         assert_almost_equal(np.sum(clf.predict_proba([X[1]])), 1)
         assert_almost_equal(np.sum(clf.predict_proba([X[-1]])), 1)
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
-        assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
@@ -408,23 +397,6 @@ def test_discretenb_sample_weight_multiclass(DiscreteNaiveBayes):
     clf.partial_fit(X[2:3], y[2:3], sample_weight=sample_weight[2:3])
     clf.partial_fit(X[3:], y[3:], sample_weight=sample_weight[3:])
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
-
-
-# TODO: Remove in version 1.1
-@ignore_warnings(category=FutureWarning)
-@pytest.mark.parametrize(
-    "DiscreteNaiveBayes", [BernoulliNB, ComplementNB, MultinomialNB]
-)
-def test_discretenb_coef_intercept_shape(DiscreteNaiveBayes):
-    # coef_ and intercept_ should have shapes as in other linear models.
-    # Non-regression test for issue #2127.
-    X = [[1, 0, 0], [1, 1, 1]]
-    y = [1, 2]  # binary classification
-    clf = DiscreteNaiveBayes()
-
-    clf.fit(X, y)
-    assert clf.coef_.shape == (1, 3)
-    assert clf.intercept_.shape == (1,)
 
 
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
@@ -560,16 +532,6 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
     assert clf.predict([[1, 1]]) == 2
-
-
-# TODO: Remove in version 1.1
-@ignore_warnings(category=FutureWarning)
-def test_mnb_sample_weight():
-    clf = MultinomialNB()
-    clf.fit([[1, 2], [1, 2], [1, 0]], [0, 0, 1], sample_weight=[1, 1, 4])
-    assert_array_equal(clf.predict([[1, 0]]), [1])
-    positive_prior = np.exp(clf.intercept_[0])
-    assert_array_almost_equal([1 - positive_prior, positive_prior], [1 / 3.0, 2 / 3.0])
 
 
 def test_bnb():

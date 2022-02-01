@@ -414,10 +414,11 @@ def roc_auc_score(
 
     average : {'micro', 'macro', 'samples', 'weighted'} or None, \
             default='macro'
-        If ``None``, the scores for each class are returned. Otherwise,
-        this determines the type of averaging performed on the data:
+        If ``None``, the scores for each class are returned.
+        Otherwise, this determines the type of averaging performed on the data.
         Note: multiclass ROC AUC currently only handles the 'macro' and
-        'weighted' averages.
+        'weighted' averages. For multiclass targets, `average=None`
+        is only implemented for `multi_class='ovo'`.
 
         ``'micro'``:
             Calculate metrics globally by considering each element of the label
@@ -631,7 +632,7 @@ def _multiclass_roc_auc_score(
         )
 
     # validation for multiclass parameter specifications
-    average_options = ("macro", "weighted")
+    average_options = ("macro", "weighted", None)
     if average not in average_options:
         raise ValueError(
             "average must be one of {0} for multiclass problems".format(average_options)
@@ -643,6 +644,11 @@ def _multiclass_roc_auc_score(
             "multi_class='{0}' is not supported "
             "for multiclass ROC AUC, multi_class must be "
             "in {1}".format(multi_class, multiclass_options)
+        )
+
+    if average is None and multi_class == "ovo":
+        raise NotImplementedError(
+            "average=None is not implemented for multi_class='ovo'."
         )
 
     if labels is not None:
@@ -1722,6 +1728,8 @@ def top_k_accuracy_score(
             raise ValueError(
                 f"Number of classes in 'y_true' ({n_classes}) not equal "
                 f"to the number of classes in 'y_score' ({y_score_n_classes})."
+                "You can provide a list of all known classes by assigning it "
+                "to the `labels` parameter."
             )
     else:
         labels = column_or_1d(labels)
