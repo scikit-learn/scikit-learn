@@ -212,7 +212,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self.C = C
         self.loss = loss
 
-    def partial_fit(self, X, y, classes=None):
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters
@@ -230,6 +230,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
+
+        sample_weight : None
+            Ignored. This parameter exists only for compatibility with
+            sklearn.linear_model._stochastic_gradient.BaseSGDClassifier.
 
         Returns
         -------
