@@ -103,7 +103,7 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings
+    assert len(record) == n_warnings, [w.message for w in record]
 
 
 @pytest.mark.parametrize(
@@ -1404,7 +1404,7 @@ def test_convergence_warnings():
     with pytest.warns(None) as record:
         MultiTaskElasticNet().fit(X, y)
 
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 def test_sparse_input_convergence_warning():
@@ -1417,7 +1417,7 @@ def test_sparse_input_convergence_warning():
     with pytest.warns(None) as record:
         Lasso().fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize(

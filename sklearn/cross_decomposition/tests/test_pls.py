@@ -587,8 +587,7 @@ def test_loadings_converges():
     with pytest.warns(None) as record:
         cca.fit(X, y)
     # ConvergenceWarning should not be raised
-    if len(record) > 0:
-        pytest.fail(f"Unexpected warning: {str(record[0].message)}")
+    assert not [w.message for w in record]
 
     # Loadings converges to reasonable values
     assert np.all(np.abs(cca.x_loadings_) < 1)

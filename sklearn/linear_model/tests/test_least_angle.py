@@ -53,7 +53,7 @@ def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings
+    assert len(record) == n_warnings, [w.message for w in record]
 
 
 def test_simple():
