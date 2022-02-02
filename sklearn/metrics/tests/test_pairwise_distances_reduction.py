@@ -59,12 +59,6 @@ def _get_dummy_metric_params_list(metric: str, n_features: int):
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
 
-    if metric == "mahalanobis":
-        A = rng.rand(n_features, n_features)
-        # Make the matrix symmetric positive definite
-        VI = A + A.T + 3 * np.eye(n_features)
-        return [dict(VI=VI)]
-
     # Case of: "euclidean", "manhattan", "chebyshev", "haversine" or any other metric.
     # In those cases, no kwargs is needed.
     return [{}]
