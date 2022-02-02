@@ -690,7 +690,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
                 )
-                self.coef_ = np.vstack([o[0] for o in outs])
+                self.coef_ = np.vstack([out[0] for out in outs])
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
@@ -712,7 +712,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                     delayed(sparse_lsqr)(X_centered, y[:, j].ravel())
                     for j in range(y.shape[1])
                 )
-                self.coef_ = np.vstack([o[0] for o in outs])
+                self.coef_ = np.vstack([out[0] for out in outs])
         else:
             self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
