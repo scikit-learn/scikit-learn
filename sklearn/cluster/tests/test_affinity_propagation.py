@@ -247,7 +247,7 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
     ap.cluster_centers_ = centers
     with pytest.warns(None) as record:
         assert_array_equal(ap.predict(X), np.zeros(X.shape[0], dtype=int))
-    assert len(record) == 0
+    assert len(record) == 0, [w.message for w in record]
 
 
 def test_affinity_propagation_float32():
