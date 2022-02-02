@@ -640,8 +640,7 @@ class MDS(BaseEstimator):
             self.n_iter_ = None
         else:
             raise ValueError(
-                "Solver must be 'smacof', 'svd' or 'auto'. Got %s instead"
-                % str(self.solver)
+                "Solver must be 'smacof' or 'svd'. Got %s instead" % str(self.solver)
             )
 
         return self.embedding_
