@@ -105,7 +105,7 @@ def test_max_features_error(max_features, err_type, err_msg):
 
 
 @pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
-def test_max_features_dim_integer(max_features):
+def test_inferred_max_features_integer(max_features):
     clf = RandomForestClassifier(n_estimators=50, random_state=0)
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
@@ -118,7 +118,7 @@ def test_max_features_dim_integer(max_features):
     "max_features",
     [lambda X: 1, lambda X: X.shape[1], lambda X: min(X.shape[1], 10000)],
 )
-def test_max_features_dim_callable(max_features):
+def test_inferred_max_features_callable(max_features):
     clf = RandomForestClassifier(n_estimators=50, random_state=0)
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
