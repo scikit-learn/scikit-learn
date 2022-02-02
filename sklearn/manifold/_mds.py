@@ -435,10 +435,8 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    solver : {'auto', 'smacof', 'svd'}, default = 'auto'
-        The solver used for solving the MDS problem. When set to 'auto', MDS
-        will use the ``svd`` solver when ``metric==True`` and the ``smacof``
-        solver when ``metric==False``.
+    solver : {'smacof', 'svd'}, default = 'smacof'
+        The solver used for solving the MDS problem.
 
         .. versionadded:: 1.1
 
