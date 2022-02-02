@@ -469,7 +469,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         is completed.
         Values must be in the range `[0, inf)`, or `True` or `False`.
 
-
         .. versionadded:: 0.23
 
     Attributes
