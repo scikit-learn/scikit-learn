@@ -687,13 +687,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self.coef_ = optimize.nnls(X, y)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
-                def _nnls_0(X, y):
-                    return optimize.nnls(X, y)[0]
-
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(_nnls_0)(X, y[:, j]) for j in range(y.shape[1])
+                    delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
                 )
-                self.coef_ = np.vstack(outs)
+                self.coef_ = np.vstack([o[0] for o in outs])
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
@@ -711,14 +708,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self.coef_ = sparse_lsqr(X_centered, y)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
-                def _sparse_lsqr_0(X, y):
-                    return sparse_lsqr(X, y)[0]
-
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(_sparse_lsqr_0)(X_centered, y[:, j].ravel())
+                    delayed(sparse_lsqr)(X_centered, y[:, j].ravel())
                     for j in range(y.shape[1])
                 )
-                self.coef_ = np.vstack(outs)
+                self.coef_ = np.vstack([o[0] for o in outs])
         else:
             self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
