@@ -520,7 +520,7 @@ class MDS(BaseEstimator):
         n_jobs=None,
         random_state=None,
         dissimilarity="euclidean",
-        solver="auto",
+        solver="smacof",
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
@@ -605,9 +605,6 @@ class MDS(BaseEstimator):
                 "dissimilarity matrix, set "
                 "``dissimilarity='precomputed'``."
             )
-        solver = self.solver
-        if self.solver == "auto":
-            solver = "svd" if self.metric else "smacof"
 
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
@@ -620,7 +617,7 @@ class MDS(BaseEstimator):
                 % str(self.dissimilarity)
             )
 
-        if solver == "smacof":
+        if self.solver == "smacof":
             self.embedding_, self.stress_, self.n_iter_ = smacof(
                 self.dissimilarity_matrix_,
                 metric=self.metric,
@@ -634,7 +631,7 @@ class MDS(BaseEstimator):
                 random_state=self.random_state,
                 return_n_iter=True,
             )
-        elif solver == "svd":
+        elif self.solver == "svd":
             if not self.metric:
                 raise ValueError("Using SVD requires metric=True")
             self.embedding_, self.stress_ = svd_scaler(
