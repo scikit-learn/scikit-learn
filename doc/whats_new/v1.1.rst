@@ -112,6 +112,14 @@ Changelog
   `gamma`, `n_neighbors`, `eigen_tol` or `degree`.
   :pr:`21881` by :user:`Hugo Vassard <hvassard>`.
 
+- |Enhancement| :class:`cluster.AffinityPropagation` now returns cluster
+  centers and labels if they exist, even if the model has not fully converged.
+  When returning these potentially-degenerate cluster centers and labels, a new
+  warning message is shown. If no cluster centers were constructed,
+  then the cluster centers remain an empty list with labels set to
+  `-1` and the original warning message is shown.
+  :pr:`22217` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
