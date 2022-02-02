@@ -826,8 +826,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         better.
 
     alpha : float, default=0.0001
-        L2 penalty (regularization term) parameter. `alpha` is divided by
-        the sample size when added to the loss.
+        Strength of the L2 regularization term. The L2 regularization term
+        is divided by the sample size when added to the loss.
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
