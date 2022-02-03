@@ -95,7 +95,7 @@ def test_input_estimator_unchanged():
     ],
 )
 def test_max_features_error(max_features, err_type, err_msg):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
 
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
@@ -106,34 +106,14 @@ def test_max_features_error(max_features, err_type, err_msg):
 
 @pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
 def test_inferred_max_features_integer(max_features):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
-    transformer = SelectFromModel(
-        estimator=clf, max_features=max_features, threshold=-np.inf
-    )
-    transformer.fit_transform(data, y)
-    assert transformer.max_features_ == max_features
-
-
-@pytest.mark.parametrize(
-    "max_features",
-    [lambda X: 1, lambda X: X.shape[1], lambda X: min(X.shape[1], 10000)],
-)
-def test_inferred_max_features_callable(max_features):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
-    transformer = SelectFromModel(
-        estimator=clf, max_features=max_features, threshold=-np.inf
-    )
-    transformer.fit_transform(data, y)
-    assert transformer.max_features_ == max_features(data)
-
-
-@pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
-def test_output_shape_max_features_integers(max_features):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
+    # Assert correctness of inferred max features
+    assert transformer.max_features_ == max_features(data)
+    # Assert output shape matches inferred max features
     assert X_trans.shape[1] == transformer.max_features_
 
 
@@ -141,12 +121,15 @@ def test_output_shape_max_features_integers(max_features):
     "max_features",
     [lambda X: 1, lambda X: X.shape[1], lambda X: min(X.shape[1], 10000)],
 )
-def test_output_shape_max_features_callable(max_features):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+def test_inferred_max_features_callable(max_features):
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
+    # Assert correctness of inferred max features
+    assert transformer.max_features_ == max_features(data)
+    # Assert output shape matches inferred max features
     assert X_trans.shape[1] == transformer.max_features_
 
 

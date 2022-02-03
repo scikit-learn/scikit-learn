@@ -1,7 +1,6 @@
 # Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
 # License: BSD 3 clause
 
-import inspect
 import numpy as np
 import numbers
 
@@ -101,12 +100,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         estimator is of dimension 2.
 
     max_features : int, callable, default=None
-        The maximum number of features to select. ``max_features`` may be a
-        whole number representing the number of maximum features to allow,
-        or a callable that takes only ``X`` as an argument and returns the
-        number of maximum features to allow. When ``max_features`` is a
-        callable, the maximum number of features is calculated as
-        ``max_features_=max_features(X)``. For example, if one wanted to
+        The maximum number of features to select.
+
+        If an integer, then it specifies the maximum number of features to
+        allow. The callable must take only one argument. It will be called on
+        the data passed to `fit`.
+
+        If a callable, then it specifies how to calculate the maximum number of
+        features allowed. For example, if one wanted to
         select only up to 50% of the incoming features, they may set
         ``max_features=lambda X: round(X.shape[1]/2)``.
         To only select based on ``max_features``, set ``threshold=-np.inf``.
@@ -145,8 +146,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     max_features_ : int
         Maximum number of features calculated during :term:`fit`. Only defined
-        if the ``max_features`` is not none. For details on how
-        ``max_features_`` is calculated, see ``max_features``.
+        if the ``max_features`` is not `None`.
+
+        - If `max_features` is an int, then `max_features_ = max_features`.
+        - If `max_features` is a callable, then `max_features_ = max_features(X)`.
 
         .. versionadded:: 1.1
 
@@ -265,27 +268,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             if isinstance(self.max_features, numbers.Integral):
                 if self.max_features < 0 or self.max_features > X.shape[1]:
                     raise ValueError(
-                        "When using an integral value, 'max_features' should be"
+                        "When using an int, 'max_features' should be"
                         f" between 0 and {X.shape[1]}. Got {self.max_features} instead."
                     )
                 self.max_features_ = self.max_features
             elif callable(self.max_features):
-                try:
-                    self.max_features_ = self.max_features(X)
-                    if not isinstance(self.max_features_, numbers.Integral):
-                        raise ValueError(
-                            "When `max_features` is a callable, it must return an"
-                            " integral value (e.g. `int`)"
-                        )
-                except TypeError:
-                    raise TypeError(
-                        "When 'max_features' is a callable, it must take only 'X' as"
-                        " input -- you passed a function with signature"
-                        f" {inspect.signature(self.max_features)}"
+                self.max_features_ = self.max_features(X)
+                if not isinstance(self.max_features_, numbers.Integral):
+                    raise ValueError(
+                        "When `max_features` is a callable, it must return an int"
                     )
             else:
                 raise TypeError(
-                    "'max_features' must be either an integral value or a"
+                    "'max_features' must be either an int or a"
                     " callable that takes 'X' as input. Got"
                     f" {self.max_features} instead."
                 )
