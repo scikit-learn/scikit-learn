@@ -204,6 +204,10 @@ DATASETS = {
     "sparse-neg": {"X": -X_sparse_pos, "y": y_random},
     "sparse-mix": {"X": X_sparse_mix, "y": y_random},
     "zeros": {"X": np.zeros((20, 3)), "y": y_random},
+    "sparse-pos-binary": {"X": X_sparse_pos, "y": y_binary_random},
+    "sparse-neg-binary": {"X": -X_sparse_pos, "y": y_binary_random},
+    "sparse-mix-binary": {"X": X_sparse_mix, "y": y_binary_random},
+    "zeros-binary": {"X": np.zeros((20, 3)), "y": y_binary_random},
 }
 
 for name in DATASETS:
