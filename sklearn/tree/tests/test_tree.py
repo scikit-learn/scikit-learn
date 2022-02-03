@@ -188,6 +188,7 @@ X_large_imbl, y_large_imbl = datasets.make_classification(
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.0
 y_random = random_state.randint(0, 4, size=(20,))
+y_binary_random = random_state.randint(0, 2, size=(20,))
 X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25, random_state=0).toarray()
 
 
