@@ -103,7 +103,7 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings, [w.message for w in record]
+    assert len(record) == n_warnings
 
 
 @pytest.mark.parametrize(

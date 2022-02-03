@@ -57,7 +57,7 @@ def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings, [w.message for w in record]
+    assert len(record) == n_warnings
 
 
 def test_correct_shapes():
