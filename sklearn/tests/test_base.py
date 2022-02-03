@@ -566,7 +566,7 @@ def test_is_pairwise():
     pca = KernelPCA(kernel="precomputed")
     with pytest.warns(None) as record:
         assert _is_pairwise(pca)
-    assert not record
+    assert not [w.message for w in record]
 
     # pairwise attribute that is not consistent with the pairwise tag
     class IncorrectTagPCA(KernelPCA):
@@ -590,7 +590,7 @@ def test_is_pairwise():
     est = BaseEstimator()
     with pytest.warns(None) as record:
         assert not _is_pairwise(est)
-    assert not record
+    assert not [w.message for w in record]
 
 
 def test_n_features_in_validation():
@@ -667,7 +667,7 @@ def test_feature_names_in():
     trans = NoOpTransformer()
     with pytest.warns(None) as record:
         trans.fit(df_int_names)
-    assert not record
+    assert not [w.message for w in record]
 
     # fit on dataframe with no feature names or all integer feature names
     # -> do not warn on transform
@@ -675,7 +675,7 @@ def test_feature_names_in():
     for X in Xs:
         with pytest.warns(None) as record:
             trans.transform(X)
-        assert not record
+        assert not [w.message for w in record]
 
     # TODO: Convert to a error in 1.2
     # fit on dataframe with feature names that are mixed warns:
