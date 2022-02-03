@@ -107,9 +107,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         the data passed to `fit`.
 
         If a callable, then it specifies how to calculate the maximum number of
-        features allowed. For example, if one wanted to
-        select only up to 50% of the incoming features, they may set
-        ``max_features=lambda X: round(X.shape[1]/2)``.
+        features allowed.
+
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
