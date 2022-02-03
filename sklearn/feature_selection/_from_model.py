@@ -176,6 +176,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     Examples
     --------
+
     >>> from sklearn.feature_selection import SelectFromModel
     >>> from sklearn.linear_model import LogisticRegression
     >>> X = [[ 0.87, -1.34,  0.31 ],
@@ -183,9 +184,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     ...      [-1.34, -0.48, -2.55 ],
     ...      [ 1.92,  1.48,  0.65 ]]
     >>> y = [0, 1, 0, 1]
-    >>> selector = SelectFromModel(estimator=LogisticRegression())
-    >>> selector.set_params(max_features=lambda X: round(len(X[0])/2))
-    >>> selector.fit(X,y)
+    >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X,y)
     >>> selector.estimator_.coef_
     array([[-0.3252302 ,  0.83462377,  0.49750423]])
     >>> selector.threshold_
@@ -197,6 +196,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.02],
            [-0.48],
            [ 1.48]])
+
+    Using a callable to create a selector that can use no more than half
+    of the input features.
+    >>> half_selector = SelectFromModel(estimator=LogisticRegression())
+    >>> half_selector.set_params(max_features=lambda X: round(len(X[0])/2))
+    >>> half_selector.fit(X,y)
+
     """
 
     def __init__(
