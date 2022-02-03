@@ -591,8 +591,8 @@ def make_scorer(
     :func:`~sklearn.model_selection.cross_val_score`.
     It takes a score function, such as :func:`~sklearn.metrics.accuracy_score`,
     :func:`~sklearn.metrics.mean_squared_error`,
-    :func:`~sklearn.metrics.adjusted_rand_index` or
-    :func:`~sklearn.metrics.average_precision`
+    :func:`~sklearn.metrics.adjusted_rand_score` or
+    :func:`~sklearn.metrics.average_precision_score`
     and returns a callable that scores an estimator's output.
     The signature of the call is `(estimator, X, y)` where `estimator`
     is the model to be evaluated, `X` is the data and `y` is the
