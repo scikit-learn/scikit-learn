@@ -321,6 +321,12 @@ def test_xor():
         assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
 
 
+@pytest.mark.parametrize("name", CLF_TREES)
+@pytest.mark.parametrize("criterion", ["hellinger"])
+def test_imbalanced_criterions(name, criterion):
+    check_classification(name, Tree, criterion, X_large_imbl, y_large_imbl)
+
+
 @pytest.mark.parametrize("name, Tree", CLF_TREES.items())
 @pytest.mark.parametrize("criterion", ["gini", "entropy"])
 def test_iris(name, Tree, criterion):
