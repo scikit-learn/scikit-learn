@@ -171,6 +171,19 @@ X_multilabel, y_multilabel = datasets.make_multilabel_classification(
     random_state=0, n_samples=30, n_features=10
 )
 
+# Imbalanced classification sample used for testing imbalanced criterions
+imbl_minority_class_ratio = 0.05
+X_large_imbl, y_large_imbl = datasets.make_classification(
+    n_samples=500,
+    n_features=10,
+    n_informative=5,
+    n_redundant=0,
+    n_repeated=0,
+    weights=[1 - imbl_minority_class_ratio, imbl_minority_class_ratio],
+    shuffle=False,
+    random_state=0,
+)
+
 # NB: despite their names X_sparse_* are numpy arrays (and not sparse matrices)
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.0
