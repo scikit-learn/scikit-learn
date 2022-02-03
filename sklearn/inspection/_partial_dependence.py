@@ -428,6 +428,7 @@ def partial_dependence(
     --------
     PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
+
     Examples
     --------
     >>> X = [[0, 0, 2], [1, 0, 0]]
