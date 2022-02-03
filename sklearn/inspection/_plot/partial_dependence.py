@@ -503,9 +503,10 @@ class PartialDependenceDisplay:
             See :term:`Glossary <random_state>` for details.
 
         custom_values : dict
-            A dictionary mapping the index of an element of `features` to an array of values where
-            the partial dependence should be calculated for that feature. Setting a range
-            of values for a feature overrides `grid_resolution` and `percentiles`.
+            A dictionary mapping the index of an element of `features` to an
+            array of values where the partial dependence should be calculated
+            for that feature. Setting a range of values for a feature overrides
+            `grid_resolution` and `percentiles`.
 
             .. versionadded:: 1.3
 
