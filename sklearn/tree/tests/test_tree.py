@@ -321,22 +321,27 @@ def test_xor():
         assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
 
 
-def test_iris():
-    # Check consistency on dataset iris.
-    for (name, Tree), criterion in product(CLF_TREES.items(), CLF_CRITERIONS):
-        clf = Tree(criterion=criterion, random_state=0)
-        clf.fit(iris.data, iris.target)
-        score = accuracy_score(clf.predict(iris.data), iris.target)
-        assert score > 0.9, "Failed with {0}, criterion = {1} and score = {2}".format(
-            name, criterion, score
-        )
+@pytest.mark.parametrize("name, Tree", CLF_TREES.items())
+@pytest.mark.parametrize("criterion", ["gini", "entropy"])
+def test_iris(name, Tree, criterion):
+    check_classification(name, Tree, criterion, iris.data, iris.target)
 
-        clf = Tree(criterion=criterion, max_features=2, random_state=0)
-        clf.fit(iris.data, iris.target)
-        score = accuracy_score(clf.predict(iris.data), iris.target)
-        assert score > 0.5, "Failed with {0}, criterion = {1} and score = {2}".format(
-            name, criterion, score
-        )
+
+def check_classification(name, Tree, criterion, X, y):
+    # Check consistency on dataset iris.
+    clf = Tree(criterion=criterion, random_state=0)
+    clf.fit(X, y)
+    score = accuracy_score(clf.predict(X), y)
+    assert score > 0.9, "Failed with {0}, criterion = {1} and score = {2}".format(
+        name, criterion, score
+    )
+
+    clf = Tree(criterion=criterion, max_features=2, random_state=0)
+    clf.fit(X, y)
+    score = accuracy_score(clf.predict(X), y)
+    assert score > 0.5, "Failed with {0}, criterion = {1} and score = {2}".format(
+        name, criterion, score
+    )
 
 
 @pytest.mark.parametrize("name, Tree", REG_TREES.items())
