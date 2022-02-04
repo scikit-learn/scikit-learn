@@ -860,28 +860,69 @@ regularization.
     that it improves numerical stability. No regularization amounts to
     setting C to a very high value.
 
-As an optimization problem, binary class :math:`\ell_2` penalized logistic
-regression minimizes the following cost function:
+Binary Case
+-----------
 
-.. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+For notational ease, we assume that the target :math:`y_i` takes values in the
+set :math:`{-1, 1}` at trial :math:`i`. As an optimization problem, binary
+class logistic regression using :math:`r(w)` regularization minimizes the
+following cost function:
 
-Similarly, :math:`\ell_1` regularized logistic regression solves the following
+.. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+
+
+Multinomial Case
+----------------
+
+We may then extend logistic regression to obtain a multinomial estimator by
+considering the logistic regression as a `log-linear model
+<https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`.
+Note that t is possible in a :math:`K`-class context to parameterize the model
+using only :math:`K-1` weight vectors, leaving one class probability fully
+determined by the other class probabilities by leveraging the fact that all
+class probabilities must sum to one. We choose to overparameterize the model
+using :math:`K` weight vectors for ease of implementation and to preserve the
+symmetrical inductive bias regarding ordering of classes. This effect becomes
+especially important when using regularization.
+
+
+In the multinomial context with :math:`K`-many classes, we define the target
+vector of :math:`x_n` as :math:`y_n`, a binary vector with all zeros except for
+at element :math:`y_{n, t}` where :math:`t` is the true class of :math:`x_n`.
+Let :math:`C_i` be a binary vector with a :math:`0` for every element except
+for element :math:`k`, and :math:`W` be a matrix of weights where each vector
+:math:`W_k` corresponds to class :math:`k`. Then we find that
+
+.. math:: p(y_n=C_k|x_n) = z_{n,k} = \frac{\exp (W_k^T x_n)}{\sum_j W_j^T x_n}
+
+ Then the multinomial logistic regression solves this
 optimization problem:
 
-.. math:: \min_{w, c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
+.. math:: \min_W r(W) - C\sum_n \sum_k y_{n,k} z_{n,k}
 
-Elastic-Net regularization is a combination of :math:`\ell_1` and
-:math:`\ell_2`, and minimizes the following cost function:
+.. note::
 
-.. math:: \min_{w, c} \frac{1 - \rho}{2}w^T w + \rho \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1),
+   In the multinomial case, the regularization function internally flattens the
+   matrix of weights into a vector which is equivalent to concatenating each
+   individual vector :math:`W_k`. Then using the :math:`\ell_2` regularization,
+   the regularization equivalently takes the Frobenius norm:
+   :math:`r(W) = \|W\|_F`
 
-where :math:`\rho` controls the strength of :math:`\ell_1` regularization vs.
-:math:`\ell_2` regularization (it corresponds to the `l1_ratio` parameter).
+Regularization
+--------------
+We currently implement four choices of regularization term
+- None, :math:`r(w) = 0`
+- :math:`\ell_1,\, r(w) = \|w\|_1`
+- :math:`\ell_2,\, r(w) = \|w\|_2 = w^T w`
+- ElasticNet, :math:`r(w) = \frac{1 - \rho}{2}w^T w + \rho \|w\|_1`
 
-Note that, in this notation, it's assumed that the target :math:`y_i` takes
-values in the set :math:`{-1, 1}` at trial :math:`i`. We can also see that
-Elastic-Net is equivalent to :math:`\ell_1` when :math:`\rho = 1` and equivalent
-to :math:`\ell_2` when :math:`\rho=0`.
+For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
+controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
+regularization. Elastic-Net is equivalent to :math:`\ell_1` when
+:math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
+
+Solvers
+-------
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
