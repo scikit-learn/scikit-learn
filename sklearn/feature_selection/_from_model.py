@@ -191,10 +191,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     >>> selector.get_support()
     array([False,  True, False])
     >>> selector.transform(X)
-    array([[-1.34],
-           [-0.02],
-           [-0.48],
-           [ 1.48]])
+    ... array([[-1.34],
+    ...       [-0.02],
+    ...       [-0.48],
+    ...       [ 1.48]])
 
     Using a callable to create a selector that can use no more than half
     of the input features.
