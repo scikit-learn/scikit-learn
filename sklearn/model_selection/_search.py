@@ -768,15 +768,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of the estimator.
+            Parameters passed to the `fit` method of the estimator.
 
-            Depending on the value, a fit parameter may be split into multiple
-            CV groups along with `X` and `y`. For example, the `sample_weight`
-            parameter to :meth:`sklearn.linear_model.SGDClassifier.fit`
-            is split becuase it's an array-like with the same number of
-            samples as `X` and `y`. On the other hand, the `coef_init`
-            parameter is not split along with `X` and `y`, because it's
-            shape is ``[n_features, n_classes]``.
+            If a fit parameter is an array-like whose length is equal to
+            `num_samples` then it will be split across CV groups along with `X`
+            and `y`. For example, the :term:`sample_weight` parameter is split
+            becuase `len(sample_weights) = len(X)` while, the `coef_init`
+            parameter is not split along with `X` and `y` because its shape is
+            `[n_features, n_classes]`.
 
         Returns
         -------
