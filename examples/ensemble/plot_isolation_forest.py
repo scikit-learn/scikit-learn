@@ -3,7 +3,7 @@
 IsolationForest example
 ==========================================
 
-An example using :class:`sklearn.ensemble.IsolationForest` for anomaly
+An example using :class:`~sklearn.ensemble.IsolationForest` for anomaly
 detection.
 
 The IsolationForest 'isolates' observations by randomly selecting a feature
@@ -22,7 +22,6 @@ Hence, when a forest of random trees collectively produce shorter path lengths
 for particular samples, they are highly likely to be anomalies.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,8 +39,7 @@ X_test = np.r_[X + 2, X - 2]
 X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
 
 # fit the model
-clf = IsolationForest(behaviour='new', max_samples=100,
-                      random_state=rng, contamination='auto')
+clf = IsolationForest(max_samples=100, random_state=rng)
 clf.fit(X_train)
 y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
@@ -55,17 +53,15 @@ Z = Z.reshape(xx.shape)
 plt.title("IsolationForest")
 plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
 
-b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c='white',
-                 s=20, edgecolor='k')
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c='green',
-                 s=20, edgecolor='k')
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red',
-                s=20, edgecolor='k')
-plt.axis('tight')
+b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=20, edgecolor="k")
+b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="green", s=20, edgecolor="k")
+c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="red", s=20, edgecolor="k")
+plt.axis("tight")
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
-plt.legend([b1, b2, c],
-           ["training observations",
-            "new regular observations", "new abnormal observations"],
-           loc="upper left")
+plt.legend(
+    [b1, b2, c],
+    ["training observations", "new regular observations", "new abnormal observations"],
+    loc="upper left",
+)
 plt.show()

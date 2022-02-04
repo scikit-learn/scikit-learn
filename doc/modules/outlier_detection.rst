@@ -8,9 +8,9 @@ Novelty and Outlier Detection
 
 Many applications require being able to decide whether a new observation
 belongs to the same distribution as existing observations (it is an
-`inlier`), or should be considered as different (it is an outlier).
+*inlier*), or should be considered as different (it is an *outlier*).
 Often, this ability is used to clean real data sets. Two important
-distinction must be made:
+distinctions must be made:
 
 :outlier detection:
   The training data contains outliers which are defined as observations that
@@ -35,7 +35,7 @@ a low density region of the training data, considered as normal in this
 context.
 
 The scikit-learn project provides a set of machine learning tools that
-can be used both for novelty or outliers detection. This strategy is
+can be used both for novelty or outlier detection. This strategy is
 implemented with objects learning in an unsupervised way from the data::
 
     estimator.fit(X_train)
@@ -74,8 +74,22 @@ not available.
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
   and not on the training samples as this would lead to wrong results.
+  I.e., the result of ``predict`` will not be the same as ``fit_predict``.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
+
+The behavior of :class:`neighbors.LocalOutlierFactor` is summarized in the
+following table.
+
+============================ ================================ =====================
+Method                       Outlier detection                Novelty detection
+============================ ================================ =====================
+``fit_predict``              OK                               Not available
+``predict``                  Not available                    Use only on new data
+``decision_function``        Not available                    Use only on new data
+``score_samples``            Use ``negative_outlier_factor_`` Use only on new data
+``negative_outlier_factor_`` OK                               OK
+============================ ================================ =====================
 
 
 Overview of outlier detection methods
@@ -86,23 +100,32 @@ Outlier Factor (LOF) does not show a decision boundary in black as it
 has no predict method to be applied on new data when it is used for outlier
 detection.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_anomaly_comparison_001.png
-   :target: ../auto_examples/plot_anomaly_comparison.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
+   :target: ../auto_examples/miscellaneous/plot_anomaly_comparison.html
    :align: center
    :scale: 50
 
 :class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
 perform reasonably well on the data sets considered here.
 The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus
-does not perform very well for outlier detection. Finally,
-:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
-an ellipse. For more details on the different estimators refer to the example
-:ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` and the sections
-hereunder.
+does not perform very well for outlier detection. That being said, outlier
+detection in high-dimension, or without any assumptions on the distribution
+of the inlying data is very challenging. :class:`svm.OneClassSVM` may still
+be used with outlier detection but requires fine-tuning of its hyperparameter
+`nu` to handle outliers and prevent overfitting.
+:class:`linear_model.SGDOneClassSVM` provides an implementation of a
+linear One-Class SVM with a linear complexity in the number of samples. This
+implementation is here used with a kernel approximation technique to obtain
+results similar to :class:`svm.OneClassSVM` which uses a Gaussian kernel
+by default. Finally, :class:`covariance.EllipticEnvelope` assumes the data is
+Gaussian and learns an ellipse. For more details on the different estimators
+refer to the example
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` and the
+sections hereunder.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py`
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
     for a comparison of the :class:`svm.OneClassSVM`, the
     :class:`ensemble.IsolationForest`, the
     :class:`neighbors.LocalOutlierFactor` and
@@ -134,15 +157,15 @@ and implemented in the :ref:`svm` module in the
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
 usually chosen although there exists no exact formula or algorithm to
 set its bandwidth parameter. This is the default in the scikit-learn
-implementation. The :math:`\nu` parameter, also known as the margin of
+implementation. The `nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
 
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
-      Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+      <http://www.recognition.mccme.ru/pub/papers/SVM/sch99estimating.pdf>`_
+      Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
 
@@ -157,12 +180,29 @@ but regular, observation outside the frontier.
    :scale: 75%
 
 
+Scaling up the One-Class SVM
+----------------------------
+
+An online linear version of the One-Class SVM is implemented in
+:class:`linear_model.SGDOneClassSVM`. This implementation scales linearly with
+the number of samples and can be used with a kernel approximation to
+approximate the solution of a kernelized :class:`svm.OneClassSVM` whose
+complexity is at best quadratic in the number of samples. See section
+:ref:`sgd_online_one_class_svm` for more details.
+
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
+    for an illustration of the approximation of a kernelized One-Class SVM
+    with the `linear_model.SGDOneClassSVM` combined with kernel approximation.
+
+
 Outlier Detection
 =================
 
 Outlier detection is similar to novelty detection in the sense that
 the goal is to separate a core of regular observations from some
-polluting ones, called "outliers". Yet, in the case of outlier
+polluting ones, called *outliers*. Yet, in the case of outlier
 detection, we don't have a clean data set representing the population
 of regular observations that can be used to train any tool.
 
@@ -227,24 +267,43 @@ Random partitioning produces noticeably shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path
 lengths for particular samples, they are highly likely to be anomalies.
 
-This strategy is illustrated below.
+The implementation of :class:`ensemble.IsolationForest` is based on an ensemble
+of :class:`tree.ExtraTreeRegressor`. Following Isolation Forest original paper,
+the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
+:math:`n` is the number of samples used to build the tree (see (Liu et al.,
+2008) for more details).
+
+This algorithm is illustrated below.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
    :target: ../auto_examples/ensemble/plot_isolation_forest.html
    :align: center
    :scale: 75%
 
+.. _iforest_warm_start:
+
+The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
+allows you to add more trees to an already fitted model::
+
+  >>> from sklearn.ensemble import IsolationForest
+  >>> import numpy as np
+  >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [0, 0], [-20, 50], [3, 5]])
+  >>> clf = IsolationForest(n_estimators=10, warm_start=True)
+  >>> clf.fit(X)  # fit 10 trees  # doctest: +SKIP
+  >>> clf.set_params(n_estimators=20)  # add 10 more trees  # doctest: +SKIP
+  >>> clf.fit(X)  # fit the added trees  # doctest: +SKIP
+
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
      an illustration of the use of IsolationForest.
 
-   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
-     comparison of :class:`ensemble.IsolationForest` with
+   * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+     for a comparison of :class:`ensemble.IsolationForest` with
      :class:`neighbors.LocalOutlierFactor`,
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
-     method) and a covariance-based outlier detection with
-     :class:`covariance.EllipticEnvelope`.
+     method), :class:`linear_model.SGDOneClassSVM`, and a covariance-based
+     outlier detection with :class:`covariance.EllipticEnvelope`.
 
 .. topic:: References:
 
@@ -275,7 +334,7 @@ chosen 1) greater than the minimum number of objects a cluster has to contain,
 so that other objects can be local outliers relative to this cluster, and 2)
 smaller than the maximum number of close by objects that can potentially be
 local outliers.
-In practice, such informations are generally not available, and taking
+In practice, such information is generally not available, and taking
 n_neighbors=20 appears to work well in general.
 When the proportion of outliers is high (i.e. greater than 10 \%, as in the
 example below), n_neighbors should be greater (n_neighbors=35 in the example
@@ -293,23 +352,24 @@ method. The scores of abnormality of the training samples are accessible
 through the ``negative_outlier_factor_`` attribute.
 Note that ``predict``, ``decision_function`` and ``score_samples`` can be used
 on new unseen data when LOF is applied for novelty detection, i.e. when the
-``novelty`` parameter is set to ``True``. See :ref:`novelty_with_lof`.
+``novelty`` parameter is set to ``True``, but the result of ``predict`` may
+differ from that of ``fit_predict``. See :ref:`novelty_with_lof`.
 
 
 This strategy is illustrated below.
 
 .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_outlier_detection_001.png
-   :target: ../auto_examples/neighbors/sphx_glr_plot_lof_outlier_detection.html
+   :target: ../auto_examples/neighbors/plot_lof_outlier_detection.html
    :align: center
    :scale: 75%
 
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
-   for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+     for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
-   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
-   comparison with other anomaly detection methods.
+   * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+     for a comparison with other anomaly detection methods.
 
 .. topic:: References:
 
@@ -331,32 +391,20 @@ set to ``True`` before fitting the estimator::
   lof = LocalOutlierFactor(novelty=True)
   lof.fit(X_train)
 
-Note that ``fit_predict`` is not available in this case.
+Note that ``fit_predict`` is not available in this case to avoid inconsistencies.
 
 .. warning:: **Novelty detection with Local Outlier Factor`**
 
   When ``novelty`` is set to ``True`` be aware that you must only use
   ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
   and not on the training samples as this would lead to wrong results.
+  I.e., the result of ``predict`` will not be the same as ``fit_predict``.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
 
-The behavior of LOF is summarized in the following table.
-
-====================  ================================  =====================
-Method                Outlier detection                 Novelty detection
-====================  ================================  =====================
-`fit_predict`         OK                                Not available
-`predict`             Not available                     Use only on test data
-`decision_function`   Not available                     Use only on test data
-`score_samples`       Use `negative_outlier_factor_`    Use only on test data
-====================  ================================  =====================
-
-
-This strategy is illustrated below.
+Novelty detection with Local Outlier Factor is illustrated below.
 
   .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
-     :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
+     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
-

@@ -1,10 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises
-
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris
 from sklearn.linear_model import Perceptron
@@ -19,8 +18,7 @@ X_csr = sp.csr_matrix(X)
 X_csr.sort_indices()
 
 
-class MyPerceptron(object):
-
+class MyPerceptron:
     def __init__(self, n_iter=1):
         self.n_iter = n_iter
 
@@ -48,7 +46,7 @@ def test_perceptron_accuracy():
         clf = Perceptron(max_iter=100, tol=None, shuffle=False)
         clf.fit(data, y)
         score = clf.score(data, y)
-        assert_greater(score, 0.7)
+        assert score > 0.7
 
 
 def test_perceptron_correctness():
@@ -67,4 +65,26 @@ def test_perceptron_correctness():
 def test_undefined_methods():
     clf = Perceptron(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba"):
-        assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
+        with pytest.raises(AttributeError):
+            getattr(clf, meth)
+
+
+def test_perceptron_l1_ratio():
+    """Check that `l1_ratio` has an impact when `penalty='elasticnet'`"""
+    clf1 = Perceptron(l1_ratio=0, penalty="elasticnet")
+    clf1.fit(X, y)
+
+    clf2 = Perceptron(l1_ratio=0.15, penalty="elasticnet")
+    clf2.fit(X, y)
+
+    assert clf1.score(X, y) != clf2.score(X, y)
+
+    # check that the bounds of elastic net which should correspond to an l1 or
+    # l2 penalty depending of `l1_ratio` value.
+    clf_l1 = Perceptron(penalty="l1").fit(X, y)
+    clf_elasticnet = Perceptron(l1_ratio=1, penalty="elasticnet").fit(X, y)
+    assert_allclose(clf_l1.coef_, clf_elasticnet.coef_)
+
+    clf_l2 = Perceptron(penalty="l2").fit(X, y)
+    clf_elasticnet = Perceptron(l1_ratio=0, penalty="elasticnet").fit(X, y)
+    assert_allclose(clf_l2.coef_, clf_elasticnet.coef_)
