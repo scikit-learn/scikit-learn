@@ -331,11 +331,11 @@ def test_imbalanced_criterions(name, Tree, criterion):
 @pytest.mark.parametrize("name, Tree", CLF_TREES.items())
 @pytest.mark.parametrize("criterion", ["gini", "entropy"])
 def test_iris(name, Tree, criterion):
+    # Check consistency on dataset iris.
     check_classification(name, Tree, criterion, iris.data, iris.target)
 
 
 def check_classification(name, Tree, criterion, X, y):
-    # Check consistency on dataset iris.
     clf = Tree(criterion=criterion, random_state=0)
     clf.fit(X, y)
     score = accuracy_score(clf.predict(X), y)
