@@ -61,7 +61,7 @@ def test_input_estimator_unchanged():
 @pytest.mark.parametrize(
     "max_features, err_type, err_msg",
     [
-        (-1, ValueError, "When using an integral value, 'max_features' should be"),
+        (-1, ValueError, "When using an int value, 'max_features' should be"),
         (
             lambda: 10,
             TypeError,
@@ -70,7 +70,7 @@ def test_input_estimator_unchanged():
         (
             lambda X: 0.9,
             ValueError,
-            "When `max_features` is a callable, it must return an integral",
+            "When `max_features` is a callable, it must return an int",
         ),
         (
             lambda X, y: 10,
@@ -80,17 +80,17 @@ def test_input_estimator_unchanged():
         (
             data.shape[1] + 1,
             ValueError,
-            "When using an integral value, 'max_features' should be",
+            "When using an int value, 'max_features' should be",
         ),
         (
             "gobbledigook",
             TypeError,
-            "'max_features' must be either an integral value or a",
+            "'max_features' must be either an int value or a",
         ),
         (
             "all",
             TypeError,
-            "'max_features' must be either an integral value or a",
+            "'max_features' must be either an int value or a",
         ),
     ],
 )
@@ -106,6 +106,7 @@ def test_max_features_error(max_features, err_type, err_msg):
 
 @pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
 def test_inferred_max_features_integer(max_features):
+    """Check max_features_ and output shape for integer max_features."""
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
@@ -120,6 +121,7 @@ def test_inferred_max_features_integer(max_features):
     [lambda X: 1, lambda X: X.shape[1], lambda X: min(X.shape[1], 10000)],
 )
 def test_inferred_max_features_callable(max_features):
+    """Check max_features_ and output shape for callable max_features."""
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
@@ -134,7 +136,7 @@ def test_inferred_max_features_callable(max_features):
     [lambda X: min(X.shape[1], 10000), lambda X: X.shape[1], lambda X: 1],
 )
 def test_max_features_callable_data(max_features):
-    """Tests that the callable passed to `fit` is called on X"""
+    """Tests that the callable passed to `fit` is called on X."""
     clf = RandomForestClassifier(n_estimators=50, random_state=0)
     m = Mock(side_effect=max_features)
     transformer = SelectFromModel(estimator=clf, max_features=m, threshold=-np.inf)
