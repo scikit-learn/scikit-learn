@@ -201,7 +201,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     >>> half_selector = SelectFromModel(estimator=LogisticRegression())
     >>> half_selector.set_params(max_features=lambda X: round(len(X[0])/2))
     >>> half_selector.fit(X,y)
-
     """
 
     def __init__(
