@@ -3,6 +3,7 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
+import itertools
 from itertools import product
 import struct
 import io
@@ -1568,7 +1569,9 @@ def test_sparse_criterion(tree_type, criterion, dataset):
     'tree_type, criterion',
     itertools.product(CLF_TREES, ["hellinger"])
 )
-@pytest.mark.parametrize("dataset", ["sparse-pos-binary", "sparse-neg-binary", "sparse-mix-binary", "zeros-binary"])
+@pytest.mark.parametrize(
+    "dataset",
+    ["sparse-pos-binary", "sparse-neg-binary", "sparse-mix-binary", "zeros-binary"])
 def test_sparse_imbl_criterion(tree_type, criterion, dataset):
     check_sparse_criterion(tree_type, criterion, dataset)
 
