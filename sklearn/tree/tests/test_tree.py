@@ -1535,9 +1535,7 @@ def check_sparse_criterion(tree, criterion, dataset):
     y = DATASETS[dataset]["y"]
 
     d = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(X, y)
-    s = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(
-        X_sparse, y
-    )
+    s = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(X_sparse, y)
 
     assert_tree_equal(
         d.tree_,
@@ -1554,11 +1552,11 @@ def test_sparse_parameters(tree_type, dataset):
 
 
 @pytest.mark.parametrize(
-    'tree_type, criterion',
+    "tree_type, criterion",
     itertools.chain(
         itertools.product(CLF_TREES, ["gini", "entropy"]),
-        itertools.product(REG_TREES, REG_CRITERIONS)
-    )
+        itertools.product(REG_TREES, REG_CRITERIONS),
+    ),
 )
 @pytest.mark.parametrize("dataset", ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
 def test_sparse_criterion(tree_type, criterion, dataset):
@@ -1566,12 +1564,12 @@ def test_sparse_criterion(tree_type, criterion, dataset):
 
 
 @pytest.mark.parametrize(
-    'tree_type, criterion',
-    itertools.product(CLF_TREES, ["hellinger"])
+    "tree_type, criterion", itertools.product(CLF_TREES, ["hellinger"])
 )
 @pytest.mark.parametrize(
     "dataset",
-    ["sparse-pos-binary", "sparse-neg-binary", "sparse-mix-binary", "zeros-binary"])
+    ["sparse-pos-binary", "sparse-neg-binary", "sparse-mix-binary", "zeros-binary"],
+)
 def test_sparse_imbl_criterion(tree_type, criterion, dataset):
     check_sparse_criterion(tree_type, criterion, dataset)
 
