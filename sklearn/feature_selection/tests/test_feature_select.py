@@ -854,6 +854,9 @@ def test_invalid_k():
         GenericUnivariateSelect(mode="k_best", param=-1).fit(X, y)
     with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
+    msg = "No features were selected: either the data is"
+    with pytest.warns(UserWarning, match=msg):
+        GenericUnivariateSelect(mode="k_best", param=0).fit_transform(X, y)
 
 
 def test_f_classif_constant_feature():
