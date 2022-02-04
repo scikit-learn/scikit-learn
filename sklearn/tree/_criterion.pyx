@@ -9,6 +9,7 @@
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Evgeni Dubov <evgeni.dubov@gmail.com>
 #
 # License: BSD 3 clause
 
