@@ -854,9 +854,6 @@ def test_invalid_k():
         GenericUnivariateSelect(mode="k_best", param=-1).fit(X, y)
     with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
-    msg = "No features were selected: either the data is"
-    with pytest.warns(UserWarning, match=msg):
-        GenericUnivariateSelect(mode="k_best", param=0).fit_transform(X, y)
 
 
 def test_f_classif_constant_feature():
@@ -971,3 +968,15 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
+
+
+@pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
+def test_empty_support_dtype(dtype_in):
+    rng = np.random.RandomState(0)
+
+    X = rng.rand(40, 10).astype(dtype_in)
+    y = rng.randint(0, 4, size=40)
+    X_trans = GenericUnivariateSelect(f_classif, mode="k_best", param=0).fit_transform(
+        X, y
+    )
+    assert X_trans.dtype == dtype_in
