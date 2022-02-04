@@ -145,7 +145,7 @@ def test_logistic_cv_score_does_not_warn_by_default():
 
     with pytest.warns(None) as record:
         lr.score(X, lr.predict(X))
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
 
 @skip_if_no_parallel

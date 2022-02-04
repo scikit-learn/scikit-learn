@@ -518,8 +518,9 @@ def test_feature_union():
 
     # test error if some elements do not support transform
     msg = "All estimators should implement fit and transform.*\\bNoTrans\\b"
+    fs = FeatureUnion([("transform", Transf()), ("no_transform", NoTrans())])
     with pytest.raises(TypeError, match=msg):
-        FeatureUnion([("transform", Transf()), ("no_transform", NoTrans())])
+        fs.fit(X)
 
     # test that init accepts tuples
     fs = FeatureUnion((("svd", svd), ("select", select)))
@@ -995,20 +996,20 @@ def test_set_feature_union_step_drop(get_names):
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         ft.set_params(m3="drop")
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert_array_equal([], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         # Check 'drop' step at construction time
@@ -1016,7 +1017,7 @@ def test_set_feature_union_step_drop(get_names):
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
 
 def test_set_feature_union_passthrough():

@@ -24,7 +24,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils._mocking import NoSampleWeightWrapper
-from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import skip_if_32bit
@@ -46,7 +45,7 @@ true_result = [-1, 1, 1]
 
 # also make regression dataset
 X_reg, y_reg = make_regression(
-    n_samples=500, n_features=10, n_informative=8, noise=10, random_state=7
+    n_samples=100, n_features=4, n_informative=8, noise=10, random_state=7
 )
 y_reg = scale(y_reg)
 
@@ -231,18 +230,22 @@ def test_regression_dataset(loss, subsample):
     ones = np.ones(len(y_reg))
     last_y_pred = None
     for sample_weight in [None, ones, 2 * ones]:
+        # learning_rate, max_depth and n_estimators were adjusted to get a mode
+        # that is accurate enough to reach a low MSE on the training set while
+        # keeping the resource used to execute this test low enough.
         reg = GradientBoostingRegressor(
-            n_estimators=100,
+            n_estimators=30,
             loss=loss,
             max_depth=4,
             subsample=subsample,
             min_samples_split=2,
             random_state=1,
+            learning_rate=0.5,
         )
 
         reg.fit(X_reg, y_reg, sample_weight=sample_weight)
         leaves = reg.apply(X_reg)
-        assert leaves.shape == (500, 100)
+        assert leaves.shape == (100, 30)
 
         y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
@@ -1021,15 +1024,18 @@ def test_complete_regression():
 
 
 def test_zero_estimator_reg():
-    # Test if init='zero' works for regression.
+    # Test if init='zero' works for regression by checking that it is better
+    # than a simple baseline.
 
+    baseline = DummyRegressor(strategy="mean").fit(X_reg, y_reg)
+    mse_baseline = mean_squared_error(baseline.predict(X_reg), y_reg)
     est = GradientBoostingRegressor(
-        n_estimators=20, max_depth=1, random_state=1, init="zero"
+        n_estimators=5, max_depth=1, random_state=1, init="zero", learning_rate=0.5
     )
     est.fit(X_reg, y_reg)
     y_pred = est.predict(X_reg)
-    mse = mean_squared_error(y_reg, y_pred)
-    assert_almost_equal(mse, 0.52, decimal=2)
+    mse_gbdt = mean_squared_error(y_reg, y_pred)
+    assert mse_gbdt < mse_baseline
 
     est = GradientBoostingRegressor(
         n_estimators=20, max_depth=1, random_state=1, init="foobar"

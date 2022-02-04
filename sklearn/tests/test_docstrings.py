@@ -14,7 +14,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf_shrinkage",
-    "sklearn.datasets._base.load_breast_cancer",
     "sklearn.datasets._base.load_digits",
     "sklearn.datasets._base.load_linnerud",
     "sklearn.datasets._base.load_sample_image",
@@ -27,7 +26,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._olivetti_faces.fetch_olivetti_faces",
     "sklearn.datasets._openml.fetch_openml",
     "sklearn.datasets._samples_generator.make_biclusters",
-    "sklearn.datasets._samples_generator.make_blobs",
     "sklearn.datasets._samples_generator.make_checkerboard",
     "sklearn.datasets._samples_generator.make_classification",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
@@ -39,7 +37,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_file",
     "sklearn.datasets._svmlight_format_io.load_svmlight_files",
-    "sklearn.datasets._twenty_newsgroups.fetch_20newsgroups",
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.decomposition._dict_learning.dict_learning_online",
     "sklearn.decomposition._dict_learning.sparse_encode",
