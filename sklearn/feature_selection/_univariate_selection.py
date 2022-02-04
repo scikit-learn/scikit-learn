@@ -293,7 +293,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
     X, y = check_X_y(
-        X, y, accept_sparse=["csr", "csc", "coo"], dtype="numeric", y_numeric=True
+        X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64, y_numeric=True
     )
     n_samples = X.shape[0]
 
