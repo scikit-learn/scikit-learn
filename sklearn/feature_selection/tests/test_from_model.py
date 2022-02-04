@@ -61,36 +61,21 @@ def test_input_estimator_unchanged():
 @pytest.mark.parametrize(
     "max_features, err_type, err_msg",
     [
-        (-1, ValueError, "When using an int value, 'max_features' should be"),
-        (
-            lambda: 10,
-            TypeError,
-            "When 'max_features' is a callable, it must take only 'X' as",
-        ),
-        (
-            lambda X: 0.9,
-            ValueError,
-            "When `max_features` is a callable, it must return an int",
-        ),
-        (
-            lambda X, y: 10,
-            TypeError,
-            "When 'max_features' is a callable, it must take only 'X' as",
-        ),
+        (-1, ValueError, "When using an int, 'max_features' should be"),
         (
             data.shape[1] + 1,
             ValueError,
-            "When using an int value, 'max_features' should be",
+            "When using an int, 'max_features' should be",
         ),
         (
             "gobbledigook",
             TypeError,
-            "'max_features' must be either an int value or a",
+            "'max_features' must be either an int or a",
         ),
         (
             "all",
             TypeError,
-            "'max_features' must be either an int value or a",
+            "'max_features' must be either an int or a",
         ),
     ],
 )
@@ -112,7 +97,7 @@ def test_inferred_max_features_integer(max_features):
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
-    assert transformer.max_features_ == max_features(data)
+    assert transformer.max_features_ == max_features
     assert X_trans.shape[1] == transformer.max_features_
 
 
