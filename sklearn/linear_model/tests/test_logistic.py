@@ -810,7 +810,7 @@ def test_logistic_regression_solvers():
         for solver in solvers
     }
 
-    for solver_1, solver_2 in itertools.combinations(regressors):
+    for solver_1, solver_2 in itertools.combinations(regressors, r=2):
         assert_array_almost_equal(
             regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=3
         )
@@ -836,7 +836,7 @@ def test_logistic_regression_solvers_multiclass():
         for solver in solvers
     }
 
-    for solver_1, solver_2 in itertools.combinations(regressors):
+    for solver_1, solver_2 in itertools.combinations(regressors, r=2):
         assert_array_almost_equal(
             regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=4
         )
