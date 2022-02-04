@@ -111,9 +111,7 @@ def test_inferred_max_features_integer(max_features):
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
-    # Assert correctness of inferred max features
     assert transformer.max_features_ == max_features(data)
-    # Assert output shape matches inferred max features
     assert X_trans.shape[1] == transformer.max_features_
 
 
@@ -127,9 +125,7 @@ def test_inferred_max_features_callable(max_features):
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
-    # Assert correctness of inferred max features
     assert transformer.max_features_ == max_features(data)
-    # Assert output shape matches inferred max features
     assert X_trans.shape[1] == transformer.max_features_
 
 
