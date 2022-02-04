@@ -383,7 +383,6 @@ GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "ensemble",
     "kernel_approximation",
     "preprocessing",
-    "neural_network",
 ]
 
 
