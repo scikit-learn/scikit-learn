@@ -1922,7 +1922,7 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
-@pytest.mark.parametrize("criterion", CLF_CRITERIONS)
+@pytest.mark.parametrize("criterion", ["gini", "entropy", "hellinger"])
 @pytest.mark.parametrize(
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "diabetes"})
 )
