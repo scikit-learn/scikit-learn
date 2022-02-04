@@ -877,7 +877,7 @@ Multinomial Case
 We may then extend logistic regression to obtain a multinomial estimator by
 considering the logistic regression as a `log-linear model
 <https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`.
-Note that t is possible in a :math:`K`-class context to parameterize the model
+Note that it is possible in a :math:`K`-class context to parameterize the model
 using only :math:`K-1` weight vectors, leaving one class probability fully
 determined by the other class probabilities by leveraging the fact that all
 class probabilities must sum to one. We choose to overparameterize the model
