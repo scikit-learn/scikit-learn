@@ -2373,7 +2373,7 @@ def test_validation_pairwise():
     svm = SVC(kernel="precomputed")
     with pytest.warns(None) as record:
         cross_validate(svm, linear_kernel, y, cv=2)
-    assert not record
+    assert not [w.message for w in record]
 
     # pairwise tag is not consistent with pairwise attribute
     class IncorrectTagSVM(SVC):

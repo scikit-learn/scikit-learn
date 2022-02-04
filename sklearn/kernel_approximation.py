@@ -510,7 +510,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2*sample_steps+1 features, where sample_steps is
+    space is transformed into 2*sample_steps-1 features, where sample_steps is
     a parameter of the method. Typical values of sample_steps include 1, 2 and
     3.
 
@@ -635,7 +635,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : {ndarray, sparse matrix}, \
-               shape = (n_samples, n_features * (2*sample_steps + 1))
+               shape = (n_samples, n_features * (2*sample_steps - 1))
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """

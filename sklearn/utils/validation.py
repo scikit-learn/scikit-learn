@@ -1118,7 +1118,7 @@ def column_or_1d(y, *, warn=False):
        Output data.
 
     Raises
-    -------
+    ------
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
@@ -1406,6 +1406,7 @@ def check_scalar(
 
     ValueError
         If the parameter's value violates the given bounds.
+        If `min_val`, `max_val` and `include_boundaries` are inconsistent.
     """
 
     if not isinstance(x, target_type):
@@ -1416,6 +1417,18 @@ def check_scalar(
         raise ValueError(
             f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
             f"Possible values are: {expected_include_boundaries}."
+        )
+
+    if max_val is None and include_boundaries == "right":
+        raise ValueError(
+            "`include_boundaries`='right' without specifying explicitly `max_val` "
+            "is inconsistent."
+        )
+
+    if min_val is None and include_boundaries == "left":
+        raise ValueError(
+            "`include_boundaries`='left' without specifying explicitly `min_val` "
+            "is inconsistent."
         )
 
     comparison_operator = (
