@@ -60,7 +60,6 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
-CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
