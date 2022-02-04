@@ -15,6 +15,8 @@ classification.
 #   - SGDRegressor, SGDClassifier
 # - Replace link module of GLMs.
 
+import math
+import numbers
 import numpy as np
 from scipy.special import xlogy
 from ._loss import (
@@ -604,9 +606,9 @@ class PinballLoss(BaseLoss):
     need_update_leaves_values = True
 
     def __init__(self, sample_weight=None, quantile=0.5):
-        if quantile <= 0 or quantile >= 1:
+        if not isinstance(quantile, numbers.Number) or quantile <= 0 or quantile >= 1:
             raise ValueError(
-                "PinballLoss aka quantile loss only accepts "
+                "PinballLoss aka quantile loss only accepts numbers "
                 f"0 < quantile < 1; {quantile} was given."
             )
         super().__init__(
@@ -725,6 +727,11 @@ class HalfTweedieLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None, power=1.5):
+        if not isinstance(power, numbers.Number) or not math.isfinite(power):
+            raise ValueError(
+                "HalfTweedieLoss only accepts finite numbers as power parameter;"
+                f" {power} was given."
+            )
         super().__init__(
             closs=CyHalfTweedieLoss(power=float(power)),
             link=LogLink(),
