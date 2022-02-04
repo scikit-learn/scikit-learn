@@ -72,7 +72,7 @@ methods["SE"] = manifold.SpectralEmbedding(
     n_components=n_components, n_neighbors=n_neighbors, random_state=0
 )
 methods["t-SNE"] = manifold.TSNE(
-    n_components=n_components, perplexity=10, n_iter=250, init="pca", random_state=0
+    n_components=n_components, perplexity=30, n_iter=250, init="pca", random_state=0
 )
 
 # Plot results
