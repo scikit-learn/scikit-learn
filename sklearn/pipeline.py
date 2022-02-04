@@ -991,7 +991,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
-        self._validate_transformers()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

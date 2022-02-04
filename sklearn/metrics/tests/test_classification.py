@@ -1448,7 +1448,7 @@ def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
             y_true, y_pred, average="samples", zero_division=zero_division
         )
     assert score == pytest.approx(expected_score)
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
 
 @ignore_warnings

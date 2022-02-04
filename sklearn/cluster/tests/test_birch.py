@@ -219,3 +219,14 @@ def test_birch_params_validation(params, err_type, err_msg):
     X, _ = make_blobs(n_samples=80, centers=4)
     with pytest.raises(err_type, match=err_msg):
         Birch(**params).fit(X)
+
+
+def test_feature_names_out():
+    """Check `get_feature_names_out` for `Birch`."""
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    brc.fit(X)
+    n_clusters = brc.subcluster_centers_.shape[0]
+
+    names_out = brc.get_feature_names_out()
+    assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)
