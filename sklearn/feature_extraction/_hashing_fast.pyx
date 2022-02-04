@@ -1,7 +1,5 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
-#
-# cython: boundscheck=False, cdivision=True
 
 import sys
 import array
@@ -68,7 +66,12 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
             h = murmurhash3_bytes_s32(<bytes>f, seed)
 
             array.resize_smart(indices, len(indices) + 1)
-            indices[len(indices) - 1] = abs(h) % n_features
+            if h == - 2147483648:
+                # abs(-2**31) is undefined behavior because h is a `np.int32`
+                # The following is defined such that it is equal to: abs(-2**31) % n_features
+                indices[len(indices) - 1] = (2147483647 - (n_features - 1)) % n_features
+            else:
+                indices[len(indices) - 1] = abs(h) % n_features
             # improve inner product preservation in the hashed space
             if alternate_sign:
                 value *= (h >= 0) * 2 - 1
@@ -87,7 +90,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     indices_a = np.frombuffer(indices, dtype=np.int32)
     indptr_a = np.frombuffer(indptr, dtype=indices_np_dtype)
 
-    if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
+    if indptr[len(indptr) - 1] > np.iinfo(np.int32).max:  # = 2**31 - 1
         # both indices and indptr have the same dtype in CSR arrays
         indices_a = indices_a.astype(np.int64, copy=False)
     else:

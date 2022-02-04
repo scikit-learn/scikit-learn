@@ -60,6 +60,7 @@ Scoring                                Function                                 
 **Classification**
 'accuracy'                             :func:`metrics.accuracy_score`
 'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
+'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
 'neg_brier_score'                      :func:`metrics.brier_score_loss`
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
@@ -85,6 +86,7 @@ Scoring                                Function                                 
 'homogeneity_score'                    :func:`metrics.homogeneity_score`
 'mutual_info_score'                    :func:`metrics.mutual_info_score`
 'normalized_mutual_info_score'         :func:`metrics.normalized_mutual_info_score`
+'rand_score'                           :func:`metrics.rand_score`
 'v_measure_score'                      :func:`metrics.v_measure_score`
 
 **Regression**
@@ -197,7 +199,7 @@ Here is an example of building custom scorers, and of using the
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
-    >>> my_custom_loss_func(clf.predict(X), y)
+    >>> my_custom_loss_func(y, clf.predict(X))
     0.69...
     >>> score(clf, X, y)
     -0.69...
@@ -318,6 +320,7 @@ Others also work in the multiclass case:
    hinge_loss
    matthews_corrcoef
    roc_auc_score
+   top_k_accuracy_score
 
 
 Some also work in the multilabel case:
@@ -413,7 +416,7 @@ defined as
 
 .. math::
 
-   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
+  \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -434,9 +437,47 @@ In the multilabel case with binary label indicators::
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
+
+.. _top_k_accuracy_score:
+
+Top-k accuracy score
+--------------------
+
+The :func:`top_k_accuracy_score` function is a generalization of
+:func:`accuracy_score`. The difference is that a prediction is considered
+correct as long as the true label is associated with one of the ``k`` highest
+predicted scores. :func:`accuracy_score` is the special case of `k = 1`.
+
+The function covers the binary and multiclass classification cases but not the
+multilabel case.
+
+If :math:`\hat{f}_{i,j}` is the predicted class for the :math:`i`-th sample
+corresponding to the :math:`j`-th largest predicted score and :math:`y_i` is the
+corresponding true value, then the fraction of correct predictions over
+:math:`n_\text{samples}` is defined as
+
+.. math::
+
+   \texttt{top-k accuracy}(y, \hat{f}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=1}^{k} 1(\hat{f}_{i,j} = y_i)
+
+where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
+`indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import top_k_accuracy_score
+  >>> y_true = np.array([0, 1, 2, 2])
+  >>> y_score = np.array([[0.5, 0.2, 0.2],
+  ...                     [0.3, 0.4, 0.2],
+  ...                     [0.2, 0.4, 0.3],
+  ...                     [0.7, 0.2, 0.1]])
+  >>> top_k_accuracy_score(y_true, y_score, k=2)
+  0.75
+  >>> # Not normalizing gives the number of "correctly" classified samples
+  >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
+  3
 
 .. _balanced_accuracy_score:
 
@@ -522,8 +563,9 @@ or *informedness*.
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
-  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
-     classifier system <https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description 
+      and evaluation of a scalable learning classifier 
+      system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
 
@@ -572,7 +614,7 @@ predicted to be in group :math:`j`. Here is an example::
          [0, 0, 1],
          [1, 0, 2]])
 
-:func:`plot_confusion_matrix` can be used to visually represent a confusion
+:class:`ConfusionMatrixDisplay` can be used to visually represent a confusion
 matrix as shown in the
 :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
 example, which creates the following figure:
@@ -755,9 +797,10 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format. The
-:func:`plot_precision_recall_curve` function plots the precision recall as
-follows.
+binary classification and multilabel indicator format.
+The :func:`PredictionRecallDisplay.from_estimator` and
+:func:`PredictionRecallDisplay.from_predictions` functions will plot the
+precision-recall curve as follows.
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
         :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
@@ -789,7 +832,7 @@ follows.
      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
      IJCV 2010.
   .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
-     <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
+     <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
      ICML 2006.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
@@ -973,6 +1016,11 @@ In the binary case::
   >>> jaccard_score(y_true[0], y_pred[0])
   0.6666...
 
+In the 2D comparison case (e.g. image similarity):
+
+  >>> jaccard_score(y_true, y_pred, average="micro")
+  0.6
+
 In the multilabel case with binary label indicators::
 
   >>> jaccard_score(y_true, y_pred, average='samples')
@@ -1054,7 +1102,7 @@ with a svm classifier in a multiclass problem::
   LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
-  >>> hinge_loss(y_true, pred_decision, labels)
+  >>> hinge_loss(y_true, pred_decision, labels=labels)
   0.56...
 
 .. _log_loss:
@@ -1382,7 +1430,7 @@ uniformly:
 
 .. math::
 
-   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
    \text{AUC}(k | j))
 
 where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
@@ -1397,7 +1445,7 @@ prevalence:
 
 .. math::
 
-   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
+   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
    \text{AUC}(j | k) + \text{AUC}(k | j))
 
 where :math:`c` is the number of classes. This algorithm is used by setting
@@ -1546,7 +1594,7 @@ Additionally DET curves can be consulted for threshold analysis and operating
 point selection.
 This is particularly helpful if a comparison of error types is required.
 
-One the other hand DET curves do not provide their metric as a single number.
+On the other hand DET curves do not provide their metric as a single number.
 Therefore for either automated evaluation or comparison to other
 classification tasks metrics like the derived area under ROC curve might be
 better suited.
@@ -1919,8 +1967,8 @@ Regression metrics
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
-:func:`mean_absolute_error`, :func:`explained_variance_score` and
-:func:`r2_score`.
+:func:`mean_absolute_error`, :func:`explained_variance_score`,
+:func:`r2_score` and :func:`mean_pinball_loss`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -1962,6 +2010,19 @@ then the explained variance is estimated as follow:
 
 The best possible score is 1.0, lower values are worse.
 
+Note: when the prediction residuals have zero mean, the Explained Variance
+score and the :ref:`r2_score` are identical.
+
+In the particular case where the true target is constant, the Explained
+Variance score is not finite: it is either ``NaN`` (perfect predictions) or
+``-Inf`` (imperfect predictions). Such non-finite scores may prevent correct
+model optimization such as grid-search cross-validation to be performed
+correctly. For this reason the default behaviour of
+:func:`explained_variance_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). You can set the ``force_finite``
+parameter to ``False`` to prevent this fix from happening and fallback on the
+original Explained Variance score.
+
 Here is a small example of usage of the :func:`explained_variance_score`
 function::
 
@@ -1976,6 +2037,18 @@ function::
     array([0.967..., 1.        ])
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
     0.990...
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2]
+    >>> explained_variance_score(y_true, y_pred)
+    1.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    nan
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2 + 1e-8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    -inf
 
 .. _max_error:
 
@@ -2198,8 +2271,11 @@ predicted by the model, through the proportion of explained variance.
 As such variance is dataset dependent, R² may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
-predicts the expected value of y, disregarding the input features, would get a
-R² score of 0.0.
+predicts the expected (average) value of y, disregarding the input features,
+would get an :math:`R^2` score of 0.0.
+
+Note: when the prediction residuals have zero mean, the :math:`R^2` score and
+the :ref:`explained_variance_score` are identical.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,
@@ -2213,6 +2289,14 @@ where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n}
 
 Note that :func:`r2_score` calculates unadjusted R² without correcting for
 bias in sample variance of y.
+
+In the particular case where the true target is constant, the :math:`R^2` score is
+not finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+predictions). Such non-finite scores may prevent correct model optimization
+such as grid-search cross-validation to be performed correctly. For this reason
+the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). If ``force_finite``
+is set to ``False``, this score falls back on the original :math:`R^2` definition.
 
 Here is a small example of usage of the :func:`r2_score` function::
 
@@ -2233,7 +2317,18 @@ Here is a small example of usage of the :func:`r2_score` function::
   array([0.965..., 0.908...])
   >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
   0.925...
-
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2]
+  >>> r2_score(y_true, y_pred)
+  1.0
+  >>> r2_score(y_true, y_pred, force_finite=False)
+  nan
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2 + 1e-8]
+  >>> r2_score(y_true, y_pred)
+  0.0
+  >>> r2_score(y_true, y_pred, force_finite=False)
+  -inf
 
 .. topic:: Example:
 
@@ -2312,6 +2407,99 @@ the difference in errors decreases. Finally, by setting, ``power=2``::
 
 we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
+
+.. _d2_tweedie_score:
+
+D² score, the coefficient of determination
+-------------------------------------------
+
+The :func:`d2_tweedie_score` function computes the percentage of deviance
+explained. It is a generalization of R², where the squared error is replaced by
+the Tweedie deviance. D², also known as McFadden's likelihood ratio index, is
+calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{D}(y, \hat{y})}{\text{D}(y, \bar{y})} \,.
+
+The argument ``power`` defines the Tweedie power as for
+:func:`mean_tweedie_deviance`. Note that for `power=0`,
+:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts the
+expected value of y, disregarding the input features, would get a D² score
+of 0.0.
+
+A scorer object with a specific choice of ``power`` can be built by::
+
+  >>> from sklearn.metrics import d2_tweedie_score, make_scorer
+  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
+
+.. _pinball_loss:
+
+Pinball loss
+------------
+
+The :func:`mean_pinball_loss` function is used to evaluate the predictive
+performance of quantile regression models. The `pinball loss
+<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is equivalent
+to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
+0.5.
+
+.. math::
+
+  \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+
+Here is a small example of usage of the :func:`mean_pinball_loss` function::
+
+  >>> from sklearn.metrics import mean_pinball_loss
+  >>> y_true = [1, 2, 3]
+  >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
+  0.03...
+  >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
+  0.3...
+  >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
+  0.3...
+  >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
+  0.03...
+  >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
+  0.0
+  >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
+  0.0
+
+It is possible to build a scorer object with a specific choice of ``alpha``::
+
+  >>> from sklearn.metrics import make_scorer
+  >>> mean_pinball_loss_95p = make_scorer(mean_pinball_loss, alpha=0.95)
+
+Such a scorer can be used to evaluate the generalization performance of a
+quantile regressor via cross-validation:
+
+  >>> from sklearn.datasets import make_regression
+  >>> from sklearn.model_selection import cross_val_score
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>>
+  >>> X, y = make_regression(n_samples=100, random_state=0)
+  >>> estimator = GradientBoostingRegressor(
+  ...     loss="quantile",
+  ...     alpha=0.95,
+  ...     random_state=0,
+  ... )
+  >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
+  array([13.6..., 9.7..., 23.3..., 9.5..., 10.4...])
+
+It is also possible to build scorer objects for hyper-parameter tuning. The
+sign of the loss must be switched to ensure that greater means better as
+explained in the example linked below.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+    for an example of using a the pinball loss to evaluate and tune the
+    hyper-parameters of quantile regression models on data with non-symmetric
+    noise and outliers.
+
 
 .. _clustering_metrics:
 
