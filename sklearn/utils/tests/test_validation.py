@@ -1092,7 +1092,7 @@ def test_check_scalar_valid(x):
             max_val=5,
             include_boundaries="both",
         )
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert scalar == x
 
 
@@ -1623,7 +1623,7 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
 
     with pytest.warns(None) as record:
         names = _get_feature_names(X)
-    assert not record
+    assert not [w.message for w in record]
     assert names is None
 
 

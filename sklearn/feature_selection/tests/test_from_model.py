@@ -455,4 +455,4 @@ def test_estimator_does_not_support_feature_names():
 
     with pytest.warns(None) as records:
         selector.transform(X.iloc[1:3])
-    assert not [str(record.message) for record in records]
+    assert not [w.message for w in records]
