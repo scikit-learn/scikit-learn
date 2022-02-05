@@ -864,7 +864,7 @@ Binary Case
 -----------
 
 For notational ease, we assume that the target :math:`y_i` takes values in the
-set :math:`{-1, 1}` at trial :math:`i`. As an optimization problem, binary
+set :math:`\{-1, 1\}` at trial :math:`i`. As an optimization problem, binary
 class logistic regression using :math:`r(w)` regularization minimizes the
 following cost function:
 
@@ -876,7 +876,7 @@ Multinomial Case
 
 We may then extend logistic regression to obtain a multinomial estimator by
 considering the logistic regression as a `log-linear model
-<https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`.
+<https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`_.
 Note that it is possible in a :math:`K`-class context to parameterize the model
 using only :math:`K-1` weight vectors, leaving one class probability fully
 determined by the other class probabilities by leveraging the fact that all
@@ -886,16 +886,16 @@ symmetrical inductive bias regarding ordering of classes. This effect becomes
 especially important when using regularization.
 
 
-In the multinomial context with :math:`K`-many classes, we define the target
-vector of :math:`x_n` as :math:`y_n`, a binary vector with all zeros except for
-at element :math:`y_{n, t}` where :math:`t` is the true class of :math:`x_n`.
-Let :math:`C_i` be a binary vector with a :math:`0` for every element except
-for element :math:`k`, and :math:`W` be a matrix of weights where each vector
-:math:`W_k` corresponds to class :math:`k`. Then we find that
+Let :math:`J_i` be a binary vector with a :math:`0` for every element except
+for element :math:`i`. In the multinomial context with :math:`K`-many classes,
+we define the target vector of :math:`x_n` as :math:`y_n=J_t` where :math:`t`
+is the true class of :math:`x_n`. Instead of a single weight vector, we now have
+a matrix of weights :math:`W` where each vector :math:`W_k` corresponds to class
+:math:`k`. Then we find that
 
-.. math:: p(y_n=C_k|x_n) = z_{n,k} = \frac{\exp (W_k^T x_n)}{\sum_j W_j^T x_n}
+.. math:: p(y_n=J_k|x_n) = z_{n,k} = \frac{\exp (W_k^T x_n)}{\sum_j W_j^T x_n}
 
- Then the multinomial logistic regression solves this
+Then the multinomial logistic regression solves this
 optimization problem:
 
 .. math:: \min_W r(W) - C\sum_n \sum_k y_{n,k} z_{n,k}
@@ -904,17 +904,18 @@ optimization problem:
 
    In the multinomial case, the regularization function internally flattens the
    matrix of weights into a vector which is equivalent to concatenating each
-   individual vector :math:`W_k`. Then using the :math:`\ell_2` regularization,
-   the regularization equivalently takes the Frobenius norm:
+   individual :math:`W_k` vector. Thus, for a matrix :math:`W`, using
+   :math:`\ell_2` regularization is equivalent to taking the Frobenius norm:
    :math:`r(W) = \|W\|_F`
 
 Regularization
 --------------
 We currently implement four choices of regularization term
-- None, :math:`r(w) = 0`
-- :math:`\ell_1,\, r(w) = \|w\|_1`
-- :math:`\ell_2,\, r(w) = \|w\|_2 = w^T w`
-- ElasticNet, :math:`r(w) = \frac{1 - \rho}{2}w^T w + \rho \|w\|_1`
+
+#. None, :math:`r(w) = 0`
+#. :math:`\ell_1,\, r(w) = \|w\|_1`
+#. :math:`\ell_2,\, r(w) = \|w\|_2 = w^T w`
+#. ElasticNet, :math:`r(w) = \frac{1 - \rho}{2}w^T w + \rho \|w\|_1`
 
 For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
 controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
