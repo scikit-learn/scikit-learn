@@ -511,6 +511,9 @@ Changelog
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
 
+- |Enhancement| Adds :term:`get_feature_names_out` to
+  :class:`neural_network.BernoulliRBM`. :pr:`22248` by `Thomas Fan`_.
+
 :mod:`sklearn.pipeline`
 .......................
 

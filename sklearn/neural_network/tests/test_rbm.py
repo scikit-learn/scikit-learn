@@ -238,3 +238,15 @@ def test_convergence_dtype_consistency():
     )
     assert_allclose(rbm_64.components_, rbm_32.components_, rtol=1e-03, atol=0)
     assert_allclose(rbm_64.h_samples_, rbm_32.h_samples_)
+
+
+@pytest.mark.parametrize("method", ["fit", "partial_fit"])
+def test_feature_names_out(method):
+    """Check `get_feature_names_out` for `BernoulliRBM`."""
+    n_components = 10
+    rbm = BernoulliRBM(n_components=n_components)
+    getattr(rbm, method)(Xdigits)
+
+    names = rbm.get_feature_names_out()
+    expected_names = [f"bernoullirbm{i}" for i in range(n_components)]
+    assert_array_equal(expected_names, names)
