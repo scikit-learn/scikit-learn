@@ -924,7 +924,7 @@ stored components::
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
+      <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -938,7 +938,7 @@ stored components::
 
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
-      <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
+      <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.214.6398&rep=rep1&type=pdf>`_
       A. Cichocki, A. Phan, 2009
 
     .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with
