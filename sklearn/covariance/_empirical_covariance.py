@@ -22,11 +22,11 @@ from ..metrics.pairwise import pairwise_distances
 
 
 def log_likelihood(emp_cov, precision):
-    """Computes the sample mean of the log_likelihood under a covariance model
+    """Compute the sample mean of the log_likelihood under a covariance model.
 
-    computes the empirical expected log-likelihood (accounting for the
-    normalization terms and scaling), allowing for universal comparison (beyond
-    this software package)
+    Computes the empirical expected log-likelihood, allowing for universal
+    comparison (beyond this software package), and accounts for normalization
+    terms and scaling.
 
     Parameters
     ----------
@@ -49,19 +49,18 @@ def log_likelihood(emp_cov, precision):
 
 
 def empirical_covariance(X, *, assume_centered=False):
-    """Computes the Maximum likelihood covariance estimator
-
+    """Compute the Maximum likelihood covariance estimator.
 
     Parameters
     ----------
     X : ndarray of shape (n_samples, n_features)
-        Data from which to compute the covariance estimate
+        Data from which to compute the covariance estimate.
 
     assume_centered : bool, default=False
-        If True, data will not be centered before computation.
+        If `True`, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
-        If False, data will be centered before computation.
+        If `False`, data will be centered before computation.
 
     Returns
     -------

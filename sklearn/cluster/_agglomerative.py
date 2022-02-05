@@ -14,7 +14,7 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, ClusterMixin
+from ..base import BaseEstimator, ClusterMixin, _ClassNamePrefixFeaturesOutMixin
 from ..metrics.pairwise import paired_distances
 from ..metrics import DistanceMetric
 from ..metrics._dist_metrics import METRIC_MAPPING
@@ -429,11 +429,11 @@ def linkage_tree(
               observations of the two sets.
 
     affinity : str or callable, default='euclidean'
-        which metric to use. Can be 'euclidean', 'manhattan', or any
+        Which metric to use. Can be 'euclidean', 'manhattan', or any
         distance known to paired distance (see metric.pairwise).
 
     return_distance : bool, default=False
-        whether or not to return the distances between the clusters.
+        Whether or not to return the distances between the clusters.
 
     Returns
     -------
@@ -506,7 +506,7 @@ def linkage_tree(
             # by sklearn.metrics.pairwise_distances.
             if X.shape[0] != X.shape[1]:
                 raise ValueError(
-                    "Distance matrix should be square, Got matrix of shape {X.shape}"
+                    f"Distance matrix should be square, got matrix of shape {X.shape}"
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
@@ -914,7 +914,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2, estimator=self)
+        X = self._validate_data(X, ensure_min_samples=2)
         return self._fit(X)
 
     def _fit(self, X):
@@ -1054,7 +1054,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         return super().fit_predict(X, y)
 
 
-class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
+class FeatureAgglomeration(
+    _ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
+):
     """Agglomerate features.
 
     Recursively merges pair of clusters of features.
@@ -1234,8 +1236,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, ensure_min_features=2, estimator=self)
+        X = self._validate_data(X, ensure_min_features=2)
         super()._fit(X.T)
+        self._n_features_out = self.n_clusters_
         return self
 
     @property

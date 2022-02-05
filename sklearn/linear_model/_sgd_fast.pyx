@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-#
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel (partial_fit support)
 #         Rob Zinkov (passive-aggressive)
