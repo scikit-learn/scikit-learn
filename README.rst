@@ -89,7 +89,7 @@ User installation
 ~~~~~~~~~~~~~~~~~
 
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip``   ::
+the easiest way to install scikit-learn is using ``pip``::
 
     pip install -U scikit-learn
 
