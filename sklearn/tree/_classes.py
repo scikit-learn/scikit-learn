@@ -681,7 +681,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity, "log_loss" and "entropy" both for the
         Shannon information gain, see :ref:`tree_mathematical_formulation`
-        and "hellinger" for Hellinger Distance.
+        and "hellinger" for the Hellinger distance.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
