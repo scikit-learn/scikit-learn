@@ -19,6 +19,7 @@ the lower the better.
 # License: BSD 3 clause
 
 
+import itertools
 import warnings
 from functools import partial
 
@@ -1471,8 +1472,72 @@ def dcg_score(
         ),
         weights=sample_weight,
     )
+from sklearn.inspection import partial_dependence
 
+def h_statistic(dataset, estimator):
+    """Compute Friedman's H Statistic.
 
+    Calculation of the H Statistic which determines how strongly does two features
+    interact with each other.
+
+   
+
+    Parameters
+    ----------
+    dataset: Dictionary like object with the following attributes
+        data{ndarray, dataframe} of shape (442, 10)
+        The data matrix. If as_frame=True, data will be a pandas DataFrame.
+
+        target: {ndarray, Series} of shape (442,)
+        The regression target. If as_frame=True, target will be a pandas Series.
+
+        feature_names: list
+        The names of the dataset columns.
+
+        frame: DataFrame of shape (442, 11)
+        Only present when as_frame=True. DataFrame with data and target.
+
+        New in version 0.23.
+
+        DESCR: str
+        The full description of the dataset.
+
+        data_filename: str
+        The path to the location of the data.
+
+        target_filename: str
+        The path to the location of the target.
+
+    estimator: BaseEstimator
+    A fitted estimator object implementing predict, predict_proba, or decision_function.
+    Multioutput-multiclass classifiers are not supported.
+
+    Returns
+    -------
+    h_statistic : ndarray of shape (dataset.data.shape[1],dataset.data.shape[1])
+        The H statistic for the dataset
+
+    References
+    --------
+    1. https://www.firmai.org/bit/interaction.html#theory-friedmans-h-statistic
+
+    """
+    univariate_partial_dependence = {}
+    for i in range(dataset.data.shape[1]):
+        univariate_partial_dependence[i] = partial_dependence(estimator,dataset.data,features=[i],kind='average')['average']
+    
+    bivariate_partial_dependence = {}
+
+    for i, j in itertools.combinations(range(dataset.data.shape[1]), 2):
+        bivariate_partial_dependence[(i,j)] = partial_dependence(estimator,dataset.data,features=[i, j],kind='average')['average']
+    h_statistic = np.zeros((dataset.data.shape[1], dataset.data.shape[1]))
+    for i, j in itertools.combinations(range(dataset.data.shape[1]), 2):
+        numerator = ((bivariate_partial_dependence[(i, j)] - univariate_partial_dependence[i].reshape(1, -1, 1) - univariate_partial_dependence[j].reshape(1, 1, -1) + dataset.data.target.mean() ) ** 2).sum() 
+        denominator = ((bivariate_partial_dependence[(i, j)] - dataset.data.target.mean())** 2).sum()
+        h_statistic[i, j] = numerator / denominator
+
+    return h_statistic 
+        
 def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 
