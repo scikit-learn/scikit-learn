@@ -877,33 +877,34 @@ Multinomial Case
 We may then extend logistic regression to obtain a multinomial estimator by
 considering the logistic regression as a `log-linear model
 <https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`_.
-Note that it is possible in a :math:`K`-class context to parameterize the model
-using only :math:`K-1` weight vectors, leaving one class probability fully
-determined by the other class probabilities by leveraging the fact that all
-class probabilities must sum to one. We choose to overparameterize the model
-using :math:`K` weight vectors for ease of implementation and to preserve the
-symmetrical inductive bias regarding ordering of classes. This effect becomes
-especially important when using regularization.
 
+.. note::
+   It is possible in a :math:`K`-class context to parameterize the model
+   using only :math:`K-1` weight vectors, leaving one class probability fully
+   determined by the other class probabilities by leveraging the fact that all
+   class probabilities must sum to one. We choose to overparameterize the model
+   using :math:`K` weight vectors for ease of implementation and to preserve the
+   symmetrical inductive bias regarding ordering of classes. This effect becomes
+   especially important when using regularization.
 
 Let :math:`J_i` be a binary vector with a :math:`0` for every element except
 for element :math:`i`. In the multinomial context with :math:`K`-many classes,
-we define the target vector of :math:`x_n` as :math:`y_n=J_t` where :math:`t`
-is the true class of :math:`x_n`. Instead of a single weight vector, we now have
+we define the target vector of :math:`X_n` as :math:`Y_n=J_t` where :math:`t`
+is the true class of :math:`X_n`. Instead of a single weight vector, we now have
 a matrix of weights :math:`W` where each vector :math:`W_k` corresponds to class
-:math:`k`. Then we find that
+:math:`k`. Then we can define the evidence vector :math:`z_n` component-wise as:
 
-.. math:: p(y_n=J_k|x_n) = z_{n,k} = \frac{\exp (W_k^T x_n)}{\sum_j W_j^T x_n}
+.. math:: p(Y_n=J_k|X_n) = z_{n,k} = \frac{\exp (W_k^T X_n)}{\sum_j \exp (W_j^T X_n)}
 
 Then the multinomial logistic regression solves this
 optimization problem:
 
-.. math:: \min_W r(W) - C\sum_n \sum_k y_{n,k} z_{n,k}
+.. math:: \min_W r(W) - C\sum_n Y_n^T z_n
 
 .. note::
 
    In the multinomial case, the regularization function internally flattens the
-   matrix of weights into a vector which is equivalent to concatenating each
+   matrix of weights into a vector. This is equivalent to concatenating each
    individual :math:`W_k` vector. Thus, for a matrix :math:`W`, using
    :math:`\ell_2` regularization is equivalent to taking the Frobenius norm:
    :math:`r(W) = \|W\|_F`
