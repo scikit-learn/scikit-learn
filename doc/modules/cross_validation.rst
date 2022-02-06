@@ -679,7 +679,7 @@ Implementation notes:
 - With the current implementation full shuffle is not possible in most
   scenarios. When shuffle=True, the following happens:
 
-  1. All groups a shuffled.
+  1. All groups are shuffled.
   2. Groups are sorted by standard deviation of classes using stable sort.
   3. Sorted groups are iterated over and assigned to folds.
 
@@ -954,7 +954,7 @@ to obtain good results. A high p-value could be due to a lack of dependency
 between features and labels (there is no difference in feature values between
 the classes) or because the classifier was not able to use the dependency in
 the data. In the latter case, using a more appropriate classifier that
-is able to utilize the structure in the data, would result in a low
+is able to utilize the structure in the data, would result in a lower
 p-value.
 
 Cross-validation provides information about how well a classifier generalizes,

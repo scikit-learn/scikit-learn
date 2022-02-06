@@ -10,9 +10,11 @@ Ridge regression
 
 
 from abc import ABCMeta, abstractmethod
+from functools import partial
 import warnings
 
 import numpy as np
+import numbers
 from scipy import linalg
 from scipy import sparse
 from scipy import optimize
@@ -26,6 +28,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
 from ..utils import check_consistent_length
+from ..utils import check_scalar
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
@@ -557,6 +560,17 @@ def _ridge_regression(
             # we implement sample_weight via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
+    # Some callers of this method might pass alpha as single
+    # element array which already has been validated.
+    if alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
+        alpha = check_scalar(
+            alpha,
+            "alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
     # There should be either 1 or n_targets penalties
     alpha = np.asarray(alpha, dtype=X.dtype).ravel()
     if alpha.size not in [1, n_targets]:
@@ -741,6 +755,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        if self.max_iter is not None:
+            self.max_iter = check_scalar(
+                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
+            )
+
+        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
@@ -1844,12 +1865,6 @@ class _RidgeGCV(LinearModel):
 
         self.alphas = np.asarray(self.alphas)
 
-        if np.any(self.alphas <= 0):
-            raise ValueError(
-                "alphas must be strictly positive. Got {} containing some "
-                "negative or null value instead.".format(self.alphas)
-            )
-
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
             X,
             y,
@@ -2018,9 +2033,30 @@ class _BaseRidgeCV(LinearModel):
         the validation score.
         """
         cv = self.cv
+
+        check_scalar_alpha = partial(
+            check_scalar,
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+
+        if isinstance(self.alphas, (np.ndarray, list, tuple)):
+            n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
+            if n_alphas != 1:
+                for index, alpha in enumerate(self.alphas):
+                    alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
+            else:
+                self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
+        else:
+            # check for single non-iterable item
+            self.alphas = check_scalar_alpha(self.alphas, "alphas")
+
+        alphas = np.asarray(self.alphas)
+
         if cv is None:
             estimator = _RidgeGCV(
-                self.alphas,
+                alphas,
                 fit_intercept=self.fit_intercept,
                 normalize=self.normalize,
                 scoring=self.scoring,
@@ -2039,7 +2075,8 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True are incompatible")
             if self.alpha_per_target:
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
-            parameters = {"alpha": self.alphas}
+
+            parameters = {"alpha": alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
             gs = GridSearchCV(

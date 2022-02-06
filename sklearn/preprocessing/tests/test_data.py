@@ -346,7 +346,7 @@ def test_standard_scaler_numerical_stability():
     # to trigger the problem in recent numpy
     with pytest.warns(None) as record:
         scale(x)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
@@ -359,7 +359,7 @@ def test_standard_scaler_numerical_stability():
     x = np.full(10, 1e-100, dtype=np.float64)
     with pytest.warns(None) as record:
         x_small_scaled = scale(x)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
