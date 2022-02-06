@@ -1830,7 +1830,7 @@ def make_checkerboard(
     See Also
     --------
     make_biclusters : Generate an array with constant block diagonal structure
-     for biclustering.
+        for biclustering.
 
     References
     ----------
