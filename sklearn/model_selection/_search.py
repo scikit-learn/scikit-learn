@@ -767,7 +767,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
-        **fit_params : dict of string -> object
+        **fit_params : dict of str -> object
             Parameters passed to the `fit` method of the estimator.
 
             If a fit parameter is an array-like whose length is equal to
