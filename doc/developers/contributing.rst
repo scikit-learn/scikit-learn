@@ -1185,9 +1185,10 @@ Change the default value of a parameter
 
 If the default value of a parameter needs to be changed, please replace the
 default value with a specific value (e.g., ``warn``) and raise
-``FutureWarning`` when users are using the default value. In the following
-example, we change the default value of ``n_clusters`` from 5 to 10
-(current version is 0.20)::
+``FutureWarning`` when users are using the default value. The following
+example assumes that the current version is 0.20 and that we change the
+default value of ``n_clusters`` from 5 (old default for 0.20) to 10
+(new default for 0.22)::
 
     import warnings
 

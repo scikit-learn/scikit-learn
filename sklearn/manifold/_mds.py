@@ -84,7 +84,7 @@ def _smacof_single(
     sim_flat_w = sim_flat[sim_flat != 0]
     if init is None:
         # Randomly choose initial configuration
-        X = random_state.rand(n_samples * n_components)
+        X = random_state.uniform(size=n_samples * n_components)
         X = X.reshape((n_samples, n_components))
     else:
         # overrides the parameter p

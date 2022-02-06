@@ -453,7 +453,7 @@ def test_countvectorizer_uppercase_in_vocab():
 
     with pytest.warns(None) as record:
         vectorizer.transform(vocabulary)
-    assert not record
+    assert not [w.message for w in record]
 
 
 def test_tf_transformer_feature_names_out():
@@ -1424,7 +1424,7 @@ def test_vectorizer_stop_words_inconsistent():
     # Only one warning per stop list
     with pytest.warns(None) as record:
         vec.fit_transform(["hello world"])
-    assert not len(record)
+    assert not [w.message for w in record]
     assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment
