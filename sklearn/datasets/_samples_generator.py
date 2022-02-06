@@ -1836,7 +1836,7 @@ def make_checkerboard(
     ----------
     .. [1] Kluger, Y., Basri, R., Chang, J. T., & Gerstein, M. (2003).
         Spectral biclustering of microarray data: coclustering genes
-        and conditions. Genome research, 13(4), 703-716.   
+        and conditions. Genome research, 13(4), 703-716.
     """
     generator = check_random_state(random_state)
 
