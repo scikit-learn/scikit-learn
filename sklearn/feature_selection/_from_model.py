@@ -175,7 +175,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     Examples
     --------
-
     >>> from sklearn.feature_selection import SelectFromModel
     >>> from sklearn.linear_model import LogisticRegression
     >>> X = [[ 0.87, -1.34,  0.31 ],
@@ -192,9 +191,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     array([False,  True, False])
     >>> selector.transform(X)
     array([[-1.34],
-          [-0.02],
-          [-0.48],
-          [ 1.48]])
+           [-0.02],
+           [-0.48],
+           [ 1.48]])
 
     Using a callable to create a selector that can use no more than half
     of the input features.
