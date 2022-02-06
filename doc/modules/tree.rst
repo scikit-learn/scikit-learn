@@ -84,7 +84,7 @@ The disadvantages of decision trees include:
 
     - Decision tree learners create biased trees if some classes dominate.
       It is therefore recommended to balance the dataset prior to fitting
-      with the decision tree.
+      with the decision tree. Or use Hellinger distance as split criterion.
 
 
 .. _tree_classification:
@@ -393,6 +393,9 @@ Tips on practical use
     matrix input compared to a dense matrix when features have zero values in
     most of the samples.
 
+  * If the target is binary and imbalanced, it is recommended to use
+    Hellinger distance, ``criterion="hellinger"``.
+
 
 .. _tree_algorithms:
 
@@ -501,6 +504,8 @@ Entropy:
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
 HellingerDistance:
+
+Hellinger distance is implemented for the binary case only.
 
 .. math::
 
