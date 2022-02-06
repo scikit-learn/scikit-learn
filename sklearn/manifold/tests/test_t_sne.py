@@ -1248,7 +1248,7 @@ def test_tsne_with_mahalanobis_distance():
         square_distances=True,
     ).fit_transform(X)
     assert_array_equal(ref, now)
-=======
+
 @pytest.mark.filterwarnings("ignore:The PCA initialization in TSNE will change")
 # FIXME: remove in 1.3 after deprecation of `square_distances`
 def test_tsne_deprecation_square_distances():
