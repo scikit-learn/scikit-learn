@@ -536,7 +536,14 @@ HellingerDistance:
 
 .. math::
 
-    H(X_m) = \sqrt{(\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{1_left}}{N_{1_parent}}})^2+(\sqrt{\frac{N_{0_right}}{N_{0_parent}}}-\sqrt{\frac{N_{1_right}}{N_{1_parent}}})^2 }
+    H(Q_m) = \sqrt{\left(\sqrt{\frac{N_{m,+}^{left}}{N_{m,+}}}-\sqrt{\frac{N_{m,-}^{left}}{N_{m,-}}}\right)^2+\left(\sqrt{\frac{N_{m,+}^{right}}{N_{m,+}}}-\sqrt{\frac{N_{m,-}^{right}}{N_{m,-}}}\right)^2 }
+
+where :math:`N_{m,+}` and :math:`N_{m,-}` are the number of positive and
+negative samples for the :math:`m` node respectively; :math:`N_{m,+}^{left}` and
+:math:`N_{m,+}^{right}` are the number of positive samples for each of the
+:math:`m` node splits. Similarly, :math:`N_{m,-}^{left}` and
+:math:`N_{m,-}^{right}` are the number of negative samples for each of the
+:math:`m` node splits.
 
 Regression criteria
 -------------------
