@@ -1829,13 +1829,14 @@ def make_checkerboard(
 
     See Also
     --------
-    make_biclusters : Generate an array with constant block diagonal structure for biclustering.
+    make_biclusters : Generate an array with constant block diagonal structure
+     for biclustering.
 
     References
     ----------
     .. [1] Kluger, Y., Basri, R., Chang, J. T., & Gerstein, M. (2003).
         Spectral biclustering of microarray data: coclustering genes
-        and conditions. Genome research, 13(4), 703-716.
+        and conditions. Genome research, 13(4), 703-716.   
     """
     generator = check_random_state(random_state)
 
