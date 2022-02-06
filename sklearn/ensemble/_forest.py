@@ -1118,7 +1118,7 @@ class RandomForestClassifier(ForestClassifier):
     criterion : {"gini", "entropy", "hellinger"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity, "entropy" for the information gain
-        and "hellinger" for Hellinger Distance.
+        and "hellinger" for the Hellinger distance.
         Note: this parameter is tree-specific.
 
     max_depth : int, default=None
