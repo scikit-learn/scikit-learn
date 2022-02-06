@@ -70,12 +70,12 @@ def test_input_estimator_unchanged():
         (
             "gobbledigook",
             TypeError,
-            "'max_features' must be either an int or a",
+            "'max_features' must be either an int or a callable",
         ),
         (
             "all",
             TypeError,
-            "'max_features' must be either an int or a",
+            "'max_features' must be either an int or a callable",
         ),
     ],
 )

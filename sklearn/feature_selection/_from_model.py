@@ -183,7 +183,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     ...      [-1.34, -0.48, -2.55 ],
     ...      [ 1.92,  1.48,  0.65 ]]
     >>> y = [0, 1, 0, 1]
-    >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X,y)
+    >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
     >>> selector.estimator_.coef_
     array([[-0.3252302 ,  0.83462377,  0.49750423]])
     >>> selector.threshold_
@@ -199,9 +199,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     Using a callable to create a selector that can use no more than half
     of the input features.
 
-    >>> half_selector = SelectFromModel(estimator = LogisticRegression())
-    >>> half_selector.set_params(max_features = lambda X: round(len(X[0]) / 2))
-    >>> half_selector.fit(X,y)
+    >>> half_callable = lambda X: round(len(X[0]) / 2)
+    >>> half_selector = SelectFromModel(estimator=LogisticRegression(),
+    ...                                 max_features=half_callable)
+    >>> _ = half_selector.fit(X, y)
+    >>> half_selector.max_features_
+    2
     """
 
     def __init__(
@@ -287,9 +290,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                     )
             else:
                 raise TypeError(
-                    "'max_features' must be either an int or a"
-                    " callable that takes 'X' as input. Got"
-                    f" {self.max_features} instead."
+                    "'max_features' must be either an int or a  callable that takes"
+                    f" 'X' as input. Got {self.max_features} instead."
                 )
 
         if self.prefit:
