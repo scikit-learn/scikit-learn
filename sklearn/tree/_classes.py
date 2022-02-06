@@ -650,7 +650,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     criterion : {"gini", "entropy", "hellinger"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity, "entropy" for the information gain
-        and "hellinger" for Hellinger Distance.
+        and "hellinger" for the Hellinger distance.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
