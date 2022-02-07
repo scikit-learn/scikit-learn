@@ -550,6 +550,12 @@ Changelog
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
 
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`preprocessing.Normalizer`,
+  :class:`preprocessing.KernelCenterer`,
+  :class:`preprocessing.OrdinalEncoder`, and
+  :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
+
 :mod:`sklearn.random_projection`
 ................................
 
