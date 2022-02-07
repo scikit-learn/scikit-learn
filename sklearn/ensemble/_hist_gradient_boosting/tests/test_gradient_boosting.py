@@ -276,11 +276,15 @@ def test_asymmetric_error(quantile):
     model = HistGradientBoostingRegressor(
         loss="quantile",
         quantile=quantile,
+        max_iter=25,
+        random_state=0,
+        max_leaf_nodes=10,
     ).fit(X, y)
     assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=1e-2)
 
-    loss_true_quantile = model._loss(y, X @ coef + intercept)
-    loss_pred_quantile = model._loss(y, model.predict(X))
+    pinball_loss = PinballLoss(quantile=quantile)
+    loss_true_quantile = pinball_loss(y, X @ coef + intercept)
+    loss_pred_quantile = pinball_loss(y, model.predict(X))
     # we are overfitting
     assert loss_pred_quantile <= loss_true_quantile
 

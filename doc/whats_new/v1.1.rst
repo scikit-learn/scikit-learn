@@ -214,9 +214,9 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Feature| Added additional option `loss="quantile"` to
+- |MajorFeature| Added additional option `loss="quantile"` to
   :class:`ensemble.HistGradientBoostingRegressor` for modelling quantiles.
-  The quantile level can be specified with the new parameter `loss_param`.
+  The quantile level can be specified with the new parameter `quantile`.
   :pr:`21800` and :pr:`20567` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
