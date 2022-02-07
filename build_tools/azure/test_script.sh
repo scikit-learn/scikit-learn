@@ -41,6 +41,9 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 
     # Python 3.10 deprecates disutils and is imported by numpy interally during import time
     TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
+
+    # pyamg uses upcast from scipy.sparse.sputils which is deprecated in 1.8.0
+    TEST_CMD="$TEST_CMD -Wignore:Please\ use\ `upcast`\ from:DeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
