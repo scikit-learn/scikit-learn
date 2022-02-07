@@ -3,7 +3,6 @@
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
-from atexit import register
 import pytest
 import numpy as np
 import scipy.sparse as sparse
