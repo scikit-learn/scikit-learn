@@ -934,7 +934,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Boosting. `subsample` interacts with the parameter `n_estimators`.
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
-        Values must be in the range `(0, 1]`.
+        Values must be in the range `(0.0, 1.0]`.
 
     criterion : {'friedman_mse', 'squared_error', 'mse', 'mae'}, \
             default='friedman_mse'
