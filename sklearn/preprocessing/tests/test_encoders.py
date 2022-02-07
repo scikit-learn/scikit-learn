@@ -1387,3 +1387,15 @@ def test_ordinal_encoder_python_integer():
     assert_array_equal(encoder.categories_, np.sort(X, axis=0).T)
     X_trans = encoder.transform(X)
     assert_array_equal(X_trans, [[0], [3], [2], [1]])
+
+
+def test_ordinal_encoder_features_names_out_pandas():
+    """Check feature names out is same as the input."""
+    pd = pytest.importorskip("pandas")
+
+    names = ["b", "c", "a"]
+    X = pd.DataFrame([[1, 2, 3]], columns=names)
+    enc = OrdinalEncoder().fit(X)
+
+    feature_names_out = enc.get_feature_names_out()
+    assert_array_equal(names, feature_names_out)
