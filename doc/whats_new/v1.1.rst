@@ -235,6 +235,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| Added additional option `loss="gamma"` to
+  :class:`ensemble.HistGradientBoostingRegressor` for modelling skewed
+  distributed, positive valued targets.
+  :pr:`22409` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
   calls :func:`check_array` with parameter `force_all_finite=False` for non
   initial warm-start runs as it has already been checked before.
