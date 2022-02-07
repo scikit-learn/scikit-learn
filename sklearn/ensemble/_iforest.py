@@ -158,6 +158,16 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
+        Gaussian distributed dataset.
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+        Estimate the support of a high-dimensional distribution.
+        The implementation is based on libsvm.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
+        using Local Outlier Factor (LOF).
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
@@ -172,16 +182,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
     .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
-
-    See Also
-    ----------
-    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
-        Gaussian distributed dataset.
-    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
-        Estimate the support of a high-dimensional distribution.
-        The implementation is based on libsvm.
-    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
-        using Local Outlier Factor (LOF).
 
     Examples
     --------

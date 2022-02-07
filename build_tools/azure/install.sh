@@ -23,10 +23,10 @@ make_conda() {
 }
 
 setup_ccache() {
-    echo "Setting up ccache"
+    echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
     mkdir /tmp/ccache/
     which ccache
-    for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
+    for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
       ln -s $(which ccache) "/tmp/ccache/${name}"
     done
     export PATH="/tmp/ccache/:${PATH}"
@@ -137,17 +137,17 @@ python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
                       $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
-fi
-
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    python -m pip install pytest-xdist
+    # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
+    # cf. https://github.com/nedbat/coveragepy/issues/1310
+    python -m pip install codecov pytest-cov coverage==6.2
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     # numpydoc requires sphinx
     python -m pip install sphinx
-    python -m pip install numpydoc
+    # TODO: update the docstring checks to be compatible with new
+    # numpydoc versions
+    python -m pip install "numpydoc<1.2"
 fi
 
 python --version
