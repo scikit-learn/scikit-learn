@@ -103,7 +103,6 @@ def test_classification_toy(loss):
         ),
         ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
         ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 1000}, ValueError, "max_features == 1000, must be <="),
         ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
         ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
         ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
