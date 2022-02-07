@@ -695,3 +695,18 @@ def test_isotonic_regression_sample_weight_not_overwritten():
 
     IsotonicRegression().fit(X, y, sample_weight=sample_weight_fit)
     assert_allclose(sample_weight_fit, sample_weight_original)
+
+
+@pytest.mark.parametrize("shape", ["1d", "2d"])
+def test_get_feature_names_out(shape):
+    """Check `get_feature_names_out` for `IsotonicRegression`."""
+    X = np.arange(10)
+    if shape == "2d":
+        X = X.reshape(-1, 1)
+    y = np.arange(10)
+
+    iso = IsotonicRegression().fit(X, y)
+    names = iso.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(["isotonicregression0"], names)

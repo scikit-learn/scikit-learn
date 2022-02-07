@@ -660,6 +660,10 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     Features            real, positive
     =================   ==============
 
+    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
+    downloaded from:
+    https://goo.gl/U2Uwz2
+
     Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
     Parameters
@@ -687,32 +691,33 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        target: {ndarray, Series} of shape (569,)
+        target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names: list
+        feature_names : list
             The names of the dataset columns.
-        target_names: list
+        target_names : list
             The names of target classes.
-        frame: DataFrame of shape (569, 31)
+        frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
             .. versionadded:: 0.23
-        DESCR: str
+        DESCR : str
             The full description of the dataset.
-        filename: str
+        filename : str
             The path to the location of the data.
 
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (569, 30) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (569,) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
-
-    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
-    downloaded from:
-    https://goo.gl/U2Uwz2
 
     Examples
     --------
@@ -989,6 +994,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         Returns a tuple of two ndarray of shape (n_samples, n_features)
         A 2D array with each row representing one sample and each column
         representing the features and/or target of a given sample.
+
         .. versionadded:: 0.18
     """
     data_filename = "diabetes_data_raw.csv.gz"
