@@ -5,6 +5,7 @@ from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
     HalfMultinomialLoss,
+    HalfGammaLoss,
     HalfPoissonLoss,
     HalfSquaredError,
 )
@@ -15,7 +16,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_poisson_deviance
+from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.compose import make_column_transformer
@@ -34,6 +35,7 @@ n_threads = _openmp_effective_n_threads()
 _LOSSES = {
     "squared_error": HalfSquaredError,
     "absolute_error": AbsoluteError,
+    "gamma": HalfGammaLoss,
     "poisson": HalfPoissonLoss,
     "binary_crossentropy": HalfBinomialLoss,
     "categorical_crossentropy": HalfMultinomialLoss,
@@ -247,6 +249,58 @@ def test_absolute_error_sample_weight():
     sample_weight = rng.uniform(0, 1, size=n_samples)
     gbdt = HistGradientBoostingRegressor(loss="absolute_error")
     gbdt.fit(X, y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
+def test_gamma_y_positive(y):
+    # Test that ValueError is raised if any y_i <= 0.
+    err_msg = r"loss='gamma' requires positive y."
+    gbdt = HistGradientBoostingRegressor(loss="gamma", random_state=0)
+    with pytest.raises(ValueError, match=err_msg):
+        gbdt.fit(np.zeros(shape=(len(y), 1)), y)
+
+
+def test_gamma():
+    # For Gamma distributed target, Gamma loss should give better results
+    # than least squares or Poisson measured in Gamma deviance as metric.
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 500, 20
+    X = make_low_rank_matrix(
+        n_samples=n_train + n_test,
+        n_features=n_features,
+        random_state=rng,
+    )
+    # We create a log-linear Gamma model. This gives y.min ~ 1e-2, y.max ~ 1e2
+    coef = rng.uniform(low=-10, high=20, size=n_features)
+    # Numpy parametrizes gamma(shape=k, scale=theta) with mean = k * theta and
+    # variance = k * theta^2. We want parametrized instead with mean = exp(X @ coef)
+    # and variance = dispersion * mean^2 by setting k = 1 / dispersion,
+    # theta =  dispersion * mean.
+    dispersion = 0.5
+    y = rng.gamma(shape=1 / dispersion, scale=dispersion * np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=n_test, random_state=rng
+    )
+    gbdt_gamma = HistGradientBoostingRegressor(loss="gamma", random_state=123)
+    gbdt_ls = HistGradientBoostingRegressor(loss="squared_error", random_state=123)
+    gbdt_pois = HistGradientBoostingRegressor(loss="poisson", random_state=123)
+    for model in (gbdt_gamma, gbdt_ls, gbdt_pois):
+        model.fit(X_train, y_train)
+    dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
+
+    # Improve unconditional calibration on the training set by a correction factor.
+    # This almost always improves out-of-sample predictive accuracy.
+    cor = np.mean(y_train) / np.mean(gbdt_gamma.predict(X_train))
+
+    for X, y in [(X_train, y_train), (X_test, y_test)]:
+        metric_gamma = mean_gamma_deviance(y, cor * gbdt_gamma.predict(X))
+        # squared_error might produce non-positive predictions => clip
+        metric_ls = mean_gamma_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15, None))
+        metric_pois = mean_gamma_deviance(y, gbdt_pois.predict(X))
+        metric_dummy = mean_gamma_deviance(y, dummy.predict(X))
+        assert metric_gamma < metric_ls
+        assert metric_gamma < metric_pois
+        assert metric_gamma < metric_dummy
 
 
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 0.0, 0.0])])

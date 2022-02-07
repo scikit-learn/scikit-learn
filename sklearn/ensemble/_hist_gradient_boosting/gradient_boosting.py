@@ -12,6 +12,7 @@ from ..._loss.loss import (
     BaseLoss,
     AbsoluteError,
     HalfBinomialLoss,
+    HalfGammaLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
     HalfSquaredError,
@@ -42,6 +43,7 @@ _LOSSES.update(
         "least_squares": HalfSquaredError,
         "least_absolute_deviation": AbsoluteError,
         "poisson": HalfPoissonLoss,
+        "gamma": HalfGammaLoss,
         "binary_crossentropy": HalfBinomialLoss,
         "categorical_crossentropy": HalfMultinomialLoss,
     }
@@ -1115,16 +1117,20 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'poisson'}, \
+    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson'}, \
             default='squared_error'
         The loss function to use in the boosting process. Note that the
-        "squared error" and "poisson" losses actually implement
-        "half least squares loss" and "half poisson deviance" to simplify the
-        computation of the gradient. Furthermore, "poisson" loss internally
-        uses a log-link and requires ``y >= 0``.
+        "squared error", "gamma" and "poisson" losses actually implement
+        "half least squares loss", "half gamma deviance" and "half poisson
+        deviance" to simplify the computation of the gradient. Furthermore,
+        "gamma" and "poisson" losses internally use a log-link, "gamma"
+        requires ``y > 0`` and "poisson" requires ``y >= 0``.
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
+
+        .. versionchanged:: 1.1
+           Added option 'gamma'.
 
         .. deprecated:: 1.0
             The loss 'least_squares' was deprecated in v1.0 and will be removed
@@ -1293,6 +1299,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         "least_squares",
         "absolute_error",
         "least_absolute_deviation",
+        "gamma",
         "poisson",
     )
 
@@ -1382,7 +1389,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
         y = y.astype(Y_DTYPE, copy=False)
-        if self.loss == "poisson":
+        if self.loss == "gamma":
+            # Ensure y > 0
+            if not np.all(y > 0):
+                raise ValueError("loss='gamma' requires positive y.")
+        elif self.loss == "poisson":
             # Ensure y >= 0 and sum(y) > 0
             if not (np.all(y >= 0) and np.sum(y) > 0):
                 raise ValueError(
