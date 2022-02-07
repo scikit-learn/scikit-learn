@@ -6,6 +6,7 @@
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
+import numbers
 import numpy as np
 from joblib import Parallel
 import scipy.sparse as sparse
@@ -31,6 +32,7 @@ from ..utils import Bunch
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils.validation import check_scalar
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
 
@@ -145,6 +147,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         -------
         self : object
         """
+        # check params
+        check_scalar(
+            self.passthrough,
+            name="passthrough",
+            target_type=(np.bool_, numbers.Integral),
+            include_boundaries="neither",
+        )
+
         # all_estimators contains all estimators, the one to be fitted and the
         # 'drop' string.
         names, all_estimators = self._validate_estimators()

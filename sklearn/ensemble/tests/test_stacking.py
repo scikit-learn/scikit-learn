@@ -3,6 +3,7 @@
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
+from atexit import register
 import pytest
 import numpy as np
 import scipy.sparse as sparse
@@ -268,6 +269,45 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         self.clf = DummyClassifier(strategy="stratified")
         return self.clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "stacker, X, y",
+    [
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression()),
+                    ("svm", LinearSVC(random_state=42)),
+                ],
+                final_estimator=LogisticRegression(),
+            ),
+            X_iris,
+            y_iris,
+        ),
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR(random_state=42)),
+                ],
+                final_estimator=LinearRegression(),
+            ),
+            X_diabetes,
+            y_diabetes,
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"passthrough": "foo"}, TypeError, "passthrough must be an instance of"),
+    ],
+)
+def test_stacking_params_validation(stacker, X, y, params, err_type, err_msg):
+    with pytest.raises(err_type, match=err_msg):
+        clf = stacker.set_params(**params)
+        clf.fit(scale(X), y)
 
 
 @pytest.mark.parametrize(
