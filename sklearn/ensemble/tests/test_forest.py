@@ -82,7 +82,7 @@ X_large_imbl, y_large_imbl = datasets.make_classification(
     n_informative=5,
     n_redundant=0,
     n_repeated=0,
-    weights=[1 - imbl_minority_class_ratio, imbl_minority_class_ratio],
+    weights=[1 - imbl_minority_class_ratio],
     shuffle=False,
     random_state=0,
 )
