@@ -302,12 +302,15 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
     "params, err_type, err_msg",
     [
         ({"passthrough": "foo"}, TypeError, "passthrough must be an instance of"),
+        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
+        ({"verbose": "foo"}, TypeError, "verbose must be an instance of"),
     ],
 )
 def test_stacking_params_validation(stacker, X, y, params, err_type, err_msg):
     with pytest.raises(err_type, match=err_msg):
-        clf = stacker.set_params(**params)
-        clf.fit(scale(X), y)
+        final_estimator = clone(stacker)
+        final_estimator.set_params(**params)
+        final_estimator.fit(scale(X), y)
 
 
 @pytest.mark.parametrize(
