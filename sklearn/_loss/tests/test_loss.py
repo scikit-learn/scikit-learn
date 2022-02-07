@@ -1048,47 +1048,6 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
         gradient, hessian = loss.init_gradient_and_hessian(n_samples=5, **params)
 
 
-@pytest.mark.parametrize(
-    "loss, params, err_msg",
-    [
-        (
-            PinballLoss,
-            {"quantile": None},
-            "PinballLoss aka quantile loss only accepts numbers 0 < quantile < 1;"
-            f" {None} was given.",
-        ),
-        (
-            PinballLoss,
-            {"quantile": 0},
-            "PinballLoss aka quantile loss only accepts numbers 0 < quantile < 1;"
-            f" {0} was given.",
-        ),
-        (
-            PinballLoss,
-            {"quantile": 1.1},
-            "PinballLoss aka quantile loss only accepts numbers 0 < quantile < 1;"
-            f" {1.1} was given.",
-        ),
-        (
-            HalfTweedieLoss,
-            {"power": None},
-            "HalfTweedieLoss only accepts finite numbers as power parameter;"
-            f" {None} was given.",
-        ),
-        (
-            HalfTweedieLoss,
-            {"power": np.inf},
-            "HalfTweedieLoss only accepts finite numbers as power parameter;"
-            f" {np.inf} was given.",
-        ),
-    ],
-)
-def test_loss_init_parameter_validation(loss, params, err_msg):
-    """Test that loss raises errors for invalid input."""
-    with pytest.raises(ValueError, match=err_msg):
-        loss(**params)
-
-
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 def test_loss_pickle(loss):
     """Test that losses can be pickled."""
