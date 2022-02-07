@@ -961,7 +961,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         The minimum number of samples required to split an internal node:
 
         - If int, values must be in the range `[2, inf)`.
-        - If float, values must be in the range `(0, 1]` and `min_samples_split`
+        - If float, values must be in the range `(0.0, 1.0]` and `min_samples_split`
           will be `ceil(min_samples_split * n_samples)`.
 
         .. versionchanged:: 0.18
@@ -985,7 +985,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-        Values must be in the range `[0, 0.5]`.
+        Values must be in the range `[0.0, 0.5]`.
 
     max_depth : int, default=3
         The maximum depth of the individual regression estimators. The maximum
@@ -1032,8 +1032,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     max_features : {'auto', 'sqrt', 'log2'}, int or float, default=None
         The number of features to consider when looking for the best split:
 
-        - If int, values must be in the range `[1, number of features]`.
-        - If float, values must be in the range `(0, 1]` and the features
+        - If int, values must be in the range `[1, inf)`.
+        - If float, values must be in the range `(0.0, 1.0]` and the features
           considered at each split will be `int(max_features * n_features)`.
         - If 'auto', then `max_features=sqrt(n_features)`.
         - If 'sqrt', then `max_features=sqrt(n_features)`.
@@ -1057,17 +1057,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         Values must be in the range `[2, inf)`.
-        If None, then unlimited number of leaf nodes.
+        If `None`, then unlimited number of leaf nodes.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution. Values must be `True` or `False`.
-        See :term:`the Glossary <warm_start>`.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
-        early stopping. Values must be in the range `(0, 1)`.
+        early stopping. Values must be in the range `(0.0, 1.0)`.
         Only used if ``n_iter_no_change`` is set to an integer.
 
         .. versionadded:: 0.20
@@ -1088,7 +1087,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
-        Values must be in the range `(0, inf)`.
+        Values must be in the range `(0.0, inf)`.
 
         .. versionadded:: 0.20
 
@@ -1096,7 +1095,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
-        Values must be in the range `[0, inf)`.
+        Values must be in the range `[0.0, inf)`.
         See :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
@@ -1520,7 +1519,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Boosting. `subsample` interacts with the parameter `n_estimators`.
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
-        Values must be in the range `(0, 1]`.
+        Values must be in the range `(0.0, 1.0]`.
 
     criterion : {'friedman_mse', 'squared_error', 'mse', 'mae'}, \
             default='friedman_mse'
@@ -1546,7 +1545,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The minimum number of samples required to split an internal node:
 
         - If int, values must be in the range `[2, inf)`.
-        - If float, values must be in the range `(0, 1]` and `min_samples_split`
+        - If float, values must be in the range `(0.0, 1.0]` and `min_samples_split`
           will be `ceil(min_samples_split * n_samples)`.
 
         .. versionchanged:: 0.18
@@ -1560,7 +1559,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         especially in regression.
 
         - If int, values must be in the range `[1, inf)`.
-        - If float, values must be in the range `(0, 1]` and `min_samples_leaf`
+        - If float, values must be in the range `(0.0, 1.0]` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
 
         .. versionchanged:: 0.18
@@ -1570,7 +1569,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-        Values must be in the range `[0, 0.5]`.
+        Values must be in the range `[0.0, 0.5]`.
 
     max_depth : int, default=3
         Maximum depth of the individual regression estimators. The maximum
@@ -1618,8 +1617,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     max_features : {'auto', 'sqrt', 'log2'}, int or float, default=None
         The number of features to consider when looking for the best split:
 
-        - If int, values must be in the range `[1, number of features]`.
-        - If float, values must be in the range `(0, 1]` and the features
+        - If int, values must be in the range `[1, inf)`.
+        - If float, values must be in the range `(0.0, 1.0]` and the features
           considered at each split will be `int(max_features * n_features)`.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -1636,7 +1635,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     alpha : float, default=0.9
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
-        Values must be in the range `(0, 1)`.
+        Values must be in the range `(0.0, 1.0)`.
 
     verbose : int, default=0
         Enable verbose output. If 1 then it prints progress and performance
@@ -1653,12 +1652,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution. Values must be `True` or `False`.
-        See :term:`the Glossary <warm_start>`.
+        previous solution. See :term:`the Glossary <warm_start>`.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
-        early stopping. Values must be in the range `(0, 1)`.
+        early stopping. Values must be in the range `(0.0, 1.0)`.
         Only used if ``n_iter_no_change`` is set to an integer.
 
         .. versionadded:: 0.20
@@ -1679,7 +1677,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
-        Values must be in the range `(0, inf)`.
+        Values must be in the range `(0.0, inf)`.
 
         .. versionadded:: 0.20
 
@@ -1687,7 +1685,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
-        Values must be in the range `[0, inf)`.
+        Values must be in the range `[0.0, inf)`.
         See :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
