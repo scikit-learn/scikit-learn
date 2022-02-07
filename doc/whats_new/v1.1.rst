@@ -246,6 +246,11 @@ Changelog
   :pr:`20811`, :pr:`20567` and :pr:`21814` by
   :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| Change the parameter `validation_fraction` in
+  :class:`ensemble.BaseGradientBoosting` so that an error is raised if anything
+  other than a float is passed in as an argument.
+  :pr:`21632` by :user:`Genesis Valencia <genvalen>`
+
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
   :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
