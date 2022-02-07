@@ -16,6 +16,7 @@ Developer's Guide
    contributing
    develop
    tips
+   minimal_reproducer
    utilities
    performance
    advanced_installation
