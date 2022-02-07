@@ -975,7 +975,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         especially in regression.
 
         - If int, values must be in the range `[1, inf)`.
-        - If float, values must be in the range `(0, 1]` and `min_samples_leaf`
+        - If float, values must be in the range `(0.0, 1.0]` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
 
         .. versionchanged:: 0.18
