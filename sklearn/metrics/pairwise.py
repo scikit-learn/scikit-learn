@@ -1024,6 +1024,9 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
         should take two arrays from `X` as input and return a value indicating
         the distance between them.
 
+    **kwds : dict
+        Unused parameters.
+
     Returns
     -------
     distances : ndarray of shape (n_samples,)
