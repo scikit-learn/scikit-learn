@@ -342,9 +342,17 @@ def test_probability(name):
     check_probability(name)
 
 
-def check_importances(name, criterion, tolerance, X, y):
-    ForestEstimator = FOREST_ESTIMATORS[name]
+def check_importances(name, criterion, tolerance):
+    # cast as dtype
+    # use imbalanced data for testing imbalanced criterion
+    if criterion == "hellinger":
+        X = X_large_imbl.astype(dtype, copy=False)
+        y = y_large_imbl.astype(dtype, copy=False)
+    else:
+        X = X_large.astype(dtype, copy=False)
+        y = y_large.astype(dtype, copy=False)
 
+    ForestEstimator = FOREST_ESTIMATORS[name]
     est = ForestEstimator(n_estimators=10, criterion=criterion, random_state=0)
     est.fit(X, y)
     importances = est.feature_importances_
@@ -389,17 +397,7 @@ def test_importances(dtype, name, criterion):
     if name in FOREST_REGRESSORS and criterion == "absolute_error":
         tolerance = 0.05
 
-    # cast as dtype
-    X = X_large.astype(dtype, copy=False)
-    y = y_large.astype(dtype, copy=False)
-
-    if criterion == "hellinger":
-        # use imbalanced data for testing imbalanced criterion
-        # cast as dtype
-        X = X_large_imbl.astype(dtype, copy=False)
-        y = y_large_imbl.astype(dtype, copy=False)
-
-    check_importances(name, criterion, tolerance, X, y)
+    check_importances(name, criterion, tolerance)
 
 
 def test_importances_asymptotic():
