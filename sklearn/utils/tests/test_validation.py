@@ -2,7 +2,6 @@
 
 import numbers
 import warnings
-import os
 import re
 
 from tempfile import NamedTemporaryFile
@@ -13,7 +12,6 @@ import pytest
 from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
-import joblib
 
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
@@ -994,19 +992,11 @@ class WrongDummyMemory:
 
 
 def test_check_memory():
-    joblib_before_0_12 = parse_version(joblib.__version__) < parse_version("0.12")
-
     memory = check_memory("cache_directory")
-    if joblib_before_0_12:
-        assert memory.cachedir == os.path.join("cache_directory", "joblib")
-    else:
-        assert memory.location == "cache_directory"
+    assert memory.location == "cache_directory"
 
     memory = check_memory(None)
-    if joblib_before_0_12:
-        assert memory.cachedir is None
-    else:
-        assert memory.location is None
+    assert memory.location is None
 
     dummy = DummyMemory()
     memory = check_memory(dummy)
