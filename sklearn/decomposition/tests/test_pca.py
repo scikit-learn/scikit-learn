@@ -171,10 +171,10 @@ def test_pca_singular_values(svd_solver):
 
     # compare to the Frobenius norm
     assert_allclose(
-        np.sum(pca.singular_values_ ** 2), np.linalg.norm(X_trans, "fro") ** 2
+        np.sum(pca.singular_values_**2), np.linalg.norm(X_trans, "fro") ** 2
     )
     # Compare to the 2-norms of the score vectors
-    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans ** 2, axis=0)))
+    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans**2, axis=0)))
 
     # set the singular values and see what er get back
     n_samples, n_features = 100, 110
@@ -182,7 +182,7 @@ def test_pca_singular_values(svd_solver):
 
     pca = PCA(n_components=3, svd_solver=svd_solver, random_state=rng)
     X_trans = pca.fit_transform(X)
-    X_trans /= np.sqrt(np.sum(X_trans ** 2, axis=0))
+    X_trans /= np.sqrt(np.sum(X_trans**2, axis=0))
     X_trans[:, 0] *= 3.142
     X_trans[:, 1] *= 2.718
     X_hat = np.dot(X_trans, pca.components_)
@@ -200,7 +200,7 @@ def test_pca_check_projection(svd_solver):
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
 
     Yt = PCA(n_components=2, svd_solver=svd_solver).fit(X).transform(Xt)
-    Yt /= np.sqrt((Yt ** 2).sum())
+    Yt /= np.sqrt((Yt**2).sum())
 
     assert_allclose(np.abs(Yt[0][0]), 1.0, rtol=5e-3)
 
@@ -412,7 +412,7 @@ def test_pca_score(svd_solver):
     pca.fit(X)
 
     ll1 = pca.score(X)
-    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
+    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1**2) * p
     assert_allclose(ll1 / h, 1, rtol=5e-2)
 
     ll2 = pca.score(rng.randn(n, p) * 0.2 + np.array([3, 4, 5]))

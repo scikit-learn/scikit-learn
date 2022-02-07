@@ -13,6 +13,7 @@ import pytest
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils import check_random_state
 from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
@@ -288,3 +289,18 @@ def test_ard_regression_predict_normalize_true():
     clf = ARDRegression(normalize=True)
     clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     clf.predict([[1, 1]], return_std=True)
+
+
+def test_ard_regression_positive_constraint():
+    """
+    Test nonnegative ARDRegression on a simple dataset
+    """
+    X = [[1], [2]]
+    y = [1, 2]
+
+    reg = ARDRegression(positive=True)
+    reg.fit(X, y)
+
+    assert_array_almost_equal(reg.coef_, [1], decimal=5)
+    assert_array_almost_equal(reg.intercept_, [0], decimal=5)
+    assert_array_almost_equal(reg.predict(X), [1, 2], decimal=5)

@@ -281,7 +281,7 @@ def test_standard_scaler_near_constant_features(
     # is considered constant and not scaled.
 
     scale_min, scale_max = -30, 19
-    scales = np.array([10 ** i for i in range(scale_min, scale_max + 1)], dtype=dtype)
+    scales = np.array([10**i for i in range(scale_min, scale_max + 1)], dtype=dtype)
 
     n_features = scales.shape[0]
     X = np.empty((n_samples, n_features), dtype=dtype)
@@ -298,8 +298,8 @@ def test_standard_scaler_near_constant_features(
 
     # if var < bound = N.eps.var + N².eps².mean², the feature is considered
     # constant and the scale_ attribute is set to 1.
-    bounds = n_samples * eps * scales ** 2 + n_samples ** 2 * eps ** 2 * average ** 2
-    within_bounds = scales ** 2 <= bounds
+    bounds = n_samples * eps * scales**2 + n_samples**2 * eps**2 * average**2
+    within_bounds = scales**2 <= bounds
 
     # Check that scale_min is small enough to have some scales below the
     # bound and therefore detected as constant:
@@ -320,7 +320,7 @@ def test_standard_scaler_near_constant_features(
     # The other features are scaled and scale_ is equal to sqrt(var_) assuming
     # that scales are large enough for average + scale and average - scale to
     # be distinct in X (depending on X's dtype).
-    common_mask = np.logical_and(scales ** 2 > bounds, representable_diff)
+    common_mask = np.logical_and(scales**2 > bounds, representable_diff)
     assert_allclose(scaler.scale_[common_mask], np.sqrt(scaler.var_)[common_mask])
 
 
@@ -2038,7 +2038,7 @@ def test_normalize():
                 if norm == "l1":
                     row_sums = np.abs(X_norm).sum(axis=1)
                 else:
-                    X_norm_squared = X_norm ** 2
+                    X_norm_squared = X_norm**2
                     row_sums = X_norm_squared.sum(axis=1)
 
                 assert_array_almost_equal(row_sums, ones)

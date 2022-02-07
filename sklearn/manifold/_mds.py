@@ -114,7 +114,7 @@ def _smacof_single(
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
             disparities *= np.sqrt(
-                (n_samples * (n_samples - 1) / 2) / (disparities ** 2).sum()
+                (n_samples * (n_samples - 1) / 2) / (disparities**2).sum()
             )
 
         # Compute stress
@@ -127,7 +127,7 @@ def _smacof_single(
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1.0 / n_samples * np.dot(B, X)
 
-        dis = np.sqrt((X ** 2).sum(axis=1)).sum()
+        dis = np.sqrt((X**2).sum(axis=1)).sum()
         if verbose >= 2:
             print("it: %d, stress %s" % (it, stress))
         if old_stress is not None:

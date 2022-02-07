@@ -281,7 +281,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         XT_y = np.dot(X.T, y)
         U, S, Vh = linalg.svd(X, full_matrices=False)
-        eigen_vals_ = S ** 2
+        eigen_vals_ = S**2
 
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
@@ -300,7 +300,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
             # Update alpha and lambda according to (MacKay, 1992)
             gamma_ = np.sum((alpha_ * eigen_vals_) / (lambda_ + alpha_ * eigen_vals_))
-            lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_ ** 2) + 2 * lambda_2)
+            lambda_ = (gamma_ + 2 * lambda_1) / (np.sum(coef_**2) + 2 * lambda_2)
             alpha_ = (n_samples - gamma_ + 2 * alpha_1) / (rmse_ + 2 * alpha_2)
 
             # Check for convergence
@@ -417,7 +417,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             n_features * log(lambda_)
             + n_samples * log(alpha_)
             - alpha_ * rmse
-            - lambda_ * np.sum(coef ** 2)
+            - lambda_ * np.sum(coef**2)
             + logdet_sigma
             - n_samples * log(2 * np.pi)
         )
@@ -581,6 +581,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         normalize="deprecated",
         copy_X=True,
         verbose=False,
+        positive=False,
     ):
         self.n_iter = n_iter
         self.tol = tol
@@ -594,6 +595,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.threshold_lambda = threshold_lambda
         self.copy_X = copy_X
         self.verbose = verbose
+        self.positive = positive
 
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
@@ -616,9 +618,15 @@ class ARDRegression(RegressorMixin, LinearModel):
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
+        accept_sparse = False if self.positive else ["csr", "csc", "coo"]
 
         X, y = self._validate_data(
-            X, y, dtype=np.float64, y_numeric=True, ensure_min_samples=2
+            X,
+            y,
+            accept_sparse=accept_sparse,
+            dtype=np.float64,
+            y_numeric=True,
+            ensure_min_samples=2,
         )
 
         n_samples, n_features = X.shape
@@ -689,7 +697,7 @@ class ARDRegression(RegressorMixin, LinearModel):
                     + n_samples * log(alpha_)
                     + np.sum(np.log(lambda_))
                 )
-                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_ ** 2).sum())
+                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_**2).sum())
                 self.scores_.append(s)
 
             # Check for convergence
