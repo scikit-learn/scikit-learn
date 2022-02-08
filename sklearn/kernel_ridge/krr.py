@@ -5,14 +5,18 @@
 # License: BSD 3 clause
 
 import numpy as np
-from .kernel_ridge import KernelRidge
-from sklearn.linear_model._ridge import RidgeClassifier
+
+from sklearn.base import BaseEstimator, RegressorMixin, MultiOutputMixin
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.utils.validation import check_is_fitted, _check_sample_weight
+from sklearn.utils.deprecation import deprecated
 
 
-class KernelClassifier(KernelRidge, RidgeClassifier):
-    """Kernel ridge classification.
+class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
+    """Kernel ridge regression.
 
-    Kernel ridge clasification (KRR) combines ridge regression (linear least
+    Kernel ridge regression (KRR) combines ridge regression (linear least
     squares with l2-norm regularization) with the kernel trick. It thus
     learns a linear function in the space induced by the respective kernel and
     the data. For non-linear kernels, this corresponds to a non-linear

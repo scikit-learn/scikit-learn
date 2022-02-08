@@ -5,18 +5,18 @@
 # License: BSD 3 clause
 
 import numpy as np
+from sklearn.kernel_ridge.krr import KernelRidge
+from sklearn.linear_model._ridge import RidgeClassifier
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.utils.validation import check_is_fitted, _check_sample_weight
+from sklearn.utils.deprecation import deprecated
 
-from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from .metrics.pairwise import pairwise_kernels
-from .linear_model._ridge import _solve_cholesky_kernel
-from .utils.validation import check_is_fitted, _check_sample_weight
-from .utils.deprecation import deprecated
 
+class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
+    """Kernel ridge classification.
 
-class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
-    """Kernel ridge regression.
-
-    Kernel ridge regression (KRR) combines ridge regression (linear least
+    Kernel ridge clasification (KRR) combines ridge regression (linear least
     squares with l2-norm regularization) with the kernel trick. It thus
     learns a linear function in the space induced by the respective kernel and
     the data. For non-linear kernels, this corresponds to a non-linear
@@ -129,44 +129,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> krr.fit(X, y)
     KernelRidge(alpha=1.0)
     """
-
-    def __init__(
-        self,
-        alpha=1,
-        *,
-        kernel="linear",
-        gamma=None,
-        degree=3,
-        coef0=1,
-        kernel_params=None,
-    ):
-        self.alpha = alpha
-        self.kernel = kernel
-        self.gamma = gamma
-        self.degree = degree
-        self.coef0 = coef0
-        self.kernel_params = kernel_params
-
-    def _get_kernel(self, X, Y=None):
-        if callable(self.kernel):
-            params = self.kernel_params or {}
-        else:
-            params = {"gamma": self.gamma, "degree": self.degree, "coef0": self.coef0}
-        return pairwise_kernels(X, Y, metric=self.kernel, filter_params=True, **params)
-
-    def _more_tags(self):
-        return {"pairwise": self.kernel == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
-
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.
 
@@ -188,9 +150,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Returns the instance itself.
         """
         # Convert data
-        X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
-        )
+        X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
+
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -214,13 +175,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def predict(self, X):
         """Predict using the kernel ridge model.
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Samples. If kernel == "precomputed" this is instead a
-            precomputed kernel matrix, shape = [n_samples,
-            n_samples_fitted], where n_samples_fitted is the number of
-            samples used in the fitting for this estimator.
+        
 
         Returns
         -------
@@ -231,3 +186,33 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)
+
+    def predict(self, X):
+        """Predict class labels for samples in `X`.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Samples. If kernel == "precomputed" this is instead a
+            precomputed kernel matrix, shape = [n_samples,
+            n_samples_fitted], where n_samples_fitted is the number of
+            samples used in the fitting for this estimator.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Vector or matrix containing the predictions. In binary and
+            multiclass problems, this is a vector containing `n_samples`. In
+            a multilabel problem, it returns a matrix of shape
+            `(n_samples, n_outputs)`.
+        """
+        check_is_fitted(self, attributes=["_label_binarizer"])
+        X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
+        K = self._get_kernel(X, self.X_fit_)
+        if self._label_binarizer.y_type_.startswith("multilabel"):
+            # Threshold such that the negative label is -1 and positive label
+            # is 1 to use the inverse transform of the label binarizer fitted
+            # during fit.
+            scores = 2 * (self.decision_function(X) > 0) - 1
+            return self._label_binarizer.inverse_transform(scores)
+        return super(RidgeClassifier).predict(X)
