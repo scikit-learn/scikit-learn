@@ -633,7 +633,7 @@ def test_feature_names_in():
     trans = NoOpTransformer()
     with pytest.warns(None) as record:
         trans.fit(df_int_names)
-    assert not record
+    assert not [w.message for w in record]
 
     # fit on dataframe with no feature names or all integer feature names
     # -> do not warn on transform
@@ -641,7 +641,7 @@ def test_feature_names_in():
     for X in Xs:
         with pytest.warns(None) as record:
             trans.transform(X)
-        assert not record
+        assert not [w.message for w in record]
 
     # TODO: Convert to a error in 1.2
     # fit on dataframe with feature names that are mixed warns:
