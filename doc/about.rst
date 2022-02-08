@@ -253,7 +253,7 @@ July 2017.
    <div class="sk-sponsor-div-box">
 
 .. image:: images/huggingface_logo-noborder.png
-   :width: 100pt
+   :width: 55pt
    :align: center
    :target: https://huggingface.co/
 
