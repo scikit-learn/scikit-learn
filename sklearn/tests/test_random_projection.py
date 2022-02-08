@@ -421,6 +421,8 @@ def test_no_inverse_transform_by_default(random_projection_cls):
         random_projection.inverse_transform(projected)
     with pytest.raises(AttributeError):
         random_projection.inverse_components_
+
+
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
 @pytest.mark.parametrize(
     "input_dtype, expected_dtype",
