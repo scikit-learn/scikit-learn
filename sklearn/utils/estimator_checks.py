@@ -168,7 +168,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
     # Checks that the Estimator targets are not NaN.
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(888)
-    X = rng.randn(10, 5)
+    X = rng.standard_normal(size=(10, 5))
 
     for value in [np.nan, np.inf]:
         y = np.full(10, value)
@@ -278,6 +278,7 @@ def _yield_outliers_checks(estimator):
         # test if NotFittedError is raised
         if _safe_tags(estimator, key="requires_fit"):
             yield check_estimators_unfitted
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_all_checks(estimator):
@@ -530,7 +531,7 @@ def parametrize_with_checks(estimators):
 def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
-    This estimator will run an extensive test-suite for input validation,
+    This function will run an extensive test-suite for input validation,
     shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
@@ -658,6 +659,11 @@ def _set_checking_parameters(estimator):
         # TruncatedSVD doesn't run with n_components = n_features
         # This is ugly :-/
         estimator.n_components = 1
+
+    if name == "LassoLarsIC":
+        # Noise variance estimation does not work when `n_samples < n_features`.
+        # We need to provide the noise variance explicitly.
+        estimator.set_params(noise_variance=1.0)
 
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = min(estimator.n_clusters, 2)
@@ -792,11 +798,11 @@ def _generate_sparse_matrix(X_csr):
 
 def check_estimator_sparse_data(name, estimator_orig):
     rng = np.random.RandomState(0)
-    X = rng.rand(40, 3)
+    X = rng.uniform(size=(40, 3))
     X[X < 0.8] = 0
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(int)
+    y = (4 * rng.uniform(size=40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
@@ -1082,7 +1088,7 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
+    X = _pairwise_estimator_convert_X(rng.uniform(size=(40, 10)), estimator_orig)
     X = X.astype(object)
     tags = _safe_tags(estimator_orig)
     y = (X[:, 0] * 4).astype(int)
@@ -2064,6 +2070,22 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
+def _create_memmap_backed_data(numpy_arrays):
+    # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
+    # See: https://github.com/scipy/scipy/issues/14886
+    has_prescott_openblas = any(
+        True
+        for info in threadpool_info()
+        if info["internal_api"] == "openblas"
+        # Prudently assume Prescott might be the architecture if it is unknown.
+        and info.get("architecture", "prescott").lower() == "prescott"
+    )
+    return [
+        create_memmap_backed_data(array, aligned=has_prescott_openblas)
+        for array in numpy_arrays
+    ]
+
+
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2081,19 +2103,7 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
-        # See: https://github.com/scipy/scipy/issues/14886
-        has_prescott_openblas = any(
-            True
-            for info in threadpool_info()
-            if info["internal_api"] == "openblas"
-            # Prudently assume Prescott might be the architecture if it is unknown.
-            and info.get("architecture", "prescott").lower() == "prescott"
-        )
-        X_m = create_memmap_backed_data(data=X_m, aligned=has_prescott_openblas)
-        y_m = create_memmap_backed_data(data=y_m, aligned=has_prescott_openblas)
-        X_b = create_memmap_backed_data(data=X_b, aligned=has_prescott_openblas)
-        y_b = create_memmap_backed_data(data=y_b, aligned=has_prescott_openblas)
+        X_m, y_m, X_b, y_b = _create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
@@ -2761,7 +2771,7 @@ def check_regressors_train(
         y_ = y
 
     if readonly_memmap:
-        X, y, y_ = create_memmap_backed_data([X, y, y_])
+        X, y, y_ = _create_memmap_backed_data([X, y, y_])
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -3252,11 +3262,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # labeled, hence n_iter_ = 0 is valid.
     not_run_check_n_iter = [
         "Ridge",
-        "SVR",
-        "NuSVR",
-        "NuSVC",
         "RidgeClassifier",
-        "SVC",
         "RandomizedLasso",
         "LogisticRegressionCV",
         "LinearSVC",
@@ -3281,9 +3287,11 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 
         set_random_state(estimator, 0)
 
+        X = _pairwise_estimator_convert_X(X, estimator_orig)
+
         estimator.fit(X, y_)
 
-        assert estimator.n_iter_ >= 1
+        assert np.all(estimator.n_iter_ >= 1)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3782,7 +3790,16 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
-    estimator.fit(X, y)
+
+    # Check that calling `fit` does not raise any warnings about feature names.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "error",
+            message="X does not have valid feature names",
+            category=UserWarning,
+            module="sklearn",
+        )
+        estimator.fit(X, y)
 
     if not hasattr(estimator, "feature_names_in_"):
         raise ValueError(
@@ -3844,6 +3861,12 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
         ),
     ]
+    params = {
+        key: value
+        for key, value in estimator.get_params().items()
+        if "early_stopping" in key
+    }
+    early_stopping_enabled = any(value is True for value in params.values())
 
     for invalid_name, additional_message in invalid_names:
         X_bad = pd.DataFrame(X, columns=invalid_name)
@@ -3867,7 +3890,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
                     method(X_bad)
 
         # partial_fit checks on second call
-        if not hasattr(estimator, "partial_fit"):
+        # Do not call partial fit if early_stopping is on
+        if not hasattr(estimator, "partial_fit") or early_stopping_enabled:
             continue
 
         estimator = clone(estimator_orig)
@@ -3920,6 +3944,7 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     feature_names_out = transformer.get_feature_names_out(input_features)
     assert feature_names_out is not None
     assert isinstance(feature_names_out, np.ndarray)
+    assert feature_names_out.dtype == object
     assert all(isinstance(name, str) for name in feature_names_out)
 
     if isinstance(X_transform, tuple):

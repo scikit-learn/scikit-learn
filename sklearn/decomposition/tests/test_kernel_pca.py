@@ -461,7 +461,7 @@ def test_kernel_pca_solvers_equivalence(n_components):
     """Check that 'dense' 'arpack' & 'randomized' solvers give similar results"""
 
     # Generate random data
-    n_train, n_test = 2000, 100
+    n_train, n_test = 1_000, 100
     X, _ = make_circles(
         n_samples=(n_train + n_test), factor=0.3, noise=0.05, random_state=0
     )

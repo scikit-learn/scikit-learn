@@ -102,6 +102,7 @@ def basic_check_build():
     if "PYODIDE_PACKAGE_ABI" in os.environ:
         # The following check won't work in pyodide
         return
+
     code = textwrap.dedent(
         """\
         #include <stdio.h>

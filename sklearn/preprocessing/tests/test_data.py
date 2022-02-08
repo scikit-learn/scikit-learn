@@ -45,6 +45,7 @@ from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import power_transform
 from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
+from sklearn.metrics.pairwise import linear_kernel
 
 from sklearn.exceptions import NotFittedError
 
@@ -346,7 +347,7 @@ def test_standard_scaler_numerical_stability():
     # to trigger the problem in recent numpy
     with pytest.warns(None) as record:
         scale(x)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
@@ -359,7 +360,7 @@ def test_standard_scaler_numerical_stability():
     x = np.full(10, 1e-100, dtype=np.float64)
     with pytest.warns(None) as record:
         x_small_scaled = scale(x)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
@@ -2672,6 +2673,8 @@ def test_one_to_one_features(Transformer):
         StandardScaler,
         QuantileTransformer,
         PowerTransformer,
+        Normalizer,
+        Binarizer,
     ],
 )
 def test_one_to_one_features_pandas(Transformer):
@@ -2691,3 +2694,16 @@ def test_one_to_one_features_pandas(Transformer):
     with pytest.raises(ValueError, match=msg):
         invalid_names = list("abcd")
         tr.get_feature_names_out(invalid_names)
+
+
+def test_kernel_centerer_feature_names_out():
+    """Test that kernel centerer `feature_names_out`."""
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 4))
+    X_pairwise = linear_kernel(X)
+    centerer = KernelCenterer().fit(X_pairwise)
+
+    names_out = centerer.get_feature_names_out()
+    samples_out2 = X_pairwise.shape[1]
+    assert_array_equal(names_out, [f"kernelcenterer{i}" for i in range(samples_out2)])

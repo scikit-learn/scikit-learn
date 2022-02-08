@@ -148,7 +148,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            resp = random_state.rand(n_samples, self.n_components)
+            resp = random_state.uniform(size=(n_samples, self.n_components))
             resp /= resp.sum(axis=1)[:, np.newaxis]
         else:
             raise ValueError(
@@ -456,7 +456,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             X = np.vstack(
                 [
-                    mean + rng.randn(sample, n_features) * np.sqrt(covariance)
+                    mean
+                    + rng.standard_normal(size=(sample, n_features))
+                    * np.sqrt(covariance)
                     for (mean, covariance, sample) in zip(
                         self.means_, self.covariances_, n_samples_comp
                     )

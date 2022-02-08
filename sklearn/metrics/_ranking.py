@@ -414,10 +414,11 @@ def roc_auc_score(
 
     average : {'micro', 'macro', 'samples', 'weighted'} or None, \
             default='macro'
-        If ``None``, the scores for each class are returned. Otherwise,
-        this determines the type of averaging performed on the data:
+        If ``None``, the scores for each class are returned.
+        Otherwise, this determines the type of averaging performed on the data.
         Note: multiclass ROC AUC currently only handles the 'macro' and
-        'weighted' averages.
+        'weighted' averages. For multiclass targets, `average=None`
+        is only implemented for `multi_class='ovo'`.
 
         ``'micro'``:
             Calculate metrics globally by considering each element of the label
@@ -631,7 +632,7 @@ def _multiclass_roc_auc_score(
         )
 
     # validation for multiclass parameter specifications
-    average_options = ("macro", "weighted")
+    average_options = ("macro", "weighted", None)
     if average not in average_options:
         raise ValueError(
             "average must be one of {0} for multiclass problems".format(average_options)
@@ -643,6 +644,11 @@ def _multiclass_roc_auc_score(
             "multi_class='{0}' is not supported "
             "for multiclass ROC AUC, multi_class must be "
             "in {1}".format(multi_class, multiclass_options)
+        )
+
+    if average is None and multi_class == "ovo":
+        raise NotImplementedError(
+            "average=None is not implemented for multi_class='ovo'."
         )
 
     if labels is not None:
@@ -1526,7 +1532,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     score (Ideal DCG, obtained for a perfect ranking) to obtain a score between
     0 and 1.
 
-    This ranking metric yields a high value if true labels are ranked high by
+    This ranking metric returns a high value if true labels are ranked high by
     ``y_score``.
 
     Parameters
@@ -1610,7 +1616,6 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> ndcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
     0.5
-
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
@@ -1639,12 +1644,14 @@ def top_k_accuracy_score(
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores. These can be either probability estimates or
         non-thresholded decision values (as returned by
-        :term:`decision_function` on some classifiers). The binary case expects
-        scores with shape (n_samples,) while the multiclass case expects scores
-        with shape (n_samples, n_classes). In the multiclass case, the order of
-        the class scores must correspond to the order of ``labels``, if
-        provided, or else to the numerical or lexicographical order of the
-        labels in ``y_true``.
+        :term:`decision_function` on some classifiers).
+        The binary case expects scores with shape (n_samples,) while the
+        multiclass case expects scores with shape (n_samples, n_classes).
+        In the multiclass case, the order of the class scores must
+        correspond to the order of ``labels``, if provided, or else to
+        the numerical or lexicographical order of the labels in ``y_true``.
+        If ``y_true`` does not contain all the labels, ``labels`` must be
+        provided.
 
     k : int, default=2
         Number of most likely outcomes considered to find the correct label.
@@ -1659,7 +1666,8 @@ def top_k_accuracy_score(
     labels : array-like of shape (n_classes,), default=None
         Multiclass only. List of labels that index the classes in ``y_score``.
         If ``None``, the numerical or lexicographical order of the labels in
-        ``y_true`` is used.
+        ``y_true`` is used. If ``y_true`` does not contain all the labels,
+        ``labels`` must be provided.
 
     Returns
     -------
@@ -1719,6 +1727,8 @@ def top_k_accuracy_score(
             raise ValueError(
                 f"Number of classes in 'y_true' ({n_classes}) not equal "
                 f"to the number of classes in 'y_score' ({y_score_n_classes})."
+                "You can provide a list of all known classes by assigning it "
+                "to the `labels` parameter."
             )
     else:
         labels = column_or_1d(labels)
