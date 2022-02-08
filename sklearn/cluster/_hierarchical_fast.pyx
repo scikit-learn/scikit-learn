@@ -26,7 +26,7 @@ ctypedef np.intp_t ITYPE_t
 
 from numpy.math cimport INFINITY
 
-###############################################################################
+# %%
 # Utilities for computing the ward momentum
 
 def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
@@ -50,7 +50,7 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
     return res
 
 
-###############################################################################
+# %%
 # Utilities for cutting and exploring a hierarchical tree
 
 def _hc_get_descendent(INTP node, children, INTP n_leaves):
@@ -158,7 +158,7 @@ def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
     return heads
 
 
-###############################################################################
+# %%
 # merge strategies implemented on IntFloatDicts
 
 # These are used in the hierarchical clustering code, to implement
@@ -275,7 +275,7 @@ def average_merge(IntFloatDict a, IntFloatDict b,
     return out_obj
 
 
-###############################################################################
+# %%
 # An edge object for fast comparisons
 
 cdef class WeightedEdge:
@@ -318,7 +318,7 @@ cdef class WeightedEdge:
                                               self.a, self.b)
 
 
-################################################################################
+# %%
 # Efficient labelling/conversion of MSTs to single linkage hierarchies
 
 cdef class UnionFind(object):

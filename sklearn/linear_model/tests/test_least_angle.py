@@ -688,10 +688,10 @@ def test_lasso_lars_vs_R_implementation():
 
     X = x.T
 
-    ###########################################################################
+    # %%
     # Scenario 1: Let's compare R vs sklearn when fit_intercept=False and
     # normalize=False
-    ###########################################################################
+    # %%
     #
     # The R result was obtained using the following code:
     #
@@ -762,9 +762,9 @@ def test_lasso_lars_vs_R_implementation():
     skl_betas = model_lasso_lars.coef_path_
 
     assert_array_almost_equal(r, skl_betas, decimal=12)
-    ###########################################################################
+    # %%
 
-    ###########################################################################
+    # %%
     # Scenario 2: Let's compare R vs sklearn when fit_intercept=True and
     # normalize=True
     #
@@ -772,7 +772,7 @@ def test_lasso_lars_vs_R_implementation():
     # their original units, that is, they are rescaled back, whereas sklearn
     # does not do that, therefore, we need to do this step before comparing
     # their results.
-    ###########################################################################
+    # %%
     #
     # The R result was obtained using the following code:
     #
@@ -808,7 +808,7 @@ def test_lasso_lars_vs_R_implementation():
     skl_betas2 /= normx[:, np.newaxis]
 
     assert_array_almost_equal(r2, skl_betas2, decimal=12)
-    ###########################################################################
+    # %%
 
 
 @filterwarnings_normalize

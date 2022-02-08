@@ -77,7 +77,7 @@ X_train, y_train = X[: n_samples // 2], y[: n_samples // 2]
 X_test, y_test = X[n_samples // 2 :], y[n_samples // 2 :]
 print("test data sparsity: %f" % sparsity_ratio(X_test))
 
-###############################################################################
+# %%
 clf = SGDRegressor(penalty="l1", alpha=0.2, max_iter=2000, tol=None)
 clf.fit(X_train, y_train)
 print("model sparsity: %f" % sparsity_ratio(clf.coef_))

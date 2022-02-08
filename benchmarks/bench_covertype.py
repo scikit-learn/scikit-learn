@@ -71,7 +71,7 @@ memory = Memory(
 @memory.cache
 def load_data(dtype=np.float32, order="C", random_state=13):
     """Load the data, then cache and memmap the train/test split"""
-    ######################################################################
+    # %%
     # Load dataset
     print("Loading dataset...")
     data = fetch_covtype(

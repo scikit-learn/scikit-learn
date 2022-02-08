@@ -33,7 +33,7 @@ missing values imputed using different techniques.
 
 # %%
 # Download the data and make missing values sets
-################################################
+# %%
 #
 # First we download the two datasets. Diabetes dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
@@ -82,7 +82,7 @@ X_miss_diabetes, y_miss_diabetes = add_missing_values(X_diabetes, y_diabetes)
 
 # %%
 # Impute the missing data and score
-# #################################
+# %%
 # Now we will write a function which will score the results on the differently
 # imputed data. Let's look at each imputer separately:
 #
@@ -251,7 +251,7 @@ mses_california = mses_california * -1
 
 # %%
 # Plot the results
-# ################
+# %%
 #
 # Finally we are going to visualize the score:
 #

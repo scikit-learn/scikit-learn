@@ -21,7 +21,7 @@ or with conda::
 
 """
 
-##############################################################################
+# %%
 # Generalized Linear Models, and Poisson loss for gradient boosting
 # -----------------------------------------------------------------
 # Long-awaited Generalized Linear Models with non-normal loss functions are now
@@ -52,7 +52,7 @@ gbdt.fit(X_train, y_train)
 print(glm.score(X_test, y_test))
 print(gbdt.score(X_test, y_test))
 
-##############################################################################
+# %%
 # Rich visual representation of estimators
 # -----------------------------------------
 # Estimators can now be visualized in notebooks by enabling the
@@ -85,7 +85,7 @@ preprocessor = make_column_transformer(
 clf = make_pipeline(preprocessor, LogisticRegression())
 clf
 
-##############################################################################
+# %%
 # Scalability and stability improvements to KMeans
 # ------------------------------------------------
 # The :class:`~sklearn.cluster.KMeans` estimator was entirely re-worked, and it
@@ -108,7 +108,7 @@ X_train, X_test, _, y_test = train_test_split(X, y, random_state=rng)
 kmeans = KMeans(algorithm="elkan").fit(X_train)
 print(completeness_score(kmeans.predict(X_test), y_test))
 
-##############################################################################
+# %%
 # Improvements to the histogram-based Gradient Boosting estimators
 # ----------------------------------------------------------------
 # Various improvements were made to
@@ -160,7 +160,7 @@ disp.axes_[0, 0].set_xlim(-1, 1)
 plt.legend()
 plt.show()
 
-##############################################################################
+# %%
 # Sample-weight support for Lasso and ElasticNet
 # ----------------------------------------------
 # The two linear regressors :class:`~sklearn.linear_model.Lasso` and

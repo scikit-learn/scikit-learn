@@ -268,7 +268,7 @@ def affinity_propagation(
         return cluster_centers_indices, labels
 
 
-###############################################################################
+# %%
 
 
 class AffinityPropagation(ClusterMixin, BaseEstimator):

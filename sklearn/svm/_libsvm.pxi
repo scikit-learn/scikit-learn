@@ -1,4 +1,4 @@
-################################################################################
+# %%
 # Includes
 cdef extern from "_svm_cython_blas_helpers.h":
     ctypedef double (*dot_func)(int, double*, int, double*, int)

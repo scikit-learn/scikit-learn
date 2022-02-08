@@ -34,7 +34,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.svm import LinearSVC
 
-##############################################################################
+# %%
 # 20 newsgroups dataset
 # ---------------------
 #
@@ -60,13 +60,13 @@ X_test, y_test = fetch_20newsgroups(
     return_X_y=True,
 )
 
-##############################################################################
+# %%
 # Each feature comprises meta information about that post, such as the subject,
 # and the body of the news post.
 
 print(X_train[0])
 
-##############################################################################
+# %%
 # Creating transformers
 # ---------------------
 #
@@ -102,7 +102,7 @@ def subject_body_extractor(posts):
 
 subject_body_transformer = FunctionTransformer(subject_body_extractor)
 
-##############################################################################
+# %%
 # We will also create a transformer that extracts the
 # length of the text and the number of sentences.
 
@@ -113,7 +113,7 @@ def text_stats(posts):
 
 text_stats_transformer = FunctionTransformer(text_stats)
 
-##############################################################################
+# %%
 # Classification pipeline
 # -----------------------
 #
@@ -178,7 +178,7 @@ pipeline = Pipeline(
     verbose=True,
 )
 
-##############################################################################
+# %%
 # Finally, we fit our pipeline on the training data and use it to predict
 # topics for ``X_test``. Performance metrics of our pipeline are then printed.
 

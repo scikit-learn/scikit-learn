@@ -11,7 +11,7 @@ cpdef enum BLAS_Trans:
     Trans = 116    # correspond to 't'
 
 
-# BLAS Level 1 ################################################################
+# BLAS Level 1 # %%
 cdef floating _dot(int, floating*, int, floating*, int) nogil
 
 cdef floating _asum(int, floating*, int) nogil
@@ -28,14 +28,14 @@ cdef void _rotg(floating*, floating*, floating*, floating*) nogil
 
 cdef void _rot(int, floating*, int, floating*, int, floating, floating) nogil
 
-# BLAS Level 2 ################################################################
+# BLAS Level 2 # %%
 cdef void _gemv(BLAS_Order, BLAS_Trans, int, int, floating, floating*, int,
                 floating*, int, floating, floating*, int) nogil
 
 cdef void _ger(BLAS_Order, int, int, floating, floating*, int, floating*, int,
                floating*, int) nogil
 
-# BLASLevel 3 ################################################################
+# BLASLevel 3 # %%
 cdef void _gemm(BLAS_Order, BLAS_Trans, BLAS_Trans, int, int, int, floating,
                 floating*, int, floating*, int, floating, floating*,
                 int) nogil

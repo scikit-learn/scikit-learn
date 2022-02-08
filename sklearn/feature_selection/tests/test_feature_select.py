@@ -33,7 +33,7 @@ from sklearn.feature_selection import (
 )
 
 
-##############################################################################
+# %%
 # Test the score functions
 
 
@@ -395,7 +395,7 @@ def test_select_percentile_classif_sparse():
     assert X_r2inv.getnnz() == X_r.getnnz()
 
 
-##############################################################################
+# %%
 # Test univariate selection in classification settings
 
 
@@ -491,7 +491,7 @@ def test_select_heuristics_classif():
         assert_allclose(support, gtruth)
 
 
-##############################################################################
+# %%
 # Test univariate selection in regression settings
 
 

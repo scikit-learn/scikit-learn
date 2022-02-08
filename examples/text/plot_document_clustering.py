@@ -134,7 +134,7 @@ if len(args) > 0:
     sys.exit(1)
 
 
-# #############################################################################
+# %%
 # Load some categories from the training set
 categories = [
     "alt.atheism",
@@ -214,7 +214,7 @@ if opts.n_components:
     print()
 
 
-# #############################################################################
+# %%
 # Do the actual clustering
 
 if opts.minibatch:

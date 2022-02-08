@@ -42,12 +42,12 @@ cdef extern from *:
 np.import_array()
 
 
-################################################################################
+# %%
 # Internal variables
 LIBSVM_KERNEL_TYPES = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 
 
-################################################################################
+# %%
 # Wrapper functions
 
 def fit(

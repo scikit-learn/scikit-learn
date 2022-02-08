@@ -17,7 +17,7 @@ from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
 
 
-###############################################################################
+# %%
 # BayesianRidge regression
 
 
@@ -425,7 +425,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         return score
 
 
-###############################################################################
+# %%
 # ARD (Automatic Relevance Determination) regression
 
 

@@ -26,7 +26,7 @@ set_config(display="diagram")
 
 # %%
 # Download the dataset
-##############################################################################
+# %%
 #
 # We will use `Ames Housing`_ dataset which was first compiled by Dean De Cock
 # and became better known after it was used in Kaggle challenge. It is a set
@@ -89,7 +89,7 @@ X, y = load_ames_housing()
 
 # %%
 # Make pipeline to preprocess the data
-##############################################################################
+# %%
 #
 # Before we can use Ames dataset we still need to do some preprocessing.
 # First, we will select the categorical and numerical columns of the dataset to
@@ -149,7 +149,7 @@ linear_preprocessor
 
 # %%
 # Stack of predictors on a single data set
-##############################################################################
+# %%
 #
 # It is sometimes tedious to find the model which will best perform on a given
 # dataset. Stacking provide an alternative by combining the outputs of several
@@ -201,7 +201,7 @@ stacking_regressor
 
 # %%
 # Measure and plot the results
-##############################################################################
+# %%
 #
 # Now we can use Ames Housing dataset to make the predictions. We check the
 # performance of each individual predictor as well as of the stack of the

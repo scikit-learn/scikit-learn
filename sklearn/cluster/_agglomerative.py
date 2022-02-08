@@ -28,7 +28,7 @@ from ..utils.validation import check_memory
 from . import _hierarchical_fast as _hierarchical  # type: ignore
 from ._feature_agglomeration import AgglomerationTransform
 
-###############################################################################
+# %%
 # For non fully-connected graphs
 
 
@@ -163,7 +163,7 @@ def _single_linkage_tree(
     return children_, n_connected_components, n_samples, parent
 
 
-###############################################################################
+# %%
 # Hierarchical tree building functions
 
 
@@ -682,7 +682,7 @@ _TREE_BUILDERS = dict(
     single=_single_linkage,
 )
 
-###############################################################################
+# %%
 # Functions for cutting hierarchical clustering tree
 
 
@@ -734,7 +734,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     return label
 
 
-###############################################################################
+# %%
 
 
 class AgglomerativeClustering(ClusterMixin, BaseEstimator):

@@ -28,7 +28,7 @@ np.import_array()
 #ITYPE = np.intp
 #ctypedef np.intp_t ITYPE_t
 
-###############################################################################
+# %%
 # An object to be used in Python
 
 # Lookup is faster than dict (up to 10 times), and so is full traversal
@@ -133,7 +133,7 @@ cdef class IntFloatDict:
         self.my_map.insert(args)
 
 
-###############################################################################
+# %%
 # operation on dict
 
 def argmin(IntFloatDict d):

@@ -13,7 +13,7 @@ steps in the pipeline.
 
 # %%
 # Displaying a Pipeline with a Preprocessing Step and Classifier
-################################################################################
+# %%
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with a preprocessing
 # step, :class:`~sklearn.preprocessing.StandardScaler`, and classifier,
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
@@ -42,7 +42,7 @@ pipe  # click on the diagram below to see the details of each step
 
 # %%
 # Displaying a Pipeline Chaining Multiple Preprocessing Steps & Classifier
-################################################################################
+# %%
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with multiple
 # preprocessing steps, :class:`~sklearn.preprocessing.PolynomialFeatures` and
 # :class:`~sklearn.preprocessing.StandardScaler`, and a classifer step,
@@ -68,7 +68,7 @@ pipe  # click on the diagram below to see the details of each step
 
 # %%
 # Displaying a Pipeline and Dimensionality Reduction and Classifier
-################################################################################
+# %%
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with a
 # dimensionality reduction step, :class:`~sklearn.decomposition.PCA`,
 # a classifier, :class:`~sklearn.svm.SVC`, and displays its visual
@@ -89,7 +89,7 @@ pipe  # click on the diagram below to see the details of each step
 
 # %%
 # Displaying a Complex Pipeline Chaining a Column Transformer
-################################################################################
+# %%
 # This section constructs a complex :class:`~sklearn.pipeline.Pipeline` with a
 # :class:`~sklearn.compose.ColumnTransformer` and a classifier,
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
@@ -137,7 +137,7 @@ pipe  # click on the diagram below to see the details of each step
 
 # %%
 # Displaying a Grid Search over a Pipeline with a Classifier
-################################################################################
+# %%
 # This section constructs a :class:`~sklearn.model_selection.GridSearchCV`
 # over a :class:`~sklearn.pipeline.Pipeline` with
 # :class:`~sklearn.ensemble.RandomForestClassifier` and displays its visual

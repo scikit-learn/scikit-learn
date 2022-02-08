@@ -15,12 +15,12 @@ import numpy as np
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn.datasets import make_blobs
 
-# #############################################################################
+# %%
 # Generate sample data
 centers = [[1, 1], [-1, -1], [1, -1]]
 X, _ = make_blobs(n_samples=10000, centers=centers, cluster_std=0.6)
 
-# #############################################################################
+# %%
 # Compute clustering with MeanShift
 
 # The following bandwidth can be automatically detected using
@@ -36,7 +36,7 @@ n_clusters_ = len(labels_unique)
 
 print("number of estimated clusters : %d" % n_clusters_)
 
-# #############################################################################
+# %%
 # Plot result
 import matplotlib.pyplot as plt
 from itertools import cycle

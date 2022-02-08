@@ -24,7 +24,7 @@ from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree
 
-##############################################################################
+# %%
 # Train tree classifier
 # ---------------------
 # First, we fit a :class:`~sklearn.tree.DecisionTreeClassifier` using the
@@ -38,7 +38,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 clf = DecisionTreeClassifier(max_leaf_nodes=3, random_state=0)
 clf.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Tree structure
 # --------------
 #
@@ -118,13 +118,13 @@ for i in range(n_nodes):
             )
         )
 
-##############################################################################
+# %%
 # We can compare the above output to the plot of the decision tree.
 
 tree.plot_tree(clf)
 plt.show()
 
-##############################################################################
+# %%
 # Decision path
 # -------------
 #
@@ -176,7 +176,7 @@ for node_id in node_index:
         )
     )
 
-##############################################################################
+# %%
 # For a group of samples, we can determine the common nodes the samples go
 # through.
 

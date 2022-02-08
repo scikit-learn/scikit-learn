@@ -9,7 +9,7 @@ np.import_array()
 cdef extern from *:
     ctypedef char* const_char_p "const char*"
 
-################################################################################
+# %%
 # Includes
 
 cdef extern from "_svm_cython_blas_helpers.h":

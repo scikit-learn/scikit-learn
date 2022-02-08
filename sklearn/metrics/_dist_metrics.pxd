@@ -3,7 +3,7 @@ from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 
-######################################################################
+# %%
 # Inline distance functions
 #
 #  We use these for the default (euclidean) case so that they can be
@@ -36,7 +36,7 @@ cdef inline DTYPE_t euclidean_rdist_to_dist(const DTYPE_t dist) nogil except -1:
     return sqrt(dist)
 
 
-######################################################################
+# %%
 # DistanceMetric base class
 cdef class DistanceMetric:
     # The following attributes are required for a few of the subclasses.

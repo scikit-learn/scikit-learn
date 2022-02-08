@@ -13,9 +13,9 @@ from scipy.linalg.cython_blas cimport sger, dger
 from scipy.linalg.cython_blas cimport sgemm, dgemm
 
 
-################
+# %%
 # BLAS Level 1 #
-################
+# %%
 
 cdef floating _dot(int n, floating *x, int incx,
                    floating *y, int incy) nogil:
@@ -117,9 +117,9 @@ cpdef _rot_memview(floating[::1] x, floating[::1] y, floating c, floating s):
     _rot(x.shape[0], &x[0], 1, &y[0], 1, c, s)
 
 
-################
+# %%
 # BLAS Level 2 #
-################
+# %%
 
 cdef void _gemv(BLAS_Order order, BLAS_Trans ta, int m, int n, floating alpha,
                 floating *A, int lda, floating *x, int incx,
@@ -176,9 +176,9 @@ cpdef _ger_memview(floating alpha, floating[::1] x, floating[::] y,
     _ger(order, m, n, alpha, &x[0], 1, &y[0], 1, &A[0, 0], lda)
 
 
-################
+# %%
 # BLAS Level 3 #
-################
+# %%
 
 cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
                 int k, floating alpha, floating *A, int lda, floating *B,

@@ -27,7 +27,7 @@ from sklearn import config_context
 import pickle
 
 
-#############################################################################
+# %%
 # A few test classes
 class MyEstimator(BaseEstimator):
     def __init__(self, l1=0, empty=None):
@@ -106,7 +106,7 @@ class VargEstimator(BaseEstimator):
         pass
 
 
-#############################################################################
+# %%
 # The tests
 
 

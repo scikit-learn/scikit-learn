@@ -33,9 +33,9 @@ def bench_sample(sampling, n_population, n_samples):
 
 
 if __name__ == "__main__":
-    ###########################################################################
+    # %%
     # Option parser
-    ###########################################################################
+    # %%
     op = optparse.OptionParser()
     op.add_option(
         "--n-times",
@@ -95,21 +95,21 @@ if __name__ == "__main__":
                 % (key, default_algorithms)
             )
 
-    ###########################################################################
+    # %%
     # List sampling algorithm
-    ###########################################################################
+    # %%
     # We assume that sampling algorithm has the following signature:
     #   sample(n_population, n_sample)
     #
     sampling_algorithm = {}
 
-    ###########################################################################
+    # %%
     # Set Python core input
     sampling_algorithm[
         "python-core-sample"
     ] = lambda n_population, n_sample: random.sample(range(n_population), n_sample)
 
-    ###########################################################################
+    # %%
     # Set custom automatic method selection
     sampling_algorithm[
         "custom-auto"
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         n_population, n_samples, method="auto", random_state=random_state
     )
 
-    ###########################################################################
+    # %%
     # Set custom tracking based method
     sampling_algorithm[
         "custom-tracking-selection"
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         n_population, n_samples, method="tracking_selection", random_state=random_state
     )
 
-    ###########################################################################
+    # %%
     # Set custom reservoir based method
     sampling_algorithm[
         "custom-reservoir-sampling"
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         n_population, n_samples, method="reservoir_sampling", random_state=random_state
     )
 
-    ###########################################################################
+    # %%
     # Set custom reservoir based method
     sampling_algorithm[
         "custom-pool"
@@ -141,13 +141,13 @@ if __name__ == "__main__":
         n_population, n_samples, method="pool", random_state=random_state
     )
 
-    ###########################################################################
+    # %%
     # Numpy permutation based
     sampling_algorithm[
         "numpy-permutation"
     ] = lambda n_population, n_sample: np.random.permutation(n_population)[:n_sample]
 
-    ###########################################################################
+    # %%
     # Remove unspecified algorithm
     sampling_algorithm = {
         key: value
@@ -155,9 +155,9 @@ if __name__ == "__main__":
         if key in selected_algorithm
     }
 
-    ###########################################################################
+    # %%
     # Perform benchmark
-    ###########################################################################
+    # %%
     time = {}
     n_samples = np.linspace(start=0, stop=opts.n_population, num=opts.n_steps).astype(
         int
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     print("done\n")
 
     # Print results
-    ###########################################################################
+    # %%
     print("Script arguments")
     print("===========================")
     arguments = vars(opts)

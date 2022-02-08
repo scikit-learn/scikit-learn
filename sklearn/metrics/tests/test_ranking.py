@@ -37,7 +37,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 
 
-###############################################################################
+# %%
 # Utilities for testing
 
 CURVE_FUNCS = [
@@ -91,7 +91,7 @@ def make_prediction(dataset=None, binary=False):
     return y_true, y_pred, y_score
 
 
-###############################################################################
+# %%
 # Tests
 
 

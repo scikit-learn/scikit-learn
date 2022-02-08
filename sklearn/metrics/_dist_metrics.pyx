@@ -32,14 +32,14 @@ from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils import check_array
 
-######################################################################
+# %%
 # newObj function
 #  this is a helper function for pickling
 def newObj(obj):
     return obj.__new__(obj)
 
 
-######################################################################
+# %%
 # metric mappings
 #  These map from metric id strings to class names
 METRIC_MAPPING = {'euclidean': EuclideanDistance,
@@ -82,7 +82,7 @@ def get_valid_metric_ids(L):
             if (val.__name__ in L) or (val in L)]
 
 
-######################################################################
+# %%
 # Distance Metric Classes
 cdef class DistanceMetric:
     """DistanceMetric class

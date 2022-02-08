@@ -26,7 +26,7 @@ __all__ = [
     "reconstruct_from_patches_2d",
 ]
 
-###############################################################################
+# %%
 # From an image to a graph
 
 
@@ -210,7 +210,7 @@ def grid_to_graph(
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 
 
-###############################################################################
+# %%
 # From an image to a set of small image patches
 
 

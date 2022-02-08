@@ -31,7 +31,7 @@ def _clean_nans(scores):
     return scores
 
 
-######################################################################
+# %%
 # Scoring functions
 
 
@@ -426,7 +426,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
     return f_statistic, p_values
 
 
-######################################################################
+# %%
 # Base classes
 
 
@@ -490,9 +490,9 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         return {"requires_y": True}
 
 
-######################################################################
+# %%
 # Specific filters
-######################################################################
+# %%
 class SelectPercentile(_BaseFilter):
     """Select features according to a percentile of the highest scores.
 
@@ -920,9 +920,9 @@ class SelectFwe(_BaseFilter):
         return self.pvalues_ < self.alpha / len(self.pvalues_)
 
 
-######################################################################
+# %%
 # Generic filter
-######################################################################
+# %%
 
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.

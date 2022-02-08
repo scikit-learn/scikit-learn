@@ -27,7 +27,7 @@ or with conda::
 
 """
 
-##############################################################################
+# %%
 # Keyword and positional arguments
 # ---------------------------------------------------------
 # The scikit-learn API exposes many functions and methods which have many input
@@ -72,7 +72,7 @@ or with conda::
 # :class:`~decomposition.PCA`, where ``PCA(10)`` is still allowed, but ``PCA(10,
 # False)`` is not allowed.
 
-##############################################################################
+# %%
 # Spline Transformers
 # ---------------------------------------------------------
 # One way to add nonlinear terms to a dataset's feature set is to generate
@@ -96,7 +96,7 @@ spline = SplineTransformer(degree=2, n_knots=3)
 spline.fit_transform(X)
 
 
-##############################################################################
+# %%
 # Quantile Regressor
 # --------------------------------------------------------------------------
 # Quantile regression estimates the median or other quantiles of :math:`y`
@@ -134,7 +134,7 @@ spline.fit_transform(X)
 #    :align: center
 #    :scale: 50%
 
-##############################################################################
+# %%
 # Feature Names Support
 # --------------------------------------------------------------------------
 # When an estimator is passed a `pandas' dataframe
@@ -188,7 +188,7 @@ pipe.fit(X, y)
 pipe[:-1].get_feature_names_out()
 
 
-##############################################################################
+# %%
 # A more flexible plotting API
 # --------------------------------------------------------------------------
 # :class:`metrics.ConfusionMatrixDisplay`,
@@ -202,7 +202,7 @@ pipe[:-1].get_feature_names_out()
 # <sphx_glr_auto_examples_classification_plot_digits_classification.py>` for
 # how to use the new plotting functionalities.
 
-##############################################################################
+# %%
 # Online One-Class SVM
 # --------------------------------------------------------------------------
 # The new class :class:`~linear_model.SGDOneClassSVM` implements an online
@@ -224,7 +224,7 @@ pipe[:-1].get_feature_names_out()
 #    :target: ../miscellaneous/plot_anomaly_comparison.html
 #    :align: center
 
-##############################################################################
+# %%
 # Histogram-based Gradient Boosting Models are now stable
 # --------------------------------------------------------------------------
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor` and
@@ -233,7 +233,7 @@ pipe[:-1].get_feature_names_out()
 #
 #     from sklearn.ensemble import HistGradientBoostingClassifier
 
-##############################################################################
+# %%
 # New documentation improvements
 # ------------------------------
 # This release includes many documentation improvements. Out of over 2100

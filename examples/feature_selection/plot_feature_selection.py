@@ -31,7 +31,7 @@ from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest, f_classif
 
-# #############################################################################
+# %%
 # Import some data to play with
 
 # The iris dataset
@@ -51,7 +51,7 @@ plt.clf()
 
 X_indices = np.arange(X.shape[-1])
 
-# #############################################################################
+# %%
 # Univariate feature selection with F-test for feature scoring
 # We use the default selection function to select the four
 # most significant features
@@ -63,7 +63,7 @@ plt.bar(
     X_indices - 0.45, scores, width=0.2, label=r"Univariate score ($-Log(p_{value})$)"
 )
 
-# #############################################################################
+# %%
 # Compare to the weights of an SVM
 clf = make_pipeline(MinMaxScaler(), LinearSVC())
 clf.fit(X_train, y_train)

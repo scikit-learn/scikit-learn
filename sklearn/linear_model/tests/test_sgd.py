@@ -176,7 +176,7 @@ Y5 = [1, 1, 1, 2, 2, 2]
 true_result5 = [0, 1, 1]
 
 
-###############################################################################
+# %%
 # Common Test Case to classification and regression
 
 # a simple implementation of ASGD to use for testing
@@ -536,7 +536,7 @@ def test_not_enough_sample_for_early_stopping(klass):
         clf.fit(X3, Y3)
 
 
-###############################################################################
+# %%
 # Classification Test Case
 
 
@@ -1189,7 +1189,7 @@ def test_multiple_fit(klass):
     clf.fit(X[:, :-1], y)
 
 
-###############################################################################
+# %%
 # Regression Test Case
 
 
@@ -1454,7 +1454,7 @@ def test_loss_function_epsilon(klass):
     assert clf.loss_functions["huber"][1] == 0.1
 
 
-###############################################################################
+# %%
 # SGD One Class SVM Test Case
 
 # a simple implementation of ASGD to use for testing SGDOneClassSVM

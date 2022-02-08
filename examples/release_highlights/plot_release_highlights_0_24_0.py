@@ -21,7 +21,7 @@ or with conda::
 
 """
 
-##############################################################################
+# %%
 # Successive Halving estimators for tuning hyper-parameters
 # ---------------------------------------------------------
 # Successive Halving, a state of the art method, is now available to
@@ -76,7 +76,7 @@ rsh = HalvingRandomSearchCV(
 rsh.fit(X, y)
 rsh.best_params_
 
-##############################################################################
+# %%
 # Native support for categorical features in HistGradientBoosting estimators
 # --------------------------------------------------------------------------
 # :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
@@ -97,7 +97,7 @@ rsh.best_params_
 # preprocess the data within a pipeline as demonstrated in this :ref:`example
 # <sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py>`.
 
-##############################################################################
+# %%
 # Improved performances of HistGradientBoosting estimators
 # --------------------------------------------------------
 # The memory footprint of :class:`ensemble.HistGradientBoostingRegressor` and
@@ -107,7 +107,7 @@ rsh.best_params_
 # See more in the `Benchmark page
 # <https://scikit-learn.org/scikit-learn-benchmarks/>`_.
 
-##############################################################################
+# %%
 # New self-training meta-estimator
 # --------------------------------
 # A new self-training implementation, based on `Yarowski's algorithm
@@ -130,7 +130,7 @@ svc = SVC(probability=True, gamma="auto")
 self_training_model = SelfTrainingClassifier(svc)
 self_training_model.fit(iris.data, iris.target)
 
-##############################################################################
+# %%
 # New SequentialFeatureSelector transformer
 # -----------------------------------------
 # A new iterative transformer to select features is available:
@@ -154,7 +154,7 @@ print(
     f"{feature_names[sfs.get_support()].tolist()}"
 )
 
-##############################################################################
+# %%
 # New PolynomialCountSketch kernel approximation function
 # -------------------------------------------------------
 # The new :class:`~sklearn.kernel_approximation.PolynomialCountSketch`
@@ -180,13 +180,13 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 pipe.fit(X_train, y_train).score(X_test, y_test)
 
-##############################################################################
+# %%
 # For comparison, here is the score of a linear baseline for the same data:
 
 linear_baseline = make_pipeline(MinMaxScaler(), LogisticRegression(max_iter=1000))
 linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 
-##############################################################################
+# %%
 # Individual Conditional Expectation plots
 # ----------------------------------------
 # A new kind of partial dependence plot is available: the Individual
@@ -218,7 +218,7 @@ display.figure_.suptitle(
 )
 display.figure_.subplots_adjust(hspace=0.3)
 
-##############################################################################
+# %%
 # New Poisson splitting criterion for DecisionTreeRegressor
 # ---------------------------------------------------------
 # The integration of Poisson regression estimation continues from version 0.23.
@@ -239,7 +239,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 regressor = DecisionTreeRegressor(criterion="poisson", random_state=0)
 regressor.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # New documentation improvements
 # ------------------------------
 #

@@ -34,7 +34,7 @@ if parse_version(skimage.__version__) >= parse_version("0.14"):
 else:
     rescale_params = {}
 
-# #############################################################################
+# %%
 # Generate data
 orig_coins = coins()
 
@@ -46,11 +46,11 @@ rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect", **rescale_params
 
 X = np.reshape(rescaled_coins, (-1, 1))
 
-# #############################################################################
+# %%
 # Define the structure A of the data. Pixels connected to their neighbors.
 connectivity = grid_to_graph(*rescaled_coins.shape)
 
-# #############################################################################
+# %%
 # Compute clustering
 print("Compute structured hierarchical clustering...")
 st = time.time()
@@ -64,7 +64,7 @@ print("Elapsed time: ", time.time() - st)
 print("Number of pixels: ", label.size)
 print("Number of clusters: ", np.unique(label).size)
 
-# #############################################################################
+# %%
 # Plot the results on an image
 plt.figure(figsize=(5, 5))
 plt.imshow(rescaled_coins, cmap=plt.cm.gray)

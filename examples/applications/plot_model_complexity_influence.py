@@ -52,7 +52,7 @@ from sklearn.metrics import hamming_loss
 # Initialize random generator
 np.random.seed(0)
 
-##############################################################################
+# %%
 # Load the data
 # -------------
 #
@@ -88,7 +88,7 @@ regression_data = generate_data("regression")
 classification_data = generate_data("classification")
 
 
-##############################################################################
+# %%
 # Benchmark influence
 # -------------------
 # Next, we can calculate the influence of the parameters on the given
@@ -137,7 +137,7 @@ def benchmark_influence(conf):
     return prediction_powers, prediction_times, complexities
 
 
-##############################################################################
+# %%
 # Choose parameters
 # -----------------
 #
@@ -211,7 +211,7 @@ configurations = [
 ]
 
 
-##############################################################################
+# %%
 # Run the code and plot the results
 # ---------------------------------
 #
@@ -276,7 +276,7 @@ for conf in configurations:
     plot_influence(conf, prediction_performances, prediction_times, complexities)
 plt.show()
 
-##############################################################################
+# %%
 # Conclusion
 # ----------
 #

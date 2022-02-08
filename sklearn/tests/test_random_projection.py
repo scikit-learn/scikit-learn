@@ -58,9 +58,9 @@ n_nonzeros = int(n_samples * n_features / 100.0)
 data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 
 
-###############################################################################
+# %%
 # test on JL lemma
-###############################################################################
+# %%
 
 
 @pytest.mark.parametrize(
@@ -80,9 +80,9 @@ def test_input_size_jl_min_dim():
     )
 
 
-###############################################################################
+# %%
 # tests random matrix generation
-###############################################################################
+# %%
 def check_input_size_random_matrix(random_matrix):
     inputs = [(0, 0), (-1, 1), (1, -1), (1, 0), (-1, 0)]
     for n_components, n_features in inputs:
@@ -200,9 +200,9 @@ def test_sparse_random_matrix():
         )
 
 
-###############################################################################
+# %%
 # tests on random projection transformer
-###############################################################################
+# %%
 
 
 @pytest.mark.parametrize("density", [1.1, 0, -0.1])

@@ -48,7 +48,7 @@ from sklearn.exceptions import UndefinedMetricWarning
 
 from scipy.spatial.distance import hamming as sp_hamming
 
-###############################################################################
+# %%
 # Utilities for testing
 
 
@@ -96,7 +96,7 @@ def make_prediction(dataset=None, binary=False):
     return y_true, y_pred, probas_pred
 
 
-###############################################################################
+# %%
 # Tests
 
 

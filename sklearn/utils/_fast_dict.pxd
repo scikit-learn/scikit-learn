@@ -14,7 +14,7 @@ ctypedef np.float64_t DTYPE_t
 
 ctypedef np.intp_t ITYPE_t
 
-###############################################################################
+# %%
 # An object to be used in Python
 
 cdef class IntFloatDict:

@@ -11,7 +11,7 @@ from ..base import TransformerMixin
 from ..utils.validation import check_is_fitted
 from scipy.sparse import issparse
 
-###############################################################################
+# %%
 # Mixin class for feature agglomeration.
 
 

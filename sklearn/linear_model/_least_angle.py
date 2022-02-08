@@ -592,14 +592,14 @@ def _lars_path_solver(
             break
         if not drop:
 
-            ##########################################################
+            # %%
             # Append x_j to the Cholesky factorization of (Xa * Xa') #
             #                                                        #
             #            ( L   0 )                                   #
             #     L  ->  (       )  , where L * w = Xa' x_j          #
             #            ( w   z )    and z = ||x_j||                #
             #                                                        #
-            ##########################################################
+            # %%
 
             if positive:
                 sign_active[n_active] = np.ones_like(C_)
@@ -843,7 +843,7 @@ def _lars_path_solver(
             return alpha, active, coef
 
 
-###############################################################################
+# %%
 # Estimator classes
 
 
@@ -1326,7 +1326,7 @@ class LassoLars(Lars):
         self.random_state = random_state
 
 
-###############################################################################
+# %%
 # Cross-validated estimator classes
 
 

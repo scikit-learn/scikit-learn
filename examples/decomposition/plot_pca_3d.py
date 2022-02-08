@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 
-# #############################################################################
+# %%
 # Create the data
 
 e = np.exp(1)
@@ -52,7 +52,7 @@ a /= norm
 b /= norm
 
 
-# #############################################################################
+# %%
 # Plot the figures
 def plot_figs(fig_num, elev, azim):
     fig = plt.figure(fig_num, figsize=(4, 3))

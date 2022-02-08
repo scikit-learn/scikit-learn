@@ -59,7 +59,7 @@ memory = Memory(os.path.join(get_data_home(), "mnist_benchmark_data"), mmap_mode
 @memory.cache
 def load_data(dtype=np.float32, order="F"):
     """Load the data, then cache and memmap the train/test split"""
-    ######################################################################
+    # %%
     # Load dataset
     print("Loading dataset...")
     data = fetch_openml("mnist_784")

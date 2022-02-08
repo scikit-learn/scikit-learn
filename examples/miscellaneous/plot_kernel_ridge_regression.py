@@ -47,7 +47,7 @@ import matplotlib.pyplot as plt
 
 rng = np.random.RandomState(0)
 
-# #############################################################################
+# %%
 # Generate sample data
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
@@ -57,7 +57,7 @@ y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 
 X_plot = np.linspace(0, 5, 100000)[:, None]
 
-# #############################################################################
+# %%
 # Fit regression model
 train_size = 100
 svr = GridSearchCV(
@@ -94,7 +94,7 @@ kr_predict = time.time() - t0
 print("KRR prediction for %d inputs in %.3f s" % (X_plot.shape[0], kr_predict))
 
 
-# #############################################################################
+# %%
 # Look at the results
 sv_ind = svr.best_estimator_.support_
 plt.scatter(

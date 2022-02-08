@@ -94,9 +94,9 @@ def print_row(clf_type, time_fit, time_transform):
 
 
 if __name__ == "__main__":
-    ###########################################################################
+    # %%
     # Option parser
-    ###########################################################################
+    # %%
     op = optparse.OptionParser()
     op.add_option(
         "--n-times",
@@ -190,9 +190,9 @@ if __name__ == "__main__":
     opts.density = type_auto_or_float(opts.density)
     selected_transformers = opts.selected_transformers.split(",")
 
-    ###########################################################################
+    # %%
     # Generate dataset
-    ###########################################################################
+    # %%
     n_nonzeros = int(opts.ratio_nonzeros * opts.n_features)
 
     print("Dataset statistics")
@@ -211,12 +211,12 @@ if __name__ == "__main__":
     print("ratio_nonzeros \t= %s" % opts.ratio_nonzeros)
     print("")
 
-    ###########################################################################
+    # %%
     # Set transformer input
-    ###########################################################################
+    # %%
     transformers = {}
 
-    ###########################################################################
+    # %%
     # Set GaussianRandomProjection input
     gaussian_matrix_params = {
         "n_components": opts.n_components,
@@ -226,7 +226,7 @@ if __name__ == "__main__":
         **gaussian_matrix_params
     )
 
-    ###########################################################################
+    # %%
     # Set SparseRandomProjection input
     sparse_matrix_params = {
         "n_components": opts.n_components,
@@ -239,9 +239,9 @@ if __name__ == "__main__":
         **sparse_matrix_params
     )
 
-    ###########################################################################
+    # %%
     # Perform benchmark
-    ###########################################################################
+    # %%
     time_fit = collections.defaultdict(list)
     time_transform = collections.defaultdict(list)
 
@@ -268,9 +268,9 @@ if __name__ == "__main__":
 
     print("")
 
-    ###########################################################################
+    # %%
     # Print results
-    ###########################################################################
+    # %%
     print("Script arguments")
     print("===========================")
     arguments = vars(opts)

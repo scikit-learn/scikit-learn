@@ -13,7 +13,7 @@ from ..utils import check_array
 from ..utils.extmath import row_norms
 
 
-###############################################################################
+# %%
 # Gaussian mixture shape checkers used by the GaussianMixture class
 
 
@@ -147,7 +147,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
     return precisions
 
 
-###############################################################################
+# %%
 # Gaussian mixture parameters estimators (used by the M-Step)
 
 
@@ -349,7 +349,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
     return precisions_chol
 
 
-###############################################################################
+# %%
 # Gaussian mixture probability estimators
 def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     """Compute the log-det of the cholesky decomposition of matrices.

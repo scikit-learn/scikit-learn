@@ -38,7 +38,7 @@ from sklearn.metrics import auc
 from sklearn.metrics import RocCurveDisplay
 from sklearn.model_selection import StratifiedKFold
 
-# #############################################################################
+# %%
 # Data IO and generation
 
 # Import some data to play with
@@ -52,7 +52,7 @@ n_samples, n_features = X.shape
 random_state = np.random.RandomState(0)
 X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 
-# #############################################################################
+# %%
 # Classification and ROC analysis
 
 # Run classifier with cross-validation and plot ROC curves

@@ -80,7 +80,7 @@ def _set_order(X, y, order="C"):
     return X, y
 
 
-###############################################################################
+# %%
 # Paths functions
 
 
@@ -673,7 +673,7 @@ def enet_path(
     return alphas, coefs, dual_gaps
 
 
-###############################################################################
+# %%
 # ElasticNet model
 
 
@@ -1124,7 +1124,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             return super()._decision_function(X)
 
 
-###############################################################################
+# %%
 # Lasso model
 
 
@@ -1296,7 +1296,7 @@ class Lasso(ElasticNet):
         )
 
 
-###############################################################################
+# %%
 # Functions for CV with paths functions
 
 
@@ -2226,7 +2226,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         return {"multioutput": False}
 
 
-###############################################################################
+# %%
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
 
 

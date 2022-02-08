@@ -47,7 +47,7 @@ from sklearn.decomposition import randomized_svd
 from urllib.request import urlopen
 
 
-# #############################################################################
+# %%
 # Where to download the data, if not already on disk
 redirects_url = "http://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
 redirects_filename = redirects_url.rsplit("/", 1)[1]
@@ -68,7 +68,7 @@ for url, filename in resources:
         print()
 
 
-# #############################################################################
+# %%
 # Loading the redirect files
 
 

@@ -60,7 +60,7 @@ from sklearn.pipeline import Pipeline
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-# #############################################################################
+# %%
 # Load some categories from the training set
 categories = [
     "alt.atheism",
@@ -77,7 +77,7 @@ print("%d documents" % len(data.filenames))
 print("%d categories" % len(data.target_names))
 print()
 
-# #############################################################################
+# %%
 # Define a pipeline combining a text feature extractor with a simple
 # classifier
 pipeline = Pipeline(

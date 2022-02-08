@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from sklearn import datasets, svm, metrics
 from sklearn.model_selection import train_test_split
 
-###############################################################################
+# %%
 # Digits dataset
 # --------------
 #
@@ -40,7 +40,7 @@ for ax, image, label in zip(axes, digits.images, digits.target):
     ax.imshow(image, cmap=plt.cm.gray_r, interpolation="nearest")
     ax.set_title("Training: %i" % label)
 
-###############################################################################
+# %%
 # Classification
 # --------------
 #
@@ -73,7 +73,7 @@ clf.fit(X_train, y_train)
 # Predict the value of the digit on the test subset
 predicted = clf.predict(X_test)
 
-###############################################################################
+# %%
 # Below we visualize the first 4 test samples and show their predicted
 # digit value in the title.
 
@@ -84,7 +84,7 @@ for ax, image, prediction in zip(axes, X_test, predicted):
     ax.imshow(image, cmap=plt.cm.gray_r, interpolation="nearest")
     ax.set_title(f"Prediction: {prediction}")
 
-###############################################################################
+# %%
 # :func:`~sklearn.metrics.classification_report` builds a text report showing
 # the main classification metrics.
 
@@ -93,7 +93,7 @@ print(
     f"{metrics.classification_report(y_test, predicted)}\n"
 )
 
-###############################################################################
+# %%
 # We can also plot a :ref:`confusion matrix <confusion_matrix>` of the
 # true digit values and the predicted digit values.
 

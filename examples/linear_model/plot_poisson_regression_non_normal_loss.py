@@ -46,7 +46,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-##############################################################################
+# %%
 # The French Motor Third-Party Liability Claims dataset
 # -----------------------------------------------------
 #
@@ -148,7 +148,7 @@ dummy = Pipeline(
 ).fit(df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"])
 
 
-##############################################################################
+# %%
 # Let's compute the performance of this constant prediction baseline with 3
 # different regression metrics:
 

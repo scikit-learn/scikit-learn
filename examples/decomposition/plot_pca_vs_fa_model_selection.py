@@ -38,7 +38,7 @@ from sklearn.covariance import ShrunkCovariance, LedoitWolf
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GridSearchCV
 
-# #############################################################################
+# %%
 # Create the data
 
 n_samples, n_features, rank = 500, 25, 5
@@ -54,7 +54,7 @@ X_homo = X + sigma * rng.randn(n_samples, n_features)
 sigmas = sigma * rng.rand(n_features) + sigma / 2.0
 X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 
-# #############################################################################
+# %%
 # Fit the models
 
 n_components = np.arange(0, n_features, 5)  # options for n_components

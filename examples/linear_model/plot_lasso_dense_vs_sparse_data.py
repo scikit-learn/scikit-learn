@@ -16,7 +16,7 @@ from sklearn.datasets import make_regression
 from sklearn.linear_model import Lasso
 
 
-# #############################################################################
+# %%
 # The two Lasso implementations on Dense data
 print("--- Dense matrices")
 
@@ -40,7 +40,7 @@ print(
     % linalg.norm(sparse_lasso.coef_ - dense_lasso.coef_)
 )
 
-# #############################################################################
+# %%
 # The two Lasso implementations on Sparse data
 print("--- Sparse matrices")
 

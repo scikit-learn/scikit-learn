@@ -200,7 +200,7 @@ cdef NodeData_t nd_tmp
 NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 
 
-######################################################################
+# %%
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
 CLASS_DOC = \
@@ -311,7 +311,7 @@ Compute a two-point auto-correlation function
 """
 
 
-######################################################################
+# %%
 # Utility functions
 cdef DTYPE_t logaddexp(DTYPE_t x1, DTYPE_t x2):
     """logaddexp(x1, x2) -> log(exp(x1) + exp(x2))"""
@@ -329,7 +329,7 @@ cdef DTYPE_t logsubexp(DTYPE_t x1, DTYPE_t x2):
         return x1 + log(1 - exp(x2 - x1))
 
 
-######################################################################
+# %%
 # Kernel functions
 #
 # Note: Kernels assume dist is non-negative and h is positive
@@ -618,7 +618,7 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
     return j_max
 
 
-######################################################################
+# %%
 # NodeHeap : min-heap used to keep track of nodes during
 #            breadth-first query
 cdef inline void swap_nodes(NodeHeapData_t* arr, ITYPE_t i1, ITYPE_t i2):
@@ -749,20 +749,20 @@ cdef class NodeHeap:
         self.n = 0
 
 
-######################################################################
+# %%
 # newObj function
 #  this is a helper function for pickling
 def newObj(obj):
     return obj.__new__(obj)
 
 
-######################################################################
+# %%
 # define the reverse mapping of VALID_METRICS
 from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 
-######################################################################
+# %%
 # Binary Tree class
 cdef class BinaryTree:
 
@@ -2367,7 +2367,7 @@ cdef class BinaryTree:
         return 0
 
 
-######################################################################
+# %%
 # Python functions for benchmarking and testing C implementations
 
 def load_heap(DTYPE_t[:, ::1] X, ITYPE_t k):

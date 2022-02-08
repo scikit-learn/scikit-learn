@@ -30,9 +30,9 @@ from sklearn.utils.validation import check_is_fitted, check_non_negative
 
 mem = Memory(cachedir=".", verbose=0)
 
-###################
+# %%
 # Start of _PGNMF #
-###################
+# %%
 # This class implements a projected gradient solver for the NMF.
 # The projected gradient solver was removed from scikit-learn in version 0.19,
 # and a simplified copy is used here for comparison purpose only.
@@ -315,9 +315,9 @@ class _PGNMF(NMF):
         return W, H, n_iter
 
 
-#################
+# %%
 # End of _PGNMF #
-#################
+# %%
 
 
 def plot_results(results_df, plot_name):

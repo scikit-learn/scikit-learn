@@ -49,7 +49,7 @@ from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
 
 
-###############################################################################
+# %%
 # Initialization heuristic
 
 
@@ -243,7 +243,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
     return centers, indices
 
 
-###############################################################################
+# %%
 # K-means batch estimation by EM (expectation maximization)
 
 
