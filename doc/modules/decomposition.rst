@@ -941,8 +941,7 @@ parameter.
 
 The estimator also implements ``partial_fit``, which updates ``H`` by iterating
 only once over a mini-batch. This can be used for online learning when the data
-is not readily available from the start, or for when the data does not fit into
-the memory.
+is not readily available from the start, or when the data does not fit into memory.
 
 .. topic:: References:
 

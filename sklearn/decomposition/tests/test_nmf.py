@@ -92,7 +92,7 @@ def test_parameter_checking():
 )
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
 def test_nmf_common_wrong_params(Estimator, param, match):
-    # Check that appropriate errors are raised for invalid values of paramters common
+    # Check that appropriate errors are raised for invalid values of parameters common
     # to NMF and MiniBatchNMF.
     A = np.ones((2, 2))
     with pytest.raises(ValueError, match=match):
@@ -277,7 +277,8 @@ def test_minibatch_nmf_transform():
 
 
 @pytest.mark.parametrize(
-    ["Estimator", "solver"], [[NMF, {"solver": "mu"}], [MiniBatchNMF, {}]]
+    ["Estimator", "solver"],
+    [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
 def test_nmf_transform_custom_init(Estimator, solver):
     # Smoke test that checks if NMF.transform works with custom initialization
@@ -311,7 +312,8 @@ def test_nmf_inverse_transform(solver):
 
 
 def test_mbnmf_inverse_transform():
-    # Test that MiniBatchNMF.inverse_transform returns close values
+    # Test that MiniBatchNMF.transform followed by MiniBatchNMF.inverse_transform
+    # is close to the identity
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
     m = MiniBatchNMF(
@@ -866,7 +868,7 @@ def test_nmf_custom_init_dtype_error(Estimator):
         non_negative_factorization(X, H=H, update_H=False)
 
 
-@pytest.mark.parametrize("beta_loss", [0, 1, 2])
+@pytest.mark.parametrize("beta_loss", [0, 0.5, 1, 1.5, 2])
 def test_nmf_minibatchnmf_equivalence(beta_loss):
     # Test that MiniBatchNMF is equivalent to NMF when batch_size = n_samples and
     # forget_factor 0.0 (stopping criterion put aside)
