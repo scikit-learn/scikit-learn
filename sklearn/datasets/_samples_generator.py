@@ -1787,8 +1787,7 @@ def make_checkerboard(
     shuffle=True,
     random_state=None,
 ):
-    """Generate an array with block checkerboard structure for
-    biclustering.
+    """Generate an array with block checkerboard structure for biclustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1828,17 +1827,16 @@ def make_checkerboard(
     cols : ndarray of shape (n_clusters, X.shape[1])
         The indicators for cluster membership of each column.
 
+    See Also
+    --------
+    make_biclusters : Generate an array with constant block diagonal structure
+        for biclustering.
 
     References
     ----------
-
     .. [1] Kluger, Y., Basri, R., Chang, J. T., & Gerstein, M. (2003).
         Spectral biclustering of microarray data: coclustering genes
         and conditions. Genome research, 13(4), 703-716.
-
-    See Also
-    --------
-    make_biclusters
     """
     generator = check_random_state(random_state)
 

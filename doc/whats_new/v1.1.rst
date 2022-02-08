@@ -246,6 +246,11 @@ Changelog
   :pr:`20811`, :pr:`20567` and :pr:`21814` by
   :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| Change the parameter `validation_fraction` in
+  :class:`ensemble.BaseGradientBoosting` so that an error is raised if anything
+  other than a float is passed in as an argument.
+  :pr:`21632` by :user:`Genesis Valencia <genvalen>`
+
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
   :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
@@ -511,6 +516,9 @@ Changelog
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
 
+- |Enhancement| Adds :term:`get_feature_names_out` to
+  :class:`neural_network.BernoulliRBM`. :pr:`22248` by `Thomas Fan`_.
+
 :mod:`sklearn.pipeline`
 .......................
 
@@ -546,6 +554,12 @@ Changelog
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`preprocessing.Normalizer`,
+  :class:`preprocessing.KernelCenterer`,
+  :class:`preprocessing.OrdinalEncoder`, and
+  :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
 
 :mod:`sklearn.random_projection`
 ................................
