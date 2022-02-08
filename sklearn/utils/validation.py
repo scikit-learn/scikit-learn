@@ -1828,7 +1828,9 @@ def _get_feature_names(X):
 
 
 def _check_feature_names_in(estimator, input_features=None, *, generate_names=True):
-    """Get output feature names for transformation.
+    """Check `input_features` and generate names if needed.
+
+    Commonly used in :term:`get_feature_names_out`.
 
     Parameters
     ----------
@@ -1842,8 +1844,10 @@ def _check_feature_names_in(estimator, input_features=None, *, generate_names=Tr
             match `feature_names_in_` if `feature_names_in_` is defined.
 
     generate_names : bool, default=True
-        Wether to generate names when `input_features` is `None` and
-        `estimator.feature_names_in_` is not defined.
+        Whether to generate names when `input_features` is `None` and
+        `estimator.feature_names_in_` is not defined. This is useful for transformers
+        that validates `input_features` but do not require them in
+        :term:`get_feature_names_out` e.g. `PCA`.
 
     Returns
     -------

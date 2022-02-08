@@ -1532,7 +1532,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     score (Ideal DCG, obtained for a perfect ranking) to obtain a score between
     0 and 1.
 
-    This ranking metric yields a high value if true labels are ranked high by
+    This ranking metric returns a high value if true labels are ranked high by
     ``y_score``.
 
     Parameters
@@ -1616,7 +1616,6 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> ndcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
     0.5
-
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)

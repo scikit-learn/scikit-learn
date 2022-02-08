@@ -16,7 +16,12 @@ from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from ..base import (
+    BaseEstimator,
+    TransformerMixin,
+    _OneToOneFeatureMixin,
+    _ClassNamePrefixFeaturesOutMixin,
+)
 from ..utils import check_array
 from ..utils.deprecation import deprecated
 from ..utils.extmath import _incremental_mean_and_var, row_norms
@@ -1825,7 +1830,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         return X
 
 
-class Normalizer(TransformerMixin, BaseEstimator):
+class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1996,7 +2001,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(TransformerMixin, BaseEstimator):
+class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold.
 
     Values greater than the threshold map to 1, while values less than
@@ -2119,7 +2124,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         return {"stateless": True}
 
 
-class KernelCenterer(TransformerMixin, BaseEstimator):
+class KernelCenterer(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     r"""Center an arbitrary kernel matrix :math:`K`.
 
     Let define a kernel :math:`K` such that:
@@ -2257,6 +2262,15 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         K += self.K_fit_all_
 
         return K
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        # Used by _ClassNamePrefixFeaturesOutMixin. This model preserves the
+        # number of input features but this is not a one-to-one mapping in the
+        # usual sense. Hence the choice not to use _OneToOneFeatureMixin to
+        # implement get_feature_names_out for this class.
+        return self.n_features_in_
 
     def _more_tags(self):
         return {"pairwise": True}
