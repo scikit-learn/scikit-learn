@@ -46,7 +46,7 @@ random sampling procedures.
   the old behavior.
 
 - |Fix| Panda's DataFrames with all non-string columns such as a MultiIndex
-  will no longer warn when passed into an Estimator. :pr:`xxxxx` by
+  will no longer warn when passed into an Estimator. :pr:`22410` by
   `Thomas Fan`_.
 
 Changelog
