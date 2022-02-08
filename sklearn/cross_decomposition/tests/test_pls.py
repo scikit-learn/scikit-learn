@@ -71,7 +71,12 @@ def test_sanity_check_pls_regression():
     Y = d.target
 
     pls = PLSRegression(n_components=X.shape[1])
-    pls.fit_transform(X, Y)
+    X_trans, _ = pls.fit_transform(X, Y)
+
+    # FIXME: one would expect y_trans == pls.y_scores_ but this is not
+    # the case.
+    # xref: https://github.com/scikit-learn/scikit-learn/issues/22420
+    assert_allclose(X_trans, pls.x_scores_)
 
     expected_x_weights = np.array(
         [
