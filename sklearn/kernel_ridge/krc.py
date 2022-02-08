@@ -5,12 +5,15 @@
 # License: BSD 3 clause
 
 import numpy as np
-from sklearn.kernel_ridge.krr import KernelRidge
-from sklearn.linear_model._ridge import RidgeClassifier
-from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.linear_model._ridge import _solve_cholesky_kernel
-from sklearn.utils.validation import check_is_fitted, _check_sample_weight
-from sklearn.utils.deprecation import deprecated
+from ..kernel_ridge.krr import KernelRidge
+from ..linear_model._ridge import RidgeClassifier
+from ..metrics.pairwise import pairwise_kernels
+from ..linear_model._ridge import _solve_cholesky_kernel
+from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.deprecation import deprecated
+from ..preprocessing import LabelBinarizer
+from ..utils import column_or_1d
+from ..utils import compute_sample_weight
 
 
 class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
@@ -119,16 +122,58 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
 
     Examples
     --------
-    >>> from sklearn.kernel_ridge import KernelRidge
-    >>> import numpy as np
+    >>> from sklearn.kernel_ridge import KernelRidgeClassifier
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
     >>> n_samples, n_features = 10, 5
-    >>> rng = np.random.RandomState(0)
-    >>> y = rng.randn(n_samples)
-    >>> X = rng.randn(n_samples, n_features)
-    >>> krr = KernelRidge(alpha=1.0)
-    >>> krr.fit(X, y)
+    >>> krc = KernelRidgeClassifier(alpha=1.0)
+    >>> krc.fit(X, y)
     KernelRidge(alpha=1.0)
     """
+    def _prepare_data(self, X, y, sample_weight):
+        """Validate `X` and `y` and binarize `y`.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Training data.
+
+        y : ndarray of shape (n_samples,)
+            Target values.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
+        Returns
+        -------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Validated training data.
+
+        y : ndarray of shape (n_samples,)
+            Validated target values.
+
+        sample_weight : ndarray of shape (n_samples,)
+            Validated sample weights.
+
+        Y : ndarray of shape (n_samples, n_classes)
+            The binarized version of `y`.
+        """
+        X, y = self._validate_data(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
+        if sample_weight is not None and not isinstance(sample_weight, float):
+            sample_weight = _check_sample_weight(sample_weight, X)
+    
+        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
+        Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.y_type_.startswith("multilabel"):
+            y = column_or_1d(y, warn=True)
+
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        return X, y, sample_weight, Y
+
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.
 
@@ -150,7 +195,7 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
             Returns the instance itself.
         """
         # Convert data
-        X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
+        X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight)
 
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = _check_sample_weight(sample_weight, X)
