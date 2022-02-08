@@ -1613,11 +1613,14 @@ def test_check_array_deprecated_matrix():
 
 @pytest.mark.parametrize(
     "names",
-    [list(range(2)), range(2), None],
-    ids=["list-int", "range", "default"],
+    [list(range(2)), range(2), None, [["a", "b"], ["c", "d"]]],
+    ids=["list-int", "range", "default", "MultiIndex"],
 )
 def test_get_feature_names_pandas_with_ints_no_warning(names):
-    """Get feature names with pandas dataframes with ints without warning"""
+    """Get feature names with pandas dataframes without warning.
+
+    Column names with consistent dtypes will not warn, such as int or MultiIndex.
+    """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
@@ -1648,10 +1651,10 @@ def test_get_feature_names_numpy():
 @pytest.mark.parametrize(
     "names, dtypes",
     [
-        ([["a", "b"], ["c", "d"]], "['tuple']"),
         (["a", 1], "['int', 'str']"),
+        (["pizza", ["a", "b"]], "['list', 'str']"),
     ],
-    ids=["multi-index", "mixed"],
+    ids=["int-str", "list-str"],
 )
 def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
     """Get feature names warns when the feature names have mixed dtypes"""
