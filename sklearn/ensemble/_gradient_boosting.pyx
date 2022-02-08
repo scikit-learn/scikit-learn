@@ -256,7 +256,7 @@ def _random_sample_mask(np.npy_intp n_total_samples,
          the others are ``False``.
      """
      cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
-          random_state.rand(n_total_samples)
+          random_state.uniform(size=n_total_samples)
      cdef np.ndarray[uint8, ndim=1, mode="c", cast=True] sample_mask = \
           np_zeros((n_total_samples,), dtype=bool)
 

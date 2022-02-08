@@ -274,6 +274,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
 
+        dual_coef = self._dual_coef_.data if self._sparse else self._dual_coef_
+        intercept_finiteness = np.isfinite(self._intercept_).all()
+        dual_coef_finiteness = np.isfinite(dual_coef).all()
+        if not (intercept_finiteness and dual_coef_finiteness):
+            raise ValueError(
+                "The dual coefficients or intercepts are not finite. "
+                "The input data may contain large values and need to be"
+                "preprocessed."
+            )
+
         # Since, in the case of SVC and NuSVC, the number of models optimized by
         # libSVM could be greater than one (depending on the input), `n_iter_`
         # stores an ndarray.

@@ -1118,7 +1118,7 @@ def column_or_1d(y, *, warn=False):
        Output data.
 
     Raises
-    -------
+    ------
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
@@ -1406,6 +1406,7 @@ def check_scalar(
 
     ValueError
         If the parameter's value violates the given bounds.
+        If `min_val`, `max_val` and `include_boundaries` are inconsistent.
     """
 
     if not isinstance(x, target_type):
@@ -1416,6 +1417,18 @@ def check_scalar(
         raise ValueError(
             f"Unknown value for `include_boundaries`: {repr(include_boundaries)}. "
             f"Possible values are: {expected_include_boundaries}."
+        )
+
+    if max_val is None and include_boundaries == "right":
+        raise ValueError(
+            "`include_boundaries`='right' without specifying explicitly `max_val` "
+            "is inconsistent."
+        )
+
+    if min_val is None and include_boundaries == "left":
+        raise ValueError(
+            "`include_boundaries`='left' without specifying explicitly `min_val` "
+            "is inconsistent."
         )
 
     comparison_operator = (
@@ -1815,7 +1828,9 @@ def _get_feature_names(X):
 
 
 def _check_feature_names_in(estimator, input_features=None, *, generate_names=True):
-    """Get output feature names for transformation.
+    """Check `input_features` and generate names if needed.
+
+    Commonly used in :term:`get_feature_names_out`.
 
     Parameters
     ----------
@@ -1829,8 +1844,10 @@ def _check_feature_names_in(estimator, input_features=None, *, generate_names=Tr
             match `feature_names_in_` if `feature_names_in_` is defined.
 
     generate_names : bool, default=True
-        Wether to generate names when `input_features` is `None` and
-        `estimator.feature_names_in_` is not defined.
+        Whether to generate names when `input_features` is `None` and
+        `estimator.feature_names_in_` is not defined. This is useful for transformers
+        that validates `input_features` but do not require them in
+        :term:`get_feature_names_out` e.g. `PCA`.
 
     Returns
     -------

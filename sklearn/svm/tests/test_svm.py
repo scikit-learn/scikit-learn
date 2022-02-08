@@ -731,6 +731,20 @@ def test_bad_input():
         clf.predict(Xt)
 
 
+def test_svc_nonfinite_params():
+    # Check SVC throws ValueError when dealing with non-finite parameter values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+
+    clf = svm.SVC()
+    msg = "The dual coefficients or intercepts are not finite"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
 @pytest.mark.parametrize(
     "Estimator, data",
     [
@@ -1318,11 +1332,11 @@ def test_gamma_auto():
 
     with pytest.warns(None) as record:
         svm.SVC(kernel="linear").fit(X, y)
-    assert not len(record)
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         svm.SVC(kernel="precomputed").fit(X, y)
-    assert not len(record)
+    assert not [w.message for w in record]
 
 
 def test_gamma_scale():
@@ -1331,7 +1345,7 @@ def test_gamma_scale():
     clf = svm.SVC()
     with pytest.warns(None) as record:
         clf.fit(X, y)
-    assert not len(record)
+    assert not [w.message for w in record]
     assert_almost_equal(clf._gamma, 4)
 
     # X_var ~= 1 shouldn't raise warning, for when
@@ -1339,7 +1353,7 @@ def test_gamma_scale():
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
     with pytest.warns(None) as record:
         clf.fit(X, y)
-    assert not len(record)
+    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize(
