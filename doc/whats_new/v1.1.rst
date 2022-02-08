@@ -45,6 +45,10 @@ random sampling procedures.
   `force_finite=False` if you really want to get non-finite values and keep
   the old behavior.
 
+- |Fix| Panda's DataFrames with all non-string columns such as a MultiIndex
+  will no longer warn when passed into an Estimator. :pr:`xxxxx` by
+  `Thomas Fan`_.
+
 Changelog
 ---------
 
