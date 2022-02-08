@@ -289,13 +289,14 @@ def plot_benchmark_throughput(throughputs, configuration):
     plt.show()
 
 
-# #############################################################################
+# %%
 # Main code
 
 start_time = time.time()
 
-# #############################################################################
+# %%
 # Benchmark bulk/atomic prediction speed for various regressors
+# -------------------------------------------------------------
 configuration = {
     "n_train": int(1e3),
     "n_test": int(1e2),
