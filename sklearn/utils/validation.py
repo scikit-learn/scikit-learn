@@ -1810,9 +1810,8 @@ def _get_feature_names(X):
 
     types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
 
-    # Warn when types are mixed.
-    # ints and strings do not warn
-    if len(types) > 1 or not (types[0].startswith("int") or types[0] == "str"):
+    # Warn when types are mixed and string is one of the types
+    if len(types) > 1 and "str" in types:
         # TODO: Convert to an error in 1.2
         warnings.warn(
             "Feature names only support names that are all strings. "
@@ -1823,7 +1822,7 @@ def _get_feature_names(X):
         return
 
     # Only feature names of all strings are supported
-    if types[0] == "str":
+    if len(types) == 1 and types[0] == "str":
         return feature_names
 
 
