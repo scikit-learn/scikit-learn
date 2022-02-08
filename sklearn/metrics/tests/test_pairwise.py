@@ -524,8 +524,8 @@ def test_pairwise_distances_argmin_min():
 
     assert_array_equal(argmin_0, argmin_1)
 
-    argmin_0 = pairwise_distances_argmin_min(X, X, axis=0)
-    argmin_1 = pairwise_distances_argmin_min(X, X, axis=1)
+    argmin_0 = pairwise_distances_argmin(X, X, axis=0)
+    argmin_1 = pairwise_distances_argmin(X, X, axis=1)
 
     assert_array_equal(argmin_0, argmin_1)
 
