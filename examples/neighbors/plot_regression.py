@@ -32,6 +32,7 @@ y[::5] += 1 * (0.5 - np.random.rand(8))
 
 # %%
 # Fit regression model
+# --------------------
 n_neighbors = 5
 
 for i, weights in enumerate(["uniform", "distance"]):
