@@ -1092,7 +1092,7 @@ def test_check_scalar_valid(x):
             max_val=5,
             include_boundaries="both",
         )
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert scalar == x
 
 
@@ -1156,6 +1156,30 @@ def test_check_scalar_valid(x):
             ValueError(
                 "Unknown value for `include_boundaries`: 'bad parameter value'. "
                 "Possible values are: ('left', 'right', 'both', 'neither')."
+            ),
+        ),
+        (
+            4,
+            "test_name7",
+            int,
+            None,
+            4,
+            "left",
+            ValueError(
+                "`include_boundaries`='left' without specifying explicitly `min_val` "
+                "is inconsistent."
+            ),
+        ),
+        (
+            4,
+            "test_name8",
+            int,
+            2,
+            None,
+            "right",
+            ValueError(
+                "`include_boundaries`='right' without specifying explicitly `max_val` "
+                "is inconsistent."
             ),
         ),
     ],
@@ -1599,7 +1623,7 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
 
     with pytest.warns(None) as record:
         names = _get_feature_names(X)
-    assert not record
+    assert not [w.message for w in record]
     assert names is None
 
 
