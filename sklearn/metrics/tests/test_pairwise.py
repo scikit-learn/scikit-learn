@@ -194,7 +194,7 @@ def test_pairwise_boolean_distance(metric):
     # Check that no warning is raised if X is already boolean and Y is None:
     with pytest.warns(None) as records:
         pairwise_distances(X.astype(bool), metric=metric)
-    assert len(records) == 0
+    assert not [w.message for w in records]
 
 
 def test_no_data_conversion_warning():
@@ -203,7 +203,7 @@ def test_no_data_conversion_warning():
     X = rng.randn(5, 4)
     with pytest.warns(None) as records:
         pairwise_distances(X, metric="minkowski")
-    assert len(records) == 0
+    assert not [w.message for w in records]
 
 
 @pytest.mark.parametrize("func", [pairwise_distances, pairwise_kernels])

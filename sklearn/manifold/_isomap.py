@@ -10,7 +10,7 @@ from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
@@ -19,7 +19,7 @@ from ..utils.graph import _fix_connected_components
 from ..externals._packaging.version import parse as parse_version
 
 
-class Isomap(TransformerMixin, BaseEstimator):
+class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Isomap Embedding.
 
     Non-linear dimensionality reduction through Isometric Mapping
@@ -257,6 +257,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
+        self._n_features_out = self.embedding_.shape[1]
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.
