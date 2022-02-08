@@ -1889,7 +1889,7 @@ class MiniBatchNMF(NMF):
         change of W controlled by `tol`.
 
     transform_max_iter : int, default=None
-        Maximum number of iterations when solving for W at transform time. 
+        Maximum number of iterations when solving for W at transform time.
         If None, it defaults to `max_iter`.
 
     random_state : int, RandomState instance, default=None
