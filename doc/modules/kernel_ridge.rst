@@ -60,3 +60,15 @@ dense model.
 
     .. [M2012] "Machine Learning: A Probabilistic Perspective"
       Murphy, K. P. - chapter 14.4.3, pp. 492-493, The MIT Press, 2012
+
+
+Classification
+--------------
+
+The :class:`KernelRidge` regressor has a classifier variant:
+:class:`KernelRidgeClassifier`. This classifier first converts binary targets to
+``{-1, 1}`` and then treats the problem as a nonlinear regression task, optimizing the
+same objective as in Kernel ridge regression. The predicted class corresponds to the sign of the
+regressor's prediction. For multiclass classification, the problem is
+treated as multi-output regression, and the predicted class corresponds to
+the output with the highest value.
