@@ -2221,9 +2221,9 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
 
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """
-    Test implementation of BaseSearchCV has the _pairwise property
-    which matches the _pairwise property of its estimator.
-    This test make sure _pairwise is delegated to the base estimator.
+    Test implementation of BaseSearchCV has the pairwise property
+    which matches the pairwise tag of its estimator.
+    This test make sure pairwise tag is delegated to the base estimator.
 
     Non-regression test for issue #13920.
     """

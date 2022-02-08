@@ -535,10 +535,10 @@ pairwise (default=False)
     similar methods consists of pairwise measures over samples rather than a
     feature representation for each sample.  It is usually `True` where an
     estimator has a `metric` or `affinity` or `kernel` parameter with value
-    'precomputed'. Its primary purpose is that when a :term:`meta-estimator`
-    extracts a sub-sample of data intended for a pairwise estimator, the data
-    needs to be indexed on both axes, while other data is indexed only on the
-    first axis. Specifically, this tag is used by
+    'precomputed'. Its primary purpose is to support a :term:`meta-estimator`
+    or a cross validation procedure that extracts a sub-sample of data intended
+    for a pairwise estimator, where the data needs to be indexed on both axes.
+    Specifically, this tag is used by
     :func:`~sklearn.utils.metaestimators._safe_split` to slice rows and
     columns.
 
