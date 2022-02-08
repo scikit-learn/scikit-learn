@@ -126,53 +126,11 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
     >>> from sklearn.datasets import load_iris
     >>> iris = load_iris()
     >>> X, y = iris.data, iris.target
-    >>> n_samples, n_features = 10, 5
-    >>> krc = KernelRidgeClassifier(alpha=1.0)
+    >>> krc = KernelRidgeClassifier(kernel='rbf', alpha=1.0, gamma=0.01)
     >>> krc.fit(X, y)
-    KernelRidge(alpha=1.0)
+    KernelRidgeClassifier(alpha=0.1)
     """
-    def _prepare_data(self, X, y, sample_weight):
-        """Validate `X` and `y` and binarize `y`.
-
-        Parameters
-        ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Training data.
-
-        y : ndarray of shape (n_samples,)
-            Target values.
-
-        sample_weight : float or ndarray of shape (n_samples,), default=None
-            Individual weights for each sample. If given a float, every sample
-            will have the same weight.
-
-        Returns
-        -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            Validated training data.
-
-        y : ndarray of shape (n_samples,)
-            Validated target values.
-
-        sample_weight : ndarray of shape (n_samples,)
-            Validated sample weights.
-
-        Y : ndarray of shape (n_samples, n_classes)
-            The binarized version of `y`.
-        """
-        X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
-        )
-        if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = _check_sample_weight(sample_weight, X)
-    
-        self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-        Y = self._label_binarizer.fit_transform(y)
-        if not self._label_binarizer.y_type_.startswith("multilabel"):
-            y = column_or_1d(y, warn=True)
-
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-        return X, y, sample_weight, Y
+    class_weight = None
 
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.
@@ -194,44 +152,35 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
         self : object
             Returns the instance itself.
         """
-        # Convert data
-        X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight)
-
-        if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = _check_sample_weight(sample_weight, X)
-
-        K = self._get_kernel(X)
-        alpha = np.atleast_1d(self.alpha)
-
-        ravel = False
-        if len(y.shape) == 1:
-            y = y.reshape(-1, 1)
-            ravel = True
-
-        copy = self.kernel == "precomputed"
-        self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha, sample_weight, copy)
-        if ravel:
-            self.dual_coef_ = self.dual_coef_.ravel()
-
-        self.X_fit_ = X
-
+        # Binarize and process as a classifier, using RidgeClassifier method
+        X, y, sample_weight, Y = super(RidgeClassifier, self)._prepare_data(X, y, sample_weight, 'auto')
+        # Fit with kernel from KernelRidge
+        super().fit(X, Y, sample_weight)
+        self.coef_ = self.dual_coef_
         return self
 
-    def predict(self, X):
-        """Predict using the kernel ridge model.
+    def decision_function(self, X):
+        """
+        Predict confidence scores for samples.
 
-        
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the confidence scores.
 
         Returns
         -------
-        C : ndarray of shape (n_samples,) or (n_samples, n_targets)
-            Returns predicted values.
+        scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Confidence scores per `(n_samples, n_classes)` combination. In the
+            binary case, confidence score for `self.classes_[1]` where >0 means
+            this class would be predicted.
         """
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
-        return np.dot(K, self.dual_coef_)
-
+        scores = np.dot(K, self.coef_)
+        return scores.ravel() if scores.shape[1] == 1 else scores
+    
     def predict(self, X):
         """Predict class labels for samples in `X`.
 
@@ -251,13 +200,4 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
             a multilabel problem, it returns a matrix of shape
             `(n_samples, n_outputs)`.
         """
-        check_is_fitted(self, attributes=["_label_binarizer"])
-        X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
-        K = self._get_kernel(X, self.X_fit_)
-        if self._label_binarizer.y_type_.startswith("multilabel"):
-            # Threshold such that the negative label is -1 and positive label
-            # is 1 to use the inverse transform of the label binarizer fitted
-            # during fit.
-            scores = 2 * (self.decision_function(X) > 0) - 1
-            return self._label_binarizer.inverse_transform(scores)
-        return super(RidgeClassifier).predict(X)
+        return super(RidgeClassifier, self).predict(X)

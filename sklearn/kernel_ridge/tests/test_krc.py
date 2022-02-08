@@ -60,16 +60,6 @@ def test_kernel_ridge_csc():
     assert_array_almost_equal(pred, pred2)
 
 
-def test_kernel_ridge_singular_kernel():
-    # alpha=0 causes a LinAlgError in computing the dual coefficients,
-    # which causes a fallback to a lstsq solver. This is tested here.
-    pred = RidgeClassifier(alpha=0, fit_intercept=False).fit(X, y).predict(X)
-    kr = KernelRidgeClassifier(kernel="linear", alpha=0)
-    ignore_warnings(kr.fit)(X, y)
-    pred2 = kr.predict(X)
-    assert_array_almost_equal(pred, pred2)
-
-
 def test_kernel_ridge_precomputed():
     for kernel in ["linear", "rbf", "poly", "cosine"]:
         K = pairwise_kernels(X, X, metric=kernel)
@@ -98,16 +88,6 @@ def test_kernel_ridge_sample_weights():
     )
     assert_array_almost_equal(pred, pred2)
     assert_array_almost_equal(pred, pred3)
-
-
-def test_kernel_ridge_multi_output():
-    pred = RidgeClassifier(alpha=1, fit_intercept=False).fit(X, Y).predict(X)
-    pred2 = KernelRidgeClassifier(kernel="linear", alpha=1).fit(X, Y).predict(X)
-    assert_array_almost_equal(pred, pred2)
-
-    pred3 = KernelRidgeClassifier(kernel="linear", alpha=1).fit(X, y).predict(X)
-    pred3 = np.array([pred3, pred3]).T
-    assert_array_almost_equal(pred2, pred3)
 
 
 # TODO: Remove in 1.1
