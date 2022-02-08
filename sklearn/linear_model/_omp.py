@@ -554,9 +554,9 @@ def orthogonal_mp_gram(
         )
 
     if return_path:
-        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)))
+        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)), dtype=Gram.dtype)
     else:
-        coef = np.zeros((len(Gram), Xy.shape[1]))
+        coef = np.zeros((len(Gram), Xy.shape[1]), dtype=Gram.dtype)
 
     n_iters = []
     for k in range(Xy.shape[1]):
@@ -966,6 +966,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     LassoLarsCV : Cross-validated Lasso model fit with Least Angle Regression.
     sklearn.decomposition.sparse_encode : Generic sparse coding.
         Each column of the result is the solution to a Lasso problem.
+
+    Notes
+    -----
+    In `fit`, once the optimal number of non-zero coefficients is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------

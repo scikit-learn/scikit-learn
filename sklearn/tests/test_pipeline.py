@@ -165,20 +165,23 @@ class DummyEstimatorParams(BaseEstimator):
         return self
 
 
-def test_pipeline_init():
-    # Test the various init parameters of the pipeline.
+def test_pipeline_invalid_parameters():
+    # Test the various init parameters of the pipeline in fit
+    # method
+    pipeline = Pipeline([(1, 1)])
     with pytest.raises(TypeError):
-        Pipeline()
+        pipeline.fit([[1]], [1])
 
-    # Check that we can't instantiate pipelines with objects without fit
+    # Check that we can't fit pipelines with objects without fit
     # method
     msg = (
         "Last step of Pipeline should implement fit "
         "or be the string 'passthrough'"
         ".*NoFit.*"
     )
+    pipeline = Pipeline([("clf", NoFit())])
     with pytest.raises(TypeError, match=msg):
-        Pipeline([("clf", NoFit())])
+        pipeline.fit([[1]], [1])
 
     # Smoke test with only an estimator
     clf = NoTrans()
@@ -203,11 +206,12 @@ def test_pipeline_init():
     assert pipe.named_steps["anova"] is filter1
     assert pipe.named_steps["svc"] is clf
 
-    # Check that we can't instantiate with non-transformers on the way
+    # Check that we can't fit with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
     msg = "All intermediate steps should be transformers.*\\bNoTrans\\b.*"
+    pipeline = Pipeline([("t", NoTrans()), ("svc", clf)])
     with pytest.raises(TypeError, match=msg):
-        Pipeline([("t", NoTrans()), ("svc", clf)])
+        pipeline.fit([[1]], [1])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -514,8 +518,9 @@ def test_feature_union():
 
     # test error if some elements do not support transform
     msg = "All estimators should implement fit and transform.*\\bNoTrans\\b"
+    fs = FeatureUnion([("transform", Transf()), ("no_transform", NoTrans())])
     with pytest.raises(TypeError, match=msg):
-        FeatureUnion([("transform", Transf()), ("no_transform", NoTrans())])
+        fs.fit(X)
 
     # test that init accepts tuples
     fs = FeatureUnion((("svd", svd), ("select", select)))
@@ -991,20 +996,20 @@ def test_set_feature_union_step_drop(get_names):
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         ft.set_params(m3="drop")
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert_array_equal([], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         # Check 'drop' step at construction time
@@ -1012,7 +1017,7 @@ def test_set_feature_union_step_drop(get_names):
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
 
 def test_set_feature_union_passthrough():
@@ -1086,7 +1091,7 @@ def test_step_name_validation():
             # three ways to make invalid:
             # - construction
             with pytest.raises(ValueError, match=message):
-                cls(**{param: bad_steps})
+                cls(**{param: bad_steps}).fit([[1]], [1])
 
             # - setattr
             est = cls(**{param: [("a", Mult(1))]})

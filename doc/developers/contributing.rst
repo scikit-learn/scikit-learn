@@ -194,7 +194,7 @@ Contributing code
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
   so far. In order to claim an issue for yourself, please comment exactly
-  ``take`` on it for the CI to automatically assign the issue to you.
+  ``/take`` on it for the CI to automatically assign the issue to you.
 
 Video resources
 ---------------
@@ -559,6 +559,7 @@ message, the following actions are taken.
     ---------------------- -------------------
     [ci skip]              CI is skipped completely
     [cd build]             CD is run (wheels and source distribution are built)
+    [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Build & test with the Intel C compiler (ICC)
@@ -933,8 +934,9 @@ Monitoring performance
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
 `asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
-performance of a selection of common estimators and functions. The benchmark
-suite can be found in the `scikit-learn/asv_benchmarks` directory.
+performance of a selection of common estimators and functions. You can view 
+these benchmarks on the `scikit-learn benchmark page <https://scikit-learn.org/scikit-learn-benchmarks>`_. 
+The corresponding benchmark suite can be found in the `scikit-learn/asv_benchmarks` directory.
 
 To use all features of asv, you will need either `conda` or `virtualenv`. For
 more details please check the `asv installation webpage
@@ -1183,9 +1185,10 @@ Change the default value of a parameter
 
 If the default value of a parameter needs to be changed, please replace the
 default value with a specific value (e.g., ``warn``) and raise
-``FutureWarning`` when users are using the default value. In the following
-example, we change the default value of ``n_clusters`` from 5 to 10
-(current version is 0.20)::
+``FutureWarning`` when users are using the default value. The following
+example assumes that the current version is 0.20 and that we change the
+default value of ``n_clusters`` from 5 (old default for 0.20) to 10
+(new default for 0.22)::
 
     import warnings
 

@@ -473,14 +473,10 @@ class GaussianMixture(BaseMixture):
         String describing the type of covariance parameters to use.
         Must be one of:
 
-        'full'
-            each component has its own general covariance matrix
-        'tied'
-            all components share the same general covariance matrix
-        'diag'
-            each component has its own diagonal covariance matrix
-        'spherical'
-            each component has its own single variance
+        - 'full': each component has its own general covariance matrix.
+        - 'tied': all components share the same general covariance matrix.
+        - 'diag': each component has its own diagonal covariance matrix.
+        - 'spherical': each component has its own single variance.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -732,7 +728,7 @@ class GaussianMixture(BaseMixture):
                 self.precisions_init, lower=True
             )
         else:
-            self.precisions_cholesky_ = self.precisions_init
+            self.precisions_cholesky_ = np.sqrt(self.precisions_init)
 
     def _m_step(self, X, log_resp):
         """M step.

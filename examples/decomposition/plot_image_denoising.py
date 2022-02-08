@@ -79,7 +79,7 @@ print("done in %.2fs." % (time() - t0))
 
 print("Learning the dictionary...")
 t0 = time()
-dico = MiniBatchDictionaryLearning(n_components=100, alpha=1, n_iter=500)
+dico = MiniBatchDictionaryLearning(n_components=50, alpha=1, n_iter=250)
 V = dico.fit(data).components_
 dt = time() - t0
 print("done in %.2fs." % dt)
@@ -139,7 +139,7 @@ print("done in %.2fs." % (time() - t0))
 transform_algorithms = [
     ("Orthogonal Matching Pursuit\n1 atom", "omp", {"transform_n_nonzero_coefs": 1}),
     ("Orthogonal Matching Pursuit\n2 atoms", "omp", {"transform_n_nonzero_coefs": 2}),
-    ("Least-angle regression\n5 atoms", "lars", {"transform_n_nonzero_coefs": 5}),
+    ("Least-angle regression\n4 atoms", "lars", {"transform_n_nonzero_coefs": 4}),
     ("Thresholding\n alpha=0.1", "threshold", {"transform_alpha": 0.1}),
 ]
 

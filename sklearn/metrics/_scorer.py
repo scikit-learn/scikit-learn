@@ -46,6 +46,7 @@ from . import (
     brier_score_loss,
     jaccard_score,
     mean_absolute_percentage_error,
+    matthews_corrcoef,
 )
 
 from .cluster import adjusted_rand_score
@@ -705,6 +706,7 @@ neg_mean_gamma_deviance_scorer = make_scorer(
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
+matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
 # Score functions that need decision values
 top_k_accuracy_scorer = make_scorer(
@@ -749,6 +751,7 @@ SCORERS = dict(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,
     max_error=max_error_scorer,
+    matthews_corrcoef=matthews_corrcoef_scorer,
     neg_median_absolute_error=neg_median_absolute_error_scorer,
     neg_mean_absolute_error=neg_mean_absolute_error_scorer,
     neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa

@@ -140,7 +140,7 @@ The project would like to thank the following funders.
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
 <https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
+Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 
 .. raw:: html
 
@@ -244,8 +244,7 @@ July 2017.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Zalando SE <https://corporate.zalando.com/en>`_ funds Adrin Jalali since
-August 2020.
+`Hugging Face <https://huggingface.co/>`_ funds Adrin Jalali since 2022.
 
 .. raw:: html
 
@@ -253,10 +252,10 @@ August 2020.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/zalando_logo.png
-   :width: 100pt
+.. image:: images/huggingface_logo-noborder.png
+   :width: 55pt
    :align: center
-   :target: https://corporate.zalando.com/en
+   :target: https://huggingface.co/
 
 .. raw:: html
 
@@ -417,31 +416,6 @@ time of Joris van den Bossche (2017-2018).
    :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-............
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/anaconda.png
-   :width: 100pt
-   :align: center
-   :target: https://www.anaconda.com/
 
 .. raw:: html
 

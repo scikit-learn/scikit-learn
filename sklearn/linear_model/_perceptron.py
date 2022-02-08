@@ -59,7 +59,7 @@ class Perceptron(BaseSGDClassifier):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=0
         Used to shuffle the training data, when ``shuffle`` is set to
         ``True``. Pass an int for reproducible output across multiple
         function calls.
