@@ -130,6 +130,7 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
     >>> krc.fit(X, y)
     KernelRidgeClassifier(alpha=0.1)
     """
+
     class_weight = None
 
     def fit(self, X, y, sample_weight=None):
@@ -153,7 +154,9 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
             Returns the instance itself.
         """
         # Binarize and process as a classifier, using RidgeClassifier method
-        X, y, sample_weight, Y = super(RidgeClassifier, self)._prepare_data(X, y, sample_weight, 'auto')
+        X, y, sample_weight, Y = super(RidgeClassifier, self)._prepare_data(
+            X, y, sample_weight, "auto"
+        )
         # Fit with kernel from KernelRidge
         super().fit(X, Y, sample_weight)
         self.coef_ = self.dual_coef_
@@ -180,7 +183,7 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
         K = self._get_kernel(X, self.X_fit_)
         scores = np.dot(K, self.coef_)
         return scores.ravel() if scores.shape[1] == 1 else scores
-    
+
     def predict(self, X):
         """Predict class labels for samples in `X`.
 

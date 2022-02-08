@@ -79,8 +79,16 @@ def test_kernel_ridge_sample_weights():
     K = np.dot(X, X.T)  # precomputed kernel
     sw = np.random.RandomState(0).rand(X.shape[0])
 
-    pred = RidgeClassifier(alpha=1, fit_intercept=False).fit(X, y, sample_weight=sw).predict(X)
-    pred2 = KernelRidgeClassifier(kernel="linear", alpha=1).fit(X, y, sample_weight=sw).predict(X)
+    pred = (
+        RidgeClassifier(alpha=1, fit_intercept=False)
+        .fit(X, y, sample_weight=sw)
+        .predict(X)
+    )
+    pred2 = (
+        KernelRidgeClassifier(kernel="linear", alpha=1)
+        .fit(X, y, sample_weight=sw)
+        .predict(X)
+    )
     pred3 = (
         KernelRidgeClassifier(kernel="precomputed", alpha=1)
         .fit(K, y, sample_weight=sw)

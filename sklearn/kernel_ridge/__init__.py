@@ -11,4 +11,4 @@ from .krc import KernelRidgeClassifier
 __all__ = [
     "KernelRidge",
     "KernelRidgeClassification",
-    ]
+]
