@@ -179,8 +179,6 @@ Changelog
   
   :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
-  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
 - |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
   and :func:`decomposition.sparse_encode` preserve dtype for `numpy.float32`.
   :class:`decomposition.DictionaryLearning`, :class:`decompsition.MiniBatchDictionaryLearning`
@@ -634,13 +632,6 @@ Changelog
 - |Fix| :func:`check_scalar` raises an error when `include_boundaries={"left", "right"}`
   and the boundaries are not set.
   :pr:`22027` by `Marie Lanternier <mlant>`.
-
-:mod:`sklearn.datasets`
-.......................
-
-- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first downloaded
-  to a temporary subfolder and then renamed.
-  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 
 Code and Documentation Contributors
 -----------------------------------
