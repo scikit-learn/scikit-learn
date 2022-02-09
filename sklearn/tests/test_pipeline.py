@@ -12,7 +12,6 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.fixes import parse_version
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -518,8 +517,9 @@ def test_feature_union():
 
     # test error if some elements do not support transform
     msg = "All estimators should implement fit and transform.*\\bNoTrans\\b"
+    fs = FeatureUnion([("transform", Transf()), ("no_transform", NoTrans())])
     with pytest.raises(TypeError, match=msg):
-        FeatureUnion([("transform", Transf()), ("no_transform", NoTrans())])
+        fs.fit(X)
 
     # test that init accepts tuples
     fs = FeatureUnion((("svd", svd), ("select", select)))
@@ -995,20 +995,20 @@ def test_set_feature_union_step_drop(get_names):
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         ft.set_params(m3="drop")
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert_array_equal([], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert not record
+    assert not [w.message for w in record]
 
     with pytest.warns(None) as record:
         # Check 'drop' step at construction time
@@ -1016,7 +1016,7 @@ def test_set_feature_union_step_drop(get_names):
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not record
+    assert not [w.message for w in record]
 
 
 def test_set_feature_union_passthrough():
@@ -1162,11 +1162,7 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if parse_version(joblib.__version__) < parse_version("0.12"):
-            # Deal with change of API in joblib
-            memory = joblib.Memory(cachedir=cachedir, verbose=10)
-        else:
-            memory = joblib.Memory(location=cachedir, verbose=10)
+        memory = joblib.Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
         clf = SVC(probability=True, random_state=0)
         transf = DummyTransf()
@@ -1226,11 +1222,7 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        memory = joblib.Memory(cachedir=cachedir, verbose=10)
-    else:
-        memory = joblib.Memory(location=cachedir, verbose=10)
+    memory = joblib.Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())

@@ -46,7 +46,7 @@ def test_no_empty_slice_warning():
     pca = PCA(n_components=n_components)
     with pytest.warns(None) as record:
         pca.fit(X)
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize("copy", [True, False])

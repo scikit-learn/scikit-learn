@@ -14,7 +14,6 @@ from ..utils import (
     gen_batches,
     get_chunk_n_rows,
 )
-from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
@@ -231,7 +230,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # a thread-based backend rather than a process-based backend so as
         # to avoid suffering from communication overhead and extra memory
         # copies.
-        return _joblib_parallel_args(prefer="threads")
+        return {"prefer": "threads"}
 
     def fit(self, X, y=None, sample_weight=None):
         """
