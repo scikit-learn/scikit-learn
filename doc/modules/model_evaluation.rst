@@ -563,8 +563,8 @@ or *informedness*.
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
-  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description 
-      and evaluation of a scalable learning classifier 
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
+      and evaluation of a scalable learning classifier
       system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
@@ -1951,6 +1951,36 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
   * Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
     A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
     Annual Conference on Learning Theory (COLT 2013)
+
+  * McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
+
+.. _precision_at_k:
+
+Precision@k
+-------------------------------------
+
+Precision@k (implemented in :func:`~sklearn.metrics.precision_at_k_score`)
+is a ranking metric that represents the proportion of relevant documents
+in a top-scored subset.
+
+For one sample, given the vector of ground-truth relevance values for each
+target :math:`y \in \{0,1\}^{M}`, where :math:`M` is the number of outputs, and
+the prediction :math:`\hat{y}`, which induces the ranking function :math:`f`, the
+Precision@K is
+
+.. math::
+   \frac{1}{k}\sum_{r=1}^{k}y_{f(r)}
+
+.. topic:: References:
+
+  * `Wikipedia entry for Precision At K
+    <https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Precision_at_k>`_
+
+  * Manning, Christopher D.; Raghavan, Prabhakar; Schütze, Hinrich (2008).
+    Introduction to Information Retrieval. Cambridge University Press.
 
   * McSherry, F., & Najork, M. (2008, March). Computing information retrieval
     performance measures efficiently in the presence of tied scores. In
