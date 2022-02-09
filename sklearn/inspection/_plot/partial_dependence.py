@@ -247,9 +247,10 @@ def plot_partial_dependence(
         interaction requested in `features`.
 
         .. note::
-           ICE ('individual' or 'both') makes it impossible rendering 2-ways
-           interactions plot. As a result, an error will be raised and a
-           regular 'average' plot will be made instead.
+           ICE ('individual' or 'both') is not a valid option for 2-ways
+           interactions plot. As a result, an error will be raised.
+           2-ways interaction plots should always be configured to
+           use the 'average' kind instead.
 
         .. note::
            The fast ``method='recursion'`` option is only available for
@@ -425,7 +426,8 @@ def _plot_partial_dependence(
                 "a string, or an iterable of size at most 2."
             )
         # store the information if 2-way PD was requested with ICE to later
-        # raise a warning
+        # raise a ValueError with an exhaustive list of problematic
+        # settings.
         ice_for_two_way_pd.append(kind_plot != "average" and np.size(fxs) > 1)
 
         tmp_features.append(fxs)
@@ -438,11 +440,11 @@ def _plot_partial_dependence(
             for forcing_average, kind_plot in zip(ice_for_two_way_pd, kind_)
         ]
         raise ValueError(
-            "You requested an ICE plot with 2-way feature interactions. "
-            "This is impossible to render. You need to explicitely request "
-            "a PD plot ('average') for the 2-way feature interactions. "
-            f"Therefore for features={features!r}, you need to provide "
-            f"kind={kind_!r}"
+            "ICE plot cannot be rendered for 2-way feature interactions. "
+            "2-way feature interactions mandates PD plots using the "
+            "'average' kind: "
+            f"features={features!r} should be configured to use "
+            f"kind={kind_!r} explicitly."
         )
     features = tmp_features
 
@@ -611,9 +613,10 @@ class PartialDependenceDisplay:
         interaction requested in `features`.
 
         .. note::
-           ICE ('individual' or 'both') makes it impossible rendering 2-ways
-           interactions plot. As a result, an error will be raised and a
-           regular 'average' plot will be made instead.
+           ICE ('individual' or 'both') is not a valid option for 2-ways
+           interactions plot. As a result, an error will be raised.
+           2-ways interaction plots should always be configured to
+           use the 'average' kind instead.
 
         .. note::
            The fast ``method='recursion'`` option is only available for
@@ -1343,7 +1346,7 @@ class PartialDependenceDisplay:
         if any([k not in valid_kinds for k in kind]):
             raise ValueError(
                 f"Values provided to `kind` must be one of: {valid_kinds!r} or a list"
-                f" of such values. Currently, kind={self.kind}"
+                f" of such values. Currently, kind={self.kind!r}"
             )
 
         if line_kw is None:
