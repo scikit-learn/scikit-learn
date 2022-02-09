@@ -116,7 +116,7 @@ def test_max_iter():
             D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
         )
         model.fit_transform(X)
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 def test_dict_learning_lars_positive_parameter():
