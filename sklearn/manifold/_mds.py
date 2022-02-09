@@ -14,7 +14,6 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
-from ..utils.deprecation import deprecated
 from ..utils.fixes import delayed
 
 
@@ -450,16 +449,6 @@ class MDS(BaseEstimator):
 
     def _more_tags(self):
         return {"pairwise": self.dissimilarity == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.dissimilarity == "precomputed"
 
     def fit(self, X, y=None, init=None):
         """
