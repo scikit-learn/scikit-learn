@@ -1109,6 +1109,15 @@ def test_check_scalar_valid(x):
             TypeError("test_name1 must be an instance of float, not int."),
         ),
         (
+            None,
+            "test_name1",
+            numbers.Real,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of float, not NoneType."),
+        ),
+        (
             1,
             "test_name1",
             (float, bool),
