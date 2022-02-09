@@ -142,7 +142,6 @@
 #                                   BinaryTree tree2, ITYPE_t i_node2):
 #     """Compute the maximum distance between two nodes"""
 
-cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
 from libc.math cimport fmin, fmax
@@ -151,20 +150,20 @@ from libc.string cimport memcpy
 
 import numpy as np
 import warnings
-from ..utils import check_array
-
-from sklearn.utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from sklearn.utils._typedefs import DTYPE, ITYPE
 
 from ..metrics._dist_metrics cimport (
     DistanceMetric,
     euclidean_dist,
     euclidean_rdist,
     euclidean_dist_to_rdist,
-    euclidean_rdist_to_dist,
 )
 
 from ._partition_nodes cimport partition_node_indices
+
+from ..utils import check_array
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t
+from ..utils._typedefs import DTYPE, ITYPE
+from ..utils._heap cimport simultaneous_sort as _simultaneous_sort, heap_push
 
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
@@ -231,7 +230,7 @@ leaf_size : positive int, default=40
     the case that ``n_samples < leaf_size``.
 
 metric : str or DistanceMetric object
-    the distance metric to use for the tree.  Default='minkowski'
+    The distance metric to use for the tree.  Default='minkowski'
     with p=2 (that is, a euclidean metric). See the documentation
     of the DistanceMetric class for a list of available metrics.
     {binary_tree}.valid_metrics gives a list of the metrics which
@@ -494,27 +493,6 @@ def kernel_norm(h, d, kernel, return_log=False):
         return np.exp(result)
 
 
-######################################################################
-# Tree Utility Routines
-cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
-    """swap the values at index i1 and i2 of arr"""
-    cdef DITYPE_t tmp = arr[i1]
-    arr[i1] = arr[i2]
-    arr[i2] = tmp
-
-
-cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr,
-                           ITYPE_t i1, ITYPE_t i2) nogil:
-    """swap the values at inex i1 and i2 of both darr and iarr"""
-    cdef DTYPE_t dtmp = darr[i1]
-    darr[i1] = darr[i2]
-    darr[i2] = dtmp
-
-    cdef ITYPE_t itmp = iarr[i1]
-    iarr[i1] = iarr[i2]
-    iarr[i2] = itmp
-
-
 cdef class NeighborsHeap:
     """A max-heap structure to keep track of distances/indices of neighbors
 
@@ -569,52 +547,11 @@ cdef class NeighborsHeap:
     cdef int _push(self, ITYPE_t row, DTYPE_t val,
                    ITYPE_t i_val) nogil except -1:
         """push (val, i_val) into the given row"""
-        cdef ITYPE_t i, ic1, ic2, i_swap
-        cdef ITYPE_t size = self.distances.shape[1]
-        cdef DTYPE_t* dist_arr = &self.distances[row, 0]
-        cdef ITYPE_t* ind_arr = &self.indices[row, 0]
-
-        # check if val should be in heap
-        if val >= dist_arr[0]:
-            return 0
-
-        # insert val at position zero
-        dist_arr[0] = val
-        ind_arr[0] = i_val
-
-        # descend the heap, swapping values until the max heap criterion is met
-        i = 0
-        while True:
-            ic1 = 2 * i + 1
-            ic2 = ic1 + 1
-
-            if ic1 >= size:
-                break
-            elif ic2 >= size:
-                if dist_arr[ic1] > val:
-                    i_swap = ic1
-                else:
-                    break
-            elif dist_arr[ic1] >= dist_arr[ic2]:
-                if val < dist_arr[ic1]:
-                    i_swap = ic1
-                else:
-                    break
-            else:
-                if val < dist_arr[ic2]:
-                    i_swap = ic2
-                else:
-                    break
-
-            dist_arr[i] = dist_arr[i_swap]
-            ind_arr[i] = ind_arr[i_swap]
-
-            i = i_swap
-
-        dist_arr[i] = val
-        ind_arr[i] = i_val
-
-        return 0
+        cdef:
+            ITYPE_t size = self.distances.shape[1]
+            DTYPE_t* dist_arr = &self.distances[row, 0]
+            ITYPE_t* ind_arr = &self.indices[row, 0]
+        return heap_push(dist_arr, ind_arr, size, val, i_val)
 
     cdef int _sort(self) except -1:
         """simultaneously sort the distances and indices"""
@@ -626,68 +563,6 @@ cdef class NeighborsHeap:
                                &indices[row, 0],
                                distances.shape[1])
         return 0
-
-
-cdef int _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx,
-                            ITYPE_t size) nogil except -1:
-    """
-    Perform a recursive quicksort on the dist array, simultaneously
-    performing the same swaps on the idx array.  The equivalent in
-    numpy (though quite a bit slower) is
-
-    def simultaneous_sort(dist, idx):
-        i = np.argsort(dist)
-        return dist[i], idx[i]
-    """
-    cdef ITYPE_t pivot_idx, i, store_idx
-    cdef DTYPE_t pivot_val
-
-    # in the small-array case, do things efficiently
-    if size <= 1:
-        pass
-    elif size == 2:
-        if dist[0] > dist[1]:
-            dual_swap(dist, idx, 0, 1)
-    elif size == 3:
-        if dist[0] > dist[1]:
-            dual_swap(dist, idx, 0, 1)
-        if dist[1] > dist[2]:
-            dual_swap(dist, idx, 1, 2)
-            if dist[0] > dist[1]:
-                dual_swap(dist, idx, 0, 1)
-    else:
-        # Determine the pivot using the median-of-three rule.
-        # The smallest of the three is moved to the beginning of the array,
-        # the middle (the pivot value) is moved to the end, and the largest
-        # is moved to the pivot index.
-        pivot_idx = size / 2
-        if dist[0] > dist[size - 1]:
-            dual_swap(dist, idx, 0, size - 1)
-        if dist[size - 1] > dist[pivot_idx]:
-            dual_swap(dist, idx, size - 1, pivot_idx)
-            if dist[0] > dist[size - 1]:
-                dual_swap(dist, idx, 0, size - 1)
-        pivot_val = dist[size - 1]
-
-        # partition indices about pivot.  At the end of this operation,
-        # pivot_idx will contain the pivot value, everything to the left
-        # will be smaller, and everything to the right will be larger.
-        store_idx = 0
-        for i in range(size - 1):
-            if dist[i] < pivot_val:
-                dual_swap(dist, idx, i, store_idx)
-                store_idx += 1
-        dual_swap(dist, idx, store_idx, size - 1)
-        pivot_idx = store_idx
-
-        # recursively sort each side of the pivot
-        if pivot_idx > 1:
-            _simultaneous_sort(dist, idx, pivot_idx)
-        if pivot_idx + 2 < size:
-            _simultaneous_sort(dist + pivot_idx + 1,
-                               idx + pivot_idx + 1,
-                               size - pivot_idx - 1)
-    return 0
 
 #------------------------------------------------------------
 # find_node_split_dim:

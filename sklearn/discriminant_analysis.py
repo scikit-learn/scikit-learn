@@ -15,6 +15,7 @@ from scipy import linalg
 from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
+from .base import _ClassNamePrefixFeaturesOutMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
@@ -165,7 +166,10 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
 
 
 class LinearDiscriminantAnalysis(
-    LinearClassifierMixin, TransformerMixin, BaseEstimator
+    _ClassNamePrefixFeaturesOutMixin,
+    LinearClassifierMixin,
+    TransformerMixin,
+    BaseEstimator,
 ):
     """Linear Discriminant Analysis.
 
@@ -614,6 +618,7 @@ class LinearDiscriminantAnalysis(
             self.intercept_ = np.array(
                 self.intercept_[1] - self.intercept_[0], ndmin=1, dtype=X.dtype
             )
+        self._n_features_out = self._max_components
         return self
 
     def transform(self, X):
@@ -626,8 +631,10 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_components)
-            Transformed data.
+        X_new : ndarray of shape (n_samples, n_components) or \
+            (n_samples, min(rank, n_components))
+            Transformed data. In the case of the 'svd' solver, the shape
+            is (n_samples, min(rank, n_components)).
         """
         if self.solver == "lsqr":
             raise NotImplementedError(

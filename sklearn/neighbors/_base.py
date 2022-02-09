@@ -32,7 +32,7 @@ from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
-from ..utils.fixes import delayed
+from ..utils.fixes import delayed, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
@@ -63,11 +63,15 @@ VALID_METRICS = dict(
             "sokalsneath",
             "sqeuclidean",
             "yule",
-            "wminkowski",
         ]
     ),
 )
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+if sp_version < parse_version("1.8.0.dev0"):
+    # Before scipy 1.8.0.dev0, wminkowski was the key to use
+    # the weighted minkowski metric.
+    VALID_METRICS["brute"].append("wminkowski")
 
 VALID_METRICS_SPARSE = dict(
     ball_tree=[],
@@ -535,7 +539,21 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ):
                 self._fit_method = "brute"
             else:
-                if self.effective_metric_ in VALID_METRICS["kd_tree"]:
+                if (
+                    self.effective_metric_ == "minkowski"
+                    and self.effective_metric_params_.get("w") is not None
+                ):
+                    # Be consistent with scipy 1.8 conventions: in scipy 1.8,
+                    # 'wminkowski' was removed in favor of passing a
+                    # weight vector directly to 'minkowski'.
+                    #
+                    # 'wminkowski' is not part of valid metrics for KDTree but
+                    # the 'minkowski' without weights is.
+                    #
+                    # Hence, we detect this case and choose BallTree
+                    # which supports 'wminkowski'.
+                    self._fit_method = "ball_tree"
+                elif self.effective_metric_ in VALID_METRICS["kd_tree"]:
                     self._fit_method = "kd_tree"
                 elif (
                     callable(self.effective_metric_)
@@ -553,6 +571,16 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 **self.effective_metric_params_,
             )
         elif self._fit_method == "kd_tree":
+            if (
+                self.effective_metric_ == "minkowski"
+                and self.effective_metric_params_.get("w") is not None
+            ):
+                raise ValueError(
+                    "algorithm='kd_tree' is not valid for "
+                    "metric='minkowski' with a weight parameter 'w': "
+                    "try algorithm='ball_tree' "
+                    "or algorithm='brute' instead."
+                )
             self._tree = KDTree(
                 X,
                 self.leaf_size,

@@ -98,19 +98,19 @@ but more input formats are possible, as documented in :ref:`multimetric_scoring`
   ...                   f" +/- {r.importances_std[i]:.3f}")
   ...
   r2
-    s5      0.204 +/- 0.050
-    bmi     0.176 +/- 0.048
-    bp      0.088 +/- 0.033
-    sex     0.056 +/- 0.023
+      s5      0.204 +/- 0.050
+      bmi     0.176 +/- 0.048
+      bp      0.088 +/- 0.033
+      sex     0.056 +/- 0.023
   neg_mean_absolute_percentage_error
-    s5      0.081 +/- 0.020
-    bmi     0.064 +/- 0.015
-    bp      0.029 +/- 0.010
+      s5      0.081 +/- 0.020
+      bmi     0.064 +/- 0.015
+      bp      0.029 +/- 0.010
   neg_mean_squared_error
-    s5      1013.903 +/- 246.460
-    bmi     872.694 +/- 240.296
-    bp      438.681 +/- 163.025
-    sex     277.382 +/- 115.126
+      s5      1013.866 +/- 246.445
+      bmi     872.726 +/- 240.298
+      bp      438.663 +/- 163.022
+      sex     277.376 +/- 115.123
 
 The ranking of the features is approximately the same for different metrics even
 if the scales of the importance values are very different. However, this is not
@@ -184,5 +184,5 @@ example:
 
 .. topic:: References:
 
-   .. [1] L. Breiman, :doi:`"Random Forests" <10.1023/A:1010933404324>`, 
+   .. [1] L. Breiman, :doi:`"Random Forests" <10.1023/A:1010933404324>`,
       Machine Learning, 45(1), 5-32, 2001.
