@@ -382,7 +382,6 @@ def test_pandas_column_name_consistency(estimator):
 GET_FEATURES_OUT_MODULES_TO_IGNORE = [
     "ensemble",
     "kernel_approximation",
-    "preprocessing",
 ]
 
 
