@@ -199,9 +199,9 @@ as :class:`sklearn.preprocessing.StandardScaler`.
 
 - classification
 
-    If the bug is not raised during encoding a categorical variable, you can feed
-    numeric data to a classifier. Just remember to ensure that the target is indeed
-    an integer.
+    If the bug is not raised during encoding a categorical variable, you can
+    feed numeric data to a classifier. Just remember to ensure that the target
+    is indeed an integer.
 
     .. code-block:: python
 
@@ -212,14 +212,15 @@ as :class:`sklearn.preprocessing.StandardScaler`.
         X = rng.randn(n_samples, n_features)
         y = rng.randint(0, 2, n_samples)
 
-    If you need to test encoding, you may prefer to start from non-numeric data. In
-    such case you may use `numpy.random.choice
+    If you need to test encoding, you may prefer to start from non-numeric data.
+    In such case you may use `numpy.random.choice
     <https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html>`_.
 
     .. code-block:: python
 
         import numpy as np
 
+        rng = np.random.RandomState(0)
         n_samples, n_features = 50, 5
         X = rng.randn(n_samples, n_features)
         y = np.random.choice(
