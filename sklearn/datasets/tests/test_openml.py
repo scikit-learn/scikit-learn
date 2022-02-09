@@ -308,9 +308,9 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
     """Check the consistency of the LIAC-ARFF and pandas parser.
 
     In the future, we should test for titanic dataset. However, LIAC-ARFF
-    always use string dtype for nominal features whereas pandas infer the data
-    type and thus can use integer or float dtype. Fixing this bug in LIAC-ARFF
-    would allow to check the consistency in the future.
+    always use string dtype for categorical features whereas pandas infer the
+    data type and thus can use integer or float dtype. Fixing this bug in
+    LIAC-ARFF would allow to check the consistency in the future.
     """
     pd = pytest.importorskip("pandas")
 

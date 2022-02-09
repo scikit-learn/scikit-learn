@@ -475,7 +475,7 @@ def _load_arff_response(
         A dataframe containing both `X` and `y`. `None` if
         `output_array_type != "pandas"`.
 
-    nominal_attributes : list of str or None
+    categories : list of str or None
         The names of the features that are categorical. `None` if
         `output_array_type == "pandas"`.
     """
@@ -493,7 +493,7 @@ def _load_arff_response(
     gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
     with closing(gzip_file):
 
-        X, y, frame, nominal_attributes = load_arff_from_gzip_file(
+        X, y, frame, categories = load_arff_from_gzip_file(
             gzip_file,
             parser=parser,
             output_type=output_type,
@@ -503,7 +503,7 @@ def _load_arff_response(
             shape=shape,
         )
 
-        return X, y, frame, nominal_attributes
+        return X, y, frame, categories
 
 
 def _download_data_to_bunch(
@@ -578,7 +578,7 @@ def _download_data_to_bunch(
         frame : dataframe or None
             A dataframe containing both `X` and `y`. `None` if
             `output_array_type != "pandas"`.
-        nominal_attributes : list of str or None
+        categories : list of str or None
             The names of the features that are categorical. `None` if
             `output_array_type == "pandas"`.
     """
@@ -594,7 +594,7 @@ def _download_data_to_bunch(
     else:
         output_type = "numpy"
 
-    # XXX: target columns should all be nominal or all numeric
+    # XXX: target columns should all be categorical or all numeric
     _verify_target_data_type(features_dict, target_columns)
     for name in target_columns:
         column_info = features_dict[name]
@@ -605,7 +605,7 @@ def _download_data_to_bunch(
                 "values. Missing values are not supported for target columns."
             )
 
-    X, y, frame, nominal_attributes = _retry_with_clean_cache(url, data_home)(
+    X, y, frame, categories = _retry_with_clean_cache(url, data_home)(
         _load_arff_response
     )(
         url,
@@ -625,7 +625,7 @@ def _download_data_to_bunch(
         data=X,
         target=y,
         frame=frame,
-        categories=nominal_attributes,
+        categories=categories,
         feature_names=data_columns,
         target_names=target_columns,
     )

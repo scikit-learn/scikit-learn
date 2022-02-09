@@ -176,7 +176,7 @@ def _liac_arff_parser(
         A dataframe containing both `X` and `y`. `None` if
         `output_array_type != "pandas"`.
 
-    nominal_attributes : list of str or None
+    categories : list of str or None
         The names of the features that are categorical. `None` if
         `output_array_type == "pandas"`.
     """
@@ -197,10 +197,10 @@ def _liac_arff_parser(
     )
     columns_to_select = feature_names_to_select + target_names_to_select
 
-    nominal_attributes = {
-        name: categories
-        for name, categories in arff_container["attributes"]
-        if isinstance(categories, list) and name in columns_to_select
+    categories = {
+        name: cat
+        for name, cat in arff_container["attributes"]
+        if isinstance(cat, list) and name in columns_to_select
     }
     if output_arrays_type == "pandas":
         pd = check_pandas_support("fetch_openml with as_frame=True")
@@ -274,7 +274,7 @@ def _liac_arff_parser(
             )
 
         is_classification = {
-            col_name in nominal_attributes for col_name in target_names_to_select
+            col_name in categories for col_name in target_names_to_select
         }
         if not is_classification:
             # No target
@@ -283,7 +283,7 @@ def _liac_arff_parser(
             y = np.hstack(
                 [
                     np.take(
-                        np.asarray(nominal_attributes.pop(col_name), dtype="O"),
+                        np.asarray(categories.pop(col_name), dtype="O"),
                         y[:, i : i + 1].astype(int, copy=False),
                     )
                     for i, col_name in enumerate(target_names_to_select)
@@ -303,7 +303,7 @@ def _liac_arff_parser(
 
     if output_arrays_type == "pandas":
         return X, y, frame, None
-    return X, y, None, nominal_attributes
+    return X, y, None, categories
 
 
 def _pandas_arff_parser(
@@ -353,7 +353,7 @@ def _pandas_arff_parser(
         A dataframe containing both `X` and `y`. `None` if
         `output_array_type != "pandas"`.
 
-    nominal_attributes : list of str or None
+    categories : list of str or None
         The names of the features that are categorical. `None` if
         `output_array_type == "pandas"`.
     """
@@ -379,7 +379,7 @@ def _pandas_arff_parser(
 
     frame = _cast_frame(frame, openml_columns_info)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
-    nominal_attributes = {
+    categories = {
         col_name: frame[col_name].cat.categories.tolist()
         for col_name in frame.columns
         if hasattr(frame[col_name].dtype, "is_dtype")
@@ -394,7 +394,7 @@ def _pandas_arff_parser(
         X = X.to_numpy() if hasattr(X, "to_numpy") else X.values
         if y is not None:
             y = y.to_numpy() if hasattr(y, "to_numpy") else np.asarray(y)
-    return X, y, None, nominal_attributes
+    return X, y, None, categories
 
 
 def load_arff_from_gzip_file(
@@ -447,7 +447,7 @@ def load_arff_from_gzip_file(
         A dataframe containing both `X` and `y`. `None` if
         `output_array_type != "pandas"`.
 
-    nominal_attributes : list of str or None
+    categories : list of str or None
         The names of the features that are categorical. `None` if
         `output_array_type == "pandas"`.
     """
