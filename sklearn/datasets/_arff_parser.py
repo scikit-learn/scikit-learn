@@ -413,8 +413,9 @@ def load_arff_from_gzip_file(
     gzip_file : GzipFile instance
         The file compressed to be read.
 
-    parser : {"liac-arff", "pandas"}
-        The parser used to parse the ARFF file.
+    parser : {"pandas", "liac-arff"}
+        The parser used to parse the ARFF file. "pandas" is recommended
+        but only supports loading dense datasets.
 
     output_type : {"numpy", "sparse", "pandas"}
         The type of the arrays that will be returned. The possibilities ara:

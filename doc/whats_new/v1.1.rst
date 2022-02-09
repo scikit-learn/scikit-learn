@@ -133,10 +133,13 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
-- |Enhancement| Introduce a new parameter `parser` in
-  :func:`datasets.fetch_openml`. This parameter allows to use `pandas.read_csv`
-  and its C parser to read ARFF file that is more memory efficient and much
-  faster. It will be used by default if `pandas` is installed.
+- |Enhancement| Introduce the new parameter `parser="pandas"` in
+  :func:`datasets.fetch_openml`. This parameter allows to use the very CPU
+  and memory efficient `pandas.read_csv` parser to load dense ARFF
+  formatted dataset files. If is possible to pass `parser="liac-arff"`
+  to use the old LIAC parser.
+  By default, dense datasets are loaded with "pandas" and sparse datasets
+  are loaded with "liac-arff".
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter

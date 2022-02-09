@@ -766,12 +766,12 @@ def fetch_openml(
     delay : float, default=1.0
         Number of seconds between retries.
 
-    parser : {"auto", "liac-arff", "pandas"}, default="auto"
+    parser : {"auto", "pandas", "liac-arff"}, default="auto"
         Parser used to load the ARFF file. Two parsers are implemented:
 
         - `"pandas"`: this is the most efficient parser. However, it requires
           pandas to be installed and can only open dense datasets.
-        - `"liac-arff"`: this is a pure Python ARFF parser that is less
+        - `"liac-arff"`: this is a pure Python ARFF parser that is much less
           memory- and CPU-efficient. It deals with sparse ARFF dataset.
 
         If `"auto"` (default), the parser is chosen automatically such that
@@ -828,13 +828,13 @@ def fetch_openml(
     to different data types in the output. The notable differences are the
     following:
 
-    - The `"liac-arff"` parser always considers nominal features as string.
+    - The `"liac-arff"` parser always encodes categorical features as `str` objects.
       To the contrary, the `"pandas"` parser instead infers the type while
       reading and numerical categories will be casted into integers or floats
       whenever possible.
-    - The `"liac-arff"` parser is using floats to encode numerical features
-      tagged as 'REAL' and 'NUMERICAL' in the metadata. To the contrary, the
-      `"pandas"` parser instead infers if these numerical features corresponds
+    - The `"liac-arff"` parser uses floats to encode numerical features
+      tagged as 'REAL' and 'NUMERICAL' in the metadata. The `"pandas"`
+      parser instead infers if these numerical features corresponds
       to integers.
     """
     if cache is False:
@@ -911,7 +911,7 @@ def fetch_openml(
     if parser == "auto":
         parser = "liac-arff" if return_sparse else "pandas"
 
-    if as_frame or (not as_frame and parser == "pandas"):
+    if as_frame or parser == "pandas":
         try:
             check_pandas_support("`fetch_openml`")
         except ImportError as exc:
@@ -928,12 +928,17 @@ def fetch_openml(
                 )
             raise ImportError(err_msg) from exc
 
-    if return_sparse and (as_frame or parser == "pandas"):
-        raise ValueError(
-            "The sparse ARFF format is not supported together with pandas. "
-            "Explicitely set `parser='liac-arff'` and either `as_frame='auto'` or "
-            "`as_frame=True`."
-        )
+    if return_sparse:
+        if as_frame:
+            raise ValueError(
+                "Sparse ARFF datasets cannot be loaded with as_frame=True. "
+                "Use as_frame=False or as_frame='auto' instead."
+            )
+        if parser == "pandas":
+            raise ValueError(
+                "Sparse ARFF datasets cannot be loaded with parser='pandas'. "
+                "Use parser='liac-arff' or  parser='auto' instead."
+            )
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
