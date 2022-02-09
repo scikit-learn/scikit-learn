@@ -36,8 +36,8 @@ def random_X_y_coef(
         random_state=rng,
     )
 
-    if linear_model_loss._loss.is_multiclass:
-        n_classes = linear_model_loss._loss.n_classes
+    if linear_model_loss.base_loss.is_multiclass:
+        n_classes = linear_model_loss.base_loss.n_classes
         coef = np.empty((n_classes, n_dof))
         coef.flat[:] = rng.uniform(
             low=coef_bound[0],
@@ -48,7 +48,7 @@ def random_X_y_coef(
             raw_prediction = X @ coef[:, :-1].T + coef[:, -1]
         else:
             raw_prediction = X @ coef.T
-        proba = linear_model_loss._loss.link.inverse(raw_prediction)
+        proba = linear_model_loss.base_loss.link.inverse(raw_prediction)
 
         # y = rng.choice(np.arange(n_classes), p=proba) does not work.
         # See https://stackoverflow.com/a/34190035/16761084
@@ -70,7 +70,7 @@ def random_X_y_coef(
             raw_prediction = X @ coef[:-1] + coef[-1]
         else:
             raw_prediction = X @ coef
-        y = linear_model_loss._loss.link.inverse(
+        y = linear_model_loss.base_loss.link.inverse(
             raw_prediction + rng.uniform(low=-1, high=1, size=n_samples)
         )
 
@@ -304,5 +304,5 @@ def test_multinomial_coef_shape(fit_intercept):
     assert_allclose(g_r, g1_r)
     assert_allclose(g_r, g2_r)
 
-    assert_allclose(g, g_r.reshape(loss._loss.n_classes, -1, order="F"))
-    assert_allclose(h, h_r.reshape(loss._loss.n_classes, -1, order="F"))
+    assert_allclose(g, g_r.reshape(loss.base_loss.n_classes, -1, order="F"))
+    assert_allclose(h, h_r.reshape(loss.base_loss.n_classes, -1, order="F"))
