@@ -190,7 +190,7 @@ jobs:
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
         COVERAGE: 'false'
-      # Linux + Python 3.7 build with OpenBLAS and without SITE_JOBLIB
+      # Linux + Python 3.7 build with OpenBLAS
       py37_conda_defaults_openblas:
         DISTRIB: 'conda'
         CONDA_CHANNEL: 'defaults'  # Anaconda main channel

@@ -25,7 +25,6 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..utils.deprecation import deprecated
 
 
 def _graph_connected_component(graph, node_id):
@@ -533,16 +532,6 @@ class SpectralEmbedding(BaseEstimator):
             "pairwise": self.affinity
             in ["precomputed", "precomputed_nearest_neighbors"]
         }
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
