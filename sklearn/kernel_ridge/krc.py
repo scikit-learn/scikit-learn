@@ -125,6 +125,24 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
     """
 
     class_weight = None
+    _estimator_type = "classifier"
+
+    def __init__(
+        self,
+        alpha=1.0,
+        *,
+        kernel="rbf",
+        gamma=0.1,
+        degree=3,
+        coef0=1,
+        kernel_params=None,
+    ):
+        self.alpha = alpha
+        self.kernel = kernel
+        self.gamma = gamma
+        self.degree = degree
+        self.coef0 = coef0
+        self.kernel_params = kernel_params
 
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.
