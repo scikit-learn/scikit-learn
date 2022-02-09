@@ -11,10 +11,10 @@ and passed along to estimators, scorers, and CV splitters through
 meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass
 metadata to a method such as ``fit`` or ``score``, the object accepting the
 metadata, must *request* it. For estimators and splitters this is done via
-``*_requests`` methods, e.g. ``fit_requests(...)``, and for scorers this is
-done via ``score_requests`` method of a scorer. For grouped splitters such as
-``GroupKFold`` a ``groups`` parameter is requested by default. This is best
-demonstrated by the following examples.
+``set_*_request`` methods, e.g. ``set_fit_request(...)``, and scorers this
+is done via ``set_score_request`` method of a scorer. For grouped splitters
+such as ``GroupKFold`` a ``groups`` parameter is requested by default. This is
+best demonstrated by the following examples.
 
 Usage Examples
 **************
@@ -45,12 +45,12 @@ explicitly request weights in ``make_scorer`` and for ``LogisticRegressionCV``.
 Both of these *consumers* understand the meaning of the key
 ``"sample_weight"``::
 
-  >>> weighted_acc = make_scorer(accuracy_score).score_requests(
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
   ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ... ).fit_requests(sample_weight=True)
+  ... ).set_fit_request(sample_weight=True)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -75,12 +75,12 @@ requested. To perform a unweighted fit, we need to configure
 :class:`~linear_model.LogisticRegressionCV` to not request sample weights, so
 that :func:`~model_selection.cross_validate` does not pass the weights along::
 
-  >>> weighted_acc = make_scorer(accuracy_score).score_requests(
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
   ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ... ).fit_requests(sample_weight=False)
+  ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -90,7 +90,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
   ...     scoring=weighted_acc,
   ... )
 
-If :class:`~linear_model.LogisticRegressionCV` did not call ``fit_requests``,
+If :class:`~linear_model.LogisticRegressionCV` did not call ``set_fit_request``,
 :func:`~model_selection.cross_validate` will raise an error because weights is
 passed in but :class:`~linear_model.LogisticRegressionCV` was not configured to
 recognize the weights.
@@ -101,12 +101,12 @@ Unweighted feature selection
 Unlike ``LogisticRegressionCV``, ``SelectKBest`` doesn't accept weights and
 therefore `"sample_weight"` is not routed to it::
 
-  >>> weighted_acc = make_scorer(accuracy_score).score_requests(
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
   ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ... ).fit_requests(sample_weight=True)
+  ... ).set_fit_request(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
   >>> cv_results = cross_validate(
@@ -126,12 +126,12 @@ Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting a key
 consumers. In this example, we pass ``scoring_weight`` to the scorer, and
 ``fitting_weight`` to ``LogisticRegressionCV``::
 
-  >>> weighted_acc = make_scorer(accuracy_score).score_requests(
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ... ).fit_requests(sample_weight="fitting_weight")
+  ... ).set_fit_request(sample_weight="fitting_weight")
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -155,11 +155,11 @@ Meta-estimators which only forward the metadata to other objects (the child
 estimator, scorers, or splitters) and don't use the metadata themselves are not
 consumers. (Meta)Estimators which route metadata to other objects are routers.
 An (meta)estimator can be a consumer and a router at the same time.
-(Meta)Estimators and splitters expose a ``*_requests`` method for each method
-which accepts at least one metadata. For instance, if an estimator supports
-``sample_weight`` in ``fit`` and ``score``, it exposes
-``estimator.fit_requests(sample_weight=value)`` and
-``estimator.score_requests(sample_weight=value)``. Here ``value`` can be:
+(Meta)Estimators and splitters expose a ``set_*_request`` method for each
+method which accepts at least one metadata. For instance, if an estimator
+supports ``sample_weight`` in ``fit`` and ``score``, it exposes
+``estimator.set_fit_request(sample_weight=value)`` and
+``estimator.set_score_request(sample_weight=value)``. Here ``value`` can be:
 
 - ``RequestType.REQUESTED`` or ``True``: method requests a ``sample_weight``.
   This means if the metadata is provided, it will be used, otherwise no error
@@ -178,7 +178,7 @@ which accepts at least one metadata. For instance, if an estimator supports
   ``my_weights`` is done at the router level, and not by the object, e.g.
   estimator, itself.
 
-For the scorers, this is done the same way, using ``.score_requests`` method.
+For the scorers, this is done the same way, using ``.set_score_request`` method.
 
 If a metadata, e.g. ``sample_weight``, is passed by the user, the metadata
 request for all objects which potentially can accept ``sample_weight`` should
@@ -187,7 +187,7 @@ example, the following code would raise, since it hasn't been explicitly set
 whether ``sample_weight`` should be passed to the estimator's scorer or not::
 
     >>> param_grid = {"C": [0.1, 1]}
-    >>> lr = LogisticRegression().fit_requests(sample_weight=True)
+    >>> lr = LogisticRegression().set_fit_request(sample_weight=True)
     >>> try:
     ...     GridSearchCV(
     ...         estimator=lr, param_grid=param_grid
@@ -199,6 +199,6 @@ whether ``sample_weight`` should be passed to the estimator's scorer or not::
 
 The issue can be fixed by explicitly setting the request value::
 
-    >>> lr = LogisticRegression().fit_requests(
+    >>> lr = LogisticRegression().set_fit_request(
     ...     sample_weight=True
-    ... ).score_requests(sample_weight=False)
+    ... ).set_score_request(sample_weight=False)

@@ -91,8 +91,8 @@ class ExampleClassifier(ClassifierMixin, BaseEstimator):
 # %%
 # The above estimator now has all it needs to consume metadata. This is done by
 # some magic done in :class:`~base.BaseEstimator`. There are now three methods
-# exposed by the above class: ``fit_requests``, ``predict_requests``, and
-# ``get_metadata_routing``. There is also a ``score_requests`` for
+# exposed by the above class: ``set_fit_request``, ``set_predict_request``, and
+# ``get_metadata_routing``. There is also a ``set_score_request`` for
 # ``sample_weight`` which is present since :class:`~base.ClassifierMixin`
 # implements a ``score``` method accepting ``sample_weight``. The same applies
 # to regressors which inherit from :class:`~base.RegressorMixin`.
@@ -111,9 +111,9 @@ print_routing(ExampleClassifier())
 
 est = (
     ExampleClassifier()
-    .fit_requests(sample_weight=False)
-    .predict_requests(groups=True)
-    .score_requests(sample_weight=False)
+    .set_fit_request(sample_weight=False)
+    .set_predict_request(groups=True)
+    .set_score_request(sample_weight=False)
 )
 print_routing(est)
 
@@ -124,9 +124,9 @@ print_routing(est)
 
 est = (
     ExampleClassifier()
-    .fit_requests(sample_weight=RequestType.UNREQUESTED)
-    .predict_requests(groups=RequestType.REQUESTED)
-    .score_requests(sample_weight=RequestType.UNREQUESTED)
+    .set_fit_request(sample_weight=RequestType.UNREQUESTED)
+    .set_predict_request(groups=RequestType.REQUESTED)
+    .set_score_request(sample_weight=RequestType.UNREQUESTED)
 )
 print_routing(est)
 
@@ -207,7 +207,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 # ``validate_metadata`` makes sure all given metadata are requested. This is to
 # avoid silent bugs, and this is how it will work:
 
-est = MetaClassifier(estimator=ExampleClassifier().fit_requests(sample_weight=True))
+est = MetaClassifier(estimator=ExampleClassifier().set_fit_request(sample_weight=True))
 est.fit(X, y, sample_weight=my_weights)
 
 # %%
@@ -235,8 +235,8 @@ except ValueError as e:
 # Also, if we explicitly say it's not requested, but pass it:
 est = MetaClassifier(
     estimator=ExampleClassifier()
-    .fit_requests(sample_weight=True)
-    .predict_requests(groups=False)
+    .set_fit_request(sample_weight=True)
+    .set_predict_request(groups=False)
 )
 try:
     est.fit(X, y, sample_weight=my_weights).predict(X[:3, :], groups=my_groups)
@@ -255,7 +255,7 @@ except ValueError as e:
 # ``sample_weight``, and passes it as ``sample_weight`` to the underlying
 # estimator:
 est = MetaClassifier(
-    estimator=ExampleClassifier().fit_requests(sample_weight="aliased_sample_weight")
+    estimator=ExampleClassifier().set_fit_request(sample_weight="aliased_sample_weight")
 )
 est.fit(X, y, aliased_sample_weight=my_weights)
 
@@ -360,7 +360,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 # The key parts where the above estimator differs from our previous
 # meta-estimator is accepting ``sample_weight`` explicitly in ``fit`` and
 # including it in ``fit_params``. Making ``sample_weight`` an explicit argument
-# makes sure ``fit_requests(sample_weight=...)`` is present for this class.
+# makes sure ``set_fit_request(sample_weight=...)`` is present for this class.
 #
 # In ``get_metadata_routing``, we add ``self`` to the routing using
 # ``add_self``. Now let's look at some examples:
@@ -374,13 +374,13 @@ print_routing(est)
 # %%
 # ``sample_weight`` requested by child estimator
 est = RouterConsumerClassifier(
-    estimator=ExampleClassifier().fit_requests(sample_weight=True)
+    estimator=ExampleClassifier().set_fit_request(sample_weight=True)
 )
 print_routing(est)
 
 # %%
 # ``sample_weight`` requested by meta-estimator
-est = RouterConsumerClassifier(estimator=ExampleClassifier()).fit_requests(
+est = RouterConsumerClassifier(estimator=ExampleClassifier()).set_fit_request(
     sample_weight=True
 )
 print_routing(est)
@@ -391,8 +391,8 @@ print_routing(est)
 # We can also alias the metadata to pass different values to them:
 
 est = RouterConsumerClassifier(
-    estimator=ExampleClassifier().fit_requests(sample_weight="clf_sample_weight"),
-).fit_requests(sample_weight="meta_clf_sample_weight")
+    estimator=ExampleClassifier().set_fit_request(sample_weight="clf_sample_weight"),
+).set_fit_request(sample_weight="meta_clf_sample_weight")
 print_routing(est)
 
 # %%
@@ -405,8 +405,8 @@ est.fit(X, y, sample_weight=my_weights, clf_sample_weight=my_other_weights)
 # meta-estimator to use the metadata, and we only want the metadata to be used
 # by the sub-estimator.
 est = RouterConsumerClassifier(
-    estimator=ExampleClassifier().fit_requests(sample_weight="aliased_sample_weight")
-).fit_requests(sample_weight=True)
+    estimator=ExampleClassifier().set_fit_request(sample_weight="aliased_sample_weight")
+).set_fit_request(sample_weight=True)
 print_routing(est)
 
 
@@ -495,16 +495,16 @@ class ExampleTransformer(TransformerMixin, BaseEstimator):
 est = SimplePipeline(
     transformer=ExampleTransformer()
     # we transformer's fit to receive sample_weight
-    .fit_requests(sample_weight=True)
+    .set_fit_request(sample_weight=True)
     # we want transformer's transform to receive groups
-    .transform_requests(groups=True),
+    .set_transform_request(groups=True),
     classifier=RouterConsumerClassifier(
         estimator=ExampleClassifier()
         # we want this sub-estimator to receive sample_weight in fit
-        .fit_requests(sample_weight=True)
+        .set_fit_request(sample_weight=True)
         # but not groups in predict
-        .predict_requests(groups=False),
-    ).fit_requests(
+        .set_predict_request(groups=False),
+    ).set_fit_request(
         # and we want the meta-estimator to receive sample_weight as well
         sample_weight=True
     ),
@@ -541,7 +541,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 # %%
 # As explained above, this is now a valid usage:
 
-reg = MetaRegressor(estimator=LinearRegression().fit_requests(sample_weight=True))
+reg = MetaRegressor(estimator=LinearRegression().set_fit_request(sample_weight=True))
 reg.fit(X, y, sample_weight=my_weights)
 
 
@@ -577,7 +577,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
 with warnings.catch_warnings(record=True) as record:
     WeightedMetaRegressor(
-        estimator=LinearRegression().fit_requests(sample_weight=False)
+        estimator=LinearRegression().set_fit_request(sample_weight=False)
     ).fit(X, y, sample_weight=my_weights)
 for w in record:
     print(w.message)

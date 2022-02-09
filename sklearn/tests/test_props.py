@@ -352,7 +352,7 @@ def test_simple_metadata_routing():
     # but if a metadata is passed which is not requested by any object/estimator,
     # there will be still an error
     clf = SimpleMetaClassifier(
-        estimator=ClassifierFitMetadata().fit_requests(sample_weight=False)
+        estimator=ClassifierFitMetadata().set_fit_request(sample_weight=False)
     )
     # this doesn't raise since SimpleMetaClassifier itself is a consumer,
     # and passing metadata to the consumer directly is fine regardless of its
@@ -362,14 +362,14 @@ def test_simple_metadata_routing():
 
     # Requesting a metadata will make the meta-estimator forward it correctly
     clf = SimpleMetaClassifier(
-        estimator=ClassifierFitMetadata().fit_requests(sample_weight=True)
+        estimator=ClassifierFitMetadata().set_fit_request(sample_weight=True)
     )
     clf.fit(X, y, sample_weight=my_weights)
     check_recorded_metadata(clf.estimator_, "fit", sample_weight=my_weights, brand=None)
 
     # And requesting it with an alias
     clf = SimpleMetaClassifier(
-        estimator=ClassifierFitMetadata().fit_requests(
+        estimator=ClassifierFitMetadata().set_fit_request(
             sample_weight="alternative_weight"
         )
     )
@@ -383,14 +383,14 @@ def test_nested_routing():
         [
             MetaTransformer(
                 transformer=TransformerMetadata()
-                .fit_requests(brand=True, sample_weight=False)
-                .transform_requests(sample_weight=True)
+                .set_fit_request(brand=True, sample_weight=False)
+                .set_transform_request(sample_weight=True)
             ),
             WeightedMetaRegressor(
-                estimator=RegressorMetadata().fit_requests(
+                estimator=RegressorMetadata().set_fit_request(
                     sample_weight="inner_weights"
                 )
-            ).fit_requests(sample_weight="outer_weights"),
+            ).set_fit_request(sample_weight="outer_weights"),
         ]
     )
     w1, w2, w3 = [1], [2], [3]
@@ -418,12 +418,12 @@ def test_nested_routing_conflict():
         [
             MetaTransformer(
                 transformer=TransformerMetadata()
-                .fit_requests(brand=True, sample_weight=False)
-                .transform_requests(sample_weight=True)
+                .set_fit_request(brand=True, sample_weight=False)
+                .set_transform_request(sample_weight=True)
             ),
             WeightedMetaRegressor(
-                estimator=RegressorMetadata().fit_requests(sample_weight=True)
-            ).fit_requests(sample_weight="outer_weights"),
+                estimator=RegressorMetadata().set_fit_request(sample_weight=True)
+            ).set_fit_request(sample_weight="outer_weights"),
         ]
     )
     w1, w2 = [1], [2]
@@ -444,7 +444,7 @@ def test_nested_routing_conflict():
 def test_invalid_metadata():
     # check that passing wrong metadata raises an error
     trs = MetaTransformer(
-        transformer=TransformerMetadata().transform_requests(sample_weight=True)
+        transformer=TransformerMetadata().set_transform_request(sample_weight=True)
     )
     with pytest.raises(
         ValueError,
@@ -459,7 +459,7 @@ def test_invalid_metadata():
 
     # passing a metadata which is not requested by any estimator should also raise
     trs = MetaTransformer(
-        transformer=TransformerMetadata().transform_requests(sample_weight=False)
+        transformer=TransformerMetadata().set_transform_request(sample_weight=False)
     )
     with pytest.raises(
         ValueError,
@@ -518,7 +518,7 @@ def test_get_metadata_routing():
     }
     assert_request_equal(TestDefaults().get_metadata_routing(), expected)
 
-    est = TestDefaults().score_requests(my_param="other_param")
+    est = TestDefaults().set_score_request(my_param="other_param")
     expected = {
         "score": {
             "my_param": "other_param",
@@ -533,7 +533,7 @@ def test_get_metadata_routing():
     }
     assert_request_equal(est.get_metadata_routing(), expected)
 
-    est = TestDefaults().fit_requests(sample_weight=True)
+    est = TestDefaults().set_fit_request(sample_weight=True)
     expected = {
         "score": {
             "my_param": RequestType.REQUESTED,
@@ -642,7 +642,7 @@ def test_metaestimator_warnings():
         UserWarning, match="Support for .* has recently been added to this class"
     ):
         WeightedMetaRegressorWarn(
-            estimator=LinearRegression().fit_requests(sample_weight=False)
+            estimator=LinearRegression().set_fit_request(sample_weight=False)
         ).fit(X, y, sample_weight=my_weights)
 
 
@@ -726,4 +726,4 @@ def test_validations(obj, method, inputs, err_cls, err_msg):
 
 def test_requestmethod():
     with pytest.raises(TypeError, match="Unexpected args"):
-        ClassifierFitMetadata().fit_requests(invalid=True)
+        ClassifierFitMetadata().set_fit_request(invalid=True)

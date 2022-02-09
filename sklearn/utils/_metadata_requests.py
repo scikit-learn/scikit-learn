@@ -66,7 +66,7 @@ class RequestType(Enum, metaclass=MemberCheckEnumMeta):
     WARN = "$WARN$"
 
 
-# this is the default used in `{method}_requests` methods to indicate no change
+# this is the default used in `set_{method}_request` methods to indicate no change
 # requested by the user.
 UNCHANGED = "$UNCHANGED$"
 
@@ -84,7 +84,7 @@ METHODS = [
 
 
 # These strings are used to dynamically generate the docstrings for
-# {method}_requests methods.
+# set_{method}_request methods.
 REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
 
         Please check :ref:`User Guide <metadata_routing>` on how the routing
@@ -866,7 +866,7 @@ class RequestMethod:
     ----------
     name : str
         The name of the method for which the request function should be
-        created, e.g. ``"fit"`` would create a ``fit_requests`` function.
+        created, e.g. ``"fit"`` would create a ``set_fit_request`` function.
 
     keys : list of str
         A list of strings which are accepted parameters by the created
@@ -910,7 +910,7 @@ class RequestMethod:
 
         # Now we set the relevant attributes of the function so that it seems
         # like a normal method to the end user, with known expected arguments.
-        func.__name__ = f"{self.name}_requests"
+        func.__name__ = f"set_{self.name}_request"
         params = [
             inspect.Parameter(
                 name="self",
@@ -948,9 +948,9 @@ class _MetadataRequester:
     """
 
     def __init_subclass__(cls, **kwargs):
-        """Set the ``{method}_requests`` methods.
+        """Set the ``set_{method}_request`` methods.
 
-        This uses PEP-487 [1]_ to set the ``{method}_requests`` methods. It
+        This uses PEP-487 [1]_ to set the ``set_{method}_request`` methods. It
         looks for the information available in the set default values which are
         set using ``__metadata_request__*`` class attributes.
 
@@ -969,12 +969,12 @@ class _MetadataRequester:
 
         for method in METHODS:
             mmr = getattr(requests, method)
-            # set ``{method}_requests``` methods
+            # set ``set_{method}_request``` methods
             if not len(mmr.requests):
                 continue
             setattr(
                 cls,
-                f"{method}_requests",
+                f"set_{method}_request",
                 RequestMethod(method, sorted(mmr.requests.keys())),
             )
         super().__init_subclass__(**kwargs)

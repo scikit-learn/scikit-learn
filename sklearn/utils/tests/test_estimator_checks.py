@@ -679,7 +679,7 @@ def test_check_no_attributes_set_in_init():
         "estimator_name", ConformantEstimatorClassAttribute()
     )
     check_no_attributes_set_in_init(
-        "estimator_name", ConformantEstimatorClassAttribute().fit_requests(foo=True)
+        "estimator_name", ConformantEstimatorClassAttribute().set_fit_request(foo=True)
     )
 
 
