@@ -162,7 +162,6 @@ def mean_absolute_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-
     Returns
     -------
     loss : float or ndarray of floats

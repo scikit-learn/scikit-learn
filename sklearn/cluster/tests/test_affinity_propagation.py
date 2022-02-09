@@ -158,7 +158,7 @@ def test_affinity_propagation_equal_mutual_similarities():
         cluster_center_indices, labels = affinity_propagation(
             S, preference=[-20, -10], random_state=37
         )
-    assert not len(record)
+    assert not [w.message for w in record]
 
     # expect one cluster, with highest-preference sample as exemplar
     assert_array_equal([1], cluster_center_indices)
@@ -184,8 +184,15 @@ def test_affinity_propagation_predict_non_convergence():
 
 def test_affinity_propagation_non_convergence_regressiontest():
     X = np.array([[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]])
-    af = AffinityPropagation(affinity="euclidean", max_iter=2, random_state=34).fit(X)
-    assert_array_equal(np.array([-1, -1, -1]), af.labels_)
+    af = AffinityPropagation(affinity="euclidean", max_iter=2, random_state=34)
+    msg = (
+        "Affinity propagation did not converge, this model may return degenerate"
+        " cluster centers and labels."
+    )
+    with pytest.warns(ConvergenceWarning, match=msg):
+        af.fit(X)
+
+    assert_array_equal(np.array([0, 0, 0]), af.labels_)
 
 
 def test_equal_similarities_and_preferences():
@@ -240,7 +247,7 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
     ap.cluster_centers_ = centers
     with pytest.warns(None) as record:
         assert_array_equal(ap.predict(X), np.zeros(X.shape[0], dtype=int))
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
 
 def test_affinity_propagation_float32():
@@ -273,11 +280,3 @@ def test_sparse_input_for_fit_predict():
     X = csr_matrix(rng.randint(0, 2, size=(5, 5)))
     labels = af.fit_predict(X)
     assert_array_equal(labels, (0, 1, 1, 2, 3))
-
-
-# TODO: Remove in 1.1
-def test_affinity_propagation_pairwise_is_deprecated():
-    afp = AffinityPropagation(affinity="precomputed")
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        afp._pairwise

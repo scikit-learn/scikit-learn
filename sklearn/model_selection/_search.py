@@ -42,7 +42,6 @@ from ..utils.metaestimators import available_if
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-from ..utils import deprecated
 
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
@@ -410,17 +409,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 "check_supervised_y_2d": "DataConversionWarning not caught"
             },
         }
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # allows cross-validation to see 'precomputed' metrics
-        return getattr(self.estimator, "_pairwise", False)
 
     def score(self, X, y=None):
         """Return the score on the given data, if the estimator has been refit.
@@ -1307,6 +1295,15 @@ class GridSearchCV(BaseSearchCV):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    ParameterGrid : Generates all the combinations of a hyperparameter grid.
+    train_test_split : Utility function to split the data into a development
+        set usable for fitting a GridSearchCV instance and an evaluation set
+        for its final evaluation.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1319,15 +1316,6 @@ class GridSearchCV(BaseSearchCV):
     this case is to set `pre_dispatch`. Then, the memory is copied only
     `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
     n_jobs`.
-
-    See Also
-    ---------
-    ParameterGrid : Generates all the combinations of a hyperparameter grid.
-    train_test_split : Utility function to split the data into a development
-        set usable for fitting a GridSearchCV instance and an evaluation set
-        for its final evaluation.
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
 
     Examples
     --------

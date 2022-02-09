@@ -1016,6 +1016,11 @@ In the binary case::
   >>> jaccard_score(y_true[0], y_pred[0])
   0.6666...
 
+In the 2D comparison case (e.g. image similarity):
+
+  >>> jaccard_score(y_true, y_pred, average="micro")
+  0.6
+
 In the multilabel case with binary label indicators::
 
   >>> jaccard_score(y_true, y_pred, average='samples')
@@ -1609,12 +1614,12 @@ better suited.
 
   .. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
      `The DET Curve in Assessment of Detection Task Performance
-     <http://www.dtic.mil/docs/citations/ADA530509>`_,
+     <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_,
      NIST 1997.
 
   .. [Navratil2007] J. Navractil and D. Klusacek,
      "`On Linear DETs,
-     <http://www.research.ibm.com/CBG/papers/icassp07_navratil.pdf>`_"
+     <https://ieeexplore.ieee.org/document/4218079>`_"
      2007 IEEE International Conference on Acoustics,
      Speech and Signal Processing - ICASSP '07, Honolulu,
      HI, 2007, pp. IV-229-IV-232.

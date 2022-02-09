@@ -18,10 +18,11 @@ from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
 from ..utils import check_array
+from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
+from ..utils.fixes import _astype_copy_false
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
@@ -903,6 +904,13 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
+        check_scalar(
+            self.alpha,
+            "alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+        )
+
         if self.alpha == 0:
             warnings.warn(
                 "With alpha=0, this algorithm does not converge "
@@ -917,14 +925,20 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 % self.precompute
             )
 
-        if (
-            not isinstance(self.l1_ratio, numbers.Number)
-            or self.l1_ratio < 0
-            or self.l1_ratio > 1
-        ):
-            raise ValueError(
-                f"l1_ratio must be between 0 and 1; got l1_ratio={self.l1_ratio}"
+        check_scalar(
+            self.l1_ratio,
+            "l1_ratio",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+        )
+
+        if self.max_iter is not None:
+            check_scalar(
+                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
             )
+
+        check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # Remember if X is copied
         X_copied = False
@@ -1074,6 +1088,14 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         # workaround since _set_intercept will cast self.coef_ into X.dtype
         self.coef_ = np.asarray(self.coef_, dtype=X.dtype)
+
+        # check for finiteness of coefficients
+        if not all(np.isfinite(w).all() for w in [self.coef_, self.intercept_]):
+            raise ValueError(
+                "Coordinate descent iterations resulted in non-finite parameter"
+                " values. The input data may contain large values and need to"
+                " be preprocessed."
+            )
 
         # return self for chaining fit and predict calls
         return self
@@ -1670,7 +1692,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         mse_paths = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(prefer="threads"),
+            prefer="threads",
         )(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         # The mean is computed over folds.
@@ -1885,12 +1907,15 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
+
+     For an example, see
+     :ref:`examples/linear_model/plot_lasso_model_selection.py
+     <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     Examples
     --------
@@ -2108,14 +2133,13 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
+    cross-validation, the model is fit again using the entire training set.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
 
-    The parameter l1_ratio corresponds to alpha in the glmnet R package
+    The parameter `l1_ratio` corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
 
@@ -2131,6 +2155,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     for::
 
         alpha = a + b and l1_ratio = a / (a + b).
+
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_model_selection.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     Examples
     --------
@@ -2779,8 +2807,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
 
     Examples
     --------
@@ -3011,8 +3042,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
 
     Examples
     --------

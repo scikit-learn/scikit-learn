@@ -33,12 +33,12 @@ RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "check
 
 
 def get_data_home(data_home=None) -> str:
-    """Return the path of the scikit-learn data dir.
+    """Return the path of the scikit-learn data directory.
 
     This folder is used by some large dataset loaders to avoid downloading the
     data several times.
 
-    By default the data dir is set to a folder named 'scikit_learn_data' in the
+    By default the data directory is set to a folder named 'scikit_learn_data' in the
     user home folder.
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
@@ -52,6 +52,11 @@ def get_data_home(data_home=None) -> str:
     data_home : str, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
+
+    Returns
+    -------
+    data_home: str
+        The path to scikit-learn data directory.
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
@@ -655,6 +660,10 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     Features            real, positive
     =================   ==============
 
+    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
+    downloaded from:
+    https://goo.gl/U2Uwz2
+
     Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
     Parameters
@@ -682,32 +691,33 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        target: {ndarray, Series} of shape (569,)
+        target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names: list
+        feature_names : list
             The names of the dataset columns.
-        target_names: list
+        target_names : list
             The names of target classes.
-        frame: DataFrame of shape (569, 31)
+        frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
             .. versionadded:: 0.23
-        DESCR: str
+        DESCR : str
             The full description of the dataset.
-        filename: str
+        filename : str
             The path to the location of the data.
 
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (569, 30) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (569,) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
-
-    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
-    downloaded from:
-    https://goo.gl/U2Uwz2
 
     Examples
     --------
@@ -798,6 +808,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     Features             integers 0-16
     =================   ==============
 
+    This is a copy of the test set of the UCI ML hand-written digits datasets
+    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+
     Read more in the :ref:`User Guide <digits_dataset>`.
 
     Parameters
@@ -849,11 +862,13 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (1797, 64) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (1797) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
-
-    This is a copy of the test set of the UCI ML hand-written digits datasets
-    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 
     Examples
     --------
@@ -984,6 +999,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         Returns a tuple of two ndarray of shape (n_samples, n_features)
         A 2D array with each row representing one sample and each column
         representing the features and/or target of a given sample.
+
         .. versionadded:: 0.18
     """
     data_filename = "diabetes_data_raw.csv.gz"
@@ -1144,7 +1160,6 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         import pandas as pd
         import numpy as np
 
-
         data_url = "http://lib.stat.cmu.edu/datasets/boston"
         raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
         data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
@@ -1162,11 +1177,10 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         from sklearn.datasets import fetch_openml
         housing = fetch_openml(name="house_prices", as_frame=True)
 
-    for the Ames housing dataset.
-    """
+    for the Ames housing dataset."""
 )
 def load_boston(*, return_X_y=False):
-    r"""Load and return the boston house-prices dataset (regression).
+    r"""Load and return the Boston house-prices dataset (regression).
 
     ==============   ==============
     Samples total               506
@@ -1176,11 +1190,6 @@ def load_boston(*, return_X_y=False):
     ==============   ==============
 
     Read more in the :ref:`User Guide <boston_dataset>`.
-
-    .. deprecated:: 1.0
-       This function is deprecated in 1.0 and will be removed in 1.2. See the
-       warning message below for further details regarding the alternative
-       datasets.
 
     .. warning::
         The Boston housing prices dataset has an ethical problem: as
@@ -1201,9 +1210,8 @@ def load_boston(*, return_X_y=False):
             import pandas as pd  # doctest: +SKIP
             import numpy as np
 
-
             data_url = "http://lib.stat.cmu.edu/datasets/boston"
-            raw_df = pd.read_csv(data_url, sep="s+", skiprows=22, header=None)
+            raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
             data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
             target = raw_df.values[1::2, 2]
 
@@ -1249,6 +1257,9 @@ def load_boston(*, return_X_y=False):
             The names of features
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays. The first contains a 2D array of shape (506, 13)
+        with each row representing one sample and each column representing the features.
+        The second array of shape (506,) contains the target samples.
 
         .. versionadded:: 0.18
 
