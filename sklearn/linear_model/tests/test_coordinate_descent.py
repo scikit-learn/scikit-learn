@@ -1403,7 +1403,7 @@ def test_convergence_warnings():
     with pytest.warns(None) as record:
         MultiTaskElasticNet().fit(X, y)
 
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 def test_sparse_input_convergence_warning():
@@ -1416,7 +1416,7 @@ def test_sparse_input_convergence_warning():
     with pytest.warns(None) as record:
         Lasso().fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize(

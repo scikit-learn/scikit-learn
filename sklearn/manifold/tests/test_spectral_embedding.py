@@ -480,12 +480,3 @@ def test_error_pyamg_not_available():
     err_msg = "The eigen_solver was set to 'amg', but pyamg is not available."
     with pytest.raises(ValueError, match=err_msg):
         se_precomp.fit_transform(S)
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
-def test_spectral_embedding_pairwise_deprecated(affinity):
-    se = SpectralEmbedding(affinity=affinity)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        se._pairwise
