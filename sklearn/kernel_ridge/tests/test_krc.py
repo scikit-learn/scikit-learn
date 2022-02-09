@@ -87,11 +87,3 @@ def test_kernel_ridge_sample_weights():
     )
     assert_array_almost_equal(pred, pred2)
     assert_array_almost_equal(pred, pred3)
-
-
-# TODO: Remove in 1.1
-def test_kernel_ridge_pairwise_is_deprecated():
-    k_ridge = KernelRidgeClassifier(kernel="precomputed")
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        k_ridge._pairwise
