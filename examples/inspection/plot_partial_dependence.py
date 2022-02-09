@@ -228,8 +228,6 @@ display = PartialDependenceDisplay.from_estimator(
     X_train,
     features=["AveOccup", "HouseAge", ("AveOccup", "HouseAge")],
     kind=["both", "both", "average"],
-    n_jobs=2,
-    grid_resolution=10,
     ax=ax,
     **common_params,
 )
