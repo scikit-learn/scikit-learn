@@ -47,7 +47,7 @@ MCVE from it.
 
     import pandas as pd
     df = pd.read_csv('my_data.csv')
-    X = df["feature_name"] # my features do have names
+    X = df[["feature_name"]] # my features do have names
     y = df["target"]
 
     # We set random_state=42 for the train_test_split
@@ -79,7 +79,7 @@ description in the **Describe the bug** section of the Issue template.
 
     import pandas as pd
     df = pd.read_csv('my_data.csv')
-    X = df["feature_name"]
+    X = df[["feature_name"]]
     y = df["target"]
 
     from sklearn.model_selection import train_test_split
@@ -109,7 +109,7 @@ do with the `train_test_split`, nor the `random_state`.
 
     import pandas as pd
     df = pd.read_csv('my_data.csv')
-    X = df["feature_name"]
+    X = df[["feature_name"]]
     y = df["target"]
 
     from sklearn.ensemble import GradientBoostingRegressor
@@ -394,7 +394,7 @@ the equally working MCVE here below
 
     import pandas as pd
     df = pd.DataFrame({"feature_name": [-12.32, 1.43, 30.00], "target": [72, 55, 32]})
-    X = df["feature_name"]
+    X = df[["feature_name"]]
     y = df["target"]
     from sklearn.ensemble import GradientBoostingRegressor
     gbdt = GradientBoostingRegressor()
