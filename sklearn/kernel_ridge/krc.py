@@ -66,8 +66,13 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
 
     Attributes
     ----------
-    dual_coef_ : ndarray of shape (n_samples,) or (n_samples, n_targets)
-        Representation of weight vector(s) in kernel space
+    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function.
+
+        ``coef_`` is of shape (1, n_features) when the given problem is binary.
+
+    classes_ : ndarray of shape (n_classes,)
+        The classes labels.
 
     X_fit_ : {ndarray, sparse matrix} of shape (n_samples, n_features)
         Training data, which is also required for prediction. If
@@ -171,12 +176,11 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
             ravel = True
 
         copy = self.kernel == "precomputed"
-        self.dual_coef_ = _solve_cholesky_kernel(K, Y, alpha, sample_weight, copy)
+        self.coef_ = _solve_cholesky_kernel(K, Y, alpha, sample_weight, copy)
         if ravel:
-            self.dual_coef_ = self.dual_coef_.ravel()
+            self.coef_ = self.coef_.ravel()
 
         self.X_fit_ = X.copy()
-        self.coef_ = self.dual_coef_
         return self
 
     def decision_function(self, X):
