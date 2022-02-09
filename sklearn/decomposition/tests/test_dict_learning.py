@@ -740,6 +740,10 @@ def test_dictionary_learning_dtype_match(
     assert dict_learner.components_.dtype == expected_type
     assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
 
+    if dictionary_learning_transformer is MiniBatchDictionaryLearning:
+        assert dict_learner.inner_stats_[0].dtype == expected_type
+        assert dict_learner.inner_stats_[1].dtype == expected_type
+
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
 @pytest.mark.parametrize(
@@ -812,17 +816,19 @@ def test_dict_learning_numerical_consistency(method):
         (np.int64, np.float64),
     ),
 )
-def test_minibatch_dictionary_learning_dtype_match(data_type, expected_type, method):
+def test_dict_learning_online_dtype_match(data_type, expected_type, method):
     # Verify output matrix dtype
     rng = np.random.RandomState(0)
     n_components = 8
-    dl = MiniBatchDictionaryLearning(n_components=8, alpha=1, random_state=0, method=method)
-    code = dl.fit_transform(X.astype(data_type))
-
+    code, dictionary = dict_learning_online(
+        X.astype(data_type),
+        n_components=n_components,
+        alpha=1,
+        random_state=rng,
+        method=method,
+    )
     assert code.dtype == expected_type
-    assert dl.components_.dtype == expected_type
-    assert dl.inner_stats_[0].dtype == expected_type
-    assert dl.inner_stats_[1].dtype == expected_type
+    assert dictionary.dtype == expected_type
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
