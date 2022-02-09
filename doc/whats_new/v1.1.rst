@@ -150,7 +150,7 @@ Changelog
 - |Enhancement| Introduce the new parameter `parser="pandas"` in
   :func:`datasets.fetch_openml`. This parameter allows to use the very CPU
   and memory efficient `pandas.read_csv` parser to load dense ARFF
-  formatted dataset files. If is possible to pass `parser="liac-arff"`
+  formatted dataset files. It is possible to pass `parser="liac-arff"`
   to use the old LIAC parser.
   By default, dense datasets are loaded with "pandas" and sparse datasets
   are loaded with "liac-arff".
