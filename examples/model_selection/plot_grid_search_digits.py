@@ -145,7 +145,7 @@ def refit_strategy(cv_results):
         f"{cv_results_.loc[best_index]}"
     )
 
-    return cv_results_.index[best_index]
+    return best_index
 
 
 # %%
