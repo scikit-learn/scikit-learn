@@ -442,11 +442,13 @@ def test_select_kbest_all():
     assert_array_equal(X, X_r)
 
 
-def test_select_kbest_zero():
+@pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
+def test_select_kbest_zero(dtype_in):
     # Test whether k=0 correctly returns no features.
     X, y = make_classification(
         n_samples=20, n_features=10, shuffle=False, random_state=0
     )
+    X = X.astype(dtype_in)
 
     univariate_filter = SelectKBest(f_classif, k=0)
     univariate_filter.fit(X, y)
@@ -456,6 +458,7 @@ def test_select_kbest_zero():
     with pytest.warns(UserWarning, match="No features were selected"):
         X_selected = univariate_filter.transform(X)
     assert X_selected.shape == (20, 0)
+    assert X_selected.dtype == dtype_in
 
 
 def test_select_heuristics_classif():
@@ -968,15 +971,3 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
-
-
-@pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
-def test_empty_support_dtype(dtype_in):
-    rng = np.random.RandomState(0)
-
-    X = rng.rand(40, 10).astype(dtype_in)
-    y = rng.randint(0, 4, size=40)
-    X_trans = GenericUnivariateSelect(f_classif, mode="k_best", param=0).fit_transform(
-        X, y
-    )
-    assert X_trans.dtype == dtype_in

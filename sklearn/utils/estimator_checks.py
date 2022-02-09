@@ -44,7 +44,7 @@ from ..base import (
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
-from ..feature_selection import SelectKBest, f_regression
+from ..feature_selection import SelectKBest, f_classif
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
@@ -714,7 +714,7 @@ def _set_checking_parameters(estimator):
         estimator.set_params(n_components=1)
 
     if name == "GenericUnivariateSelect":
-        estimator.set_params(score_func=f_regression)
+        estimator.set_params(score_func=f_classif)
 
 
 class _NotAnArray:
