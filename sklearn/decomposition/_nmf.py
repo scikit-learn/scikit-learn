@@ -1151,9 +1151,9 @@ def non_negative_factorization(
 class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Non-Negative Matrix Factorization (NMF).
 
-    Find two non-negative matrices (W, H) whose product approximates the non-
-    negative matrix X. This factorization can be used for example for
-    dimensionality reduction, source separation or topic extraction.
+    Find two non-negative matrices, i.e. matrices with all non-negative elements, (W, H)
+    whose product approximates the non-negative matrix X. This factorization can be used
+    for example for dimensionality reduction, source separation or topic extraction.
 
     The objective function is:
 
@@ -1771,9 +1771,9 @@ class MiniBatchNMF(NMF):
 
     .. versionadded:: 1.1
 
-    Find two non-negative matrices (W, H) whose product approximates the non-
-    negative matrix X. This factorization can be used for example for
-    dimensionality reduction, source separation or topic extraction.
+    Find two non-negative matrices, i.e. matrices with all non-negative elements, (W, H)
+    whose product approximates the non-negative matrix X. This factorization can be used
+    for example for dimensionality reduction, source separation or topic extraction.
 
     The objective function is:
 
