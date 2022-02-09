@@ -45,6 +45,12 @@ random sampling procedures.
   `force_finite=False` if you really want to get non-finite values and keep
   the old behavior.
 
+- |Fix| Panda's DataFrames with all non-string columns such as a MultiIndex no
+  longer warns when passed into an Estimator. Estimators will continue to
+  ignore the column names in DataFrames with non-string columns. For
+  `feature_names_in_` to be defined, columns must be all strings. :pr:`22410` by
+  `Thomas Fan`_.
+
 Changelog
 ---------
 
@@ -111,6 +117,14 @@ Changelog
   error messages when passed invalid values for `n_clusters`, `n_init`,
   `gamma`, `n_neighbors`, `eigen_tol` or `degree`.
   :pr:`21881` by :user:`Hugo Vassard <hvassard>`.
+
+- |Enhancement| :class:`cluster.AffinityPropagation` now returns cluster
+  centers and labels if they exist, even if the model has not fully converged.
+  When returning these potentially-degenerate cluster centers and labels, a new
+  warning message is shown. If no cluster centers were constructed,
+  then the cluster centers remain an empty list with labels set to
+  `-1` and the original warning message is shown.
+  :pr:`22217` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -247,6 +261,11 @@ Changelog
   :pr:`20811`, :pr:`20567` and :pr:`21814` by
   :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| Change the parameter `validation_fraction` in
+  :class:`ensemble.BaseGradientBoosting` so that an error is raised if anything
+  other than a float is passed in as an argument.
+  :pr:`21632` by :user:`Genesis Valencia <genvalen>`
+
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
   :class:`ensemble.RandomForestClassifier`. Note that these give the same fit
@@ -357,6 +376,12 @@ Changelog
   now raise consistent error message when passed invalid values for `alpha`,
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+:mod:`sklearn.isotonic`
+.......................
+
+- |Enhancement| Adds :term:`get_feature_names_out` to `IsotonicRegression`.
+  :pr:`22249` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -506,6 +531,9 @@ Changelog
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
 
+- |Enhancement| Adds :term:`get_feature_names_out` to
+  :class:`neural_network.BernoulliRBM`. :pr:`22248` by `Thomas Fan`_.
+
 :mod:`sklearn.pipeline`
 .......................
 
@@ -541,6 +569,12 @@ Changelog
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`preprocessing.Normalizer`,
+  :class:`preprocessing.KernelCenterer`,
+  :class:`preprocessing.OrdinalEncoder`, and
+  :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
 
 :mod:`sklearn.random_projection`
 ................................
