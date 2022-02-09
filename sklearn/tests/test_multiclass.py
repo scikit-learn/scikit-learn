@@ -7,7 +7,6 @@ from re import escape
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
@@ -837,19 +836,6 @@ def test_pairwise_n_features_in():
     assert ovo_precomputed.estimators_[2].n_features_in_ == 100  # class 1 vs class 2
 
 
-@ignore_warnings(category=FutureWarning)
-def test_pairwise_attribute():
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    clf_notprecomputed = svm.SVC()
-
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert not ovr_false._pairwise
-
-        ovr_true = MultiClassClassifier(clf_precomputed)
-        assert ovr_true._pairwise
-
-
 @pytest.mark.parametrize(
     "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
 )
@@ -862,18 +848,6 @@ def test_pairwise_tag(MultiClassClassifier):
 
     ovr_true = MultiClassClassifier(clf_precomputed)
     assert ovr_true._get_tags()["pairwise"]
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize(
-    "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
-)
-def test_pairwise_deprecated(MultiClassClassifier):
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        ov_clf._pairwise
 
 
 @pytest.mark.parametrize(
