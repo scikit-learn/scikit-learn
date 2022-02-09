@@ -1132,14 +1132,23 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
 
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
 @pytest.mark.parametrize(
-    "params",
+    "params, err_msg",
     [
-        {"parser": "pandas"},
-        {"as_frame": True},
-        {"parser": "pandas", "as_frame": True},
+        (
+            {"parser": "pandas"},
+            "Sparse ARFF datasets cannot be loaded with parser='pandas'",
+        ),
+        (
+            {"as_frame": True},
+            "Sparse ARFF datasets cannot be loaded with as_frame=True.",
+        ),
+        (
+            {"parser": "pandas", "as_frame": True},
+            "Sparse ARFF datasets cannot be loaded with as_frame=True.",
+        ),
     ],
 )
-def test_fetch_openml_sparse_arff_error(monkeypatch, params):
+def test_fetch_openml_sparse_arff_error(monkeypatch, params, err_msg):
     """Check that we raise the expected error for sparse ARFF datasets and
     a wrong set of incompatible parameters.
     """
@@ -1147,8 +1156,7 @@ def test_fetch_openml_sparse_arff_error(monkeypatch, params):
     data_id = 292
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    msg = "The sparse ARFF format is not supported together with pandas"
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(ValueError, match=err_msg):
         fetch_openml(
             data_id=data_id,
             cache=False,
