@@ -228,7 +228,13 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.weights == "uniform":
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
+            neigh_ind = self.kneighbors(X, return_distance=False)
+            neigh_dist = None
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
         weights = _get_weights(neigh_dist, self.weights)
 
