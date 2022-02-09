@@ -1406,21 +1406,20 @@ def check_scalar(
         If `min_val`, `max_val` and `include_boundaries` are inconsistent.
     """
 
+    def type_name(t):
+        """Convert type into humman readable string."""
+        module = t.__module__
+        qualname = t.__qualname__
+        if module == "builtins":
+            return qualname
+        elif module == "numbers":
+            if qualname == "Real":
+                return "float"
+            elif qualname == "Integral":
+                return "int"
+        return f"{module}.{qualname}"
+
     if not isinstance(x, target_type):
-
-        def type_name(t):
-            """Convert type into humman readable string."""
-            module = t.__module__
-            qualname = t.__qualname__
-            if module == "builtins":
-                return qualname
-            elif module == "numbers":
-                if qualname == "Real":
-                    return "float"
-                elif qualname == "Integral":
-                    return "int"
-            return f"{module}.{qualname}"
-
         if isinstance(target_type, tuple):
             types_str = ", ".join(type_name(t) for t in target_type)
             target_type_str = f"{{{types_str}}}"
