@@ -10,19 +10,10 @@ from sklearn import datasets
 from sklearn.linear_model import RidgeClassifier
 from sklearn.kernel_ridge.krc import KernelRidgeClassifier
 from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import check_random_state
 
 from sklearn.utils._testing import assert_array_almost_equal
 
-# mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
-from sklearn.svm import _libsvm  # type: ignore
-
-# toy sample
-X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-Y = [1, 1, 1, 2, 2, 2]
-T = [[-1, -1], [2, 2], [3, 2]]
-true_result = [1, 2, 2]
 
 # also load the iris dataset
 iris = datasets.load_iris()

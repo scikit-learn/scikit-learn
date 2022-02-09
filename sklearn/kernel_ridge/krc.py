@@ -1,19 +1,12 @@
-"""Module :mod:`sklearn.kernel_ridge` implements kernel ridge regression."""
+"""Module :mod:`sklearn.kernel_ridge.krc` implements kernel ridge classification."""
 
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# Author: Carlos Perales <cperalesg@outlook.es>
 # License: BSD 3 clause
 
 import numpy as np
 from ..kernel_ridge.krr import KernelRidge
 from ..linear_model._ridge import RidgeClassifier
-from ..metrics.pairwise import pairwise_kernels
-from ..linear_model._ridge import _solve_cholesky_kernel
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.deprecation import deprecated
-from ..preprocessing import LabelBinarizer
-from ..utils import column_or_1d
-from ..utils import compute_sample_weight
+from ..utils.validation import check_is_fitted
 
 
 class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
