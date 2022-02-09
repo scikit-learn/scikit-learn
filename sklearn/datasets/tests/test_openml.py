@@ -1615,7 +1615,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
     # validate failed checksum
     with pytest.raises(ValueError) as exc:
         sklearn.datasets.fetch_openml(
-            data_id=data_id, cache=False, as_frame=as_frame, parser="auto"
+            data_id=data_id, cache=False, as_frame=as_frame, parser=parser
         )
     # exception message should have file-path
     assert exc.match("1666876")
