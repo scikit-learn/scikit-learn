@@ -47,9 +47,13 @@ Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 samples_weights = ax.contour(xx, yy, Z, levels=[0], linestyles=["dashed"])
 
-h1, _ = no_weights.legend_elements()
-h2, _ = samples_weights.legend_elements()
-ax.legend([h1[0], h2[0]], ["no weights", "with weights"], loc="lower left")
+no_weights_handles, _ = no_weights.legend_elements()
+weights_handles, _ = samples_weights.legend_elements()
+ax.legend(
+    [no_weights_handles[0], weights_handles[0]],
+    ["no weights", "with weights"],
+    loc="lower left",
+)
 
 ax.set(xticks=(), yticks=())
 plt.show()
