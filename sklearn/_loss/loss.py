@@ -36,6 +36,7 @@ from .link import (
     LogitLink,
     MultinomialLogit,
 )
+from ..utils import check_scalar
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.stats import _weighted_percentile
 
@@ -606,11 +607,14 @@ class PinballLoss(BaseLoss):
     need_update_leaves_values = True
 
     def __init__(self, sample_weight=None, quantile=0.5):
-        if not isinstance(quantile, numbers.Number) or quantile <= 0 or quantile >= 1:
-            raise ValueError(
-                "PinballLoss aka quantile loss only accepts numbers "
-                f"0 < quantile < 1; {quantile} was given."
-            )
+        check_scalar(
+            quantile,
+            "quantile",
+            target_type=numbers.Real,
+            min_val=0,
+            max_val=1,
+            include_boundaries="neither",
+        )
         super().__init__(
             closs=CyPinballLoss(quantile=float(quantile)),
             link=IdentityLink(),
@@ -727,6 +731,14 @@ class HalfTweedieLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None, power=1.5):
+        check_scalar(
+            power,
+            "power",
+            target_type=numbers.Real,
+            include_boundaries="neither",
+            min_val=-np.inf,
+            max_val=np.inf,
+        )
         if not isinstance(power, numbers.Number) or not math.isfinite(power):
             raise ValueError(
                 "HalfTweedieLoss only accepts finite numbers as power parameter;"

@@ -1049,43 +1049,40 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
 
 
 @pytest.mark.parametrize(
-    "loss, params, err_msg",
+    "loss, params, err_type, err_msg",
     [
         (
             PinballLoss,
             {"quantile": None},
-            "PinballLoss aka quantile loss only accepts numbers 0 < quantile < 1;"
-            " None was given.",
+            TypeError,
+            "quantile must be an instance of <class 'numbers.Real'>, not <class"
+            " 'NoneType'>.",
         ),
         (
             PinballLoss,
             {"quantile": 0},
-            "PinballLoss aka quantile loss only accepts numbers 0 < quantile < 1;"
-            " 0 was given.",
+            ValueError,
+            "quantile == 0, must be > 0.",
         ),
-        (
-            PinballLoss,
-            {"quantile": 1.1},
-            "PinballLoss aka quantile loss only accepts numbers 0 < quantile < 1;"
-            " 1.1 was given.",
-        ),
+        (PinballLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
         (
             HalfTweedieLoss,
             {"power": None},
-            "HalfTweedieLoss only accepts finite numbers as power parameter;"
-            " None was given.",
+            TypeError,
+            "power must be an instance of <class 'numbers.Real'>, not <class"
+            " 'NoneType'>.",
         ),
         (
             HalfTweedieLoss,
             {"power": np.inf},
-            "HalfTweedieLoss only accepts finite numbers as power parameter;"
-            " inf was given.",
+            ValueError,
+            "power == inf, must be < inf.",
         ),
     ],
 )
-def test_loss_init_parameter_validation(loss, params, err_msg):
+def test_loss_init_parameter_validation(loss, params, err_type, err_msg):
     """Test that loss raises errors for invalid input."""
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(err_type, match=err_msg):
         loss(**params)
 
 
