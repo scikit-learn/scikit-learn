@@ -773,7 +773,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             If a fit parameter is an array-like whose length is equal to
             `num_samples` then it will be split across CV groups along with `X`
             and `y`. For example, the :term:`sample_weight` parameter is split
-            becuase `len(sample_weights) = len(X)`.
+            because `len(sample_weights) = len(X)`.
 
         Returns
         -------
