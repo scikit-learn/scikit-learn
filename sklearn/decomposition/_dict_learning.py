@@ -2076,10 +2076,14 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             dictionary = dictionary[: self._n_components, :]
         else:
             dictionary = np.r_[
-                dictionary, np.zeros((self._n_components - r, dictionary.shape[1]))
+                dictionary,
+                np.zeros(
+                    (self._n_components - r, dictionary.shape[1]),
+                    dtype=dictionary.dtype,
+                ),
             ]
 
-        dictionary = check_array(dictionary, order="F", dtype=np.float64, copy=False)
+        dictionary = check_array(dictionary, order="F", dtype=X.dtype, copy=False)
         dictionary = np.require(dictionary, requirements="W")
 
         return dictionary
@@ -2224,14 +2228,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             )
             self._batch_size = 3
 
-        X = self._validate_data(X, dtype=np.float64, order="C", copy=self.shuffle)
+        X = self._validate_data(
+            X, dtype=[np.float64, np.float32], order="C", copy=False
+        )
 
         self._check_params(X)
         self._random_state = check_random_state(self.random_state)
-        n_samples, n_features = X.shape
-
-        dictionary = self._initialize_dict(X, self._random_state)
-        dict_buffer = dictionary.copy()
 
         if self.shuffle:
             X_train = X.copy()
@@ -2239,13 +2241,18 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         else:
             X_train = X
 
+        dictionary = self._initialize_dict(X_train, self._random_state)
+        dict_buffer = dictionary.copy()
+
+        n_samples, n_features = X_train.shape
+
         if self.verbose:
             print("[dict_learning]")
 
         # Inner stats
         self._inner_stats = (
-            np.zeros((self._n_components, self._n_components)),
-            np.zeros((n_features, self._n_components)),
+            np.zeros((self._n_components, self._n_components), dtype=X_train.dtype),
+            np.zeros((n_features, self._n_components), dtype=X_train.dtype),
         )
 
         if self.max_iter is not None:
@@ -2345,7 +2352,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         has_components = hasattr(self, "components_")
 
         X = self._validate_data(
-            X, dtype=np.float64, order="C", reset=not has_components
+            X, dtype=[np.float64, np.float32], order="C", reset=not has_components
         )
 
         if iter_offset != "deprecated":
@@ -2366,8 +2373,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             dictionary = self._initialize_dict(X, self._random_state)
 
             self._inner_stats = (
-                np.zeros((self._n_components, self._n_components)),
-                np.zeros((X.shape[1], self._n_components)),
+                np.zeros((self._n_components, self._n_components), dtype=X.dtype),
+                np.zeros((X.shape[1], self._n_components), dtype=X.dtype),
             )
         else:
             dictionary = self.components_
