@@ -1341,6 +1341,8 @@ def test_fetch_openml_error(
     monkeypatch, gzip_response, data_id, params, err_type, err_msg
 ):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    if "as_frame" in params and params["as_frame"]:
+        pytest.importorskip("pandas")
     with pytest.raises(err_type, match=err_msg):
         fetch_openml(cache=False, **params)
 
@@ -1568,13 +1570,13 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     [
         (True, "liac-arff"),
         (False, "liac-arff"),
-        (True, "auto"),
         (True, "pandas"),
+        (False, "pandas"),
     ],
 )
 def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, parser):
     """Check that the checksum is working as expected."""
-    if as_frame:
+    if as_frame or parser == "pandas":
         pytest.importorskip("pandas")
 
     data_id = 2
