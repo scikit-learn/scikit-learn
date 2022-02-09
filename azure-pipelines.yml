@@ -141,10 +141,7 @@ jobs:
       )
     matrix:
       pylatest_conda_forge_mkl:
-        DISTRIB: 'conda'
-        CONDA_CHANNEL: 'conda-forge'
-        PYTHON_VERSION: '*'
-        BLAS: 'mkl'
+        LOCK_FILE: ./build_tools/azure/pylatest_conda_forge_mkl_linux-64.lock
         COVERAGE: 'true'
         SHOW_SHORT_SUMMARY: 'true'
 
@@ -245,9 +242,7 @@ jobs:
       )
     matrix:
       pylatest_conda_forge_mkl:
-        DISTRIB: 'conda'
-        BLAS: 'mkl'
-        CONDA_CHANNEL: 'conda-forge'
+        LOCK_FILE: ./build_tools/azure/pylatest_conda_forge_mkl_osx-64.lock
         CPU_COUNT: '3'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'

@@ -36,7 +36,13 @@ setup_ccache() {
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
-if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
+if [[ -n $LOCK_FILE ]]; then
+    conda install --channel conda-forge conda-lock --yes
+    conda-lock install --name $VIRTUAL_ENV $LOCK_FILE
+    setup_ccache
+
+else if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
+
 
     if [[ "$CONDA_CHANNEL" != "" ]]; then
         TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
@@ -132,9 +138,11 @@ elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     pip install https://github.com/python-pillow/Pillow/archive/main.zip
 fi
 
-python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-                      $(get_dep pytest $PYTEST_VERSION) \
-                      $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
+if [[ -z $LOCK_FILE ]]; then
+    python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
+                        $(get_dep pytest $PYTEST_VERSION) \
+                        $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
+fi
 
 if [[ "$COVERAGE" == "true" ]]; then
     # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
