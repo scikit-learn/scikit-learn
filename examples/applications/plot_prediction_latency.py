@@ -38,6 +38,11 @@ def _not_in_sphinx():
     return "__file__" in globals()
 
 
+# %%
+# Benchmark and plot helper functions
+# -----------------------------------
+
+
 def atomic_benchmark_estimator(estimator, X_test, verbose=False):
     """Measure runtime prediction of each instance."""
     n_instances = X_test.shape[0]
@@ -290,13 +295,11 @@ def plot_benchmark_throughput(throughputs, configuration):
 
 
 # %%
-# Main code
+# Benchmark bulk/atomic prediction speed for various regressors
+# -------------------------------------------------------------
 
 start_time = time.time()
 
-# %%
-# Benchmark bulk/atomic prediction speed for various regressors
-# -------------------------------------------------------------
 configuration = {
     "n_train": int(1e3),
     "n_test": int(1e2),
