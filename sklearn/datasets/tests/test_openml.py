@@ -1337,14 +1337,15 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
         ),
     ],
 )
+@pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 def test_fetch_openml_error(
-    monkeypatch, gzip_response, data_id, params, err_type, err_msg
+    monkeypatch, gzip_response, data_id, params, err_type, err_msg, parser
 ):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    if "as_frame" in params and params["as_frame"]:
+    if params.get("as_frame", True) or parser == "pandas":
         pytest.importorskip("pandas")
     with pytest.raises(err_type, match=err_msg):
-        fetch_openml(cache=False, **params)
+        fetch_openml(cache=False, parser=parser, **params)
 
 
 @pytest.mark.parametrize(
