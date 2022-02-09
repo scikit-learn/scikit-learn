@@ -2,7 +2,6 @@
 
 import numbers
 import warnings
-import os
 import re
 
 from tempfile import NamedTemporaryFile
@@ -992,12 +991,13 @@ class WrongDummyMemory:
     pass
 
 
-@pytest.mark.filterwarnings("ignore:The 'cachedir' attribute")
 def test_check_memory():
     memory = check_memory("cache_directory")
-    assert memory.cachedir == os.path.join("cache_directory", "joblib")
+    assert memory.location == "cache_directory"
+
     memory = check_memory(None)
-    assert memory.cachedir is None
+    assert memory.location is None
+
     dummy = DummyMemory()
     memory = check_memory(dummy)
     assert memory is dummy
