@@ -2235,14 +2235,14 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._check_params(X)
         self._random_state = check_random_state(self.random_state)
 
+        dictionary = self._initialize_dict(X, self._random_state)
+        dict_buffer = dictionary.copy()
+
         if self.shuffle:
             X_train = X.copy()
             self._random_state.shuffle(X_train)
         else:
             X_train = X
-
-        dictionary = self._initialize_dict(X_train, self._random_state)
-        dict_buffer = dictionary.copy()
 
         n_samples, n_features = X_train.shape
 
