@@ -143,7 +143,7 @@ feature names.
             "target": [72, 55, 32],
         }
     )
-    X = df["feature_name"]
+    X = df[["feature_name"]]
     y = df["target"]
 
     from sklearn.ensemble import GradientBoostingRegressor
@@ -179,11 +179,11 @@ Numpy tools such as `random.randn
 <https://numpy.org/doc/stable/reference/random/generated/numpy.random.randn.html>`_
 and `random.randint
 <https://numpy.org/doc/stable/reference/random/generated/numpy.random.randint.html>`_
-can be used to create dummy numeric data
+can be used to create dummy numeric data.
 
 - regression
 
-Regressions take continuous numeric data as features and target
+Regressions take continuous numeric data as features and target.
 
 .. code-block:: python
 
@@ -199,32 +199,32 @@ as :class:`sklearn.preprocessing.StandardScaler`.
 
 - classification
 
-If the bug is not raised during encoding a categorical variable, you can feed
-numeric data to a classifier. Just remember to ensure that the target is indeed
-an integer.
+    If the bug is not raised during encoding a categorical variable, you can feed
+    numeric data to a classifier. Just remember to ensure that the target is indeed
+    an integer.
 
-.. code-block:: python
+    .. code-block:: python
 
-    import numpy as np
+        import numpy as np
 
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 5, 5
-    X = rng.randn(n_samples, n_features)
-    y = rng.randint(0, 2, n_samples)
+        rng = np.random.RandomState(0)
+        n_samples, n_features = 5, 5
+        X = rng.randn(n_samples, n_features)
+        y = rng.randint(0, 2, n_samples)
 
-If you need to test encoding, you may prefer to start from non-numeric data. In
-such case you may use `numpy.random.choice
-<https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html>`_.
+    If you need to test encoding, you may prefer to start from non-numeric data. In
+    such case you may use `numpy.random.choice
+    <https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html>`_.
 
-.. code-block:: python
+    .. code-block:: python
 
-    import numpy as np
+        import numpy as np
 
-    n_samples, n_features = 50, 5
-    X = rng.randn(n_samples, n_features)
-    y = np.random.choice(
-        ["male", "female", "other"], size=n_samples, p=[0.49, 0.49, 0.02]
-    )
+        n_samples, n_features = 50, 5
+        X = rng.randn(n_samples, n_features)
+        y = np.random.choice(
+            ["male", "female", "other"], size=n_samples, p=[0.49, 0.49, 0.02]
+        )
 
 Pandas
 ------
@@ -311,7 +311,7 @@ Formatting
 ==========
 
 As already mentioned, the key to communication is the readability of the code
-and good formatting can really improve it
+and good formatting can really improve it.
 
 Use markdown
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -381,7 +381,7 @@ Try to follow the `PEP 8 convention <https://www.python.org/dev/peps/pep-0008/>`
 ---------------------------------------------------------------------------------
 
 The convention in a nutshell:
-    - Try to limit all lines to a maximum of 79 characters
+    - try to limit all lines to a maximum of 79 characters
     - use blank lines to separate groups of related functions
     - blank lines may be omitted between a bunch of related lines of code
 
