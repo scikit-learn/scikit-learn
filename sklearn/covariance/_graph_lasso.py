@@ -25,7 +25,6 @@ from ..utils.fixes import delayed
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
-from ..utils.deprecation import deprecated
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -112,7 +111,7 @@ def graphical_lasso(
     eps=np.finfo(np.float64).eps,
     return_n_iter=False,
 ):
-    """l1-penalized covariance estimator
+    """L1-penalized covariance estimator.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -184,7 +183,10 @@ def graphical_lasso(
 
     See Also
     --------
-    GraphicalLasso, GraphicalLassoCV
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with
+        cross-validated choice of the l1 penalty.
 
     Notes
     -----
@@ -696,22 +698,6 @@ class GraphicalLassoCV(GraphicalLasso):
     alpha_ : float
         Penalization parameter selected.
 
-    cv_alphas_ : list of shape (n_alphas,), dtype=float
-        All penalization parameters explored.
-
-        .. deprecated:: 0.24
-            The `cv_alphas_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_['alphas']` and will be removed in version
-            1.1 (renaming of 0.26).
-
-    grid_scores_ : ndarray of shape (n_alphas, n_folds)
-        Log-likelihood score on left-out data across folds.
-
-        .. deprecated:: 0.24
-            The `grid_scores_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_` and will be removed in version
-            1.1 (renaming of 0.26).
-
     cv_results_ : dict of ndarrays
         A dict with keys:
 
@@ -778,15 +764,18 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Notes
     -----
-    The search for the optimal penalization parameter (alpha) is done on an
+    The search for the optimal penalization parameter (`alpha`) is done on an
     iteratively refined grid: first the cross-validated scores on a grid are
     computed, then a new refined grid is centered around the maximum, and so
     on.
 
     One of the challenges which is faced here is that the solvers can
     fail to converge to a well-conditioned estimate. The corresponding
-    values of alpha then come out as missing values, but the optimum may
+    values of `alpha` then come out as missing values, but the optimum may
     be close to these missing values.
+
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------
@@ -1006,34 +995,3 @@ class GraphicalLassoCV(GraphicalLasso):
             return_n_iter=True,
         )
         return self
-
-    # TODO: Remove in 1.1 when grid_scores_ is deprecated
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The `grid_scores_` attribute is deprecated in version 0.24 in favor "
-        "of `cv_results_` and will be removed in version 1.1 "
-        "(renaming of 0.26)."
-    )
-    @property
-    def grid_scores_(self):
-        n_splits = len(
-            [
-                key
-                for key in self.cv_results_
-                if key.startswith("split") and key.endswith("_test_score")
-            ]
-        )
-        return np.asarray(
-            [self.cv_results_["split{}_test_score".format(i)] for i in range(n_splits)]
-        ).T
-
-    # TODO: Remove in 1.1 when cv_alphas_ is deprecated
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The `cv_alphas_` attribute is deprecated in version 0.24 in favor "
-        "of `cv_results_['alpha']` and will be removed in version 1.1 "
-        "(renaming of 0.26)."
-    )
-    @property
-    def cv_alphas_(self):
-        return self.cv_results_["alphas"].tolist()

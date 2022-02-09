@@ -7,7 +7,6 @@ from re import escape
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
@@ -474,63 +473,6 @@ def test_ovr_pipeline():
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_():
-    for base_classifier in [
-        SVC(kernel="linear", random_state=0),
-        LinearSVC(random_state=0),
-    ]:
-        # SVC has sparse coef with sparse input data
-
-        ovr = OneVsRestClassifier(base_classifier)
-        for X in [iris.data, sp.csr_matrix(iris.data)]:
-            # test with dense and sparse coef
-            ovr.fit(X, iris.target)
-            shape = ovr.coef_.shape
-            assert shape[0] == n_classes
-            assert shape[1] == iris.data.shape[1]
-            # don't densify sparse coefficients
-            assert sp.issparse(ovr.estimators_[0].coef_) == sp.issparse(ovr.coef_)
-
-
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_exceptions():
-    # Not fitted exception!
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-
-    with pytest.raises(NotFittedError):
-        ovr.coef_
-
-    # Doesn't have coef_ exception!
-    ovr = OneVsRestClassifier(DecisionTreeClassifier())
-    ovr.fit(iris.data, iris.target)
-    msg = "Base estimator doesn't have a coef_ attribute"
-    with pytest.raises(AttributeError, match=msg):
-        ovr.coef_
-
-
-# TODO: Remove this test in version 1.1 when
-# the coef_ and intercept_ attributes are removed
-def test_ovr_deprecated_coef_intercept():
-    ovr = OneVsRestClassifier(SVC(kernel="linear"))
-    ovr = ovr.fit(iris.data, iris.target)
-
-    msg = (
-        r"Attribute `{0}` was deprecated in version 0.24 "
-        r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
-        r"this warning while using RFE or SelectFromModel, "
-        r"use the importance_getter parameter instead."
-    )
-
-    for att in ["coef_", "intercept_"]:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(ovr, att)
-
-
 def test_ovo_exceptions():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
@@ -894,19 +836,6 @@ def test_pairwise_n_features_in():
     assert ovo_precomputed.estimators_[2].n_features_in_ == 100  # class 1 vs class 2
 
 
-@ignore_warnings(category=FutureWarning)
-def test_pairwise_attribute():
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    clf_notprecomputed = svm.SVC()
-
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert not ovr_false._pairwise
-
-        ovr_true = MultiClassClassifier(clf_precomputed)
-        assert ovr_true._pairwise
-
-
 @pytest.mark.parametrize(
     "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
 )
@@ -919,18 +848,6 @@ def test_pairwise_tag(MultiClassClassifier):
 
     ovr_true = MultiClassClassifier(clf_precomputed)
     assert ovr_true._get_tags()["pairwise"]
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize(
-    "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
-)
-def test_pairwise_deprecated(MultiClassClassifier):
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        ov_clf._pairwise
 
 
 @pytest.mark.parametrize(
