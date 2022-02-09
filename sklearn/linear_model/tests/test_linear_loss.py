@@ -54,7 +54,7 @@ def random_X_y_coef(
         # See https://stackoverflow.com/a/34190035/16761084
         def choice_vectorized(items, p):
             s = p.cumsum(axis=1)
-            r = np.random.rand(p.shape[0])[:, None]
+            r = rng.rand(p.shape[0])[:, None]
             k = (s < r).sum(axis=1)
             return items[k]
 
