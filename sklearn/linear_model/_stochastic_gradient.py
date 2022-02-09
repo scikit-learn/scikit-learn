@@ -36,7 +36,6 @@ from ._sgd_fast import SquaredLoss
 from ._sgd_fast import Huber
 from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import SquaredEpsilonInsensitive
-from ..utils.fixes import _joblib_parallel_args
 
 LEARNING_RATE_TYPES = {
     "constant": 1,
@@ -752,9 +751,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
         seeds = random_state.randint(MAX_INT, size=len(self.classes_))
         result = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            **_joblib_parallel_args(require="sharedmem"),
+            n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem"
         )(
             delayed(fit_binary)(
                 self,

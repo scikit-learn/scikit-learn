@@ -311,7 +311,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 name="max_features",
                 target_type=numbers.Integral,
                 min_val=1,
-                max_val=self.n_features_in_,
+                include_boundaries="left",
             )
             max_features = self.max_features
         else:  # float

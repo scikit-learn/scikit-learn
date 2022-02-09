@@ -455,7 +455,7 @@ def test_missing_values_minmax_imputation():
     # "Missing In Attributes" (MIA) missing value handling for decision trees
     # https://www.sciencedirect.com/science/article/abs/pii/S0167865508000305
     # The implementation of MIA as an imputation transformer was suggested by
-    # "Remark 3" in https://arxiv.org/abs/1902.06931
+    # "Remark 3" in :arxiv:'<1902.06931>`
 
     class MinMaxImputer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
