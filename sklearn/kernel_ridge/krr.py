@@ -6,11 +6,11 @@
 
 import numpy as np
 
-from sklearn.base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.linear_model._ridge import _solve_cholesky_kernel
-from sklearn.utils.validation import check_is_fitted, _check_sample_weight
-from sklearn.utils.deprecation import deprecated
+from ..base import BaseEstimator, RegressorMixin, MultiOutputMixin
+from ..metrics.pairwise import pairwise_kernels
+from ..linear_model._ridge import _solve_cholesky_kernel
+from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.deprecation import deprecated
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):

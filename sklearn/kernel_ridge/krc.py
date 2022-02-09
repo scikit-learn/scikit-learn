@@ -4,31 +4,21 @@
 # License: BSD 3 clause
 
 import numpy as np
+from scipy import sparse
 from ..kernel_ridge.krr import KernelRidge
-from ..linear_model._ridge import RidgeClassifier
-from ..utils.validation import check_is_fitted
+from ..linear_model._ridge import RidgeClassifier, _get_valid_accept_sparse
+from ..linear_model._ridge import _solve_cholesky_kernel
+from ..utils.validation import check_is_fitted, _check_sample_weight
 
 
 class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
     """Kernel ridge classification.
 
     Kernel ridge clasification (KRR) combines ridge regression (linear least
-    squares with l2-norm regularization) with the kernel trick. It thus
-    learns a linear function in the space induced by the respective kernel and
-    the data. For non-linear kernels, this corresponds to a non-linear
-    function in the original space.
-
-    The form of the model learned by KRR is identical to support vector
-    regression (SVR). However, different loss functions are used: KRR uses
-    squared error loss while support vector regression uses epsilon-insensitive
-    loss, both combined with l2 regularization. In contrast to SVR, fitting a
-    KRR model can be done in closed-form and is typically faster for
-    medium-sized datasets. On the other hand, the learned model is non-sparse
-    and thus slower than SVR, which learns a sparse model for epsilon > 0, at
-    prediction-time.
-
-    This estimator has built-in support for multi-variate regression
-    (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
+    squares with l2-norm regularization) with the kernel trick and the label
+    binarization. It thus learns a linear function in the space induced 
+    y the respective kernel and the data. For non-linear kernels,
+    this corresponds to a non-linear function in the original space.
 
     Read more in the :ref:`User Guide <kernel_ridge>`.
 
@@ -119,20 +109,22 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
     >>> from sklearn.datasets import load_iris
     >>> iris = load_iris()
     >>> X, y = iris.data, iris.target
-    >>> krc = KernelRidgeClassifier(kernel='rbf', alpha=1.0, gamma=0.01)
+    >>> krc = KernelRidgeClassifier()
     >>> krc.fit(X, y)
-    KernelRidgeClassifier(alpha=1.0, gamma=0.01, kernel='rbf')
+    KernelRidgeClassifier()
     """
 
-    class_weight = None
     _estimator_type = "classifier"
+    normalize = "deprecated"
+    fit_intercept = False
+    class_weight = None
 
     def __init__(
         self,
         alpha=1.0,
         *,
         kernel="rbf",
-        gamma=0.1,
+        gamma=None,
         degree=3,
         coef0=1,
         kernel_params=None,
@@ -164,12 +156,27 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
         self : object
             Returns the instance itself.
         """
-        # Binarize and process as a classifier, using RidgeClassifier method
         X, y, sample_weight, Y = super(RidgeClassifier, self)._prepare_data(
             X, y, sample_weight, "auto"
         )
-        # Fit with kernel from KernelRidge
-        super().fit(X, Y, sample_weight)
+
+        if sample_weight is not None and not isinstance(sample_weight, float):
+            sample_weight = _check_sample_weight(sample_weight, X)
+
+        K = self._get_kernel(X)
+        alpha = np.atleast_1d(self.alpha)
+
+        ravel = False
+        if len(Y.shape) == 1:
+            Y = Y.reshape(-1, 1)
+            ravel = True
+
+        copy = self.kernel == "precomputed"
+        self.dual_coef_ = _solve_cholesky_kernel(K, Y, alpha, sample_weight, copy)
+        if ravel:
+            self.dual_coef_ = self.dual_coef_.ravel()
+
+        self.X_fit_ = X.copy()
         self.coef_ = self.dual_coef_
         return self
 
