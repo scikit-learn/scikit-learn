@@ -4,9 +4,8 @@
 # License: BSD 3 clause
 
 import numpy as np
-from scipy import sparse
 from ..kernel_ridge.krr import KernelRidge
-from ..linear_model._ridge import RidgeClassifier, _get_valid_accept_sparse
+from ..linear_model._ridge import RidgeClassifier
 from ..linear_model._ridge import _solve_cholesky_kernel
 from ..utils.validation import check_is_fitted, _check_sample_weight
 
@@ -16,7 +15,7 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
 
     Kernel ridge clasification (KRR) combines ridge regression (linear least
     squares with l2-norm regularization) with the kernel trick and the label
-    binarization. It thus learns a linear function in the space induced 
+    binarization. It thus learns a linear function in the space induced
     y the respective kernel and the data. For non-linear kernels,
     this corresponds to a non-linear function in the original space.
 
