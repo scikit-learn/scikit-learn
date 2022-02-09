@@ -27,7 +27,6 @@ from ..utils import (
     gen_even_slices,
     _to_object_array,
 )
-from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
@@ -605,17 +604,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _more_tags(self):
         # For cross-validation routines to split data correctly
         return {"pairwise": self.metric == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # For cross-validation routines to split data correctly
-        return self.metric == "precomputed"
 
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):
