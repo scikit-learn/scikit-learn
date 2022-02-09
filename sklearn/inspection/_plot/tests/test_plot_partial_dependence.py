@@ -870,7 +870,7 @@ def test_partial_dependence_display_wrong_len_kind(
         diabetes.data,
         features=[0, 2],
         grid_resolution=20,
-        kind=["average"],  # len(kind) != len(features)
+        kind="average",  # len(kind) != len(features)
     )
 
     # alter `kind` to be a list with a length different from length of `features`
