@@ -1810,9 +1810,8 @@ def _get_feature_names(X):
 
     types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
 
-    # Warn when types are mixed.
-    # ints and strings do not warn
-    if len(types) > 1 or not (types[0].startswith("int") or types[0] == "str"):
+    # Warn when types are mixed and string is one of the types
+    if len(types) > 1 and "str" in types:
         # TODO: Convert to an error in 1.2
         warnings.warn(
             "Feature names only support names that are all strings. "
@@ -1823,12 +1822,14 @@ def _get_feature_names(X):
         return
 
     # Only feature names of all strings are supported
-    if types[0] == "str":
+    if len(types) == 1 and types[0] == "str":
         return feature_names
 
 
 def _check_feature_names_in(estimator, input_features=None, *, generate_names=True):
-    """Get output feature names for transformation.
+    """Check `input_features` and generate names if needed.
+
+    Commonly used in :term:`get_feature_names_out`.
 
     Parameters
     ----------
@@ -1842,8 +1843,10 @@ def _check_feature_names_in(estimator, input_features=None, *, generate_names=Tr
             match `feature_names_in_` if `feature_names_in_` is defined.
 
     generate_names : bool, default=True
-        Wether to generate names when `input_features` is `None` and
-        `estimator.feature_names_in_` is not defined.
+        Whether to generate names when `input_features` is `None` and
+        `estimator.feature_names_in_` is not defined. This is useful for transformers
+        that validates `input_features` but do not require them in
+        :term:`get_feature_names_out` e.g. `PCA`.
 
     Returns
     -------
