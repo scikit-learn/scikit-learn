@@ -128,7 +128,7 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
     >>> X, y = iris.data, iris.target
     >>> krc = KernelRidgeClassifier(kernel='rbf', alpha=1.0, gamma=0.01)
     >>> krc.fit(X, y)
-    KernelRidgeClassifier(alpha=0.1)
+    KernelRidgeClassifier(alpha=1.0, gamma=0.01, kernel='rbf')
     """
 
     class_weight = None
