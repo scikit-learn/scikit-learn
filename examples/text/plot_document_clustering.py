@@ -134,8 +134,10 @@ if len(args) > 0:
     sys.exit(1)
 
 
-# #############################################################################
+# %%
 # Load some categories from the training set
+# ------------------------------------------
+
 categories = [
     "alt.atheism",
     "talk.religion.misc",
@@ -155,6 +157,11 @@ dataset = fetch_20newsgroups(
 print("%d documents" % len(dataset.data))
 print("%d categories" % len(dataset.target_names))
 print()
+
+
+# %%
+# Feature Extraction
+# ------------------
 
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
@@ -214,8 +221,9 @@ if opts.n_components:
     print()
 
 
-# #############################################################################
-# Do the actual clustering
+# %%
+# Clustering
+# ----------
 
 if opts.minibatch:
     km = MiniBatchKMeans(
@@ -241,6 +249,11 @@ km.fit(X)
 print("done in %0.3fs" % (time() - t0))
 print()
 
+
+# %%
+# Performance metrics
+# -------------------
+
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
 print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
 print("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
@@ -252,6 +265,8 @@ print(
 
 print()
 
+
+# %%
 
 if not opts.use_hashing:
     print("Top terms per cluster:")
