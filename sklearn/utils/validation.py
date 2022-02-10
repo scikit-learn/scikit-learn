@@ -1412,11 +1412,10 @@ def check_scalar(
         qualname = t.__qualname__
         if module == "builtins":
             return qualname
-        elif module == "numbers":
-            if qualname == "Real":
-                return "float"
-            elif qualname == "Integral":
-                return "int"
+        elif t == numbers.Real:
+            return "float"
+        elif t == numbers.Integral:
+            return "int"
         return f"{module}.{qualname}"
 
     if not isinstance(x, target_type):
