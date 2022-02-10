@@ -683,7 +683,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
 
         if self.make_target_pairs:
-            # self.target_pairs = np.full((n_classes * (n_classes - 1) // 2, 2), y[0], dtype = y.dtype)
 
             self.target_pairs = np.array(
                 [self.classes_[i], self.classes_[j]] 
