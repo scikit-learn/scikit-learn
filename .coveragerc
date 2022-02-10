@@ -2,7 +2,7 @@
 branch = True
 source = sklearn
 parallel = True
-plugins = Cython.Coverage
+plugins = ${SKLEARN_CYTHON_COVERAGE}
 omit =
     */sklearn/externals/*
     */sklearn/_build_utils/*

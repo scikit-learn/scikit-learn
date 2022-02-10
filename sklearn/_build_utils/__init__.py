@@ -72,7 +72,7 @@ def cythonize_extensions(top_path, config):
     )
 
     enable_cython_coverage = (
-        os.environ.get("SKLEARN_ENABLE_CYTHON_COVERAGE", "0") != "0"
+        os.environ.get("SKLEARN_CYTHON_COVERAGE", "0") != "0"
     )
 
     # To enable cython coverage, we need to
