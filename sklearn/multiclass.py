@@ -590,6 +590,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+    
+    make_target_pairs : bool, default=False
+        Whether to store pairs of classes used to train each estimator.
 
     Attributes
     ----------
@@ -617,6 +620,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    target_pairs : ndarray of shape ``(n_classes * (n_classes - 1) // 2, 2)``
+        Store pairs of classes used to train each estimator.
+        This attribute exists only when ``make_target_pairs`` is True.
+
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -642,9 +649,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
 
-    def __init__(self, estimator, *, n_jobs=None):
+    def __init__(self, estimator, *, n_jobs=None, make_target_pairs = False):
         self.estimator = estimator
         self.n_jobs = n_jobs
+        self.make_target_pairs = make_target_pairs
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -692,6 +700,15 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         pairwise = _is_pairwise(self)
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
+
+        if self.make_target_pairs:
+            # self.target_pairs = np.full((n_classes * (n_classes - 1) // 2, 2), y[0], dtype = y.dtype)
+
+            self.target_pairs = np.array(
+                [self.classes_[i], self.classes_[j]] 
+                for i in range(n_classes)
+                for j in range(i + 1, n_classes)
+            )
 
         return self
 
