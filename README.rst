@@ -39,7 +39,7 @@
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
 .. |MatplotlibMinVersion| replace:: 2.2.3
 .. |Scikit-ImageMinVersion| replace:: 0.14.5
-.. |PandasMinVersion| replace:: 0.25.0
+.. |PandasMinVersion| replace:: 1.0.5
 .. |SeabornMinVersion| replace:: 0.9.0
 .. |PytestMinVersion| replace:: 5.0.1
 
