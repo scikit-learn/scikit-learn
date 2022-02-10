@@ -10,16 +10,13 @@ compared with the ground-truth.
 """
 
 # %%
-# Sparse Signals
+# Data Generation
 # ---------------------------------------------------
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import r2_score
-
-# %%
-# Generate some sparse data to play with
 
 np.random.seed(42)
 
