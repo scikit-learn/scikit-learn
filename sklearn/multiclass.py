@@ -577,7 +577,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-    
+
     make_target_pairs : bool, default=False
         Whether to store pairs of classes used to train each estimator.
 
@@ -630,7 +630,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
 
-    def __init__(self, estimator, *, n_jobs=None, make_target_pairs = False):
+    def __init__(self, estimator, *, n_jobs=None, make_target_pairs=False):
         self.estimator = estimator
         self.n_jobs = n_jobs
         self.make_target_pairs = make_target_pairs
@@ -685,7 +685,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         if self.make_target_pairs:
 
             self.target_pairs = np.array(
-                [self.classes_[i], self.classes_[j]] 
+                [self.classes_[i], self.classes_[j]]
                 for i in range(n_classes)
                 for j in range(i + 1, n_classes)
             )
