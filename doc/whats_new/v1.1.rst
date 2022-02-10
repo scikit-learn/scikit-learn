@@ -156,6 +156,10 @@ Changelog
   are loaded with "liac-arff".
   :pr:`21938` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`datasets.make_blobs` no longer copies data during the generation
+  process, therefore uses less memory. 
+  :pr:`22412` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 - |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
   ``scaled``, to allow loading unscaled data. The scaled version of this
   dataset is now computed from the unscaled data, and can produce slightly
