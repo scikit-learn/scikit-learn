@@ -170,16 +170,8 @@ class KernelRidgeClassifier(KernelRidge, RidgeClassifier):
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
 
-        ravel = False
-        if len(Y.shape) == 1:
-            Y = Y.reshape(-1, 1)
-            ravel = True
-
         copy = self.kernel == "precomputed"
         self.coef_ = _solve_cholesky_kernel(K, Y, alpha, sample_weight, copy)
-        if ravel:
-            self.coef_ = self.coef_.ravel()
-
         self.X_fit_ = X.copy()
         return self
 
