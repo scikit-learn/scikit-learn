@@ -11,13 +11,14 @@ the iris dataset. Support vector machine (SVM) is used to classify the
 dataset both before and after applying univariate feature selection.
 For each feature, we plot the p-values for the univariate feature selection
 and the corresponding weights of SVMs. With this, we will compare model
-accuracy and examine the impact of univariate feature selection on model weights.
+accuracy and examine the impact of univariate feature selection on model
+weights.
 
 """
 
 # %%
 # Generate sample data
-#---------------------------------------------------
+# ---------------------------------------------------
 #
 import numpy as np
 import matplotlib.pyplot as plt
@@ -60,11 +61,7 @@ scores /= scores.max()
 X_indices = np.arange(X.shape[-1])
 plt.figure(1)
 plt.clf()
-plt.bar(
-    X_indices - 0.05,
-    scores,
-    width=0.2
-)
+plt.bar(X_indices - 0.05, scores, width=0.2)
 plt.title("Feature univariate score")
 plt.xlabel("Feature number")
 plt.ylabel(r"Univariate score ($-Log(p_{value})$)")
@@ -109,19 +106,11 @@ svm_weights_selected /= svm_weights_selected.sum()
 # plot
 # previously obtained univariate scores
 plt.bar(
-    X_indices - 0.45,
-    scores,
-    width=0.2,
-    label=r"Univariate score ($-Log(p_{value})$)"
+    X_indices - 0.45, scores, width=0.2, label=r"Univariate score ($-Log(p_{value})$)"
 )
 
 # SVM weights without selection
-plt.bar(
-    X_indices - 0.25,
-    svm_weights,
-    width=0.2,
-    label="SVM weight"
-)
+plt.bar(X_indices - 0.25, svm_weights, width=0.2, label="SVM weight")
 
 # SVM weights after selection
 plt.bar(
