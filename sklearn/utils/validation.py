@@ -24,7 +24,7 @@ import joblib
 
 from contextlib import suppress
 
-from .fixes import _object_dtype_isnan, parse_version
+from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
@@ -344,10 +344,7 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, str):
-        if parse_version(joblib.__version__) < parse_version("0.12"):
-            memory = joblib.Memory(cachedir=memory, verbose=0)
-        else:
-            memory = joblib.Memory(location=memory, verbose=0)
+        memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, "cache"):
         raise ValueError(
             "'memory' should be None, a string or have the same"
@@ -1810,9 +1807,8 @@ def _get_feature_names(X):
 
     types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
 
-    # Warn when types are mixed.
-    # ints and strings do not warn
-    if len(types) > 1 or not (types[0].startswith("int") or types[0] == "str"):
+    # Warn when types are mixed and string is one of the types
+    if len(types) > 1 and "str" in types:
         # TODO: Convert to an error in 1.2
         warnings.warn(
             "Feature names only support names that are all strings. "
@@ -1823,7 +1819,7 @@ def _get_feature_names(X):
         return
 
     # Only feature names of all strings are supported
-    if types[0] == "str":
+    if len(types) == 1 and types[0] == "str":
         return feature_names
 
 
