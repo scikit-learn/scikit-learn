@@ -1803,6 +1803,7 @@ def test_random_trees_embedding_feature_names_out():
     X = np.abs(random_state.randn(100, 4))
 
     hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False).fit(X)
+    names = hasher.get_feature_names_out()
     n_features_out = hasher.transform(X).shape[1]
     assert_array_equal(
         [f"randomtreesembedding{i}" for i in range(n_features_out)], names
