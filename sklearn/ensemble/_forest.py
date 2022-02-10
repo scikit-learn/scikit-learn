@@ -2634,12 +2634,9 @@ class RandomTreesEmbedding(_ClassNamePrefixFeaturesOutMixin , BaseForest):
         super().fit(X, y, sample_weight=sample_weight)
 
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
-        X_leaf = self.apply(X)
-        self.one_hot_encoder_.fit(X_leaf)
-        self._n_features_out = np.product(
-            np.asarray(self.one_hot_encoder_.categories_).shape
-        )
-        return self.one_hot_encoder_.transform(X_leaf)
+        output = self.one_hot_encoder_.fit_transform(self.apply(X))
+        self._n_features_out = output.shape[1]
+        return output
 
     def transform(self, X):
         """
