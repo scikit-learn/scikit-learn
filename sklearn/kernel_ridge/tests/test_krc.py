@@ -1,8 +1,6 @@
 """
 Testing for Kernel Ridge Classifier
 """
-import pytest
-
 import numpy as np
 import scipy.sparse as sp
 
