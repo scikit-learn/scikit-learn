@@ -941,7 +941,7 @@ def make_blobs(
 
     cum_sum_n_samples = np.cumsum(n_samples_per_center)
     X = np.empty(shape=(sum(n_samples_per_center), n_features), dtype=np.float64)
-    y = np.empty(shape=(sum(n_samples_per_center),), dtype=np.int64)
+    y = np.empty(shape=(sum(n_samples_per_center),), dtype=int)
 
     for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
         start_idx = cum_sum_n_samples[i - 1] if i > 0 else 0
