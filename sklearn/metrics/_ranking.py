@@ -1892,7 +1892,7 @@ def precision_at_k_score(
     >>> scores = [[0.1, 0.2, 0.3, 0.4]]
     >>> # we can get the true relevance of the top scored answer (precision@1)
     >>> precision_at_k_score(true_relevance, scores)
-    1
+    1.0
     >>> # we can get the average true relevance of the top k answers (precision@k)
     >>> precision_at_k_score(true_relevance, scores, k=3)
     0.66...
