@@ -13,12 +13,11 @@ For each feature, we plot the p-values for the univariate feature selection
 and the corresponding weights of SVMs. With this, we will compare model
 accuracy and examine the impact of univariate feature selection on model weights.
 
-
 """
 
 # %%
 # Generate sample data
-# ---------------------------------------------------
+#---------------------------------------------------
 #
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,8 +42,6 @@ X = np.hstack((X, E))
 
 # Split dataset to select feature and evaluate the classifier
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
-
-
 
 # %%
 # Univariate feature selection
@@ -78,7 +75,6 @@ plt.show()
 # We can see that they have the highest score with univariate feature
 # selection.
 
-
 # %%
 # Compare to the weights of SVMs
 # ---------------------------------------------------
@@ -95,7 +91,6 @@ print(
 
 svm_weights = np.abs(clf[-1].coef_).sum(axis=0)
 svm_weights /= svm_weights.sum()
-
 
 # After univariate feature selection
 clf_selected = make_pipeline(SelectKBest(f_classif, k=4), MinMaxScaler(), LinearSVC())
