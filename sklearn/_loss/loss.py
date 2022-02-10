@@ -15,7 +15,6 @@ classification.
 #   - SGDRegressor, SGDClassifier
 # - Replace link module of GLMs.
 
-import math
 import numbers
 import numpy as np
 from scipy.special import xlogy
@@ -739,11 +738,6 @@ class HalfTweedieLoss(BaseLoss):
             min_val=-np.inf,
             max_val=np.inf,
         )
-        if not isinstance(power, numbers.Number) or not math.isfinite(power):
-            raise ValueError(
-                "HalfTweedieLoss only accepts finite numbers as power parameter;"
-                f" {power} was given."
-            )
         super().__init__(
             closs=CyHalfTweedieLoss(power=float(power)),
             link=LogLink(),
