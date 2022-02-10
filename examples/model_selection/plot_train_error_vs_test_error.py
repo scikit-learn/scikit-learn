@@ -12,14 +12,15 @@ measured using the explained variance a.k.a. R^2.
 
 """
 
+# %%
+# Generate sample data
+# --------------------
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
 import numpy as np
 from sklearn import linear_model
 
-# #############################################################################
-# Generate sample data
 n_samples_train, n_samples_test, n_features = 75, 150, 500
 np.random.seed(0)
 coef = np.random.randn(n_features)
@@ -27,12 +28,14 @@ coef[50:] = 0.0  # only the top 10 features are impacting the model
 X = np.random.randn(n_samples_train + n_samples_test, n_features)
 y = np.dot(X, coef)
 
+# %%
 # Split train and test data
 X_train, X_test = X[:n_samples_train], X[n_samples_train:]
 y_train, y_test = y[:n_samples_train], y[n_samples_train:]
 
-# #############################################################################
+# %%
 # Compute train and test errors
+# -----------------------------
 alphas = np.logspace(-5, 1, 60)
 enet = linear_model.ElasticNet(l1_ratio=0.7, max_iter=10000)
 train_errors = list()
@@ -51,8 +54,9 @@ print("Optimal regularization parameter : %s" % alpha_optim)
 enet.set_params(alpha=alpha_optim)
 coef_ = enet.fit(X, y).coef_
 
-# #############################################################################
+# %%
 # Plot results functions
+# ----------------------
 
 import matplotlib.pyplot as plt
 
