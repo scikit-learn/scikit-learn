@@ -1,3 +1,7 @@
+# cython: linetrace=False
+# locally disable linetrace. It means we don't have coverage for this extension.
+# TODO: find why enabling linetrace for this extension breaks compilation.
+
 """This module contains routines and data structures to:
 
 - Find the best possible split of a node. For a given node, a split is

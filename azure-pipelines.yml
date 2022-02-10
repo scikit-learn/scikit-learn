@@ -210,6 +210,7 @@ jobs:
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
+        SKLEARN_ENABLE_CYTHON_COVERAGE: '1'
 
 - template: build_tools/azure/posix-docker.yml
   parameters:

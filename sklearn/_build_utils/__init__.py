@@ -71,6 +71,25 @@ def cythonize_extensions(top_path, config):
         os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
     )
 
+    enable_cython_coverage = (
+        os.environ.get("SKLEARN_ENABLE_CYTHON_COVERAGE", "0") != "0"
+    )
+
+    # To enable cython coverage, we need to
+    # - set the cython directive linetrace=True (can be done globally in cythonize)
+    # - set the C macro CYTHON_TRACE_NOGIL=1 (has to be done per extension)
+    #   It's a bit hackish but instead of defining the macro in every setup file, we
+    #   manually update the defined macros of every extension here.
+    if enable_cython_coverage:
+        for extension in config.ext_modules:
+            if extension.name == "sklearn.tree._splitter":
+                # TODO enabling linetrace in _splitter.pyx makes compilation fail
+                # we ignore this extension for now.
+                continue
+
+            if "CYTHON_TRACE_NOGIL" not in [m[0] for m in extension.define_macros]:
+                extension.define_macros.append(("CYTHON_TRACE_NOGIL", "1"))
+
     config.ext_modules = cythonize(
         config.ext_modules,
         nthreads=n_jobs,
@@ -84,6 +103,7 @@ def cythonize_extensions(top_path, config):
             "initializedcheck": False,
             "nonecheck": False,
             "cdivision": True,
+            "linetrace": enable_cython_coverage,
         },
     )
 
