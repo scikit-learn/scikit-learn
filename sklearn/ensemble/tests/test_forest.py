@@ -1798,7 +1798,7 @@ def test_mse_criterion_object_segfault_smoke_test(Forest):
 
 
 def test_random_trees_embedding_feature_names_out():
-    """Check feature names out for NMF."""
+    """Check feature names out for Random Trees Embedding."""
     random_state = np.random.RandomState(0)
     X = np.abs(random_state.randn(100, 4))
 
