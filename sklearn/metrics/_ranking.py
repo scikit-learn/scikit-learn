@@ -1816,9 +1816,9 @@ def _tie_averaged_precision_at_k(y_true, y_score, k):
     _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
     relevance_per_group = np.zeros(len(counts))
     np.add.at(relevance_per_group, inv, y_true)
-    counts_sumsum = np.cumsum(counts)
-    tie_group = np.searchsorted(counts_sumsum, k)
-    counts_before_tie = counts_sumsum[tie_group - 1] if tie_group != 0 else 0
+    counts_cumsum = np.cumsum(counts)
+    tie_group = np.searchsorted(counts_cumsum, k)
+    counts_before_tie = counts_cumsum[tie_group - 1] if tie_group != 0 else 0
     return (
         relevance_per_group[:tie_group].sum()
         + relevance_per_group[tie_group] * (k - counts_before_tie) / counts[tie_group]
