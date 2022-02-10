@@ -435,42 +435,6 @@ def test_make_blobs_error():
         make_blobs(n_samples, centers=3)
 
 
-def test_make_blobs_memory_usage():
-    try:
-        import memory_profiler
-
-        has_memory_profiler = True
-    except:
-        has_memory_profiler = False
-
-    if not has_memory_profiler:
-        pytest.skip("memory_profiler is not available.")
-
-    blobs_opts = {
-        "n_samples": 10 ** 4,
-        "n_features": 10 ** 4,
-        "centers": 10,
-        "random_state": 10,
-        "return_centers": True,
-        "shuffle": False,
-    }
-    # maximum memory usage in MB
-    actual_memory_usage, (X, y, c) = memory_profiler.memory_usage(
-        (partial(make_blobs, **blobs_opts), ()),
-        max_iterations=1,
-        max_usage=True,
-        retval=True,
-    )
-    memory_usage_X = (
-        blobs_opts["n_samples"] * blobs_opts["n_features"] * X.dtype.itemsize
-    )
-    memory_usage_y = blobs_opts["n_samples"] * y.dtype.itemsize
-    memory_usage_c = blobs_opts["centers"] * blobs_opts["n_features"] * c.dtype.itemsize
-    calc_memory_useage_mb = (memory_usage_X + memory_usage_y + memory_usage_c) / 1048576
-    # make sure actual memory usage is relatively close to theratical amount
-    assert actual_memory_usage < calc_memory_useage_mb * 1.3
-
-
 def test_make_friedman1():
     X, y = make_friedman1(n_samples=5, n_features=10, noise=0.0, random_state=0)
 
