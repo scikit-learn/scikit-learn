@@ -71,6 +71,7 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'pyfunc': PyFuncDistance}
 
 BOOL_METRICS = [
+    "hamming",
     "matching",
     "jaccard",
     "dice",

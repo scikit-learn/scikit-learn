@@ -211,7 +211,8 @@ cdef class PairwiseDistancesReduction:
         True if the PairwiseDistancesReduction can be used, else False.
         """
         # TODO: support sparse arrays and 32 bits
-        return (not issparse(X) and X.dtype == np.float64 and
+        return (get_config().get("enable_cython_pairwise_dist", True) and
+                not issparse(X) and X.dtype == np.float64 and
                 not issparse(Y) and Y.dtype == np.float64 and
                 metric in cls.valid_metrics())
 
@@ -621,10 +622,10 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 Indices of the argkmin for each vector in X.
 
             If return_distance=True:
-              - argkmin_indices : ndarray of shape (n_samples_X, k)
-                Indices of the argkmin for each vector in X.
               - argkmin_distances : ndarray of shape (n_samples_X, k)
                 Distances to the argkmin for each vector in X.
+              - argkmin_indices : ndarray of shape (n_samples_X, k)
+                Indices of the argkmin for each vector in X.
 
         Notes
         -----
@@ -642,7 +643,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         # Note (jjerphan): Some design thoughts for future extensions.
         # This factory comes to handle specialisations for the given arguments.
         # For future work, this might can be an entrypoint to specialise operations
-        # for various back-end and/or hardware and/or datatypes, and/or fused
+        # for various backend and/or hardware and/or datatypes, and/or fused
         # {sparse, dense}-datasetspair etc.
         if (
             metric in ("euclidean", "sqeuclidean")
@@ -883,7 +884,11 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
             # We need to recompute distances because we relied on
             # surrogate distances for the reduction.
             self.compute_exact_distances()
-            return np.asarray(self.argkmin_indices), np.asarray(self.argkmin_distances)
+
+            # Values are returned identically to the way `KNeighborsMixin.kneighbors`
+            # returns values. This is counter-intuitive but this allows not using
+            # complex adaptations where `PairwiseDistancesArgKmin.compute` is called.
+            return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
 

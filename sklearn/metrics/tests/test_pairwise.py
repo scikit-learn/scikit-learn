@@ -432,10 +432,11 @@ def test_paired_distances_callable():
         paired_distances(X, Y)
 
 
-def test_pairwise_distances_argmin_min():
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_pairwise_distances_argmin_min(dtype):
     # Check pairwise minimum distances computation for any metric
-    X = [[0], [1]]
-    Y = [[-2], [3]]
+    X = np.asarray([[0], [1]], dtype=dtype)
+    Y = np.asarray([[-2], [3]], dtype=dtype)
 
     Xsp = dok_matrix(X)
     Ysp = csr_matrix(Y, dtype=np.float32)
@@ -458,12 +459,23 @@ def test_pairwise_distances_argmin_min():
     assert type(idxsp) == np.ndarray
     assert type(valssp) == np.ndarray
 
-    # euclidean metric squared
-    idx, vals = pairwise_distances_argmin_min(
+    # Squared Euclidean metric
+    idx, vals = pairwise_distances_argmin_min(X, Y, metric="sqeuclidean")
+    idx2, vals2 = pairwise_distances_argmin_min(
         X, Y, metric="euclidean", metric_kwargs={"squared": True}
     )
-    assert_array_almost_equal(idx, expected_idx)
+    idx3 = pairwise_distances_argmin(X, Y, metric="sqeuclidean")
+    idx4 = pairwise_distances_argmin(
+        X, Y, metric="euclidean", metric_kwargs={"squared": True}
+    )
+
     assert_array_almost_equal(vals, expected_vals_sq)
+    assert_array_almost_equal(vals2, expected_vals_sq)
+
+    assert_array_almost_equal(idx, expected_idx)
+    assert_array_almost_equal(idx2, expected_idx)
+    assert_array_almost_equal(idx3, expected_idx)
+    assert_array_almost_equal(idx4, expected_idx)
 
     # Non-euclidean scikit-learn metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="manhattan")

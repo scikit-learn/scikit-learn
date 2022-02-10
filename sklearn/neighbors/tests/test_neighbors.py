@@ -13,8 +13,12 @@ from scipy.sparse import (
     issparse,
 )
 
-from sklearn import metrics
-from sklearn import neighbors, datasets
+from sklearn import (
+    config_context,
+    datasets,
+    metrics,
+    neighbors,
+)
 from sklearn.base import clone
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import EfficiencyWarning
@@ -1450,7 +1454,6 @@ def test_neighbors_metrics(
     metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
 ):
     # Test computing the neighbors for various metrics
-    # create a symmetric matrix
     algorithms = ["brute", "ball_tree", "kd_tree"]
     X_train = rng.rand(n_samples, n_features)
     X_test = rng.rand(n_query_pts, n_features)
@@ -1493,7 +1496,7 @@ def test_neighbors_metrics(
                 and algorithm == "brute"
                 and sp_version >= parse_version("1.6.0")
             ):
-                ExceptionToAssert = DeprecationWarning
+                ExceptionToAssert = FutureWarning
 
             with pytest.warns(ExceptionToAssert):
                 results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
@@ -1511,6 +1514,59 @@ def test_neighbors_metrics(
 
             assert_allclose(ball_tree_dst, kd_tree_dst)
             assert_array_equal(ball_tree_idx, kd_tree_idx)
+
+
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+@pytest.mark.parametrize(
+    "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
+)
+def test_kneighbors_brute_backend(
+    metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
+):
+    # Both backend for the 'brute' algorithm of kneighbors must give identical results.
+    X_train = rng.rand(n_samples, n_features)
+    X_test = rng.rand(n_query_pts, n_features)
+
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        feature_sl = slice(None, 2)
+        X_train = np.ascontiguousarray(X_train[:, feature_sl])
+        X_test = np.ascontiguousarray(X_test[:, feature_sl])
+
+    metric_params_list = _generate_test_params_for(metric, n_features)
+
+    # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+    ExceptionToAssert = None
+    if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
+        ExceptionToAssert = FutureWarning
+
+    for metric_params in metric_params_list:
+        p = metric_params.pop("p", 2)
+
+        neigh = neighbors.NearestNeighbors(
+            n_neighbors=n_neighbors,
+            algorithm="brute",
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+        )
+
+        neigh.fit(X_train)
+        with pytest.warns(ExceptionToAssert):
+            with config_context(enable_cython_pairwise_dist=False):
+                # Use the legacy backend for brute
+                legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
+                    X_test, return_distance=True
+                )
+            with config_context(enable_cython_pairwise_dist=True):
+                # Use the PairwiseDistancesReduction as a backend for brute
+                pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
+                    X_test, return_distance=True
+                )
+
+        assert_allclose(legacy_brute_dst, pdr_brute_dst)
+        assert_array_equal(legacy_brute_idx, pdr_brute_idx)
 
 
 def test_callable_metric():
