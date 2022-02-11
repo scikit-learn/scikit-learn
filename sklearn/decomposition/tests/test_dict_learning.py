@@ -854,9 +854,6 @@ def test_sparse_coder_dtype_match(data_type, transform_algorithm):
     assert code.dtype == data_type
 
 
-@pytest.mark.parametrize(
-    "dictionary_learning_transformer", (DictionaryLearning, MiniBatchDictionaryLearning)
-)
 @pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
 @pytest.mark.parametrize(
     "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
@@ -873,12 +870,11 @@ def test_sparse_coder_dtype_match(data_type, transform_algorithm):
 def test_dictionary_learning_dtype_match(
     data_type,
     expected_type,
-    dictionary_learning_transformer,
     fit_algorithm,
     transform_algorithm,
 ):
     # Verify preserving dtype for fit and transform in dictionary learning class
-    dict_learner = dictionary_learning_transformer(
+    dict_learner = DictionaryLearning(
         n_components=8,
         fit_algorithm=fit_algorithm,
         transform_algorithm=transform_algorithm,
@@ -888,9 +884,39 @@ def test_dictionary_learning_dtype_match(
     assert dict_learner.components_.dtype == expected_type
     assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
 
-    if dictionary_learning_transformer is MiniBatchDictionaryLearning:
-        assert dict_learner.inner_stats_[0].dtype == expected_type
-        assert dict_learner.inner_stats_[1].dtype == expected_type
+
+@pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_minibatch_dictionary_learning_dtype_match(
+    data_type,
+    expected_type,
+    fit_algorithm,
+    transform_algorithm,
+):
+    # Verify preserving dtype for fit and transform in minibatch dictionary learning
+    dict_learner = MiniBatchDictionaryLearning(
+        n_components=8,
+        batch_size=10,
+        fit_algorithm=fit_algorithm,
+        transform_algorithm=transform_algorithm,
+        random_state=0,
+    )
+    dict_learner.fit(X.astype(data_type))
+    assert dict_learner.components_.dtype == expected_type
+    assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
+    assert dict_learner._inner_stats[0].dtype == expected_type
+    assert dict_learner._inner_stats[1].dtype == expected_type
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
@@ -972,6 +998,7 @@ def test_dict_learning_online_dtype_match(data_type, expected_type, method):
         X.astype(data_type),
         n_components=n_components,
         alpha=1,
+        batch_size=10,
         random_state=rng,
         method=method,
     )
@@ -990,6 +1017,7 @@ def test_dict_learning_online_numerical_consistency(method):
         X.astype(np.float64),
         n_components=n_components,
         alpha=alpha,
+        batch_size=10,
         random_state=0,
         method=method,
     )
@@ -997,6 +1025,7 @@ def test_dict_learning_online_numerical_consistency(method):
         X.astype(np.float32),
         n_components=n_components,
         alpha=alpha,
+        batch_size=10,
         random_state=0,
         method=method,
     )
