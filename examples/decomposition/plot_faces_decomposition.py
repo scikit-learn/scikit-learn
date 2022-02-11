@@ -8,10 +8,16 @@ matrix decomposition (dimension reduction) methods from the module
 :py:mod:`sklearn.decomposition` (see the documentation chapter
 :ref:`decompositions`) .
 
+
+- Authors: Vlad Niculae, Alexandre Gramfort
+- License: BSD 3 clause
 """
 
-# Authors: Vlad Niculae, Alexandre Gramfort
-# License: BSD 3 clause
+# %%
+# Dataset preparation
+# ---------------------------------------------------
+#
+# Loading and preprocessing the Olivetti faces dataset.
 
 import logging
 from time import time
@@ -23,30 +29,39 @@ from sklearn.datasets import fetch_olivetti_faces
 from sklearn.cluster import MiniBatchKMeans
 from sklearn import decomposition
 
-# Display progress logs on stdout
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-n_row, n_col = 2, 3
-n_components = n_row * n_col
-image_shape = (64, 64)
 rng = RandomState(0)
 
-# #############################################################################
-# Load faces data
+# Display progress logs on stdout
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
 faces, _ = fetch_olivetti_faces(return_X_y=True, shuffle=True, random_state=rng)
 n_samples, n_features = faces.shape
 
-# global centering
+# Global centering (focus on one feature, centering all samples)
 faces_centered = faces - faces.mean(axis=0)
 
-# local centering
+# Local centering (focus on one sample, centering all features)
 faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
 
 print("Dataset consists of %d faces" % n_samples)
 
 
+# %%
+# Define a base function to plot the gallery of faces.
+
+n_row, n_col = 2, 3
+n_components = n_row * n_col
+image_shape = (64, 64)
+
+
 def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
-    plt.figure(figsize=(2.0 * n_col, 2.26 * n_row))
-    plt.suptitle(title, size=16)
+    if n_col * n_row == 1:
+        figsize = (3.5, 3.6)
+    else:
+        figsize = (2.0 * n_col, 2.26 * n_row)
+
+    fig = plt.figure(figsize=figsize, facecolor="white", tight_layout={"pad": 0.3})
+    fig.suptitle(title, size=16, wrap=True)
     for i, comp in enumerate(images):
         plt.subplot(n_row, n_col, i + 1)
         vmax = max(comp.max(), -comp.min())
@@ -59,12 +74,23 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
         )
         plt.xticks(())
         plt.yticks(())
-    plt.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.0)
 
 
-# #############################################################################
-# List of the different estimators, whether to center and transpose the
-# problem, and whether the transformer uses the clustering API.
+# %%
+# Let’s take a look at our data. Gray color indicates negative values,
+# white indicates positive values.
+
+plot_gallery("Faces from dataset", faces_centered[:n_components])
+
+# %%
+# Decomposition
+# ---------------------------------------------------
+#
+# Initialise different estimators for decomposition and organise them all
+# in a simple structure. Each tuple has the name and instance of the
+# estimator and boolean flag if this estimator will be used
+# on centred (preprocessed) data.
+
 estimators = [
     (
         "Eigenfaces - PCA using randomized SVD",
@@ -120,57 +146,62 @@ estimators = [
 ]
 
 
-# #############################################################################
-# Plot a sample of the input data
-
-plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
-
-# #############################################################################
-# Do the estimation and plot it
+# %%
+# Next, fit each estimator on all images and plot some results.
+# Each estimator extracts 6 components as vectors
+# :math:`h \in \mathbf{R}^{4096}`. We just displayed these vectors
+# in human-friendly visualisation as 64x64 pixel images.
+#
+# .. note::
+#
+#     The Eigenfaces estimator, via the :py:mod:`sklearn.decomposition.PCA`,
+#     also provides a scalar `noise_variance_` (the mean of pixelwise variance)
+#     that cannot be displayed as an image.
 
 for name, estimator, center in estimators:
-    print("Extracting the top %d %s..." % (n_components, name))
+    print("- Extracting the top %d '%s'..." % (n_components, name))
     t0 = time()
-    data = faces
     if center:
         data = faces_centered
+    else:
+        data = faces
     estimator.fit(data)
     train_time = time() - t0
-    print("done in %0.3fs" % train_time)
+    print("  done in %0.3fs" % train_time)
     if hasattr(estimator, "cluster_centers_"):
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
 
-    # Plot an image representing the pixelwise variance provided by the
-    # estimator e.g its noise_variance_ attribute. The Eigenfaces estimator,
-    # via the PCA decomposition, also provides a scalar noise_variance_
-    # (the mean of pixelwise variance) that cannot be displayed as an image
-    # so we skip it.
     if (
         hasattr(estimator, "noise_variance_") and estimator.noise_variance_.ndim > 0
-    ):  # Skip the Eigenfaces case
+    ):  # skip the Eigenfaces case
         plot_gallery(
-            "Pixelwise variance",
+            "Pixelwise variance from \n %s" % name,
             estimator.noise_variance_.reshape(1, -1),
             n_col=1,
             n_row=1,
         )
-    plot_gallery(
-        "%s - Train time %.1fs" % (name, train_time), components_[:n_components]
-    )
+
+    plot_gallery(name, components_[:n_components])
 
 plt.show()
+# %%
+# Decomposition: Dictionary learning
+# ---------------------------------------------------
+#
+# In the further section, let's consider :ref:`DictionaryLearning` more precisely.
+# Dictionary learning is a problem that amounts to finding a sparse representation
+# of the input data as a combination of simple elements. These simple elements form
+# a dictionary. It is possible to constrain the dictionary and/or code to be positive
+# to match constraints that may be present in the data.
 
-# #############################################################################
-# Various positivity constraints applied to dictionary learning.
-estimators = [
+dict_estimators = [
     (
         "Dictionary learning",
         decomposition.MiniBatchDictionaryLearning(
             n_components=15, alpha=0.1, n_iter=50, batch_size=3, random_state=rng
         ),
-        True,
     ),
     (
         "Dictionary learning - positive dictionary",
@@ -182,7 +213,6 @@ estimators = [
             random_state=rng,
             positive_dict=True,
         ),
-        True,
     ),
     (
         "Dictionary learning - positive code",
@@ -195,7 +225,6 @@ estimators = [
             random_state=rng,
             positive_code=True,
         ),
-        True,
     ),
     (
         "Dictionary learning - positive dictionary & code",
@@ -209,31 +238,29 @@ estimators = [
             positive_dict=True,
             positive_code=True,
         ),
-        True,
     ),
 ]
 
 
-# #############################################################################
-# Plot a sample of the input data
+# %%
+# Plot the same samples from our dataset but with another colormap.
+# Red indicates negative values, blue indicates positive values,
+# and white represents zeros.
 
-plot_gallery(
-    "First centered Olivetti faces", faces_centered[:n_components], cmap=plt.cm.RdBu
-)
+plot_gallery("Faces from dataset", faces_centered[:n_components], cmap=plt.cm.RdBu)
 
-# #############################################################################
-# Do the estimation and plot it
+# %%
+# Similar to the previous example, we train each estimator on all images.
+#
+# The results of the different positivity constraints are presented below.
 
-for name, estimator, center in estimators:
-    print("Extracting the top %d %s..." % (n_components, name))
+for name, estimator in dict_estimators:
+    print("- Extracting the top %d '%s'..." % (n_components, name))
     t0 = time()
-    data = faces
-    if center:
-        data = faces_centered
+    data = faces_centered
     estimator.fit(data)
     train_time = time() - t0
-    print("done in %0.3fs" % train_time)
-    components_ = estimator.components_
-    plot_gallery(name, components_[:n_components], cmap=plt.cm.RdBu)
+    print("  done in %0.3fs" % train_time)
+    plot_gallery(name, estimator.components_[:n_components], cmap=plt.cm.RdBu)
 
 plt.show()
