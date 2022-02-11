@@ -23,7 +23,6 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ..base import _ClassNamePrefixFeaturesOutMixin
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
@@ -37,9 +36,7 @@ from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
 
 
-class _BaseVoting(
-    TransformerMixin, _BaseHeterogeneousEnsemble, _ClassNamePrefixFeaturesOutMixin
-):
+class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
@@ -86,7 +83,6 @@ class _BaseVoting(
             for idx, clf in enumerate(clfs)
             if clf != "drop"
         )
-        self._n_features_out = len(self.estimators_)
 
         self.named_estimators_ = Bunch()
 

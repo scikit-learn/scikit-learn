@@ -602,29 +602,3 @@ def test_voting_verbose(estimator, capsys):
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
-
-
-@pytest.mark.parametrize(
-    "estimator",
-    [
-        VotingRegressor(
-            estimators=[
-                ("lr", LinearRegression()),
-                ("rf", RandomForestRegressor(random_state=123)),
-            ],
-            verbose=True,
-        ),
-        VotingClassifier(
-            estimators=[
-                ("lr", LogisticRegression(random_state=123)),
-                ("rf", RandomForestClassifier(random_state=123)),
-            ],
-            verbose=True,
-        ),
-    ],
-)
-def test_voting_get_feature_names_out(estimator):
-    eclf = estimator.fit(X, y)
-    names = eclf.get_feature_names_out()
-    cls_name = estimator.__class__.__name__.lower()
-    assert_array_equal([f"{cls_name}{i}" for i in range(eclf._n_features_out)], names)
