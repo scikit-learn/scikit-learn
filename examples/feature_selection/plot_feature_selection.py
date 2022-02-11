@@ -18,19 +18,11 @@ weights.
 
 # %%
 # Generate sample data
-# ----------------------
+# --------------------
 #
 import numpy as np
-import matplotlib.pyplot as plt
-
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.svm import LinearSVC
-from sklearn.pipeline import make_pipeline
-from sklearn.feature_selection import SelectKBest, f_classif
-
-# %%
 
 # The iris dataset
 X, y = load_iris(return_X_y=True)
@@ -51,6 +43,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 # Univariate feature selection with F-test for feature scoring.
 # We use the default selection function to select
 # the four most significant features.
+from sklearn.feature_selection import SelectKBest, f_classif
 
 selector = SelectKBest(f_classif, k=4)
 selector.fit(X_train, y_train)
@@ -58,6 +51,8 @@ scores = -np.log10(selector.pvalues_)
 scores /= scores.max()
 
 # %%
+import matplotlib.pyplot as plt
+
 X_indices = np.arange(X.shape[-1])
 plt.figure(1)
 plt.clf()
@@ -73,11 +68,14 @@ plt.show()
 # selection.
 
 # %%
-# Compare to the weights of SVMs
-# ---------------------------------
+# Compare with SVMs
+# -----------------
 #
-
 # Without univariate feature selection
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.svm import LinearSVC
+
 clf = make_pipeline(MinMaxScaler(), LinearSVC())
 clf.fit(X_train, y_train)
 print(
@@ -89,6 +87,7 @@ print(
 svm_weights = np.abs(clf[-1].coef_).sum(axis=0)
 svm_weights /= svm_weights.sum()
 
+# %%
 # After univariate feature selection
 clf_selected = make_pipeline(SelectKBest(f_classif, k=4), MinMaxScaler(), LinearSVC())
 clf_selected.fit(X_train, y_train)
@@ -102,17 +101,12 @@ svm_weights_selected = np.abs(clf_selected[-1].coef_).sum(axis=0)
 svm_weights_selected /= svm_weights_selected.sum()
 
 # %%
-
-# plot
-# previously obtained univariate scores
 plt.bar(
     X_indices - 0.45, scores, width=0.2, label=r"Univariate score ($-Log(p_{value})$)"
 )
 
-# SVM weights without selection
 plt.bar(X_indices - 0.25, svm_weights, width=0.2, label="SVM weight")
 
-# SVM weights after selection
 plt.bar(
     X_indices[selector.get_support()] - 0.05,
     svm_weights_selected,
