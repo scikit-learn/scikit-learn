@@ -943,20 +943,6 @@ def test_result_equal_in_diff_n_threads(Estimator):
     assert_array_equal(result_1, result_2)
 
 
-@pytest.mark.parametrize("attr", ["counts_", "init_size_", "random_state_"])
-def test_minibatch_kmeans_deprecated_attributes(attr):
-    # check that we raise a deprecation warning when accessing `init_size_`
-    # FIXME: remove in 1.1
-    depr_msg = (
-        f"The attribute `{attr}` is deprecated in 0.24 and will be removed in 1.1"
-    )
-    km = MiniBatchKMeans(n_clusters=2, n_init=1, init="random", random_state=0)
-    km.fit(X)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        getattr(km, attr)
-
-
 def test_warning_elkan_1_cluster():
     # Check warning messages specific to KMeans
     with pytest.warns(
@@ -1205,3 +1191,18 @@ def test_is_same_clustering():
     # mapped to a same value
     labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
     assert not _is_same_clustering(labels1, labels3, 3)
+
+
+@pytest.mark.parametrize(
+    "Klass, method",
+    [(KMeans, "fit"), (MiniBatchKMeans, "fit"), (MiniBatchKMeans, "partial_fit")],
+)
+def test_feature_names_out(Klass, method):
+    """Check `feature_names_out` for `KMeans` and `MiniBatchKMeans`."""
+    class_name = Klass.__name__.lower()
+    kmeans = Klass()
+    getattr(kmeans, method)(X)
+    n_clusters = kmeans.cluster_centers_.shape[0]
+
+    names_out = kmeans.get_feature_names_out()
+    assert_array_equal([f"{class_name}{i}" for i in range(n_clusters)], names_out)
