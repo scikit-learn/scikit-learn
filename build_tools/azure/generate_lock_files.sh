@@ -2,8 +2,12 @@
 
 set -e
 
-conda-lock \
-    --platform linux-64 \
-    --platform osx-64 \
-    --file pylatest_conda_forge_mkl_environment.yml \
-    --filename-template "pylatest_conda_forge_mkl_{platform}.lock"
+build_name=pylatest_conda_forge_mkl
+platforms="linux-64 osx-64"
+
+for platform in ${platforms}; do
+    conda-lock \
+        --platform ${platform} \
+        --file ${build_name}_${platform}_environment.yml \
+        --filename-template "${build_name}_${platform}.lock"
+done
