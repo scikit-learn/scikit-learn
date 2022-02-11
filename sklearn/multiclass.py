@@ -578,7 +578,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    make_target_pairs : bool, default=False
+    store_class_pairs : bool, default=False
         Whether to store pairs of classes used to train each estimator.
 
     Attributes
@@ -601,9 +601,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    target_pairs : ndarray of shape ``(n_classes * (n_classes - 1) // 2, 2)``
+    class_pairs_ : ndarray of shape ``(n_classes * (n_classes - 1) // 2, 2)``
         Store pairs of classes used to train each estimator.
-        This attribute exists only when ``make_target_pairs`` is True.
+        This attribute exists only when ``store_class_pairs`` is True.
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -630,10 +630,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
 
-    def __init__(self, estimator, *, n_jobs=None, make_target_pairs=False):
+    def __init__(self, estimator, *, n_jobs=None, store_class_pairs=False):
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.make_target_pairs = make_target_pairs
+        self.store_class_pairs = store_class_pairs
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -682,12 +682,15 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         pairwise = self._get_tags()["pairwise"]
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
 
-        if self.make_target_pairs:
+        if self.store_class_pairs:
 
-            self.target_pairs = np.array(
-                [self.classes_[i], self.classes_[j]]
-                for i in range(n_classes)
-                for j in range(i + 1, n_classes)
+            self.class_pairs_ = np.array(
+                [
+                    [self.classes_[i], self.classes_[j]]
+                    for i in range(n_classes)
+                    for j in range(i + 1, n_classes)
+                ],
+                dtype=y.dtype,
             )
 
         return self
