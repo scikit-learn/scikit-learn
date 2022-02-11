@@ -57,7 +57,7 @@ selector.fit(X_train, y_train)
 scores = -np.log10(selector.pvalues_)
 scores /= scores.max()
 
-# Plot
+# %%
 X_indices = np.arange(X.shape[-1])
 plt.figure(1)
 plt.clf()
