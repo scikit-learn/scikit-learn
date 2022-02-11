@@ -2638,6 +2638,17 @@ class RandomTreesEmbedding(_ClassNamePrefixFeaturesOutMixin, BaseForest):
         self._n_features_out = output.shape[1]
         return output
 
+    def get_feature_names_out(self, input_features=None):
+        check_is_fitted(self, "_n_features_out")
+
+        # i is the tree used to generate the leaf, j is the leaf index.
+        feature_names = [
+            f"randomtreesembedding_{i+1}_{j}"
+            for i in range(self.n_estimators)
+            for j in self.one_hot_encoder_.categories_[i]
+        ]
+        return feature_names
+
     def transform(self, X):
         """
         Transform dataset.
