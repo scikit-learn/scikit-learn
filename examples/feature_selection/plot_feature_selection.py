@@ -74,7 +74,7 @@ plt.show()
 
 # %%
 # Compare to the weights of SVMs
-# ---------------------------------------------------
+# ---------------------------------
 #
 
 # Without univariate feature selection
