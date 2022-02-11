@@ -118,13 +118,15 @@ op.add_option(
 )
 
 print(__doc__)
-op.print_help()
-print()
 
 
 def is_interactive():
     return not hasattr(sys.modules["__main__"], "__file__")
 
+
+if not is_interactive():
+    op.print_help()
+    print()
 
 # work-around for Jupyter notebook and IPython console
 argv = [] if is_interactive() else sys.argv[1:]
