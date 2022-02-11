@@ -42,11 +42,9 @@ import itertools
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
-from .base import _is_pairwise
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
-from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
@@ -215,40 +213,13 @@ class OneVsRestClassifier(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionchanged:: v0.20
+        .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
         Estimators used for predictions.
-
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
-        Coefficient of the features in the decision function. This attribute
-        exists only if the ``estimators_`` defines ``coef_``.
-
-        .. deprecated:: 0.24
-            This attribute is deprecated in 0.24 and will
-            be removed in 1.1 (renaming of 0.26). If you use this attribute
-            in :class:`~sklearn.feature_selection.RFE` or
-            :class:`~sklearn.feature_selection.SelectFromModel`,
-            you may pass a callable to the `importance_getter`
-            parameter that extracts feature the importances
-            from `estimators_`.
-
-    intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
-        If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
-        This attribute exists only if the ``estimators_`` defines
-        ``intercept_``.
-
-        .. deprecated:: 0.24
-            This attribute is deprecated in 0.24 and will
-            be removed in 1.1 (renaming of 0.26). If you use this attribute
-            in :class:`~sklearn.feature_selection.RFE` or
-            :class:`~sklearn.feature_selection.SelectFromModel`,
-            you may pass a callable to the `importance_getter`
-            parameter that extracts feature the importances
-            from `estimators_`.
 
     classes_ : array, shape = [`n_classes`]
         Class labels.
@@ -542,52 +513,6 @@ class OneVsRestClassifier(
         """Number of classes."""
         return len(self.classes_)
 
-    # TODO: Remove coef_ attribute in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `coef_` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
-        "If you observe this warning while using RFE "
-        "or SelectFromModel, use the importance_getter "
-        "parameter instead."
-    )
-    @property
-    def coef_(self):
-        check_is_fitted(self)
-        if not hasattr(self.estimators_[0], "coef_"):
-            raise AttributeError("Base estimator doesn't have a coef_ attribute.")
-        coefs = [e.coef_ for e in self.estimators_]
-        if sp.issparse(coefs[0]):
-            return sp.vstack(coefs)
-        return np.vstack(coefs)
-
-    # TODO: Remove intercept_ attribute in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `intercept_` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26). "
-        "If you observe this warning while using RFE "
-        "or SelectFromModel, use the importance_getter "
-        "parameter instead."
-    )
-    @property
-    def intercept_(self):
-        check_is_fitted(self)
-        if not hasattr(self.estimators_[0], "intercept_"):
-            raise AttributeError("Base estimator doesn't have an intercept_ attribute.")
-        return np.array([e.intercept_.ravel() for e in self.estimators_])
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return getattr(self.estimator, "_pairwise", False)
-
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return {"pairwise": _safe_tags(self.estimator, key="pairwise")}
@@ -668,12 +593,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Indices of samples used when training the estimators.
         ``None`` when ``estimator``'s `pairwise` tag is False.
 
-        .. deprecated:: 0.24
-
-            The _pairwise attribute is deprecated in 0.24. From 1.1
-            (renaming of 0.25) and onward, `pairwise_indices_` will use the
-            pairwise estimator tag instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -752,7 +671,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.estimators_ = estimators_indices[0]
 
-        pairwise = _is_pairwise(self)
+        pairwise = self._get_tags()["pairwise"]
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
 
         return self
@@ -895,17 +814,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def n_classes_(self):
         """Number of classes."""
         return len(self.classes_)
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return getattr(self.estimator, "_pairwise", False)
 
     def _more_tags(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
@@ -1055,7 +963,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         # FIXME: there are more elaborate methods than generating the codebook
         # randomly.
-        self.code_book_ = random_state.random_sample((n_classes, code_size_))
+        self.code_book_ = random_state.uniform(size=(n_classes, code_size_))
         self.code_book_[self.code_book_ > 0.5] = 1
 
         if hasattr(self.estimator, "decision_function"):

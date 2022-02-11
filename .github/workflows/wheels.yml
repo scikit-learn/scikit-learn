@@ -121,40 +121,6 @@ jobs:
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
-          # Linux 32 bit manylinux2014
-          - os: ubuntu-latest
-            python: 37
-            bitness: 32
-            platform_id: manylinux_i686
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 38
-            bitness: 32
-            platform_id: manylinux_i686
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 39
-            bitness: 32
-            platform_id: manylinux_i686
-            manylinux_image: manylinux2014
-
-          # Linux 32 bit manylinux2010
-          - os: ubuntu-latest
-            python: 37
-            bitness: 32
-            platform_id: manylinux_i686
-            manylinux_image: manylinux2010
-          - os: ubuntu-latest
-            python: 38
-            bitness: 32
-            platform_id: manylinux_i686
-            manylinux_image: manylinux2010
-          - os: ubuntu-latest
-            python: 39
-            bitness: 32
-            platform_id: manylinux_i686
-            manylinux_image: manylinux2010
-
           # MacOS x86_64
           - os: macos-latest
             bitness: 64
