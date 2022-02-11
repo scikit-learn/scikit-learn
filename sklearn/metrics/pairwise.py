@@ -1000,9 +1000,9 @@ PAIRED_DISTANCES = {
 
 def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
-    Computes the paired distances between X and Y.
+    Compute the paired distances between X and Y.
 
-    Computes the distances between (X[0], Y[0]), (X[1], Y[1]), etc...
+    Compute the distances between (X[0], Y[0]), (X[1], Y[1]), etc...
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1021,12 +1021,17 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
         "manhattan", or "cosine".
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays from X as input and return a value indicating
+        should take two arrays from `X` as input and return a value indicating
         the distance between them.
+
+    **kwds : dict
+        Unused parameters.
 
     Returns
     -------
     distances : ndarray of shape (n_samples,)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`.
 
     See Also
     --------
