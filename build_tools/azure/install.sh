@@ -41,8 +41,7 @@ if [[ -n $LOCK_FILE ]]; then
     conda-lock install --name $VIRTUAL_ENV $LOCK_FILE
     setup_ccache
 
-else if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
-
+elif [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$CONDA_CHANNEL" != "" ]]; then
         TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
