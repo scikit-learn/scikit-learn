@@ -86,8 +86,10 @@ def cythonize_extensions(top_path, config):
                 # we ignore this extension for now.
                 continue
 
-            if "CYTHON_TRACE_NOGIL" not in [m[0] for m in extension.define_macros]:
-                extension.define_macros.append(("CYTHON_TRACE_NOGIL", "1"))
+            if "CYTHON_TRACE" not in [m[0] for m in extension.define_macros]:
+                # We could also define CYTHON_TRACE_NOGIL to cover nogil blocks but it
+                # makes the execution of the tests way too slow.
+                extension.define_macros.append(("CYTHON_TRACE", "1"))
 
     config.ext_modules = cythonize(
         config.ext_modules,
