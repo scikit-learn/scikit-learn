@@ -1243,7 +1243,7 @@ def make_sparse_coded_signal(
     n_features,
     n_nonzero_coefs,
     random_state=None,
-    data_transposed="deprecated",
+    data_transposed="warn",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
@@ -1276,6 +1276,9 @@ def make_sparse_coded_signal(
         By default, Y, D and X are transposed.
 
         .. versionadded:: 1.1
+        .. deprecated:: 1.1
+            In version 1.3, `data_transposed=False` will be the default.
+
     Returns
     -------
     data : ndarray of shape (n_features, n_samples)
@@ -1310,7 +1313,7 @@ def make_sparse_coded_signal(
     Y = np.dot(D, X)
 
     # raise warning if data_transposed is not passed explicitly
-    if data_transposed == "deprecated":
+    if data_transposed == "warn":
         data_transposed = True
         warnings.warn(
             "The default value of data_transposed will change from True to False in"
