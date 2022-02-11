@@ -436,24 +436,21 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
         (
             {"min_samples": 1.5},
             TypeError,
-            "min_samples must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
+            "min_samples must be an instance of int, not float.",
         ),
         ({"min_samples": -2}, ValueError, "min_samples == -2, must be >= 1."),
         ({"leaf_size": 0}, ValueError, "leaf_size == 0, must be >= 1."),
         (
             {"leaf_size": 2.5},
             TypeError,
-            "leaf_size must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
+            "leaf_size must be an instance of int, not float.",
         ),
         ({"leaf_size": -3}, ValueError, "leaf_size == -3, must be >= 1."),
         ({"p": -2}, ValueError, "p == -2, must be >= 0.0."),
         (
             {"n_jobs": 2.5},
             TypeError,
-            "n_jobs must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
+            "n_jobs must be an instance of int, not float.",
         ),
     ],
 )

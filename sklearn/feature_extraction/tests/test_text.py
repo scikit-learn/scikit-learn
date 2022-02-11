@@ -869,8 +869,7 @@ def test_vectorizer_min_df():
         (
             {"max_features": 3.5},
             TypeError,
-            "max_features must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>",
+            "max_features must be an instance of int, not float",
         ),
     ),
 )
