@@ -211,6 +211,13 @@ class PCA(_BasePCA):
 
         .. versionadded:: 1.1
 
+    power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
+        Power iteration normalizer for randomized SVD solver.
+        Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
+        for more details.
+
+        .. versionadded:: 1.1
+
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
@@ -361,6 +368,7 @@ class PCA(_BasePCA):
         tol=0.0,
         iterated_power="auto",
         n_oversamples=10,
+        power_iteration_normalizer="auto",
         random_state=None,
     ):
         self.n_components = n_components
@@ -370,6 +378,7 @@ class PCA(_BasePCA):
         self.tol = tol
         self.iterated_power = iterated_power
         self.n_oversamples = n_oversamples
+        self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -599,6 +608,7 @@ class PCA(_BasePCA):
                 n_components=n_components,
                 n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
+                power_iteration_normalizer=self.power_iteration_normalizer,
                 flip_sign=True,
                 random_state=random_state,
             )

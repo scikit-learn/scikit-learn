@@ -10,7 +10,6 @@ from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
-from .utils.deprecation import deprecated
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -156,16 +155,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"pairwise": self.kernel == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
 
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.

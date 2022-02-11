@@ -342,20 +342,19 @@ def test_ridge_individual_penalties():
         (
             {"alpha": "1"},
             TypeError,
-            "alpha must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "alpha must be an instance of float, not str",
         ),
         ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
         (
             {"max_iter": "1"},
             TypeError,
-            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'str'>",
+            "max_iter must be an instance of int, not str",
         ),
         ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
         (
             {"tol": "1"},
             TypeError,
-            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "tol must be an instance of float, not str",
         ),
     ],
 )
@@ -1283,8 +1282,7 @@ def test_ridgecv_int_alphas():
         (
             {"alphas": (1, 1.0, "1")},
             TypeError,
-            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
-            r" 'str'>",
+            r"alphas\[2\] must be an instance of float, not str",
         ),
     ],
 )
@@ -1388,7 +1386,7 @@ def test_ridge_fit_intercept_sparse(solver):
     dense_ridge.fit(X, y)
     with pytest.warns(None) as record:
         sparse_ridge.fit(X_csr, y)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
     assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
@@ -1417,7 +1415,7 @@ def test_ridge_fit_intercept_sparse_sag():
     dense_ridge.fit(X, y)
     with pytest.warns(None) as record:
         sparse_ridge.fit(X_csr, y)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
     assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
     with pytest.warns(UserWarning, match='"sag" solver requires.*'):

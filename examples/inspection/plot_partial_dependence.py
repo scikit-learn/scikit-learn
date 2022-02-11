@@ -27,10 +27,10 @@ California housing dataset. The example is taken from [1]_.
 .. [2] For classification you can think of it as the regression score before
        the link function.
 
-.. [3] Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E., Peeking Inside
-       the Black Box: Visualizing Statistical Learning With Plots of
-       Individual Conditional Expectation. (2015) Journal of Computational and
-       Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
+.. [3] :arxiv:`Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E. (2015).
+       "Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of
+       Individual Conditional Expectation". Journal of Computational and
+       Graphical Statistics, 24(1): 44-65 <1309.6392>`
 
 """
 
@@ -191,7 +191,7 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Analysis of the plots
 # .....................
 #
-# We can clearly see on the PDPs (thick blue line) that the median house price
+# We can clearly see on the PDPs (dashed orange line) that the median house price
 # shows a linear relationship with the median income (top left) and that the
 # house price drops when the average occupants per household increases (top
 # middle). The top right plot shows that the house age in a district does not

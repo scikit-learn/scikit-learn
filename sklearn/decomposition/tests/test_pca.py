@@ -46,7 +46,7 @@ def test_no_empty_slice_warning():
     pca = PCA(n_components=n_components)
     with pytest.warns(None) as record:
         pca.fit(X)
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize("copy", [True, False])
@@ -474,9 +474,15 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
     pca = PCA(n_components=p, svd_solver=svd_solver)
     pca.fit(X)
     assert pca.noise_variance_ == 0
+    # Non-regression test for gh-12489
+    # ensure no divide-by-zero error for n_components == n_features < n_samples
+    pca.score(X)
 
     pca.fit(X.T)
     assert pca.noise_variance_ == 0
+    # Non-regression test for gh-12489
+    # ensure no divide-by-zero error for n_components == n_samples < n_features
+    pca.score(X.T)
 
 
 @pytest.mark.parametrize(
@@ -696,7 +702,7 @@ def test_pca_randomized_svd_n_oversamples():
         (
             {"n_oversamples": 1.5},
             TypeError,
-            "n_oversamples must be an instance of <class 'numbers.Integral'>",
+            "n_oversamples must be an instance of int",
         ),
     ],
 )
