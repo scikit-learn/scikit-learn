@@ -1406,8 +1406,29 @@ def check_scalar(
         If `min_val`, `max_val` and `include_boundaries` are inconsistent.
     """
 
+    def type_name(t):
+        """Convert type into humman readable string."""
+        module = t.__module__
+        qualname = t.__qualname__
+        if module == "builtins":
+            return qualname
+        elif t == numbers.Real:
+            return "float"
+        elif t == numbers.Integral:
+            return "int"
+        return f"{module}.{qualname}"
+
     if not isinstance(x, target_type):
-        raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
+        if isinstance(target_type, tuple):
+            types_str = ", ".join(type_name(t) for t in target_type)
+            target_type_str = f"{{{types_str}}}"
+        else:
+            target_type_str = type_name(target_type)
+
+        raise TypeError(
+            f"{name} must be an instance of {target_type_str}, not"
+            f" {type(x).__qualname__}."
+        )
 
     expected_include_boundaries = ("left", "right", "both", "neither")
     if include_boundaries not in expected_include_boundaries:
