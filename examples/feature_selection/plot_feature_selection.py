@@ -68,7 +68,7 @@ plt.ylabel(r"Univariate score ($-Log(p_{value})$)")
 plt.show()
 
 # %%
-# In the total set of features, only the 4 original features are significant.
+# In the total set of features, only the 4 of the original features are significant.
 # We can see that they have the highest score with univariate feature
 # selection.
 
