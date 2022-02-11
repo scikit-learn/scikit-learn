@@ -18,7 +18,7 @@ weights.
 
 # %%
 # Generate sample data
-# ---------------------------------------------------
+# ----------------------
 #
 import numpy as np
 import matplotlib.pyplot as plt
