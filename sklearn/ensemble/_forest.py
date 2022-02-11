@@ -2639,9 +2639,21 @@ class RandomTreesEmbedding(_ClassNamePrefixFeaturesOutMixin, BaseForest):
         return output
 
     def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names, in the format of randomtreesembedding_{i}_{j},
+            where i is the tree used to generate the leaf and j is the leaf index.
+        """
         check_is_fitted(self, "_n_features_out")
 
-        # i is the tree used to generate the leaf, j is the leaf index.
         feature_names = [
             f"randomtreesembedding_{i+1}_{j}"
             for i in range(self.n_estimators)
