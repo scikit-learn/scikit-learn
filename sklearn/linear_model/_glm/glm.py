@@ -13,7 +13,7 @@ import scipy.optimize
 
 from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
-from ...utils import check_scalar
+from ...utils import check_scalar, check_array
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ..._loss.glm_distribution import (
     ExponentialDispersionModel,
@@ -68,12 +68,16 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+    alpha : {float, iterable}, default=1
+        Constant(s) that multiplies the penalty term and thus determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
         Values must be in the range `[0.0, inf)`.
+        If alpha is a scalar then the value is applied to all non-intercept terms
+        If alpha is an iterable then each value must be in the range `[0.0, inf)`
+            and the size of the iterable must be equal to the input design matrix.
+            If alpha is greater than 1 dimension it will be converted to 1 dimension.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -214,13 +218,27 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "got (link={0})".format(self.link)
                 )
 
-        check_scalar(
-            self.alpha,
-            name="alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
+        if hasattr(self.alpha, '__iter__'):
+            self.alpha = np.asarray(self.alpha, dtype=np.float_).ravel()
+            if self.alpha.size != X.shape[1]:
+                raise ValueError(f'Alpha must have length equivalent to input array. Input array is shape {X.shape[1]}'
+                                 f'while alpha is of length {self.alpha.size}')
+            for i, val in enumerate(self.alpha):
+                check_scalar(val
+                             , name=f'alpha index [{i}]'
+                             , target_type=numbers.Real
+                             , min_val=0.
+                             , include_boundaries='left')
+        else:
+            check_scalar(
+                self.alpha,
+                name="alpha",
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="left",
+            )
+            self.alpha = np.full(X.shape[1], self.alpha)
+
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
                 "The argument fit_intercept must be bool; got {0}".format(
@@ -279,7 +297,9 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     family.__class__.__name__
                 )
             )
-        # TODO: if alpha=0 check that X is not rank deficient
+        # check that matrix is full rank when alpha = 0.
+        if np.max(self.alpha) == 0. and np.linalg.matrix_rank(X) < X.shape[1]:
+            raise ValueError('Design matrix must be full rank when alpha = 0.')
 
         # rescaling of sample_weight
         #
