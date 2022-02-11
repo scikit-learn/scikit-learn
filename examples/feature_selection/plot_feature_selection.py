@@ -46,7 +46,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 
 # %%
 # Univariate feature selection
-# ---------------------------------------------------
+# ----------------------------
 #
 # Univariate feature selection with F-test for feature scoring.
 # We use the default selection function to select
