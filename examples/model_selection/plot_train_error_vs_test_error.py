@@ -20,19 +20,21 @@ measured using the explained variance a.k.a. R^2.
 # --------------------
 import numpy as np
 from sklearn import linear_model
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
 
 n_samples_train, n_samples_test, n_features = 75, 150, 500
-np.random.seed(0)
-coef = np.random.randn(n_features)
-coef[50:] = 0.0  # only the top 10 features are impacting the model
-X = np.random.randn(n_samples_train + n_samples_test, n_features)
-y = np.dot(X, coef)
-
-# %%
-# Split train and test data
-X_train, X_test = X[:n_samples_train], X[n_samples_train:]
-y_train, y_test = y[:n_samples_train], y[n_samples_train:]
-
+X, y, coef = make_regression(
+    n_samples=n_samples_train + n_samples_test,
+    n_features=n_features,
+    n_informative=50,
+    shuffle=False,
+    noise=1.0,
+    coef=True,
+)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, train_size=n_samples_train, test_size=n_samples_test, shuffle=False
+)
 # %%
 # Compute train and test errors
 # -----------------------------
