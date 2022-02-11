@@ -38,6 +38,10 @@ source build_tools/shared.sh
 
 if [[ -n $LOCK_FILE ]]; then
     conda install --channel conda-forge conda-lock --yes
+    which conda
+    conda info -e
+    echo $CONDA_PREFIX
+    echo $PATH
     conda-lock install --name $VIRTUAL_ENV $LOCK_FILE
     setup_ccache
 
