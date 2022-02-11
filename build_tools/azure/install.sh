@@ -44,6 +44,7 @@ if [[ -n $LOCK_FILE ]]; then
     echo $PATH
     conda list
     conda-lock install --name $VIRTUALENV $LOCK_FILE
+    source activate $VIRTUALENV
     setup_ccache
 
 elif [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
