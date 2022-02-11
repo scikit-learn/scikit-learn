@@ -621,6 +621,9 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
+- |Enhancement| :func:`utils.validation.check_scalar` now has better messages
+  when displaying the type. :pr:`22218` by `Thomas Fan`_.
+
 - |Fix| :func:`check_scalar` raises an error when `include_boundaries={"left", "right"}`
   and the boundaries are not set.
   :pr:`22027` by `Marie Lanternier <mlant>`.
