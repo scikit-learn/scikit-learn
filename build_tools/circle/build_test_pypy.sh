@@ -35,5 +35,3 @@ export SKLEARN_BUILD_PARALLEL=3
 pip install --no-build-isolation -e .
 
 python -m pytest sklearn
-python -m pytest doc/sphinxext/
-python -m pytest $(find doc -name '*.rst' | sort)
