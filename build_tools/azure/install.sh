@@ -43,7 +43,7 @@ if [[ -n $LOCK_FILE ]]; then
     echo $CONDA_PREFIX
     echo $PATH
     conda list
-    conda-lock install --name $VIRTUAL_ENV $LOCK_FILE
+    conda-lock install --name $VIRTUALENV $LOCK_FILE
     setup_ccache
 
 elif [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
