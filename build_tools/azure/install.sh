@@ -147,20 +147,21 @@ if [[ -z $LOCK_FILE ]]; then
     python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
                         $(get_dep pytest $PYTEST_VERSION) \
                         $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
-fi
 
-if [[ "$COVERAGE" == "true" ]]; then
-    # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
-    # cf. https://github.com/nedbat/coveragepy/issues/1310
-    python -m pip install codecov pytest-cov coverage==6.2
-fi
+    if [[ "$COVERAGE" == "true" ]]; then
+        # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
+        # cf. https://github.com/nedbat/coveragepy/issues/1310
+        python -m pip install codecov pytest-cov coverage==6.2
+    fi
 
-if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    # numpydoc requires sphinx
-    python -m pip install sphinx
-    # TODO: update the docstring checks to be compatible with new
-    # numpydoc versions
-    python -m pip install "numpydoc<1.2"
+    if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
+        # numpydoc requires sphinx
+        python -m pip install sphinx
+        # TODO: update the docstring checks to be compatible with new
+        # numpydoc versions
+        python -m pip install "numpydoc<1.2"
+    fi
+
 fi
 
 python --version
