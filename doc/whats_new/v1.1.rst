@@ -65,6 +65,34 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |Efficiency| Low-level routines for reductions on pairwise distances
+  for dense float64 datasets have been refactored. The following functions
+  and estimators now benefit from improved performances, in particular on
+  multi-cores machines:
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.MeanShift`
+  - :class:`sklearn.cluster.OPTICS`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :func:`sklearn.feature_selection.mutual_info_regression`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.LocallyLinearEmbedding`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors`
+  can be up to 20× faster than in the previous versions'.
+
+  :pr:`21462` by :user:`Julien Jerphanion <jjerphan>`.
+
 - |Enhancement| All scikit-learn models now generate a more informative
   error message when some input contains unexpected `NaN` or infinite values.
   In particular the message contains the input name ("X", "y" or
@@ -148,7 +176,7 @@ Changelog
   :user:`Sebastian Pujalte <pujaltes>`.
 
 - |Enhancement| :func:`datasets.make_blobs` no longer copies data during the generation
-  process, therefore uses less memory. 
+  process, therefore uses less memory.
   :pr:`22412` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
@@ -620,38 +648,6 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
-
-
-Miscellaneous
-.............
-
-- |Efficiency| Low-level routines for reductions on pairwise distances
-  for dense float64 datasets have been refactored. The following functions
-  and estimators now benefit from improved performances, in particular on
-  multi-cores machines:
-  - :func:`sklearn.metrics.pairwise_distances_argmin`
-  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
-  - :class:`sklearn.cluster.AffinityPropagation`
-  - :class:`sklearn.cluster.Birch`
-  - :class:`sklearn.cluster.MeanShift`
-  - :class:`sklearn.cluster.OPTICS`
-  - :class:`sklearn.cluster.SpectralClustering`
-  - :func:`sklearn.feature_selection.mutual_info_regression`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.neighbors.KNeighborsRegressor`
-  - :class:`sklearn.neighbors.LocalOutlierFactor`
-  - :class:`sklearn.neighbors.NearestNeighbors`
-  - :class:`sklearn.manifold.Isomap`
-  - :class:`sklearn.manifold.LocallyLinearEmbedding`
-  - :class:`sklearn.manifold.TSNE`
-  - :func:`sklearn.manifold.trustworthiness`
-  - :class:`sklearn.semi_supervised.LabelPropagation`
-  - :class:`sklearn.semi_supervised.LabelSpreading`
-
-  For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors`
-  can be up to 20× faster than in the previous versions'.
-
-  :pr:`21462` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Enhancement| :func:`utils.validation.check_scalar` now has better messages
   when displaying the type. :pr:`22218` by `Thomas Fan`_.
