@@ -12,12 +12,12 @@ measured using the explained variance a.k.a. R^2.
 
 """
 
-# %%
-# Generate sample data
-# --------------------
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
+# %%
+# Generate sample data
+# --------------------
 import numpy as np
 from sklearn import linear_model
 
