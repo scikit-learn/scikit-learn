@@ -121,8 +121,7 @@ def test_spectral_unknown_assign_labels():
             X,
             {"n_clusters": 1.5},
             TypeError,
-            "n_clusters must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'float'>",
+            "n_clusters must be an instance of int, not float",
         ),
         (X, {"n_init": -1}, ValueError, "n_init == -1, must be >= 1"),
         (X, {"n_init": 0}, ValueError, "n_init == 0, must be >= 1"),
@@ -130,8 +129,7 @@ def test_spectral_unknown_assign_labels():
             X,
             {"n_init": 1.5},
             TypeError,
-            "n_init must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'float'>",
+            "n_init must be an instance of int, not float",
         ),
         (X, {"gamma": -1}, ValueError, "gamma == -1, must be >= 1"),
         (X, {"gamma": 0}, ValueError, "gamma == 0, must be >= 1"),
