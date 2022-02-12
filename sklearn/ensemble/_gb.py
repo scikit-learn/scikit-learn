@@ -50,6 +50,7 @@ from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
+from ..utils import check_scalar
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
@@ -265,21 +266,28 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_params(self):
         """Check validity of parameters and raise ValueError if not valid."""
-        if self.n_estimators <= 0:
-            raise ValueError(
-                "n_estimators must be greater than 0 but was %r" % self.n_estimators
-            )
 
-        if self.learning_rate <= 0.0:
-            raise ValueError(
-                "learning_rate must be greater than 0 but was %r" % self.learning_rate
-            )
+        check_scalar(
+            self.learning_rate,
+            name="learning_rate",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+
+        check_scalar(
+            self.n_estimators,
+            name="n_estimators",
+            target_type=numbers.Integral,
+            min_val=1,
+            include_boundaries="left",
+        )
 
         if (
             self.loss not in self._SUPPORTED_LOSS
             or self.loss not in _gb_losses.LOSS_FUNCTIONS
         ):
-            raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
+            raise ValueError(f"Loss {self.loss!r} not supported. ")
 
         # TODO: Remove in v1.2
         if self.loss == "ls":
@@ -313,8 +321,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             self.loss_ = loss_class()
 
-        if not (0.0 < self.subsample <= 1.0):
-            raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
+        check_scalar(
+            self.subsample,
+            name="subsample",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="right",
+        )
 
         if self.init is not None:
             # init must be an estimator or 'zero'
@@ -323,11 +337,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             elif not (isinstance(self.init, str) and self.init == "zero"):
                 raise ValueError(
                     "The init parameter must be an estimator or 'zero'. "
-                    "Got init={}".format(self.init)
+                    f"Got init={self.init!r}"
                 )
 
-        if not (0.0 < self.alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0) but was %r" % self.alpha)
+        check_scalar(
+            self.alpha,
+            name="alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="neither",
+        )
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
@@ -341,28 +361,65 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_features = max(1, int(np.log2(self.n_features_in_)))
             else:
                 raise ValueError(
-                    "Invalid value for max_features: %r. "
-                    "Allowed string values are 'auto', 'sqrt' "
-                    "or 'log2'."
-                    % self.max_features
+                    f"Invalid value for max_features: {self.max_features!r}. "
+                    "Allowed string values are 'auto', 'sqrt' or 'log2'."
                 )
         elif self.max_features is None:
             max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
+            check_scalar(
+                self.max_features,
+                name="max_features",
+                target_type=numbers.Integral,
+                min_val=1,
+                include_boundaries="left",
+            )
             max_features = self.max_features
         else:  # float
-            if 0.0 < self.max_features <= 1.0:
-                max_features = max(int(self.max_features * self.n_features_in_), 1)
-            else:
-                raise ValueError("max_features must be in (0, n_features]")
+            check_scalar(
+                self.max_features,
+                name="max_features",
+                target_type=numbers.Real,
+                min_val=0.0,
+                max_val=1.0,
+                include_boundaries="right",
+            )
+            max_features = max(1, int(self.max_features * self.n_features_in_))
 
         self.max_features_ = max_features
 
-        if not isinstance(self.n_iter_no_change, (numbers.Integral, type(None))):
-            raise ValueError(
-                "n_iter_no_change should either be None or an integer. %r was passed"
-                % self.n_iter_no_change
+        check_scalar(
+            self.verbose,
+            name="verbose",
+            target_type=(numbers.Integral, np.bool_),
+            min_val=0,
+        )
+
+        check_scalar(
+            self.validation_fraction,
+            name="validation_fraction",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="neither",
+        )
+
+        if self.n_iter_no_change is not None:
+            check_scalar(
+                self.n_iter_no_change,
+                name="n_iter_no_change",
+                target_type=numbers.Integral,
+                min_val=1,
+                include_boundaries="left",
             )
+
+        check_scalar(
+            self.tol,
+            name="tol",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures."""
@@ -477,6 +534,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             )
 
         # if not warmstart - clear the estimator state
+        check_scalar(
+            self.warm_start,
+            name="warm_start",
+            target_type=(numbers.Integral, np.bool_),
+        )
         if not self.warm_start:
             self._clear_state()
 
@@ -498,6 +560,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             y = self._validate_y(y, sample_weight)
         else:
             y = self._validate_y(y)
+
+        self._check_params()
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
@@ -522,8 +586,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     )
         else:
             X_val = y_val = sample_weight_val = None
-
-        self._check_params()
 
         if not self._is_initialized():
             # init state

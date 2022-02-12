@@ -35,7 +35,7 @@
 .. |PythonMinVersion| replace:: 3.7
 .. |NumPyMinVersion| replace:: 1.14.6
 .. |SciPyMinVersion| replace:: 1.1.0
-.. |JoblibMinVersion| replace:: 0.11
+.. |JoblibMinVersion| replace:: 1.0.0
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
 .. |MatplotlibMinVersion| replace:: 2.2.3
 .. |Scikit-ImageMinVersion| replace:: 0.14.5
@@ -89,7 +89,7 @@ User installation
 ~~~~~~~~~~~~~~~~~
 
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip``   ::
+the easiest way to install scikit-learn is using ``pip``::
 
     pip install -U scikit-learn
 

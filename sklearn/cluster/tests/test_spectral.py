@@ -390,15 +390,6 @@ def test_verbose(assign_labels, capsys):
         assert re.search(r"Iteration [0-9]+, inertia", captured.out)
 
 
-# TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
-def test_pairwise_is_deprecated(affinity):
-    sp = SpectralClustering(affinity=affinity)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        sp._pairwise
-
-
 def test_spectral_clustering_np_matrix_raises():
     """Check that spectral_clustering raises an informative error when passed
     a np.matrix. See #10993"""
