@@ -197,7 +197,7 @@ _ = plt.legend(loc="best")
 # of the arrows point towards the true class, e.g., green arrows (samples where
 # the true class is 'green') generally point towards the green vertex. This
 # results in fewer over-confident, 0 predicted probabilities and at the same
-# time an increase in the the predicted probabilities of the correct class.
+# time an increase in the predicted probabilities of the correct class.
 # Thus, the calibrated classifier produces more accurate predicted probablities
 # that incur a lower :ref:`log loss <log_loss>`
 #
