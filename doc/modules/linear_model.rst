@@ -877,6 +877,19 @@ following cost function:
 
 .. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \left[-y_i P(y_i=1|X_i)) - (1 - y_i) \log(1 - P(y_i=1|X_i))\right].
 Multinomial Case
+
+We currently implement four choices of regularization term
+
+#. None, :math:`r(w) = 0`
+#. :math:`\ell_1,\, r(w) = \|w\|_1`
+#. :math:`\ell_2,\, r(w) = \frac{1}{2}\|w\|_2^2 = \frac{1}{2}w^T w`
+#. ElasticNet, :math:`r(w) = \frac{1 - \rho}{2}w^T w + \rho \|w\|_1`
+
+For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
+controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
+regularization. Elastic-Net is equivalent to :math:`\ell_1` when
+:math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
+
 ----------------
 
 The binary case can be extended to :math:`K`-classes leading to the multinomial logistic regression, see also `log-linear model
@@ -900,27 +913,12 @@ a matrix of coefficients :math:`W` where each row vector :math:`w_k` corresponds
 
 .. math:: \min_W r(W) - C\sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log  p(y_i=k|X_i).
 
-.. note::
-
-   In the multinomial case, the regularization function internally flattens the
-   matrix of weights into a vector. This is equivalent to concatenating each
-   individual :math:`W_k` vector. Thus, for a matrix :math:`W`, using
-   :math:`\ell_2` regularization is equivalent to taking the Frobenius norm:
-   :math:`r(W) = \|W\|_F`
-
-Regularization
---------------
 We currently implement four choices of regularization term
 
-#. None, :math:`r(w) = 0`
-#. :math:`\ell_1,\, r(w) = \|w\|_1`
-#. :math:`\ell_2,\, r(w) = \|w\|_2 = w^T w`
-#. ElasticNet, :math:`r(w) = \frac{1 - \rho}{2}w^T w + \rho \|w\|_1`
-
-For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
-controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
-regularization. Elastic-Net is equivalent to :math:`\ell_1` when
-:math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
+#. None, :math:`r(W) = 0`
+#. :math:`\ell_1,\, r(W) = \|W\|_1 `
+#. :math:`\ell_2,\, r(W) = \frac{1}{2}\|W\|_F^2 = \frac{1}{2}sum_{i=1}^n\sum_{j=1}^K w_{i,j}^2`
+#. ElasticNet, :math:`r(W) = \frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_1`
 
 Solvers
 -------
