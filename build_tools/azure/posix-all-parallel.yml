@@ -9,7 +9,7 @@ parameters:
 
 jobs:
 # When [azure parallel] is *not* in the commit message, this build is enabled.
-# Later builds should check if this job succeed or skipped by using:
+# Later builds should check if this job succeeded or skipped by using:
 # in(dependencies[{{ parameters.name }}]['result'], 'Succeeded', 'Skipped')
 - template: posix.yml
   parameters:
