@@ -217,7 +217,9 @@ def type_of_target(y, input_name=""):
 
     Parameters
     ----------
-    y : array-like
+    y : {array-like, sparse matrix}
+        The target array. If a sparse matrix, `y` is expected to be a
+        CSR/CSC matrix.
 
     input_name : str, default=""
         The data name used to construct the error message.
