@@ -864,14 +864,18 @@ Binary Case
 -----------
 
 For notational ease, we assume that the target :math:`y_i` takes values in the
-set :math:`\{0, 1\}` for data point :math:`i`. As an optimization problem, binary
+set :math:`\{0, 1\}` for data point :math:`i`.
+
+Once fitted, the ``predict_proba`` method of ``LogisticRegression`` predicts
+the class probability of
+
+.. math:: P(y_i=1|X_i) = \operatorname{expit}(X_i^T w + w_0) = \frac{1}{1 + \exp(-X_i^T w - w_0)}.
+
+As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)`  minimizes the
 following cost function:
 
-.. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \log(1 + \exp(X_i^T w + w_0)) - y_i * (X_i^T w + w_0).
-
-Once fitter, the ``predict_proba`` method of ``LogisticRegression`` predicts the class probability of :math:`P(y_i=1|X_i) = \expit(X_i^T w + w_0) = \frac{1}{1 + \exp(-X_i^T w - w_0)}`.
-
+.. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \left[-y_i P(y_i=1|X_i)) - (1 - y_i) \log(1 - P(y_i=1|X_i))\right].
 Multinomial Case
 ----------------
 
@@ -887,19 +891,14 @@ The binary case can be extended to :math:`K`-classes leading to the multinomial 
    symmetrical inductive bias regarding ordering of classes, see [1].. This effect becomes
    especially important when using regularization.
 
-Let :math:`J_i` be a binary vector with a :math:`0` for every element except
-for element :math:`i`. In the multinomial context with :math:`K`-many classes,
-we define the target vector of :math:`X_n` as :math:`Y_n=J_t` where :math:`t`
-is the true class of :math:`X_n`. Instead of a single weight vector, we now have
-a matrix of weights :math:`W` where each vector :math:`W_k` corresponds to class
-:math:`k`. Then we can define the evidence vector :math:`z_n` component-wise as:
+Let :math:`y_i \in {0, \ldots, K-1}` be the label (ordinal) encoded target variable for observation $i$.
+Instead of a single coefficient vector, we now have
+a matrix of coefficients :math:`W` where each row vector :math:`w_k` corresponds to class
+:math:`k`. We aim at predicting the class probabilities via ``predict_proba`` as:
 
-.. math:: p(Y_n=J_k|X_n) = z_{n,k} = \frac{\exp (W_k^T X_n)}{\sum_j \exp (W_j^T X_n)}
+.. math:: p(y_i=k|X_i) = \frac{\exp(X_i w_k + w_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i w_l + w_{0, l})}.
 
-Finding the weight matrix $W$ corresponds to solving the following
-optimization problem:
-
-.. math:: \min_W r(W) - C\sum_n Y_n^T z_n
+.. math:: \min_W r(W) - C\sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log  p(y_i=k|X_i).
 
 .. note::
 
