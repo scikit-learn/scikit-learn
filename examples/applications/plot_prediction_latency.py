@@ -298,8 +298,6 @@ def plot_benchmark_throughput(throughputs, configuration):
 # Benchmark bulk/atomic prediction speed for various regressors
 # -------------------------------------------------------------
 
-start_time = time.time()
-
 configuration = {
     "n_train": int(1e3),
     "n_test": int(1e2),
@@ -329,7 +327,10 @@ configuration = {
 }
 benchmark(configuration)
 
-# benchmark n_features influence on prediction speed
+# %%
+# Benchmark n_features influence on prediction speed
+# --------------------------------------------------
+
 percentile = 90
 percentiles = n_feature_influence(
     {"ridge": Ridge()},
@@ -340,9 +341,9 @@ percentiles = n_feature_influence(
 )
 plot_n_features_influence(percentiles, percentile)
 
-# benchmark throughput
+# %%
+# Benchmark throughput
+# --------------------
+
 throughputs = benchmark_throughputs(configuration)
 plot_benchmark_throughput(throughputs, configuration)
-
-stop_time = time.time()
-print("example run in %.2fs" % (stop_time - start_time))
