@@ -33,9 +33,9 @@ sparse_multilable_explicit_zero[:, 0] = 0
 
 
 def _generate_sparse(
-        matrix,
-        matrix_types=(csr_matrix, csc_matrix, coo_matrix, dok_matrix, lil_matrix),
-        dtypes=(bool, int, np.int8, np.uint8, float, np.float32),
+    matrix,
+    matrix_types=(csr_matrix, csc_matrix, coo_matrix, dok_matrix, lil_matrix),
+    dtypes=(bool, int, np.int8, np.uint8, float, np.float32),
 ):
     return [
         matrix_type(matrix, dtype=dtype)
@@ -84,12 +84,14 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.uint8),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=float),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
-        *_generate_sparse([[1, 0, 2, 2], [1, 4, 2, 4]],
-                          matrix_types=(csr_matrix, csc_matrix),
-                          dtypes=(int, np.int8, np.uint8, float, np.float32)),
-        np.array([['a', 'b'], ['c', 'd']]),
-        np.array([['a', 'b'], ['c', 'd']]),
-        np.array([['a', 'b'], ['c', 'd']], dtype=object),
+        *_generate_sparse(
+            [[1, 0, 2, 2], [1, 4, 2, 4]],
+            matrix_types=(csr_matrix, csc_matrix),
+            dtypes=(int, np.int8, np.uint8, float, np.float32),
+        ),
+        np.array([["a", "b"], ["c", "d"]]),
+        np.array([["a", "b"], ["c", "d"]]),
+        np.array([["a", "b"], ["c", "d"]], dtype=object),
         np.array([[1, 0, 2]]),
         _NotAnArray(np.array([[1, 0, 2]])),
     ],
@@ -121,16 +123,20 @@ EXAMPLES = {
         np.array([[0], [0.5]]),
         np.array([[0], [0.5]], dtype=np.float32),
     ],
-    'continuous-multioutput': [
-        np.array([[0, .5], [.5, 0]]),
-        np.array([[0, .5], [.5, 0]], dtype=np.float32),
-        np.array([[0, .5]]),
-        *_generate_sparse([[0, .5], [.5, 0]],
-                          matrix_types=(csr_matrix, csc_matrix),
-                          dtypes=(float, np.float32)),
-        *_generate_sparse([[0, .5]],
-                          matrix_types=(csr_matrix, csc_matrix),
-                          dtypes=(float, np.float32)),
+    "continuous-multioutput": [
+        np.array([[0, 0.5], [0.5, 0]]),
+        np.array([[0, 0.5], [0.5, 0]], dtype=np.float32),
+        np.array([[0, 0.5]]),
+        *_generate_sparse(
+            [[0, 0.5], [0.5, 0]],
+            matrix_types=(csr_matrix, csc_matrix),
+            dtypes=(float, np.float32),
+        ),
+        *_generate_sparse(
+            [[0, 0.5]],
+            matrix_types=(csr_matrix, csc_matrix),
+            dtypes=(float, np.float32),
+        ),
     ],
     "unknown": [
         [[]],
@@ -142,7 +148,7 @@ EXAMPLES = {
         [{1, 2, 3}, {1, 2}],
         [frozenset([1, 2, 3]), frozenset([1, 2])],
         # and also confusable as sequences of sequences
-        [{0: 'a', 1: 'b'}, {0: 'a'}],
+        [{0: "a", 1: "b"}, {0: "a"}],
         # ndim 0
         np.array(0),
         # empty second dimension

@@ -164,14 +164,8 @@ def is_multilabel(y):
         labels = np.unique(y.data)
         return (
             len(y.data) == 0
-            or (
-                labels.size == 1
-                or (labels.size == 2) and (0 in labels)
-            )
-            and (
-                y.dtype.kind in "biu"
-                or _is_integral_float(labels)  # bool, int, uint
-            )
+            or (labels.size == 1 or (labels.size == 2) and (0 in labels))
+            and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
         labels = np.unique(y)
@@ -294,7 +288,7 @@ def type_of_target(y, input_name=""):
     # DeprecationWarning will be replaced by ValueError, see NEP 34
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
     with warnings.catch_warnings():
-        warnings.simplefilter('error', np.VisibleDeprecationWarning)
+        warnings.simplefilter("error", np.VisibleDeprecationWarning)
         if not issparse(y):
             try:
                 y = np.asarray(y)
@@ -323,18 +317,17 @@ def type_of_target(y, input_name=""):
     # Invalid inputs
     if y.ndim not in (1, 2):
         # Number of dimension greater than 2: [[[1, 2]]]
-        return 'unknown'
+        return "unknown"
     if not min(y.shape):
         # Empty ndarray: []/[[]]
         if y.ndim == 1:
             # 1-D empty array: []
-            return 'binary'  # []
+            return "binary"  # []
         # 2-D empty array: [[]]
-        return 'unknown'
-    if (not issparse(y) and y.dtype == object and
-            not isinstance(y.flat[0], str)):
+        return "unknown"
+    if not issparse(y) and y.dtype == object and not isinstance(y.flat[0], str):
         # [obj_1] and not ["label_1"]
-        return 'unknown'
+        return "unknown"
 
     # Check if multioutput
     if y.ndim == 2 and y.shape[1] > 1:
@@ -343,18 +336,18 @@ def type_of_target(y, input_name=""):
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
     # Check float and contains non-integer float values
-    if y.dtype.kind == 'f':
+    if y.dtype.kind == "f":
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         data = y.data if issparse(y) else y
         if np.any(data != data.astype(int)):
             _assert_all_finite(data, input_name=input_name)
-            return 'continuous' + suffix
+            return "continuous" + suffix
 
     # Check multiclass
     first_row = y[0] if not issparse(y) else y.getrow(0).data
     if len(np.unique(y)) > 2 or (y.ndim == 2 and len(first_row) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
-        return 'multiclass' + suffix
+        return "multiclass" + suffix
     else:
         return "binary"  # [1, 2] or [["a"], ["b"]]
 
