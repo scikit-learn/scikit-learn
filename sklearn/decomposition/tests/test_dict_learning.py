@@ -740,6 +740,10 @@ def test_dictionary_learning_dtype_match(
     assert dict_learner.components_.dtype == expected_type
     assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
 
+    if dictionary_learning_transformer is MiniBatchDictionaryLearning:
+        assert dict_learner.inner_stats_[0].dtype == expected_type
+        assert dict_learner.inner_stats_[1].dtype == expected_type
+
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
 @pytest.mark.parametrize(

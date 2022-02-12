@@ -931,9 +931,6 @@ def make_blobs(
     if isinstance(cluster_std, numbers.Real):
         cluster_std = np.full(len(centers), cluster_std)
 
-    X = []
-    y = []
-
     if isinstance(n_samples, Iterable):
         n_samples_per_center = n_samples
     else:
@@ -942,19 +939,20 @@ def make_blobs(
         for i in range(n_samples % n_centers):
             n_samples_per_center[i] += 1
 
-    for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
-        X.append(generator.normal(loc=centers[i], scale=std, size=(n, n_features)))
-        y += [i] * n
+    cum_sum_n_samples = np.cumsum(n_samples_per_center)
+    X = np.empty(shape=(sum(n_samples_per_center), n_features), dtype=np.float64)
+    y = np.empty(shape=(sum(n_samples_per_center),), dtype=int)
 
-    X = np.concatenate(X)
-    y = np.array(y)
+    for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
+        start_idx = cum_sum_n_samples[i - 1] if i > 0 else 0
+        end_idx = cum_sum_n_samples[i]
+        X[start_idx:end_idx] = generator.normal(
+            loc=centers[i], scale=std, size=(n, n_features)
+        )
+        y[start_idx:end_idx] = i
 
     if shuffle:
-        total_n_samples = np.sum(n_samples)
-        indices = np.arange(total_n_samples)
-        generator.shuffle(indices)
-        X = X[indices]
-        y = y[indices]
+        X, y = util_shuffle(X, y, random_state=generator)
 
     if return_centers:
         return X, y, centers
