@@ -914,14 +914,13 @@ def test_ovo_store_class_pairs():
     X = iris.data
 
     # Check with y of type int and string
-    y_int_string = [
-        iris.target, # int
-        iris.target_names[iris.target] # string
-    ]
+    y_int_string = [iris.target, iris.target_names[iris.target]]  # int  # string
 
     for y in y_int_string:
-        clf = OneVsOneClassifier(LinearSVC(random_state=0), store_class_pairs = True).fit(X, y)
-        
+        clf = OneVsOneClassifier(LinearSVC(random_state=0), store_class_pairs=True).fit(
+            X, y
+        )
+
         classes = np.unique(y)
         n_classes = classes.shape[0]
 
@@ -932,13 +931,17 @@ def test_ovo_store_class_pairs():
 
         # Check pairs are correct or not.
         correct_pairs = np.array(
-                [[classes[i], classes[j]]
+            [
+                [classes[i], classes[j]]
                 for i in range(n_classes)
-                for j in range(i + 1, n_classes)],
-                dtype = y.dtype
-            )
+                for j in range(i + 1, n_classes)
+            ],
+            dtype=y.dtype,
+        )
         assert np.all(clf.class_pairs_ == correct_pairs)
-    
+
     # If store_class_pairs = False `class_pairs_` should not be created.
-    clf = OneVsOneClassifier(LinearSVC(random_state=0), store_class_pairs = False).fit(X, iris.target)
+    clf = OneVsOneClassifier(LinearSVC(random_state=0), store_class_pairs=False).fit(
+        X, iris.target
+    )
     assert not hasattr(clf, "class_pairs_")
