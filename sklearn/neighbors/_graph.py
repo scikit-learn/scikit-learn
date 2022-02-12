@@ -46,7 +46,7 @@ def kneighbors_graph(
     include_self=False,
     n_jobs=None,
 ):
-    """Computes the (weighted) graph of k-Neighbors for points in X
+    """Compute the (weighted) graph of k-Neighbors for points in X.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
@@ -79,7 +79,7 @@ def kneighbors_graph(
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, default=None
-        additional keyword arguments for the metric function.
+        Additional keyword arguments for the metric function.
 
     include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
@@ -98,6 +98,10 @@ def kneighbors_graph(
         Graph where A[i, j] is assigned the weight of edge that
         connects i to j. The matrix is of CSR format.
 
+    See Also
+    --------
+    radius_neighbors_graph: Compute the (weighted) graph of Neighbors for points in X.
+
     Examples
     --------
     >>> X = [[0], [3], [1]]
@@ -107,10 +111,6 @@ def kneighbors_graph(
     array([[1., 0., 1.],
            [0., 1., 1.],
            [1., 0., 1.]])
-
-    See Also
-    --------
-    radius_neighbors_graph
     """
     if not isinstance(X, KNeighborsMixin):
         X = NearestNeighbors(
