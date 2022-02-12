@@ -14,7 +14,6 @@ import numbers
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-import joblib
 from joblib import Parallel, effective_n_jobs
 
 from ._ball_tree import BallTree
@@ -28,7 +27,6 @@ from ..utils import (
     gen_even_slices,
     _to_object_array,
 )
-from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
@@ -607,17 +605,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # For cross-validation routines to split data correctly
         return {"pairwise": self.metric == "precomputed"}
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # For cross-validation routines to split data correctly
-        return self.metric == "precomputed"
-
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):
     """Helper for the Parallel calls in KNeighborsMixin.kneighbors.
@@ -795,13 +782,7 @@ class KNeighborsMixin:
                     "or set algorithm='brute'"
                     % self._fit_method
                 )
-            old_joblib = parse_version(joblib.__version__) < parse_version("0.12")
-            if old_joblib:
-                # Deal with change of API in joblib
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                parallel_kwargs = {"prefer": "threads"}
-            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+            chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(_tree_query_parallel_helper)(
                     self._tree, X[s], n_neighbors, return_distance
                 )
@@ -1133,13 +1114,7 @@ class RadiusNeighborsMixin:
 
             n_jobs = effective_n_jobs(self.n_jobs)
             delayed_query = delayed(_tree_query_radius_parallel_helper)
-            if parse_version(joblib.__version__) < parse_version("0.12"):
-                # Deal with change of API in joblib
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                parallel_kwargs = {"prefer": "threads"}
-
-            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+            chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed_query(
                     self._tree, X[s], radius, return_distance, sort_results=sort_results
                 )

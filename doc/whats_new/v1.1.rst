@@ -45,6 +45,12 @@ random sampling procedures.
   `force_finite=False` if you really want to get non-finite values and keep
   the old behavior.
 
+- |Fix| Panda's DataFrames with all non-string columns such as a MultiIndex no
+  longer warns when passed into an Estimator. Estimators will continue to
+  ignore the column names in DataFrames with non-string columns. For
+  `feature_names_in_` to be defined, columns must be all strings. :pr:`22410` by
+  `Thomas Fan`_.
+
 Changelog
 ---------
 
@@ -112,6 +118,14 @@ Changelog
   `gamma`, `n_neighbors`, `eigen_tol` or `degree`.
   :pr:`21881` by :user:`Hugo Vassard <hvassard>`.
 
+- |Enhancement| :class:`cluster.AffinityPropagation` now returns cluster
+  centers and labels if they exist, even if the model has not fully converged.
+  When returning these potentially-degenerate cluster centers and labels, a new
+  warning message is shown. If no cluster centers were constructed,
+  then the cluster centers remain an empty list with labels set to
+  `-1` and the original warning message is shown.
+  :pr:`22217` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -133,10 +147,14 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
+- |Enhancement| :func:`datasets.make_blobs` no longer copies data during the generation
+  process, therefore uses less memory.
+  :pr:`22412` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 - |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
   ``scaled``, to allow loading unscaled data. The scaled version of this
   dataset is now computed from the unscaled data, and can produce slightly
-  different different results that in previous version (within a 1e-4 absolute
+  different results that in previous version (within a 1e-4 absolute
   tolerance).
   :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
 
@@ -237,6 +255,11 @@ Changelog
   function module.
   :pr:`20811`, :pr:`20567` and :pr:`21814` by
   :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| Change the parameter `validation_fraction` in
+  :class:`ensemble.BaseGradientBoosting` so that an error is raised if anything
+  other than a float is passed in as an argument.
+  :pr:`21632` by :user:`Genesis Valencia <genvalen>`
 
 - |API| Changed the default of :func:`max_features` to 1.0 for
   :class:`ensemble.RandomForestRegressor` and to `"sqrt"` for
@@ -510,6 +533,9 @@ Changelog
   messages when optimizers produce non-finite parameter weights. :pr:`22150`
   by :user:`Christian Ritter <chritter>` and :user:`Norbert Preining <norbusan>`.
 
+- |Enhancement| Adds :term:`get_feature_names_out` to
+  :class:`neural_network.BernoulliRBM`. :pr:`22248` by `Thomas Fan`_.
+
 :mod:`sklearn.pipeline`
 .......................
 
@@ -545,6 +571,12 @@ Changelog
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`preprocessing.Normalizer`,
+  :class:`preprocessing.KernelCenterer`,
+  :class:`preprocessing.OrdinalEncoder`, and
+  :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
 
 :mod:`sklearn.random_projection`
 ................................
@@ -595,6 +627,9 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.validation.check_scalar` now has better messages
+  when displaying the type. :pr:`22218` by `Thomas Fan`_.
 
 - |Fix| :func:`check_scalar` raises an error when `include_boundaries={"left", "right"}`
   and the boundaries are not set.

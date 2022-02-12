@@ -808,6 +808,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     Features             integers 0-16
     =================   ==============
 
+    This is a copy of the test set of the UCI ML hand-written digits datasets
+    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+
     Read more in the :ref:`User Guide <digits_dataset>`.
 
     Parameters
@@ -859,11 +862,13 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (1797, 64) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (1797) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
-
-    This is a copy of the test set of the UCI ML hand-written digits datasets
-    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 
     Examples
     --------

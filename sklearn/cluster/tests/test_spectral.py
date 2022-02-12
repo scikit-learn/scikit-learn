@@ -121,8 +121,7 @@ def test_spectral_unknown_assign_labels():
             X,
             {"n_clusters": 1.5},
             TypeError,
-            "n_clusters must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'float'>",
+            "n_clusters must be an instance of int, not float",
         ),
         (X, {"n_init": -1}, ValueError, "n_init == -1, must be >= 1"),
         (X, {"n_init": 0}, ValueError, "n_init == 0, must be >= 1"),
@@ -130,8 +129,7 @@ def test_spectral_unknown_assign_labels():
             X,
             {"n_init": 1.5},
             TypeError,
-            "n_init must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'float'>",
+            "n_init must be an instance of int, not float",
         ),
         (X, {"gamma": -1}, ValueError, "gamma == -1, must be >= 1"),
         (X, {"gamma": 0}, ValueError, "gamma == 0, must be >= 1"),
@@ -388,15 +386,6 @@ def test_verbose(assign_labels, capsys):
     if assign_labels == "kmeans":
         assert re.search(r"Initialization complete", captured.out)
         assert re.search(r"Iteration [0-9]+, inertia", captured.out)
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
-def test_pairwise_is_deprecated(affinity):
-    sp = SpectralClustering(affinity=affinity)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        sp._pairwise
 
 
 def test_spectral_clustering_np_matrix_raises():

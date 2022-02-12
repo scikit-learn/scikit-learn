@@ -326,22 +326,10 @@ class Pipeline(_BaseComposition):
                 with _print_elapsed_time("Pipeline", self._log_message(step_idx)):
                     continue
 
-            if hasattr(memory, "location"):
-                # joblib >= 0.12
-                if memory.location is None:
-                    # we do not clone when caching is disabled to
-                    # preserve backward compatibility
-                    cloned_transformer = transformer
-                else:
-                    cloned_transformer = clone(transformer)
-            elif hasattr(memory, "cachedir"):
-                # joblib < 0.11
-                if memory.cachedir is None:
-                    # we do not clone when caching is disabled to
-                    # preserve backward compatibility
-                    cloned_transformer = transformer
-                else:
-                    cloned_transformer = clone(transformer)
+            if hasattr(memory, "location") and memory.location is None:
+                # we do not clone when caching is disabled to
+                # preserve backward compatibility
+                cloned_transformer = transformer
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transformer
@@ -718,17 +706,6 @@ class Pipeline(_BaseComposition):
     def _more_tags(self):
         # check if first estimator expects pairwise input
         return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # check if first estimator expects pairwise input
-        return getattr(self.steps[0][1], "_pairwise", False)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
