@@ -46,7 +46,7 @@ def test_no_empty_slice_warning():
     pca = PCA(n_components=n_components)
     with pytest.warns(None) as record:
         pca.fit(X)
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize("copy", [True, False])
@@ -702,7 +702,7 @@ def test_pca_randomized_svd_n_oversamples():
         (
             {"n_oversamples": 1.5},
             TypeError,
-            "n_oversamples must be an instance of <class 'numbers.Integral'>",
+            "n_oversamples must be an instance of int",
         ),
     ],
 )
