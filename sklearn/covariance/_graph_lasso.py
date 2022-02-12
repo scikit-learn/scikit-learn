@@ -188,7 +188,7 @@ def graphical_lasso(
     GraphicalLassoCV : Sparse inverse covariance with
         cross-validated choice of the l1 penalty.
 
-    Notes
+  Notes
     -----
     The algorithm employed to solve this problem is the GLasso algorithm,
     from the Friedman 2008 Biostatistics paper. It is the same algorithm
