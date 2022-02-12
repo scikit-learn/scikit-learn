@@ -161,12 +161,16 @@ def is_multilabel(y):
     if issparse(y):
         if isinstance(y, (dok_matrix, lil_matrix)):
             y = y.tocsr()
+        labels = np.unique(y.data)
         return (
             len(y.data) == 0
-            or np.unique(y.data).size == 1
+            or (
+                labels.size == 1
+                or (labels.size == 2) and (0 in labels)
+            )
             and (
                 y.dtype.kind in "biu"
-                or _is_integral_float(np.unique(y.data))  # bool, int, uint
+                or _is_integral_float(labels)  # bool, int, uint
             )
         )
     else:
