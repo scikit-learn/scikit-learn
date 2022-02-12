@@ -330,7 +330,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits,
-        * `"prefit"` to assume the `estimators` are prefit. In this case, the estimators will not be refitted.
+        * `"prefit"` to assume the `estimators` are prefit. In this case, the
+        estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,

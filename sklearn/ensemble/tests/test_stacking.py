@@ -591,7 +591,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
     [
         (
             StackingClassifier(
-                estimators=[("lr", LogisticRegression()), ("svm", SVC(max_iter=5e4))],
+                estimators=[("lr", LogisticRegression()), ("svm", SVC())],
                 cv="prefit",
             ),
             X_iris,
@@ -601,7 +601,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=42)),
+                    ("svm", LinearSVR()),
                 ],
                 cv="prefit",
             ),
