@@ -395,10 +395,7 @@ def test_kbinsdiscretizer_subsample_invalid_type():
         n_bins=10, encode="ordinal", strategy="quantile", subsample="full"
     )
 
-    msg = (
-        "subsample must be an instance of <class 'numbers.Integral'>, not "
-        "<class 'str'>."
-    )
+    msg = "subsample must be an instance of int, not str."
     with pytest.raises(TypeError, match=msg):
         kbd.fit(X)
 

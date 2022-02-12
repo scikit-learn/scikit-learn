@@ -410,6 +410,8 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     assess_same_labelling(cut, cut_scipy)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 def test_mst_linkage_core_memory_mapped(metric_param_grid):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
@@ -870,7 +872,10 @@ def test_invalid_shape_precomputed_dist_matrix():
     # and a non square matrix is passed (PR #16257).
     rng = np.random.RandomState(0)
     X = rng.rand(5, 3)
-    with pytest.raises(ValueError, match="Distance matrix should be square, "):
+    with pytest.raises(
+        ValueError,
+        match=r"Distance matrix should be square, got matrix of shape \(5, 3\)",
+    ):
         AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(X)
 
 

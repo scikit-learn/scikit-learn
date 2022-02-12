@@ -15,6 +15,7 @@ from scipy import linalg
 from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
+from .base import _ClassNamePrefixFeaturesOutMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
@@ -165,7 +166,10 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
 
 
 class LinearDiscriminantAnalysis(
-    LinearClassifierMixin, TransformerMixin, BaseEstimator
+    _ClassNamePrefixFeaturesOutMixin,
+    LinearClassifierMixin,
+    TransformerMixin,
+    BaseEstimator,
 ):
     """Linear Discriminant Analysis.
 
@@ -378,7 +382,9 @@ class LinearDiscriminantAnalysis(
         self.covariance_ = _class_cov(
             X, y, self.priors_, shrinkage, covariance_estimator
         )
-        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
+        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T, check_finite=False)[
+            0
+        ].T
         self.intercept_ = -0.5 * np.diag(np.dot(self.means_, self.coef_.T)) + np.log(
             self.priors_
         )
@@ -437,7 +443,7 @@ class LinearDiscriminantAnalysis(
         St = _cov(X, shrinkage, covariance_estimator)  # total scatter
         Sb = St - Sw  # between scatter
 
-        evals, evecs = linalg.eigh(Sb, Sw)
+        evals, evecs = linalg.eigh(Sb, Sw, check_finite=False)
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals))[::-1][
             : self._max_components
         ]
@@ -485,7 +491,7 @@ class LinearDiscriminantAnalysis(
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, Vt = linalg.svd(X, full_matrices=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
 
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
@@ -503,7 +509,7 @@ class LinearDiscriminantAnalysis(
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        _, S, Vt = linalg.svd(X, full_matrices=0)
+        _, S, Vt = linalg.svd(X, full_matrices=0, check_finite=False)
 
         if self._max_components == 0:
             self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
@@ -614,6 +620,7 @@ class LinearDiscriminantAnalysis(
             self.intercept_ = np.array(
                 self.intercept_[1] - self.intercept_[0], ndmin=1, dtype=X.dtype
             )
+        self._n_features_out = self._max_components
         return self
 
     def transform(self, X):
@@ -626,8 +633,10 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_components)
-            Transformed data.
+        X_new : ndarray of shape (n_samples, n_components) or \
+            (n_samples, min(rank, n_components))
+            Transformed data. In the case of the 'svd' solver, the shape
+            is (n_samples, min(rank, n_components)).
         """
         if self.solver == "lsqr":
             raise NotImplementedError(
