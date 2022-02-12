@@ -63,11 +63,7 @@ if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
-            # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            # TODO: Remove !=1.1.0 when the following is fixed:
-            # sklearn/svm/_libsvm.cpython-38-darwin.so,
-            # 2): Symbol not found: _svm_check_parameter error
-            TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
+            TO_INSTALL="$TO_INSTALL compilers llvm-openmp"
         else
             # Without openmp, we use the system clang. Here we use /usr/bin/ar
             # instead because llvm-ar errors
@@ -145,9 +141,7 @@ fi
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     # numpydoc requires sphinx
     python -m pip install sphinx
-    # TODO: update the docstring checks to be compatible with new
-    # numpydoc versions
-    python -m pip install "numpydoc<1.2"
+    python -m pip install numpydoc
 fi
 
 python --version

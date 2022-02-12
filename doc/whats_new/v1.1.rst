@@ -147,10 +147,14 @@ Changelog
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
 
+- |Enhancement| :func:`datasets.make_blobs` no longer copies data during the generation
+  process, therefore uses less memory.
+  :pr:`22412` by :user:`Zhehao Liu <MaxwellLZH>`.
+
 - |Enhancement| :func:`datasets.load_diabetes` now accepts the parameter
   ``scaled``, to allow loading unscaled data. The scaled version of this
   dataset is now computed from the unscaled data, and can produce slightly
-  different different results that in previous version (within a 1e-4 absolute
+  different results that in previous version (within a 1e-4 absolute
   tolerance).
   :pr:`16605` by :user:`Mandy Gu <happilyeverafter95>`.
 
@@ -621,6 +625,9 @@ Changelog
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.validation.check_scalar` now has better messages
+  when displaying the type. :pr:`22218` by `Thomas Fan`_.
 
 - |Fix| :func:`check_scalar` raises an error when `include_boundaries={"left", "right"}`
   and the boundaries are not set.

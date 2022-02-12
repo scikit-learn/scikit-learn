@@ -115,20 +115,19 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
         (
             {"l1_ratio": "1"},
             TypeError,
-            "l1_ratio must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "l1_ratio must be an instance of float, not str",
         ),
         ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
         (
             {"tol": "1"},
             TypeError,
-            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "tol must be an instance of float, not str",
         ),
         ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
         (
             {"max_iter": "1"},
             TypeError,
-            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'str'>",
+            "max_iter must be an instance of int, not str",
         ),
     ],
 )
