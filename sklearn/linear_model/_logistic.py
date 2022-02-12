@@ -29,7 +29,6 @@ from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..utils.fixes import _joblib_parallel_args
 from ..utils.fixes import delayed
 from ..model_selection import check_cv
 from ..metrics import get_scorer
@@ -1369,9 +1368,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         https://hal.inria.fr/hal-00860051/document
 
     SAGA -- Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-        SAGA: A Fast Incremental Gradient Method With Support
-        for Non-Strongly Convex Composite Objectives
-        https://arxiv.org/abs/1407.0202
+            :arxiv:`"SAGA: A Fast Incremental Gradient Method With Support
+            for Non-Strongly Convex Composite Objectives" <1407.0202>`
 
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
@@ -1586,11 +1584,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             prefer = "threads"
         else:
             prefer = "processes"
-        fold_coefs_ = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            **_joblib_parallel_args(prefer=prefer),
-        )(
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
             path_func(
                 X,
                 y,
@@ -2151,11 +2145,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             prefer = "processes"
 
-        fold_coefs_ = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            **_joblib_parallel_args(prefer=prefer),
-        )(
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
             path_func(
                 X,
                 y,

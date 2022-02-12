@@ -479,7 +479,7 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     subset = _safe_indexing(X, [0, 1], axis=0)
     with pytest.warns(None) as record:
         subset.iloc[0, 0] = 10
-    assert len(record) == 0, f"{[str(rec.message) for rec in record]}"
+    assert not [w.message for w in record]
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1
 
