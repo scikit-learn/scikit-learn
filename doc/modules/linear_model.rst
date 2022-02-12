@@ -864,27 +864,27 @@ Binary Case
 -----------
 
 For notational ease, we assume that the target :math:`y_i` takes values in the
-set :math:`\{-1, 1\}` at trial :math:`i`. As an optimization problem, binary
-class logistic regression using :math:`r(w)` regularization minimizes the
+set :math:`\{0, 1\}` for data point :math:`i`. As an optimization problem, binary
+class logistic regression with regularization term :math:`r(w)`  minimizes the
 following cost function:
 
-.. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+.. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \log(1 + \exp(X_i^T w + w_0)) - y_i * (X_i^T w + w_0).
 
+Once fitter, the ``predict_proba`` method of ``LogisticRegression`` predicts the class probability of :math:`P(y_i=1|X_i) = \expit(X_i^T w + w_0) = \frac{1}{1 + \exp(-X_i^T w - w_0)}`.
 
 Multinomial Case
 ----------------
 
-We may then extend logistic regression to obtain a multinomial estimator by
-considering the logistic regression as a `log-linear model
+The binary case can be extended to :math:`K`-classes leading to the multinomial logistic regression, see also `log-linear model
 <https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`_.
 
 .. note::
    It is possible in a :math:`K`-class context to parameterize the model
    using only :math:`K-1` weight vectors, leaving one class probability fully
    determined by the other class probabilities by leveraging the fact that all
-   class probabilities must sum to one. We choose to overparameterize the model
+   class probabilities must sum to one. We deliberately choose to overparameterize the model
    using :math:`K` weight vectors for ease of implementation and to preserve the
-   symmetrical inductive bias regarding ordering of classes. This effect becomes
+   symmetrical inductive bias regarding ordering of classes, see [1].. This effect becomes
    especially important when using regularization.
 
 Let :math:`J_i` be a binary vector with a :math:`0` for every element except
@@ -896,7 +896,7 @@ a matrix of weights :math:`W` where each vector :math:`W_k` corresponds to class
 
 .. math:: p(Y_n=J_k|X_n) = z_{n,k} = \frac{\exp (W_k^T X_n)}{\sum_j \exp (W_j^T X_n)}
 
-Then the multinomial logistic regression solves this
+Finding the weight matrix $W$ corresponds to solving the following
 optimization problem:
 
 .. math:: \min_W r(W) - C\sum_n Y_n^T z_n
