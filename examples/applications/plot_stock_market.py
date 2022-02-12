@@ -74,14 +74,13 @@ import pandas as pd
 
 from sklearn import cluster, covariance, manifold
 
-
-# #############################################################################
+# %%
 # Retrieve the data from Internet
 
 # The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
 # that we get high-tech firms, and before the 2008 crash). This kind of
-# historical data can be obtained for from APIs like the quandl.com and
-# alphavantage.co ones.
+# historical data can be obtained from APIs like the quandl.com and
+# alphavantage.co .
 
 symbol_dict = {
     "TOT": "Total",
@@ -158,21 +157,21 @@ for symbol in symbols:
 close_prices = np.vstack([q["close"] for q in quotes])
 open_prices = np.vstack([q["open"] for q in quotes])
 
-# The daily variations of the quotes are what carry most information
+# The daily variations of the quotes are what carry the most information
 variation = close_prices - open_prices
 
 
-# #############################################################################
+# %%
 # Learn a graphical structure from the correlations
 edge_model = covariance.GraphicalLassoCV()
 
 # standardize the time series: using correlations rather than covariance
-# is more efficient for structure recovery
+# former is more efficient for structure recovery
 X = variation.copy().T
 X /= X.std(axis=0)
 edge_model.fit(X)
 
-# #############################################################################
+# %%
 # Cluster using affinity propagation
 
 _, labels = cluster.affinity_propagation(edge_model.covariance_, random_state=0)
@@ -181,8 +180,8 @@ n_labels = labels.max()
 for i in range(n_labels + 1):
     print("Cluster %i: %s" % ((i + 1), ", ".join(names[labels == i])))
 
-# #############################################################################
-# Find a low-dimension embedding for visualization: find the best position of
+# %%
+# Finding a low-dimension embedding for visualization: find the best position of
 # the nodes (the stocks) on a 2D plane
 
 # We use a dense eigen_solver to achieve reproducibility (arpack is
@@ -194,14 +193,14 @@ node_position_model = manifold.LocallyLinearEmbedding(
 
 embedding = node_position_model.fit_transform(X.T).T
 
-# #############################################################################
+# %%
 # Visualization
 plt.figure(1, facecolor="w", figsize=(10, 8))
 plt.clf()
 ax = plt.axes([0.0, 0.0, 1.0, 1.0])
 plt.axis("off")
 
-# Display a graph of the partial correlations
+# Plot the graph of partial correlations
 partial_correlations = edge_model.precision_.copy()
 d = 1 / np.sqrt(np.diag(partial_correlations))
 partial_correlations *= d
