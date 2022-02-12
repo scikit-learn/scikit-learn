@@ -556,7 +556,7 @@ def test_stacking_cv_influence(stacker, X, y):
     ],
 )
 def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y):
-    # check if fit is not called when using prefit models
+    """Check the behaviour of stacking when `cv='prefit'`"""
     X_train1, X_train2, y_train1, y_train2 = train_test_split(
         X, y, random_state=42, test_size=0.5
     )

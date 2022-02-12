@@ -188,9 +188,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         if self.cv == "prefit":
             # Generate predictions from prefit models
             predictions = [
-                getattr(est, meth)(X)
-                for est, meth in zip(all_estimators, self.stack_method_)
-                if est != "drop"
+                getattr(estimator, predict_method)(X)
+                for estimator, predict_method in zip(all_estimators, self.stack_method_)
+                if estimator != "drop"
             ]
         else:
             # To train the meta-classifier using the most data as possible, we use
@@ -321,7 +321,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         The default classifier is a
         :class:`~sklearn.linear_model.LogisticRegression`.
 
-    cv : int, cross-validation generator, iterable, or 'prefit', default=None
+    cv : int, cross-validation generator, iterable, or "prefit", default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -329,8 +329,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
-        * An iterable yielding train, test splits.
-        * 'prefit' to assume the `estimators` are prefit, and skip cross validation
+        * An iterable yielding train, test splits,
+        * `"prefit"` to assume the `estimators` are prefit. In this case, the estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -342,7 +342,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If “prefit” is passed, it is assumed that all `estimators` have
+        If "prefit" is passed, it is assumed that all `estimators` have
         been fitted already. The `final_estimator_` is trained on the `estimators`
         predictions on the full training set and are **not** cross validated
         predictions. Please note that if the models have been trained on the same
@@ -650,7 +650,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If “prefit” is passed, it is assumed that all `estimators` have
+        If "prefit" is passed, it is assumed that all `estimators` have
         been fitted already. The `final_estimator_` is trained on the `estimators`
         predictions on the full training set and are **not** cross validated
         predictions. Please note that if the models have been trained on the same
