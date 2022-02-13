@@ -496,6 +496,14 @@ Changelog
   its square root.
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.multiclass`
+......................
+
+- |Enhancement| Adds :term:`store_class_pairs` 
+  to :class:`sklearn.multiclass.OneVsOneClassifier` storing classes for which 
+  each estimator is trained with. This attribute is only available
+  if store_class_pairs=True :pr:`22436` by :user:`Diwakar-Gupta`.
+
 :mod:`sklearn.neighbors`
 ........................
 
