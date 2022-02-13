@@ -180,7 +180,7 @@ configurations = [
     },
     {
         "estimator": NuSVR,
-        "tuned_params": {"C": 1e3, "gamma": 2 ** -15},
+        "tuned_params": {"C": 1e3, "gamma": 2**-15},
         "changing_param": "nu",
         "changing_param_values": [0.05, 0.1, 0.2, 0.35, 0.5],
         "complexity_label": "n_support_vectors",

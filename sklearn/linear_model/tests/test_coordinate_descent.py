@@ -301,10 +301,10 @@ def test_lasso_dual_gap():
     clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
     w = clf.coef_
     R = y - X @ w
-    primal = 0.5 * np.mean(R ** 2) + clf.alpha * np.sum(np.abs(w))
+    primal = 0.5 * np.mean(R**2) + clf.alpha * np.sum(np.abs(w))
     # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
     R /= np.max(np.abs(X.T @ R) / (n_samples * alpha))
-    dual = 0.5 * (np.mean(y ** 2) - np.mean((y - R) ** 2))
+    dual = 0.5 * (np.mean(y**2) - np.mean((y - R) ** 2))
     assert_allclose(clf.dual_gap_, primal - dual)
 
 
