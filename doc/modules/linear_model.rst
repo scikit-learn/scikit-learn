@@ -876,6 +876,7 @@ class logistic regression with regularization term :math:`r(w)`  minimizes the
 following cost function:
 
 .. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \left[-y_i P(y_i=1|X_i)) - (1 - y_i) \log(1 - P(y_i=1|X_i))\right].
+
 Multinomial Case
 
 We currently implement four choices of regularization term
@@ -916,7 +917,7 @@ a matrix of coefficients :math:`W` where each row vector :math:`w_k` corresponds
 We currently implement four choices of regularization term
 
 #. None, :math:`r(W) = 0`
-#. :math:`\ell_1,\, r(W) = \|W\|_1 `
+#. :math:`\ell_1,\, r(W) = \|W\|_1`
 #. :math:`\ell_2,\, r(W) = \frac{1}{2}\|W\|_F^2 = \frac{1}{2}sum_{i=1}^n\sum_{j=1}^K w_{i,j}^2`
 #. ElasticNet, :math:`r(W) = \frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_1`
 
