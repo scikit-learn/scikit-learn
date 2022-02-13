@@ -89,13 +89,14 @@ plot_gallery("Faces from dataset", faces_centered[:n_components])
 # 6 components as vectors :math:`h \in \mathbf{R}^{4096}`.
 # We just displayed these vectors in human-friendly visualisation as 64x64 pixel images.
 #
+# Read more in the :ref:`User Guide <decompositions>`.
 
 # %%
 # Eigenfaces - PCA using randomized SVD
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Linear dimensionality reduction using Singular Value Decomposition (SVD) of the data
 # to project it to a lower dimensional space.
-# Read more in the :ref:`User Guide <PCA>`.
+#
 #
 # .. note::
 #
