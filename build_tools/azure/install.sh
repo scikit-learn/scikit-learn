@@ -63,11 +63,7 @@ if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
-            # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            # TODO: Remove !=1.1.0 when the following is fixed:
-            # sklearn/svm/_libsvm.cpython-38-darwin.so,
-            # 2): Symbol not found: _svm_check_parameter error
-            TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
+            TO_INSTALL="$TO_INSTALL compilers llvm-openmp"
         else
             # Without openmp, we use the system clang. Here we use /usr/bin/ar
             # instead because llvm-ar errors
@@ -137,11 +133,9 @@ python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
                       $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
-fi
-
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    python -m pip install pytest-xdist
+    # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
+    # cf. https://github.com/nedbat/coveragepy/issues/1310
+    python -m pip install codecov pytest-cov coverage==6.2
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then

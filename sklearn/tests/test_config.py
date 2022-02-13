@@ -2,12 +2,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from joblib import Parallel
-import joblib
 import pytest
 
 from sklearn import get_config, set_config, config_context
 from sklearn.utils.fixes import delayed
-from sklearn.utils.fixes import parse_version
 
 
 def test_config_context():
@@ -110,10 +108,6 @@ def test_config_threadsafe_joblib(backend):
     should be the same as the value passed to the function. In other words,
     it is not influenced by the other job setting assume_finite to True.
     """
-
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
-        pytest.skip("loky backend does not exist in joblib <0.12")  # noqa
-
     assume_finites = [False, True]
     sleep_durations = [0.1, 0.2]
 

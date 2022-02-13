@@ -116,7 +116,7 @@ def test_max_iter():
             D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
         )
         model.fit_transform(X)
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 def test_dict_learning_lars_positive_parameter():
@@ -739,6 +739,10 @@ def test_dictionary_learning_dtype_match(
     dict_learner.fit(X.astype(data_type))
     assert dict_learner.components_.dtype == expected_type
     assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
+
+    if dictionary_learning_transformer is MiniBatchDictionaryLearning:
+        assert dict_learner.inner_stats_[0].dtype == expected_type
+        assert dict_learner.inner_stats_[1].dtype == expected_type
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))

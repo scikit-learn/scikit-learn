@@ -34,6 +34,40 @@ X, y = iris.data[:, 1:3], iris.target
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 
+def test_invalid_type_for_flatten_transform():
+    # Test that invalid input raises the proper exception
+    ensemble = VotingClassifier(
+        estimators=[("lr", LogisticRegression())], flatten_transform="foo"
+    )
+    err_msg = "flatten_transform must be an instance of"
+    with pytest.raises(TypeError, match=err_msg):
+        ensemble.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "X, y, voter, learner",
+    [
+        (X, y, VotingClassifier, {"estimators": [("lr", LogisticRegression())]}),
+        (X_r, y_r, VotingRegressor, {"estimators": [("lr", LinearRegression())]}),
+    ],
+)
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
+        ({"verbose": "foo"}, TypeError, "verbose must be an instance of"),
+    ],
+)
+def test_voting_estimators_param_validation(
+    X, y, voter, learner, params, err_type, err_msg
+):
+    # Test that invalid input raises the proper exception
+    params.update(learner)
+    ensemble = voter(**params)
+    with pytest.raises(err_type, match=err_msg):
+        ensemble.fit(X, y)
+
+
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -399,7 +433,7 @@ def test_set_estimator_drop():
             warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
             eclf2.set_params(rf="drop").fit(X, y)
 
-    assert not record
+    assert not [w.message for w in record]
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
     assert dict(eclf2.estimators)["rf"] == "drop"
@@ -416,14 +450,14 @@ def test_set_estimator_drop():
             warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
             eclf2.set_params(voting="soft").fit(X, y)
 
-    assert not record
+    assert not [w.message for w in record]
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
     msg = "All estimators are dropped. At least one is required"
     with pytest.warns(None) as record:
         with pytest.raises(ValueError, match=msg):
             eclf2.set_params(lr="drop", rf="drop", nb="drop").fit(X, y)
-    assert not record
+    assert not [w.message for w in record]
 
     # Test soft voting transform
     X1 = np.array([[1], [2]])
@@ -446,7 +480,7 @@ def test_set_estimator_drop():
             # scipy 1.3.0 uses tostring which is deprecated in numpy
             warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
             eclf2.set_params(rf="drop").fit(X1, y1)
-    assert not record
+    assert not [w.message for w in record]
     assert_array_almost_equal(
         eclf1.transform(X1),
         np.array([[[0.7, 0.3], [0.3, 0.7]], [[1.0, 0.0], [0.0, 1.0]]]),
@@ -538,7 +572,7 @@ def test_none_estimator_with_weights(X, y, voter):
     voter.set_params(lr="drop")
     with pytest.warns(None) as record:
         voter.fit(X, y, sample_weight=np.ones(y.shape))
-    assert not record
+    assert not [w.message for w in record]
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
 
