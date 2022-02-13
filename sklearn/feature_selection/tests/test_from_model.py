@@ -68,6 +68,11 @@ def test_input_estimator_unchanged():
             "When using an int, 'max_features' should be",
         ),
         (
+            lambda X: 1.5,
+            ValueError,
+            "When `max_features` is a callable, it must return an int",
+        ),
+        (
             "gobbledigook",
             TypeError,
             "'max_features' must be either an int or a callable",
