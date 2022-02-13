@@ -159,7 +159,7 @@ def assert_all_finite(
         The input data.
 
     allow_nan : bool, default=False
-        Do not throw an error if X contains Nan.
+        If True, do not throw error when X to contains NaN.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
