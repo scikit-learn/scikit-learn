@@ -497,7 +497,7 @@ Changelog
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.multiclass`
-......................
+.........................
 
 - |Enhancement| :class:`sklearn.multiclass.OneVsOneClassifier` now have an
   attribute `store_class_pairs` storing classes for which each estimator is
