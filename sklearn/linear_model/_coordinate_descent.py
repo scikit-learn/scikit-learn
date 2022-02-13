@@ -22,7 +22,7 @@ from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
+from ..utils.fixes import _astype_copy_false
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
@@ -1692,7 +1692,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         mse_paths = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(prefer="threads"),
+            prefer="threads",
         )(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         # The mean is computed over folds.

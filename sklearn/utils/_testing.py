@@ -655,14 +655,25 @@ def check_docstring_parameters(func, doc=None, ignore=None):
 
     # Analyze function's docstring
     if doc is None:
-        with warnings.catch_warnings(record=True) as w:
+        records = []
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("error", UserWarning)
             try:
                 doc = docscrape.FunctionDoc(func)
+            except UserWarning as exp:
+                if "potentially wrong underline length" in str(exp):
+                    # Catch warning raised as of numpydoc 1.2 when
+                    # the underline length for a section of a docstring
+                    # is not consistent.
+                    message = str(exp).split("\n")[:3]
+                    incorrect += [f"In function: {func_name}"] + message
+                    return incorrect
+                records.append(str(exp))
             except Exception as exp:
                 incorrect += [func_name + " parsing error: " + str(exp)]
                 return incorrect
-        if len(w):
-            raise RuntimeError("Error for %s:\n%s" % (func_name, w[0]))
+        if len(records):
+            raise RuntimeError("Error for %s:\n%s" % (func_name, records[0]))
 
     param_docs = []
     for name, type_definition, param_doc in doc["Parameters"]:

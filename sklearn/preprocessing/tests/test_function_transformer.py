@@ -149,7 +149,7 @@ def test_check_inverse():
         )
         with pytest.warns(None) as record:
             Xt = trans.fit_transform(X)
-        assert len(record) == 0
+        assert not [w.message for w in record]
         assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
 
     # check that we don't check inverse when one of the func or inverse is not
@@ -159,13 +159,13 @@ def test_check_inverse():
     )
     with pytest.warns(None) as record:
         trans.fit(X_dense)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     trans = FunctionTransformer(
         func=None, inverse_func=np.expm1, check_inverse=True, validate=True
     )
     with pytest.warns(None) as record:
         trans.fit(X_dense)
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
 
 def test_function_transformer_frame():

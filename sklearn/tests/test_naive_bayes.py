@@ -518,7 +518,7 @@ def test_mnb_prior_unobserved_targets():
 
     with pytest.warns(None) as record:
         clf.partial_fit(X, y, classes=[0, 1, 2])
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
@@ -527,7 +527,7 @@ def test_mnb_prior_unobserved_targets():
     # add a training example with previously unobserved class
     with pytest.warns(None) as record:
         clf.partial_fit([[1, 1]], [2])
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
