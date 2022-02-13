@@ -288,7 +288,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                     )
             else:
                 raise TypeError(
-                    "'max_features' must be either an int or a  callable that takes"
+                    "'max_features' must be either an int or a callable that takes"
                     f" 'X' as input. Got {self.max_features} instead."
                 )
 
