@@ -605,6 +605,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Store pairs of classes used to train each estimator.
         This attribute exists only when ``store_class_pairs`` is True.
 
+        .. versionadded:: 1.1
+
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.

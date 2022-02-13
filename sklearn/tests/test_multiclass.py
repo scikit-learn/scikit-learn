@@ -914,7 +914,7 @@ def test_ovo_store_class_pairs():
     X = iris.data
 
     # Check with y of type int and string
-    y_int_string = [iris.target, iris.target_names[iris.target]]  # int  # string
+    y_int_string = [iris.target, iris.target_names[iris.target]]
 
     for y in y_int_string:
         clf = OneVsOneClassifier(LinearSVC(random_state=0), store_class_pairs=True).fit(
