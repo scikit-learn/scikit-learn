@@ -49,9 +49,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 def plot_embedding(X, title):
+    _, ax = plt.subplots()
     X = MinMaxScaler().fit_transform(X)
-    plt.figure()
-    ax = plt.subplot(111)
 
     for digit in digits.target_names:
         ax.scatter(
