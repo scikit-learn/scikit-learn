@@ -2345,7 +2345,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.ccp_alpha = ccp_alpha
 
 
-class RandomTreesEmbedding(_ClassNamePrefixFeaturesOutMixin, BaseForest):
+class RandomTreesEmbedding(TransformerMixin, BaseForest):
     """
     An ensemble of totally random trees.
 
