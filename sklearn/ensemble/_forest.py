@@ -51,8 +51,8 @@ from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
 from ..base import is_classifier
-from ..base import _ClassNamePrefixFeaturesOutMixin
-from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin
+from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
+
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
@@ -68,7 +68,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import check_is_fitted, _check_sample_weight, _check_feature_names_in
 from ..utils.validation import _num_samples
 
 
@@ -2659,7 +2659,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         feature_names = [
             f"randomtreesembedding_{tree}_{leaf}"
             for tree in range(self.n_estimators)
-            for leaf in self.one_hot_encoder_.categories_[i]
+            for leaf in self.one_hot_encoder_.categories_[tree]
         ]
         return np.asarray(feature_names, dtype=object)
 
