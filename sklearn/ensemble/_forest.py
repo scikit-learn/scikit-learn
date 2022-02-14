@@ -2656,7 +2656,7 @@ class RandomTreesEmbedding(_ClassNamePrefixFeaturesOutMixin, BaseForest):
         _check_feature_names_in(self, input_features=input_features, generate_names=False)
 
         feature_names = [
-            f"randomtreesembedding_{i+1}_{j}"
+            f"randomtreesembedding_{tree}_{leaf}"
             for i in range(self.n_estimators)
             for j in self.one_hot_encoder_.categories_[i]
         ]
