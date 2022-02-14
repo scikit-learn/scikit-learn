@@ -2,6 +2,9 @@
 
 set -e
 
+# defines the show_installed_libraries function
+source build_tools/shared.sh
+
 if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
@@ -18,13 +21,7 @@ cd $TEST_DIR
 
 python -c "import sklearn; sklearn.show_versions()"
 
-if ! command -v conda &> /dev/null
-then
-    pip list
-else
-    # conda list provides more info than pip list (when available)
-    conda list
-fi
+show_installed_libraries
 
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
@@ -47,7 +44,11 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    TEST_CMD="$TEST_CMD -n2"
+    TEST_CMD="$TEST_CMD -n$CPU_COUNT"
+fi
+
+if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
+    TEST_CMD="$TEST_CMD -ra"
 fi
 
 set -x

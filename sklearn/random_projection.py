@@ -347,7 +347,9 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
-        X = self._validate_data(X, accept_sparse=["csr", "csc"])
+        X = self._validate_data(
+            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        )
 
         n_samples, n_features = X.shape
 
@@ -387,7 +389,9 @@ class BaseRandomProjection(
             self.n_components_ = self.n_components
 
         # Generate a projection matrix of size [n_components, n_features]
-        self.components_ = self._make_random_matrix(self.n_components_, n_features)
+        self.components_ = self._make_random_matrix(
+            self.n_components_, n_features
+        ).astype(X.dtype, copy=False)
 
         # Check contract
         assert self.components_.shape == (self.n_components_, n_features), (
@@ -411,7 +415,9 @@ class BaseRandomProjection(
             Projected array.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+        X = self._validate_data(
+            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        )
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
@@ -430,6 +436,11 @@ class BaseRandomProjection(
         Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
         """
         return self.n_components
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
 
 class GaussianRandomProjection(BaseRandomProjection):
@@ -498,11 +509,11 @@ class GaussianRandomProjection(BaseRandomProjection):
     >>> import numpy as np
     >>> from sklearn.random_projection import GaussianRandomProjection
     >>> rng = np.random.RandomState(42)
-    >>> X = rng.rand(100, 10000)
+    >>> X = rng.rand(25, 3000)
     >>> transformer = GaussianRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
-    (100, 3947)
+    (25, 2759)
     """
 
     def __init__(self, n_components="auto", *, eps=0.1, random_state=None):
@@ -648,14 +659,14 @@ class SparseRandomProjection(BaseRandomProjection):
     >>> import numpy as np
     >>> from sklearn.random_projection import SparseRandomProjection
     >>> rng = np.random.RandomState(42)
-    >>> X = rng.rand(100, 10000)
+    >>> X = rng.rand(25, 3000)
     >>> transformer = SparseRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
-    (100, 3947)
+    (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    0.0100...
+    0.0182...
     """
 
     def __init__(

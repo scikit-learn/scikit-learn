@@ -194,7 +194,7 @@ def test_pairwise_boolean_distance(metric):
     # Check that no warning is raised if X is already boolean and Y is None:
     with pytest.warns(None) as records:
         pairwise_distances(X.astype(bool), metric=metric)
-    assert len(records) == 0
+    assert not [w.message for w in records]
 
 
 def test_no_data_conversion_warning():
@@ -203,7 +203,7 @@ def test_no_data_conversion_warning():
     X = rng.randn(5, 4)
     with pytest.warns(None) as records:
         pairwise_distances(X, metric="minkowski")
-    assert len(records) == 0
+    assert not [w.message for w in records]
 
 
 @pytest.mark.parametrize("func", [pairwise_distances, pairwise_kernels])
@@ -252,6 +252,8 @@ def callable_rbf_kernel(x, y, **kwds):
     return K
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "func, metric, kwds",
     [
@@ -502,6 +504,30 @@ def test_pairwise_distances_argmin_min():
     )
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
+
+    # Changing the axis and permuting datasets must give the same results
+    argmin_0, dist_0 = pairwise_distances_argmin_min(X, Y, axis=0)
+    argmin_1, dist_1 = pairwise_distances_argmin_min(Y, X, axis=1)
+
+    assert_allclose(dist_0, dist_1)
+    assert_array_equal(argmin_0, argmin_1)
+
+    argmin_0, dist_0 = pairwise_distances_argmin_min(X, X, axis=0)
+    argmin_1, dist_1 = pairwise_distances_argmin_min(X, X, axis=1)
+
+    assert_allclose(dist_0, dist_1)
+    assert_array_equal(argmin_0, argmin_1)
+
+    # Changing the axis and permuting datasets must give the same results
+    argmin_0 = pairwise_distances_argmin(X, Y, axis=0)
+    argmin_1 = pairwise_distances_argmin(Y, X, axis=1)
+
+    assert_array_equal(argmin_0, argmin_1)
+
+    argmin_0 = pairwise_distances_argmin(X, X, axis=0)
+    argmin_1 = pairwise_distances_argmin(X, X, axis=1)
+
+    assert_array_equal(argmin_0, argmin_1)
 
 
 def _reduce_func(dist, start):

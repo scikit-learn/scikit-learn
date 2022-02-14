@@ -802,7 +802,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     # 1. unknown output type
     clf = MultiLabelClassifierPredictProba(response_output=sp.csr_matrix(y_test))
     err_msg = (
-        r"Unknown returned type <class 'scipy.sparse.csr.csr_matrix'> by "
+        "Unknown returned type .*csr_matrix.* by "
         r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
         r"array is expected."
     )
@@ -1042,3 +1042,16 @@ def test_check_fit_check_is_fitted():
 
     check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
     check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
+
+
+# TODO: Remove in 1.3 when Estimator is removed
+def test_deprecated_Estimator_check_estimator():
+    err_msg = "'Estimator' was deprecated in favor of"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        with raises(FutureWarning, match=err_msg, may_pass=True):
+            check_estimator(Estimator=NuSVC())
+
+    err_msg = "Either estimator or Estimator should be passed"
+    with raises(ValueError, match=err_msg, may_pass=False):
+        check_estimator()

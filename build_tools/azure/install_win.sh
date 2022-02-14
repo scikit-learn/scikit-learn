@@ -4,8 +4,7 @@ set -e
 set -x
 
 if [[ "$PYTHON_ARCH" == "64" ]]; then
-    conda create -n $VIRTUALENV -q -y python=$PYTHON_VERSION numpy scipy cython matplotlib wheel pillow joblib \
-    "setuptools<58.5" # TODO: Remove this line once setuptools#2849 is resolved.
+    conda create -n $VIRTUALENV -q -y python=$PYTHON_VERSION numpy scipy cython matplotlib wheel pillow joblib
 
     source activate $VIRTUALENV
 
@@ -17,8 +16,7 @@ if [[ "$PYTHON_ARCH" == "64" ]]; then
         pip install pytest==$PYTEST_VERSION
     fi
 else
-    pip install numpy scipy cython pytest wheel pillow joblib threadpoolctl \
-    "setuptools<58.5" # TODO: Remove this line once setuptools#2849 is resolved.
+    pip install numpy scipy cython pytest wheel pillow joblib threadpoolctl
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
@@ -26,7 +24,9 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage codecov pytest-cov
+    # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
+    # cf. https://github.com/nedbat/coveragepy/issues/1310
+    pip install coverage codecov pytest-cov coverage==6.2
 fi
 
 python --version

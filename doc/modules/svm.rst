@@ -175,9 +175,11 @@ The shape of ``dual_coef_`` is ``(n_classes-1, n_SV)`` with
 a somewhat hard to grasp layout.
 The columns correspond to the support vectors involved in any
 of the ``n_classes * (n_classes - 1) / 2`` "one-vs-one" classifiers.
-Each of the support vectors is used in ``n_classes - 1`` classifiers.
-The ``n_classes - 1`` entries in each row correspond to the dual coefficients
-for these classifiers.
+Each support vector ``v`` has a dual coefficient in each of the 
+``n_classes - 1`` classifiers comparing the class of ``v`` against another class.
+Note that some, but not all, of these dual coefficients, may be zero.
+The ``n_classes - 1`` entries in each column are these dual coefficients,
+ordered by the opposing class.
 
 This might be clearer with an example: consider a three class problem with
 class 0 having three support vectors
@@ -188,21 +190,14 @@ the coefficient of support vector :math:`v^{j}_i` in the classifier between
 classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
 Then ``dual_coef_`` looks like this:
 
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 0|
-|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|                  |
-+------------------------+------------------------+                  |
-|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|                  |
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 1|
-|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|                  |
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 2|
-|:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|                  |
-+------------------------+------------------------+------------------+
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{1}_{2,0}`|
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|:math:`\alpha^{0}_{0,2}`|:math:`\alpha^{1}_{0,2}`|:math:`\alpha^{2}_{0,2}`|:math:`\alpha^{0}_{1,2}`|:math:`\alpha^{1}_{1,2}`|:math:`\alpha^{0}_{2,1}`|:math:`\alpha^{1}_{2,1}`|
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|Coefficients                                                              |Coefficients                                     |Coefficients                                     |
+|for SVs of class 0                                                        |for SVs of class 1                               |for SVs of class 2                               |
++--------------------------------------------------------------------------+-------------------------------------------------+-------------------------------------------------+
 
 .. topic:: Examples:
 
