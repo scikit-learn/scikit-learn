@@ -1107,7 +1107,7 @@ def test_non_symmetric_metric_pos_label(
     ids=["ThresholdScorer", "ProbaScorer", "PredictScorer"],
 )
 def test_scorer_select_proba_error(scorer):
-    # check that we raise the the proper error when passing an unknown
+    # check that we raise the proper error when passing an unknown
     # pos_label
     X, y = make_classification(
         n_classes=2, n_informative=3, n_samples=20, random_state=0

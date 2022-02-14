@@ -2230,24 +2230,11 @@ def test_cv_pipeline_precomputed():
     # did the pipeline set the pairwise attribute?
     assert pipeline._get_tags()["pairwise"]
 
-    # TODO: Remove in 1.1
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        assert pipeline._pairwise
-
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration
     #     of Pipeline and KernelCenterer
     y_pred = cross_val_predict(pipeline, K, y_true, cv=2)
     assert_array_almost_equal(y_true, y_pred)
-
-
-# TODO: Remove in 1.1
-def test_pairwise_deprecated():
-    kcent = KernelCenterer()
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        kcent._pairwise
 
 
 def test_fit_transform():

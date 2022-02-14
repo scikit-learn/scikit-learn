@@ -61,7 +61,7 @@ def plot_partial_dependence(
     .. note::
 
         :func:`plot_partial_dependence` does not support using the same axes
-        with multiple calls. To plot the the partial dependence for multiple
+        with multiple calls. To plot the partial dependence for multiple
         estimators, please pass the axes created by the first call to the
         second call::
 
@@ -702,7 +702,7 @@ class PartialDependenceDisplay:
         .. note::
 
             :func:`PartialDependenceDisplay.from_estimator` does not support using the
-            same axes with multiple calls. To plot the the partial dependence for
+            same axes with multiple calls. To plot the partial dependence for
             multiple estimators, please pass the axes created by the first call to the
             second call::
 
