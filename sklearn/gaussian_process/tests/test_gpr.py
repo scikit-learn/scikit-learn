@@ -693,7 +693,7 @@ def test_predict_shapes(normalize_y, n_targets):
     n_features, n_samples_train, n_samples_test = 6, 9, 7
 
     y_train_shape = (n_samples_train,)
-    if n_targets:
+    if n_targets is not None:
         y_train_shape = y_train_shape + (n_targets,)
 
     # By convention single-output data is squeezed upon prediction
@@ -735,7 +735,7 @@ def test_sample_y_shapes(normalize_y, n_targets):
     n_samples_y_test = 5
 
     y_train_shape = (n_samples_train,)
-    if n_targets:
+    if n_targets is not None:
         y_train_shape = y_train_shape + (n_targets,)
 
     # By convention single-output data is squeezed upon prediction

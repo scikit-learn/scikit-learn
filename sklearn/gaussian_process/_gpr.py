@@ -396,7 +396,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
             # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
-            if len(y_mean.shape) > 1 and y_mean.shape[1] == 1:
+            if y_mean.n_dim > 1 and y_mean.shape[1] == 1:
                 y_mean = np.squeeze(y_mean, axis=1)
 
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
