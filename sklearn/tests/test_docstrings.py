@@ -22,7 +22,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._kddcup99.fetch_kddcup99",
     "sklearn.datasets._lfw.fetch_lfw_pairs",
     "sklearn.datasets._lfw.fetch_lfw_people",
-    "sklearn.datasets._olivetti_faces.fetch_olivetti_faces",
     "sklearn.datasets._openml.fetch_openml",
     "sklearn.datasets._samples_generator.make_biclusters",
     "sklearn.datasets._samples_generator.make_classification",
