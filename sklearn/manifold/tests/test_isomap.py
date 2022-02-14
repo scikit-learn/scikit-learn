@@ -231,14 +231,15 @@ def test_sparse_input():
 
 
 def test_isomap_fit_precomputed_radius_graph():
-    X, _ = datasets.load_digits(return_X_y=True)
-    X = preprocessing.StandardScaler().fit_transform(X)
-    g = neighbors.radius_neighbors_graph(X, radius=5.5, mode="distance")
-    isomap = manifold.Isomap(n_neighbors=None, radius=5.5, metric="precomputed")
+    X, y = datasets.make_s_curve(200, random_state=0)
+    radius = 10
+
+    g = neighbors.radius_neighbors_graph(X, radius=radius, mode="distance")
+    isomap = manifold.Isomap(n_neighbors=None, radius=radius, metric="precomputed")
     isomap.fit(g)
     precomputed_result = isomap.embedding_
 
-    isomap = manifold.Isomap(n_neighbors=None, radius=5.5, metric="minkowski")
+    isomap = manifold.Isomap(n_neighbors=None, radius=radius, metric="minkowski")
     result = isomap.fit_transform(X)
     # test fit_transform yields similar result as using precomputed distance matrix
     assert np.allclose(precomputed_result, result)
