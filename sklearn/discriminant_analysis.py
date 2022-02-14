@@ -382,9 +382,7 @@ class LinearDiscriminantAnalysis(
         self.covariance_ = _class_cov(
             X, y, self.priors_, shrinkage, covariance_estimator
         )
-        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T, check_finite=False)[
-            0
-        ].T
+        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
         self.intercept_ = -0.5 * np.diag(np.dot(self.means_, self.coef_.T)) + np.log(
             self.priors_
         )
@@ -443,7 +441,7 @@ class LinearDiscriminantAnalysis(
         St = _cov(X, shrinkage, covariance_estimator)  # total scatter
         Sb = St - Sw  # between scatter
 
-        evals, evecs = linalg.eigh(Sb, Sw, check_finite=False)
+        evals, evecs = linalg.eigh(Sb, Sw)
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals))[::-1][
             : self._max_components
         ]
@@ -491,7 +489,7 @@ class LinearDiscriminantAnalysis(
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
@@ -509,7 +507,7 @@ class LinearDiscriminantAnalysis(
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        _, S, Vt = linalg.svd(X, full_matrices=0, check_finite=False)
+        _, S, Vt = linalg.svd(X, full_matrices=0)
 
         if self._max_components == 0:
             self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)

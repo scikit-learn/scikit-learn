@@ -526,7 +526,7 @@ def parametrize_with_checks(estimators):
     )
 
 
-def check_estimator(Estimator, generate_only=False):
+def check_estimator(estimator=None, generate_only=False, Estimator="deprecated"):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -547,10 +547,10 @@ def check_estimator(Estimator, generate_only=False):
 
     Parameters
     ----------
-    Estimator : estimator object
+    estimator : estimator object
         Estimator instance to check.
 
-        .. versionchanged:: 0.24
+        .. versionadded:: 1.1
            Passing a class was deprecated in version 0.23, and support for
            classes was removed in 0.24.
 
@@ -561,6 +561,13 @@ def check_estimator(Estimator, generate_only=False):
         `check(estimator)`.
 
         .. versionadded:: 0.22
+
+    Estimator : estimator object
+        Estimator instance to check.
+
+        .. deprecated:: 1.1
+            ``Estimator`` was deprecated in favor of ``estimator`` in version 1.1
+            and will be removed in version 1.3.
 
     Returns
     -------
@@ -573,7 +580,19 @@ def check_estimator(Estimator, generate_only=False):
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
     """
-    if isinstance(Estimator, type):
+
+    if estimator is None and Estimator == "deprecated":
+        msg = "Either estimator or Estimator should be passed to check_estimator."
+        raise ValueError(msg)
+
+    if Estimator != "deprecated":
+        msg = (
+            "'Estimator' was deprecated in favor of 'estimator' in version 1.1 "
+            "and will be removed in version 1.3."
+        )
+        warnings.warn(msg, FutureWarning)
+        estimator = Estimator
+    if isinstance(estimator, type):
         msg = (
             "Passing a class was deprecated in version 0.23 "
             "and isn't supported anymore from 0.24."
@@ -581,7 +600,6 @@ def check_estimator(Estimator, generate_only=False):
         )
         raise TypeError(msg)
 
-    estimator = Estimator
     name = type(estimator).__name__
 
     def checks_generator():
