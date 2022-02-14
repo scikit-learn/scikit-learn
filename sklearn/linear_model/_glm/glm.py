@@ -217,28 +217,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "an element of ['auto', 'identity', 'log']; "
                     "got (link={0})".format(self.link)
                 )
-
-        if hasattr(self.alpha, '__iter__'):
-            self.alpha = np.asarray(self.alpha, dtype=np.float_).ravel()
-            if self.alpha.size != X.shape[1]:
-                raise ValueError(f'Alpha must have length equivalent to input array. Input array is shape {X.shape[1]}'
-                                 f'while alpha is of length {self.alpha.size}')
-            for i, val in enumerate(self.alpha):
-                check_scalar(val
-                             , name=f'alpha index [{i}]'
-                             , target_type=numbers.Real
-                             , min_val=0.
-                             , include_boundaries='left')
-        else:
-            check_scalar(
-                self.alpha,
-                name="alpha",
-                target_type=numbers.Real,
-                min_val=0.0,
-                include_boundaries="left",
-            )
-            self.alpha = np.full(X.shape[1], self.alpha)
-
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
                 "The argument fit_intercept must be bool; got {0}".format(
@@ -286,7 +264,25 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
-
+        if hasattr(self.alpha, '__iter__') and not isinstance(self.alpha, str):
+            for i, val in enumerate(self.alpha):
+                check_scalar(val
+                             , name=f'alpha at index {i}'
+                             , target_type=numbers.Real
+                             , min_val=0.
+                             , include_boundaries='left')
+            self.alpha = np.asarray(self.alpha, dtype=np.float_).ravel()
+            if self.alpha.size != X.shape[1]:
+                raise ValueError(f'X width is {X.shape[1]} while alpha is of length {self.alpha.size}')
+        else:
+            check_scalar(
+                self.alpha,
+                name="alpha",
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="left",
+            )
+            self.alpha = np.full(X.shape[1], self.alpha)
         weights = _check_sample_weight(sample_weight, X)
 
         _, n_features = X.shape
@@ -299,7 +295,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
         # check that matrix is full rank when alpha = 0.
         if np.max(self.alpha) == 0. and np.linalg.matrix_rank(X) < X.shape[1]:
-            raise ValueError('Design matrix must be full rank when alpha = 0.')
+            raise ValueError('X must be full rank when alpha = 0.')
 
         # rescaling of sample_weight
         #
