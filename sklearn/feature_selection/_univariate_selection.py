@@ -1014,6 +1014,9 @@ class GenericUnivariateSelect(_BaseFilter):
 
         return selector
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
     def _check_params(self, X, y):
         if self.mode not in self._selection_modes:
             raise ValueError(
