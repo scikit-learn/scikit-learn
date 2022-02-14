@@ -750,9 +750,13 @@ def test_sample_y_shapes(normalize_y, n_targets):
 
     model = GaussianProcessRegressor(normalize_y=normalize_y)
 
-    # Before fitting, model assumes n_targets=1 so output should be 2d array
-    y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
-    assert y_samples.shape == (n_samples_X_test, n_samples_y_test)
+    # FIXME: before fitting, the estimator does not have information regarding
+    # the number of targets and default to 1. This is inconsistent with the shape
+    # provided after `fit`. This assert should be made once the following issue
+    # is fixed:
+    # https://github.com/scikit-learn/scikit-learn/issues/22430
+    # y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
+    # assert y_samples.shape == y_test_shape
 
     model.fit(X_train, y_train)
 
