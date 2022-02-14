@@ -3,12 +3,13 @@
 from copy import copy
 from pathlib import Path
 from tempfile import mkdtemp
-import time
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from . import BaseCallback
+
+# import ..metrics as metrics
 
 
 class ConvergenceMonitor(BaseCallback):
@@ -16,7 +17,7 @@ class ConvergenceMonitor(BaseCallback):
 
     Parameters
     ----------
-    monitor : 
+    monitor :
 
     X_val : ndarray, default=None
         Validation data
@@ -33,37 +34,41 @@ class ConvergenceMonitor(BaseCallback):
     request_reconstruction_attributes = True
 
     def __init__(self, *, monitor="objective_function", X_val=None, y_val=None):
+        if monitor == "objective_function":
+            self._monitor = "objective_function"
+        else:
+            self._monitor = getattr(metrics, monitor, None)
+            if self._monitor is None:
+                raise ValueError(f"unknown metric {monitor}")
+
         self.X_val = X_val
         self.y_val = y_val
+
         self._data_file = Path(mkdtemp()) / "convergence_monitor.csv"
 
     def on_fit_begin(self, estimator, *, X=None, y=None):
         self.estimator = estimator
         self.X_train = X
         self.y_train = y
-        self._start_time = {}
 
-    def on_fit_iter_end(self, *, node, **kwargs):
-        if node.depth != node.computation_tree.depth:
-            return
-
+    def on_fit_iter_end(self, *, estimator, node, **kwargs):
         reconstruction_attributes = kwargs.get("reconstruction_attributes", None)
         if reconstruction_attributes is None:
             return
 
-        new_estimator = copy(self.estimator)
+        new_estimator = copy(estimator)
         for key, val in reconstruction_attributes.items():
             setattr(new_estimator, key, val)
 
-        if node.idx == 0:
-            self._start_time[node.parent] = time.perf_counter()
-            curr_time = 0
-        else:
-            curr_time = time.perf_counter() - self._start_time[node.parent]
+        # if self._monitor =
 
-        obj_train, *_ = new_estimator.objective_function(self.X_train, self.y_train, normalize=True)
+        obj_train, *_ = new_estimator.objective_function(
+            self.X_train, self.y_train, normalize=True
+        )
         if self.X_val is not None:
-            obj_val, *_ = new_estimator.objective_function(self.X_val, self.y_val, normalize=True)
+            obj_val, *_ = new_estimator.objective_function(
+                self.X_val, self.y_val, normalize=True
+            )
         else:
             obj_val = None
 
