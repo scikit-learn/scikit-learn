@@ -552,7 +552,7 @@ def check_estimator(estimator=None, generate_only=False, Estimator="deprecated")
     estimator : estimator object
         Estimator instance to check.
 
-        .. versionchanged:: 0.24
+        .. versionadded:: 1.1
            Passing a class was deprecated in version 0.23, and support for
            classes was removed in 0.24.
 
