@@ -1801,16 +1801,21 @@ def test_random_trees_embedding_feature_names_out():
     """Check feature names out for Random Trees Embedding."""
     random_state = np.random.RandomState(0)
     X = np.abs(random_state.randn(100, 4))
-    n_estimators = 10
     hasher = RandomTreesEmbedding(
-        n_estimators=n_estimators, max_depth=1, sparse_output=False
+        n_estimators=2, max_depth=2, sparse_output=False, random_state=0
     ).fit(X)
     names = hasher.get_feature_names_out()
-    assert_array_equal(
-        [
-            f"randomtreesembedding_{i+1}_{j}"
-            for i in range(n_estimators)
-            for j in [1, 2]
-        ],
-        names,
-    )
+    expected_names = [
+        f"randomtreesembedding_{tree}_{leaf}"
+        for tree, leaf in [
+            (0, 2),
+            (0, 3),
+            (0, 5),
+            (0, 6),
+            (1, 2),
+            (1, 3),
+            (1, 5),
+            (1, 6),
+        ]
+    ]
+    assert_array_equal(expected_names, names)

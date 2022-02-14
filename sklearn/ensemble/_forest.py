@@ -68,7 +68,11 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.validation import check_is_fitted, _check_sample_weight, _check_feature_names_in
+from ..utils.validation import (
+    check_is_fitted,
+    _check_sample_weight,
+    _check_feature_names_in,
+)
 from ..utils.validation import _num_samples
 
 
@@ -2654,7 +2658,9 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             to generate the leaf and `leaf` is the leaf index.
         """
         check_is_fitted(self, "_n_features_out")
-        _check_feature_names_in(self, input_features=input_features, generate_names=False)
+        _check_feature_names_in(
+            self, input_features=input_features, generate_names=False
+        )
 
         feature_names = [
             f"randomtreesembedding_{tree}_{leaf}"
