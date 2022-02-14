@@ -2653,6 +2653,7 @@ class RandomTreesEmbedding(_ClassNamePrefixFeaturesOutMixin, BaseForest):
             where i is the tree used to generate the leaf and j is the leaf index.
         """
         check_is_fitted(self, "_n_features_out")
+        _check_feature_names_in(self, input_features=input_features, generate_names=False)
 
         feature_names = [
             f"randomtreesembedding_{i+1}_{j}"
