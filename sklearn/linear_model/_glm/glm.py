@@ -264,16 +264,21 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
-        if hasattr(self.alpha, '__iter__') and not isinstance(self.alpha, str):
+        if hasattr(self.alpha, "__iter__") and not isinstance(self.alpha, str):
             for i, val in enumerate(self.alpha):
-                check_scalar(val
-                             , name=f'alpha at index {i}'
-                             , target_type=numbers.Real
-                             , min_val=0.
-                             , include_boundaries='left')
+                check_scalar(
+                    val,
+                    name=f"alpha at index {i}",
+                    target_type=numbers.Real,
+                    min_val=0.0,
+                    include_boundaries="left",
+                )
             self.alpha = np.asarray(self.alpha, dtype=np.float_).ravel()
             if self.alpha.size != X.shape[1]:
-                raise ValueError(f'X width is {X.shape[1]} while alpha is of length {self.alpha.size}')
+                raise ValueError(
+                    f"X width is {X.shape[1]} while alpha is of length"
+                    f" {self.alpha.size}"
+                )
         else:
             check_scalar(
                 self.alpha,
@@ -294,8 +299,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 )
             )
         # check that matrix is full rank when alpha = 0.
-        if np.max(self.alpha) == 0. and np.linalg.matrix_rank(X) < X.shape[1]:
-            raise ValueError('X must be full rank when alpha = 0.')
+        if np.max(self.alpha) == 0.0 and np.linalg.matrix_rank(X) < X.shape[1]:
+            raise ValueError("X must be full rank when alpha = 0.")
 
         # rescaling of sample_weight
         #

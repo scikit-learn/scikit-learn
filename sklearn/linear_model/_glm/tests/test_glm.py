@@ -202,23 +202,32 @@ def test_glm_scalar_argument(Estimator, params, err_type, err_msg):
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
-        ({"alpha": [1, '2']}, TypeError, "alpha at index 1 must be an instance of float, not str."),
-        ({"alpha": [1, 2, 3], "fit_intercept": True}, ValueError
-         , 'X width is 2 while alpha is of length 3'),
-        ({"alpha": [1, 2, 3], "fit_intercept": False}, ValueError
-         , 'X width is 2 while alpha is of length 3'),
+        (
+            {"alpha": [1, "2"]},
+            TypeError,
+            "alpha at index 1 must be an instance of float, not str.",
+        ),
+        (
+            {"alpha": [1, 2, 3], "fit_intercept": True},
+            ValueError,
+            "X width is 2 while alpha is of length 3",
+        ),
+        (
+            {"alpha": [1, 2, 3], "fit_intercept": False},
+            ValueError,
+            "X width is 2 while alpha is of length 3",
+        ),
         ({"alpha": [-2, 2]}, ValueError, "alpha at index 0 == -2, must be >= 0.0"),
-        ({"alpha": [0., 0.]}, ValueError, "X must be full rank when alpha = 0."),
-    ]
+        ({"alpha": [0.0, 0.0]}, ValueError, "X must be full rank when alpha = 0."),
+    ],
 )
 def test_glm_alpha_array(Estimator, params, err_type, err_msg):
     """Test GLM for invalid alpha input when alpha is an iterable"""
-    X = [[1,2], [2,4]]
+    X = [[1, 2], [2, 4]]
     y = [1, 2]
     glm = Estimator(**params)
     with pytest.raises(err_type, match=err_msg):
         glm.fit(X, y)
-
 
 
 @pytest.mark.parametrize("warm_start", ["not bool", 1, 0, [True]])
