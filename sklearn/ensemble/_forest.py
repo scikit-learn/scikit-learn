@@ -181,9 +181,15 @@ def _parallel_build_trees(
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        # since the deprecation warning has been showed in the ensemble class,
+        # we ignore the warnings raise within individual trees
+        with catch_warnings():
+            simplefilter("ignore", FutureWarning)
+            tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        with catch_warnings():
+            simplefilter("ignore", FutureWarning)
+            tree.fit(X, y, sample_weight=sample_weight, check_input=False)
 
     return tree
 
