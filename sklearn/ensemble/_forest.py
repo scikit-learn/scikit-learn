@@ -2660,7 +2660,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             for tree in range(self.n_estimators)
             for leaf in self.one_hot_encoder_.categories_[i]
         ]
-        return feature_names
+        return np.asarray(feature_names, dtype=object)
 
     def transform(self, X):
         """
