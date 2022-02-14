@@ -397,6 +397,15 @@ Changelog
   beginning which speeds up fitting.
   :pr:`22206` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| :class:`~linear_model.LogisticRegression` is faster for
+  ``solvers="lbfgs"`` and ``solver="newton-cg"``, for binary and in particular for
+  multiclass problems thanks to the new private loss function module. In the multiclass
+  case, the memory consumption has also been reduced for these solvers as the target is
+  now label encoded (mapped to integers) instead of label binarized (one-hot encoded).
+  The more classes, the larger the benefit.
+  :pr:`21808`, :pr:`20567` and :pr:`21814` by
+  :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| Rename parameter `base_estimator` to `estimator` in
   :class:`linear_model.RANSACRegressor` to improve readability and consistency.
   `base_estimator` is deprecated and will be removed in 1.3.
