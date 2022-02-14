@@ -546,27 +546,6 @@ def test_max_features():
         est.fit(iris.data, iris.target)
         assert est.max_features_ == iris.data.shape[1]
 
-        # use values of max_features that are invalid
-        est = TreeEstimator(max_features=10)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
-        est = TreeEstimator(max_features=-1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
-        est = TreeEstimator(max_features=0.0)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
-        est = TreeEstimator(max_features=1.5)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
-        est = TreeEstimator(max_features="foobar")
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-
 
 def test_error():
     # Test that it gives proper exception on deficient input.
@@ -580,34 +559,6 @@ def test_error():
         X2 = [[-2, -1, 1]]  # wrong feature shape for sample
         with pytest.raises(ValueError):
             est.predict_proba(X2)
-
-    for name, TreeEstimator in ALL_TREES.items():
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_leaf=-1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_leaf=0.6).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_leaf=0.0).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_leaf=3.0).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_weight_fraction_leaf=-1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_weight_fraction_leaf=0.51).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_split=-1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_split=0.0).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_split=1.1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_samples_split=2.5).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(max_depth=-1).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(max_features=42).fit(X, y)
-        with pytest.raises(ValueError):
-            TreeEstimator(min_impurity_decrease=-1.0).fit(X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -660,6 +611,95 @@ def test_error():
         est.fit([[0, 1, 2]], [0, 0, 0])
     with pytest.raises(ValueError, match="Some.*y are negative.*Poisson"):
         est.fit([[0, 1, 2]], [5, -0.1, 2])
+
+
+@pytest.mark.parametrize("name, Tree", ALL_TREES.items())
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
+        (
+            {"max_depth": 1.1},
+            TypeError,
+            "max_depth must be an instance of int",
+        ),
+        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
+        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
+        (
+            {"min_samples_leaf": "foo"},
+            TypeError,
+            "min_samples_leaf must be an instance of float",
+        ),
+        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
+        (
+            {"min_samples_split": 0.0},
+            ValueError,
+            "min_samples_split == 0.0, must be > 0.0",
+        ),
+        (
+            {"min_samples_split": 1.1},
+            ValueError,
+            "min_samples_split == 1.1, must be <= 1.0",
+        ),
+        (
+            {"min_samples_split": "foo"},
+            TypeError,
+            "min_samples_split must be an instance of float",
+        ),
+        (
+            {"min_weight_fraction_leaf": -1},
+            ValueError,
+            "min_weight_fraction_leaf == -1, must be >= 0.0",
+        ),
+        (
+            {"min_weight_fraction_leaf": 0.6},
+            ValueError,
+            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
+        ),
+        (
+            {"min_weight_fraction_leaf": "foo"},
+            TypeError,
+            "min_weight_fraction_leaf must be an instance of float",
+        ),
+        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
+        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
+        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
+        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
+        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
+        (
+            {"max_leaf_nodes": 1.5},
+            TypeError,
+            "max_leaf_nodes must be an instance of int",
+        ),
+        (
+            {"min_impurity_decrease": -1},
+            ValueError,
+            "min_impurity_decrease == -1, must be >= 0.0",
+        ),
+        (
+            {"min_impurity_decrease": "foo"},
+            TypeError,
+            "min_impurity_decrease must be an instance of float",
+        ),
+        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
+        (
+            {"ccp_alpha": "foo"},
+            TypeError,
+            "ccp_alpha must be an instance of float",
+        ),
+    ],
+)
+def test_tree_params_validation(name, Tree, params, err_type, err_msg):
+    """Check parameter validation in DecisionTreeClassifier, DecisionTreeRegressor,
+    ExtraTreeClassifier, and ExtraTreeRegressor.
+    """
+    if "Classifier" in name:
+        X, y = iris.data, iris.target
+    else:
+        X, y = diabetes.data, diabetes.target
+    est = Tree(**params)
+    with pytest.raises(err_type, match=err_msg):
+        est.fit(X, y)
 
 
 def test_min_samples_split():
@@ -1259,17 +1299,6 @@ def test_max_leaf_nodes():
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
         assert est.get_n_leaves() == k + 1
-
-        # max_leaf_nodes in (0, 1) should raise ValueError
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
-        with pytest.raises(ValueError):
-            est.fit(X, y)
 
 
 def test_max_leaf_nodes_max_depth():
@@ -1982,22 +2011,6 @@ def assert_is_subtree(tree, subtree):
             )
 
 
-def test_prune_tree_raises_negative_ccp_alpha():
-    clf = DecisionTreeClassifier()
-    msg = "ccp_alpha must be greater than or equal to 0"
-
-    with pytest.raises(ValueError, match=msg):
-        clf.set_params(ccp_alpha=-1.0)
-        clf.fit(X, y)
-
-    clf.set_params(ccp_alpha=0.0)
-    clf.fit(X, y)
-
-    with pytest.raises(ValueError, match=msg):
-        clf.set_params(ccp_alpha=-1.0)
-        clf._prune_tree()
-
-
 def check_apply_path_readonly(name):
     X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE, copy=False))
     y_readonly = create_memmap_backed_data(np.array(y_small, dtype=tree._tree.DTYPE))
@@ -2067,8 +2080,6 @@ def test_poisson_vs_mse():
     # than squared error measured in Poisson deviance as metric.
     # We have a similar test, test_poisson(), in
     # sklearn/ensemble/_hist_gradient_boosting/tests/test_gradient_boosting.py
-    # Note: Some fine tuning was needed to have metric_poi < metric_dummy on
-    # the test set!
     rng = np.random.RandomState(42)
     n_train, n_test, n_features = 500, 500, 10
     X = datasets.make_low_rank_matrix(
@@ -2102,8 +2113,8 @@ def test_poisson_vs_mse():
         # score can be better than Poisson. This is no longer the case for the
         # test set.
         if val == "test":
-            assert metric_poi < metric_mse
-        assert metric_poi < metric_dummy
+            assert metric_poi < 0.5 * metric_mse
+        assert metric_poi < 0.75 * metric_dummy
 
 
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)

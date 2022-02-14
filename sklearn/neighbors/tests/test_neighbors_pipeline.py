@@ -147,7 +147,6 @@ def test_tsne():
                 method="barnes_hut",
                 random_state=42,
                 n_iter=n_iter,
-                square_distances=True,
             ),
         )
         est_compact = TSNE(
@@ -156,7 +155,6 @@ def test_tsne():
             n_iter=n_iter,
             method="barnes_hut",
             random_state=42,
-            square_distances=True,
         )
 
         Xt_chain = est_chain.fit_transform(X)
