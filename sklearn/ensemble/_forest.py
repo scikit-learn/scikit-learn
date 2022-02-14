@@ -2649,8 +2649,9 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         Returns
         -------
         feature_names_out : ndarray of str objects
-            Transformed feature names, in the format of randomtreesembedding_{i}_{j},
-            where i is the tree used to generate the leaf and j is the leaf index.
+            Transformed feature names, in the format of
+            `randomtreesembedding_{tree}_{leaf}`, where `tree` is the tree used
+            to generate the leaf and `leaf` is the leaf index.
         """
         check_is_fitted(self, "_n_features_out")
         _check_feature_names_in(self, input_features=input_features, generate_names=False)
