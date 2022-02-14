@@ -621,14 +621,14 @@ def test_error():
         (
             {"max_depth": 1.1},
             TypeError,
-            "max_depth must be an instance of <class 'numbers.Integral'>",
+            "max_depth must be an instance of int",
         ),
         ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
         ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
         (
             {"min_samples_leaf": "foo"},
             TypeError,
-            "min_samples_leaf must be an instance of <class 'numbers.Real'>",
+            "min_samples_leaf must be an instance of float",
         ),
         ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
         (
@@ -644,7 +644,7 @@ def test_error():
         (
             {"min_samples_split": "foo"},
             TypeError,
-            "min_samples_split must be an instance of <class 'numbers.Real'>",
+            "min_samples_split must be an instance of float",
         ),
         (
             {"min_weight_fraction_leaf": -1},
@@ -659,7 +659,7 @@ def test_error():
         (
             {"min_weight_fraction_leaf": "foo"},
             TypeError,
-            "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
+            "min_weight_fraction_leaf must be an instance of float",
         ),
         ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
         ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
@@ -669,7 +669,7 @@ def test_error():
         (
             {"max_leaf_nodes": 1.5},
             TypeError,
-            "max_leaf_nodes must be an instance of <class 'numbers.Integral'>",
+            "max_leaf_nodes must be an instance of int",
         ),
         (
             {"min_impurity_decrease": -1},
@@ -679,13 +679,13 @@ def test_error():
         (
             {"min_impurity_decrease": "foo"},
             TypeError,
-            "min_impurity_decrease must be an instance of <class 'numbers.Real'>",
+            "min_impurity_decrease must be an instance of float",
         ),
         ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
         (
             {"ccp_alpha": "foo"},
             TypeError,
-            "ccp_alpha must be an instance of <class 'numbers.Real'>",
+            "ccp_alpha must be an instance of float",
         ),
     ],
 )

@@ -1042,3 +1042,16 @@ def test_check_fit_check_is_fitted():
 
     check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
     check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
+
+
+# TODO: Remove in 1.3 when Estimator is removed
+def test_deprecated_Estimator_check_estimator():
+    err_msg = "'Estimator' was deprecated in favor of"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        with raises(FutureWarning, match=err_msg, may_pass=True):
+            check_estimator(Estimator=NuSVC())
+
+    err_msg = "Either estimator or Estimator should be passed"
+    with raises(ValueError, match=err_msg, may_pass=False):
+        check_estimator()
