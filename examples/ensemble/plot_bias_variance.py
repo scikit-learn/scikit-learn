@@ -20,7 +20,7 @@ The upper left figure illustrates the predictions (in dark red) of a single
 decision tree trained over a random dataset LS (the blue dots) of a toy 1d
 regression problem. It also illustrates the predictions (in light red) of other
 single decision trees trained over other (and different) randomly drawn
-instances (S) of the problem. Intuitively, the variance term here corresponds to
+instances LS of the problem. Intuitively, the variance term here corresponds to
 the width of the beam of predictions (in light red) of the individual
 estimators. The larger the variance, the more sensitive are the predictions for
 `x` to small changes in the training set. The bias term corresponds to the
