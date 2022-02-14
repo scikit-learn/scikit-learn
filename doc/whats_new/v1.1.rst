@@ -339,6 +339,14 @@ Changelog
 :mod:`sklearn.gaussian_process`
 ...............................
 
+- |Fix| `predict` and `sample_y` methods of
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` now return
+  arrays of the correct shape in single-target and multi-target cases, and for
+  both `normalize_y=False` and `normalize_y=True`.
+  :pr:`22199` by :user:`Guillaume Lemaitre <glemaitre>`,
+  :user:`Aidar Shakerimoff <AidarShakerimoff>` and
+  :user:`Tenavi Nakamura-Zimmerer <Tenavi>`.
+
 - |Fix| :class:`gaussian_process.GaussianProcessClassifier` raises
   a more informative error if `CompoundKernel` is passed via `kernel`.
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
