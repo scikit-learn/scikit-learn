@@ -159,7 +159,7 @@ for n, (name, estimator) in enumerate(estimators):
     # Plot figures
     plt.subplot(2, n_estimators, n + 1)
     plt.plot(X_test, f(X_test), "b", label="$f(x)$")
-    plt.plot(X_train[0], y_train[0], ".b", label="S ~ $y = f(x)+noise$")
+    plt.plot(X_train[0], y_train[0], ".b", label="LS ~ $y = f(x)+noise$")
 
     for i in range(n_repeat):
         if i == 0:
@@ -167,7 +167,7 @@ for n, (name, estimator) in enumerate(estimators):
         else:
             plt.plot(X_test, y_predict[:, i], "r", alpha=0.05)
 
-    plt.plot(X_test, np.mean(y_predict, axis=1), "c", label=r"$\mathbb{E}_{S} \^y(x)$")
+    plt.plot(X_test, np.mean(y_predict, axis=1), "c", label=r"$\mathbb{E}_{LS} \^y(x)$")
 
     plt.xlim([-5, 5])
     plt.title(name)
