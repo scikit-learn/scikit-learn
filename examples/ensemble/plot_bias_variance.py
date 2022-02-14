@@ -17,7 +17,7 @@ random instances of the same problem. Each problem instance is noted "LS", for
 of the error which is due the variability in the data.
 
 The upper left figure illustrates the predictions (in dark red) of a single
-decision tree trained over a random dataset (S) (the blue dots) of a toy 1d
+decision tree trained over a random dataset LS (the blue dots) of a toy 1d
 regression problem. It also illustrates the predictions (in light red) of other
 single decision trees trained over other (and different) randomly drawn
 instances (S) of the problem. Intuitively, the variance term here corresponds to
