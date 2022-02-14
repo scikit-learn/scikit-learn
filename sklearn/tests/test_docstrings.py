@@ -14,7 +14,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf_shrinkage",
-    "sklearn.datasets._base.load_linnerud",
     "sklearn.datasets._base.load_sample_image",
     "sklearn.datasets._base.load_wine",
     "sklearn.datasets._california_housing.fetch_california_housing",
