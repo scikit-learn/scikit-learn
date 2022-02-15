@@ -162,7 +162,7 @@ for i in range(n_labels + 1):
 # 2D canvas. For this we use :ref:`manifold` techniques to retrieve 2D
 # embedding.
 # We use a dense eigen_solver to achieve reproducibility (arpack is initiated
-# with the random vectors that we don't control). In addition, we use a large 
+# with the random vectors that we don't control). In addition, we use a large
 # number of neighbors to capture the large-scale structure.
 
 # Finding a low-dimension embedding for visualization: find the best position of
