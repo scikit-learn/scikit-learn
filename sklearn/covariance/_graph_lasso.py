@@ -5,7 +5,7 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
-from collections.abc import Sequence
+from collections.abc import Iterable
 import warnings
 import operator
 import sys
@@ -857,7 +857,7 @@ class GraphicalLassoCV(GraphicalLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if isinstance(n_alphas, Sequence):
+        if isinstance(n_alphas, Iterable):
             alphas = self.alphas
             n_refinements = 1
         else:
@@ -933,7 +933,7 @@ class GraphicalLassoCV(GraphicalLasso):
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
 
-            if not isinstance(n_alphas, Sequence):
+            if not isinstance(n_alphas, Iterable):
                 alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0), n_alphas + 2)
                 alphas = alphas[1:-1]
 
