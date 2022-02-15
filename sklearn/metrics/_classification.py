@@ -1489,7 +1489,7 @@ def precision_recall_fscore_support(
     -------
     precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
-        Estimated precision of data.
+        Precision score.
 
     recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
