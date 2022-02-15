@@ -1074,7 +1074,7 @@ def test_sample_weight_unchanged(Estimator):
         (
             {"init": "wrong"},
             r"init should be either 'k-means\+\+', 'random', "
-            r"a ndarray or a callable",
+            r"an array-like or a callable",
         ),
     ],
 )
@@ -1191,6 +1191,21 @@ def test_is_same_clustering():
     # mapped to a same value
     labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
     assert not _is_same_clustering(labels1, labels3, 3)
+
+
+@pytest.mark.parametrize(
+    "kwargs", ({"init": np.str_("k-means++")}, {"init": [[0, 0], [1, 1]], "n_init": 1})
+)
+def test_kmeans_with_array_like_or_np_scalar_init(kwargs):
+    """Check that init works with numpy scalar strings.
+
+    Non-regression test for #21964.
+    """
+    X = np.asarray([[0, 0], [0.5, 0], [0.5, 1], [1, 1]], dtype=np.float64)
+
+    clustering = KMeans(n_clusters=2, **kwargs)
+    # Does not raise
+    clustering.fit(X)
 
 
 @pytest.mark.parametrize(
