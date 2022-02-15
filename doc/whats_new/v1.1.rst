@@ -143,6 +143,13 @@ Changelog
   :class:`cross_decomposition.PLSRegression`,
   and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| :class:`covariance.GraphicalLassoCV` now accepts NumPy array for the
+  parameter `alphas`.
+  :pr:`22493` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.datasets`
 .......................
 
