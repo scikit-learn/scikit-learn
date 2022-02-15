@@ -490,7 +490,7 @@ def test_polynomial_features_input_validation(params, err_msg):
 @pytest.fixture()
 def single_feature_degree3():
     X = np.arange(6)[:, np.newaxis]
-    P = np.hstack([np.ones_like(X), X, X ** 2, X ** 3])
+    P = np.hstack([np.ones_like(X), X, X**2, X**3])
     return X, P
 
 
@@ -541,16 +541,16 @@ def two_features_degree3():
     x2 = X[:, 1:]
     P = np.hstack(
         [
-            x1 ** 0 * x2 ** 0,  # 0
-            x1 ** 1 * x2 ** 0,  # 1
-            x1 ** 0 * x2 ** 1,  # 2
-            x1 ** 2 * x2 ** 0,  # 3
-            x1 ** 1 * x2 ** 1,  # 4
-            x1 ** 0 * x2 ** 2,  # 5
-            x1 ** 3 * x2 ** 0,  # 6
-            x1 ** 2 * x2 ** 1,  # 7
-            x1 ** 1 * x2 ** 2,  # 8
-            x1 ** 0 * x2 ** 3,  # 9
+            x1**0 * x2**0,  # 0
+            x1**1 * x2**0,  # 1
+            x1**0 * x2**1,  # 2
+            x1**2 * x2**0,  # 3
+            x1**1 * x2**1,  # 4
+            x1**0 * x2**2,  # 5
+            x1**3 * x2**0,  # 6
+            x1**2 * x2**1,  # 7
+            x1**1 * x2**2,  # 8
+            x1**0 * x2**3,  # 9
         ]
     )
     return X, P

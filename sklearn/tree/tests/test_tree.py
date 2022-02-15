@@ -621,14 +621,14 @@ def test_error():
         (
             {"max_depth": 1.1},
             TypeError,
-            "max_depth must be an instance of <class 'numbers.Integral'>",
+            "max_depth must be an instance of int",
         ),
         ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
         ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
         (
             {"min_samples_leaf": "foo"},
             TypeError,
-            "min_samples_leaf must be an instance of <class 'numbers.Real'>",
+            "min_samples_leaf must be an instance of float",
         ),
         ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
         (
@@ -644,7 +644,7 @@ def test_error():
         (
             {"min_samples_split": "foo"},
             TypeError,
-            "min_samples_split must be an instance of <class 'numbers.Real'>",
+            "min_samples_split must be an instance of float",
         ),
         (
             {"min_weight_fraction_leaf": -1},
@@ -659,10 +659,9 @@ def test_error():
         (
             {"min_weight_fraction_leaf": "foo"},
             TypeError,
-            "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
+            "min_weight_fraction_leaf must be an instance of float",
         ),
         ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 1000}, ValueError, "max_features == 1000, must be <="),
         ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
         ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
         ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
@@ -670,7 +669,7 @@ def test_error():
         (
             {"max_leaf_nodes": 1.5},
             TypeError,
-            "max_leaf_nodes must be an instance of <class 'numbers.Integral'>",
+            "max_leaf_nodes must be an instance of int",
         ),
         (
             {"min_impurity_decrease": -1},
@@ -680,13 +679,13 @@ def test_error():
         (
             {"min_impurity_decrease": "foo"},
             TypeError,
-            "min_impurity_decrease must be an instance of <class 'numbers.Real'>",
+            "min_impurity_decrease must be an instance of float",
         ),
         ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
         (
             {"ccp_alpha": "foo"},
             TypeError,
-            "ccp_alpha must be an instance of <class 'numbers.Real'>",
+            "ccp_alpha must be an instance of float",
         ),
     ],
 )
@@ -1254,7 +1253,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = TreeClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight ** 2)
+    clf1.fit(iris.data, iris.target, sample_weight**2)
     clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -1372,7 +1371,7 @@ def test_with_only_one_non_constant_features():
 
 def test_big_input():
     # Test if the warning for too large inputs is appropriate.
-    X = np.repeat(10 ** 40.0, 4).astype(np.float64).reshape(-1, 1)
+    X = np.repeat(10**40.0, 4).astype(np.float64).reshape(-1, 1)
     clf = DecisionTreeClassifier()
     try:
         clf.fit(X, [0, 1, 0, 1])

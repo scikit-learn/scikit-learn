@@ -194,7 +194,7 @@ def test_pairwise_boolean_distance(metric):
     # Check that no warning is raised if X is already boolean and Y is None:
     with pytest.warns(None) as records:
         pairwise_distances(X.astype(bool), metric=metric)
-    assert len(records) == 0
+    assert not [w.message for w in records]
 
 
 def test_no_data_conversion_warning():
@@ -203,7 +203,7 @@ def test_no_data_conversion_warning():
     X = rng.randn(5, 4)
     with pytest.warns(None) as records:
         pairwise_distances(X, metric="minkowski")
-    assert len(records) == 0
+    assert not [w.message for w in records]
 
 
 @pytest.mark.parametrize("func", [pairwise_distances, pairwise_kernels])
@@ -505,6 +505,30 @@ def test_pairwise_distances_argmin_min():
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
+    # Changing the axis and permuting datasets must give the same results
+    argmin_0, dist_0 = pairwise_distances_argmin_min(X, Y, axis=0)
+    argmin_1, dist_1 = pairwise_distances_argmin_min(Y, X, axis=1)
+
+    assert_allclose(dist_0, dist_1)
+    assert_array_equal(argmin_0, argmin_1)
+
+    argmin_0, dist_0 = pairwise_distances_argmin_min(X, X, axis=0)
+    argmin_1, dist_1 = pairwise_distances_argmin_min(X, X, axis=1)
+
+    assert_allclose(dist_0, dist_1)
+    assert_array_equal(argmin_0, argmin_1)
+
+    # Changing the axis and permuting datasets must give the same results
+    argmin_0 = pairwise_distances_argmin(X, Y, axis=0)
+    argmin_1 = pairwise_distances_argmin(Y, X, axis=1)
+
+    assert_array_equal(argmin_0, argmin_1)
+
+    argmin_0 = pairwise_distances_argmin(X, X, axis=0)
+    argmin_1 = pairwise_distances_argmin(X, X, axis=1)
+
+    assert_array_equal(argmin_0, argmin_1)
+
 
 def _reduce_func(dist, start):
     return dist[:, :100]
@@ -516,7 +540,7 @@ def test_pairwise_distances_chunked_reduce():
     # Reduced Euclidean distance
     S = pairwise_distances(X)[:, :100]
     S_chunks = pairwise_distances_chunked(
-        X, None, reduce_func=_reduce_func, working_memory=2 ** -16
+        X, None, reduce_func=_reduce_func, working_memory=2**-16
     )
     assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
@@ -530,7 +554,7 @@ def test_pairwise_distances_chunked_reduce_none():
     rng = np.random.RandomState(0)
     X = rng.random_sample((10, 4))
     S_chunks = pairwise_distances_chunked(
-        X, None, reduce_func=lambda dist, start: None, working_memory=2 ** -16
+        X, None, reduce_func=lambda dist, start: None, working_memory=2**-16
     )
     assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
@@ -601,11 +625,11 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
     assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
     Y = X if Y is None else Y
-    min_block_mib = len(Y) * 8 * 2 ** -20
+    min_block_mib = len(Y) * 8 * 2**-20
 
     for block in blockwise_distances:
         memory_used = block.nbytes
-        assert memory_used <= max(working_memory, min_block_mib) * 2 ** 20
+        assert memory_used <= max(working_memory, min_block_mib) * 2**20
 
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
@@ -639,7 +663,7 @@ def test_pairwise_distances_chunked():
     # Test small amounts of memory
     for power in range(-16, 0):
         check_pairwise_distances_chunked(
-            X, None, working_memory=2 ** power, metric="euclidean"
+            X, None, working_memory=2**power, metric="euclidean"
         )
     # X as list
     check_pairwise_distances_chunked(
@@ -662,7 +686,7 @@ def test_pairwise_distances_chunked():
 
     # Test precomputed returns all at once
     D = pairwise_distances(X)
-    gen = pairwise_distances_chunked(D, working_memory=2 ** -16, metric="precomputed")
+    gen = pairwise_distances_chunked(D, working_memory=2**-16, metric="precomputed")
     assert isinstance(gen, GeneratorType)
     assert next(gen) is D
     with pytest.raises(StopIteration):
@@ -725,8 +749,8 @@ def test_euclidean_distances_norm_shapes():
     X = rng.random_sample((10, 10))
     Y = rng.random_sample((20, 10))
 
-    X_norm_squared = (X ** 2).sum(axis=1)
-    Y_norm_squared = (Y ** 2).sum(axis=1)
+    X_norm_squared = (X**2).sum(axis=1)
+    Y_norm_squared = (Y**2).sum(axis=1)
 
     D1 = euclidean_distances(
         X, Y, X_norm_squared=X_norm_squared, Y_norm_squared=Y_norm_squared
@@ -922,7 +946,7 @@ def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
     assert_allclose(exp_dist, dist)
 
     dist_sq = nan_euclidean_distances(X, squared=True, missing_values=missing_value)
-    assert_allclose(exp_dist ** 2, dist_sq)
+    assert_allclose(exp_dist**2, dist_sq)
 
     dist_two = nan_euclidean_distances(X, X, missing_values=missing_value)
     assert_allclose(exp_dist, dist_two)
@@ -1410,7 +1434,7 @@ def test_pairwise_distances_data_derived_params_error(metric):
 
     with pytest.raises(
         ValueError,
-        match=fr"The '(V|VI)' parameter is required for the " fr"{metric} metric",
+        match=rf"The '(V|VI)' parameter is required for the " rf"{metric} metric",
     ):
         pairwise_distances(X, Y, metric=metric)
 

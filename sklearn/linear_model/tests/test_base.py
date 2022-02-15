@@ -364,7 +364,7 @@ def test_linear_regression_pd_sparse_dataframe_warning():
 
     with pytest.warns(None) as record:
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
-    assert not record
+    assert not [w.message for w in record]
 
 
 def test_preprocess_data():

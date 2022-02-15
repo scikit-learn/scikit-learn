@@ -158,10 +158,10 @@ def _beta_divergence(X, W, H, beta, square_root=False):
                 sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
 
         else:
-            sum_WH_beta = np.sum(WH ** beta)
+            sum_WH_beta = np.sum(WH**beta)
 
         sum_X_WH = np.dot(X_data, WH_data ** (beta - 1))
-        res = (X_data ** beta).sum() - beta * sum_X_WH
+        res = (X_data**beta).sum() - beta * sum_X_WH
         res += sum_WH_beta * (beta - 1)
         res /= beta * (beta - 1)
 
@@ -314,8 +314,12 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
     if init == "random":
         avg = np.sqrt(X.mean() / n_components)
         rng = check_random_state(random_state)
-        H = avg * rng.randn(n_components, n_features).astype(X.dtype, copy=False)
-        W = avg * rng.randn(n_samples, n_components).astype(X.dtype, copy=False)
+        H = avg * rng.standard_normal(size=(n_components, n_features)).astype(
+            X.dtype, copy=False
+        )
+        W = avg * rng.standard_normal(size=(n_samples, n_components)).astype(
+            X.dtype, copy=False
+        )
         np.abs(H, out=H)
         np.abs(W, out=W)
         return W, H
@@ -369,8 +373,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
     elif init == "nndsvdar":
         rng = check_random_state(random_state)
         avg = X.mean()
-        W[W == 0] = abs(avg * rng.randn(len(W[W == 0])) / 100)
-        H[H == 0] = abs(avg * rng.randn(len(H[H == 0])) / 100)
+        W[W == 0] = abs(avg * rng.standard_normal(size=len(W[W == 0])) / 100)
+        H[H == 0] = abs(avg * rng.standard_normal(size=len(H[H == 0])) / 100)
     else:
         raise ValueError(
             "Invalid init parameter: got %r instead of one of %r"
