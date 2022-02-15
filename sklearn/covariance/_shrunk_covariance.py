@@ -281,14 +281,14 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
 
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
-    """Estimates the shrunk Ledoit-Wolf covariance matrix.
+    """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Data from which to compute the covariance estimate
+        Data from which to compute the covariance estimate.
 
     assume_centered : bool, default=False
         If True, data will not be centered before computation.
