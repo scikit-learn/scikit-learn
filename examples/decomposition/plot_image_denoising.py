@@ -80,8 +80,10 @@ print(f"{data.shape[0]} patches extracted in %.2fs." % (time() - t0))
 print("Learning the dictionary...")
 t0 = time()
 dico = MiniBatchDictionaryLearning(
-    n_components=300,
-    batch_size=256,
+    # increase to 300 for higher quality results at the cost of slower
+    # training times.
+    n_components=50,
+    batch_size=200,
     alpha=1.0,
     max_iter=10,
 )
