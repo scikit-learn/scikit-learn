@@ -504,7 +504,7 @@ def test_make_sparse_coded_signal():
     for row in X:
         assert len(np.flatnonzero(row)) == 3, "Non-zero coefs mismatch"
     assert_array_almost_equal(np.dot(X, D), Y)
-    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=1)), np.ones(D.shape[0]))
+    assert_array_almost_equal(np.sqrt((D**2).sum(axis=1)), np.ones(D.shape[0]))
 
 
 def test_make_sparse_coded_signal_transposed():
