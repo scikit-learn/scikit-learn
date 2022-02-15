@@ -274,7 +274,7 @@ Changelog
 ....................
 
 - |Fix| :class:`dummy.DummyRegressor` no longer overrides the `constant`
-  parameter during `fit`. :pr:`xxxxx` by `Thomas Fan`_.
+  parameter during `fit`. :pr:`22486` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
