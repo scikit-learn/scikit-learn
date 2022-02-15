@@ -245,6 +245,12 @@ Changelog
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
   `Thomas Fan`_.
 
+:mod:`sklearn.dummy`
+....................
+
+- |Fix| :class:`dummy.DummyRegressor` no longer overrides the `constant`
+  parameter during `fit`. :pr:`22486` by `Thomas Fan`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
