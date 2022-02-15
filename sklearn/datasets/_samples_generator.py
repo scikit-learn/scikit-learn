@@ -29,7 +29,7 @@ def _generate_hypercube(samples, dimensions, rng):
                 _generate_hypercube(samples, 30, rng),
             ]
         )
-    out = sample_without_replacement(2 ** dimensions, samples, random_state=rng).astype(
+    out = sample_without_replacement(2**dimensions, samples, random_state=rng).astype(
         dtype=">u4", copy=False
     )
     out = np.unpackbits(out.view(">u1")).reshape((-1, 32))[:, -dimensions:]
@@ -185,7 +185,7 @@ def make_classification(
         msg += " smaller or equal 2**n_informative({})={}"
         raise ValueError(
             msg.format(
-                n_classes, n_clusters_per_class, n_informative, 2 ** n_informative
+                n_classes, n_clusters_per_class, n_informative, 2**n_informative
             )
         )
 
@@ -496,7 +496,7 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
 
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
-    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
+    y = ((X**2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
     y[y == 0.0] = -1.0
 
     return X, y
@@ -1286,7 +1286,7 @@ def make_sparse_coded_signal(
 
     # generate dictionary
     D = generator.standard_normal(size=(n_features, n_components))
-    D /= np.sqrt(np.sum((D ** 2), axis=0))
+    D /= np.sqrt(np.sum((D**2), axis=0))
 
     # generate code
     X = np.zeros((n_components, n_samples))

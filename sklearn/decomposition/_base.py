@@ -75,7 +75,7 @@ class _BasePCA(
         precision = np.dot(components_, components_.T) / self.noise_variance_
         precision.flat[:: len(precision) + 1] += 1.0 / exp_var_diff
         precision = np.dot(components_.T, np.dot(linalg.inv(precision), components_))
-        precision /= -(self.noise_variance_ ** 2)
+        precision /= -(self.noise_variance_**2)
         precision.flat[:: len(precision) + 1] += 1.0 / self.noise_variance_
         return precision
 
