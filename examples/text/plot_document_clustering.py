@@ -72,8 +72,9 @@ from sklearn import metrics
 from sklearn.cluster import MiniBatchKMeans
 
 
-def kmeans_pipeline(data, labels, n_clusters,
-                   idf=True, n_components=False, random_state=None):
+def kmeans_pipeline(
+    data, labels, n_clusters, idf=True, n_components=False, random_state=None
+):
     pipeline = []
 
     vectorizer = TfidfVectorizer(
@@ -107,7 +108,7 @@ def kmeans_pipeline(data, labels, n_clusters,
         init_size=1000,
         batch_size=1000,
         verbose=False,
-        random_state=random_state
+        random_state=random_state,
     )
 
     km.fit(X)
@@ -119,9 +120,7 @@ def kmeans_pipeline(data, labels, n_clusters,
     v_msr = metrics.v_measure_score(labels, km.labels_)
     rand_scr = metrics.adjusted_rand_score(labels, km.labels_)
     silhouette = metrics.silhouette_score(X, km.labels_, sample_size=1000)
-    print(
-        f"{homo:.3f}\t{complt:.3f}\t{v_msr:.3f}\t{rand_scr:.3f}\t{silhouette:.3f}"
-        )
+    print(f"{homo:.3f}\t{complt:.3f}\t{v_msr:.3f}\t{rand_scr:.3f}\t{silhouette:.3f}")
 
     return pipeline
 
@@ -139,7 +138,7 @@ def kmeans_pipeline(data, labels, n_clusters,
 # This improvement is not visible in the Silhouette Coefficient which is small
 # for both as this measure seem to suffer from the phenomenon called
 # "Concentration of Measure" or "Curse of Dimensionality" for high dimensional
-# datasets such as text data. The other measures are information theoretic 
+# datasets such as text data. The other measures are information theoretic
 # based evaluation scores: as they are only based
 # on cluster assignments rather than distances, hence not affected by the curse
 # of dimensionality.
@@ -161,16 +160,24 @@ print("         \thomo\tcomplet\tv-meas\trand-i\tsilhouette")
 print("-" * 58)
 
 print(f"{'Tf':9s}", end="\t")
-kmeans_pipeline(data=dataset.data, labels=labels, n_clusters=true_k,
-               idf=False, random_state=rseed)
+kmeans_pipeline(
+    data=dataset.data, labels=labels, n_clusters=true_k, idf=False, random_state=rseed
+)
 
 print(f"{'Tfidf':9s}", end="\t")
-kmeans_pipeline(data=dataset.data, labels=labels, n_clusters=true_k,
-               idf=True, random_state=rseed)
+kmeans_pipeline(
+    data=dataset.data, labels=labels, n_clusters=true_k, idf=True, random_state=rseed
+)
 
 print(f"{'Tfidf+LSA':9s}", end="\t")
-pipeline = kmeans_pipeline(data=dataset.data, labels=labels, n_clusters=true_k,
-                          idf=True, n_components=10, random_state=rseed)
+pipeline = kmeans_pipeline(
+    data=dataset.data,
+    labels=labels,
+    n_clusters=true_k,
+    idf=True,
+    n_components=10,
+    random_state=rseed,
+)
 
 
 # %%
@@ -193,20 +200,32 @@ order_centroids = original_space_centroids.argsort()[:, ::-1]
 
 terms = vectorizer.get_feature_names_out()
 
-fig, ax = plt.subplots(figsize=(10,5))
+fig, ax = plt.subplots(figsize=(10, 5))
 
 for i in range(true_k):
-    x_pos = .1 + .266 * i
-    ax.text(x_pos, .95, f"Cluster {i}",
-            fontsize=15, fontweight='bold',
-            ha='center', va='bottom')
+    x_pos = 0.1 + 0.266 * i
+    ax.text(
+        x_pos,
+        0.95,
+        f"Cluster {i}",
+        fontsize=15,
+        fontweight="bold",
+        ha="center",
+        va="bottom",
+    )
     for j, ind in enumerate(order_centroids[i, :10]):
-        scale = np.log(original_space_centroids[i, ind]+1)
-        y_pos = .77-.1*j
-        ax.text(x_pos, y_pos, terms[ind],
-                color=plt.cm.Set1(i),
-                fontsize=scale*130, fontweight=scale*1300,
-                ha='center', va='bottom')
+        scale = np.log(original_space_centroids[i, ind] + 1)
+        y_pos = 0.77 - 0.1 * j
+        ax.text(
+            x_pos,
+            y_pos,
+            terms[ind],
+            color=plt.cm.Set1(i),
+            fontsize=scale * 130,
+            fontweight=scale * 1300,
+            ha="center",
+            va="bottom",
+        )
 
 ax.set_title("Top terms per cluster", fontsize=20)
 ax.axis(False)
