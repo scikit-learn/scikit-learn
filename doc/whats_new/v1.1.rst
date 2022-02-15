@@ -471,7 +471,7 @@ Changelog
   will now allow penalty term `alpha` to be an iterable of same length as number
   of features in X in addition to a scalar value. Will also check that X matrix
   is full rank if penalty term `alpha` is set to 0.0 or array of 0.0s.
-  :pr:`11566` by :user:`Xiao Wei <xiaowei1234>`.
+  :pr:`22485` by :user:`Xiao Wei <xiaowei1234>`.
 
 :mod:`sklearn.metrics`
 ......................
