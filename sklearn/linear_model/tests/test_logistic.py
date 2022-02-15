@@ -1230,58 +1230,46 @@ def test_max_iter(max_iter, multi_class, solver, message):
 def test_n_iter(solver):
     # Test that self.n_iter_ has the correct format.
     X, y = iris.data, iris.target
+    n_classes = np.unique(y).shape[0]
+    assert n_classes == 3
 
+    # Also generate a binary classification sub-problem.
     y_bin = y.copy()
     y_bin[y_bin == 2] = 0
 
     n_Cs = 4
     n_cv_fold = 2
 
-    # OvR case
-    n_classes = 1 if solver == "liblinear" else np.unique(y).shape[0]
-    clf = LogisticRegression(
-        tol=1e-2, multi_class="ovr", solver=solver, C=1.0, random_state=42
+    # Binary classification case
+    clf = LogisticRegression(tol=1e-2, C=1.0, solver=solver, random_state=42)
+    clf.fit(X, y_bin)
+    assert clf.n_iter_.shape == (1,)
+
+    clf_cv = LogisticRegressionCV(
+        tol=1e-2, solver=solver, Cs=n_Cs, cv=n_cv_fold, random_state=42
     )
-    clf.fit(X, y)
+    clf_cv.fit(X, y_bin)
+    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+
+    # OvR case
+    clf.set_params(multi_class="ovr").fit(X, y)
     assert clf.n_iter_.shape == (n_classes,)
 
-    n_classes = np.unique(y).shape[0]
-    clf = LogisticRegressionCV(
-        tol=1e-2,
-        multi_class="ovr",
-        solver=solver,
-        Cs=n_Cs,
-        cv=n_cv_fold,
-        random_state=42,
-    )
-    clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
-    clf.fit(X, y_bin)
-    assert clf.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    clf_cv.set_params(multi_class="ovr").fit(X, y)
+    assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
 
     # multinomial case
-    n_classes = 1
-    if solver in ("liblinear", "sag", "saga"):
+    if solver == "liblinear":
+        # This solver only supports one-vs-rest multiclass classification.
         return
 
-    clf = LogisticRegression(
-        tol=1e-2, multi_class="multinomial", solver=solver, C=1.0, random_state=42
-    )
-    clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes,)
+    # When using the multinomial objective function, there is a single
+    # optimization problem to solve for all classes at once:
+    clf.set_params(multi_class="multinomial").fit(X, y)
+    assert clf.n_iter_.shape == (1,)
 
-    clf = LogisticRegressionCV(
-        tol=1e-2,
-        multi_class="multinomial",
-        solver=solver,
-        Cs=n_Cs,
-        cv=n_cv_fold,
-        random_state=42,
-    )
-    clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
-    clf.fit(X, y_bin)
-    assert clf.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    clf_cv.set_params(multi_class="multinomial").fit(X, y)
+    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
 
 
 @pytest.mark.parametrize("solver", ("newton-cg", "sag", "saga", "lbfgs"))
