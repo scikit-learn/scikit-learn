@@ -21,7 +21,7 @@ eigen_solvers = ["auto", "dense", "arpack"]
 path_methods = ["auto", "FW", "D"]
 
 N_PER_SIDE = 5
-NPTS = N_PER_SIDE ** 2
+NPTS = N_PER_SIDE**2
 
 
 def create_sample_data(add_noise=False):
@@ -103,7 +103,7 @@ def test_isomap_reconstruction_error(n_neighbors, radius):
                     clf.embedding_, radius, mode="distance"
                 )
             G_iso = G_iso.toarray()
-            K_iso = centerer.fit_transform(-0.5 * G_iso ** 2)
+            K_iso = centerer.fit_transform(-0.5 * G_iso**2)
 
             # make sure error agrees
             reconstruction_error = np.linalg.norm(K - K_iso) / NPTS
