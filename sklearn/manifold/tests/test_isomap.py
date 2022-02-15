@@ -245,12 +245,17 @@ def test_isomap_fit_precomputed_radius_graph():
     assert np.allclose(precomputed_result, result)
 
 
-def test_isomap_raise_warning_with_neighbor_and_radius_argument():
+def test_isomap_raise_error_when_neighbor_and_radius_both_set():
     X, _ = datasets.load_digits(return_X_y=True)
-    isomap = manifold.Isomap(n_neighbors=5, radius=5.5)
-    with pytest.warns(UserWarning):
-        isomap.fit(X)
-    with pytest.warns(UserWarning):
+
+    # works fine when one of `n_neighbors` and `radius` is provided
+    for n_neighbors, radius in [(None, 2), (2, None)]:
+        isomap = manifold.Isomap(n_neighbors=n_neighbors, radius=radius)
+
+    # raise ValueError when both arguments are provided
+    isomap = manifold.Isomap(n_neighbors=3, radius=5.5)
+    msg = "Both n_neighbors and radius are provided"
+    with pytest.raises(ValueError, match=msg):
         isomap.fit_transform(X)
 
 
