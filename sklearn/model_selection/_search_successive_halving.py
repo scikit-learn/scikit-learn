@@ -4,7 +4,6 @@ from abc import abstractmethod
 from numbers import Integral
 
 import numpy as np
-from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
 from ..base import is_classifier
@@ -227,8 +226,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
         ----------
 
         X : array-like, shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_output), optional
             Target relative to X for classification or regression;
@@ -240,7 +239,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the ``fit`` method of the estimator.
+
+        Returns
+        -------
+        self : object
+            Instance of fitted estimator.
         """
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator)
@@ -284,7 +288,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             last_iteration = n_required_iterations - 1
             self.min_resources_ = max(
                 self.min_resources_,
-                self.max_resources_ // self.factor ** last_iteration,
+                self.max_resources_ // self.factor**last_iteration,
             )
 
         # n_possible_iterations is the number of iterations that we can
@@ -323,7 +327,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # eliminated), and then go on as usual.
                 power = max(0, itr - n_required_iterations + n_possible_iterations)
 
-            n_resources = int(self.factor ** power * self.min_resources_)
+            n_resources = int(self.factor**power * self.min_resources_)
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
@@ -410,7 +414,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -496,7 +500,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : string, callable, or None, default=None
+    scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
@@ -513,7 +517,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -582,8 +586,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains many informations for
-        analysing the results of a search.
+        imported into a pandas ``DataFrame``. It contains lots of information
+        for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
 
@@ -626,10 +630,20 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         the underlying estimator is a classifier.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -699,7 +713,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             aggressive_elimination=aggressive_elimination,
         )
         self.param_grid = param_grid
-        _check_param_grid(self.param_grid)
 
     def _generate_candidate_params(self):
         return ParameterGrid(self.param_grid)
@@ -730,7 +743,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -822,7 +835,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
             deactivating shuffling (`shuffle=False`), or by setting the
             `cv`'s `random_state` parameter to an integer.
 
-    scoring : string, callable, or None, default=None
+    scoring : str, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
@@ -839,7 +852,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -910,8 +923,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``. It contains many informations for
-        analysing the results of a search.
+        imported into a pandas ``DataFrame``. It contains lots of information
+        for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
 
@@ -954,10 +967,20 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         the underlying estimator is a classifier.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -977,6 +1000,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> from sklearn.experimental import enable_halving_search_cv  # noqa
     >>> from sklearn.model_selection import HalvingRandomSearchCV
     >>> from scipy.stats import randint
+    >>> import numpy as np
     ...
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = RandomForestClassifier(random_state=0)

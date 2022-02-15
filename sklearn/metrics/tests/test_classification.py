@@ -255,7 +255,7 @@ def test_precision_recall_f1_score_binary():
 
         assert_almost_equal(
             my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs),
+            (1 + 2**2) * ps * rs / (2**2 * ps + rs),
             2,
         )
 
@@ -297,7 +297,7 @@ def test_precision_recall_f_extra_labels():
         actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4], average="macro")
         assert_array_almost_equal(np.mean([0.0, 1.0, 1.0, 0.5, 0.0]), actual)
 
-        # No effect otheriwse
+        # No effect otherwise
         for average in ["micro", "weighted", "samples"]:
             if average == "samples" and i == 0:
                 continue
@@ -1448,7 +1448,7 @@ def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
             y_true, y_pred, average="samples", zero_division=zero_division
         )
     assert score == pytest.approx(expected_score)
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
 
 @ignore_warnings

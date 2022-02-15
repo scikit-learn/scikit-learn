@@ -51,7 +51,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """Compute the unnormalized posterior log probability of X
 
         I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
-        shape (n_classes, n_samples).
+        shape (n_samples, n_classes).
 
         Input is passed to _joint_log_likelihood as-is by predict,
         predict_proba and predict_log_proba.
@@ -168,6 +168,12 @@ class GaussianNB(_BaseNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     sigma_ : ndarray of shape (n_classes, n_features)
         Variance of each feature per class.
 
@@ -218,8 +224,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -235,7 +241,7 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(X, y)
+        y = self._validate_data(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
         )
@@ -334,8 +340,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -366,8 +372,8 @@ class GaussianNB(_BaseNB):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -570,8 +576,8 @@ class _BaseDiscreteNB(_BaseNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -640,8 +646,8 @@ class _BaseDiscreteNB(_BaseNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -690,32 +696,6 @@ class _BaseDiscreteNB(_BaseNB):
     def _init_counters(self, n_classes, n_features):
         self.class_count_ = np.zeros(n_classes, dtype=np.float64)
         self.feature_count_ = np.zeros((n_classes, n_features), dtype=np.float64)
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `coef_` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def coef_(self):
-        return (
-            self.feature_log_prob_[1:]
-            if len(self.classes_) == 2
-            else self.feature_log_prob_
-        )
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `intercept_` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def intercept_(self):
-        return (
-            self.class_log_prior_[1:]
-            if len(self.classes_) == 2
-            else self.class_log_prior_
-        )
 
     def _more_tags(self):
         return {"poor_score": True}
@@ -768,14 +748,6 @@ class MultinomialNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
-    coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting `MultinomialNB`
-        as a linear model.
-
-        .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
-
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -784,14 +756,6 @@ class MultinomialNB(_BaseDiscreteNB):
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
-
-    intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` for interpreting `MultinomialNB`
-        as a linear model.
-
-        .. deprecated:: 0.24
-            ``intercept_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
 
     n_features_ : int
         Number of features of each sample.
@@ -805,18 +769,18 @@ class MultinomialNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
     CategoricalNB : Naive Bayes classifier for categorical features.
     ComplementNB : Complement Naive Bayes classifier.
     GaussianNB : Gaussian Naive Bayes.
-
-    Notes
-    -----
-    For the rationale behind the names `coef_` and `intercept_`, i.e.
-    naive Bayes as a linear classifier, see J. Rennie et al. (2003),
-    Tackling the poor assumptions of naive Bayes text classifiers, ICML.
 
     References
     ----------
@@ -907,14 +871,6 @@ class ComplementNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
-    coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting `ComplementNB`
-        as a linear model.
-
-        .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
-
     feature_all_ : ndarray of shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
@@ -925,14 +881,6 @@ class ComplementNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical weights for class complements.
-
-    intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` for interpreting `ComplementNB`
-        as a linear model.
-
-        .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
 
     n_features_ : int
         Number of features of each sample.
@@ -945,6 +893,12 @@ class ComplementNB(_BaseDiscreteNB):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1049,10 +1003,6 @@ class BernoulliNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
-    coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting `BernoulliNB`
-        as a linear model.
-
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -1060,10 +1010,6 @@ class BernoulliNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
-
-    intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` for interpreting `BernoulliNB`
-        as a linear model.
 
     n_features_ : int
         Number of features of each sample.
@@ -1076,6 +1022,12 @@ class BernoulliNB(_BaseDiscreteNB):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -1233,6 +1185,12 @@ class CategoricalNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_categories_ : ndarray of shape (n_features,), dtype=np.int64
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
@@ -1274,8 +1232,8 @@ class CategoricalNB(_BaseDiscreteNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
             It is further assumed that all categories of each feature are
             represented by the numbers 0, ..., n - 1, where n refers to the
@@ -1312,8 +1270,8 @@ class CategoricalNB(_BaseDiscreteNB):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
             It is further assumed that all categories of each feature are
             represented by the numbers 0, ..., n - 1, where n refers to the

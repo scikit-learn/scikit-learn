@@ -297,6 +297,12 @@ class BayesianGaussianMixture(BaseMixture):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     GaussianMixture : Finite Gaussian mixture fit with EM.
@@ -887,4 +893,4 @@ class BayesianGaussianMixture(BaseMixture):
                 self.precisions_cholesky_, self.precisions_cholesky_.T
             )
         else:
-            self.precisions_ = self.precisions_cholesky_ ** 2
+            self.precisions_ = self.precisions_cholesky_**2

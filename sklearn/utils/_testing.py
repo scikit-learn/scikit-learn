@@ -255,6 +255,8 @@ def ignore_warnings(obj=None, category=Warning):
 
     Examples
     --------
+    >>> import warnings
+    >>> from sklearn.utils._testing import ignore_warnings
     >>> with ignore_warnings():
     ...     warnings.warn('buhuhuhu')
 
@@ -518,19 +520,36 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
-def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
+def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=False):
     """
     Parameters
     ----------
     data
     mmap_mode : str, default='r'
     return_folder :  bool, default=False
+    aligned : bool, default=False
+        If True, if input is a single numpy array and if the input array is aligned,
+        the memory mapped array will also be aligned. This is a workaround for
+        https://github.com/joblib/joblib/issues/563.
     """
     temp_folder = tempfile.mkdtemp(prefix="sklearn_testing_")
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
-    filename = op.join(temp_folder, "data.pkl")
-    joblib.dump(data, filename)
-    memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
+    if aligned:
+        if isinstance(data, np.ndarray) and data.flags.aligned:
+            # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
+            filename = op.join(temp_folder, "data.dat")
+            fp = np.memmap(filename, dtype=data.dtype, mode="w+", shape=data.shape)
+            fp[:] = data[:]  # write data to memmap array
+            fp.flush()
+            memmap_backed_data = np.memmap(
+                filename, dtype=data.dtype, mode=mmap_mode, shape=data.shape
+            )
+        else:
+            raise ValueError("If aligned=True, input must be a single numpy array.")
+    else:
+        filename = op.join(temp_folder, "data.pkl")
+        joblib.dump(data, filename)
+        memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
     result = (
         memmap_backed_data if not return_folder else (memmap_backed_data, temp_folder)
     )
@@ -636,14 +655,25 @@ def check_docstring_parameters(func, doc=None, ignore=None):
 
     # Analyze function's docstring
     if doc is None:
-        with warnings.catch_warnings(record=True) as w:
+        records = []
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("error", UserWarning)
             try:
                 doc = docscrape.FunctionDoc(func)
+            except UserWarning as exp:
+                if "potentially wrong underline length" in str(exp):
+                    # Catch warning raised as of numpydoc 1.2 when
+                    # the underline length for a section of a docstring
+                    # is not consistent.
+                    message = str(exp).split("\n")[:3]
+                    incorrect += [f"In function: {func_name}"] + message
+                    return incorrect
+                records.append(str(exp))
             except Exception as exp:
                 incorrect += [func_name + " parsing error: " + str(exp)]
                 return incorrect
-        if len(w):
-            raise RuntimeError("Error for %s:\n%s" % (func_name, w[0]))
+        if len(records):
+            raise RuntimeError("Error for %s:\n%s" % (func_name, records[0]))
 
     param_docs = []
     for name, type_definition, param_doc in doc["Parameters"]:

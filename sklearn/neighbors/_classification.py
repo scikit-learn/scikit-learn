@@ -67,8 +67,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     metric : str or callable, default='minkowski'
         The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of :class:`DistanceMetric` for a
-        list of available metrics.
+        metric. For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
@@ -103,6 +105,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_samples_fit_ : int
         Number of samples in the fitted data.
@@ -205,9 +213,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        if self.weights == "uniform":
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
+            neigh_ind = self.kneighbors(X, return_distance=False)
+            neigh_dist = None
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
         _y = self._y
         if not self.outputs_2d_:
@@ -249,9 +262,13 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.weights == "uniform":
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
+            neigh_ind = self.kneighbors(X, return_distance=False)
+            neigh_dist = None
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
 
         classes_ = self.classes_
         _y = self._y
@@ -265,7 +282,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         if weights is None:
             weights = np.ones_like(neigh_ind)
 
-        all_rows = np.arange(X.shape[0])
+        all_rows = np.arange(n_queries)
         probabilities = []
         for k, classes_k in enumerate(classes_):
             pred_labels = _y[:, k][neigh_ind]
@@ -287,9 +304,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         return probabilities
 
+    def _more_tags(self):
+        return {"multilabel": True}
+
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, NeighborsBase):
-    """Classifier implementing a vote among neighbors within a given radius
+    """Classifier implementing a vote among neighbors within a given radius.
 
     Read more in the :ref:`User Guide <classification>`.
 
@@ -300,7 +320,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         queries.
 
     weights : {'uniform', 'distance'} or callable, default='uniform'
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
@@ -337,16 +357,16 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        Distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of :class:`DistanceMetric` for a
-        list of available metrics.
+        metric. For a list of available metrics, see the documentation of
+        :class:`~sklearn.metrics.DistanceMetric`.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
     outlier_label : {manual label, 'most_frequent'}, default=None
-        label for outlier samples (samples with no neighbors in given radius).
+        Label for outlier samples (samples with no neighbors in given radius).
 
         - manual label: str or int label (should be the same type as y)
           or list of manual labels if multi-output is used.
@@ -361,6 +381,13 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    **kwargs : dict
+        Additional keyword arguments passed to the constructor.
+
+        .. deprecated:: 1.0
+            The RadiusNeighborsClassifier class will not longer accept extra
+            keyword parameters in 1.2 since they are unused.
 
     Attributes
     ----------
@@ -383,6 +410,12 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
@@ -393,6 +426,23 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
     outputs_2d_ : bool
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
+
+    See Also
+    --------
+    KNeighborsClassifier : Classifier implementing the k-nearest neighbors
+        vote.
+    RadiusNeighborsRegressor : Regression based on neighbors within a
+        fixed radius.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    NearestNeighbors : Unsupervised learner for implementing neighbor
+        searches.
+
+    Notes
+    -----
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
 
     Examples
     --------
@@ -406,20 +456,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
     [0]
     >>> print(neigh.predict_proba([[1.0]]))
     [[0.66666667 0.33333333]]
-
-    See Also
-    --------
-    KNeighborsClassifier
-    RadiusNeighborsRegressor
-    KNeighborsRegressor
-    NearestNeighbors
-
-    Notes
-    -----
-    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
-    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
-
-    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(
@@ -436,6 +472,15 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         n_jobs=None,
         **kwargs,
     ):
+        # TODO: Remove in v1.2
+        if len(kwargs) > 0:
+            warnings.warn(
+                "Passing additional keyword parameters has no effect and is "
+                "deprecated in 1.0. An error will be raised from 1.2 and "
+                "beyond. The ignored keyword parameter(s) are: "
+                f"{kwargs.keys()}.",
+                FutureWarning,
+            )
         super().__init__(
             radius=radius,
             algorithm=algorithm,
@@ -503,7 +548,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
             for classes, label in zip(classes_, outlier_label_):
                 if _is_arraylike(label) and not isinstance(label, str):
-                    # ensure the outlier lable for each output is a scalar.
+                    # ensure the outlier label for each output is a scalar.
                     raise TypeError(
                         "The outlier_label of classes {} is "
                         "supposed to be a scalar, got "
@@ -574,13 +619,12 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         Returns
         -------
-        p : ndarray of shape (n_queries, n_classes), or a list of n_outputs
-            of such arrays if n_outputs > 1.
+        p : ndarray of shape (n_queries, n_classes), or a list of \
+                n_outputs of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
@@ -651,3 +695,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             probabilities = probabilities[0]
 
         return probabilities
+
+    def _more_tags(self):
+        return {"multilabel": True}

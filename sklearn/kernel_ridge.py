@@ -10,7 +10,6 @@ from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
-from .utils.deprecation import deprecated
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -48,11 +47,11 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         assumed to be specific to the targets. Hence they must correspond in
         number. See :ref:`ridge_regression` for formula.
 
-    kernel : string or callable, default="linear"
+    kernel : str or callable, default="linear"
         Kernel mapping used internally. This parameter is directly passed to
         :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
         If `kernel` is a string, it must be one of the metrics
-        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS` or "precomputed".
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if `kernel` is a callable function, it is called on
         each pair of instances (rows) and the resulting value recorded. The
@@ -75,7 +74,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of string to any, default=None
+    kernel_params : mapping of str to any, default=None
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
@@ -94,16 +93,28 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.gaussian_process.GaussianProcessRegressor : Gaussian
+        Process regressor providing automatic kernel hyperparameters
+        tuning and predictions uncertainty.
+    sklearn.linear_model.Ridge : Linear ridge regression.
+    sklearn.linear_model.RidgeCV : Ridge regression with built-in
+        cross-validation.
+    sklearn.svm.SVR : Support Vector Regression accepting a large variety
+        of kernels.
+
     References
     ----------
     * Kevin P. Murphy
       "Machine Learning: A Probabilistic Perspective", The MIT Press
       chapter 14.4.3, pp. 492-493
-
-    See Also
-    --------
-    sklearn.linear_model.Ridge : Linear ridge regression.
-    sklearn.svm.SVR : Support Vector Regression implemented using libsvm.
 
     Examples
     --------
@@ -113,8 +124,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = KernelRidge(alpha=1.0)
-    >>> clf.fit(X, y)
+    >>> krr = KernelRidge(alpha=1.0)
+    >>> krr.fit(X, y)
     KernelRidge(alpha=1.0)
     """
 
@@ -145,18 +156,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _more_tags(self):
         return {"pairwise": self.kernel == "precomputed"}
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
-
     def fit(self, X, y, sample_weight=None):
-        """Fit Kernel Ridge regression model
+        """Fit Kernel Ridge regression model.
 
         Parameters
         ----------
@@ -165,14 +166,15 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             a precomputed kernel matrix, of shape (n_samples, n_samples).
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values
+            Target values.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
             Individual weights for each sample, ignored if None is passed.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns the instance itself.
         """
         # Convert data
         X, y = self._validate_data(
@@ -199,7 +201,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        """Predict using the kernel ridge model
+        """Predict using the kernel ridge model.
 
         Parameters
         ----------
