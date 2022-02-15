@@ -250,11 +250,16 @@ def load_files(
     for label, folder in enumerate(folders):
         target_names.append(folder)
         folder_path = join(container_path, folder)
-        documents = [
-            join(folder_path, d)
-            for d in sorted(listdir(folder_path))
-            if _check_valid_document(d, allowed_extensions)
-        ]
+        files = sorted(listdir(folder_path))
+        if allowed_extensions is not None:
+            allowed_extensions = frozenset(allowed_extensions)
+            documents = [
+                join(folder_path, file)
+                for file in files
+                if os.path.splitext(file)[1] in allowed_extensions
+            ]
+        else:
+            documents = [join(folder_path, file) for file in files]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
