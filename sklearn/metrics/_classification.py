@@ -1497,7 +1497,7 @@ def precision_recall_fscore_support(
 
     fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
-        Estimated fbeta_score of data.
+        F-beta score.
 
     support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
