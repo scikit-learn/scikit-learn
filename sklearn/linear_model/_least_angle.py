@@ -707,7 +707,7 @@ def _lars_path_solver(
                 i = 0
                 L_ = L[:n_active, :n_active].copy()
                 while not np.isfinite(AA):
-                    L_.flat[:: n_active + 1] += (2 ** i) * eps
+                    L_.flat[:: n_active + 1] += (2**i) * eps
                     least_squares, _ = solve_cholesky(
                         L_, sign_active[:n_active], lower=True
                     )
@@ -1450,7 +1450,7 @@ def _lars_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -1602,6 +1602,11 @@ class LarsCV(Lars):
         or AIC for model selection.
     sklearn.decomposition.sparse_encode : Sparse coding.
 
+    Notes
+    -----
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
     Examples
     --------
     >>> from sklearn.linear_model import LarsCV
@@ -1738,7 +1743,7 @@ class LarsCV(Lars):
         self.cv_alphas_ = all_alphas
         self.mse_path_ = mse_path
 
-        # Now compute the full model
+        # Now compute the full model using best_alpha
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
         self._fit(
@@ -1900,14 +1905,19 @@ class LassoLarsCV(LarsCV):
 
     Notes
     -----
-    The object solves the same problem as the LassoCV object. However,
-    unlike the LassoCV, it find the relevant alphas values by itself.
-    In general, because of this property, it will be more stable.
+    The object solves the same problem as the
+    :class:`~sklearn.linear_model.LassoCV` object. However, unlike the
+    :class:`~sklearn.linear_model.LassoCV`, it find the relevant alphas values
+    by itself. In general, because of this property, it will be more stable.
     However, it is more fragile to heavily multicollinear datasets.
 
-    It is more efficient than the LassoCV if only a small number of
-    features are selected compared to the total number, for instance if
-    there are very few samples compared to the number of features.
+    It is more efficient than the :class:`~sklearn.linear_model.LassoCV` if
+    only a small number of features are selected compared to the total number,
+    for instance if there are very few samples compared to the number of
+    features.
+
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------
@@ -2212,7 +2222,7 @@ class LassoLarsIC(LassoLars):
             )
 
         residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
-        residuals_sum_squares = np.sum(residuals ** 2, axis=0)
+        residuals_sum_squares = np.sum(residuals**2, axis=0)
         degrees_of_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps

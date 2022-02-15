@@ -548,10 +548,9 @@ class SVC(BaseSVC):
         inversely proportional to C. Must be strictly positive. The penalty
         is a squared l2 penalty.
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
         Specifies the kernel type to be used in the algorithm.
-        It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-        a callable.
         If none is given, 'rbf' will be used. If a callable is given it is
         used to pre-compute the kernel matrix from data matrices; that matrix
         should be an array of shape ``(n_samples, n_samples)``.
@@ -680,6 +679,13 @@ class SVC(BaseSVC):
 
         .. versionadded:: 1.0
 
+    n_iter_ : ndarray of shape (n_classes * (n_classes - 1) // 2,)
+        Number of iterations run by the optimization routine to fit the model.
+        The shape of this attribute depends on the number of models optimized
+        which in turn depends on the number of classes.
+
+        .. versionadded:: 1.1
+
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
@@ -805,10 +811,9 @@ class NuSVC(BaseSVC):
         <nu_svc>`) and a lower bound of the fraction of support vectors.
         Should be in the interval (0, 1].
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -934,6 +939,13 @@ class NuSVC(BaseSVC):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : ndarray of shape (n_classes * (n_classes - 1) // 2,)
+        Number of iterations run by the optimization routine to fit the model.
+        The shape of this attribute depends on the number of models optimized
+        which in turn depends on the number of classes.
+
+        .. versionadded:: 1.1
 
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
@@ -1063,10 +1075,9 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1149,6 +1160,11 @@ class SVR(RegressorMixin, BaseLibSVM):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1262,10 +1278,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     C : float, default=1.0
         Penalty parameter C of the error term.
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1337,6 +1352,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1440,10 +1460,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1521,6 +1540,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.

@@ -395,7 +395,7 @@ def orthogonal_mp(
         G = np.asfortranarray(G)
         Xy = np.dot(X.T, y)
         if tol is not None:
-            norms_squared = np.sum((y ** 2), axis=0)
+            norms_squared = np.sum((y**2), axis=0)
         else:
             norms_squared = None
         return orthogonal_mp_gram(
@@ -554,9 +554,9 @@ def orthogonal_mp_gram(
         )
 
     if return_path:
-        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)))
+        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)), dtype=Gram.dtype)
     else:
-        coef = np.zeros((len(Gram), Xy.shape[1]))
+        coef = np.zeros((len(Gram), Xy.shape[1]), dtype=Gram.dtype)
 
     n_iters = []
     for k in range(Xy.shape[1]):
@@ -753,7 +753,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 return_n_iter=True,
             )
         else:
-            norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
+            norms_sq = np.sum(y**2, axis=0) if self.tol is not None else None
 
             coef_, self.n_iter_ = orthogonal_mp_gram(
                 Gram,
@@ -844,7 +844,7 @@ def _omp_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -966,6 +966,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     LassoLarsCV : Cross-validated Lasso model fit with Least Angle Regression.
     sklearn.decomposition.sparse_encode : Generic sparse coding.
         Each column of the result is the solution to a Lasso problem.
+
+    Notes
+    -----
+    In `fit`, once the optimal number of non-zero coefficients is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------

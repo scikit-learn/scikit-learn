@@ -23,17 +23,17 @@ make_conda() {
 }
 
 setup_ccache() {
-    echo "Setting up ccache"
+    echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
     mkdir /tmp/ccache/
     which ccache
-    for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
+    for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
       ln -s $(which ccache) "/tmp/ccache/${name}"
     done
     export PATH="/tmp/ccache/:${PATH}"
     ccache -M 256M
 }
 
-# imports get_dep
+# defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
@@ -63,11 +63,7 @@ if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
-            # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            # TODO: Remove !=1.1.0 when the following is fixed:
-            # sklearn/svm/_libsvm.cpython-38-darwin.so,
-            # 2): Symbol not found: _svm_check_parameter error
-            TO_INSTALL="$TO_INSTALL compilers>=1.0.4,!=1.1.0 llvm-openmp"
+            TO_INSTALL="$TO_INSTALL compilers llvm-openmp"
         else
             # Without openmp, we use the system clang. Here we use /usr/bin/ar
             # instead because llvm-ar errors
@@ -137,11 +133,9 @@ python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
                       $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install codecov pytest-cov
-fi
-
-if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    python -m pip install pytest-xdist
+    # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
+    # cf. https://github.com/nedbat/coveragepy/issues/1310
+    python -m pip install codecov pytest-cov coverage==6.2
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
@@ -164,7 +158,8 @@ except ImportError:
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
 
-python -m pip list
+show_installed_libraries
+
 if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # Check that pip can automatically build scikit-learn with the build
     # dependencies specified in pyproject.toml using an isolated build
