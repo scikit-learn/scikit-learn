@@ -113,12 +113,9 @@ def test_deviance_derivative(family):
     dev_derivative = family.deviance_derivative(y_true, y_pred)
     assert dev_derivative.shape == y_pred.shape
 
-    err = (
-        check_grad(
-            lambda y_pred: family.deviance(y_true, y_pred),
-            lambda y_pred: family.deviance_derivative(y_true, y_pred),
-            y_pred,
-        )
-        / np.linalg.norm(dev_derivative)
-    )
+    err = check_grad(
+        lambda y_pred: family.deviance(y_true, y_pred),
+        lambda y_pred: family.deviance_derivative(y_true, y_pred),
+        y_pred,
+    ) / np.linalg.norm(dev_derivative)
     assert abs(err) < 1e-6

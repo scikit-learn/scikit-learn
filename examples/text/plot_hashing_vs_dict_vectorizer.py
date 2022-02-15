@@ -72,7 +72,7 @@ print()
 try:
     n_features = int(sys.argv[1])
 except IndexError:
-    n_features = 2 ** 18
+    n_features = 2**18
 except ValueError:
     print("not a valid number of features: %r" % sys.argv[1])
     sys.exit(1)

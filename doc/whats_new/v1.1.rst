@@ -101,6 +101,9 @@ Changelog
   See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`.
 
+- |Fix| :class:`cluster.KMeans`'s `init` parameter now properly supports
+  array-like input and NumPy string scalars. :pr:`22154` by `Thomas Fan`_.
+
 - |Enhancement| Adds :term:`get_feature_names_out` to :class:`cluster.Birch`,
   :class:`cluster.FeatureAgglomeration`, :class:`cluster.KMeans`,
   :class:`cluster.MiniBatchKMeans`. :pr:`22255` by `Thomas Fan`_.
@@ -139,6 +142,13 @@ Changelog
   :class:`cross_decomposition.PLSSVD`,
   :class:`cross_decomposition.PLSRegression`,
   and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| :class:`covariance.GraphicalLassoCV` now accepts NumPy array for the
+  parameter `alphas`.
+  :pr:`22493` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -247,6 +257,12 @@ Changelog
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
   `Thomas Fan`_.
 
+:mod:`sklearn.dummy`
+....................
+
+- |Fix| :class:`dummy.DummyRegressor` no longer overrides the `constant`
+  parameter during `fit`. :pr:`22486` by `Thomas Fan`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -304,6 +320,11 @@ Changelog
   `warm_start` enabled.
   :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
+- |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
+  float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
+  and :user:`Daniel Kharsa <aflatoune>` and :pr:`22370` by
+  :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -338,6 +359,14 @@ Changelog
 
 :mod:`sklearn.gaussian_process`
 ...............................
+
+- |Fix| `predict` and `sample_y` methods of
+  :class:`sklearn.gaussian_process.GaussianProcessRegressor` now return
+  arrays of the correct shape in single-target and multi-target cases, and for
+  both `normalize_y=False` and `normalize_y=True`.
+  :pr:`22199` by :user:`Guillaume Lemaitre <glemaitre>`,
+  :user:`Aidar Shakerimoff <AidarShakerimoff>` and
+  :user:`Tenavi Nakamura-Zimmerer <Tenavi>`.
 
 - |Fix| :class:`gaussian_process.GaussianProcessClassifier` raises
   a more informative error if `CompoundKernel` is passed via `kernel`.
@@ -435,6 +464,14 @@ Changelog
   now raise consistent error messages when passed invalid values for `l1_ratio`,
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
+  
+- |Fix| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
+  with a shape that respects the docstring and that is consistent with the shape
+  obtained when using the other solvers in the one-vs-rest setting. Previously,
+  it would record only the maximum of the number of iterations for each binary
+  sub-problem while now all of them are recorded. :pr:`21998` by
+  :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -645,6 +682,10 @@ Changelog
 - |Fix| :func:`check_scalar` raises an error when `include_boundaries={"left", "right"}`
   and the boundaries are not set.
   :pr:`22027` by `Marie Lanternier <mlant>`.
+
+- |Fix| Estimators with `non_deterministic` tag set to `True` will skip both
+  `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
+  :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
 
 Code and Documentation Contributors
 -----------------------------------

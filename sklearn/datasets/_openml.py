@@ -109,7 +109,7 @@ def _open_openml_url(
     ----------
     openml_path : str
         OpenML URL that will be accessed. This will be prefixes with
-        _OPENML_PREFIX
+        _OPENML_PREFIX.
 
     data_home : str
         Directory to which the files will be cached. If None, no caching will
@@ -125,7 +125,7 @@ def _open_openml_url(
     Returns
     -------
     result : stream
-        A stream to the OpenML resource
+        A stream to the OpenML resource.
     """
 
     def is_gzip_encoded(_fsrc):
@@ -194,12 +194,12 @@ def _get_json_content_from_openml_api(
     Parameters
     ----------
     url : str
-        The URL to load from. Should be an official OpenML endpoint
+        The URL to load from. Should be an official OpenML endpoint.
 
     error_message : str or None
         The error message to raise if an acceptable OpenML error is thrown
         (acceptable error is, e.g., data id not found. Other errors, like 404's
-        will throw the native error message)
+        will throw the native error message).
 
     data_home : str or None
         Location to cache the response. None if no cache is required.
@@ -648,7 +648,7 @@ def fetch_openml(
         is used. If ``None``, all columns are returned as data and the
         target is ``None``. If list (of strings), all columns with these names
         are returned as multi-target (Note: not all scikit-learn classifiers
-        can handle all types of multi-output combinations)
+        can handle all types of multi-output combinations).
 
     cache : bool, default=True
         Whether to cache the downloaded datasets into `data_home`.
@@ -693,11 +693,11 @@ def fetch_openml(
             Dtype is float if numeric, and object if categorical. If
             ``as_frame`` is True, ``target`` is a pandas object.
         DESCR : str
-            The full description of the dataset
+            The full description of the dataset.
         feature_names : list
-            The names of the dataset columns
+            The names of the dataset columns.
         target_names: list
-            The names of the target columns
+            The names of the target columns.
 
         .. versionadded:: 0.22
 
@@ -706,7 +706,7 @@ def fetch_openml(
             that the value encoded as i is ith in the list. If ``as_frame``
             is True, this is None.
         details : dict
-            More metadata from OpenML
+            More metadata from OpenML.
         frame : pandas DataFrame
             Only present when `as_frame=True`. DataFrame with ``data`` and
             ``target``.
@@ -721,7 +721,7 @@ def fetch_openml(
 
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None
-        (categorical target)
+        (categorical target).
     """
     if cache is False:
         # no caching will be applied
