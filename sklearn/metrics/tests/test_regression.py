@@ -71,7 +71,7 @@ def test_regression_metrics(n_samples=50):
     n = n_samples
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=-1),
-        5 / 12 * n * (n ** 2 + 2 * n + 1),
+        5 / 12 * n * (n**2 + 2 * n + 1),
     )
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=1), (n + 1) * (1 - np.log(2))

@@ -156,8 +156,10 @@ def assert_all_finite(
     Parameters
     ----------
     X : {ndarray, sparse matrix}
+        The input data.
 
     allow_nan : bool, default=False
+        If True, do not throw error when `X` contains NaN.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
@@ -238,6 +240,11 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 def _is_arraylike(x):
     """Returns whether the input is array-like."""
     return hasattr(x, "__len__") or hasattr(x, "shape") or hasattr(x, "__array__")
+
+
+def _is_arraylike_not_scalar(array):
+    """Return True if array is array-like and not a scalar"""
+    return _is_arraylike(array) and not np.isscalar(array)
 
 
 def _num_features(X):

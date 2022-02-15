@@ -158,10 +158,10 @@ def _beta_divergence(X, W, H, beta, square_root=False):
                 sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
 
         else:
-            sum_WH_beta = np.sum(WH ** beta)
+            sum_WH_beta = np.sum(WH**beta)
 
         sum_X_WH = np.dot(X_data, WH_data ** (beta - 1))
-        res = (X_data ** beta).sum() - beta * sum_X_WH
+        res = (X_data**beta).sum() - beta * sum_X_WH
         res += sum_WH_beta * (beta - 1)
         res /= beta * (beta - 1)
 

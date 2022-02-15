@@ -255,7 +255,7 @@ def test_precision_recall_f1_score_binary():
 
         assert_almost_equal(
             my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs),
+            (1 + 2**2) * ps * rs / (2**2 * ps + rs),
             2,
         )
 
