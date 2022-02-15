@@ -654,6 +654,10 @@ Changelog
   and the boundaries are not set.
   :pr:`22027` by `Marie Lanternier <mlant>`.
 
+- |Fix| Estimators with `non_deterministic` tag set to `True` will skip both
+  `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
+  :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
