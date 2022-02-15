@@ -72,17 +72,22 @@ data = extract_patches_2d(distorted[:, : width // 2], patch_size)
 data = data.reshape(data.shape[0], -1)
 data -= np.mean(data, axis=0)
 data /= np.std(data, axis=0)
-print("done in %.2fs." % (time() - t0))
+print(f"{data.shape[0]} patches extracted in %.2fs." % (time() - t0))
 
 # #############################################################################
 # Learn the dictionary from reference patches
 
 print("Learning the dictionary...")
 t0 = time()
-dico = MiniBatchDictionaryLearning(n_components=50, batch_size=3, alpha=1, max_iter=10)
+dico = MiniBatchDictionaryLearning(
+    n_components=300,
+    batch_size=256,
+    alpha=1.0,
+    max_iter=10,
+)
 V = dico.fit(data).components_
 dt = time() - t0
-print("done in %.2fs." % dt)
+print(f"{dico.n_iter_} iterations / {dico.n_steps_} steps in %.2fs." % dt)
 
 plt.figure(figsize=(4.2, 4))
 for i, comp in enumerate(V[:100]):
