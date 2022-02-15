@@ -13,7 +13,7 @@ import scipy.optimize
 
 from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
-from ...utils import check_scalar, check_array
+from ...utils import check_scalar
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ..._loss.glm_distribution import (
     ExponentialDispersionModel,
@@ -287,7 +287,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 min_val=0.0,
                 include_boundaries="left",
             )
-            self.alpha = np.full(X.shape[1], self.alpha)
         weights = _check_sample_weight(sample_weight, X)
 
         _, n_features = X.shape
