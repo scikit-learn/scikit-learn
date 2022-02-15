@@ -145,7 +145,7 @@ Changelog
 
 - |Fix| :class:`covariance.GraphicalLassoCV` now accepts NumPy array for the
   parameter `alphas`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`22493` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
