@@ -97,29 +97,6 @@ def _convert_data_dataframe(
     return combined_df, X, y
 
 
-def _check_valid_document(file_name, allowed_extensions):
-    """Checks if the file with file_name should be loaded in for `load_files`.
-
-    Parameters
-    ----------
-    file_name: str
-        The name of the file to check.
-
-    allowed_extensions : frozenset of str or None
-        List of desired file extensions to filter the files to be loaded.
-        If `None`, then all files are considered valid.
-
-    Returns
-    -------
-    data : bool
-        Indicates whether or not the file should be loaded in `load_files`.
-    """
-
-    if not allowed_extensions:
-        return True
-    return os.path.splitext(file_name)[1] in allowed_extensions
-
-
 def load_files(
     container_path,
     *,
