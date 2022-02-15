@@ -6,139 +6,25 @@ Clustering text documents using k-means
 This is an example showing how the scikit-learn can be used to cluster
 documents by topics using a bag-of-words approach. This example uses
 a scipy.sparse matrix to store the features instead of standard numpy arrays.
-
-Two feature extraction methods can be used in this example:
-
-  - TfidfVectorizer uses a in-memory vocabulary (a python dict) to map the most
-    frequent words to features indices and hence compute a word occurrence
-    frequency (sparse) matrix. The word frequencies are then reweighted using
-    the Inverse Document Frequency (IDF) vector collected feature-wise over
-    the corpus.
-
-  - HashingVectorizer hashes word occurrences to a fixed dimensional space,
-    possibly with collisions. The word count vectors are then normalized to
-    each have l2-norm equal to one (projected to the euclidean unit-ball) which
-    seems to be important for k-means to work in high dimensional space.
-
-    HashingVectorizer does not provide IDF weighting as this is a stateless
-    model (the fit method does nothing). When IDF weighting is needed it can
-    be added by pipelining its output to a TfidfTransformer instance.
-
-Two algorithms are demoed: ordinary k-means and its more scalable cousin
-minibatch k-means.
-
-Additionally, latent semantic analysis can also be used to reduce
-dimensionality and discover latent patterns in the data.
-
-It can be noted that k-means (and minibatch k-means) are very sensitive to
-feature scaling and that in this case the IDF weighting helps improve the
-quality of the clustering by quite a lot as measured against the "ground truth"
-provided by the class label assignments of the 20 newsgroups dataset.
-
-This improvement is not visible in the Silhouette Coefficient which is small
-for both as this measure seem to suffer from the phenomenon called
-"Concentration of Measure" or "Curse of Dimensionality" for high dimensional
-datasets such as text data. Other measures such as V-measure and Adjusted Rand
-Index are information theoretic based evaluation scores: as they are only based
-on cluster assignments rather than distances, hence not affected by the curse
-of dimensionality.
-
-Note: as k-means is optimizing a non-convex objective function, it will likely
-end up in a local optimum. Several runs with independent random init might be
-necessary to get a good convergence.
-
+We attempt reweighting and dimensionality reduction on the
+extracted features and compare performance metrics for each case.
 """
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Lars Buitinck
+#         Giorgos Papadokostakis
 # License: BSD 3 clause
-
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.decomposition import TruncatedSVD
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import Normalizer
-from sklearn import metrics
-
-from sklearn.cluster import KMeans, MiniBatchKMeans
-
-import logging
-from optparse import OptionParser
-import sys
-from time import time
-
-import numpy as np
-
-
-# Display progress logs on stdout
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-
-# parse commandline arguments
-op = OptionParser()
-op.add_option(
-    "--lsa",
-    dest="n_components",
-    type="int",
-    help="Preprocess documents with latent semantic analysis.",
-)
-op.add_option(
-    "--no-minibatch",
-    action="store_false",
-    dest="minibatch",
-    default=True,
-    help="Use ordinary k-means algorithm (in batch mode).",
-)
-op.add_option(
-    "--no-idf",
-    action="store_false",
-    dest="use_idf",
-    default=True,
-    help="Disable Inverse Document Frequency feature weighting.",
-)
-op.add_option(
-    "--use-hashing",
-    action="store_true",
-    default=False,
-    help="Use a hashing feature vectorizer",
-)
-op.add_option(
-    "--n-features",
-    type=int,
-    default=10000,
-    help="Maximum number of features (dimensions) to extract from text.",
-)
-op.add_option(
-    "--verbose",
-    action="store_true",
-    dest="verbose",
-    default=False,
-    help="Print progress reports inside k-means algorithm.",
-)
-
-print(__doc__)
-
-
-def is_interactive():
-    return not hasattr(sys.modules["__main__"], "__file__")
-
-
-if not is_interactive():
-    op.print_help()
-    print()
-
-# work-around for Jupyter notebook and IPython console
-argv = [] if is_interactive() else sys.argv[1:]
-(opts, args) = op.parse_args(argv)
-if len(args) > 0:
-    op.error("this script takes no arguments.")
-    sys.exit(1)
 
 
 # %%
 # Load some categories from the training set
 # ------------------------------------------
+# We will start by loading 4 of the 20 news groups categories and see if
+# k-means can cluster them properly.
+
+from sklearn.datasets import fetch_20newsgroups
+import numpy as np
+
 
 categories = [
     "alt.atheism",
@@ -146,8 +32,6 @@ categories = [
     "comp.graphics",
     "sci.space",
 ]
-# Uncomment the following to do the analysis on all the categories
-# categories = None
 
 print("Loading 20 newsgroups dataset for categories:")
 print(categories)
@@ -162,126 +46,168 @@ print()
 
 
 # %%
-# Feature Extraction
-# ------------------
+# Define k-means pipeline
+# -----------------------
+# Here we define our k-means pipeline and the metrics to evaluate performance.
+#
+# Term-frequency inverse document-frequency (Tfidf) is used as a feature
+# extraction method.
+# TfidfVectorizer uses an in-memory vocabulary (a python dict) to map the most
+# frequent words to features indices and hence compute a word occurrence
+# frequency (sparse) matrix. The word frequencies are then reweighted using
+# the Inverse Document Frequency (IDF) vector collected feature-wise over
+# the corpus.
+#
+# Additionally, latent semantic analysis (LSA) is also be used to reduce
+# dimensionality and discover latent patterns in the data.
+#
+# Instead of ordinary k-means we use its more scalable cousin
+# minibatch k-means.
 
-labels = dataset.target
-true_k = np.unique(labels).shape[0]
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import Normalizer
+from sklearn import metrics
+from sklearn.cluster import MiniBatchKMeans
 
-print("Extracting features from the training dataset using a sparse vectorizer")
-t0 = time()
-if opts.use_hashing:
-    if opts.use_idf:
-        # Perform an IDF normalization on the output of HashingVectorizer
-        hasher = HashingVectorizer(
-            n_features=opts.n_features,
-            stop_words="english",
-            alternate_sign=False,
-            norm=None,
-        )
-        vectorizer = make_pipeline(hasher, TfidfTransformer())
-    else:
-        vectorizer = HashingVectorizer(
-            n_features=opts.n_features,
-            stop_words="english",
-            alternate_sign=False,
-            norm="l2",
-        )
-else:
+
+def kmeans_pipeline(data, labels, n_clusters,
+                   idf=True, n_components=False, random_state=None):
+    pipeline = []
+
     vectorizer = TfidfVectorizer(
         max_df=0.5,
-        max_features=opts.n_features,
+        max_features=10000,
         min_df=2,
         stop_words="english",
-        use_idf=opts.use_idf,
-    )
-X = vectorizer.fit_transform(dataset.data)
-
-print("done in %fs" % (time() - t0))
-print("n_samples: %d, n_features: %d" % X.shape)
-print()
-
-if opts.n_components:
-    print("Performing dimensionality reduction using LSA")
-    t0 = time()
-    # Vectorizer results are normalized, which makes KMeans behave as
-    # spherical k-means for better results. Since LSA/SVD results are
-    # not normalized, we have to redo the normalization.
-    svd = TruncatedSVD(opts.n_components)
-    normalizer = Normalizer(copy=False)
-    lsa = make_pipeline(svd, normalizer)
-
-    X = lsa.fit_transform(X)
-
-    print("done in %fs" % (time() - t0))
-
-    explained_variance = svd.explained_variance_ratio_.sum()
-    print(
-        "Explained variance of the SVD step: {}%".format(int(explained_variance * 100))
+        use_idf=idf,
     )
 
-    print()
+    X = vectorizer.fit_transform(data)
 
+    pipeline.append(vectorizer)
 
-# %%
-# Clustering
-# ----------
+    if type(n_components) is int:
+        # Vectorizer results are normalized, which makes KMeans behave as
+        # spherical k-means for better results. Since LSA/SVD results are
+        # not normalized, we have to redo the normalization.
+        svd = TruncatedSVD(10, random_state=random_state)
+        normalizer = Normalizer(copy=False)
+        lsa = make_pipeline(svd, normalizer)
 
-if opts.minibatch:
+        X = lsa.fit_transform(X)
+
+        pipeline.append(svd)
+
     km = MiniBatchKMeans(
-        n_clusters=true_k,
+        n_clusters=n_clusters,
         init="k-means++",
         n_init=1,
         init_size=1000,
         batch_size=1000,
-        verbose=opts.verbose,
-    )
-else:
-    km = KMeans(
-        n_clusters=true_k,
-        init="k-means++",
-        max_iter=100,
-        n_init=1,
-        verbose=opts.verbose,
+        verbose=False,
+        random_state=random_state
     )
 
-print("Clustering sparse data with %s" % km)
-t0 = time()
-km.fit(X)
-print("done in %0.3fs" % (time() - t0))
-print()
+    km.fit(X)
+
+    pipeline.append(km)
+
+    homo = metrics.homogeneity_score(labels, km.labels_)
+    complt = metrics.completeness_score(labels, km.labels_)
+    v_msr = metrics.v_measure_score(labels, km.labels_)
+    rand_scr = metrics.adjusted_rand_score(labels, km.labels_)
+    silhouette = metrics.silhouette_score(X, km.labels_, sample_size=1000)
+    print(
+        f"{homo:.3f}\t{complt:.3f}\t{v_msr:.3f}\t{rand_scr:.3f}\t{silhouette:.3f}"
+        )
+
+    return pipeline
 
 
 # %%
-# Performance metrics
-# -------------------
+# Compare performance metrics
+# ---------------------------
+# It can be noted that k-means (and minibatch k-means) are very sensitive to
+# feature scaling and that in this case the IDF weighting helps improve the
+# quality of the clustering by quite a lot as measured against the "ground truth"
+# provided by the class label assignments of the 20 newsgroups dataset.
+# We can see this improvement in metrics homogeneity, completeness, V-measure
+# and adjusted Rand index.
+#
+# This improvement is not visible in the Silhouette Coefficient which is small
+# for both as this measure seem to suffer from the phenomenon called
+# "Concentration of Measure" or "Curse of Dimensionality" for high dimensional
+# datasets such as text data. The other measures are information theoretic 
+# based evaluation scores: as they are only based
+# on cluster assignments rather than distances, hence not affected by the curse
+# of dimensionality.
+# We can see a significant improvemend though in Silhouette Coefficient with
+# LSA as the dimensionality reduction makes the space more compact and
+# the Euclidian distances between samples much lower.
+#
+# Note: as k-means is optimizing a non-convex objective function, it will
+# likely end up in a local optimum. Several runs with independent random init
+# might be necessary to get a good convergence. Here we have chosen a random
+# state that produces good results.
 
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
-print("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
-print("Adjusted Rand-Index: %.3f" % metrics.adjusted_rand_score(labels, km.labels_))
-print(
-    "Silhouette Coefficient: %0.3f"
-    % metrics.silhouette_score(X, km.labels_, sample_size=1000)
-)
+labels = dataset.target
+true_k = np.unique(labels).shape[0]
 
-print()
+rseed = 16
+
+print("         \thomo\tcomplet\tv-meas\trand-i\tsilhouette")
+print("-" * 58)
+
+print(f"{'Tf':9s}", end="\t")
+kmeans_pipeline(data=dataset.data, labels=labels, n_clusters=true_k,
+               idf=False, random_state=rseed)
+
+print(f"{'Tfidf':9s}", end="\t")
+kmeans_pipeline(data=dataset.data, labels=labels, n_clusters=true_k,
+               idf=True, random_state=rseed)
+
+print(f"{'Tfidf+LSA':9s}", end="\t")
+pipeline = kmeans_pipeline(data=dataset.data, labels=labels, n_clusters=true_k,
+                          idf=True, n_components=10, random_state=rseed)
 
 
 # %%
+# Plot top terms per cluster
+# --------------------------
+# Finally we attempt to plot the top ten terms for each cluster centroid, with
+# their font size scaled by their weighted term frequency.
+# Notice how k-means seems to have clustered together two of the four categories
+# of the data and created another unrelated cluster.
+# This seems to be a common theme of k-means, when the data categories are
+# closely related it lumps them together.
 
-if not opts.use_hashing:
-    print("Top terms per cluster:")
+import matplotlib.pyplot as plt
 
-    if opts.n_components:
-        original_space_centroids = svd.inverse_transform(km.cluster_centers_)
-        order_centroids = original_space_centroids.argsort()[:, ::-1]
-    else:
-        order_centroids = km.cluster_centers_.argsort()[:, ::-1]
 
-    terms = vectorizer.get_feature_names_out()
-    for i in range(true_k):
-        print("Cluster %d:" % i, end="")
-        for ind in order_centroids[i, :10]:
-            print(" %s" % terms[ind], end="")
-        print()
+vectorizer, svd, km = pipeline
+
+original_space_centroids = svd.inverse_transform(km.cluster_centers_)
+order_centroids = original_space_centroids.argsort()[:, ::-1]
+
+terms = vectorizer.get_feature_names_out()
+
+fig, ax = plt.subplots(figsize=(10,5))
+
+for i in range(true_k):
+    x_pos = .1 + .266 * i
+    ax.text(x_pos, .95, f"Cluster {i}",
+            fontsize=15, fontweight='bold',
+            ha='center', va='bottom')
+    for j, ind in enumerate(order_centroids[i, :10]):
+        scale = np.log(original_space_centroids[i, ind]+1)
+        y_pos = .77-.1*j
+        ax.text(x_pos, y_pos, terms[ind],
+                color=plt.cm.Set1(i),
+                fontsize=scale*130, fontweight=scale*1300,
+                ha='center', va='bottom')
+
+ax.set_title("Top terms per cluster", fontsize=20)
+ax.axis(False)
+plt.show()
