@@ -753,7 +753,6 @@ def explained_variance_score(
     0.0
     >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
-
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
