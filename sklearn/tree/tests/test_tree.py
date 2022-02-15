@@ -2451,7 +2451,7 @@ def test_max_features_deprecated(Tree, old_max_features, new_max_features):
     tree = Tree(max_features=old_max_features)
 
     with pytest.warns(
-        FutureWarning, match=f"`max_features='auto'` has been deprecated in 1.1"
+        FutureWarning, match="`max_features='auto'` has been deprecated in 1.1"
     ):
         tree.fit(X, y)
 
