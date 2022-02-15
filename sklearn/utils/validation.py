@@ -156,8 +156,10 @@ def assert_all_finite(
     Parameters
     ----------
     X : {ndarray, sparse matrix}
+        The input data.
 
     allow_nan : bool, default=False
+        If True, do not throw error when `X` contains NaN.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
