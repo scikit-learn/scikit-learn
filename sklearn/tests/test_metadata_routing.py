@@ -349,8 +349,9 @@ def test_simple_metadata_routing():
         clf.fit(X, y, sample_weight=my_weights)
 
     # Explicitly saying the estimator doesn't need it, makes the error go away,
-    # but if a metadata is passed which is not requested by any object/estimator,
-    # there will be still an error
+    # because in this case `SimpleMetaClassifier` consumes `sample_weight`
+    # (whereas if there was no consumer of sample_weight, passing it would
+    # result in an error.
     clf = SimpleMetaClassifier(
         estimator=ClassifierFitMetadata().set_fit_request(sample_weight=False)
     )
@@ -549,49 +550,50 @@ def test_get_metadata_routing():
     assert_request_equal(est.get_metadata_routing(), expected)
 
 
-def test__get_default_requests():
+def test_setting_default_requests():
     # Test _get_default_requests method
+    test_cases = dict()
+
     class ExplicitRequest(BaseEstimator):
+        # `fit` doesn't accept `props` explicitly, but we want to request it
         __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
-        def fit(self, X, y):
+        def fit(self, X, y, **kwargs):
             return self
 
-    assert get_routing_for_object(ExplicitRequest()).fit.requests == {
-        "prop": RequestType.ERROR_IF_PASSED
-    }
-    assert_request_is_empty(ExplicitRequest().get_metadata_routing(), exclude="fit")
+    test_cases[ExplicitRequest] = {"prop": RequestType.ERROR_IF_PASSED}
 
     class ExplicitRequestOverwrite(BaseEstimator):
+        # `fit` explicitly accepts `props`, but we want to change the default
+        # request value from ERROR_IF_PASSEd to REQUESTED
         __metadata_request__fit = {"prop": RequestType.REQUESTED}
 
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert get_routing_for_object(ExplicitRequestOverwrite()).fit.requests == {
-        "prop": RequestType.REQUESTED
-    }
-    assert_request_is_empty(
-        ExplicitRequestOverwrite().get_metadata_routing(), exclude="fit"
-    )
+    test_cases[ExplicitRequestOverwrite] = {"prop": RequestType.REQUESTED}
 
     class ImplicitRequest(BaseEstimator):
+        # `fit` requests `prop` and the default ERROR_IF_PASSED should be used
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert get_routing_for_object(ImplicitRequest()).fit.requests == {
-        "prop": RequestType.ERROR_IF_PASSED
-    }
-    assert_request_is_empty(ImplicitRequest().get_metadata_routing(), exclude="fit")
+    test_cases[ImplicitRequest] = {"prop": RequestType.ERROR_IF_PASSED}
 
     class ImplicitRequestRemoval(BaseEstimator):
+        # `fit` (in this class or a parent) requests `prop`, but we don't want
+        # it requested at all.
         __metadata_request__fit = {"prop": RequestType.UNUSED}
 
         def fit(self, X, y, prop=None, **kwargs):
             return self
 
-    assert get_routing_for_object(ImplicitRequestRemoval()).fit.requests == {}
-    assert_request_is_empty(ImplicitRequestRemoval().get_metadata_routing())
+    test_cases[ImplicitRequestRemoval] = {}
+
+    for Klass, requests in test_cases.items():
+        assert get_routing_for_object(Klass()).fit.requests == requests
+        assert_request_is_empty(Klass().get_metadata_routing(), exclude="fit")
+        Klass().fit(None, None)  # for coverage
 
 
 def test_method_metadata_request():
