@@ -2436,3 +2436,24 @@ def test_check_node_ndarray():
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+
+# TODO: Remove in v1.2
+@pytest.mark.parametrize("Tree", ALL_TREES.values())
+@pytest.mark.parametrize(
+    "old_max_features, new_max_features",
+    [
+        ("auto", "sqrt"),
+        ("auto", "sqrt"),
+    ],
+)
+def test_max_features_deprecated(Tree, old_max_features, new_max_features):
+    tree = Tree(max_features=old_max_features)
+
+    with pytest.warns(
+        FutureWarning, match=f"`max_features='auto'` has been deprecated in 1.1"
+    ):
+        tree.fit(X, y)
+
+    tree_new = Tree(max_features=new_max_features).fit(X, y)
+    assert_allclose(tree.predict(X), tree_new.predict(X))
