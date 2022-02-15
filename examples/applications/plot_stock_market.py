@@ -25,7 +25,7 @@ import pandas as pd
 
 from sklearn import cluster, covariance, manifold
 
-#%%
+# %%
 # Retrieve the data from Internet
 # -------------------------------
 #
@@ -113,7 +113,7 @@ open_prices = np.vstack([q["open"] for q in quotes])
 # The daily variations of the quotes are what carry the most information
 variation = close_prices - open_prices
 
-#%%
+# %%
 # Learning a graph structure
 # --------------------------
 #
@@ -131,7 +131,7 @@ X = variation.copy().T
 X /= X.std(axis=0)
 edge_model.fit(X)
 
-#%%
+# %%
 # Clustering using affinity propagation
 # -------------------------------------
 #
@@ -154,7 +154,7 @@ n_labels = labels.max()
 for i in range(n_labels + 1):
     print("Cluster %i: %s" % ((i + 1), ", ".join(names[labels == i])))
 
-#%%
+# %%
 # Embedding in 2D space
 # ---------------------
 #
@@ -174,7 +174,7 @@ node_position_model = manifold.LocallyLinearEmbedding(
 
 embedding = node_position_model.fit_transform(X.T).T
 
-#%%
+# %%
 # Visualization
 # -------------
 #
