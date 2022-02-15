@@ -645,7 +645,7 @@ def safe_sqr(X, *, copy=True):
         X.data **= 2
     else:
         if copy:
-            X = X ** 2
+            X = X**2
         else:
             X **= 2
     return X
@@ -926,14 +926,14 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     if working_memory is None:
         working_memory = get_config()["working_memory"]
 
-    chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
+    chunk_n_rows = int(working_memory * (2**20) // row_bytes)
     if max_n_rows is not None:
         chunk_n_rows = min(chunk_n_rows, max_n_rows)
     if chunk_n_rows < 1:
         warnings.warn(
             "Could not adhere to working_memory config. "
             "Currently %.0fMiB, %.0fMiB required."
-            % (working_memory, np.ceil(row_bytes * 2 ** -20))
+            % (working_memory, np.ceil(row_bytes * 2**-20))
         )
         chunk_n_rows = 1
     return chunk_n_rows

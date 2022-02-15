@@ -499,7 +499,7 @@ def test_make_sparse_coded_signal():
     for col in X.T:
         assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
     assert_array_almost_equal(np.dot(D, X), Y)
-    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
+    assert_array_almost_equal(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
 
 
 def test_make_sparse_uncorrelated():
@@ -632,8 +632,8 @@ def test_make_circles():
         center = [0.0, 0.0]
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
-            dist_exp = 1.0 if label == 0 else factor ** 2
-            dist_exp = 1.0 if label == 0 else factor ** 2
+            dist_exp = 1.0 if label == 0 else factor**2
+            dist_exp = 1.0 if label == 0 else factor**2
             assert_almost_equal(
                 dist_sqr, dist_exp, err_msg="Point is not on expected circle"
             )

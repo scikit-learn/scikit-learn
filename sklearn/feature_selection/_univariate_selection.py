@@ -96,7 +96,7 @@ def f_oneway(*args):
     ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
     sums_args = [np.asarray(a.sum(axis=0)) for a in args]
     square_of_sums_alldata = sum(sums_args) ** 2
-    square_of_sums_args = [s ** 2 for s in sums_args]
+    square_of_sums_args = [s**2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0.0
     for k, _ in enumerate(args):
@@ -305,7 +305,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
         else:
             X_means = X.mean(axis=0)
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means ** 2)
+        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
     else:
         X_norms = row_norms(X.T)
 
@@ -407,7 +407,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
     )
     deg_of_freedom = y.size - (2 if center else 1)
 
-    corr_coef_squared = correlation_coefficient ** 2
+    corr_coef_squared = correlation_coefficient**2
 
     with np.errstate(divide="ignore", invalid="ignore"):
         f_statistic = corr_coef_squared / (1 - corr_coef_squared) * deg_of_freedom
