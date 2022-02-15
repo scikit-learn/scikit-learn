@@ -673,10 +673,11 @@ def explained_variance_score(
     is set to ``False``, this score falls back on the original :math:`R^2`
     definition.
 
-    Note: the Explained Variance score is similar to the
-    :func:`R^2 score <r2_score>`, with the notable difference that it
-    does not account for systematic offsets in the prediction. Most often
-    the :func:`R^2 score <r2_score>` should be prefered.
+    .. note::
+       The Explained Variance score is similar to the
+       :func:`R^2 score <r2_score>`, with the notable difference that it
+       does not account for systematic offsets in the prediction. Most often
+       the :func:`R^2 score <r2_score>` should be prefered.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
 
