@@ -32,6 +32,7 @@ from ..utils.sparsefuncs import mean_variance_axis
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _is_arraylike_not_scalar
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..exceptions import ConvergenceWarning
@@ -993,16 +994,16 @@ class KMeans(
 
         # init
         if not (
-            hasattr(self.init, "__array__")
+            _is_arraylike_not_scalar(self.init)
             or callable(self.init)
             or (isinstance(self.init, str) and self.init in ["k-means++", "random"])
         ):
             raise ValueError(
-                "init should be either 'k-means++', 'random', a ndarray or a "
+                "init should be either 'k-means++', 'random', an array-like or a "
                 f"callable, got '{self.init}' instead."
             )
 
-        if hasattr(self.init, "__array__") and self._n_init != 1:
+        if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
                 "Explicit initial center position passed: performing only"
                 f" one init in {self.__class__.__name__} instead of "
@@ -1118,7 +1119,7 @@ class KMeans(
         elif isinstance(init, str) and init == "random":
             seeds = random_state.permutation(n_samples)[:n_clusters]
             centers = X[seeds]
-        elif hasattr(init, "__array__"):
+        elif _is_arraylike_not_scalar(self.init):
             centers = init
         elif callable(init):
             centers = init(X, n_clusters, random_state=random_state)
@@ -1172,7 +1173,8 @@ class KMeans(
 
         # Validate init array
         init = self.init
-        if hasattr(init, "__array__"):
+        init_is_array_like = _is_arraylike_not_scalar(init)
+        if init_is_array_like:
             init = check_array(init, dtype=X.dtype, copy=True, order="C")
             self._validate_center_shape(X, init)
 
@@ -1182,7 +1184,7 @@ class KMeans(
             # The copy was already done above
             X -= X_mean
 
-            if hasattr(init, "__array__"):
+            if init_is_array_like:
                 init -= X_mean
 
         # precompute squared norms of data points
@@ -1892,7 +1894,7 @@ class MiniBatchKMeans(KMeans):
 
         # Validate init array
         init = self.init
-        if hasattr(init, "__array__"):
+        if _is_arraylike_not_scalar(init):
             init = check_array(init, dtype=X.dtype, copy=True, order="C")
             self._validate_center_shape(X, init)
 
@@ -2058,7 +2060,7 @@ class MiniBatchKMeans(KMeans):
 
             # Validate init array
             init = self.init
-            if hasattr(init, "__array__"):
+            if _is_arraylike_not_scalar(init):
                 init = check_array(init, dtype=X.dtype, copy=True, order="C")
                 self._validate_center_shape(X, init)
 
