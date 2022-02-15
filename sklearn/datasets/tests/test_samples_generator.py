@@ -501,8 +501,8 @@ def test_make_sparse_coded_signal():
     assert Y.shape == (5, 10), "Y shape mismatch"
     assert D.shape == (8, 10), "D shape mismatch"
     assert X.shape == (5, 8), "X shape mismatch"
-    for i in X:
-        assert len(np.flatnonzero(i)) == 3, "Non-zero coefs mismatch"
+    for row in X:
+        assert len(np.flatnonzero(row)) == 3, "Non-zero coefs mismatch"
     assert_array_almost_equal(np.dot(X, D), Y)
     assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=1)), np.ones(D.shape[0]))
 
@@ -519,8 +519,8 @@ def test_make_sparse_coded_signal_transposed():
     assert Y.shape == (10, 5), "Y shape mismatch"
     assert D.shape == (10, 8), "D shape mismatch"
     assert X.shape == (8, 5), "X shape mismatch"
-    for i in X.T:
-        assert len(np.flatnonzero(i)) == 3, "Non-zero coefs mismatch"
+    for col in X.T:
+        assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
     assert_array_almost_equal(np.dot(D, X), Y)
     assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
 

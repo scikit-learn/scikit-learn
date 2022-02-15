@@ -1241,6 +1241,7 @@ def make_low_rank_matrix(
 
 
 # TODO: Change argument `data_transposed` default from True to False in 1.3.
+# TODO: Deprecate data_transposed in 1.3, always return data not transposed.
 def make_sparse_coded_signal(
     n_samples,
     *,
@@ -1303,7 +1304,7 @@ def make_sparse_coded_signal(
     generator = check_random_state(random_state)
 
     # generate dictionary
-    D = generator.randn(n_features, n_components)
+    D = generator.standard_normal(size=(n_features, n_components))
     D /= np.sqrt(np.sum((D ** 2), axis=0))
 
     # generate code
