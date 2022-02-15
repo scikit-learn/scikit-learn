@@ -270,6 +270,12 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+:mod:`sklearn.dummy`
+....................
+
+- |Fix| :class:`dummy.DummyRegressor` no longer overrides the `constant`
+  parameter during `fit`. :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
