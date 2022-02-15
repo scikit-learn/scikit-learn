@@ -436,6 +436,43 @@ Changelog
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |Fix| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
+  with a shape that respects the docstring and that is consistent with the shape
+  obtained when using the other solvers in the one-vs-rest setting. Previously,
+  it would record only the maximum of the number of iterations for each binary
+  sub-problem while now all of them are recorded. :pr:`21998` by
+  :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :class:`linear_model.BayesianRidge` and
+  :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
+  :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Feature| :class:`sklearn.manifold.Isomap` now supports radius-based
+  neighbors via the `radius` argument.
+  :pr:`19794` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Enhancement| :func:`manifold.spectral_embedding` and
+  :class:`manifold.SpectralEmbedding` supports `np.float32` dtype and will
+  preserve this dtype.
+  :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
+
+- |Enhancement| Adds `get_feature_names_out` to :class:`manifold.Isomap`
+  and :class:`manifold.LocallyLinearEmbedding`. :pr:`22254` by `Thomas Fan`_.
+
+- |Fix| :func:`manifold.spectral_embedding` now uses Gaussian instead of
+  the previous uniform on [0, 1] random initial approximations to eigenvectors
+  in eigen_solvers `lobpcg` and `amg` to improve their numerical stability.
+  :pr:`21565` by :user:`Andrew Knyazev <lobpcg>`.
+- |Enhancement| :class:`linear_model.GeneralizedLinearRegressor` fit method
+  will now allow penalty term `alpha` to be an iterable of same length as number
+  of features in X in addition to a scalar value. Will also check that X matrix
+  is full rank if penalty term `alpha` is set to 0.0 or array of 0.0s.
+  :pr:`11566` by :user:`Xiao Wei <xiaowei1234>`.
+
 :mod:`sklearn.metrics`
 ......................
 
