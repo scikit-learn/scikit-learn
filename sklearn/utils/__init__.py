@@ -770,6 +770,14 @@ def tosequence(x):
     Parameters
     ----------
     x : iterable
+        The iterable to be converted.
+
+    Returns
+    -------
+    x : Sequence
+        If x is a NumPy array, it returns it as an array. If x 
+        is a Sequence, x is returned as is. If x is any other 
+        type, x is returned casted as a list.
     """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
