@@ -214,7 +214,7 @@ def plot_species_distribution(
         plt.scatter(
             species.pts_train["dd long"],
             species.pts_train["dd lat"],
-            s=2 ** 2,
+            s=2**2,
             c="black",
             marker="^",
             label="train",
@@ -222,7 +222,7 @@ def plot_species_distribution(
         plt.scatter(
             species.pts_test["dd long"],
             species.pts_test["dd lat"],
-            s=2 ** 2,
+            s=2**2,
             c="black",
             marker="x",
             label="test",

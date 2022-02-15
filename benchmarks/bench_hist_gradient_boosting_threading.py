@@ -239,7 +239,7 @@ def one_run(n_threads, n_samples):
 
 
 max_threads = os.cpu_count()
-n_threads_list = [2 ** i for i in range(8) if (2 ** i) < max_threads]
+n_threads_list = [2**i for i in range(8) if (2**i) < max_threads]
 n_threads_list.append(max_threads)
 
 sklearn_scores = []
