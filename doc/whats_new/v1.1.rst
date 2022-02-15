@@ -242,6 +242,12 @@ Changelog
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
   `Thomas Fan`_.
 
+:mod:`sklearn.dummy`
+....................
+
+- |Fix| :class:`dummy.DummyRegressor` no longer overrides the `constant`
+  parameter during `fit`. :pr:`22486` by `Thomas Fan`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -269,12 +275,6 @@ Changelog
   changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
-
-:mod:`sklearn.dummy`
-....................
-
-- |Fix| :class:`dummy.DummyRegressor` no longer overrides the `constant`
-  parameter during `fit`. :pr:`22486` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
