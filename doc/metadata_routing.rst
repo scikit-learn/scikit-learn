@@ -11,10 +11,10 @@ and passed along to estimators, scorers, and CV splitters through
 meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass
 metadata to a method such as ``fit`` or ``score``, the object accepting the
 metadata, must *request* it. For estimators and splitters this is done via
-``set_*_request`` methods, e.g. ``set_fit_request(...)``, and scorers this
-is done via ``set_score_request`` method of a scorer. For grouped splitters
-such as ``GroupKFold`` a ``groups`` parameter is requested by default. This is
-best demonstrated by the following examples.
+``set_*_request`` methods, e.g. ``set_fit_request(...)``, and for scorers this
+is done via ``set_score_request`` method. For grouped splitters such as
+``GroupKFold`` a ``groups`` parameter is requested by default. This is best
+demonstrated by the following examples.
 
 Usage Examples
 **************
@@ -29,6 +29,7 @@ in this section require the following imports and data::
   >>> from sklearn.model_selection import GridSearchCV
   >>> from sklearn.model_selection import GroupKFold
   >>> from sklearn.feature_selection import SelectKBest
+  >>> from sklearn.utils.metadata_requests import RequestType
   >>> from sklearn.pipeline import make_pipeline
   >>> n_samples, n_features = 100, 4
   >>> X = np.random.rand(n_samples, n_features)
@@ -42,8 +43,7 @@ Weighted scoring and fitting
 
 Here ``GroupKFold`` requests ``groups`` by default. However, we need to
 explicitly request weights in ``make_scorer`` and for ``LogisticRegressionCV``.
-Both of these *consumers* understand the meaning of the key
-``"sample_weight"``::
+Both of these *consumers* know how to use metadata called ``"sample_weight"``::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
@@ -71,7 +71,8 @@ Weighted scoring and unweighted fitting
 ---------------------------------------
 
 All scikit-learn estimators requires weights to be explicitly requested or not
-requested. To perform a unweighted fit, we need to configure
+requested when used in another router such as a ``Pipeline`` or a
+``*GridSearchCV``. To perform a unweighted fit, we need to configure
 :class:`~linear_model.LogisticRegressionCV` to not request sample weights, so
 that :func:`~model_selection.cross_validate` does not pass the weights along::
 
@@ -80,7 +81,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
   ... )
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(), scoring=weighted_acc,
-  ... ).set_fit_request(sample_weight=False)
+  ... ).set_fit_request(sample_weight=RequestType.UNREQUESTED)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -90,10 +91,14 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
   ...     scoring=weighted_acc,
   ... )
 
-If :class:`~linear_model.LogisticRegressionCV` did not call ``set_fit_request``,
-:func:`~model_selection.cross_validate` will raise an error because weights is
-passed in but :class:`~linear_model.LogisticRegressionCV` was not configured to
-recognize the weights.
+Note the usage of ``RequestType`` which in this case is equivalent to
+``False``; the type is explained further at the end of this document.
+
+If :class:`~linear_model.LogisticRegressionCV` did not call
+``set_fit_request``, :func:`~model_selection.cross_validate` will raise an
+error because weights is passed in but
+:class:`~linear_model.LogisticRegressionCV` was not configured to recognize the
+weights.
 
 Unweighted feature selection
 ----------------------------
@@ -118,8 +123,8 @@ therefore `"sample_weight"` is not routed to it::
   ...     scoring=weighted_acc,
   ... )
 
-Different scoring and fitting weights
--------------------------------------
+Advanced: Different scoring and fitting weights
+-----------------------------------------------
 
 Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting a key
 ``sample_weight``, we can use aliases to pass different weights to different
@@ -194,8 +199,8 @@ whether ``sample_weight`` should be passed to the estimator's scorer or not::
     ...     ).fit(X, y, sample_weight=my_weights)
     ... except ValueError as e:
     ...     print(e)
-    sample_weight is passed but is not explicitly set as requested or not. In
-    method: score
+    sample_weight is passed but is not explicitly set as requested or not for
+    LogisticRegression.score
 
 The issue can be fixed by explicitly setting the request value::
 
