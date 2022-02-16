@@ -352,7 +352,7 @@ def orthogonal_mp(
     See Also
     --------
     OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model.
-    orthogonal_mp_gram : Solves OMP problems using the Gram matrix and the product X.T * y.
+    orthogonal_mp_gram : Solve OMP problems using Gram matrix and the product X.T * y.
     lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
     sklearn.decomposition.sparse_encode : Sparse coding.
 
