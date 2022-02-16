@@ -348,7 +348,7 @@ def svd_scaler(dissimilarities, n_components=2):
     )
 
     # Double centered matrix
-    B = -0.5 * np.dot(J, np.dot(dissimilarities ** 2, J))
+    B = -0.5 * np.dot(J, np.dot(dissimilarities**2, J))
 
     w, V = linalg.eigh(B, check_finite=False)
 
