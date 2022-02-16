@@ -23,7 +23,6 @@ from ..base import (
     _ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
-from ..utils.deprecation import deprecated
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
@@ -2274,16 +2273,6 @@ class KernelCenterer(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
 
     def _more_tags(self):
         return {"pairwise": True}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1."
-    )
-    @property
-    def _pairwise(self):
-        return True
 
 
 def add_dummy_feature(X, value=1.0):
