@@ -1455,8 +1455,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                 The default of `max_features` changed from `"auto"` to `"sqrt"`.
 
             .. deprecated:: 1.1
-            The `"auto"` option was deprecated in 1.1 and will be removed
-            in 1.3.
+                The `"auto"` option was deprecated in 1.1 and will be removed
+                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
