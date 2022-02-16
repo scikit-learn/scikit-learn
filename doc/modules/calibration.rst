@@ -240,6 +240,28 @@ probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
+The parameters ``class_weight`` and ``sample_weight`` can be used to
+respectively set relative importance to classes and to individual samples.
+
+:class:`CalibratedClassifierCV` can handle such unbalanced dataset with the
+``class_weight`` parameter. ``class_weight`` has to be provided as a
+dictionary of the form ``{class_label : value}``, where value is a strictly
+positive floating point, or as ``class_weight='balanced'`` which will
+automatically adjust weights inversely proportional to class frequencies in
+the input data.
+
+.. note::
+   Setting ``class_weight`` parameter in :class:`CalibratedClassifierCV`,
+   will only affect the training of the chosen regressor (`'isotonic'` or `'sigmoid'`).
+
+For instance, if ``class_weight='balanced'`` is passed to
+:class:`CalibratedClassifierCV`, only the samples used to fit the calibrator
+will be balanced. If one also wants the samples used to fit the estimator
+to be balanced, one would need to set ``class_weight='balanced'`` within
+the `base_estimator` passed to :class:`CalibratedClassifierCV`.
+Alternatively, if `cv="prefit"` is set, the samples are not split and are
+all used to fit the regressor in a balanced manner.
+
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`

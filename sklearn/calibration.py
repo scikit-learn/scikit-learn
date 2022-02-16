@@ -32,6 +32,7 @@ from .utils import (
     column_or_1d,
     indexable,
     check_matplotlib_support,
+    compute_class_weight,
 )
 
 from .utils.multiclass import check_classification_targets
@@ -145,6 +146,15 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 0.24
 
+    class_weight : dict or 'balanced', default=None
+        Class weights used for the calibration.
+        If a dict, it must be provided in this form: ``{class_label: weight}``.
+
+        Those weights won't be used for the underlying estimator training.
+        See :term:`Glossary <class_weight>` for more details.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -244,12 +254,14 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         cv=None,
         n_jobs=None,
         ensemble=True,
+        class_weight=None,
     ):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
         self.ensemble = ensemble
+        self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the calibrated model.
@@ -276,8 +288,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         """
         check_classification_targets(y)
         X, y = indexable(X, y)
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         for sample_aligned_params in fit_params.values():
             check_consistent_length(y, sample_aligned_params)
@@ -299,6 +311,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             n_classes = len(self.classes_)
             predictions = _compute_predictions(pred_method, method_name, X, n_classes)
 
+            if self.class_weight is not None:
+                self.class_weight_ = compute_class_weight(
+                    self.class_weight, classes=self.classes_, y=y
+                )
+                label_encoder_ = LabelEncoder()
+                sample_weight *= self.class_weight_[label_encoder_.fit_transform(y)]
+
             calibrated_classifier = _fit_calibrator(
                 base_estimator,
                 predictions,
@@ -317,7 +336,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             # sample_weight checks
             fit_parameters = signature(base_estimator.fit).parameters
             supports_sw = "sample_weight" in fit_parameters
-            if sample_weight is not None and not supports_sw:
+            if not supports_sw:
                 estimator_name = type(base_estimator).__name__
                 warnings.warn(
                     f"Since {estimator_name} does not appear to accept sample_weight, "
@@ -328,6 +347,17 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "warned that the result of the calibration is likely to be "
                     "incorrect."
                 )
+
+            sample_weight_cal = np.copy(sample_weight)
+            if self.class_weight is not None:
+                # Build sample weights for calibrator.
+                # Those weights will not be used for the training of
+                # the underlying estimator which will then be calibrated.
+                self.class_weight_ = compute_class_weight(
+                    self.class_weight, classes=self.classes_, y=y
+                )
+                label_encoder_ = LabelEncoder()
+                sample_weight_cal *= self.class_weight_[label_encoder_.fit_transform(y)]
 
             # Check that each cross-validation fold can have at least one
             # example per class
@@ -360,6 +390,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                         classes=self.classes_,
                         supports_sw=supports_sw,
                         sample_weight=sample_weight,
+                        sample_weight_cal=sample_weight_cal,
                         **fit_params,
                     )
                     for train, test in cv.split(X, y)
@@ -367,11 +398,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             else:
                 this_estimator = clone(base_estimator)
                 _, method_name = _get_prediction_method(this_estimator)
-                fit_params = (
-                    {"sample_weight": sample_weight}
-                    if sample_weight is not None and supports_sw
-                    else None
-                )
+                fit_params = {"sample_weight": sample_weight} if supports_sw else None
                 pred_method = partial(
                     cross_val_predict,
                     estimator=this_estimator,
@@ -386,7 +413,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     pred_method, method_name, X, n_classes
                 )
 
-                if sample_weight is not None and supports_sw:
+                if supports_sw:
                     this_estimator.fit(X, y, sample_weight=sample_weight)
                 else:
                     this_estimator.fit(X, y)
@@ -398,7 +425,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     y,
                     self.classes_,
                     self.method,
-                    sample_weight,
+                    sample_weight_cal,
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
@@ -478,6 +505,7 @@ def _fit_classifier_calibrator_pair(
     method,
     classes,
     sample_weight=None,
+    sample_weight_cal=None,
     **fit_params,
 ):
     """Fit a classifier/calibration pair on a given train/test split.
@@ -513,7 +541,10 @@ def _fit_classifier_calibrator_pair(
         The target classes.
 
     sample_weight : array-like, default=None
-        Sample weights for `X`.
+        Sample weights for `X` that are used to fit the estimator.
+
+    sample_weight_cal : array-like, default=None
+        Sample weights for `X` that are used to fit the calibrator.
 
     **fit_params : dict
         Parameters to pass to the `fit` method of the underlying
@@ -527,7 +558,7 @@ def _fit_classifier_calibrator_pair(
     X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
     X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
 
-    if sample_weight is not None and supports_sw:
+    if supports_sw:
         sw_train = _safe_indexing(sample_weight, train)
         estimator.fit(X_train, y_train, sample_weight=sw_train, **fit_params_train)
     else:
@@ -537,7 +568,7 @@ def _fit_classifier_calibrator_pair(
     pred_method, method_name = _get_prediction_method(estimator)
     predictions = _compute_predictions(pred_method, method_name, X_test, n_classes)
 
-    sw_test = None if sample_weight is None else _safe_indexing(sample_weight, test)
+    sw_test = _safe_indexing(sample_weight_cal, test)
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
