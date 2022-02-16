@@ -1,0 +1,20 @@
+channels:
+  - defaults
+dependencies:
+  - python=3.7
+  - numpy=1.14.6
+  - blas=*=openblas
+  - scipy=1.1.0
+  - cython
+  - joblib
+  - threadpoolctl=2.2.0
+  - pandas
+  - matplotlib=2.2.3
+  - pyamg
+  - pillow
+  - pytest=6.2.5
+  - pytest-xdist
+  - codecov
+  - pytest-cov
+  - coverage=6.2
+  - ccache
