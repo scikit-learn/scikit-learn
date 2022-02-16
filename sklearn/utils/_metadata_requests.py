@@ -124,7 +124,7 @@ REQUESTER_DOC_RETURN = """        Returns
 
 
 class MethodMetadataRequest:
-    """Contains the metadata request info for a single method.
+    """A prescription of how metadata is to be passed to a single method.
 
     Refer to :class:`MetadataRequest` for how this class is used.
 
@@ -151,14 +151,14 @@ class MethodMetadataRequest:
     def add_request(
         self,
         *,
-        prop,
+        param,
         alias,
     ):
         """Add request info for a prop.
 
         Parameters
         ----------
-        prop : str
+        param : str
             The property for which a request is set.
 
         alias : str, RequestType, or {True, False, None}
@@ -182,13 +182,13 @@ class MethodMetadataRequest:
                     "{None, True, False}, or a RequestType."
                 )
 
-        if alias == prop:
+        if alias == param:
             alias = RequestType.REQUESTED
 
-        if alias == RequestType.UNUSED and prop in self._requests:
-            del self._requests[prop]
+        if alias == RequestType.UNUSED and param in self._requests:
+            del self._requests[param]
         else:
-            self._requests[prop] = alias
+            self._requests[param] = alias
 
         return self
 
@@ -903,7 +903,7 @@ class RequestMethod:
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
-                    method_metadata_request.add_request(prop=prop, alias=alias)
+                    method_metadata_request.add_request(param=prop, alias=alias)
             instance._metadata_request = requests
 
             return instance
@@ -1020,7 +1020,7 @@ class _MetadataRequester:
                 if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
                     continue
                 getattr(requests, method).add_request(
-                    prop=pname,
+                    param=pname,
                     alias=RequestType.ERROR_IF_PASSED,
                 )
 
@@ -1033,7 +1033,7 @@ class _MetadataRequester:
             substr = "__metadata_request__"
             method = attr[attr.index(substr) + len(substr) :]
             for prop, alias in value.items():
-                getattr(requests, method).add_request(prop=prop, alias=alias)
+                getattr(requests, method).add_request(param=prop, alias=alias)
         return requests
 
     def _get_metadata_request(self):

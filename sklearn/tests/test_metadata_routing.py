@@ -264,11 +264,11 @@ def test_assert_request_is_empty():
     requests = MetadataRequest(owner="test")
     assert_request_is_empty(requests)
 
-    requests.fit.add_request(prop="foo", alias=RequestType.ERROR_IF_PASSED)
+    requests.fit.add_request(param="foo", alias=RequestType.ERROR_IF_PASSED)
     # this should still work, since ERROR_IF_PASSED is the default value
     assert_request_is_empty(requests)
 
-    requests.fit.add_request(prop="bar", alias="value")
+    requests.fit.add_request(param="bar", alias="value")
     with pytest.raises(AssertionError):
         # now requests is no more empty
         assert_request_is_empty(requests)
@@ -276,7 +276,7 @@ def test_assert_request_is_empty():
     # but one can exclude a method
     assert_request_is_empty(requests, exclude="fit")
 
-    requests.score.add_request(prop="carrot", alias=RequestType.REQUESTED)
+    requests.score.add_request(param="carrot", alias=RequestType.REQUESTED)
     with pytest.raises(AssertionError):
         # excluding `fit` is not enough
         assert_request_is_empty(requests, exclude="fit")
@@ -592,17 +592,17 @@ def test_method_metadata_request():
     with pytest.raises(
         ValueError, match="alias should be either a valid identifier or"
     ):
-        mmr.add_request(prop="foo", alias=1.4)
+        mmr.add_request(param="foo", alias=1.4)
 
-    mmr.add_request(prop="foo", alias=None)
+    mmr.add_request(param="foo", alias=None)
     assert mmr.requests == {"foo": RequestType.ERROR_IF_PASSED}
-    mmr.add_request(prop="foo", alias=False)
+    mmr.add_request(param="foo", alias=False)
     assert mmr.requests == {"foo": RequestType.UNREQUESTED}
-    mmr.add_request(prop="foo", alias=True)
+    mmr.add_request(param="foo", alias=True)
     assert mmr.requests == {"foo": RequestType.REQUESTED}
-    mmr.add_request(prop="foo", alias="foo")
+    mmr.add_request(param="foo", alias="foo")
     assert mmr.requests == {"foo": RequestType.REQUESTED}
-    mmr.add_request(prop="foo", alias="bar")
+    mmr.add_request(param="foo", alias="bar")
     assert mmr.requests == {"foo": "bar"}
     assert mmr._get_param_names(original_names=True) == {"foo"}
     assert mmr._get_param_names(original_names=False) == {"bar"}
@@ -616,7 +616,7 @@ def test_get_routing_for_object():
     assert_request_is_empty(get_routing_for_object(object()))
 
     mr = MetadataRequest(owner="test")
-    mr.fit.add_request(prop="foo", alias="bar")
+    mr.fit.add_request(param="foo", alias="bar")
     mr_factory = get_routing_for_object(mr)
     assert_request_is_empty(mr_factory, exclude="fit")
     assert mr_factory.fit.requests == {"foo": "bar"}
@@ -655,7 +655,7 @@ def test_estimator_warnings():
     [
         (
             MethodMetadataRequest(owner="test", method="fit").add_request(
-                prop="foo", alias="bar"
+                param="foo", alias="bar"
             ),
             "{'foo': 'bar'}",
         ),
