@@ -221,6 +221,9 @@ def load_files(
     if categories is not None:
         folders = [f for f in folders if f in categories]
 
+    if allowed_extensions is not None:
+        allowed_extensions = frozenset(allowed_extensions)
+
     for label, folder in enumerate(folders):
         target_names.append(folder)
         folder_path = join(container_path, folder)
