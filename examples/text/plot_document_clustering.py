@@ -228,5 +228,5 @@ for i in range(true_k):
         )
 
 ax.set_title("Top terms per cluster", fontsize=20)
-ax.axis(False)
+ax.axis("off")
 plt.show()
