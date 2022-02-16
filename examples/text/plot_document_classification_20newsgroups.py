@@ -85,7 +85,7 @@ op.add_option(
     "--n_features",
     action="store",
     type=int,
-    default=2 ** 16,
+    default=2**16,
     help="n_features when using the hashing vectorizer.",
 )
 op.add_option(
