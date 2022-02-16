@@ -195,16 +195,14 @@ def test_birch_fit_attributes_deprecated(attribute):
         (
             {"branching_factor": 1.5},
             TypeError,
-            "branching_factor must be an instance of <class 'numbers.Integral'>, not"
-            " <class 'float'>.",
+            "branching_factor must be an instance of int, not float.",
         ),
         ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
         ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
         (
             {"n_clusters": 2.5},
             TypeError,
-            "n_clusters must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
+            "n_clusters must be an instance of int, not float.",
         ),
         (
             {"n_clusters": "whatever"},

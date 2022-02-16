@@ -2,7 +2,6 @@
 
 import numbers
 import warnings
-import os
 import re
 
 from tempfile import NamedTemporaryFile
@@ -992,12 +991,13 @@ class WrongDummyMemory:
     pass
 
 
-@pytest.mark.filterwarnings("ignore:The 'cachedir' attribute")
 def test_check_memory():
     memory = check_memory("cache_directory")
-    assert memory.cachedir == os.path.join("cache_directory", "joblib")
+    assert memory.location == "cache_directory"
+
     memory = check_memory(None)
-    assert memory.cachedir is None
+    assert memory.location is None
+
     dummy = DummyMemory()
     memory = check_memory(dummy)
     assert memory is dummy
@@ -1106,9 +1106,34 @@ def test_check_scalar_valid(x):
             2,
             4,
             "neither",
-            TypeError(
-                "test_name1 must be an instance of <class 'float'>, not <class 'int'>."
-            ),
+            TypeError("test_name1 must be an instance of float, not int."),
+        ),
+        (
+            None,
+            "test_name1",
+            numbers.Real,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of float, not NoneType."),
+        ),
+        (
+            None,
+            "test_name1",
+            numbers.Integral,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of int, not NoneType."),
+        ),
+        (
+            1,
+            "test_name1",
+            (float, bool),
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of {float, bool}, not int."),
         ),
         (
             1,
