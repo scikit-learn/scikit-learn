@@ -220,8 +220,8 @@ class OneVsRestClassifier(
         The verbosity level, if non zero, progress messages are printed.
         Below 50, the output is sent to stderr. Otherwise, the output is sent
         to stdout. The frequency of the messages increases with the verbosity
-        level, reporting all iterations at 10. See joblib.Parallel for more
-        details.
+        level, reporting all iterations at 10. See :class:`joblib.Parallel` for
+        more details.
 
     Attributes
     ----------
@@ -259,7 +259,6 @@ class OneVsRestClassifier(
         multilabel classification.
     sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
         to binary indicator matrix.
-    joblib.Parallel : Class used for parallel training.
 
     Examples
     --------
