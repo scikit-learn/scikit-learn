@@ -15,7 +15,7 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
+from ..tree import DecisionTreeRegressor, ExtraTreeRegressor, BaseDecisionTree
 from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
@@ -166,6 +166,16 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 estimator.set_params(criterion="squared_error")
             elif getattr(estimator, "criterion", None) == "mae":
                 estimator.set_params(criterion="absolute_error")
+
+        # TODO: Remove in v1.2
+        # max_features = 'auto' would cause warnings in every call to
+        # Tree.fit(..)
+        if isinstance(estimator, BaseDecisionTree):
+            if getattr(estimator, "max_features", None) == "auto":
+                if is_classifier(estimator):
+                    estimator.set_params(max_features="sqrt")
+                else:
+                    estimator.set_params(max_features=1.0)
 
         if random_state is not None:
             _set_random_states(estimator, random_state)

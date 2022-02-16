@@ -41,7 +41,7 @@ Single and multi-output problems are both handled.
 
 
 import numbers
-from warnings import catch_warnings, simplefilter, warn, filterwarnings
+from warnings import catch_warnings, simplefilter, warn
 import threading
 
 from abc import ABCMeta, abstractmethod
@@ -181,23 +181,9 @@ def _parallel_build_trees(
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
 
-        # since the deprecation warning has been showed in the ensemble class,
-        # we ignore the warnings raise within individual trees
-        with catch_warnings():
-            filterwarnings(
-                "ignore",
-                "`max_features='auto'` has been deprecated in 1.1",
-                FutureWarning,
-            )
-            tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:
-        with catch_warnings():
-            filterwarnings(
-                "ignore",
-                "`max_features='auto'` has been deprecated in 1.1",
-                FutureWarning,
-            )
-            tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
 
     return tree
 
