@@ -54,6 +54,9 @@ from sklearn.utils.estimator_checks import (
     check_outlier_corruption,
     set_random_state,
     check_fit_check_is_fitted,
+    check_methods_sample_order_invariance,
+    check_methods_subset_invariance,
+    _yield_all_checks,
 )
 
 
@@ -1055,3 +1058,20 @@ def test_deprecated_Estimator_check_estimator():
     err_msg = "Either estimator or Estimator should be passed"
     with raises(ValueError, match=err_msg, may_pass=False):
         check_estimator()
+
+
+def test_non_deterministic_estimator_skip_tests():
+    # check estimators with non_deterministic tag set to True
+    # will skip certain tests, refer to issue #22313 for details
+    for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
+        all_tests = list(_yield_all_checks(est()))
+        assert check_methods_sample_order_invariance in all_tests
+        assert check_methods_subset_invariance in all_tests
+
+        class Estimator(est):
+            def _more_tags(self):
+                return {"non_deterministic": True}
+
+        all_tests = list(_yield_all_checks(Estimator()))
+        assert check_methods_sample_order_invariance not in all_tests
+        assert check_methods_subset_invariance not in all_tests
