@@ -113,7 +113,7 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 from sklearn.inspection import PartialDependenceDisplay
 
-common_params = {"subsample": 50, "n_jobs": 3, "grid_resolution": 20, "random_state": 0}
+common_params = {"subsample": 50, "n_jobs": 2, "grid_resolution": 20, "random_state": 0}
 
 print("Computing partial dependence plots...")
 tic = time()
