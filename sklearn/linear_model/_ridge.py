@@ -757,11 +757,11 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if self.max_iter is not None:
-            self.max_iter = check_scalar(
+            check_scalar(
                 self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
             )
 
-        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
+        check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
@@ -2041,18 +2041,20 @@ class _BaseRidgeCV(LinearModel):
             include_boundaries="neither",
         )
 
-        if isinstance(self.alphas, (np.ndarray, list, tuple)):
-            n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
+        alphas = self.alphas
+
+        if isinstance(alphas, (np.ndarray, list, tuple)):
+            n_alphas = 1 if np.ndim(alphas) == 0 else len(alphas)
             if n_alphas != 1:
-                for index, alpha in enumerate(self.alphas):
-                    alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
+                for index, alpha in enumerate(alphas):
+                    check_scalar_alpha(alpha, f"alphas[{index}]")
             else:
-                self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
+                check_scalar_alpha(alphas[0], "alphas")
         else:
             # check for single non-iterable item
-            self.alphas = check_scalar_alpha(self.alphas, "alphas")
+            check_scalar_alpha(alphas, "alphas")
 
-        alphas = np.asarray(self.alphas)
+        alphas = np.asarray(alphas)
 
         if cv is None:
             estimator = _RidgeGCV(

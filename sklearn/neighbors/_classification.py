@@ -195,7 +195,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        self.weights = _check_weights(self.weights)
+        _check_weights(self.weights)
 
         return self._fit(X, y)
 
@@ -511,7 +511,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
-        self.weights = _check_weights(self.weights)
+        _check_weights(self.weights)
 
         self._fit(X, y)
 

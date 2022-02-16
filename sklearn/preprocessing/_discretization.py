@@ -216,9 +216,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         FutureWarning,
                     )
             else:
-                self.subsample = check_scalar(
-                    self.subsample, "subsample", numbers.Integral, min_val=1
-                )
+                check_scalar(self.subsample, "subsample", numbers.Integral, min_val=1)
                 rng = check_random_state(self.random_state)
                 if n_samples > self.subsample:
                     subsample_idx = rng.choice(

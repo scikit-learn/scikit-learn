@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator, signature, Parameter
+from inspect import isgenerator, signature, Parameter, getmembers, isfunction, getsource
 from itertools import product, chain
 from functools import partial
 
@@ -447,3 +447,45 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+ESTIMATOR_PARAMETER_TO_XFAIL = {
+    ("SpectralEmbedding", "affinity"),
+    ("FeatureUnion", "transformer_list"),  # Expected behavior
+    ("GaussianMixture", "weights_init"),
+    ("GaussianProcessRegressor", "alpha"),
+    ("LabelPropagation", "nn_fit"),
+    ("LabelSpreading", "nn_fit"),
+    ("NeighborhoodComponentsAnalysis", "n_components"),
+    ("PatchExtractor", "random_state"),
+    ("Pipeline", "steps"),  # Expected behavior
+    ("RANSACRegressor", "estimator"),
+    ("RidgeClassifier", "max_iter"),
+    ("RidgeClassifierCV", "alphas"),
+}
+
+
+@pytest.mark.parametrize("name, Estimator", all_estimators())
+def test_estimators_do_not_set_parameter_outside_of_init(name, Estimator):
+    """Check that parameter is not set outside of __init__."""
+    functions = chain.from_iterable(
+        (
+            f
+            for name, f in getmembers(kls, isfunction)
+            if f.__qualname__.startswith(kls.__name__) and name != "__init__"
+        )
+        for kls in Estimator.mro()
+    )
+    param_set_re = re.compile(r"self.(?!_)(\w+)(?<!_) = ")
+
+    for f in functions:
+        source = getsource(f)
+        match = param_set_re.search(source)
+        if match is None:
+            continue
+        param_name = match.group(1)
+        message = f"{f.__qualname__} sets `{param_name}` outside of __init__"
+        if (name, param_name) in ESTIMATOR_PARAMETER_TO_XFAIL:
+            pytest.xfail(message)
+        else:
+            pytest.fail(message)

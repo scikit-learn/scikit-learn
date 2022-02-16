@@ -198,7 +198,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        self.weights = _check_weights(self.weights)
+        _check_weights(self.weights)
 
         return self._fit(X, y)
 
@@ -411,7 +411,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
-        self.weights = _check_weights(self.weights)
+        _check_weights(self.weights)
 
         return self._fit(X, y)
 
