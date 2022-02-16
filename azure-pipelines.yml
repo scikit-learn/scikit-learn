@@ -191,7 +191,7 @@ jobs:
         COVERAGE: 'false'
       # Linux + Python 3.7 build with OpenBLAS
       py37_conda_defaults_openblas:
-        LOCK_FILE: ./build_tools/azure/py37_conda_defaults_openblas.lock
+        LOCK_FILE: ./build_tools/azure/py37_conda_defaults_openblas_linux-64.lock
         # DISTRIB used in azure posix.yml template
         DISTRIB: 'conda'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
