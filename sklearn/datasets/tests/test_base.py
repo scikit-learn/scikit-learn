@@ -128,18 +128,19 @@ def test_load_files_wo_load_content(
     assert res.get("data") is None
 
 
-def test_load_files_allowed_extensions(tmp_path):
+@pytest.mark.parametrize("allowed_extensions", ([".txt"], [".txt", ".json"]))
+def test_load_files_allowed_extensions(tmp_path, allowed_extensions):
     """Check the behaviour of `allowed_extension` in `load_files`."""
     d = tmp_path / "sub"
     d.mkdir()
-    p1 = d / "file1.txt"
-    p1.touch()
-    p2 = d / "file2.json"
-    p2.touch()
-    p3 = d / "file3.json"
-    p3.touch()
-    res = load_files(tmp_path, allowed_extensions=[".txt"])
-    assert set([str(p1)]) == set(res.filenames)
+    files = ("file1.txt", "file2.json", "file3.json", "file4.md")
+    paths = [d / f for f in files]
+    for p in paths:
+        p.touch()
+    res = load_files(tmp_path, allowed_extensions=allowed_extensions)
+    assert set([str(p) for p in paths if p.suffix in allowed_extensions]) == set(
+        res.filenames
+    )
 
 
 @pytest.mark.parametrize(

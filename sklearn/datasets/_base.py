@@ -210,9 +210,6 @@ def load_files(
             The filenames holding the dataset.
     """
 
-    if allowed_extensions is not None:
-        allowed_extensions = frozenset(allowed_extensions)
-
     target = []
     target_names = []
     filenames = []
