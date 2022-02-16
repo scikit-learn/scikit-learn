@@ -192,7 +192,7 @@ class MethodMetadataRequest:
 
         return self
 
-    def _get_param_names(self, original_names):
+    def _get_param_names(self, return_alias):
         """Get the names of all available metadata.
 
         This method returns the names of all metadata, even the UNREQUESTED
@@ -200,9 +200,9 @@ class MethodMetadataRequest:
 
         Parameters
         ----------
-        original_names : bool
+        return_alias : bool
             Controls whether original or aliased names should be returned. If
-            ``True``, aliases are ignored and original names are returned.
+            ``False``, aliases are ignored and original names are returned.
 
         Returns
         -------
@@ -211,7 +211,7 @@ class MethodMetadataRequest:
         """
         return set(
             [
-                alias if not original_names and alias not in RequestType else prop
+                alias if return_alias and alias not in RequestType else prop
                 for prop, alias in self._requests.items()
                 if alias not in RequestType
                 or RequestType(alias) != RequestType.UNREQUESTED
@@ -344,7 +344,7 @@ class MetadataRequest:
         for method in METHODS:
             setattr(self, method, MethodMetadataRequest(owner=owner, method=method))
 
-    def _get_param_names(self, method, original_names, ignore_self=None):
+    def _get_param_names(self, method, return_alias, ignore_self=None):
         """Get the names of all available metadata for a method.
 
         This method returns the names of all metadata, even the UNREQUESTED
@@ -355,9 +355,9 @@ class MetadataRequest:
         method : str
             The name of the method for which metadata names are requested.
 
-        original_names : bool
+        return_alias : bool
             Controls whether original or aliased names should be returned. If
-            ``True``, aliases are ignored and original names are returned.
+            ``False``, aliases are ignored and original names are returned.
 
         ignore_self : bool
             Ignored. Present for API compatibility.
@@ -367,7 +367,7 @@ class MetadataRequest:
         names : set of str
             Returns a set of strings with the names of all parameters.
         """
-        return getattr(self, method)._get_param_names(original_names=original_names)
+        return getattr(self, method)._get_param_names(return_alias=return_alias)
 
     def _route_params(self, *, method, params):
         """Return the input parameters requested by a method.
@@ -605,7 +605,7 @@ class MetadataRouter:
             )
         return self
 
-    def _get_param_names(self, *, method, original_names, ignore_self):
+    def _get_param_names(self, *, method, return_alias, ignore_self):
         """Get the names of all available metadata for a method.
 
         This method returns the names of all metadata, even the UNREQUESTED
@@ -616,14 +616,14 @@ class MetadataRouter:
         method : str
             The name of the method for which metadata names are requested.
 
-        original_names : bool
+        return_alias : bool
             Controls whether original or aliased names should be returned,
             which only applies to the stored `self`. If no `self` routing
             object is stored, this parameter has no effect.
 
         ignore_self : bool
             If `self._self` should be ignored. This is used in
-            `_get_squashed_params`. If ``True``, ``original_names`` has no
+            `_get_squashed_params`. If ``True``, ``return_alias`` has no
             effect.
 
         Returns
@@ -634,9 +634,7 @@ class MetadataRouter:
         res = set()
         if self._self and not ignore_self:
             res = res.union(
-                self._self._get_param_names(
-                    method=method, original_names=original_names
-                )
+                self._self._get_param_names(method=method, return_alias=return_alias)
             )
 
         for name, route_mapping in self._route_mappings.items():
@@ -644,7 +642,7 @@ class MetadataRouter:
                 if caller == method:
                     res = res.union(
                         route_mapping.router._get_param_names(
-                            method=callee, original_names=False, ignore_self=False
+                            method=callee, return_alias=True, ignore_self=False
                         )
                     )
         return set(res)
@@ -679,7 +677,7 @@ class MetadataRouter:
             res.update(self._self._route_params(params=params, method=method))
 
         param_names = self._get_param_names(
-            method=method, original_names=False, ignore_self=True
+            method=method, return_alias=True, ignore_self=True
         )
         child_params = {
             key: value for key, value in params.items() if key in param_names
@@ -762,12 +760,10 @@ class MetadataRouter:
             A dictionary of provided metadata.
         """
         param_names = self._get_param_names(
-            method=method, original_names=True, ignore_self=False
+            method=method, return_alias=False, ignore_self=False
         )
         if self._self:
-            self_params = self._self._get_param_names(
-                method=method, original_names=True
-            )
+            self_params = self._self._get_param_names(method=method, return_alias=False)
         else:
             self_params = set()
         extra_keys = set(params.keys()) - param_names - self_params

@@ -604,8 +604,8 @@ def test_method_metadata_request():
     assert mmr.requests == {"foo": RequestType.REQUESTED}
     mmr.add_request(param="foo", alias="bar")
     assert mmr.requests == {"foo": "bar"}
-    assert mmr._get_param_names(original_names=True) == {"foo"}
-    assert mmr._get_param_names(original_names=False) == {"bar"}
+    assert mmr._get_param_names(return_alias=False) == {"foo"}
+    assert mmr._get_param_names(return_alias=True) == {"bar"}
 
 
 def test_get_routing_for_object():
