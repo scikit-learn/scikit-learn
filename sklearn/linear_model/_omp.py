@@ -342,7 +342,7 @@ def orthogonal_mp(
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
-        iterating over the last axis returns coefficients in increasing order
+        iterating over the last axis generates coefficients in increasing order
         of active features.
 
     n_iters : array-like or int
