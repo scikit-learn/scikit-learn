@@ -1452,7 +1452,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             - If None, then `max_features=n_features`.
 
             .. versionchanged:: 1.1
-            The default of `max_features` changed from `"auto"` to `"sqrt"`.
+                The default of `max_features` changed from `"auto"` to `"sqrt"`.
 
             .. deprecated:: 1.1
             The `"auto"` option was deprecated in 1.1 and will be removed
