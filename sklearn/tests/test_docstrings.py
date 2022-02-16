@@ -50,7 +50,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.feature_selection._univariate_selection.r_regression",
     "sklearn.inspection._partial_dependence.partial_dependence",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
-    "sklearn.linear_model._least_angle.lars_path",
     "sklearn.linear_model._least_angle.lars_path_gram",
     "sklearn.linear_model._omp.orthogonal_mp",
     "sklearn.linear_model._omp.orthogonal_mp_gram",
