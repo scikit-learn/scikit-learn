@@ -31,8 +31,8 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_neighbors : int or None, default=5
-        Number of neighbors to consider for each point. Use radius-based
-        neighbors when set to ``None``.
+        Number of neighbors to consider for each point. If `n_neighbors` is an int,
+        then `radius` must be `None`.
 
     radius : float or None, default=None
         Limiting distance of neighbors to return. Use n_neighbors
