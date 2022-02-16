@@ -459,7 +459,7 @@ ESTIMATOR_PARAMETER_TO_XFAIL = {
     ("NeighborhoodComponentsAnalysis", "n_components"),
     ("PatchExtractor", "random_state"),
     ("Pipeline", "steps"),  # Expected behavior
-    ("RANSACRegressor", "estimator"),
+    ("RANSACRegressor", "estimator"),  # Expected behavior
     ("RidgeClassifier", "max_iter"),
     ("RidgeClassifierCV", "alphas"),
 }
@@ -476,10 +476,16 @@ def test_estimators_do_not_set_parameter_outside_of_init(name, Estimator):
         )
         for kls in Estimator.mro()
     )
+
+    # Regex for "self.a_string = " where "a_string" can not begin or end with "_"
     param_set_re = re.compile(r"self.(?!_)(\w+)(?<!_) = ")
 
     for f in functions:
-        source = getsource(f)
+        try:
+            source = getsource(f)
+        except TypeError:
+            continue
+
         match = param_set_re.search(source)
         if match is None:
             continue
