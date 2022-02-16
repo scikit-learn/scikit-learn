@@ -38,6 +38,8 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Limiting distance of neighbors to return. If `radius` is a float,
         then `n_neighbors` must be set to `None`.
 
+        .. versionadded:: 1.1
+
     n_components : int, default=2
         Number of coordinates for the manifold.
 
