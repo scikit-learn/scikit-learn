@@ -1633,6 +1633,206 @@ def precision_recall_fscore_support(
     return precision, recall, f_score, true_sum
 
 
+def likelihood_ratios_support(
+    y_true,
+    y_pred,
+    *,
+    beta=1.0,
+    labels=None,
+    pos_label=1,
+    average=None,
+    warn_for=("positive", "negative"),
+    sample_weight=None,
+    zero_division="warn",
+):
+    """Compute positive and negative likelihood ratio.
+
+    The positive likelihood ratio is ``sensitivity / (1 - specificity)`` where
+    the sensitivity or recall is the ratio ``tp / (tp + fn)`` and the
+    specificity is ``tn / (tn + fp)``. The negative likelihood ratio is ``(1 -
+    sensitivity) / specificity``. Here ``tp`` is the number of true positives,
+    ``fp`` the number of false positives, ``tn`` is the number of true negatives
+    and ``fn`` the number of false negatives. These ratios are interpretable in
+    terms of the pre-test versus post-test odds ratio.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Estimated targets as returned by a classifier.
+
+    labels : array-like, default=None
+        The set of labels to include when ``average != 'binary'``, and their
+        order if ``average is None``. Labels present in the data can be
+        excluded, for example to calculate a multiclass average ignoring a
+        majority negative class, while labels not present in the data will
+        result in 0 components in a macro average. For multilabel targets,
+        labels are column indices. By default, all labels in ``y_true`` and
+        ``y_pred`` are used in sorted order.
+
+    pos_label : str or int, default=1
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
+
+    average : {'binary', 'micro', 'macro', 'samples','weighted'}, \
+            default=None
+        If ``None``, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+
+        ``'binary'``:
+            Only report results for the class specified by ``pos_label``.
+            This is applicable only if targets (``y_{true,pred}``) are binary.
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+
+    warn_for : tuple or set, for internal use
+        This determines which warnings will be made in the case that this
+        function is being used to return only one of its metrics.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division:
+           - recall: when there are no positive labels
+           - precision: when there are no positive predictions
+           - f-score: both
+
+        If set to "warn", this acts as 0, but warnings are also raised.
+
+    Returns
+    -------
+    positive_likelihood_ratio : float (if average is not None) or array of float,\
+        shape = [n_unique_labels]
+        Positive likelihood ratio.
+
+    negative_likelihood_ratio : float (if average is not None) or array of float,\
+        shape = [n_unique_labels]
+        Negative likelihood ratio.
+
+    Notes
+    -----
+    When ``false positive == 0``, positive likelihood ratio is undefined.
+    When ``true negative == 0``, negative likelihood ratio is undefined.
+    When ``true positive + false negative == 0`` both ratios are undefined.
+    In such cases, ``UndefinedMetricWarning`` will be raised. This behavior can
+    be modified with ``zero_division``.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Likelihood ratios in diagnostic testing
+           <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import likelihood_ratios_support
+    >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
+    >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
+    >>> likelihood_ratios_support(y_true, y_pred, average='macro')
+    (0.22..., 0.33..., 0.26..., None)
+    >>> likelihood_ratios_support(y_true, y_pred, average='micro')
+    (0.33..., 0.33..., 0.33..., None)
+    >>> likelihood_ratios_support(y_true, y_pred, average='weighted')
+    (0.22..., 0.33..., 0.26..., None)
+
+    It is possible to compute per-label precisions, recalls, F1-scores and
+    supports instead of averaging:
+
+    >>> likelihood_ratios_support(y_true, y_pred, average=None,
+    ... labels=['pig', 'dog', 'cat'])
+    (array([0.        , 0.        , 0.66...]),
+     array([0., 0., 1.]), array([0. , 0. , 0.8]),
+     array([2, 2, 2]))
+    """
+    _check_zero_division(zero_division)
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+
+    # Compute a confusion matrix for each class or sample
+    samplewise = average == "samples"
+    MCM = multilabel_confusion_matrix(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        labels=labels,
+        samplewise=samplewise,
+    )
+    tp = MCM[:, 1, 1]
+    tn = MCM[:, 0, 0]
+    fp = MCM[:, 0, 1]
+    fn = MCM[:, 1, 0]
+
+    if average == "micro":
+        tp = np.array([tp.sum()])
+        tn = np.array([tn.sum()])
+        fp = np.array([fp.sum()])
+        fn = np.array([fn.sum()])
+
+    true_sum = tp + fn
+    false_sum = tn + fp
+    pos_num = tp * false_sum
+    pos_denom = fp * true_sum
+    neg_num = fn * false_sum
+    neg_denom = tn * true_sum
+
+    # Divide, and on zero-division, set scores and/or warn according to
+    # zero_division:
+    positive_likelihood_ratio = _prf_divide(
+        pos_num,
+        pos_denom,
+        "positive_likelihood_ratio",
+        "positive",
+        average,
+        warn_for,
+        zero_division,
+    )
+    negative_likelihood_ratio = _prf_divide(
+        neg_num,
+        neg_denom,
+        "negative_likelihood_ratio",
+        "positive",
+        average,
+        warn_for,
+        zero_division,
+    )
+
+    # Average the results
+    if average == "weighted":
+        weights = true_sum
+    elif average == "samples":
+        weights = sample_weight
+    else:
+        weights = None
+
+    if average is not None:
+        assert average != "binary" or len(positive_likelihood_ratio) == 1
+        positive_likelihood_ratio = np.average(
+            positive_likelihood_ratio, weights=weights
+        )
+        negative_likelihood_ratio = np.average(
+            negative_likelihood_ratio, weights=weights
+        )
+
+    return positive_likelihood_ratio, negative_likelihood_ratio
+
+
 def precision_score(
     y_true,
     y_pred,
