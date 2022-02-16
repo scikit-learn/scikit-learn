@@ -208,6 +208,30 @@ def test_one_hot_encoder_feature_names_unicode(get_names):
     assert_array_equal(["n👍me_c❤t1", "n👍me_dat2"], feature_names)
 
 
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_one_hot_encoder_feature_names_unique(get_names):
+    enc = OneHotEncoder()
+    X = np.array([["None", None]], dtype=object).T
+    enc.fit(X)
+    feature_names = getattr(enc, get_names)()
+    assert_array_equal(["x0_None", "x0_None__1"], feature_names)
+    feature_names = getattr(enc, get_names)(input_features=["a"])
+    assert_array_equal(["a_None", "a_None__1"], feature_names)
+
+
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_one_hot_encoder_feature_names_with_int_features(get_names):
+    enc = OneHotEncoder()
+    X = np.array([["a", "b"]], dtype=object).T
+    enc.fit(X)
+    feature_names = getattr(enc, get_names)(input_features=[1])
+    assert_array_equal(["1_a", "1_b"], feature_names)
+
+
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
     oh = OneHotEncoder()

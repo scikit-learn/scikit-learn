@@ -2,6 +2,7 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+from collections import defaultdict
 import warnings
 import numpy as np
 from scipy import sparse
@@ -692,12 +693,14 @@ class OneHotEncoder(_BaseEncoder):
 
         feature_names = []
         for i in range(len(cats)):
-            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            names = [str(input_features[i]) + "_" + str(t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
 
-        return np.array(feature_names, dtype=object)
+        return np.asarray(
+            self._ensure_unique_feature_names(feature_names), dtype=object
+        )
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -724,11 +727,28 @@ class OneHotEncoder(_BaseEncoder):
 
         feature_names = []
         for i in range(len(cats)):
-            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            names = [str(input_features[i]) + "_" + str(t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-        return np.asarray(feature_names, dtype=object)
+        return np.asarray(
+            self._ensure_unique_feature_names(feature_names), dtype=object
+        )
+
+    def _ensure_unique_feature_names(self, feature_names):
+        name_counts = defaultdict(int)
+        unique_feature_names = []
+        for name in feature_names:
+            if name in name_counts:
+                original_name = name
+                suffix_count = name_counts[original_name]
+                name = original_name + "__" + str(suffix_count)
+                while name in name_counts:
+                    suffix_count += 1
+                    name = original_name + "__" + str(suffix_count)
+            name_counts[name] += 1
+            unique_feature_names.append(name)
+        return unique_feature_names
 
 
 class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
