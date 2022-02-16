@@ -318,6 +318,7 @@ Changelog
 - |Enhancement| Adds support to use pre-fit models with `cv="prefit"`
   in :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
   :pr:`16748` by :user:`Siqi He <siqi-he>` and :pr:`22215` by
+
 - |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
   float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
   and :user:`Daniel Kharsa <aflatoune>` and :pr:`22370` by
@@ -462,7 +463,7 @@ Changelog
   now raise consistent error messages when passed invalid values for `l1_ratio`,
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
-  
+
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
   with a shape that respects the docstring and that is consistent with the shape
