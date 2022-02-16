@@ -2114,7 +2114,7 @@ def test_poisson_vs_mse():
         # test set.
         if val == "test":
             assert metric_poi < 0.5 * metric_mse
-        assert metric_poi < 0.75 * metric_dummy
+        assert metric_poi < 0.9 * metric_dummy
 
 
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
