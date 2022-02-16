@@ -1461,10 +1461,10 @@ class PartialDependenceDisplay:
                     "color": "C0",
                     "label": "average" if kind_plot == "both" else None,
                 }
-                if kind_plot in "individual":
+                if kind_plot == "individual":
                     default_ice_lines_kws = {"alpha": 0.3, "linewidth": 0.5}
                     default_pd_lines_kws = {}
-                elif kind_plot in "both":
+                elif kind_plot == "both":
                     # by default, we need to distinguish the average line from
                     # the individual lines via color and line style
                     default_ice_lines_kws = {
