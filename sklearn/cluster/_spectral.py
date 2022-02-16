@@ -131,7 +131,7 @@ def discretize(
     # Normalize the rows of the eigenvectors.  Samples should lie on the unit
     # hypersphere centered at the origin.  This transforms the samples in the
     # embedding space to the space of partition matrices.
-    vectors = vectors / np.sqrt((vectors ** 2).sum(axis=1))[:, np.newaxis]
+    vectors = vectors / np.sqrt((vectors**2).sum(axis=1))[:, np.newaxis]
 
     svd_restarts = 0
     has_converged = False
