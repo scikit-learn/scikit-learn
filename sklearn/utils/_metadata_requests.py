@@ -772,9 +772,9 @@ class MetadataRouter:
             self_params = set()
         extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
-            raise ValueError(
-                "These passed parameters are not understood or requested by any object:"
-                f" {extra_keys}"
+            raise TypeError(
+                f"{method} got unexpected argument(s) {extra_keys}, which are "
+                "not requested metadata in any object."
             )
 
     def _serialize(self):

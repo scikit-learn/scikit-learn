@@ -221,7 +221,7 @@ est.fit(X, y)
 # If we pass an unknown metadata, it will be caught:
 try:
     est.fit(X, y, test=my_weights)
-except ValueError as e:
+except TypeError as e:
     print(e)
 
 # %%
@@ -240,7 +240,7 @@ est = MetaClassifier(
 )
 try:
     est.fit(X, y, sample_weight=my_weights).predict(X[:3, :], groups=my_groups)
-except ValueError as e:
+except TypeError as e:
     print(e)
 
 # %%
@@ -264,7 +264,7 @@ est.fit(X, y, aliased_sample_weight=my_weights)
 # alias and ``sample_weight`` with that name is not requested:
 try:
     est.fit(X, y, sample_weight=my_weights)
-except ValueError as e:
+except TypeError as e:
     print(e)
 
 # %%

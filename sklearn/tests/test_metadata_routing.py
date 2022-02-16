@@ -448,13 +448,8 @@ def test_invalid_metadata():
         transformer=TransformerMetadata().set_transform_request(sample_weight=True)
     )
     with pytest.raises(
-        ValueError,
-        match=(
-            re.escape(
-                "These passed parameters are not understood or requested by any object:"
-                " {'other_param'}"
-            )
-        ),
+        TypeError,
+        match=(re.escape("transform got unexpected argument(s) {'other_param'}")),
     ):
         trs.fit(X, y).transform(X, other_param=my_weights)
 
@@ -463,13 +458,8 @@ def test_invalid_metadata():
         transformer=TransformerMetadata().set_transform_request(sample_weight=False)
     )
     with pytest.raises(
-        ValueError,
-        match=(
-            re.escape(
-                "These passed parameters are not understood or requested by any object:"
-                " {'sample_weight'}"
-            )
-        ),
+        TypeError,
+        match=(re.escape("transform got unexpected argument(s) {'sample_weight'}")),
     ):
         trs.fit(X, y).transform(X, sample_weight=my_weights)
 
