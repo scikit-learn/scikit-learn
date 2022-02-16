@@ -51,7 +51,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.inspection._partial_dependence.partial_dependence",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
     "sklearn.linear_model._least_angle.lars_path_gram",
-    "sklearn.linear_model._omp.orthogonal_mp",
     "sklearn.linear_model._omp.orthogonal_mp_gram",
     "sklearn.linear_model._ridge.ridge_regression",
     "sklearn.manifold._locally_linear.locally_linear_embedding",
