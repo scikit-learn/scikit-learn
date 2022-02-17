@@ -15,7 +15,6 @@ JOBLIB_MIN_VERSION = '0.11'
 THREADPOOLCTL_MIN_VERSION = '2.0.0'
 PYTEST_MIN_VERSION = '5.0.1'
 CYTHON_MIN_VERSION = '0.28.5'
-NUMBA_MIN_VERSION = '0.53.1'
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -23,7 +22,7 @@ NUMBA_MIN_VERSION = '0.53.1'
 # The values are (version_spec, comma seperated tags)
 dependent_packages = {
     'numpy': (NUMPY_MIN_VERSION, 'build, install'),
-    'numba': (NUMBA_MIN_VERSION, 'build, install'),
+    'numba': ('0.53.1', 'build, install'),
     'scipy': (SCIPY_MIN_VERSION, 'build, install'),
     'joblib': (JOBLIB_MIN_VERSION, 'install'),
     'threadpoolctl': (THREADPOOLCTL_MIN_VERSION, 'install'),
