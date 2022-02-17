@@ -12,6 +12,7 @@ import warnings
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
 
+# NumPy 1.23 deprecates numpy.distutils
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from numpy.distutils.ccompiler import new_compiler
