@@ -350,14 +350,13 @@ class OneHotEncoder(_BaseEncoder):
     array([[0., 1., 0., 0.],
            [1., 0., 1., 0.]])
 
-
     One can change the way feature names are created.
+
     >>> def custom_combiner(feature, category):
     >>>   return str(feature) + "_" + type(category).__name__ + "_" + str(category)
     >>> custom_fnames_enc = OneHotEncoder(feature_name_combiner=custom_combiner).fit(X)
     >>> custom_fnames_enc.get_feature_names_out()
     array(['x0_str_Male', 'x0_str_Female', 'x1_int_1', 'x1_int_3', 'x1_int_2']
-
     """
 
     def __init__(
