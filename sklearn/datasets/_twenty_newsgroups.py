@@ -232,7 +232,6 @@ def fetch_20newsgroups(
     delay : int
         Number of seconds between retries.
 
-
     Returns
     -------
     bunch : :class:`~sklearn.utils.Bunch`
