@@ -285,7 +285,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
                 break
             old_ll = ll
 
-            psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
+            psi = np.maximum(var - np.sum(W**2, axis=0), SMALL)
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
@@ -443,10 +443,10 @@ def _ortho_rotation(components, method="varimax", tol=1e-6, max_iter=100):
     for _ in range(max_iter):
         comp_rot = np.dot(components, rotation_matrix)
         if method == "varimax":
-            tmp = comp_rot * np.transpose((comp_rot ** 2).sum(axis=0) / nrow)
+            tmp = comp_rot * np.transpose((comp_rot**2).sum(axis=0) / nrow)
         elif method == "quartimax":
             tmp = 0
-        u, s, v = np.linalg.svd(np.dot(components.T, comp_rot ** 3 - tmp))
+        u, s, v = np.linalg.svd(np.dot(components.T, comp_rot**3 - tmp))
         rotation_matrix = np.dot(u, v)
         var_new = np.sum(s)
         if var != 0 and var_new < var * (1 + tol):

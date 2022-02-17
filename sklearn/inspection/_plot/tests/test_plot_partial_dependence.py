@@ -159,6 +159,8 @@ def test_plot_partial_dependence_kind(
     assert disp.contours_[0, 1] is None
     assert disp.contours_[0, 2] is None
 
+    assert disp.kind == kind
+
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
@@ -592,13 +594,8 @@ dummy_classification_data = make_classification(random_state=0)
         ),
         (
             dummy_classification_data,
-            {"features": [(1, 2)], "kind": "individual"},
-            "It is not possible to display individual effects for more than one",
-        ),
-        (
-            dummy_classification_data,
-            {"features": [(1, 2)], "kind": "both"},
-            "It is not possible to display individual effects for more than one",
+            {"features": [1, 2], "kind": ["both"]},
+            "When `kind` is provided as a list of strings, it should contain",
         ),
         (
             dummy_classification_data,
@@ -609,6 +606,16 @@ dummy_classification_data = make_classification(random_state=0)
             dummy_classification_data,
             {"features": [1], "subsample": 1.2},
             r"When a floating-point, subsample=1.2 should be in the \(0, 1\) range",
+        ),
+        (
+            dummy_classification_data,
+            {"features": [1], "kind": "foo"},
+            "Values provided to `kind` must be one of",
+        ),
+        (
+            dummy_classification_data,
+            {"features": [0, 1], "kind": ["foo", "individual"]},
+            "Values provided to `kind` must be one of",
         ),
     ],
 )
@@ -729,6 +736,71 @@ def test_partial_dependence_overwrite_labels(
             assert legend_text[0].get_text() == label
 
 
+def test_partial_dependence_kind_list(
+    plot_partial_dependence,
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we can provide a list of strings to kind parameter."""
+    matplotlib = pytest.importorskip("matplotlib")
+
+    disp = plot_partial_dependence(
+        clf_diabetes,
+        diabetes.data,
+        features=[0, 2, (1, 2)],
+        grid_resolution=20,
+        kind=["both", "both", "average"],
+    )
+
+    for idx in [0, 1]:
+        assert all(
+            [
+                isinstance(line, matplotlib.lines.Line2D)
+                for line in disp.lines_[0, idx].ravel()
+            ]
+        )
+        assert disp.contours_[0, idx] is None
+
+    assert disp.contours_[0, 2] is not None
+    assert all([line is None for line in disp.lines_[0, 2].ravel()])
+
+
+@pytest.mark.parametrize(
+    "features, kind",
+    [
+        ([0, 2, (1, 2)], "individual"),
+        ([0, 2, (1, 2)], "both"),
+        ([(0, 1), (0, 2), (1, 2)], "individual"),
+        ([(0, 1), (0, 2), (1, 2)], "both"),
+        ([0, 2, (1, 2)], ["individual", "individual", "individual"]),
+        ([0, 2, (1, 2)], ["both", "both", "both"]),
+    ],
+)
+def test_partial_dependence_kind_error(
+    plot_partial_dependence,
+    pyplot,
+    clf_diabetes,
+    diabetes,
+    features,
+    kind,
+):
+    """Check that we raise an informative error when 2-way PD is requested
+    together with 1-way PD/ICE"""
+    warn_msg = (
+        "ICE plot cannot be rendered for 2-way feature interactions. 2-way "
+        "feature interactions mandates PD plots using the 'average' kind"
+    )
+    with pytest.raises(ValueError, match=warn_msg):
+        plot_partial_dependence(
+            clf_diabetes,
+            diabetes.data,
+            features=features,
+            grid_resolution=20,
+            kind=kind,
+        )
+
+
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "line_kw, pd_line_kw, ice_lines_kw, expected_colors",
@@ -773,7 +845,7 @@ def test_plot_partial_dependence_lines_kw(
     if pd_line_kw is not None and "linestyle" in pd_line_kw:
         assert line.get_linestyle() == pd_line_kw["linestyle"]
     else:
-        assert line.get_linestyle() == "-"
+        assert line.get_linestyle() == "--"
 
     line = disp.lines_[0, 0, 0]
     assert line.get_color() == expected_colors[1]
@@ -781,3 +853,32 @@ def test_plot_partial_dependence_lines_kw(
         assert line.get_linestyle() == ice_lines_kw["linestyle"]
     else:
         assert line.get_linestyle() == "-"
+
+
+def test_partial_dependence_display_wrong_len_kind(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that we raise an error when `kind` is a list with a wrong length.
+
+    This case can only be triggered using the `PartialDependenceDisplay.from_estimator`
+    method.
+    """
+    disp = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        features=[0, 2],
+        grid_resolution=20,
+        kind="average",  # len(kind) != len(features)
+    )
+
+    # alter `kind` to be a list with a length different from length of `features`
+    disp.kind = ["average"]
+    err_msg = (
+        r"When `kind` is provided as a list of strings, it should contain as many"
+        r" elements as `features`. `kind` contains 1 element\(s\) and `features`"
+        r" contains 2 element\(s\)."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        disp.plot()
