@@ -3,12 +3,7 @@
 # same topic namely the Wikipedia encyclopedia itself
 
 import os
-try:
-    # Python 2 compat
-    from urllib2 import Request, build_opener
-except ImportError:
-    # Python 3
-    from urllib.request import Request, build_opener
+from urllib.request import Request, build_opener
 
 import lxml.html
 from lxml.etree import ElementTree
@@ -17,23 +12,23 @@ import numpy as np
 import codecs
 
 pages = {
-    u'ar': u'http://ar.wikipedia.org/wiki/%D9%88%D9%8A%D9%83%D9%8A%D8%A8%D9%8A%D8%AF%D9%8A%D8%A7',
-    u'de': u'http://de.wikipedia.org/wiki/Wikipedia',
-    u'en': u'https://en.wikipedia.org/wiki/Wikipedia',
-    u'es': u'http://es.wikipedia.org/wiki/Wikipedia',
-    u'fr': u'http://fr.wikipedia.org/wiki/Wikip%C3%A9dia',
-    u'it': u'http://it.wikipedia.org/wiki/Wikipedia',
-    u'ja': u'http://ja.wikipedia.org/wiki/Wikipedia',
-    u'nl': u'http://nl.wikipedia.org/wiki/Wikipedia',
-    u'pl': u'http://pl.wikipedia.org/wiki/Wikipedia',
-    u'pt': u'http://pt.wikipedia.org/wiki/Wikip%C3%A9dia',
-    u'ru': u'http://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F',
+    'ar': 'http://ar.wikipedia.org/wiki/%D9%88%D9%8A%D9%83%D9%8A%D8%A8%D9%8A%D8%AF%D9%8A%D8%A7',   # noqa: E501
+    'de': 'http://de.wikipedia.org/wiki/Wikipedia',
+    'en': 'https://en.wikipedia.org/wiki/Wikipedia',
+    'es': 'http://es.wikipedia.org/wiki/Wikipedia',
+    'fr': 'http://fr.wikipedia.org/wiki/Wikip%C3%A9dia',
+    'it': 'http://it.wikipedia.org/wiki/Wikipedia',
+    'ja': 'http://ja.wikipedia.org/wiki/Wikipedia',
+    'nl': 'http://nl.wikipedia.org/wiki/Wikipedia',
+    'pl': 'http://pl.wikipedia.org/wiki/Wikipedia',
+    'pt': 'http://pt.wikipedia.org/wiki/Wikip%C3%A9dia',
+    'ru': 'http://ru.wikipedia.org/wiki/%D0%92%D0%B8%D0%BA%D0%B8%D0%BF%D0%B5%D0%B4%D0%B8%D1%8F',  # noqa: E501
 #    u'zh': u'http://zh.wikipedia.org/wiki/Wikipedia',
 }
 
-html_folder = u'html'
-text_folder = u'paragraphs'
-short_text_folder = u'short_paragraphs'
+html_folder = 'html'
+text_folder = 'paragraphs'
+short_text_folder = 'short_paragraphs'
 n_words_per_short_text = 5
 
 
@@ -93,7 +88,7 @@ for lang, page in pages.items():
         groups = np.array_split(words, n_groups)
 
         for group in groups:
-            small_content = u" ".join(group)
+            small_content = " ".join(group)
 
             short_text_filename = os.path.join(short_text_lang_folder,
                                                '%s_%04d.txt' % (lang, j))
