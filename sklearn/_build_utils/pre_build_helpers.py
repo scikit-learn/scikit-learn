@@ -7,11 +7,15 @@ import tempfile
 import textwrap
 import setuptools  # noqa
 import subprocess
+import warnings
 
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
-from numpy.distutils.ccompiler import new_compiler
-from numpy.distutils.command.config_compiler import config_cc
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    from numpy.distutils.ccompiler import new_compiler
+    from numpy.distutils.command.config_compiler import config_cc
 
 
 def _get_compiler():
