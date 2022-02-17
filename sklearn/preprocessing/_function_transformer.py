@@ -157,15 +157,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
         X_round_trip = self.inverse_transform(self.transform(X[idx_selected]))
 
-        X = np.asarray(X) if not hasattr(X, "dtype") else X
-        if np.issubdtype(X.dtype, np.number):
-            valid = _allclose_dense_sparse(X[idx_selected], X_round_trip)
-        else:
+        if not np.issubdtype(X.dtype, np.number):
             raise ValueError(
                 "'check_inverse' is only supported when all the elements in `X` is"
                 " numerical."
             )
-        if not valid:
+
+        if not _allclose_dense_sparse(X[idx_selected], X_round_trip):
             warnings.warn(
                 "The provided functions are not strictly"
                 " inverse of each other. If you are sure you"
