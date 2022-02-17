@@ -173,6 +173,11 @@ Changelog
   3 times in case of a network failure with a delay between each try.
   :pr:`21901` by :user:`Rileran <rileran>`.
 
+- |Feature| :func:`datasets.load_files` now accepts a ignore list and
+  an allow list based on file extensions.
+  :pr:`19747` by :user:`Tony Attalla <tonyattalla>` and :pr:`22498` by
+  :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -459,7 +464,7 @@ Changelog
   now raise consistent error messages when passed invalid values for `l1_ratio`,
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
-  
+
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
   with a shape that respects the docstring and that is consistent with the shape
