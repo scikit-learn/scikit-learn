@@ -15,14 +15,12 @@ from sklearn import pipeline
 from sklearn import preprocessing
 from sklearn.datasets import make_blobs
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.utils._testing import assert_allclose, assert_allclose_dense_sparse
 
 from scipy.sparse import rand as sparse_rand
 
 eigen_solvers = ["auto", "dense", "arpack"]
 path_methods = ["auto", "FW", "D"]
-
-# N_PER_SIDE = 5
-# NPTS = N_PER_SIDE**2
 
 
 def create_sample_data(n_pts=25, add_noise=False):
@@ -45,9 +43,9 @@ def test_isomap_simple_grid(n_neighbors, radius):
 
     # distances from each point to all others
     if n_neighbors is not None:
-        G = neighbors.kneighbors_graph(X, n_neighbors, mode="distance").toarray()
+        G = neighbors.kneighbors_graph(X, n_neighbors, mode="distance")
     else:
-        G = neighbors.radius_neighbors_graph(X, radius, mode="distance").toarray()
+        G = neighbors.radius_neighbors_graph(X, radius, mode="distance")
 
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
@@ -68,8 +66,7 @@ def test_isomap_simple_grid(n_neighbors, radius):
                 G_iso = neighbors.radius_neighbors_graph(
                     clf.embedding_, radius, mode="distance"
                 )
-            G_iso = G_iso.toarray()
-            assert_array_almost_equal(G, G_iso)
+            assert_allclose_dense_sparse(G, G_iso)
 
 
 @pytest.mark.parametrize("n_neighbors, radius", [(24, None), (None, np.inf)])
@@ -246,15 +243,11 @@ def test_isomap_fit_precomputed_radius_graph():
     isomap = manifold.Isomap(n_neighbors=None, radius=radius, metric="minkowski")
     result = isomap.fit_transform(X)
     # test fit_transform yields similar result as using precomputed distance matrix
-    assert np.allclose(precomputed_result, result)
+    assert_allclose(precomputed_result, result)
 
 
 def test_isomap_raise_error_when_neighbor_and_radius_both_set():
     X, _ = datasets.load_digits(return_X_y=True)
-
-    # works fine when one of `n_neighbors` and `radius` is provided
-    for n_neighbors, radius in [(None, 2), (2, None)]:
-        isomap = manifold.Isomap(n_neighbors=n_neighbors, radius=radius)
 
     # raise ValueError when both arguments are provided
     isomap = manifold.Isomap(n_neighbors=3, radius=5.5)
