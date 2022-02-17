@@ -27,8 +27,7 @@ digits = datasets.load_digits()
 
 # To apply an classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
-n_samples = len(digits.images)
-X = digits.images.reshape((n_samples, -1))
+X = digits.data
 y = digits.target
 
 # Split the dataset in two equal parts
