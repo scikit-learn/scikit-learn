@@ -421,6 +421,20 @@ Changelog
   values in the training set.
   :pr:`21617` by :user:`Christian Ritter <chritter>`.
 
+- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
+  multilabel classification.
+  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now raise consistent error message
+  when passed invalid values for `alphas`.
+  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+- |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
+  now raise consistent error message when passed invalid values for `alpha`,
+  `max_iter` and `tol`.
+  :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -490,19 +504,6 @@ Changelog
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
 
-- |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
-  multilabel classification.
-  :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Enhancement| :class:`linear_model.RidgeCV` and
-  :class:`linear_model.RidgeClassifierCV` now raise consistent error message
-  when passed invalid values for `alphas`.
-  :pr:`21606` by :user:`Arturo Amor <ArturoAmorQ>`.
-
-- |Enhancement| :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`
-  now raise consistent error message when passed invalid values for `alpha`,
-  `max_iter` and `tol`.
-  :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
   with a shape that respects the docstring and that is consistent with the shape
@@ -657,7 +658,7 @@ Changelog
 - |Fix| :class:`preprocessing.FunctionTransformer` with `check_inverse=True`
   now provides informative error message when input has mixed dtypes. :pr:`19916` by
   :user:`Zhehao Liu <MaxwellLZH>`.
-  
+
 - |API| Adds :meth:`get_feature_names_out` to
   :class:`preprocessing.Normalizer`,
   :class:`preprocessing.KernelCenterer`,
