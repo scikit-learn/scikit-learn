@@ -27,6 +27,7 @@ from ._classification import fbeta_score
 from ._classification import hamming_loss
 from ._classification import hinge_loss
 from ._classification import jaccard_score
+from ._classification import likelihood_ratios
 from ._classification import log_loss
 from ._classification import matthews_corrcoef
 from ._classification import precision_recall_fscore_support
@@ -131,6 +132,7 @@ __all__ = [
     "jaccard_score",
     "label_ranking_average_precision_score",
     "label_ranking_loss",
+    "likelihood_ratios",
     "log_loss",
     "make_scorer",
     "nan_euclidean_distances",
