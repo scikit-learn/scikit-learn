@@ -709,7 +709,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| |Fix| :class:`decomposition.SparsePCA` now exposes
   ``normalize_components``. When set to True, the train and test data are
-  centered with the train mean repsectively during the fit phase and the
+  centered with the train mean respectively during the fit phase and the
   transform phase. This fixes the behavior of SparsePCA. When set to False,
   which is the default, the previous abnormal behaviour still holds. The False
   value is for backward compatibility and should not be used. :issue:`11585`
@@ -1286,7 +1286,7 @@ Support for Python 3.3 has been officially dropped.
   be used for novelty detection, i.e. predict on new unseen data. Available
   prediction methods are ``predict``, ``decision_function`` and
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
-  the ``fit_predict`` method is avaiable.
+  the ``fit_predict`` method is available.
   By :user:`Albert Thomas <albertcthomas>`.
 
 - |Fix| Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a

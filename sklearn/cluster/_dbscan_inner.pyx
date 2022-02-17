@@ -1,19 +1,13 @@
 # Fast inner loop for DBSCAN.
 # Author: Lars Buitinck
 # License: 3-clause BSD
-#
-# cython: boundscheck=False, wraparound=False
 
 cimport cython
 from libcpp.vector cimport vector
 cimport numpy as np
 import numpy as np
 
-
-# Work around Cython bug: C++ exceptions are not caught unless thrown within
-# a cdef function with an "except +" declaration.
-cdef inline void push(vector[np.npy_intp] &stack, np.npy_intp i) except +:
-    stack.push_back(i)
+np.import_array()
 
 
 def dbscan_inner(np.ndarray[np.uint8_t, ndim=1, mode='c'] is_core,
@@ -39,7 +33,7 @@ def dbscan_inner(np.ndarray[np.uint8_t, ndim=1, mode='c'] is_core,
                     for i in range(neighb.shape[0]):
                         v = neighb[i]
                         if labels[v] == -1:
-                            push(stack, v)
+                            stack.push_back(v)
 
             if stack.size() == 0:
                 break

@@ -1,4 +1,4 @@
---find-links https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+--extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 --pre
 matplotlib
 scikit-image
