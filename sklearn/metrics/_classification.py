@@ -1633,7 +1633,7 @@ def precision_recall_fscore_support(
     return precision, recall, f_score, true_sum
 
 
-def likelihood_ratios_support(
+def likelihood_ratios(
     y_true,
     y_pred,
     *,
@@ -1743,24 +1743,21 @@ def likelihood_ratios_support(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import likelihood_ratios_support
+    >>> from sklearn.metrics import likelihood_ratios
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
-    >>> likelihood_ratios_support(y_true, y_pred, average='macro')
-    (0.22..., 0.33..., 0.26..., None)
-    >>> likelihood_ratios_support(y_true, y_pred, average='micro')
-    (0.33..., 0.33..., 0.33..., None)
-    >>> likelihood_ratios_support(y_true, y_pred, average='weighted')
-    (0.22..., 0.33..., 0.26..., None)
+    >>> likelihood_ratios(y_true, y_pred, average='macro')
+    (1.33..., 1.11...)
+    >>> likelihood_ratios(y_true, y_pred, average='micro')
+    (1.0, 1.0)
+    >>> likelihood_ratios(y_true, y_pred, average='weighted')
+    (1.33..., 1.11...)
 
-    It is possible to compute per-label precisions, recalls, F1-scores and
-    supports instead of averaging:
+    It is possible to compute per-label likelihood ratios instead of averaging:
 
-    >>> likelihood_ratios_support(y_true, y_pred, average=None,
+    >>> likelihood_ratios(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (array([0.        , 0.        , 0.66...]),
-     array([0., 0., 1.]), array([0. , 0. , 0.8]),
-     array([2, 2, 2]))
+    (array([4., 0., 0.]), array([0.        , 2.        , 1.33...]))
     """
     _check_zero_division(zero_division)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
