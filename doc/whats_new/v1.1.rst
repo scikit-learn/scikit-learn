@@ -435,6 +435,16 @@ Changelog
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| In
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
+  `kind` to accept a list of strings to specify  which type of
+  plot to draw for each feature interaction.
+  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
@@ -648,7 +658,7 @@ Changelog
 - |Fix| :class:`preprocessing.FunctionTransformer` with `check_inverse=True`
   now provides informative error message when input has mixed dtypes. :pr:`19916` by
   :user:`Zhehao Liu <MaxwellLZH>`.
-  
+
 - |API| Adds :meth:`get_feature_names_out` to
   :class:`preprocessing.Normalizer`,
   :class:`preprocessing.KernelCenterer`,
