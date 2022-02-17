@@ -471,14 +471,14 @@ def test_estimators_do_not_set_parameter_outside_of_init(name, Estimator):
     functions = chain.from_iterable(
         (
             f
-            for name, f in getmembers(kls, isfunction)
-            if f.__qualname__.startswith(kls.__name__) and name != "__init__"
+            for name, f in getmembers(Kls, isfunction)
+            if f.__qualname__.startswith(Kls.__name__) and name != "__init__"
         )
-        for kls in Estimator.mro()
+        for Kls in Estimator.mro()
     )
 
     # Regex for "self.a_string = " where "a_string" can not begin or end with "_"
-    param_set_re = re.compile(r"self.(?!_)(\w+)(?<!_) = ")
+    param_set_re = re.compile(r"self\.(?!_)(\w+)(?<!_) = ")
 
     for f in functions:
         try:
