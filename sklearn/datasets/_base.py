@@ -229,7 +229,6 @@ def load_files(
         folder_path = join(container_path, folder)
         files = sorted(listdir(folder_path))
         if allowed_extensions is not None:
-            allowed_extensions = frozenset(allowed_extensions)
             documents = [
                 join(folder_path, file)
                 for file in files
