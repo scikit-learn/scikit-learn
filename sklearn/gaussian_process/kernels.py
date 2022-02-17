@@ -1122,10 +1122,10 @@ class Exponentiation(Kernel):
         if eval_gradient:
             K, K_gradient = self.kernel(X, Y, eval_gradient=True)
             K_gradient *= self.exponent * K[:, :, np.newaxis] ** (self.exponent - 1)
-            return K ** self.exponent, K_gradient
+            return K**self.exponent, K_gradient
         else:
             K = self.kernel(X, Y, eval_gradient=False)
-            return K ** self.exponent
+            return K**self.exponent
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -1554,7 +1554,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
                 K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (
-                    length_scale ** 2
+                    length_scale**2
                 )
                 K_gradient *= K[..., np.newaxis]
                 return K, K_gradient
@@ -1701,15 +1701,15 @@ class Matern(RBF):
             K = (1.0 + K) * np.exp(-K)
         elif self.nu == 2.5:
             K = dists * math.sqrt(5)
-            K = (1.0 + K + K ** 2 / 3.0) * np.exp(-K)
+            K = (1.0 + K + K**2 / 3.0) * np.exp(-K)
         elif self.nu == np.inf:
-            K = np.exp(-(dists ** 2) / 2.0)
+            K = np.exp(-(dists**2) / 2.0)
         else:  # general case; expensive to evaluate
             K = dists
             K[K == 0.0] += np.finfo(float).eps  # strict zeros result in nan
             tmp = math.sqrt(2 * self.nu) * K
             K.fill((2 ** (1.0 - self.nu)) / gamma(self.nu))
-            K *= tmp ** self.nu
+            K *= tmp**self.nu
             K *= kv(self.nu, tmp)
 
         if Y is None:
@@ -1726,10 +1726,10 @@ class Matern(RBF):
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
                 D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (
-                    length_scale ** 2
+                    length_scale**2
                 )
             else:
-                D = squareform(dists ** 2)[:, :, np.newaxis]
+                D = squareform(dists**2)[:, :, np.newaxis]
 
             if self.nu == 0.5:
                 denominator = np.sqrt(D.sum(axis=2))[:, :, np.newaxis]
@@ -1888,20 +1888,20 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric="sqeuclidean"))
-            tmp = dists / (2 * self.alpha * self.length_scale ** 2)
+            tmp = dists / (2 * self.alpha * self.length_scale**2)
             base = 1 + tmp
-            K = base ** -self.alpha
+            K = base**-self.alpha
             np.fill_diagonal(K, 1)
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
             dists = cdist(X, Y, metric="sqeuclidean")
-            K = (1 + dists / (2 * self.alpha * self.length_scale ** 2)) ** -self.alpha
+            K = (1 + dists / (2 * self.alpha * self.length_scale**2)) ** -self.alpha
 
         if eval_gradient:
             # gradient with respect to length_scale
             if not self.hyperparameter_length_scale.fixed:
-                length_scale_gradient = dists * K / (self.length_scale ** 2 * base)
+                length_scale_gradient = dists * K / (self.length_scale**2 * base)
                 length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
             else:  # l is kept fixed
                 length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
@@ -1910,7 +1910,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             if not self.hyperparameter_alpha.fixed:
                 alpha_gradient = K * (
                     -self.alpha * np.log(base)
-                    + dists / (2 * self.length_scale ** 2 * base)
+                    + dists / (2 * self.length_scale**2 * base)
                 )
                 alpha_gradient = alpha_gradient[:, :, np.newaxis]
             else:  # alpha is kept fixed
@@ -2048,14 +2048,14 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             cos_of_arg = np.cos(arg)
             # gradient with respect to length_scale
             if not self.hyperparameter_length_scale.fixed:
-                length_scale_gradient = 4 / self.length_scale ** 2 * sin_of_arg ** 2 * K
+                length_scale_gradient = 4 / self.length_scale**2 * sin_of_arg**2 * K
                 length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
             else:  # length_scale is kept fixed
                 length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
             # gradient with respect to p
             if not self.hyperparameter_periodicity.fixed:
                 periodicity_gradient = (
-                    4 * arg / self.length_scale ** 2 * cos_of_arg * sin_of_arg * K
+                    4 * arg / self.length_scale**2 * cos_of_arg * sin_of_arg * K
                 )
                 periodicity_gradient = periodicity_gradient[:, :, np.newaxis]
             else:  # p is kept fixed
@@ -2166,16 +2166,16 @@ class DotProduct(Kernel):
         """
         X = np.atleast_2d(X)
         if Y is None:
-            K = np.inner(X, X) + self.sigma_0 ** 2
+            K = np.inner(X, X) + self.sigma_0**2
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
-            K = np.inner(X, Y) + self.sigma_0 ** 2
+            K = np.inner(X, Y) + self.sigma_0**2
 
         if eval_gradient:
             if not self.hyperparameter_sigma_0.fixed:
                 K_gradient = np.empty((K.shape[0], K.shape[1], 1))
-                K_gradient[..., 0] = 2 * self.sigma_0 ** 2
+                K_gradient[..., 0] = 2 * self.sigma_0**2
                 return K, K_gradient
             else:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
@@ -2199,7 +2199,7 @@ class DotProduct(Kernel):
         K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X).
         """
-        return np.einsum("ij,ij->i", X, X) + self.sigma_0 ** 2
+        return np.einsum("ij,ij->i", X, X) + self.sigma_0**2
 
     def is_stationary(self):
         """Returns whether the kernel is stationary."""

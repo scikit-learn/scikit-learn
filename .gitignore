@@ -75,7 +75,11 @@ _configtest.o.d
 # Used by mypy
 .mypy_cache/
 
+# virtualenv from advanced installation guide
+sklearn-env/
+
 # files generated from a template
+sklearn/_loss/_loss.pyx
 sklearn/utils/_seq_dataset.pyx
 sklearn/utils/_seq_dataset.pxd
 sklearn/utils/_weight_vector.pyx
