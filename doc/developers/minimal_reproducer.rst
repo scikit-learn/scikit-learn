@@ -137,12 +137,7 @@ feature names.
 .. code-block:: python
 
     import pandas as pd
-    df = pd.DataFrame(
-        {
-            "feature_name": [-12.32, 1.43, 30.00],
-            "target": [72, 55, 32],
-        }
-    )
+    df = pd.DataFrame({"feature_name": [-12.32, 1.43, 30.01, 22.17], "target": [72, 55, 32, 43]})
     X = df[["feature_name"]]
     y = df["target"]
 
@@ -153,6 +148,104 @@ feature names.
 
     gbdt = GradientBoostingRegressor(n_iter_no_change=5)
     gbdt.fit(X, y) # raises warning
+
+Improve your formatting as much as possible
+-------------------------------------------
+
+As already mentioned, the key to communication is the readability of the code
+and good formatting can really improve it.
+
+Try to follow the `PEP 8 convention <https://www.python.org/dev/peps/pep-0008/>`_.
+In a nutshell:
+    - try to limit all lines to a maximum of 79 characters
+    - use blank lines to separate groups of related functions
+Place all your imports in their own group at the beginning of the snippet.
+
+**Even better example**
+
+.. code-block:: python
+
+    import pandas as pd
+    from sklearn.ensemble import GradientBoostingRegressor
+
+    df = pd.DataFrame(
+        {
+            "feature_name": [-12.32, 1.43, 30.01, 22.17],
+            "target": [72, 55, 32, 43],
+        }
+    )
+    X = df[["feature_name"]]
+    y = df["target"]
+
+    gbdt = GradientBoostingRegressor()
+    gbdt.fit(X, y) # compiles
+    gbdt = GradientBoostingRegressor(n_iter_no_change=5)
+    gbdt.fit(X, y) # raises warning
+
+
+Use markdown
+------------
+
+To format code or text into its own distinct block, use triple backticks.
+`Markdown
+<https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax>`_
+supports an optional language identifier to enable syntax highlighting in your
+fenced code block. For example::
+
+    ```python
+    from sklearn.datasets import make_blobs
+
+    n_samples = 100
+    n_components = 3
+    X, y = make_blobs(n_samples=n_samples, centers=n_components)
+    ```
+
+will render a python formatted snippet as follows
+
+.. code-block:: python
+
+    from sklearn.datasets import make_blobs
+
+    n_samples = 100
+    n_components = 3
+    X, y = make_blobs(n_samples=n_samples, centers=n_components)
+
+It is not necessary to create several blocks of code when submitting a bug
+report. Remember other reviewers are going to copy-paste your code and having a
+single cell will make their task easier.
+
+In the section `**Actual results**` of your `Issue template
+<https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
+you are asked to provide the error message including the full traceback of the exception. In this
+case, use the `python-traceback` qualifier. For example::
+
+    ```python-traceback
+    ---------------------------------------------------------------------------
+    TypeError                                 Traceback (most recent call last)
+    <ipython-input-1-a674e682c281> in <module>
+        4 vectorizer = CountVectorizer(input=docs, analyzer='word')
+        5 lda_features = vectorizer.fit_transform(docs)
+    ----> 6 lda_model = LatentDirichletAllocation(
+        7     n_topics=10,
+        8     learning_method='online',
+
+    TypeError: __init__() got an unexpected keyword argument 'n_topics'
+    ```
+
+yields the following when rendered:
+
+.. code-block:: python
+
+    ---------------------------------------------------------------------------
+    TypeError                                 Traceback (most recent call last)
+    <ipython-input-1-a674e682c281> in <module>
+        4 vectorizer = CountVectorizer(input=docs, analyzer='word')
+        5 lda_features = vectorizer.fit_transform(docs)
+    ----> 6 lda_model = LatentDirichletAllocation(
+        7     n_topics=10,
+        8     learning_method='online',
+
+    TypeError: __init__() got an unexpected keyword argument 'n_topics'
 
 The above steps can be implemented in a different order than the progression we
 show in this example. Take into account that having a pipeline that makes sense
@@ -307,98 +400,3 @@ of the data, e.g. dealing with missing values or image recognition.
     cancer = load_breast_cancer()
     X = cancer.data
     y = cancer.target
-
-Formatting
-==========
-
-As already mentioned, the key to communication is the readability of the code
-and good formatting can really improve it.
-
-Use markdown
---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-To format code or text into its own distinct block, use triple backticks.
-`Markdown
-<https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax>`_
-supports an optional language identifier to enable syntax highlighting in your
-fenced code block. For example::
-
-    ```python
-    from sklearn.datasets import make_blobs
-
-    n_samples = 100
-    n_components = 3
-    X, y = make_blobs(n_samples=n_samples, centers=n_components)
-    ```
-
-will render a python formatted snippet as follows
-
-.. code-block:: python
-
-    from sklearn.datasets import make_blobs
-
-    n_samples = 100
-    n_components = 3
-    X, y = make_blobs(n_samples=n_samples, centers=n_components)
-
-It is not necessary to create several blocks of code when submitting a bug
-report. Remember other reviewers are going to copy-paste your code.
-
-In the section `**Actual results**` of your `Issue template
-<https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
-you are asked to provide the error message including the full traceback of the exception. In this
-case, use the `python-traceback` qualifier. For example::
-
-    ```python-traceback
-    ---------------------------------------------------------------------------
-    TypeError                                 Traceback (most recent call last)
-    <ipython-input-1-a674e682c281> in <module>
-        4 vectorizer = CountVectorizer(input=docs, analyzer='word')
-        5 lda_features = vectorizer.fit_transform(docs)
-    ----> 6 lda_model = LatentDirichletAllocation(
-        7     n_topics=10,
-        8     learning_method='online',
-
-    TypeError: __init__() got an unexpected keyword argument 'n_topics'
-    ```
-
-yields the following when rendered:
-
-.. code-block:: python
-
-    ---------------------------------------------------------------------------
-    TypeError                                 Traceback (most recent call last)
-    <ipython-input-1-a674e682c281> in <module>
-        4 vectorizer = CountVectorizer(input=docs, analyzer='word')
-        5 lda_features = vectorizer.fit_transform(docs)
-    ----> 6 lda_model = LatentDirichletAllocation(
-        7     n_topics=10,
-        8     learning_method='online',
-
-    TypeError: __init__() got an unexpected keyword argument 'n_topics'
-
-
-Try to follow the `PEP 8 convention <https://www.python.org/dev/peps/pep-0008/>`_
----------------------------------------------------------------------------------
-
-The convention in a nutshell:
-    - try to limit all lines to a maximum of 79 characters
-    - use blank lines to separate groups of related functions
-    - blank lines may be omitted between a bunch of related lines of code
-
-**Example**
-
-The MCVE we created in the :ref:`good_practices` section is easier to read than
-the equally working MCVE here below
-
-.. code-block:: python
-
-    import pandas as pd
-    df = pd.DataFrame({"feature_name": [-12.32, 1.43, 30.00], "target": [72, 55, 32]})
-    X = df[["feature_name"]]
-    y = df["target"]
-    from sklearn.ensemble import GradientBoostingRegressor
-    gbdt = GradientBoostingRegressor()
-    gbdt.fit(X, y) # compiles
-    gbdt = GradientBoostingRegressor(n_iter_no_change=5)
-    gbdt.fit(X, y) # raises warning
