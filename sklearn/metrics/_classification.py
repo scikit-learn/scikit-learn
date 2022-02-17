@@ -1637,7 +1637,6 @@ def likelihood_ratios(
     y_true,
     y_pred,
     *,
-    beta=1.0,
     labels=None,
     pos_label=1,
     average=None,
