@@ -73,7 +73,7 @@ english speakers. It is better that all the necessary information can be read
 from the code itself. Besides, by this point you already provided a concise
 description in the **Describe the bug** section of the Issue template.
 
-**Better example**
+**Improved example**
 
 .. code-block:: python
 
@@ -103,7 +103,7 @@ rasing the bug. Erasing unnecessary lines of code will help you and other
 contributors narrow down the bug. In this example the warning has nothing to
 do with the `train_test_split`, nor the `random_state`.
 
-**Even better example**
+**Improved example**
 
 .. code-block:: python
 
@@ -132,7 +132,7 @@ dataset that has similar characteristics to yours and that reproduces the
 problem. In this particular case, we are interested in data that has labeled
 feature names.
 
-**Even better example**
+**Improved example**
 
 .. code-block:: python
 
@@ -161,7 +161,7 @@ In a nutshell:
     - use blank lines to separate groups of related functions
 Place all your imports in their own group at the beginning of the snippet.
 
-**Even better example**
+**Improved example**
 
 .. code-block:: python
 
