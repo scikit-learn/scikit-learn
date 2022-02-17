@@ -709,6 +709,13 @@ def test_string_representations(obj, string):
             ValueError,
             "Given object is neither a `MetadataRequest` nor does it implement",
         ),
+        (
+            ClassifierFitMetadata(),
+            "set_fit_request",
+            {"invalid": True},
+            TypeError,
+            "Unexpected args",
+        ),
     ],
 )
 def test_validations(obj, method, inputs, err_cls, err_msg):
@@ -716,6 +723,124 @@ def test_validations(obj, method, inputs, err_cls, err_msg):
         getattr(obj, method)(**inputs)
 
 
-def test_requestmethod():
-    with pytest.raises(TypeError, match="Unexpected args"):
-        ClassifierFitMetadata().set_fit_request(invalid=True)
+def test_methodmapping():
+    mm = (
+        MethodMapping()
+        .add(caller="fit", callee="transform")
+        .add(caller="fit", callee="fit")
+    )
+
+    mm_list = list(mm)
+    assert mm_list[0] == ("transform", "fit")
+    assert mm_list[1] == ("fit", "fit")
+
+    mm = MethodMapping.from_str("one-to-one")
+    assert (
+        str(mm)
+        == "[{'callee': 'fit', 'caller': 'fit'}, {'callee': 'partial_fit', 'caller':"
+        " 'partial_fit'}, {'callee': 'predict', 'caller': 'predict'}, {'callee':"
+        " 'score', 'caller': 'score'}, {'callee': 'split', 'caller': 'split'},"
+        " {'callee': 'transform', 'caller': 'transform'}, {'callee':"
+        " 'inverse_transform', 'caller': 'inverse_transform'}]"
+    )
+
+    mm = MethodMapping.from_str("score")
+    assert repr(mm) == "[{'callee': 'score', 'caller': 'score'}]"
+
+
+def test_metadatarouter_add_self():
+    # adding a MetadataRequest as `self` adds a copy
+    request = MetadataRequest(owner="nested")
+    request.fit.add_request(param="param", alias=True)
+    router = MetadataRouter(owner="test").add_self(request)
+    assert str(router._self) == str(request)
+    # should be a copy, not the same object
+    assert router._self is not request
+
+    # one can add an estimator as self
+    est = RegressorMetadata().set_fit_request(sample_weight="my_weights")
+    router = MetadataRouter(owner="test").add_self(obj=est)
+    assert str(router._self) == str(est.get_metadata_routing())
+    assert router._self is not est.get_metadata_routing()
+
+    # adding a consumer+router as self should only add the consumer part
+    est = WeightedMetaRegressor(
+        estimator=RegressorMetadata().set_fit_request(sample_weight="nested_weights")
+    )
+    router = MetadataRouter(owner="test").add_self(obj=est)
+    # _get_metadata_request() returns the consumer part of the requests
+    assert str(router._self) == str(est._get_metadata_request())
+    # get_metadata_routing() returns the complete request set, consumer and
+    # router included.
+    assert str(router._self) != str(est.get_metadata_routing())
+    # it should be a copy, not the same object
+    assert router._self is not est._get_metadata_request()
+
+
+def test_metadata_routing_add():
+    # adding one with a string `method_mapping`
+    router = MetadataRouter(owner="test").add(
+        method_mapping="fit",
+        est=RegressorMetadata().set_fit_request(sample_weight="weights"),
+    )
+    assert (
+        str(router)
+        == "{'est': {'mapping': [{'callee': 'fit', 'caller': 'fit'}], 'router': {'fit':"
+        " {'sample_weight': 'weights'}, 'score': {'sample_weight':"
+        " <RequestType.ERROR_IF_PASSED: None>}}}}"
+    )
+
+    # adding one with an instance of MethodMapping
+    router = MetadataRouter(owner="test").add(
+        method_mapping=MethodMapping().add(callee="score", caller="fit"),
+        est=RegressorMetadata().set_score_request(sample_weight=True),
+    )
+    assert (
+        str(router)
+        == "{'est': {'mapping': [{'callee': 'score', 'caller': 'fit'}], 'router':"
+        " {'fit': {'sample_weight': <RequestType.ERROR_IF_PASSED: None>}, 'score':"
+        " {'sample_weight': <RequestType.REQUESTED: True>}}}}"
+    )
+
+
+def test_metadata_routing_get_param_names():
+    router = (
+        MetadataRouter(owner="test")
+        .add_self(
+            WeightedMetaRegressor(estimator=RegressorMetadata()).set_fit_request(
+                sample_weight="self_weights"
+            )
+        )
+        .add(
+            method_mapping="fit",
+            trs=TransformerMetadata().set_fit_request(
+                sample_weight="transform_weights"
+            ),
+        )
+    )
+
+    assert (
+        str(router)
+        == "{'$self': {'fit': {'sample_weight': 'self_weights'}, 'score':"
+        " {'sample_weight': <RequestType.ERROR_IF_PASSED: None>}}, 'trs':"
+        " {'mapping': [{'callee': 'fit', 'caller': 'fit'}], 'router': {'fit':"
+        " {'sample_weight': 'transform_weights', 'brand':"
+        " <RequestType.ERROR_IF_PASSED: None>}, 'transform': {'sample_weight':"
+        " <RequestType.ERROR_IF_PASSED: None>}}}}"
+    )
+
+    assert router._get_param_names(
+        method="fit", return_alias=True, ignore_self=False
+    ) == {"transform_weights", "brand", "self_weights"}
+    # return_alias=False will return original names for "self"
+    assert router._get_param_names(
+        method="fit", return_alias=False, ignore_self=False
+    ) == {"sample_weight", "brand", "transform_weights"}
+    # ignoring self would remove "sample_weight"
+    assert router._get_param_names(
+        method="fit", return_alias=False, ignore_self=True
+    ) == {"brand", "transform_weights"}
+    # return_alias is ignored when ignore_self=True
+    assert router._get_param_names(
+        method="fit", return_alias=True, ignore_self=True
+    ) == router._get_param_names(method="fit", return_alias=False, ignore_self=True)

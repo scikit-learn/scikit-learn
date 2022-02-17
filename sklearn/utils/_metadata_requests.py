@@ -437,6 +437,9 @@ class MethodMapping:
     scorer) to the router's methods. It stores a collection of ``Route``
     namedtuples.
 
+    Iterating through an instance of this class will yield ``(callee, caller)``
+    tuples.
+
     .. versionadded:: 1.1
     """
 
