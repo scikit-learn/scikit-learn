@@ -253,6 +253,43 @@ def test_return_std():
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
 
 
+@pytest.mark.parametrize("seed", range(10))
+def test_update_sigma(seed):
+    # make sure the two update_sigma() helpers are equivalent. The woodbury
+    # formula is used when n_samples < n_features, and the other one is used
+    # otherwise.
+
+    rng = np.random.RandomState(seed)
+
+    # set n_samples == n_features to avoid instability issues when inverting
+    # the matrices. Using the woodbury formula would be unstable when
+    # n_samples > n_features
+    n_samples = n_features = 10
+    X = rng.randn(n_samples, n_features)
+    alpha = 1
+    lmbda = np.arange(1, n_features + 1)
+    keep_lambda = np.array([True] * n_features)
+
+    reg = ARDRegression()
+
+    sigma = reg._update_sigma(X, alpha, lmbda, keep_lambda)
+    sigma_woodbury = reg._update_sigma_woodbury(X, alpha, lmbda, keep_lambda)
+
+    np.testing.assert_allclose(sigma, sigma_woodbury)
+
+
+# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+def test_ard_regression_predict_normalize_true():
+    """Check that we can predict with `normalize=True` and `return_std=True`.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/18605
+    """
+    clf = ARDRegression(normalize=True)
+    clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    clf.predict([[1, 1]], return_std=True)
+
+
 def test_dtype_match():
     # Test that np.float32 input data is not cast to np.float64 when possible
     X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
