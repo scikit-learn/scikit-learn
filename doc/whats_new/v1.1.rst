@@ -101,6 +101,9 @@ Changelog
   See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`.
 
+- |Fix| :class:`cluster.KMeans`'s `init` parameter now properly supports
+  array-like input and NumPy string scalars. :pr:`22154` by `Thomas Fan`_.
+
 - |Enhancement| Adds :term:`get_feature_names_out` to :class:`cluster.Birch`,
   :class:`cluster.FeatureAgglomeration`, :class:`cluster.KMeans`,
   :class:`cluster.MiniBatchKMeans`. :pr:`22255` by `Thomas Fan`_.
@@ -140,6 +143,13 @@ Changelog
   :class:`cross_decomposition.PLSRegression`,
   and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| :class:`covariance.GraphicalLassoCV` now accepts NumPy array for the
+  parameter `alphas`.
+  :pr:`22493` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -162,6 +172,11 @@ Changelog
   `n_retries` and `delay`. By default, :func:`datasets.fetch_openml` will retry
   3 times in case of a network failure with a delay between each try.
   :pr:`21901` by :user:`Rileran <rileran>`.
+
+- |Feature| :func:`datasets.load_files` now accepts a ignore list and
+  an allow list based on file extensions.
+  :pr:`19747` by :user:`Tony Attalla <tonyattalla>` and :pr:`22498` by
+  :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -241,6 +256,12 @@ Changelog
 - |API| Adds :term:`get_feature_names_out` to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
   `Thomas Fan`_.
+
+:mod:`sklearn.dummy`
+....................
+
+- |Fix| :class:`dummy.DummyRegressor` no longer overrides the `constant`
+  parameter during `fit`. :pr:`22486` by `Thomas Fan`_.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -450,6 +471,13 @@ Changelog
 - |Feature| :class:`sklearn.manifold.Isomap` now supports radius-based
   neighbors via the `radius` argument.
   :pr:`19794` by :user:`Zhehao Liu <MaxwellLZH>`.
+- |Fix| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
+  with a shape that respects the docstring and that is consistent with the shape
+  obtained when using the other solvers in the one-vs-rest setting. Previously,
+  it would record only the maximum of the number of iterations for each binary
+  sub-problem while now all of them are recorded. :pr:`21998` by
+  :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.metrics`
 ......................
