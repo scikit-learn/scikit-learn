@@ -522,7 +522,7 @@ class PCA(_BasePCA):
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / (n_samples - 1)
+        explained_variance_ = (S**2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
@@ -618,7 +618,7 @@ class PCA(_BasePCA):
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S ** 2) / (n_samples - 1)
+        self.explained_variance_ = (S**2) / (n_samples - 1)
         total_var = np.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.

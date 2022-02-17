@@ -143,7 +143,7 @@ def test_ledoit_wolf():
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X_1d, assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
-    assert_array_almost_equal((X_1d ** 2).sum() / n_samples, lw.covariance_, 4)
+    assert_array_almost_equal((X_1d**2).sum() / n_samples, lw.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False, assume_centered=True)
@@ -207,12 +207,12 @@ def _naive_ledoit_wolf_shrinkage(X):
     mu = np.trace(emp_cov) / n_features
     delta_ = emp_cov.copy()
     delta_.flat[:: n_features + 1] -= mu
-    delta = (delta_ ** 2).sum() / n_features
-    X2 = X ** 2
+    delta = (delta_**2).sum() / n_features
+    X2 = X**2
     beta_ = (
         1.0
         / (n_features * n_samples)
-        * np.sum(np.dot(X2.T, X2) / n_samples - emp_cov ** 2)
+        * np.sum(np.dot(X2.T, X2) / n_samples - emp_cov**2)
     )
 
     beta = min(beta_, delta)
@@ -279,7 +279,7 @@ def test_oas():
     oa_cov_from_mle, oa_shrinkage_from_mle = oas(X_1d, assume_centered=True)
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
     assert_almost_equal(oa_shrinkage_from_mle, oa.shrinkage_)
-    assert_array_almost_equal((X_1d ** 2).sum() / n_samples, oa.covariance_, 4)
+    assert_array_almost_equal((X_1d**2).sum() / n_samples, oa.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False, assume_centered=True)
