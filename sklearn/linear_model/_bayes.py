@@ -740,7 +740,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         # invert a matrix of shape (n_features, n_features)
         X_keep = X[:, keep_lambda]
         gram = np.dot(X_keep.T, X_keep)
-        eye = np.eye(gram.shape[0])
+        eye = np.eye(gram.shape[0], dtype=X.dtype)
         sigma_inv = lambda_[keep_lambda] * eye + alpha_ * gram
         sigma_ = pinvh(sigma_inv)
         return sigma_
