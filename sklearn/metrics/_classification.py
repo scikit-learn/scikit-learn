@@ -1756,7 +1756,7 @@ def likelihood_ratios(
 
     >>> likelihood_ratios(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (array([4., 0., 0.]), array([0.        , 2.        , 1.33...]))
+    (array([0., 0., 4.]), array([1.33..., 2.        , 0.        ]))
     """
     _check_zero_division(zero_division)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
