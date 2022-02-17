@@ -578,20 +578,19 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
     return distances
 
 
-# start is specified in the signature of `_argmin_min_reduce`
-# and of `_argmin_reduce` but is not used.
-# This is because the higher order `pairwise_distances_chunked`
-# function needs reduction functions that are passed as argument
-# to have a two arguments signature.
-
-
 def _argmin_min_reduce(dist, start):
+    # `start` is specified in the signature but not used. This is because the higher
+    # order `pairwise_distances_chunked` function needs reduction functions that are
+    # passed as argument to have a two arguments signature.
     indices = dist.argmin(axis=1)
     values = dist[np.arange(dist.shape[0]), indices]
     return indices, values
 
 
 def _argmin_reduce(dist, start):
+    # `start` is specified in the signature but not used. This is because the higher
+    # order `pairwise_distances_chunked` function needs reduction functions that are
+    # passed as argument to have a two arguments signature.
     return dist.argmin(axis=1)
 
 
