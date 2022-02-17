@@ -645,6 +645,10 @@ Changelog
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
 
+- |Fix| :class:`preprocessing.FunctionTransformer` with `check_inverse=True`
+  now provides informative error message when input has mixed dtypes. :pr:`19916` by
+  :user:`Zhehao Liu <MaxwellLZH>`.
+  
 - |API| Adds :meth:`get_feature_names_out` to
   :class:`preprocessing.Normalizer`,
   :class:`preprocessing.KernelCenterer`,
