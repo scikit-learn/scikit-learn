@@ -15,7 +15,12 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..tree import DecisionTreeRegressor, ExtraTreeRegressor, BaseDecisionTree
+from ..tree import (
+    DecisionTreeRegressor,
+    ExtraTreeRegressor,
+    BaseDecisionTree,
+    DecisionTreeClassifier,
+)
 from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
@@ -172,9 +177,9 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # Tree.fit(..)
         if isinstance(estimator, BaseDecisionTree):
             if getattr(estimator, "max_features", None) == "auto":
-                if is_classifier(estimator):
+                if isinstance(estimator, DecisionTreeClassifier):
                     estimator.set_params(max_features="sqrt")
-                else:
+                elif isinstance(estimator, DecisionTreeRegressor):
                     estimator.set_params(max_features=1.0)
 
         if random_state is not None:

@@ -2439,7 +2439,6 @@ def test_check_node_ndarray():
 
 
 # TODO: Remove in v1.2
-@pytest.mark.parametrize("Tree", ALL_TREES.values())
 @pytest.mark.parametrize(
     "old_max_features, new_max_features",
     [
@@ -2447,13 +2446,21 @@ def test_check_node_ndarray():
         ("auto", "sqrt"),
     ],
 )
-def test_max_features_deprecated(Tree, old_max_features, new_max_features):
-    tree = Tree(max_features=old_max_features)
+def test_max_features_deprecated(old_max_features, new_max_features):
+    for Tree in CLF_TREES.values():
+        tree = Tree(max_features=old_max_features)
+        msg = (
+            "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
+            " 1.3. To keep the past behaviour, explicitly set `max_features='sqrt'`."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            tree.fit(X, y)
 
-    with pytest.warns(
-        FutureWarning, match="`max_features='auto'` has been deprecated in 1.1"
-    ):
-        tree.fit(X, y)
-
-    tree_new = Tree(max_features=new_max_features).fit(X, y)
-    assert_allclose(tree.predict(X), tree_new.predict(X))
+    for Tree in REG_TREES.values():
+        tree = Tree(max_features=old_max_features)
+        msg = (
+            "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
+            " 1.3. To keep the past behaviour, explicitly set `max_features=1.0'`."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            tree.fit(X, y)
