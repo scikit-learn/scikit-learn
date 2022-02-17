@@ -459,7 +459,7 @@ Changelog
   now raise consistent error messages when passed invalid values for `l1_ratio`,
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
-  
+
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
   with a shape that respects the docstring and that is consistent with the shape
@@ -592,6 +592,11 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Enhancement| Adds a `feature_name_combiner` parameter to :class:`preprocessing.OneHotEncoder`.
+  This allows specifiying a custom callable to create feature names out of (encoded_feature_name, category)
+  tuple.
+  :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
 
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
   This allows specifying a maximum number of samples to be used while fitting

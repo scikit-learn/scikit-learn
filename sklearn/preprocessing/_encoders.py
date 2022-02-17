@@ -2,7 +2,7 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-from collections import defaultdict
+from collections import Counter
 import warnings
 import numpy as np
 from scipy import sparse
@@ -259,6 +259,12 @@ class OneHotEncoder(_BaseEncoder):
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None.
 
+    feature_name_combiner : str {'concat_string'} or Callable, default='concat_string'
+        Function creating feature names from tuples (encoded_feature, category).
+
+        'concat_string' concatenates encoded feature name and category separated by
+        '_'.  E.g. feature X with values 1, 6, 7 create feature names X_1, X_6, X_7.
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -343,6 +349,15 @@ class OneHotEncoder(_BaseEncoder):
     >>> drop_binary_enc.transform([['Female', 1], ['Male', 2]]).toarray()
     array([[0., 1., 0., 0.],
            [1., 0., 1., 0.]])
+
+
+    One can change the way feature names are created.
+    >>> def custom_combiner(feature, category):
+    >>>   return str(feature) + "_" + type(category).__name__ + "_" + str(category)
+    >>> custom_fnames_enc = OneHotEncoder(feature_name_combiner=custom_combiner).fit(X)
+    >>> custom_fnames_enc.get_feature_names_out()
+    array(['x0_str_Male', 'x0_str_Female', 'x1_int_1', 'x1_int_3', 'x1_int_2']
+
     """
 
     def __init__(
@@ -353,12 +368,14 @@ class OneHotEncoder(_BaseEncoder):
         sparse=True,
         dtype=np.float64,
         handle_unknown="error",
+        feature_name_combiner="concat_string",
     ):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
+        self.feature_name_combiner = feature_name_combiner
 
     def _validate_keywords(self):
         if self.handle_unknown not in ("error", "ignore"):
@@ -366,6 +383,14 @@ class OneHotEncoder(_BaseEncoder):
                 "handle_unknown should be either 'error' or 'ignore', got {0}.".format(
                     self.handle_unknown
                 )
+            )
+            raise ValueError(msg)
+        if isinstance(
+            self.feature_name_combiner, str
+        ) and self.feature_name_combiner not in ("concat_string"):
+            msg = (
+                "feature_name_combiner should be either 'concat_string' or callable,"
+                " got {0}.".format(self.handle_unknown)
             )
             raise ValueError(msg)
 
@@ -691,16 +716,15 @@ class OneHotEncoder(_BaseEncoder):
                 )
             )
 
+        name_combiner = self._get_feature_name_combiner()
         feature_names = []
         for i in range(len(cats)):
-            names = [str(input_features[i]) + "_" + str(t) for t in cats[i]]
+            names = [name_combiner(input_features[i], t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-
-        return np.asarray(
-            self._ensure_unique_feature_names(feature_names), dtype=object
-        )
+        feature_names = self._check_feature_names_uniqueness(feature_names)
+        return np.asarray(feature_names, dtype=object)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -725,30 +749,38 @@ class OneHotEncoder(_BaseEncoder):
         cats = self.categories_
         input_features = _check_feature_names_in(self, input_features)
 
+        name_combiner = self._get_feature_name_combiner()
         feature_names = []
         for i in range(len(cats)):
-            names = [str(input_features[i]) + "_" + str(t) for t in cats[i]]
+            names = [name_combiner(input_features[i], t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-        return np.asarray(
-            self._ensure_unique_feature_names(feature_names), dtype=object
-        )
+        feature_names = self._check_feature_names_uniqueness(feature_names)
+        return np.asarray(feature_names, dtype=object)
 
-    def _ensure_unique_feature_names(self, feature_names):
-        name_counts = defaultdict(int)
-        unique_feature_names = []
-        for name in feature_names:
-            if name in name_counts:
-                original_name = name
-                suffix_count = name_counts[original_name]
-                name = original_name + "__" + str(suffix_count)
-                while name in name_counts:
-                    suffix_count += 1
-                    name = original_name + "__" + str(suffix_count)
-            name_counts[name] += 1
-            unique_feature_names.append(name)
-        return unique_feature_names
+    def _get_feature_name_combiner(self):
+        if self.feature_name_combiner == "concat_string":
+            return lambda feature, category: feature + "_" + str(category)
+        elif callable(self.feature_name_combiner):
+            return self.feature_name_combiner
+        else:
+            raise ValueError(
+                "feature_name_combiner has to be either 'concat_string' or callable,"
+                " got {0}".format(self.feature_name_combiner)
+            )
+
+    def _check_feature_names_uniqueness(self, feature_names):
+        name_counts = Counter(feature_names)
+        duplicates = [name for name, count in name_counts.items() if count > 1]
+        if duplicates:
+            elipsis = "..." if len(duplicates) > 5 else ""
+            raise ValueError(
+                "All feature names must be unique. Feature names {0}{1} appear more"
+                " than once. Use different `feature_name_combiner` to produce unique"
+                " feature names".format(duplicates[:5], elipsis)
+            )
+        return feature_names
 
 
 class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
