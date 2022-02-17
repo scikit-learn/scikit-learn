@@ -1,5 +1,6 @@
 from itertools import product
 import numpy as np
+import math
 from numpy.testing import (
     assert_almost_equal,
     assert_array_almost_equal,
@@ -20,25 +21,27 @@ from scipy.sparse import rand as sparse_rand
 eigen_solvers = ["auto", "dense", "arpack"]
 path_methods = ["auto", "FW", "D"]
 
-N_PER_SIDE = 5
-NPTS = N_PER_SIDE**2
+# N_PER_SIDE = 5
+# NPTS = N_PER_SIDE**2
 
 
-def create_sample_data(add_noise=False):
+def create_sample_data(n_pts=25, add_noise=False):
     # grid of equidistant points in 2D, n_components = n_dim
-    X = np.array(list(product(range(N_PER_SIDE), repeat=2)))
+    n_per_side = int(math.sqrt(n_pts))
+    X = np.array(list(product(range(n_per_side), repeat=2)))
     if add_noise:
         # add noise in a third dimension
         rng = np.random.RandomState(0)
-        noise = 0.1 * rng.randn(NPTS, 1)
+        noise = 0.1 * rng.randn(n_pts, 1)
         X = np.concatenate((X, noise), 1)
     return X
 
 
-@pytest.mark.parametrize("n_neighbors, radius", [(NPTS - 1, None), (None, np.inf)])
+@pytest.mark.parametrize("n_neighbors, radius", [(24, None), (None, np.inf)])
 def test_isomap_simple_grid(n_neighbors, radius):
     # Isomap should preserve distances when all neighbors are used
-    X = create_sample_data(add_noise=False)
+    n_pts = (n_neighbors + 1) if n_neighbors is not None else 25
+    X = create_sample_data(n_pts=n_pts, add_noise=False)
 
     # distances from each point to all others
     if n_neighbors is not None:
@@ -69,10 +72,11 @@ def test_isomap_simple_grid(n_neighbors, radius):
             assert_array_almost_equal(G, G_iso)
 
 
-@pytest.mark.parametrize("n_neighbors, radius", [(NPTS - 1, None), (None, np.inf)])
+@pytest.mark.parametrize("n_neighbors, radius", [(24, None), (None, np.inf)])
 def test_isomap_reconstruction_error(n_neighbors, radius):
     # Same setup as in test_isomap_simple_grid, with an added dimension
-    X = create_sample_data(add_noise=True)
+    n_pts = (n_neighbors + 1) if n_neighbors is not None else 25
+    X = create_sample_data(n_pts=n_pts, add_noise=True)
 
     # compute input kernel
     if n_neighbors is not None:
@@ -106,7 +110,7 @@ def test_isomap_reconstruction_error(n_neighbors, radius):
             K_iso = centerer.fit_transform(-0.5 * G_iso**2)
 
             # make sure error agrees
-            reconstruction_error = np.linalg.norm(K - K_iso) / NPTS
+            reconstruction_error = np.linalg.norm(K - K_iso) / n_pts
             assert_almost_equal(reconstruction_error, clf.reconstruction_error())
 
 
