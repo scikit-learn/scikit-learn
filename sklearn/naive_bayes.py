@@ -51,7 +51,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """Compute the unnormalized posterior log probability of X
 
         I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
-        shape (n_classes, n_samples).
+        shape (n_samples, n_classes).
 
         Input is passed to _joint_log_likelihood as-is by predict,
         predict_proba and predict_log_proba.

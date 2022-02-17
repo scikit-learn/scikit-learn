@@ -61,8 +61,8 @@ nmds = manifold.MDS(
 npos = nmds.fit_transform(similarities, init=pos)
 
 # Rescale the data
-pos *= np.sqrt((X_true ** 2).sum()) / np.sqrt((pos ** 2).sum())
-npos *= np.sqrt((X_true ** 2).sum()) / np.sqrt((npos ** 2).sum())
+pos *= np.sqrt((X_true**2).sum()) / np.sqrt((pos**2).sum())
+npos *= np.sqrt((X_true**2).sum()) / np.sqrt((npos**2).sum())
 
 # Rotate the data
 clf = PCA(n_components=2)

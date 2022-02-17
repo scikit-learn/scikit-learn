@@ -11,6 +11,7 @@ import hashlib
 import gzip
 import shutil
 from collections import namedtuple
+import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from importlib import resources
@@ -106,6 +107,7 @@ def load_files(
     encoding=None,
     decode_error="strict",
     random_state=0,
+    allowed_extensions=None,
 ):
     """Load text files with categories as subfolder names.
 
@@ -142,6 +144,9 @@ def load_files(
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
+
+    If you want files with a specific file extension (e.g. `.txt`) then you
+    can pass a list of those file extensions to `allowed_extensions`.
 
     Read more in the :ref:`User Guide <datasets>`.
 
@@ -184,6 +189,9 @@ def load_files(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    allowed_extensions : list of str, default=None
+        List of desired file extensions to filter the files to be loaded.
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -201,6 +209,7 @@ def load_files(
         filenames: ndarray
             The filenames holding the dataset.
     """
+
     target = []
     target_names = []
     filenames = []
@@ -212,10 +221,21 @@ def load_files(
     if categories is not None:
         folders = [f for f in folders if f in categories]
 
+    if allowed_extensions is not None:
+        allowed_extensions = frozenset(allowed_extensions)
+
     for label, folder in enumerate(folders):
         target_names.append(folder)
         folder_path = join(container_path, folder)
-        documents = [join(folder_path, d) for d in sorted(listdir(folder_path))]
+        files = sorted(listdir(folder_path))
+        if allowed_extensions is not None:
+            documents = [
+                join(folder_path, file)
+                for file in files
+                if os.path.splitext(file)[1] in allowed_extensions
+            ]
+        else:
+            documents = [join(folder_path, file) for file in files]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 

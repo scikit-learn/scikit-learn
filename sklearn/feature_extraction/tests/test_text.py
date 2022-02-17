@@ -473,7 +473,7 @@ def test_tf_idf_smoothing():
     assert (tfidf >= 0).all()
 
     # check normalization
-    assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1.0, 1.0, 1.0])
+    assert_array_almost_equal((tfidf**2).sum(axis=1), [1.0, 1.0, 1.0])
 
     # this is robust to features with only zeros
     X = [[1, 1, 0], [1, 1, 0], [1, 0, 0]]
@@ -489,7 +489,7 @@ def test_tfidf_no_smoothing():
     assert (tfidf >= 0).all()
 
     # check normalization
-    assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1.0, 1.0, 1.0])
+    assert_array_almost_equal((tfidf**2).sum(axis=1), [1.0, 1.0, 1.0])
 
     # the lack of smoothing make IDF fragile in the presence of feature with
     # only zeros
@@ -1065,7 +1065,7 @@ def test_vectorizer_unicode():
 
     vect = HashingVectorizer(norm=None, alternate_sign=False)
     X_hashed = vect.transform([document])
-    assert X_hashed.shape == (1, 2 ** 20)
+    assert X_hashed.shape == (1, 2**20)
 
     # No collisions on such a small dataset
     assert X_counted.nnz == X_hashed.nnz
