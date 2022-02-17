@@ -707,17 +707,6 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # check if first estimator expects pairwise input
-        return getattr(self.steps[0][1], "_pairwise", False)
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 

@@ -1106,9 +1106,34 @@ def test_check_scalar_valid(x):
             2,
             4,
             "neither",
-            TypeError(
-                "test_name1 must be an instance of <class 'float'>, not <class 'int'>."
-            ),
+            TypeError("test_name1 must be an instance of float, not int."),
+        ),
+        (
+            None,
+            "test_name1",
+            numbers.Real,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of float, not NoneType."),
+        ),
+        (
+            None,
+            "test_name1",
+            numbers.Integral,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of int, not NoneType."),
+        ),
+        (
+            1,
+            "test_name1",
+            (float, bool),
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of {float, bool}, not int."),
         ),
         (
             1,

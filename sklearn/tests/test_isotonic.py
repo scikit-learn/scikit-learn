@@ -495,7 +495,7 @@ def test_fast_predict():
     # affect out-of-sample predictions:
     # https://github.com/scikit-learn/scikit-learn/pull/6206
     rng = np.random.RandomState(123)
-    n_samples = 10 ** 3
+    n_samples = 10**3
     # X values over the -10,10 range
     X_train = 20.0 * rng.rand(n_samples) - 10
     y_train = (

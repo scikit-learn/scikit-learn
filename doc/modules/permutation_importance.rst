@@ -157,7 +157,7 @@ with a small number of possible categories.
 
 Permutation-based feature importances do not exhibit such a bias. Additionally,
 the permutation feature importance may be computed performance metric on the
-model predictions predictions and can be used to analyze any model class (not
+model predictions and can be used to analyze any model class (not
 just tree-based models).
 
 The following example highlights the limitations of impurity-based feature
