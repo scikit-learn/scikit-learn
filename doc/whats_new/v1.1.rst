@@ -670,7 +670,7 @@ Changelog
   :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
 
 - |Fix| :class:`preprocessing.KBinDiscretizer` handles bin edges more consistently now.
-  :pr:`14975` by `Andreas Müller`_ and :pr:`` by :user:`Meekail Zain <micky774>`.
+  :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.random_projection`
 ................................
