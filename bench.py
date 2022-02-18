@@ -54,7 +54,7 @@ def main() -> None:
         df = pd.DataFrame(data)
 
     if args.save and not args.load:
-        df.to_pickle(args.save)
+        df.to_csv(args.save)
         print(f"Dataframe saved to {args.save}")
 
     chart = (
@@ -73,7 +73,7 @@ def main() -> None:
 
 def on_load(pth: str) -> pd.DataFrame:
     print(f"Dataframe loaded from {args.load}")
-    return pd.read_pickle(pth)
+    return pd.read_csv(pth)
 
 
 if __name__ == "__main__":

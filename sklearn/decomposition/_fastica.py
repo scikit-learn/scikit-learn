@@ -562,7 +562,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
             # Whitening and preprocessing by PCA
             if self.svd_solver == "eigh":
-                D, u = linalg.eigh(X.T.dot(X))  # Faster when n < p
+                # Faster when num_samples >> n_features
+                D, u = linalg.eigh(X.T.dot(X))
                 eps = np.finfo(np.double).eps
                 degenerate_idx = D < eps
                 if np.any(degenerate_idx):
