@@ -222,8 +222,8 @@ class OneVsRestClassifier(
         to stdout. The frequency of the messages increases with the verbosity
         level, reporting all iterations at 10. See :class:`joblib.Parallel` for
         more details.
-        
-            .. versionadded:: 1.1
+
+        .. versionadded:: 1.1
 
     Attributes
     ----------
