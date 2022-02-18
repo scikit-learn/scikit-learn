@@ -3,11 +3,11 @@
 Clustering text documents using k-means
 =======================================
 
-This is an example showing how the scikit-learn can be used to cluster
+This is an example showing how scikit-learn can be used to cluster
 documents by topics using a bag-of-words approach. This example uses
-a scipy.sparse matrix to store the features instead of standard numpy arrays.
-We attempt reweighting and dimensionality reduction on the
-extracted features and compare performance metrics for each case.
+a `scipy.sparse` matrix to store the features instead of standard numpy arrays.
+Here, we compare different feature extraction approaches using several
+clustering metrics.
 """
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -40,9 +40,12 @@ dataset = fetch_20newsgroups(
     subset="all", categories=categories, shuffle=True, random_state=42
 )
 
-print("%d documents" % len(dataset.data))
-print("%d categories" % len(dataset.target_names))
-print()
+data = dataset.data
+labels = dataset.target
+true_k = np.unique(labels).shape[0]
+
+print(f"{len(data)} documents")
+print(f"{len(dataset.target_names)} categories")
 
 
 # %%
@@ -64,65 +67,110 @@ print()
 # Instead of ordinary k-means we use its more scalable cousin
 # minibatch k-means.
 
-from sklearn.decomposition import TruncatedSVD
+
+# %%
+
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import Normalizer
-from sklearn import metrics
-from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import KMeans
 
 
-def kmeans_pipeline(
-    data, labels, n_clusters, idf=True, n_components=False, random_state=None
-):
-    pipeline = []
-
-    vectorizer = TfidfVectorizer(
+tf_model = [
+    TfidfVectorizer(
         max_df=0.5,
         max_features=10000,
         min_df=2,
         stop_words="english",
-        use_idf=idf,
+        use_idf=False,
+    ),
+    KMeans(n_clusters=true_k, init="k-means++", random_state=0),
+]
+
+
+# %%
+
+tf_idf_model = [
+    TfidfVectorizer(
+        max_df=0.5,
+        max_features=10000,
+        min_df=2,
+        stop_words="english",
+        use_idf=True,
+    ),
+    KMeans(n_clusters=true_k, init="k-means++", random_state=0),
+]
+
+
+# %%
+
+from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import Normalizer
+
+
+tf_idf_lsa_model = [
+    TfidfVectorizer(
+        max_df=0.5,
+        max_features=10000,
+        min_df=2,
+        stop_words="english",
+        use_idf=True,
+    ),
+    TruncatedSVD(n_components=10, random_state=0),
+    Normalizer(copy=False),
+    KMeans(n_clusters=true_k, init="k-means++", random_state=0),
+]
+
+
+# %%
+
+from collections import defaultdict
+
+import pandas as pd
+
+from sklearn.pipeline import make_pipeline
+from sklearn.utils import resample
+from sklearn.metrics import (
+    homogeneity_score,
+    completeness_score,
+    v_measure_score,
+    adjusted_rand_score,
+    silhouette_score,
+)
+
+
+def fit_evaluate_clusterer_bootstrap(
+    model, X, labels, n_bootstrap=10, random_state=None
+):
+    bootstrap_results = defaultdict(list)
+    rng = np.random.RandomState(random_state)
+    vectorizer, km = make_pipeline(*model[:-1]), model[-1]
+
+    for _ in range(n_bootstrap):
+        X_bootstrap, labels_bootstrap = resample(
+            X, labels, replace=True, random_state=rng
+        )
+
+        X_vec = vectorizer.fit_transform(X_bootstrap)
+        predicted_labels = km.fit_predict(X_vec)
+
+        bootstrap_results["homogeneity"].append(
+            homogeneity_score(labels_bootstrap, predicted_labels)
+        )
+        bootstrap_results["completeness"].append(
+            completeness_score(labels_bootstrap, predicted_labels)
+        )
+        bootstrap_results["v-measure"].append(
+            v_measure_score(labels_bootstrap, predicted_labels)
+        )
+        bootstrap_results["ARI"].append(
+            adjusted_rand_score(labels_bootstrap, predicted_labels)
+        )
+        bootstrap_results["silhouette"].append(
+            silhouette_score(X_vec, predicted_labels, sample_size=20)
+        )
+
+    return pd.DataFrame(
+        bootstrap_results, index=[f"Bootstrap #{i}" for i in range(n_bootstrap)]
     )
-
-    X = vectorizer.fit_transform(data)
-
-    pipeline.append(vectorizer)
-
-    if type(n_components) is int:
-        # Vectorizer results are normalized, which makes KMeans behave as
-        # spherical k-means for better results. Since LSA/SVD results are
-        # not normalized, we have to redo the normalization.
-        svd = TruncatedSVD(10, random_state=random_state)
-        normalizer = Normalizer(copy=False)
-        lsa = make_pipeline(svd, normalizer)
-
-        X = lsa.fit_transform(X)
-
-        pipeline.append(svd)
-
-    km = MiniBatchKMeans(
-        n_clusters=n_clusters,
-        init="k-means++",
-        n_init=1,
-        init_size=1000,
-        batch_size=1000,
-        verbose=False,
-        random_state=random_state,
-    )
-
-    km.fit(X)
-
-    pipeline.append(km)
-
-    homo = metrics.homogeneity_score(labels, km.labels_)
-    complt = metrics.completeness_score(labels, km.labels_)
-    v_msr = metrics.v_measure_score(labels, km.labels_)
-    rand_scr = metrics.adjusted_rand_score(labels, km.labels_)
-    silhouette = metrics.silhouette_score(X, km.labels_, sample_size=1000)
-    print(f"{homo:.3f}\t{complt:.3f}\t{v_msr:.3f}\t{rand_scr:.3f}\t{silhouette:.3f}")
-
-    return pipeline
 
 
 # %%
@@ -151,33 +199,40 @@ def kmeans_pipeline(
 # might be necessary to get a good convergence. Here we have chosen a random
 # state that produces good results.
 
-labels = dataset.target
-true_k = np.unique(labels).shape[0]
+pd.set_option("display.max_columns", 10)
 
-rseed = 16
+results = []
 
-print("         \thomo\tcomplet\tv-meas\trand-i\tsilhouette")
-print("-" * 58)
-
-print(f"{'Tf':9s}", end="\t")
-kmeans_pipeline(
-    data=dataset.data, labels=labels, n_clusters=true_k, idf=False, random_state=rseed
+results.append(
+    fit_evaluate_clusterer_bootstrap(
+        tf_model, data, labels, n_bootstrap=2, random_state=0
+    )
+)
+results.append(
+    fit_evaluate_clusterer_bootstrap(
+        tf_idf_model, data, labels, n_bootstrap=2, random_state=0
+    )
+)
+results.append(
+    fit_evaluate_clusterer_bootstrap(
+        tf_idf_lsa_model, data, labels, n_bootstrap=2, random_state=0
+    )
 )
 
-print(f"{'Tfidf':9s}", end="\t")
-kmeans_pipeline(
-    data=dataset.data, labels=labels, n_clusters=true_k, idf=True, random_state=rseed
+results = pd.concat(
+    [df.aggregate(["mean", "std"]).melt().transpose() for df in results], axis=0
 )
 
-print(f"{'Tfidf+LSA':9s}", end="\t")
-pipeline = kmeans_pipeline(
-    data=dataset.data,
-    labels=labels,
-    n_clusters=true_k,
-    idf=True,
-    n_components=10,
-    random_state=rseed,
+index = pd.MultiIndex.from_product(
+    [
+        ["homogeneity", "completeness", "v-measure", "ARI", "silhouette"],
+        ["mean", "std"],
+    ]
 )
+performance_summary = pd.DataFrame(
+    results.loc["value"].values, index=["Tf", "Tf-idf", "Tf-idf-LSA"], columns=index
+)
+print(performance_summary.round(3))
 
 
 # %%
@@ -193,7 +248,7 @@ pipeline = kmeans_pipeline(
 import matplotlib.pyplot as plt
 
 
-vectorizer, svd, km = pipeline
+vectorizer, svd, _, km = tf_idf_lsa_model
 
 original_space_centroids = svd.inverse_transform(km.cluster_centers_)
 order_centroids = original_space_centroids.argsort()[:, ::-1]
