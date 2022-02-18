@@ -272,11 +272,15 @@ def partial_dependence(
     custom_values=None,
 ):
     """Partial dependence of ``features``.
+
     Partial dependence of a feature (or a set of features) corresponds to
     the average response of an estimator for each possible value of the
     feature.
+
     Read more in the :ref:`User Guide <partial_dependence>`.
+
     .. warning::
+
         For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
         `'recursion'` method (used by default) will not account for the `init`
@@ -291,17 +295,20 @@ def partial_dependence(
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
         :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
         :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+
     Parameters
     ----------
     estimator : BaseEstimator
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
+
     X : {array-like or dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
         `method` is 'brute'.
+
     features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
@@ -336,12 +343,15 @@ def partial_dependence(
         and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
+
     percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
+
     grid_resolution : int, default=100
         The number of equally spaced points on the grid, for each target
         feature.
+
     method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
         - `'recursion'` is only supported for some tree-based estimators
