@@ -119,26 +119,27 @@ def test_fastica_simple(add_noise, seed):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
-    _, _, sources_fun = fastica(
-        m.T, fun=nl, algorithm=algo, random_state=0, svd_solver="eigh"
-    )
-    ica = FastICA(fun=nl, algorithm=algo, random_state=0, svd_solver="eigh")
-    sources = ica.fit_transform(m.T)
-    assert ica.components_.shape == (2, 2)
-    assert sources.shape == (1000, 2)
+    for solver in ("eigh", "svd"):
+        _, _, sources_fun = fastica(
+            m.T, fun=nl, algorithm=algo, random_state=0, svd_solver=solver
+        )
+        ica = FastICA(fun=nl, algorithm=algo, random_state=0, svd_solver=solver)
+        sources = ica.fit_transform(m.T)
+        assert ica.components_.shape == (2, 2)
+        assert sources.shape == (1000, 2)
 
-    assert_array_almost_equal(sources_fun, sources)
-    assert_array_almost_equal(sources, ica.transform(m.T))
+        assert_array_almost_equal(sources_fun, sources)
+        assert_array_almost_equal(sources, ica.transform(m.T))
 
-    assert ica.mixing_.shape == (2, 2)
+        assert ica.mixing_.shape == (2, 2)
 
-    for fn in [np.tanh, "exp(-.5(x^2))"]:
-        ica = FastICA(fun=fn, algorithm=algo)
-        with pytest.raises(ValueError):
-            ica.fit(m.T)
+        for fn in [np.tanh, "exp(-.5(x^2))"]:
+            ica = FastICA(fun=fn, algorithm=algo)
+            with pytest.raises(ValueError):
+                ica.fit(m.T)
 
-    with pytest.raises(TypeError):
-        FastICA(fun=range(10)).fit(m.T)
+        with pytest.raises(TypeError):
+            FastICA(fun=range(10)).fit(m.T)
 
 
 def test_fastica_nowhiten():

@@ -575,12 +575,13 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 d = np.sqrt(D)
                 del D
             else:
-                u, d, _ = linalg.svd(X, full_matrices=False)
+                u, d, _ = linalg.svd(X, full_matrices=False, check_finite=False)
 
             del _
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d
-            X1 = np.dot(K, XT)
+            print(f"DEBUG *** {X.shape=}|{XT.shape=}|{K.shape=}|{self.svd_solver=}")
+            X1 = np.matmul(K, XT)
             # see (13.6) p.267 Here X1 is white and data
             # in X has been projected onto a subspace by PCA
             X1 *= np.sqrt(n_samples)
