@@ -563,8 +563,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             # Whitening and preprocessing by PCA
             if self.svd_solver == "eigh":
                 D, u = linalg.eigh(X.T.dot(X))  # Faster when n < p
-                idx = D.argsort()[::-1]
-                D, u = D[idx], u[idx]
                 eps = np.finfo(np.double).eps
                 degenerate_idx = D < eps
                 if np.any(degenerate_idx):
@@ -578,8 +576,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 del D
             else:
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
-                idx = d.argsort()[::-1]
-                d, u = d[idx], u[idx]
 
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d
