@@ -82,7 +82,7 @@ def _retry_on_network_error(
             while True:
                 try:
                     return f(*args, **kwargs)
-                except URLError as e:
+                except (URLError, TimeoutError) as e:
                     # 412 is a specific OpenML error code.
                     if isinstance(e, HTTPError) and e.code == 412:
                         raise
@@ -674,8 +674,9 @@ def fetch_openml(
            in 0.24.
 
     n_retries : int, default=3
-        Number of retries when HTTP errors are encountered. Error with status
-        code 412 won't be retried as they represent OpenML generic errors.
+        Number of retries when HTTP errors or network timeouts are encountered.
+        Error with status code 412 won't be retried as they represent OpenML
+        generic errors.
 
     delay : float, default=1.0
         Number of seconds between retries.
