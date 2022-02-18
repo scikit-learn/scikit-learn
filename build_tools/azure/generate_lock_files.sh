@@ -9,7 +9,7 @@ function conda_lock_func() {
     conda-lock lock \
         --platform ${platform} \
         --file ${environment_base_name}_environment.yml \
-        --filename-template "${build_name}_${platform}.lock"
+        --lockfile "${build_name}_${platform}_lock.yml"
 }
 
 build_name=pylatest_conda_forge_mkl

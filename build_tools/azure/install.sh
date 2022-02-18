@@ -37,12 +37,9 @@ setup_ccache() {
 source build_tools/shared.sh
 
 if [[ -n $LOCK_FILE ]]; then
-    conda install --channel conda-forge conda-lock --yes
-    which conda
-    conda info -e
-    echo $CONDA_PREFIX
-    echo $PATH
-    conda list
+    # FIXME install conda-lock dev version with a fixed commit while waiting
+    # for the release
+    pip install git+https://github.com/conda-incubator/conda-lock@67f8da
     conda-lock install --name $VIRTUALENV $LOCK_FILE
     source activate $VIRTUALENV
     setup_ccache
