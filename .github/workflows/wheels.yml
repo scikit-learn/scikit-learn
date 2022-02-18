@@ -49,11 +49,13 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          - os: windows-latest
+          # Note: windows-2019 is needed for older Python versions:
+          # https://github.com/scikit-learn/scikit-learn/issues/22530
+          - os: windows-2019
             python: 37
             bitness: 64
             platform_id: win_amd64
-          - os: windows-latest
+          - os: windows-2019
             python: 38
             bitness: 64
             platform_id: win_amd64

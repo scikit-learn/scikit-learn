@@ -55,7 +55,7 @@ COLORS = np.array(
 
 # Use same random seed for multiple calls to make_multilabel_classification to
 # ensure same distributions
-RANDOM_SEED = np.random.randint(2 ** 10)
+RANDOM_SEED = np.random.randint(2**10)
 
 
 def plot_2d(ax, n_labels=1, n_classes=3, length=50):
@@ -79,7 +79,7 @@ def plot_2d(ax, n_labels=1, n_classes=3, length=50):
         marker="*",
         linewidth=0.5,
         edgecolor="black",
-        s=20 + 1500 * p_c ** 2,
+        s=20 + 1500 * p_c**2,
         color=COLORS.take([1, 2, 4]),
     )
     ax.set_xlabel("Feature 0 count")
