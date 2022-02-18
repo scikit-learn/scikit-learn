@@ -29,10 +29,11 @@ It is already quite informative about the information you will be asked to provi
 Good practices
 ==============
 
-In this section we will focus on the **Steps/Code to Reproduce** section of
-the Issue template. We will start with a snippet of code that already provides a
-failing example but that has room for readability improvement. We then craft a
-MCVE from it.
+In this section we will focus on the **Steps/Code to Reproduce** section of the
+`Issue template
+<https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
+We will start with a snippet of code that already provides a failing example but
+that has room for readability improvement. We then craft a MCVE from it.
 
 **Example**
 
@@ -71,7 +72,8 @@ Provide a failing code example with minimal annotations
 Please take into account that things may get lost in translation for non-native
 english speakers. It is better that all the necessary information can be read
 from the code itself. Besides, by this point you already provided a concise
-description in the **Describe the bug** section of the Issue template.
+description in the **Describe the bug** section of the `Issue template
+<https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
 
 **Improved example**
 
@@ -215,8 +217,8 @@ It is not necessary to create several blocks of code when submitting a bug
 report. Remember other reviewers are going to copy-paste your code and having a
 single cell will make their task easier.
 
-In the section `**Actual results**` of your `Issue template
-<https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
+In the section `**Actual results**` of the `Issue template
+<https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_
 you are asked to provide the error message including the full traceback of the
 exception. In this case, use the `python-traceback` qualifier. For example::
 
