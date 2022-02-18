@@ -52,8 +52,11 @@ random sampling procedures.
   `Thomas Fan`_.
 
 - |Fix| :class:`preprocessing.KBinsDiscretizer` changed handling of bin edges
-  slightly, which might result in a different encoding such as in
-  :func:`sklearn.calibration.calibration_curve`.
+  slightly, which might result in a different encoding with the same data.
+
+- |Fix| :func:`sklearn.calibration.calibration_curve` chnged handling of bin
+  edges slightly, which might result in a different output curve given the same
+  data.
 
 Changelog
 ---------
@@ -115,6 +118,9 @@ Changelog
 - |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :func:`calibration.calibration_curve` handles bin edges more consistently now.
+  :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
   add this information to the plot.
