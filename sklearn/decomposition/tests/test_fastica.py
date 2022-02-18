@@ -142,7 +142,7 @@ def test_fastica_simple(add_noise, seed):
 
         with pytest.raises(TypeError):
             FastICA(fun=range(10), svd_solver=solver).fit(m.T)
-    # assert_array_almost_equal(outs["eigh"], outs["svd"])
+    assert_array_almost_equal(outs["eigh"], outs["svd"])
 
 
 def test_fastica_nowhiten():
