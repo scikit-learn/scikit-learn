@@ -8,17 +8,18 @@ Naive Bayes
 
 
 Naive Bayes methods are a set of supervised learning algorithms
-based on applying Bayes' theorem with the "naive" assumption of independence
-between every pair of features. Given a class variable :math:`y` and a
-dependent feature vector :math:`x_1` through :math:`x_n`,
-Bayes' theorem states the following relationship:
+based on applying Bayes' theorem with the "naive" assumption of
+conditional independence between every pair of features given the
+value of the class variable. Bayes' theorem states the following
+relationship, given class variable :math:`y` and dependent feature
+vector :math:`x_1` through :math:`x_n`, :
 
 .. math::
 
-   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
+   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots, x_n \mid y)}
                                     {P(x_1, \dots, x_n)}
 
-Using the naive independence assumption that
+Using the naive conditional independence assumption that
 
 .. math::
 
@@ -71,7 +72,7 @@ it is known to be a bad estimator, so the probability outputs from
 .. topic:: References:
 
  * H. Zhang (2004). `The optimality of Naive Bayes.
-   <http://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+   <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
    Proc. FLAIRS.
 
 .. _gaussian_naive_bayes:
@@ -84,19 +85,21 @@ classification. The likelihood of the features is assumed to be Gaussian:
 
 .. math::
 
-   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
+   P(x_i \mid y) = \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
 
-    >>> from sklearn import datasets
-    >>> iris = datasets.load_iris()
-    >>> from sklearn.naive_bayes import GaussianNB
-    >>> gnb = GaussianNB()
-    >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
-    >>> print("Number of mislabeled points out of a total %d points : %d"
-    ...       % (iris.data.shape[0],(iris.target != y_pred).sum()))
-    Number of mislabeled points out of a total 150 points : 6
+   >>> from sklearn.datasets import load_iris
+   >>> from sklearn.model_selection import train_test_split
+   >>> from sklearn.naive_bayes import GaussianNB
+   >>> X, y = load_iris(return_X_y=True)
+   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+   >>> gnb = GaussianNB()
+   >>> y_pred = gnb.fit(X_train, y_train).predict(X_test)
+   >>> print("Number of mislabeled points out of a total %d points : %d"
+   ...       % (X_test.shape[0], (y_test != y_pred).sum()))
+   Number of mislabeled points out of a total 75 points : 4
 
 .. _multinomial_naive_bayes:
 
@@ -124,7 +127,7 @@ version of maximum likelihood, i.e. relative frequency counting:
 where :math:`N_{yi} = \sum_{x \in T} x_i` is
 the number of times feature :math:`i` appears in a sample of class :math:`y`
 in the training set :math:`T`,
-and :math:`N_{y} = \sum_{i=1}^{|T|} N_{yi}` is the total count of
+and :math:`N_{y} = \sum_{i=1}^{n} N_{yi}` is the total count of
 all features for class :math:`y`.
 
 The smoothing priors :math:`\alpha \ge 0` accounts for
@@ -174,7 +177,7 @@ match.
 
  * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
    `Tackling the poor assumptions of naive bayes text classifiers.
-   <http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+   <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
    In ICML (Vol. 3, pp. 616-623).
 
 .. _bernoulli_naive_bayes:
@@ -221,6 +224,40 @@ It is advisable to evaluate both models, if time permits.
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
    3rd Conf. on Email and Anti-Spam (CEAS).
 
+.. _categorical_naive_bayes:
+
+Categorical Naive Bayes
+-----------------------
+
+:class:`CategoricalNB` implements the categorical naive Bayes 
+algorithm for categorically distributed data. It assumes that each feature, 
+which is described by the index :math:`i`, has its own categorical 
+distribution. 
+
+For each feature :math:`i` in the training set :math:`X`,
+:class:`CategoricalNB` estimates a categorical distribution for each feature i
+of X conditioned on the class y. The index set of the samples is defined as
+:math:`J = \{ 1, \dots, m \}`, with :math:`m` as the number of samples.
+
+The probability of category :math:`t` in feature :math:`i` given class
+:math:`c` is estimated as:
+
+.. math::
+
+    P(x_i = t \mid y = c \: ;\, \alpha) = \frac{ N_{tic} + \alpha}{N_{c} +
+                                           \alpha n_i},
+
+where :math:`N_{tic} = |\{j \in J \mid x_{ij} = t, y_j = c\}|` is the number
+of times category :math:`t` appears in the samples :math:`x_{i}`, which belong
+to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
+of samples with class c, :math:`\alpha` is a smoothing parameter and
+:math:`n_i` is the number of available categories of feature :math:`i`.
+
+:class:`CategoricalNB` assumes that the sample matrix :math:`X` is encoded
+(for instance with the help of :class:`OrdinalEncoder`) such that all
+categories for each feature :math:`i` are represented with numbers
+:math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
+of feature :math:`i`.
 
 Out-of-core naive Bayes model fitting
 -------------------------------------
