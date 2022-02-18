@@ -49,11 +49,11 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          - os: windows-latest
+          - os: windows-2019
             python: 37
             bitness: 64
             platform_id: win_amd64
-          - os: windows-latest
+          - os: windows-2019
             python: 38
             bitness: 64
             platform_id: win_amd64
