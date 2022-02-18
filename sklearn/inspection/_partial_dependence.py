@@ -38,6 +38,7 @@ __all__ = [
 
 def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values):
     """Generate a grid of points based on the percentiles of X.
+
     The grid is a cartesian product between the columns of ``values``. The
     ith column of ``values`` consists in ``grid_resolution`` equally-spaced
     points between the percentiles of the jth column of X.
@@ -67,12 +68,13 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
     custom_values: dict
         Mapping from column index of X to an array-like of values where
         the partial dependence should be calculated for that feature
-    
+
     Returns
     -------
     grid : ndarray of shape (n_points, n_target_features)
         A value for each feature at each point in the grid. ``n_points`` is
         always ``<= grid_resolution ** X.shape[1]``.
+
     values : list of 1d ndarrays
         The values with which the grid has been created. The size of each
         array ``values[j]`` is either ``grid_resolution``, the number of
