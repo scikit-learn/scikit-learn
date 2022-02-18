@@ -15,16 +15,6 @@ that are linked tend to fluctuate in relation to each other during a day.
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
 
-import sys
-
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
-
-import pandas as pd
-
-from sklearn import cluster, covariance, manifold
-
 # %%
 # Retrieve the data from Internet
 # -------------------------------
@@ -34,6 +24,9 @@ from sklearn import cluster, covariance, manifold
 # historical data can be obtained from APIs like the quandl.com and
 # alphavantage.co .
 
+import sys
+import numpy as np
+import pandas as pd
 
 symbol_dict = {
     "TOT": "Total",
@@ -123,6 +116,8 @@ variation = close_prices - open_prices
 # symbol, the symbols that it is connected too are those useful to explain
 # its fluctuations.
 
+from sklearn import covariance
+
 edge_model = covariance.GraphicalLassoCV()
 
 # standardize the time series: using correlations rather than covariance
@@ -147,12 +142,13 @@ edge_model.fit(X)
 # be considered as having a similar impact at the level of the full stock
 # market.
 
+from sklearn import cluster
 
 _, labels = cluster.affinity_propagation(edge_model.covariance_, random_state=0)
 n_labels = labels.max()
 
 for i in range(n_labels + 1):
-    print("Cluster %i: %s" % ((i + 1), ", ".join(names[labels == i])))
+    print(f"Cluster {i + 1}: {', '.join(names[labels == i])}")
 
 # %%
 # Embedding in 2D space
@@ -167,6 +163,8 @@ for i in range(n_labels + 1):
 
 # Finding a low-dimension embedding for visualization: find the best position of
 # the nodes (the stocks) on a 2D plane
+
+from sklearn import manifold
 
 node_position_model = manifold.LocallyLinearEmbedding(
     n_components=2, eigen_solver="dense", n_neighbors=6
@@ -191,6 +189,8 @@ embedding = node_position_model.fit_transform(X.T).T
 # heuristic based on the direction of the nearest neighbor along each
 # axis.
 
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 
 plt.figure(1, facecolor="w", figsize=(10, 8))
 plt.clf()
@@ -206,7 +206,7 @@ non_zero = np.abs(np.triu(partial_correlations, k=1)) > 0.02
 
 # Plot the nodes using the coordinates of our embedding
 plt.scatter(
-    embedding[0], embedding[1], s=100 * d ** 2, c=labels, cmap=plt.cm.nipy_spectral
+    embedding[0], embedding[1], s=100 * d**2, c=labels, cmap=plt.cm.nipy_spectral
 )
 
 # Plot the edges
