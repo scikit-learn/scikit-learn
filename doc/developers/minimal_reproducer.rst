@@ -159,6 +159,7 @@ Try to follow the `PEP 8 convention <https://www.python.org/dev/peps/pep-0008/>`
 In a nutshell:
     - try to limit all lines to a maximum of 79 characters
     - use blank lines to separate groups of related functions
+
 Place all your imports in their own group at the beginning of the snippet.
 
 **Improved example**
@@ -216,8 +217,8 @@ single cell will make their task easier.
 
 In the section `**Actual results**` of your `Issue template
 <https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
-you are asked to provide the error message including the full traceback of the exception. In this
-case, use the `python-traceback` qualifier. For example::
+you are asked to provide the error message including the full traceback of the
+exception. In this case, use the `python-traceback` qualifier. For example::
 
     ```python-traceback
     ---------------------------------------------------------------------------
@@ -251,8 +252,8 @@ The above steps can be implemented in a different order than the progression we
 show in this example. Take into account that having a pipeline that makes sense
 as a model is not important when creating a MCVE.
 
-.. _synth_data:
 
+.. _synth_data:
 
 Synthetic dataset
 =================
@@ -276,16 +277,16 @@ can be used to create dummy numeric data.
 
 - regression
 
-Regressions take continuous numeric data as features and target.
+    Regressions take continuous numeric data as features and target.
 
-.. code-block:: python
+    .. code-block:: python
 
-    import numpy as np
+        import numpy as np
 
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 5, 5
-    X = rng.randn(n_samples, n_features)
-    y = rng.randn(n_samples)
+        rng = np.random.RandomState(0)
+        n_samples, n_features = 5, 5
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
 
 A similar snippet can be used as synthetic data when testing scaling tools such
 as :class:`sklearn.preprocessing.StandardScaler`.
