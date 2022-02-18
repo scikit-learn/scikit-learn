@@ -72,7 +72,7 @@ def test_isomap_simple_grid(n_neighbors, radius):
 @pytest.mark.parametrize("n_neighbors, radius", [(24, None), (None, np.inf)])
 def test_isomap_reconstruction_error(n_neighbors, radius):
     # Same setup as in test_isomap_simple_grid, with an added dimension
-    n_pts = (n_neighbors + 1) if n_neighbors is not None else 25
+    n_pts = 25
     X = create_sample_data(n_pts=n_pts, add_noise=True)
 
     # compute input kernel
