@@ -312,6 +312,7 @@ def partial_dependence(
 
     method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
+
         - `'recursion'` is only supported for some tree-based estimators
           (namely
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
@@ -328,10 +329,13 @@ def partial_dependence(
           the average of the Individual Conditional Expectation (ICE) by
           design, it is not compatible with ICE and thus `kind` must be
           `'average'`.
+
         - `'brute'` is supported for any estimator, but is more
           computationally intensive.
+
         - `'auto'`: the `'recursion'` is used for estimators that support it,
           and `'brute'` is used otherwise.
+
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the `'brute'` and `'recursion'` method.
 
@@ -339,9 +343,11 @@ def partial_dependence(
         Whether to return the partial dependence averaged across all the
         samples in the dataset or one line per sample or both.
         See Returns below.
+
         Note that the fast `method='recursion'` option is only available for
         `kind='average'`. Plotting individual dependencies requires using the
         slower `method='brute'` option.
+
         .. versionadded:: 0.24
 
     custom_values: dict
