@@ -16,7 +16,7 @@ from sklearn.utils.random import sample_without_replacement
 
 
 def compute_time(t_start, delta):
-    mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
+    mu_second = 0.0 + 10**6  # number of microseconds in a second
 
     return delta.seconds + delta.microseconds / mu_second
 

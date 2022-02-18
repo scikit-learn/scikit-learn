@@ -26,7 +26,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version, parse_version
+from .fixes import np_version, parse_version, threadpool_info
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (
     as_float_array,
@@ -81,6 +81,39 @@ __all__ = [
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
+
+
+def _in_unstable_openblas_configuration():
+    """Return True if in an unstable configuration for OpenBLAS"""
+
+    # Import libraries which might load OpenBLAS.
+    import numpy  # noqa
+    import scipy  # noqa
+
+    modules_info = threadpool_info()
+
+    open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
+    if not open_blas_used:
+        return False
+
+    # OpenBLAS 0.3.16 fixed unstability for arm64, see:
+    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
+    openblas_arm64_stable_version = parse_version("0.3.16")
+    for info in modules_info:
+        if info["internal_api"] != "openblas":
+            continue
+        openblas_version = info.get("version")
+        openblas_architecture = info.get("architecture")
+        if openblas_version is None or openblas_architecture is None:
+            # Cannot be sure that OpenBLAS is good enough. Assume unstable:
+            return True
+        if (
+            openblas_architecture == "neoversen1"
+            and parse_version(openblas_version) < openblas_arm64_stable_version
+        ):
+            # See discussions in https://github.com/numpy/numpy/issues/19411
+            return True
+    return False
 
 
 def safe_mask(X, mask):
@@ -645,7 +678,7 @@ def safe_sqr(X, *, copy=True):
         X.data **= 2
     else:
         if copy:
-            X = X ** 2
+            X = X**2
         else:
             X **= 2
     return X
@@ -770,6 +803,14 @@ def tosequence(x):
     Parameters
     ----------
     x : iterable
+        The iterable to be converted.
+
+    Returns
+    -------
+    x : Sequence
+        If `x` is a NumPy array, it returns it as a `ndarray`. If `x`
+        is a `Sequence`, `x` is returned as-is. If `x` is from any other
+        type, `x` is returned casted as a list.
     """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
@@ -926,14 +967,14 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     if working_memory is None:
         working_memory = get_config()["working_memory"]
 
-    chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
+    chunk_n_rows = int(working_memory * (2**20) // row_bytes)
     if max_n_rows is not None:
         chunk_n_rows = min(chunk_n_rows, max_n_rows)
     if chunk_n_rows < 1:
         warnings.warn(
             "Could not adhere to working_memory config. "
             "Currently %.0fMiB, %.0fMiB required."
-            % (working_memory, np.ceil(row_bytes * 2 ** -20))
+            % (working_memory, np.ceil(row_bytes * 2**-20))
         )
         chunk_n_rows = 1
     return chunk_n_rows
