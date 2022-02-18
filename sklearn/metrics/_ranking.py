@@ -754,7 +754,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
     # make y_true a boolean vector
-    y_true = y_true == pos_label
+    y_true = y_true.astype(bool)
 
     # sort scores and corresponding truth values
     desc_score_indices = np.argsort(y_score, kind="mergesort")[::-1]
