@@ -23,7 +23,7 @@ class Interval:
         """Check that low <= high"""
         if self.low > self.high:
             raise ValueError(
-                f"On must have low <= high; got low={self.low}, high={self.high}."
+                f"One must have low <= high; got low={self.low}, high={self.high}."
             )
 
     def includes(self, x):

@@ -16,7 +16,7 @@ LINK_FUNCTIONS = list(_LINKS.values())
 def test_interval_raises():
     """Test that interval with low > high raises ValueError."""
     with pytest.raises(
-        ValueError, match="On must have low <= high; got low=1, high=0."
+        ValueError, match="One must have low <= high; got low=1, high=0."
     ):
         Interval(1, 0, False, False)
 
