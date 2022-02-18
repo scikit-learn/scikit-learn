@@ -6,8 +6,8 @@ Clustering text documents using k-means
 This is an example showing how scikit-learn can be used to cluster
 documents by topics using a bag-of-words approach. This example uses
 a `scipy.sparse` matrix to store the features instead of standard numpy arrays.
-Here, we compare different feature extraction approaches using several
-clustering metrics.
+Here, we compare different feature extraction approaches using a bootstrap
+sampling method and several clustering metrics.
 """
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -19,8 +19,7 @@ clustering metrics.
 # %%
 # Load some categories from the training set
 # ------------------------------------------
-# We will start by loading 4 of the 20 news groups categories and see if
-# k-means can cluster them properly.
+# We will start by loading 4 of the 20 news groups categories.
 
 from sklearn.datasets import fetch_20newsgroups
 import numpy as np
@@ -49,26 +48,17 @@ print(f"{len(dataset.target_names)} categories")
 
 
 # %%
-# Define k-means pipeline
-# -----------------------
-# Here we define our k-means pipeline and the metrics to evaluate performance.
+# Define k-means pipelines
+# ------------------------
+# We start by instantiating k-means pipelines with feature extraction methods
+# of increasing complexity.
 #
-# Term-frequency inverse document-frequency (Tfidf) is used as a feature
-# extraction method.
-# TfidfVectorizer uses an in-memory vocabulary (a python dict) to map the most
+# Term frequency
+# ^^^^^^^^^^^^^^
+# Initially, we use only term frequency as a feature extraction method.
+# `TfidfVectorizer` uses an in-memory vocabulary (a python dict) to map the most
 # frequent words to features indices and hence compute a word occurrence
-# frequency (sparse) matrix. The word frequencies are then reweighted using
-# the Inverse Document Frequency (IDF) vector collected feature-wise over
-# the corpus.
-#
-# Additionally, latent semantic analysis (LSA) is also be used to reduce
-# dimensionality and discover latent patterns in the data.
-#
-# Instead of ordinary k-means we use its more scalable cousin
-# minibatch k-means.
-
-
-# %%
+# frequency (sparse) matrix.
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
@@ -87,6 +77,12 @@ tf_model = [
 
 
 # %%
+# Term frequency-inverse document frequency
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# This time we extract features with the more complete term-frequency inverse
+# document-frequency (Tfidf) method.
+# The difference is the word frequencies are reweighted using the Inverse
+# Document Frequency (IDF) vector collected feature-wise over the corpus.
 
 tf_idf_model = [
     TfidfVectorizer(
@@ -101,6 +97,12 @@ tf_idf_model = [
 
 
 # %%
+# Latent semantic analysis
+# ^^^^^^^^^^^^^^^^^^^^^^^^
+# Finally, we add latent semantic analysis (LSA) to the end of the feature
+# extraction pipeline to also reduce dimensionality and discover latent patterns
+# in the data.
+
 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import Normalizer
@@ -121,6 +123,11 @@ tf_idf_lsa_model = [
 
 
 # %%
+# Bootstrap method for evaluation
+# -------------------------------
+# In order to evaluate the feature extraction methods and estimate the variation
+# of the fitting we define an evaluation function that uses the bootstrap sampling
+# method.
 
 from collections import defaultdict
 
@@ -176,7 +183,10 @@ def fit_evaluate_clusterer_bootstrap(
 # %%
 # Compare performance metrics
 # ---------------------------
-# It can be noted that k-means (and minibatch k-means) are very sensitive to
+# Finally, we fit each model over multiple repetitions on the data and estimate
+# the mean and standard deviation of the performance metrics.
+#
+# It can be noted that k-means are very sensitive to
 # feature scaling and that in this case the IDF weighting helps improve the
 # quality of the clustering by quite a lot as measured against the "ground truth"
 # provided by the class label assignments of the 20 newsgroups dataset.
@@ -193,11 +203,6 @@ def fit_evaluate_clusterer_bootstrap(
 # We can see a significant improvemend though in Silhouette Coefficient with
 # LSA as the dimensionality reduction makes the space more compact and
 # the Euclidian distances between samples much lower.
-#
-# Note: as k-means is optimizing a non-convex objective function, it will
-# likely end up in a local optimum. Several runs with independent random init
-# might be necessary to get a good convergence. Here we have chosen a random
-# state that produces good results.
 
 pd.set_option("display.max_columns", 10)
 
@@ -205,17 +210,17 @@ results = []
 
 results.append(
     fit_evaluate_clusterer_bootstrap(
-        tf_model, data, labels, n_bootstrap=2, random_state=0
+        tf_model, data, labels, n_bootstrap=10, random_state=0
     )
 )
 results.append(
     fit_evaluate_clusterer_bootstrap(
-        tf_idf_model, data, labels, n_bootstrap=2, random_state=0
+        tf_idf_model, data, labels, n_bootstrap=10, random_state=0
     )
 )
 results.append(
     fit_evaluate_clusterer_bootstrap(
-        tf_idf_lsa_model, data, labels, n_bootstrap=2, random_state=0
+        tf_idf_lsa_model, data, labels, n_bootstrap=10, random_state=0
     )
 )
 
@@ -238,7 +243,8 @@ print(performance_summary.round(3))
 # %%
 # Plot top terms per cluster
 # --------------------------
-# Finally we attempt to plot the top ten terms for each cluster centroid, with
+# Finally we use the last run of our LSA model to attempt to plot the top ten
+# terms for each cluster centroid, with
 # their font size scaled by their weighted term frequency.
 # Notice how k-means seems to have clustered together two of the four categories
 # of the data and created another unrelated cluster.
