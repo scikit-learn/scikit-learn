@@ -232,6 +232,7 @@ def test_sparse_input():
 
 
 def test_isomap_fit_precomputed_radius_graph():
+    # Test fit_transform yields similar result as using precomputed distance matrix
     X, y = datasets.make_s_curve(200, random_state=0)
     radius = 10
 
@@ -242,7 +243,6 @@ def test_isomap_fit_precomputed_radius_graph():
 
     isomap = manifold.Isomap(n_neighbors=None, radius=radius, metric="minkowski")
     result = isomap.fit_transform(X)
-    # test fit_transform yields similar result as using precomputed distance matrix
     assert_allclose(precomputed_result, result)
 
 
