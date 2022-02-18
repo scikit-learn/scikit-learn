@@ -94,7 +94,7 @@ n_estimators = len(estimators)
 def f(x):
     x = x.ravel()
 
-    return np.exp(-(x ** 2)) + 1.5 * np.exp(-((x - 2) ** 2))
+    return np.exp(-(x**2)) + 1.5 * np.exp(-((x - 2) ** 2))
 
 
 def generate(n_samples, noise, n_repeat=1):

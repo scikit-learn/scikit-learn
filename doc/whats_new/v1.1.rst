@@ -65,6 +65,35 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |Efficiency| Low-level routines for reductions on pairwise distances
+  for dense float64 datasets have been refactored. The following functions
+  and estimators now benefit from improved performances, in particular on
+  multi-cores machines:
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.MeanShift`
+  - :class:`sklearn.cluster.OPTICS`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :func:`sklearn.feature_selection.mutual_info_regression`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.LocallyLinearEmbedding`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors`
+  can be up to ×20 faster than in the previous versions'.
+
+  :pr:`21987`, :pr:`22064`, :pr:`22065` and :pr:`22288`
+  by :user:`Julien Jerphanion <jjerphan>`
+
 - |Enhancement| All scikit-learn models now generate a more informative
   error message when some input contains unexpected `NaN` or infinite values.
   In particular the message contains the input name ("X", "y" or
@@ -100,6 +129,9 @@ Changelog
   `'kmeans'` and `'discrete'` methods.
   See :func:`cluster.spectral_clustering` for more details.
   :pr:`21148` by :user:`Andrew Knyazev <lobpcg>`.
+
+- |Fix| :class:`cluster.KMeans`'s `init` parameter now properly supports
+  array-like input and NumPy string scalars. :pr:`22154` by `Thomas Fan`_.
 
 - |Enhancement| Adds :term:`get_feature_names_out` to :class:`cluster.Birch`,
   :class:`cluster.FeatureAgglomeration`, :class:`cluster.KMeans`,
@@ -140,6 +172,13 @@ Changelog
   :class:`cross_decomposition.PLSRegression`,
   and :class:`cross_decomposition.PLSCanonical`. :pr:`22119` by `Thomas Fan`_.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| :class:`covariance.GraphicalLassoCV` now accepts NumPy array for the
+  parameter `alphas`.
+  :pr:`22493` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -162,6 +201,11 @@ Changelog
   `n_retries` and `delay`. By default, :func:`datasets.fetch_openml` will retry
   3 times in case of a network failure with a delay between each try.
   :pr:`21901` by :user:`Rileran <rileran>`.
+
+- |Feature| :func:`datasets.load_files` now accepts a ignore list and
+  an allow list based on file extensions.
+  :pr:`19747` by :user:`Tony Attalla <tonyattalla>` and :pr:`22498` by
+  :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -241,6 +285,12 @@ Changelog
 - |API| Adds :term:`get_feature_names_out` to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
   `Thomas Fan`_.
+
+:mod:`sklearn.dummy`
+....................
+
+- |Fix| :class:`dummy.DummyRegressor` no longer overrides the `constant`
+  parameter during `fit`. :pr:`22486` by `Thomas Fan`_.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -385,6 +435,16 @@ Changelog
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| In
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
+  :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
+  `kind` to accept a list of strings to specify  which type of
+  plot to draw for each feature interaction.
+  :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
@@ -443,6 +503,14 @@ Changelog
   now raise consistent error messages when passed invalid values for `l1_ratio`,
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+- |Fix| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
+  with a shape that respects the docstring and that is consistent with the shape
+  obtained when using the other solvers in the one-vs-rest setting. Previously,
+  it would record only the maximum of the number of iterations for each binary
+  sub-problem while now all of them are recorded. :pr:`21998` by
+  :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -586,6 +654,10 @@ Changelog
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
+
+- |Fix| :class:`preprocessing.FunctionTransformer` with `check_inverse=True`
+  now provides informative error message when input has mixed dtypes. :pr:`19916` by
+  :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |API| Adds :meth:`get_feature_names_out` to
   :class:`preprocessing.Normalizer`,

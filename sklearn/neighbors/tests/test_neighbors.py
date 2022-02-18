@@ -13,8 +13,12 @@ from scipy.sparse import (
     issparse,
 )
 
-from sklearn import metrics
-from sklearn import neighbors, datasets
+from sklearn import (
+    config_context,
+    datasets,
+    metrics,
+    neighbors,
+)
 from sklearn.base import clone
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import EfficiencyWarning
@@ -118,7 +122,7 @@ def _weight_func(dist):
     # can be looped
     with np.errstate(divide="ignore"):
         retval = 1.0 / dist
-    return retval ** 2
+    return retval**2
 
 
 @pytest.mark.parametrize(
@@ -554,7 +558,7 @@ def test_kneighbors_classifier(
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < 0.5).astype(int)
+    y = ((X**2).sum(axis=1) < 0.5).astype(int)
     y_str = y.astype(str)
 
     weight_func = _weight_func
@@ -580,7 +584,7 @@ def test_kneighbors_classifier_float_labels(
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < 0.5).astype(int)
+    y = ((X**2).sum(axis=1) < 0.5).astype(int)
 
     knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
     knn.fit(X, y.astype(float))
@@ -625,7 +629,7 @@ def test_radius_neighbors_classifier(
     # Test radius-based classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < 0.5).astype(int)
+    y = ((X**2).sum(axis=1) < 0.5).astype(int)
     y_str = y.astype(str)
 
     weight_func = _weight_func
@@ -1006,7 +1010,7 @@ def test_kneighbors_classifier_sparse(
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     X *= X > 0.2
-    y = ((X ** 2).sum(axis=1) < 0.5).astype(int)
+    y = ((X**2).sum(axis=1) < 0.5).astype(int)
 
     for sparsemat in SPARSE_TYPES:
         knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, algorithm="auto")
@@ -1068,7 +1072,7 @@ def test_kneighbors_regressor(
     # Test k-neighbors regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt((X ** 2).sum(1))
+    y = np.sqrt((X**2).sum(1))
     y /= y.max()
 
     y_target = y[:n_test_pts]
@@ -1117,7 +1121,7 @@ def test_kneighbors_regressor_multioutput(
     # Test k-neighbors in multi-output regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt((X ** 2).sum(1))
+    y = np.sqrt((X**2).sum(1))
     y /= y.max()
     y = np.vstack([y, y]).T
 
@@ -1142,7 +1146,7 @@ def test_radius_neighbors_regressor(
     # Test radius-based neighbors regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt((X ** 2).sum(1))
+    y = np.sqrt((X**2).sum(1))
     y /= y.max()
 
     y_target = y[:n_test_pts]
@@ -1209,7 +1213,7 @@ def test_RadiusNeighborsRegressor_multioutput(
     # Test k-neighbors in multi-output regression with various weight
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = np.sqrt((X ** 2).sum(1))
+    y = np.sqrt((X**2).sum(1))
     y /= y.max()
     y = np.vstack([y, y]).T
 
@@ -1234,7 +1238,7 @@ def test_kneighbors_regressor_sparse(
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < 0.25).astype(int)
+    y = ((X**2).sum(axis=1) < 0.25).astype(int)
 
     for sparsemat in SPARSE_TYPES:
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors, algorithm="auto")
@@ -1450,7 +1454,6 @@ def test_neighbors_metrics(
     metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
 ):
     # Test computing the neighbors for various metrics
-    # create a symmetric matrix
     algorithms = ["brute", "ball_tree", "kd_tree"]
     X_train = rng.rand(n_samples, n_features)
     X_test = rng.rand(n_query_pts, n_features)
@@ -1493,7 +1496,7 @@ def test_neighbors_metrics(
                 and algorithm == "brute"
                 and sp_version >= parse_version("1.6.0")
             ):
-                ExceptionToAssert = DeprecationWarning
+                ExceptionToAssert = FutureWarning
 
             with pytest.warns(ExceptionToAssert):
                 results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
@@ -1513,9 +1516,62 @@ def test_neighbors_metrics(
             assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+@pytest.mark.parametrize(
+    "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
+)
+def test_kneighbors_brute_backend(
+    metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
+):
+    # Both backend for the 'brute' algorithm of kneighbors must give identical results.
+    X_train = rng.rand(n_samples, n_features)
+    X_test = rng.rand(n_query_pts, n_features)
+
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        feature_sl = slice(None, 2)
+        X_train = np.ascontiguousarray(X_train[:, feature_sl])
+        X_test = np.ascontiguousarray(X_test[:, feature_sl])
+
+    metric_params_list = _generate_test_params_for(metric, n_features)
+
+    # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+    ExceptionToAssert = None
+    if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
+        ExceptionToAssert = FutureWarning
+
+    for metric_params in metric_params_list:
+        p = metric_params.pop("p", 2)
+
+        neigh = neighbors.NearestNeighbors(
+            n_neighbors=n_neighbors,
+            algorithm="brute",
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+        )
+
+        neigh.fit(X_train)
+        with pytest.warns(ExceptionToAssert):
+            with config_context(enable_cython_pairwise_dist=False):
+                # Use the legacy backend for brute
+                legacy_brute_dst, legacy_brute_idx = neigh.kneighbors(
+                    X_test, return_distance=True
+                )
+            with config_context(enable_cython_pairwise_dist=True):
+                # Use the PairwiseDistancesReduction as a backend for brute
+                pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
+                    X_test, return_distance=True
+                )
+
+        assert_allclose(legacy_brute_dst, pdr_brute_dst)
+        assert_array_equal(legacy_brute_idx, pdr_brute_idx)
+
+
 def test_callable_metric():
     def custom_metric(x1, x2):
-        return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
+        return np.sqrt(np.sum(x1**2 + x2**2))
 
     X = np.random.RandomState(42).rand(20, 2)
     nbrs1 = neighbors.NearestNeighbors(

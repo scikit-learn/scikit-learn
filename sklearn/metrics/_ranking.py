@@ -355,7 +355,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
 
     # McClish correction: standardize result to be 0.5 if non-discriminant
     # and 1 if maximal
-    min_area = 0.5 * max_fpr ** 2
+    min_area = 0.5 * max_fpr**2
     max_area = max_fpr
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
@@ -859,7 +859,6 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     array([1. , 0.5, 0.5, 0. ])
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
-
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
