@@ -82,7 +82,7 @@ def _retry_on_network_error(
             while True:
                 try:
                     return f(*args, **kwargs)
-                except URLError as e:
+                except (URLError, TimeoutError) as e:
                     # 412 is a specific OpenML error code.
                     if isinstance(e, HTTPError) and e.code == 412:
                         raise
