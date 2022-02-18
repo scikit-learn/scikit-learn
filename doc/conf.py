@@ -253,6 +253,7 @@ redirects = {
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
+    "modules/model_persistence": "model_persistence",
 }
 html_context["redirects"] = redirects
 for old_link in redirects:

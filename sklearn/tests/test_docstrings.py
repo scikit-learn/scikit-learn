@@ -142,7 +142,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.fixes.threadpool_limits",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
-    "sklearn.utils.get_chunk_n_rows",
     "sklearn.utils.graph.graph_shortest_path",
     "sklearn.utils.graph.single_source_shortest_path_length",
     "sklearn.utils.is_scalar_nan",
