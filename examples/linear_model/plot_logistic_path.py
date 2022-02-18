@@ -25,8 +25,15 @@ full-path.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# %%
+# Author
+# ---------------------------------------------------
+# Alexandre Gramfort <alexandre.gramfort@inria.fr>
+
+# %%
+# License
+# ---------------------------------------------------
+# BSD 3 clause
 
 from time import time
 import numpy as np
@@ -45,8 +52,9 @@ y = y[y != 2]
 
 X /= X.max()  # Normalize X to speed-up convergence
 
-# #############################################################################
+# %%
 # Demo path functions
+# ---------------------------------------------------
 
 cs = l1_min_c(X, y, loss="log") * np.logspace(0, 7, 16)
 
