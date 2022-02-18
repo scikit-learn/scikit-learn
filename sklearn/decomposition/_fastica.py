@@ -375,7 +375,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     w_init : ndarray of shape (n_components, n_components), default=None
         The mixing matrix to be used to initialize the algorithm.
 
-    svd_solver : str, default='svd'
+    whiten_solver : str, default='svd'
         The solver to use for whitening. Can either be 'svd' or 'eigh'.
         'svd' is more stable numerically if the problem is degenerate.
         'eigh' is generally faster.
