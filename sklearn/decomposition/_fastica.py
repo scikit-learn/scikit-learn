@@ -562,7 +562,9 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
             # Whitening and preprocessing by PCA
             if self.svd_solver == "eigh":
-                D, u = linalg.eigh(X.dot(X.T))  # Faster when n < p
+                D, u = linalg.eigh(X.T.dot(X))  # Faster when n < p
+                idx = D.argsort()[::-1]
+                D, u = D[idx], u[idx]
                 eps = np.finfo(np.double).eps
                 degenerate_idx = D < eps
                 if np.any(degenerate_idx):
@@ -575,13 +577,13 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 d = np.sqrt(D)
                 del D
             else:
-                u, d, _ = linalg.svd(X, full_matrices=False, check_finite=False)
+                u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
+                idx = d.argsort()[::-1]
+                d, u = d[idx], u[idx]
 
-            del _
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d
-            print(f"DEBUG *** {X.shape=}|{XT.shape=}|{K.shape=}|{self.svd_solver=}")
-            X1 = np.matmul(K, XT)
+            X1 = np.dot(K, XT)
             # see (13.6) p.267 Here X1 is white and data
             # in X has been projected onto a subspace by PCA
             X1 *= np.sqrt(n_samples)

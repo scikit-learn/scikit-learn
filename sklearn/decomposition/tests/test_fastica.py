@@ -119,12 +119,14 @@ def test_fastica_simple(add_noise, seed):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
+    outs = {}
     for solver in ("eigh", "svd"):
         _, _, sources_fun = fastica(
             m.T, fun=nl, algorithm=algo, random_state=0, svd_solver=solver
         )
         ica = FastICA(fun=nl, algorithm=algo, random_state=0, svd_solver=solver)
         sources = ica.fit_transform(m.T)
+        outs[solver] = sources
         assert ica.components_.shape == (2, 2)
         assert sources.shape == (1000, 2)
 
@@ -134,12 +136,13 @@ def test_fastica_simple(add_noise, seed):
         assert ica.mixing_.shape == (2, 2)
 
         for fn in [np.tanh, "exp(-.5(x^2))"]:
-            ica = FastICA(fun=fn, algorithm=algo)
+            ica = FastICA(fun=fn, algorithm=algo, svd_solver=solver)
             with pytest.raises(ValueError):
                 ica.fit(m.T)
 
         with pytest.raises(TypeError):
-            FastICA(fun=range(10)).fit(m.T)
+            FastICA(fun=range(10), svd_solver=solver).fit(m.T)
+    # assert_array_almost_equal(outs["eigh"], outs["svd"])
 
 
 def test_fastica_nowhiten():
