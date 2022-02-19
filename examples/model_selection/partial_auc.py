@@ -48,71 +48,82 @@ standardized pAUC for better understanding.
 """
 # %%
 # Plot partial ROC area on one example
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import metrics
 
 print(__doc__)
 
 # Author: Fengjun Wang
 # License: BSD 3 clause
 
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn import metrics
-
 # Make a fake y_true and y_score
 y_true = np.array([0, 0, 1, 1])
-y_score = np.array([0.1,  0,  0.1, 0.01])
+y_score = np.array([0.1, 0, 0.1, 0.01])
 max_fpr = 0.9
 min_tpr = 0.6
 
 # Calculate the fpr, tpr list
-fpr, tpr, thresholds = metrics.roc_curve(y_true=y_true,
-                                         y_score=y_score,
-                                         pos_label=1)
-spauc = metrics.roc_auc_score(y_true=y_true,
-                              y_score=y_score,
-                              max_fpr=max_fpr,
-                              min_tpr=min_tpr)
-print(f'The fpr list is: {fpr}')
-print(f'The tpr list is: {tpr}')
-print(f'With max_fpr {max_fpr} and min_tpr '
-      f'{min_tpr}, the standardized partial AUC is {spauc}.')
+fpr, tpr, thresholds = metrics.roc_curve(y_true=y_true, y_score=y_score, pos_label=1)
+spauc = metrics.roc_auc_score(
+    y_true=y_true, y_score=y_score, max_fpr=max_fpr, min_tpr=min_tpr
+)
+print(f"The fpr list is: {fpr}")
+print(f"The tpr list is: {tpr}")
+print(
+    f"With max_fpr {max_fpr} and min_tpr "
+    f"{min_tpr}, the standardized partial AUC is {spauc}."
+)
 plt.rcParams["figure.figsize"] = (10, 10)
 
 # Plot the min_tpr horizontal line
 if min_tpr is not None:
-    plt.axhline(y=min_tpr, color='g', linestyle='--',
-                alpha=0.5, label='min_tpr')
+    plt.axhline(y=min_tpr, color="g", linestyle="--", alpha=0.5, label="min_tpr")
 
 # Plot the max_fpr vertical line
 if max_fpr is not None:
-    plt.axvline(x=max_fpr, color='r', linestyle='--',
-                alpha=0.5, label='max_fpr')
+    plt.axvline(x=max_fpr, color="r", linestyle="--", alpha=0.5, label="max_fpr")
 
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve')
+plt.plot(fpr, tpr, color="darkorange", lw=2, label="ROC curve")
 
 # Plot the non-discriminant ROC line for reference:
-plt.plot([0, 1], [0, 1], color='navy', lw=2,
-         linestyle='--', label='non-discriminant ROC')
+plt.plot(
+    [0, 1], [0, 1], color="navy", lw=2, linestyle="--", label="non-discriminant ROC"
+)
 
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver operating characteristic example')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("Receiver operating characteristic example")
 plt.legend(loc="lower right")
 plt.grid()
-plt.gca().set_aspect('equal', adjustable='box')
+plt.gca().set_aspect("equal", adjustable="box")
 
 if min_tpr is None:
     min_tpr = 0.0
 if max_fpr is None:
     max_fpr = 1.0
 # Fill the region which conforms to max_fpr with red:
-plt.fill_betweenx(tpr, x1=max_fpr, x2=fpr, where=(fpr <= max_fpr),
-                  alpha=0.1, interpolate=True, color='red')
+plt.fill_betweenx(
+    tpr,
+    x1=max_fpr,
+    x2=fpr,
+    where=(fpr <= max_fpr),
+    alpha=0.1,
+    interpolate=True,
+    color="red",
+)
 # Fill the region which conforms to min_tpr with green:
-plt.fill_between(fpr, y1=min_tpr, y2=tpr, where=(tpr >= min_tpr),
-                 alpha=0.1, interpolate=True, color='green')
+plt.fill_between(
+    fpr,
+    y1=min_tpr,
+    y2=tpr,
+    where=(tpr >= min_tpr),
+    alpha=0.1,
+    interpolate=True,
+    color="green",
+)
 plt.show()
 
 # %%

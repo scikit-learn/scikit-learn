@@ -1,4 +1,3 @@
-
 from functools import partial
 from inspect import signature
 from itertools import product
@@ -230,7 +229,8 @@ THRESHOLDED_METRICS = {
     ),
     "partial_roc_auc_max_fpr": partial(roc_auc_score, max_fpr=0.5),
     "partial_roc_auc_min_tpr": partial(roc_auc_score, min_tpr=0.5),
-    "average_precision_score": average_precision_score,  # default: average="macro"
+    "average_precision_score": average_precision_score,
+    # default: average="macro"
     "weighted_average_precision_score": partial(
         average_precision_score, average="weighted"
     ),

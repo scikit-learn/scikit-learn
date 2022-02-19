@@ -328,11 +328,16 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     sl = slice(first_ind, last_ind)
 
     # reverse the output such that list of false positives is decreasing
-    return (fps[sl][::-1] / n_count, fns[sl][::-1] / p_count, thresholds[sl][::-1])
+    return (
+        fps[sl][::-1] / n_count,
+        fns[sl][::-1] / p_count,
+        thresholds[sl][::-1],
+    )
 
 
-def _binary_roc_auc_score(y_true, y_score, sample_weight=None,
-                          max_fpr=None, min_tpr=None):
+def _binary_roc_auc_score(
+    y_true, y_score, sample_weight=None, max_fpr=None, min_tpr=None
+):
     """Binary roc auc score."""
     if len(np.unique(y_true)) != 2:
         raise ValueError(
@@ -340,8 +345,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None,
             "is not defined in that case."
         )
 
-    fpr, tpr, _ = roc_curve(y_true, y_score,
-                            sample_weight=sample_weight)
+    fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
     # when there is no valid limitation on both max_fpr and min_tpr:
     if (max_fpr is None or max_fpr == 1) and (min_tpr is None or min_tpr == 0):
         return auc(fpr, tpr)
@@ -353,7 +357,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None,
     if max_fpr is not None and max_fpr != 1:
         # if specified max_fpr,
         # add a single point at max_fpr (for tpr list) by linear interpolation
-        stop = np.searchsorted(fpr, max_fpr, 'right')
+        stop = np.searchsorted(fpr, max_fpr, "right")
         x_interp_tpr = [fpr[stop - 1], fpr[stop]]
         y_interp_tpr = [tpr[stop - 1], tpr[stop]]
         tpr_interp = np.interp(max_fpr, x_interp_tpr, y_interp_tpr)
@@ -365,7 +369,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None,
     if min_tpr is not None and min_tpr != 0:
         # if specified min_tpr,
         # add a single point at min_tpr (for fpr list) by linear interpolation
-        start = np.searchsorted(tpr, min_tpr, 'left')
+        start = np.searchsorted(tpr, min_tpr, "left")
         # handle the case when the required
         # min_tpr and max_fpr can't form a valid area:
         if start == len(tpr):
@@ -633,15 +637,19 @@ def roc_auc_score(
     ):
         # do not support partial ROC computation for multiclass
         if max_fpr is not None and max_fpr != 1.0:
-            raise ValueError("Partial AUC computation not available in "
-                             "multiclass setting, 'max_fpr' must be"
-                             " set to `None`, received `max_fpr={0}` "
-                             "instead".format(max_fpr))
+            raise ValueError(
+                "Partial AUC computation not available in "
+                "multiclass setting, 'max_fpr' must be"
+                " set to `None`, received `max_fpr={0}` "
+                "instead".format(max_fpr)
+            )
         if min_tpr is not None and min_tpr != 0.0:
-            raise ValueError("Partial AUC computation not available in "
-                             "multiclass setting, 'min_tpr' must be"
-                             " set to `None`, received `min_tpr={0}` "
-                             "instead".format(min_tpr))
+            raise ValueError(
+                "Partial AUC computation not available in "
+                "multiclass setting, 'min_tpr' must be"
+                " set to `None`, received `min_tpr={0}` "
+                "instead".format(min_tpr)
+            )
         if multi_class == "raise":
             raise ValueError("multi_class must be in ('ovo', 'ovr')")
         return _multiclass_roc_auc_score(
@@ -651,9 +659,7 @@ def roc_auc_score(
         labels = np.unique(y_true)
         y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(
-            partial(_binary_roc_auc_score,
-                    max_fpr=max_fpr,
-                    min_tpr=min_tpr),
+            partial(_binary_roc_auc_score, max_fpr=max_fpr, min_tpr=min_tpr),
             y_true,
             y_score,
             average,
@@ -661,9 +667,7 @@ def roc_auc_score(
         )
     else:  # multilabel-indicator
         return _average_binary_score(
-            partial(_binary_roc_auc_score,
-                    max_fpr=max_fpr,
-                    min_tpr=min_tpr),
+            partial(_binary_roc_auc_score, max_fpr=max_fpr, min_tpr=min_tpr),
             y_true,
             y_score,
             average,
