@@ -408,7 +408,7 @@ def test_raise_on_reset_base_loss_class(regression_data, estimator, base_loss):
 
 def test_tweedie_raise_on_reset_base_loss_class(regression_data):
     # Make sure to raise an appropriate error if base_loss_class or base_loss_params
-    # was inconsistently reset for TweedieDistribution
+    # was inconsistently reset for a Tweedie deviance loss.
     X, y = regression_data
     # make y positive
     y = np.abs(y) + 1.0
