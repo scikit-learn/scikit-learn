@@ -54,7 +54,7 @@ random sampling procedures.
 - |Fix| :class:`preprocessing.KBinsDiscretizer` changed handling of bin edges
   slightly, which might result in a different encoding with the same data.
 
-- |Fix| :func:`sklearn.calibration.calibration_curve` chnged handling of bin
+- |Fix| :func:`sklearn.calibration.calibration_curve` changed handling of bin
   edges slightly, which might result in a different output curve given the same
   data.
 
