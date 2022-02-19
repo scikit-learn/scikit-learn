@@ -409,14 +409,12 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         #       input validation and so on)
         raw_prediction = self._linear_predictor(X)  # validates X
         # required by losses
-        y = check_array(y, dtype=[np.float64, np.float32], order="C", ensure_2d=False)
+        y = check_array(y, dtype=raw_prediction.dtype, order="C", ensure_2d=False)
 
         if sample_weight is not None:
             # Note that _check_sample_weight calls check_array(order="C") required by
             # losses.
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=[np.float64, np.float32]
-            )
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=y.dtype)
 
         base_loss = self._linear_loss.base_loss
 
