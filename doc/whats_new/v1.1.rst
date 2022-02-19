@@ -51,6 +51,13 @@ random sampling procedures.
   `feature_names_in_` to be defined, columns must be all strings. :pr:`22410` by
   `Thomas Fan`_.
 
+- |Fix| :class:`preprocessing.KBinsDiscretizer` changed handling of bin edges
+  slightly, which might result in a different encoding with the same data.
+
+- |Fix| :func:`calibration.calibration_curve` changed handling of bin
+  edges slightly, which might result in a different output curve given the same
+  data.
+
 Changelog
 ---------
 
@@ -111,6 +118,9 @@ Changelog
 - |Enhancement| :func:`calibration.calibration_curve` accepts a parameter
   `pos_label` to specify the positive class label.
   :pr:`21032` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :func:`calibration.calibration_curve` handles bin edges more consistently now.
+  :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`CalibrationDisplay` accepts a parameter `pos_label` to
   add this information to the plot.
@@ -671,6 +681,9 @@ Changelog
   :class:`preprocessing.KernelCenterer`,
   :class:`preprocessing.OrdinalEncoder`, and
   :class:`preprocessing.Binarizer`. :pr:`21079` by `Thomas Fan`_.
+
+- |Fix| :class:`preprocessing.KBinDiscretizer` handles bin edges more consistently now.
+  :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.random_projection`
 ................................
