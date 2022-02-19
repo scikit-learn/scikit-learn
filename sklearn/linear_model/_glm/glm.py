@@ -44,7 +44,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at fitting and
     predicting the mean of the target y as y_pred=h(X*w) with coefficients w.
-    Therefore, the fit minimizes the following objective function with L2priors as
+    Therefore, the fit minimizes the following objective function with L2 priors as
     regularizer::
 
         1/(2*sum(s_i)) * sum(s_i * deviance(y_i, h(x_i*w)) + 1/2 * alpha * ||w||_2^2
