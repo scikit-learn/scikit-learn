@@ -917,9 +917,7 @@ def test_ovo_store_class_pairs():
     y_int_string = [iris.target, iris.target_names[iris.target]]
 
     for y in y_int_string:
-        clf = OneVsOneClassifier(LinearSVC(random_state=0)).fit(
-            X, y
-        )
+        clf = OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y)
 
         classes = np.unique(y)
         n_classes = classes.shape[0]

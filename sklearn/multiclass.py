@@ -589,9 +589,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    class_pairs_ : bool, default=False
-        Whether to store pairs of classes used to train each estimator.
-
     Attributes
     ----------
     estimators_ : list of ``n_classes * (n_classes - 1) / 2`` estimators
@@ -612,8 +609,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    class_pairs_ : a cached_property returning
-        ndarray of shape ``(n_classes * (n_classes - 1) // 2, 2)``
+    class_pairs_ : a cached_property containing an
+        ndarray of shape ``(n_classes * (n_classes - 1) // 2, 2)``.
         Store pairs of classes used to train each estimator.
 
         .. versionadded:: 1.1
@@ -700,14 +697,13 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def class_pairs_(self):
         n_classes = self.classes_.shape[0]
         return np.array(
-                [
-                    [self.classes_[i], self.classes_[j]]
-                    for i in range(n_classes)
-                    for j in range(i + 1, n_classes)
-                ],
-                dtype=self.classes_.dtype,
-            )
-
+            [
+                [self.classes_[i], self.classes_[j]]
+                for i in range(n_classes)
+                for j in range(i + 1, n_classes)
+            ],
+            dtype=self.classes_.dtype,
+        )
 
     @available_if(_estimators_has("partial_fit"))
     def partial_fit(self, X, y, classes=None):
