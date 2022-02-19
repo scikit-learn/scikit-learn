@@ -941,7 +941,7 @@ def _print_elapsed_time(source, message=None):
 
 
 def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
-    """Calculates how many rows can be processed within working_memory.
+    """Calculate how many rows can be processed within `working_memory`.
 
     Parameters
     ----------
@@ -951,17 +951,18 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     max_n_rows : int, default=None
         The maximum return value.
     working_memory : int or float, default=None
-        The number of rows to fit inside this number of MiB will be returned.
-        When None (default), the value of
+        The number of rows to fit inside this number of MiB will be
+        returned. When None (default), the value of
         ``sklearn.get_config()['working_memory']`` is used.
 
     Returns
     -------
-    int or the value of n_samples
+    int
+        The number of rows which can be processed within `working_memory`.
 
     Warns
     -----
-    Issues a UserWarning if ``row_bytes`` exceeds ``working_memory`` MiB.
+    Issues a UserWarning if `row_bytes exceeds `working_memory` MiB.
     """
 
     if working_memory is None:

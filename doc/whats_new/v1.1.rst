@@ -586,6 +586,13 @@ Changelog
   its square root.
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.multiclass`
+.........................
+
+- |Enhancement| :class:`multiclass.OneVsRestClassifier` now supports a `verbose`
+  parameter so progress on fitting can be seen.
+  :pr:`22508` by :user:`Chris Combs <combscCode>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
