@@ -9,6 +9,8 @@ from ..utils.extmath import squared_norm
 class LinearModelLoss:
     """General class for loss functions with raw_prediction = X @ coef + intercept.
 
+    Note that raw_prediction is also known as linear predictor.
+
     The loss is the sum of per sample losses and includes a term for L2
     regularization::
 
