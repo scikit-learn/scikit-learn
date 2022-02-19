@@ -23,6 +23,7 @@ from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
 from ...utils import check_scalar, check_array
 from ...utils.validation import check_is_fitted, _check_sample_weight
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._linear_loss import LinearModelLoss
 
 
@@ -300,9 +301,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         if solver == "lbfgs":
             func = self._linear_loss.loss_gradient
             l2_reg_strength = self.alpha
-            # TODO: In the future, we would like
-            # n_threads = _openmp_effective_n_threads()
-            n_threads = 1
+            n_threads = _openmp_effective_n_threads()
 
             opt_res = scipy.optimize.minimize(
                 func,
