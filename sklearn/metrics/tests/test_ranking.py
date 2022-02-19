@@ -180,8 +180,7 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr, min_tpr):
         idx_in = idx_out - 1
         x_interp_tpr = [fpr[idx_in], fpr[idx_out]]
         y_interp_tpr = [tpr[idx_in], tpr[idx_out]]
-        new_tpr = np.append(new_tpr,
-                            np.interp(max_fpr, x_interp_tpr, y_interp_tpr))
+        new_tpr = np.append(new_tpr, np.interp(max_fpr, x_interp_tpr, y_interp_tpr))
 
         further_cut_new_tpr = new_tpr[new_tpr >= min_tpr]
         if len(further_cut_new_tpr) == 0:
@@ -192,9 +191,9 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr, min_tpr):
         idx_out = idx_in - 1
         x_interp_fpr = [new_tpr[idx_out], new_tpr[idx_in]]
         y_interp_fpr = [new_fpr[idx_out], new_fpr[idx_in]]
-        further_cut_new_fpr = np.append(np.interp(min_tpr,
-                                                  x_interp_fpr, y_interp_fpr),
-                                        further_cut_new_fpr)
+        further_cut_new_fpr = np.append(
+            np.interp(min_tpr, x_interp_fpr, y_interp_fpr), further_cut_new_fpr
+        )
         return (further_cut_new_fpr, further_cut_new_tpr)
 
     new_fpr, new_tpr = _partial_roc(y_true, y_predict, max_fpr, min_tpr)
@@ -1792,32 +1791,24 @@ def test_partial_roc_auc_score():
     # case 1: max_fpr = 0.3
     assert roc_auc_score(y_true, y_scores, max_fpr=0.3) == 0.5
     # case 2: min_tpr = 0.5
-    assert_almost_equal(2/3, roc_auc_score(y_true, y_scores,
-                                           min_tpr=0.5), decimal=3)
+    assert_almost_equal(2 / 3, roc_auc_score(y_true, y_scores, min_tpr=0.5), decimal=3)
     # case 3: max_fpr = 0.9, min_tpr = 0.6
-    assert_almost_equal(0.6825,
-                        roc_auc_score(y_true, y_scores,
-                                      max_fpr=0.9, min_tpr=0.6), decimal=3)
+    assert_almost_equal(
+        0.6825, roc_auc_score(y_true, y_scores, max_fpr=0.9, min_tpr=0.6), decimal=3
+    )
 
     # 5. Compare two implementations
     y_true, y_pred, _ = make_prediction(binary=True)
     for max_fpr in np.linspace(0.1, 1, 5):
         for min_tpr in np.linspace(1e-4, 1 - 1e-4, 5):
             assert_almost_equal(
-                roc_auc_score(
-                    y_true,
-                    y_pred,
-                    max_fpr=max_fpr,
-                    min_tpr=min_tpr
-                ),
+                roc_auc_score(y_true, y_pred, max_fpr=max_fpr, min_tpr=min_tpr),
                 _partial_roc_auc_score(
-                    y_true,
-                    y_pred,
-                    max_fpr=max_fpr,
-                    min_tpr=min_tpr
+                    y_true, y_pred, max_fpr=max_fpr, min_tpr=min_tpr
                 ),
                 decimal=3,
-                err_msg=f'{max_fpr, min_tpr}')
+                err_msg=f"{max_fpr, min_tpr}",
+            )
 
 
 @pytest.mark.parametrize(
