@@ -1757,6 +1757,11 @@ def test_partial_roc_auc_score():
     # tpr = array([0. , 0.5, 1. , 1. ])
     y_scores = np.array([0.1, 0, 0.1, 0.01])
 
+    # 0. Check when inputs are None:
+    assert roc_auc_score(y_true, y_true, max_fpr=None, min_tpr=0) == 1
+    assert roc_auc_score(y_true, y_true, max_fpr=1, min_tpr=None) == 1
+    assert roc_auc_score(y_true, y_true, max_fpr=None, min_tpr=None) == 1
+
     # 1. Check functionality of full AUC for the perfect prediction case:
     assert roc_auc_score(y_true, y_true, max_fpr=1, min_tpr=0) == 1
     assert roc_auc_score(y_true, y_true, max_fpr=1) == 1
@@ -1809,6 +1814,19 @@ def test_partial_roc_auc_score():
                 decimal=3,
                 err_msg=f"{max_fpr, min_tpr}",
             )
+
+    # 6. Check multiclass and binary high dim cases:
+    y_true = np.array([0, 3, 1, 2])
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_true, max_fpr=0.8, min_tpr=None)
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_true, max_fpr=None, min_tpr=0.1)
+
+    y_true = np.array([[0, 0, 1, 1], [0, 1, 0, 1]])
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_true, max_fpr=0.8, min_tpr=None)
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_true, max_fpr=None, min_tpr=0.1)
 
 
 @pytest.mark.parametrize(
