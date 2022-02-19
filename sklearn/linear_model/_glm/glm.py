@@ -11,56 +11,52 @@ import numbers
 import numpy as np
 import scipy.optimize
 
+from ..._loss.loss import (
+    BaseLoss,
+    HalfGammaLoss,
+    HalfPoissonLoss,
+    HalfSquaredError,
+    HalfTweedieLoss,
+    HalfTweedieLossIdentity,
+)
 from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
-from ...utils import check_scalar
+from ...utils import check_scalar, check_array
 from ...utils.validation import check_is_fitted, _check_sample_weight
-from ..._loss.glm_distribution import (
-    ExponentialDispersionModel,
-    TweedieDistribution,
-    EDM_DISTRIBUTIONS,
-)
-from .link import (
-    BaseLink,
-    IdentityLink,
-    LogLink,
-)
+from .._linear_loss import LinearModelLoss
 
 
-def _safe_lin_pred(X, coef):
-    """Compute the linear predictor taking care if intercept is present."""
-    if coef.size == X.shape[1] + 1:
-        return X @ coef[1:] + coef[0]
-    else:
-        return X @ coef
+class HalfInverseGaussianLoss(HalfTweedieLoss):
+    """Half inverse Gaussian deviance loss with log-link, for regression.
+
+    This is equivalent to HalfTweedieLoss(power=3).
+    """
+
+    def __init__(self, sample_weight=None):
+        super().__init__(sample_weight=sample_weight, power=3)
 
 
-def _y_pred_deviance_derivative(coef, X, y, weights, family, link):
-    """Compute y_pred and the derivative of the deviance w.r.t coef."""
-    lin_pred = _safe_lin_pred(X, coef)
-    y_pred = link.inverse(lin_pred)
-    d1 = link.inverse_derivative(lin_pred)
-    temp = d1 * family.deviance_derivative(y, y_pred, weights)
-    if coef.size == X.shape[1] + 1:
-        devp = np.concatenate(([temp.sum()], temp @ X))
-    else:
-        devp = temp @ X  # same as X.T @ temp
-    return y_pred, devp
-
-
+# TODO: We could allow strings for base_loss_class (as before for the now removed
+# family parameter): 'normal', 'poisson', 'gamma', 'inverse-gaussian'
 class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
-    GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as y_pred=h(X*w).
-    Therefore, the fit minimizes the following objective function with L2
-    priors as regularizer::
+    GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at fitting and
+    predicting the mean of the target y as y_pred=h(X*w) with coefficients w.
+    Therefore, the fit minimizes the following objective function with L2priors as
+    regularizer::
 
-            1/(2*sum(s)) * deviance(y, h(X*w); s)
-            + 1/2 * alpha * |w|_2
+        1/(2*sum(s_i)) * sum(s_i * deviance(y_i, h(x_i*w)) + 1/2 * alpha * ||w||_2^2
 
-    with inverse link function h and s=sample_weight.
+    with inverse link function h, s=sample_weight and per observation (unit) deviance
+    deviance(y_i, h(x_i*w). Note that for an EDM 1/2 * deviance is the negative
+    log-likelihood up to a constant (in w) term.
     The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
+
+    Instead of implementing the EDM family and a link function seperately, we directly
+    use the loss functions `from sklearn._loss` which have the link functions included
+    in them for performance reasons. We pick the loss functions that implement
+    (1/2 times) EDM deviances.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
@@ -79,19 +75,28 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    family : {'normal', 'poisson', 'gamma', 'inverse-gaussian'} \
-            or an ExponentialDispersionModel instance, default='normal'
-        The distributional assumption of the GLM, i.e. which distribution from
-        the EDM, specifies the loss function to be minimized.
+    base_loss_class : subclass of BaseLoss, default=HalfSquaredError
+        A `base_loss_class` contains a specific loss function as well as the link
+        function. The loss to be minimized specifies the distributional assumption of
+        the GLM, i.e. the distribution from the EDM. Here are some examples:
 
-    link : {'auto', 'identity', 'log'} or an instance of class BaseLink, \
-            default='auto'
+        =======================  ========  ==========================
+        base_loss_class          Link       Target Domain
+        =======================  ========  ==========================
+        HalfSquaredError         identity  y any real number
+        HalfPoissonLoss          log       0 <= y
+        HalfGammaLoss            log       0 < y
+        HalfInverseGaussianLoss  log       0 < y
+        HalfTweedieLoss          log       dependend on tweedie power
+        =======================  ========  ==========================
+
         The link function of the GLM, i.e. mapping from linear predictor
-        `X @ coeff + intercept` to prediction `y_pred`. Option 'auto' sets
-        the link depending on the chosen family as follows:
+        `X @ coeff + intercept` to prediction `y_pred`. For instance, with a log link,
+        we have `y_pred = exp(X @ coeff + intercept)`.
 
-        - 'identity' for Normal distribution
-        - 'log' for Poisson,  Gamma and Inverse Gaussian distributions
+    base_loss_params : dictionary, default={}
+        Arguments to be passed to base_loss_class, e.g. {"power": 1.5} with
+        `base_loss_class=HalfTweedieLoss`.
 
     solver : 'lbfgs', default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -136,8 +141,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         *,
         alpha=1.0,
         fit_intercept=True,
-        family="normal",
-        link="auto",
+        base_loss_class=HalfSquaredError,
+        base_loss_params={},
         solver="lbfgs",
         max_iter=100,
         tol=1e-4,
@@ -146,8 +151,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.family = family
-        self.link = link
+        self.base_loss_class = base_loss_class
+        self.base_loss_params = base_loss_params
         self.solver = solver
         self.max_iter = max_iter
         self.tol = tol
@@ -173,46 +178,12 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        if isinstance(self.family, ExponentialDispersionModel):
-            self._family_instance = self.family
-        elif self.family in EDM_DISTRIBUTIONS:
-            self._family_instance = EDM_DISTRIBUTIONS[self.family]()
-        else:
+        if not issubclass(self.base_loss_class, BaseLoss):
             raise ValueError(
-                "The family must be an instance of class"
-                " ExponentialDispersionModel or an element of"
-                " ['normal', 'poisson', 'gamma', 'inverse-gaussian']"
-                "; got (family={0})".format(self.family)
+                "The base_loss_class must be an subclass of"
+                " sklearn._loss.loss.BaseLoss; ; got"
+                f" (base_loss_class={self.base_loss})"
             )
-
-        # Guarantee that self._link_instance is set to an instance of
-        # class BaseLink
-        if isinstance(self.link, BaseLink):
-            self._link_instance = self.link
-        else:
-            if self.link == "auto":
-                if isinstance(self._family_instance, TweedieDistribution):
-                    if self._family_instance.power <= 0:
-                        self._link_instance = IdentityLink()
-                    if self._family_instance.power >= 1:
-                        self._link_instance = LogLink()
-                else:
-                    raise ValueError(
-                        "No default link known for the "
-                        "specified distribution family. Please "
-                        "set link manually, i.e. not to 'auto'; "
-                        "got (link='auto', family={})".format(self.family)
-                    )
-            elif self.link == "identity":
-                self._link_instance = IdentityLink()
-            elif self.link == "log":
-                self._link_instance = LogLink()
-            else:
-                raise ValueError(
-                    "The link must be an instance of class Link or "
-                    "an element of ['auto', 'identity', 'log']; "
-                    "got (link={0})".format(self.link)
-                )
 
         check_scalar(
             self.alpha,
@@ -257,9 +228,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "The argument warm_start must be bool; got {0}".format(self.warm_start)
             )
 
-        family = self._family_instance
-        link = self._link_instance
-
         X, y = self._validate_data(
             X,
             y,
@@ -268,58 +236,66 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
+        # required by losses
+        y = check_array(y, dtype=[np.float64, np.float32], order="C", ensure_2d=False)
 
-        weights = _check_sample_weight(sample_weight, X)
+        # TODO: We could support samples_weight=None as the losses support it.
+        # Note that _check_sample_weight calls check_array(order="C") required by
+        # losses.
+        sample_weight = _check_sample_weight(
+            sample_weight, X, dtype=[np.float64, np.float32]
+        )
 
-        _, n_features = X.shape
+        n_samples, n_features = X.shape
 
-        if not np.all(family.in_y_range(y)):
+        self._linear_loss = LinearModelLoss(
+            base_loss=self._get_base_loss_instance(),
+            fit_intercept=self.fit_intercept,
+        )
+
+        if not self._linear_loss.base_loss.in_y_true_range(y):
             raise ValueError(
-                "Some value(s) of y are out of the valid range for family {0}".format(
-                    family.__class__.__name__
-                )
+                "Some value(s) of y are out of the valid range of the loss"
+                f" {self.base_loss_class.__name__}."
             )
+
         # TODO: if alpha=0 check that X is not rank deficient
 
-        # rescaling of sample_weight
-        #
-        # IMPORTANT NOTE: Since we want to minimize
-        # 1/(2*sum(sample_weight)) * deviance + L2,
-        # deviance = sum(sample_weight * unit_deviance),
-        # we rescale weights such that sum(weights) = 1 and this becomes
-        # 1/2*deviance + L2 with deviance=sum(weights * unit_deviance)
-        weights = weights / weights.sum()
+        # IMPORTANT NOTE: Rescaling of sample_weight:
+        # We want to minimize
+        #     obj = 1/(2*sum(sample_weight)) * sum(sample_weight * deviance)
+        #         + 1/2 * alpha * L2,
+        # with
+        #     deviance = 2 * loss.
+        # The objective is invariant to multiplying sample_weight by a constant. We
+        # choose this constant such that sum(sample_weight) = 1. Thus, we end up with
+        #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
+        # Note that LinearModelLoss.loss() computes sum(sample_weight * loss).
+        sample_weight = sample_weight / sample_weight.sum()
 
         if self.warm_start and hasattr(self, "coef_"):
             if self.fit_intercept:
-                coef = np.concatenate((np.array([self.intercept_]), self.coef_))
+                # LinearModelLoss needs intercept at the end of coefficient array.
+                coef = np.concatenate((self.coef_, np.array([self.intercept_])))
             else:
                 coef = self.coef_
         else:
             if self.fit_intercept:
-                coef = np.zeros(n_features + 1)
-                coef[0] = link(np.average(y, weights=weights))
-            else:
-                coef = np.zeros(n_features)
-
-        # algorithms for optimization
-
-        if solver == "lbfgs":
-
-            def func(coef, X, y, weights, alpha, family, link):
-                y_pred, devp = _y_pred_deviance_derivative(
-                    coef, X, y, weights, family, link
+                coef = np.zeros(n_features + 1, dtype=X.dtype)
+                coef[-1] = self._linear_loss.base_loss.link.link(
+                    np.average(y, weights=sample_weight)
                 )
-                dev = family.deviance(y, y_pred, weights)
-                # offset if coef[0] is intercept
-                offset = 1 if self.fit_intercept else 0
-                coef_scaled = alpha * coef[offset:]
-                obj = 0.5 * dev + 0.5 * (coef[offset:] @ coef_scaled)
-                objp = 0.5 * devp
-                objp[offset:] += coef_scaled
-                return obj, objp
+            else:
+                coef = np.zeros(n_features, dtype=X.dtype)
 
-            args = (X, y, weights, self.alpha, family, link)
+        # Algorithms for optimization:
+        # Note again that our losses implement 1/2 * deviance.
+        if solver == "lbfgs":
+            func = self._linear_loss.loss_gradient
+            l2_reg_strength = self.alpha
+            # TODO: In the future, we would like
+            # n_threads = _openmp_effective_n_threads()
+            n_threads = 1
 
             opt_res = scipy.optimize.minimize(
                 func,
@@ -332,14 +308,14 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "gtol": self.tol,
                     "ftol": 1e3 * np.finfo(float).eps,
                 },
-                args=args,
+                args=(X, y, sample_weight, l2_reg_strength, n_threads),
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
 
         if self.fit_intercept:
-            self.intercept_ = coef[0]
-            self.coef_ = coef[1:]
+            self.intercept_ = coef[-1]
+            self.coef_ = coef[:-1]
         else:
             # set intercept to zero as the other linear models do
             self.intercept_ = 0.0
@@ -349,6 +325,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     def _linear_predictor(self, X):
         """Compute the linear_predictor = `X @ coef_ + intercept_`.
+
+        Note that we often use the term raw_prediction instead of linear predictor.
 
         Parameters
         ----------
@@ -385,8 +363,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Returns predicted values.
         """
         # check_array is done in _linear_predictor
-        eta = self._linear_predictor(X)
-        y_pred = self._link_instance.inverse(eta)
+        raw_prediction = self._linear_predictor(X)
+        y_pred = self._linear_loss.base_loss.link.inverse(raw_prediction)
         return y_pred
 
     def score(self, X, y, sample_weight=None):
@@ -394,7 +372,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         D^2 is a generalization of the coefficient of determination R^2.
         R^2 uses squared error and D^2 deviance. Note that those two are equal
-        for ``family='normal'``.
+        for ``base_loss_class=HalfSquaredError``.
 
         D^2 is defined as
         :math:`D^2 = 1-\\frac{D(y_{true},y_{pred})}{D_{null}}`,
@@ -423,24 +401,57 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # Note, default score defined in RegressorMixin is R^2 score.
         # TODO: make D^2 a score function in module metrics (and thereby get
         #       input validation and so on)
-        weights = _check_sample_weight(sample_weight, X)
-        y_pred = self.predict(X)
-        dev = self._family_instance.deviance(y, y_pred, weights=weights)
-        y_mean = np.average(y, weights=weights)
-        dev_null = self._family_instance.deviance(y, y_mean, weights=weights)
-        return 1 - dev / dev_null
+        raw_prediction = self._linear_predictor(X)  # validates X
+        # required by losses
+        y = check_array(y, dtype=[np.float64, np.float32], order="C", ensure_2d=False)
+
+        if sample_weight is not None:
+            # Note that _check_sample_weight calls check_array(order="C") required by
+            # losses.
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=[np.float64, np.float32]
+            )
+
+        base_loss = self._linear_loss.base_loss
+
+        if not base_loss.in_y_true_range(y):
+            raise ValueError(
+                "Some value(s) of y are out of the valid range of the loss"
+                f" {self.base_loss_class.__name__}."
+            )
+
+        # Note that constant_to_optimal_zero is already multiplied by sample_weight.
+        constant = np.mean(base_loss.constant_to_optimal_zero(y_true=y))
+        if sample_weight is not None:
+            constant *= sample_weight.shape[0] / np.sum(sample_weight)
+
+        # Missing factor of 2 in deviance cancels out.
+        deviance = base_loss(
+            y_true=y,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            n_threads=1,
+        )
+        y_mean = base_loss.link.link(np.average(y, weights=sample_weight))
+        deviance_null = base_loss(
+            y_true=y,
+            raw_prediction=np.tile(y_mean, y.shape[0]),
+            sample_weight=sample_weight,
+            n_threads=1,
+        )
+        return 1 - (deviance + constant) / (deviance_null + constant)
 
     def _more_tags(self):
-        # create the _family_instance if fit wasn't called yet.
-        if hasattr(self, "_family_instance"):
-            _family_instance = self._family_instance
-        elif isinstance(self.family, ExponentialDispersionModel):
-            _family_instance = self.family
-        elif self.family in EDM_DISTRIBUTIONS:
-            _family_instance = EDM_DISTRIBUTIONS[self.family]()
-        else:
-            raise ValueError
-        return {"requires_positive_y": not _family_instance.in_y_range(-1.0)}
+        # create instance of BaseLoss if fit wasn't called yet.
+        base_loss = self.base_loss_class(**self.base_loss_params)
+        return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
+
+    def _get_base_loss_instance(self):
+        # This is only necessary because of the link and power arguments of the
+        # TweedieRegressor.
+        # Note that we do not need to pass sample_weight to the loss class as this is
+        # only needed to set loss.constant_hessian on which GLMs do not rely.
+        return self.base_loss_class(**self.base_loss_params)
 
 
 class PoissonRegressor(GeneralizedLinearRegressor):
@@ -540,28 +551,22 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         warm_start=False,
         verbose=0,
     ):
-
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            family="poisson",
-            link="log",
+            base_loss_class=HalfPoissonLoss,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
             verbose=verbose,
         )
 
-    @property
-    def family(self):
-        """Return the string `'poisson'`."""
-        # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
-        return "poisson"
-
-    @family.setter
-    def family(self, value):
-        if value != "poisson":
-            raise ValueError("PoissonRegressor.family must be 'poisson'!")
+    def _get_base_loss_instance(self):
+        if self.base_loss_class != HalfPoissonLoss:
+            raise ValueError(
+                "PoissonRegressor.base_loss_class must be HalfPoissonLoss!"
+            )
+        return HalfPoissonLoss()
 
 
 class GammaRegressor(GeneralizedLinearRegressor):
@@ -661,28 +666,20 @@ class GammaRegressor(GeneralizedLinearRegressor):
         warm_start=False,
         verbose=0,
     ):
-
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            family="gamma",
-            link="log",
+            base_loss_class=HalfGammaLoss,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
             verbose=verbose,
         )
 
-    @property
-    def family(self):
-        """Return the family of the regressor."""
-        # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
-        return "gamma"
-
-    @family.setter
-    def family(self, value):
-        if value != "gamma":
-            raise ValueError("GammaRegressor.family must be 'gamma'!")
+    def _get_base_loss_instance(self):
+        if self.base_loss_class != HalfGammaLoss:
+            raise ValueError("GammaRegressor.base_loss_class must be HalfGammaLoss!")
+        return HalfGammaLoss()
 
 
 class TweedieRegressor(GeneralizedLinearRegressor):
@@ -731,10 +728,11 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
         `X @ coeff + intercept` to prediction `y_pred`. Option 'auto' sets
-        the link depending on the chosen family as follows:
+        the link depending on the chosen base_loss_class (EDM family) as follows:
 
-        - 'identity' for Normal distribution
-        - 'log' for Poisson,  Gamma and Inverse Gaussian distributions
+        - 'identity' for ``power <= 0``, e.g. for the Normal distribution
+        - 'log' for ``power > 0``, e.g. for Poisson,  Gamma and Inverse Gaussian
+          distributions
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -813,33 +811,48 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         warm_start=False,
         verbose=0,
     ):
-
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            family=TweedieDistribution(power=power),
-            link=link,
+            base_loss_class=HalfTweedieLoss,
+            base_loss_params={"power": power},
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
             verbose=verbose,
         )
+        self.link = link
+        self.power = power
 
-    @property
-    def family(self):
-        """Return the family of the regressor."""
-        # We use a property with a setter to make sure that the family is
-        # always a Tweedie distribution, and that self.power and
-        # self.family.power are identical by construction.
-        dist = TweedieDistribution(power=self.power)
-        # TODO: make the returned object immutable
-        return dist
+    def _get_base_loss_instance(self):
+        # This is only necessary because of the link and power arguments of the
+        # TweedieRegressor.
+        if self.base_loss_class not in [HalfTweedieLoss, HalfTweedieLossIdentity]:
+            raise ValueError(
+                "TweedieRegressor.base_loss_class must be HalfTweedieLoss or"
+                " HalfTweedieLossIdentity!"
+            )
 
-    @family.setter
-    def family(self, value):
-        if isinstance(value, TweedieDistribution):
-            self.power = value.power
+        if list(self.base_loss_params.keys()) != ["power"]:
+            raise ValueError(
+                "TweedieRegressor must have base_loss_params={'power': some float}."
+            )
+        # In case parameter power was reset, make it consistent with base_loss_param
+        self.base_loss_params["power"] = self.power
+
+        if self.link == "auto":
+            if self.power <= 0:
+                # identity link
+                return HalfTweedieLossIdentity(power=self.power)
+            else:
+                # log link
+                return HalfTweedieLoss(power=self.power)
+        elif self.link == "log":
+            return HalfTweedieLoss(power=self.power)
+        elif self.link == "identity":
+            return HalfTweedieLossIdentity(power=self.power)
         else:
-            raise TypeError(
-                "TweedieRegressor.family must be of type TweedieDistribution!"
+            raise ValueError(
+                "The link must be an element of ['auto', 'identity', 'log']; "
+                "got (link={0})".format(self.link)
             )

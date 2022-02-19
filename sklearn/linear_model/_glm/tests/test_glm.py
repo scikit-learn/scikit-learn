@@ -2,27 +2,27 @@
 #
 # License: BSD 3 clause
 
+import re
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 import warnings
 
+from sklearn._loss.link import IdentityLink, LogLink
+from sklearn._loss.loss import (
+    HalfGammaLoss,
+    HalfPoissonLoss,
+    HalfSquaredError,
+    HalfTweedieLoss,
+    HalfTweedieLossIdentity,
+)
 from sklearn.datasets import make_regression
 from sklearn.linear_model._glm import GeneralizedLinearRegressor
+from sklearn.linear_model._glm.glm import HalfInverseGaussianLoss
 from sklearn.linear_model import TweedieRegressor, PoissonRegressor, GammaRegressor
-from sklearn.linear_model._glm.link import (
-    IdentityLink,
-    LogLink,
-)
-from sklearn._loss.glm_distribution import (
-    TweedieDistribution,
-    NormalDistribution,
-    PoissonDistribution,
-    GammaDistribution,
-    InverseGaussianDistribution,
-)
 from sklearn.linear_model import Ridge
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import d2_tweedie_score
 from sklearn.model_selection import train_test_split
 
 
@@ -55,59 +55,6 @@ def test_sample_weights_validation():
     msg = r"sample_weight.shape == \(2,\), expected \(1,\)!"
     with pytest.raises(ValueError, match=msg):
         glm.fit(X, y, weights)
-
-
-@pytest.mark.parametrize(
-    "name, instance",
-    [
-        ("normal", NormalDistribution()),
-        ("poisson", PoissonDistribution()),
-        ("gamma", GammaDistribution()),
-        ("inverse-gaussian", InverseGaussianDistribution()),
-    ],
-)
-def test_glm_family_argument(name, instance):
-    """Test GLM family argument set as string."""
-    y = np.array([0.1, 0.5])  # in range of all distributions
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(family=name, alpha=0).fit(X, y)
-    assert isinstance(glm._family_instance, instance.__class__)
-
-    glm = GeneralizedLinearRegressor(family="not a family")
-    with pytest.raises(ValueError, match="family must be"):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "name, instance", [("identity", IdentityLink()), ("log", LogLink())]
-)
-def test_glm_link_argument(name, instance):
-    """Test GLM link argument set as string."""
-    y = np.array([0.1, 0.5])  # in range of all distributions
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(family="normal", link=name).fit(X, y)
-    assert isinstance(glm._link_instance, instance.__class__)
-
-    glm = GeneralizedLinearRegressor(family="normal", link="not a link")
-    with pytest.raises(ValueError, match="link must be"):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "family, expected_link_class",
-    [
-        ("normal", IdentityLink),
-        ("poisson", LogLink),
-        ("gamma", LogLink),
-        ("inverse-gaussian", LogLink),
-    ],
-)
-def test_glm_link_auto(family, expected_link_class):
-    # Make sure link='auto' delivers the expected link function
-    y = np.array([0.1, 0.5])  # in range of all distributions
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(family=family, link="auto").fit(X, y)
-    assert isinstance(glm._link_instance, expected_link_class)
 
 
 @pytest.mark.parametrize("fit_intercept", ["not bool", 1, 0, [True]])
@@ -213,8 +160,7 @@ def test_glm_identity_regression(fit_intercept):
     y = np.dot(X, coef)
     glm = GeneralizedLinearRegressor(
         alpha=0,
-        family="normal",
-        link="identity",
+        base_loss_class=HalfSquaredError,
         fit_intercept=fit_intercept,
         tol=1e-12,
     )
@@ -229,8 +175,10 @@ def test_glm_identity_regression(fit_intercept):
 
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("alpha", [0.0, 1.0])
-@pytest.mark.parametrize("family", ["normal", "poisson", "gamma"])
-def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
+@pytest.mark.parametrize(
+    "base_loss_class", [HalfSquaredError, HalfPoissonLoss, HalfGammaLoss]
+)
+def test_glm_sample_weight_consistentcy(fit_intercept, alpha, base_loss_class):
     """Test that the impact of sample_weight is consistent"""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
@@ -238,7 +186,7 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     glm_params = dict(
-        alpha=alpha, family=family, link="auto", fit_intercept=fit_intercept
+        alpha=alpha, base_loss_class=base_loss_class, fit_intercept=fit_intercept
     )
 
     glm = GeneralizedLinearRegressor(**glm_params).fit(X, y)
@@ -280,28 +228,32 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
-    "family",
+    "base_loss_class, base_loss_param",
     [
-        NormalDistribution(),
-        PoissonDistribution(),
-        GammaDistribution(),
-        InverseGaussianDistribution(),
-        TweedieDistribution(power=1.5),
-        TweedieDistribution(power=4.5),
+        (HalfPoissonLoss, {}),
+        (HalfGammaLoss, {}),
+        (HalfInverseGaussianLoss, {}),
+        (HalfTweedieLoss, {"power": 0}),
+        (HalfTweedieLoss, {"power": 1.5}),
+        (HalfTweedieLoss, {"power": 4.5}),
     ],
 )
-def test_glm_log_regression(fit_intercept, family):
+def test_glm_log_regression(fit_intercept, base_loss_class, base_loss_param):
     """Test GLM regression with log link on a simple dataset."""
     coef = [0.2, -0.1]
-    X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
+    X = np.array([[0, 1, 2, 3, 4], [1, 1, 1, 1, 1]]).T
     y = np.exp(np.dot(X, coef))
     glm = GeneralizedLinearRegressor(
-        alpha=0, family=family, link="log", fit_intercept=fit_intercept, tol=1e-7
+        alpha=0,
+        base_loss_class=base_loss_class,
+        base_loss_params=base_loss_param,
+        fit_intercept=fit_intercept,
+        tol=1e-8,
     )
     if fit_intercept:
-        res = glm.fit(X[:, 1:], y)
-        assert_allclose(res.coef_, coef[1:], rtol=1e-6)
-        assert_allclose(res.intercept_, coef[0], rtol=1e-6)
+        res = glm.fit(X[:, :-1], y)
+        assert_allclose(res.coef_, coef[:-1], rtol=1e-6)
+        assert_allclose(res.intercept_, coef[-1], rtol=1e-6)
     else:
         res = glm.fit(X, y)
         assert_allclose(res.coef_, coef, rtol=2e-6)
@@ -391,8 +343,7 @@ def test_normal_ridge_comparison(
 
     glm = GeneralizedLinearRegressor(
         alpha=alpha,
-        family="normal",
-        link="identity",
+        base_loss_class=HalfSquaredError,
         fit_intercept=fit_intercept,
         max_iter=300,
         tol=1e-5,
@@ -423,8 +374,7 @@ def test_poisson_glmnet():
     glm = GeneralizedLinearRegressor(
         alpha=1,
         fit_intercept=True,
-        family="poisson",
-        link="log",
+        base_loss_class=HalfPoissonLoss,
         tol=1e-7,
         max_iter=300,
     )
@@ -441,47 +391,107 @@ def test_convergence_warning(regression_data):
         est.fit(X, y)
 
 
-def test_poisson_regression_family(regression_data):
-    # Make sure the family attribute is read-only to prevent searching over it
-    # e.g. in a grid search
-    est = PoissonRegressor()
-    est.family == "poisson"
+@pytest.mark.parametrize(
+    "estimator, base_loss",
+    [(PoissonRegressor, HalfPoissonLoss), (GammaRegressor, HalfGammaLoss)],
+)
+def test_raise_on_reset_base_loss_class(regression_data, estimator, base_loss):
+    # Make sure to raise an appropriate error if base_loss_class was reset.
+    X, y = regression_data
 
-    msg = "PoissonRegressor.family must be 'poisson'!"
+    est = estimator()
+    est.base_loss_class = HalfSquaredError
+    msg = f"{estimator.__name__}.base_loss_class must be {base_loss.__name__}!"
     with pytest.raises(ValueError, match=msg):
-        est.family = 0
+        est.fit(X, y)
 
 
-def test_gamma_regression_family(regression_data):
-    # Make sure the family attribute is read-only to prevent searching over it
-    # e.g. in a grid search
-    est = GammaRegressor()
-    est.family == "gamma"
+def test_tweedie_raise_on_reset_base_loss_class(regression_data):
+    # Make sure to raise an appropriate error if base_loss_class or base_loss_params
+    # was inconsistently reset for TweedieDistribution
+    X, y = regression_data
+    # make y positive
+    y = np.abs(y) + 1.0
 
-    msg = "GammaRegressor.family must be 'gamma'!"
-    with pytest.raises(ValueError, match=msg):
-        est.family = 0
-
-
-def test_tweedie_regression_family(regression_data):
-    # Make sure the family attribute is always a TweedieDistribution and that
-    # the power attribute is properly updated
     power = 2.0
     est = TweedieRegressor(power=power)
-    assert isinstance(est.family, TweedieDistribution)
-    assert est.family.power == power
+    assert est.base_loss_class, HalfTweedieLoss
+    assert est.base_loss_params == {"power": power}
     assert est.power == power
 
+    # reset power
     new_power = 0
-    new_family = TweedieDistribution(power=new_power)
-    est.family = new_family
-    assert isinstance(est.family, TweedieDistribution)
-    assert est.family.power == new_power
-    assert est.power == new_power
+    est.power = new_power
+    est.fit(X, y)  # fit resets base_loss_param["power"]
+    assert est.power == est.base_loss_params["power"]
 
-    msg = "TweedieRegressor.family must be of type TweedieDistribution!"
-    with pytest.raises(TypeError, match=msg):
-        est.family = None
+    # reset base_loss_params
+    est.base_loss_params = {"should error": True}
+    msg = re.escape(
+        "TweedieRegressor must have base_loss_params={'power': some float}."
+    )
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
+
+    # reset base_loss_class
+    est = TweedieRegressor(power=power)
+    est.base_loss_class = HalfTweedieLossIdentity
+    est.fit(X, y)
+    est.base_loss_class = HalfSquaredError
+    msg = (
+        "TweedieRegressor.base_loss_class must be HalfTweedieLoss or"
+        " HalfTweedieLossIdentity!"
+    )
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "name, link_class", [("identity", IdentityLink), ("log", LogLink)]
+)
+def test_tweedie_link_argument(name, link_class):
+    """Test GLM link argument set as string."""
+    y = np.array([0.1, 0.5])  # in range of all distributions
+    X = np.array([[1], [2]])
+    glm = TweedieRegressor(power=1, link=name).fit(X, y)
+    assert isinstance(glm._linear_loss.base_loss.link, link_class)
+
+    glm = TweedieRegressor(power=1, link="not a link")
+    with pytest.raises(
+        ValueError,
+        match=re.escape("The link must be an element of ['auto', 'identity', 'log']"),
+    ):
+        glm.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "power, expected_link_class",
+    [
+        (0, IdentityLink),  # normal
+        (1, LogLink),  # poisson
+        (2, LogLink),  # gamma
+        (3, LogLink),  # inverse-gaussian
+    ],
+)
+def test_tweedie_link_auto(power, expected_link_class):
+    """Test that link='auto' delivers the expected link function"""
+    y = np.array([0.1, 0.5])  # in range of all distributions
+    X = np.array([[1], [2]])
+    glm = TweedieRegressor(link="auto", power=power).fit(X, y)
+    assert isinstance(glm._linear_loss.base_loss.link, expected_link_class)
+
+
+@pytest.mark.parametrize("power", [0, 1, 1.5, 2, 3])
+@pytest.mark.parametrize("link", ["log", "identity"])
+def test_tweedie_score(regression_data, power, link):
+    """Test that GLM score equals d2_tweedie_score for Tweedie losses."""
+    X, y = regression_data
+    # make y positive
+    y = np.abs(y) + 1.0
+    glm = TweedieRegressor(power=power, link=link).fit(X, y)
+    assert glm.score(X, y) == pytest.approx(
+        d2_tweedie_score(y, glm.predict(X), power=power)
+    )
 
 
 @pytest.mark.parametrize(
