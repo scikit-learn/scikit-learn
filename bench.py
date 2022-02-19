@@ -42,19 +42,23 @@ def main() -> None:
         transformers = {
             s: FastICA(n_components=7, random_state=0, svd_solver=s) for s in solvers
         }
+        total_reps = len(solvers) * len(X_shapes)
+        count = 0
         data = []
         for shape in X_shapes:
             X = np.random.rand(*shape)
             for s in transformers:
+                count += 1
                 start = time.time()
                 transformers[s].fit_transform(X)
+                print(f"Progress: {count}/{total_reps}")
                 data.append(
-                    {"shape": str(shape), "solver": s, "time": time.time() - start}
+                    {"shape": str(shape), "solver": str(s), "time": time.time() - start}
                 )
         df = pd.DataFrame(data)
 
     if args.save and not args.load:
-        df.to_pickle(args.save)
+        df.to_csv(args.save)
         print(f"Dataframe saved to {args.save}")
 
     chart = (
@@ -73,7 +77,7 @@ def main() -> None:
 
 def on_load(pth: str) -> pd.DataFrame:
     print(f"Dataframe loaded from {args.load}")
-    return pd.read_pickle(pth)
+    return pd.read_csv(pth)
 
 
 if __name__ == "__main__":
