@@ -1234,18 +1234,18 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
+    y_true, y_pred = np.squeeze(y_true), np.squeeze(y_pred)
     numerator = mean_tweedie_deviance(
         y_true, y_pred, sample_weight=sample_weight, power=power
     )
 
-    y_avg = np.average(y_true, weights=sample_weight)
+    y_avg = np.full_like(y_true, np.average(y_true, weights=sample_weight))
     denominator = mean_tweedie_deviance(
         y_true, y_avg, sample_weight=sample_weight, power=power
     )
