@@ -35,6 +35,12 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import NuSVR
 
 
+pytestmark = pytest.mark.filterwarnings(
+    # TODO: Remove when issue #22458 is resolved
+    "ignore:`max_features='auto'` has been deprecated in 1.1"
+)
+
+
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier, GradientBoostingRegressor]
 
 # toy sample
