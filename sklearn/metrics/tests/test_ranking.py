@@ -166,13 +166,6 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr, min_tpr):
 
     def _partial_roc(y_true, y_predict, max_fpr, min_tpr):
         fpr, tpr, _ = roc_curve(y_true, y_predict)
-
-        # in this test, we don't check None cases
-        if max_fpr is None:
-            max_fpr = 1.0
-        if min_tpr is None:
-            min_tpr = 0.0
-
         new_fpr = fpr[fpr <= max_fpr]
         new_fpr = np.append(new_fpr, max_fpr)
         new_tpr = tpr[fpr <= max_fpr]
