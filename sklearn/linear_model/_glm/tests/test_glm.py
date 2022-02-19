@@ -161,6 +161,25 @@ def test_glm_warm_start_argument(warm_start):
         glm.fit(X, y)
 
 
+@pytest.mark.parametrize(
+    "glm",
+    [
+        GeneralizedLinearRegressor(
+            base_loss_class=HalfTweedieLoss, base_loss_params={"power": 3}
+        ),
+        PoissonRegressor(),
+        GammaRegressor(),
+        TweedieRegressor(power=1.5),
+    ],
+)
+def test_glm_wrong_y_range(glm):
+    y = np.array([-1, 2])
+    X = np.array([[1], [1]])
+    msg = r"Some value\(s\) of y are out of the valid range of the loss"
+    with pytest.raises(ValueError, match=msg):
+        glm.fit(X, y)
+
+
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_glm_identity_regression(fit_intercept):
     """Test GLM regression with identity link on a simple dataset."""
