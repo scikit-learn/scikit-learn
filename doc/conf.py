@@ -166,7 +166,7 @@ html_theme = "scikit-learn-modern"
 html_theme_options = {
     "google_analytics": True,
     "mathjax_path": mathjax_path,
-    "link_to_live_dev_in_nav_bar": not parsed_version.is_devrelease,
+    "link_to_live_dev_in_navbar": not parsed_version.is_devrelease,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.

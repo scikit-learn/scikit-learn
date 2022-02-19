@@ -6,7 +6,7 @@
   {%- set top_container_cls = "sk-landing-container" %}
 {%- endif %}
 
-{% if theme_link_to_live_dev_in_nav_bar|tobool %}
+{% if theme_link_to_live_dev_in_navbar|tobool %}
   {%- set development_link = "https://scikit-learn.org/dev/developers/index.html" %}
 {%- else %}
   {%- set development_link = pathto('developers/index') %}
