@@ -264,7 +264,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy black==21.6b0
+        pip install pytest pytest-cov flake8 mypy black==22.1.0
 
 .. _upstream:
 
@@ -934,8 +934,8 @@ Monitoring performance
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
 `asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
-performance of a selection of common estimators and functions. You can view 
-these benchmarks on the `scikit-learn benchmark page <https://scikit-learn.org/scikit-learn-benchmarks>`_. 
+performance of a selection of common estimators and functions. You can view
+these benchmarks on the `scikit-learn benchmark page <https://scikit-learn.org/scikit-learn-benchmarks>`_.
 The corresponding benchmark suite can be found in the `scikit-learn/asv_benchmarks` directory.
 
 To use all features of asv, you will need either `conda` or `virtualenv`. For
