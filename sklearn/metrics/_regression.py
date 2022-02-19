@@ -19,7 +19,7 @@ the lower the better.
 #          Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
-#          Christian Lorentzen <lorentzen.ch@googlemail.com>
+#          Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
 #          Uttam kumar <bajiraouttamsinha@gmail.com>
 #          Sylvain Marie <sylvain.marie@se.com>
