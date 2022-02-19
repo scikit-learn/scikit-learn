@@ -6,12 +6,18 @@
   {%- set top_container_cls = "sk-landing-container" %}
 {%- endif %}
 
+{% if theme_link_to_live_dev_in_nav_bar|tobool %}
+  {%- set development_link = "https://scikit-learn.org/dev/developers/index.html" %}
+{%- else %}
+  {%- set development_link = pathto('developers/index') %}
+{%- endif %}
+
 {%- set drop_down_navigation = [
   ('Getting Started', pathto('getting_started')),
   ('Tutorial', pathto('tutorial/index')),
   ("What's new", pathto('whats_new/v' + version)),
   ('Glossary', pathto('glossary')),
-  ('Development', 'https://scikit-learn.org/dev/developers/index.html'),
+  ('Development', development_link ),
   ('FAQ', pathto('faq')),
   ('Support', pathto('support')),
   ('Related packages', pathto('related_projects')),
