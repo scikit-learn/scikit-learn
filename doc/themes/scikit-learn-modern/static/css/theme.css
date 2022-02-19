@@ -650,14 +650,16 @@ table.longtable tr.row-odd {
   overflow: auto;
 }
 
-code.descname {
+span.descname {
   font-weight: bold;
   background-color: transparent;
   padding: 0;
+  font-family: monospace;
 }
 
-code.descclassname {
+span.descclassname {
   background-color: transparent;
+  font-family: monospace;
 }
 
 .viewcode-link {
@@ -714,8 +716,9 @@ dl.field-list > dt:after {
 
 .classifier::before {
   font-style: normal;
-  margin: 0.3em;
+  margin: 0 0.3em;
   content: ":";
+  display: inline-block;
 }
 
 dd {
@@ -787,12 +790,16 @@ div.admonition p.admonition-title + p, div.deprecated p {
 }
 
 div.admonition, div.deprecated,
-div.versionchanged, div.versionadded{
+div.versionchanged {
   margin-top: 0.5rem;
   padding: 0.5rem;
   border-radius: 0.5rem;
   margin-bottom: 0.5rem;
   border: 1px solid #ddd;
+}
+
+div.versionadded {
+  margin: 1rem 0;
 }
 
 div.admonition {
@@ -845,7 +852,8 @@ div.body dd > p {
     hyphens: none;
 }
 
-img.align-center, .figure.align-center, object.align-center {
+img.align-center, figure.align-center,
+.figure.align-center, object.align-center {
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -853,7 +861,8 @@ img.align-center, .figure.align-center, object.align-center {
   text-align: center;
 }
 
-img.align-right, .figure.align-right, object.align-right {
+img.align-right, figure.align-right,
+.figure.align-right, object.align-right {
   clear: right;
   float: right;
   margin-left: 1em;
@@ -1231,7 +1240,7 @@ table.sk-sponsor-table td {
   text-align: center
 }
 
-/* pygments - highlightning */
+/* pygments - highlighting */
 
 .highlight .hll { background-color: #ffffcc }
 .highlight  { background: #f8f8f8; }
