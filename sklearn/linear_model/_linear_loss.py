@@ -196,13 +196,13 @@ class LinearModelLoss:
 
         if not self.base_loss.is_multiclass:
             loss += 0.5 * l2_reg_strength * (weights @ weights)
-            grad = np.empty_like(coef, dtype=X.dtype)
+            grad = np.empty_like(coef, dtype=weights.dtype)
             grad[:n_features] = X.T @ grad_per_sample + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[-1] = grad_per_sample.sum()
         else:
             loss += 0.5 * l2_reg_strength * squared_norm(weights)
-            grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
+            grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_per_sample.shape = (n_samples, n_classes)
             grad[:, :n_features] = grad_per_sample.T @ X + l2_reg_strength * weights
             if self.fit_intercept:
@@ -252,13 +252,13 @@ class LinearModelLoss:
         )
 
         if not self.base_loss.is_multiclass:
-            grad = np.empty_like(coef, dtype=X.dtype)
+            grad = np.empty_like(coef, dtype=weights.dtype)
             grad[:n_features] = X.T @ grad_per_sample + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[-1] = grad_per_sample.sum()
             return grad
         else:
-            grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
+            grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # gradient.shape = (n_samples, n_classes)
             grad[:, :n_features] = grad_per_sample.T @ X + l2_reg_strength * weights
             if self.fit_intercept:
@@ -311,7 +311,7 @@ class LinearModelLoss:
                 sample_weight=sample_weight,
                 n_threads=n_threads,
             )
-            grad = np.empty_like(coef, dtype=X.dtype)
+            grad = np.empty_like(coef, dtype=weights.dtype)
             grad[:n_features] = X.T @ gradient + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[-1] = gradient.sum()
@@ -358,7 +358,7 @@ class LinearModelLoss:
                 sample_weight=sample_weight,
                 n_threads=n_threads,
             )
-            grad = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
+            grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             grad[:, :n_features] = gradient.T @ X + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[:, -1] = gradient.sum(axis=0)
@@ -398,7 +398,7 @@ class LinearModelLoss:
                     tmp *= sample_weight[:, np.newaxis]
                 # hess_prod = empty_like(grad), but we ravel grad below and this
                 # function is run after that.
-                hess_prod = np.empty((n_classes, n_dof), dtype=X.dtype, order="F")
+                hess_prod = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
                 hess_prod[:, :n_features] = tmp.T @ X + l2_reg_strength * s
                 if self.fit_intercept:
                     hess_prod[:, -1] = tmp.sum(axis=0)

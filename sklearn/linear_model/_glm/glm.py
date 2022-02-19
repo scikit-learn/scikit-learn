@@ -236,15 +236,21 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
+
         # required by losses
-        y = check_array(y, dtype=[np.float64, np.float32], order="C", ensure_2d=False)
+        if solver == "lbfgs":
+            # lbfgs will force coef and therefore raw_prediction to be float64. The
+            # base_loss needs y, X @ coef and sample_weight all of same dtype
+            # (and contiguous).
+            loss_dtype = np.float64
+        else:
+            loss_dtype = min(max(y.dtype, X.dtype), np.float64)
+        y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
 
         # TODO: We could support samples_weight=None as the losses support it.
         # Note that _check_sample_weight calls check_array(order="C") required by
         # losses.
-        sample_weight = _check_sample_weight(
-            sample_weight, X, dtype=[np.float64, np.float32]
-        )
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
         n_samples, n_features = X.shape
 
@@ -279,14 +285,15 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 coef = np.concatenate((self.coef_, np.array([self.intercept_])))
             else:
                 coef = self.coef_
+            coef = coef.astype(loss_dtype, copy=False)
         else:
             if self.fit_intercept:
-                coef = np.zeros(n_features + 1, dtype=X.dtype)
+                coef = np.zeros(n_features + 1, dtype=loss_dtype)
                 coef[-1] = self._linear_loss.base_loss.link.link(
                     np.average(y, weights=sample_weight)
                 )
             else:
-                coef = np.zeros(n_features, dtype=X.dtype)
+                coef = np.zeros(n_features, dtype=loss_dtype)
 
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
