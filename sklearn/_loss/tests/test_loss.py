@@ -71,7 +71,7 @@ def random_y_true_raw_prediction(
         y_true = np.arange(n_samples).astype(float) % loss.n_classes
     else:
         raw_prediction = rng.uniform(
-            low=raw_bound[0], high=raw_bound[0], size=n_samples
+            low=raw_bound[0], high=raw_bound[1], size=n_samples
         )
         # generate a y_true in valid range
         low, high = _inclusive_low_high(loss.interval_y_true)
