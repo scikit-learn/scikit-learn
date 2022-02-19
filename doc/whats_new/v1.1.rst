@@ -499,9 +499,8 @@ Changelog
 :mod:`sklearn.multiclass`
 .........................
 
-- |Enhancement| :class:`sklearn.multiclass.OneVsOneClassifier` now have an
-  attribute `store_class_pairs` storing classes for which each estimator is
-  trained with. This attribute is only available if `store_class_pairs=True`.
+- |Enhancement| :class:`sklearn.multiclass.OneVsOneClassifier` now have a cached_property
+  `class_pairs_` storing classes for which each estimator is trained with.
   :pr:`22436` by :user:`Diwakar-Gupta`.
 
 :mod:`sklearn.neighbors`

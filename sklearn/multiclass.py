@@ -55,6 +55,7 @@ from .utils.multiclass import (
 )
 from .utils.metaestimators import _safe_split, available_if
 from .utils.fixes import delayed
+from sklearn.utils._cached_property import cached_property
 
 from joblib import Parallel
 
@@ -578,7 +579,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    store_class_pairs : bool, default=False
+    class_pairs_ : bool, default=False
         Whether to store pairs of classes used to train each estimator.
 
     Attributes
@@ -601,9 +602,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
-    class_pairs_ : ndarray of shape ``(n_classes * (n_classes - 1) // 2, 2)``
+    class_pairs_ : a cached_property returning
+        ndarray of shape ``(n_classes * (n_classes - 1) // 2, 2)``
         Store pairs of classes used to train each estimator.
-        This attribute exists only when ``store_class_pairs`` is True.
 
         .. versionadded:: 1.1
 
@@ -632,10 +633,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
 
-    def __init__(self, estimator, *, n_jobs=None, store_class_pairs=False):
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.store_class_pairs = store_class_pairs
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -684,18 +684,20 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         pairwise = self._get_tags()["pairwise"]
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
 
-        if self.store_class_pairs:
+        return self
 
-            self.class_pairs_ = np.array(
+    @cached_property
+    def class_pairs_(self):
+        n_classes = self.classes_.shape[0]
+        return np.array(
                 [
                     [self.classes_[i], self.classes_[j]]
                     for i in range(n_classes)
                     for j in range(i + 1, n_classes)
                 ],
-                dtype=y.dtype,
+                dtype=self.classes_.dtype,
             )
 
-        return self
 
     @available_if(_estimators_has("partial_fit"))
     def partial_fit(self, X, y, classes=None):
