@@ -143,7 +143,7 @@ jobs:
       pylatest_conda_forge_mkl:
         # DISTRIB used in azure posix.yml template
         DISTRIB: 'conda'
-        LOCK_FILE: ./build_tools/azure/pylatest_conda_forge_mkl_linux-64_lock.yml
+        LOCK_FILE: ./build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda-lock.yml
         COVERAGE: 'true'
         SHOW_SHORT_SUMMARY: 'true'
 
@@ -191,7 +191,7 @@ jobs:
         COVERAGE: 'false'
       # Linux + Python 3.7 build with OpenBLAS
       py37_conda_defaults_openblas:
-        LOCK_FILE: ./build_tools/azure/py37_conda_defaults_openblas_linux-64_lock.yml
+        LOCK_FILE: ./build_tools/azure/py37_conda_defaults_openblas_linux-64_conda-lock.yml
         # DISTRIB used in azure posix.yml template
         DISTRIB: 'conda'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
@@ -241,7 +241,7 @@ jobs:
       pylatest_conda_forge_mkl:
         # DISTRIB used in azure posix.yml template
         DISTRIB: 'conda'
-        LOCK_FILE: ./build_tools/azure/pylatest_conda_forge_mkl_osx-64_lock.yml
+        LOCK_FILE: ./build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda-lock.yml
         CPU_COUNT: '3'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
