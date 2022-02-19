@@ -77,6 +77,15 @@ def test_glm_solver_argument(solver):
         glm.fit(X, y)
 
 
+def test_glm_validate_base_loss_class():
+    y = np.array([1, 2])
+    X = np.array([[1], [2]])
+    glm = GeneralizedLinearRegressor(base_loss_class=LogLink)
+    msg = "The base_loss_class must be an subclass of sklearn._loss.loss.BaseLoss"
+    with pytest.raises(ValueError, match=msg):
+        glm.fit(X, y)
+
+
 @pytest.mark.parametrize(
     "Estimator",
     [GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],

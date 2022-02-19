@@ -183,7 +183,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             raise ValueError(
                 "The base_loss_class must be an subclass of"
                 " sklearn._loss.loss.BaseLoss; ; got"
-                f" (base_loss_class={self.base_loss})"
+                f" (base_loss_class={self.base_loss_class})"
             )
 
         check_scalar(
