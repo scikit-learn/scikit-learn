@@ -8,6 +8,7 @@ from functools import partial
 from importlib import resources
 
 import pytest
+from unittest.mock import Mock
 import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -385,25 +386,23 @@ def test_load_boston_alternative():
     np.testing.assert_allclose(target, boston_sklearn.target)
 
 
-def test_fetch_remote_raise_warnings_with_invalid_url():
-    if os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
-        raise SkipTest(
-            "This test requires an internet connection to fetch the dataset."
-        )
-
+def test_fetch_remote_raise_warnings_with_invalid_url(monkeypatch):
+    """Check retry mechanism in _fetch_remote."""
     from urllib.error import HTTPError
 
-    invalid_remote_file = RemoteFileMetadata(
-        "invalid_file", "https://scikit-learn.org/this_file_does_not_exist.tar.gz", None
+    url = "https://scikit-learn.org/this_file_does_not_exist.tar.gz"
+    invalid_remote_file = RemoteFileMetadata("invalid_file", url, None)
+    urlretrieve_mock = Mock(
+        side_effect=HTTPError(url=url, code=404, msg="Not Found", hdrs=None, fp=None)
     )
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
 
     with pytest.warns(UserWarning, match="Retry downloading") as record:
         with pytest.raises(HTTPError, match="HTTP Error 404"):
             _fetch_remote(invalid_remote_file, n_retries=3, delay=0)
 
+        assert urlretrieve_mock.call_count == 4
+
         for r in record:
-            assert (
-                r.message.args[0]
-                == f"Retry downloading from url: {invalid_remote_file.url}"
-            )
+            assert str(r.message) == f"Retry downloading from url: {url}"
         assert len(record) == 3
