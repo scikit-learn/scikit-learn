@@ -1055,8 +1055,7 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
             PinballLoss,
             {"quantile": None},
             TypeError,
-            "quantile must be an instance of <class 'numbers.Real'>, not <class"
-            " 'NoneType'>.",
+            "quantile must be an instance of float, not NoneType.",
         ),
         (
             PinballLoss,
@@ -1069,8 +1068,7 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
             HalfTweedieLoss,
             {"power": None},
             TypeError,
-            "power must be an instance of <class 'numbers.Real'>, not <class"
-            " 'NoneType'>.",
+            "power must be an instance of float, not NoneType.",
         ),
         (
             HalfTweedieLoss,
