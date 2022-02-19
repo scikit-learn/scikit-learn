@@ -161,7 +161,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
 
     # manually construct bitset
     known_cat_bitsets = np.zeros((1, 8), dtype=np.uint32)
-    known_cat_bitsets[0, 0] = np.sum(2 ** categories, dtype=np.uint32)
+    known_cat_bitsets[0, 0] = np.sum(2**categories, dtype=np.uint32)
     f_idx_map = np.array([0], dtype=np.uint32)
 
     # Check with un-binned data

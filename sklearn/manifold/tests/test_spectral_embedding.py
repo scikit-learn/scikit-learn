@@ -47,7 +47,7 @@ S, true_labels = make_blobs(
 def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """Check array A and B are equal with possible sign flipping on
     each columns"""
-    tol_squared = tol ** 2
+    tol_squared = tol**2
     for A_col, B_col in zip(A.T, B.T):
         assert (
             np.max((A_col - B_col) ** 2) <= tol_squared
@@ -480,12 +480,3 @@ def test_error_pyamg_not_available():
     err_msg = "The eigen_solver was set to 'amg', but pyamg is not available."
     with pytest.raises(ValueError, match=err_msg):
         se_precomp.fit_transform(S)
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
-def test_spectral_embedding_pairwise_deprecated(affinity):
-    se = SpectralEmbedding(affinity=affinity)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        se._pairwise

@@ -206,7 +206,7 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25),
         (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
         (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
-        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4 ** 2),
+        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2),
         (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
         (
             HalfMultinomialLoss(n_classes=3),
