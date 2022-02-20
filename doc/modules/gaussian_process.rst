@@ -88,14 +88,14 @@ estimate the noise level of data. An illustration of the
 log-marginal-likelihood (LML) landscape shows that there exist two local
 maxima of LML.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
 The first corresponds to a model with a high noise level and a
 large length scale, which explains all variations in the data by noise.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_002.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_004.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
@@ -106,7 +106,7 @@ hyperparameters, the gradient-based optimization might also converge to the
 high-noise solution. It is thus important to repeat the optimization several
 times for different initializations.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_005.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
@@ -142,7 +142,7 @@ Moreover, the noise level
 of the data is learned explicitly by GPR by an additional WhiteKernel component
 in the kernel and by the regularization parameter alpha of KRR.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_compare_gpr_krr_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_compare_gpr_krr_005.png
    :target: ../auto_examples/gaussian_process/plot_compare_gpr_krr.html
    :align: center
 
@@ -156,9 +156,9 @@ required for fitting and predicting: while fitting KRR is fast in principle,
 the grid-search for hyperparameter optimization scales exponentially with the
 number of hyperparameters ("curse of dimensionality"). The gradient-based
 optimization of the parameters in GPR does not suffer from this exponential
-scaling and is thus considerable faster on this example with 3-dimensional
+scaling and is thus considerably faster on this example with 3-dimensional
 hyperparameter space. The time for predicting is similar; however, generating
-the variance of the predictive distribution of GPR takes considerable longer
+the variance of the predictive distribution of GPR takes considerably longer
 than just predicting the mean.
 
 GPR on Mauna Loa CO2 data
@@ -220,7 +220,7 @@ overall noise level is very small, indicating that the data can be very well
 explained by the model. The figure shows also that the model makes very
 confident predictions until around 2015
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_co2_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_co2_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_co2.html
    :align: center
 
@@ -294,7 +294,7 @@ with different choices of the hyperparameters. The first figure shows the
 predicted probability of GPC with arbitrarily chosen hyperparameters and with
 the hyperparameters corresponding to the maximum log-marginal-likelihood (LML).
 
-While the hyperparameters chosen by optimizing LML have a considerable larger
+While the hyperparameters chosen by optimizing LML have a considerably larger
 LML, they perform slightly worse according to the log-loss on test data. The
 figure shows that this is because they exhibit a steep change of the class
 probabilities at the class boundaries (which is good) but have predicted
@@ -384,13 +384,15 @@ equivalent call to ``__call__``: ``np.diag(k(X, X)) == k.diag(X)``
 
 Kernels are parameterized by a vector :math:`\theta` of hyperparameters. These
 hyperparameters can for instance control length-scales or periodicity of a
-kernel (see below). All kernels support computing analytic gradients 
-of the kernel's auto-covariance with respect to :math:`\theta` via setting
-``eval_gradient=True`` in the ``__call__`` method. This gradient is used by the
-Gaussian process (both regressor and classifier) in computing the gradient
-of the log-marginal-likelihood, which in turn is used to determine the
-value of :math:`\theta`, which maximizes the log-marginal-likelihood,  via
-gradient ascent. For each hyperparameter, the initial value and the
+kernel (see below). All kernels support computing analytic gradients
+of the kernel's auto-covariance with respect to :math:`log(\theta)` via setting
+``eval_gradient=True`` in the ``__call__`` method.
+That is, a ``(len(X), len(X), len(theta))`` array is returned where the entry
+``[i, j, l]`` contains :math:`\frac{\partial k_\theta(x_i, x_j)}{\partial log(\theta_l)}`.
+This gradient is used by the Gaussian process (both regressor and classifier)
+in computing the gradient of the log-marginal-likelihood, which in turn is used
+to determine the value of :math:`\theta`, which maximizes the log-marginal-likelihood,
+via gradient ascent. For each hyperparameter, the initial value and the
 bounds need to be specified when creating an instance of the kernel. The
 current value of :math:`\theta` can be get and set via the property
 ``theta`` of the kernel object. Moreover, the bounds of the hyperparameters can be

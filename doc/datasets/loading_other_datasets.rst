@@ -20,9 +20,6 @@ and pipelines on 2D data.
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    load_sample_images
    load_sample_image
 
@@ -224,10 +221,9 @@ identifies the dataset::
 
 .. topic:: References:
 
- * Vanschoren, van Rijn, Bischl and Torgo
-   `"OpenML: networked science in machine learning"
-   <https://arxiv.org/pdf/1407.7722.pdf>`_,
-   ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
+ * :arxiv:`Vanschoren, van Rijn, Bischl and Torgo. "OpenML: networked science in
+   machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
+   <1407.7722>`
 
 .. _external_datasets:
 

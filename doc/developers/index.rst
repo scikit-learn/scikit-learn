@@ -19,5 +19,6 @@ Developer's Guide
    utilities
    performance
    advanced_installation
+   bug_triaging
    maintainer
    plotting

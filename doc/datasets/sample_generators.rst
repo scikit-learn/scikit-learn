@@ -73,9 +73,6 @@ Biclustering
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    make_biclusters
    make_checkerboard
 
@@ -101,9 +98,6 @@ Generators for manifold learning
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    make_s_curve
    make_swiss_roll
 
@@ -111,9 +105,6 @@ Generators for decomposition
 ----------------------------
 
 .. autosummary::
-
-   :toctree: ../modules/generated/
-   :template: function.rst
 
    make_low_rank_matrix
    make_sparse_coded_signal

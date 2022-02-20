@@ -52,7 +52,7 @@ The main theoretical result behind the efficiency of random projection is the
   and can even be taken to be an orthogonal projection.
 
 Knowing only the number of samples, the
-:func:`sklearn.random_projection.johnson_lindenstrauss_min_dim` estimates
+:func:`johnson_lindenstrauss_min_dim` estimates
 conservatively the minimal size of the random subspace to guarantee a
 bounded distortion introduced by the random projection::
 
@@ -90,7 +90,7 @@ bounded distortion introduced by the random projection::
 
 Gaussian random projection
 ==========================
-The :class:`sklearn.random_projection.GaussianRandomProjection` reduces the
+The :class:`GaussianRandomProjection` reduces the
 dimensionality by projecting the original input space on a randomly generated
 matrix where components are drawn from the following distribution
 :math:`N(0, \frac{1}{n_{components}})`.
@@ -111,7 +111,7 @@ projection transformer::
 
 Sparse random projection
 ========================
-The :class:`sklearn.random_projection.SparseRandomProjection` reduces the
+The :class:`SparseRandomProjection` reduces the
 dimensionality by projecting the original input space using a sparse
 random matrix.
 
@@ -152,7 +152,7 @@ projection transformer::
 
  * D. Achlioptas. 2003.
    `Database-friendly random projections: Johnson-Lindenstrauss  with binary
-   coins <http://www.cs.ucsc.edu/~optas/papers/jl.pdf>`_.
+   coins <https://www.sciencedirect.com/science/article/pii/S0022000003000254>`_.
    Journal of Computer and System Sciences 66 (2003) 671–687
 
  * Ping Li, Trevor J. Hastie, and Kenneth W. Church. 2006.

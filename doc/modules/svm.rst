@@ -175,9 +175,11 @@ The shape of ``dual_coef_`` is ``(n_classes-1, n_SV)`` with
 a somewhat hard to grasp layout.
 The columns correspond to the support vectors involved in any
 of the ``n_classes * (n_classes - 1) / 2`` "one-vs-one" classifiers.
-Each of the support vectors is used in ``n_classes - 1`` classifiers.
-The ``n_classes - 1`` entries in each row correspond to the dual coefficients
-for these classifiers.
+Each support vector ``v`` has a dual coefficient in each of the 
+``n_classes - 1`` classifiers comparing the class of ``v`` against another class.
+Note that some, but not all, of these dual coefficients, may be zero.
+The ``n_classes - 1`` entries in each column are these dual coefficients,
+ordered by the opposing class.
 
 This might be clearer with an example: consider a three class problem with
 class 0 having three support vectors
@@ -188,21 +190,14 @@ the coefficient of support vector :math:`v^{j}_i` in the classifier between
 classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
 Then ``dual_coef_`` looks like this:
 
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 0|
-|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|                  |
-+------------------------+------------------------+                  |
-|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|                  |
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 1|
-|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|                  |
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 2|
-|:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|                  |
-+------------------------+------------------------+------------------+
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{1}_{2,0}`|
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|:math:`\alpha^{0}_{0,2}`|:math:`\alpha^{1}_{0,2}`|:math:`\alpha^{2}_{0,2}`|:math:`\alpha^{0}_{1,2}`|:math:`\alpha^{1}_{1,2}`|:math:`\alpha^{0}_{2,1}`|:math:`\alpha^{1}_{2,1}`|
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|Coefficients                                                              |Coefficients                                     |Coefficients                                     |
+|for SVs of class 0                                                        |for SVs of class 1                               |for SVs of class 2                               |
++--------------------------------------------------------------------------+-------------------------------------------------+-------------------------------------------------+
 
 .. topic:: Examples:
 
@@ -453,7 +448,7 @@ Tips on Practical Use
     set to ``False`` the underlying implementation of :class:`LinearSVC` is
     not random and ``random_state`` has no effect on the results.
 
-  * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
+  * Using L1 penalization as provided by ``LinearSVC(penalty='l1',
     dual=False)`` yields a sparse solution, i.e. only a subset of feature
     weights is different from zero and contribute to the decision function.
     Increasing ``C`` yields a more complex model (more features are selected).
@@ -500,7 +495,7 @@ correctly.  ``gamma`` defines how much influence a single training example has.
 The larger ``gamma`` is, the closer other examples must be to be affected.
 
 Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
-is advised to use :class:`sklearn.model_selection.GridSearchCV` with 
+is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
 ``C`` and ``gamma`` spaced exponentially far apart to choose good values.
 
 .. topic:: Examples:
@@ -623,7 +618,7 @@ misclassified or within the margin boundary. Ideally, the value :math:`y_i
 (w^T \phi (x_i) + b)` would be :math:`\geq 1` for all samples, which
 indicates a perfect prediction. But problems are usually not always perfectly
 separable with a hyperplane, so we allow some samples to be at a distance :math:`\zeta_i` from
-their correct margin boundary. The penalty term `C` controls the strengh of
+their correct margin boundary. The penalty term `C` controls the strength of
 this penalty, and as a result, acts as an inverse regularization parameter
 (see note below).
 
@@ -667,7 +662,7 @@ term :math:`b`
     regularization parameter, most other estimators use ``alpha``. The exact
     equivalence between the amount of regularization of two models depends on
     the exact objective function optimized by the model. For example, when the
-    estimator used is :class:`sklearn.linear_model.Ridge <ridge>` regression,
+    estimator used is :class:`~sklearn.linear_model.Ridge` regression,
     the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
 LinearSVC
@@ -677,7 +672,7 @@ The primal problem can be equivalently formulated as
 
 .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, y_i (w^T \phi(x_i) + b)),
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
 
 where we make use of the `hinge loss
 <https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is
