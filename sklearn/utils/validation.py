@@ -15,6 +15,7 @@ import numbers
 import operator
 
 import numpy as np
+import numpy
 import scipy.sparse as sp
 from inspect import signature, isclass, Parameter
 
@@ -29,6 +30,7 @@ from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from ..utils._array_api import get_namespace
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -94,24 +96,27 @@ def _assert_all_finite(
     # validation is also imported in extmath
     from .extmath import _safe_accumulator_op
 
+    xp, _ = get_namespace(X)
+
     if _get_config()["assume_finite"]:
         return
-    X = np.asanyarray(X)
+
+    X = xp.asarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
     # false positives from overflow in sum method. The sum is also calculated
     # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in "fc"
-    if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
+    if is_float and (xp.isfinite(_safe_accumulator_op(xp.sum, X))):
         pass
     elif is_float:
         if (
             allow_nan
-            and np.isinf(X).any()
+            and xp.any(xp.isinf(X))
             or not allow_nan
-            and not np.isfinite(X).all()
+            and not xp.all(xp.isfinite(X))
         ):
-            if not allow_nan and np.isnan(X).any():
+            if not allow_nan and xp.any(xp.isnan(X)):
                 type_err = "NaN"
             else:
                 msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
@@ -122,7 +127,7 @@ def _assert_all_finite(
                 not allow_nan
                 and estimator_name
                 and input_name == "X"
-                and np.isnan(X).any()
+                and xp.any(xp.isnan(X))
             ):
                 # Improve the error message on how to handle missing values in
                 # scikit-learn.
@@ -139,8 +144,8 @@ def _assert_all_finite(
             raise ValueError(msg_err)
 
     # for object dtype data, we only check for NaNs (GH-13254)
-    elif X.dtype == np.dtype("object") and not allow_nan:
-        if _object_dtype_isnan(X).any():
+    elif X.dtype == object and not allow_nan:
+        if xp.any(_object_dtype_isnan(X)):
             raise ValueError("Input contains NaN")
 
 
@@ -710,6 +715,7 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
             FutureWarning,
         )
+    xp, _ = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -755,7 +761,7 @@ def check_array(
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
-            dtype = np.float64
+            dtype = xp.float64
         else:
             dtype = None
 
@@ -825,7 +831,7 @@ def check_array(
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
-                    array = np.asarray(array, order=order)
+                    array = xp.asarray(array, order=order)
                     if array.dtype.kind == "f":
                         _assert_all_finite(
                             array,
@@ -834,9 +840,9 @@ def check_array(
                             estimator_name=estimator_name,
                             input_name=input_name,
                         )
-                    array = array.astype(dtype, casting="unsafe", copy=False)
+                    array = xp.astype(array, dtype, casting="unsafe", copy=False)
                 else:
-                    array = np.asarray(array, order=order, dtype=dtype)
+                    array = xp.asarray(array, order=order, dtype=dtype)
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)
@@ -877,7 +883,7 @@ def check_array(
                 stacklevel=2,
             )
             try:
-                array = array.astype(np.float64)
+                array = xp.astype(array, np.float64)
             except ValueError as e:
                 raise ValueError(
                     "Unable to convert array of bytes/strings "
@@ -915,8 +921,8 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    if copy and np.may_share_memory(array, array_orig):
-        array = np.array(array, dtype=dtype, order=order)
+    if copy and xp.may_share_memory(array, array_orig):
+        array = xp.asarray(array, dtype=dtype, order=order, copy=True)
 
     return array
 
@@ -1126,10 +1132,11 @@ def column_or_1d(y, *, warn=False):
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
-    y = np.asarray(y)
-    shape = np.shape(y)
+    xp, _ = get_namespace(y)
+    y = xp.asarray(y)
+    shape = y.shape
     if len(shape) == 1:
-        return np.ravel(y)
+        return xp.asarray(xp.reshape(y, -1), order="C")
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1139,7 +1146,7 @@ def column_or_1d(y, *, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return np.ravel(y)
+        return xp.asarray(xp.reshape(y, -1), order="C")
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1340,6 +1347,7 @@ def check_non_negative(X, whom):
     whom : str
         Who passed X to this function.
     """
+    xp, _ = get_namespace(X)
     # avoid X.min() on sparse matrix since it also sorts the indices
     if sp.issparse(X):
         if X.format in ["lil", "dok"]:
@@ -1349,7 +1357,7 @@ def check_non_negative(X, whom):
         else:
             X_min = X.data.min()
     else:
-        X_min = X.min()
+        X_min = xp.min(X)
 
     if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)

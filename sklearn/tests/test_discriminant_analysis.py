@@ -4,6 +4,8 @@ import pytest
 
 from scipy import linalg
 
+from sklearn.base import clone
+from sklearn._config import config_context
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -667,3 +669,30 @@ def test_get_feature_names_out():
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
+def test_lda_array_api():
+    """Check that the array_api Array gives the same results as ndarrays."""
+    pytest.importorskip("numpy", minversion="1.22", reason="Requires Array API")
+    xp = pytest.importorskip("numpy.array_api")
+
+    X_xp = xp.asarray(X)
+    y_xp = xp.asarray(y)
+
+    lda = LinearDiscriminantAnalysis()
+    lda.fit(X, y)
+
+    lda_xp = clone(lda)
+    with config_context(array_api_dispatch=True):
+        lda_xp.fit(X_xp, y_xp)
+
+    gm_attributes_array = {
+        key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
+    }
+    for key in gm_attributes_array:
+        gm_xp_param = getattr(lda_xp, key)
+        assert hasattr(gm_xp_param, "__array_namespace__")
+
+        assert_allclose(
+            gm_attributes_array[key], gm_xp_param, err_msg=f"{key} not the same"
+        )
