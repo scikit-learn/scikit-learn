@@ -22,7 +22,7 @@ from datetime import datetime
 scikit_classifier_results = []
 scikit_regressor_results = []
 
-mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
+mu_second = 0.0 + 10**6  # number of microseconds in a second
 
 
 def bench_scikit_tree_classifier(X, Y):

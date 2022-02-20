@@ -678,7 +678,7 @@ def safe_sqr(X, *, copy=True):
         X.data **= 2
     else:
         if copy:
-            X = X ** 2
+            X = X**2
         else:
             X **= 2
     return X
@@ -803,6 +803,14 @@ def tosequence(x):
     Parameters
     ----------
     x : iterable
+        The iterable to be converted.
+
+    Returns
+    -------
+    x : Sequence
+        If `x` is a NumPy array, it returns it as a `ndarray`. If `x`
+        is a `Sequence`, `x` is returned as-is. If `x` is from any other
+        type, `x` is returned casted as a list.
     """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
@@ -933,7 +941,7 @@ def _print_elapsed_time(source, message=None):
 
 
 def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
-    """Calculates how many rows can be processed within working_memory.
+    """Calculate how many rows can be processed within `working_memory`.
 
     Parameters
     ----------
@@ -943,30 +951,31 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     max_n_rows : int, default=None
         The maximum return value.
     working_memory : int or float, default=None
-        The number of rows to fit inside this number of MiB will be returned.
-        When None (default), the value of
+        The number of rows to fit inside this number of MiB will be
+        returned. When None (default), the value of
         ``sklearn.get_config()['working_memory']`` is used.
 
     Returns
     -------
-    int or the value of n_samples
+    int
+        The number of rows which can be processed within `working_memory`.
 
     Warns
     -----
-    Issues a UserWarning if ``row_bytes`` exceeds ``working_memory`` MiB.
+    Issues a UserWarning if `row_bytes exceeds `working_memory` MiB.
     """
 
     if working_memory is None:
         working_memory = get_config()["working_memory"]
 
-    chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
+    chunk_n_rows = int(working_memory * (2**20) // row_bytes)
     if max_n_rows is not None:
         chunk_n_rows = min(chunk_n_rows, max_n_rows)
     if chunk_n_rows < 1:
         warnings.warn(
             "Could not adhere to working_memory config. "
             "Currently %.0fMiB, %.0fMiB required."
-            % (working_memory, np.ceil(row_bytes * 2 ** -20))
+            % (working_memory, np.ceil(row_bytes * 2**-20))
         )
         chunk_n_rows = 1
     return chunk_n_rows

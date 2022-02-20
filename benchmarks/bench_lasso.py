@@ -39,7 +39,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
                 coef=True,
             )
 
-            X /= np.sqrt(np.sum(X ** 2, axis=0))  # Normalize data
+            X /= np.sqrt(np.sum(X**2, axis=0))  # Normalize data
 
             gc.collect()
             print("- benchmarking Lasso")

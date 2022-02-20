@@ -14,7 +14,6 @@ import numbers
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-import joblib
 from joblib import Parallel, effective_n_jobs
 
 from ._ball_tree import BallTree
@@ -22,14 +21,16 @@ from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
-from ..metrics._pairwise_distances_reduction import PairwiseDistancesRadiusNeighborhood
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics._pairwise_distances_reduction import (
+    PairwiseDistancesArgKmin,
+    PairwiseDistancesRadiusNeighborhood,
+)
 from ..utils import (
     check_array,
     gen_even_slices,
     _to_object_array,
 )
-from ..utils.deprecation import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
@@ -402,7 +403,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(X, y, accept_sparse="csr", multi_output=True)
+                X, y = self._validate_data(
+                    X, y, accept_sparse="csr", multi_output=True, order="C"
+                )
 
             if is_classifier(self):
                 # Classification targets require a specific format
@@ -437,7 +440,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr")
+                X = self._validate_data(X, accept_sparse="csr", order="C")
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -507,6 +510,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if issparse(X):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
+
             if self.effective_metric_ not in VALID_METRICS_SPARSE[
                 "brute"
             ] and not callable(self.effective_metric_):
@@ -607,17 +611,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _more_tags(self):
         # For cross-validation routines to split data correctly
         return {"pairwise": self.metric == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # For cross-validation routines to split data correctly
-        return self.metric == "precomputed"
 
 
 def _tree_query_parallel_helper(tree, *args, **kwargs):
@@ -738,18 +731,17 @@ class KNeighborsMixin:
                 % type(n_neighbors)
             )
 
-        if X is not None:
-            query_is_train = False
-            if self.metric == "precomputed":
-                X = _check_precomputed(X)
-            else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False)
-        else:
-            query_is_train = True
+        query_is_train = X is None
+        if query_is_train:
             X = self._fit_X
             # Include an extra neighbor to account for the sample itself being
             # returned, which is removed later
             n_neighbors += 1
+        else:
+            if self.metric == "precomputed":
+                X = _check_precomputed(X)
+            else:
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -760,12 +752,35 @@ class KNeighborsMixin:
 
         n_jobs = effective_n_jobs(self.n_jobs)
         chunked_results = None
-        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
+        use_pairwise_distances_reductions = (
+            self._fit_method == "brute"
+            and PairwiseDistancesArgKmin.is_usable_for(
+                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
+            )
+        )
+        if use_pairwise_distances_reductions:
+            results = PairwiseDistancesArgKmin.compute(
+                X=X,
+                Y=self._fit_X,
+                k=n_neighbors,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+                n_threads=self.n_jobs,
+                strategy="auto",
+                return_distance=return_distance,
+            )
+
+        elif (
+            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+        ):
             results = _kneighbors_from_graph(
                 X, n_neighbors=n_neighbors, return_distance=return_distance
             )
 
         elif self._fit_method == "brute":
+            # TODO: should no longer be needed once PairwiseDistancesArgKmin
+            # is extended to accept sparse and/or float32 inputs.
+
             reduce_func = partial(
                 self._kneighbors_reduce_func,
                 n_neighbors=n_neighbors,
@@ -796,13 +811,7 @@ class KNeighborsMixin:
                     "or set algorithm='brute'"
                     % self._fit_method
                 )
-            old_joblib = parse_version(joblib.__version__) < parse_version("0.12")
-            if old_joblib:
-                # Deal with change of API in joblib
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                parallel_kwargs = {"prefer": "threads"}
-            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+            chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(_tree_query_parallel_helper)(
                     self._tree, X[s], n_neighbors, return_distance
                 )
@@ -1158,13 +1167,7 @@ class RadiusNeighborsMixin:
 
             n_jobs = effective_n_jobs(self.n_jobs)
             delayed_query = delayed(_tree_query_radius_parallel_helper)
-            if parse_version(joblib.__version__) < parse_version("0.12"):
-                # Deal with change of API in joblib
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                parallel_kwargs = {"prefer": "threads"}
-
-            chunked_results = Parallel(n_jobs, **parallel_kwargs)(
+            chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed_query(
                     self._tree, X[s], radius, return_distance, sort_results=sort_results
                 )

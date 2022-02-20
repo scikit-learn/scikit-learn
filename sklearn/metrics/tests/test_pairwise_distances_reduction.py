@@ -244,14 +244,14 @@ def test_chunk_size_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_indices, ref_dist = PairwiseDistancesReduction.compute(
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
         return_distance=True,
     )
 
-    indices, dist = PairwiseDistancesReduction.compute(
+    dist, indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -290,20 +290,22 @@ def test_n_threads_agnosticism(
         else 10 ** np.log(n_features)
     )
 
-    ref_indices, ref_dist = PairwiseDistancesReduction.compute(
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
         return_distance=True,
     )
 
-    indices, dist = PairwiseDistancesReduction.compute(
+    dist, indices = PairwiseDistancesReduction.compute(
         X, Y, parameter, n_threads=1, return_distance=True
     )
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
@@ -337,7 +339,7 @@ def test_strategies_consistency(
         else 10 ** np.log(n_features)
     )
 
-    indices_par_X, dist_par_X = PairwiseDistancesReduction.compute(
+    dist_par_X, indices_par_X = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -350,7 +352,7 @@ def test_strategies_consistency(
         return_distance=True,
     )
 
-    indices_par_Y, dist_par_Y = PairwiseDistancesReduction.compute(
+    dist_par_Y, indices_par_Y = PairwiseDistancesReduction.compute(
         X,
         Y,
         parameter,
@@ -373,7 +375,8 @@ def test_strategies_consistency(
 
 # Concrete PairwiseDistancesReductions tests
 
-
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("n_features", [50, 500])
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
@@ -414,7 +417,7 @@ def test_pairwise_distances_argkmin(
             row_idx, argkmin_indices_ref[row_idx]
         ]
 
-    argkmin_indices, argkmin_distances = PairwiseDistancesArgKmin.compute(
+    argkmin_distances, argkmin_indices = PairwiseDistancesArgKmin.compute(
         X,
         Y,
         k,

@@ -409,7 +409,7 @@ def test_pair_confusion_matrix_single_cluster():
 def test_pair_confusion_matrix():
     # regular case: different non-trivial clusterings
     n = 10
-    N = n ** 2
+    N = n**2
     clustering1 = np.hstack([[i + 1] * n for i in range(n)])
     clustering2 = np.hstack([[i + 1] * (n + 1) for i in range(n)])[:N]
     # basic quadratic implementation
@@ -460,4 +460,4 @@ def test_adjusted_rand_score_overflow():
     y_pred = rng.randint(0, 2, 100_000, dtype=np.int8)
     with pytest.warns(None) as record:
         adjusted_rand_score(y_true, y_pred)
-    assert len(record) == 0
+    assert not [w.message for w in record]

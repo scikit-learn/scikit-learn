@@ -6,6 +6,9 @@ on:
 
 jobs:
   check:
+    # Don't run on forks
+    if: github.repository == 'scikit-learn/scikit-learn'
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
