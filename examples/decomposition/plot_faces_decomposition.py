@@ -157,7 +157,8 @@ batch_pca_estimator = decomposition.MiniBatchSparsePCA(
 )
 batch_pca_estimator.fit(faces_centered)
 plot_gallery(
-    "Sparse comp. - MiniBatchSparsePCA", batch_pca_estimator.components_[:n_components]
+    "Sparse components - MiniBatchSparsePCA",
+    batch_pca_estimator.components_[:n_components],
 )
 
 # %%
