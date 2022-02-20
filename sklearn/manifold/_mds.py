@@ -127,10 +127,6 @@ def _smacof_single(
         # Compute stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
 
-        # Use Stress-1
-        if normalize:
-            stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
-
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
         ratio = disparities / dis
@@ -143,11 +139,17 @@ def _smacof_single(
             print("it: %d, stress %s" % (it, stress))
         if old_stress is not None:
             if (old_stress - stress / dis) < eps:
+                # Use Stress-1
+                if normalize:
+                    stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
                 if verbose:
                     print("breaking at iteration %d with stress %s" % (it, stress))
                 break
         old_stress = stress / dis
 
+    # Use Stress-1
+    if normalize:
+        stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
     return X, stress, it + 1
 
 
