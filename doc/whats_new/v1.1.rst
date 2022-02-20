@@ -294,7 +294,7 @@ Changelog
 
 - |Enhancement| Adds Array API support to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` for `solver="svd"`.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`22554` by `Thomas Fan`_.
 
 - |API| Adds :term:`get_feature_names_out` to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
