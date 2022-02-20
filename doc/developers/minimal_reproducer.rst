@@ -157,6 +157,7 @@ and good formatting can really improve it.
 
 Try to follow the `PEP 8 convention <https://www.python.org/dev/peps/pep-0008/>`_.
 In a nutshell:
+
     - try to limit all lines to a maximum of 79 characters
     - use blank lines to separate groups of related functions
 
