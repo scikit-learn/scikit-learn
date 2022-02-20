@@ -90,7 +90,6 @@ pipeline = Pipeline(
     ]
 )
 
-
 # %%
 # Grid Search
 # -----------
@@ -107,7 +106,6 @@ parameters = {
     "clf__penalty": ("l2", "elasticnet"),
     # 'clf__max_iter': (10, 50, 80),
 }
-
 
 # %%
 # Find the best parameters for both the feature extraction and the
