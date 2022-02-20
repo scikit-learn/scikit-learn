@@ -43,7 +43,7 @@ and will store the coefficients :math:`w` of the linear model in its
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
-    >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 3])
+    >>> reg.fit([[0, 0], [1, 1], [2, 2]], [1, 2, 3])
     LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
