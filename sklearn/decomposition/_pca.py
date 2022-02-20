@@ -10,7 +10,7 @@
 #
 # License: BSD 3 clause
 
-from math import log, sqrt
+from math import log, sqrt, ceil
 import numbers
 
 import numpy as np
@@ -23,7 +23,7 @@ from ._base import _BasePCA
 from ..utils import check_random_state, check_scalar
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
-from ..utils.extmath import stable_cumsum
+from ..utils.extmath import stable_cumsum, _incremental_mean_and_var
 from ..utils.validation import check_is_fitted
 
 
@@ -617,20 +617,28 @@ class PCA(_BasePCA):
         self.components_ = Vt
         self.n_components_ = n_components
 
-        def in_place_var(X):
-            N = X.shape[0] - 1
-            X -= X.mean(axis=0)
-            np.square(X, out=X)
-            np.sum(X, axis=0, out=X[0])
-            X = X[0]
-            X /= N
-            out = np.sum(X)
-            del X
-            return out
-
         # Get variance explained by singular values
         self.explained_variance_ = (S ** 2) / (n_samples - 1)
-        total_var = in_place_var(X) if self.copy else np.var(X, ddof=1, axis=0).sum()
+        if X.shape[0] > 1000:
+            chunk = ceil(X.shape[0] / 4)
+            last_mean, last_variance, last_sample_count = np.zeros((3, X.shape[1]))
+
+            for i in range(3):
+                last_mean, last_variance, last_sample_count = _incremental_mean_and_var(
+                    X[i * chunk : (i + 1) * chunk, :],
+                    last_mean,
+                    last_variance,
+                    last_sample_count,
+                )
+            last_mean, last_variance, last_sample_count = _incremental_mean_and_var(
+                X[3 * chunk :, :], last_mean, last_variance, last_sample_count
+            )
+
+            del last_mean, last_sample_count
+            total_var = last_variance.sum()
+        else:
+            total_var = np.var(X, ddof=1, axis=0).sum()
+
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
 
