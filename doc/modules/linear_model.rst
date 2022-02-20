@@ -43,12 +43,12 @@ and will store the coefficients :math:`w` of the linear model in its
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
-    >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 3])
     LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
     >>> reg.intercept_
-    1.1102230246251565e-16
+    1.0
 
 The coefficient estimates for Ordinary Least Squares rely on the
 independence of the features. When features are correlated and the
