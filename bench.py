@@ -47,18 +47,24 @@ def main() -> None:
         data = []
         for shape in X_shapes:
             X = np.random.rand(*shape)
-            for s in transformers:
-                count += 1
-                start = time.time()
-                transformers[s].fit_transform(X)
-                print(f"Progress: {count}/{total_reps}")
-                data.append(
-                    {"shape": str(shape), "solver": str(s), "time": time.time() - start}
-                )
+
+            count += 1
+            start = time.time()
+            transformers["svd"].fit_transform(X)
+            print(f"Progress: {count}/{total_reps}")
+            svd_time = time.time() - start
+
+            count += 1
+            start = time.time()
+            transformers["eigh"].fit_transform(X)
+            print(f"Progress: {count}/{total_reps}")
+            eigh_time = time.time() - start
+
+            data.append({"shape": str(shape), "svd": svd_time, "eigh": eigh_time})
         df = pd.DataFrame(data)
 
     if args.save and not args.load:
-        df.to_csv(args.save)
+        df.to_csv(args.save, index=False)
         print(f"Dataframe saved to {args.save}")
 
     chart = (
