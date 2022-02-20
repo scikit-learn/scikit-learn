@@ -290,35 +290,28 @@ def test_ard_regression_predict_normalize_true():
     clf.predict([[1, 1]], return_std=True)
 
 
-def test_dtype_match():
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("model", [BayesianRidge(), ARDRegression()])
+def test_dtype_match(dtype, model):
     # Test that np.float32 input data is not cast to np.float64 when possible
-    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]]).astype(
+        dtype
+    )
     y = np.array([1, 2, 3, 2, 0, 4, 5]).T
-    X_32 = np.array(X).astype(np.float32)
-    y_32 = np.array(y).astype(np.float32)
-    X_64 = np.array(X).astype(np.float64)
-    y_64 = np.array(y).astype(np.float64)
 
     # check type consistency
-    for X, dtype in [(X_32, np.float32), (X_64, np.float64)]:
-        for y in [y_32, y_64]:
-            for model in [BayesianRidge(), ARDRegression()]:
-                model.fit(X, y)
-                y_mean, y_std = model.predict(X, return_std=True)
-                assert X.dtype == dtype
-                assert model.coef_.dtype == X.dtype
-                assert y_mean.dtype == X.dtype
-                assert y_std.dtype == X.dtype
+    model.fit(X, y)
+    y_mean, y_std = model.predict(X, return_std=True)
+    assert X.dtype == dtype
+    assert model.coef_.dtype == X.dtype
+    assert y_mean.dtype == X.dtype
+    assert y_std.dtype == X.dtype
 
-    # check accuracy
-    br_32 = BayesianRidge()
-    br_32.fit(X_32, y_32)
-    br_64 = BayesianRidge()
-    br_64.fit(X_64, y_64)
-    ard_32 = ARDRegression()
-    ard_32.fit(X_32, y_32)
-    ard_64 = ARDRegression()
-    ard_64.fit(X_64, y_64)
 
-    assert_array_almost_equal(br_32.coef_, br_64.coef_, decimal=5)
-    assert_array_almost_equal(ard_32.coef_, ard_64.coef_, decimal=5)
+@pytest.mark.parametrize("model", [BayesianRidge(), ARDRegression()])
+def test_dtype_correctness(model):
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+    coef_32 = model.fit(X.astype(np.float32), y).coef_
+    coef_64 = model.fit(X.astype(np.float64), y).coef_
+    np.testing.assert_allclose(coef_32, coef_64, rtol=1e-5)
