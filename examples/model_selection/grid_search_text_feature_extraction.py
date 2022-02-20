@@ -45,6 +45,9 @@ Here is a sample output of a run on a quad-core machine::
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD 3 clause
+# %%
+# Load categories from the training set
+# -------------------------------------
 from pprint import pprint
 from time import time
 import logging
@@ -59,9 +62,6 @@ from sklearn.pipeline import Pipeline
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-
-# #############################################################################
-# Load some categories from the training set
 categories = [
     "alt.atheism",
     "talk.religion.misc",
@@ -77,7 +77,9 @@ print("%d documents" % len(data.filenames))
 print("%d categories" % len(data.target_names))
 print()
 
-# #############################################################################
+# %%
+# Build Pipeline
+# --------------
 # Define a pipeline combining a text feature extractor with a simple
 # classifier
 pipeline = Pipeline(
@@ -88,8 +90,12 @@ pipeline = Pipeline(
     ]
 )
 
-# uncommenting more parameters will give better exploring power but will
-# increase processing time in a combinatorial way
+
+# %%
+# Grid Search
+# -----------
+# Parameters to use for grid search. Uncommenting more parameters will give
+# better exploring power but will increase processing time in a combinatorial way
 parameters = {
     "vect__max_df": (0.5, 0.75, 1.0),
     # 'vect__max_features': (None, 5000, 10000, 50000),
@@ -102,12 +108,14 @@ parameters = {
     # 'clf__max_iter': (10, 50, 80),
 }
 
+
+# %%
+# Find the best parameters for both the feature extraction and the
+# classifier
 if __name__ == "__main__":
     # multiprocessing requires the fork to happen in a __main__ protected
     # block
 
-    # find the best parameters for both the feature extraction and the
-    # classifier
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
 
     print("Performing grid search...")
