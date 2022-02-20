@@ -13,7 +13,7 @@ value.
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
-Across the module, we designate the vector :math:`w = (w_1,
+Across the module, we designate the vector :math:`(w_1,
 ..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
 
 To perform classification with generalized linear models, see
@@ -25,7 +25,7 @@ Ordinary Least Squares
 =======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`w = (w_1, ..., w_p)` to minimize the residual sum
+:math:`w = (w_0, ..., w_p)` to minimize the residual sum
 of squares between the observed targets in the dataset, and the
 targets predicted by the linear approximation. Mathematically it
 solves a problem of the form:
@@ -39,7 +39,7 @@ solves a problem of the form:
 
 :class:`LinearRegression` will take in its ``fit`` method arrays X, y
 and will store the coefficients :math:`w` of the linear model in its
-``coef_`` member::
+``coef_`` and ``intercept_`` members::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
@@ -47,6 +47,8 @@ and will store the coefficients :math:`w` of the linear model in its
     LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
+    >>> reg.intercept_
+    1.1102230246251565e-16
 
 The coefficient estimates for Ordinary Least Squares rely on the
 independence of the features. When features are correlated and the
