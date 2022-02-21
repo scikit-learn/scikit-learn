@@ -677,6 +677,7 @@ Changelog
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`. Please use `tol=0` for
   the same behavior. :pr:`19296` by `Thomas Fan`_.
+
 - |Enhancement| multilabel-indicator target is supported by
   :class:`ensemble.StackingClassifier`.
   :pr:`20424` by :user:`Nicolas Peretti <nicoperetti>`,
