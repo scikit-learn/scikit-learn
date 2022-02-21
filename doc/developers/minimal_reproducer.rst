@@ -5,18 +5,18 @@ Craft a minimal reproducer for scikit-learn
 ===========================================
 
 
-Whether if you are submitting a bug report, designing a pytest for a feature you
-are contributing to, or simply posting a question in a forum, being able to
-craft minimal, reproducible examples (or minimal, workable examples) is the key
-to communicating with the community.
+Whether submitting a bug report, designing a suite of tests, or simply posting a
+question in the discussions, being able to craft minimal, reproducible examples
+(or minimal, workable examples) is the key to communicating effectively and
+efficiently with the community.
 
 There are very good guidelines on the internet such as `this StackOverflow
 document <https://stackoverflow.com/help/mcve>`_ or `this blogpost by Matthew
 Rocklin <https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports>`_
-on how to craft Minimal Complete Verifiable Examples (MCVE). Our goal is not to
-be repetitive with those references but rather to provide a step-by-step guide
-on how to narrow down a bug until you have reached the shortest possible code to
-reproduce it.
+on crafting Minimal Complete Verifiable Examples (referred bellow as MCVE).
+Our goal is not to be repetitive with those references but rather to provide a
+step-by-step guide on how to narrow down a bug until you have reached the
+shortest possible code to reproduce it.
 
 The first step before submitting a bug report to scikit-learn is to read the
 `Issue template
@@ -65,11 +65,11 @@ MCVE from it.
     gbdt = GradientBoostingRegressor(random_state=0, n_iter_no_change=5)
     gbdt.fit(X_train, y_train)
 
-Provide a failing code example with minimal annotations
--------------------------------------------------------
+Provide a failing code example with minimal comments
+----------------------------------------------------
 
-Please take into account that things may get lost in translation for non-native
-english speakers. It is better that all the necessary information can be read
+Instructions may get lost in translation for non-native english speakers.
+Hence, it is better that all the necessary information can be read
 from the code itself. Besides, by this point you already provided a concise
 description in the **Describe the bug** section of the Issue template.
 
@@ -98,8 +98,8 @@ description in the **Describe the bug** section of the Issue template.
 Boil down your script to something as small as possible
 -------------------------------------------------------
 
-You have to ask yourself which lines of code are relavant and which are not for
-rasing the bug. Erasing unnecessary lines of code will help you and other
+You have to ask yourself which lines of code are relevant and which are not for
+raising the bug. Erasing unnecessary lines of code will help you and other
 contributors narrow down the bug. In this example the warning has nothing to
 do with the `train_test_split`, nor the `random_state`.
 
@@ -259,9 +259,9 @@ as a model is not important when creating a MCVE.
 Synthetic dataset
 =================
 
-Before chosing a particular synthetic dataset, first you have to identify the
-type of problem you are solving: Is it classification, regression, clustering,
-etc?
+Before choosing a particular synthetic dataset, first you have to identify the
+type of problem you are solving: Is it a classification, a regression,
+a clustering, etc?
 
 Once that you narrowed down the type of problem, you need to provide a synthetic
 dataset accordingly. Most of the times you only need a minimalistic dataset.
@@ -294,7 +294,7 @@ as :class:`sklearn.preprocessing.StandardScaler`.
 
 - classification
 
-    If the bug is not raised during encoding a categorical variable, you can
+    If the bug is not raised during when encoding a categorical variable, you can
     feed numeric data to a classifier. Just remember to ensure that the target
     is indeed an integer.
 
