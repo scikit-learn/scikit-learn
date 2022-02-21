@@ -40,6 +40,8 @@ if [[ -n $LOCK_FILE ]]; then
     # FIXME install conda-lock dev version with a fixed commit while waiting
     # for the release
     conda update -n base conda -y
+    conda install pip -y
+    conda list
     python -m pip install git+https://github.com/conda-incubator/conda-lock@67f8da
     conda-lock install --name $VIRTUALENV $LOCK_FILE
     source activate $VIRTUALENV
