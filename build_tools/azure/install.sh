@@ -91,12 +91,11 @@ python_environment_install() {
 
         if [[ "$UNAMESTR" == "Darwin" ]] && [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
                 TO_INSTALL="$TO_INSTALL compilers llvm-openmp"
-            fi
         fi
 
         make_conda $TO_INSTALL
 
-    elif [[ "$DISTRIB" == "ubuntu" ] || [ "$DISTRIB" == "debian-32" ] ]; then
+    elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
         source $VIRTUALENV/bin/activate
 
@@ -152,7 +151,7 @@ scikit_learn_install() {
     # workers with 2 cores when building the compiled extensions of scikit-learn.
     export SKLEARN_BUILD_PARALLEL=3
 
-    if [[ "$UNAMESTR" == "Darwin"]] && [[ "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
+    if [[ "$UNAMESTR" == "Darwin" ]] && [[ "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
         export AR=/usr/bin/ar
