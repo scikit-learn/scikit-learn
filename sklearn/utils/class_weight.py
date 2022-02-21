@@ -55,10 +55,8 @@ def compute_class_weight(class_weight, *, classes, y):
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
         remaining_classes = list(classes)
-        print(class_weight, classes, type(class_weight), type(classes))
         for c in class_weight:
             i = np.searchsorted(classes, c)
-            print(i, c)
             # ignore weights for classes not present in y
             if i < len(classes) and classes[i] == c:
                 weight[i] = class_weight[c]
