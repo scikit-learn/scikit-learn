@@ -104,12 +104,9 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # conda is still used as a convenient way to install Python and pip.
     make_conda "ccache python=$PYTHON_VERSION"
     setup_ccache
+
     python -m pip install -U pip
-
-    # Do not build scikit-image from source because it is an optional dependency
-    python -m pip install --only-binary :all: scikit-image || true
-
-    python -m pip install pandas matplotlib pyamg
+    python -m pip install pandas matplotlib scikit-image pyamg
     # do not install dependencies for lightgbm since it requires scikit-learn.
     python -m pip install "lightgbm>=3.0.0" --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
