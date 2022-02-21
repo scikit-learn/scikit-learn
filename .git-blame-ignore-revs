@@ -19,3 +19,6 @@
 
 # PR 20502: Runs Black on examples
 70a185ae59b4362633d18b0d0083abb1b6f7370c
+
+# PR 22474: Update to Black 22.1.0
+1fc86b6aacd89da44a3b4e8abf7c3e2ba4336ffe
