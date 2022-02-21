@@ -63,9 +63,11 @@ def _smacof_single(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    normalize : boolean, optional, default: False
+    normalize : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default.
+
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -107,7 +109,6 @@ def _smacof_single(
     for it in range(max_iter):
         # Compute distance and monotonic regression
         dis = euclidean_distances(X)
-
         if metric:
             disparities = dissimilarities
         else:
@@ -126,7 +127,8 @@ def _smacof_single(
 
         # Compute stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
-
+        if normalize:
+            stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
         ratio = disparities / dis
@@ -139,17 +141,10 @@ def _smacof_single(
             print("it: %d, stress %s" % (it, stress))
         if old_stress is not None:
             if (old_stress - stress / dis) < eps:
-                # Use Stress-1
-                if normalize:
-                    stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
                 if verbose:
                     print("breaking at iteration %d with stress %s" % (it, stress))
                 break
         old_stress = stress / dis
-
-    # Use Stress-1
-    if normalize:
-        stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
     return X, stress, it + 1
 
 
@@ -239,9 +234,11 @@ def smacof(
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    normalize : boolean, optional, default: False
+    normalize : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default.
+
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -382,9 +379,11 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    normalize : boolean, optional, default: False
+    normalize : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default.
+
+        .. versionadded:: 1.1
 
     Attributes
     ----------
