@@ -1640,9 +1640,7 @@ def likelihood_ratios(
     labels=None,
     pos_label=1,
     average=None,
-    warn_for=("positive", "negative"),
     sample_weight=None,
-    zero_division="warn",
 ):
     """Compute positive and negative likelihood ratio.
 
@@ -1701,20 +1699,8 @@ def likelihood_ratios(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    warn_for : tuple or set, for internal use
-        This determines which warnings will be made in the case that this
-        function is being used to return only one of its metrics.
-
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
-
-    zero_division : "warn", 0 or 1, default="warn"
-        Sets the value to return when there is a zero division:
-           - recall: when there are no positive labels
-           - precision: when there are no positive predictions
-           - f-score: both
-
-        If set to "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
@@ -1731,8 +1717,7 @@ def likelihood_ratios(
     When ``false positive == 0``, positive likelihood ratio is undefined.
     When ``true negative == 0``, negative likelihood ratio is undefined.
     When ``true positive + false negative == 0`` both ratios are undefined.
-    In such cases, ``UndefinedMetricWarning`` will be raised. This behavior can
-    be modified with ``zero_division``.
+    In such cases, ``UndefinedMetricWarning`` will be raised.
 
     References
     ----------
@@ -1758,7 +1743,7 @@ def likelihood_ratios(
     ... labels=['pig', 'dog', 'cat'])
     (array([0., 0., 4.]), array([1.33..., 2.        , 0.        ]))
     """
-    _check_zero_division(zero_division)
+
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Compute a confusion matrix for each class or sample
@@ -1788,26 +1773,22 @@ def likelihood_ratios(
     neg_num = fn * false_sum
     neg_denom = tn * true_sum
 
-    # Divide, and on zero-division, set scores and/or warn according to
-    # zero_division:
-    positive_likelihood_ratio = _prf_divide(
-        pos_num,
-        pos_denom,
-        "positive_likelihood_ratio",
-        "positive",
-        average,
-        warn_for,
-        zero_division,
-    )
-    negative_likelihood_ratio = _prf_divide(
-        neg_num,
-        neg_denom,
-        "negative_likelihood_ratio",
-        "positive",
-        average,
-        warn_for,
-        zero_division,
-    )
+    # Divide, and on zero-division, warn and set scores to float('inf')
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        positive_likelihood_ratio = pos_num / pos_denom
+        negative_likelihood_ratio = neg_num / neg_denom
+
+    if (pos_denom == 0).any():
+        positive_likelihood_ratio[pos_denom == 0] = float("inf")
+        msg = "positive_likelihood_ratio ill-defined and being set to inf "
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+
+    if (neg_denom == 0).any():
+        negative_likelihood_ratio[neg_denom == 0] = float("inf")
+        msg = "negative_likelihood_ratio ill-defined and being set to inf "
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
 
     # Average the results
     if average == "weighted":
