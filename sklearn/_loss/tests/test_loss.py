@@ -206,7 +206,7 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25),
         (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
         (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
-        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4 ** 2),
+        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2),
         (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
         (
             HalfMultinomialLoss(n_classes=3),
@@ -1046,6 +1046,42 @@ def test_init_gradient_and_hessian_raises(loss, params, err_msg):
     loss = loss()
     with pytest.raises((ValueError, TypeError), match=err_msg):
         gradient, hessian = loss.init_gradient_and_hessian(n_samples=5, **params)
+
+
+@pytest.mark.parametrize(
+    "loss, params, err_type, err_msg",
+    [
+        (
+            PinballLoss,
+            {"quantile": None},
+            TypeError,
+            "quantile must be an instance of float, not NoneType.",
+        ),
+        (
+            PinballLoss,
+            {"quantile": 0},
+            ValueError,
+            "quantile == 0, must be > 0.",
+        ),
+        (PinballLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
+        (
+            HalfTweedieLoss,
+            {"power": None},
+            TypeError,
+            "power must be an instance of float, not NoneType.",
+        ),
+        (
+            HalfTweedieLoss,
+            {"power": np.inf},
+            ValueError,
+            "power == inf, must be < inf.",
+        ),
+    ],
+)
+def test_loss_init_parameter_validation(loss, params, err_type, err_msg):
+    """Test that loss raises errors for invalid input."""
+    with pytest.raises(err_type, match=err_msg):
+        loss(**params)
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)

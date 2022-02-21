@@ -21,7 +21,7 @@ elastic_net_color = "darkorange"
 line = np.linspace(-1.5, 1.5, 1001)
 xx, yy = np.meshgrid(line, line)
 
-l2 = xx ** 2 + yy ** 2
+l2 = xx**2 + yy**2
 l1 = np.abs(xx) + np.abs(yy)
 rho = 0.5
 elastic_net = rho * l1 + (1 - rho) * l2

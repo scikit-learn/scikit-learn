@@ -739,7 +739,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         token_pattern=r"(?u)\b\w\w+\b",
         ngram_range=(1, 1),
         analyzer="word",
-        n_features=(2 ** 20),
+        n_features=(2**20),
         binary=False,
         norm="l2",
         alternate_sign=True,
