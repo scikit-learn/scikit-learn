@@ -330,6 +330,12 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+- |Fix| Removed a potential source of CPU oversubscription in
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` when CPU resource usage is limited,
+  for instance using cgroups quota in a docker container. :pr:`22566` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
