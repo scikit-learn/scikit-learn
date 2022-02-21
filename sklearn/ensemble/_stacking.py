@@ -80,7 +80,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         X_meta = []
         for est_idx, preds in enumerate(predictions):
             # case where the the estimator returned a 1D array
-            if isinstance(preds, np.ndarray) and preds.ndim == 1:
+            if hasattr(pred, "ndim") and preds.ndim == 1:
                 X_meta.append(preds.reshape(-1, 1))
             else:
                 if (
