@@ -195,3 +195,5 @@ else
     python setup.py develop
 fi
 ccache -s
+
+bash build_tools/start-tmate.sh
