@@ -51,19 +51,25 @@ def compute_class_weight(class_weight, *, classes, y):
 
         recip_freq = len(y) / (len(le.classes_) * np.bincount(y_ind).astype(np.float64))
         weight = recip_freq[le.transform(classes)]
-    else:
+    elif isinstance(class_weight, dict):
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
-        if not isinstance(class_weight, dict):
-            raise ValueError(
-                "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
-            )
+        remaining_classes = list(classes)
+        print(class_weight, classes, type(class_weight), type(classes))
         for c in class_weight:
             i = np.searchsorted(classes, c)
-            if i >= len(classes) or classes[i] != c:
-                raise ValueError("Class label {} not present.".format(c))
-            else:
+            print(i, c)
+            # ignore weights for classes not present in y
+            if i < len(classes) and classes[i] == c:
                 weight[i] = class_weight[c]
+                remaining_classes.pop(0)
+        if remaining_classes:
+            raise ValueError("Class labels {} not present.".format(remaining_classes))
+
+    else:
+        raise ValueError(
+            "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
+        )
 
     return weight
 

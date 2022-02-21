@@ -261,3 +261,16 @@ def test_compute_sample_weight_more_than_32():
     indices = np.arange(50)  # use subsampling
     weight = compute_sample_weight("balanced", y, indices=indices)
     assert_array_almost_equal(weight, np.ones(y.shape[0]))
+
+
+def test_compute_sample_weight_extra_weight():
+    # Test fix for #22413: extra class weight
+    class_weight = {"dog": 10, "cat": 1, "parrot": 5}
+    compute_sample_weight(class_weight, ["dog", "cat"])
+
+
+def test_compute_sample_weight_missing_weight():
+    # Regression test for #22413 fix: missing class weight
+    class_weight = {"dog": 10, "cat": 1}
+    with pytest.raises(ValueError):
+        compute_sample_weight(class_weight, ["dog", "cat", "parrot"])
