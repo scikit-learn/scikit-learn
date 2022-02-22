@@ -290,11 +290,15 @@ def fetch_lfw_people(
 
         .. versionadded:: 0.20
 
-    n_retries : int
+    n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
-    delay : int
+    .. versionadded:: 1.1
+
+    delay : int, default=1
         Number of seconds between retries.
+
+    .. versionadded:: 1.1
 
     Returns
     -------
@@ -427,6 +431,8 @@ def fetch_lfw_pairs(
     color=False,
     slice_=(slice(70, 195), slice(78, 172)),
     download_if_missing=True,
+    n_retries=3,
+    delay=1,
 ):
     """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
 
@@ -482,6 +488,16 @@ def fetch_lfw_pairs(
     download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+    .. versionadded:: 1.1
+
+    delay : int, default=1
+        Number of seconds between retries.
+
+    .. versionadded:: 1.1
 
     Returns
     -------

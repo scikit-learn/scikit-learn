@@ -114,12 +114,15 @@ def fetch_kddcup99(
 
         .. versionadded:: 0.24
 
-    n_retries : int
+    n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
-    delay : int
+    .. versionadded:: 1.1
+
+    delay : int, default=1
         Number of seconds between retries.
 
+    .. versionadded:: 1.1
 
     Returns
     -------
@@ -254,11 +257,15 @@ def _fetch_brute_kddcup99(
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
 
-    n_retries : int
+    n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
-    delay : int
+    .. versionadded:: 1.1
+
+    delay : int, default=1
         Number of seconds between retries.
+
+    .. versionadded:: 1.1
 
     Returns
     -------

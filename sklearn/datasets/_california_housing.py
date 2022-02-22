@@ -94,11 +94,15 @@ def fetch_california_housing(
 
         .. versionadded:: 0.23
 
-    n_retries : int
+    n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
-    delay : int
+    .. versionadded:: 1.1
+
+    delay : int, default=1
         Number of seconds between retries.
+
+    .. versionadded:: 1.1
 
     Returns
     -------
