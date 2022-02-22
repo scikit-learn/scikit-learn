@@ -22,8 +22,10 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.special import logsumexp
+from joblib import Parallel
 
 from .base import BaseEstimator, ClassifierMixin
+from .base import clone
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
@@ -32,6 +34,13 @@ from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
+from .utils.validation import column_or_1d
+from .utils.metaestimators import _BaseComposition
+from .utils import _safe_indexing, _get_column_indices
+from .utils import _print_elapsed_time
+from .utils import Bunch
+from .utils.fixes import delayed
+from .compose._column_transformer import _is_empty_column_selection
 
 
 __all__ = [
@@ -40,6 +49,7 @@ __all__ = [
     "MultinomialNB",
     "ComplementNB",
     "CategoricalNB",
+    "ColumnwiseNB",
 ]
 
 
@@ -1423,3 +1433,539 @@ class CategoricalNB(_BaseDiscreteNB):
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
+
+
+def _fit_one(estimator, X, y, message_clsname="", message=None, **fit_params):
+    """Call ``estimator.fit`` and print elapsed time message.
+
+    See :func:`sklearn.pipeline._fit_one`.
+    """
+    with _print_elapsed_time(message_clsname, message):
+        return estimator.fit(X, y, **fit_params)
+
+
+def _partial_fit_one(estimator, X, y, message_clsname="", message=None, **fit_params):
+    """Call ``estimator.partial_fit`` and print elapsed time message.
+
+    See :func:`sklearn.pipeline._fit_one`.
+    """
+    with _print_elapsed_time(message_clsname, message):
+        return estimator.partial_fit(X, y, **fit_params)
+
+
+def _jll_one(estimator, X):
+    """Call ``estimator._joint_log_likelihood``.
+
+    See :func:`sklearn.pipeline._transform_one`.
+    """
+    return estimator._joint_log_likelihood(estimator._check_X(X))
+
+
+class ColumnwiseNB(_BaseNB, _BaseComposition):
+    """
+    Column-wise Naive Bayes estimator.
+
+    Parameters
+    ----------
+    estimators : list of tuples
+        List of (name, estimatorNB, columns) tuples specifying the naive Bayes
+        estimators to be combined into a single naive Bayes meta-estimator.
+
+        name : str
+            Name of the naive Bayes estimator. Like in Pipeline, FeatureUnion,
+            and ColumnTransformer, this allows the subestimator and its
+            parameters to be set using ``set_params`` and searched in grid
+            search.
+        estimatorNB : estimator
+            The estimator must support :term:`fit` or :term:`partial_fit`,
+            depending on how the meta-estimator is fitted. In addition, the
+            estimator must support ``_joint_log_likelihood`` method, which
+            takes :term:`X` of shape (n_samples, n_features) and returns a
+            numpy array of shape (n_samples, n_classes) containing joint
+            log-likelihoods, ``log P(x,c)`` for each sample point and class.
+        columns :  str, array-like of str, int, array-like of int, \
+                array-like of bool, slice or callable
+            Indexes the data on its second axis. Integers are interpreted as
+            positional columns, while strings can reference DataFrame columns
+            by name.  A scalar string or int should be used where
+            ``estimatorNB`` expects X to be a 1d array-like (vector),
+            otherwise a 2d array will be passed to the transformer.
+            A callable is passed the input data `X` and can return any of the
+            above. To select multiple columns by name or dtype, you can use
+            :obj:`make_column_selector`.
+
+    priors : array-like of shape (n_classes,) or str, default=None
+        Prior probabilities of classes. If unspecified, the priors are
+        calculated as relative frequencies of classes in the training data.
+        If str, the priors are taken from the estimator with the given name.
+
+    n_jobs : int, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    verbose : bool, default=False
+        If True, the time elapsed while fitting each estimator will be
+        printed as it is completed.
+
+    Attributes
+    ----------
+    estimators_ : list of tuples
+        List of ``(name, fitted_estimatorNB, columns)`` tuples, which follow
+        the order of `estimators`. ``fitted_estimatorNB`` is a fitted naive
+        Bayes estimator, except when ``columns`` presents an empty selection of
+        columns, in which case it is the original unfitted ``estimatorNB``.
+        Here ``columns`` is converted to a list of column indices, if the
+        original specification in `estimators` was a callable.
+
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
+        Read-only attribute to access any subestimator by given name.
+        Keys are estimator names and values are the fitted estimators, except
+        when a subestimator does not require fitting (i.e., when ``columns`` is
+        an empty set of indices).
+
+    class_prior_ : ndarray of shape (n_classes,)
+        Prior probabilities of classes used in the naive Bayes meta-estimator,
+        which are calculated as relative frequencies, extracted from
+        subestimators, or provided, according to the value of `priors`
+        at initialization.
+
+    class_count_ : ndarray of shape (n_classes,)
+        Number of samples encountered for each class during fitting. This
+        value is weighted by the sample weight when provided.
+
+    n_classes_ : int
+        The number of classes known to the naive Bayes classifier, `n_classes`.
+
+    classes_ : ndarray of shape (n_classes,)
+        Class labels known to the classifier.
+
+    feature_names_in_ : ndarray of shape (n_features_in_,)
+        Names of features seen during :term:`fit`. Only defined if `X` has
+        feature names that are all strings.
+
+    Notes
+    -----
+    ColumnwiseNB combines multiple naive Bayes estimators by expressing the
+    overall joint probability ``P(x,y)`` through ``P(x_i|y)``, the joint
+    probabilities of the subestimators:
+        ``Log P(x,y) = Log P(x_1,y) + ... + Log P(x_N,y) - (N - 1) Log P(y)``,
+    where ``N`` denotes ``n_estimators``, the number of estimators.
+    It is implicitly assumed that the class log priors are finite and agree
+    between the estimators and the subestimator:
+        ``- inf < Log P(y) = Log P(y|1) = ... = Log P(y|N)``.
+    The meta-estimators does not check if this condition holds. Meaningless
+    results, including ``NaN``, may be produced by ColumnwiseNB if the class
+    priors differ or contain a zero probability.
+    """
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return "(%d of %d) Processing %s" % (idx, total, name)
+
+    def __init__(self, estimators, priors=None, n_jobs=None, verbose=False):
+        self.estimators = estimators
+        self.priors = priors
+        self.n_jobs = n_jobs
+        self.verbose = verbose
+
+    def _check_X(self, X):
+        """Validate X, used only in predict* methods."""
+        # The meta-estimator checks for feature names only. Other checks
+        # and conversion to numpy array are performed by subestimators.
+        # It is important that X is not modified by the meta-estimator, and X's
+        # columns are passed to an estimator as they are. Note that estimators
+        # may modify (a copy of) X. E.g., BernoulliNB._check_X binarises the
+        # input.
+        self._check_feature_names(X, reset=False)
+        return X
+
+    def _joint_log_likelihood(self, X):
+        """Calculate the meta-estimator's joint log likelihood ``log P(x,c)``.
+        """
+        # Because data must follow the same path as it would in subestimators,
+        # _jll_one(estimatorNB, X) passes it through estimatorNB._check_X to
+        # match the implementation of _BaseNB.predict_log_proba.
+        # Changes therein must be reflected in _jll_one or here.
+        estimators = self._iter(fitted=True, replace_strings=True)
+        all_jlls = Parallel(n_jobs=self.n_jobs)(
+            delayed(_jll_one)(
+                estimator=estimatorNB,
+                X=_safe_indexing(X, cols, axis=1)
+                )
+            for (_, estimatorNB, cols) in estimators
+            )
+        n_estimators = len(all_jlls)
+        log_prior = np.log(self.class_prior_)
+        return np.sum(all_jlls, axis=0) - (n_estimators - 1) * log_prior
+
+    def _validate_estimators(self, check_partial=False):
+        # Check if estimators have fit/partial_fit and jll methods
+        # Validate estimator names via _BaseComposition._validate_names(self, names)
+        if not self.estimators:
+            raise ValueError(
+                "A list of naive Bayes estimators must be provided "
+                "in the form [(name, estimatorNB, columns), ... ]."
+            )
+        names, estimators, _ = zip(*self.estimators)
+        for e in estimators:
+            if (not check_partial) and (
+                not (hasattr(e, "fit") and hasattr(e, "_joint_log_likelihood"))
+            ):
+                raise TypeError(
+                    "Estimators must be naive Bayes estimators implementing "
+                    "`fit` and `_joint_log_likelihood` methods."
+                )
+            if check_partial and (
+                not (hasattr(e, "partial_fit")
+                     and hasattr(e, "_joint_log_likelihood"))
+            ):
+                raise TypeError(
+                    "Estimators must be Naive Bayes estimators implementing "
+                    "`partial_fit` and `_joint_log_likelihood` methods."
+                )
+        self._validate_names(names)
+
+    def _validate_column_callables(self, X):
+        """
+        Convert callable column specifications and store into self._columns.
+
+        Empty-set columns do not enjoy any special treatment.
+        """
+        # Almost a verbatim copy of ColumnTransformer._validate_column_callables().
+        # Consider refactoring in the future.
+        # Unlike ColumnTransformer, this estimator does not need to output a
+        # dataframe or validate a the remainder, so _estimator_to_input_indices
+        # is not really needed, but retained for consistency with
+        # ColumnTransformer code.
+        all_columns = []
+        estimator_to_input_indices = {}
+        for name, _, columns in self.estimators:
+            if callable(columns):
+                columns = columns(X)
+            all_columns.append(columns)
+            estimator_to_input_indices[name] = _get_column_indices(X, columns)
+        self._columns = all_columns
+        self._estimator_to_input_indices = estimator_to_input_indices
+
+    @property
+    def named_estimators_(self):
+        """Access the fitted naive Bayes subestimators by name.
+
+        Read-only attribute to access any estimators by given name.
+        Keys are estimators names and values are the fitted estimator
+        objects.
+        """
+        # Almost a verbatim copy of ColumnTransformer.named_transformers_
+        # Use Bunch object to improve autocomplete
+        return Bunch(**{name: e for name, e, _ in self.estimators_})
+
+    def _iter(self, *, fitted=False, replace_strings=False):
+        """Generate ``(name, estimatorNB, columns)`` tuples.
+
+        This is a private method, similar to ColumnTransformer._iter.
+        Must not be called before _validate_column_callables.
+
+        Parameters
+        ----------
+        fitted : bool, default=False
+            If False, returns tuples from self.estimators (user-specified), but
+            callable columns are replaced with a list column names or indices.
+            If True, returns tuples from self.estimators_ (fitted), where
+            columns are processed as well.
+
+        replace_strings : bool, default=False
+            If True, omits the estimators that do not require fitting, i.e those
+            with empty-set columns. The name `replace_strings` is a relic of
+            ColumnTransformer implementation, where `passthrough` and `drop`
+            required replacement and omission, respectively.
+
+        Yields
+        ------
+        tuple
+            of the form ``(name, estimatorNB, columns)``.
+
+        Notes
+        -----
+        Loop through estimators from this generator with the following
+        parameters, depending on the purpose:
+
+        self._iter(fitted=False, replace_strings=True) :
+            fit, 1st partial_fit
+        self._iter(fitted=True, replace_strings=True) :
+            further partial_fit, predict
+        self._iter(fitted=False, replace_strings=False) :
+            update fitted estimators. Note that special treatment is required
+            for unfitted estimators (those with empty-set columns)!
+        self._iter(fitted=True, replace_strings=False) :
+            not used here. The usecase in ColumnTransformer would be sorting
+            out the transformed output and its column names.
+        do not use in :
+            a Bunch accessor named_estimators_;
+            input validation _validate_estimators, _validate_column_callables;
+            parameter management: get_params_, set_params_, _estimators.
+        """
+        if fitted:
+            for (name, estimator, cols) in self.estimators_:
+                if replace_strings and _is_empty_column_selection(cols):
+                    continue
+                else:
+                    yield (name, estimator, cols)
+        else:  # fitted=False
+            for (name, estimator, _), cols in (zip(self.estimators,
+                                                   self._columns)):
+                if replace_strings and _is_empty_column_selection(cols):
+                    continue
+                else:
+                    yield (name, estimator, cols)
+
+    def _update_class_prior(self):
+        """Update class prior after most of the fitting as done."""
+        if self.priors is None:  # calculcate empirical prior from counts
+            priors = self.class_count_ / self.class_count_.sum()
+        elif isinstance(self.priors, str):  # extract prior from estimator
+            name = self.priors
+            e = self.named_estimators_[name]
+            if getattr(e, 'class_prior_', None) is not None:
+                priors = e.class_prior_
+            elif getattr(e, 'class_log_prior_', None) is not None:
+                priors = np.exp(e.class_log_prior_)
+            else:
+                raise AttributeError(
+                    f"Unable to extract class prior from estimator {name}, as "
+                    "it does not have class_prior_ or class_log_prior_ "
+                    "attributes.")
+        else:  # check the provided prior
+            priors = np.asarray(self.priors)
+        # Check the prior in any case.
+        if len(priors) != self.n_classes_:
+            raise ValueError("Number of priors must match number of classes.")
+        if not np.isclose(priors.sum(), 1.0):
+            raise ValueError("The sum of the priors should be 1.")
+        if (priors < 0).any():
+            raise ValueError("Priors must be non-negative.")
+        self.class_prior_ = priors
+
+    def _update_fitted_estimators(self, fitted_estimators):
+        """Update tuples in self.estimators_ with fitted_estimators provided.
+
+        Callable columns are replaced with sets of actual str or int indices.
+        Estimators that don't require fitting are passed as they were,
+        without cloning.
+        """
+        estimators_ = []
+        fitted_estimators = iter(fitted_estimators)
+
+        for name, estimatorNB, cols in self._iter():
+            if not _is_empty_column_selection(cols):
+                updated_estimatorNB = next(fitted_estimators)
+            else:  # don't advance fitted_estimators; use original
+                updated_estimatorNB = estimatorNB
+            estimators_.append((name, updated_estimatorNB, cols))
+        self.estimators_ = estimators_
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the naive Bayes meta-estimator.
+
+        Calls `fit` of each subestimator ``estimatorNB``.  Only a corresponding
+        subset of columns of `X` is passed to each subestimator; `sample_weight`
+        and `y` are passed to the subestimators as they are.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        y : array-like of shape (n_samples,)
+            Target values.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self._check_feature_names(X, reset=True)
+        # TODO: Consider overriding BaseEstimator._check_feature_names
+        # Currently, when X has all str feature names, all features are
+        # registered in self.feature_names_in no matter if they are used or not.
+        self._validate_estimators()
+        self._validate_column_callables(X)
+        # Consistency checks for X, y are delegated to subestimators
+
+        # Subestimators get original sample_weight. This is for class counts:
+        if sample_weight is not None:
+            weights = _check_sample_weight(sample_weight, X=y, copy=True)
+
+        # We would use sklearn.utils.multiclass.class_distribution, but it does
+        # not return class_count, which we want as well.
+        if sample_weight is None:
+            self.classes_, self.class_count_ = np.unique(column_or_1d(y),
+                                                         return_counts=True)
+        else:
+            self.classes_ = np.unique(column_or_1d(y))
+            counts = np.zeros(len(self.classes_))
+            for i, c in enumerate(self.classes_):
+                counts[i] = (weights * (column_or_1d(y) == c)).sum()
+            self.class_count_ = counts
+        self.n_classes_ = len(self.classes_)
+        self._update_class_prior()
+
+        estimators = list(self._iter(fitted=False, replace_strings=True))
+        fitted_estimators = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_one)(
+                estimator=clone(estimatorNB),
+                X=_safe_indexing(X, cols, axis=1),
+                y=y,
+                message_clsname="ColumnwiseNB",
+                message=self._log_message(name, idx, len(estimators)),
+                sample_weight=sample_weight
+                )
+            for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
+            )
+        self._update_fitted_estimators(fitted_estimators)
+        return self
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        """Fit incrementally the naive Bayes meta-estimator on a batch of samples.
+
+        Calls `partial_fit` of each subestimator. Only a corresponding
+        subset of columns of `X` is passed to each subestimator. `classes`,
+        `sample_weight` and 'y' are passed to the subestimators as they are.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        classes : array-like of shape (n_classes,), default=None
+            List of all the classes that can possibly appear in the y vector.
+
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        first_call = not hasattr(self, "classes_")
+        if first_call:
+            self._check_feature_names(X, reset=True)
+            self._validate_estimators(check_partial=True)
+            self._validate_column_callables(X)
+        else:
+            self._check_feature_names(X, reset=False)
+        # Consistency checks for X, y are delegated to subestimators
+
+        # Subestimators get original sample_weight. This is for class counts:
+        if sample_weight is not None:
+            weights = _check_sample_weight(sample_weight, X=y, copy=True)
+
+        # Subestimators should've checked classes. We set classes_ for counts
+        # and so that first_call becomes False at next partial_fit call.
+        _check_partial_fit_first_call(self, classes)
+
+        # We don't use sklearn.utils.multiclass.class_distribution, because it
+        # neither returns class_count, nor is suitable for partial_fit.
+        if sample_weight is None:
+            counts = np.zeros(len(self.classes_))
+            for i, c in enumerate(self.classes_):
+                counts[i] = (column_or_1d(y) == c).sum()
+        else:
+            counts = np.zeros(len(self.classes_))
+            for i, c in enumerate(self.classes_):
+                counts[i] = (weights * (column_or_1d(y) == c)).sum()
+
+        if first_call:
+            self.n_classes_ = len(self.classes_)
+            self.class_count_ = counts
+        else:
+            self.class_count_ += counts
+        self._update_class_prior()
+
+        estimators = list(self._iter(fitted=not first_call, replace_strings=True))
+        fitted_estimators = Parallel(n_jobs=self.n_jobs)(
+            delayed(_partial_fit_one)(
+                estimator=clone(estimatorNB) if first_call else estimatorNB,
+                X=_safe_indexing(X, cols, axis=1),
+                y=y,
+                message_clsname="ColumnwiseNB",
+                message=self._log_message(name, idx, len(estimators)),
+                classes=classes,
+                sample_weight=sample_weight
+                )
+            for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
+            )
+        self._update_fitted_estimators(fitted_estimators)
+        return self
+
+    @property
+    def _estimators(self):
+        """Internal list of subestimators.
+
+        This is for the implementation of get_params via BaseComposition._get_params,
+        which expects lists of tuples of len 2.
+        """
+        # Implemented in the image and likeness of ColumnTranformer._transformers
+        return [(name, e) for name, e, _ in self.estimators]
+
+    @_estimators.setter
+    def _estimators(self, value):
+        # Implemented in the image and likeness of ColumnTranformer._transformers
+        # TODO: Is renaming or changing the order legal? Swap `name` and `_`?
+        self.estimators = [
+            (name, e, col)
+            for ((name, e), (_, _, col)) in zip(value, self.estimators)
+        ]
+
+    def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Returns the parameters listed in the constructor as well as the
+        subestimators contained within the `estimators` of the `ColumnwiseNB`
+        instance.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values.
+        """
+        # Implemented in the image and likeness of ColumnTranformer.get_params
+        return self._get_params("_estimators", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``. Note that you
+        can directly set the parameters of the estimators contained in
+        `estimators` of `ColumnwiseNB`.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Estimator parameters.
+
+        Returns
+        -------
+        self : ColumnwiseNB
+            This estimator.
+        """
+        # Implemented in the image and likeness of ColumnTranformer.set_params
+        self._set_params("_estimators", **kwargs)
+        return self
