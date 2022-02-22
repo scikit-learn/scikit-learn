@@ -1610,8 +1610,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         return X
 
     def _joint_log_likelihood(self, X):
-        """Calculate the meta-estimator's joint log likelihood ``log P(x,c)``.
-        """
+        """Calculate the meta-estimator's joint log likelihood ``log P(x,c)``."""
         # Because data must follow the same path as it would in subestimators,
         # _jll_one(estimatorNB, X) passes it through estimatorNB._check_X to
         # match the implementation of _BaseNB.predict_log_proba.
