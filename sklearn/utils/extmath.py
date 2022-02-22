@@ -1019,7 +1019,7 @@ def _incremental_mean_and_var(
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
         # and recommendations", by Chan, Golub, and LeVeque.
-        new_unnormalized_variance -= correction ** 2 / new_sample_count
+        new_unnormalized_variance -= correction**2 / new_sample_count
 
         last_unnormalized_variance = last_variance * last_sample_count
 

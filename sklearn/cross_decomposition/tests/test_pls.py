@@ -476,7 +476,7 @@ def test_scale_and_stability(Est, X, Y):
         (
             2.0,
             TypeError,
-            "n_components must be an instance of <class 'numbers.Integral'>",
+            "n_components must be an instance of int",
         ),
     ],
 )
@@ -498,7 +498,7 @@ def test_n_components_bounds(Est, n_components, err_type, err_msg):
         (
             2.0,
             TypeError,
-            "n_components must be an instance of <class 'numbers.Integral'>",
+            "n_components must be an instance of int",
         ),
     ],
 )
