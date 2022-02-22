@@ -259,7 +259,7 @@ class OneHotEncoder(_BaseEncoder):
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None.
 
-    feature_name_combiner : str {'concat_string'} or Callable, default='concat_string'
+    feature_name_combiner : {'concat_string'} or Callable, default='concat_string'
         Function creating feature names from tuples (input_feature, category).
 
         'concat_string' concatenates encoded feature name and category separated by
