@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
@@ -21,7 +21,7 @@ from sklearn.utils._testing import (
     MinimalTransformer,
     SkipTest,
 )
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_is_fitted, check_X_y
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
@@ -51,6 +51,7 @@ from sklearn.utils.estimator_checks import (
     check_fit_score_takes_y,
     check_no_attributes_set_in_init,
     check_regressor_data_not_an_array,
+    check_requires_y_none,
     check_outlier_corruption,
     set_random_state,
     check_fit_check_is_fitted,
@@ -1045,6 +1046,20 @@ def test_check_fit_check_is_fitted():
 
     check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
     check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
+
+
+def test_check_requires_y_none():
+    class CheckXyRegressor(BaseEstimator, RegressorMixin):
+        def fit(self, X, y):
+            X, y = check_X_y(X, y)
+            return self
+
+    estimator = CheckXyRegressor()
+    with warnings.catch_warnings(record=True) as record:
+        check_requires_y_none("estimator", estimator)
+
+    # no warnings are raised
+    assert not record
 
 
 # TODO: Remove in 1.3 when Estimator is removed
