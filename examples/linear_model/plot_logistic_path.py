@@ -25,23 +25,14 @@ full-path.
 
 """
 
-# %%
-# Author
-# ---------------------------------------------------
-# Alexandre Gramfort <alexandre.gramfort@inria.fr>
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+# License: BSD 3 clause
 
 # %%
-# License
-# ---------------------------------------------------
-# BSD 3 clause
+# Load data
+# ---------
 
-from time import time
-import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn import linear_model
 from sklearn import datasets
-from sklearn.svm import l1_min_c
 
 iris = datasets.load_iris()
 X = iris.data
@@ -53,14 +44,16 @@ y = y[y != 2]
 X /= X.max()  # Normalize X to speed-up convergence
 
 # %%
-# Demo path functions
-# ---------------------------------------------------
+# Compute regularization path
+# ---------------------------
+
+import numpy as np
+
+from sklearn import linear_model
+from sklearn.svm import l1_min_c
 
 cs = l1_min_c(X, y, loss="log") * np.logspace(0, 7, 16)
 
-
-print("Computing regularization path ...")
-start = time()
 clf = linear_model.LogisticRegression(
     penalty="l1",
     solver="liblinear",
@@ -74,9 +67,15 @@ for c in cs:
     clf.set_params(C=c)
     clf.fit(X, y)
     coefs_.append(clf.coef_.ravel().copy())
-print("This took %0.3fs" % (time() - start))
 
 coefs_ = np.array(coefs_)
+
+# %%
+# Plot regularization path
+# ------------------------
+
+import matplotlib.pyplot as plt
+
 plt.plot(np.log10(cs), coefs_, marker="o")
 ymin, ymax = plt.ylim()
 plt.xlabel("log(C)")
