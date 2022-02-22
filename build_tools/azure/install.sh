@@ -97,6 +97,7 @@ python_environment_install() {
 
         python -m pip install $(get_dep cython $CYTHON_VERSION) \
                 $(get_dep joblib $JOBLIB_VERSION)
+
     elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
         # Since conda main channel usually lacks behind on the latest releases,
         # we use pypi to test against the latest releases of the dependencies.
@@ -107,6 +108,7 @@ python_environment_install() {
         python -m pip install pandas matplotlib scikit-image pyamg
         # do not install dependencies for lightgbm since it requires scikit-learn.
         python -m pip install "lightgbm>=3.0.0" --no-deps
+
     elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         make_conda "ccache python=$PYTHON_VERSION"
         python -m pip install -U pip
