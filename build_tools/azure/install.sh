@@ -61,45 +61,45 @@ pre_python_environment_install() {
 
 python_environment_install_and_activate() {
     if [[ -n "$LOCK_FILE" ]]; then
-        # FIXME install conda-lock dev version with a fixed commit while waiting
-        # for the release
         conda update -n base conda -y
         conda install pip -y
         conda list
+        # FIXME install conda-lock dev version with a fixed commit while waiting
+        # for the release
         python -m pip install git+https://github.com/conda-incubator/conda-lock@67f8da
         conda-lock install --name $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
     else
         if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
-        if [[ "$CONDA_CHANNEL" != "" ]]; then
-            TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
-        else
-            TO_INSTALL=""
-        fi
+            if [[ "$CONDA_CHANNEL" != "" ]]; then
+                TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
+            else
+                TO_INSTALL=""
+            fi
 
-        if [[ "$DISTRIB" == *"pypy"* ]]; then
-            TO_INSTALL="$TO_INSTALL pypy"
-        else
-            TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
-        fi
+            if [[ "$DISTRIB" == *"pypy"* ]]; then
+                TO_INSTALL="$TO_INSTALL pypy"
+            else
+                TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
+            fi
 
-        TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
+            TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
 
-        TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep cython $CYTHON_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep joblib $JOBLIB_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep pandas $PANDAS_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep pyamg $PYAMG_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep Pillow $PILLOW_VERSION)"
-        TO_INSTALL="$TO_INSTALL $(get_dep matplotlib $MATPLOTLIB_VERSION)"
+            TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
+            TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
+            TO_INSTALL="$TO_INSTALL $(get_dep cython $CYTHON_VERSION)"
+            TO_INSTALL="$TO_INSTALL $(get_dep joblib $JOBLIB_VERSION)"
+            TO_INSTALL="$TO_INSTALL $(get_dep pandas $PANDAS_VERSION)"
+            TO_INSTALL="$TO_INSTALL $(get_dep pyamg $PYAMG_VERSION)"
+            TO_INSTALL="$TO_INSTALL $(get_dep Pillow $PILLOW_VERSION)"
+            TO_INSTALL="$TO_INSTALL $(get_dep matplotlib $MATPLOTLIB_VERSION)"
 
-        if [[ "$UNAMESTR" == "Darwin" ]] && [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
-                TO_INSTALL="$TO_INSTALL compilers llvm-openmp"
-        fi
+            if [[ "$UNAMESTR" == "Darwin" ]] && [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
+                    TO_INSTALL="$TO_INSTALL compilers llvm-openmp"
+            fi
 
-        make_conda $TO_INSTALL
+            make_conda $TO_INSTALL
 
         elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
             python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
@@ -147,6 +147,7 @@ python_environment_install_and_activate() {
             python -m pip install sphinx
             python -m pip install numpydoc
         fi
+    fi
 }
 
 scikit_learn_install() {
