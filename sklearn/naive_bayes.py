@@ -1586,6 +1586,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     >>> print(clf.predict(X))
     [0 0 1 0 2 2]
     """
+
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
@@ -1617,12 +1618,9 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         # Changes therein must be reflected in _jll_one or here.
         estimators = self._iter(fitted=True, replace_strings=True)
         all_jlls = Parallel(n_jobs=self.n_jobs)(
-            delayed(_jll_one)(
-                estimator=estimatorNB,
-                X=_safe_indexing(X, cols, axis=1)
-                )
+            delayed(_jll_one)(estimator=estimatorNB, X=_safe_indexing(X, cols, axis=1))
             for (_, estimatorNB, cols) in estimators
-            )
+        )
         n_estimators = len(all_jlls)
         log_prior = np.log(self.class_prior_)
         return np.sum(all_jlls, axis=0) - (n_estimators - 1) * log_prior
@@ -1645,8 +1643,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                     "`fit` and `_joint_log_likelihood` methods."
                 )
             if check_partial and (
-                not (hasattr(e, "partial_fit")
-                     and hasattr(e, "_joint_log_likelihood"))
+                not (hasattr(e, "partial_fit") and hasattr(e, "_joint_log_likelihood"))
             ):
                 raise TypeError(
                     "Estimators must be Naive Bayes estimators implementing "
@@ -1740,8 +1737,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 else:
                     yield (name, estimator, cols)
         else:  # fitted=False
-            for (name, estimator, _), cols in (zip(self.estimators,
-                                                   self._columns)):
+            for (name, estimator, _), cols in zip(self.estimators, self._columns):
                 if replace_strings and _is_empty_column_selection(cols):
                     continue
                 else:
@@ -1754,15 +1750,16 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         elif isinstance(self.priors, str):  # extract prior from estimator
             name = self.priors
             e = self.named_estimators_[name]
-            if getattr(e, 'class_prior_', None) is not None:
+            if getattr(e, "class_prior_", None) is not None:
                 priors = e.class_prior_
-            elif getattr(e, 'class_log_prior_', None) is not None:
+            elif getattr(e, "class_log_prior_", None) is not None:
                 priors = np.exp(e.class_log_prior_)
             else:
                 raise AttributeError(
                     f"Unable to extract class prior from estimator {name}, as "
                     "it does not have class_prior_ or class_log_prior_ "
-                    "attributes.")
+                    "attributes."
+                )
         else:  # check the provided prior
             priors = np.asarray(self.priors)
         # Check the prior in any case.
@@ -1829,8 +1826,9 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         # We would use sklearn.utils.multiclass.class_distribution, but it does
         # not return class_count, which we want as well.
         if sample_weight is None:
-            self.classes_, self.class_count_ = np.unique(column_or_1d(y),
-                                                         return_counts=True)
+            self.classes_, self.class_count_ = np.unique(
+                column_or_1d(y), return_counts=True
+            )
         else:
             self.classes_ = np.unique(column_or_1d(y))
             counts = np.zeros(len(self.classes_))
@@ -1848,10 +1846,10 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 y=y,
                 message_clsname="ColumnwiseNB",
                 message=self._log_message(name, idx, len(estimators)),
-                sample_weight=sample_weight
-                )
-            for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
+                sample_weight=sample_weight,
             )
+            for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
+        )
         self._update_fitted_estimators(fitted_estimators)
         return self
 
@@ -1929,10 +1927,10 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 message_clsname="ColumnwiseNB",
                 message=self._log_message(name, idx, len(estimators)),
                 classes=classes,
-                sample_weight=sample_weight
-                )
-            for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
+                sample_weight=sample_weight,
             )
+            for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
+        )
         self._update_fitted_estimators(fitted_estimators)
         return self
 
@@ -1951,8 +1949,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         # Implemented in the image and likeness of ColumnTranformer._transformers
         # TODO: Is renaming or changing the order legal? Swap `name` and `_`?
         self.estimators = [
-            (name, e, col)
-            for ((name, e), (_, _, col)) in zip(value, self.estimators)
+            (name, e, col) for ((name, e), (_, _, col)) in zip(value, self.estimators)
         ]
 
     def get_params(self, deep=True):
