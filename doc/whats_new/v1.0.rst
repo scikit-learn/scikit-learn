@@ -140,11 +140,6 @@ Changelog
   descriptions in the generated HTML. :pr:`21493` by
   :user:`Aurélien Geron <ageron>`.
 
-- |Fix| Changes the error message of the ValidationError raised by
-  :func:`utils.validation.check_X_y` when y is None so that it is compatible
-  with :func:`utils.estimator_checks.check_requires_y_none`. :pr:`22578` by
-  :user:`Claudio Salvatore Arcidiacono <ClaudioSalvatoreArcidiacono>`.
-
 .. _changes_1_0_1:
 
 Version 1.0.1
