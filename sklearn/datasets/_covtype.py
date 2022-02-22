@@ -121,12 +121,12 @@ def fetch_covtype(
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
-    .. versionadded:: 1.1
+        .. versionadded:: 1.1
 
     delay : int, default=1
         Number of seconds between retries.
 
-    .. versionadded:: 1.1
+        .. versionadded:: 1.1
 
     Returns
     -------
