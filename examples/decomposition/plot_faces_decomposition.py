@@ -241,9 +241,7 @@ plt.show()
 #
 # :class:`MiniBatchDictionaryLearning` implements a faster, but less accurate
 # version of the dictionary learning algorithm that is better suited for large
-# datasets.
-#
-# Read more in the :ref:`User Guide <_MiniBatchDictionaryLearning>`.
+# datasets. Read more in the :ref:`User Guide <MiniBatchDictionaryLearning>`.
 
 # %%
 # Plot the same samples from our dataset but with another colormap.
