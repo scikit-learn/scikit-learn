@@ -90,7 +90,7 @@ plot_gallery("Faces from dataset", faces_centered[:n_components])
 #
 # Initialise different estimators for decomposition and fit each
 # of them on all images and plot some results. Each estimator extracts
-# 6 components as vectors :math:`h \in \R^{4096}`.
+# 6 components as vectors :math:`h \in \mathbb{R}^{4096}`.
 # We just displayed these vectors in human-friendly visualisation as 64x64 pixel images.
 #
 # Read more in the :ref:`User Guide <decompositions>`.
@@ -121,7 +121,7 @@ plot_gallery(
 # Non-negative components - NMF
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# Estimate non- negative original data as production of two non-negative matrices.
+# Estimate non-negative original data as production of two non-negative matrices.
 
 # %%
 nmf_estimator = decomposition.NMF(n_components=n_components, tol=5e-3)
@@ -258,8 +258,8 @@ plot_gallery("Faces from dataset", faces_centered[:n_components], cmap=plt.cm.Rd
 # the dictionary learning and sparse encoding decompose input data
 # into the dictionary and the coding coefficients matrices.
 # :math:`X \approx UV`, where :math:`X = [x_1, . . . , x_n]`,
-# :math:`X \in R^{m×n}`, dictionary :math:`U \in R^{m×k}`, coding
-# coefficients :math:`V \in R^{k×n}`.
+# :math:`X \in \mathbb{R}^{m×n}`, dictionary :math:`U \in \mathbb{R}^{m×k}`, coding
+# coefficients :math:`V \in \mathbb{R}^{k×n}`.
 #
 # Also below are the results when the dictionary and coding
 # coefficients are positively constrained.
@@ -269,6 +269,7 @@ plot_gallery("Faces from dataset", faces_centered[:n_components], cmap=plt.cm.Rd
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
 # In the following section we enforce positivity when finding the dictionary.
+
 # %%
 dict_pos_dict_estimator = decomposition.MiniBatchDictionaryLearning(
     n_components=n_components,
