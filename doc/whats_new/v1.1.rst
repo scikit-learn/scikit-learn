@@ -374,6 +374,15 @@ Changelog
 - |Enhancement| Adds :term:`get_feature_names_out` to `IsotonicRegression`.
   :pr:`22249` by `Thomas Fan`_.
 
+
+:mod:`sklearn.kernel_ridge`
+............................
+
+- |Feature| Adds :class:`kernel_ridge.KernelRidgeClassifier` method that 
+  implements Kernel Ridge for classification problems.
+  :pr:`22417` by :user:`Carlos Perales <cperales>`.
+
+
 :mod:`sklearn.linear_model`
 ...........................
 
