@@ -7,7 +7,7 @@ Metadata Routing Utility
 
 import inspect
 from copy import deepcopy
-from enum import Enum, EnumMeta
+from enum import Enum
 from warnings import warn
 from collections import namedtuple
 from typing import Union, Optional
@@ -23,23 +23,7 @@ RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 MethodPair = namedtuple("MethodPair", ["callee", "caller"])
 
 
-class MemberCheckEnumMeta(EnumMeta):
-    """Enum metaclass adding __contains__ to Enum.
-
-    This allows us to check whether something is a valid alias later in the
-    code w/o having to code the try/except everywhere.
-    """
-
-    def __contains__(cls, item):
-        try:
-            cls(item)
-        except ValueError:
-            return False
-        else:
-            return True
-
-
-class RequestType(Enum, metaclass=MemberCheckEnumMeta):
+class RequestType(Enum):
     """A metadata is requested either with a string alias or this enum.
 
     .. versionadded:: 1.1
@@ -65,6 +49,48 @@ class RequestType(Enum, metaclass=MemberCheckEnumMeta):
     # consumer.
     WARN = "$WARN$"
 
+    @classmethod
+    def is_alias(cls, item):
+        """Check if an item is a valid alias.
+
+        Parameters
+        ----------
+        item : object
+            The given item to be checked if it can be an alias.
+
+        Returns
+        -------
+        result : bool
+            Whether the given item is a valid alias.
+        """
+        try:
+            cls(item)
+        except ValueError:
+            # item is only an alias if it's a valid identifier
+            return isinstance(item, str) and item.isidentifier()
+        else:
+            return False
+
+    @classmethod
+    def is_valid(cls, item):
+        """Check if an item is a valid RequestType (and not an alias).
+
+        Parameters
+        ----------
+        item : object
+            The given item to be checked.
+
+        Returns
+        -------
+        result : bool
+            Whether the given item is valid.
+        """
+        try:
+            cls(item)
+            return True
+        except ValueError:
+            return False
+
 
 # this is the default used in `set_{method}_request` methods to indicate no change
 # requested by the user.
@@ -87,7 +113,7 @@ METHODS = [
 # set_{method}_request methods.
 REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
 
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        Please see :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
         .. versionadded:: 1.1
@@ -119,7 +145,7 @@ alias instead of the original name.
 REQUESTER_DOC_RETURN = """        Returns
         -------
         self : estimator
-            Returns the object itself.
+            The updated object.
 """
 
 
@@ -133,7 +159,7 @@ class MethodMetadataRequest:
     Parameters
     ----------
     owner : str
-        The name of the object owning these requests.
+        A display name for the object owning these requests.
 
     method : str
         The name of the method to which these requests belong.
@@ -162,10 +188,10 @@ class MethodMetadataRequest:
             The property for which a request is set.
 
         alias : str, RequestType, or {True, False, None}
-            The alias which is routed to `prop`
+            Specifies which metadata should be routed to `param`
 
-            - str: the name which should be used as an alias when a meta-estimator
-              routes the metadata.
+            - str: the name (or alias) of metadata given to a meta-estimator that
+              should be routed to this parameter.
 
             - True or RequestType.REQUESTED: requested
 
@@ -176,7 +202,7 @@ class MethodMetadataRequest:
         try:
             alias = RequestType(alias)
         except ValueError:
-            if not (isinstance(alias, str) and alias.isidentifier()):
+            if not RequestType.is_alias(alias):
                 raise ValueError(
                     "alias should be either a valid identifier or one of "
                     "{None, True, False}, or a RequestType."
@@ -193,7 +219,7 @@ class MethodMetadataRequest:
         return self
 
     def _get_param_names(self, return_alias):
-        """Get the names of all available metadata.
+        """Get names of all metadata that can be consumed or routed by this method.
 
         This method returns the names of all metadata, even the UNREQUESTED
         ones.
@@ -207,13 +233,13 @@ class MethodMetadataRequest:
         Returns
         -------
         names : set of str
-            Returns a set of strings with the names of all parameters.
+            A set of strings with the names of all parameters.
         """
         return set(
             [
-                alias if return_alias and alias not in RequestType else prop
+                alias if return_alias and not RequestType.is_valid(alias) else prop
                 for prop, alias in self._requests.items()
-                if alias not in RequestType
+                if not RequestType.is_valid(alias)
                 or RequestType(alias) != RequestType.UNREQUESTED
             ]
         )
@@ -244,7 +270,7 @@ class MethodMetadataRequest:
             )
 
     def _route_params(self, params=None):
-        """Return the input parameters requested by the method.
+        """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
         corresponding method as extra props.
@@ -298,7 +324,7 @@ class MethodMetadataRequest:
             {
                 prop: alias
                 for prop, alias in self._requests.items()
-                if alias not in RequestType
+                if not RequestType.is_valid(alias)
             }
         )
         # And at last the parameters with RequestType routing info
@@ -306,7 +332,7 @@ class MethodMetadataRequest:
             {
                 prop: RequestType(alias)
                 for prop, alias in self._requests.items()
-                if alias in RequestType
+                if RequestType.is_valid(alias)
             }
         )
         return result
@@ -324,7 +350,7 @@ class MetadataRequest:
     Instances of :class:`MethodMetadataRequest` are used in this class for each
     available method under `metadatarequest.{method}`.
 
-    Consumers-only classes such as simple estimators return a serialized
+    Consumer-only classes such as simple estimators return a serialized
     version of this class as the output of `get_metadata_routing()`.
 
     .. versionadded:: 1.1
@@ -345,7 +371,8 @@ class MetadataRequest:
             setattr(self, method, MethodMetadataRequest(owner=owner, method=method))
 
     def _get_param_names(self, method, return_alias, ignore_self=None):
-        """Get the names of all available metadata for a method.
+        """Get names of all metadata that can be consumed or routed by specified \
+            method.
 
         This method returns the names of all metadata, even the UNREQUESTED
         ones.
@@ -365,12 +392,12 @@ class MetadataRequest:
         Returns
         -------
         names : set of str
-            Returns a set of strings with the names of all parameters.
+            A set of strings with the names of all parameters.
         """
         return getattr(self, method)._get_param_names(return_alias=return_alias)
 
     def _route_params(self, *, method, params):
-        """Return the input parameters requested by a method.
+        """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
         corresponding method as extra props.
@@ -609,7 +636,8 @@ class MetadataRouter:
         return self
 
     def _get_param_names(self, *, method, return_alias, ignore_self):
-        """Get the names of all available metadata for a method.
+        """Get names of all metadata that can be consumed or routed by specified \
+            method.
 
         This method returns the names of all metadata, even the UNREQUESTED
         ones.
@@ -632,7 +660,7 @@ class MetadataRouter:
         Returns
         -------
         names : set of str
-            Returns a set of strings with the names of all parameters.
+            A set of strings with the names of all parameters.
         """
         res = set()
         if self._self and not ignore_self:
