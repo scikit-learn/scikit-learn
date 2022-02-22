@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
@@ -1049,14 +1049,13 @@ def test_check_fit_check_is_fitted():
 
 
 def test_check_requires_y_none():
-    class CheckXyRegressor(BaseEstimator, RegressorMixin):
+    class Estimator(BaseEstimator):
         def fit(self, X, y):
             X, y = check_X_y(X, y)
             return self
 
-    estimator = CheckXyRegressor()
     with warnings.catch_warnings(record=True) as record:
-        check_requires_y_none("estimator", estimator)
+        check_requires_y_none("estimator", Estimator())
 
     # no warnings are raised
     assert not record
