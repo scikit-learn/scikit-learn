@@ -205,6 +205,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             while not builder_stack.empty():
                 stack_record = builder_stack.top()
+                builder_stack.pop()
 
                 start = stack_record.start
                 end = stack_record.end
@@ -213,7 +214,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
                 n_constant_features = stack_record.n_constant_features
-                builder_stack.pop()
 
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
@@ -1501,9 +1501,10 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
         while not ccp_stack.empty():
             stack_record = ccp_stack.top()
+            ccp_stack.pop()
+
             node_idx = stack_record.node_idx
             parent[node_idx] = stack_record.parent
-            ccp_stack.pop()
 
             if child_l[node_idx] == _TREE_LEAF:
                 # ... and child_r[node_idx] == _TREE_LEAF:
@@ -1722,12 +1723,12 @@ cdef _build_pruned_tree(
 
         while not prune_stack.empty():
             stack_record = prune_stack.top()
+            prune_stack.pop()
 
             orig_node_id = stack_record.start
             depth = stack_record.depth
             parent = stack_record.parent
             is_left = stack_record.is_left
-            prune_stack.pop()
 
             is_leaf = leaves_in_subtree[orig_node_id]
             node = &orig_tree.nodes[orig_node_id]
