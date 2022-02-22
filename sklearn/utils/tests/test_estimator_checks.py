@@ -1058,7 +1058,7 @@ def test_check_requires_y_none():
         check_requires_y_none("estimator", Estimator())
 
     # no warnings are raised
-    assert not record
+    assert not [r.message for r in record]
 
 
 # TODO: Remove in 1.3 when Estimator is removed
