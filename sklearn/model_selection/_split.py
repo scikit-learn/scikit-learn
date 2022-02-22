@@ -496,6 +496,10 @@ class GroupKFold(_BaseKFold):
      [7 8]] [[1 2]
      [3 4]] [3 4] [1 2]
 
+    Notes
+    -----
+    Groups appear in an arbitrary order throughout the folds.
+
     See Also
     --------
     LeaveOneGroupOut : For splitting the data according to explicit
@@ -1138,6 +1142,11 @@ class LeaveOneGroupOut(BaseCrossValidator):
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
 
+    Notes
+    -----
+    Splits are ordered according to the index of the group left out. The first
+    split has training set consting of the group whose index in `groups` is
+    lowest, and so on.
     """
 
     def _iter_test_masks(self, X, y, groups):
