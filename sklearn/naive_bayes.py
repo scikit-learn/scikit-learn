@@ -1546,10 +1546,19 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         Names of features seen during :term:`fit`. Only defined if `X` has
         feature names that are all strings.
 
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    CategoricalNB : Naive Bayes classifier for categorical features.
+    ComplementNB : Complement Naive Bayes classifier.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+    GaussianNB : Gaussian Naive Bayes.
+    ColumnTransformer : Applies transformers to columns.
+
     Notes
     -----
     ColumnwiseNB combines multiple naive Bayes estimators by expressing the
-    overall joint probability ``P(x,y)`` through ``P(x_i|y)``, the joint
+    overall joint probability ``P(x,y)`` through ``P(x_i,y)``, the joint
     probabilities of the subestimators:
         ``Log P(x,y) = Log P(x_1,y) + ... + Log P(x_N,y) - (N - 1) Log P(y)``,
     where ``N`` denotes ``n_estimators``, the number of estimators.
@@ -1559,6 +1568,23 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     The meta-estimators does not check if this condition holds. Meaningless
     results, including ``NaN``, may be produced by ColumnwiseNB if the class
     priors differ or contain a zero probability.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> y = np.array([0, 0, 1, 1, 2, 2])
+    >>> from sklearn.naive_bayes import MultinomialNB, GaussianNB, ColumnwiseNB
+    >>> clf = ColumnwiseNB(estimators=[('mnb1', MultinomialNB(), [0, 1]),
+    ...                                ('mnb2', MultinomialNB(), [3, 4]),
+    ...                                ('gnb1', GaussianNB(), [5])])
+    >>> clf.fit(X, y)
+    ColumnwiseNB(estimators=[('mnb1', MultinomialNB(), [0, 1]),
+                            ('mnb2', MultinomialNB(), [3, 4]),
+                            ('gnb1', GaussianNB(), [5])])
+    >>> print(clf.predict(X))
+    [0 0 1 0 2 2]
     """
     def _log_message(self, name, idx, total):
         if not self.verbose:

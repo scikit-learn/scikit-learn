@@ -1375,3 +1375,17 @@ def test_cwnb_n_jobs():
                               clf2.predict_log_proba(X2), 8)
     assert_array_equal(clf1.predict(X2),
                        clf2.predict(X2))
+
+
+def test_cwnb_example():
+    # Test the Example from ColumnwiseNB docstring in naive_bayes.py
+    import numpy as np
+    rng = np.random.RandomState(1)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([0, 0, 1, 1, 2, 2])
+    from sklearn.naive_bayes import MultinomialNB, GaussianNB, ColumnwiseNB
+    clf = ColumnwiseNB(estimators=[('mnb1', MultinomialNB(), [0, 1]),
+                                   ('mnb2', MultinomialNB(), [3, 4]),
+                                   ('gnb1', GaussianNB(), [5])])
+    clf.fit(X, y)
+    clf.predict(X)
