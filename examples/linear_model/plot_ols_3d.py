@@ -47,8 +47,7 @@ from mpl_toolkits.mplot3d import Axes3D
 def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = plt.figure(fig_num, figsize=(4, 3))
     plt.clf()
-    ax = Axes3D(fig, elev=elev, azim=azim, auto_add_to_figure=False)
-    fig.add_axes(ax)
+    ax = Axes3D(fig, elev=elev, azim=azim)
 
     ax.scatter(X_train[:, 0], X_train[:, 1], y_train, c="k", marker="+")
     ax.plot_surface(
