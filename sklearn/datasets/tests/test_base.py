@@ -8,7 +8,6 @@ from functools import partial
 from importlib import resources
 
 import pytest
-
 import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -127,6 +126,21 @@ def test_load_files_wo_load_content(
     assert len(res.target_names) == 2
     assert res.DESCR is None
     assert res.get("data") is None
+
+
+@pytest.mark.parametrize("allowed_extensions", ([".txt"], [".txt", ".json"]))
+def test_load_files_allowed_extensions(tmp_path, allowed_extensions):
+    """Check the behaviour of `allowed_extension` in `load_files`."""
+    d = tmp_path / "sub"
+    d.mkdir()
+    files = ("file1.txt", "file2.json", "file3.json", "file4.md")
+    paths = [d / f for f in files]
+    for p in paths:
+        p.touch()
+    res = load_files(tmp_path, allowed_extensions=allowed_extensions)
+    assert set([str(p) for p in paths if p.suffix in allowed_extensions]) == set(
+        res.filenames
+    )
 
 
 @pytest.mark.parametrize(
