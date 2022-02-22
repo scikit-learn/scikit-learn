@@ -61,12 +61,6 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 
-pytestmark = pytest.mark.filterwarnings(
-    # TODO: Remove when issue #22458 is resolved
-    "ignore:`max_features='auto'` has been deprecated in 1.1"
-)
-
-
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
@@ -508,6 +502,8 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
+# TODO: Remove when issue #22458 is resolved
+@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
 def test_max_features():
     # Check max_features.
     for name, TreeRegressor in REG_TREES.items():

@@ -35,12 +35,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import NuSVR
 
 
-pytestmark = pytest.mark.filterwarnings(
-    # TODO: Remove when issue #22458 is resolved
-    "ignore:`max_features='auto'` has been deprecated in 1.1"
-)
-
-
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier, GradientBoostingRegressor]
 
 # toy sample
@@ -517,6 +511,8 @@ def test_feature_importance_regression(fetch_california_housing_fxt):
     assert set(sorted_features[1:4]) == {"Longitude", "AveOccup", "Latitude"}
 
 
+# TODO: Remove when issue #22458 is resolved
+@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
 def test_max_feature_auto():
     # Test if max features is set properly for floats and str.
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
