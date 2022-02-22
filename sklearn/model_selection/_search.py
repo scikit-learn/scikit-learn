@@ -1815,7 +1815,6 @@ class Razors(object):
     __slots__ = (
         "cv_results",
         "param",
-        "param_complexity",
         "scoring",
         "rule",
         "greater_is_better",
