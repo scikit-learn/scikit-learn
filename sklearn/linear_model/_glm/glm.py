@@ -68,16 +68,16 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    alpha : {float, iterable}, default=1
+    alpha : {float, array-like} if array like then of size n_features, default=1
         Constant(s) that multiplies the penalty term and thus determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
         Values must be in the range `[0.0, inf)`.
         If alpha is a scalar then the value is applied to all non-intercept terms
-        If alpha is an iterable then each value must be in the range `[0.0, inf)`
-            and the size of the iterable must be equal to the input design matrix.
-            If alpha is greater than 1 dimension it will be converted to 1 dimension.
+        If alpha is an array-like then each value must be in the range `[0.0, inf)`
+            and the length must equal to n_features.
+        If alpha is greater than 1 dimension it will be converted to 1 dimension.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
