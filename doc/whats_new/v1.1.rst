@@ -571,6 +571,13 @@ Changelog
   in the multiclass case when ``multiclass='ovr'`` which will return the score
   per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
 
+- |Enhancement| Adds `im_kw` parameter to
+  :func:`~metrics.ConfusionMatrixDisplay.from_estimator`
+  :func:`~metrics.ConfusionMatrixDisplay.from_predictions`, and
+  :func:`~metrics.ConfusionMatrixDisplay.plot`. The `im_kw` parameter is passed
+  to the `matplotlib.pyplot.imshow` call when plotting the confusion matrix.
+  :pr:`20753` by `Thomas Fan`_.
+
 :mod:`sklearn.manifold`
 .......................
 
