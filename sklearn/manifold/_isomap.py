@@ -6,10 +6,11 @@ import warnings
 
 import numpy as np
 import scipy
+from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
@@ -18,8 +19,8 @@ from ..utils.graph import _fix_connected_components
 from ..externals._packaging.version import parse as parse_version
 
 
-class Isomap(TransformerMixin, BaseEstimator):
-    """Isomap Embedding
+class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+    """Isomap Embedding.
 
     Non-linear dimensionality reduction through Isometric Mapping
 
@@ -28,10 +29,10 @@ class Isomap(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_neighbors : int, default=5
-        number of neighbors to consider for each point.
+        Number of neighbors to consider for each point.
 
     n_components : int, default=2
-        number of coordinates for the manifold
+        Number of coordinates for the manifold.
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         'auto' : Attempt to choose the most efficient solver
@@ -71,7 +72,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    metric : string, or callable, default="minkowski"
+    metric : str, or callable, default="minkowski"
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -115,6 +116,29 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.decomposition.PCA : Principal component analysis that is a linear
+        dimensionality reduction method.
+    sklearn.decomposition.KernelPCA : Non-linear dimensionality reduction using
+        kernels and PCA.
+    MDS : Manifold learning using multidimensional scaling.
+    TSNE : T-distributed Stochastic Neighbor Embedding.
+    LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality.
+
+    References
+    ----------
+
+    .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
+           framework for nonlinear dimensionality reduction. Science 290 (5500)
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -126,12 +150,6 @@ class Isomap(TransformerMixin, BaseEstimator):
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
-
-    References
-    ----------
-
-    .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
-           framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
 
     def __init__(
@@ -200,13 +218,14 @@ class Isomap(TransformerMixin, BaseEstimator):
         # Similar fix to cluster._agglomerative._fix_connectivity.
         n_connected_components, labels = connected_components(kng)
         if n_connected_components > 1:
-            if self.metric == "precomputed":
+            if self.metric == "precomputed" and issparse(X):
                 raise RuntimeError(
                     "The number of connected components of the neighbors graph"
                     f" is {n_connected_components} > 1. The graph cannot be "
                     "completed with metric='precomputed', and Isomap cannot be"
                     "fitted. Increase the number of neighbors to avoid this "
-                    "issue."
+                    "issue, or precompute the full distance matrix instead "
+                    "of passing a sparse neighbors graph."
                 )
             warnings.warn(
                 "The number of connected components of the neighbors graph "
@@ -234,10 +253,11 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
 
-        G = self.dist_matrix_ ** 2
+        G = self.dist_matrix_**2
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
+        self._n_features_out = self.embedding_.shape[1]
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.
@@ -245,6 +265,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Returns
         -------
         reconstruction_error : float
+            Reconstruction error.
 
         Notes
         -----
@@ -258,13 +279,13 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
         """
-        G = -0.5 * self.dist_matrix_ ** 2
+        G = -0.5 * self.dist_matrix_**2
         G_center = KernelCenterer().fit_transform(G)
         evals = self.kernel_pca_.eigenvalues_
-        return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
+        return np.sqrt(np.sum(G_center**2) - np.sum(evals**2)) / G.shape[0]
 
     def fit(self, X, y=None):
-        """Compute the embedding vectors for data X
+        """Compute the embedding vectors for data X.
 
         Parameters
         ----------
@@ -274,10 +295,12 @@ class Isomap(TransformerMixin, BaseEstimator):
             object.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Returns a fitted instance of self.
         """
         self._fit_transform(X)
         return self
@@ -288,14 +311,16 @@ class Isomap(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse graph, BallTree, KDTree}
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            X transformed in the new space.
         """
         self._fit_transform(X)
         return self.embedding_
@@ -321,6 +346,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : array-like, shape (n_queries, n_components)
+            X transformed in the new space.
         """
         check_is_fitted(self)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)

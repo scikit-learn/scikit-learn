@@ -85,7 +85,8 @@ def test_n_clusters():
     # Test that the wrong global clustering step raises an Error.
     clf = ElasticNet()
     brc3 = Birch(n_clusters=clf)
-    with pytest.raises(ValueError):
+    err_msg = "n_clusters should be an instance of ClusterMixin or an int"
+    with pytest.raises(TypeError, match=err_msg):
         brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
@@ -141,11 +142,6 @@ def test_branching_factor():
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
 
-    # Raises error when branching_factor is set to one.
-    brc = Birch(n_clusters=None, branching_factor=1, threshold=0.01)
-    with pytest.raises(ValueError):
-        brc.fit(X)
-
 
 def check_threshold(birch_instance, threshold):
     """Use the leaf linked list for traversal"""
@@ -187,3 +183,48 @@ def test_birch_fit_attributes_deprecated(attribute):
 
     with pytest.warns(FutureWarning, match=msg):
         getattr(brc, attribute)
+
+
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"threshold": -1.0}, ValueError, "threshold == -1.0, must be > 0.0."),
+        ({"threshold": 0.0}, ValueError, "threshold == 0.0, must be > 0.0."),
+        ({"branching_factor": 0}, ValueError, "branching_factor == 0, must be > 1."),
+        ({"branching_factor": 1}, ValueError, "branching_factor == 1, must be > 1."),
+        (
+            {"branching_factor": 1.5},
+            TypeError,
+            "branching_factor must be an instance of int, not float.",
+        ),
+        ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
+        ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
+        (
+            {"n_clusters": 2.5},
+            TypeError,
+            "n_clusters must be an instance of int, not float.",
+        ),
+        (
+            {"n_clusters": "whatever"},
+            TypeError,
+            "n_clusters should be an instance of ClusterMixin or an int",
+        ),
+        ({"n_clusters": -3}, ValueError, "n_clusters == -3, must be >= 1."),
+    ],
+)
+def test_birch_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in `Birch`."""
+    X, _ = make_blobs(n_samples=80, centers=4)
+    with pytest.raises(err_type, match=err_msg):
+        Birch(**params).fit(X)
+
+
+def test_feature_names_out():
+    """Check `get_feature_names_out` for `Birch`."""
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    brc.fit(X)
+    n_clusters = brc.subcluster_centers_.shape[0]
+
+    names_out = brc.get_feature_names_out()
+    assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)

@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import re
 
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
@@ -147,7 +148,7 @@ def test_diabetes(loss):
     reg = AdaBoostRegressor(loss=loss, random_state=0)
     reg.fit(diabetes.data, diabetes.target)
     score = reg.score(diabetes.data, diabetes.target)
-    assert score > 0.6
+    assert score > 0.55
 
     # Check we used multiple estimators
     assert len(reg.estimators_) > 1
@@ -273,14 +274,20 @@ def test_importances():
 def test_error():
     # Test that it gives proper exception on deficient input.
 
-    with pytest.raises(ValueError):
-        AdaBoostClassifier(learning_rate=-1).fit(X, y_class)
+    reg = AdaBoostRegressor(loss="foo")
+    msg = "loss must be 'linear', 'square', or 'exponential'. Got 'foo' instead."
+    with pytest.raises(ValueError, match=msg):
+        reg.fit(X, y_class)
 
-    with pytest.raises(ValueError):
-        AdaBoostClassifier(algorithm="foo").fit(X, y_class)
+    clf = AdaBoostClassifier(algorithm="foo")
+    msg = "Algorithm must be 'SAMME' or 'SAMME.R'. Got 'foo' instead."
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y_class)
 
-    with pytest.raises(ValueError):
-        AdaBoostClassifier().fit(X, y_class, sample_weight=np.asarray([-1]))
+    clf = AdaBoostClassifier()
+    msg = re.escape("sample_weight.shape == (1,), expected (6,)")
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y_class, sample_weight=np.asarray([-1]))
 
 
 def test_base_estimator():
@@ -549,6 +556,34 @@ def test_adaboostregressor_sample_weight():
     assert score_no_outlier == pytest.approx(score_with_weight)
 
 
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1"),
+        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
+        (
+            {"n_estimators": 1.5},
+            TypeError,
+            "n_estimators must be an instance of int, not float",
+        ),
+        ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
+        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
+    ],
+)
+@pytest.mark.parametrize(
+    "model, X, y",
+    [
+        (AdaBoostClassifier, X, y_class),
+        (AdaBoostRegressor, X, y_regr),
+    ],
+)
+def test_adaboost_params_validation(model, X, y, params, err_type, err_msg):
+    """Check input parameter validation in weight boosting."""
+    est = model(**params)
+    with pytest.raises(err_type, match=err_msg):
+        est.fit(X, y)
+
+
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_consistent_predict(algorithm):
     # check that predict_proba and predict give consistent results
@@ -576,6 +611,6 @@ def test_adaboost_negative_weight_error(model, X, y):
     sample_weight = np.ones_like(y)
     sample_weight[-1] = -10
 
-    err_msg = "sample_weight cannot contain negative weight"
+    err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)

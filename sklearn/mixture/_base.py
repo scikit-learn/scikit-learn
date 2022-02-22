@@ -28,7 +28,7 @@ def _check_shape(param, param_shape, name):
 
     param_shape : tuple
 
-    name : string
+    name : str
     """
     param = np.array(param)
     if param.shape != param_shape:
@@ -148,7 +148,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == "random":
-            resp = random_state.rand(n_samples, self.n_components)
+            resp = random_state.uniform(size=(n_samples, self.n_components))
             resp /= resp.sum(axis=1)[:, np.newaxis]
         else:
             raise ValueError(
@@ -335,7 +335,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         pass
 
     def score_samples(self, X):
-        """Compute the weighted log probabilities for each sample.
+        """Compute the log-likelihood of each sample.
 
         Parameters
         ----------
@@ -346,7 +346,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         log_prob : array, shape (n_samples,)
-            Log probabilities of each data point in X.
+            Log-likelihood of each sample in `X` under the current model.
         """
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
@@ -368,7 +368,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         log_likelihood : float
-            Log likelihood of the Gaussian mixture given X.
+            Log-likelihood of `X` under the Gaussian mixture model.
         """
         return self.score_samples(X).mean()
 
@@ -391,7 +391,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
-        """Predict posterior probability of each component given the data.
+        """Evaluate the components' density for each sample.
 
         Parameters
         ----------
@@ -402,8 +402,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         resp : array, shape (n_samples, n_components)
-            Returns the probability each Gaussian (state) in
-            the model given each sample.
+            Density of each Gaussian component for each sample in X.
         """
         check_is_fitted(self)
         X = self._validate_data(X, reset=False)
@@ -457,7 +456,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             X = np.vstack(
                 [
-                    mean + rng.randn(sample, n_features) * np.sqrt(covariance)
+                    mean
+                    + rng.standard_normal(size=(sample, n_features))
+                    * np.sqrt(covariance)
                     for (mean, covariance, sample) in zip(
                         self.means_, self.covariances_, n_samples_comp
                     )

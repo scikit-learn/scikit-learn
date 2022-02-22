@@ -10,8 +10,8 @@ from functools import update_wrapper
 import numpy as np
 
 from ..utils import _safe_indexing
+from ..utils._tags import _safe_tags
 from ..base import BaseEstimator
-from ..base import _is_pairwise
 
 __all__ = ["available_if", "if_delegate_has_method"]
 
@@ -29,8 +29,18 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         out = super().get_params(deep=deep)
         if not deep:
             return out
+
         estimators = getattr(self, attr)
-        out.update(estimators)
+        try:
+            out.update(estimators)
+        except (TypeError, ValueError):
+            # Ignore TypeError for cases where estimators is not a list of
+            # (name, estimator) and ignore ValueError when the list is not
+            # formated correctly. This is to prevent errors when calling
+            # `set_params`. `BaseEstimator.set_params` calls `get_params` which
+            # can error for invalid values for `estimators`.
+            return out
+
         for name, estimator in estimators:
             if hasattr(estimator, "get_params"):
                 for key, value in estimator.get_params(deep=True).items():
@@ -42,14 +52,15 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         # 1. All steps
         if attr in params:
             setattr(self, attr, params.pop(attr))
-        # 2. Step replacement
+        # 2. Replace items with estimators in params
         items = getattr(self, attr)
-        names = []
-        if items:
-            names, _ = zip(*items)
-        for name in list(params.keys()):
-            if "__" not in name and name in names:
-                self._replace_estimator(attr, name, params.pop(name))
+        if isinstance(items, list) and items:
+            # Get item names used to identify valid names in params
+            item_names, _ = zip(*items)
+            for name in list(params.keys()):
+                if "__" not in name and name in item_names:
+                    self._replace_estimator(attr, name, params.pop(name))
+
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
         return self
@@ -194,7 +205,9 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         if delegate is None:
             return False
         # raise original AttributeError
-        return getattr(delegate, self.attribute_name) or True
+        getattr(delegate, self.attribute_name)
+
+        return True
 
 
 def if_delegate_has_method(delegate):
@@ -205,7 +218,7 @@ def if_delegate_has_method(delegate):
 
     Parameters
     ----------
-    delegate : string, list of strings or tuple of strings
+    delegate : str, list of str or tuple of str
         Name of the sub-estimator that can be accessed as an attribute of the
         base object. If a list or a tuple of names are provided, the first
         sub-estimator that is an attribute of the base object will be used.
@@ -229,12 +242,6 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     we slice rows and columns. If ``train_indices`` is not None,
     we slice rows using ``indices`` (assumed the test set) and columns
     using ``train_indices``, indicating the training set.
-
-    .. deprecated:: 0.24
-
-        The _pairwise attribute is deprecated in 0.24. From 1.1
-        (renaming of 0.26) and onward, this function will check for the
-        pairwise estimator tag.
 
     Labels y will always be indexed only along the first axis.
 
@@ -269,7 +276,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         Indexed targets.
 
     """
-    if _is_pairwise(estimator):
+    if _safe_tags(estimator, key="pairwise"):
         if not hasattr(X, "shape"):
             raise ValueError(
                 "Precomputed kernels or affinity matrices have "

@@ -11,8 +11,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-from sklearn.svm import SVR
+from sklearn.svm import SVC, SVR
 
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
@@ -30,6 +29,9 @@ def test_confusion_matrix_display_validation(pyplot):
     X, y = make_classification(
         n_samples=100, n_informative=5, n_classes=5, random_state=0
     )
+
+    with pytest.raises(NotFittedError):
+        ConfusionMatrixDisplay.from_estimator(SVC(), X, y)
 
     regressor = SVR().fit(X, y)
     y_pred_regressor = regressor.predict(X)

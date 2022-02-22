@@ -23,17 +23,18 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.decomposition import NMF
+from sklearn.decomposition import PCA
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
+from sklearn.utils.metaestimators import available_if
 
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
@@ -52,6 +53,10 @@ from sklearn.utils.estimator_checks import (
     check_regressor_data_not_an_array,
     check_outlier_corruption,
     set_random_state,
+    check_fit_check_is_fitted,
+    check_methods_sample_order_invariance,
+    check_methods_subset_invariance,
+    _yield_all_checks,
 )
 
 
@@ -494,7 +499,7 @@ def test_check_estimator():
     except ImportError:
         pass
     # check that predict does input validation (doesn't accept dicts in input)
-    msg = "Estimator doesn't check for NaN and inf in predict"
+    msg = "Estimator NoCheckinPredict doesn't check for NaN and inf in predict"
     with raises(AssertionError, match=msg):
         check_estimator(NoCheckinPredict())
     # check that estimator state does not change
@@ -502,7 +507,7 @@ def test_check_estimator():
     msg = "Estimator changes __dict__ during predict"
     with raises(AssertionError, match=msg):
         check_estimator(ChangesDict())
-    # check that `fit` only changes attribures that
+    # check that `fit` only changes attributes that
     # are private (start with an _ or end with a _).
     msg = (
         "Estimator ChangesWrongAttribute should not change or mutate  "
@@ -601,9 +606,9 @@ def test_check_estimator_clones():
     for Estimator in [
         GaussianMixture,
         LinearRegression,
-        RandomForestClassifier,
-        NMF,
         SGDClassifier,
+        PCA,
+        ExtraTreesClassifier,
         MiniBatchKMeans,
     ]:
         with ignore_warnings(category=FutureWarning):
@@ -716,6 +721,15 @@ def test_check_dataframe_column_names_consistency():
         check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
     check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
 
+    lr = LogisticRegression()
+    check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+    lr.__doc__ = "Docstring that does not document the estimator's attributes"
+    err_msg = (
+        "Estimator LogisticRegression does not document its feature_names_in_ attribute"
+    )
+    with raises(ValueError, match=err_msg):
+        check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+
 
 class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
     def __init__(self, response_output):
@@ -791,7 +805,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     # 1. unknown output type
     clf = MultiLabelClassifierPredictProba(response_output=sp.csr_matrix(y_test))
     err_msg = (
-        r"Unknown returned type <class 'scipy.sparse.csr.csr_matrix'> by "
+        "Unknown returned type .*csr_matrix.* by "
         r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
         r"array is expected."
     )
@@ -1006,3 +1020,58 @@ def test_minimal_class_implementation_checks():
     minimal_estimators = [MinimalTransformer(), MinimalRegressor(), MinimalClassifier()]
     for estimator in minimal_estimators:
         check_estimator(estimator)
+
+
+def test_check_fit_check_is_fitted():
+    class Estimator(BaseEstimator):
+        def __init__(self, behavior="attribute"):
+            self.behavior = behavior
+
+        def fit(self, X, y, **kwargs):
+            if self.behavior == "attribute":
+                self.is_fitted_ = True
+            elif self.behavior == "method":
+                self._is_fitted = True
+            return self
+
+        @available_if(lambda self: self.behavior in {"method", "always-true"})
+        def __sklearn_is_fitted__(self):
+            if self.behavior == "always-true":
+                return True
+            return hasattr(self, "_is_fitted")
+
+    with raises(Exception, match="passes check_is_fitted before being fit"):
+        check_fit_check_is_fitted("estimator", Estimator(behavior="always-true"))
+
+    check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
+    check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
+
+
+# TODO: Remove in 1.3 when Estimator is removed
+def test_deprecated_Estimator_check_estimator():
+    err_msg = "'Estimator' was deprecated in favor of"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        with raises(FutureWarning, match=err_msg, may_pass=True):
+            check_estimator(Estimator=NuSVC())
+
+    err_msg = "Either estimator or Estimator should be passed"
+    with raises(ValueError, match=err_msg, may_pass=False):
+        check_estimator()
+
+
+def test_non_deterministic_estimator_skip_tests():
+    # check estimators with non_deterministic tag set to True
+    # will skip certain tests, refer to issue #22313 for details
+    for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
+        all_tests = list(_yield_all_checks(est()))
+        assert check_methods_sample_order_invariance in all_tests
+        assert check_methods_subset_invariance in all_tests
+
+        class Estimator(est):
+            def _more_tags(self):
+                return {"non_deterministic": True}
+
+        all_tests = list(_yield_all_checks(Estimator()))
+        assert check_methods_sample_order_invariance not in all_tests
+        assert check_methods_subset_invariance not in all_tests

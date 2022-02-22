@@ -32,7 +32,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : {None, 'micro', 'macro', 'samples', 'weighted'}, default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 

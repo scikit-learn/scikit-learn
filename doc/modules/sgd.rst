@@ -123,7 +123,7 @@ Please refer to the :ref:`mathematical section below
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models (i.e. with more zero
-coefficents), even when L2 penalty is used.
+coefficients), even when L2 penalty is used.
 
 Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
@@ -408,7 +408,7 @@ parameters, we minimize the regularized training error given by
 where :math:`L` is a loss function that measures model (mis)fit and
 :math:`R` is a regularization term (aka penalty) that penalizes model
 complexity; :math:`\alpha > 0` is a non-negative hyperparameter that controls
-the regularization stength.
+the regularization strength.
 
 Different choices for :math:`L` entail different classifiers or regressors:
 
@@ -556,10 +556,10 @@ The code is written in Cython.
       Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL
       '09.
 
-   .. [#4] `"Towards Optimal One Pass Large Scale Learning with
+   .. [#4] :arxiv:`"Towards Optimal One Pass Large Scale Learning with
       Averaged Stochastic Gradient Descent"
-      <https://arxiv.org/pdf/1107.2490v2.pdf>`_
-      Xu, Wei
+      <1107.2490v2>`
+      Xu, Wei (2011)
 
    .. [#5] `"Regularization and variable selection via the elastic net"
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
