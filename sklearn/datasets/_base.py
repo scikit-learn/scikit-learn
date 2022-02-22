@@ -1509,7 +1509,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
         try:
             urlretrieve(remote.url, file_path)
             break
-        except URLError:
+        except (URLError, TimeoutError):
             if retry_cnt > 0:
                 warnings.warn(f"Retry downloading from url: {remote.url}")
                 time.sleep(delay)
