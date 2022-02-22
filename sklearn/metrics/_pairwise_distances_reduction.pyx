@@ -108,30 +108,6 @@ cdef class StdVectorSentinelITYPE(StdVectorSentinel):
         return sentinel
 
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
-    const DTYPE_t[:, ::1] X,
-    ITYPE_t num_threads,
-):
-    """Compute the squared euclidean norm of the rows of X in parallel.
-
-    This is faster than using np.einsum("ij, ij->i") even when using a single thread.
-    """
-    cdef:
-        # Casting for X to remove the const qualifier is needed because APIs
-        # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
-        # const qualifier.
-        # See: https://github.com/scipy/scipy/issues/14262
-        DTYPE_t * X_ptr = <DTYPE_t *> &X[0, 0]
-        ITYPE_t idx = 0
-        ITYPE_t n = X.shape[0]
-        ITYPE_t d = X.shape[1]
-        DTYPE_t[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
-
-    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
-        squared_row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
-
-    return squared_row_norms
-
 cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
     """Create a numpy ndarray given a C++ vector.
 
@@ -176,6 +152,31 @@ cdef np.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 
 #####################
 
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms(
+    const DTYPE_t[:, ::1] X,
+    ITYPE_t num_threads,
+):
+    """Compute the squared euclidean norm of the rows of X in parallel.
+
+    This is faster than using np.einsum("ij, ij->i") even when using a single thread.
+    """
+    cdef:
+        # Casting for X to remove the const qualifier is needed because APIs
+        # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
+        # const qualifier.
+        # See: https://github.com/scipy/scipy/issues/14262
+        DTYPE_t * X_ptr = <DTYPE_t *> &X[0, 0]
+        ITYPE_t idx = 0
+        ITYPE_t n = X.shape[0]
+        ITYPE_t d = X.shape[1]
+        DTYPE_t[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
+
+    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
+        squared_row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
+
+    return squared_row_norms
+
+#####################
 
 cdef class PairwiseDistancesReduction:
     """Abstract base class for pairwise distance computation & reduction.
