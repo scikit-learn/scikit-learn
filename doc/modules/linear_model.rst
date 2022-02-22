@@ -874,7 +874,7 @@ As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)`  minimizes the
 following cost function:
 
-.. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \left[-y_i P(y_i=1|X_i)) - (1 - y_i) \log(1 - P(y_i=1|X_i))\right].
+.. math:: \min_{w} + C \sum_{i=1}^n \left[-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right] + r(w).
 
 
 We currently provide four choices for the regularization term
