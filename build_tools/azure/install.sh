@@ -34,7 +34,7 @@ pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
         sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install python3-scipy python3-matplotlib\
+        sudo apt-get install python3-scipy python3-matplotlib \
              libatlas3-base libatlas-base-dev python3-virtualenv ccache
 
     elif [[ "$DISTRIB" == "debian-32" ]]; then
@@ -42,6 +42,7 @@ pre_python_environment_install() {
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache
+
     elif [[ "$DISTRIB" == "conda-mamba-pypy3" ]]; then
         # condaforge/mambaforge-pypy3 needs compilers
         apt-get -yq update
