@@ -1587,6 +1587,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     [0 0 1 0 2 2]
     """
 
+    _required_parameters = ["estimators"]
+
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
