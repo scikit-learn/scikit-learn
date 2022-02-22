@@ -199,9 +199,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         with nogil:
             # push root node onto stack
-            builder_stack.push({"start": 0, "end": n_node_samples, "depth": 0,
-                                "parent": _TREE_UNDEFINED, "is_left": 0,
-                                "impurity": INFINITY, "n_constant_features": 0})
+            builder_stack.push({
+                "start": 0,
+                "end": n_node_samples,
+                "depth": 0,
+                "parent": _TREE_UNDEFINED,
+                "is_left": 0,
+                "impurity": INFINITY,
+                "n_constant_features": 0})
 
             while not builder_stack.empty():
                 stack_record = builder_stack.top()
@@ -253,16 +258,24 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 if not is_leaf:
                     # Push right child on stack
-                    builder_stack.push(
-                        {"start": split.pos, "end": end, "depth": depth + 1,
-                         "parent": node_id, "is_left": 0, "impurity": split.impurity_right,
-                         "n_constant_features": n_constant_features})
+                    builder_stack.push({
+                        "start": split.pos,
+                        "end": end,
+                        "depth": depth + 1,
+                        "parent": node_id,
+                        "is_left": 0,
+                        "impurity": split.impurity_right,
+                        "n_constant_features": n_constant_features})
 
                     # Push left child on stack
-                    builder_stack.push(
-                        {"start": start, "end": split.pos, "depth": depth + 1,
-                         "parent": node_id, "is_left": 1, "impurity": split.impurity_left,
-                         "n_constant_features": n_constant_features})
+                    builder_stack.push({
+                        "start": start,
+                        "end": split.pos,
+                        "depth": depth + 1,
+                        "parent": node_id,
+                        "is_left": 1,
+                        "impurity": split.impurity_left,
+                        "n_constant_features": n_constant_features})
 
                 if depth > max_depth_seen:
                     max_depth_seen = depth
