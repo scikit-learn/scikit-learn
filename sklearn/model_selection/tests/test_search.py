@@ -45,7 +45,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._search import BaseSearchCV, Razors
 
 from sklearn.model_selection._validation import FitFailedWarning
 
@@ -727,6 +727,69 @@ def test_refit_callable_multi_metric():
     assert clf.best_index_ == 0
     # Ensure `best_score_` is disabled when using `refit=callable`
     assert not hasattr(clf, "best_score_")
+
+
+@ignore_warnings
+@pytest.mark.parametrize(
+    "param",
+    [
+        "reduce_dim__n_components",
+        "knn__n_neighbors",
+        "poly__degree",
+        "rf__n_estimators",
+        "mlp__hidden_layer_sizes",
+    ],
+)
+@pytest.mark.parametrize("scoring", ["accuracy", "neg_mean_squared_log_error"])
+@pytest.mark.parametrize("rule", ["se", "ranksum", "percentile"])
+def test_refit_callable_razors(param, scoring, rule):
+    """
+    A function tests `refit=callable` interface where `callable` is `razors`
+    Return the index of the most parsimonious highest-performing model.
+    """
+
+    X, y = make_classification(n_samples=200, n_features=20, random_state=42)
+
+    if param == "rf__n_estimators":
+        from sklearn.ensemble import RandomForestClassifier
+
+        clf = RandomForestClassifier(max_depth=5)
+        param_grid = {"rf__n_estimators": [10, 50, 100]}
+        pipe = Pipeline([("rf", clf)])
+    elif param == "mlp__hidden_layer_sizes":
+        from sklearn.neural_network import MLPClassifier
+
+        clf = MLPClassifier(alpha=1, max_iter=1000)
+        param_grid = {"mlp__hidden_layer_sizes": [(10,), (40,), (80,)]}
+        pipe = Pipeline([("mlp", clf)])
+    else:
+        clf = LinearSVC(random_state=42)
+        if param == "poly__degree":
+            from sklearn.preprocessing import PolynomialFeatures
+
+            param_grid = {"poly__degree": [2, 3, 4, 6]}
+            pipe = Pipeline([("poly", PolynomialFeatures()), ("classify", clf)])
+        elif param == "reduce_dim__n_components":
+            from sklearn.decomposition import PCA
+
+            param_grid = {"reduce_dim__n_components": [8, 10, 12, 14]}
+            pipe = Pipeline([("reduce_dim", PCA(random_state=42)), ("classify", clf)])
+        elif param == "knn__n_neighbors":
+            param_grid = {"knn__n_neighbors": [1, 3, 6, 9]}
+            pipe = Pipeline([("knn", KNeighborsClassifier())])
+        else:
+            raise NotImplementedError(f"{param} not recognized.")
+
+    grid = GridSearchCV(
+        pipe,
+        param_grid,
+        scoring=["neg_mean_squared_log_error", "accuracy"],
+        refit=Razors.simplify(
+            param=param, scoring=scoring, rule=rule, sigma=1, alpha=0.001, eta=0.95
+        ),
+    )
+    grid.fit(X, y)
+    assert hasattr(grid, "best_index_")
 
 
 def test_gridsearch_nd():
