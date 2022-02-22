@@ -17,11 +17,8 @@ give us much regarding `y` when compared to just feature 1.
 # %%
 # First we load the diabetes dataset.
 
-import matplotlib.pyplot as plt
+from sklearn import datasets
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-
-from sklearn import datasets, linear_model
 
 X, y = datasets.load_diabetes(return_X_y=True)
 indices = (0, 1)
@@ -34,16 +31,24 @@ y_test = y[-20:]
 # %%
 # Next we fit a linear regression model.
 
+from sklearn import linear_model
+
 ols = linear_model.LinearRegression()
-ols.fit(X_train, y_train)
+_ = ols.fit(X_train, y_train)
 
 
 # %%
 # Finally we plot the figure from three different views.
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+
 def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = plt.figure(fig_num, figsize=(4, 3))
     plt.clf()
-    ax = Axes3D(fig, elev=elev, azim=azim)
+    ax = Axes3D(fig, elev=elev, azim=azim, auto_add_to_figure=False)
+    fig.add_axes(ax)
 
     ax.scatter(X_train[:, 0], X_train[:, 1], y_train, c="k", marker="+")
     ax.plot_surface(
