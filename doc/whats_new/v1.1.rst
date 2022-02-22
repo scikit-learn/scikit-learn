@@ -305,6 +305,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| Added additional option `loss="quantile"` to
+  :class:`ensemble.HistGradientBoostingRegressor` for modelling quantiles.
+  The quantile level can be specified with the new parameter `quantile`.
+  :pr:`21800` and :pr:`20567` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
   calls :func:`check_array` with parameter `force_all_finite=False` for non
   initial warm-start runs as it has already been checked before.
