@@ -51,7 +51,7 @@ the previously computed roc curve again by using the `plot` method of the
     import matplotlib.pyplot as plt
     from sklearn.ensemble import RandomForestClassifier
 
-    rfc = RandomForestClassifier(random_state=42)
+    rfc = RandomForestClassifier(n_estimators=10, random_state=42)
     rfc.fit(X_train, y_train)
 
     ax = plt.gca()
