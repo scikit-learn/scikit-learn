@@ -260,7 +260,7 @@ class OneHotEncoder(_BaseEncoder):
         will be denoted as None.
 
     feature_name_combiner : str {'concat_string'} or Callable, default='concat_string'
-        Function creating feature names from tuples (encoded_feature, category).
+        Function creating feature names from tuples (input_feature, category).
 
         'concat_string' concatenates encoded feature name and category separated by
         '_'.  E.g. feature X with values 1, 6, 7 create feature names X_1, X_6, X_7.
