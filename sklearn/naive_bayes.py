@@ -53,8 +53,8 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
         shape (n_samples, n_classes).
 
-        Input is handed over to _joint_log_likelihood by predict, predict_proba
-        and predict_log_proba after being passed through _check_X.
+        predict, predict_proba, and predict_log_proba passes the input through
+        _check_X and handles it over to _joint_log_likelihood
         """
 
     @abstractmethod
