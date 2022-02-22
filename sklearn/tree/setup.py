@@ -15,7 +15,7 @@ def configuration(parent_package="", top_path=None):
         include_dirs=[numpy.get_include()],
         libraries=libraries,
         language="c++",
-        extra_compile_args=["-O3", "-std=c++11"],
+        extra_compile_args=["-O3"],
     )
     config.add_extension(
         "_splitter",
