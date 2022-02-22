@@ -1055,7 +1055,8 @@ def test_check_non_negative(retype):
 def test_check_X_y_informative_error():
     X = np.ones((2, 2))
     y = None
-    with pytest.raises(ValueError, match="y cannot be None"):
+    msg = re.escape("Expected array-like (array or non-string sequence), got None")
+    with pytest.raises(ValueError, match=msg):
         check_X_y(X, y)
 
 
