@@ -56,11 +56,6 @@ pre_python_environment_install() {
         sudo apt-get update
         sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
         source /opt/intel/oneapi/setvars.sh
-
-        # The "build_clib" command is implicitly used to build "libsvm-skl".
-        # To compile with a different compiler, we also need to specify the
-        # compiler for this command
-        python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
     fi
 }
 
@@ -142,12 +137,10 @@ python_environment_install() {
     fi
 }
 
-post_python_environment_install() {
+scikit_learn_install() {
     setup_ccache
     show_installed_libraries
-}
 
-scikit_learn_install() {
     # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
     # workers with 2 cores when building the compiled extensions of scikit-learn.
     export SKLEARN_BUILD_PARALLEL=3
@@ -161,6 +154,13 @@ scikit_learn_install() {
     if [[ "$UNAMESTR" == "Linux" ]]; then
         # FIXME: temporary fix to link against system libraries on linux
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
+    fi
+
+    if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+        # The "build_clib" command is implicitly used to build "libsvm-skl".
+        # To compile with a different compiler, we also need to specify the
+        # compiler for this command
+        python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
     fi
 
     # TODO use a specific variable for this rather than using a particular build ...
@@ -181,7 +181,6 @@ scikit_learn_install() {
 main() {
     pre_python_environment_install
     python_environment_install
-    post_python_environment_install
     scikit_learn_install
 }
 
