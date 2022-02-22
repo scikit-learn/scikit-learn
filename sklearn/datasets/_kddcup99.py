@@ -150,6 +150,8 @@ def fetch_kddcup99(
         data_home=data_home,
         percent10=percent10,
         download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     data = kddcup99.data

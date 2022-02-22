@@ -507,7 +507,11 @@ def fetch_lfw_pairs(
 
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
+        data_home=data_home,
+        funneled=funneled,
+        download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
     logger.debug("Loading %s LFW pairs from %s", subset, lfw_home)
 
