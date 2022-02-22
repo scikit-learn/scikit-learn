@@ -528,6 +528,7 @@ class _BaseDiscreteNB(_BaseNB):
         The class log priors are based on `class_prior`, class count or the
         number of classes. This method is called each time `fit` or
         `partial_fit` update the model.
+        """
         n_classes = len(self.classes_)
         if class_prior is not None:
             if len(class_prior) != n_classes:
