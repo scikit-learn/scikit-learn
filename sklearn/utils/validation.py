@@ -1057,9 +1057,7 @@ def check_X_y(
         The converted and validated y.
     """
     if y is None:
-        raise ValueError(
-            "Expected array-like (array or non-string sequence), got None"
-        )
+        raise ValueError("Expected array-like (array or non-string sequence), got None")
 
     X = check_array(
         X,
