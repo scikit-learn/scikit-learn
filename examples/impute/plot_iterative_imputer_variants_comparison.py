@@ -133,6 +133,7 @@ for impute_estimator, tol in zip(estimators, tolerances):
     score_iterative_imputer[impute_estimator.__class__.__name__] = cross_val_score(
         estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
     )
+
 scores = pd.concat(
     [score_full_data, score_simple_imputer, score_iterative_imputer],
     keys=["Original", "SimpleImputer", "IterativeImputer"],
