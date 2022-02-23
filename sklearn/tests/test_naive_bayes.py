@@ -1141,6 +1141,22 @@ def test_cwnb_estimators_1():
 
 
 def test_cwnb_estimators_2():
+    # Subestimators spec: error on empty list
+    clf = ColumnwiseNB(
+        estimatorNBs=[],
+    )
+    msg = "A list of naive Bayes estimators must be provided*"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X1, y1)
+
+    # Subestimators spec: error on None
+    clf = ColumnwiseNB(
+        estimatorNBs=None,
+    )
+    msg = "A list of naive Bayes estimators must be provided*"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X1, y1)
+
     # Subestimators spec: error when some don't support _joint_log_likelihood
     class notNB(BaseEstimator):
         def __init__(self):
@@ -1201,6 +1217,20 @@ def test_cwnb_estimators_2():
     with pytest.raises(TypeError, match=msg):
         clf1.partial_fit(X, y)
 
+    # _estimators setter works
+    clf1 = ColumnwiseNB(
+        estimatorNBs=[("g1", GaussianNB(), [0]), ("b1", BernoulliNB(), [1])]
+    )
+    clf1.fit(X1, y1)
+    clf1._estimators = [
+        ("x1", clf1.named_estimators_["g1"]),
+        ("x2", clf1.named_estimators_["g1"]),
+    ]
+    assert clf1.estimatorNBs[0][0] == "x1"
+    assert clf1.estimatorNBs[0][1] is clf1.named_estimators_["g1"]
+    assert clf1.estimatorNBs[1][0] == "x2"
+    assert clf1.estimatorNBs[1][1] is clf1.named_estimators_["g1"]
+
 
 def test_cwnb_prior():
     # prior spec: error when negative, sum!=1 or bad length
@@ -1229,16 +1259,22 @@ def test_cwnb_prior():
         clf1.fit(X, y)
 
     # prior spec: specified prior equals calculated and subestimators' priors
+    # prior spec: str prior ties subestimators'
     clf1 = ColumnwiseNB(
         estimatorNBs=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])],
         priors=np.array([0.5, 0.5]),
     )
     clf2 = ColumnwiseNB(
+        estimatorNBs=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])],
+        priors="g1",
+    )
+    clf3 = ColumnwiseNB(
         estimatorNBs=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])]
     )
     clf1.fit(X, y)
     clf2.fit(X, y)
-    assert clf2.priors is None
+    clf3.fit(X, y)
+    assert clf3.priors is None
     assert_array_almost_equal(
         clf1.class_prior_, clf1.named_estimators_["g1"].class_prior_, 8
     )
@@ -1246,6 +1282,8 @@ def test_cwnb_prior():
         clf1.class_prior_, clf1.named_estimators_["g2"].class_prior_, 8
     )
     assert_array_almost_equal(clf1.class_prior_, clf2.class_prior_, 8)
+    assert_array_almost_equal(clf1.class_prior_, clf3.class_prior_, 8)
+    assert_array_equal(clf1.class_prior_, clf1.named_estimators_["g1"].class_prior_)
 
 
 def test_cwnb_zero_prior():
@@ -1496,3 +1534,19 @@ def test_cwnb_example():
     )
     clf.fit(X, y)
     clf.predict(X)
+
+
+def test_cwnb_verbose(capsys):
+    # Setting verbose=True does not result in an error.
+    # This DOES NOT test if the desired output is generated.
+    clf = ColumnwiseNB(
+        estimatorNBs=[
+            ("mnb1", MultinomialNB(), [0, 1]),
+            ("mnb2", MultinomialNB(), [3, 4]),
+            ("gnb1", GaussianNB(), [5]),
+        ],
+        verbose=True,
+        n_jobs=4,
+    )
+    clf.fit(X2, y2)
+    clf.predict(X2)
