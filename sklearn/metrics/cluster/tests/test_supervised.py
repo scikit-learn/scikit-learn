@@ -409,7 +409,7 @@ def test_pair_confusion_matrix_single_cluster():
 def test_pair_confusion_matrix():
     # regular case: different non-trivial clusterings
     n = 10
-    N = n ** 2
+    N = n**2
     clustering1 = np.hstack([[i + 1] * n for i in range(n)])
     clustering2 = np.hstack([[i + 1] * (n + 1) for i in range(n)])[:N]
     # basic quadratic implementation
