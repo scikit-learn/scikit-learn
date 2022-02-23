@@ -414,10 +414,7 @@ def test_check_array():
 def test_check_array_numeric_error(X):
     """Test that check_array errors when it receives an array of bytes/string
     while a numeric dtype is required."""
-    expected_msg = (
-        r"Unable to convert array of bytes/strings "
-        r"into decimal numbers with dtype='numeric'"
-    )
+    expected_msg = r"dtype='numeric' is not compatible with arrays of bytes/strings"
     with pytest.raises(ValueError, match=expected_msg):
         check_array(X, dtype="numeric")
 

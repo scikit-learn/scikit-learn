@@ -868,8 +868,8 @@ def check_array(
 
         if dtype_numeric and array.dtype.kind in "USV":
             raise ValueError(
-                "Unable to convert array of bytes/strings "
-                "into decimal numbers with dtype='numeric'"
+                "dtype='numeric' is not compatible with arrays of bytes/strings."
+                "Convert your data to numeric values explicitly instead."
             )
 
         if not allow_nd and array.ndim >= 3:
