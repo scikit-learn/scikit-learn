@@ -344,8 +344,10 @@ class Pipeline(_BaseComposition):
                 cloned_transformer = transformer
             else:
                 cloned_transformer = clone(transformer)
-            # Fit or load from cache the current transformer
+
             self._propagate_callbacks(cloned_transformer, parent_node=node)
+
+            # Fit or load from cache the current transformer
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer,
                 X,
