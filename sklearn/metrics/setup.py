@@ -24,6 +24,7 @@ def configuration(parent_package="", top_path=None):
     templates = [
         "sklearn/metrics/_dist_metrics.pyx.tp",
         "sklearn/metrics/_dist_metrics.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction.pyx.tp",
     ]
 
     gen_from_templates(templates)
