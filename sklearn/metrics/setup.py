@@ -3,6 +3,8 @@ import numpy as np
 
 from numpy.distutils.misc_util import Configuration
 
+from sklearn._build_utils import gen_from_templates
+
 
 def configuration(parent_package="", top_path=None):
     config = Configuration("metrics", parent_package, top_path)
@@ -18,6 +20,13 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_pairwise_fast", sources=["_pairwise_fast.pyx"], libraries=libraries
     )
+
+    templates = [
+        "sklearn/metrics/_dist_metrics.pyx.tp",
+        "sklearn/metrics/_dist_metrics.pxd.tp",
+    ]
+
+    gen_from_templates(templates)
 
     config.add_extension(
         "_dist_metrics",
