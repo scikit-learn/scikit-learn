@@ -1052,7 +1052,6 @@ def test_check_requires_y_none():
     class Estimator(BaseEstimator):
         def fit(self, X, y):
             X, y = check_X_y(X, y)
-            return self
 
     with warnings.catch_warnings(record=True) as record:
         check_requires_y_none("estimator", Estimator())
