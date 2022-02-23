@@ -3,7 +3,6 @@ import re
 import numpy as np
 import scipy.sparse
 import pytest
-import pandas as pd
 from itertools import chain
 
 from sklearn.datasets import load_digits, load_iris
@@ -33,10 +32,6 @@ ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 y = np.array([1, 1, 1, 2, 2, 2])
-
-# Same as above, but a dataframe
-Xdf = pd.DataFrame(data=X, columns=["col0", "col1"])
-ydf = pd.DataFrame({"target": y})
 
 # A bit more random tests
 rng = np.random.RandomState(0)
@@ -1024,7 +1019,11 @@ def test_cwnb_union():
     assert_array_almost_equal(clf1.predict(X2), clf2.predict(X2[:, [2, 0, 1, 3, 4]]), 8)
 
 
-def test_cwnb_estimators_1():
+def test_cwnb_estimators_pandas():
+    pd = pytest.importorskip("pandas")
+    Xdf = pd.DataFrame(data=X, columns=["col0", "col1"])
+    ydf = pd.DataFrame({"target": y})
+
     # Subestimators spec: cols can be lists of int or lists of str, if DataFrame
     clf1 = ColumnwiseNB(
         estimatorNBs=[("g1", GaussianNB(), [1]), ("g2", GaussianNB(), [0, 1])]
@@ -1045,42 +1044,8 @@ def test_cwnb_estimators_1():
             clf1.predict_log_proba(X), clf2.predict_log_proba(Xdf), 8
         )
 
-    # Subestimators spec: repeated col ints have the same effect as repeating data
-    clf1 = ColumnwiseNB(
-        estimatorNBs=[("g1", GaussianNB(), [1, 1]), ("b1", BernoulliNB(), [0, 0, 1, 1])]
-    )
-    clf2 = ColumnwiseNB(
-        estimatorNBs=[("g1", GaussianNB(), [0, 1]), ("b1", BernoulliNB(), [2, 3, 4, 5])]
-    )
-    clf1.fit(X1, y1)
-    clf2.fit(X1[:, [1, 1, 0, 0, 1, 1]], y1)
-    assert_array_almost_equal(
-        clf1.predict_log_proba(X1), clf2.predict_log_proba(X1[:, [1, 1, 0, 0, 1, 1]]), 8
-    )
-
-    # Subestimators spec: empty cols have the same effect as an absent estimator
-    clf1 = ColumnwiseNB(
-        estimatorNBs=[
-            ("g1", GaussianNB(), [1]),
-            ("g2", GaussianNB(), []),
-            ("g3", GaussianNB(), [0, 1]),
-        ]
-    )
-    clf2 = ColumnwiseNB(
-        estimatorNBs=[("g1", GaussianNB(), [1]), ("g3", GaussianNB(), [0, 1])]
-    )
-    clf1.fit(X1, y1)
-    clf2.fit(X1, y1)
-    assert_array_almost_equal(clf1.predict_log_proba(X1), clf2.predict_log_proba(X1), 8)
-    # Empty-columns estimators are passed to estimators_ and the numbers match
-    assert len(clf1.estimatorNBs) == len(clf1.estimators_) == 3
-    assert len(clf2.estimatorNBs) == len(clf2.estimators_) == 2
-    # No cloning of the empty-columns estimators took place:
-    assert id(clf1.estimatorNBs[1][1]) == id(clf1.named_estimators_["g2"])
-
     # Subestimators spec: empty cols have the same effect as an absent estimator
     # when callable columns produce the empty set.
-
     select_none = make_column_selector(pattern="qwerasdf")
     clf1 = ColumnwiseNB(
         estimatorNBs=[
@@ -1125,6 +1090,41 @@ def test_cwnb_estimators_1():
     assert_array_almost_equal(
         clf1.predict_log_proba(Xdf), clf2.predict_log_proba(Xdf), 8
     )
+
+
+def test_cwnb_estimators_1():
+    # Subestimators spec: repeated col ints have the same effect as repeating data
+    clf1 = ColumnwiseNB(
+        estimatorNBs=[("g1", GaussianNB(), [1, 1]), ("b1", BernoulliNB(), [0, 0, 1, 1])]
+    )
+    clf2 = ColumnwiseNB(
+        estimatorNBs=[("g1", GaussianNB(), [0, 1]), ("b1", BernoulliNB(), [2, 3, 4, 5])]
+    )
+    clf1.fit(X1, y1)
+    clf2.fit(X1[:, [1, 1, 0, 0, 1, 1]], y1)
+    assert_array_almost_equal(
+        clf1.predict_log_proba(X1), clf2.predict_log_proba(X1[:, [1, 1, 0, 0, 1, 1]]), 8
+    )
+
+    # Subestimators spec: empty cols have the same effect as an absent estimator
+    clf1 = ColumnwiseNB(
+        estimatorNBs=[
+            ("g1", GaussianNB(), [1]),
+            ("g2", GaussianNB(), []),
+            ("g3", GaussianNB(), [0, 1]),
+        ]
+    )
+    clf2 = ColumnwiseNB(
+        estimatorNBs=[("g1", GaussianNB(), [1]), ("g3", GaussianNB(), [0, 1])]
+    )
+    clf1.fit(X1, y1)
+    clf2.fit(X1, y1)
+    assert_array_almost_equal(clf1.predict_log_proba(X1), clf2.predict_log_proba(X1), 8)
+    # Empty-columns estimators are passed to estimators_ and the numbers match
+    assert len(clf1.estimatorNBs) == len(clf1.estimators_) == 3
+    assert len(clf2.estimatorNBs) == len(clf2.estimators_) == 2
+    # No cloning of the empty-columns estimators took place:
+    assert id(clf1.estimatorNBs[1][1]) == id(clf1.named_estimators_["g2"])
 
     # Subestimators spec: error on repeated names
     clf1 = ColumnwiseNB(
