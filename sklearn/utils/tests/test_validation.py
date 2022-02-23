@@ -2,7 +2,6 @@
 
 import numbers
 import warnings
-import os
 import re
 
 from tempfile import NamedTemporaryFile
@@ -992,12 +991,13 @@ class WrongDummyMemory:
     pass
 
 
-@pytest.mark.filterwarnings("ignore:The 'cachedir' attribute")
 def test_check_memory():
     memory = check_memory("cache_directory")
-    assert memory.cachedir == os.path.join("cache_directory", "joblib")
+    assert memory.location == "cache_directory"
+
     memory = check_memory(None)
-    assert memory.cachedir is None
+    assert memory.location is None
+
     dummy = DummyMemory()
     memory = check_memory(dummy)
     assert memory is dummy
@@ -1092,7 +1092,7 @@ def test_check_scalar_valid(x):
             max_val=5,
             include_boundaries="both",
         )
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert scalar == x
 
 
@@ -1106,9 +1106,34 @@ def test_check_scalar_valid(x):
             2,
             4,
             "neither",
-            TypeError(
-                "test_name1 must be an instance of <class 'float'>, not <class 'int'>."
-            ),
+            TypeError("test_name1 must be an instance of float, not int."),
+        ),
+        (
+            None,
+            "test_name1",
+            numbers.Real,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of float, not NoneType."),
+        ),
+        (
+            None,
+            "test_name1",
+            numbers.Integral,
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of int, not NoneType."),
+        ),
+        (
+            1,
+            "test_name1",
+            (float, bool),
+            2,
+            4,
+            "neither",
+            TypeError("test_name1 must be an instance of {float, bool}, not int."),
         ),
         (
             1,
@@ -1156,6 +1181,30 @@ def test_check_scalar_valid(x):
             ValueError(
                 "Unknown value for `include_boundaries`: 'bad parameter value'. "
                 "Possible values are: ('left', 'right', 'both', 'neither')."
+            ),
+        ),
+        (
+            4,
+            "test_name7",
+            int,
+            None,
+            4,
+            "left",
+            ValueError(
+                "`include_boundaries`='left' without specifying explicitly `min_val` "
+                "is inconsistent."
+            ),
+        ),
+        (
+            4,
+            "test_name8",
+            int,
+            2,
+            None,
+            "right",
+            ValueError(
+                "`include_boundaries`='right' without specifying explicitly `max_val` "
+                "is inconsistent."
             ),
         ),
     ],
@@ -1589,17 +1638,20 @@ def test_check_array_deprecated_matrix():
 
 @pytest.mark.parametrize(
     "names",
-    [list(range(2)), range(2), None],
-    ids=["list-int", "range", "default"],
+    [list(range(2)), range(2), None, [["a", "b"], ["c", "d"]]],
+    ids=["list-int", "range", "default", "MultiIndex"],
 )
 def test_get_feature_names_pandas_with_ints_no_warning(names):
-    """Get feature names with pandas dataframes with ints without warning"""
+    """Get feature names with pandas dataframes without warning.
+
+    Column names with consistent dtypes will not warn, such as int or MultiIndex.
+    """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     with pytest.warns(None) as record:
         names = _get_feature_names(X)
-    assert not record
+    assert not [w.message for w in record]
     assert names is None
 
 
@@ -1624,10 +1676,10 @@ def test_get_feature_names_numpy():
 @pytest.mark.parametrize(
     "names, dtypes",
     [
-        ([["a", "b"], ["c", "d"]], "['tuple']"),
         (["a", 1], "['int', 'str']"),
+        (["pizza", ["a", "b"]], "['list', 'str']"),
     ],
-    ids=["multi-index", "mixed"],
+    ids=["int-str", "list-str"],
 )
 def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
     """Get feature names warns when the feature names have mixed dtypes"""

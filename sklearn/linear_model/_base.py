@@ -684,13 +684,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = optimize.nnls(X, y)
+                self.coef_ = optimize.nnls(X, y)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
                 )
-                self.coef_, self._residues = map(np.vstack, zip(*outs))
+                self.coef_ = np.vstack([out[0] for out in outs])
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
@@ -705,9 +705,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
             if y.ndim < 2:
-                out = sparse_lsqr(X_centered, y)
-                self.coef_ = out[0]
-                self._residues = out[3]
+                self.coef_ = sparse_lsqr(X_centered, y)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
@@ -715,9 +713,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
-                self._residues = np.vstack([out[3] for out in outs])
         else:
-            self.coef_, self._residues, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

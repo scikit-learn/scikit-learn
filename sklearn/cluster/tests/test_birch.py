@@ -195,16 +195,14 @@ def test_birch_fit_attributes_deprecated(attribute):
         (
             {"branching_factor": 1.5},
             TypeError,
-            "branching_factor must be an instance of <class 'numbers.Integral'>, not"
-            " <class 'float'>.",
+            "branching_factor must be an instance of int, not float.",
         ),
         ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
         ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
         (
             {"n_clusters": 2.5},
             TypeError,
-            "n_clusters must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>.",
+            "n_clusters must be an instance of int, not float.",
         ),
         (
             {"n_clusters": "whatever"},
@@ -219,3 +217,14 @@ def test_birch_params_validation(params, err_type, err_msg):
     X, _ = make_blobs(n_samples=80, centers=4)
     with pytest.raises(err_type, match=err_msg):
         Birch(**params).fit(X)
+
+
+def test_feature_names_out():
+    """Check `get_feature_names_out` for `Birch`."""
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    brc.fit(X)
+    n_clusters = brc.subcluster_centers_.shape[0]
+
+    names_out = brc.get_feature_names_out()
+    assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)

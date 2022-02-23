@@ -65,7 +65,6 @@ from ..utils import check_random_state, compute_sample_weight, deprecated
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
-from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _num_samples
@@ -147,7 +146,7 @@ def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
 
 def _parallel_build_trees(
     tree,
-    forest,
+    bootstrap,
     X,
     y,
     sample_weight,
@@ -162,7 +161,7 @@ def _parallel_build_trees(
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
-    if forest.bootstrap:
+    if bootstrap:
         n_samples = X.shape[0]
         if sample_weight is None:
             curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
@@ -249,7 +248,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         results = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(prefer="threads"),
+            prefer="threads",
         )(delayed(tree.apply)(X, check_input=False) for tree in self.estimators_)
 
         return np.array(results).T
@@ -282,7 +281,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         indicators = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(prefer="threads"),
+            prefer="threads",
         )(
             delayed(tree.decision_path)(X, check_input=False)
             for tree in self.estimators_
@@ -407,6 +406,27 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     FutureWarning,
                 )
 
+            if self.max_features == "auto":
+                warn(
+                    "`max_features='auto'` has been deprecated in 1.1 "
+                    "and will be removed in 1.3. To keep the past behaviour, "
+                    "explicitly set `max_features=1.0` or remove this "
+                    "parameter as it is also the default value for "
+                    "RandomForestRegressors and ExtraTreesRegressors.",
+                    FutureWarning,
+                )
+
+        elif isinstance(self, (RandomForestClassifier, ExtraTreesClassifier)):
+            if self.max_features == "auto":
+                warn(
+                    "`max_features='auto'` has been deprecated in 1.1 "
+                    "and will be removed in 1.3. To keep the past behaviour, "
+                    "explicitly set `max_features='sqrt'` or remove this "
+                    "parameter as it is also the default value for "
+                    "RandomForestClassifiers and ExtraTreesClassifiers.",
+                    FutureWarning,
+                )
+
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available if bootstrap=True")
 
@@ -450,11 +470,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             trees = Parallel(
                 n_jobs=self.n_jobs,
                 verbose=self.verbose,
-                **_joblib_parallel_args(prefer="threads"),
+                prefer="threads",
             )(
                 delayed(_parallel_build_trees)(
                     t,
-                    self,
+                    self.bootstrap,
                     X,
                     y,
                     sample_weight,
@@ -519,8 +539,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         oob_pred : ndarray of shape (n_samples, n_classes, n_outputs) or \
                 (n_samples, 1, n_outputs)
             The OOB predictions.
-      """
-        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        """
+        # Prediction requires X to be in CSR format
+        if issparse(X):
+            X = X.tocsr()
 
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
@@ -602,9 +624,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        all_importances = Parallel(
-            n_jobs=self.n_jobs, **_joblib_parallel_args(prefer="threads")
-        )(
+        all_importances = Parallel(n_jobs=self.n_jobs, prefer="threads")(
             delayed(getattr)(tree, "feature_importances_")
             for tree in self.estimators_
             if tree.tree_.node_count > 1
@@ -856,11 +876,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             for j in np.atleast_1d(self.n_classes_)
         ]
         lock = threading.Lock()
-        Parallel(
-            n_jobs=n_jobs,
-            verbose=self.verbose,
-            **_joblib_parallel_args(require="sharedmem"),
-        )(
+        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
             delayed(_accumulate_prediction)(e.predict_proba, X, all_proba, lock)
             for e in self.estimators_
         )
@@ -979,11 +995,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         # Parallel loop
         lock = threading.Lock()
-        Parallel(
-            n_jobs=n_jobs,
-            verbose=self.verbose,
-            **_joblib_parallel_args(require="sharedmem"),
-        )(
+        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
             delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
             for e in self.estimators_
         )
@@ -1133,7 +1145,7 @@ class RandomForestClassifier(ForestClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
+    max_features : {"sqrt", "log2", None}, int or float, default="sqrt"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1141,9 +1153,16 @@ class RandomForestClassifier(ForestClassifier):
           `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
+        - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to `"sqrt"`.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1279,6 +1298,7 @@ class RandomForestClassifier(ForestClassifier):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
@@ -1355,7 +1375,7 @@ class RandomForestClassifier(ForestClassifier):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features="sqrt",
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         bootstrap=True,
@@ -1486,7 +1506,7 @@ class RandomForestRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
+    max_features : {"sqrt", "log2", None}, int or float, default=1.0
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1496,7 +1516,18 @@ class RandomForestRegressor(ForestRegressor):
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If None or 1.0, then `max_features=n_features`.
+
+        .. note::
+            The default of 1.0 is equivalent to bagged trees and more
+            randomness can be achieved by setting smaller values, e.g. 0.3.
+
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to 1.0.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1609,6 +1640,7 @@ class RandomForestRegressor(ForestRegressor):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
@@ -1676,7 +1708,7 @@ class RandomForestRegressor(ForestRegressor):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features=1.0,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         bootstrap=True,
@@ -1783,7 +1815,7 @@ class ExtraTreesClassifier(ForestClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
+    max_features : {"sqrt", "log2", None}, int or float, default="sqrt"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1794,6 +1826,13 @@ class ExtraTreesClassifier(ForestClassifier):
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to `"sqrt"`.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1944,6 +1983,7 @@ class ExtraTreesClassifier(ForestClassifier):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
@@ -2001,7 +2041,7 @@ class ExtraTreesClassifier(ForestClassifier):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features="sqrt",
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         bootstrap=False,
@@ -2123,7 +2163,7 @@ class ExtraTreesRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
+    max_features : {"sqrt", "log2", None}, int or float, default=1.0
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -2133,7 +2173,18 @@ class ExtraTreesRegressor(ForestRegressor):
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If None or 1.0, then `max_features=n_features`.
+
+        .. note::
+            The default of 1.0 is equivalent to bagged trees and more
+            randomness can be achieved by setting smaller values, e.g. 0.3.
+
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to 1.0.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -2250,6 +2301,7 @@ class ExtraTreesRegressor(ForestRegressor):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
@@ -2293,7 +2345,7 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg = ExtraTreesRegressor(n_estimators=100, random_state=0).fit(
     ...    X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.2708...
+    0.2727...
     """
 
     def __init__(
@@ -2305,7 +2357,7 @@ class ExtraTreesRegressor(ForestRegressor):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features=1.0,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         bootstrap=False,
@@ -2487,6 +2539,7 @@ class RandomTreesEmbedding(BaseForest):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
         .. versionadded:: 1.0
 
     n_outputs_ : int
