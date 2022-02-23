@@ -866,9 +866,9 @@ def check_array(
                     "if it contains a single sample.".format(array)
                 )
 
-        if dtype_numeric and array.dtype.kind in "OUSV":
-            raise TypeError(
-                "Unable to convert array of objects/bytes/strings "
+        if dtype_numeric and array.dtype.kind in "USV":
+            raise ValueError(
+                "Unable to convert array of bytes/strings "
                 "into decimal numbers with dtype='numeric'"
             )
 

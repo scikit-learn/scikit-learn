@@ -401,7 +401,6 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 1.1 when implicit conversion is removed
 @pytest.mark.parametrize(
     "X",
     [
@@ -413,13 +412,13 @@ def test_check_array():
     ],
 )
 def test_check_array_numeric_error(X):
-    """Test that check_array errors when it receives an array of objects/bytes/string
+    """Test that check_array errors when it receives an array of bytes/string
     while a numeric dtype is required."""
     expected_msg = (
-        r"Unable to convert array of objects/bytes/strings "
+        r"Unable to convert array of bytes/strings "
         r"into decimal numbers with dtype='numeric'"
     )
-    with pytest.raises(TypeError, match=expected_msg):
+    with pytest.raises(ValueError, match=expected_msg):
         check_array(X, dtype="numeric")
 
 
