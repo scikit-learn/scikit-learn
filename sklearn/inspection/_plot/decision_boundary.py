@@ -301,11 +301,6 @@ class DecisionBoundaryDisplay:
             )
 
         if response.ndim != 1:
-            if response.shape[1] != 2:
-                raise ValueError(
-                    "Multiclass classifiers are only supported when "
-                    "response_method='predict'"
-                )
             response = response[:, 1]
 
         if xlabel is not None:
