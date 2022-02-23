@@ -1473,7 +1473,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     Parameters
     ----------
-    estimators : list of tuples
+    estimatorNBs : list of tuples
         List of (name, estimatorNB, columns) tuples specifying the naive Bayes
         estimators to be combined into a single naive Bayes meta-estimator.
 
@@ -1592,15 +1592,15 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     [0 0 1 0 2 2]
     """
 
-    _required_parameters = ["estimatorsNB"]
+    _required_parameters = ["estimatorNBs"]
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
         return "(%d of %d) Processing %s" % (idx, total, name)
 
-    def __init__(self, estimators, priors=None, n_jobs=None, verbose=False):
-        self.estimators = estimators
+    def __init__(self, estimatorNBs, priors=None, n_jobs=None, verbose=False):
+        self.estimatorNBs = estimatorNBs
         self.priors = priors
         self.n_jobs = n_jobs
         self.verbose = verbose
@@ -1634,12 +1634,12 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     def _validate_estimators(self, check_partial=False):
         # Check if estimators have fit/partial_fit and jll methods
         # Validate estimator names via _BaseComposition._validate_names(self, names)
-        if not self.estimators:
+        if not self.estimatorNBs:
             raise ValueError(
                 "A list of naive Bayes estimators must be provided "
                 "in the form [(name, estimatorNB, columns), ... ]."
             )
-        names, estimators, _ = zip(*self.estimators)
+        names, estimators, _ = zip(*self.estimatorNBs)
         for e in estimators:
             if (not check_partial) and (
                 not (hasattr(e, "fit") and hasattr(e, "_joint_log_likelihood"))
@@ -1671,7 +1671,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         # ColumnTransformer code.
         all_columns = []
         estimator_to_input_indices = {}
-        for name, _, columns in self.estimators:
+        for name, _, columns in self.estimatorNBs:
             if callable(columns):
                 columns = columns(X)
             all_columns.append(columns)
@@ -1743,7 +1743,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 else:
                     yield (name, estimator, cols)
         else:  # fitted=False
-            for (name, estimator, _), cols in zip(self.estimators, self._columns):
+            for (name, estimator, _), cols in zip(self.estimatorNBs, self._columns):
                 if replace_strings and _is_empty_column_selection(cols):
                     continue
                 else:
@@ -1948,14 +1948,14 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         which expects lists of tuples of len 2.
         """
         # Implemented in the image and likeness of ColumnTranformer._transformers
-        return [(name, e) for name, e, _ in self.estimators]
+        return [(name, e) for name, e, _ in self.estimatorNBs]
 
     @_estimators.setter
     def _estimators(self, value):
         # Implemented in the image and likeness of ColumnTranformer._transformers
         # TODO: Is renaming or changing the order legal? Swap `name` and `_`?
-        self.estimators = [
-            (name, e, col) for ((name, e), (_, _, col)) in zip(value, self.estimators)
+        self.estimatorNBs = [
+            (name, e, col) for ((name, e), (_, _, col)) in zip(value, self.estimatorNBs)
         ]
 
     def get_params(self, deep=True):
