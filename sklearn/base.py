@@ -616,6 +616,11 @@ class BaseEstimator:
         ----------
         callbacks : callback or list of callbacks
             the callbacks to set.
+
+        Returns
+        -------
+        self : estimator instance
+            The estimator instance itself. 
         """
         if not isinstance(callbacks, list):
             callbacks = [callbacks]
@@ -625,9 +630,11 @@ class BaseEstimator:
 
         self._callbacks = callbacks
 
+        return self
+
     # XXX should be a method of MetaEstimatorMixin but this mixin can't handle all
     # meta-estimators.
-    def _propagate_callbacks(self, sub_estimator, parent_node):
+    def _propagate_callbacks(self, sub_estimator, *, parent_node):
         """Propagate the auto-propagated callbacks to a sub-estimator
 
         Parameters
@@ -640,9 +647,6 @@ class BaseEstimator:
             computation tree of the sub-estimator. It must be the node where the fit
             method of the sub-estimator is called.
         """
-        if not hasattr(self, "_callbacks"):
-            return
-
         if hasattr(sub_estimator, "_callbacks") and any(
             isinstance(callback, AutoPropagatedMixin)
             for callback in sub_estimator._callbacks
@@ -659,6 +663,9 @@ class BaseEstimator:
                 " Set them directly on the meta-estimator."
             )
 
+        if not hasattr(self, "_callbacks"):
+            return
+
         propagated_callbacks = [
             callback
             for callback in self._callbacks
@@ -668,7 +675,7 @@ class BaseEstimator:
         if not propagated_callbacks:
             return
 
-        sub_estimator._parent_node = parent_node
+        sub_estimator._parent_ct_node = parent_node
 
         if not hasattr(sub_estimator, "_callbacks"):
             sub_estimator._callbacks = propagated_callbacks
@@ -702,7 +709,7 @@ class BaseEstimator:
         self._computation_tree = ComputationTree(
             estimator_name=self.__class__.__name__,
             levels=levels,
-            parent_node=getattr(self, "_parent_node", None),
+            parent_node=getattr(self, "_parent_ct_node", None),
         )
 
         if hasattr(self, "_callbacks"):
@@ -710,13 +717,13 @@ class BaseEstimator:
             with open(file_path, "wb") as f:
                 pickle.dump(self._computation_tree, f)
 
+            # Only call the on_fit_begin method of callbacks that are not
+            # propagated from a meta-estimator.
             for callback in self._callbacks:
-                is_propagated = hasattr(self, "_parent_node") and isinstance(
+                is_propagated = hasattr(self, "_parent_ct_node") and isinstance(
                     callback, AutoPropagatedMixin
                 )
                 if not is_propagated:
-                    # Only call the on_fit_begin method of callbacks that are not
-                    # propagated from a meta-estimator.
                     callback.on_fit_begin(estimator=self, X=X, y=y)
 
         return self._computation_tree.root
@@ -728,25 +735,33 @@ class BaseEstimator:
 
         self._computation_tree._tree_status[0] = True
 
+        # Only call the on_fit_end method of callbacks that are not
+        # propagated from a meta-estimator.
         for callback in self._callbacks:
             is_propagated = isinstance(callback, AutoPropagatedMixin) and hasattr(
-                self, "_parent_node"
+                self, "_parent_ct_node"
             )
             if not is_propagated:
-                # Only call the on_fit_end method of callbacks that are not
-                # propagated from a meta-estimator.
                 callback.on_fit_end()
 
     def _from_reconstruction_attributes(self, *, reconstruction_attributes):
-        """Return a as if fitted copy of this estimator
+        """Return an as if fitted copy of this estimator
 
         Parameters
         ----------
         reconstruction_attributes : callable
-            The necessary fitted attributes to create a working fitted estimator from
-            this instance.
+            A callable that has no arguments and returns the necessary fitted attributes
+            to create a working fitted estimator from this instance.
+
+            Using a callable allows lazy evaluation of the potentially costly
+            reconstruction attributes.
+
+        Returns
+        -------
+        fitted_estimator : estimator instance
+            The fitted copy of this estimator.
         """
-        new_estimator = copy.copy(self)
+        new_estimator = copy.copy(self)  # XXX deepcopy ?
         for key, val in reconstruction_attributes().items():
             setattr(new_estimator, key, val)
         return new_estimator

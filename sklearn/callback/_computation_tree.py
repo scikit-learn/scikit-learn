@@ -88,6 +88,12 @@ class ComputationNode:
 
         return ancestors
 
+    def __repr__(self):
+        return (
+            f"ComputationNode(description={self.description}, "
+            f"depth={self.depth}, idx={self.idx})"
+        )
+
 
 class ComputationTree:
     """Data structure to store the computation tree of an estimator
@@ -221,7 +227,7 @@ class ComputationTree:
 
     def _recursive_iterate(self, node=None, include_leaves=False, node_list=None):
         """Recursively constructs the iterable"""
-        # TODO make it a generator
+        # TODO make it an iterator ?
         if node is None:
             node = self.root
             node_list = []
