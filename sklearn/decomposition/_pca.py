@@ -321,12 +321,12 @@ class PCA(_BasePCA):
     "Finding structure with randomness: Probabilistic algorithms for
     constructing approximate matrix decompositions".
     SIAM review, 53(2), 217-288.
-    <https://doi.org/10.1137/090771806>`_
+    :doi:`10.1137/090771806``_
     and also
     `Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
     Applied and Computational Harmonic Analysis, 30(1), 47-68
-    <https://doi.org/10.1016/j.acha.2010.02.003>`_.
+    :doi:`10.1016/j.acha.2010.02.003`_.
 
     Examples
     --------
