@@ -17,7 +17,6 @@ comes in to choose a direction that is not flat.
 
 from sklearn.decomposition import PCA
 
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
