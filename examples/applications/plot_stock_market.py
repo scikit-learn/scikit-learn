@@ -210,7 +210,7 @@ non_zero = np.abs(np.triu(partial_correlations, k=1)) > 0.02
 
 # Plot the nodes using the coordinates of our embedding
 plt.scatter(
-    embedding[0], embedding[1], s=100 * d ** 2, c=labels, cmap=plt.cm.nipy_spectral
+    embedding[0], embedding[1], s=100 * d**2, c=labels, cmap=plt.cm.nipy_spectral
 )
 
 # Plot the edges

@@ -370,7 +370,7 @@ def f_check_param_definition(a, b, c, d, e):
     b:
         Parameter b
     c :
-        Parameter c
+        This is parsed correctly in numpydoc 1.2
     d:int
         Parameter d
     e
@@ -387,7 +387,7 @@ class Klass:
         """Function f
 
         Parameter
-        ----------
+        ---------
         a : int
             Parameter a
         b : float
@@ -525,7 +525,9 @@ class MockMetaEstimatorDeprecatedDelegation:
 )
 def test_check_docstring_parameters(mock_meta):
     pytest.importorskip(
-        "numpydoc", reason="numpydoc is required to test the docstrings"
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
+        minversion="1.2.0",
     )
 
     incorrect = check_docstring_parameters(f_ok)
@@ -546,8 +548,6 @@ def test_check_docstring_parameters(mock_meta):
         "was no space between the param name and colon ('a: int')",
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('b:')",
-        "sklearn.utils.tests.test_testing.f_check_param_definition "
-        "Parameter 'c :' has an empty type spec. Remove the colon",
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('d:int')",
     ]
@@ -602,20 +602,16 @@ def test_check_docstring_parameters(mock_meta):
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
             + "predict_proba",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
-            "Full diff:",
-            "- ['X']",
-            "+ []",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
-            "Full diff:",
-            "- ['X']",
-            "+ []",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
             "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",

@@ -10,6 +10,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 import warnings
+from itertools import chain
 
 import scipy.optimize
 
@@ -440,6 +441,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             self._fit_lbfgs(
                 X, y, activations, deltas, coef_grads, intercept_grads, layer_units
             )
+
+        # validate parameter weights
+        weights = chain(self.coefs_, self.intercepts_)
+        if not all(np.isfinite(w).all() for w in weights):
+            raise ValueError(
+                "Solver produced non-finite parameter weights. The input data may"
+                " contain large values and need to be preprocessed."
+            )
+
         return self
 
     def _validate_hyperparameters(self):
@@ -826,7 +836,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         better.
 
     alpha : float, default=0.0001
-        L2 penalty (regularization term) parameter.
+        Strength of the L2 regularization term. The L2 regularization term
+        is divided by the sample size when added to the loss.
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
@@ -1010,20 +1021,18 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     References
     ----------
-    Hinton, Geoffrey E.
-        "Connectionist learning procedures." Artificial intelligence 40.1
-        (1989): 185-234.
+    Hinton, Geoffrey E. "Connectionist learning procedures."
+    Artificial intelligence 40.1 (1989): 185-234.
 
-    Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of
-        training deep feedforward neural networks." International Conference
-        on Artificial Intelligence and Statistics. 2010.
+    Glorot, Xavier, and Yoshua Bengio.
+    "Understanding the difficulty of training deep feedforward neural networks."
+    International Conference on Artificial Intelligence and Statistics. 2010.
 
-    He, Kaiming, et al. "Delving deep into rectifiers: Surpassing human-level
-        performance on imagenet classification." arXiv preprint
-        arXiv:1502.01852 (2015).
+    :arxiv:`He, Kaiming, et al (2015). "Delving deep into rectifiers:
+    Surpassing human-level performance on imagenet classification." <1502.01852>`
 
-    Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
-        optimization." arXiv preprint arXiv:1412.6980 (2014).
+    :arxiv:`Kingma, Diederik, and Jimmy Ba (2014)
+    "Adam: A method for stochastic optimization." <1412.6980>`
 
     Examples
     --------
@@ -1300,7 +1309,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         better.
 
     alpha : float, default=0.0001
-        L2 penalty (regularization term) parameter.
+        Strength of the L2 regularization term. The L2 regularization term
+        is divided by the sample size when added to the loss.
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
@@ -1482,20 +1492,18 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     References
     ----------
-    Hinton, Geoffrey E.
-        "Connectionist learning procedures." Artificial intelligence 40.1
-        (1989): 185-234.
+    Hinton, Geoffrey E. "Connectionist learning procedures."
+    Artificial intelligence 40.1 (1989): 185-234.
 
-    Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of
-        training deep feedforward neural networks." International Conference
-        on Artificial Intelligence and Statistics. 2010.
+    Glorot, Xavier, and Yoshua Bengio.
+    "Understanding the difficulty of training deep feedforward neural networks."
+    International Conference on Artificial Intelligence and Statistics. 2010.
 
-    He, Kaiming, et al. "Delving deep into rectifiers: Surpassing human-level
-        performance on imagenet classification." arXiv preprint
-        arXiv:1502.01852 (2015).
+    :arxiv:`He, Kaiming, et al (2015). "Delving deep into rectifiers:
+    Surpassing human-level performance on imagenet classification." <1502.01852>`
 
-    Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
-        optimization." arXiv preprint arXiv:1412.6980 (2014).
+    :arxiv:`Kingma, Diederik, and Jimmy Ba (2014)
+    "Adam: A method for stochastic optimization." <1412.6980>`
 
     Examples
     --------

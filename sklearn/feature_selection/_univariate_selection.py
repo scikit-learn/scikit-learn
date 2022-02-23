@@ -96,7 +96,7 @@ def f_oneway(*args):
     ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
     sums_args = [np.asarray(a.sum(axis=0)) for a in args]
     square_of_sums_alldata = sum(sums_args) ** 2
-    square_of_sums_args = [s ** 2 for s in sums_args]
+    square_of_sums_args = [s**2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0.0
     for k, _ in enumerate(args):
@@ -210,15 +210,27 @@ def chi2(X, y):
 
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
-    X = check_array(X, accept_sparse="csr")
+    # Converting X to float allows getting better performance for the
+    # safe_sparse_dot call made bellow.
+    X = check_array(X, accept_sparse="csr", dtype=(np.float64, np.float32))
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
-    Y = LabelBinarizer().fit_transform(y)
+    # Use a sparse representation for Y by default to reduce memory usage when
+    # y has many unique classes.
+    Y = LabelBinarizer(sparse_output=True).fit_transform(y)
     if Y.shape[1] == 1:
+        Y = Y.toarray()
         Y = np.append(1 - Y, Y, axis=1)
 
     observed = safe_sparse_dot(Y.T, X)  # n_classes * n_features
+
+    if issparse(observed):
+        # convert back to a dense array before calling _chisquare
+        # XXX: could _chisquare be reimplement to accept sparse matrices for
+        # cases where both n_classes and n_features are large (and X is
+        # sparse)?
+        observed = observed.toarray()
 
     feature_count = X.sum(axis=0).reshape(1, -1)
     class_prob = Y.mean(axis=0).reshape(1, -1)
@@ -237,7 +249,9 @@ def r_regression(X, y, *, center=True, force_finite=True):
     a free standing feature selection procedure.
 
     The cross correlation between each regressor and the target is computed
-    as ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) * std(y)).
+    as::
+
+        E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y))
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -291,7 +305,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
         else:
             X_means = X.mean(axis=0)
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means ** 2)
+        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
     else:
         X_norms = row_norms(X.T)
 
@@ -316,9 +330,11 @@ def f_regression(X, y, *, center=True, force_finite=True):
 
     This is done in 2 steps:
 
-    1. The cross correlation between each regressor and the target is computed,
-       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
-       std(y)) using r_regression function.
+    1. The cross correlation between each regressor and the target is computed
+       using :func:`r_regression` as::
+
+           E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y))
+
     2. It is converted to an F score and then to a p-value.
 
     :func:`f_regression` is derived from :func:`r_regression` and will rank
@@ -391,7 +407,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
     )
     deg_of_freedom = y.size - (2 if center else 1)
 
-    corr_coef_squared = correlation_coefficient ** 2
+    corr_coef_squared = correlation_coefficient**2
 
     with np.errstate(divide="ignore", invalid="ignore"):
         f_statistic = corr_coef_squared / (1 - corr_coef_squared) * deg_of_freedom
@@ -997,6 +1013,9 @@ class GenericUnivariateSelect(_BaseFilter):
         selector.set_params(**{possible_params[0]: self.param})
 
         return selector
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
 
     def _check_params(self, X, y):
         if self.mode not in self._selection_modes:
