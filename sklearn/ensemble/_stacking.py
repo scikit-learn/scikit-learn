@@ -147,19 +147,12 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         -------
         self : object
         """
-        # check params
+        # Check params.
         check_scalar(
             self.passthrough,
             name="passthrough",
             target_type=(np.bool_, numbers.Integral),
             include_boundaries="neither",
-        )
-        check_scalar(
-            self.verbose,
-            name="verbose",
-            target_type=(np.bool_, numbers.Integral),
-            min_val=0,
-            include_boundaries="left",
         )
         # all_estimators contains all estimators, the one to be fitted and the
         # 'drop' string.
