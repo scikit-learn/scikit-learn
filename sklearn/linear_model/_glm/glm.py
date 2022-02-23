@@ -13,6 +13,7 @@ import scipy.optimize
 
 from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
+from ...utils import check_scalar
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ..._loss.glm_distribution import (
     ExponentialDispersionModel,
@@ -72,6 +73,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -99,12 +101,14 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values must be in the range `[1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values must be in the range `(0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -112,6 +116,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values must be in the range `[0, inf)`.
 
     Attributes
     ----------
@@ -165,7 +170,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted model.
         """
         if isinstance(self.family, ExponentialDispersionModel):
             self._family_instance = self.family
@@ -208,15 +214,18 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "got (link={0})".format(self.link)
                 )
 
-        if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
-            raise ValueError(
-                "Penalty term must be a non-negative number;"
-                " got (alpha={0})".format(self.alpha)
-            )
+        check_scalar(
+            self.alpha,
+            name="alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
-                "The argument fit_intercept must be bool;"
-                " got {0}".format(self.fit_intercept)
+                "The argument fit_intercept must be bool; got {0}".format(
+                    self.fit_intercept
+                )
             )
         if self.solver not in ["lbfgs"]:
             raise ValueError(
@@ -224,21 +233,28 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "'lbfgs'; got {0}".format(self.solver)
             )
         solver = self.solver
-        if not isinstance(self.max_iter, numbers.Integral) or self.max_iter <= 0:
-            raise ValueError(
-                "Maximum number of iteration must be a positive "
-                "integer;"
-                " got (max_iter={0!r})".format(self.max_iter)
-            )
-        if not isinstance(self.tol, numbers.Number) or self.tol <= 0:
-            raise ValueError(
-                "Tolerance for stopping criteria must be "
-                "positive; got (tol={0!r})".format(self.tol)
-            )
+        check_scalar(
+            self.max_iter,
+            name="max_iter",
+            target_type=numbers.Integral,
+            min_val=1,
+        )
+        check_scalar(
+            self.tol,
+            name="tol",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.verbose,
+            name="verbose",
+            target_type=numbers.Integral,
+            min_val=0,
+        )
         if not isinstance(self.warm_start, bool):
             raise ValueError(
-                "The argument warm_start must be bool;"
-                " got {0}".format(self.warm_start)
+                "The argument warm_start must be bool; got {0}".format(self.warm_start)
             )
 
         family = self._family_instance
@@ -259,8 +275,9 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         if not np.all(family.in_y_range(y)):
             raise ValueError(
-                "Some value(s) of y are out of the valid "
-                "range for family {0}".format(family.__class__.__name__)
+                "Some value(s) of y are out of the valid range for family {0}".format(
+                    family.__class__.__name__
+                )
             )
         # TODO: if alpha=0 check that X is not rank deficient
 
@@ -442,6 +459,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -449,12 +467,14 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values must be in the range `[1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values must be in the range `(0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -462,6 +482,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values must be in the range `[0, inf)`.
 
     Attributes
     ----------
@@ -477,11 +498,22 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Actual number of iterations used in the solver.
 
+    See Also
+    --------
+    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson
+        distribution.
+
     Examples
-    ----------
+    --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.PoissonRegressor()
     >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
@@ -522,6 +554,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the string `'poisson'`."""
         # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "poisson"
 
@@ -547,6 +580,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -554,12 +588,14 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values must be in the range `[1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values must be in the range `(0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -567,6 +603,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values must be in the range `[0, inf)`.
 
     Attributes
     ----------
@@ -584,6 +621,17 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    PoissonRegressor : Generalized Linear Model with a Poisson distribution.
+    TweedieRegressor : Generalized Linear Model with a Tweedie distribution.
 
     Examples
     --------
@@ -627,6 +675,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the family of the regressor."""
         # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "gamma"
 
@@ -673,6 +722,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
+        Values must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -688,12 +738,14 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
+        Values must be in the range `[1, inf)`.
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
         where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
+        Values must be in the range `(0.0, inf)`.
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -701,6 +753,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
+        Values must be in the range `[0, inf)`.
 
     Attributes
     ----------
@@ -719,8 +772,19 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    PoissonRegressor : Generalized Linear Model with a Poisson distribution.
+    GammaRegressor : Generalized Linear Model with a Gamma distribution.
+
     Examples
-    ----------
+    --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.TweedieRegressor()
     >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
@@ -763,6 +827,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        """Return the family of the regressor."""
         # We use a property with a setter to make sure that the family is
         # always a Tweedie distribution, and that self.power and
         # self.family.power are identical by construction.
@@ -776,5 +841,5 @@ class TweedieRegressor(GeneralizedLinearRegressor):
             self.power = value.power
         else:
             raise TypeError(
-                "TweedieRegressor.family must be of type " "TweedieDistribution!"
+                "TweedieRegressor.family must be of type TweedieDistribution!"
             )

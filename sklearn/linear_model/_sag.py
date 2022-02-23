@@ -58,10 +58,9 @@ def get_auto_step_size(
     Minimizing finite sums with the stochastic average gradient
     https://hal.inria.fr/hal-00860051/document
 
-    Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-    SAGA: A Fast Incremental Gradient Method With Support
-    for Non-Strongly Convex Composite Objectives
-    https://arxiv.org/abs/1407.0202
+    :arxiv:`Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    "SAGA: A Fast Incremental Gradient Method With Support
+    for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
     if loss in ("log", "multinomial"):
         L = 0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled
@@ -70,8 +69,8 @@ def get_auto_step_size(
         L = max_squared_sum + int(fit_intercept) + alpha_scaled
     else:
         raise ValueError(
-            "Unknown loss function for SAG solver, got %s "
-            "instead of 'log' or 'squared'" % loss
+            "Unknown loss function for SAG solver, got %s instead of 'log' or 'squared'"
+            % loss
         )
     if is_saga:
         # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
@@ -156,7 +155,7 @@ def sag_solver(
         The max number of passes over the training data if the stopping
         criteria is not reached.
 
-    tol : double, default=0.001
+    tol : float, default=0.001
         The stopping criteria for the weights. The iterations will stop when
         max(change in weights) / max(weights) < tol.
 
@@ -232,10 +231,9 @@ def sag_solver(
     Minimizing finite sums with the stochastic average gradient
     https://hal.inria.fr/hal-00860051/document
 
-    Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-    SAGA: A Fast Incremental Gradient Method With Support
-    for Non-Strongly Convex Composite Objectives
-    https://arxiv.org/abs/1407.0202
+    :arxiv:`Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    "SAGA: A Fast Incremental Gradient Method With Support
+    for Non-Strongly Convex Composite Objectives" <1407.0202>`
 
     See Also
     --------
@@ -350,7 +348,7 @@ def sag_solver(
 
     if n_iter_ == max_iter:
         warnings.warn(
-            "The max_iter was reached which means " "the coef_ did not converge",
+            "The max_iter was reached which means the coef_ did not converge",
             ConvergenceWarning,
         )
 

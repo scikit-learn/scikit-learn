@@ -33,6 +33,7 @@ def test_fetch_kddcup99_percent10(
     assert data.target.shape == (n_samples,)
     if as_frame:
         assert data.frame.shape == (n_samples, n_features + 1)
+    assert data.DESCR.startswith(".. _kddcup99_dataset:")
 
 
 def test_fetch_kddcup99_return_X_y(fetch_kddcup99_fxt):
@@ -77,7 +78,7 @@ def test_corrupted_file_error_message(fetch_kddcup99_fxt, tmp_path):
         f.write(b"THIS IS CORRUPTED")
 
     msg = (
-        f"The cache for fetch_kddcup99 is invalid, please "
+        "The cache for fetch_kddcup99 is invalid, please "
         f"delete {str(kddcup99_dir)} and run the fetch_kddcup99 again"
     )
 

@@ -61,7 +61,7 @@ if __name__ == "__main__":
         "--iterations",
         type=int,
         required=True,
-        help="Number of iterations to average timings over " "for each problem size",
+        help="Number of iterations to average timings over for each problem size",
     )
     parser.add_argument(
         "--log_min_problem_size",
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     timings = []
     for exponent in range(args.log_min_problem_size, args.log_max_problem_size):
-        n = 10 ** exponent
+        n = 10**exponent
         Y = DATASET_GENERATORS[args.dataset](n)
         time_per_iteration = [
             bench_isotonic_regression(Y) for i in range(args.iterations)

@@ -129,14 +129,16 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError(
-                "n_estimators must be an integer, "
-                "got {0}.".format(type(self.n_estimators))
+                "n_estimators must be an integer, got {0}.".format(
+                    type(self.n_estimators)
+                )
             )
 
         if self.n_estimators <= 0:
             raise ValueError(
-                "n_estimators must be greater than zero, "
-                "got {0}.".format(self.n_estimators)
+                "n_estimators must be greater than zero, got {0}.".format(
+                    self.n_estimators
+                )
             )
 
         if self.base_estimator is not None:
@@ -224,6 +226,12 @@ class _BaseHeterogeneousEnsemble(
 
     @property
     def named_estimators(self):
+        """Dictionary to access any fitted sub-estimators by name.
+
+        Returns
+        -------
+        :class:`~sklearn.utils.Bunch`
+        """
         return Bunch(**dict(self.estimators))
 
     @abstractmethod
@@ -275,6 +283,11 @@ class _BaseHeterogeneousEnsemble(
             parameters of the estimator, the individual estimator of the
             estimators can also be set, or can be removed by setting them to
             'drop'.
+
+        Returns
+        -------
+        self : object
+            Estimator instance.
         """
         super()._set_params("estimators", **params)
         return self
@@ -291,5 +304,11 @@ class _BaseHeterogeneousEnsemble(
         deep : bool, default=True
             Setting it to True gets the various estimators and the parameters
             of the estimators as well.
+
+        Returns
+        -------
+        params : dict
+            Parameter and estimator names mapped to their values or parameter
+            names mapped to their values.
         """
         return super()._get_params("estimators", deep=deep)

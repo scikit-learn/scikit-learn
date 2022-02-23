@@ -21,7 +21,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists
 from os import makedirs, remove
 import tarfile
 
@@ -35,6 +35,7 @@ from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..utils import Bunch
 
 
@@ -43,7 +44,7 @@ from ..utils import Bunch
 ARCHIVE = RemoteFileMetadata(
     filename="cal_housing.tgz",
     url="https://ndownloader.figshare.com/files/5976036",
-    checksum=("aaa5c9a6afe2225cc2aed2723682ae40" "3280c4a3695a2ddda4ffb5d8215ea681"),
+    checksum="aaa5c9a6afe2225cc2aed2723682ae403280c4a3695a2ddda4ffb5d8215ea681",
 )
 
 logger = logging.getLogger(__name__)
@@ -101,7 +102,7 @@ def fetch_california_housing(
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : list of length 8
             Array of ordered feature names used in the dataset.
-        DESCR : string
+        DESCR : str
             Description of the California housing dataset.
         frame : pandas DataFrame
             Only present when `as_frame=True`. DataFrame with ``data`` and
@@ -173,9 +174,7 @@ def fetch_california_housing(
     # target in units of 100,000
     target = target / 100000.0
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "california_housing.rst")) as dfile:
-        descr = dfile.read()
+    descr = load_descr("california_housing.rst")
 
     X = data
     y = target

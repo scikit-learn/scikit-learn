@@ -27,7 +27,7 @@ parser.add_argument("--cache-loc", type=str, default="/tmp")
 args = parser.parse_args()
 
 HERE = os.path.dirname(__file__)
-URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00280/" "HIGGS.csv.gz"
+URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz"
 m = Memory(location=args.cache_loc, mmap_mode="r")
 
 n_leaf_nodes = args.n_leaf_nodes
@@ -71,7 +71,7 @@ def predict(est, data_test, target_test):
     toc = time()
     roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
     acc = accuracy_score(target_test, predicted_test)
-    print(f"predicted in {toc - tic:.3f}s, " f"ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
+    print(f"predicted in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 
 
 df = load_data()

@@ -3,7 +3,6 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from sklearn.metrics import plot_roc_curve
-from sklearn.metrics import RocCurveDisplay
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc
 from sklearn.datasets import load_iris
@@ -19,7 +18,8 @@ from sklearn.compose import make_column_transformer
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
+    "matplotlib.*",
+    "ignore:Function plot_roc_curve is deprecated",
 )
 
 
@@ -101,8 +101,8 @@ def test_plot_roc_curve(
     assert viz.line_.get_label() == expected_label
 
     expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = f"True Positive Rate (Positive label: " f"{expected_pos_label})"
-    expected_xlabel = f"False Positive Rate (Positive label: " f"{expected_pos_label})"
+    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
 
     assert viz.ax_.get_ylabel() == expected_ylabel
     assert viz.ax_.get_xlabel() == expected_xlabel
@@ -126,23 +126,6 @@ def test_roc_curve_not_fitted_errors(pyplot, data_binary, clf):
     disp = plot_roc_curve(clf, X, y)
     assert clf.__class__.__name__ in disp.line_.get_label()
     assert disp.estimator_name == clf.__class__.__name__
-
-
-@pytest.mark.parametrize(
-    "roc_auc, estimator_name, expected_label",
-    [
-        (0.9, None, "AUC = 0.90"),
-        (None, "my_est", "my_est"),
-        (0.8, "my_est2", "my_est2 (AUC = 0.80)"),
-    ],
-)
-def test_default_labels(pyplot, roc_auc, estimator_name, expected_label):
-    fpr = np.array([0, 0.5, 1])
-    tpr = np.array([0, 0.5, 1])
-    disp = RocCurveDisplay(
-        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=estimator_name
-    ).plot()
-    assert disp.line_.get_label() == expected_label
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])

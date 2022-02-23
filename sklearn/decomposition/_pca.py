@@ -20,7 +20,7 @@ from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
 from ._base import _BasePCA
-from ..utils import check_random_state
+from ..utils import check_random_state, check_scalar
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
@@ -203,6 +203,21 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
+    n_oversamples : int, default=10
+        This parameter is only relevant when `svd_solver="randomized"`.
+        It corresponds to the additional number of random vectors to sample the
+        range of `X` so as to ensure proper conditioning. See
+        :func:`~sklearn.utils.extmath.randomized_svd` for more details.
+
+        .. versionadded:: 1.1
+
+    power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
+        Power iteration normalizer for randomized SVD solver.
+        Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
+        for more details.
+
+        .. versionadded:: 1.1
+
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
@@ -214,8 +229,9 @@ class PCA(_BasePCA):
     ----------
     components_ : ndarray of shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
-        maximum variance in the data. The components are sorted by
-        ``explained_variance_``.
+        maximum variance in the data. Equivalently, the right singular
+        vectors of the centered input data, parallel to its eigenvectors.
+        The components are sorted by ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         The amount of variance explained by each of the selected components.
@@ -271,6 +287,12 @@ class PCA(_BasePCA):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -345,6 +367,8 @@ class PCA(_BasePCA):
         svd_solver="auto",
         tol=0.0,
         iterated_power="auto",
+        n_oversamples=10,
+        power_iteration_normalizer="auto",
         random_state=None,
     ):
         self.n_components = n_components
@@ -353,6 +377,8 @@ class PCA(_BasePCA):
         self.svd_solver = svd_solver
         self.tol = tol
         self.iterated_power = iterated_power
+        self.n_oversamples = n_oversamples
+        self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -361,16 +387,24 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
+        check_scalar(
+            self.n_oversamples,
+            "n_oversamples",
+            min_val=1,
+            target_type=numbers.Integral,
+        )
+
         self._fit(X)
         return self
 
@@ -380,10 +414,11 @@ class PCA(_BasePCA):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------
@@ -450,7 +485,7 @@ class PCA(_BasePCA):
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
         else:
             raise ValueError(
-                "Unrecognized svd_solver='{0}'" "".format(self._fit_svd_solver)
+                "Unrecognized svd_solver='{0}'".format(self._fit_svd_solver)
             )
 
     def _fit_full(self, X, n_components):
@@ -460,7 +495,7 @@ class PCA(_BasePCA):
         if n_components == "mle":
             if n_samples < n_features:
                 raise ValueError(
-                    "n_components='mle' is only supported " "if n_samples >= n_features"
+                    "n_components='mle' is only supported if n_samples >= n_features"
                 )
         elif not 0 <= n_components <= min(n_samples, n_features):
             raise ValueError(
@@ -487,7 +522,7 @@ class PCA(_BasePCA):
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / (n_samples - 1)
+        explained_variance_ = (S**2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
@@ -527,8 +562,8 @@ class PCA(_BasePCA):
 
         if isinstance(n_components, str):
             raise ValueError(
-                "n_components=%r cannot be a string "
-                "with svd_solver='%s'" % (n_components, svd_solver)
+                "n_components=%r cannot be a string with svd_solver='%s'"
+                % (n_components, svd_solver)
             )
         elif not 1 <= n_components <= min(n_samples, n_features):
             raise ValueError(
@@ -571,7 +606,9 @@ class PCA(_BasePCA):
             U, S, Vt = randomized_svd(
                 X,
                 n_components=n_components,
+                n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
+                power_iteration_normalizer=self.power_iteration_normalizer,
                 flip_sign=True,
                 random_state=random_state,
             )
@@ -581,7 +618,7 @@ class PCA(_BasePCA):
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S ** 2) / (n_samples - 1)
+        self.explained_variance_ = (S**2) / (n_samples - 1)
         total_var = np.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.
@@ -634,6 +671,7 @@ class PCA(_BasePCA):
             The data.
 
         y : Ignored
+            Ignored.
 
         Returns
         -------

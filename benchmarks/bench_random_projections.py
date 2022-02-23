@@ -38,15 +38,15 @@ def type_auto_or_int(val):
 
 
 def compute_time(t_start, delta):
-    mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
+    mu_second = 0.0 + 10**6  # number of microseconds in a second
 
     return delta.seconds + delta.microseconds / mu_second
 
 
-def bench_scikit_transformer(X, transfomer):
+def bench_scikit_transformer(X, transformer):
     gc.collect()
 
-    clf = clone(transfomer)
+    clf = clone(transformer)
 
     # start time
     t_start = datetime.now()
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     op.add_option(
         "--n-features",
         dest="n_features",
-        default=10 ** 4,
+        default=10**4,
         type=int,
         help="Number of features in the benchmarks",
     )
@@ -118,13 +118,13 @@ if __name__ == "__main__":
         "--n-components",
         dest="n_components",
         default="auto",
-        help="Size of the random subspace." " ('auto' or int > 0)",
+        help="Size of the random subspace. ('auto' or int > 0)",
     )
 
     op.add_option(
         "--ratio-nonzeros",
         dest="ratio_nonzeros",
-        default=10 ** -3,
+        default=10**-3,
         type=float,
         help="Number of features in the benchmarks",
     )
@@ -149,8 +149,9 @@ if __name__ == "__main__":
         "--density",
         dest="density",
         default=1 / 3,
-        help="Density used by the sparse random projection."
-        " ('auto' or float (0.0, 1.0]",
+        help=(
+            "Density used by the sparse random projection. ('auto' or float (0.0, 1.0]"
+        ),
     )
 
     op.add_option(
@@ -166,9 +167,11 @@ if __name__ == "__main__":
         dest="selected_transformers",
         default="GaussianRandomProjection,SparseRandomProjection",
         type=str,
-        help="Comma-separated list of transformer to benchmark. "
-        "Default: %default. Available: "
-        "GaussianRandomProjection,SparseRandomProjection",
+        help=(
+            "Comma-separated list of transformer to benchmark. "
+            "Default: %default. Available: "
+            "GaussianRandomProjection,SparseRandomProjection"
+        ),
     )
 
     op.add_option(
@@ -192,7 +195,7 @@ if __name__ == "__main__":
     ###########################################################################
     n_nonzeros = int(opts.ratio_nonzeros * opts.n_features)
 
-    print("Dataset statics")
+    print("Dataset statistics")
     print("===========================")
     print("n_samples \t= %s" % opts.n_samples)
     print("n_features \t= %s" % opts.n_features)

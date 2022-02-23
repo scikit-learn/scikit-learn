@@ -14,9 +14,10 @@ from functools import partial
 import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
+from scipy.sparse.csgraph import connected_components
 
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.neighbors.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
+from sklearn.metrics.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
 from sklearn.utils._testing import assert_almost_equal, create_memmap_backed_data
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
@@ -30,6 +31,7 @@ from sklearn.cluster._agglomerative import (
     _fix_connectivity,
 )
 from sklearn.feature_extraction.image import grid_to_graph
+from sklearn.metrics import DistanceMetric
 from sklearn.metrics.pairwise import (
     PAIRED_DISTANCES,
     cosine_distances,
@@ -37,7 +39,7 @@ from sklearn.metrics.pairwise import (
     pairwise_distances,
 )
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors import kneighbors_graph, DistanceMetric
+from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster._hierarchical_fast import (
     average_merge,
     max_merge,
@@ -368,7 +370,7 @@ def test_sparse_scikit_vs_scipy():
             assert_array_equal(
                 children,
                 children_,
-                "linkage tree differs" " from scipy impl for" " linkage: " + linkage,
+                "linkage tree differs from scipy impl for linkage: " + linkage,
             )
 
             cut = _hc_cut(k, children, n_leaves)
@@ -400,7 +402,7 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     assert_array_equal(
         children,
         children_scipy,
-        "linkage tree differs" " from scipy impl for" " single linkage.",
+        "linkage tree differs from scipy impl for single linkage.",
     )
 
     cut = _hc_cut(n_clusters, children, n_leaves)
@@ -408,8 +410,10 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     assess_same_labelling(cut, cut_scipy)
 
 
-@pytest.mark.parametrize("metric", METRICS_DEFAULT_PARAMS)
-def test_mst_linkage_core_memory_mapped(metric):
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+@pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
+def test_mst_linkage_core_memory_mapped(metric_param_grid):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
 
     Non-regression test for issue #19875.
@@ -417,9 +421,9 @@ def test_mst_linkage_core_memory_mapped(metric):
     rng = np.random.RandomState(seed=1)
     X = rng.normal(size=(20, 4))
     Xmm = create_memmap_backed_data(X)
-    argdict = METRICS_DEFAULT_PARAMS[metric]
-    keys = argdict.keys()
-    for vals in itertools.product(*argdict.values()):
+    metric, param_grid = metric_param_grid
+    keys = param_grid.keys()
+    for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
         distance_metric = DistanceMetric.get_metric(metric, **kwargs)
         mst = mst_linkage_core(X, distance_metric)
@@ -716,9 +720,8 @@ def test_agg_n_clusters():
     X = rng.rand(20, 10)
     for n_clus in [-1, 0]:
         agc = AgglomerativeClustering(n_clusters=n_clus)
-        msg = (
-            "n_clusters should be an integer greater than 0."
-            " %s was provided." % str(agc.n_clusters)
+        msg = "n_clusters should be an integer greater than 0. %s was provided." % str(
+            agc.n_clusters
         )
         with pytest.raises(ValueError, match=msg):
             agc.fit(X)
@@ -869,5 +872,47 @@ def test_invalid_shape_precomputed_dist_matrix():
     # and a non square matrix is passed (PR #16257).
     rng = np.random.RandomState(0)
     X = rng.rand(5, 3)
-    with pytest.raises(ValueError, match="Distance matrix should be square, "):
+    with pytest.raises(
+        ValueError,
+        match=r"Distance matrix should be square, got matrix of shape \(5, 3\)",
+    ):
         AgglomerativeClustering(affinity="precomputed", linkage="complete").fit(X)
+
+
+def test_precomputed_connectivity_affinity_with_2_connected_components():
+    """Check that connecting components works when connectivity and
+    affinity are both precomputed and the number of connected components is
+    greater than 1. Non-regression test for #16151.
+    """
+
+    connectivity_matrix = np.array(
+        [
+            [0, 1, 1, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0],
+        ]
+    )
+    # ensure that connectivity_matrix has two connected components
+    assert connected_components(connectivity_matrix)[0] == 2
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(5, 10)
+
+    X_dist = pairwise_distances(X)
+    clusterer_precomputed = AgglomerativeClustering(
+        affinity="precomputed", connectivity=connectivity_matrix, linkage="complete"
+    )
+    msg = "Completing it to avoid stopping the tree early"
+    with pytest.warns(UserWarning, match=msg):
+        clusterer_precomputed.fit(X_dist)
+
+    clusterer = AgglomerativeClustering(
+        connectivity=connectivity_matrix, linkage="complete"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        clusterer.fit(X)
+
+    assert_array_equal(clusterer.labels_, clusterer_precomputed.labels_)
+    assert_array_equal(clusterer.children_, clusterer_precomputed.children_)

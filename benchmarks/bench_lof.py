@@ -98,10 +98,8 @@ for dataset_name in datasets:
         fpr,
         tpr,
         lw=1,
-        label=(
-            "ROC for %s (area = %0.3f, train-time: %0.2fs)"
-            % (dataset_name, AUC, fit_time)
-        ),
+        label="ROC for %s (area = %0.3f, train-time: %0.2fs)"
+        % (dataset_name, AUC, fit_time),
     )
 
 plt.xlim([-0.05, 1.05])

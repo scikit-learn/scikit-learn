@@ -1,7 +1,9 @@
+import warnings
+import numbers
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 import scipy.sparse as sp
-import warnings
-from abc import ABCMeta, abstractmethod
 
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
@@ -14,7 +16,7 @@ from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
 from ..utils import column_or_1d
 from ..utils import compute_class_weight
-from ..utils.deprecation import deprecated
+from ..utils.metaestimators import available_if
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
@@ -97,13 +99,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 "impl should be one of %s, %s was given" % (LIBSVM_IMPL, self._impl)
             )
 
-        if gamma == 0:
-            msg = (
-                "The gamma value of 0.0 is invalid. Use 'auto' to set"
-                " gamma to a value of 1 / n_features."
-            )
-            raise ValueError(msg)
-
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
@@ -124,17 +119,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # Used by cross_val_score.
         return {"pairwise": self.kernel == "precomputed"}
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute _pairwise was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # Used by cross_val_score.
-        return self.kernel == "precomputed"
-
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
@@ -142,8 +126,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features) \
                 or (n_samples, n_samples)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
             For kernel="precomputed", the expected shape of X is
             (n_samples, n_samples).
 
@@ -158,6 +142,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
@@ -178,7 +163,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if hasattr(self, "decision_function_shape"):
             if self.decision_function_shape not in ("ovr", "ovo"):
                 raise ValueError(
-                    f"decision_function_shape must be either 'ovr' or 'ovo', "
+                    "decision_function_shape must be either 'ovr' or 'ovo', "
                     f"got {self.decision_function_shape}."
                 )
 
@@ -240,10 +225,23 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             else:
                 raise ValueError(
                     "When 'gamma' is a string, it should be either 'scale' or "
-                    "'auto'. Got '{}' instead.".format(self.gamma)
+                    f"'auto'. Got '{self.gamma!r}' instead."
                 )
-        else:
+        elif isinstance(self.gamma, numbers.Real):
+            if self.gamma <= 0:
+                msg = (
+                    f"gamma value must be > 0; {self.gamma!r} is invalid. Use"
+                    " a positive number or use 'auto' to set gamma to a"
+                    " value of 1 / n_features."
+                )
+                raise ValueError(msg)
             self._gamma = self.gamma
+        else:
+            msg = (
+                "The gamma value should be set to 'scale', 'auto' or a"
+                f" positive float value. {self.gamma!r} is not a valid option"
+            )
+            raise ValueError(msg)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
@@ -264,6 +262,27 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
 
+        dual_coef = self._dual_coef_.data if self._sparse else self._dual_coef_
+        intercept_finiteness = np.isfinite(self._intercept_).all()
+        dual_coef_finiteness = np.isfinite(dual_coef).all()
+        if not (intercept_finiteness and dual_coef_finiteness):
+            raise ValueError(
+                "The dual coefficients or intercepts are not finite. "
+                "The input data may contain large values and need to be"
+                "preprocessed."
+            )
+
+        # Since, in the case of SVC and NuSVC, the number of models optimized by
+        # libSVM could be greater than one (depending on the input), `n_iter_`
+        # stores an ndarray.
+        # For the other sub-classes (SVR, NuSVR, and OneClassSVM), the number of
+        # models optimized by libSVM is always one, so `n_iter_` stores an
+        # integer.
+        if self._impl in ["c_svc", "nu_svc"]:
+            self.n_iter_ = self._num_iter
+        else:
+            self.n_iter_ = self._num_iter.item()
+
         return self
 
     def _validate_targets(self, y):
@@ -282,7 +301,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             warnings.warn(
                 "Solver terminated early (max_iter=%i)."
                 "  Consider pre-processing your data with"
-                " StandardScaler or MinMaxScaler." % self.max_iter,
+                " StandardScaler or MinMaxScaler."
+                % self.max_iter,
                 ConvergenceWarning,
             )
 
@@ -309,6 +329,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
+            self._num_iter,
         ) = libsvm.fit(
             X,
             y,
@@ -349,6 +370,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
+            self._num_iter,
         ) = libsvm_sparse.libsvm_sparse_train(
             X.shape[1],
             X.data,
@@ -406,6 +428,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         y_pred : ndarray of shape (n_samples,)
+            The predicted values.
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
@@ -612,14 +635,25 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                     "the number of samples at training time"
                     % (X.shape[1], self.shape_fit_[0])
                 )
+        # Fixes https://nvd.nist.gov/vuln/detail/CVE-2020-28975
+        # Check that _n_support is consistent with support_vectors
+        sv = self.support_vectors_
+        if not self._sparse and sv.size > 0 and self.n_support_.sum() != sv.shape[0]:
+            raise ValueError(
+                f"The internal representation of {self.__class__.__name__} was altered"
+            )
         return X
 
     @property
     def coef_(self):
+        """Weights assigned to the features when `kernel="linear"`.
+
+        Returns
+        -------
+        ndarray of shape (n_features, n_classes)
+        """
         if self.kernel != "linear":
-            raise AttributeError(
-                "coef_ is only available when using a " "linear kernel"
-            )
+            raise AttributeError("coef_ is only available when using a linear kernel")
 
         coef = self._get_coef()
 
@@ -638,6 +672,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def n_support_(self):
+        """Number of support vectors for each class."""
         try:
             check_is_fitted(self)
         except NotFittedError:
@@ -702,8 +737,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         self.class_weight_ = compute_class_weight(self.class_weight, classes=cls, y=y_)
         if len(cls) < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; got %d"
-                " class" % len(cls)
+                "The number of classes has to be greater than one; got %d class"
+                % len(cls)
             )
 
         self.classes_ = cls
@@ -711,11 +746,12 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         return np.asarray(y, dtype=np.float64, order="C")
 
     def decision_function(self, X):
-        """Evaluates the decision function for the samples in X.
+        """Evaluate the decision function for the samples in X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -761,7 +797,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         check_is_fitted(self)
         if self.break_ties and self.decision_function_shape == "ovo":
             raise ValueError(
-                "break_ties must be False when " "decision_function_shape is 'ovo'"
+                "break_ties must be False when decision_function_shape is 'ovo'"
             )
 
         if (
@@ -781,13 +817,14 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     def _check_proba(self):
         if not self.probability:
             raise AttributeError(
-                "predict_proba is not available when " " probability=False"
+                "predict_proba is not available when  probability=False"
             )
         if self._impl not in ("c_svc", "nu_svc"):
-            raise AttributeError("predict_proba only implemented for SVC" " and NuSVC")
+            raise AttributeError("predict_proba only implemented for SVC and NuSVC")
+        return True
 
-    @property
-    def predict_proba(self):
+    @available_if(_check_proba)
+    def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -813,22 +850,18 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
-        self._check_proba()
-        return self._predict_proba
-
-    def _predict_proba(self, X):
         X = self._validate_for_predict(X)
         if self.probA_.size == 0 or self.probB_.size == 0:
             raise NotFittedError(
-                "predict_proba is not available when fitted " "with probability=False"
+                "predict_proba is not available when fitted with probability=False"
             )
         pred_proba = (
             self._sparse_predict_proba if self._sparse else self._dense_predict_proba
         )
         return pred_proba(X)
 
-    @property
-    def predict_log_proba(self):
+    @available_if(_check_proba)
+    def predict_log_proba(self, X):
         """Compute log probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -855,10 +888,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
-        self._check_proba()
-        return self._predict_log_proba
-
-    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _dense_predict_proba(self, X):
@@ -941,10 +970,22 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
     @property
     def probA_(self):
+        """Parameter learned in Platt scaling when `probability=True`.
+
+        Returns
+        -------
+        ndarray of shape  (n_classes * (n_classes - 1) / 2)
+        """
         return self._probA
 
     @property
     def probB_(self):
+        """Parameter learned in Platt scaling when `probability=True`.
+
+        Returns
+        -------
+        ndarray of shape  (n_classes * (n_classes - 1) / 2)
+        """
         return self._probB
 
 
@@ -977,8 +1018,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         return _solver_type_dict[multi_class]
     elif multi_class != "ovr":
         raise ValueError(
-            "`multi_class` must be one of `ovr`, "
-            "`crammer_singer`, got %r" % multi_class
+            "`multi_class` must be one of `ovr`, `crammer_singer`, got %r" % multi_class
         )
 
     _solver_pen = _solver_type_dict.get(loss, None)
@@ -988,8 +1028,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         _solver_dual = _solver_pen.get(penalty, None)
         if _solver_dual is None:
             error_string = (
-                "The combination of penalty='%s' "
-                "and loss='%s' is not supported" % (penalty, loss)
+                "The combination of penalty='%s' and loss='%s' is not supported"
+                % (penalty, loss)
             )
         else:
             solver_num = _solver_dual.get(dual, None)
@@ -1001,8 +1041,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
             else:
                 return solver_num
     raise ValueError(
-        "Unsupported set of arguments: %s, "
-        "Parameters: penalty=%r, loss=%r, dual=%r" % (error_string, penalty, loss, dual)
+        "Unsupported set of arguments: %s, Parameters: penalty=%r, loss=%r, dual=%r"
+        % (error_string, penalty, loss, dual)
     )
 
 
@@ -1031,8 +1071,8 @@ def _fit_liblinear(
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : array-like of shape (n_samples,)
         Target vector relative to X
@@ -1111,8 +1151,8 @@ def _fit_liblinear(
     intercept_ : float
         The intercept term added to the vector.
 
-    n_iter_ : int
-        Maximum number of iterations run across all classes.
+    n_iter_ : array of int
+        Number of iterations run across for each class.
     """
     if loss not in ["epsilon_insensitive", "squared_epsilon_insensitive"]:
         enc = LabelEncoder()
@@ -1122,7 +1162,8 @@ def _fit_liblinear(
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r" % classes_[0]
+                " class: %r"
+                % classes_[0]
             )
 
         class_weight_ = compute_class_weight(class_weight, classes=classes_, y=y)
@@ -1179,10 +1220,10 @@ def _fit_liblinear(
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports
-    n_iter_ = max(n_iter_)
-    if n_iter_ >= max_iter:
+    n_iter_max = max(n_iter_)
+    if n_iter_max >= max_iter:
         warnings.warn(
-            "Liblinear failed to converge, increase " "the number of iterations.",
+            "Liblinear failed to converge, increase the number of iterations.",
             ConvergenceWarning,
         )
 

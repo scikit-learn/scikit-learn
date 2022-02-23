@@ -42,7 +42,7 @@ class TreePredictor:
         """Return maximum depth among all leaves."""
         return int(self.nodes["depth"].max())
 
-    def predict(self, X, known_cat_bitsets, f_idx_map):
+    def predict(self, X, known_cat_bitsets, f_idx_map, n_threads):
         """Predict raw values for non-binned data.
 
         Parameters
@@ -57,6 +57,9 @@ class TreePredictor:
             Map from original feature index to the corresponding index in the
             known_cat_bitsets array.
 
+        n_threads : int
+            Number of OpenMP threads to use.
+
         Returns
         -------
         y : ndarray, shape (n_samples,)
@@ -64,11 +67,17 @@ class TreePredictor:
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_raw_data(
-            self.nodes, X, self.raw_left_cat_bitsets, known_cat_bitsets, f_idx_map, out
+            self.nodes,
+            X,
+            self.raw_left_cat_bitsets,
+            known_cat_bitsets,
+            f_idx_map,
+            n_threads,
+            out,
         )
         return out
 
-    def predict_binned(self, X, missing_values_bin_idx):
+    def predict_binned(self, X, missing_values_bin_idx, n_threads):
         """Predict raw values for binned data.
 
         Parameters
@@ -79,6 +88,8 @@ class TreePredictor:
             Index of the bin that is used for missing values. This is the
             index of the last bin and is always equal to max_bins (as passed
             to the GBDT classes), or equivalently to n_bins - 1.
+        n_threads : int
+            Number of OpenMP threads to use.
 
         Returns
         -------
@@ -87,7 +98,12 @@ class TreePredictor:
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_binned_data(
-            self.nodes, X, self.binned_left_cat_bitsets, missing_values_bin_idx, out
+            self.nodes,
+            X,
+            self.binned_left_cat_bitsets,
+            missing_values_bin_idx,
+            n_threads,
+            out,
         )
         return out
 

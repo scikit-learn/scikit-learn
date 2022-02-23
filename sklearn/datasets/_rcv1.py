@@ -11,7 +11,7 @@ The dataset page is available at
 import logging
 
 from os import remove, makedirs
-from os.path import dirname, exists, join
+from os.path import exists, join
 from gzip import GzipFile
 
 import numpy as np
@@ -22,6 +22,7 @@ from . import get_data_home
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ._svmlight_format_io import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
@@ -39,37 +40,27 @@ from ..utils import Bunch
 XY_METADATA = (
     RemoteFileMetadata(
         url="https://ndownloader.figshare.com/files/5976069",
-        checksum=(
-            "ed40f7e418d10484091b059703eeb95a" "e3199fe042891dcec4be6696b9968374"
-        ),
+        checksum="ed40f7e418d10484091b059703eeb95ae3199fe042891dcec4be6696b9968374",
         filename="lyrl2004_vectors_test_pt0.dat.gz",
     ),
     RemoteFileMetadata(
         url="https://ndownloader.figshare.com/files/5976066",
-        checksum=(
-            "87700668ae45d45d5ca1ef6ae9bd81ab" "0f5ec88cc95dcef9ae7838f727a13aa6"
-        ),
+        checksum="87700668ae45d45d5ca1ef6ae9bd81ab0f5ec88cc95dcef9ae7838f727a13aa6",
         filename="lyrl2004_vectors_test_pt1.dat.gz",
     ),
     RemoteFileMetadata(
         url="https://ndownloader.figshare.com/files/5976063",
-        checksum=(
-            "48143ac703cbe33299f7ae9f4995db4" "9a258690f60e5debbff8995c34841c7f5"
-        ),
+        checksum="48143ac703cbe33299f7ae9f4995db49a258690f60e5debbff8995c34841c7f5",
         filename="lyrl2004_vectors_test_pt2.dat.gz",
     ),
     RemoteFileMetadata(
         url="https://ndownloader.figshare.com/files/5976060",
-        checksum=(
-            "dfcb0d658311481523c6e6ca0c3f5a3" "e1d3d12cde5d7a8ce629a9006ec7dbb39"
-        ),
+        checksum="dfcb0d658311481523c6e6ca0c3f5a3e1d3d12cde5d7a8ce629a9006ec7dbb39",
         filename="lyrl2004_vectors_test_pt3.dat.gz",
     ),
     RemoteFileMetadata(
         url="https://ndownloader.figshare.com/files/5976057",
-        checksum=(
-            "5468f656d0ba7a83afc7ad44841cf9a5" "3048a5c083eedc005dcdb5cc768924ae"
-        ),
+        checksum="5468f656d0ba7a83afc7ad44841cf9a53048a5c083eedc005dcdb5cc768924ae",
         filename="lyrl2004_vectors_train.dat.gz",
     ),
 )
@@ -78,7 +69,7 @@ XY_METADATA = (
 # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a08-topic-qrels/rcv1-v2.topics.qrels.gz
 TOPICS_METADATA = RemoteFileMetadata(
     url="https://ndownloader.figshare.com/files/5976048",
-    checksum=("2a98e5e5d8b770bded93afc8930d882" "99474317fe14181aee1466cc754d0d1c1"),
+    checksum="2a98e5e5d8b770bded93afc8930d88299474317fe14181aee1466cc754d0d1c1",
     filename="rcv1v2.topics.qrels.gz",
 )
 
@@ -145,21 +136,24 @@ def fetch_rcv1(
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object. Returned only if `return_X_y` is False.
+        `dataset` has the following attributes:
 
-        data : sparse matrix of shape (804414, 47236), dtype=np.float64
+        - data : sparse matrix of shape (804414, 47236), dtype=np.float64
             The array has 0.16% of non zero values. Will be of CSR format.
-        target : sparse matrix of shape (804414, 103), dtype=np.uint8
+        - target : sparse matrix of shape (804414, 103), dtype=np.uint8
             Each sample has a value of 1 in its categories, and 0 in others.
             The array has 3.15% of non zero values. Will be of CSR format.
-        sample_id : ndarray of shape (804414,), dtype=np.uint32,
+        - sample_id : ndarray of shape (804414,), dtype=np.uint32,
             Identification number of each sample, as ordered in dataset.data.
-        target_names : ndarray of shape (103,), dtype=object
+        - target_names : ndarray of shape (103,), dtype=object
             Names of each target (RCV1 topics), as ordered in dataset.target.
-        DESCR : str
+        - DESCR : str
             Description of the RCV1 dataset.
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple
+        A tuple consisting of `dataset.data` and `dataset.target`, as
+        described above. Returned only if `return_X_y` is True.
 
         .. versionadded:: 0.20
     """
@@ -278,9 +272,7 @@ def fetch_rcv1(
     if shuffle:
         X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "rcv1.rst")) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("rcv1.rst")
 
     if return_X_y:
         return X, y

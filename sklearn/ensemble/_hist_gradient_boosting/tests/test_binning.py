@@ -10,6 +10,9 @@ from sklearn.ensemble._hist_gradient_boosting.binning import (
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import ALMOST_INF
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
+n_threads = _openmp_effective_n_threads()
 
 
 DATA = (
@@ -93,7 +96,7 @@ def test_map_to_bins(max_bins):
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, last_bin_idx, binned)
+    _map_to_bins(DATA, bin_thresholds, last_bin_idx, n_threads, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
@@ -421,16 +424,16 @@ def test_make_known_categories_bitsets():
     # first categorical feature: [2, 4, 10, 240]
     f_idx = 1
     mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2 ** 2 + 2 ** 4 + 2 ** 10
+    expected_cat_bitset[mapped_f_idx, 0] = 2**2 + 2**4 + 2**10
     # 240 = 32**7 + 16, therefore the 16th bit of the 7th array is 1.
-    expected_cat_bitset[mapped_f_idx, 7] = 2 ** 16
+    expected_cat_bitset[mapped_f_idx, 7] = 2**16
 
     # second categorical feature [30, 70, 180]
     f_idx = 2
     mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2 ** 30
-    expected_cat_bitset[mapped_f_idx, 2] = 2 ** 6
-    expected_cat_bitset[mapped_f_idx, 5] = 2 ** 20
+    expected_cat_bitset[mapped_f_idx, 0] = 2**30
+    expected_cat_bitset[mapped_f_idx, 2] = 2**6
+    expected_cat_bitset[mapped_f_idx, 5] = 2**20
 
     assert_allclose(expected_cat_bitset, known_cat_bitsets)
 

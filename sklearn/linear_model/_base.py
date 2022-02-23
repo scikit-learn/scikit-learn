@@ -66,7 +66,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
     default : bool,
         default normalize value used by the estimator
 
-    estimator_name : string,
+    estimator_name : str
         name of the linear estimator which calls this function.
         The name will be used for writing the deprecation warnings
 
@@ -92,7 +92,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
 
     if normalize not in [True, False, "deprecated"]:
         raise ValueError(
-            "Leave 'normalize' to its default value or set it " "to True or False"
+            "Leave 'normalize' to its default value or set it to True or False"
         )
 
     if normalize == "deprecated":
@@ -132,13 +132,16 @@ def _deprecate_normalize(normalize, default, estimator_name):
     if default and normalize == "deprecated":
         warnings.warn(
             "The default of 'normalize' will be set to False in version 1.2 "
-            "and deprecated in version 1.4.\n" + pipeline_msg + alpha_msg,
+            "and deprecated in version 1.4.\n"
+            + pipeline_msg
+            + alpha_msg,
             FutureWarning,
         )
     elif normalize != "deprecated" and normalize and not default:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be "
-            "removed in 1.2.\n" + pipeline_msg + alpha_msg,
+            "'normalize' was deprecated in version 1.0 and will be removed in 1.2.\n"
+            + pipeline_msg
+            + alpha_msg,
             FutureWarning,
         )
     elif not normalize and not default:
@@ -389,15 +392,15 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the confidence scores.
 
         Returns
         -------
-        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
-            Confidence scores per (sample, class) combination. In the binary
-            case, confidence score for self.classes_[1] where >0 means this
-            class would be predicted.
+        scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Confidence scores per `(n_samples, n_classes)` combination. In the
+            binary case, confidence score for `self.classes_[1]` where >0 means
+            this class would be predicted.
         """
         check_is_fitted(self)
 
@@ -411,13 +414,13 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the predictions.
 
         Returns
         -------
-        C : array, shape [n_samples]
-            Predicted class label per sample.
+        y_pred : ndarray of shape (n_samples,)
+            Vector containing the class labels for each sample.
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
@@ -533,10 +536,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
-        speedup for n_targets > 1 and sufficient large problems.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        speedup in case of sufficiently large problems, that is if firstly
+        `n_targets > 1` and secondly `X` is sparse or if `positive` is set
+        to `True`. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        processors. See :term:`Glossary <n_jobs>` for more details.
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive. This
@@ -566,6 +570,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -624,20 +634,21 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample
+            Individual weights for each sample.
 
             .. versionadded:: 0.17
                parameter *sample_weight* support to LinearRegression.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Fitted Estimator.
         """
 
         _normalize = _deprecate_normalize(
@@ -653,7 +664,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, only_non_negative=True
+            )
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X,
@@ -671,13 +684,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = optimize.nnls(X, y)
+                self.coef_ = optimize.nnls(X, y)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
                 )
-                self.coef_, self._residues = map(np.vstack, zip(*outs))
+                self.coef_ = np.vstack([out[0] for out in outs])
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
@@ -692,9 +705,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
             if y.ndim < 2:
-                out = sparse_lsqr(X_centered, y)
-                self.coef_ = out[0]
-                self._residues = out[3]
+                self.coef_ = sparse_lsqr(X_centered, y)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
@@ -702,9 +713,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
-                self._residues = np.vstack([out[3] for out in outs])
         else:
-            self.coef_, self._residues, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

@@ -19,8 +19,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
@@ -308,7 +306,7 @@ def test_row_norms(dtype):
         precision = 5
 
     X = X.astype(dtype, copy=False)
-    sq_norm = (X ** 2).sum(axis=1)
+    sq_norm = (X**2).sum(axis=1)
 
     assert_array_almost_equal(sq_norm, row_norms(X, squared=True), precision)
     assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
@@ -492,16 +490,12 @@ def test_randomized_svd_sparse_warnings():
     n_components = 5
     for cls in (sparse.lil_matrix, sparse.dok_matrix):
         X = cls(X)
-        assert_warns_message(
-            sparse.SparseEfficiencyWarning,
+        warn_msg = (
             "Calculating SVD of a {} is expensive. "
-            "csr_matrix is more efficient.".format(cls.__name__),
-            randomized_svd,
-            X,
-            n_components,
-            n_iter=1,
-            power_iteration_normalizer="none",
+            "csr_matrix is more efficient.".format(cls.__name__)
         )
+        with pytest.warns(sparse.SparseEfficiencyWarning, match=warn_msg):
+            randomized_svd(X, n_components, n_iter=1, power_iteration_normalizer="none")
 
 
 def test_svd_flip():
@@ -630,7 +624,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = (
-        np.average(X ** 2, weights=sample_weight, axis=0) - expected_mean ** 2
+        np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
     )
     assert_almost_equal(mean, expected_mean)
     assert_almost_equal(var, expected_var)
@@ -782,7 +776,7 @@ def test_incremental_variance_numerical_stability():
     # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
     def one_pass_var(X):
         n = X.shape[0]
-        exp_x2 = (X ** 2).sum(axis=0) / n
+        exp_x2 = (X**2).sum(axis=0) / n
         expx_2 = (X.sum(axis=0) / n) ** 2
         return exp_x2 - expx_2
 
@@ -898,7 +892,8 @@ def test_softmax():
 def test_stable_cumsum():
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
-    assert_warns(RuntimeWarning, stable_cumsum, r, rtol=0, atol=0)
+    with pytest.warns(RuntimeWarning):
+        stable_cumsum(r, rtol=0, atol=0)
 
     # test axis parameter
     A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))

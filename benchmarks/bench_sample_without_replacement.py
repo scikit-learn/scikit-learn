@@ -16,7 +16,7 @@ from sklearn.utils.random import sample_without_replacement
 
 
 def compute_time(t_start, delta):
-    mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
+    mu_second = 0.0 + 10**6  # number of microseconds in a second
 
     return delta.seconds + delta.microseconds / mu_second
 
@@ -72,8 +72,10 @@ if __name__ == "__main__":
         dest="selected_algorithm",
         default=default_algorithms,
         type=str,
-        help="Comma-separated list of transformer to benchmark. "
-        "Default: %default. \nAvailable: %default",
+        help=(
+            "Comma-separated list of transformer to benchmark. "
+            "Default: %default. \nAvailable: %default"
+        ),
     )
 
     # op.add_option("--random-seed",

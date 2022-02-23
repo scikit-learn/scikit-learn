@@ -47,7 +47,7 @@ def test_estimate_bandwidth_1sample():
 
 
 @pytest.mark.parametrize(
-    "bandwidth, cluster_all, expected, " "first_cluster_label",
+    "bandwidth, cluster_all, expected, first_cluster_label",
     [(1.2, True, 3, 0), (1.2, False, 4, -1)],
 )
 def test_mean_shift(bandwidth, cluster_all, expected, first_cluster_label):

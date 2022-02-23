@@ -108,11 +108,12 @@ def test_iforest_error():
     with pytest.warns(None) as record:
         IsolationForest(max_samples="auto").fit(X)
     user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
-    assert len(user_warnings) == 0
+    assert not user_warnings
+
     with pytest.warns(None) as record:
         IsolationForest(max_samples=np.int64(2)).fit(X)
     user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
-    assert len(user_warnings) == 0
+    assert not user_warnings
 
     with pytest.raises(ValueError):
         IsolationForest(max_samples="foobar").fit(X)
@@ -349,5 +350,5 @@ def test_n_features_deprecation():
     y = np.array([1, 0])
     est = IsolationForest().fit(X, y)
 
-    with pytest.warns(FutureWarning, match="n_features_ was deprecated"):
+    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_

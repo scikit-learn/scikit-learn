@@ -79,7 +79,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         """
         X_meta = []
         for est_idx, preds in enumerate(predictions):
-            # case where the the estimator returned a 1D array
+            # case where the estimator returned a 1D array
             if preds.ndim == 1:
                 X_meta.append(preds.reshape(-1, 1))
             else:
@@ -114,8 +114,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         else:
             if not hasattr(estimator, method):
                 raise ValueError(
-                    "Underlying estimator {} does not implement "
-                    "the method {}.".format(name, method)
+                    "Underlying estimator {} does not implement the method {}.".format(
+                        name, method
+                    )
                 )
             return method
 
@@ -151,55 +152,73 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         stack_method = [self.stack_method] * len(all_estimators)
 
-        # Fit the base estimators on the whole training data. Those
-        # base estimators will be used in transform, predict, and
-        # predict_proba. They are exposed publicly.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
-            for est in all_estimators
-            if est != "drop"
-        )
+        if self.cv == "prefit":
+            self.estimators_ = []
+            for estimator in all_estimators:
+                if estimator != "drop":
+                    check_is_fitted(estimator)
+                    self.estimators_.append(estimator)
+        else:
+            # Fit the base estimators on the whole training data. Those
+            # base estimators will be used in transform, predict, and
+            # predict_proba. They are exposed publicly.
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
+                for est in all_estimators
+                if est != "drop"
+            )
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
         for name_est, org_est in zip(names, all_estimators):
             if org_est != "drop":
-                self.named_estimators_[name_est] = self.estimators_[est_fitted_idx]
+                current_estimator = self.estimators_[est_fitted_idx]
+                self.named_estimators_[name_est] = current_estimator
                 est_fitted_idx += 1
+                if hasattr(current_estimator, "feature_names_in_"):
+                    self.feature_names_in_ = current_estimator.feature_names_in_
             else:
                 self.named_estimators_[name_est] = "drop"
-
-        # To train the meta-classifier using the most data as possible, we use
-        # a cross-validation to obtain the output of the stacked estimators.
-
-        # To ensure that the data provided to each estimator are the same, we
-        # need to set the random state of the cv if there is one and we need to
-        # take a copy.
-        cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
-        if hasattr(cv, "random_state") and cv.random_state is None:
-            cv.random_state = np.random.RandomState()
 
         self.stack_method_ = [
             self._method_name(name, est, meth)
             for name, est, meth in zip(names, all_estimators, stack_method)
         ]
-        fit_params = (
-            {"sample_weight": sample_weight} if sample_weight is not None else None
-        )
-        predictions = Parallel(n_jobs=self.n_jobs)(
-            delayed(cross_val_predict)(
-                clone(est),
-                X,
-                y,
-                cv=deepcopy(cv),
-                method=meth,
-                n_jobs=self.n_jobs,
-                fit_params=fit_params,
-                verbose=self.verbose,
+
+        if self.cv == "prefit":
+            # Generate predictions from prefit models
+            predictions = [
+                getattr(estimator, predict_method)(X)
+                for estimator, predict_method in zip(all_estimators, self.stack_method_)
+                if estimator != "drop"
+            ]
+        else:
+            # To train the meta-classifier using the most data as possible, we use
+            # a cross-validation to obtain the output of the stacked estimators.
+            # To ensure that the data provided to each estimator are the same,
+            # we need to set the random state of the cv if there is one and we
+            # need to take a copy.
+            cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
+            if hasattr(cv, "random_state") and cv.random_state is None:
+                cv.random_state = np.random.RandomState()
+
+            fit_params = (
+                {"sample_weight": sample_weight} if sample_weight is not None else None
             )
-            for est, meth in zip(all_estimators, self.stack_method_)
-            if est != "drop"
-        )
+            predictions = Parallel(n_jobs=self.n_jobs)(
+                delayed(cross_val_predict)(
+                    clone(est),
+                    X,
+                    y,
+                    cv=deepcopy(cv),
+                    method=meth,
+                    n_jobs=self.n_jobs,
+                    fit_params=fit_params,
+                    verbose=self.verbose,
+                )
+                for est, meth in zip(all_estimators, self.stack_method_)
+                if est != "drop"
+            )
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
@@ -223,7 +242,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                f"{self.__class__.__name__} object has no attribute " f"n_features_in_"
+                f"{self.__class__.__name__} object has no attribute n_features_in_"
             ) from nfe
         return self.estimators_[0].n_features_in_
 
@@ -244,8 +263,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
@@ -302,7 +321,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         The default classifier is a
         :class:`~sklearn.linear_model.LogisticRegression`.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable, or "prefit", default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -310,7 +329,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
-        * An iterable yielding train, test splits.
+        * An iterable yielding train, test splits,
+        * `"prefit"` to assume the `estimators` are prefit. In this case, the
+          estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -321,6 +342,15 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        If "prefit" is passed, it is assumed that all `estimators` have
+        been fitted already. The `final_estimator_` is trained on the `estimators`
+        predictions on the full training set and are **not** cross validated
+        predictions. Please note that if the models have been trained on the same
+        data to train the stacking model, there is a very high risk of overfitting.
+
+        .. versionadded:: 1.1
+            The 'prefit' option was added in 1.1
 
         .. note::
            A larger number of split will provide no benefits if the number
@@ -359,9 +389,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Class labels.
 
     estimators_ : list of estimators
-        The elements of the estimators parameter, having been fitted on the
+        The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`.
+        will not appear in `estimators_`. When `cv="prefit"`, `estimators_`
+        is set to `estimators` and is not fitted again.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
@@ -372,11 +403,20 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
+
     final_estimator_ : estimator
         The classifier which predicts given the output of `estimators_`.
 
     stack_method_ : list of str
         The method used by each base estimator.
+
+    See Also
+    --------
+    StackingRegressor : Stack of estimators with a final regressor.
 
     Notes
     -----
@@ -415,7 +455,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0.9...
-
     """
 
     def __init__(
@@ -468,6 +507,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Returns
         -------
         self : object
+            Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
         self._le = LabelEncoder().fit(y)
@@ -481,8 +521,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
@@ -500,14 +540,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     @if_delegate_has_method(delegate="final_estimator_")
     def predict_proba(self, X):
-        """Predict class probabilities for X using
-        `final_estimator_.predict_proba`.
+        """Predict class probabilities for `X` using the final estimator.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -520,14 +559,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     @if_delegate_has_method(delegate="final_estimator_")
     def decision_function(self, X):
-        """Predict decision function for samples in X using
-        `final_estimator_.decision_function`.
+        """Decision function for samples in `X` using the final estimator.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -592,7 +630,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         A regressor which will be used to combine the base estimators.
         The default regressor is a :class:`~sklearn.linear_model.RidgeCV`.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable, or "prefit", default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -601,6 +639,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
+        * "prefit" to assume the `estimators` are prefit, and skip cross validation
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -611,6 +650,15 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        If "prefit" is passed, it is assumed that all `estimators` have
+        been fitted already. The `final_estimator_` is trained on the `estimators`
+        predictions on the full training set and are **not** cross validated
+        predictions. Please note that if the models have been trained on the same
+        data to train the stacking model, there is a very high risk of overfitting.
+
+        .. versionadded:: 1.1
+            The 'prefit' option was added in 1.1
 
         .. note::
            A larger number of split will provide no benefits if the number
@@ -635,9 +683,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     Attributes
     ----------
     estimators_ : list of estimator
-        The elements of the estimators parameter, having been fitted on the
+        The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
-        will not appear in `estimators_`.
+        will not appear in `estimators_`. When `cv="prefit"`, `estimators_`
+        is set to `estimators` and is not fitted again.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
@@ -648,11 +697,20 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+        .. versionadded:: 1.0
+
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
 
     stack_method_ : list of str
         The method used by each base estimator.
+
+    See Also
+    --------
+    StackingClassifier : Stack of estimators with a final classifier.
 
     References
     ----------
@@ -682,7 +740,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     ... )
     >>> reg.fit(X_train, y_train).score(X_test, y_test)
     0.3...
-
     """
 
     def __init__(
@@ -720,8 +777,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target values.
@@ -734,6 +791,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Returns
         -------
         self : object
+            Returns a fitted instance.
         """
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)

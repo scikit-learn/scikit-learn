@@ -42,9 +42,7 @@ class NotFittedError(ValueError, AttributeError):
     """
 
 
-@deprecated(
-    "ChangedBehaviorWarning is deprecated in 0.24 and will be removed " "in 1.1"
-)
+@deprecated("ChangedBehaviorWarning is deprecated in 0.24 and will be removed in 1.1")
 class ChangedBehaviorWarning(UserWarning):
     """Warning class used to notify the user of any change in the behavior.
 
@@ -116,7 +114,7 @@ class FitFailedWarning(RuntimeWarning):
     """
 
 
-@deprecated("NonBLASDotWarning is deprecated in 0.24 and will be removed in " "1.1")
+@deprecated("NonBLASDotWarning is deprecated in 0.24 and will be removed in 1.1")
 class NonBLASDotWarning(EfficiencyWarning):
     """Warning used when the dot operation does not use BLAS.
 

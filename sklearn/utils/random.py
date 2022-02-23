@@ -55,7 +55,7 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
 
         if not np.isclose(np.sum(class_prob_j), 1.0):
             raise ValueError(
-                "Probability array at index {0} does not sum to " "one".format(j)
+                "Probability array at index {0} does not sum to one".format(j)
             )
 
         if class_prob_j.shape[0] != classes[j].shape[0]:
@@ -89,7 +89,7 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
                 class_probability_nz
             )
             classes_ind = np.searchsorted(
-                class_probability_nz_norm.cumsum(), rng.rand(nnz)
+                class_probability_nz_norm.cumsum(), rng.uniform(size=nnz)
             )
             data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))

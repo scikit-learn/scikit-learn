@@ -51,7 +51,7 @@ external to the core library.
   (i.e. rectangular data largely invariant to column and row order;
   predicting targets with simple structure)
 * improve the ease for users to develop and publish external components
-* improve inter-operability with modern data science tools (e.g. Pandas, Dask)
+* improve interoperability with modern data science tools (e.g. Pandas, Dask)
   and infrastructures (e.g. distributed processing)
 
 Many of the more fine-grained goals can be found under the `API tag

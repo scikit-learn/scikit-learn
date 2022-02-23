@@ -5,6 +5,7 @@ import pytest
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
+from numpy.testing import assert_array_equal
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -73,9 +74,11 @@ def test_incremental_pca_sparse(matrix_class):
 
     with pytest.raises(
         TypeError,
-        match="IncrementalPCA.partial_fit does not support "
-        "sparse input. Either convert data to dense "
-        "or use IncrementalPCA.fit to do so in batches.",
+        match=(
+            "IncrementalPCA.partial_fit does not support "
+            "sparse input. Either convert data to dense "
+            "or use IncrementalPCA.fit to do so in batches."
+        ),
     ):
         ipca.partial_fit(X_sparse)
 
@@ -94,7 +97,7 @@ def test_incremental_pca_check_projection():
     Yt = IncrementalPCA(n_components=2).fit(X).transform(Xt)
 
     # Normalize
-    Yt /= np.sqrt((Yt ** 2).sum())
+    Yt /= np.sqrt((Yt**2).sum())
 
     # Make sure that the first element of Yt is ~1, this means
     # the reconstruction worked as expected
@@ -124,10 +127,12 @@ def test_incremental_pca_validation():
     for n_components in [-1, 0, 0.99, 4]:
         with pytest.raises(
             ValueError,
-            match="n_components={} invalid"
-            " for n_features={}, need more rows than"
-            " columns for IncrementalPCA"
-            " processing".format(n_components, n_features),
+            match=(
+                "n_components={} invalid"
+                " for n_features={}, need more rows than"
+                " columns for IncrementalPCA"
+                " processing".format(n_components, n_features)
+            ),
         ):
             IncrementalPCA(n_components, batch_size=10).fit(X)
 
@@ -135,9 +140,11 @@ def test_incremental_pca_validation():
     n_components = 3
     with pytest.raises(
         ValueError,
-        match="n_components={} must be"
-        " less or equal to the batch number of"
-        " samples {}".format(n_components, n_samples),
+        match=(
+            "n_components={} must be"
+            " less or equal to the batch number of"
+            " samples {}".format(n_components, n_samples)
+        ),
     ):
         IncrementalPCA(n_components=n_components).partial_fit(X)
 
@@ -324,18 +331,18 @@ def test_singular_values():
     X_pca = pca.transform(X)
     X_ipca = ipca.transform(X)
     assert_array_almost_equal(
-        np.sum(pca.singular_values_ ** 2.0), np.linalg.norm(X_pca, "fro") ** 2.0, 12
+        np.sum(pca.singular_values_**2.0), np.linalg.norm(X_pca, "fro") ** 2.0, 12
     )
     assert_array_almost_equal(
-        np.sum(ipca.singular_values_ ** 2.0), np.linalg.norm(X_ipca, "fro") ** 2.0, 2
+        np.sum(ipca.singular_values_**2.0), np.linalg.norm(X_ipca, "fro") ** 2.0, 2
     )
 
     # Compare to the 2-norms of the score vectors
     assert_array_almost_equal(
-        pca.singular_values_, np.sqrt(np.sum(X_pca ** 2.0, axis=0)), 12
+        pca.singular_values_, np.sqrt(np.sum(X_pca**2.0, axis=0)), 12
     )
     assert_array_almost_equal(
-        ipca.singular_values_, np.sqrt(np.sum(X_ipca ** 2.0, axis=0)), 2
+        ipca.singular_values_, np.sqrt(np.sum(X_ipca**2.0, axis=0)), 2
     )
 
     # Set the singular values and see what we get back
@@ -351,7 +358,7 @@ def test_singular_values():
     ipca = IncrementalPCA(n_components=3, batch_size=100)
 
     X_pca = pca.fit_transform(X)
-    X_pca /= np.sqrt(np.sum(X_pca ** 2.0, axis=0))
+    X_pca /= np.sqrt(np.sum(X_pca**2.0, axis=0))
     X_pca[:, 0] *= 3.142
     X_pca[:, 1] *= 2.718
 
@@ -421,3 +428,11 @@ def test_incremental_pca_fit_overflow_error():
     pca.fit(A)
 
     np.testing.assert_allclose(ipca.singular_values_, pca.singular_values_)
+
+
+def test_incremental_pca_feature_names_out():
+    """Check feature names out for IncrementalPCA."""
+    ipca = IncrementalPCA(n_components=2).fit(iris.data)
+
+    names = ipca.get_feature_names_out()
+    assert_array_equal([f"incrementalpca{i}" for i in range(2)], names)

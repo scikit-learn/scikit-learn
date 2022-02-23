@@ -46,6 +46,7 @@ from . import (
     brier_score_loss,
     jaccard_score,
     mean_absolute_percentage_error,
+    matthews_corrcoef,
 )
 
 from .cluster import adjusted_rand_score
@@ -175,7 +176,7 @@ class _BaseScorer:
         err_msg = (
             f"Got predict_proba of shape {y_pred.shape}, but need "
             f"classifier with two classes for {self._score_func.__name__} "
-            f"scoring"
+            "scoring"
         )
         raise ValueError(err_msg)
 
@@ -432,6 +433,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
         If no scoring is specified and the estimator has no score function, we
@@ -445,8 +447,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     """
     if not hasattr(estimator, "fit"):
         raise TypeError(
-            "estimator should be an estimator implementing "
-            "'fit' method, %r was passed" % estimator
+            "estimator should be an estimator implementing 'fit' method, %r was passed"
+            % estimator
         )
     if isinstance(scoring, str):
         return get_scorer(scoring)
@@ -485,8 +487,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         )
     else:
         raise ValueError(
-            "scoring value should either be a callable, string or"
-            " None. %r was passed" % scoring
+            "scoring value should either be a callable, string or None. %r was passed"
+            % scoring
         )
 
 
@@ -524,15 +526,12 @@ def _check_multimetric_scoring(estimator, scoring):
 
     if isinstance(scoring, (list, tuple, set)):
         err_msg = (
-            "The list/tuple elements must be unique " "strings of predefined scorers. "
+            "The list/tuple elements must be unique strings of predefined scorers. "
         )
-        invalid = False
         try:
             keys = set(scoring)
-        except TypeError:
-            invalid = True
-        if invalid:
-            raise ValueError(err_msg)
+        except TypeError as e:
+            raise ValueError(err_msg) from e
 
         if len(keys) != len(scoring):
             raise ValueError(
@@ -592,8 +591,8 @@ def make_scorer(
     :func:`~sklearn.model_selection.cross_val_score`.
     It takes a score function, such as :func:`~sklearn.metrics.accuracy_score`,
     :func:`~sklearn.metrics.mean_squared_error`,
-    :func:`~sklearn.metrics.adjusted_rand_index` or
-    :func:`~sklearn.metrics.average_precision`
+    :func:`~sklearn.metrics.adjusted_rand_score` or
+    :func:`~sklearn.metrics.average_precision_score`
     and returns a callable that scores an estimator's output.
     The signature of the call is `(estimator, X, y)` where `estimator`
     is the model to be evaluated, `X` is the data and `y` is the
@@ -605,51 +604,40 @@ def make_scorer(
     ----------
     score_func : callable
         Score function (or loss function) with signature
-        ``score_func(y, y_pred, **kwargs)``.
+        `score_func(y, y_pred, **kwargs)`.
 
     greater_is_better : bool, default=True
-        Whether score_func is a score function (default), meaning high is good,
-        or a loss function, meaning low is good. In the latter case, the
-        scorer object will sign-flip the outcome of the score_func.
+        Whether `score_func` is a score function (default), meaning high is
+        good, or a loss function, meaning low is good. In the latter case, the
+        scorer object will sign-flip the outcome of the `score_func`.
 
     needs_proba : bool, default=False
-        Whether score_func requires predict_proba to get probability estimates
-        out of a classifier.
+        Whether `score_func` requires `predict_proba` to get probability
+        estimates out of a classifier.
 
         If True, for binary `y_true`, the score function is supposed to accept
         a 1D `y_pred` (i.e., probability of the positive class, shape
         `(n_samples,)`).
 
     needs_threshold : bool, default=False
-        Whether score_func takes a continuous decision certainty.
+        Whether `score_func` takes a continuous decision certainty.
         This only works for binary classification using estimators that
-        have either a decision_function or predict_proba method.
+        have either a `decision_function` or `predict_proba` method.
 
         If True, for binary `y_true`, the score function is supposed to accept
         a 1D `y_pred` (i.e., probability of the positive class or the decision
         function, shape `(n_samples,)`).
 
-        For example ``average_precision`` or the area under the roc curve
+        For example `average_precision` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
     **kwargs : additional arguments
-        Additional parameters to be passed to score_func.
+        Additional parameters to be passed to `score_func`.
 
     Returns
     -------
     scorer : callable
         Callable object that returns a scalar score; greater is better.
-
-    Examples
-    --------
-    >>> from sklearn.metrics import fbeta_score, make_scorer
-    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
-    >>> ftwo_scorer
-    make_scorer(fbeta_score, beta=2)
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
-    ...                     scoring=ftwo_scorer)
 
     Notes
     -----
@@ -661,11 +649,22 @@ def make_scorer(
     `needs_threshold=True`, the score function is supposed to accept the
     output of :term:`decision_function` or :term:`predict_proba` when
     :term:`decision_function` is not present.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
+    >>> ftwo_scorer
+    make_scorer(fbeta_score, beta=2)
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
+    ...                     scoring=ftwo_scorer)
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
         raise ValueError(
-            "Set either needs_proba or needs_threshold to True," " but not both."
+            "Set either needs_proba or needs_threshold to True, but not both."
         )
     if needs_proba:
         cls = _ProbaScorer
@@ -707,6 +706,7 @@ neg_mean_gamma_deviance_scorer = make_scorer(
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
+matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
 
 # Score functions that need decision values
 top_k_accuracy_scorer = make_scorer(
@@ -751,6 +751,7 @@ SCORERS = dict(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,
     max_error=max_error_scorer,
+    matthews_corrcoef=matthews_corrcoef_scorer,
     neg_median_absolute_error=neg_median_absolute_error_scorer,
     neg_mean_absolute_error=neg_mean_absolute_error_scorer,
     neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa

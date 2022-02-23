@@ -1,14 +1,9 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
-
 """This module contains routines and data structures to:
 
 - Find the best possible split of a node. For a given node, a split is
   characterized by a feature and a bin.
 - Apply a split to a node, i.e. split the indices of the samples at the node
-  into the newly created left and right childs.
+  into the newly created left and right children.
 """
 # Author: Nicolas Hug
 
@@ -16,8 +11,6 @@ cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
-IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-    from openmp cimport omp_get_max_threads
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 from numpy.math cimport INFINITY
@@ -177,6 +170,7 @@ cdef class Splitter:
         unsigned int [::1] partition
         unsigned int [::1] left_indices_buffer
         unsigned int [::1] right_indices_buffer
+        int n_threads
 
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
@@ -189,7 +183,8 @@ cdef class Splitter:
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
                  Y_DTYPE_C min_gain_to_split=0.,
-                 unsigned char hessians_are_constant=False):
+                 unsigned char hessians_are_constant=False,
+                 unsigned int n_threads=1):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -203,9 +198,10 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
         self.hessians_are_constant = hessians_are_constant
+        self.n_threads = n_threads
 
         # The partition array maps each sample index into the leaves of the
-        # tree (a leaf in this context is a node that isn't splitted yet, not
+        # tree (a leaf in this context is a node that isn't split yet, not
         # necessarily a 'finalized' leaf). Initially, the root contains all
         # the indices, e.g.:
         # partition = [abcdefghijkl]
@@ -306,10 +302,7 @@ cdef class Splitter:
             # split_info.left_cat_bitset directly, so we need a tmp var
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
             BITSET_DTYPE_C left_cat_bitset
-            IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-                int n_threads = omp_get_max_threads()
-            ELSE:
-                int n_threads = 1
+            int n_threads = self.n_threads
 
             int [:] sizes = np.full(n_threads, n_samples // n_threads,
                                     dtype=np.int32)
@@ -342,7 +335,7 @@ cdef class Splitter:
 
             # map indices from sample_indices to left/right_indices_buffer
             for thread_idx in prange(n_threads, schedule='static',
-                                     chunksize=1):
+                                     chunksize=1, num_threads=n_threads):
                 left_count = 0
                 right_count = 0
 
@@ -384,17 +377,31 @@ cdef class Splitter:
             # sample_indices. This also updates self.partition since
             # sample_indices is a view.
             for thread_idx in prange(n_threads, schedule='static',
-                                     chunksize=1):
+                                     chunksize=1, num_threads=n_threads):
                 memcpy(
                     &sample_indices[left_offset[thread_idx]],
                     &left_indices_buffer[offset_in_buffers[thread_idx]],
                     sizeof(unsigned int) * left_counts[thread_idx]
                 )
-                memcpy(
-                    &sample_indices[right_offset[thread_idx]],
-                    &right_indices_buffer[offset_in_buffers[thread_idx]],
-                    sizeof(unsigned int) * right_counts[thread_idx]
-                )
+                if right_counts[thread_idx] > 0:
+                    # If we're splitting the rightmost node of the tree, i.e. the
+                    # rightmost node in the partition array, and if n_threads >= 2, one
+                    # might have right_counts[-1] = 0 and right_offset[-1] = len(sample_indices)
+                    # leading to evaluating
+                    #
+                    #    &sample_indices[right_offset[-1]] = &samples_indices[n_samples_at_node]
+                    #                                      = &partition[n_samples_in_tree]
+                    #
+                    # which is an out-of-bounds read access that can cause a segmentation fault.
+                    # When boundscheck=True, removing this check produces this exception:
+                    #
+                    #    IndexError: Out of bounds on buffer access
+                    #
+                    memcpy(
+                        &sample_indices[right_offset[thread_idx]],
+                        &right_indices_buffer[offset_in_buffers[thread_idx]],
+                        sizeof(unsigned int) * right_counts[thread_idx]
+                    )
 
         return (sample_indices[:right_child_position],
                 sample_indices[right_child_position:],
@@ -456,13 +463,15 @@ cdef class Splitter:
             const unsigned char [::1] has_missing_values = self.has_missing_values
             const unsigned char [::1] is_categorical = self.is_categorical
             const signed char [::1] monotonic_cst = self.monotonic_cst
+            int n_threads = self.n_threads
 
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
 
-            for feature_idx in prange(n_features, schedule='static'):
+            for feature_idx in prange(n_features, schedule='static',
+                                      num_threads=n_threads):
                 split_infos[feature_idx].feature_idx = feature_idx
 
                 # For each feature, find best bin to split on
@@ -777,7 +786,6 @@ cdef class Splitter:
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
-    @cython.initializedcheck(False)
     cdef void _find_best_bin_to_split_category(
             self,
             unsigned int feature_idx,
@@ -839,7 +847,7 @@ cdef class Splitter:
         # other category. The low-support categories will always be mapped to
         # the right child. We scan the sorted categories array from left to
         # right and from right to left, and we stop at the middle.
-        
+
         # Considering ordered categories A B C D, with E being a low-support
         # category: A B C D
         #              ^
@@ -1022,8 +1030,8 @@ cdef inline Y_DTYPE_C _split_gain(
     the node a leaf of the tree.
 
     See Equation 7 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv:`T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System,
+    <1603.02754>.`
     """
     cdef:
         Y_DTYPE_C gain
@@ -1061,8 +1069,8 @@ cdef inline Y_DTYPE_C _loss_from_value(
     """Return loss of a node from its (bounded) value
 
     See Equation 6 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv:`T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System,
+    <1603.02754>.`
     """
     return sum_gradient * value
 
@@ -1101,8 +1109,8 @@ cpdef inline Y_DTYPE_C compute_node_value(
     monotonic constraints. Shrinkage is ignored.
 
     See Equation 5 of:
-    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-    https://arxiv.org/abs/1603.02754
+    :arxiv:`T. Chen, C. Guestrin, (2016) XGBoost: A Scalable Tree Boosting System,
+    <1603.02754>.`
     """
 
     cdef:
