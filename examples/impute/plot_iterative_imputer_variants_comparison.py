@@ -102,8 +102,8 @@ for strategy in ("mean", "median"):
 estimators = [
     BayesianRidge(),
     RandomForestRegressor(
-        # We tuned the hyperparameters of the RandomForestRegressor to minimize
-        # the execution time
+        # We tuned the hyperparameters of the RandomForestRegressor to get a good
+        # enough predictive performance for a restricted execution time.
         n_estimators=4,
         max_depth=10,
         bootstrap=True,
