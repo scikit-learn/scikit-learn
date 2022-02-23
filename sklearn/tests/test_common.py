@@ -419,6 +419,7 @@ VALIDATE_ESTIMATOR_INIT = [
     "SGDOneClassSVM",
     "TheilSenRegressor",
     "TweedieRegressor",
+    "ColumnwiseNB",
 ]
 VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
 
