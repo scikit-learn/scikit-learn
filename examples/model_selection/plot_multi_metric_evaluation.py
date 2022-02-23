@@ -33,7 +33,7 @@ from sklearn.tree import DecisionTreeClassifier
 # ----------------------------------------------------------
 #
 
-X, y = make_hastie_10_2(n_samples=6000, random_state=42)
+X, y = make_hastie_10_2(n_samples=8000, random_state=42)
 
 # The scorers can be either one of the predefined metric strings or a scorer
 # callable, like the one returned by make_scorer
