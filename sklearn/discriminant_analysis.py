@@ -970,7 +970,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples,)
             Estimated probabilities.
         """
-        assert False
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
         return y_pred
