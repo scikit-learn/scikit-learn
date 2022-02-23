@@ -1806,7 +1806,9 @@ def test_ridge_sample_weight_invariance(normalize, solver):
     assert_allclose(ridge_2sw.intercept_, ridge_dup.intercept_)
 
 
-@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV], ids=["RidgeCV", "RidgeClassifierCV"])
+@pytest.mark.parametrize(
+    "Estimator", [RidgeCV, RidgeClassifierCV], ids=["RidgeCV", "RidgeClassifierCV"]
+)
 def test_ridgecv_normalize_deprecated(Estimator):
     """Check that the normalize deprecation warning mentions the rescaling of alphas
 
@@ -1817,5 +1819,7 @@ def test_ridgecv_normalize_deprecated(Estimator):
 
     estimator = Estimator(normalize=True)
 
-    with pytest.warns(FutureWarning, match=r"Set parameter alphas to: original_alphas \* n_samples"):
+    with pytest.warns(
+        FutureWarning, match=r"Set parameter alphas to: original_alphas \* n_samples"
+    ):
         estimator.fit(X, y)
