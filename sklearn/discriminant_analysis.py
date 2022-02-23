@@ -13,7 +13,6 @@ import warnings
 import numpy as np
 import scipy.linalg
 from scipy import linalg
-from scipy.special import expit
 import math
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
@@ -22,7 +21,7 @@ from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils.validation import check_is_fitted
-from .utils._array_api import get_namespace
+from .utils._array_api import get_namespace, expit
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .preprocessing import StandardScaler
@@ -655,12 +654,13 @@ class LinearDiscriminantAnalysis(
                 "transform not implemented for 'lsqr' solver (use 'svd' or 'eigen')."
             )
         check_is_fitted(self)
-
+        xp, _ = get_namespace(X)
         X = self._validate_data(X, reset=False)
+
         if self.solver == "svd":
-            X_new = np.dot(X - self.xbar_, self.scalings_)
+            X_new = (X - self.xbar_) @ self.scalings_
         elif self.solver == "eigen":
-            X_new = np.dot(X, self.scalings_)
+            X_new = X @ self.scalings_
 
         return X_new[:, : self._max_components]
 
@@ -678,11 +678,11 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
-
+        xp, is_array_api = get_namespace(X)
         decision = self.decision_function(X)
         if self.classes_.size == 2:
             proba = expit(decision)
-            return np.vstack([1 - proba, proba]).T
+            return xp.stack([1 - proba, proba], axis=1)
         else:
             return softmax(decision)
 
@@ -699,9 +699,10 @@ class LinearDiscriminantAnalysis(
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
+        xp, _ = get_namespace(X)
         prediction = self.predict_proba(X)
-        prediction[prediction == 0.0] += np.finfo(prediction.dtype).tiny
-        return np.log(prediction)
+        prediction[prediction == 0.0] += xp.finfo(prediction.dtype).smallest_normal
+        return xp.log(prediction)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
@@ -969,6 +970,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples,)
             Estimated probabilities.
         """
+        assert False
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
         return y_pred

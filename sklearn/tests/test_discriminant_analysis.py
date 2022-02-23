@@ -671,7 +671,8 @@ def test_get_feature_names_out():
     assert_array_equal(names_out, expected_names_out)
 
 
-def test_lda_array_api():
+@pytest.mark.parametrize("X, y", [(X, y), (X, y3)])
+def test_lda_array_api(X, y):
     """Check that the array_api Array gives the same results as ndarrays."""
     pytest.importorskip("numpy", minversion="1.22", reason="Requires Array API")
     xp = pytest.importorskip("numpy.array_api")
@@ -695,4 +696,25 @@ def test_lda_array_api():
 
         assert_allclose(
             gm_attributes_array[key], gm_xp_param, err_msg=f"{key} not the same"
+        )
+
+    # Check predictions are the same
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+    )
+
+    for method in methods:
+        result = getattr(lda, method)(X)
+        with config_context(array_api_dispatch=True):
+            result_xp = getattr(lda_xp, method)(X_xp)
+        assert hasattr(
+            result_xp, "__array_namespace__"
+        ), f"{method} did not output an array_namespace"
+
+        assert_allclose(
+            result, result_xp, err_msg=f"{method} did not the return the same result"
         )

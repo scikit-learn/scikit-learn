@@ -404,9 +404,9 @@ class LinearClassifierMixin(ClassifierMixin):
             this class would be predicted.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(X)
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
-        xp, _ = get_namespace(X)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
         return xp.reshape(scores, -1) if scores.shape[1] == 1 else scores
 
@@ -424,18 +424,13 @@ class LinearClassifierMixin(ClassifierMixin):
         y_pred : ndarray of shape (n_samples,)
             Vector containing the class labels for each sample.
         """
-        xp, is_array_api = get_namespace(X)
+        xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, int)
         else:
             indices = xp.argmax(scores, axis=1)
 
-        if is_array_api:
-            return indices
-
-        # When array_api supports `take` we can use this directly
-        # https://github.com/data-apis/array-api/issues/177
         return xp.take(self.classes_, indices, axis=0)
 
     def _predict_proba_lr(self, X):

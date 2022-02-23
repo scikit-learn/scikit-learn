@@ -1,6 +1,7 @@
 """Tools to support array_api."""
 import numpy
 from .._config import get_config
+import scipy.special as special
 
 
 class _ArrayAPIWrapper:
@@ -38,6 +39,15 @@ class _ArrayAPIWrapper:
 
         # The safe choice is to return True for all other array_api Arrays
         return True
+
+    def take(self, X, indices, *, axis):
+        # When array_api supports `take` we can use this directly
+        # https://github.com/data-apis/array-api/issues/177
+        if axis == 0:
+            selected = [X[i] for i in indices]
+        else:  # axis == 1
+            selected = [X[:, i] for i in indices]
+        return self._namespace.stack(selected, axis=axis)
 
 
 class _NumPyApiWrapper:
@@ -108,3 +118,11 @@ def get_namespace(*arrays):
         return _NumPyApiWrapper(), False
 
     return _ArrayAPIWrapper(xp), True
+
+
+def expit(X):
+    xp, is_array_api = get_namespace(X)
+    if not is_array_api:
+        return special.expit(X)
+
+    return 1.0 / (1.0 + xp.exp(-X))
