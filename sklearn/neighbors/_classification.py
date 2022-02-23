@@ -84,6 +84,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
         Doesn't affect :meth:`fit` method.
+        Note that even if n_jobs=1, low-level parallelism (via Numpy and OpenMP)
+        might be used in some configuration. See :ref:`User Guide <computing>`.
 
     Attributes
     ----------
@@ -381,6 +383,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+        Note that even if n_jobs=1, low-level parallelism (via Numpy and OpenMP)
+        might be used in some configuration. See :ref:`User Guide <computing>`.
 
     **kwargs : dict
         Additional keyword arguments passed to the constructor.
