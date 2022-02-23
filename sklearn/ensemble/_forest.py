@@ -168,11 +168,15 @@ def _parallel_build_trees(
         else:
             curr_sample_weight = sample_weight.copy()
 
-        indices = _generate_sample_indices(
-            tree.random_state, n_samples, n_samples_bootstrap
-        )
-        sample_counts = np.bincount(indices, minlength=n_samples)
-        curr_sample_weight *= sample_counts
+        while True:
+            indices = _generate_sample_indices(
+                tree.random_state, n_samples, n_samples_bootstrap
+            )
+            sample_counts = np.bincount(indices, minlength=n_samples)
+            curr_sample_weight *= sample_counts
+
+            if np.any(curr_sample_weight != 0):
+                break
 
         if class_weight == "subsample":
             with catch_warnings():
