@@ -1464,7 +1464,12 @@ def _jll_one(estimator, X):
 
 class ColumnwiseNB(_BaseNB, _BaseComposition):
     """
-    Column-wise Naive Bayes estimator.
+    Column-wise Naive Bayes meta-estimator.
+
+    This estimator combines various naive Bayes estimators by applying them
+    to different column subsets of the input and joining their predictions
+    according to the naive Bayes assumption. This is useful when features are
+    heterogeneous and follow different kinds of distributions.
 
     Parameters
     ----------
