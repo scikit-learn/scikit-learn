@@ -723,7 +723,6 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-        feature_names = self._check_feature_names_uniqueness(feature_names)
         return np.asarray(feature_names, dtype=object)
 
     def get_feature_names_out(self, input_features=None):
@@ -756,7 +755,6 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
-        feature_names = self._check_feature_names_uniqueness(feature_names)
         return np.asarray(feature_names, dtype=object)
 
     def _get_feature_name_combiner(self):
@@ -769,18 +767,6 @@ class OneHotEncoder(_BaseEncoder):
                 "feature_name_combiner has to be either 'concat_string' or callable,"
                 " got {0}".format(self.feature_name_combiner)
             )
-
-    def _check_feature_names_uniqueness(self, feature_names):
-        name_counts = Counter(feature_names)
-        duplicates = [name for name, count in name_counts.items() if count > 1]
-        if duplicates:
-            elipsis = "..." if len(duplicates) > 5 else ""
-            raise ValueError(
-                "All feature names must be unique. Feature names {0}{1} appear more"
-                " than once. Use different `feature_name_combiner` to produce unique"
-                " feature names".format(duplicates[:5], elipsis)
-            )
-        return feature_names
 
 
 class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):

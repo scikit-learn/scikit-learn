@@ -211,17 +211,6 @@ def test_one_hot_encoder_feature_names_unicode(get_names):
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_one_hot_encoder_feature_names_uniqueness_checked(get_names):
-    enc = OneHotEncoder()
-    X = np.array([["None", None]], dtype=object).T
-    enc.fit(X)
-    with pytest.raises(ValueError, match="All feature names must be unique"):
-        getattr(enc, get_names)()
-
-
-# TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 def test_one_hot_encoder_custom_feature_name_combiner(get_names):
     name_combiner = lambda feature, category: feature + "_" + repr(category)
     enc = OneHotEncoder(feature_name_combiner=name_combiner)

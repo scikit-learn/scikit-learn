@@ -598,11 +598,6 @@ Changelog
   tuple.
   :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
 
-- |Enhancement| Makes :class:`preprocessing.OneHotEncoder` raise if get_feature_names_out's features are not unique.
-  This reduces the confusion in cases where different categories for the same feature have the same string representation,
-  and result in duplicated feature names.
-  :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
-
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
   This allows specifying a maximum number of samples to be used while fitting
   the model. The option is only available when `strategy` is set to `quantile`.
