@@ -1581,11 +1581,11 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([0, 0, 1, 1, 2, 2])
     >>> from sklearn.naive_bayes import MultinomialNB, GaussianNB, ColumnwiseNB
-    >>> clf = ColumnwiseNB(estimators=[('mnb1', MultinomialNB(), [0, 1]),
+    >>> clf = ColumnwiseNB(estimatorNBs=[('mnb1', MultinomialNB(), [0, 1]),
     ...                                ('mnb2', MultinomialNB(), [3, 4]),
     ...                                ('gnb1', GaussianNB(), [5])])
     >>> clf.fit(X, y)
-    ColumnwiseNB(estimators=[('mnb1', MultinomialNB(), [0, 1]),
+    ColumnwiseNB(estimatorNBs=[('mnb1', MultinomialNB(), [0, 1]),
                             ('mnb2', MultinomialNB(), [3, 4]),
                             ('gnb1', GaussianNB(), [5])])
     >>> print(clf.predict(X))
