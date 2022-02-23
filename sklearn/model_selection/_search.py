@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
+from itertools import cycle
 import numbers
 import operator
 import time
@@ -23,6 +24,7 @@ import warnings
 import numpy as np
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
+from joblib import Parallel
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
@@ -33,7 +35,6 @@ from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
 from ._validation import _warn_or_raise_about_fit_failures
 from ..exceptions import NotFittedError
-from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
@@ -783,7 +784,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
 
-        cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
+        cv_orig = self._checked_cv_orig
         n_splits = cv_orig.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
@@ -806,7 +807,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, cv=None, more_results=None):
+            def evaluate_candidates(candidate_params, cv=None, more_results=None, parent_node=None):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
@@ -819,6 +820,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         )
                     )
 
+                if parent_node is not None:
+                    nodes = parent_node.children
+                else:
+                    nodes = cycle([None])
+
                 out = parallel(
                     delayed(_fit_and_score)(
                         clone(base_estimator),
@@ -830,10 +836,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         split_progress=(split_idx, n_splits),
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
+                        caller=self,
+                        node=node,
                     )
-                    for (cand_idx, parameters), (split_idx, (train, test)) in product(
-                        enumerate(candidate_params), enumerate(cv.split(X, y, groups))
-                    )
+                    for ((cand_idx, parameters), (split_idx, (train, test))), node in zip(product(
+                        enumerate(candidate_params), enumerate(cv.split(X, y, groups))), nodes)
                 )
 
                 if len(out) < 1:
@@ -1370,10 +1377,60 @@ class GridSearchCV(BaseSearchCV):
         )
         self.param_grid = param_grid
 
+    def fit(self, X, y=None, *, groups=None, **fit_params):
+        """Run fit with all sets of parameters.
+
+        Parameters
+        ----------
+
+        X : array-like of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples used while splitting the dataset into
+            train/test set. Only used in conjunction with a "Group" :term:`cv`
+            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+
+        **fit_params : dict of str -> object
+            Parameters passed to the `fit` method of the estimator.
+
+            If a fit parameter is an array-like whose length is equal to
+            `num_samples` then it will be split across CV groups along with `X`
+            and `y`. For example, the :term:`sample_weight` parameter is split
+            because `len(sample_weights) = len(X)`.
+
+        Returns
+        -------
+        self : object
+            Instance of fitted estimator.
+        """
+        self._param_grid = ParameterGrid(self.param_grid)
+
+        self._checked_cv_orig = check_cv(
+            self.cv, y, classifier=is_classifier(self.estimator)
+        )
+        n_splits = self._checked_cv_orig.get_n_splits(X, y, groups)
+
+        self._eval_callbacks_on_fit_begin(
+            levels=[
+                {"descr": "fit", "max_iter": len(self._param_grid) * n_splits},
+                {"descr": "param - fold", "max_iter": None},
+            ],
+            X=X,
+            y=y,
+        )
+        super().fit(X, y=y, groups=groups, **fit_params)
+
+        self._eval_callbacks_on_fit_end()
+
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid))
-
+        evaluate_candidates(self._param_grid, parent_node=self._computation_tree.root)
 
 class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.

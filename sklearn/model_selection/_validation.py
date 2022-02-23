@@ -33,6 +33,7 @@ from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
+from ..callback._base import _eval_callbacks_on_fit_iter_end
 
 
 __all__ = [
@@ -547,6 +548,8 @@ def _fit_and_score(
     split_progress=None,
     candidate_progress=None,
     error_score=np.nan,
+    caller=None,
+    node=None,
 ):
 
     """Fit estimator and compute scores for a given dataset split.
@@ -673,6 +676,9 @@ def _fit_and_score(
             cloned_parameters[k] = clone(v, safe=False)
 
         estimator = estimator.set_params(**cloned_parameters)
+   
+    if caller is not None:
+        caller._propagate_callbacks(estimator, parent_node=node)
 
     start_time = time.time()
 
@@ -735,6 +741,8 @@ def _fit_and_score(
         end_msg += "." * (80 - len(end_msg) - len(result_msg))
         end_msg += result_msg
         print(end_msg)
+
+    _eval_callbacks_on_fit_iter_end(estimator=caller, node=node)
 
     result["test_scores"] = test_scores
     if return_train_score:
