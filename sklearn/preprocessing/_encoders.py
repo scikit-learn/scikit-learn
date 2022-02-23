@@ -2,7 +2,6 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-from collections import Counter
 import warnings
 import numpy as np
 from scipy import sparse
