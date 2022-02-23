@@ -1842,7 +1842,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 counts[i] = (weights * (column_or_1d(y) == c)).sum()
             self.class_count_ = counts
         self.n_classes_ = len(self.classes_)
-        self._update_class_prior()
 
         estimators = list(self._iter(fitted=False, replace_strings=True))
         fitted_estimators = Parallel(n_jobs=self.n_jobs)(
@@ -1857,6 +1856,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
         )
         self._update_fitted_estimators(fitted_estimators)
+        self._update_class_prior()
         return self
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -1922,7 +1922,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             self.class_count_ = counts
         else:
             self.class_count_ += counts
-        self._update_class_prior()
 
         estimators = list(self._iter(fitted=not first_call, replace_strings=True))
         fitted_estimators = Parallel(n_jobs=self.n_jobs)(
@@ -1938,6 +1937,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
         )
         self._update_fitted_estimators(fitted_estimators)
+        self._update_class_prior()
         return self
 
     @property
