@@ -474,9 +474,6 @@ Changelog
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
-:mod:`sklearn.inspection`
-.........................
-
 - |Enhancement| In
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
