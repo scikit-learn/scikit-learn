@@ -61,14 +61,23 @@ pre_python_environment_install() {
 
 python_environment_install_and_activate() {
     if [[ -n "$LOCK_FILE" ]]; then
-        conda update -n base conda -y
-        conda install pip -y
-        conda list
-        # FIXME install conda-lock dev version with a fixed commit while waiting
-        # for the release
-        python -m pip install git+https://github.com/conda-incubator/conda-lock@67f8da
-        conda-lock install --name $VIRTUALENV $LOCK_FILE
-        source activate $VIRTUALENV
+        if [[ "DISTRIB" == "conda" ]]; then
+            conda update -n base conda -y
+            conda install pip -y
+            conda list
+            # FIXME install conda-lock dev version with a fixed commit while waiting
+            # for the release
+            python -m pip install git+https://github.com/conda-incubator/conda-lock@67f8da
+            conda-lock install --name $VIRTUALENV $LOCK_FILE
+            source activate $VIRTUALENV
+        elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+            python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
+            source $VIRTUALENV/bin/activate
+            pip install -r "${LOCK_FILE}"
+        else
+            echo "DISTRIB $DISTRIB does not support lockfile for now. LOCK_FILE=$LOCK_FILE"
+            exit 1
+        fi
     else
         if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 

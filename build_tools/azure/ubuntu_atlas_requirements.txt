@@ -1,0 +1,5 @@
+cython
+joblib==0.11
+threadpoolctl==2.0.0
+pytest==6.2.5
+pytest-xdist
