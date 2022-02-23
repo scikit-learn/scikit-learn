@@ -458,12 +458,6 @@ Changelog
   multilabel classification.
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.inspection`
-.........................
-
-- |Feature| Add a display to plot the boundary decision of a classifier by
-  using the method :func:`inspection.DecisionBoundaryDisplay.from_estimator`.
-  :pr:`16061` by `Thomas Fan`_.
 - |Enhancement| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now raise consistent error message
   when passed invalid values for `alphas`.
@@ -473,6 +467,13 @@ Changelog
   now raise consistent error message when passed invalid values for `alpha`,
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| Add a display to plot the boundary decision of a classifier by
+  using the method :func:`inspection.DecisionBoundaryDisplay.from_estimator`.
+  :pr:`16061` by `Thomas Fan`_.
 
 - |Enhancement| In
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
