@@ -40,6 +40,7 @@ DecisionBoundaryDisplay.from_estimator(
     shading="auto",
     xlabel="Sepal length",
     ylabel="Sepal width",
+    eps=0.5,
 )
 
 # Plot also the training points

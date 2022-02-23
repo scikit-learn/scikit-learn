@@ -12,7 +12,7 @@ def _check_boundary_response_method(estimator, response_method):
     Parameters
     ----------
     estimator : object
-        Estimator to check.
+        Fitted estimator to check.
 
     response_method : {'auto', 'predict_proba', 'decision_function', 'predict'}
         Specifies whether to use :term:`predict_proba`,
@@ -25,17 +25,25 @@ def _check_boundary_response_method(estimator, response_method):
     prediction_method: callable
         Prediction method of estimator.
     """
-    if response_method == "auto":
-        list_methods = ["decision_function", "predict_proba", "predict"]
+    if len(estimator.classes_) > 2:
+        if response_method not in {"auto", "predict"}:
+            msg = (
+                "Multiclass classifiers are only supported when response_method is"
+                " 'predict' or 'auto'"
+            )
+            raise ValueError(msg)
+        methods_list = ["predict"]
+    elif response_method == "auto":
+        methods_list = ["decision_function", "predict_proba", "predict"]
     else:
-        list_methods = [response_method]
+        methods_list = [response_method]
 
-    prediction_method = [getattr(estimator, method, None) for method in list_methods]
+    prediction_method = [getattr(estimator, method, None) for method in methods_list]
     prediction_method = reduce(lambda x, y: x or y, prediction_method)
     if prediction_method is None:
         raise ValueError(
             f"{estimator.__class__.__name__} has none of the following attributes: "
-            f"{', '.join(list_methods)}."
+            f"{', '.join(methods_list)}."
         )
 
     return prediction_method
@@ -51,7 +59,7 @@ class DecisionBoundaryDisplay:
 
     Read more in the :ref:`User Guide <visualizations>`.
 
-    .. versionadded:: 1.0
+    .. versionadded:: 1.1
 
     Parameters
     ----------
@@ -197,6 +205,8 @@ class DecisionBoundaryDisplay:
             :term:`decision_function`, :term:`predict` as the target response.
             If set to 'auto', the response method is tried in the following order:
             :term:`predict_proba`, :term:`decision_function`, :term:`predict`.
+            For multiclass problems, :term:`predict` is selected when
+            `response_method="auto"`.
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
