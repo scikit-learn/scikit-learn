@@ -22,8 +22,8 @@ def test_compute_class_weight():
     assert cw[0] < cw[1] < cw[2]
 
 
-def test_compute_class_weight_not_present():
-    # Raise error when y does not contain all class labels
+def test_compute_class_not_present_in_class_weight():
+    # Raise error when class_weight does not contain all class labels
     classes = np.array(["label_not_present", 1, 2, 3])
     y = np.asarray(
         ["label_not_present", "label_not_present", "label_not_present", 1, 1, 2]
