@@ -766,6 +766,9 @@ Changelog
   `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
   :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
 
+- |Fix| :func:`utils.class_weight.compute_class_weight` does not require all
+  in `class_weight` to be in `classes`. :pr:`xxxxx` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
