@@ -194,48 +194,6 @@ def test_chunk_size_agnosticism(
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
 
-@pytest.mark.parametrize("seed", range(5))
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
-@pytest.mark.parametrize(
-    "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin],
-)
-def test_n_threads_agnosticism(
-    PairwiseDistancesReduction,
-    seed,
-    n_samples,
-    chunk_size,
-    n_features=100,
-    dtype=np.float64,
-):
-    # Results should not depend on the number of threads
-    rng = np.random.RandomState(seed)
-    spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
-
-    parameter = (
-        10
-        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
-        # Scaling the radius slightly with the numbers of dimensions
-        else 10 ** np.log(n_features)
-    )
-
-    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
-        X,
-        Y,
-        parameter,
-        return_distance=True,
-    )
-
-    dist, indices = PairwiseDistancesReduction.compute(
-        X, Y, parameter, n_threads=1, return_distance=True
-    )
-
-    ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
-
-
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("seed", range(5))
