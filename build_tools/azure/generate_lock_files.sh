@@ -12,6 +12,11 @@ function conda_lock_func() {
         --lockfile "${build_name}_${platform}_lock.yml"
 }
 
+function pip_lock_func() {
+    build_name=$1
+    pip-compile "${build_name}_requirements.txt" -o "{build_name}_lock.txt"
+}
+
 build_name=pylatest_conda_forge_mkl
 platforms="linux-64 osx-64"
 
@@ -21,3 +26,8 @@ done
 
 build_name=py37_conda_defaults_openblas
 conda_lock_func ${build_name} linux-64
+
+# TODO: how to make sure that python 3.8 (Ubuntu 20.04 has python 3.8.10)is
+# used for this command here
+build_name=ubuntu_atlas
+pip_lock_func ${build_name}
