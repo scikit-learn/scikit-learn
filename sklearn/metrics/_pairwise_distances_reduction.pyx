@@ -1243,7 +1243,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         #
         # Though it is possible to access their buffer address with
         # std::vector::data, they can't be stolen: buffers lifetime
-        # is tight to their std::vector and are deallocated when
+        # is tied to their std::vector and are deallocated when
         # std::vectors are.
         #
         # To solve this, we dynamically allocate std::vectors and then
@@ -1344,29 +1344,29 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         Returns
         -------
-            If return_distance=False:
-              - neighbors_indices : ndarray of n_samples_X ndarray
-                Indices of the neighbors for each vector in X.
+        If return_distance=False:
+          - neighbors_indices : ndarray of n_samples_X ndarray
+            Indices of the neighbors for each vector in X.
 
-            If return_distance=True:
-              - neighbors_indices : ndarray of n_samples_X ndarray
-                Indices of the neighbors for each vector in X.
-              - neighbors_distances : ndarray of n_samples_X ndarray
-                Distances to the neighbors for each vector in X.
+        If return_distance=True:
+          - neighbors_indices : ndarray of n_samples_X ndarray
+            Indices of the neighbors for each vector in X.
+          - neighbors_distances : ndarray of n_samples_X ndarray
+            Distances to the neighbors for each vector in X.
 
         Notes
         -----
-            This public classmethod is responsible for introspecting the arguments
-            values to dispatch to the private
-            :meth:`PairwiseDistancesRadiusNeighborhood._compute` instance method of
-            the most appropriate :class:`PairwiseDistancesRadiusNeighborhood`
-            concrete implementation.
+        This public classmethod is responsible for introspecting the arguments
+        values to dispatch to the private
+        :meth:`PairwiseDistancesRadiusNeighborhood._compute` instance method of
+        the most appropriate :class:`PairwiseDistancesRadiusNeighborhood`
+        concrete implementation.
 
-            All temporarily allocated datastructures necessary for the concrete
-            implementation are therefore freed when this classmethod returns.
+        All temporarily allocated datastructures necessary for the concrete
+        implementation are therefore freed when this classmethod returns.
 
-            This allows entirely decoupling the interface entirely from the
-            implementation details whilst maintaining RAII.
+        This allows entirely decoupling the interface entirely from the
+        implementation details whilst maintaining RAII.
         """
         # Note (jjerphan): Some design thoughts for future extensions.
         # This factory comes to handle specialisations for the given arguments.
