@@ -765,7 +765,7 @@ class OneHotEncoder(_BaseEncoder):
         else:
             raise ValueError(
                 "feature_name_combiner has to be either 'concat_string' or callable,"
-                " got {0}".format(self.feature_name_combiner)
+                f" got {self.feature_name_combiner}"
             )
 
 
