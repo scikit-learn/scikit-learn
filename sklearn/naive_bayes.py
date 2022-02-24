@@ -522,8 +522,8 @@ class _BaseDiscreteNB(_BaseNB):
 
         The counts make up a sufficient statistic extracted from the data.
         Accordingly, this method is called each time ``fit`` or ``partial_fit``
-        update the model. The number and composition of counts depend on a
-        concrete model, but ``self.class_count_`` must be updated in any case.
+        update the model. `class_count_` and `feature_count_` must be updated
+        here along with any model specific counts. 
 
         Parameters
         ----------
