@@ -1235,7 +1235,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         str metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
-        n_threads=None,
         str strategy=None,
         bint return_distance=False,
         bint sort_results=False,
@@ -1265,15 +1264,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
-
-        n_threads : int, default=None
-            The number of OpenMP threads to use for the reduction.
-            Parallelism is done on chunks and the sharding of chunks
-            depends on the `strategy` set on
-            :meth:`~PairwiseDistancesRadiusNeighborhood.compute`.
-
-            See _openmp_effective_n_threads, for details about
-            the specification of n_threads.
 
         strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
             The chunking strategy defining which dataset parallelization are made on.
@@ -1356,7 +1346,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
-                n_threads=n_threads,
                 strategy=strategy,
                 sort_results=sort_results,
             )
@@ -1368,7 +1357,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                 radius=radius,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
-                n_threads=n_threads,
                 strategy=strategy,
                 sort_results=sort_results,
             )
@@ -1389,7 +1377,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         DatasetsPair datasets_pair,
         DTYPE_t radius,
         chunk_size=None,
-        n_threads=None,
         strategy=None,
         sort_results=False,
         metric_kwargs=None,
@@ -1397,7 +1384,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         super().__init__(
             datasets_pair=datasets_pair,
             chunk_size=chunk_size,
-            n_threads=n_threads,
             strategy=strategy,
         )
 
@@ -1635,7 +1621,6 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         DTYPE_t radius,
         bint use_squared_distances=False,
         chunk_size=None,
-        n_threads=None,
         strategy=None,
         sort_results=False,
         metric_kwargs=None,
@@ -1645,7 +1630,6 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             radius=radius,
             chunk_size=chunk_size,
-            n_threads=n_threads,
             strategy=strategy,
             sort_results=sort_results,
             metric_kwargs=metric_kwargs,
