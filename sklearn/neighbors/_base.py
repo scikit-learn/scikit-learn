@@ -43,7 +43,7 @@ VALID_METRICS = dict(
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
     brute=sorted(
-        set(PAIRWISE_DISTANCE_FUNCTIONS.keys()).union(
+        set(PAIRWISE_DISTANCE_FUNCTIONS).union(
             [
                 "braycurtis",
                 "canberra",
