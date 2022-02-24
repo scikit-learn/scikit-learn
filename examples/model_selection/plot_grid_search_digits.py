@@ -71,6 +71,7 @@ scores = ["precision", "recall"]
 # Note that these choices are completely arbitrary.
 import pandas as pd
 
+
 def print_dataframe(filtered_cv_results):
     """Pretty print for filtered dataframe"""
     for score in scores:
@@ -81,7 +82,7 @@ def print_dataframe(filtered_cv_results):
             filtered_cv_results["params"],
         ):
             print(f"{mean:0.3f} (+/-{std * 2:0.03f}) for {params}")
-    
+
 
 def refit_strategy(cv_results):
     """Define the strategy to select the best estimator.
