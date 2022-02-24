@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 # Though the following import is not directly being used, it is required
 # for 3D projection to work with matplotlib < 3.2
-import mpl_toolkits.mplot3d
+import mpl_toolkits.mplot3d # noqa: E501
 
 from sklearn.cluster import KMeans
 from sklearn import datasets
