@@ -4,6 +4,8 @@ import numpy as np
 
 from ...utils import check_matplotlib_support
 from ...utils import _safe_indexing
+from ...base import is_regressor
+from ...utils.validation import check_is_fitted, _is_arraylike_not_scalar
 
 
 def _check_boundary_response_method(estimator, response_method):
@@ -25,7 +27,12 @@ def _check_boundary_response_method(estimator, response_method):
     prediction_method: callable
         Prediction method of estimator.
     """
-    if hasattr(estimator, "classes_") and len(estimator.classes_) > 2:
+    has_classes = hasattr(estimator, "classes_")
+    if has_classes and _is_arraylike_not_scalar(estimator.classes_[0]):
+        msg = "Multi-label and multi-output multi-class classifiers are not supported"
+        raise ValueError(msg)
+
+    if has_classes and len(estimator.classes_) > 2:
         if response_method not in {"auto", "predict"}:
             msg = (
                 "Multiclass classifiers are only supported when response_method is"
@@ -258,6 +265,7 @@ class DecisionBoundaryDisplay:
         >>> plt.show()
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
+        check_is_fitted(estimator)
 
         if not grid_resolution > 1:
             raise ValueError(
@@ -303,6 +311,9 @@ class DecisionBoundaryDisplay:
         # TODO: Check for multi-label classifier, a multi-output multiclass
         # classifier or a multioutput regressor and error.
         if response.ndim != 1:
+            if is_regressor(estimator):
+                raise ValueError("Multi-output regressors are not supported")
+
             # TODO: Support pos_label
             response = response[:, 1]
 
