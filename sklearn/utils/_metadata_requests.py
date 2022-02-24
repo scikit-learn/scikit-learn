@@ -144,7 +144,7 @@ alias instead of the original name.
 """
 REQUESTER_DOC_RETURN = """        Returns
         -------
-        self : estimator
+        self : object
             The updated object.
 """
 
