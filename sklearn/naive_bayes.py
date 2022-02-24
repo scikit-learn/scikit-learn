@@ -527,7 +527,7 @@ class _BaseDiscreteNB(_BaseNB):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The input samples.
         Y : array-like of shape (n_samples, n_classes)
             Binarized class labels.
