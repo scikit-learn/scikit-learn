@@ -2091,3 +2091,8 @@ def test_radius_neighbors_brute_backend(
         assert_radius_neighborhood_results_equality(
             legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
         )
+
+        
+def test_valid_metrics_has_no_duplicate():
+    for val in neighbors.VALID_METRICS.values():
+        assert len(val) == len(set(val))
