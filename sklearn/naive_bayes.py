@@ -53,8 +53,8 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
         shape (n_samples, n_classes).
 
-        Input is passed to _joint_log_likelihood as-is by predict,
-        predict_proba and predict_log_proba.
+        predict, predict_proba, and predict_log_proba pass the input through
+        _check_X and handle it over to _joint_log_likelihood.
         """
 
     @abstractmethod
@@ -140,7 +140,7 @@ class GaussianNB(_BaseNB):
     Parameters
     ----------
     priors : array-like of shape (n_classes,)
-        Prior probabilities of the classes. If specified the priors are not
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
     var_smoothing : float, default=1e-9
@@ -423,13 +423,13 @@ class GaussianNB(_BaseNB):
             # Take into account the priors
             if self.priors is not None:
                 priors = np.asarray(self.priors)
-                # Check that the provide prior match the number of classes
+                # Check that the provided prior matches the number of classes
                 if len(priors) != n_classes:
                     raise ValueError("Number of priors must match number of classes.")
                 # Check that the sum is 1
                 if not np.isclose(priors.sum(), 1.0):
                     raise ValueError("The sum of the priors should be 1.")
-                # Check that the prior are non-negative
+                # Check that the priors are non-negative
                 if (priors < 0).any():
                     raise ValueError("Priors must be non-negative.")
                 self.class_prior_ = priors
@@ -523,6 +523,12 @@ class _BaseDiscreteNB(_BaseNB):
         return self._validate_data(X, y, accept_sparse="csr", reset=reset)
 
     def _update_class_log_prior(self, class_prior=None):
+        """Update class log priors.
+
+        The class log priors are based on `class_prior`, class count or the
+        number of classes. This method is called each time `fit` or
+        `partial_fit` update the model.
+        """
         n_classes = len(self.classes_)
         if class_prior is not None:
             if len(class_prior) != n_classes:
@@ -733,7 +739,7 @@ class MultinomialNB(_BaseDiscreteNB):
         If false, a uniform prior will be used.
 
     class_prior : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. If specified the priors are not
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
     Attributes
@@ -988,7 +994,7 @@ class BernoulliNB(_BaseDiscreteNB):
         If false, a uniform prior will be used.
 
     class_prior : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. If specified the priors are not
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
     Attributes
@@ -1136,7 +1142,7 @@ class CategoricalNB(_BaseDiscreteNB):
         If false, a uniform prior will be used.
 
     class_prior : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. If specified the priors are not
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
     min_categories : int or array-like of shape (n_features,), default=None
