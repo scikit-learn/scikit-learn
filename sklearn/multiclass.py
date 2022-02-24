@@ -770,7 +770,14 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         Y = self.decision_function(X)
         if self.n_classes_ == 2:
-            return self.classes_[(Y > 0).astype(int)]
+            if hasattr(self.estimators_[0], "decision_function") and is_classifier(
+                self.estimators_[0]
+            ):
+                thresh = 0
+            else:
+                # predict_proba threshold
+                thresh = 0.5
+            return self.classes_[(Y > thresh).astype(int)]
         return self.classes_[Y.argmax(axis=1)]
 
     def decision_function(self, X):
