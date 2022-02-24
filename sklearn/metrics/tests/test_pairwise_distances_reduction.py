@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import threadpoolctl
 from numpy.testing import assert_array_equal, assert_allclose
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
@@ -190,6 +191,49 @@ def test_chunk_size_agnosticism(
         chunk_size=chunk_size,
         return_distance=True,
     )
+
+    ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
+
+
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("n_samples", [100, 1000])
+@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin],
+)
+def test_n_threads_agnosticism(
+    PairwiseDistancesReduction,
+    seed,
+    n_samples,
+    chunk_size,
+    n_features=100,
+    dtype=np.float64,
+):
+    # Results should not depend on the number of threads
+    rng = np.random.RandomState(seed)
+    spread = 100
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    parameter = (
+        10
+        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
+        # Scaling the radius slightly with the numbers of dimensions
+        else 10 ** np.log(n_features)
+    )
+
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+        X,
+        Y,
+        parameter,
+        return_distance=True,
+    )
+
+    with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
+        dist, indices = PairwiseDistancesReduction.compute(
+            X, Y, parameter, return_distance=True
+        )
 
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
