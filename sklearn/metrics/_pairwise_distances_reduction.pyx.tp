@@ -1,8 +1,15 @@
 {{py:
 
-dtypes = [
-    ('', '64', 'DTYPE_t'),
-    ('32', '32', 'np.float32_t')
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, bitness, DTYPE_t, DTYPE
+    #
+    # We use an empty string as to still be able to expose the same
+    # API for the reference 64bit implementations.
+    #
+    ('', '64', 'DTYPE_t', 'DTYPE'),
+    ('32', '32', 'np.float32_t', 'np.float32')
 ]
 
 }}
@@ -56,36 +63,7 @@ from ..utils._typedefs import ITYPE, DTYPE
 
 np.import_array()
 
-{{for distance_suffix, pdr_suffix, DTYPE_t in dtypes}}
-
-from ._dist_metrics cimport DatasetsPair{{distance_suffix}}, DenseDenseDatasetsPair{{distance_suffix}}
-
-cpdef {{DTYPE_t}}[::1] _sqeuclidean_row_norms{{pdr_suffix}}(
-    const {{DTYPE_t}}[:, ::1] X,
-    ITYPE_t num_threads,
-):
-    """Compute the squared euclidean norm of the rows of X in parallel.
-
-    This is faster than using np.einsum("ij, ij->i") even when using a single thread.
-    """
-    cdef:
-        # Casting for X to remove the const qualifier is needed because APIs
-        # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
-        # const qualifier.
-        # See: https://github.com/scipy/scipy/issues/14262
-        {{DTYPE_t}} * X_ptr = <{{DTYPE_t}} *> &X[0, 0]
-        ITYPE_t idx = 0
-        ITYPE_t n = X.shape[0]
-        ITYPE_t d = X.shape[1]
-        {{DTYPE_t}}[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
-
-    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
-        squared_row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
-
-    return squared_row_norms
-
-
-cdef class PairwiseDistancesReduction{{pdr_suffix}}:
+cdef class PairwiseDistancesReduction:
     """Abstract base class for pairwise distance computation & reduction.
 
     Subclasses of this class compute pairwise distances between a set of
@@ -113,7 +91,7 @@ cdef class PairwiseDistancesReduction{{pdr_suffix}}:
 
     Parameters
     ----------
-    datasets_pair: DatasetsPair{{distance_suffix}}
+    datasets_pair: DatasetsPair
         The pair of dataset to use.
 
     chunk_size: int, default=None
@@ -158,6 +136,250 @@ cdef class PairwiseDistancesReduction{{pdr_suffix}}:
           `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
     """
 
+    @classmethod
+    def valid_metrics(cls) -> List[str]:
+        excluded = {
+            "pyfunc",  # is relatively slow because we need to coerce data as np arrays
+            "mahalanobis", # is numerically unstable
+            # TODO: In order to support discrete distance metrics, we need to have a
+            # stable simultaneous sort which preserves the order of the input.
+            # The best might be using std::stable_sort and a Comparator taking an
+            # Arrays of Structures instead of Structure of Arrays (currently used).
+            "hamming",
+            *BOOL_METRICS,
+        }
+        return sorted(set(METRIC_MAPPING.keys()) - excluded)
+
+    @classmethod
+    def valid_dtypes(cls):
+        return (np.float32, np.float64)
+
+
+    @classmethod
+    def is_usable_for(cls, X, Y, metric) -> bool:
+        """Return True if the PairwiseDistancesReduction can be used for the given parameters.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
+            Input data.
+
+        metric : str, default='euclidean'
+            The distance metric to use.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        Returns
+        -------
+        True if the PairwiseDistancesReduction can be used, else False.
+        """
+        dtypes_validity = X.dtype == Y.dtype and Y.dtype in cls.valid_dtypes()
+        return (get_config().get("enable_cython_pairwise_dist", True) and
+                not issparse(X) and not issparse(Y) and dtypes_validity and
+                metric in cls.valid_metrics())
+
+
+cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
+    """Compute the argkmin of row vectors of X on the ones of Y.
+
+    For each row vector of X, computes the indices of k first the rows
+    vectors of Y with the smallest distances.
+
+    PairwiseDistancesArgKmin is typically used to perform
+    bruteforce k-nearest neighbors queries.
+
+    Parameters
+    ----------
+    datasets_pair: DatasetsPair
+        The dataset pairs (X, Y) for the reduction.
+
+    chunk_size: int, default=None,
+        The number of vectors per chunk. If None (default) looks-up in
+        scikit-learn configuration for `pairwise_dist_chunk_size`,
+        and use 256 if it is not set.
+
+    n_threads: int, default=None
+        The number of OpenMP threads to use for the reduction.
+        Parallelism is done on chunks and the sharding of chunks
+        depends on the `strategy` set on
+        :meth:`~PairwiseDistancesArgKmin.compute`.
+
+        See _openmp_effective_n_threads, for details about
+        the specification of n_threads.
+
+    k: int, default=1
+        The k for the argkmin reduction.
+    """
+
+    @classmethod
+    def compute(
+        cls,
+        X,
+        Y,
+        ITYPE_t k,
+        str metric="euclidean",
+        chunk_size=None,
+        dict metric_kwargs=None,
+        n_threads=None,
+        str strategy=None,
+        bint return_distance=False,
+    ):
+        """Return the results of the reduction for the given arguments.
+
+        Parameters
+        ----------
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
+            Input data.
+
+        k : int
+            The k for the argkmin reduction.
+
+        metric : str, default='euclidean'
+            The distance metric to use for argkmin.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        chunk_size : int, default=None,
+            The number of vectors per chunk. If None (default) looks-up in
+            scikit-learn configuration for `pairwise_dist_chunk_size`,
+            and use 256 if it is not set.
+
+        metric_kwargs : dict, default=None
+            Keyword arguments to pass to specified metric function.
+
+        n_threads : int, default=None
+            The number of OpenMP threads to use for the reduction.
+            Parallelism is done on chunks and the sharding of chunks
+            depends on the `strategy` set on
+            :meth:`~PairwiseDistancesArgKmin.compute`.
+
+            See _openmp_effective_n_threads, for details about
+            the specification of n_threads.
+
+        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
+            The chunking strategy defining which dataset parallelization are made on.
+
+            For both strategies the computations happens with two nested loops,
+            respectively on chunks of X and chunks of Y.
+            Strategies differs on which loop (outer or inner) is made to run
+            in parallel with the Cython `prange` construct:
+
+              - 'parallel_on_X' dispatches chunks of X uniformly on threads.
+              Each thread then iterates on all the chunks of Y. This strategy is
+              embarrassingly parallel and comes with no datastructures synchronisation.
+
+              - 'parallel_on_Y' dispatches chunks of Y uniformly on threads.
+              Each thread processes all the chunks of X in turn. This strategy is
+              a sequence of embarrassingly parallel subtasks (the inner loop on Y
+              chunks) with intermediate datastructures synchronisation at each
+              iteration of the sequential outer loop on X chunks.
+
+              - 'auto' relies on a simple heuristic to choose between
+              'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
+              'parallel_on_X' is usually the most efficient strategy. When `X.shape[0]`
+              is small but `Y.shape[0]` is large, 'parallel_on_Y' brings more opportunity
+              for parallelism and is therefore more efficient despite the synchronization
+              step at each iteration of the outer loop on chunks of `X`.
+
+              - None (default) looks-up in scikit-learn configuration for
+              `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
+
+        return_distance : boolean, default=False
+            Return distances between each X vector and its
+            argkmin if set to True.
+
+        Returns
+        -------
+            If return_distance=False:
+              - argkmin_indices : ndarray of shape (n_samples_X, k)
+                Indices of the argkmin for each vector in X.
+
+            If return_distance=True:
+              - argkmin_distances : ndarray of shape (n_samples_X, k)
+                Distances to the argkmin for each vector in X.
+              - argkmin_indices : ndarray of shape (n_samples_X, k)
+                Indices of the argkmin for each vector in X.
+
+        Notes
+        -----
+            This public classmethod is responsible for introspecting the arguments
+            values to dispatch to the proper implementations of
+            :meth:`PairwiseDistancesArgKmin` given the types.
+
+            All temporarily allocated datastructures necessary for the concrete
+            implementation are therefore freed when this classmethod returns.
+
+            This allows decoupling the interface entirely from the
+            implementation details whilst maintaining RAII.
+        """
+        if X.dtype == Y.dtype == np.float64:
+            return PairwiseDistancesArgKmin64.compute(
+                X=X,
+                Y=Y,
+                k=k,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                n_threads=n_threads,
+                strategy=strategy,
+                return_distance=return_distance,
+            )
+        if X.dtype == Y.dtype == np.float32:
+            return PairwiseDistancesArgKmin32.compute(
+                X=X,
+                Y=Y,
+                k=k,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                n_threads=n_threads,
+                strategy=strategy,
+                return_distance=return_distance,
+            )
+        raise ValueError(
+            "No implementation exist for fused-typed datasets pair. "
+            f"Currently X.dtype={X.dtype} and Y.dtype={Y.dtype}."
+        )
+
+
+{{for distance_suffix, bitness, DTYPE_t, DTYPE in implementation_specific_values}}
+
+from ._dist_metrics cimport DatasetsPair{{distance_suffix}}, DenseDenseDatasetsPair{{distance_suffix}}
+
+cpdef {{DTYPE_t}}[::1] _sqeuclidean_row_norms{{bitness}}(
+    const {{DTYPE_t}}[:, ::1] X,
+    ITYPE_t num_threads,
+):
+    """Compute the squared euclidean norm of the rows of X in parallel.
+
+    This is faster than using np.einsum("ij, ij->i") even when using a single thread.
+    """
+    cdef:
+        # Casting for X to remove the const qualifier is needed because APIs
+        # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
+        # const qualifier.
+        # See: https://github.com/scipy/scipy/issues/14262
+        {{DTYPE_t}} * X_ptr = <{{DTYPE_t}} *> &X[0, 0]
+        ITYPE_t idx = 0
+        ITYPE_t n = X.shape[0]
+        ITYPE_t d = X.shape[1]
+        {{DTYPE_t}}[::1] squared_row_norms = np.empty(n, dtype={{DTYPE}})
+
+    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
+        squared_row_norms[idx] = _dot(d, X_ptr + idx * d, 1, X_ptr + idx * d, 1)
+
+    return squared_row_norms
+
+
+cdef class PairwiseDistancesReduction{{bitness}}(PairwiseDistancesReduction):
+    """{{bitness}}bit implementation of PairwiseDistancesReduction."""
+
     cdef:
         readonly DatasetsPair{{distance_suffix}} datasets_pair
 
@@ -183,47 +405,6 @@ cdef class PairwiseDistancesReduction{{pdr_suffix}}:
         ITYPE_t n_samples_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_last_chunk
 
         bint execute_in_parallel_on_Y
-
-    @classmethod
-    def valid_metrics(cls) -> List[str]:
-        excluded = {
-            "pyfunc",  # is relatively slow because we need to coerce data as np arrays
-            "mahalanobis", # is numerically unstable
-            # TODO: In order to support discrete distance metrics, we need to have a
-            # stable simultaneous sort which preserves the order of the input.
-            # The best might be using std::stable_sort and a Comparator taking an
-            # Arrays of Structures instead of Structure of Arrays (currently used).
-            "hamming",
-            *BOOL_METRICS,
-        }
-        return sorted(set(METRIC_MAPPING.keys()) - excluded)
-
-    @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the PairwiseDistancesReduction can be used for the given parameters.
-
-        Parameters
-        ----------
-        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
-            Input data.
-
-        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
-            Input data.
-
-        metric : str, default='euclidean'
-            The distance metric to use.
-            For a list of available metrics, see the documentation of
-            :class:`~sklearn.metrics.DistanceMetric`.
-
-        Returns
-        -------
-        True if the PairwiseDistancesReduction can be used, else False.
-        """
-        # TODO: support sparse arrays and 32 bits
-        return (get_config().get("enable_cython_pairwise_dist", True) and
-                not issparse(X) and X.dtype == np.float64 and
-                not issparse(Y) and Y.dtype == np.float64 and
-                metric in cls.valid_metrics())
 
     def __init__(
         self,
@@ -426,7 +607,7 @@ cdef class PairwiseDistancesReduction{{pdr_suffix}}:
     ) nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
-        This is THE core computational method of PairwiseDistanceReductions{{pdr_suffix}}.
+        This is THE core computational method of PairwiseDistanceReductions{{bitness}}.
         This must be implemented in subclasses.
         """
         return
@@ -502,37 +683,8 @@ cdef class PairwiseDistancesReduction{{pdr_suffix}}:
         """Update datastructures after executing all the reductions."""
         return
 
-cdef class PairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistancesReduction{{pdr_suffix}}):
-    """Compute the argkmin of row vectors of X on the ones of Y.
-
-    For each row vector of X, computes the indices of k first the rows
-    vectors of Y with the smallest distances.
-
-    PairwiseDistancesArgKmin is typically used to perform
-    bruteforce k-nearest neighbors queries.
-
-    Parameters
-    ----------
-    datasets_pair: DatasetsPair
-        The dataset pairs (X, Y) for the reduction.
-
-    chunk_size: int, default=None,
-        The number of vectors per chunk. If None (default) looks-up in
-        scikit-learn configuration for `pairwise_dist_chunk_size`,
-        and use 256 if it is not set.
-
-    n_threads: int, default=None
-        The number of OpenMP threads to use for the reduction.
-        Parallelism is done on chunks and the sharding of chunks
-        depends on the `strategy` set on
-        :meth:`~PairwiseDistancesArgKmin{{distance_suffix}}.compute`.
-
-        See _openmp_effective_n_threads, for details about
-        the specification of n_threads.
-
-    k: int, default=1
-        The k for the argkmin reduction.
-    """
+cdef class PairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesReduction{{bitness}}):
+    """{{bitness}}bit implementation of PairwiseDistancesArgKmin."""
 
     cdef:
         ITYPE_t k
@@ -587,7 +739,7 @@ cdef class PairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistancesReduction{{pd
             The number of OpenMP threads to use for the reduction.
             Parallelism is done on chunks and the sharding of chunks
             depends on the `strategy` set on
-            :meth:`~PairwiseDistancesArgKmin{{pdr_suffix}}.compute`.
+            :meth:`~PairwiseDistancesArgKmin{{bitness}}.compute`.
 
             See _openmp_effective_n_threads, for details about
             the specification of n_threads.
@@ -639,14 +791,14 @@ cdef class PairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistancesReduction{{pd
         Notes
         -----
             This public classmethod is responsible for introspecting the arguments
-            values to dispatch to the private :meth:`PairwiseDistancesArgKmin{{pdr_suffix}}._compute`
-            instance method of the most appropriate :class:`PairwiseDistancesArgKmin{{pdr_suffix}}`
+            values to dispatch to the private :meth:`PairwiseDistancesArgKmin{{bitness}}._compute`
+            instance method of the most appropriate :class:`PairwiseDistancesArgKmin{{bitness}}`
             concrete implementation.
 
             All temporarily allocated datastructures necessary for the concrete
             implementation are therefore freed when this classmethod returns.
 
-            This allows entirely decoupling the interface entirely from the
+            This allows decoupling the interface entirely from the
             implementation details whilst maintaining RAII.
         """
         # Note (jjerphan): Some design thoughts for future extensions.
@@ -664,7 +816,7 @@ cdef class PairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistancesReduction{{pd
             # at time to leverage a call to the BLAS GEMM routine as explained
             # in more details in the docstring.
             use_squared_distances = metric == "sqeuclidean"
-            pda = FastEuclideanPairwiseDistancesArgKmin{{pdr_suffix}}(
+            pda = FastEuclideanPairwiseDistancesArgKmin{{bitness}}(
                 X=X, Y=Y, k=k,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
@@ -674,7 +826,7 @@ cdef class PairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistancesReduction{{pd
         else:
              # Fall back on a generic implementation that handles most scipy
              # metrics by computing the distances between 2 vectors at a time.
-            pda = PairwiseDistancesArgKmin{{pdr_suffix}}(
+            pda = PairwiseDistancesArgKmin{{bitness}}(
                 datasets_pair=DatasetsPair{{distance_suffix}}.get_for(X, Y, metric, metric_kwargs),
                 k=k,
                 chunk_size=chunk_size,
@@ -723,9 +875,9 @@ cdef class PairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistancesReduction{{pd
             sizeof(ITYPE_t *) * self.chunks_n_threads
         )
 
-        # Main heaps which will be returned as results by `PairwiseDistancesArgKmin{{pdr_suffix}}.compute`.
+        # Main heaps which will be returned as results by `PairwiseDistancesArgKmin{{bitness}}.compute`.
         self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
-        self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=DTYPE)
+        self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype={{DTYPE}})
 
     def __dealloc__(self):
         if self.heaps_indices_chunks is not NULL:
@@ -896,14 +1048,14 @@ cdef class PairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistancesReduction{{pd
 
             # Values are returned identically to the way `KNeighborsMixin.kneighbors`
             # returns values. This is counter-intuitive but this allows not using
-            # complex adaptations where `PairwiseDistancesArgKmin{{pdr_suffix}}.compute` is called.
+            # complex adaptations where `PairwiseDistancesArgKmin{{bitness}}.compute` is called.
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
 
 
-cdef class FastEuclideanPairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistancesArgKmin{{pdr_suffix}}):
-    """Fast specialized alternative for PairwiseDistancesArgKmin{{pdr_suffix}} on EuclideanDistance.
+cdef class FastEuclideanPairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesArgKmin{{bitness}}):
+    """Fast specialized alternative for PairwiseDistancesArgKmin{{bitness}} on EuclideanDistance.
 
     The full pairwise squared distances matrix is computed as follows:
 
@@ -931,7 +1083,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistances
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return (PairwiseDistancesArgKmin{{pdr_suffix}}.is_usable_for(X, Y, metric) and
+        return (PairwiseDistancesArgKmin{{bitness}}.is_usable_for(X, Y, metric) and
                 not _in_unstable_openblas_configuration())
 
     def __init__(
@@ -971,12 +1123,12 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistances
         if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
             self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared")
         else:
-            self.Y_norm_squared = _sqeuclidean_row_norms{{pdr_suffix}}(self.Y, self.effective_n_threads)
+            self.Y_norm_squared = _sqeuclidean_row_norms{{bitness}}(self.Y, self.effective_n_threads)
 
         # Do not recompute norms if datasets are identical.
         self.X_norm_squared = (
             self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms{{pdr_suffix}}(self.X, self.effective_n_threads)
+            _sqeuclidean_row_norms{{bitness}}(self.X, self.effective_n_threads)
         )
         self.use_squared_distances = use_squared_distances
 
@@ -992,14 +1144,14 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistances
     @final
     cdef void compute_exact_distances(self) nogil:
         if not self.use_squared_distances:
-            PairwiseDistancesArgKmin{{pdr_suffix}}.compute_exact_distances(self)
+            PairwiseDistancesArgKmin{{bitness}}.compute_exact_distances(self)
 
     @final
     cdef void _parallel_on_X_parallel_init(
         self,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesArgKmin{{pdr_suffix}}._parallel_on_X_parallel_init(self, thread_num)
+        PairwiseDistancesArgKmin{{bitness}}._parallel_on_X_parallel_init(self, thread_num)
 
         # Temporary buffer for the `-2 * X_c @ Y_c.T` term
         self.dist_middle_terms_chunks[thread_num] = <{{DTYPE_t}} *> malloc(
@@ -1011,7 +1163,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistances
         self,
         ITYPE_t thread_num
     ) nogil:
-        PairwiseDistancesArgKmin{{pdr_suffix}}._parallel_on_X_parallel_finalize(self, thread_num)
+        PairwiseDistancesArgKmin{{bitness}}._parallel_on_X_parallel_finalize(self, thread_num)
         free(self.dist_middle_terms_chunks[thread_num])
 
     @final
@@ -1019,7 +1171,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistances
         self,
     ) nogil:
         cdef ITYPE_t thread_num
-        PairwiseDistancesArgKmin{{pdr_suffix}}._parallel_on_Y_init(self)
+        PairwiseDistancesArgKmin{{bitness}}._parallel_on_Y_init(self)
 
         for thread_num in range(self.chunks_n_threads):
             # Temporary buffer for the `-2 * X_c @ Y_c.T` term
@@ -1032,7 +1184,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{pdr_suffix}}(PairwiseDistances
         self,
     ) nogil:
         cdef ITYPE_t thread_num
-        PairwiseDistancesArgKmin{{pdr_suffix}}._parallel_on_Y_finalize(self)
+        PairwiseDistancesArgKmin{{bitness}}._parallel_on_Y_finalize(self)
 
         for thread_num in range(self.chunks_n_threads):
             free(self.dist_middle_terms_chunks[thread_num])

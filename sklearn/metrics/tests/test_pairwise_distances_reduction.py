@@ -7,7 +7,8 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics._pairwise_distances_reduction import (
     PairwiseDistancesReduction,
     PairwiseDistancesArgKmin,
-    _sqeuclidean_row_norms,
+    _sqeuclidean_row_norms64,
+    _sqeuclidean_row_norms32,
 )
 
 from sklearn.metrics import euclidean_distances
@@ -64,7 +65,7 @@ def _get_dummy_metric_params_list(metric: str, n_features: int):
     return [{}]
 
 
-def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
+def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1e-7):
     assert_array_equal(
         ref_indices,
         indices,
@@ -74,7 +75,7 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices):
         ref_dist,
         dist,
         err_msg="Query vectors have different neighbors' distances",
-        rtol=1e-7,
+        rtol=rtol,
     )
 
 
@@ -88,13 +89,18 @@ def test_pairwise_distances_reduction_is_usable_for():
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
     metric = "euclidean"
-    assert PairwiseDistancesReduction.is_usable_for(X, Y, metric)
+
+    assert PairwiseDistancesReduction.is_usable_for(
+        X.astype(np.float64), X.astype(np.float64), metric
+    )
+    assert PairwiseDistancesReduction.is_usable_for(
+        X.astype(np.float32), X.astype(np.float32), metric
+    )
     assert not PairwiseDistancesReduction.is_usable_for(
         X.astype(np.int64), Y.astype(np.int64), metric
     )
 
     assert not PairwiseDistancesReduction.is_usable_for(X, Y, metric="pyfunc")
-    # TODO: remove once 32 bits datasets are supported
     assert not PairwiseDistancesReduction.is_usable_for(X.astype(np.float32), Y, metric)
     assert not PairwiseDistancesReduction.is_usable_for(X, Y.astype(np.int32), metric)
 
@@ -111,8 +117,8 @@ def test_argkmin_factory_method_wrong_usages():
     metric = "euclidean"
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
-        "got: X.dtype=float32 and Y.dtype=float64"
+        "No implementation exist for fused-typed datasets pair. "
+        "Currently X.dtype=float32 and Y.dtype=float64."
     )
     with pytest.raises(ValueError, match=msg):
         PairwiseDistancesArgKmin.compute(
@@ -120,8 +126,8 @@ def test_argkmin_factory_method_wrong_usages():
         )
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
-        "got: X.dtype=float64 and Y.dtype=int32"
+        "No implementation exist for fused-typed datasets pair. "
+        "Currently X.dtype=float64 and Y.dtype=int32."
     )
     with pytest.raises(ValueError, match=msg):
         PairwiseDistancesArgKmin.compute(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
@@ -151,6 +157,7 @@ def test_argkmin_factory_method_wrong_usages():
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
+@pytest.mark.parametrize("dtype", PairwiseDistancesReduction.valid_dtypes())
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
     [PairwiseDistancesArgKmin],
@@ -160,8 +167,8 @@ def test_chunk_size_agnosticism(
     seed,
     n_samples,
     chunk_size,
+    dtype,
     n_features=100,
-    dtype=np.float64,
 ):
     # Results should not depend on the chunk size
     rng = np.random.RandomState(seed)
@@ -191,12 +198,16 @@ def test_chunk_size_agnosticism(
         return_distance=True,
     )
 
-    ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
+    rtol = 1e-7 if dtype is np.float64 else 1e-6
+    ASSERT_RESULT[PairwiseDistancesReduction](
+        ref_dist, dist, ref_indices, indices, rtol
+    )
 
 
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
+@pytest.mark.parametrize("dtype", PairwiseDistancesReduction.valid_dtypes())
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
     [PairwiseDistancesArgKmin],
@@ -206,8 +217,8 @@ def test_n_threads_agnosticism(
     seed,
     n_samples,
     chunk_size,
+    dtype,
     n_features=100,
-    dtype=np.float64,
 ):
     # Results should not depend on the number of threads
     rng = np.random.RandomState(seed)
@@ -233,7 +244,10 @@ def test_n_threads_agnosticism(
         X, Y, parameter, n_threads=1, return_distance=True
     )
 
-    ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
+    rtol = 1e-7 if dtype is np.float64 else 1e-6
+    ASSERT_RESULT[PairwiseDistancesReduction](
+        ref_dist, dist, ref_indices, indices, rtol
+    )
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -241,6 +255,7 @@ def test_n_threads_agnosticism(
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
+@pytest.mark.parametrize("dtype", PairwiseDistancesReduction.valid_dtypes())
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
     [PairwiseDistancesArgKmin],
@@ -250,8 +265,8 @@ def test_strategies_consistency(
     metric,
     n_samples,
     seed,
+    dtype,
     n_features=10,
-    dtype=np.float64,
 ):
 
     rng = np.random.RandomState(seed)
@@ -297,11 +312,13 @@ def test_strategies_consistency(
         return_distance=True,
     )
 
+    rtol = 1e-7 if dtype is np.float64 else 1e-6
     ASSERT_RESULT[PairwiseDistancesReduction](
         dist_par_X,
         dist_par_Y,
         indices_par_X,
         indices_par_Y,
+        rtol,
     )
 
 
@@ -312,15 +329,16 @@ def test_strategies_consistency(
 @pytest.mark.parametrize("n_features", [50, 500])
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
+@pytest.mark.parametrize("dtype", PairwiseDistancesReduction.valid_dtypes())
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
 def test_pairwise_distances_argkmin(
     n_features,
     translation,
     metric,
     strategy,
+    dtype,
     n_samples=100,
     k=10,
-    dtype=np.float64,
 ):
     rng = np.random.RandomState(0)
     spread = 1000
@@ -361,8 +379,13 @@ def test_pairwise_distances_argkmin(
         strategy=strategy,
     )
 
+    rtol = 1e-7 if dtype is np.float64 else 1e-6
     ASSERT_RESULT[PairwiseDistancesArgKmin](
-        argkmin_distances, argkmin_distances_ref, argkmin_indices, argkmin_indices_ref
+        argkmin_distances,
+        argkmin_distances_ref,
+        argkmin_indices,
+        argkmin_indices_ref,
+        rtol,
     )
 
 
@@ -375,13 +398,15 @@ def test_sqeuclidean_row_norms(
     n_samples,
     n_features,
     num_threads,
-    dtype=np.float64,
 ):
     rng = np.random.RandomState(seed)
     spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X64 = rng.rand(n_samples, n_features).astype(np.float64) * spread
+    X32 = rng.rand(n_samples, n_features).astype(np.float32) * spread
 
-    sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
-    sq_row_norm = np.asarray(_sqeuclidean_row_norms(X, num_threads=num_threads))
+    sq_row_norm_reference = np.linalg.norm(X64, axis=1) ** 2
+    sq_row_norm64 = np.asarray(_sqeuclidean_row_norms64(X64, num_threads=num_threads))
+    sq_row_norm32 = np.asarray(_sqeuclidean_row_norms32(X32, num_threads=num_threads))
 
-    assert_allclose(sq_row_norm_reference, sq_row_norm)
+    assert_allclose(sq_row_norm_reference, sq_row_norm32)
+    assert_allclose(sq_row_norm_reference, sq_row_norm64)

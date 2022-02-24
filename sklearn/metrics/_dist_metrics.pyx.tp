@@ -1,9 +1,15 @@
 {{py:
 
-
-dtypes = [
-    ('', 'DTYPE_t'),
-    ('32', 'np.float32_t'),
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, bitness, DTYPE_t, DTYPE
+    #
+    # We use an empty string as to still be able to expose the same
+    # API for the reference 64bit implementations.
+    #
+    ('', '64', 'DTYPE_t', 'DTYPE'),
+    ('32', '32', 'np.float32_t', 'np.float32')
 ]
 
 }}
@@ -40,35 +46,6 @@ def newObj(obj):
     return obj.__new__(obj)
 
 
-######################################################################
-# metric mappings
-#  These map from metric id strings to class names
-METRIC_MAPPING = {'euclidean': EuclideanDistance,
-                  'l2': EuclideanDistance,
-                  'minkowski': MinkowskiDistance,
-                  'p': MinkowskiDistance,
-                  'manhattan': ManhattanDistance,
-                  'cityblock': ManhattanDistance,
-                  'l1': ManhattanDistance,
-                  'chebyshev': ChebyshevDistance,
-                  'infinity': ChebyshevDistance,
-                  'seuclidean': SEuclideanDistance,
-                  'mahalanobis': MahalanobisDistance,
-                  'wminkowski': WMinkowskiDistance,
-                  'hamming': HammingDistance,
-                  'canberra': CanberraDistance,
-                  'braycurtis': BrayCurtisDistance,
-                  'matching': MatchingDistance,
-                  'jaccard': JaccardDistance,
-                  'dice': DiceDistance,
-                  'kulsinski': KulsinskiDistance,
-                  'rogerstanimoto': RogersTanimotoDistance,
-                  'russellrao': RussellRaoDistance,
-                  'sokalmichener': SokalMichenerDistance,
-                  'sokalsneath': SokalSneathDistance,
-                  'haversine': HaversineDistance,
-                  'pyfunc': PyFuncDistance}
-
 BOOL_METRICS = [
     "hamming",
     "matching",
@@ -94,7 +71,38 @@ def get_valid_metric_ids(L):
             if (val.__name__ in L) or (val in L)]
 
 
-{{for name_suffix, DTYPE_t in dtypes}}
+{{for name_suffix, bitness, DTYPE_t, DTYPE in implementation_specific_values}}
+
+######################################################################
+# metric mappings
+#  These map from metric id strings to class names
+METRIC_MAPPING{{name_suffix}} = {
+    'euclidean': EuclideanDistance{{name_suffix}},
+    'l2': EuclideanDistance{{name_suffix}},
+    'minkowski': MinkowskiDistance{{name_suffix}},
+    'p': MinkowskiDistance{{name_suffix}},
+    'manhattan': ManhattanDistance{{name_suffix}},
+    'cityblock': ManhattanDistance{{name_suffix}},
+    'l1': ManhattanDistance{{name_suffix}},
+    'chebyshev': ChebyshevDistance{{name_suffix}},
+    'infinity': ChebyshevDistance{{name_suffix}},
+    'seuclidean': SEuclideanDistance{{name_suffix}},
+    'mahalanobis': MahalanobisDistance{{name_suffix}},
+    'wminkowski': WMinkowskiDistance{{name_suffix}},
+    'hamming': HammingDistance{{name_suffix}},
+    'canberra': CanberraDistance{{name_suffix}},
+    'braycurtis': BrayCurtisDistance{{name_suffix}},
+    'matching': MatchingDistance{{name_suffix}},
+    'jaccard': JaccardDistance{{name_suffix}},
+    'dice': DiceDistance{{name_suffix}},
+    'kulsinski': KulsinskiDistance{{name_suffix}},
+    'rogerstanimoto': RogersTanimotoDistance{{name_suffix}},
+    'russellrao': RussellRaoDistance{{name_suffix}},
+    'sokalmichener': SokalMichenerDistance{{name_suffix}},
+    'sokalsneath': SokalSneathDistance{{name_suffix}},
+    'haversine': HaversineDistance{{name_suffix}},
+    'pyfunc': PyFuncDistance{{name_suffix}},
+}
 
 cdef inline np.ndarray _buffer_to_ndarray{{name_suffix}}(const {{DTYPE_t}}* x, np.npy_intp n):
     # Wrap a memory buffer with an ndarray. Warning: this is not robust.
@@ -227,8 +235,8 @@ cdef class DistanceMetric{{name_suffix}}:
     """
     def __cinit__(self):
         self.p = 2
-        self.vec = np.zeros(1, dtype=DTYPE, order='C')
-        self.mat = np.zeros((1, 1), dtype=DTYPE, order='C')
+        self.vec = np.zeros(1, dtype={{DTYPE}}, order='C')
+        self.mat = np.zeros((1, 1), dtype={{DTYPE}}, order='C')
         self.size = 1
 
     def __reduce__(self):
@@ -241,7 +249,7 @@ cdef class DistanceMetric{{name_suffix}}:
         """
         get state for pickling
         """
-        if self.__class__.__name__ == "PyFuncDistance":
+        if self.__class__.__name__ == "PyFuncDistance{{name_suffix}}":
             return (float(self.p), np.asarray(self.vec), np.asarray(self.mat), self.func, self.kwargs)
         return (float(self.p), np.asarray(self.vec), np.asarray(self.mat))
 
@@ -252,7 +260,7 @@ cdef class DistanceMetric{{name_suffix}}:
         self.p = state[0]
         self.vec = ReadonlyArrayWrapper(state[1])
         self.mat = ReadonlyArrayWrapper(state[2])
-        if self.__class__.__name__ == "PyFuncDistance":
+        if self.__class__.__name__ == "PyFuncDistance{{name_suffix}}":
             self.func = state[3]
             self.kwargs = state[4]
         self.size = self.vec.shape[0]
@@ -270,39 +278,39 @@ cdef class DistanceMetric{{name_suffix}}:
         **kwargs
             additional arguments will be passed to the requested metric
         """
-        if isinstance(metric, DistanceMetric):
+        if isinstance(metric, DistanceMetric{{name_suffix}}):
             return metric
 
         if callable(metric):
-            return PyFuncDistance(metric, **kwargs)
+            return PyFuncDistance{{name_suffix}}(metric, **kwargs)
 
         # Map the metric string ID to the metric class
-        if isinstance(metric, type) and issubclass(metric, DistanceMetric):
+        if isinstance(metric, type) and issubclass(metric, DistanceMetric{{name_suffix}}):
             pass
         else:
             try:
-                metric = METRIC_MAPPING[metric]
+                metric = METRIC_MAPPING{{name_suffix}}[metric]
             except:
                 raise ValueError("Unrecognized metric '%s'" % metric)
 
         # In Minkowski special cases, return more efficient methods
-        if metric is MinkowskiDistance:
+        if metric is MinkowskiDistance{{name_suffix}}:
             p = kwargs.pop('p', 2)
             w = kwargs.pop('w', None)
             if p == 1 and w is None:
-                return ManhattanDistance(**kwargs)
+                return ManhattanDistance{{name_suffix}}(**kwargs)
             elif p == 2 and w is None:
-                return EuclideanDistance(**kwargs)
+                return EuclideanDistance{{name_suffix}}(**kwargs)
             elif np.isinf(p) and w is None:
-                return ChebyshevDistance(**kwargs)
+                return ChebyshevDistance{{name_suffix}}(**kwargs)
             else:
-                return MinkowskiDistance(p, w, **kwargs)
+                return MinkowskiDistance{{name_suffix}}(p, w, **kwargs)
         else:
             return metric(**kwargs)
 
     def __init__(self):
-        if self.__class__ is DistanceMetric:
-            raise NotImplementedError("DistanceMetric is an abstract class")
+        if self.__class__ is DistanceMetric{{name_suffix}}:
+            raise NotImplementedError("DistanceMetric{{name_suffix}} is an abstract class")
 
     def _validate_data(self, X):
         """Validate the input data.
@@ -484,7 +492,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
        D(x, y) = \sqrt{ \sum_i \frac{ (x_i - y_i) ^ 2}{V_i} }
     """
     def __init__(self, V):
-        self.vec = ReadonlyArrayWrapper(np.asarray(V, dtype=DTYPE))
+        self.vec = ReadonlyArrayWrapper(np.asarray(V, dtype={{DTYPE}}))
         self.size = self.vec.shape[0]
         self.p = 2
 
@@ -616,7 +624,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             self.vec = ReadonlyArrayWrapper(w_array)
             self.size = self.vec.shape[0]
         else:
-            self.vec = ReadonlyArrayWrapper(np.asarray([], dtype=DTYPE))
+            self.vec = ReadonlyArrayWrapper(np.asarray([], dtype={{DTYPE}}))
             self.size = 0
 
     def _validate_data(self, X):
@@ -691,7 +699,7 @@ cdef class WMinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             raise ValueError("WMinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
-        self.vec = ReadonlyArrayWrapper(np.asarray(w, dtype=DTYPE))
+        self.vec = ReadonlyArrayWrapper(np.asarray(w, dtype={{DTYPE}}))
         self.size = self.vec.shape[0]
 
     def _validate_data(self, X):
@@ -1240,7 +1248,7 @@ cdef class DatasetsPair{{name_suffix}}:
         Y,
         str metric="euclidean",
         dict metric_kwargs=None,
-    ) -> DatasetsPair:
+    ) -> DatasetsPair{{name_suffix}}:
         """Return the DatasetsPair implementation for the given arguments.
 
         Parameters
@@ -1270,15 +1278,15 @@ cdef class DatasetsPair{{name_suffix}}:
             The suited DatasetsPair implementation.
         """
         cdef:
-            DistanceMetric distance_metric = DistanceMetric.get_metric(
+            DistanceMetric{{name_suffix}} distance_metric = DistanceMetric{{name_suffix}}.get_metric(
                 metric,
                 **(metric_kwargs or {})
             )
 
-        if not(X.dtype == Y.dtype == np.float64):
+        if not(X.dtype == Y.dtype == np.float{{bitness}}):
             raise ValueError(
-                f"Only 64bit float datasets are supported at this time, "
-                f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}"
+                f"Datasets must be of np.float{{bitness}} type. "
+                f"Currently: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
             )
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
@@ -1289,9 +1297,9 @@ cdef class DatasetsPair{{name_suffix}}:
         if issparse(X) or issparse(Y):
             raise ValueError("Only dense datasets are supported for X and Y.")
 
-        return DenseDenseDatasetsPair(X, Y, distance_metric)
+        return DenseDenseDatasetsPair{{name_suffix}}(X, Y, distance_metric)
 
-    def __init__(self, DistanceMetric distance_metric):
+    def __init__(self, DistanceMetric{{name_suffix}} distance_metric):
         self.distance_metric = distance_metric
 
     cdef ITYPE_t n_samples_X(self) nogil:

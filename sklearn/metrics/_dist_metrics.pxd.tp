@@ -1,8 +1,15 @@
 {{py:
 
-dtypes = [
-    ('', 'DTYPE_t'),
-    ('32', 'np.float32_t'),
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, bitness, DTYPE_t, DTYPE
+    #
+    # We use an empty string as to still be able to expose the same
+    # API for the reference 64bit implementations.
+    #
+    ('', '64', 'DTYPE_t', 'DTYPE'),
+    ('32', '32', 'np.float32_t', 'np.float32')
 ]
 
 }}
@@ -11,7 +18,7 @@ from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 
-{{for name_suffix, DTYPE_t in dtypes}}
+{{for name_suffix, bitness, DTYPE_t, DTYPE in implementation_specific_values}}
 
 ######################################################################
 # Inline distance functions
