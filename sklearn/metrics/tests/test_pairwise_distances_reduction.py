@@ -30,7 +30,7 @@ CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
 ]
 
 
-def _get_dummy_metric_params_list(metric: str, n_features: int):
+def _get_metric_params_list(metric: str, n_features: int):
     """Return list of dummy DistanceMetric kwargs for tests."""
 
     # Distinguishing on cases not to compute unneeded datastructures.
@@ -345,7 +345,7 @@ def test_strategies_consistency(
         parameter,
         metric=metric,
         # Taking the first
-        metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
+        metric_kwargs=_get_metric_params_list(metric, n_features)[0],
         # To be sure to use parallelization
         chunk_size=n_samples // 4,
         strategy="parallel_on_X",
@@ -358,7 +358,7 @@ def test_strategies_consistency(
         parameter,
         metric=metric,
         # Taking the first
-        metric_kwargs=_get_dummy_metric_params_list(metric, n_features)[0],
+        metric_kwargs=_get_metric_params_list(metric, n_features)[0],
         # To be sure to use parallelization
         chunk_size=n_samples // 4,
         strategy="parallel_on_Y",
@@ -400,7 +400,7 @@ def test_pairwise_distances_argkmin(
         X = np.ascontiguousarray(X[:, :2])
         Y = np.ascontiguousarray(Y[:, :2])
 
-    metric_kwargs = _get_dummy_metric_params_list(metric, n_features)[0]
+    metric_kwargs = _get_metric_params_list(metric, n_features)[0]
 
     # Reference for argkmin results
     if metric == "euclidean":
