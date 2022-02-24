@@ -620,7 +620,7 @@ Changelog
   :pr:`22508` by :user:`Chris Combs <combscCode>`.
 
 - |Fix| :meth:`multiclass.OneVsOneClassifier.predict` returns correct predictions when
-  the inner classifier only has a :term:`predict_proba`. :pr:`xxxxx` by `Thomas Fan`_.
+  the inner classifier only has a :term:`predict_proba`. :pr:`22604` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
 ........................
