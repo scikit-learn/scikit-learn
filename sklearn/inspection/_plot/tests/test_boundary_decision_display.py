@@ -35,8 +35,6 @@ def fitted_clf():
 
 def test_check_boundary_response_method_auto():
     class A:
-        classes_ = [0, 1]
-
         def decision_function(self):
             pass
 
@@ -45,8 +43,6 @@ def test_check_boundary_response_method_auto():
     assert method == a_inst.decision_function
 
     class B:
-        classes_ = [0, 1]
-
         def predict_proba(self):
             pass
 
@@ -55,8 +51,6 @@ def test_check_boundary_response_method_auto():
     assert method == b_inst.predict_proba
 
     class C:
-        classes_ = [0, 1]
-
         def predict_proba(self):
             pass
 
@@ -68,8 +62,6 @@ def test_check_boundary_response_method_auto():
     assert method == c_inst.decision_function
 
     class D:
-        classes_ = [0, 1]
-
         def predict(self):
             pass
 

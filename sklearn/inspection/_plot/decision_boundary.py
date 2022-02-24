@@ -25,7 +25,7 @@ def _check_boundary_response_method(estimator, response_method):
     prediction_method: callable
         Prediction method of estimator.
     """
-    if len(estimator.classes_) > 2:
+    if hasattr(estimator, "classes_") and len(estimator.classes_) > 2:
         if response_method not in {"auto", "predict"}:
             msg = (
                 "Multiclass classifiers are only supported when response_method is"
