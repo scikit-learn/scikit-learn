@@ -60,6 +60,7 @@ class InductiveClusterer(BaseEstimator):
         self.classifier_ = clone(self.classifier)
         y = self.clusterer_.fit_predict(X)
         self.classifier_.fit(X, y)
+        self.classes_ = self.classifier_.classes_
         return self
 
     @available_if(_classifier_has("predict"))
