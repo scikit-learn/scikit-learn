@@ -31,7 +31,7 @@ digits = datasets.load_digits()
 # Thus, we will get a final data array of shape (n_images, n_pixels)
 n_samples = len(digits.images)
 X = digits.images.reshape((n_samples, -1))
-y = digits.target
+y = digits.target == 7
 print(
     f"The number of images is {X.shape[0]} and each image contains {X.shape[1]} pixels"
 )
@@ -56,7 +56,7 @@ tuned_parameters = [
     {"kernel": ["linear"], "C": [1, 10, 100, 1000]},
 ]
 
-scores = ["precision_macro", "recall_macro"]
+scores = ["precision", "recall"]
 
 # %%
 # We can also define a function that will implement the strategy to use to
@@ -71,6 +71,17 @@ scores = ["precision_macro", "recall_macro"]
 # Note that these choices are completely arbitrary.
 import pandas as pd
 
+def print_dataframe(filtered_cv_results):
+    """Pretty print for filtered dataframe"""
+    for score in scores:
+        print(f"\nGrid scores on development set using {score}:\n")
+        for mean, std, params in zip(
+            filtered_cv_results[f"mean_test_{score}"],
+            filtered_cv_results[f"std_test_{score}"],
+            filtered_cv_results["params"],
+        ):
+            print(f"{mean:0.3f} (+/-{std * 2:0.03f}) for {params}")
+    
 
 def refit_strategy(cv_results):
     """Define the strategy to select the best estimator.
@@ -92,60 +103,57 @@ def refit_strategy(cv_results):
     """
     # print the info about the grid-search for the different scores
     precision_threshold = 0.98
-    for score in scores:
-        print(f"\nGrid scores on development set using {score}:\n")
-        for mean, std, params in zip(
-            cv_results[f"mean_test_{score}"],
-            cv_results[f"std_test_{score}"],
-            cv_results["params"],
-        ):
-            print(f"{mean:0.3f} (+/-{std * 2:0.03f}) for {params}")
 
     cv_results_ = pd.DataFrame(cv_results)
+    print(f"\nModels with a precision higher than {precision_threshold}:")
+    print_dataframe(cv_results_)
 
     # Filter-out all results below the threshold
-    cv_results_ = cv_results_[
-        cv_results_["mean_test_precision_macro"] > precision_threshold
+    high_precision_cv_results = cv_results_[
+        cv_results_["mean_test_precision"] > precision_threshold
     ]
 
-    cv_results_ = cv_results_[
+    high_precision_cv_results = high_precision_cv_results[
         [
             "mean_score_time",
-            "mean_test_recall_macro",
-            "mean_test_precision_macro",
-            "rank_test_recall_macro",
-            "rank_test_precision_macro",
+            "mean_test_recall",
+            "std_test_recall",
+            "mean_test_precision",
+            "std_test_precision",
+            "rank_test_recall",
+            "rank_test_precision",
+            "params"
         ]
     ]
 
     # Select the most performant models in terms of recall
     # (within 1 sigma from the best)
-    mask_best_recall = cv_results_["rank_test_recall_macro"] == 1
-    best_recall_std = cv_results_.std()["mean_test_recall_macro"]
-    best_recall_index = cv_results_.loc[
-        mask_best_recall, "mean_test_recall_macro"
-    ].idxmin()
-    best_recall = cv_results_.loc[best_recall_index, "mean_test_recall_macro"]
+    best_recall_std = high_precision_cv_results["mean_test_recall"].std()
+    best_recall = high_precision_cv_results["mean_test_recall"].max()
     best_recall_threshold = best_recall - best_recall_std
 
-    cv_results_ = cv_results_[
-        cv_results_["mean_test_recall_macro"] > best_recall_threshold
+    high_recall_cv_results = high_precision_cv_results[
+        high_precision_cv_results["mean_test_recall"] > best_recall_threshold
     ]
     print(
-        "The following models are the most performance in terms of "
-        f"recall:\n\n {cv_results_}"
+        "Out of the previously selected high precision models, we find the highest\n"
+        "recall model and also keep other models without one standard deviation of\n"
+        "this model: "
     )
+    print_dataframe(high_recall_cv_results)
 
     # From the best candidates, select the fastest model to predict
-    best_index = cv_results_.idxmin(axis="rows")["mean_score_time"]
+    fastest_top_recall_high_precision_index = \
+        high_recall_cv_results["mean_score_time"].idxmin()
 
     print(
-        "\nWe selected the model with the following parameters which maximize"
-        " the performance metric and minimize the scoring time:\n\n"
-        f"{cv_results_.loc[best_index]}"
+        "\nThe selected final model is the fastest to predict out of the previously\n"
+        "selected subset of best models based on precision and recall.\n"
+        "Its scoring time is:\n\n"
+        f"{high_recall_cv_results.loc[fastest_top_recall_high_precision_index]}"
     )
 
-    return best_index
+    return fastest_top_recall_high_precision_index
 
 
 # %%
