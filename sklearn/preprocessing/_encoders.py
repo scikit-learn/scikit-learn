@@ -385,14 +385,7 @@ class OneHotEncoder(_BaseEncoder):
                 )
             )
             raise ValueError(msg)
-        if isinstance(
-            self.feature_name_combiner, str
-        ) and self.feature_name_combiner not in ("concat_string"):
-            msg = (
-                "feature_name_combiner should be either 'concat_string' or callable,"
-                " got {0}.".format(self.handle_unknown)
-            )
-            raise ValueError(msg)
+        self._get_feature_name_combiner()  # call to force the validation
 
     def _compute_drop_idx(self):
         if self.drop is None:

@@ -222,6 +222,19 @@ def test_one_hot_encoder_custom_feature_name_combiner(get_names):
     assert_array_equal(["a_'None'", "a_None"], feature_names)
 
 
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_one_hot_encoder_invalid_feature_name_combiner(get_names):
+    enc = OneHotEncoder(feature_name_combiner="invalid_preset")
+    X = np.array([[1, 2]], dtype=object).T
+    with pytest.raises(
+        ValueError,
+        match="feature_name_combiner has to be either 'concat_string' or callable,*",
+    ):
+        enc.fit(X)
+
+
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
     oh = OneHotEncoder()
