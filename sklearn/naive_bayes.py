@@ -530,7 +530,8 @@ class _BaseDiscreteNB(_BaseNB):
         X : array-like of shape (n_samples, n_features)
             The input samples.
         Y : array-like of shape (n_samples, n_classes)
-            Binarized class labels."""
+            Binarized class labels.
+        """
 
     @abstractmethod
     def _update_feature_log_prob(self, alpha):
