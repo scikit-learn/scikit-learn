@@ -542,7 +542,9 @@ class _BaseDiscreteNB(_BaseNB):
 
         Parameters
         ----------
-        alpha : smoothing parameter. See :meth:`_check_alpha`."""
+        alpha : float
+            smoothing parameter. See :meth:`_check_alpha`.
+        """
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
