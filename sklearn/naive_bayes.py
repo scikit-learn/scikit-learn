@@ -515,6 +515,7 @@ class _BaseDiscreteNB(_BaseNB):
     _update_feature_log_prob(alpha)
     _count(X, Y)
     """
+
     @abstractmethod
     def _count(self, X, Y):
         """Update counts that are used to calculate probabilities.
