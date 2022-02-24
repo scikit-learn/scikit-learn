@@ -42,29 +42,30 @@ VALID_METRICS = dict(
     kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
-    brute=(
-        list(PAIRWISE_DISTANCE_FUNCTIONS.keys())
-        + [
-            "braycurtis",
-            "canberra",
-            "chebyshev",
-            "correlation",
-            "cosine",
-            "dice",
-            "hamming",
-            "jaccard",
-            "kulsinski",
-            "mahalanobis",
-            "matching",
-            "minkowski",
-            "rogerstanimoto",
-            "russellrao",
-            "seuclidean",
-            "sokalmichener",
-            "sokalsneath",
-            "sqeuclidean",
-            "yule",
-        ]
+    brute=list(
+        set(PAIRWISE_DISTANCE_FUNCTIONS.keys()).union(
+            [
+                "braycurtis",
+                "canberra",
+                "chebyshev",
+                "correlation",
+                "cosine",
+                "dice",
+                "hamming",
+                "jaccard",
+                "kulsinski",
+                "mahalanobis",
+                "matching",
+                "minkowski",
+                "rogerstanimoto",
+                "russellrao",
+                "seuclidean",
+                "sokalmichener",
+                "sokalsneath",
+                "sqeuclidean",
+                "yule",
+            ]
+        )
     ),
 )
 

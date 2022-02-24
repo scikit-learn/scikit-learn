@@ -2033,3 +2033,8 @@ def test_neighbors_distance_metric_deprecation():
         dist_metric = DistanceMetric.get_metric("euclidean")
 
     assert isinstance(dist_metric, ActualDistanceMetric)
+
+
+def test_valid_metrics_has_no_duplicate():
+    for val in neighbors.VALID_METRICS.values():
+        assert len(val) == len(set(val))
