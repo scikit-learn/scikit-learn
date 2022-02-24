@@ -594,8 +594,8 @@ Changelog
 ............................
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to :class:`preprocessing.OneHotEncoder`.
-  This allows specifiying a custom callable to create feature names out of (encoded_feature_name, category)
-  tuple.
+  This specifies a custom callable to create feature names out with arguments:
+  (input_feature, category).
   :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
 
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
