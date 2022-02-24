@@ -112,6 +112,9 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
+  :pr:`22606` by `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
