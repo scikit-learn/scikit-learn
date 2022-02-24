@@ -1555,9 +1555,12 @@ functions or non-estimator constructors.
         generally be interpreted as ``n_jobs=1``, unless the current
         :class:`joblib.Parallel` backend context specifies otherwise.
 
+        Note that even if ``n_jobs=1``, low-level parallelism (via Numpy and OpenMP)
+        might be used in some configuration.
+
         For more details on the use of ``joblib`` and its interactions with
         scikit-learn, please refer to our :ref:`parallelism notes
-        <parallelism>`.
+        <parallelism>` and :ref:`User Guide <computing>`.
 
     ``pos_label``
         Value with which positive labels must be encoded in binary
