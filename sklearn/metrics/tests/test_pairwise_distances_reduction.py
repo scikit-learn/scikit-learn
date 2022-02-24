@@ -373,7 +373,7 @@ def test_strategies_consistency(
     )
 
 
-# Concrete PairwiseDistancesReductions tests
+# "Concrete PairwiseDistancesReductions"-specific tests
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
@@ -431,6 +431,75 @@ def test_pairwise_distances_argkmin(
 
     ASSERT_RESULT[PairwiseDistancesArgKmin](
         argkmin_distances, argkmin_distances_ref, argkmin_indices, argkmin_indices_ref
+    )
+
+
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+@pytest.mark.parametrize("n_features", [50, 500])
+@pytest.mark.parametrize("translation", [0, 1e6])
+@pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
+@pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
+def test_pairwise_distances_radius_neighbors(
+    n_features,
+    translation,
+    metric,
+    strategy,
+    n_samples=100,
+    dtype=np.float64,
+):
+    rng = np.random.RandomState(0)
+    spread = 1000
+    radius = spread * np.log(n_features)
+    X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        X = np.ascontiguousarray(X[:, :2])
+        Y = np.ascontiguousarray(Y[:, :2])
+
+    metric_kwargs = _get_metric_params_list(metric, n_features)[0]
+
+    # Reference for argkmin results
+    if metric == "euclidean":
+        # Compare to scikit-learn GEMM optimized implementation
+        dist_matrix = euclidean_distances(X, Y)
+    else:
+        dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
+
+    # Getting the neighbors for a given radius
+    neigh_indices_ref = []
+    neigh_distances_ref = []
+
+    for row in dist_matrix:
+        ind = np.arange(row.shape[0])[row <= radius]
+        dist = row[ind]
+
+        sort = np.argsort(dist)
+        ind, dist = ind[sort], dist[sort]
+
+        neigh_indices_ref.append(ind)
+        neigh_distances_ref.append(dist)
+
+    neigh_indices_ref = np.array(neigh_indices_ref)
+    neigh_distances_ref = np.array(neigh_distances_ref)
+
+    neigh_distances, neigh_indices = PairwiseDistancesRadiusNeighborhood.compute(
+        X,
+        Y,
+        radius,
+        metric=metric,
+        metric_kwargs=metric_kwargs,
+        return_distance=True,
+        # So as to have more than a chunk, forcing parallelism.
+        chunk_size=n_samples // 4,
+        strategy=strategy,
+        sort_results=True,
+    )
+
+    ASSERT_RESULT[PairwiseDistancesRadiusNeighborhood](
+        neigh_distances, neigh_distances_ref, neigh_indices, neigh_indices_ref
     )
 
 
