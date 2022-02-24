@@ -123,7 +123,7 @@ def refit_strategy(cv_results):
             "std_test_precision",
             "rank_test_recall",
             "rank_test_precision",
-            "params"
+            "params",
         ]
     ]
 
@@ -144,8 +144,9 @@ def refit_strategy(cv_results):
     print_dataframe(high_recall_cv_results)
 
     # From the best candidates, select the fastest model to predict
-    fastest_top_recall_high_precision_index = \
-        high_recall_cv_results["mean_score_time"].idxmin()
+    fastest_top_recall_high_precision_index = high_recall_cv_results[
+        "mean_score_time"
+    ].idxmin()
 
     print(
         "\nThe selected final model is the fastest to predict out of the previously\n"
