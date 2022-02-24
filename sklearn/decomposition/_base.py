@@ -11,12 +11,14 @@
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
 
-class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
+class _BasePCA(
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, metaclass=ABCMeta
+):
     """Base class for PCA methods.
 
     Warning: This class should not be used directly.
@@ -60,7 +62,8 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         # handle corner cases first
         if self.n_components_ == 0:
             return np.eye(n_features) / self.noise_variance_
-        if self.n_components_ == n_features:
+
+        if np.isclose(self.noise_variance_, 0.0, atol=0.0):
             return linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
@@ -72,7 +75,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         precision = np.dot(components_, components_.T) / self.noise_variance_
         precision.flat[:: len(precision) + 1] += 1.0 / exp_var_diff
         precision = np.dot(components_.T, np.dot(linalg.inv(precision), components_))
-        precision /= -(self.noise_variance_ ** 2)
+        precision /= -(self.noise_variance_**2)
         precision.flat[:: len(precision) + 1] += 1.0 / self.noise_variance_
         return precision
 
@@ -154,3 +157,8 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             )
         else:
             return np.dot(X, self.components_) + self.mean_
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

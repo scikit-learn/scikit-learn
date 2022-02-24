@@ -51,10 +51,10 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """Compute the unnormalized posterior log probability of X
 
         I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
-        shape (n_classes, n_samples).
+        shape (n_samples, n_classes).
 
-        Input is passed to _joint_log_likelihood as-is by predict,
-        predict_proba and predict_log_proba.
+        predict, predict_proba, and predict_log_proba pass the input through
+        _check_X and handle it over to _joint_log_likelihood.
         """
 
     @abstractmethod
@@ -140,7 +140,7 @@ class GaussianNB(_BaseNB):
     Parameters
     ----------
     priors : array-like of shape (n_classes,)
-        Prior probabilities of the classes. If specified the priors are not
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
     var_smoothing : float, default=1e-9
@@ -423,13 +423,13 @@ class GaussianNB(_BaseNB):
             # Take into account the priors
             if self.priors is not None:
                 priors = np.asarray(self.priors)
-                # Check that the provide prior match the number of classes
+                # Check that the provided prior matches the number of classes
                 if len(priors) != n_classes:
                     raise ValueError("Number of priors must match number of classes.")
                 # Check that the sum is 1
                 if not np.isclose(priors.sum(), 1.0):
                     raise ValueError("The sum of the priors should be 1.")
-                # Check that the prior are non-negative
+                # Check that the priors are non-negative
                 if (priors < 0).any():
                     raise ValueError("Priors must be non-negative.")
                 self.class_prior_ = priors
@@ -523,6 +523,12 @@ class _BaseDiscreteNB(_BaseNB):
         return self._validate_data(X, y, accept_sparse="csr", reset=reset)
 
     def _update_class_log_prior(self, class_prior=None):
+        """Update class log priors.
+
+        The class log priors are based on `class_prior`, class count or the
+        number of classes. This method is called each time `fit` or
+        `partial_fit` update the model.
+        """
         n_classes = len(self.classes_)
         if class_prior is not None:
             if len(class_prior) != n_classes:
@@ -697,32 +703,6 @@ class _BaseDiscreteNB(_BaseNB):
         self.class_count_ = np.zeros(n_classes, dtype=np.float64)
         self.feature_count_ = np.zeros((n_classes, n_features), dtype=np.float64)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `coef_` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def coef_(self):
-        return (
-            self.feature_log_prob_[1:]
-            if len(self.classes_) == 2
-            else self.feature_log_prob_
-        )
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `intercept_` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def intercept_(self):
-        return (
-            self.class_log_prior_[1:]
-            if len(self.classes_) == 2
-            else self.class_log_prior_
-        )
-
     def _more_tags(self):
         return {"poor_score": True}
 
@@ -759,7 +739,7 @@ class MultinomialNB(_BaseDiscreteNB):
         If false, a uniform prior will be used.
 
     class_prior : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. If specified the priors are not
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
     Attributes
@@ -774,14 +754,6 @@ class MultinomialNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
-    coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting `MultinomialNB`
-        as a linear model.
-
-        .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
-
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -790,14 +762,6 @@ class MultinomialNB(_BaseDiscreteNB):
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
-
-    intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` for interpreting `MultinomialNB`
-        as a linear model.
-
-        .. deprecated:: 0.24
-            ``intercept_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
 
     n_features_ : int
         Number of features of each sample.
@@ -823,12 +787,6 @@ class MultinomialNB(_BaseDiscreteNB):
     CategoricalNB : Naive Bayes classifier for categorical features.
     ComplementNB : Complement Naive Bayes classifier.
     GaussianNB : Gaussian Naive Bayes.
-
-    Notes
-    -----
-    For the rationale behind the names `coef_` and `intercept_`, i.e.
-    naive Bayes as a linear classifier, see J. Rennie et al. (2003),
-    Tackling the poor assumptions of naive Bayes text classifiers, ICML.
 
     References
     ----------
@@ -919,14 +877,6 @@ class ComplementNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
-    coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting `ComplementNB`
-        as a linear model.
-
-        .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
-
     feature_all_ : ndarray of shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
@@ -937,14 +887,6 @@ class ComplementNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical weights for class complements.
-
-    intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` for interpreting `ComplementNB`
-        as a linear model.
-
-        .. deprecated:: 0.24
-            ``coef_`` is deprecated in 0.24 and will be removed in 1.1
-            (renaming of 0.26).
 
     n_features_ : int
         Number of features of each sample.
@@ -1052,7 +994,7 @@ class BernoulliNB(_BaseDiscreteNB):
         If false, a uniform prior will be used.
 
     class_prior : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. If specified the priors are not
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
     Attributes
@@ -1067,10 +1009,6 @@ class BernoulliNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
-    coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting `BernoulliNB`
-        as a linear model.
-
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -1078,10 +1016,6 @@ class BernoulliNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
-
-    intercept_ : ndarray of shape (n_classes,)
-        Mirrors ``class_log_prior_`` for interpreting `BernoulliNB`
-        as a linear model.
 
     n_features_ : int
         Number of features of each sample.
@@ -1208,7 +1142,7 @@ class CategoricalNB(_BaseDiscreteNB):
         If false, a uniform prior will be used.
 
     class_prior : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. If specified the priors are not
+        Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
     min_categories : int or array-like of shape (n_features,), default=None

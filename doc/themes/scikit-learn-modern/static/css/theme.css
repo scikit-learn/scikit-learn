@@ -650,14 +650,16 @@ table.longtable tr.row-odd {
   overflow: auto;
 }
 
-code.descname {
+span.descname {
   font-weight: bold;
   background-color: transparent;
   padding: 0;
+  font-family: monospace;
 }
 
-code.descclassname {
+span.descclassname {
   background-color: transparent;
+  font-family: monospace;
 }
 
 .viewcode-link {
@@ -714,8 +716,9 @@ dl.field-list > dt:after {
 
 .classifier::before {
   font-style: normal;
-  margin: 0.3em;
+  margin: 0 0.3em;
   content: ":";
+  display: inline-block;
 }
 
 dd {

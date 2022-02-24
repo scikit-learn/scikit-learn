@@ -101,6 +101,8 @@ def fetch_olivetti_faces(
             Description of the modified Olivetti Faces Dataset.
 
     (data, target) : tuple if `return_X_y=True`
+        Tuple with the `data` and `target` objects described above.
+
         .. versionadded:: 0.22
     """
     data_home = get_data_home(data_home=data_home)

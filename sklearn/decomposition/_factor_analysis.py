@@ -25,14 +25,14 @@ import numpy as np
 from scipy import linalg
 
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
-class FactorAnalysis(TransformerMixin, BaseEstimator):
+class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Factor Analysis (FA).
 
     A simple linear generative model with Gaussian latent variables.
@@ -176,11 +176,6 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-        if svd_method not in ["lapack", "randomized"]:
-            raise ValueError(
-                "SVD method %s is not supported. Please consider the documentation"
-                % svd_method
-            )
         self.svd_method = svd_method
 
         self.noise_variance_init = noise_variance_init
@@ -204,6 +199,13 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self : object
             FactorAnalysis class instance.
         """
+
+        if self.svd_method not in ["lapack", "randomized"]:
+            raise ValueError(
+                f"SVD method {self.svd_method!r} is not supported. Possible methods "
+                "are either 'lapack' or 'randomized'."
+            )
+
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
@@ -283,7 +285,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
                 break
             old_ll = ll
 
-            psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
+            psi = np.maximum(var - np.sum(W**2, axis=0), SMALL)
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
@@ -426,6 +428,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         else:
             raise ValueError("'method' must be in %s, not %s" % (implemented, method))
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
 
 def _ortho_rotation(components, method="varimax", tol=1e-6, max_iter=100):
     """Return rotated components."""
@@ -436,10 +443,10 @@ def _ortho_rotation(components, method="varimax", tol=1e-6, max_iter=100):
     for _ in range(max_iter):
         comp_rot = np.dot(components, rotation_matrix)
         if method == "varimax":
-            tmp = comp_rot * np.transpose((comp_rot ** 2).sum(axis=0) / nrow)
+            tmp = comp_rot * np.transpose((comp_rot**2).sum(axis=0) / nrow)
         elif method == "quartimax":
             tmp = 0
-        u, s, v = np.linalg.svd(np.dot(components.T, comp_rot ** 3 - tmp))
+        u, s, v = np.linalg.svd(np.dot(components.T, comp_rot**3 - tmp))
         rotation_matrix = np.dot(u, v)
         var_new = np.sum(s)
         if var != 0 and var_new < var * (1 + tol):

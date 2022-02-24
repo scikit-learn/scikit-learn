@@ -392,15 +392,15 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the confidence scores.
 
         Returns
         -------
-        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
-            Confidence scores per (sample, class) combination. In the binary
-            case, confidence score for self.classes_[1] where >0 means this
-            class would be predicted.
+        scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Confidence scores per `(n_samples, n_classes)` combination. In the
+            binary case, confidence score for `self.classes_[1]` where >0 means
+            this class would be predicted.
         """
         check_is_fitted(self)
 
@@ -414,13 +414,13 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the predictions.
 
         Returns
         -------
-        C : array, shape [n_samples]
-            Predicted class label per sample.
+        y_pred : ndarray of shape (n_samples,)
+            Vector containing the class labels for each sample.
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
@@ -684,13 +684,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = optimize.nnls(X, y)
+                self.coef_ = optimize.nnls(X, y)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
                 )
-                self.coef_, self._residues = map(np.vstack, zip(*outs))
+                self.coef_ = np.vstack([out[0] for out in outs])
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
@@ -705,9 +705,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
             if y.ndim < 2:
-                out = sparse_lsqr(X_centered, y)
-                self.coef_ = out[0]
-                self._residues = out[3]
+                self.coef_ = sparse_lsqr(X_centered, y)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
@@ -715,9 +713,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
-                self._residues = np.vstack([out[3] for out in outs])
         else:
-            self.coef_, self._residues, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

@@ -82,8 +82,8 @@ def _check_targets(y_true, y_pred):
     y_pred : array or indicator matrix
     """
     check_consistent_length(y_true, y_pred)
-    type_true = type_of_target(y_true)
-    type_pred = type_of_target(y_pred)
+    type_true = type_of_target(y_true, input_name="y_true")
+    type_pred = type_of_target(y_pred, input_name="y_pred")
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -303,7 +303,6 @@ def confusion_matrix(
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
-
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -772,6 +771,11 @@ def jaccard_score(
     >>> jaccard_score(y_true[0], y_pred[0])
     0.6666...
 
+    In the 2D comparison case (e.g. image similarity):
+
+    >>> jaccard_score(y_true, y_pred, average="micro")
+    0.6
+
     In the multilabel case:
 
     >>> jaccard_score(y_true, y_pred, average='samples')
@@ -906,8 +910,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     n_correct = np.trace(C, dtype=np.float64)
     n_samples = p_sum.sum()
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
-    cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
-    cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
+    cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
+    cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
     if cov_ypyp * cov_ytyt == 0:
         return 0.0
@@ -1485,12 +1489,15 @@ def precision_recall_fscore_support(
     -------
     precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        Precision score.
 
     recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        Recall score.
 
     fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        F-beta score.
 
     support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
@@ -1563,7 +1570,7 @@ def precision_recall_fscore_support(
         true_sum = np.array([true_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
-    beta2 = beta ** 2
+    beta2 = beta**2
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
@@ -1714,7 +1721,16 @@ def precision_score(
 
     See Also
     --------
-    precision_recall_fscore_support, multilabel_confusion_matrix
+    precision_recall_fscore_support : Compute precision, recall, F-measure and
+        support for each class.
+    recall_score :  Compute the ratio ``tp / (tp + fn)`` where ``tp`` is the
+        number of true positives and ``fn`` the number of false negatives.
+    PrecisionRecallDisplay.from_estimator : Plot precision-recall curve given
+        an estimator and some data.
+    PrecisionRecallDisplay.from_predictions : Plot precision-recall curve given
+        binary class predictions.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
 
     Notes
     -----
@@ -1847,8 +1863,18 @@ def recall_score(
 
     See Also
     --------
-    precision_recall_fscore_support, balanced_accuracy_score,
-    multilabel_confusion_matrix
+    precision_recall_fscore_support : Compute precision, recall, F-measure and
+        support for each class.
+    precision_score : Compute the ratio ``tp / (tp + fp)`` where ``tp`` is the
+        number of true positives and ``fp`` the number of false positives.
+    balanced_accuracy_score : Compute balanced accuracy to deal with imbalanced
+        datasets.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
+    PrecisionRecallDisplay.from_estimator : Plot precision-recall curve given
+        an estimator and some data.
+    PrecisionRecallDisplay.from_predictions : Plot precision-recall curve given
+        binary class predictions.
 
     Notes
     -----
@@ -1925,10 +1951,16 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     Returns
     -------
     balanced_accuracy : float
+        Balanced accuracy score.
 
     See Also
     --------
-    recall_score, roc_auc_score
+    average_precision_score : Compute average precision (AP) from prediction
+        scores.
+    precision_score : Compute the precision score.
+    recall_score : Compute the recall score.
+    roc_auc_score : Compute Area Under the Receiver Operating Characteristic
+        Curve (ROC AUC) from prediction scores.
 
     Notes
     -----
@@ -1955,7 +1987,6 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     >>> y_pred = [0, 1, 0, 0, 0, 1]
     >>> balanced_accuracy_score(y_true, y_pred)
     0.625
-
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -2641,7 +2672,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
         raise ValueError(
             "Only binary classification is supported. The type of the target "

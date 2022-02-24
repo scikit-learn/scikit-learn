@@ -25,7 +25,6 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..utils.deprecation import deprecated
 
 
 def _graph_connected_component(graph, node_id):
@@ -315,8 +314,9 @@ def spectral_embedding(
         # problem.
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
-        # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64, accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
+        )
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # The Laplacian matrix is always singular, having at least one zero
@@ -335,8 +335,9 @@ def spectral_embedding(
 
         M = ml.aspreconditioner()
         # Create initial approximation X to eigenvectors
-        X = random_state.rand(laplacian.shape[0], n_components + 1)
+        X = random_state.standard_normal(size=(laplacian.shape[0], n_components + 1))
         X[:, 0] = dd.ravel()
+        X = X.astype(laplacian.dtype)
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.0e-5, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -346,8 +347,9 @@ def spectral_embedding(
             raise ValueError
 
     if eigen_solver == "lobpcg":
-        # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64, accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
+        )
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
@@ -364,8 +366,11 @@ def spectral_embedding(
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension and create initial
             # approximation X to eigenvectors
-            X = random_state.rand(laplacian.shape[0], n_components + 1)
+            X = random_state.standard_normal(
+                size=(laplacian.shape[0], n_components + 1)
+            )
             X[:, 0] = dd.ravel()
+            X = X.astype(laplacian.dtype)
             _, diffusion_map = lobpcg(
                 laplacian, X, tol=1e-5, largest=False, maxiter=2000
             )
@@ -528,16 +533,6 @@ class SpectralEmbedding(BaseEstimator):
             in ["precomputed", "precomputed_nearest_neighbors"]
         }
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]
-
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
         Parameters
@@ -619,9 +614,7 @@ class SpectralEmbedding(BaseEstimator):
             Returns the instance itself.
         """
 
-        X = self._validate_data(
-            X, accept_sparse="csr", ensure_min_samples=2, estimator=self
-        )
+        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, str):

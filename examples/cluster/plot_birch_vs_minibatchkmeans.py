@@ -5,9 +5,16 @@ Compare BIRCH and MiniBatchKMeans
 
 This example compares the timing of BIRCH (with and without the global
 clustering step) and MiniBatchKMeans on a synthetic dataset having
-100,000 samples and 2 features generated using make_blobs.
+25,000 samples and 2 features generated using make_blobs.
 
-If ``n_clusters`` is set to None, the data is reduced from 100,000
+Both ``MiniBatchKMeans`` and ``BIRCH`` are very scalable algorithms and could
+run efficiently on hundreds of thousands or even millions of datapoints. We
+chose to limit the dataset size of this example in the interest of keeping
+our Continuous Integration resource usage reasonable but the interested
+reader might enjoy editing this script to rerun it with a larger value for
+`n_samples`.
+
+If ``n_clusters`` is set to None, the data is reduced from 25,000
 samples to a set of 158 clusters. This can be viewed as a preprocessing
 step before the final (global) clustering step that further reduces these
 158 clusters to 100 clusters.
@@ -18,6 +25,7 @@ step before the final (global) clustering step that further reduces these
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+from joblib import cpu_count
 from itertools import cycle
 from time import time
 import numpy as np
@@ -32,10 +40,10 @@ from sklearn.datasets import make_blobs
 xx = np.linspace(-22, 22, 10)
 yy = np.linspace(-22, 22, 10)
 xx, yy = np.meshgrid(xx, yy)
-n_centres = np.hstack((np.ravel(xx)[:, np.newaxis], np.ravel(yy)[:, np.newaxis]))
+n_centers = np.hstack((np.ravel(xx)[:, np.newaxis], np.ravel(yy)[:, np.newaxis]))
 
 # Generate blobs to do a comparison between MiniBatchKMeans and BIRCH.
-X, y = make_blobs(n_samples=100000, centers=n_centres, random_state=0)
+X, y = make_blobs(n_samples=25000, centers=n_centers, random_state=0)
 
 # Use all colors that matplotlib provides by default.
 colors_ = cycle(colors.cnames.keys())
@@ -78,7 +86,7 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
 mbk = MiniBatchKMeans(
     init="k-means++",
     n_clusters=100,
-    batch_size=100,
+    batch_size=256 * cpu_count(),
     n_init=10,
     max_no_improvement=10,
     verbose=0,

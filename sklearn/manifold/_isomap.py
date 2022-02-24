@@ -6,10 +6,11 @@ import warnings
 
 import numpy as np
 import scipy
+from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
@@ -18,7 +19,7 @@ from ..utils.graph import _fix_connected_components
 from ..externals._packaging.version import parse as parse_version
 
 
-class Isomap(TransformerMixin, BaseEstimator):
+class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Isomap Embedding.
 
     Non-linear dimensionality reduction through Isometric Mapping
@@ -217,13 +218,14 @@ class Isomap(TransformerMixin, BaseEstimator):
         # Similar fix to cluster._agglomerative._fix_connectivity.
         n_connected_components, labels = connected_components(kng)
         if n_connected_components > 1:
-            if self.metric == "precomputed":
+            if self.metric == "precomputed" and issparse(X):
                 raise RuntimeError(
                     "The number of connected components of the neighbors graph"
                     f" is {n_connected_components} > 1. The graph cannot be "
                     "completed with metric='precomputed', and Isomap cannot be"
                     "fitted. Increase the number of neighbors to avoid this "
-                    "issue."
+                    "issue, or precompute the full distance matrix instead "
+                    "of passing a sparse neighbors graph."
                 )
             warnings.warn(
                 "The number of connected components of the neighbors graph "
@@ -251,10 +253,11 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
 
-        G = self.dist_matrix_ ** 2
+        G = self.dist_matrix_**2
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
+        self._n_features_out = self.embedding_.shape[1]
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.
@@ -276,10 +279,10 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
         """
-        G = -0.5 * self.dist_matrix_ ** 2
+        G = -0.5 * self.dist_matrix_**2
         G_center = KernelCenterer().fit_transform(G)
         evals = self.kernel_pca_.eigenvalues_
-        return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
+        return np.sqrt(np.sum(G_center**2) - np.sum(evals**2)) / G.shape[0]
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.

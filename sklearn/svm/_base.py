@@ -1,7 +1,9 @@
+import warnings
+import numbers
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 import scipy.sparse as sp
-import warnings
-from abc import ABCMeta, abstractmethod
 
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
@@ -15,7 +17,6 @@ from ..utils import check_array, check_random_state
 from ..utils import column_or_1d
 from ..utils import compute_class_weight
 from ..utils.metaestimators import available_if
-from ..utils.deprecation import deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.validation import _num_samples
@@ -98,13 +99,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 "impl should be one of %s, %s was given" % (LIBSVM_IMPL, self._impl)
             )
 
-        if gamma == 0:
-            msg = (
-                "The gamma value of 0.0 is invalid. Use 'auto' to set"
-                " gamma to a value of 1 / n_features."
-            )
-            raise ValueError(msg)
-
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
@@ -124,17 +118,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     def _more_tags(self):
         # Used by cross_val_score.
         return {"pairwise": self.kernel == "precomputed"}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # Used by cross_val_score.
-        return self.kernel == "precomputed"
 
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -242,10 +225,23 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             else:
                 raise ValueError(
                     "When 'gamma' is a string, it should be either 'scale' or "
-                    "'auto'. Got '{}' instead.".format(self.gamma)
+                    f"'auto'. Got '{self.gamma!r}' instead."
                 )
-        else:
+        elif isinstance(self.gamma, numbers.Real):
+            if self.gamma <= 0:
+                msg = (
+                    f"gamma value must be > 0; {self.gamma!r} is invalid. Use"
+                    " a positive number or use 'auto' to set gamma to a"
+                    " value of 1 / n_features."
+                )
+                raise ValueError(msg)
             self._gamma = self.gamma
+        else:
+            msg = (
+                "The gamma value should be set to 'scale', 'auto' or a"
+                f" positive float value. {self.gamma!r} is not a valid option"
+            )
+            raise ValueError(msg)
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:
@@ -265,6 +261,27 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if self._impl in ["c_svc", "nu_svc"] and len(self.classes_) == 2:
             self.intercept_ *= -1
             self.dual_coef_ = -self.dual_coef_
+
+        dual_coef = self._dual_coef_.data if self._sparse else self._dual_coef_
+        intercept_finiteness = np.isfinite(self._intercept_).all()
+        dual_coef_finiteness = np.isfinite(dual_coef).all()
+        if not (intercept_finiteness and dual_coef_finiteness):
+            raise ValueError(
+                "The dual coefficients or intercepts are not finite. "
+                "The input data may contain large values and need to be"
+                "preprocessed."
+            )
+
+        # Since, in the case of SVC and NuSVC, the number of models optimized by
+        # libSVM could be greater than one (depending on the input), `n_iter_`
+        # stores an ndarray.
+        # For the other sub-classes (SVR, NuSVR, and OneClassSVM), the number of
+        # models optimized by libSVM is always one, so `n_iter_` stores an
+        # integer.
+        if self._impl in ["c_svc", "nu_svc"]:
+            self.n_iter_ = self._num_iter
+        else:
+            self.n_iter_ = self._num_iter.item()
 
         return self
 
@@ -312,6 +329,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
+            self._num_iter,
         ) = libsvm.fit(
             X,
             y,
@@ -352,6 +370,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             self.fit_status_,
+            self._num_iter,
         ) = libsvm_sparse.libsvm_sparse_train(
             X.shape[1],
             X.data,
@@ -1132,8 +1151,8 @@ def _fit_liblinear(
     intercept_ : float
         The intercept term added to the vector.
 
-    n_iter_ : int
-        Maximum number of iterations run across all classes.
+    n_iter_ : array of int
+        Number of iterations run across for each class.
     """
     if loss not in ["epsilon_insensitive", "squared_epsilon_insensitive"]:
         enc = LabelEncoder()
@@ -1201,8 +1220,8 @@ def _fit_liblinear(
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports
-    n_iter_ = max(n_iter_)
-    if n_iter_ >= max_iter:
+    n_iter_max = max(n_iter_)
+    if n_iter_max >= max_iter:
         warnings.warn(
             "Liblinear failed to converge, increase the number of iterations.",
             ConvergenceWarning,
