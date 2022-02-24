@@ -1560,7 +1560,7 @@ functions or non-estimator constructors.
 
         For more details on the use of ``joblib`` and its interactions with
         scikit-learn, please refer to our :ref:`parallelism notes
-        <parallelism>` and :ref:`User Guide <computing>`.
+        <parallelism>`.
 
     ``pos_label``
         Value with which positive labels must be encoded in binary
