@@ -120,7 +120,7 @@ def get_namespace(*arrays):
     return _ArrayAPIWrapper(xp), True
 
 
-def expit(X):
+def _expit(X):
     xp, is_array_api = get_namespace(X)
     if not is_array_api:
         return special.expit(X)

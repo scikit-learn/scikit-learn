@@ -21,7 +21,7 @@ from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils.validation import check_is_fitted
-from .utils._array_api import get_namespace, expit
+from .utils._array_api import get_namespace, _expit
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .preprocessing import StandardScaler
@@ -681,7 +681,7 @@ class LinearDiscriminantAnalysis(
         xp, is_array_api = get_namespace(X)
         decision = self.decision_function(X)
         if self.classes_.size == 2:
-            proba = expit(decision)
+            proba = _expit(decision)
             return xp.stack([1 - proba, proba], axis=1)
         else:
             return softmax(decision)
