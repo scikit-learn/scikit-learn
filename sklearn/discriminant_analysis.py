@@ -701,7 +701,15 @@ class LinearDiscriminantAnalysis(
         """
         xp, _ = get_namespace(X)
         prediction = self.predict_proba(X)
-        prediction[prediction == 0.0] += xp.finfo(prediction.dtype).smallest_normal
+
+        info = xp.finfo(prediction.dtype)
+        if hasattr(info, "smallest_normal"):
+            smallest_normal = info.smallest_normal
+        else:
+            # smallest_normal was introduced in NumPy 1.22
+            smallest_normal = info.tiny
+
+        prediction[prediction == 0.0] += smallest_normal
         return xp.log(prediction)
 
     def decision_function(self, X):
