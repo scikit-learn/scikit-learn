@@ -1114,8 +1114,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         """Classes labels."""
         return self._label_binarizer.classes_
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multilabel": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
@@ -2434,8 +2435,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         super().fit(X, target, sample_weight=sample_weight)
         return self
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "multilabel": True,
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
@@ -2443,3 +2444,4 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
                 ),
             },
         }
+        return {**super().__sklearn_tags__(), **more_tags}

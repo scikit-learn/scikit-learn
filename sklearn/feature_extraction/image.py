@@ -564,5 +564,6 @@ class PatchExtractor(BaseEstimator):
             )
         return patches
 
-    def _more_tags(self):
-        return {"X_types": ["3darray"]}
+    def __sklearn_tags__(self):
+        more_tags = {"X_types": ["3darray"]}
+        return {**super().__sklearn_tags__(), **more_tags}

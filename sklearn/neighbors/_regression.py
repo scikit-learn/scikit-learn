@@ -176,9 +176,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         )
         self.weights = weights
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         # For cross-validation routines to split data correctly
-        return {"pairwise": self.metric == "precomputed"}
+        more_tags = {"pairwise": self.metric == "precomputed"}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def fit(self, X, y):
         """Fit the k-nearest neighbors regressor from the training dataset.

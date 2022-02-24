@@ -1744,16 +1744,17 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.n_iter_ = model.n_iter_
         return self
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         # Note: check_sample_weights_invariance(kind='ones') should work, but
         # currently we can only mark a whole test as xfail.
-        return {
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
             }
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class LassoCV(RegressorMixin, LinearModelCV):
@@ -1974,8 +1975,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return False
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        more_tags = {"multioutput": False}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
@@ -2222,8 +2224,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return False
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        more_tags = {"multioutput": False}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 ###############################################################################
@@ -2486,8 +2489,9 @@ class MultiTaskElasticNet(Lasso):
         # return self for chaining fit and predict calls
         return self
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multioutput_only": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -2868,8 +2872,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return True
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multioutput_only": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).
@@ -3104,8 +3109,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return True
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multioutput_only": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).

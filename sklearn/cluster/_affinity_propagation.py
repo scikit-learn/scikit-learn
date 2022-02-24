@@ -427,8 +427,9 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.affinity = affinity
         self.random_state = random_state
 
-    def _more_tags(self):
-        return {"pairwise": self.affinity == "precomputed"}
+    def __sklearn_tags__(self):
+        more_tags = {"pairwise": self.affinity == "precomputed"}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def fit(self, X, y=None):
         """Fit the clustering from features, or affinity matrix.

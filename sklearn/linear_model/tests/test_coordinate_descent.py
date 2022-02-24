@@ -457,7 +457,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
         StandardScaler(), LinearModel(normalize=False, fit_intercept=True, **params)
     )
 
-    is_multitask = model_normalize._get_tags()["multioutput_only"]
+    is_multitask = model_normalize.__sklearn_tags__()["multioutput_only"]
 
     # prepare the data
     n_samples, n_features = 100, 2

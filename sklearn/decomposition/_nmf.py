@@ -1376,8 +1376,9 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.shuffle = shuffle
         self.regularization = regularization
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_positive_X": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def _check_params(self, X):
         # n_components

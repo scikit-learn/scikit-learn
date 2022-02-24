@@ -185,5 +185,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         return X
 
-    def _more_tags(self):
-        return {"X_types": [self.input_type]}
+    def __sklearn_tags__(self):
+        more_tags = {"X_types": [self.input_type]}
+        return {**super().__sklearn_tags__(), **more_tags}

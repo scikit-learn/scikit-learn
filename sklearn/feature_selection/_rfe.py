@@ -227,7 +227,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        tags = self._get_tags()
+        tags = self.__sklearn_tags__()
         X, y = self._validate_data(
             X,
             y,
@@ -426,12 +426,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "poor_score": True,
             "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
             "requires_y": True,
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class RFECV(RFE):
@@ -657,7 +658,7 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
-        tags = self._get_tags()
+        tags = self.__sklearn_tags__()
         X, y = self._validate_data(
             X,
             y,

@@ -126,5 +126,6 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
         return self.variances_ > self.threshold
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        more_tags = {"allow_nan": True}
+        return {**super().__sklearn_tags__(), **more_tags}

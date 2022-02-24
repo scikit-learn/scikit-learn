@@ -371,8 +371,9 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         else:
             self.intercept_ = 0.0
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_y": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.

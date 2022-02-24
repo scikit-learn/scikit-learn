@@ -295,5 +295,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         """Return True since FunctionTransfomer is stateless."""
         return True
 
-    def _more_tags(self):
-        return {"no_validation": not self.validate, "stateless": True}
+    def __sklearn_tags__(self):
+        more_tags = {"no_validation": not self.validate, "stateless": True}
+        return {**super().__sklearn_tags__(), **more_tags}

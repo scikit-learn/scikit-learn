@@ -149,8 +149,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         names, estimators = zip(*self.estimators)
         return _VisualBlock("parallel", estimators, names=names)
 
-    def _more_tags(self):
-        return {"preserves_dtype": []}
+    def __sklearn_tags__(self):
+        more_tags = {"preserves_dtype": []}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):

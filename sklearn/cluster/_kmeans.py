@@ -1390,14 +1390,15 @@ class KMeans(
             X, sample_weight, x_squared_norms, self.cluster_centers_, self._n_threads
         )[1]
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
             },
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 def _mini_batch_step(
@@ -2147,11 +2148,12 @@ class MiniBatchKMeans(KMeans):
 
         return labels
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
             }
         }
+        return {**super().__sklearn_tags__(), **more_tags}

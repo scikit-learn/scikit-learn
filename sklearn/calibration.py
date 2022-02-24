@@ -456,8 +456,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "Due to the cross-validation and sample ordering, removing a sample"
@@ -466,6 +466,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 ),
             }
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 def _fit_classifier_calibrator_pair(

@@ -703,8 +703,9 @@ class _BaseDiscreteNB(_BaseNB):
         self.class_count_ = np.zeros(n_classes, dtype=np.float64)
         self.feature_count_ = np.zeros((n_classes, n_features), dtype=np.float64)
 
-    def _more_tags(self):
-        return {"poor_score": True}
+    def __sklearn_tags__(self):
+        more_tags = {"poor_score": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
@@ -813,8 +814,9 @@ class MultinomialNB(_BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_positive_X": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -940,8 +942,9 @@ class ComplementNB(_BaseDiscreteNB):
         self.class_prior = class_prior
         self.norm = norm
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_positive_X": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def _count(self, X, Y):
         """Count feature occurrences."""
@@ -1303,8 +1306,9 @@ class CategoricalNB(_BaseDiscreteNB):
         """
         return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_positive_X": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
