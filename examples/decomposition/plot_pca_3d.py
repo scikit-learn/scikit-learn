@@ -54,9 +54,10 @@ b /= norm
 # #############################################################################
 # Plot the figures
 def plot_figs(fig_num, elev, azim):
-    fig = plt.figure(fig_num, figsize=(6, 4.5))
+    fig = plt.figure(fig_num, figsize=(4, 3))
     plt.clf()
     ax = fig.add_subplot(111, projection="3d", elev=elev, azim=azim)
+    ax.set_position([0, 0, 0.95, 1])
 
     ax.scatter(a[::10], b[::10], c[::10], c=density[::10], marker="+", alpha=0.4)
     Y = np.c_[a, b, c]
