@@ -20,6 +20,7 @@ from datetime import datetime
 from packaging.version import parse
 from pathlib import Path
 from io import StringIO
+from docutils.parsers.rst.directives.body import CodeBlock
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -508,6 +509,17 @@ def setup(app):
     # to hide/show the prompt in code examples:
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
+
+    # Use a normal code block for `plot` when plot directive is not installed
+    if "matplotlib.sphinxext.plot_directive" not in extensions:
+        ignored_options = {"context": str}
+
+        class CustomCodeBlock(CodeBlock):
+            """Custom codeblock used in place of plot"""
+
+            option_spec = {**CodeBlock.option_spec, **ignored_options}
+
+        app.add_directive("plot", CustomCodeBlock)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
