@@ -308,8 +308,6 @@ class DecisionBoundaryDisplay:
                 [class_name_to_idx[target] for target in response], dtype=np.int32
             )
 
-        # TODO: Check for multi-label classifier, a multi-output multiclass
-        # classifier or a multioutput regressor and error.
         if response.ndim != 1:
             if is_regressor(estimator):
                 raise ValueError("Multi-output regressors are not supported")
