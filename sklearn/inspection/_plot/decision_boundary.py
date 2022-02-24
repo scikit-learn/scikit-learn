@@ -18,7 +18,7 @@ def _check_boundary_response_method(estimator, response_method):
         Specifies whether to use :term:`predict_proba`,
         :term:`decision_function`, :term:`predict` as the target response.
         If set to 'auto', the response method is tried in the following order:
-        :term:`predict_proba`, :term:`decision_function`, :term:`predict`.
+        :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
 
     Returns
     -------
@@ -204,7 +204,7 @@ class DecisionBoundaryDisplay:
             Specifies whether to use :term:`predict_proba`,
             :term:`decision_function`, :term:`predict` as the target response.
             If set to 'auto', the response method is tried in the following order:
-            :term:`predict_proba`, :term:`decision_function`, :term:`predict`.
+            :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
             For multiclass problems, :term:`predict` is selected when
             `response_method="auto"`.
 
@@ -300,7 +300,10 @@ class DecisionBoundaryDisplay:
                 [class_name_to_idx[target] for target in response], dtype=np.int32
             )
 
+        # TODO: Check for multi-label classifier, a multi-output multiclass
+        # classifier or a multioutput regressor and error.
         if response.ndim != 1:
+            # TODO: Support pos_label
             response = response[:, 1]
 
         if xlabel is not None:
