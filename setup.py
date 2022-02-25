@@ -230,6 +230,10 @@ def check_package_status(package, min_version):
 
 
 def setup_package():
+    install_requires = min_deps.tag_to_packages["install"].copy()
+    install_requires.append(
+        "joblib @ https://github.com/lesteve/joblib/archive/refs/memmap-align.zip"
+    )
     metadata = dict(
         name=DISTNAME,
         maintainer=MAINTAINER,
@@ -264,7 +268,7 @@ def setup_package():
         ],
         cmdclass=cmdclass,
         python_requires=">=3.7",
-        install_requires=min_deps.tag_to_packages["install"],
+        install_requires=install_requires,
         package_data={"": ["*.pxd"]},
         **extra_setuptools_args,
     )
