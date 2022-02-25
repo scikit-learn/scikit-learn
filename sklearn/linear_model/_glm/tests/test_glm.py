@@ -80,8 +80,8 @@ def test_glm_solver_argument(solver):
 def test_glm_validate_base_loss_class():
     y = np.array([1, 2])
     X = np.array([[1], [2]])
-    glm = _GeneralizedLinearRegressor(base_loss_class=LogLink)
-    msg = "The base_loss_class must be an subclass of sklearn._loss.loss.BaseLoss"
+    glm = _GeneralizedLinearRegressor(_base_loss_class=LogLink)
+    msg = "The _base_loss_class must be an subclass of sklearn._loss.loss.BaseLoss"
     with pytest.raises(ValueError, match=msg):
         glm.fit(X, y)
 
@@ -165,7 +165,7 @@ def test_glm_warm_start_argument(warm_start):
     "glm",
     [
         _GeneralizedLinearRegressor(
-            base_loss_class=HalfTweedieLoss, base_loss_params={"power": 3}
+            _base_loss_class=HalfTweedieLoss, base_loss_params={"power": 3}
         ),
         PoissonRegressor(),
         GammaRegressor(),
@@ -188,7 +188,7 @@ def test_glm_identity_regression(fit_intercept):
     y = np.dot(X, coef)
     glm = _GeneralizedLinearRegressor(
         alpha=0,
-        base_loss_class=HalfSquaredError,
+        _base_loss_class=HalfSquaredError,
         fit_intercept=fit_intercept,
         tol=1e-12,
     )
@@ -214,7 +214,7 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, base_loss_class):
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     glm_params = dict(
-        alpha=alpha, base_loss_class=base_loss_class, fit_intercept=fit_intercept
+        alpha=alpha, _base_loss_class=base_loss_class, fit_intercept=fit_intercept
     )
 
     glm = _GeneralizedLinearRegressor(**glm_params).fit(X, y)
@@ -273,7 +273,7 @@ def test_glm_log_regression(fit_intercept, base_loss_class, base_loss_param):
     y = np.exp(np.dot(X, coef))
     glm = _GeneralizedLinearRegressor(
         alpha=0,
-        base_loss_class=base_loss_class,
+        _base_loss_class=base_loss_class,
         base_loss_params=base_loss_param,
         fit_intercept=fit_intercept,
         tol=1e-8,
@@ -371,7 +371,7 @@ def test_normal_ridge_comparison(
 
     glm = _GeneralizedLinearRegressor(
         alpha=alpha,
-        base_loss_class=HalfSquaredError,
+        _base_loss_class=HalfSquaredError,
         fit_intercept=fit_intercept,
         max_iter=300,
         tol=1e-5,
@@ -402,7 +402,7 @@ def test_poisson_glmnet():
     glm = _GeneralizedLinearRegressor(
         alpha=1,
         fit_intercept=True,
-        base_loss_class=HalfPoissonLoss,
+        _base_loss_class=HalfPoissonLoss,
         tol=1e-7,
         max_iter=300,
     )
@@ -424,18 +424,18 @@ def test_convergence_warning(regression_data):
     [(PoissonRegressor, HalfPoissonLoss), (GammaRegressor, HalfGammaLoss)],
 )
 def test_raise_on_reset_base_loss_class(regression_data, estimator, base_loss):
-    # Make sure to raise an appropriate error if base_loss_class was reset.
+    # Make sure to raise an appropriate error if _base_loss_class was reset.
     X, y = regression_data
 
     est = estimator()
-    est.base_loss_class = HalfSquaredError
-    msg = f"{estimator.__name__}.base_loss_class must be {base_loss.__name__}!"
+    est._base_loss_class = HalfSquaredError
+    msg = f"{estimator.__name__}._base_loss_class must be {base_loss.__name__}!"
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
 
 def test_tweedie_raise_on_reset_base_loss_class(regression_data):
-    # Make sure to raise an appropriate error if base_loss_class or base_loss_params
+    # Make sure to raise an appropriate error if _base_loss_class or base_loss_params
     # was inconsistently reset for a Tweedie deviance loss.
     X, y = regression_data
     # make y positive
@@ -443,7 +443,7 @@ def test_tweedie_raise_on_reset_base_loss_class(regression_data):
 
     power = 2.0
     est = TweedieRegressor(power=power)
-    assert est.base_loss_class, HalfTweedieLoss
+    assert est._base_loss_class, HalfTweedieLoss
     assert est.base_loss_params == {"power": power}
     assert est.power == power
 
@@ -461,13 +461,13 @@ def test_tweedie_raise_on_reset_base_loss_class(regression_data):
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
-    # reset base_loss_class
+    # reset _base_loss_class
     est = TweedieRegressor(power=power)
-    est.base_loss_class = HalfTweedieLossIdentity
+    est._base_loss_class = HalfTweedieLossIdentity
     est.fit(X, y)
-    est.base_loss_class = HalfSquaredError
+    est._base_loss_class = HalfSquaredError
     msg = (
-        "TweedieRegressor.base_loss_class must be HalfTweedieLoss or"
+        "TweedieRegressor._base_loss_class must be HalfTweedieLoss or"
         " HalfTweedieLossIdentity!"
     )
     with pytest.raises(ValueError, match=msg):

@@ -37,7 +37,7 @@ class HalfInverseGaussianLoss(HalfTweedieLoss):
         super().__init__(sample_weight=sample_weight, power=3)
 
 
-# TODO: We could allow strings for base_loss_class (as before for the now removed
+# TODO: We could allow strings for _base_loss_class (as before for the now removed
 # family parameter): 'normal', 'poisson', 'gamma', 'inverse-gaussian'
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
@@ -76,13 +76,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    base_loss_class : subclass of BaseLoss, default=HalfSquaredError
-        A `base_loss_class` contains a specific loss function as well as the link
+    _base_loss_class : subclass of BaseLoss, default=HalfSquaredError
+        A `_base_loss_class` contains a specific loss function as well as the link
         function. The loss to be minimized specifies the distributional assumption of
         the GLM, i.e. the distribution from the EDM. Here are some examples:
 
         =======================  ========  ==========================
-        base_loss_class          Link       Target Domain
+        _base_loss_class          Link       Target Domain
         =======================  ========  ==========================
         HalfSquaredError         identity  y any real number
         HalfPoissonLoss          log       0 <= y
@@ -96,8 +96,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         we have `y_pred = exp(X @ coeff + intercept)`.
 
     base_loss_params : dictionary, default={}
-        Arguments to be passed to base_loss_class, e.g. {"power": 1.5} with
-        `base_loss_class=HalfTweedieLoss`.
+        Arguments to be passed to _base_loss_class, e.g. {"power": 1.5} with
+        `_base_loss_class=HalfTweedieLoss`.
 
     solver : 'lbfgs', default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -142,7 +142,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         *,
         alpha=1.0,
         fit_intercept=True,
-        base_loss_class=HalfSquaredError,
+        _base_loss_class=HalfSquaredError,
         base_loss_params={},
         solver="lbfgs",
         max_iter=100,
@@ -152,7 +152,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.base_loss_class = base_loss_class
+        self._base_loss_class = _base_loss_class
         self.base_loss_params = base_loss_params
         self.solver = solver
         self.max_iter = max_iter
@@ -179,11 +179,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        if not issubclass(self.base_loss_class, BaseLoss):
+        if not issubclass(self._base_loss_class, BaseLoss):
             raise ValueError(
-                "The base_loss_class must be an subclass of"
+                "The _base_loss_class must be an subclass of"
                 " sklearn._loss.loss.BaseLoss; ; got"
-                f" (base_loss_class={self.base_loss_class})"
+                f" (_base_loss_class={self._base_loss_class})"
             )
 
         check_scalar(
@@ -263,7 +263,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         if not self._linear_loss.base_loss.in_y_true_range(y):
             raise ValueError(
                 "Some value(s) of y are out of the valid range of the loss"
-                f" {self.base_loss_class.__name__}."
+                f" {self._base_loss_class.__name__}."
             )
 
         # TODO: if alpha=0 check that X is not rank deficient
@@ -378,7 +378,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         D^2 is a generalization of the coefficient of determination R^2.
         R^2 uses squared error and D^2 deviance. Note that those two are equal
-        for ``base_loss_class=HalfSquaredError``.
+        for ``_base_loss_class=HalfSquaredError``.
 
         D^2 is defined as
         :math:`D^2 = 1-\\frac{D(y_{true},y_{pred})}{D_{null}}`,
@@ -421,7 +421,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         if not base_loss.in_y_true_range(y):
             raise ValueError(
                 "Some value(s) of y are out of the valid range of the loss"
-                f" {self.base_loss_class.__name__}."
+                f" {self._base_loss_class.__name__}."
             )
 
         # Note that constant_to_optimal_zero is already multiplied by sample_weight.
@@ -447,7 +447,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     def _more_tags(self):
         # create instance of BaseLoss if fit wasn't called yet.
-        base_loss = self.base_loss_class(**self.base_loss_params)
+        base_loss = self._base_loss_class(**self.base_loss_params)
         return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
 
     def _get_base_loss_instance(self):
@@ -455,7 +455,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # TweedieRegressor.
         # Note that we do not need to pass sample_weight to the loss class as this is
         # only needed to set loss.constant_hessian on which GLMs do not rely.
-        return self.base_loss_class(**self.base_loss_params)
+        return self._base_loss_class(**self.base_loss_params)
 
 
 class PoissonRegressor(_GeneralizedLinearRegressor):
@@ -557,7 +557,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            base_loss_class=HalfPoissonLoss,
+            _base_loss_class=HalfPoissonLoss,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
@@ -565,9 +565,9 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         )
 
     def _get_base_loss_instance(self):
-        if self.base_loss_class != HalfPoissonLoss:
+        if self._base_loss_class != HalfPoissonLoss:
             raise ValueError(
-                "PoissonRegressor.base_loss_class must be HalfPoissonLoss!"
+                "PoissonRegressor._base_loss_class must be HalfPoissonLoss!"
             )
         return HalfPoissonLoss()
 
@@ -672,7 +672,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            base_loss_class=HalfGammaLoss,
+            _base_loss_class=HalfGammaLoss,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
@@ -680,8 +680,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         )
 
     def _get_base_loss_instance(self):
-        if self.base_loss_class != HalfGammaLoss:
-            raise ValueError("GammaRegressor.base_loss_class must be HalfGammaLoss!")
+        if self._base_loss_class != HalfGammaLoss:
+            raise ValueError("GammaRegressor._base_loss_class must be HalfGammaLoss!")
         return HalfGammaLoss()
 
 
@@ -817,7 +817,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            base_loss_class=HalfTweedieLoss,
+            _base_loss_class=HalfTweedieLoss,
             base_loss_params={"power": power},
             max_iter=max_iter,
             tol=tol,
@@ -830,9 +830,9 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     def _get_base_loss_instance(self):
         # This is only necessary because of the link and power arguments of the
         # TweedieRegressor.
-        if self.base_loss_class not in [HalfTweedieLoss, HalfTweedieLossIdentity]:
+        if self._base_loss_class not in [HalfTweedieLoss, HalfTweedieLossIdentity]:
             raise ValueError(
-                "TweedieRegressor.base_loss_class must be HalfTweedieLoss or"
+                "TweedieRegressor._base_loss_class must be HalfTweedieLoss or"
                 " HalfTweedieLossIdentity!"
             )
 
