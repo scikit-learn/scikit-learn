@@ -521,7 +521,7 @@ class _BaseDiscreteNB(_BaseNB):
         """Update counts that are used to calculate probabilities.
 
         The counts make up a sufficient statistic extracted from the data.
-        Accordingly, this method is called each time ``fit`` or ``partial_fit``
+        Accordingly, this method is called each time `fit` or `partial_fit`
         update the model. `class_count_` and `feature_count_` must be updated
         here along with any model specific counts.
 
