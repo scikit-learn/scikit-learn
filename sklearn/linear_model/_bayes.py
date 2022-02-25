@@ -645,7 +645,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         # Add `eps` in the denominator to omit division by zero if `np.var(y)`
         # is zero
         alpha_ = 1.0 / (np.var(y) + eps)
-        lambda_ = np.ones(n_features)
+        lambda_ = np.ones(n_features, dtype=X.dtype)
 
         self.scores_ = list()
         coef_old_ = None
@@ -726,7 +726,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         X_keep = X[:, keep_lambda]
         inv_lambda = 1 / lambda_[keep_lambda].reshape(1, -1)
         sigma_ = pinvh(
-            np.eye(n_samples) / alpha_ + np.dot(X_keep * inv_lambda, X_keep.T)
+            np.eye(n_samples, dtype=X.dtype) / alpha_
+            + np.dot(X_keep * inv_lambda, X_keep.T)
         )
         sigma_ = np.dot(sigma_, X_keep * inv_lambda)
         sigma_ = -np.dot(inv_lambda.reshape(-1, 1) * X_keep.T, sigma_)
@@ -739,7 +740,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         # invert a matrix of shape (n_features, n_features)
         X_keep = X[:, keep_lambda]
         gram = np.dot(X_keep.T, X_keep)
-        eye = np.eye(gram.shape[0])
+        eye = np.eye(gram.shape[0], dtype=X.dtype)
         sigma_inv = lambda_[keep_lambda] * eye + alpha_ * gram
         sigma_ = pinvh(sigma_inv)
         return sigma_
@@ -775,4 +776,4 @@ class ARDRegression(RegressorMixin, LinearModel):
             X = X[:, self.lambda_ < self.threshold_lambda]
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
-            return y_mean, y_std.astype(X.dtype)
+            return y_mean, y_std

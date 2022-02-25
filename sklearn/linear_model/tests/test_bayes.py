@@ -316,4 +316,4 @@ def test_dtype_correctness(_model):
     model = _model()
     coef_32 = model.fit(X.astype(np.float32), y).coef_
     coef_64 = model.fit(X.astype(np.float64), y).coef_
-    np.testing.assert_allclose(coef_32, coef_64, rtol=1e-5)
+    np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)
