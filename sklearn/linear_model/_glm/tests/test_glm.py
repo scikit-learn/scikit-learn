@@ -17,7 +17,7 @@ from sklearn._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from sklearn.datasets import make_regression
-from sklearn.linear_model._glm import GeneralizedLinearRegressor
+from sklearn.linear_model._glm import _GeneralizedLinearRegressor
 from sklearn.linear_model._glm.glm import HalfInverseGaussianLoss
 from sklearn.linear_model import TweedieRegressor, PoissonRegressor, GammaRegressor
 from sklearn.linear_model import Ridge
@@ -40,7 +40,7 @@ def test_sample_weights_validation():
     X = [[1]]
     y = [1]
     weights = 0
-    glm = GeneralizedLinearRegressor()
+    glm = _GeneralizedLinearRegressor()
 
     # Positive weights are accepted
     glm.fit(X, y, sample_weight=1)
@@ -62,7 +62,7 @@ def test_glm_fit_intercept_argument(fit_intercept):
     """Test GLM for invalid fit_intercept argument."""
     y = np.array([1, 2])
     X = np.array([[1], [1]])
-    glm = GeneralizedLinearRegressor(fit_intercept=fit_intercept)
+    glm = _GeneralizedLinearRegressor(fit_intercept=fit_intercept)
     with pytest.raises(ValueError, match="fit_intercept must be bool"):
         glm.fit(X, y)
 
@@ -72,7 +72,7 @@ def test_glm_solver_argument(solver):
     """Test GLM for invalid solver argument."""
     y = np.array([1, 2])
     X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(solver=solver)
+    glm = _GeneralizedLinearRegressor(solver=solver)
     with pytest.raises(ValueError):
         glm.fit(X, y)
 
@@ -80,7 +80,7 @@ def test_glm_solver_argument(solver):
 def test_glm_validate_base_loss_class():
     y = np.array([1, 2])
     X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(base_loss_class=LogLink)
+    glm = _GeneralizedLinearRegressor(base_loss_class=LogLink)
     msg = "The base_loss_class must be an subclass of sklearn._loss.loss.BaseLoss"
     with pytest.raises(ValueError, match=msg):
         glm.fit(X, y)
@@ -88,7 +88,7 @@ def test_glm_validate_base_loss_class():
 
 @pytest.mark.parametrize(
     "Estimator",
-    [GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
+    [_GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
 )
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
@@ -156,7 +156,7 @@ def test_glm_warm_start_argument(warm_start):
     """Test GLM for invalid warm_start argument."""
     y = np.array([1, 2])
     X = np.array([[1], [1]])
-    glm = GeneralizedLinearRegressor(warm_start=warm_start)
+    glm = _GeneralizedLinearRegressor(warm_start=warm_start)
     with pytest.raises(ValueError, match="warm_start must be bool"):
         glm.fit(X, y)
 
@@ -164,7 +164,7 @@ def test_glm_warm_start_argument(warm_start):
 @pytest.mark.parametrize(
     "glm",
     [
-        GeneralizedLinearRegressor(
+        _GeneralizedLinearRegressor(
             base_loss_class=HalfTweedieLoss, base_loss_params={"power": 3}
         ),
         PoissonRegressor(),
@@ -186,7 +186,7 @@ def test_glm_identity_regression(fit_intercept):
     coef = [1.0, 2.0]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.dot(X, coef)
-    glm = GeneralizedLinearRegressor(
+    glm = _GeneralizedLinearRegressor(
         alpha=0,
         base_loss_class=HalfSquaredError,
         fit_intercept=fit_intercept,
@@ -217,7 +217,7 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, base_loss_class):
         alpha=alpha, base_loss_class=base_loss_class, fit_intercept=fit_intercept
     )
 
-    glm = GeneralizedLinearRegressor(**glm_params).fit(X, y)
+    glm = _GeneralizedLinearRegressor(**glm_params).fit(X, y)
     coef = glm.coef_.copy()
 
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
@@ -246,11 +246,11 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, base_loss_class):
     sample_weight_1 = np.ones(len(y))
     sample_weight_1[: n_samples // 2] = 2
 
-    glm1 = GeneralizedLinearRegressor(**glm_params).fit(
+    glm1 = _GeneralizedLinearRegressor(**glm_params).fit(
         X, y, sample_weight=sample_weight_1
     )
 
-    glm2 = GeneralizedLinearRegressor(**glm_params).fit(X2, y2, sample_weight=None)
+    glm2 = _GeneralizedLinearRegressor(**glm_params).fit(X2, y2, sample_weight=None)
     assert_allclose(glm1.coef_, glm2.coef_)
 
 
@@ -271,7 +271,7 @@ def test_glm_log_regression(fit_intercept, base_loss_class, base_loss_param):
     coef = [0.2, -0.1]
     X = np.array([[0, 1, 2, 3, 4], [1, 1, 1, 1, 1]]).T
     y = np.exp(np.dot(X, coef))
-    glm = GeneralizedLinearRegressor(
+    glm = _GeneralizedLinearRegressor(
         alpha=0,
         base_loss_class=base_loss_class,
         base_loss_params=base_loss_param,
@@ -298,12 +298,12 @@ def test_warm_start(fit_intercept):
         random_state=42,
     )
 
-    glm1 = GeneralizedLinearRegressor(
+    glm1 = _GeneralizedLinearRegressor(
         warm_start=False, fit_intercept=fit_intercept, max_iter=1000
     )
     glm1.fit(X, y)
 
-    glm2 = GeneralizedLinearRegressor(
+    glm2 = _GeneralizedLinearRegressor(
         warm_start=True, fit_intercept=fit_intercept, max_iter=1
     )
     # As we intentionally set max_iter=1, L-BFGS-B will issue a
@@ -369,7 +369,7 @@ def test_normal_ridge_comparison(
     )
     ridge.fit(X_train, y_train, sample_weight=sw_train)
 
-    glm = GeneralizedLinearRegressor(
+    glm = _GeneralizedLinearRegressor(
         alpha=alpha,
         base_loss_class=HalfSquaredError,
         fit_intercept=fit_intercept,
@@ -399,7 +399,7 @@ def test_poisson_glmnet():
     # b            0.03741173122
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
-    glm = GeneralizedLinearRegressor(
+    glm = _GeneralizedLinearRegressor(
         alpha=1,
         fit_intercept=True,
         base_loss_class=HalfPoissonLoss,
@@ -414,7 +414,7 @@ def test_poisson_glmnet():
 def test_convergence_warning(regression_data):
     X, y = regression_data
 
-    est = GeneralizedLinearRegressor(max_iter=1, tol=1e-20)
+    est = _GeneralizedLinearRegressor(max_iter=1, tol=1e-20)
     with pytest.warns(ConvergenceWarning):
         est.fit(X, y)
 

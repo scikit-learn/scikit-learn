@@ -39,7 +39,7 @@ class HalfInverseGaussianLoss(HalfTweedieLoss):
 
 # TODO: We could allow strings for base_loss_class (as before for the now removed
 # family parameter): 'normal', 'poisson', 'gamma', 'inverse-gaussian'
-class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
+class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at fitting and
@@ -201,8 +201,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
         if self.solver not in ["lbfgs"]:
             raise ValueError(
-                "GeneralizedLinearRegressor supports only solvers"
-                "'lbfgs'; got {0}".format(self.solver)
+                f"{self.__class__.__name__} supports only solvers 'lbfgs'; "
+                f"got {self.solver}"
             )
         solver = self.solver
         check_scalar(
@@ -458,7 +458,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         return self.base_loss_class(**self.base_loss_params)
 
 
-class PoissonRegressor(GeneralizedLinearRegressor):
+class PoissonRegressor(_GeneralizedLinearRegressor):
     """Generalized Linear Model with a Poisson distribution.
 
     This regressor uses the 'log' link function.
@@ -524,8 +524,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     See Also
     --------
-    GeneralizedLinearRegressor : Generalized Linear Model with a Poisson
-        distribution.
+    TweedieRegressor : Generalized Linear Model with a Tweedie distribution.
 
     Examples
     --------
@@ -573,7 +572,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         return HalfPoissonLoss()
 
 
-class GammaRegressor(GeneralizedLinearRegressor):
+class GammaRegressor(_GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
 
     This regressor uses the 'log' link function.
@@ -686,7 +685,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
         return HalfGammaLoss()
 
 
-class TweedieRegressor(GeneralizedLinearRegressor):
+class TweedieRegressor(_GeneralizedLinearRegressor):
     """Generalized Linear Model with a Tweedie distribution.
 
     This estimator can be used to model different GLMs depending on the
