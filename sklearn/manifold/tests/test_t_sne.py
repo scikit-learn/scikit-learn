@@ -1136,7 +1136,7 @@ def test_tsne_init_futurewarning(init):
     else:
         with pytest.warns(None) as record:
             tsne.fit_transform(X)
-        assert not record
+        assert not [w.message for w in record]
 
 
 # TODO: Remove in 1.2
@@ -1156,7 +1156,7 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
     else:
         with pytest.warns(None) as record:
             tsne.fit_transform(X)
-        assert not record
+        assert not [w.message for w in record]
 
 
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")

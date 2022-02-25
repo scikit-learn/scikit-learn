@@ -977,9 +977,9 @@ class TSNE(BaseEstimator):
         elif self._init == "random":
             # The embedding is initialized with iid samples from Gaussians with
             # standard deviation 1e-4.
-            X_embedded = 1e-4 * random_state.randn(n_samples, self.n_components).astype(
-                np.float32
-            )
+            X_embedded = 1e-4 * random_state.standard_normal(
+                size=(n_samples, self.n_components)
+            ).astype(np.float32)
         else:
             raise ValueError("'init' must be 'pca', 'random', or a numpy array")
 

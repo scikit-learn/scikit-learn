@@ -23,7 +23,7 @@ from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
+from ..utils.fixes import _astype_copy_false
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
@@ -180,7 +180,7 @@ def _alpha_grid(
         if normalize:
             Xy /= X_scale[:, np.newaxis]
 
-    alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (n_samples * l1_ratio)
+    alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (n_samples * l1_ratio)
 
     if alpha_max <= np.finfo(float).resolution:
         alphas = np.empty(n_alphas)
@@ -1440,9 +1440,9 @@ def _path_residuals(
     residues = X_test_coefs - y_test[:, :, np.newaxis]
     residues += intercepts
     if sample_weight is None:
-        this_mse = (residues ** 2).mean(axis=0)
+        this_mse = (residues**2).mean(axis=0)
     else:
-        this_mse = np.average(residues ** 2, weights=sw_test, axis=0)
+        this_mse = np.average(residues**2, weights=sw_test, axis=0)
 
     return this_mse.mean(axis=0)
 
@@ -1713,7 +1713,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         mse_paths = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            **_joblib_parallel_args(prefer="threads"),
+            prefer="threads",
         )(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         # The mean is computed over folds.
@@ -1928,12 +1928,15 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
+
+     For an example, see
+     :ref:`examples/linear_model/plot_lasso_model_selection.py
+     <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     Examples
     --------
@@ -2151,14 +2154,13 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     Notes
     -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_model_selection.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
+    cross-validation, the model is fit again using the entire training set.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the `X` argument of the `fit`
+    method should be directly passed as a Fortran-contiguous numpy array.
 
-    The parameter l1_ratio corresponds to alpha in the glmnet R package
+    The parameter `l1_ratio` corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
 
@@ -2174,6 +2176,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     for::
 
         alpha = a + b and l1_ratio = a / (a + b).
+
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_model_selection.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     Examples
     --------
@@ -2822,8 +2828,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameters `l1_ratio` and `alpha` are found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
 
     Examples
     --------
@@ -3054,8 +3063,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as Fortran-contiguous numpy arrays.
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
+    To avoid unnecessary memory duplication the `X` and `y` arguments of the
+    `fit` method should be directly passed as Fortran-contiguous numpy arrays.
 
     Examples
     --------

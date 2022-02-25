@@ -71,14 +71,14 @@ def test_missing_value_handling(
     with pytest.warns(None) as records:
         Xt = est.fit(X_train).transform(X_test)
     # ensure no warnings are raised
-    assert len(records) == 0
+    assert not [w.message for w in records]
     # missing values should still be missing, and only them
     assert_array_equal(np.isnan(Xt), np.isnan(X_test))
 
     # check that the function leads to the same results as the class
     with pytest.warns(None) as records:
         Xt_class = est.transform(X_train)
-    assert len(records) == 0
+    assert not [w.message for w in records]
     kwargs = est.get_params()
     # remove the parameters which should be omitted because they
     # are not defined in the sister function of the preprocessing class
@@ -101,7 +101,7 @@ def test_missing_value_handling(
         # check transforming with NaN works even when training without NaN
         with pytest.warns(None) as records:
             Xt_col = est.transform(X_test[:, [i]])
-        assert len(records) == 0
+        assert not [w.message for w in records]
         assert_allclose(Xt_col, Xt[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
         if not np.isnan(X_test[:, i]).all():
@@ -115,7 +115,7 @@ def test_missing_value_handling(
         with pytest.warns(None) as records:
             Xt_dense = est_dense.fit(X_train).transform(X_test)
             Xt_inv_dense = est_dense.inverse_transform(Xt_dense)
-        assert len(records) == 0
+        assert not [w.message for w in records]
         for sparse_constructor in (
             sparse.csr_matrix,
             sparse.csc_matrix,
@@ -132,12 +132,12 @@ def test_missing_value_handling(
             with pytest.warns(None) as records:
                 warnings.simplefilter("ignore", PendingDeprecationWarning)
                 Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
-            assert len(records) == 0
+            assert not [w.message for w in records]
             assert_allclose(Xt_sp.A, Xt_dense)
             with pytest.warns(None) as records:
                 warnings.simplefilter("ignore", PendingDeprecationWarning)
                 Xt_inv_sp = est_sparse.inverse_transform(Xt_sp)
-            assert len(records) == 0
+            assert not [w.message for w in records]
             assert_allclose(Xt_inv_sp.A, Xt_inv_dense)
 
 
