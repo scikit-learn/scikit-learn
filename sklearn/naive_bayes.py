@@ -537,7 +537,7 @@ class _BaseDiscreteNB(_BaseNB):
     def _update_feature_log_prob(self, alpha):
         """Update feature log probabilities based on counts.
 
-        This method is called each time ``fit`` or ``partial_fit`` update the
+        This method is called each time `fit` or `partial_fit` update the
         model.
 
         Parameters
