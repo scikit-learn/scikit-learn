@@ -28,6 +28,6 @@ User Guide
    data_transforms.rst
    datasets.rst
    computing.rst
-   modules/model_persistence.rst
+   model_persistence.rst
    common_pitfalls.rst
    metadata_routing.rst
