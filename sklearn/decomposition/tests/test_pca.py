@@ -722,7 +722,8 @@ def test_feature_names_out():
     assert_array_equal([f"pca{i}" for i in range(2)], names)
 
 
-def test_variance_correctness():
+@pytest.mark.parametrize("copy", [True, False])
+def test_variance_correctness(copy):
     """Check the accuracy of PCA's internal variance calculation"""
     rng = np.random.RandomState(0)
     X = rng.randn(1000, 200)
