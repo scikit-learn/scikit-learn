@@ -1535,11 +1535,11 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
             # bubble up values to ancestor nodes
             current_r = r_node[leaf_idx]
-            node_idx = parent[leaf_idx]
-            while node_idx != _TREE_UNDEFINED:
-                r_branch[node_idx] += current_r
-                n_leaves[node_idx] += 1
-                node_idx = parent[node_idx]
+            while leaf_idx != 0:
+                parent_idx = parent[leaf_idx]
+                r_branch[parent_idx] += current_r
+                n_leaves[parent_idx] += 1
+                leaf_idx = parent_idx
 
         for i in range(leaves_in_subtree.shape[0]):
             candidate_nodes[i] = not leaves_in_subtree[i]
