@@ -681,6 +681,9 @@ def test_check_no_attributes_set_in_init():
     check_no_attributes_set_in_init(
         "estimator_name", ConformantEstimatorClassAttribute()
     )
+    # also check if cloning an estimator which has non-default set requests is
+    # fine. Setting a non-default value via `set_{method}_request` sets the
+    # private _metadata_request instance attribute which is copied in `clone`.
     check_no_attributes_set_in_init(
         "estimator_name", ConformantEstimatorClassAttribute().set_fit_request(foo=True)
     )

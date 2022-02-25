@@ -613,7 +613,8 @@ def test_get_routing_for_object():
         __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
     assert_request_is_empty(get_routing_for_object(None))
-    assert_request_is_empty(get_routing_for_object(object()))
+    with pytest.raises(ValueError, match="Given object"):
+        assert_request_is_empty(get_routing_for_object(object()))
 
     mr = MetadataRequest(owner="test")
     mr.fit.add_request(param="foo", alias="bar")
@@ -824,8 +825,8 @@ def test_metadata_routing_get_param_names():
         == "{'$self': {'fit': {'sample_weight': 'self_weights'}, 'score':"
         " {'sample_weight': <RequestType.ERROR_IF_PASSED: None>}}, 'trs':"
         " {'mapping': [{'callee': 'fit', 'caller': 'fit'}], 'router': {'fit':"
-        " {'sample_weight': 'transform_weights', 'brand':"
-        " <RequestType.ERROR_IF_PASSED: None>}, 'transform': {'sample_weight':"
+        " {'brand': <RequestType.ERROR_IF_PASSED: None>, 'sample_weight':"
+        " 'transform_weights'}, 'transform': {'sample_weight':"
         " <RequestType.ERROR_IF_PASSED: None>}}}}"
     )
 
