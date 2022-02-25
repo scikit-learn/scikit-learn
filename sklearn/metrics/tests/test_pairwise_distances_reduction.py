@@ -404,11 +404,11 @@ def test_sqeuclidean_row_norms(
     rng = np.random.RandomState(seed)
     spread = 100
     X64 = rng.rand(n_samples, n_features).astype(np.float64) * spread
-    X32 = rng.rand(n_samples, n_features).astype(np.float32) * spread
+    X32 = X64.astype(np.float32)
 
     sq_row_norm_reference = np.linalg.norm(X64, axis=1) ** 2
     sq_row_norm64 = np.asarray(_sqeuclidean_row_norms64(X64, num_threads=num_threads))
     sq_row_norm32 = np.asarray(_sqeuclidean_row_norms32(X32, num_threads=num_threads))
 
-    assert_allclose(sq_row_norm_reference, sq_row_norm32)
-    assert_allclose(sq_row_norm_reference, sq_row_norm64)
+    assert_allclose(sq_row_norm_reference, sq_row_norm64, rtol=1e-7)
+    assert_allclose(sq_row_norm_reference, sq_row_norm32, rtol=1e-6)
