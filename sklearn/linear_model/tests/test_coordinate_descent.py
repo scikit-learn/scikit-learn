@@ -401,8 +401,8 @@ def test_lasso_cv_positive_constraint():
         (
             (1, 1.0, "1"),
             TypeError,
-            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
-            r" 'str'>",
+            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not "
+            r"<class 'str'>",
         ),
     ],
 )
