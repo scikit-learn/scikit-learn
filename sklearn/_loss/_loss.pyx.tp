@@ -559,7 +559,6 @@ cdef inline double cgradient_half_tweedie_identity(
     double raw_prediction,
     double power
 ) nogil:
-    cdef double tmp
     if power == 0.:
         return raw_prediction - y_true
     elif power == 1.:
@@ -567,8 +566,7 @@ cdef inline double cgradient_half_tweedie_identity(
     elif power == 2.:
         return (raw_prediction - y_true) / (raw_prediction * raw_prediction)
     else:
-        tmp = pow(raw_prediction, -power)
-        return tmp * (raw_prediction - y_true)
+        return pow(raw_prediction, -power) * (raw_prediction - y_true)
 
 
 cdef inline double_pair closs_grad_half_tweedie_identity(

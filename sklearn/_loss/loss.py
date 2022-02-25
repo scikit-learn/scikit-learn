@@ -778,7 +778,7 @@ class HalfTweedieLossIdentity(BaseLoss):
                     - y_true_i * raw_prediction_i**(1-p) / (1-p)
                     + raw_prediction_i**(2-p) / (2-p)
 
-    Note that the minimum loss is 0.
+    Note that the minimum value of this loss is 0.
 
     Note furthermore that although no Tweedie distribution exists for
     0 < power < 1, it still gives a strictly consistent scoring function for
