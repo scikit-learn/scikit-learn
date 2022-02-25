@@ -1100,7 +1100,6 @@ class RadiusNeighborsMixin:
                 radius=radius,
                 metric=self.effective_metric_,
                 metric_kwargs=self.effective_metric_params_,
-                n_threads=self.n_jobs,
                 strategy="auto",
                 return_distance=return_distance,
                 sort_results=sort_results,
