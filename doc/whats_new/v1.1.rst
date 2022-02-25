@@ -289,6 +289,10 @@ Changelog
   :pr:`22300` by :user:`Meekail Zain <micky774>` and :pr:`15948` by
   :user:`sysuresh`.
 
+- |Fix| Greatly reduced peak memory usage in :class:`decomposition.PCA` when
+  calling `fit` or `fit_transform`.
+  :pr:`22553` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
