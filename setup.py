@@ -232,7 +232,7 @@ def check_package_status(package, min_version):
 def setup_package():
     install_requires = min_deps.tag_to_packages["install"].copy()
     install_requires.append(
-        "joblib @ https://github.com/lesteve/joblib/archive/refs/memmap-align.zip"
+        "joblib @ https://github.com/lesteve/joblib/archive/refs/heads/memmap-align.zip"
     )
     metadata = dict(
         name=DISTNAME,
