@@ -594,8 +594,8 @@ Changelog
 ............................
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to :class:`preprocessing.OneHotEncoder`.
-  This specifies a custom callable to create feature names out with arguments:
-  (input_feature, category).
+  This specifies a custom callable to create feature names to be returned by :meth:`get_feature_names_out`.
+  The callable combines input arguments `(input_feature, category)` to a string.
   :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
 
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
