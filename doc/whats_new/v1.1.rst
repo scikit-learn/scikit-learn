@@ -370,6 +370,11 @@ Changelog
   `warm_start` enabled.
   :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
 
+- |Enhancement| Adds support to use pre-fit models with `cv="prefit"`
+  in :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
+  :pr:`16748` by :user:`Siqi He <siqi-he>` and :pr:`22215` by
+  :user:`Meekail Zain <micky774>`.
+
 - |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
   float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
   and :user:`Daniel Kharsa <aflatoune>` and :pr:`22370` by
