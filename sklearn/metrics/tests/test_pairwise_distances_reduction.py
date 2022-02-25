@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import threadpoolctl
 from numpy.testing import assert_array_equal, assert_allclose
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
@@ -240,9 +241,10 @@ def test_n_threads_agnosticism(
         return_distance=True,
     )
 
-    dist, indices = PairwiseDistancesReduction.compute(
-        X, Y, parameter, n_threads=1, return_distance=True
-    )
+    with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
+        dist, indices = PairwiseDistancesReduction.compute(
+            X, Y, parameter, return_distance=True
+        )
 
     rtol = 1e-7 if dtype is np.float64 else 1e-6
     ASSERT_RESULT[PairwiseDistancesReduction](

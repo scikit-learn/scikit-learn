@@ -335,7 +335,7 @@ cdef class Splitter:
 
             # map indices from sample_indices to left/right_indices_buffer
             for thread_idx in prange(n_threads, schedule='static',
-                                     chunksize=1):
+                                     chunksize=1, num_threads=n_threads):
                 left_count = 0
                 right_count = 0
 
@@ -377,7 +377,7 @@ cdef class Splitter:
             # sample_indices. This also updates self.partition since
             # sample_indices is a view.
             for thread_idx in prange(n_threads, schedule='static',
-                                     chunksize=1):
+                                     chunksize=1, num_threads=n_threads):
                 memcpy(
                     &sample_indices[left_offset[thread_idx]],
                     &left_indices_buffer[offset_in_buffers[thread_idx]],
