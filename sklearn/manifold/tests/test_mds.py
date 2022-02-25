@@ -44,7 +44,7 @@ def test_MDS():
     mds_clf.fit(sim)
 
 
-@pytest.mark.parametrize("k", [0.5, 1, 1.5, 2])
+@pytest.mark.parametrize("k", [0.5, 1.5, 2])
 def test_normed_stress(k):
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
@@ -57,3 +57,10 @@ def test_normed_stress(k):
 
     assert_allclose(stress1, stress2, rtol=1e-5)
     assert_allclose(X1, X2, rtol=1e-5)
+
+
+def test_normalize_metric_warning():
+    msg = "Normalized stress is not supported"
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+    with pytest.warns(UserWarning, match=msg):
+        mds.smacof(sim, metric=True, normalize=True)

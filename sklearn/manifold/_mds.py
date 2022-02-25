@@ -65,7 +65,7 @@ def _smacof_single(
 
     normalize : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
-        stress calculated by default.
+        stress calculated by default. Only supported in non-metric MDS.
 
         .. versionadded:: 1.1
 
@@ -77,7 +77,7 @@ def _smacof_single(
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If normalize is set to True, returns Stress-1 (according to
+        If `normalize=True`, and `metric=False` returns Stress-1 (according to
         Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
         excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
@@ -236,7 +236,7 @@ def smacof(
 
     normalize : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
-        stress calculated by default.
+        stress calculated by default. Only supported in non-metric MDS.
 
         .. versionadded:: 1.1
 
@@ -248,7 +248,7 @@ def smacof(
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If normalize is set to True, returns Stress-1 (according to
+        If `normalize=True`, and `metric=False` returns Stress-1 (according to
         Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
         excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
@@ -270,7 +270,13 @@ def smacof(
 
     dissimilarities = check_array(dissimilarities)
     random_state = check_random_state(random_state)
-
+    if normalize and metric:
+        warnings.warn(
+            "Normalized stress is not supported for metric MDS -- unnormalized stress"
+            " will be used instead.",
+            UserWarning,
+        )
+        normalize = False
     if hasattr(init, "__array__"):
         init = np.asarray(init).copy()
         if not n_init == 1:
@@ -381,7 +387,7 @@ class MDS(BaseEstimator):
 
     normalize : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
-        stress calculated by default.
+        stress calculated by default. Only supported in non-metric MDS.
 
         .. versionadded:: 1.1
 
@@ -393,7 +399,7 @@ class MDS(BaseEstimator):
     stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If normalize is set to True, returns Stress-1 (according to
+        If `normalize=True`, and `metric=False` returns Stress-1 (according to
         Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
         excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
