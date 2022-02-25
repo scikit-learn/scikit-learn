@@ -620,7 +620,6 @@ class PCA(_BasePCA):
         # Get variance explained by singular values
         self.explained_variance_ = (S**2) / (n_samples - 1)
         total_var = in_place_feature_var(X).sum()
-
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
 
