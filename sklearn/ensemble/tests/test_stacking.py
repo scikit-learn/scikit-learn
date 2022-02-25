@@ -43,6 +43,10 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import ignore_warnings
 
+from sklearn.exceptions import NotFittedError
+
+from unittest.mock import Mock
+
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
 
@@ -528,6 +532,89 @@ def test_stacking_cv_influence(stacker, X, y):
         assert_allclose(
             stacker_cv_3.final_estimator_.coef_, stacker_cv_5.final_estimator_.coef_
         )
+
+
+@pytest.mark.parametrize(
+    "Stacker, Estimator, stack_method, final_estimator, X, y",
+    [
+        (
+            StackingClassifier,
+            DummyClassifier,
+            "predict_proba",
+            LogisticRegression(random_state=42),
+            X_iris,
+            y_iris,
+        ),
+        (
+            StackingRegressor,
+            DummyRegressor,
+            "predict",
+            LinearRegression(),
+            X_diabetes,
+            y_diabetes,
+        ),
+    ],
+)
+def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y):
+    """Check the behaviour of stacking when `cv='prefit'`"""
+    X_train1, X_train2, y_train1, y_train2 = train_test_split(
+        X, y, random_state=42, test_size=0.5
+    )
+    estimators = [
+        ("d0", Estimator().fit(X_train1, y_train1)),
+        ("d1", Estimator().fit(X_train1, y_train1)),
+    ]
+
+    # mock out fit and stack_method to be asserted later
+    for _, estimator in estimators:
+        estimator.fit = Mock()
+        stack_func = getattr(estimator, stack_method)
+        setattr(estimator, stack_method, Mock(side_effect=stack_func))
+
+    stacker = Stacker(
+        estimators=estimators, cv="prefit", final_estimator=final_estimator
+    )
+    stacker.fit(X_train2, y_train2)
+
+    assert stacker.estimators_ == [estimator for _, estimator in estimators]
+    # fit was not called again
+    assert all(estimator.fit.call_count == 0 for estimator in stacker.estimators_)
+
+    # stack method is called with the proper inputs
+    for estimator in stacker.estimators_:
+        stack_func_mock = getattr(estimator, stack_method)
+        stack_func_mock.assert_called_with(X_train2)
+
+
+@pytest.mark.parametrize(
+    "stacker, X, y",
+    [
+        (
+            StackingClassifier(
+                estimators=[("lr", LogisticRegression()), ("svm", SVC())],
+                cv="prefit",
+            ),
+            X_iris,
+            y_iris,
+        ),
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR()),
+                ],
+                cv="prefit",
+            ),
+            X_diabetes,
+            y_diabetes,
+        ),
+    ],
+)
+def test_stacking_prefit_error(stacker, X, y):
+    # check that NotFittedError is raised
+    # if base estimators are not fitted when cv="prefit"
+    with pytest.raises(NotFittedError):
+        stacker.fit(X, y)
 
 
 @pytest.mark.parametrize(
