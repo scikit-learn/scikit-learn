@@ -141,7 +141,7 @@ python_environment_install() {
 
 scikit_learn_install() {
     # install joblib from branch with memmap alignment fix
-    python -m pip install git+https://github.com/lesteve/joblib@memmap-align
+    python -m pip install https://github.com/lesteve/joblib/archive/refs/heads/memmap-align.zip
 
     setup_ccache
     show_installed_libraries
