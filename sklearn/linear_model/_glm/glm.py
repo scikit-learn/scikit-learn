@@ -731,10 +731,10 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
         `X @ coeff + intercept` to prediction `y_pred`. Option 'auto' sets
-        the link depending on the chosen base_loss_class (EDM family) as follows:
+        the link depending on the chosen `power` parameter as follows:
 
         - 'identity' for ``power <= 0``, e.g. for the Normal distribution
-        - 'log' for ``power > 0``, e.g. for Poisson,  Gamma and Inverse Gaussian
+        - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
 
     max_iter : int, default=100

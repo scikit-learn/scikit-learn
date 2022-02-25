@@ -508,7 +508,7 @@ Changelog
   sub-problem while now all of them are recorded. :pr:`21998` by
   :user:`Olivier Grisel <ogrisel>`.
 
-- |Fix| The input paramter `family` of :class:`linear_model.TweedieRegressor` is not
+- |Fix| The input parameter `family` of :class:`linear_model.TweedieRegressor` is not
   validated in `__init__` anymore. This (private) parameter was removed.
   :pr:`22548` by :user:`Christian Lorentzen <lorentzenchr>`.
 
