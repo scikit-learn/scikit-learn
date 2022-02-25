@@ -22,6 +22,15 @@ from ._optics import (
 )
 from ._bicluster import SpectralBiclustering, SpectralCoclustering
 from ._birch import Birch
+from ._hdbscan.hdbscan_ import HDBSCAN, hdbscan
+from ._hdbscan.robust_single_linkage_ import RobustSingleLinkage, robust_single_linkage
+from ._hdbscan.validity import validity_index
+from ._hdbscan.prediction import (
+    approximate_predict,
+    membership_vector,
+    all_points_membership_vectors,
+    approximate_predict_scores,
+)
 
 __all__ = [
     "AffinityPropagation",
@@ -49,4 +58,18 @@ __all__ = [
     "ward_tree",
     "SpectralBiclustering",
     "SpectralCoclustering",
+    "HDBSCAN",
+    "hdbscan",
+    "RobustSingleLinkage",
+    "robust_single_linkage",
+    "validity_index",
+    "approximate_predict",
+    "membership_vector",
+    "all_points_membership_vectors",
+    "approximate_predict_scores",
+    "HDBSCAN_flat",
+    "approximate_predict_flat",
+    "membership_vector_flat",
+    "all_points_membership_vectors_flat",
+    "safe_always_positive_division",
 ]
