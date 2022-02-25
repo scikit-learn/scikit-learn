@@ -390,12 +390,12 @@ def test_lasso_cv_positive_constraint():
 @pytest.mark.parametrize(
     "alphas, err_type, err_msg",
     [
-        (-2, ValueError, r"alphas == -2, must be > 0.0"),
-        ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be > 0.0"),
+        (-2, ValueError, r"alphas == -2, must be >= 0.0."),
+        ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
         (
             (-0.1, -1.0, -10.0),
             ValueError,
-            r"alphas\[0\] == -0.1, must be > 0.0",
+            r"alphas\[0\] == -0.1, must be >= 0.0.",
         ),
         (
             (1, 1.0, "1"),
