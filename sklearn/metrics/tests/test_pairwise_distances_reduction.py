@@ -80,8 +80,68 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1
     )
 
 
+def assert_argkmin_results_quasi_equality(
+    ref_dist, dist, ref_indices, indices, rtol=1e-4
+):
+
+    ref_dist, dist, ref_indices, indices = map(
+        np.ndarray.flatten, [ref_dist, dist, ref_indices, indices]
+    )
+
+    assert (
+        len(ref_dist) == len(dist) == len(ref_indices) == len(indices)
+    ), "Arrays of results have various length."
+
+    n = len(ref_dist)
+
+    skip_permutation_check = False
+
+    for i in range(n - 1):
+        # We test the equality of pair of adjacent indices and distances
+        # of the references against the results.
+        rd_current, rd_next = ref_dist[i], ref_dist[i + 1]
+        d_current, d_next = dist[i], dist[i + 1]
+        ri_current, ri_next = ref_indices[i], ref_indices[i + 1]
+        i_current, i_next = indices[i], indices[i + 1]
+
+        assert np.isclose(
+            d_current, rd_current, rtol=rtol
+        ), "Query vectors have different neighbors' distances"
+
+        if ri_current != i_current:
+            # If the current reference index and index are different,
+            # it might be that their were permuted because their distances
+            # are relatively close to each other.
+            # In this case, we need to check for a valid permutation.
+            valid_permutation = (
+                np.isclose(d_current, d_next, rtol=rtol)
+                and i_next == ri_current
+                and ri_next == i_current
+            )
+            assert skip_permutation_check or valid_permutation, (
+                "Query vectors have different neighbors' indices \n"
+                f"(i_current, i_next) = {i_current, i_next} \n"
+                f"(ri_current, ri_next) = {ri_current, ri_next} \n"
+                f"(d_current, d_next) = {d_current, d_next} \n"
+                f"(rd_current, rd_next) = {rd_current, rd_next} \n"
+            )
+            # If there's a permutation at this iteration, we need to
+            # skip the following permutation check.
+            skip_permutation_check = True
+            continue
+
+        # We need to check for potential permutations for the next iterations.
+        if skip_permutation_check:
+            skip_permutation_check = False
+
+
 ASSERT_RESULT = {
-    PairwiseDistancesArgKmin: assert_argkmin_results_equality,
+    # In the case of 64bit, we test for exact equality.
+    (PairwiseDistancesArgKmin, np.float64): assert_argkmin_results_equality,
+    # In the case of 32bit, indices can be permuted due to small difference
+    # in the computations of their associated distances, hence we test equality of
+    # results up to valid permutations.
+    (PairwiseDistancesArgKmin, np.float32): assert_argkmin_results_quasi_equality,
 }
 
 
@@ -199,9 +259,8 @@ def test_chunk_size_agnosticism(
         return_distance=True,
     )
 
-    rtol = 1e-7 if dtype is np.float64 else 1e-6
-    ASSERT_RESULT[PairwiseDistancesReduction](
-        ref_dist, dist, ref_indices, indices, rtol
+    ASSERT_RESULT[(PairwiseDistancesArgKmin, dtype)](
+        ref_dist, dist, ref_indices, indices
     )
 
 
@@ -246,9 +305,8 @@ def test_n_threads_agnosticism(
             X, Y, parameter, return_distance=True
         )
 
-    rtol = 1e-7 if dtype is np.float64 else 1e-6
-    ASSERT_RESULT[PairwiseDistancesReduction](
-        ref_dist, dist, ref_indices, indices, rtol
+    ASSERT_RESULT[(PairwiseDistancesArgKmin, dtype)](
+        ref_dist, dist, ref_indices, indices
     )
 
 
@@ -314,13 +372,11 @@ def test_strategies_consistency(
         return_distance=True,
     )
 
-    rtol = 1e-7 if dtype is np.float64 else 1e-6
-    ASSERT_RESULT[PairwiseDistancesReduction](
+    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
         dist_par_X,
         dist_par_Y,
         indices_par_X,
         indices_par_Y,
-        rtol,
     )
 
 
@@ -381,13 +437,11 @@ def test_pairwise_distances_argkmin(
         strategy=strategy,
     )
 
-    rtol = 1e-7 if dtype is np.float64 else 1e-6
-    ASSERT_RESULT[PairwiseDistancesArgKmin](
+    ASSERT_RESULT[(PairwiseDistancesArgKmin, dtype)](
         argkmin_distances,
         argkmin_distances_ref,
         argkmin_indices,
         argkmin_indices_ref,
-        rtol,
     )
 
 
