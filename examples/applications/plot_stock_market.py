@@ -118,7 +118,8 @@ variation = close_prices - open_prices
 
 from sklearn import covariance
 
-edge_model = covariance.GraphicalLassoCV()
+alphas = np.logspace(-1.5, 1, num=10)
+edge_model = covariance.GraphicalLassoCV(alphas=alphas)
 
 # standardize the time series: using correlations rather than covariance
 # former is more efficient for structure recovery
