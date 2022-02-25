@@ -113,7 +113,7 @@ def show_with_diff(image, reference, title):
     plt.subplot(1, 2, 2)
     difference = image - reference
 
-    plt.title("Difference (norm: %.2f)" % np.sqrt(np.sum(difference ** 2)))
+    plt.title("Difference (norm: %.2f)" % np.sqrt(np.sum(difference**2)))
     plt.imshow(
         difference, vmin=-0.5, vmax=0.5, cmap=plt.cm.PuOr, interpolation="nearest"
     )

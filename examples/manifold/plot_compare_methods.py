@@ -43,7 +43,8 @@ n_components = 2
 # Create figure
 fig = plt.figure(figsize=(15, 8))
 fig.suptitle(
-    "Manifold Learning with %i points, %i neighbors" % (1000, n_neighbors), fontsize=14
+    "Manifold Learning with %i points, %i neighbors" % (n_points, n_neighbors),
+    fontsize=14,
 )
 
 # Add 3d scatter plot
@@ -57,6 +58,7 @@ LLE = partial(
     n_neighbors=n_neighbors,
     n_components=n_components,
     eigen_solver="auto",
+    random_state=0,
 )
 
 methods = OrderedDict()
@@ -65,11 +67,13 @@ methods["LTSA"] = LLE(method="ltsa")
 methods["Hessian LLE"] = LLE(method="hessian")
 methods["Modified LLE"] = LLE(method="modified")
 methods["Isomap"] = manifold.Isomap(n_neighbors=n_neighbors, n_components=n_components)
-methods["MDS"] = manifold.MDS(n_components, max_iter=100, n_init=1)
+methods["MDS"] = manifold.MDS(n_components, max_iter=50, n_init=1, random_state=0)
 methods["SE"] = manifold.SpectralEmbedding(
-    n_components=n_components, n_neighbors=n_neighbors
+    n_components=n_components, n_neighbors=n_neighbors, random_state=0
 )
-methods["t-SNE"] = manifold.TSNE(n_components=n_components, init="pca", random_state=0)
+methods["t-SNE"] = manifold.TSNE(
+    n_components=n_components, perplexity=30, n_iter=250, init="pca", random_state=0
+)
 
 # Plot results
 for i, (label, method) in enumerate(methods.items()):
