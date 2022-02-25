@@ -448,7 +448,7 @@ def _nan_fill_dot_inner(v1, v2, fill_values):
     s = 0.
     for k in range(fill_values.shape[0]):
         if np.isnan(v1[k]) and np.isnan(v2[k]):
-            pass
+            s += fill_values[k] / 3.    # when both x, y are nan, we set the penalty as 1*std
         elif np.isnan(v1[k]) or np.isnan(v2[k]):
             s += fill_values[k]
         else:
