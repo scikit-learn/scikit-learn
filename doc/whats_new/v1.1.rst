@@ -305,6 +305,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| Added additional option `loss="quantile"` to
+  :class:`ensemble.HistGradientBoostingRegressor` for modelling quantiles.
+  The quantile level can be specified with the new parameter `quantile`.
+  :pr:`21800` and :pr:`20567` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| :meth:`fit` of :class:`ensemble.BaseGradientBoosting` now
   calls :func:`check_array` with parameter `force_all_finite=False` for non
   initial warm-start runs as it has already been checked before.
@@ -329,6 +334,12 @@ Changelog
   changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
+- |Fix| Removed a potential source of CPU oversubscription in
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` when CPU resource usage is limited,
+  for instance using cgroups quota in a docker container. :pr:`22566` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -358,6 +369,11 @@ Changelog
   is now faster in a multiprocessing setting, especially for subsequent fits with
   `warm_start` enabled.
   :pr:`22106` by :user:`Pieter Gijsbers <PGijsbers>`.
+
+- |Enhancement| Adds support to use pre-fit models with `cv="prefit"`
+  in :class:`ensemble.StackingClassifier` and :class:`ensemble.StackingRegressor`.
+  :pr:`16748` by :user:`Siqi He <siqi-he>` and :pr:`22215` by
+  :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`feature_selection.GenericUnivariateSelect` preserves
   float32 dtype. :pr:`18482` by :user:`Thierry Gameiro <titigmr>`
