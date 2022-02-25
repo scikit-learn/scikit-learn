@@ -44,8 +44,8 @@ def _get_deps_info():
 
     """
     deps = [
-        "pip",
         "setuptools",
+        "pip",
         "sklearn",
         "numpy",
         "scipy",
