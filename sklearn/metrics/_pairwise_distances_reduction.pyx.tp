@@ -770,6 +770,12 @@ cdef class PairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesReduction{{bitne
             metric in ("euclidean", "sqeuclidean")
             and not issparse(X)
             and not issparse(Y)
+            # As of now, we do not route the 32bit case to the specialized
+            # implementation as defining the upcast fixtures for GEMM using
+            # Tempita is non-trivial
+            # TODO: find a way to define the upcasting fixtures with Tempita
+            # for the FastEuclideanPairwiseDistancesArgKmin32.
+            and {{bitness}} == 64
         ):
             # Specialized implementation with improved arithmetic intensity
             # and vector instructions (SIMD) by processing several vectors
