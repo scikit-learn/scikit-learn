@@ -1,3 +1,7 @@
+.. Places parent toc into the sidebar
+
+:parenttoc: True
+
 .. include:: includes/big_toc_css.rst
 
 .. _inspection:
@@ -16,6 +20,10 @@ understand the model's underlying issue. The
 predictions from a model and what affects them. This can be used to 
 evaluate assumptions and biases of a model, design a better model, or
 to diagnose issues with model performance.
+
+.. topic:: Examples:
+
+   * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 .. toctree::
 

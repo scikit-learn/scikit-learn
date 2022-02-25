@@ -1,3 +1,7 @@
+.. Places parent toc into the sidebar
+
+:parenttoc: True
+
 .. _developers_guide:
 
 =================
@@ -15,4 +19,6 @@ Developer's Guide
    utilities
    performance
    advanced_installation
+   bug_triaging
    maintainer
+   plotting

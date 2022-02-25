@@ -1,8 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
-
 # Author: Nicolas Hug
 
 cimport cython
@@ -13,10 +8,14 @@ cimport numpy as np
 from .common import Y_DTYPE
 from .common cimport Y_DTYPE_C
 
+np.import_array()
+
 
 def _update_raw_predictions(
         Y_DTYPE_C [::1] raw_predictions,  # OUT
-        grower):
+        grower,
+        n_threads,
+):
     """Update raw_predictions with the predictions of the newest tree.
 
     This is equivalent to (and much faster than):
@@ -40,7 +39,7 @@ def _update_raw_predictions(
     values = np.array([leaf.value for leaf in leaves], dtype=Y_DTYPE)
 
     _update_raw_predictions_helper(raw_predictions, starts, stops, partition,
-                                   values)
+                                   values, n_threads)
 
 
 cdef inline void _update_raw_predictions_helper(
@@ -48,13 +47,16 @@ cdef inline void _update_raw_predictions_helper(
         const unsigned int [::1] starts,
         const unsigned int [::1] stops,
         const unsigned int [::1] partition,
-        const Y_DTYPE_C [::1] values):
+        const Y_DTYPE_C [::1] values,
+        int n_threads,
+):
 
     cdef:
         unsigned int position
         int leaf_idx
         int n_leaves = starts.shape[0]
 
-    for leaf_idx in prange(n_leaves, schedule='static', nogil=True):
+    for leaf_idx in prange(n_leaves, schedule='static', nogil=True,
+                           num_threads=n_threads):
         for position in range(starts[leaf_idx], stops[leaf_idx]):
             raw_predictions[partition[position]] += values[leaf_idx]

@@ -1,13 +1,10 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-
 # Author: Andrew nystrom <awnystrom@gmail.com>
 
 from scipy.sparse import csr_matrix
 from numpy cimport ndarray
 cimport numpy as np
 
+np.import_array()
 ctypedef np.int32_t INDEX_T
 
 ctypedef fused DATA_T:

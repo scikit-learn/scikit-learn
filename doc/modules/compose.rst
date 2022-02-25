@@ -27,7 +27,7 @@ of steps in processing the data, for example feature selection, normalization
 and classification. :class:`Pipeline` serves multiple purposes here:
 
 Convenience and encapsulation
-    You only have to call ``fit`` and ``predict`` once on your
+    You only have to call :term:`fit` and :term:`predict` once on your
     data to fit a whole sequence of estimators.
 Joint parameter selection
     You can :ref:`grid search <grid_search>`
@@ -38,7 +38,7 @@ Safety
     used to train the transformers and predictors.
 
 All estimators in a pipeline, except the last one, must be transformers
-(i.e. must have a ``transform`` method).
+(i.e. must have a :term:`transform` method).
 The last estimator may be any type (transformer, classifier, etc.).
 
 
@@ -139,16 +139,38 @@ or by name::
     >>> pipe['reduce_dim']
     PCA()
 
+To enable model inspection, :class:`~sklearn.pipeline.Pipeline` has a
+``get_feature_names_out()`` method, just like all transformers. You can use
+pipeline slicing to get the feature names going into each step::
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.feature_selection import SelectKBest
+    >>> iris = load_iris()
+    >>> pipe = Pipeline(steps=[
+    ...    ('select', SelectKBest(k=2)),
+    ...    ('clf', LogisticRegression())])
+    >>> pipe.fit(iris.data, iris.target)
+    Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
+    >>> pipe[:-1].get_feature_names_out()
+    array(['x2', 'x3'], ...)
+
+You can also provide custom feature names for the input data using
+``get_feature_names_out``::
+
+    >>> pipe[:-1].get_feature_names_out(iris.feature_names)
+    array(['petal length (cm)', 'petal width (cm)'], ...)
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
  * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
- * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
 
-.. topic:: See also:
+.. topic:: See Also:
 
  * :ref:`composite_grid_search`
 
@@ -244,19 +266,20 @@ object::
 Transforming target in regression
 =================================
 
-:class:`TransformedTargetRegressor` transforms the targets ``y`` before fitting
-a regression model. The predictions are mapped back to the original space via
-an inverse transform. It takes as an argument the regressor that will be used
-for prediction, and the transformer that will be applied to the target
-variable::
+:class:`~sklearn.compose.TransformedTargetRegressor` transforms the
+targets ``y`` before fitting a regression model. The predictions are mapped
+back to the original space via an inverse transform. It takes as an argument
+the regressor that will be used for prediction, and the transformer that will
+be applied to the target variable::
 
   >>> import numpy as np
-  >>> from sklearn.datasets import load_boston
+  >>> from sklearn.datasets import fetch_california_housing
   >>> from sklearn.compose import TransformedTargetRegressor
   >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
-  >>> X, y = load_boston(return_X_y=True)
+  >>> X, y = fetch_california_housing(return_X_y=True)
+  >>> X, y = X[:2000, :], y[:2000]  # select a subset of data
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
   >>> regr = TransformedTargetRegressor(regressor=regressor,
@@ -265,10 +288,10 @@ variable::
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.67
+  R2 score: 0.61
   >>> raw_target_regr = LinearRegression().fit(X_train, y_train)
   >>> print('R2 score: {0:.2f}'.format(raw_target_regr.score(X_test, y_test)))
-  R2 score: 0.64
+  R2 score: 0.59
 
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
@@ -286,7 +309,7 @@ Subsequently, the object is created as::
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.65
+  R2 score: 0.51
 
 By default, the provided functions are checked at each fit to be the inverse of
 each other. However, it is possible to bypass this checking by setting
@@ -301,7 +324,7 @@ each other. However, it is possible to bypass this checking by setting
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: -4.50
+  R2 score: -1.57
 
 .. note::
 
@@ -329,7 +352,7 @@ and the feature matrices they output are concatenated side-by-side into a
 larger matrix.
 
 When you want to apply different transformations to each field of the data,
-see the related class :class:`sklearn.compose.ColumnTransformer`
+see the related class :class:`~sklearn.compose.ColumnTransformer`
 (see :ref:`user guide <column_transformer>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
@@ -340,7 +363,7 @@ create complex models.
 
 (A :class:`FeatureUnion` has no way of checking whether two transformers
 might produce identical features. It only produces a union when the
-feature sets are disjoint, and making sure they are the caller's
+feature sets are disjoint, and making sure they are is the caller's
 responsibility.)
 
 
@@ -383,11 +406,6 @@ and ignored by setting to ``'drop'``::
 ColumnTransformer for heterogeneous data
 ========================================
 
-.. warning::
-
-    The :class:`compose.ColumnTransformer <sklearn.compose.ColumnTransformer>`
-    class is experimental and the API is subject to change.
-
 Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature
 extraction steps.  Often it is easiest to preprocess data before applying
@@ -420,10 +438,8 @@ preprocessing or a specific feature extraction method::
   ...      'user_rating': [4, 5, 4, 3]})
 
 For this data, we might want to encode the ``'city'`` column as a categorical
-variable using :class:`preprocessing.OneHotEncoder
-<sklearn.preprocessing.OneHotEncoder>` but apply a
-:class:`feature_extraction.text.CountVectorizer
-<sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
+variable using :class:`~sklearn.preprocessing.OneHotEncoder` but apply a
+:class:`~sklearn.feature_extraction.text.CountVectorizer` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
 each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
 By default, the remaining rating columns are ignored (``remainder='drop'``)::
@@ -432,21 +448,20 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
+  ...     [('categories', OneHotEncoder(dtype='int'), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...     remainder='drop')
+  ...     remainder='drop', verbose_feature_names_out=False)
 
   >>> column_trans.fit(X)
-  ColumnTransformer(transformers=[('city_category', OneHotEncoder(dtype='int'),
+  ColumnTransformer(transformers=[('categories', OneHotEncoder(dtype='int'),
                                    ['city']),
-                                  ('title_bow', CountVectorizer(), 'title')])
+                                  ('title_bow', CountVectorizer(), 'title')],
+                    verbose_feature_names_out=False)
 
-  >>> column_trans.get_feature_names()
-  ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
-  'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
-  'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
-  'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
-  'title_bow__wrath']
+  >>> column_trans.get_feature_names_out()
+  array(['city_London', 'city_Paris', 'city_Sallisaw', 'bow', 'feast',
+  'grapes', 'his', 'how', 'last', 'learned', 'moveable', 'of', 'the',
+   'trick', 'watson', 'wrath'], ...)
 
   >>> column_trans.transform(X).toarray()
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -457,12 +472,30 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
 input and therefore the columns were specified as a string (``'title'``).
-However, :class:`preprocessing.OneHotEncoder <sklearn.preprocessing.OneHotEncoder>`
+However, :class:`~sklearn.preprocessing.OneHotEncoder`
 as most of other transformers expects 2D data, therefore in that case you need
 to specify the column as a list of strings (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
-as a list of multiple items, an integer array, a slice, or a boolean mask.
+as a list of multiple items, an integer array, a slice, a boolean mask, or
+with a :func:`~sklearn.compose.make_column_selector`. The
+:func:`~sklearn.compose.make_column_selector` is used to select columns based
+on data type or column name::
+
+  >>> from sklearn.preprocessing import StandardScaler
+  >>> from sklearn.compose import make_column_selector
+  >>> ct = ColumnTransformer([
+  ...       ('scale', StandardScaler(),
+  ...       make_column_selector(dtype_include=np.number)),
+  ...       ('onehot',
+  ...       OneHotEncoder(),
+  ...       make_column_selector(pattern='city', dtype_include=object))])
+  >>> ct.fit_transform(X)
+  array([[ 0.904...,  0.      ,  1. ,  0. ,  0. ],
+         [-1.507...,  1.414...,  1. ,  0. ,  0. ],
+         [-0.301...,  0.      ,  0. ,  1. ,  0. ],
+         [ 0.904..., -1.414...,  0. ,  0. ,  1. ]])
+
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
 
@@ -514,6 +547,45 @@ above example would be::
                     transformers=[('onehotencoder', OneHotEncoder(), ['city']),
                                   ('countvectorizer', CountVectorizer(),
                                    'title')])
+
+If :class:`~sklearn.compose.ColumnTransformer` is fitted with a dataframe
+and the dataframe only has string column names, then transforming a dataframe
+will use the column names to select the columns::
+
+
+  >>> ct = ColumnTransformer(
+  ...          [("scale", StandardScaler(), ["expert_rating"])]).fit(X)
+  >>> X_new = pd.DataFrame({"expert_rating": [5, 6, 1],
+  ...                       "ignored_new_col": [1.2, 0.3, -0.1]})
+  >>> ct.transform(X_new)
+  array([[ 0.9...],
+         [ 2.1...],
+         [-3.9...]])
+
+.. _visualizing_composite_estimators:
+
+Visualizing Composite Estimators
+================================
+
+Estimators can be displayed with a HTML representation when shown in a
+jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
+many estimators. This visualization is activated by setting the
+`display` option in :func:`~sklearn.set_config`::
+
+  >>> from sklearn import set_config
+  >>> set_config(display='diagram')   # doctest: +SKIP
+  >>> # displays HTML representation in a jupyter context
+  >>> column_trans  # doctest: +SKIP
+
+An example of the HTML output can be seen in the
+**HTML representation of Pipeline** section of
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
+As an alternative, the HTML can be written to a file using
+:func:`~sklearn.utils.estimator_html_repr`::
+
+   >>> from sklearn.utils import estimator_html_repr
+   >>> with open('my_estimator.html', 'w') as f:  # doctest: +SKIP
+   ...     f.write(estimator_html_repr(clf))
 
 .. topic:: Examples:
 
