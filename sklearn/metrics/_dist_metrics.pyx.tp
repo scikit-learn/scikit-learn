@@ -5,8 +5,21 @@ implementation_specific_values = [
     #
     #       name_suffix, bitness, DTYPE_t, DTYPE
     #
-    # We use an empty string as to still be able to expose the same
-    # API for the reference 64bit implementations.
+    #
+    # On the first hand, an empty string is use for `name_suffix`
+    # for the 64bit case as to still be able to expose the original
+    # 64bit implementation under the same API, namely `DistanceMetric`.
+    #
+    # On the other hand, '32' bit is use for `name_suffix`
+    # for the 32bit case to remove ambiguity and use `DistanceMetric32`,
+    # which is not publicly exposed.
+    #
+    # The metric mapping is adapted accordingly to route to the correct
+    # implementations.
+    #
+    # We also use 64bit types as defined in `sklearn.utils._typedefs`
+    # to maintain backward compatibility as the symbol level for extra
+    # safety.
     #
     ('', '64', 'DTYPE_t', 'DTYPE'),
     ('32', '32', 'np.float32_t', 'np.float32')
