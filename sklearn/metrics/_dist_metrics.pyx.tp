@@ -434,17 +434,17 @@ cdef class DistanceMetric{{name_suffix}}:
         cdef np.ndarray[{{DTYPE_t}}, ndim=2, mode='c'] Yarr
         cdef np.ndarray[{{DTYPE_t}}, ndim=2, mode='c'] Darr
 
-        Xarr = np.asarray(X, dtype=DTYPE, order='C')
+        Xarr = np.asarray(X, dtype={{DTYPE}}, order='C')
         self._validate_data(Xarr)
         if Y is None:
             Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
-                         dtype=DTYPE, order='C')
+                         dtype={{DTYPE}}, order='C')
             self.pdist(Xarr, Darr)
         else:
-            Yarr = np.asarray(Y, dtype=DTYPE, order='C')
+            Yarr = np.asarray(Y, dtype={{DTYPE}}, order='C')
             self._validate_data(Yarr)
             Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
-                         dtype=DTYPE, order='C')
+                         dtype={{DTYPE}}, order='C')
             self.cdist(Xarr, Yarr, Darr)
         return Darr
 
@@ -617,7 +617,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         self.p = p
         if w is not None:
             w_array = check_array(
-                w, ensure_2d=False, dtype=DTYPE, input_name="w"
+                w, ensure_2d=False, dtype={{DTYPE}}, input_name="w"
             )
             if (w_array < 0).any():
                 raise ValueError("w cannot contain negative weights")
@@ -759,12 +759,12 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
 
-        self.mat = ReadonlyArrayWrapper(np.asarray(VI, dtype=float, order='C'))
+        self.mat = ReadonlyArrayWrapper(np.asarray(VI, dtype={{DTYPE}}, order='C'))
 
         self.size = self.mat.shape[0]
 
         # we need vec as a work buffer
-        self.vec = np.zeros(self.size, dtype=DTYPE)
+        self.vec = np.zeros(self.size, dtype={{DTYPE}})
 
     def _validate_data(self, X):
         if X.shape[1] != self.size:
