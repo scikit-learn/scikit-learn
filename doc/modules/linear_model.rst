@@ -865,24 +865,22 @@ Binary Case
 
 For notational ease, we assume that the target :math:`y_i` takes values in the
 set :math:`\{0, 1\}` for data point :math:`i`.
-
 Once fitted, the ``predict_proba`` method of ``LogisticRegression`` predicts
-the class probability of
+the probability of the positive class math:`P(y_i=1|X_i)` as 
 
-.. math:: P(y_i=1|X_i) = \operatorname{expit}(X_i^T w + w_0) = \frac{1}{1 + \exp(-X_i^T w - w_0)}.
+.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i^T w + w_0) = \frac{1}{1 + \exp(-X_i^T w - w_0)}.
 
 As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)`  minimizes the
 following cost function:
 
-.. math:: \min_{w, c} r(w) + C \sum_{i=1}^n \left[-y_i P(y_i=1|X_i)) - (1 - y_i) \log(1 - P(y_i=1|X_i))\right].
+.. math:: \min_{w} + C \sum_{i=1}^n \left[-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right] + r(w).
 
-Multinomial Case
 
-We currently implement four choices of regularization term
+We currently provide four choices for the regularization term
 
-#. None, :math:`r(w) = 0`
-#. :math:`\ell_1,\, r(w) = \|w\|_1`
+#. `penalty=None` for :math:`r(w) = 0`
+#. `penalty=l1` for the pure :math:`\ell_1`-penalty :math:`r(w) = \|w\|_1`
 #. :math:`\ell_2,\, r(w) = \frac{1}{2}\|w\|_2^2 = \frac{1}{2}w^T w`
 #. ElasticNet, :math:`r(w) = \frac{1 - \rho}{2}w^T w + \rho \|w\|_1`
 
@@ -891,28 +889,31 @@ controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
 regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 :math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
 
+Multinomial Case
 ----------------
 
-The binary case can be extended to :math:`K`-classes leading to the multinomial logistic regression, see also `log-linear model
+The binary case can be extended to :math:`K` classes leading to the multinomial logistic regression, see also `log-linear model
 <https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`_.
 
 .. note::
-   It is possible in a :math:`K`-class context to parameterize the model
+   It is possible to parameterize a :math:`K`-class classification model
    using only :math:`K-1` weight vectors, leaving one class probability fully
    determined by the other class probabilities by leveraging the fact that all
    class probabilities must sum to one. We deliberately choose to overparameterize the model
    using :math:`K` weight vectors for ease of implementation and to preserve the
-   symmetrical inductive bias regarding ordering of classes, see [1].. This effect becomes
+   symmetrical inductive bias regarding ordering of classes, see [1]. This effect becomes
    especially important when using regularization.
 
-Let :math:`y_i \in {0, \ldots, K-1}` be the label (ordinal) encoded target variable for observation $i$.
+Let :math:`y_i \in {0, \ldots, K-1}` be the label (ordinal) encoded target variable for observation :math:`i`.
 Instead of a single coefficient vector, we now have
 a matrix of coefficients :math:`W` where each row vector :math:`w_k` corresponds to class
-:math:`k`. We aim at predicting the class probabilities via ``predict_proba`` as:
+:math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via ``predict_proba`` as:
 
-.. math:: p(y_i=k|X_i) = \frac{\exp(X_i w_k + w_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i w_l + w_{0, l})}.
+.. math:: \hat{p}_k(X_i) = \frac{\exp(X_i w_k + w_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i w_l + w_{0, l})}.
 
-.. math:: \min_W r(W) - C\sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log  p(y_i=k|X_i).
+The objective for the optimization becomes
+
+.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(p_k(X_i)) + r(W).
 
 We currently implement four choices of regularization term
 
