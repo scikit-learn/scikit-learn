@@ -163,7 +163,7 @@ def smacof(
     return_n_iter=False,
     normalize=False,
 ):
-    """Computes multidimensional scaling using the SMACOF algorithm.
+    """Compute multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
     multidimensional scaling algorithm which minimizes an objective function
