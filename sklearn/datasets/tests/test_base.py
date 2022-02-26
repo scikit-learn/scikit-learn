@@ -32,8 +32,6 @@ from sklearn.datasets.tests.test_common import check_as_frame
 
 from sklearn.externals._pilutil import pillow_installed
 
-from sklearn.utils import IS_PYPY
-
 
 def _remove_dir(path):
     if os.path.isdir(path):
