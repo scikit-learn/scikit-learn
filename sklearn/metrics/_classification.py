@@ -52,7 +52,8 @@ def _check_zero_division(zero_division):
     elif zero_division is None or np.isnan(zero_division):
         return np.nan
     raise ValueError(
-        f'Got zero_division={zero_division}. Must be one of ["warn", 0, 1, None, np.nan]'
+        f'Got zero_division={zero_division}. '
+        f'Must be one of ["warn", 0, 1, None, np.nan]'
     )
 
 
@@ -154,6 +155,8 @@ def _nan_average(scores: np.ndarray, weights: np.ndarray):
         return np.nan
     if weights is None:
         return np.average(scores[~mask])
+    if isinstance(weights, list):
+        weights = np.array(weights)
     return np.average(scores[~mask], weights=weights[~mask])
 
 
@@ -744,7 +747,8 @@ def jaccard_score(
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
 
-        Note that if zero_division is None, such values will be excluded from the average.
+        Note that if zero_division is None, such values will be excluded
+        from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1111,7 +1115,8 @@ def f1_score(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded from the average.
+        Note that if zero_division is None, such values will be excluded
+        from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1260,7 +1265,8 @@ def fbeta_score(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded from the average.
+        Note that if zero_division is None, such values will be excluded
+        from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1526,7 +1532,8 @@ def precision_recall_fscore_support(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded from the average.
+        Note that if zero_division is None, such values will be excluded
+        from the average.
 
     warn_for : tuple or set, for internal use
         This determines which warnings will be made in the case that this
@@ -1767,7 +1774,8 @@ def precision_score(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded from the average.
+        Note that if zero_division is None, such values will be excluded
+        from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1915,7 +1923,8 @@ def recall_score(
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-        Note that if zero_division is None, such values will be excluded from the average.
+        Note that if zero_division is None, such values will be excluded
+        from the average.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
