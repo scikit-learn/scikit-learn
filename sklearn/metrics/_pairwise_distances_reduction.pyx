@@ -1181,15 +1181,6 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         scikit-learn configuration for `pairwise_dist_chunk_size`,
         and use 256 if it is not set.
 
-    n_threads: int, default=None
-        The number of OpenMP threads to use for the reduction.
-        Parallelism is done on chunks and the sharding of chunks
-        depends on the `strategy` set on
-        :meth:`~PairwiseDistancesRadiusNeighborhood.compute`.
-
-        See _openmp_effective_n_threads, for details about
-        the specification of n_threads.
-
     radius: float
         The radius defining the neighborhood.
     """
