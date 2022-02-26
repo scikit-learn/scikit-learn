@@ -255,7 +255,7 @@ def test_precision_recall_f1_score_binary():
 
         assert_almost_equal(
             my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2**2) * ps * rs / (2**2 * ps + rs),
+            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs),
             2,
         )
 
@@ -1438,8 +1438,10 @@ def test_jaccard_score_zero_division_warning():
         assert score == pytest.approx(0.0)
 
 
-@pytest.mark.parametrize("zero_division, expected_score",
-                         [(0, 0.25), (1, 0.75), (None, 0.5), (np.nan, 0.5)])
+@pytest.mark.parametrize(
+    "zero_division, expected_score",
+    [(0, 0.25), (1, 0.75), (None, 0.5), (np.nan, 0.5)],
+)
 def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
     # check that we don't issue warning by passing the zero_division parameter
     y_true = np.array([[1, 0, 1], [0, 0, 0]])
@@ -1621,7 +1623,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
 
     assert_almost_equal(p, (2 + value_to_sum) / values_to_average)
     assert_almost_equal(r, (1.5 + value_to_sum) / values_to_average)
-    assert_almost_equal(f, (1/1.5 + 1) / 4)
+    assert_almost_equal(f, (1 / 1.5 + 1) / 4)
     assert s is None
     assert_almost_equal(
         fbeta_score(y_true, y_pred, beta=2, average="macro"), np.mean(f2)
