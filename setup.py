@@ -230,6 +230,9 @@ def check_package_status(package, min_version):
 
 
 def setup_package():
+
+    # TODO: Require Python 3.8 for PyPy when PyPy3.8 is ready
+    # https://github.com/conda-forge/conda-forge-pinning-feedstock/issues/2089
     if platform.python_implementation() == "PyPy":
         python_requires = ">=3.7"
     else:
