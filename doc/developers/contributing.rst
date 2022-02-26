@@ -159,17 +159,6 @@ feedback:
     >>> import sklearn
     >>> sklearn.show_versions()  # doctest: +SKIP
 
-  .. note::
-
-    This utility function is only available in scikit-learn v0.20+.
-    For previous versions, one has to explicitly run::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
-
 - Please ensure all **code snippets and error messages are formatted in
   appropriate code blocks**.  See `Creating and highlighting code blocks
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
@@ -194,7 +183,7 @@ Contributing code
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
   so far. In order to claim an issue for yourself, please comment exactly
-  ``take`` on it for the CI to automatically assign the issue to you.
+  ``/take`` on it for the CI to automatically assign the issue to you.
 
 Video resources
 ---------------
@@ -264,7 +253,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy black==21.6b0
+        pip install pytest pytest-cov flake8 mypy black==22.1.0
 
 .. _upstream:
 
@@ -934,8 +923,9 @@ Monitoring performance
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
 `asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
-performance of a selection of common estimators and functions. The benchmark
-suite can be found in the `scikit-learn/asv_benchmarks` directory.
+performance of a selection of common estimators and functions. You can view
+these benchmarks on the `scikit-learn benchmark page <https://scikit-learn.org/scikit-learn-benchmarks>`_.
+The corresponding benchmark suite can be found in the `scikit-learn/asv_benchmarks` directory.
 
 To use all features of asv, you will need either `conda` or `virtualenv`. For
 more details please check the `asv installation webpage
@@ -1184,9 +1174,10 @@ Change the default value of a parameter
 
 If the default value of a parameter needs to be changed, please replace the
 default value with a specific value (e.g., ``warn``) and raise
-``FutureWarning`` when users are using the default value. In the following
-example, we change the default value of ``n_clusters`` from 5 to 10
-(current version is 0.20)::
+``FutureWarning`` when users are using the default value. The following
+example assumes that the current version is 0.20 and that we change the
+default value of ``n_clusters`` from 5 (old default for 0.20) to 10
+(new default for 0.22)::
 
     import warnings
 

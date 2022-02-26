@@ -26,7 +26,7 @@ def X_sparse():
 def test_solvers(X_sparse, solver, kind):
     X = X_sparse if kind == "sparse" else X_sparse.toarray()
     svd_a = TruncatedSVD(30, algorithm="arpack")
-    svd = TruncatedSVD(30, algorithm=solver, random_state=42)
+    svd = TruncatedSVD(30, algorithm=solver, random_state=42, n_oversamples=100)
 
     Xa = svd_a.fit_transform(X)[:, :6]
     Xr = svd.fit_transform(X)[:, :6]
@@ -39,7 +39,7 @@ def test_solvers(X_sparse, solver, kind):
     assert_allclose(comp_a[9:], comp[9:], atol=1e-2)
 
 
-@pytest.mark.parametrize("n_components", (10, 25, 41))
+@pytest.mark.parametrize("n_components", (10, 25, 41, 55))
 def test_attributes(n_components, X_sparse):
     n_features = X_sparse.shape[1]
     tsvd = TruncatedSVD(n_components).fit(X_sparse)
@@ -47,13 +47,18 @@ def test_attributes(n_components, X_sparse):
     assert tsvd.components_.shape == (n_components, n_features)
 
 
-@pytest.mark.parametrize("algorithm", SVD_SOLVERS)
-def test_too_many_components(algorithm, X_sparse):
-    n_features = X_sparse.shape[1]
-    for n_components in (n_features, n_features + 1):
-        tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
-        with pytest.raises(ValueError):
-            tsvd.fit(X_sparse)
+@pytest.mark.parametrize(
+    "algorithm, n_components",
+    [
+        ("arpack", 55),
+        ("arpack", 56),
+        ("randomized", 56),
+    ],
+)
+def test_too_many_components(X_sparse, algorithm, n_components):
+    tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
+    with pytest.raises(ValueError):
+        tsvd.fit(X_sparse)
 
 
 @pytest.mark.parametrize("fmt", ("array", "csr", "csc", "coo", "lil"))
@@ -141,14 +146,14 @@ def test_singular_values_consistency(solver):
     # Compare to the Frobenius norm
     X_pca = pca.transform(X)
     assert_allclose(
-        np.sum(pca.singular_values_ ** 2.0),
+        np.sum(pca.singular_values_**2.0),
         np.linalg.norm(X_pca, "fro") ** 2.0,
         rtol=1e-2,
     )
 
     # Compare to the 2-norms of the score vectors
     assert_allclose(
-        pca.singular_values_, np.sqrt(np.sum(X_pca ** 2.0, axis=0)), rtol=1e-2
+        pca.singular_values_, np.sqrt(np.sum(X_pca**2.0, axis=0)), rtol=1e-2
     )
 
 
@@ -164,7 +169,7 @@ def test_singular_values_expected(solver):
     pca = TruncatedSVD(n_components=3, algorithm=solver, random_state=rng)
     X_pca = pca.fit_transform(X)
 
-    X_pca /= np.sqrt(np.sum(X_pca ** 2.0, axis=0))
+    X_pca /= np.sqrt(np.sum(X_pca**2.0, axis=0))
     X_pca[:, 0] *= 3.142
     X_pca[:, 1] *= 2.718
 

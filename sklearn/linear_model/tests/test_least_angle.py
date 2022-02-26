@@ -175,7 +175,7 @@ def test_collinearity():
     _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
     assert not np.isnan(coef_path_).any()
     residual = np.dot(X, coef_path_[:, -1]) - y
-    assert (residual ** 2).sum() < 1.0  # just make sure it's bounded
+    assert (residual**2).sum() < 1.0  # just make sure it's bounded
 
     n_samples = 10
     X = rng.rand(n_samples, 5)
@@ -446,7 +446,7 @@ def test_lars_n_nonzero_coefs(verbose=False):
 @ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
-    Y = np.vstack([y, y ** 2]).T
+    Y = np.vstack([y, y**2]).T
     n_targets = Y.shape[1]
     estimators = [
         linear_model.LassoLars(),
@@ -804,7 +804,7 @@ def test_lasso_lars_vs_R_implementation():
     # Let's rescale back the coefficients returned by sklearn before comparing
     # against the R result (read the note above)
     temp = X - np.mean(X, axis=0)
-    normx = np.sqrt(np.sum(temp ** 2, axis=0))
+    normx = np.sqrt(np.sum(temp**2, axis=0))
     skl_betas2 /= normx[:, np.newaxis]
 
     assert_array_almost_equal(r2, skl_betas2, decimal=12)

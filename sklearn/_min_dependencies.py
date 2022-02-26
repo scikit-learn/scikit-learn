@@ -17,7 +17,7 @@ else:
     NUMPY_MIN_VERSION = "1.14.6"
 
 SCIPY_MIN_VERSION = "1.1.0"
-JOBLIB_MIN_VERSION = "0.11"
+JOBLIB_MIN_VERSION = "1.0.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "5.0.1"
 CYTHON_MIN_VERSION = "0.29.24"
@@ -40,12 +40,12 @@ dependent_packages = {
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
     "flake8": ("3.8.2", "tests"),
-    "black": ("21.6b0", "tests"),
+    "black": ("22.1.0", "tests"),
     "mypy": ("0.770", "tests"),
     "pyamg": ("4.0.0", "tests"),
     "sphinx": ("4.0.1", "docs"),
     "sphinx-gallery": ("0.7.0", "docs"),
-    "numpydoc": ("1.0.0", "docs"),
+    "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("7.1.2", "docs"),
     "sphinx-prompt": ("1.3.0", "docs"),
     "sphinxext-opengraph": ("0.4.2", "docs"),

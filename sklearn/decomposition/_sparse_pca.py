@@ -241,6 +241,11 @@ class SparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         """Number of transformed output features."""
         return self.components_.shape[0]
 
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
+
 
 class MiniBatchSparsePCA(SparsePCA):
     """Mini-batch Sparse Principal Components Analysis.

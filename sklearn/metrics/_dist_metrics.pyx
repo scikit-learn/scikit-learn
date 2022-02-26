@@ -4,6 +4,8 @@
 
 import numpy as np
 cimport numpy as np
+from cython cimport final
+
 np.import_array()  # required in order to use C-API
 
 
@@ -23,13 +25,14 @@ cdef inline np.ndarray _buffer_to_ndarray(const DTYPE_t* x, np.npy_intp n):
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 
-# some handy constants
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
+from scipy.sparse import csr_matrix, issparse
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
+from ..utils import check_array
 
 ######################################################################
 # newObj function
@@ -67,6 +70,17 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'haversine': HaversineDistance,
                   'pyfunc': PyFuncDistance}
 
+BOOL_METRICS = [
+    "hamming",
+    "matching",
+    "jaccard",
+    "dice",
+    "kulsinski",
+    "rogerstanimoto",
+    "russellrao",
+    "sokalmichener",
+    "sokalsneath",
+]
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,
@@ -119,9 +133,12 @@ cdef class DistanceMetric:
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
 
-    Note that "minkowski" with a non-None `w` parameter actually calls
-    `WMinkowskiDistance` with `w=w ** (1/p)` in order to be consistent with the
-    parametrization of scipy 1.8 and later.
+    .. deprecated:: 1.1
+        `WMinkowskiDistance` is deprecated in version 1.1 and will be removed in version 1.3.
+        Use `MinkowskiDistance` instead. Note that in `MinkowskiDistance`, the weights are
+        applied to the absolute differences already raised to the p power. This is different from
+        `WMinkowskiDistance` where weights are applied to the absolute differences before raising
+        to the p power. The deprecation aims to remain consistent with SciPy 1.8 convention.
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
     distance metric requires data in the form of [latitude, longitude] and both
@@ -195,8 +212,8 @@ cdef class DistanceMetric:
     """
     def __cinit__(self):
         self.p = 2
-        self.vec = np.zeros(1, dtype=DTYPE, order='c')
-        self.mat = np.zeros((1, 1), dtype=DTYPE, order='c')
+        self.vec = np.zeros(1, dtype=DTYPE, order='C')
+        self.mat = np.zeros((1, 1), dtype=DTYPE, order='C')
         self.size = 1
 
     def __reduce__(self):
@@ -257,25 +274,14 @@ cdef class DistanceMetric:
         if metric is MinkowskiDistance:
             p = kwargs.pop('p', 2)
             w = kwargs.pop('w', None)
-            if w is not None:
-                # Be consistent with scipy 1.8 conventions: in scipy 1.8,
-                # 'wminkowski' was removed in favor of passing a
-                # weight vector directly to 'minkowski', however
-                # the new weights apply to the absolute differences raised to
-                # the p power instead of the absolute difference as in
-                # previous versions of scipy.
-                # WMinkowskiDistance in sklearn implements the weighting
-                # scheme of the old 'wminkowski' in scipy < 1.8, hence the
-                # following adaptation:
-                return WMinkowskiDistance(p, w ** (1/p), **kwargs)
-            if p == 1:
+            if p == 1 and w is None:
                 return ManhattanDistance(**kwargs)
-            elif p == 2:
+            elif p == 2 and w is None:
                 return EuclideanDistance(**kwargs)
-            elif np.isinf(p):
+            elif np.isinf(p) and w is None:
                 return ChebyshevDistance(**kwargs)
             else:
-                return MinkowskiDistance(p, **kwargs)
+                return MinkowskiDistance(p, w, **kwargs)
         else:
             return metric(**kwargs)
 
@@ -306,8 +312,9 @@ cdef class DistanceMetric:
         This can optionally be overridden in a base class.
 
         The rank-preserving surrogate distance is any measure that yields the same
-        rank as the distance, but is more efficient to compute. For example, for the
-        Euclidean metric, the surrogate distance is the squared-euclidean distance.
+        rank as the distance, but is more efficient to compute. For example, the
+        rank-preserving surrogate distance of the Euclidean metric is the
+        squared-euclidean distance.
         """
         return self.dist(x1, x2, size)
 
@@ -343,8 +350,9 @@ cdef class DistanceMetric:
         """Convert the rank-preserving surrogate distance to the distance.
 
         The surrogate distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute. For example, for the
-        Euclidean metric, the surrogate distance is the squared-euclidean distance.
+        distance, but is more efficient to compute. For example, the
+        rank-preserving surrogate distance of the Euclidean metric is the
+        squared-euclidean distance.
 
         Parameters
         ----------
@@ -362,8 +370,9 @@ cdef class DistanceMetric:
         """Convert the true distance to the rank-preserving surrogate distance.
 
         The surrogate distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute. For example, for the
-        Euclidean metric, the surrogate distance is the squared-euclidean distance.
+        distance, but is more efficient to compute. For example, the
+        rank-preserving surrogate distance of the Euclidean metric is the
+        squared-euclidean distance.
 
         Parameters
         ----------
@@ -554,27 +563,64 @@ cdef class MinkowskiDistance(DistanceMetric):
     r"""Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i |x_i - y_i|^p] ^ (1/p)
+        D(x, y) = {||u-v||}_p
+
+    when w is None.
+
+    Here is the more general expanded expression for the weighted case:
+
+    .. math::
+        D(x, y) = [\sum_i w_i *|x_i - y_i|^p] ^ (1/p)
+
+    Parameters
+    ----------
+    p : int
+        The order of the p-norm of the difference (see above).
+    w : (N,) array-like (optional)
+        The weight vector.
 
     Minkowski Distance requires p >= 1 and finite. For p = infinity,
     use ChebyshevDistance.
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
     """
-    def __init__(self, p):
+    def __init__(self, p, w=None):
         if p < 1:
             raise ValueError("p must be greater than 1")
         elif np.isinf(p):
             raise ValueError("MinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
+
         self.p = p
+        if w is not None:
+            w_array = check_array(
+                w, ensure_2d=False, dtype=DTYPE, input_name="w"
+            )
+            if (w_array < 0).any():
+                raise ValueError("w cannot contain negative weights")
+            self.vec = ReadonlyArrayWrapper(w_array)
+            self.size = self.vec.shape[0]
+        else:
+            self.vec = ReadonlyArrayWrapper(np.asarray([], dtype=DTYPE))
+            self.size = 0
+
+    def _validate_data(self, X):
+        if self.size > 0 and X.shape[1] != self.size:
+            raise ValueError("MinkowskiDistance: the size of w must match "
+                             f"the number of features ({X.shape[1]}). "
+                             f"Currently len(w)={self.size}.")
 
     cdef inline DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
         cdef DTYPE_t d=0
         cdef np.intp_t j
-        for j in range(size):
-            d += pow(fabs(x1[j] - x2[j]), self.p)
+        cdef bint has_w = self.size > 0
+        if has_w:
+            for j in range(size):
+                d += self.vec[j] * pow(fabs(x1[j] - x2[j]), self.p)
+        else:
+            for j in range(size):
+                d += pow(fabs(x1[j] - x2[j]), self.p)
         return d
 
     cdef inline DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
@@ -595,6 +641,7 @@ cdef class MinkowskiDistance(DistanceMetric):
 
 
 #------------------------------------------------------------
+# TODO: Remove in 1.3 - WMinkowskiDistance class
 # W-Minkowski Distance
 cdef class WMinkowskiDistance(DistanceMetric):
     r"""Weighted Minkowski Distance
@@ -613,6 +660,16 @@ cdef class WMinkowskiDistance(DistanceMetric):
 
     """
     def __init__(self, p, w):
+        from warnings import warn
+        warn("WMinkowskiDistance is deprecated in version 1.1 and will be "
+            "removed in version 1.3. Use MinkowskiDistance instead. Note "
+            "that in MinkowskiDistance, the weights are applied to the "
+            "absolute differences raised to the p power. This is different "
+            "from WMinkowskiDistance where weights are applied to the "
+            "absolute differences before raising to the p power. "
+            "The deprecation aims to remain consistent with SciPy 1.8 "
+            "convention.", FutureWarning)
+
         if p < 1:
             raise ValueError("p must be greater than 1")
         elif np.isinf(p):
@@ -1150,3 +1207,164 @@ cdef class PyFuncDistance(DistanceMetric):
 
 cdef inline double fmax(double a, double b) nogil:
     return max(a, b)
+
+
+######################################################################
+# Datasets Pair Classes
+cdef class DatasetsPair:
+    """Abstract class which wraps a pair of datasets (X, Y).
+
+    This class allows computing distances between a single pair of rows of
+    of X and Y at a time given the pair of their indices (i, j). This class is
+    specialized for each metric thanks to the :func:`get_for` factory classmethod.
+
+    The handling of parallelization over chunks to compute the distances
+    and aggregation for several rows at a time is done in dedicated
+    subclasses of PairwiseDistancesReduction that in-turn rely on
+    subclasses of DatasetsPair for each pair of rows in the data. The goal
+    is to make it possible to decouple the generic parallelization and
+    aggregation logic from metric-specific computation as much as
+    possible.
+
+    X and Y can be stored as C-contiguous np.ndarrays or CSR matrices
+    in subclasses.
+
+    This class avoids the overhead of dispatching distance computations
+    to :class:`sklearn.metrics.DistanceMetric` based on the physical
+    representation of the vectors (sparse vs. dense). It makes use of
+    cython.final to remove the overhead of dispatching method calls.
+
+    Parameters
+    ----------
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two vectors of (X, Y).
+    """
+
+    @classmethod
+    def get_for(
+        cls,
+        X,
+        Y,
+        str metric="euclidean",
+        dict metric_kwargs=None,
+    ) -> DatasetsPair:
+        """Return the DatasetsPair implementation for the given arguments.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+            Input data.
+            If provided as a ndarray, it must be C-contiguous.
+            If provided as a sparse matrix, it must be in CSR format.
+
+        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
+            Input data.
+            If provided as a ndarray, it must be C-contiguous.
+            If provided as a sparse matrix, it must be in CSR format.
+
+        metric : str, default='euclidean'
+            The distance metric to compute between rows of X and Y.
+            The default metric is a fast implementation of the Euclidean
+            metric. For a list of available metrics, see the documentation
+            of :class:`~sklearn.metrics.DistanceMetric`.
+
+        metric_kwargs : dict, default=None
+            Keyword arguments to pass to specified metric function.
+
+        Returns
+        -------
+        datasets_pair: DatasetsPair
+            The suited DatasetsPair implementation.
+        """
+        cdef:
+            DistanceMetric distance_metric = DistanceMetric.get_metric(
+                metric,
+                **(metric_kwargs or {})
+            )
+
+        if not(X.dtype == Y.dtype == np.float64):
+            raise ValueError(
+                f"Only 64bit float datasets are supported at this time, "
+                f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}"
+            )
+
+        # Metric-specific checks that do not replace nor duplicate `check_array`.
+        distance_metric._validate_data(X)
+        distance_metric._validate_data(Y)
+
+        # TODO: dispatch to other dataset pairs for sparse support once available:
+        if issparse(X) or issparse(Y):
+            raise ValueError("Only dense datasets are supported for X and Y.")
+
+        return DenseDenseDatasetsPair(X, Y, distance_metric)
+
+    def __init__(self, DistanceMetric distance_metric):
+        self.distance_metric = distance_metric
+
+    cdef ITYPE_t n_samples_X(self) nogil:
+        """Number of samples in X."""
+        # This is a abstract method.
+        # This _must_ always be overwritten in subclasses.
+        # TODO: add "with gil: raise" here when supporting Cython 3.0
+        return -999
+
+    cdef ITYPE_t n_samples_Y(self) nogil:
+        """Number of samples in Y."""
+        # This is a abstract method.
+        # This _must_ always be overwritten in subclasses.
+        # TODO: add "with gil: raise" here when supporting Cython 3.0
+        return -999
+
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        return self.dist(i, j)
+
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        # This is a abstract method.
+        # This _must_ always be overwritten in subclasses.
+        # TODO: add "with gil: raise" here when supporting Cython 3.0
+        return -1
+
+@final
+cdef class DenseDenseDatasetsPair(DatasetsPair):
+    """Compute distances between row vectors of two arrays.
+
+    Parameters
+    ----------
+    X: ndarray of shape (n_samples_X, n_features)
+        Rows represent vectors. Must be C-contiguous.
+
+    Y: ndarray of shape (n_samples_Y, n_features)
+        Rows represent vectors. Must be C-contiguous.
+
+    distance_metric: DistanceMetric
+        The distance metric responsible for computing distances
+        between two row vectors of (X, Y).
+    """
+
+    def __init__(self, X, Y, DistanceMetric distance_metric):
+        super().__init__(distance_metric)
+        # Arrays have already been checked
+        self.X = X
+        self.Y = Y
+        self.d = X.shape[1]
+
+    @final
+    cdef ITYPE_t n_samples_X(self) nogil:
+        return self.X.shape[0]
+
+    @final
+    cdef ITYPE_t n_samples_Y(self) nogil:
+        return self.Y.shape[0]
+
+    @final
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        return self.distance_metric.rdist(&self.X[i, 0],
+                                          &self.Y[j, 0],
+                                          self.d)
+
+    @final
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
+        return self.distance_metric.dist(&self.X[i, 0],
+                                         &self.Y[j, 0],
+                                         self.d)
