@@ -15,6 +15,7 @@ import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from importlib import resources
+from pathlib import Path
 
 from ..preprocessing import scale
 from ..utils import Bunch
@@ -253,8 +254,7 @@ def load_files(
     if load_content:
         data = []
         for filename in filenames:
-            with open(filename, "rb") as f:
-                data.append(f.read())
+            data.append(Path(filename).read_bytes())
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(
