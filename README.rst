@@ -33,11 +33,11 @@
 .. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
 .. |PythonMinVersion| replace:: 3.8
-.. |NumPyMinVersion| replace:: 1.17.13
+.. |NumPyMinVersion| replace:: 1.16.2
 .. |SciPyMinVersion| replace:: 1.3.2
 .. |JoblibMinVersion| replace:: 1.0.0
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
-.. |MatplotlibMinVersion| replace:: 2.2.3
+.. |MatplotlibMinVersion| replace:: 3.1.2
 .. |Scikit-ImageMinVersion| replace:: 0.14.5
 .. |PandasMinVersion| replace:: 1.0.5
 .. |SeabornMinVersion| replace:: 0.9.0
