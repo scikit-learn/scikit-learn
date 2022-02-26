@@ -225,7 +225,7 @@ jobs:
     matrix:
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
-        DOCKER_CONTAINER: 'i386/debian:10.9'
+        DOCKER_CONTAINER: 'i386/debian:11.2'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
