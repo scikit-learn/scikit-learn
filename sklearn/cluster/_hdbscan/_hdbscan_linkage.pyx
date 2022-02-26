@@ -6,8 +6,10 @@
 
 import numpy as np
 cimport numpy as np
+import cython
 
 from libc.float cimport DBL_MAX
+from libc.stdio cimport printf
 
 from .dist_metrics cimport DistanceMetric
 
@@ -198,6 +200,7 @@ cdef class UnionFind (object):
 
         return
 
+    @cython.wraparound(True)
     cdef np.intp_t fast_find(self, np.intp_t n):
         cdef np.intp_t p
         p = n
@@ -208,7 +211,7 @@ cdef class UnionFind (object):
             p, self.parent_arr[p] = self.parent_arr[p], n
         return n
 
-
+@cython.wraparound(True)
 cpdef np.ndarray[np.double_t, ndim=2] label(np.ndarray[np.double_t, ndim=2] L):
 
     cdef np.ndarray[np.double_t, ndim=2] result_arr

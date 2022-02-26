@@ -7,6 +7,7 @@
 
 import numpy as np
 cimport numpy as np
+import cython
 
 cdef np.double_t INFTY = np.inf
 
@@ -656,6 +657,7 @@ cpdef set epsilon_search(set leaves, np.ndarray cluster_tree, np.double_t cluste
 
     return set(selected_clusters)
 
+@cython.wraparound(True)
 cpdef tuple get_clusters(np.ndarray tree, dict stability,
                          cluster_selection_method='eom',
                          allow_single_cluster=False,
