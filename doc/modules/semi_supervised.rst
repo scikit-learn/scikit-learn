@@ -79,7 +79,7 @@ Label Propagation
 =================
 
 Label propagation denotes a few variations of semi-supervised graph
-inference algorithms.
+inference algorithms. 
 
 A few features available in this model:
   * Used for classification tasks
@@ -87,7 +87,7 @@ A few features available in this model:
 
 `scikit-learn` provides two label propagation models:
 :class:`LabelPropagation` and :class:`LabelSpreading`. Both work by
-constructing a similarity graph over all items in the input dataset. 
+constructing a similarity graph over all items in the input dataset.
 
 .. figure:: ../auto_examples/semi_supervised/images/sphx_glr_plot_label_propagation_structure_001.png
     :target: ../auto_examples/semi_supervised/plot_label_propagation_structure.html
