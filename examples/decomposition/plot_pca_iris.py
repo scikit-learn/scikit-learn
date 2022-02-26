@@ -30,7 +30,10 @@ y = iris.target
 
 fig = plt.figure(1, figsize=(4, 3))
 plt.clf()
-ax = Axes3D(fig, rect=[0, 0, 0.95, 1], elev=48, azim=134)
+
+ax = fig.add_subplot(111, projection="3d", elev=48, azim=134)
+ax.set_position([0, 0, 0.95, 1])
+
 
 plt.cla()
 pca = decomposition.PCA(n_components=3)
