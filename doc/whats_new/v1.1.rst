@@ -577,7 +577,7 @@ Changelog
   :func:`classification_report`. Now, the value can be `None` or `np.nan`, meaning that the
   metric is undefined and should be excluded from averaging. When not used for averages, the
   value returned is np.nan in both cases.
-  :pr:`XXTODOXX` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+  :pr:`22618` by :user:`Marc Torrellas Socastro <marctorsoc>`.
 
 :mod:`sklearn.manifold`
 .......................
