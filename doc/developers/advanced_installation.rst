@@ -67,7 +67,7 @@ feature, code or documentation improvement).
      conda activate sklearn-env
 
 #. **Alternative to conda:** If you run Linux or similar, you can instead use
-   your system's Python provided it is recent enough (3.7 or higher
+   your system's Python provided it is recent enough (3.8 or higher
    at the time of writing). In this case, we recommend to create a dedicated
    virtualenv_ and install the scikit-learn build dependencies with pip:
 
@@ -114,7 +114,7 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.7),
+- Python (>= 3.8),
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),

@@ -17,7 +17,7 @@
 .. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/workflows/Wheel%20builder/badge.svg?event=schedule
 .. _`Nightly wheels`: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
-.. |PythonVersion| image:: https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9%20%7C%203.10-blue
+.. |PythonVersion| image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue
 .. _PythonVersion: https://pypi.org/project/scikit-learn/
 
 .. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
@@ -32,7 +32,7 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
 .. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
-.. |PythonMinVersion| replace:: 3.7
+.. |PythonMinVersion| replace:: 3.8
 .. |NumPyMinVersion| replace:: 1.14.6
 .. |SciPyMinVersion| replace:: 1.1.0
 .. |JoblibMinVersion| replace:: 1.0.0
@@ -75,8 +75,8 @@ scikit-learn requires:
 =======
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
-scikit-learn 0.23 and later require Python 3.6 or newer.
 scikit-learn 1.0 and later require Python 3.7 or newer.
+scikit-learn 1.1 and later require Python 3.8 or newer.
 
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
 classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
