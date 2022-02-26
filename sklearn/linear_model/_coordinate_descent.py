@@ -1663,12 +1663,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 check_scalar_alpha(alphas, "alphas")
             else:
                 # alphas is an iterable item in this case.
-                n_alphas = 1 if np.ndim(alphas) == 0 else len(alphas)
-                if n_alphas != 1:
-                    for index, alpha in enumerate(alphas):
-                        check_scalar_alpha(alpha, f"alphas[{index}]")
-                else:
-                    check_scalar_alpha(alphas[0], "alphas")
+                for index, alpha in enumerate(alphas):
+                    check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
 
