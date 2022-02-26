@@ -527,7 +527,7 @@ cdef class PairwiseDistancesReduction{{bitness}}(PairwiseDistancesReduction):
                     X_end = X_start + self.X_n_samples_chunk
 
                 # Reinitializing thread datastructures for the new X chunk
-                self._parallel_on_X_init_chunk(thread_num, X_start)
+                self._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
                 for Y_chunk_idx in range(self.Y_n_chunks):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -535,6 +535,12 @@ cdef class PairwiseDistancesReduction{{bitness}}(PairwiseDistancesReduction):
                         Y_end = Y_start + self.Y_n_samples_last_chunk
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
+
+                    self._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+                        X_start, X_end,
+                        Y_start, Y_end,
+                        thread_num,
+                    )
 
                     self._compute_and_reduce_distances_on_chunks(
                         X_start, X_end,
@@ -588,7 +594,7 @@ cdef class PairwiseDistancesReduction{{bitness}}(PairwiseDistancesReduction):
                 thread_num = _openmp_thread_num()
 
                 # Initializing datastructures used in this thread
-                self._parallel_on_Y_parallel_init(thread_num)
+                self._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
                 for Y_chunk_idx in prange(self.Y_n_chunks, schedule='static'):
                     Y_start = Y_chunk_idx * self.Y_n_samples_chunk
@@ -596,6 +602,12 @@ cdef class PairwiseDistancesReduction{{bitness}}(PairwiseDistancesReduction):
                         Y_end = Y_start + self.Y_n_samples_last_chunk
                     else:
                         Y_end = Y_start + self.Y_n_samples_chunk
+
+                    self._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+                        X_start, X_end,
+                        Y_start, Y_end,
+                        thread_num,
+                    )
 
                     self._compute_and_reduce_distances_on_chunks(
                         X_start, X_end,
@@ -630,7 +642,8 @@ cdef class PairwiseDistancesReduction{{bitness}}(PairwiseDistancesReduction):
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
         This is THE core computational method of PairwiseDistanceReductions{{bitness}}.
-        This must be implemented in subclasses.
+        This must be implemented in subclasses agnostically from the parallelisation
+        strategies.
         """
         return
 
@@ -658,8 +671,20 @@ cdef class PairwiseDistancesReduction{{bitness}}(PairwiseDistancesReduction):
         self,
         ITYPE_t thread_num,
         ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         """Initialise datastructures used in a thread given its number."""
+        return
+
+    cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks."""
         return
 
     cdef void _parallel_on_X_prange_iter_finalize(
@@ -687,8 +712,21 @@ cdef class PairwiseDistancesReduction{{bitness}}(PairwiseDistancesReduction):
     cdef void _parallel_on_Y_parallel_init(
         self,
         ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         """Initialise datastructures used in a thread given its number."""
+        return
+
+    cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks."""
         return
 
     cdef void _parallel_on_Y_synchronize(
@@ -923,11 +961,15 @@ cdef class PairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesReduction{{bitne
                     Y_start + j,
                 )
 
+{{if need_upcast}}
+{{else}}
     @final
+{{endif}}
     cdef void _parallel_on_X_init_chunk(
         self,
         ITYPE_t thread_num,
         ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         # As this strategy is embarrassingly parallel, we can set each
         # thread's heaps pointer to the proper position on the main heaps.
@@ -978,10 +1020,15 @@ cdef class PairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesReduction{{bitne
                 heaps_size * sizeof(ITYPE_t)
             )
 
+{{if need_upcast}}
+{{else}}
     @final
+{{endif}}
     cdef void _parallel_on_Y_parallel_init(
         self,
         ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
     ) nogil:
         # Initialising heaps (memset can't be used here)
         for idx in range(self.X_n_samples_chunk * self.k):
@@ -1092,8 +1139,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesArg
         bint use_squared_distances
 
 {{if need_upcast}}
-        # Buffers for upcasting chunks of X and Y
-        # from 32bit to 64bit.
+        # Buffers for upcasting chunks of X and Y from 32bit to 64bit.
         DTYPE_t ** X_c_upcast
         DTYPE_t ** Y_c_upcast
 {{endif}}
@@ -1153,8 +1199,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesArg
         )
 
 {{if need_upcast}}
-        # Buffers for upcasting chunks of X and Y
-        # from 32bit to 64bit.
+        # Buffers for upcasting chunks of X and Y from 32bit to 64bit.
         self.X_c_upcast = <DTYPE_t **> malloc(
             sizeof(DTYPE_t *) * self.chunks_n_threads
         )
@@ -1190,14 +1235,58 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesArg
             self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
         )
 {{if need_upcast}}
-        # Buffers for upcasting chunks of X and Y
-        # from 32bit to 64bit.
+        # Buffers for upcasting chunks of X and Y from 32bit to 64bit.
         self.X_c_upcast[thread_num] = <DTYPE_t *> malloc(
             self.X_n_samples_chunk * self.X.shape[1] * sizeof(DTYPE_t)
         )
         self.Y_c_upcast[thread_num] = <DTYPE_t *> malloc(
             self.Y_n_samples_chunk * self.Y.shape[1] * sizeof(DTYPE_t)
         )
+{{endif}}
+
+{{if need_upcast}}
+    @final
+    cdef void _parallel_on_X_init_chunk(
+        self,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        cdef:
+            ITYPE_t n_features = self.X.shape[1]
+            ITYPE_t i, j
+            ITYPE_t n_chunk_samples = X_end - X_start
+        PairwiseDistancesArgKmin{{bitness}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
+
+        # Upcasting X_c=X[X_start:X_end, :] from float32 to float64
+        for i in range(n_chunk_samples):
+            for j in range(n_features):
+                self.X_c_upcast[thread_num][i * n_features + j] = <DTYPE_t> self.X[X_start + i, j]
+
+    @final
+    cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        cdef:
+            ITYPE_t n_features = self.Y.shape[1]
+            ITYPE_t i, j
+            ITYPE_t n_chunk_samples = Y_end - Y_start
+        PairwiseDistancesArgKmin{{bitness}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+            self,
+            X_start, X_end,
+            Y_start, Y_end,
+            thread_num,
+        )
+
+        # Upcasting Y_c=Y[Y_start:Y_end, :] from float32 to float64
+        for i in range(n_chunk_samples):
+            for j in range(n_features):
+                self.Y_c_upcast[thread_num][i * n_features + j] = <DTYPE_t> self.Y[Y_start + i, j]
 {{endif}}
 
     @final
@@ -1225,8 +1314,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesArg
                 self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
             )
 {{if need_upcast}}
-            # Buffers for upcasting chunks of X and Y
-            # from 32bit to 64bit.
+            # Buffers for upcasting chunks of X and Y from 32bit to 64bit.
             self.X_c_upcast[thread_num] = <DTYPE_t *> malloc(
                 self.X_n_samples_chunk * self.X.shape[1] * sizeof(DTYPE_t)
             )
@@ -1234,6 +1322,52 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesArg
                 self.Y_n_samples_chunk * self.Y.shape[1] * sizeof(DTYPE_t)
             )
 {{endif}}
+
+{{if need_upcast}}
+    @final
+    cdef void _parallel_on_Y_parallel_init(
+        self,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        cdef:
+            ITYPE_t n_features = self.X.shape[1]
+            ITYPE_t n_chunk_samples = X_end - X_start
+            ITYPE_t i, j
+        PairwiseDistancesArgKmin{{bitness}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
+
+        # Upcasting X_c=X[X_start:X_end, :] from float32 to float64
+        for i in range(n_chunk_samples):
+            for j in range(n_features):
+                self.X_c_upcast[thread_num][i * n_features + j] = <DTYPE_t> self.X[X_start + i, j]
+
+    @final
+    cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        cdef:
+            ITYPE_t n_features = self.Y.shape[1]
+            ITYPE_t i, j
+            ITYPE_t n_chunk_samples = Y_end - Y_start
+        PairwiseDistancesArgKmin{{bitness}}._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+            self,
+            X_start, X_end,
+            Y_start, Y_end,
+            thread_num,
+        )
+
+        # Upcasting Y_c=Y[Y_start:Y_end, :] from float32 to float64
+        for i in range(n_chunk_samples):
+            for j in range(n_features):
+                self.Y_c_upcast[thread_num][i * n_features + j] = <DTYPE_t> self.Y[Y_start + i, j]
+{{endif}}
+
 
     @final
     cdef void _parallel_on_Y_finalize(
@@ -1284,19 +1418,9 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesArg
             {{DTYPE_t}} beta = 0.
             ITYPE_t ldc = Y_c.shape[0]
 {{if need_upcast}}
+            # Those two buffers have been upcast from 32bit to 64bit previously.
             DTYPE_t * A = self.X_c_upcast[thread_num]
             DTYPE_t * B = self.Y_c_upcast[thread_num]
-
-        # Upcasting X_c from float32 to float64
-        for i in range(m):
-            for j in range(lda):
-                A[i * lda + j] = <DTYPE_t> X_c[i, j]
-
-        # Upcasting Y_c from float32 to float64
-        for i in range(n):
-            for j in range(lda):
-                B[i * lda + j] = <DTYPE_t> Y_c[i, j]
-
 {{else}}
             # Casting for A and B to remove the const is needed because APIs exposed via
             # scipy.linalg.cython_blas aren't reflecting the arguments' const qualifier.
