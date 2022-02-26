@@ -69,7 +69,7 @@ python_environment_install() {
         fi
 
         if [[ "$DISTRIB" == *"pypy"* ]]; then
-            TO_INSTALL="$TO_INSTALL pypy3.8"
+            TO_INSTALL="$TO_INSTALL pypy"
         else
             TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
         fi

@@ -230,6 +230,11 @@ def check_package_status(package, min_version):
 
 
 def setup_package():
+    if platform.python_implementation() == "PyPy":
+        python_requires = ">=3.7"
+    else:
+        python_requires = ">=3.8"
+
     metadata = dict(
         name=DISTNAME,
         maintainer=MAINTAINER,
@@ -262,7 +267,7 @@ def setup_package():
             "Programming Language :: Python :: Implementation :: PyPy",
         ],
         cmdclass=cmdclass,
-        python_requires=">=3.8",
+        python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
         package_data={"": ["*.pxd"]},
         **extra_setuptools_args,
