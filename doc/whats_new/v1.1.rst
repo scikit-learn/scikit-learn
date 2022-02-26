@@ -571,6 +571,14 @@ Changelog
   in the multiclass case when ``multiclass='ovr'`` which will return the score
   per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
 
+- |Feature| Added two new possible values for ``zero_division`` to multiple classification
+  metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
+  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+  :func:`classification_report`. Now, the value can be `None` or `np.nan`, meaning that the
+  metric is undefined and should be excluded from averaging. When not used for averages, the
+  value returned is np.nan in both cases.
+  :pr:`XXTODOXX` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
 :mod:`sklearn.manifold`
 .......................
 
