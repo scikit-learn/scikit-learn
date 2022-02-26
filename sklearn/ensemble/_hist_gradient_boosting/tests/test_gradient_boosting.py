@@ -1,6 +1,14 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
+from sklearn._loss.loss import (
+    AbsoluteError,
+    HalfBinomialLoss,
+    HalfMultinomialLoss,
+    HalfPoissonLoss,
+    HalfSquaredError,
+    PinballLoss,
+)
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
@@ -15,15 +23,23 @@ from sklearn.compose import make_column_transformer
 
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
-from sklearn.ensemble._hist_gradient_boosting.loss import LeastSquares
-from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
+
 n_threads = _openmp_effective_n_threads()
+
+_LOSSES = {
+    "squared_error": HalfSquaredError,
+    "absolute_error": AbsoluteError,
+    "poisson": HalfPoissonLoss,
+    "quantile": PinballLoss,
+    "binary_crossentropy": HalfBinomialLoss,
+    "categorical_crossentropy": HalfMultinomialLoss,
+}
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -235,6 +251,44 @@ def test_absolute_error_sample_weight():
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
+@pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
+def test_asymmetric_error(quantile):
+    """Test quantile regression for asymmetric distributed targets."""
+    n_samples = 10_000
+    rng = np.random.RandomState(42)
+    # take care that X @ coef + intercept > 0
+    X = np.concatenate(
+        (
+            np.abs(rng.randn(n_samples)[:, None]),
+            -rng.randint(2, size=(n_samples, 1)),
+        ),
+        axis=1,
+    )
+    intercept = 1.23
+    coef = np.array([0.5, -2])
+    # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
+    # the quantile at level q is:
+    #   quantile(q) = - log(1 - q) / lambda
+    #   scale = 1/lambda = -quantile(q) / log(1-q)
+    y = rng.exponential(
+        scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
+    )
+    model = HistGradientBoostingRegressor(
+        loss="quantile",
+        quantile=quantile,
+        max_iter=25,
+        random_state=0,
+        max_leaf_nodes=10,
+    ).fit(X, y)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=1e-2)
+
+    pinball_loss = PinballLoss(quantile=quantile)
+    loss_true_quantile = pinball_loss(y, X @ coef + intercept)
+    loss_pred_quantile = pinball_loss(y, model.predict(X))
+    # we are overfitting
+    assert loss_pred_quantile <= loss_true_quantile
+
+
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 0.0, 0.0])])
 def test_poisson_y_positive(y):
     # Test that ValueError is raised if either one y_i < 0 or sum(y_i) <= 0.
@@ -441,7 +495,7 @@ def test_missing_values_minmax_imputation():
     # "Missing In Attributes" (MIA) missing value handling for decision trees
     # https://www.sciencedirect.com/science/article/abs/pii/S0167865508000305
     # The implementation of MIA as an imputation transformer was suggested by
-    # "Remark 3" in https://arxiv.org/abs/1902.06931
+    # "Remark 3" in :arxiv:'<1902.06931>`
 
     class MinMaxImputer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
@@ -572,7 +626,7 @@ def test_crossentropy_binary_problem():
     y = [0, 1]
     gbrt = HistGradientBoostingClassifier(loss="categorical_crossentropy")
     with pytest.raises(
-        ValueError, match="'categorical_crossentropy' is not suitable for"
+        ValueError, match="loss='categorical_crossentropy' is not suitable for"
     ):
         gbrt.fit(X, y)
 
@@ -694,15 +748,22 @@ def test_sum_hessians_are_sample_weight(loss_name):
     bin_mapper = _BinMapper()
     X_binned = bin_mapper.fit_transform(X)
 
+    # While sample weights are supposed to be positive, this still works.
     sample_weight = rng.normal(size=n_samples)
 
-    loss = _LOSSES[loss_name](sample_weight=sample_weight, n_threads=n_threads)
-    gradients, hessians = loss.init_gradients_and_hessians(
-        n_samples=n_samples, prediction_dim=1, sample_weight=sample_weight
+    loss = _LOSSES[loss_name](sample_weight=sample_weight)
+    gradients, hessians = loss.init_gradient_and_hessian(
+        n_samples=n_samples, dtype=G_H_DTYPE
     )
-    raw_predictions = rng.normal(size=(1, n_samples))
-    loss.update_gradients_and_hessians(
-        gradients, hessians, y, raw_predictions, sample_weight
+    gradients, hessians = gradients.reshape((-1, 1)), hessians.reshape((-1, 1))
+    raw_predictions = rng.normal(size=(n_samples, 1))
+    loss.gradient_hessian(
+        y_true=y,
+        raw_prediction=raw_predictions,
+        sample_weight=sample_weight,
+        gradient_out=gradients,
+        hessian_out=hessians,
+        n_threads=n_threads,
     )
 
     # build sum_sample_weight which contains the sum of the sample weights at
@@ -716,7 +777,9 @@ def test_sum_hessians_are_sample_weight(loss_name):
             ]
 
     # Build histogram
-    grower = TreeGrower(X_binned, gradients[0], hessians[0], n_bins=bin_mapper.n_bins)
+    grower = TreeGrower(
+        X_binned, gradients[:, 0], hessians[:, 0], n_bins=bin_mapper.n_bins
+    )
     histograms = grower.histogram_builder.compute_histograms_brute(
         grower.root.sample_indices
     )
@@ -789,13 +852,13 @@ def test_single_node_trees(Est):
     [
         (
             HistGradientBoostingClassifier,
-            BinaryCrossEntropy(sample_weight=None),
+            HalfBinomialLoss(sample_weight=None),
             X_classification,
             y_classification,
         ),
         (
             HistGradientBoostingRegressor,
-            LeastSquares(sample_weight=None),
+            HalfSquaredError(sample_weight=None),
             X_regression,
             y_regression,
         ),

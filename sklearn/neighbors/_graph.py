@@ -7,7 +7,7 @@
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._unsupervised import NearestNeighbors
-from ..base import TransformerMixin
+from ..base import TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
 
 
@@ -46,7 +46,7 @@ def kneighbors_graph(
     include_self=False,
     n_jobs=None,
 ):
-    """Computes the (weighted) graph of k-Neighbors for points in X
+    """Compute the (weighted) graph of k-Neighbors for points in X.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
@@ -69,7 +69,9 @@ def kneighbors_graph(
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric.
         For a list of available metrics, see the documentation of
-        :class:`~sklearn.metrics.DistanceMetric`.
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -77,7 +79,7 @@ def kneighbors_graph(
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, default=None
-        additional keyword arguments for the metric function.
+        Additional keyword arguments for the metric function.
 
     include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
@@ -96,6 +98,10 @@ def kneighbors_graph(
         Graph where A[i, j] is assigned the weight of edge that
         connects i to j. The matrix is of CSR format.
 
+    See Also
+    --------
+    radius_neighbors_graph: Compute the (weighted) graph of Neighbors for points in X.
+
     Examples
     --------
     >>> X = [[0], [3], [1]]
@@ -105,10 +111,6 @@ def kneighbors_graph(
     array([[1., 0., 1.],
            [0., 1., 1.],
            [1., 0., 1.]])
-
-    See Also
-    --------
-    radius_neighbors_graph
     """
     if not isinstance(X, KNeighborsMixin):
         X = NearestNeighbors(
@@ -136,7 +138,7 @@ def radius_neighbors_graph(
     include_self=False,
     n_jobs=None,
 ):
-    """Computes the (weighted) graph of Neighbors for points in X
+    """Compute the (weighted) graph of Neighbors for points in X.
 
     Neighborhoods are restricted the points at a distance lower than
     radius.
@@ -162,7 +164,9 @@ def radius_neighbors_graph(
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric.
         For a list of available metrics, see the documentation of
-        :class:`~sklearn.metrics.DistanceMetric`.
+        :class:`~sklearn.metrics.DistanceMetric` and the metrics listed in
+        `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
+        "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
 
     p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -170,7 +174,7 @@ def radius_neighbors_graph(
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, default=None
-        additional keyword arguments for the metric function.
+        Additional keyword arguments for the metric function.
 
     include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
@@ -189,6 +193,10 @@ def radius_neighbors_graph(
         Graph where A[i, j] is assigned the weight of edge that connects
         i to j. The matrix is of CSR format.
 
+    See Also
+    --------
+    kneighbors_graph: Compute the weighted graph of k-neighbors for points in X.
+
     Examples
     --------
     >>> X = [[0], [3], [1]]
@@ -199,10 +207,6 @@ def radius_neighbors_graph(
     array([[1., 0., 1.],
            [0., 1., 0.],
            [1., 0., 1.]])
-
-    See Also
-    --------
-    kneighbors_graph
     """
     if not isinstance(X, RadiusNeighborsMixin):
         X = NearestNeighbors(
@@ -219,7 +223,9 @@ def radius_neighbors_graph(
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
+class KNeighborsTransformer(
+    _ClassNamePrefixFeaturesOutMixin, KNeighborsMixin, TransformerMixin, NeighborsBase
+):
     """Transform X into a (weighted) graph of k nearest neighbors.
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
@@ -385,7 +391,9 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
-        return self._fit(X)
+        self._fit(X)
+        self._n_features_out = self.n_samples_fit_
+        return self
 
     def transform(self, X):
         """Compute the (weighted) graph of Neighbors for points in X.
@@ -441,7 +449,12 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         }
 
 
-class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, NeighborsBase):
+class RadiusNeighborsTransformer(
+    _ClassNamePrefixFeaturesOutMixin,
+    RadiusNeighborsMixin,
+    TransformerMixin,
+    NeighborsBase,
+):
     """Transform X into a (weighted) graph of neighbors nearer than a radius.
 
     The transformed data is a sparse graph as returned by
@@ -610,7 +623,9 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, TransformerMixin, Neighbo
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
-        return self._fit(X)
+        self._fit(X)
+        self._n_features_out = self.n_samples_fit_
+        return self
 
     def transform(self, X):
         """Compute the (weighted) graph of Neighbors for points in X.

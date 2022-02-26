@@ -28,6 +28,16 @@ try:
 except ImportError:
     amg_loaded = False
 
+centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
+X, _ = make_blobs(
+    n_samples=60,
+    n_features=2,
+    centers=centers,
+    cluster_std=0.4,
+    shuffle=True,
+    random_state=0,
+)
+
 
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
@@ -100,6 +110,46 @@ def test_spectral_unknown_assign_labels():
     S = sparse.coo_matrix(S)
     with pytest.raises(ValueError):
         spectral_clustering(S, n_clusters=2, random_state=0, assign_labels="<unknown>")
+
+
+@pytest.mark.parametrize(
+    "input, params, err_type, err_msg",
+    [
+        (X, {"n_clusters": -1}, ValueError, "n_clusters == -1, must be >= 1"),
+        (X, {"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1"),
+        (
+            X,
+            {"n_clusters": 1.5},
+            TypeError,
+            "n_clusters must be an instance of int, not float",
+        ),
+        (X, {"n_init": -1}, ValueError, "n_init == -1, must be >= 1"),
+        (X, {"n_init": 0}, ValueError, "n_init == 0, must be >= 1"),
+        (
+            X,
+            {"n_init": 1.5},
+            TypeError,
+            "n_init must be an instance of int, not float",
+        ),
+        (X, {"gamma": -1}, ValueError, "gamma == -1, must be >= 1"),
+        (X, {"gamma": 0}, ValueError, "gamma == 0, must be >= 1"),
+        (X, {"n_neighbors": -1}, ValueError, "n_neighbors == -1, must be >= 1"),
+        (X, {"n_neighbors": 0}, ValueError, "n_neighbors == 0, must be >= 1"),
+        (
+            X,
+            {"eigen_tol": -1, "eigen_solver": "arpack"},
+            ValueError,
+            "eigen_tol == -1, must be >= 0",
+        ),
+        (X, {"degree": -1}, ValueError, "degree == -1, must be >= 1"),
+        (X, {"degree": 0}, ValueError, "degree == 0, must be >= 1"),
+    ],
+)
+def test_spectral_params_validation(input, params, err_type, err_msg):
+    """Check the parameters validation in `SpectralClustering`."""
+    est = SpectralClustering(**params)
+    with pytest.raises(err_type, match=err_msg):
+        est.fit(input)
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
@@ -271,8 +321,8 @@ def test_spectral_clustering_with_arpack_amg_solvers():
     center1, center2 = (14, 12), (20, 25)
     radius1, radius2 = 8, 7
 
-    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1 ** 2
-    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2 ** 2
+    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1**2
+    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2**2
 
     circles = circle1 | circle2
     mask = circles.copy()
@@ -336,15 +386,6 @@ def test_verbose(assign_labels, capsys):
     if assign_labels == "kmeans":
         assert re.search(r"Initialization complete", captured.out)
         assert re.search(r"Iteration [0-9]+, inertia", captured.out)
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
-def test_pairwise_is_deprecated(affinity):
-    sp = SpectralClustering(affinity=affinity)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        sp._pairwise
 
 
 def test_spectral_clustering_np_matrix_raises():
