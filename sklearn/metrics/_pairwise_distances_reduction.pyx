@@ -1532,10 +1532,9 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                 self._merge_vectors(idx, self.chunks_n_threads)
 
             # The content of the vector have been std::moved.
-            # Hence they can't be used anymore and can only be deleted.
-            # for thread_num in prange(self.chunks_n_threads, schedule='static'):
-            #     del self.neigh_distances_chunks[thread_num]
-            #     del self.neigh_indices_chunks[thread_num]
+            # Hence they can't be used anymore and can be deleted.
+            # Their deletion is carried out automatically as the
+            # implementation relies on shared pointers.
 
             # Sort in parallel in ascending order w.r.t the distances if requested.
             if self.sort_results:
