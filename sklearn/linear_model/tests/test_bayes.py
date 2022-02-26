@@ -291,26 +291,23 @@ def test_ard_regression_predict_normalize_true():
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("_model", [BayesianRidge, ARDRegression])
-def test_dtype_match(dtype, _model):
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_dtype_match(dtype, Estimator):
     # Test that np.float32 input data is not cast to np.float64 when possible
-    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]]).astype(
-        dtype
-    )
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]], dtype=dtype)
     y = np.array([1, 2, 3, 2, 0, 4, 5]).T
 
     model = _model()
     # check type consistency
     model.fit(X, y)
     y_mean, y_std = model.predict(X, return_std=True)
-    assert X.dtype == dtype
     assert model.coef_.dtype == X.dtype
     assert y_mean.dtype == X.dtype
     assert y_std.dtype == X.dtype
 
 
-@pytest.mark.parametrize("_model", [BayesianRidge, ARDRegression])
-def test_dtype_correctness(_model):
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_dtype_correctness(Estimator):
     X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
     y = np.array([1, 2, 3, 2, 0, 4, 5]).T
     model = _model()
