@@ -11,9 +11,12 @@ import scipy.sparse as sp
 from scipy.spatial.distance import cdist
 from sklearn.metrics import DistanceMetric
 
-# Private DistanceMetric for 32 bit
-from sklearn.metrics._dist_metrics import DistanceMetric32
-from sklearn.metrics._dist_metrics import BOOL_METRICS
+from sklearn.metrics._dist_metrics import (
+    BOOL_METRICS,
+    # Unexposed private DistanceMetric for 32 bit
+    DistanceMetric32,
+)
+
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
