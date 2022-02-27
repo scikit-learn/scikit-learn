@@ -302,7 +302,7 @@ def test_dtype_match(dtype, Estimator):
     model.fit(X, y)
     attributes = ["coef_", "alpha_", "lambda_", "sigma_", "intercept_"]
     for attribute in attributes:
-        getattr(model, attribute).dtype == X.dtype
+        assert getattr(model, attribute).dtype == X.dtype
 
     y_mean, y_std = model.predict(X, return_std=True)
     assert y_mean.dtype == X.dtype
