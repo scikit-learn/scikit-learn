@@ -29,8 +29,6 @@ np.import_array()
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
-from ._utils cimport Stack
-from ._utils cimport StackRecord
 from ._utils cimport PriorityHeap
 from ._utils cimport PriorityHeapRecord
 from ._utils cimport safe_realloc
@@ -42,6 +40,15 @@ cdef extern from "numpy/arrayobject.h":
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
     int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
+
+cdef extern from "<stack>" namespace "std" nogil:
+    cdef cppclass stack[T]:
+        ctypedef T value_type
+        stack() except +
+        bint empty()
+        void pop()
+        void push(T&) except +  # Raise c++ exception for bad_alloc -> MemoryError
+        T& top()
 
 # =============================================================================
 # Types and constants
@@ -114,6 +121,15 @@ cdef class TreeBuilder:
         return X, y, sample_weight
 
 # Depth first builder ---------------------------------------------------------
+# A record on the stack for depth-first tree growing
+cdef struct StackRecord:
+    SIZE_t start
+    SIZE_t end
+    SIZE_t depth
+    SIZE_t parent
+    bint is_left
+    double impurity
+    SIZE_t n_constant_features
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
@@ -178,19 +194,23 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
 
-        cdef Stack stack = Stack(INITIAL_STACK_SIZE)
+        cdef stack[StackRecord] builder_stack
         cdef StackRecord stack_record
 
         with nogil:
             # push root node onto stack
-            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
-            if rc == -1:
-                # got return code -1 - out-of-memory
-                with gil:
-                    raise MemoryError()
+            builder_stack.push({
+                "start": 0,
+                "end": n_node_samples,
+                "depth": 0,
+                "parent": _TREE_UNDEFINED,
+                "is_left": 0,
+                "impurity": INFINITY,
+                "n_constant_features": 0})
 
-            while not stack.is_empty():
-                stack.pop(&stack_record)
+            while not builder_stack.empty():
+                stack_record = builder_stack.top()
+                builder_stack.pop()
 
                 start = stack_record.start
                 end = stack_record.end
@@ -238,16 +258,24 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 if not is_leaf:
                     # Push right child on stack
-                    rc = stack.push(split.pos, end, depth + 1, node_id, 0,
-                                    split.impurity_right, n_constant_features)
-                    if rc == -1:
-                        break
+                    builder_stack.push({
+                        "start": split.pos,
+                        "end": end,
+                        "depth": depth + 1,
+                        "parent": node_id,
+                        "is_left": 0,
+                        "impurity": split.impurity_right,
+                        "n_constant_features": n_constant_features})
 
                     # Push left child on stack
-                    rc = stack.push(start, split.pos, depth + 1, node_id, 1,
-                                    split.impurity_left, n_constant_features)
-                    if rc == -1:
-                        break
+                    builder_stack.push({
+                        "start": start,
+                        "end": split.pos,
+                        "depth": depth + 1,
+                        "parent": node_id,
+                        "is_left": 1,
+                        "impurity": split.impurity_left,
+                        "n_constant_features": n_constant_features})
 
                 if depth > max_depth_seen:
                     max_depth_seen = depth
@@ -1409,6 +1437,10 @@ cdef class _PathFinder(_CCPPruneController):
         self.count += 1
 
 
+cdef struct CostComplexityPruningRecord:
+    SIZE_t node_idx
+    SIZE_t parent
+
 cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                             Tree orig_tree,
                             _CCPPruneController controller):
@@ -1443,11 +1475,11 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
         SIZE_t[:] child_r = orig_tree.children_right
         SIZE_t[:] parent = np.zeros(shape=n_nodes, dtype=np.intp)
 
-        # Only uses the start and parent variables
-        Stack stack = Stack(INITIAL_STACK_SIZE)
-        StackRecord stack_record
+        stack[CostComplexityPruningRecord] ccp_stack
+        CostComplexityPruningRecord stack_record
         int rc = 0
         SIZE_t node_idx
+        stack[SIZE_t] node_indices_stack
 
         SIZE_t[:] n_leaves = np.zeros(shape=n_nodes, dtype=np.intp)
         DOUBLE_t[:] r_branch = np.zeros(shape=n_nodes, dtype=np.float64)
@@ -1477,29 +1509,22 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
             r_node[i] = (
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
-        # Push root node, using StackRecord.start as node id
-        rc = stack.push(0, 0, 0, -1, 0, 0, 0)
-        if rc == -1:
-            with gil:
-                raise MemoryError("pruning tree")
+        # Push the root node
+        ccp_stack.push({"node_idx": 0, "parent": -1})
 
-        while not stack.is_empty():
-            stack.pop(&stack_record)
-            node_idx = stack_record.start
+        while not ccp_stack.empty():
+            stack_record = ccp_stack.top()
+            ccp_stack.pop()
+
+            node_idx = stack_record.node_idx
             parent[node_idx] = stack_record.parent
+
             if child_l[node_idx] == _TREE_LEAF:
                 # ... and child_r[node_idx] == _TREE_LEAF:
                 leaves_in_subtree[node_idx] = 1
             else:
-                rc = stack.push(child_l[node_idx], 0, 0, node_idx, 0, 0, 0)
-                if rc == -1:
-                    with gil:
-                        raise MemoryError("pruning tree")
-
-                rc = stack.push(child_r[node_idx], 0, 0, node_idx, 0, 0, 0)
-                if rc == -1:
-                    with gil:
-                        raise MemoryError("pruning tree")
+                ccp_stack.push({"node_idx": child_l[node_idx], "parent": node_idx})
+                ccp_stack.push({"node_idx": child_r[node_idx], "parent": node_idx})
 
         # computes number of leaves in all branches and the overall impurity of
         # the branch. The overall impurity is the sum of r_node in its leaves.
@@ -1538,16 +1563,12 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
             if controller.stop_pruning(effective_alpha):
                 break
 
-            # stack uses only the start variable
-            rc = stack.push(pruned_branch_node_idx, 0, 0, 0, 0, 0, 0)
-            if rc == -1:
-                with gil:
-                    raise MemoryError("pruning tree")
+            node_indices_stack.push(pruned_branch_node_idx)
 
             # descendants of branch are not in subtree
-            while not stack.is_empty():
-                stack.pop(&stack_record)
-                node_idx = stack_record.start
+            while not node_indices_stack.empty():
+                node_idx = node_indices_stack.top()
+                node_indices_stack.pop()
 
                 if not in_subtree[node_idx]:
                     continue # branch has already been marked for pruning
@@ -1557,14 +1578,8 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
                 if child_l[node_idx] != _TREE_LEAF:
                     # ... and child_r[node_idx] != _TREE_LEAF:
-                    rc = stack.push(child_l[node_idx], 0, 0, 0, 0, 0, 0)
-                    if rc == -1:
-                        with gil:
-                            raise MemoryError("pruning tree")
-                    rc = stack.push(child_r[node_idx], 0, 0, 0, 0, 0, 0)
-                    if rc == -1:
-                        with gil:
-                            raise MemoryError("pruning tree")
+                    node_indices_stack.push(child_l[node_idx])
+                    node_indices_stack.push(child_r[node_idx])
             leaves_in_subtree[pruned_branch_node_idx] = 1
             in_subtree[pruned_branch_node_idx] = 1
 
@@ -1667,6 +1682,12 @@ def ccp_pruning_path(Tree orig_tree):
     return {'ccp_alphas': ccp_alphas, 'impurities': impurities}
 
 
+cdef struct BuildPrunedRecord:
+    SIZE_t start
+    SIZE_t depth
+    SIZE_t parent
+    bint is_left
+
 cdef _build_pruned_tree(
     Tree tree, # OUT
     Tree orig_tree,
@@ -1706,19 +1727,16 @@ cdef _build_pruned_tree(
         double* orig_value_ptr
         double* new_value_ptr
 
-        # Only uses the start, depth, parent, and is_left variables
-        Stack stack = Stack(INITIAL_STACK_SIZE)
-        StackRecord stack_record
+        stack[BuildPrunedRecord] prune_stack
+        BuildPrunedRecord stack_record
 
     with nogil:
         # push root node onto stack
-        rc = stack.push(0, 0, 0, _TREE_UNDEFINED, 0, 0.0, 0)
-        if rc == -1:
-            with gil:
-                raise MemoryError("pruning tree")
+        prune_stack.push({"start": 0, "depth": 0, "parent": _TREE_UNDEFINED, "is_left": 0})
 
-        while not stack.is_empty():
-            stack.pop(&stack_record)
+        while not prune_stack.empty():
+            stack_record = prune_stack.top()
+            prune_stack.pop()
 
             orig_node_id = stack_record.start
             depth = stack_record.depth
@@ -1744,16 +1762,11 @@ cdef _build_pruned_tree(
 
             if not is_leaf:
                 # Push right child on stack
-                rc = stack.push(
-                    node.right_child, 0, depth + 1, new_node_id, 0, 0.0, 0)
-                if rc == -1:
-                    break
-
+                prune_stack.push({"start": node.right_child, "depth": depth + 1,
+                                  "parent": new_node_id, "is_left": 0})
                 # push left child on stack
-                rc = stack.push(
-                    node.left_child, 0, depth + 1, new_node_id, 1, 0.0, 0)
-                if rc == -1:
-                    break
+                prune_stack.push({"start": node.left_child, "depth": depth + 1,
+                                  "parent": new_node_id, "is_left": 1})
 
             if depth > max_depth_seen:
                 max_depth_seen = depth
