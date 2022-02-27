@@ -91,8 +91,6 @@ pipeline = Pipeline(
 )
 
 # %%
-# Grid Search
-# -----------
 # Parameters to use for grid search. Uncommenting more parameters will give
 # better exploring power but will increase processing time in a combinatorial way
 parameters = {
