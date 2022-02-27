@@ -35,7 +35,7 @@ The same task has been used in a number of papers including:
 
  * `"Training Linear SVMs in Linear Time"
    <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>`_
-   T. Joachims - In SIGKDD '06.
+   T. Joachims - In SIGKDD '06
 
 
 
