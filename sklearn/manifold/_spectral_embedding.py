@@ -225,8 +225,8 @@ def spectral_embedding(
     ----------
     * https://en.wikipedia.org/wiki/LOBPCG
 
-    * :doi:`Toward the Optimal Preconditioned Eigensolver: Locally Optimal
-      Block Preconditioned Conjugate Gradient Method
+    * :doi:`"Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
       <10.1137%2FS1064827500366124>`
     """
