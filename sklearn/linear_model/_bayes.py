@@ -314,8 +314,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         # return regularization parameters and corresponding posterior mean,
         # log marginal likelihood and posterior covariance
-        self.alpha_ = X.dtype.type(alpha_)
-        self.lambda_ = X.dtype.type(lambda_)
+        self.alpha_ = alpha_
+        self.lambda_ = lambda_
         self.coef_, rmse_ = self._update_coef_(
             X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
         )
@@ -334,7 +334,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.sigma_ = (1.0 / alpha_) * scaled_sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
-        self.intercept_ = X.dtype.type(self.intercept_)
+
         return self
 
     def predict(self, X, return_std=False):
@@ -710,9 +710,9 @@ class ARDRegression(RegressorMixin, LinearModel):
             sigma_ = np.array([]).reshape(0, 0)
 
         self.coef_ = coef_
-        self.alpha_ = X.dtype.type(alpha_)
+        self.alpha_ = alpha_
         self.sigma_ = sigma_
-        self.lambda_ = X.dtype.type(lambda_)
+        self.lambda_ = lambda_
         self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
 
