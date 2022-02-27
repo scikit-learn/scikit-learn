@@ -4,13 +4,15 @@ import joblib
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from pytest import approx
+from scipy.optimize import minimize
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.fixes import parse_version
+from sklearn.utils.fixes import parse_version, sp_version
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -22,7 +24,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
+from sklearn.linear_model import QuantileRegressor
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.metrics import mean_pinball_loss
 
 
 def _update_kwargs(kwargs):
@@ -247,6 +251,7 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
             r"validation_fraction must be in range \(0, 1\)",
         ),
         ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
+        ({"quantile": 1.2}, "quantile == 1.2, must be < 1."),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
@@ -1454,6 +1459,13 @@ def test_loss_function_epsilon(klass):
     assert clf.loss_functions["huber"][1] == 0.1
 
 
+@pytest.mark.parametrize("klass", [SGDRegressor, SparseSGDRegressor])
+def test_loss_function_quantile(klass):
+    clf = klass(quantile=0.1, loss="pinball")
+    clf.set_params(quantile=0.5)
+    assert clf.loss_functions["pinball"][1] == 0.5
+
+
 ###############################################################################
 # SGD One Class SVM Test Case
 
@@ -2054,6 +2066,20 @@ def test_loss_squared_epsilon_insensitive():
     _test_loss_common(loss, cases)
 
 
+def test_loss_pinball():
+    # Test PinBall
+    loss = sgd_fast.PinBall(0.50)
+    cases = [
+        # (p, y, expected_loss, expected_dloss)
+        (0.0, 0.0, 0.0, 0.0),
+        (0.0, 0.1, 0.05, -0.50),
+        (0.1, 0.0, 0.05, 0.50),
+        (2.2, 2.0, 0.10, 0.50),
+        (2.0, -1.0, 1.50, 0.50),
+    ]
+    _test_loss_common(loss, cases)
+
+
 def test_multi_thread_multi_class_and_early_stopping():
     # This is a non-regression test for a bad interaction between
     # early stopping internal attribute and thread-based parallelism.
@@ -2080,7 +2106,6 @@ def test_multi_core_gridsearch_and_early_stopping():
         "alpha": np.logspace(-4, 4, 9),
         "n_iter_no_change": [5, 10, 50],
     }
-
     clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True, random_state=0)
     search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2, random_state=0)
     search.fit(iris.data, iris.target)
@@ -2144,3 +2169,188 @@ def test_loss_squared_loss_deprecated(Estimator):
         assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
     else:
         assert_allclose(est1.predict(X), est2.predict(X))
+
+
+@pytest.mark.skipif(
+    sp_version <= parse_version("1.6.0"),
+    reason="Solvers are available as of scipy 1.6.0",
+)
+@pytest.mark.parametrize("quantile", [0.05, 0.1, 0.5, 0.90, 0.95])
+def test_pinball_loss_w_quantile_regressor(quantile):
+    X, y = datasets.make_regression(
+        n_samples=1000,
+        n_features=10,
+        n_informative=4,
+        random_state=14,
+        noise=3,
+    )
+    qr = QuantileRegressor(
+        fit_intercept=False, alpha=1e-1, solver="highs", quantile=quantile
+    ).fit(X, y)
+    est = SGDRegressor(
+        fit_intercept=False,
+        penalty="l1",
+        alpha=1e-1,
+        loss="pinball",
+        quantile=quantile,
+        eta0=1,
+        learning_rate="adaptive",
+        tol=None,
+        random_state=42,
+    ).fit(X, y)
+
+    assert_allclose(est.coef_, qr.coef_, rtol=1)
+    assert_almost_equal(est.score(X, y), qr.score(X, y), decimal=3)
+
+
+@pytest.mark.skipif(
+    sp_version <= parse_version("1.6.0"),
+    reason="Solvers are available as of scipy 1.6.0",
+)
+def test_pinball_loss_w_partial_fit():
+    n_samples = 10_000
+    ind_chunks = np.split(np.arange(n_samples), 10)
+    X, y, coef = datasets.make_regression(
+        n_samples=n_samples,
+        n_features=100,
+        n_informative=10,
+        random_state=14,
+        noise=200,
+        coef=True,
+    )
+    est = SGDRegressor(
+        fit_intercept=False,
+        penalty="l1",
+        alpha=1e-1,
+        loss="pinball",
+        quantile=0.5,
+        eta0=1,
+        learning_rate="adaptive",
+        tol=None,
+        random_state=42,
+    )
+
+    for inds in ind_chunks:
+        est.partial_fit(X[inds], y[inds])
+
+    assert_allclose(est.coef_, coef, rtol=2)
+
+
+@pytest.mark.skipif(
+    sp_version < parse_version("1.6.0"),
+    reason="The `highs` solver is available from the 1.6.0 scipy version",
+)
+@pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
+def test_asymmetric_error(quantile):
+    """Test for asymmetric distributed targets."""
+    n_samples = 1000
+    rng = np.random.RandomState(42)
+    X = np.concatenate(
+        (
+            np.abs(rng.randn(n_samples)[:, None]),
+            -rng.randint(2, size=(n_samples, 1)),
+        ),
+        axis=1,
+    )
+    intercept = 1.23
+    coef = np.array([0.5, -2])
+    assert np.min(X @ coef + intercept) > 0
+    # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
+    # the quantile at level q is:
+    #   quantile(q) = - log(1 - q) / lambda
+    #   scale = 1/lambda = -quantile(q) / log(1 - q)
+    y = rng.exponential(
+        scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
+    )
+    model = SGDRegressor(
+        penalty="l1",
+        alpha=0,
+        loss="pinball",
+        quantile=quantile,
+        eta0=1,
+        learning_rate="adaptive",
+        tol=None,
+        random_state=42,
+    ).fit(X, y)
+
+    assert model.intercept_ == approx(intercept, rel=0.2)
+    assert_allclose(model.coef_, coef, rtol=0.6)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
+
+    # Now compare to Nelder-Mead optimization with L1 penalty
+    alpha = 0.01
+    model.set_params(alpha=alpha).fit(X, y)
+    model_coef = np.r_[model.intercept_, model.coef_]
+
+    def func(coef):
+        loss = mean_pinball_loss(y, X @ coef[1:] + coef[0], alpha=quantile)
+        L1 = np.sum(np.abs(coef[1:]))
+        return loss + alpha * L1
+
+    res = minimize(
+        fun=func,
+        x0=[1, 0, -1],
+        method="Nelder-Mead",
+        tol=1e-12,
+        options={"maxiter": 2000},
+    )
+
+    assert func(model_coef) == approx(func(res.x))
+    assert_allclose(model.intercept_, res.x[0])
+    assert_allclose(model.coef_, res.x[1:])
+    assert_allclose(np.mean(model.predict(X) > y), quantile, atol=1e-2)
+
+
+@pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
+def test_equivariance(quantile):
+    """Test equivariace of quantile regression.
+    See Koenker (2005) Quantile Regression, Chapter 2.2.3.
+    """
+    rng = np.random.RandomState(42)
+    n_samples, n_features = 1000, 3
+    X, y = datasets.make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        noise=0,
+        random_state=rng,
+        shuffle=False,
+    )
+    # make y asymmetric
+    y += rng.exponential(scale=1000, size=y.shape)
+    params = dict(
+        alpha=0,
+        penalty="l1",
+        loss="pinball",
+        eta0=1,
+        learning_rate="adaptive",
+        tol=1e-10,
+        fit_intercept=False,
+        random_state=42,
+    )
+    model1 = SGDRegressor(quantile=quantile, **params).fit(X, y)
+
+    # coef(q; a*y, X) = a * coef(q; y, X)
+    a = 2.5
+    model2 = SGDRegressor(quantile=quantile, **params).fit(X, a * y)
+    # assert model2.intercept_ == approx(a * model1.intercept_, rel=1e-5)
+    assert_allclose(model2.coef_, a * model1.coef_, rtol=1e-5)
+
+    # coef(1-q; -a*y, X) = -a * coef(q; y, X)
+    model2 = SGDRegressor(quantile=1 - quantile, **params).fit(X, -a * y)
+    assert model2.intercept_ == approx(-a * model1.intercept_, rel=1e-5)
+    assert_allclose(model2.coef_, -a * model1.coef_, rtol=1e-5)
+
+    # coef(q; y + X @ g, X) = coef(q; y, X) + g
+    g_intercept, g_coef = rng.randn(), rng.randn(n_features)
+    model2 = SGDRegressor(quantile=quantile, **params)
+    model2.fit(X, y + X @ g_coef + g_intercept)
+    assert model2.intercept_ == approx(model1.intercept_ + g_intercept)
+    assert_allclose(model2.coef_, model1.coef_ + g_coef, rtol=1e-6)
+
+    # coef(q; y, X @ A) = A^-1 @ coef(q; y, X)
+    A = rng.randn(n_features, n_features)
+    model2 = SGDRegressor(quantile=quantile, **params)
+    model2.fit(X @ A, y)
+    assert model2.intercept_ == approx(model1.intercept_, rel=1e-5)
+    assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=1e-5)

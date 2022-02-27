@@ -538,6 +538,15 @@ Changelog
   sub-problem while now all of them are recorded. :pr:`21998` by
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| :class:`linear_model.LassoLarsIC` now correctly computes AIC
+  and BIC. An error is now raised when `n_features > n_samples` and
+  when the noise variance is not provided.
+  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Andrés Babino <ababino>`.
+
+-|Feature| :class:`linear_model.SGDRegressor` would support pinball loss now.
+  :pr:`22043` by :user:`Venkatachalam Natchiappan <venkyyuvy>`.
+
 :mod:`sklearn.metrics`
 ......................
 

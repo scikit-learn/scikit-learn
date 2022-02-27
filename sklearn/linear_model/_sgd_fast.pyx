@@ -318,8 +318,8 @@ cdef class EpsilonInsensitive(Regression):
         self.epsilon = epsilon
 
     cdef double loss(self, double p, double y) nogil:
-        cdef double ret = fabs(y - p) - self.epsilon
-        return ret if ret > 0 else 0
+        cdef double residual = fabs(y - p) - self.epsilon
+        return residual if residual > 0 else 0
 
     cdef double dloss(self, double p, double y) nogil:
         if y - p > self.epsilon:
@@ -345,8 +345,8 @@ cdef class SquaredEpsilonInsensitive(Regression):
         self.epsilon = epsilon
 
     cdef double loss(self, double p, double y) nogil:
-        cdef double ret = fabs(y - p) - self.epsilon
-        return ret * ret if ret > 0 else 0
+        cdef double residual = fabs(y - p) - self.epsilon
+        return residual * residual if residual > 0 else 0
 
     cdef double dloss(self, double p, double y) nogil:
         cdef double z
@@ -360,6 +360,37 @@ cdef class SquaredEpsilonInsensitive(Regression):
 
     def __reduce__(self):
         return SquaredEpsilonInsensitive, (self.epsilon,)
+
+
+cdef class PinBall(Regression):
+    """Pinball loss used for quantile regression.
+
+    loss = q * max(y - p, 0) + (1 - q) * max(p - y, 0)
+    """
+
+    cdef double quantile
+
+    def __init__(self, double quantile):
+        self.quantile = quantile
+
+    cdef double loss(self, double p, double y) nogil:
+        cdef double residual = y - p
+        if residual >= 0:
+            return self.quantile * residual
+        else:
+            return -(1.0 - self.quantile) * residual
+
+
+    cdef double dloss(self, double p, double y) nogil:
+        if y > p:
+            return -self.quantile
+        elif y < p:
+            return 1.0 - self.quantile
+        else:
+            return 0
+
+    def __reduce__(self):
+        return PinBall, (self.quantile,)
 
 
 def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
