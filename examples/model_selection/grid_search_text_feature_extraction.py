@@ -78,8 +78,8 @@ print("%d categories" % len(data.target_names))
 print()
 
 # %%
-# Build Pipeline
-# --------------
+# Tuning a pipeline
+# -----------------
 # Define a pipeline combining a text feature extractor with a simple
 # classifier
 pipeline = Pipeline(
