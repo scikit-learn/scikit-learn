@@ -1479,10 +1479,12 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         estimators to be combined into a single naive Bayes meta-estimator.
 
         name : str
-            Name of the naive Bayes estimator. Like in Pipeline, FeatureUnion,
-            and ColumnTransformer, this allows the subestimator and its
-            parameters to be set using ``set_params`` and searched in grid
-            search.
+            Name of the naive Bayes estimator. Like in
+            :class:`~sklearn.pipeline.Pipeline`,
+            :class:`~sklearn.pipeline.FeatureUnion`,
+            and :class:`~sklearn.compose.ColumnTransformer`, this allows the
+            subestimator and its parameters to be set using :term:`set_params`
+            and searched in grid search.
         estimatorNB : estimator
             The estimator must support :term:`fit` or :term:`partial_fit`,
             depending on how the meta-estimator is fitted. In addition, the
@@ -1499,7 +1501,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above. To select multiple columns by name or dtype, you can use
-            :obj:`make_column_selector`.
+            :obj:`~sklearn.compose.make_column_selector`.
 
     priors : array-like of shape (n_classes,) or str, default=None
         Prior probabilities of classes. If unspecified, the priors are
@@ -1520,11 +1522,11 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     ----------
     estimators_ : list of tuples
         List of ``(name, fitted_estimatorNB, columns)`` tuples, which follow
-        the order of `estimators`. ``fitted_estimatorNB`` is a fitted naive
+        the order of `estimatorNBs`. Here, ``fitted_estimatorNB`` is a fitted naive
         Bayes estimator, except when ``columns`` presents an empty selection of
-        columns, in which case it is the original unfitted ``estimatorNB``.
-        Here ``columns`` is converted to a list of column indices, if the
-        original specification in `estimators` was a callable.
+        columns, in which case it is the original unfitted ``estimatorNB``. If
+        the original specification of ``columns`` in ``estimatorNBs`` was a
+        callable, then ``columns`` is converted to a list of column indices.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any subestimator by given name.
@@ -1559,7 +1561,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     ComplementNB : Complement Naive Bayes classifier.
     MultinomialNB : Naive Bayes classifier for multinomial models.
     GaussianNB : Gaussian Naive Bayes.
-    ColumnTransformer : Applies transformers to columns.
+    :class:`~sklearn.compose.ColumnTransformer` : Applies transformers to columns.
 
     Notes
     -----
@@ -1600,7 +1602,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             return None
         return "(%d of %d) Processing %s" % (idx, total, name)
 
-    def __init__(self, estimatorNBs, priors=None, n_jobs=None, verbose=False):
+    def __init__(self, estimatorNBs, *, priors=None, n_jobs=None, verbose=False):
         self.estimatorNBs = estimatorNBs
         self.priors = priors
         self.n_jobs = n_jobs

@@ -1307,6 +1307,7 @@ Model validation
    naive_bayes.ComplementNB
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
+   naive_bayes.ColumnwiseNB
 
 
 .. _neighbors_ref:
