@@ -523,13 +523,14 @@ below.
 ================================  ================================  ================================
 
 .. topic:: References:
-       
+
  * `"Multiclass spectral clustering"
    <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
    Stella X. Yu, Jianbo Shi, 2003
 
- * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
+ * :doi:`"Simple, direct, and efficient multi-way spectral clustering"
     Anil Damle, Victor Minden, Lexing Ying, 2019
+    <10.1093/imaiai/iay008>`
 
 Spectral Clustering Graphs
 --------------------------
@@ -545,26 +546,26 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
 .. topic:: References:
 
- * `"A Tutorial on Spectral Clustering"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+ * :doi:`"A Tutorial on Spectral Clustering"
    Ulrike von Luxburg, 2007
+   <10.1.1.165.9323>`
 
- * `"Normalized cuts and image segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+ * :doi:`"Normalized cuts and image segmentation"
    Jianbo Shi, Jitendra Malik, 2000
+   <10.1.1.160.2324>`
 
- * `"A Random Walks View of Spectral Segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.33.1501>`_
+ * :doi:`"A Random Walks View of Spectral Segmentation"
    Marina Meila, Jianbo Shi, 2001
+   <10.1.1.33.1501>`
 
- * `"On Spectral Clustering: Analysis and an algorithm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
+ * :doi:`"On Spectral Clustering: Analysis and an algorithm"
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
+   <10.1.1.19.8100>`
 
  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
    Block Partition Streaming Graph Challenge"
-   <1309.0238>`
    David Zhuzhunashvili, Andrew Knyazev
+   <1309.0238>`
 
 .. _hierarchical_clustering:
 
