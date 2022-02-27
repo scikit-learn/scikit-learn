@@ -300,8 +300,11 @@ def test_dtype_match(dtype, Estimator):
     model = Estimator()
     # check type consistency
     model.fit(X, y)
+    attributes = ["coef_", "alpha_", "lambda_", "sigma_", "intercept_"]
+    for attribute in attributes:
+        getattr(model, attribute).dtype == X.dtype
+
     y_mean, y_std = model.predict(X, return_std=True)
-    assert model.coef_.dtype == X.dtype
     assert y_mean.dtype == X.dtype
     assert y_std.dtype == X.dtype
 
