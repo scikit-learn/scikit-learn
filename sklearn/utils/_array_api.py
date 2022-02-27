@@ -32,14 +32,6 @@ class _ArrayAPIWrapper:
             return f(x_np)
         return f(obj, dtype=dtype, device=device, copy=copy)
 
-    def may_share_memory(self, a, b):
-        # support may_share_memory in NumPy
-        if self._namespace.__name__ == "numpy.array_api":
-            return numpy.may_share_memory(a, b)
-
-        # The safe choice is to return True for all other array_api Arrays
-        return True
-
     def take(self, X, indices, *, axis):
         # When array_api supports `take` we can use this directly
         # https://github.com/data-apis/array-api/issues/177

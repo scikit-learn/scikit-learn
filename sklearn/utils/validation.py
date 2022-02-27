@@ -715,7 +715,7 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
             FutureWarning,
         )
-    xp, _ = get_namespace(array)
+    xp, is_array_api = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -921,8 +921,11 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    if copy and xp.may_share_memory(array, array_orig):
-        array = xp.asarray(array, dtype=dtype, order=order, copy=True)
+    if copy:
+        if is_array_api:
+            array = xp.asarray(array, dtype=dtype, order=order, copy=True)
+        elif np.may_share_memory(array, array_orig):
+            array = xp.asarray(array, dtype=dtype, order=order, copy=True)
 
     return array
 

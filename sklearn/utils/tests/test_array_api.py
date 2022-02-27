@@ -1,4 +1,5 @@
 import numpy
+from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.utils._array_api import get_namespace
@@ -40,3 +41,37 @@ def test_get_namespace_array_api():
 
         with pytest.raises(ValueError, match="Unrecognized array input"):
             get_namespace(1)
+
+
+class _NumPyArrayAPIWrapper:
+    __name__ = "wrapped_numpy.array_api"
+
+    def __init__(self, array_namespace):
+        self._namespace = array_namespace
+
+    def __getattr__(self, name):
+        return getattr(self._namespace, name)
+
+
+def test_array_api_wrapper():
+    """Test _ArrayAPIWrapper for ArrayAPIs that is not NumPy."""
+    xp = pytest.importorskip("numpy.array_api")
+
+    wrapped_np = _NumPyArrayAPIWrapper(xp)
+    xp_ = _ArrayAPIWrapper(wrapped_np)
+
+    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
+    X_converted = xp_.astype(X, xp.float32)
+    assert X_converted.dtype == xp.float32
+
+    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
+    X_converted = xp_.asarray(X, dtype=xp.float32)
+    assert X_converted.dtype == xp.float32
+
+    # Check take compared to NumPy's
+    X_take = xp_.take(X, xp.asarray([0]), axis=0)
+    assert_array_equal(X_take, numpy.take(X, [0], axis=0))
+
+    # Check take compared to NumPy's
+    X_take = xp_.take(X, xp.asarray([0, 2]), axis=1)
+    assert_array_equal(X_take, numpy.take(X, [0, 2], axis=1))
