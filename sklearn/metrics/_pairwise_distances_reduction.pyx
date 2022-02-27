@@ -1211,8 +1211,9 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         # freeing them when the associated np.ndarray is freed.
         #
         # Shared pointers (defined via shared_ptr) are use for safer memory management.
-        # Unique pointers (defined via unique_ptr) can't be used as datastructures
-        # are shared across threads for parallel_on_X; see _parallel_on_X_init_chunk.
+        # Unique pointers (defined via unique_ptr) are also used for the main
+        # datastructures and are cast as shared pointers across threads for
+        # parallel_on_X; see _parallel_on_X_init_chunk.
         unique_ptr[vector[vector[ITYPE_t]]] neigh_indices
         unique_ptr[vector[vector[DTYPE_t]]] neigh_distances
 
