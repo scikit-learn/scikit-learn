@@ -225,10 +225,10 @@ def spectral_embedding(
     ----------
     * https://en.wikipedia.org/wiki/LOBPCG
 
-    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+    * :doi:`Toward the Optimal Preconditioned Eigensolver: Locally Optimal
       Block Preconditioned Conjugate Gradient Method
       Andrew V. Knyazev
-      :doi:`10.1137%2FS1064827500366124`
+      <10.1137%2FS1064827500366124>`
     """
     adjacency = check_symmetric(adjacency)
 

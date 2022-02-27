@@ -20,8 +20,8 @@ can mitigate those limitations.
 
 .. topic:: References:
 
-   [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-       2001. :doi:`10.1023/A:1010933404324`
+   [1] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+       2001. <10.1023/A:1010933404324>`
 
 """
 

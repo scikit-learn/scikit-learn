@@ -116,11 +116,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     References
     ----------
-    David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
+    :doi:`David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
     supervised methods. In Proceedings of the 33rd annual meeting on
     Association for Computational Linguistics (ACL '95). Association for
     Computational Linguistics, Stroudsburg, PA, USA, 189-196.
-    :doi:`10.3115/981658.981684`
+    <10.3115/981658.981684>`
 
     Examples
     --------
