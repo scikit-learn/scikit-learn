@@ -525,30 +525,30 @@ def hdbscan(
     X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
             array of shape (n_samples, n_samples)
         A feature array, or array of distances between samples if
-        ``metric='precomputed'``.
+        `metric='precomputed'`.
 
-    min_cluster_size : int, optional (default=5)
+    min_cluster_size : int, default=5
         The minimum number of samples in a group for that group to be
         considered a cluster; groupings smaller than this size will be left
         as noise.
 
-    min_samples : int, optional (default=None)
+    min_samples : int, default=None
         The number of samples in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
         defaults to the min_cluster_size.
 
-    cluster_selection_epsilon: float, optional (default=0.0)
+    cluster_selection_epsilon: float, default=0.0
         A distance threshold. Clusters below this value will be merged.
         See [3]_ for more information. Note that this should not be used
         if we want to predict the cluster labels for new points in future
         (e.g. using approximate_predict), as the approximate_predict function
         is not aware of this argument.
 
-    alpha : float, optional (default=1.0)
+    alpha : float, default=1.0
         A distance scaling parameter as used in robust single linkage.
         See [2]_ for more information.
 
-    max_cluster_size : int, optional (default=0)
+    max_cluster_size : int, default=0
         A limit to the size of clusters returned by the eom algorithm.
         Has no effect when using leaf clustering (where clusters are
         usually small regardless) and can also be overridden in rare
@@ -557,7 +557,7 @@ def hdbscan(
         for new points in future (e.g. using approximate_predict), as
         the approximate_predict function is not aware of this argument.
 
-    metric : string or callable, optional (default='minkowski')
+    metric : string or callable, default='minkowski'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
@@ -565,62 +565,62 @@ def hdbscan(
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
 
-    p : int, optional (default=2)
+    p : int, default=2
         p value to use if using the minkowski metric.
 
-    leaf_size : int, optional (default=40)
+    leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest
         neighbour queries.
 
-    algorithm : string, optional (default='best')
+    algorithm : string, default='best'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
-        to ``best`` which chooses the "best" algorithm given the nature of
+        to `best` which chooses the "best" algorithm given the nature of
         the data. You can force other options if you believe you know
         better. Options are:
-            * ``best``
-            * ``generic``
-            * ``prims_kdtree``
-            * ``prims_balltree``
-            * ``boruvka_kdtree``
-            * ``boruvka_balltree``
+            * `best`
+            * `generic`
+            * `prims_kdtree`
+            * `prims_balltree`
+            * `boruvka_kdtree`
+            * `boruvka_balltree`
 
     memory : instance of joblib.Memory or string, optional
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    approx_min_span_tree : bool, optional (default=True)
+    approx_min_span_tree : bool, default=True
         Whether to accept an only approximate minimum spanning tree.
         For some algorithms this can provide a significant speedup, but
         the resulting clustering may be of marginally lower quality.
         If you are willing to sacrifice speed for correctness you may want
         to explore this; in general this should be left at the default True.
 
-    gen_min_span_tree : bool, optional (default=False)
+    gen_min_span_tree : bool, default=False
         Whether to generate the minimum spanning tree for later analysis.
 
-    core_dist_n_jobs : int, optional (default=4)
+    core_dist_n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
-        supported by the specific algorithm). For ``core_dist_n_jobs``
+        supported by the specific algorithm). For `core_dist_n_jobs`
         below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
 
-    cluster_selection_method : string, optional (default='eom')
+    cluster_selection_method : string, default='eom'
         The method used to select clusters from the condensed tree. The
         standard approach for HDBSCAN* is to use an Excess of Mass algorithm
         to find the most persistent clusters. Alternatively you can instead
         select the clusters at the leaves of the tree -- this provides the
         most fine grained and homogeneous clusters. Options are:
-            * ``eom``
-            * ``leaf``
+            * `eom`
+            * `leaf`
 
-    allow_single_cluster : bool, optional (default=False)
+    allow_single_cluster : bool, default=False
         By default HDBSCAN* will not produce a single cluster, setting this
         to t=True will override this and allow single cluster results in
         the case that you feel this is a valid result for your dataset.
         (default False)
 
-    match_reference_implementation : bool, optional (default=False)
+    match_reference_implementation : bool, default=False
         There exist some interpretational differences between this
         HDBSCAN* implementation and the original authors reference
         implementation in Java. This can result in very minor differences
@@ -775,7 +775,7 @@ def hdbscan(
                 warn(
                     "A large dataset size and small leaf_size may induce excessive "
                     "memory usage. If you are running out of memory consider "
-                    "increasing the ``leaf_size`` parameter."
+                    "increasing the `leaf_size` parameter."
                 )
             (single_linkage_tree, result_min_span_tree) = memory.cache(
                 _hdbscan_boruvka_balltree
@@ -887,16 +887,29 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    min_cluster_size : int, optional (default=5)
+    min_cluster_size : int, default=5
         The minimum size of clusters; single linkage splits that contain
         fewer points than this will be considered points "falling out" of a
         cluster rather than a cluster splitting into two new clusters.
 
-    min_samples : int, optional (default=None)
+    min_samples : int, default=None
         The number of samples in a neighbourhood for a point to be
         considered a core point.
 
-    metric : string, or callable, optional (default='euclidean')
+    cluster_selection_epsilon : float, default=0.0
+                A distance threshold. Clusters below this value will be merged.
+        See [5]_ for more information.
+
+    max_cluster_size : int, default=0
+        A limit to the size of clusters returned by the eom algorithm.
+        Has no effect when using leaf clustering (where clusters are
+        usually small regardless) and can also be overridden in rare
+        cases by a high value for cluster_selection_epsilon. Note that
+        this should not be used if we want to predict the cluster labels
+        for new points in future (e.g. using approximate_predict), as
+        the approximate_predict function is not aware of this argument.
+
+    metric : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
@@ -904,79 +917,74 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
 
-    p : int, optional (default=None)
-        p value to use if using the minkowski metric.
-
-    alpha : float, optional (default=1.0)
+    alpha : float, default=1.0
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
 
-    cluster_selection_epsilon: float, optional (default=0.0)
-                A distance threshold. Clusters below this value will be merged.
-        See [5]_ for more information.
+    p : int, default=None
+        Value of `p` if using the minkowski metric.
 
-    algorithm : string, optional (default='best')
+    algorithm : str, default='best'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
-        to ``best`` which chooses the "best" algorithm given the nature of
+        to `best` which chooses the "best" algorithm given the nature of
         the data. You can force other options if you believe you know
         better. Options are:
-            * ``best``
-            * ``generic``
-            * ``prims_kdtree``
-            * ``prims_balltree``
-            * ``boruvka_kdtree``
-            * ``boruvka_balltree``
+            * `best`
+            * `generic`
+            * `prims_kdtree`
+            * `prims_balltree`
+            * `boruvka_kdtree`
+            * `boruvka_balltree`
 
-    leaf_size: int, optional (default=40)
+    leaf_size : int, default=40
         If using a space tree algorithm (kdtree, or balltree) the number
         of points ina leaf node of the tree. This does not alter the
         resulting clustering, but may have an effect on the runtime
         of the algorithm.
 
-    memory : Instance of joblib.Memory or string (optional)
+    memory : Instance of joblib.Memory or str, default=Memory(verbose=1)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    approx_min_span_tree : bool, optional (default=True)
+    approx_min_span_tree : bool, default=True
         Whether to accept an only approximate minimum spanning tree.
         For some algorithms this can provide a significant speedup, but
         the resulting clustering may be of marginally lower quality.
         If you are willing to sacrifice speed for correctness you may want
         to explore this; in general this should be left at the default True.
 
-    gen_min_span_tree: bool, optional (default=False)
+    gen_min_span_tree : bool, default=False
         Whether to generate the minimum spanning tree with regard
         to mutual reachability distance for later analysis.
 
-    core_dist_n_jobs : int, optional (default=4)
+    core_dist_n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
-        supported by the specific algorithm). For ``core_dist_n_jobs``
+        supported by the specific algorithm). For `core_dist_n_jobs`
         below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
 
-    cluster_selection_method : string, optional (default='eom')
+    cluster_selection_method : str, default='eom'
         The method used to select clusters from the condensed tree. The
         standard approach for HDBSCAN* is to use an Excess of Mass algorithm
         to find the most persistent clusters. Alternatively you can instead
         select the clusters at the leaves of the tree -- this provides the
         most fine grained and homogeneous clusters. Options are:
-            * ``eom``
-            * ``leaf``
+            * `eom`
+            * `leaf`
 
-    allow_single_cluster : bool, optional (default=False)
+    allow_single_cluster : bool, default=False
         By default HDBSCAN* will not produce a single cluster, setting this
         to True will override this and allow single cluster results in
         the case that you feel this is a valid result for your dataset.
 
-    prediction_data : boolean, optional
+    prediction_data : bool, default=False
         Whether to generate extra cached data for predicting labels or
         membership vectors few new unseen points later. If you wish to
         persist the clustering object for later re-use you probably want
         to set this to True.
-        (default False)
 
-    match_reference_implementation : bool, optional (default=False)
+    match_reference_implementation : bool, default=False
         There exist some interpretational differences between this
         HDBSCAN* implementation and the original authors reference
         implementation in Java. This can result in very minor differences
@@ -985,7 +993,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         reference implementation.
 
     **kwargs : optional
-        Arguments passed to the distance metric
+        Arguments passed to the distance metric.
 
     Attributes
     ----------
@@ -1028,7 +1036,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     prediction_data_ : PredictionData object
         Cached data used for predicting the cluster labels of new or
         unseen points. Necessary only if you are using functions from
-        ``hdbscan.prediction`` (see
+        `hdbscan.prediction` (see
         :func:`~hdbscan.prediction.approximate_predict`,
         :func:`~hdbscan.prediction.membership_vector`,
         and :func:`~hdbscan.prediction.all_points_membership_vectors`).
@@ -1050,6 +1058,13 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         goodness of clusterering. It may only be used to compare results
         across different choices of hyper-parameters, therefore is only a
         relative score.
+
+    See Also
+    --------
+    DBSCAN : Density-Based Spatial Clustering of Applications
+        with Noise.
+    OPTICS : Ordering Points To Identify the Clustering Structure.
+    BIRCH : Memory-efficient, online-learning algorithm.
 
     References
     ----------
@@ -1075,6 +1090,16 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     .. [5] Malzer, C., & Baum, M. (2019). A Hybrid Approach To Hierarchical
            Density-based Cluster Selection. arxiv preprint 1911.02282.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import HDBSCAN
+    >>> from sklearn.datasets import load_digits
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> hdb = HDBSCAN(min_cluster_size=20)
+    >>> hdb.fit(X)
+    HDBSCAN(min_cluster_size=20)
+    >>> hdb.labels_
+    array([ 2,  6, -1, ..., -1, -1, -1], dtype=int64)
     """
 
     def __init__(
@@ -1134,12 +1159,15 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
                 array of shape (n_samples, n_samples)
             A feature array, or array of distances between samples if
-            ``metric='precomputed'``.
+            `metric='precomputed'`.
+
+        y : Ignored
+            Ignored.
 
         Returns
         -------
         self : object
-            Returns self
+            Returns self.
         """
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
@@ -1208,28 +1236,33 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         return self
 
     def fit_predict(self, X, y=None):
-        """Performs clustering on X and returns cluster labels.
+        """Perform clustering on X and return cluster labels.
 
         Parameters
         ----------
         X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
                 array of shape (n_samples, n_samples)
             A feature array, or array of distances between samples if
-            ``metric='precomputed'``.
+            `metric='precomputed'`.
+
+        y : Ignored
+            Ignored.
 
         Returns
         -------
         y : ndarray, shape (n_samples, )
-            cluster labels
+            Cluster labels.
         """
         self.fit(X)
         return self.labels_
 
     def generate_prediction_data(self):
         """
+        Create data that caches intermediate results for label prediction.
+
         Create data that caches intermediate results used for predicting
         the label of new/unseen points. This data is only useful if
-        you are intending to use functions from ``hdbscan.prediction``.
+        you are intending to use functions from `hdbscan.prediction`.
         """
 
         if self.metric in FAST_METRICS:
@@ -1258,21 +1291,22 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
             )
 
     def weighted_cluster_centroid(self, cluster_id):
-        """Provide an approximate representative point for a given cluster.
+        """
+        Provide an approximate representative point for a given cluster.
+
         Note that this technique assumes a euclidean metric for speed of
-        computation. For more general metrics use the ``weighted_cluster_medoid``
-        method which is slower, but can work with the metric the model trained
-        with.
+        computation. For more general metrics use the `weighted_cluster_medoid`
+        method which is slower, but can work with more general metrics.
 
         Parameters
         ----------
-        cluster_id: int
+        cluster_id : int
             The id of the cluster to compute a centroid for.
 
         Returns
         -------
-        centroid: array of shape (n_features,)
-            A representative centroid for cluster ``cluster_id``.
+        centroid : array of shape (n_features,)
+            A representative centroid for cluster `cluster_id`.
         """
         if not hasattr(self, "labels_"):
             raise AttributeError("Model has not been fit to data")
@@ -1290,20 +1324,22 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         return np.average(cluster_data, weights=cluster_membership_strengths, axis=0)
 
     def weighted_cluster_medoid(self, cluster_id):
-        """Provide an approximate representative point for a given cluster.
+        """
+        Provide an approximate representative point for a given cluster.
+
         Note that this technique can be very slow and memory intensive for
-        large clusters. For faster results use the ``weighted_cluster_centroid``
+        large clusters. For faster results use the `weighted_cluster_centroid`
         method which is faster, but assumes a euclidean metric.
 
         Parameters
         ----------
-        cluster_id: int
+        cluster_id : int
             The id of the cluster to compute a medoid for.
 
         Returns
         -------
-        centroid: array of shape (n_features,)
-            A representative medoid for cluster ``cluster_id``.
+        centroid : array of shape (n_features,)
+            A representative medoid for cluster `cluster_id`.
         """
         if not hasattr(self, "labels_"):
             raise AttributeError("Model has not been fit to data")
@@ -1328,10 +1364,13 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     def dbscan_clustering(self, cut_distance, min_cluster_size=5):
         """
+        Return clustering given by DBSCAN without border points.
+
         Return clustering that would be equivalent to running DBSCAN* for a
         particular cut_distance (or epsilon) DBSCAN* can be thought of as
         DBSCAN without the border points.  As such these results may differ
-        slightly from sklearns implementation of dbscan in the non-core points.
+        slightly from `cluster.DBSCAN` due to the difference in implementation
+        over the non-core points.
 
         This can also be thought of as a flat clustering derived from constant
         height cut through the single linkage tree.
@@ -1365,6 +1404,9 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     @property
     def prediction_data_(self):
+        """
+        Cached data for predicting cluster labels of new or unseen points.
+        """
         if self._prediction_data is None:
             raise AttributeError("No prediction data was generated")
         else:
@@ -1372,6 +1414,9 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     @property
     def outlier_scores_(self):
+        """
+        Points with larger scores are more outlier-like points.
+        """
         if self._outlier_scores is not None:
             return self._outlier_scores
         else:
@@ -1385,6 +1430,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     @property
     def condensed_tree_(self):
+        """A simplified or smoothed version of `sinkle_linkage_tree_`."""
         if self._condensed_tree is not None:
             return CondensedTree(
                 self._condensed_tree,
@@ -1398,6 +1444,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     @property
     def single_linkage_tree_(self):
+        """A single linkage format dendrogram tree."""
         if self._single_linkage_tree is not None:
             return SingleLinkageTree(self._single_linkage_tree)
         else:
@@ -1407,6 +1454,9 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     @property
     def minimum_spanning_tree_(self):
+        """
+        The minimum spanning tree of the mutual reachability graph.
+        """
         if self._min_spanning_tree is not None:
             if self._raw_data is not None:
                 return MinimumSpanningTree(self._min_spanning_tree, self._raw_data)
@@ -1426,6 +1476,12 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     @property
     def exemplars_(self):
+        """
+        A list of exemplar points for clusters.
+
+        These are the "most representative" points of the arbitrarily shaped
+        clusters.
+        """
         if self._prediction_data is not None:
             return self._prediction_data.exemplars
         elif self.metric in FAST_METRICS:
@@ -1440,6 +1496,9 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
 
     @property
     def relative_validity_(self):
+        """
+        A fast approximation of the Density Based Cluster Validity (DBCV) score.
+        """
         if self._relative_validity is not None:
             return self._relative_validity
 

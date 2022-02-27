@@ -276,40 +276,43 @@ def density_separation(
 
 
 def validity_index(
-    X, labels, metric="euclidean", d=None, per_cluster_scores=False, **kwd_args
+    X, labels, metric="euclidean", d=None, per_cluster_scores=False, kwargs=None
 ):
     """
+    Compute the density based cluster validity index.
+
     Compute the density based cluster validity index for the
     clustering specified by `labels` and for each cluster in `labels`.
 
     Parameters
     ----------
-    X : array (n_samples, n_features) or (n_samples, n_samples)
-        The input data of the clustering. This can be the data, or, if
-        metric is set to `precomputed` the pairwise distance matrix used
-        for the clustering.
+    X : array-like of shape (n_samples, n_features) or (n_samples, n_samples)
+        The input data of the clustering.
 
-    labels : array (n_samples)
+        If `metric=precomputed` this is treated as the pairwise distance matrix
+        used for the clustering.
+
+    labels : array-like (n_samples)
         The label array output by the clustering, providing an integral
         cluster label to each data point, with -1 for noise points.
 
-    metric : optional, string (default 'euclidean')
+    metric : str, default='euclidean'
         The metric used to compute distances for the clustering (and
         to be re-used in computing distances for mr distance). If
         set to `precomputed` then X is assumed to be the precomputed
         distance matrix between samples.
 
-    d : optional, integer (or None) (default None)
+    d : int, default=None
         The number of features (dimension) of the dataset. This need only
         be set in the case of metric being set to `precomputed`, where
         the ambient dimension of the data is unknown to the function.
 
-    per_cluster_scores : optional, boolean (default False)
+    per_cluster_scores : bool, default=False
         Whether to return the validity index for individual clusters.
         Defaults to False with the function returning a single float
         value for the whole clustering.
 
-    **kwd_args :
+    kwargs : dict, default=None
         Extra arguments to pass to the distance computation for other
         metrics, such as minkowski, Mahanalobis etc.
 
@@ -345,7 +348,7 @@ def validity_index(
             continue
 
         mr_distances, core_distances[cluster_id] = all_points_mutual_reachability(
-            X, labels, cluster_id, metric, d, **kwd_args
+            X, labels, cluster_id, metric, d, **kwargs
         )
 
         mst_nodes[cluster_id], mst_edges[cluster_id] = internal_minimum_spanning_tree(
@@ -375,7 +378,7 @@ def validity_index(
                 core_distances[i],
                 core_distances[j],
                 metric=metric,
-                **kwd_args,
+                **kwargs,
             )
             density_sep[j, i] = density_sep[i, j]
 
