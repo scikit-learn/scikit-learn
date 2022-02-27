@@ -1,10 +1,11 @@
 import time
-from sklearn.decomposition import FastICA
 import numpy as np
 import pandas as pd
-import streamlit as st
-import altair as alt
 import argparse
+from scipy import linalg
+
+# import streamlit as st
+# import altair as alt
 
 parser = argparse.ArgumentParser(
     description="Determine whether to save/load the dataframe."
@@ -33,30 +34,28 @@ def main() -> None:
         df = on_load(args.load)
     else:
         X_shapes = []
-        for i in range(10):
-            X_shapes.extend(
-                (10 * int(10 ** (i / 3)), 10 * int(10 ** (j / 3))) for j in range(10)
-            )
+        for i in range(3):
+            X_shapes.extend((int(10 ** (2 + i)), int(10 ** (1 + j))) for j in range(3))
 
-        solvers = ("svd", "eigh")
-        transformers = {
-            s: FastICA(n_components=7, random_state=0, svd_solver=s) for s in solvers
+        solvers = {
+            "svd": linalg.svd,
+            "eigh": linalg.eigh,
         }
         total_reps = len(solvers) * len(X_shapes)
         count = 0
         data = []
         for shape in X_shapes:
-            X = np.random.rand(*shape)
+            XT = np.random.rand(*shape).T
 
             count += 1
             start = time.time()
-            transformers["svd"].fit_transform(X)
+            solvers["svd"](XT)
             print(f"Progress: {count}/{total_reps}")
             svd_time = time.time() - start
 
             count += 1
             start = time.time()
-            transformers["eigh"].fit_transform(X)
+            solvers["eigh"](XT.dot(XT.T))
             print(f"Progress: {count}/{total_reps}")
             eigh_time = time.time() - start
 
@@ -67,23 +66,23 @@ def main() -> None:
         df.to_csv(args.save, index=False)
         print(f"Dataframe saved to {args.save}")
 
+    """
     chart = (
         alt.Chart(df, width=300)
         .mark_bar()
-        .encode(x="solver", y="time", column="shape")
+        .encode(x="shape", y=["svd","eigh"], column="shape")
         .properties(title="time by shape")
     ).resolve_scale(y="independent")
 
     st.altair_chart(chart)
-
-    pt = pd.pivot_table(df, values="time", index=["shape"], columns=["solver"])
-    ratio_df = pd.DataFrame(pt["eigh"] / pt["svd"], columns=["eigh/svd time"])
-    st.table(ratio_df.sort_values(by="eigh/svd time"))
+    """
 
 
 def on_load(pth: str) -> pd.DataFrame:
     print(f"Dataframe loaded from {args.load}")
-    return pd.read_csv(pth)
+    df = pd.read_csv(pth)
+    df["shape"] = df["shape"].astype("string")
+    return df
 
 
 if __name__ == "__main__":
