@@ -465,7 +465,7 @@ class SpectralBiclustering(BaseSpectral):
     References
     ----------
 
-    * :doi`Kluger, Yuval, et. al., 2003. Spectral biclustering of microarray
+    * :doi:`Kluger, Yuval, et. al., 2003. Spectral biclustering of microarray
       data: coclustering genes and conditions.
       <10.1.1.135.1608>`
 

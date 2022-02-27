@@ -33,9 +33,10 @@ The same task has been used in a number of papers including:
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
    <10.1.1.74.8513>`
 
- * "Training Linear SVMs in Linear Time"
+ * `"Training Linear SVMs in Linear Time"
+   <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>`_
    T. Joachims - In SIGKDD '06.
-   <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>
+
 
 
 [1] https://archive.ics.uci.edu/ml/datasets/Covertype

@@ -219,7 +219,7 @@ It is advisable to evaluate both models, if time permits.
    Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
    <10.1.1.46.1529>`
 
- * :doi`V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+ * :doi:`V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
    Spam filtering with Naive Bayes -- Which Naive Bayes?
    3rd Conf. on Email and Anti-Spam (CEAS).
    <10.1.1.61.5542>`
