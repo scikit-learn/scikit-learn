@@ -59,7 +59,14 @@ def main() -> None:
             print(f"Progress: {count}/{total_reps}")
             eigh_time = time.time() - start
 
-            data.append({"shape": str(shape), "svd": svd_time, "eigh": eigh_time})
+            data.append(
+                {
+                    "shape": str(shape),
+                    "svd": svd_time,
+                    "eigh": eigh_time,
+                    "eigh/svd": eigh_time / svd_time,
+                }
+            )
         df = pd.DataFrame(data)
 
     if args.save and not args.load:
