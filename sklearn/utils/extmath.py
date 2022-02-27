@@ -898,32 +898,6 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     return result
 
 
-def in_place_feature_var(X):
-    """
-    Calculate the feature-wise variance of a 2D array.
-
-    This function provides an alternative to `np.var` for calculating
-    the feature-wise sample variance of a 2D array. This function is equivalent
-    to `np.var(X, ddof=1, axis=0)`.
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-        Data to use for variance calculation.
-
-    Returns
-    -------
-    var : ndarray of shape (n_features,)
-        The feature-wise variance
-    """
-    N = X.shape[0] - 1
-    X -= X.mean(axis=0)
-    np.square(X, out=X)
-    np.sum(X, axis=0, out=X[0])
-    var = X[0] / N
-    return var
-
-
 def _incremental_mean_and_var(
     X, last_mean, last_variance, last_sample_count, sample_weight=None
 ):

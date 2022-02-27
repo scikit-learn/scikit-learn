@@ -23,7 +23,7 @@ from ._base import _BasePCA
 from ..utils import check_random_state, check_scalar
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
-from ..utils.extmath import stable_cumsum, in_place_feature_var
+from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
 
@@ -619,7 +619,14 @@ class PCA(_BasePCA):
 
         # Get variance explained by singular values
         self.explained_variance_ = (S**2) / (n_samples - 1)
-        total_var = in_place_feature_var(X).sum()
+
+        # Workaround in-place variance calculation since at the time numpy
+        # did not have a way to calculate variance in-place.
+        N = X.shape[0] - 1
+        np.square(X, out=X)
+        np.sum(X, axis=0, out=X[0])
+        total_var = (X[0] / N).sum()
+
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
 
