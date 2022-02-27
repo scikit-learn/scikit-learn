@@ -20,7 +20,7 @@ import warnings
 from .. import get_config
 from libc.stdlib cimport free, malloc
 from libc.float cimport DBL_MAX
-from libcpp.memory cimport shared_ptr, make_shared
+from libcpp.memory cimport shared_ptr, make_shared, unique_ptr, make_unique
 from libcpp.vector cimport vector
 from cython cimport final
 from cython.operator cimport dereference as deref
@@ -138,7 +138,7 @@ cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
 
 
 cdef np.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
-    shared_ptr[vector_vector_DITYPE_t] vecs
+    unique_ptr[vector_vector_DITYPE_t] vecs
 ):
     """Coerce a std::vector of std::vector to a ndarray of ndarray."""
     cdef:
@@ -1211,10 +1211,11 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         # freeing them when the associated np.ndarray is freed.
         #
         # Shared pointers (defined via shared_ptr) are use for safer memory management.
-        # Unique pointers (defined via unique_ptr) can't be used as datastructures
-        # are shared across threads for parallel_on_X; see _parallel_on_X_init_chunk.
-        shared_ptr[vector[vector[ITYPE_t]]] neigh_indices
-        shared_ptr[vector[vector[DTYPE_t]]] neigh_distances
+        # Unique pointers (defined via unique_ptr) are also used for the main
+        # datastructures and are cast as shared pointers across threads for
+        # parallel_on_X; see _parallel_on_X_init_chunk.
+        unique_ptr[vector[vector[ITYPE_t]]] neigh_indices
+        unique_ptr[vector[vector[DTYPE_t]]] neigh_distances
 
         # Used as array of pointers to private datastructures used in threads.
         vector[shared_ptr[vector[vector[ITYPE_t]]]] neigh_indices_chunks
@@ -1405,8 +1406,8 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         # Temporary datastructures which will be coerced to numpy arrays on before
         # PairwiseDistancesRadiusNeighborhood.compute "return" and will be then freed.
-        self.neigh_distances = make_shared[vector[vector[DTYPE_t]]](self.n_samples_X)
-        self.neigh_indices = make_shared[vector[vector[ITYPE_t]]](self.n_samples_X)
+        self.neigh_distances = make_unique[vector[vector[DTYPE_t]]](self.n_samples_X)
+        self.neigh_indices = make_unique[vector[vector[ITYPE_t]]](self.n_samples_X)
 
     cdef void _compute_and_reduce_distances_on_chunks(
         self,
@@ -1448,8 +1449,8 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         # As this strategy is embarrassingly parallel, we can set the
         # thread vectors' pointers to the main vectors'.
-        self.neigh_distances_chunks[thread_num] = self.neigh_distances
-        self.neigh_indices_chunks[thread_num] = self.neigh_indices
+        self.neigh_distances_chunks[thread_num] = shared_ptr[vector[vector[DTYPE_t]]](self.neigh_distances)
+        self.neigh_indices_chunks[thread_num] = shared_ptr[vector[vector[ITYPE_t]]](self.neigh_indices)
 
     @final
     cdef void _parallel_on_X_prange_iter_finalize(
