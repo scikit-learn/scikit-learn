@@ -43,6 +43,10 @@ class _ArrayAPIWrapper:
     def take(self, X, indices, *, axis):
         # When array_api supports `take` we can use this directly
         # https://github.com/data-apis/array-api/issues/177
+        if self._namespace.__name__ == "numpy.array_api":
+            X_np = numpy.take(X, indices, axis=axis)
+            return self._namespace.asarray(X_np)
+
         if axis == 0:
             selected = [X[i] for i in indices]
         else:  # axis == 1
@@ -101,7 +105,6 @@ def get_namespace(*arrays):
     namespaces = {
         x.__array_namespace__() if hasattr(x, "__array_namespace__") else None
         for x in arrays
-        if not isinstance(x, (bool, int, float, complex))
     }
 
     if not namespaces:
