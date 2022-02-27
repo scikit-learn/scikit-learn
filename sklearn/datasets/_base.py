@@ -1120,6 +1120,9 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        Returns a tuple of two ndarrays or dataframe of shape
+        `(20, 3)`. Each row represents one sample and each column represents the
+        features in `X` and a target in `y` of a given sample.
 
         .. versionadded:: 0.18
     """
