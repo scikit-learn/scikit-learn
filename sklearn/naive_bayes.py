@@ -1550,7 +1550,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier.
 
-    feature_names_in_ : ndarray of shape (n_features_in_,)
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if `X` has
         feature names that are all strings.
 
@@ -1567,12 +1567,16 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     -----
     ColumnwiseNB combines multiple naive Bayes estimators by expressing the
     overall joint probability ``P(x,y)`` through ``P(x_i,y)``, the joint
-    probabilities of the subestimators:
+    probabilities of the subestimators::
+
         ``Log P(x,y) = Log P(x_1,y) + ... + Log P(x_N,y) - (N - 1) Log P(y)``,
+
     where ``N`` denotes ``n_estimators``, the number of estimators.
     It is implicitly assumed that the class log priors are finite and agree
-    between the estimators and the subestimator:
+    between the estimators and the subestimator::
+
         ``- inf < Log P(y) = Log P(y|1) = ... = Log P(y|N)``.
+
     The meta-estimators does not check if this condition holds. Meaningless
     results, including ``NaN``, may be produced by ColumnwiseNB if the class
     priors differ or contain a zero probability.
