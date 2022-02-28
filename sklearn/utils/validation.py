@@ -1105,13 +1105,16 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, warn=False):
+def column_or_1d(y, *, dtype=None, warn=False):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
     ----------
     y : array-like
        Input data.
+
+    dtype: data-type, default=None
+        Data type for `y`.
 
     warn : bool, default=False
        To control display of warnings.
@@ -1126,7 +1129,7 @@ def column_or_1d(y, *, warn=False):
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
-    y = np.asarray(y)
+    y = np.asarray(y, dtype=dtype)
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)

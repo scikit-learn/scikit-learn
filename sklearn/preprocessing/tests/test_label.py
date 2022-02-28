@@ -643,3 +643,15 @@ def test_inverse_binarize_multiclass():
         csr_matrix([[0, 1, 0], [-1, 0, -1], [0, 0, 0]]), np.arange(3)
     )
     assert_array_equal(got, np.array([1, 1, 0]))
+
+
+def test_nan_label_encoder():
+    """Check that label encoder encodes nans in transform.
+
+    Non-regression test for #22628.
+    """
+    le = LabelEncoder()
+    le.fit(["a", "a", "b", np.nan])
+
+    y_trans = le.transform([np.nan])
+    assert_array_equal(y_trans, [2])

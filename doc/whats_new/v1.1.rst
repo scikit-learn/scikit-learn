@@ -705,6 +705,9 @@ Changelog
 - |Fix| :class:`preprocessing.KBinDiscretizer` handles bin edges more consistently now.
   :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| :class:`preprocessing.LabelEncoder` correctly encodes NaNs in `transform`.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.random_projection`
 ................................
 
