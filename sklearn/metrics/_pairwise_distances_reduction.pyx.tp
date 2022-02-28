@@ -1159,7 +1159,11 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{bitness}}(PairwiseDistancesArg
         strategy=None,
         metric_kwargs=None,
     ):
-        if metric_kwargs is not None and len(metric_kwargs) > 0:
+        if (
+            metric_kwargs is not None and
+            len(metric_kwargs) > 0 and
+            "Y_norm_squared" not in metric_kwargs
+        ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't"
                 f"usable for this case ({self.__class__.__name__}) and will be ignored.",
