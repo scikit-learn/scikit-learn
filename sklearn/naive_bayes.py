@@ -532,27 +532,30 @@ class _BaseDiscreteNB(_BaseNB):
         """Update counts that are used to calculate probabilities.
 
         The counts make up a sufficient statistic extracted from the data.
-        Accordingly, this method is called each time ``fit`` or ``partial_fit``
-        update the model. The number and composition of counts depend on a
-        concrete model, but ``self.class_count`` must be updated in any case.
+        Accordingly, this method is called each time `fit` or `partial_fit`
+        update the model. `class_count_` and `feature_count_` must be updated
+        here along with any model specific counts.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The input samples.
-        Y : array-like of shape (n_samples, n_classes)
-            Binarized class labels."""
+        Y : ndarray of shape (n_samples, n_classes)
+            Binarized class labels.
+        """
 
     @abstractmethod
     def _update_feature_log_prob(self, alpha):
         """Update feature log probabilities based on counts.
 
-        This method is called each time ``fit`` or ``partial_fit`` update the
+        This method is called each time `fit` or `partial_fit` update the
         model.
 
         Parameters
         ----------
-        alpha : smoothing parameter. See :meth:`_check_alpha`."""
+        alpha : float
+            smoothing parameter. See :meth:`_check_alpha`.
+        """
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""

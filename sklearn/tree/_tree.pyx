@@ -1510,7 +1510,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
         # Push the root node
-        ccp_stack.push({"node_idx": 0, "parent": -1})
+        ccp_stack.push({"node_idx": 0, "parent": _TREE_UNDEFINED})
 
         while not ccp_stack.empty():
             stack_record = ccp_stack.top()
@@ -1593,7 +1593,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
             # bubble up values to ancestors
             node_idx = parent[pruned_branch_node_idx]
-            while node_idx != -1:
+            while node_idx != _TREE_UNDEFINED:
                 n_leaves[node_idx] -= n_pruned_leaves
                 r_branch[node_idx] += r_diff
                 node_idx = parent[node_idx]
