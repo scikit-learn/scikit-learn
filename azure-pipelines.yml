@@ -161,10 +161,10 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py37_conda_forge_openblas_ubuntu_1804:
+      py38_conda_forge_openblas_ubuntu_1804:
         DISTRIB: 'conda'
         CONDA_CHANNEL: 'conda-forge'
-        PYTHON_VERSION: '3.7'
+        PYTHON_VERSION: '3.8'
         BLAS: 'openblas'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
@@ -190,11 +190,11 @@ jobs:
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
         COVERAGE: 'false'
-      # Linux + Python 3.7 build with OpenBLAS
-      py37_conda_defaults_openblas:
+      # Linux + Python 3.8 build with OpenBLAS
+      py38_conda_defaults_openblas:
         DISTRIB: 'conda'
         CONDA_CHANNEL: 'defaults'  # Anaconda main channel
-        PYTHON_VERSION: '3.7'
+        PYTHON_VERSION: '3.8'
         BLAS: 'openblas'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
@@ -225,7 +225,7 @@ jobs:
     matrix:
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
-        DOCKER_CONTAINER: 'i386/debian:10.9'
+        DOCKER_CONTAINER: 'i386/debian:11.2'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
@@ -268,10 +268,10 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py37_conda_forge_mkl:
+      py38_conda_forge_mkl:
         DISTRIB: 'conda'
         CONDA_CHANNEL: 'conda-forge'
-        PYTHON_VERSION: '3.7'
+        PYTHON_VERSION: '3.8'
         CHECK_WARNINGS: 'true'
         PYTHON_ARCH: '64'
         # Unpin when pytest stalling issue is fixed
@@ -280,6 +280,6 @@ jobs:
         # Temporary fix for setuptools to use disutils from standard lib
         # https://github.com/numpy/numpy/issues/17216
         SETUPTOOLS_USE_DISTUTILS: 'stdlib'
-      py37_pip_openblas_32bit:
-        PYTHON_VERSION: '3.7'
+      py38_pip_openblas_32bit:
+        PYTHON_VERSION: '3.8'
         PYTHON_ARCH: '32'
