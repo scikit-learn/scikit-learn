@@ -26,9 +26,15 @@ the clusters form a nice parcellation of the swiss roll.
 # License: BSD 3 clause
 
 import time as time
-import numpy as np
+
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
+
+# The following import is required
+# for 3D projection to work with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
+import numpy as np
+
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_swiss_roll
 
@@ -53,8 +59,8 @@ print("Number of points: %i" % label.size)
 # #############################################################################
 # Plot result
 fig = plt.figure()
-ax = p3.Axes3D(fig)
-ax.view_init(7, -80)
+ax = fig.add_subplot(111, projection="3d", elev=7, azim=-80)
+ax.set_position([0, 0, 0.95, 1])
 for l in np.unique(label):
     ax.scatter(
         X[label == l, 0],
@@ -65,7 +71,6 @@ for l in np.unique(label):
         edgecolor="k",
     )
 plt.title("Without connectivity constraints (time %.2fs)" % elapsed_time)
-
 
 # #############################################################################
 # Define the structure A of the data. Here a 10 nearest neighbors
@@ -88,8 +93,8 @@ print("Number of points: %i" % label.size)
 # #############################################################################
 # Plot result
 fig = plt.figure()
-ax = p3.Axes3D(fig)
-ax.view_init(7, -80)
+ax = fig.add_subplot(111, projection="3d", elev=7, azim=-80)
+ax.set_position([0, 0, 0.95, 1])
 for l in np.unique(label):
     ax.scatter(
         X[label == l, 0],
