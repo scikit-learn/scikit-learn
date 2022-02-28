@@ -529,8 +529,8 @@ below.
    Stella X. Yu, Jianbo Shi, 2003
 
  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"
-    Anil Damle, Victor Minden, Lexing Ying, 2019
-    <10.1093/imaiai/iay008>`
+   Anil Damle, Victor Minden, Lexing Ying, 2019
+   <10.1093/imaiai/iay008>`
 
 Spectral Clustering Graphs
 --------------------------
