@@ -396,7 +396,7 @@ def nan_euclidean_distances(
     squared=False,
     missing_values=np.nan,
     copy=True,
-    force_all_finite="allow-nan",
+    force_all_finite=True,  # automatically relaxed for NaN missing_values
 ):
     """Calculate the euclidean distances in the presence of missing values.
 
