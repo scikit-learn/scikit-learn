@@ -429,9 +429,9 @@ given sample.
 
 .. topic:: References:
 
- * `"Mean shift: A robust approach toward feature space analysis."
-   <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8968&rep=rep1&type=pdf>`_
+ * :doi:`"Mean shift: A robust approach toward feature space analysis"
    D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
+   <10.1109/34.1000236>`
 
 
 .. _spectral_clustering:
@@ -548,24 +548,24 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
  * :doi:`"A Tutorial on Spectral Clustering"
    Ulrike von Luxburg, 2007
-   <10.1.1.165.9323>`
+   <10.1007/s11222-007-9033-z>`
 
  * :doi:`"Normalized cuts and image segmentation"
    Jianbo Shi, Jitendra Malik, 2000
-   <10.1.1.160.2324>`
+   <10.1109/34.868688>`
 
- * :doi:`"A Random Walks View of Spectral Segmentation"
+ * "A Random Walks View of Spectral Segmentation"
    Marina Meila, Jianbo Shi, 2001
-   <10.1.1.33.1501>`
+   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.33.1501>`
 
  * :doi:`"On Spectral Clustering: Analysis and an algorithm"
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
-   <10.1.1.19.8100>`
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`
 
  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
    Block Partition Streaming Graph Challenge"
    David Zhuzhunashvili, Andrew Knyazev
-   <1309.0238>`
+   <1708.07481>`
 
 .. _hierarchical_clustering:
 

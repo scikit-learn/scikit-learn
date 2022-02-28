@@ -162,7 +162,7 @@ and the remaining ``n_columns`` labels provide the column partitioning.
 
  * :doi:`Dhillon, Inderjit S, 2001. Co-clustering documents and words using
    bipartite spectral graph partitioning
-   <10.1.1.140.3011>`
+   <10.1145/502512.502550>`
 
 
 .. _spectral_biclustering:
@@ -245,7 +245,7 @@ clustering this :math:`n \times q` matrix yields the column labels.
 
  * :doi:`Kluger, Yuval, et. al., 2003. Spectral biclustering of microarray
    data: coclustering genes and conditions
-   <10.1.1.135.1608>`
+   <10.1101/gr.648603>`
 
 
 .. _biclustering_evaluation:

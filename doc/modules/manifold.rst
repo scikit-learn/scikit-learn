@@ -248,9 +248,9 @@ The overall complexity of MLLE is
 
 .. topic:: References:
 
-   * :doi:`"MLLE: Modified Locally Linear Embedding Using Multiple Weights"
+   * `"MLLE: Modified Locally Linear Embedding Using Multiple Weights"
      Zhang, Z. & Wang, J.
-     <10.1.1.70.382>`
+     <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382>`
 
 
 Hessian Eigenmapping
@@ -387,10 +387,10 @@ The overall complexity of standard LTSA is
 
 .. topic:: References:
 
-   * :doi:`"Principal manifolds and nonlinear dimensionality reduction via
+   * :arxiv:`"Principal manifolds and nonlinear dimensionality reduction via
      tangent space alignment"
      Zhang, Z. & Zha, H. Journal of Shanghai Univ. 8:406 (2004)
-     <10.1.1.4.3693>`
+     <cs/0212008>`
 
 .. _multidimensional_scaling:
 

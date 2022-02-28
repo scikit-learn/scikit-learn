@@ -546,9 +546,9 @@ The code is written in Cython.
    .. [#1] `"Stochastic Gradient Descent"
        <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
-   .. [#2] :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
+   .. [#2] `"Pegasos: Primal estimated sub-gradient solver for svm"
       S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
-      <10.1.1.74.8513>`
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`
 
    .. [#3] `"Stochastic gradient descent training for l1-regularized
       log-linear models with cumulative penalty"
@@ -564,9 +564,9 @@ The code is written in Cython.
    .. [#5] :doi:`"Regularization and variable selection via the elastic net"
       H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
       67 (2), 301-320.
-      <10.1.1.124.4696>`
+      <https://www.jstor.org/stable/3647580>`
 
    .. [#6] :doi:`"Solving large scale linear prediction problems using stochastic
       gradient descent algorithms"
       T. Zhang - In Proceedings of ICML '04.
-      <10.1.1.58.7377>`
+      <10.1145/1015330.1015332>`

@@ -301,11 +301,11 @@ def spectral_clustering(
 
     .. [1] :doi:`Normalized cuts and image segmentation, 2000
            Jianbo Shi, Jitendra Malik
-           <10.1.1.160.2324>`
+           <10.1109/34.868688>`
 
     .. [2] :doi:`A Tutorial on Spectral Clustering, 2007
            Ulrike von Luxburg
-           <10.1.1.165.9323>`
+           <10.1007/s11222-007-9033-z>`
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
@@ -552,11 +552,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     ----------
     .. [1] :doi:`Normalized cuts and image segmentation, 2000
            Jianbo Shi, Jitendra Malik
-           <10.1.1.160.2324>`
+           <10.1109/34.868688>`
 
     .. [2] :doi:`A Tutorial on Spectral Clustering, 2007
            Ulrike von Luxburg
-           <10.1.1.165.9323>`
+           <10.1007/s11222-007-9033-z>`
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi

@@ -485,15 +485,15 @@ class SpectralEmbedding(BaseEstimator):
 
     - :doi:`A Tutorial on Spectral Clustering, 2007
       Ulrike von Luxburg
-      <10.1.1.165.9323>`
+      <10.1007/s11222-007-9033-z>`
 
     - :doi:`On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
-      <10.1.1.19.8100>`
+      <10.5555/2980539.2980649>`
 
     - :doi:`Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
-      <10.1.1.160.2324>`
+      <10.1109/34.868688>`
 
     Examples
     --------

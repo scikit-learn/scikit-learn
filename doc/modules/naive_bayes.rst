@@ -214,15 +214,15 @@ It is advisable to evaluate both models, if time permits.
  * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
    Information Retrieval. Cambridge University Press, pp. 234-265.
 
- * :doi:`A. McCallum and K. Nigam (1998).
+ * `A. McCallum and K. Nigam (1998).
    A comparison of event models for Naive Bayes text classification.
    Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
-   <10.1.1.46.1529>`
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.46.1529>`
 
- * :doi:`V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+ * `V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
    Spam filtering with Naive Bayes -- Which Naive Bayes?
    3rd Conf. on Email and Anti-Spam (CEAS).
-   <10.1.1.61.5542>`
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`
 
 .. _categorical_naive_bayes:
 
