@@ -73,9 +73,9 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 - |Efficiency| Low-level routines for reductions on pairwise distances
-  for dense float64 datasets have been refactored. The following functions
-  and estimators now benefit from improved performances, in particular on
-  multi-cores machines:
+  for dense float32 and float64 datasets have been refactored.
+  The following functions and estimators now benefit from improved performances,
+  in particular on multi-cores machines:
   - :func:`sklearn.metrics.pairwise_distances_argmin`
   - :func:`sklearn.metrics.pairwise_distances_argmin_min`
   - :class:`sklearn.cluster.AffinityPropagation`
@@ -98,7 +98,7 @@ Changelog
   For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors`
   can be up to ×20 faster than in the previous versions'.
 
-  :pr:`21987`, :pr:`22064`, :pr:`22065` and :pr:`22288`
+  :pr:`21987`, :pr:`22064`, :pr:`22065`, :pr:`22288` and :pr:`22590`.
   by :user:`Julien Jerphanion <jjerphan>`
 
 - |Enhancement| All scikit-learn models now generate a more informative
