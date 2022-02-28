@@ -72,7 +72,6 @@ TREE_LEAF = -1
 TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
-cdef SIZE_t INITIAL_STACK_SIZE = 10
 
 # Build the corresponding numpy dtype for Node.
 # This works by casting `dummy` to an array of Node of length 1, which numpy
@@ -292,8 +291,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
 
 # Best first builder ----------------------------------------------------------
-
-cdef struct PriorityHeapRecord:
+cdef struct FrontierRecord:
+    # Record of information of a Node, the frontier for a split. Those records are
+    # maintained in a heap to access the Node with the best improvement in impurity,
+    # allowing growing trees greedily on this improvement.
     SIZE_t node_id
     SIZE_t start
     SIZE_t end
@@ -305,11 +306,16 @@ cdef struct PriorityHeapRecord:
     double impurity_right
     double improvement
 
-cdef inline bool _compare_records(PriorityHeapRecord left, PriorityHeapRecord right):
+cdef inline bool _compare_records(
+    const FrontierRecord& left,
+    const FrontierRecord& right,
+):
     return left.improvement < right.improvement
 
-cdef inline void _add_to_frontier(PriorityHeapRecord rec,
-                                  vector[PriorityHeapRecord]& frontier) nogil:
+cdef inline void _add_to_frontier(
+    FrontierRecord rec,
+    vector[FrontierRecord]& frontier,
+) nogil:
     """Adds record `rec` to the priority queue `frontier`."""
     frontier.push_back(rec)
     push_heap(frontier.begin(), frontier.end(), &_compare_records)
@@ -356,10 +362,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr)
 
-        cdef vector[PriorityHeapRecord] frontier
-        cdef PriorityHeapRecord record
-        cdef PriorityHeapRecord split_node_left
-        cdef PriorityHeapRecord split_node_right
+        cdef vector[FrontierRecord] frontier
+        cdef FrontierRecord record
+        cdef FrontierRecord split_node_left
+        cdef FrontierRecord split_node_right
 
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef SIZE_t max_split_nodes = max_leaf_nodes - 1
@@ -444,7 +450,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
-                                    PriorityHeapRecord* res) nogil except -1:
+                                    FrontierRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
