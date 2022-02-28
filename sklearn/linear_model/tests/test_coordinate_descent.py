@@ -387,6 +387,35 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
+@pytest.mark.parametrize(
+    "alphas, err_type, err_msg",
+    [
+        (-2, ValueError, r"alphas == -2, must be >= 0.0."),
+        ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
+        (
+            (-0.1, -1.0, -10.0),
+            ValueError,
+            r"alphas\[0\] == -0.1, must be >= 0.0.",
+        ),
+        (
+            (1, 1.0, "1"),
+            TypeError,
+            r"alphas\[2\] must be an instance of float, not str",
+        ),
+    ],
+)
+def test_lassocv_alphas_validation(alphas, err_type, err_msg):
+    """Check the `alphas` validation in LassoCV."""
+
+    n_samples, n_features = 5, 5
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randint(0, 2, n_samples)
+    lassocv = LassoCV(alphas=alphas)
+    with pytest.raises(err_type, match=err_msg):
+        lassocv.fit(X, y)
+
+
 def _scale_alpha_inplace(estimator, n_samples):
     """Rescale the parameter alpha from when the estimator is evoked with
     normalize set to True as if it were evoked in a Pipeline with normalize set

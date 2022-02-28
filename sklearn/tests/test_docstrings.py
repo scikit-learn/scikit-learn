@@ -14,7 +14,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
     "sklearn.covariance._shrunk_covariance.ledoit_wolf_shrinkage",
-    "sklearn.datasets._base.load_linnerud",
     "sklearn.datasets._base.load_sample_image",
     "sklearn.datasets._base.load_wine",
     "sklearn.datasets._california_housing.fetch_california_housing",
@@ -142,7 +141,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.fixes.threadpool_limits",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
-    "sklearn.utils.get_chunk_n_rows",
     "sklearn.utils.graph.graph_shortest_path",
     "sklearn.utils.graph.single_source_shortest_path_length",
     "sklearn.utils.is_scalar_nan",
@@ -165,7 +163,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
     "sklearn.utils.sparsefuncs.mean_variance_axis",
     "sklearn.utils.sparsefuncs.min_max_axis",
-    "sklearn.utils.tosequence",
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",
     "sklearn.utils.validation.check_random_state",
