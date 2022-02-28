@@ -469,6 +469,8 @@ def test_adjusted_rand_score_overflow():
 def test_normalized_mutual_info_score_bounded():
     """Check that nmi returns a score between 0 (included) and 1 (excluded
     for non-perfect match)
+
+    Non-regression test for issue #13836
     """
     labels1 = [0] * 469
     labels2 = [1] + labels1[1:]
