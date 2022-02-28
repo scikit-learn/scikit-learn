@@ -160,7 +160,7 @@ and the remaining ``n_columns`` labels provide the column partitioning.
 
 .. topic:: References:
 
- * :doi:`Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
+ * :doi:`Dhillon, Inderjit S, 2001. Co-clustering documents and words using
    bipartite spectral graph partitioning
    <10.1.1.140.3011>`
 
