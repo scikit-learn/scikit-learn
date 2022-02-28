@@ -235,8 +235,10 @@ def setup_package():
     # https://github.com/conda-forge/conda-forge-pinning-feedstock/issues/2089
     if platform.python_implementation() == "PyPy":
         python_requires = ">=3.7"
+        required_python_version = (3, 7)
     else:
         python_requires = ">=3.8"
+        required_python_version = (3, 8)
 
     metadata = dict(
         name=DISTNAME,
@@ -289,11 +291,12 @@ def setup_package():
 
         metadata["version"] = VERSION
     else:
-        if sys.version_info < (3, 6):
+        if sys.version_info < required_python_version:
+            required_version = "%d.%d" % required_python_version
             raise RuntimeError(
-                "Scikit-learn requires Python 3.8 or later. The current"
+                "Scikit-learn requires Python %s or later. The current"
                 " Python version is %s installed in %s."
-                % (platform.python_version(), sys.executable)
+                % (required_version, platform.python_version(), sys.executable)
             )
 
         check_package_status("numpy", min_deps.NUMPY_MIN_VERSION)
