@@ -54,7 +54,7 @@ def check_metadata(obj, **kwargs):
     for key, value in kwargs.items():
         if value is not None:
             print(
-                f"Received {key} of length: {len(value)} in {obj.__class__.__name__}."
+                f"Received {key} of length = {len(value)} in {obj.__class__.__name__}."
             )
         else:
             print(f"{key} is None in {obj.__class__.__name__}.")
@@ -367,20 +367,20 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 # ``add_self``. Now let's look at some examples:
 
 # %%
-# no metadata requested
+# - No metadata requested
 est = RouterConsumerClassifier(estimator=ExampleClassifier())
 print_routing(est)
 
 
 # %%
-# ``sample_weight`` requested by child estimator
+# - ``sample_weight`` requested by child estimator
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().set_fit_request(sample_weight=True)
 )
 print_routing(est)
 
 # %%
-# ``sample_weight`` requested by meta-estimator
+# - ``sample_weight`` requested by meta-estimator
 est = RouterConsumerClassifier(estimator=ExampleClassifier()).set_fit_request(
     sample_weight=True
 )
@@ -389,7 +389,7 @@ print_routing(est)
 # %%
 # Note the difference in the requested meatada representations above.
 #
-# We can also alias the metadata to pass different values to them:
+# - We can also alias the metadata to pass different values to them:
 
 est = RouterConsumerClassifier(
     estimator=ExampleClassifier().set_fit_request(sample_weight="clf_sample_weight"),
@@ -402,7 +402,7 @@ print_routing(est)
 est.fit(X, y, sample_weight=my_weights, clf_sample_weight=my_other_weights)
 
 # %%
-# Alias only on the sub-estimator. This is useful if we don't want the
+# - Alias only on the sub-estimator. This is useful if we don't want the
 # meta-estimator to use the metadata, and we only want the metadata to be used
 # by the sub-estimator.
 est = RouterConsumerClassifier(
@@ -519,9 +519,9 @@ est.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 # ----------------------------------
 # In this section we show how one should handle the case where a router becomes
 # also a consumer, especially when it consumes the same metadata as its
-# sub-estimator, or a consumer starts consuming a metadata which it wasn't
-# before. In this case, a warning should be raised for a while, to let users
-# know the behavior is changed from previous versions.
+# sub-estimator, or a consumer starts consuming a metadata which it wasn't in
+# an older release. In this case, a warning should be raised for a while, to
+# let users know the behavior is changed from previous versions.
 
 
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
@@ -573,7 +573,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
 # %%
 # The above implementation is almost no different than ``MetaRegressor``, and
-# because of the default request value defined in `__metadata_request__fit``
+# because of the default request value defined in ``__metadata_request__fit``
 # there is a warning raised.
 
 with warnings.catch_warnings(record=True) as record:

@@ -46,7 +46,7 @@ class RequestType(Enum):
     # this is used whenever a default value is changed, and therefore the user
     # should explicitly set the value, otherwise a warning is shown. An example
     # is when a meta-estimator is only a router, but then becomes also a
-    # consumer.
+    # consumer in a new release.
     WARN = "$WARN$"
 
     @classmethod
