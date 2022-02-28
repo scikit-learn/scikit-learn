@@ -43,7 +43,6 @@ ctypedef fused realloc_ptr:
     (Node*)
     (Cell*)
     (Node**)
-    (PriorityHeapRecord*)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
 
@@ -60,37 +59,6 @@ cdef double rand_uniform(double low, double high,
 
 
 cdef double log(double x) nogil
-
-# =============================================================================
-# PriorityHeap data structure
-# =============================================================================
-
-# A record on the frontier for best-first tree growing
-cdef struct PriorityHeapRecord:
-    SIZE_t node_id
-    SIZE_t start
-    SIZE_t end
-    SIZE_t pos
-    SIZE_t depth
-    bint is_leaf
-    double impurity
-    double impurity_left
-    double impurity_right
-    double improvement
-
-cdef class PriorityHeap:
-    cdef SIZE_t capacity
-    cdef SIZE_t heap_ptr
-    cdef PriorityHeapRecord* heap_
-
-    cdef bint is_empty(self) nogil
-    cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil
-    cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos, SIZE_t heap_length) nogil
-    cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
-                  SIZE_t depth, bint is_leaf, double improvement,
-                  double impurity, double impurity_left,
-                  double impurity_right) nogil except -1
-    cdef int pop(self, PriorityHeapRecord* res) nogil
 
 # =============================================================================
 # WeightedPQueue data structure
