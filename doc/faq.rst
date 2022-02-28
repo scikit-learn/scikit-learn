@@ -190,10 +190,13 @@ careful choice of algorithms.
 Do you support PyPy?
 --------------------
 
-In case you didn't know, `PyPy <https://pypy.org/>`_ is an alternative
-Python implementation with a built-in just-in-time compiler. Experimental
-support for PyPy3-v5.10+ has been added, which requires Numpy 1.14.0+,
-and scipy 1.1.0+.
+scikit-learn is regularly tested and maintained to work with
+`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
+a built-in just-in-time compiler).
+
+Note however that this support is still considered experimental and specific
+components might behave slightly differently. Please refer to the test
+suite of a the specific module of interest for more details.
 
 How do I deal with string data (or trees, graphs...)?
 -----------------------------------------------------

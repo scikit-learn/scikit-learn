@@ -23,7 +23,6 @@ from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _astype_copy_false
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
@@ -69,9 +68,7 @@ def _set_order(X, y, order="C"):
     if order is not None:
         sparse_format = "csc" if order == "F" else "csr"
         if sparse_X:
-            # As of scipy 1.1.0, new argument copy=False by default.
-            # This is what we want.
-            X = X.asformat(sparse_format, **_astype_copy_false(X))
+            X = X.asformat(sparse_format, copy=False)
         else:
             X = np.asarray(X, order=order)
         if sparse_y:
