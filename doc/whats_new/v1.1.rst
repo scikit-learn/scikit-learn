@@ -538,6 +538,10 @@ Changelog
   sub-problem while now all of them are recorded. :pr:`21998` by
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`linear_model.BayesianRidge` and
+  :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
+  :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.metrics`
 ......................
 
