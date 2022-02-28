@@ -142,7 +142,8 @@ purpose.
     Scikit-learn 0.21 supported Python 3.5-3.7.
     Scikit-learn 0.22 supported Python 3.5-3.8.
     Scikit-learn 0.23 - 0.24 require Python 3.6 or newer.
-    Scikit-learn 1.0 and later requires Python 3.7 or newer.
+    Scikit-learn 1.0 supported Python 3.7-3.10.
+    Scikit-learn 1.1 and later requires Python 3.8 or newer.
 
 
 .. note::
