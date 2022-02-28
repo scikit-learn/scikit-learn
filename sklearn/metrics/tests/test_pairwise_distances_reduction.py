@@ -266,8 +266,6 @@ def test_chunk_size_agnosticism(
 
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
-@pytest.mark.parametrize("dtype", PairwiseDistancesReduction.valid_dtypes())
 @pytest.mark.parametrize(
     "PairwiseDistancesReduction",
     [PairwiseDistancesArgKmin],
@@ -306,6 +304,52 @@ def test_n_threads_agnosticism(
         )
 
     ASSERT_RESULT[(PairwiseDistancesArgKmin, dtype)](
+        ref_dist, dist, ref_indices, indices
+    )
+
+
+@pytest.mark.parametrize("seed", range(5))
+@pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
+@pytest.mark.parametrize(
+    "PairwiseDistancesReduction",
+    [PairwiseDistancesArgKmin],
+)
+def test_dtype_agnosticism(
+    PairwiseDistancesReduction,
+    seed,
+    metric,
+    n_samples=1000,
+    n_features=100,
+):
+    rng = np.random.RandomState(seed)
+    spread = 100
+    X64 = rng.rand(n_samples, n_features).astype(np.float64) * spread
+    Y64 = rng.rand(n_samples, n_features).astype(np.float64) * spread
+    X32 = X64.astype(np.float32)
+    Y32 = Y64.astype(np.float32)
+
+    parameter = (
+        10
+        if PairwiseDistancesReduction is PairwiseDistancesArgKmin
+        # Scaling the radius slightly with the numbers of dimensions
+        else 10 ** np.log(n_features)
+    )
+
+    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+        X64,
+        Y64,
+        parameter,
+        return_distance=True,
+    )
+
+    dist, indices = PairwiseDistancesReduction.compute(
+        X32, Y32, parameter, return_distance=True
+    )
+
+    # We check results against np.float32 because we inherently
+    # loose the information from np.float64.
+    dist = dist.astype(ref_dist.dtype)
+    ASSERT_RESULT[(PairwiseDistancesArgKmin, np.float32)](
         ref_dist, dist, ref_indices, indices
     )
 
