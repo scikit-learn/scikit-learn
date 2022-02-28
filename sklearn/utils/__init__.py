@@ -178,6 +178,8 @@ def axis0_safe_slice(X, mask, len_mask):
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
+    if issparse(array) and key_dtype == "bool":
+        key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
     return array[key] if axis == 0 else array[:, key]
