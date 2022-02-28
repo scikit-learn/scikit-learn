@@ -842,7 +842,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     return indices
 
 
-def haversine_distances(X, Y=None):
+def haversine_distances(X, Y=None, force_all_finite=True):
     """Compute the Haversine distance between samples in X and Y.
 
     The Haversine (or great circle) distance is the angular distance between
@@ -889,6 +889,7 @@ def haversine_distances(X, Y=None):
     """
     from ..metrics import DistanceMetric
 
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
