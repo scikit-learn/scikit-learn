@@ -699,7 +699,12 @@ def pairwise_distances_argmin_min(
         with config_context(assume_finite=True):
             indices, values = zip(
                 *pairwise_distances_chunked(
-                    X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
+                    X,
+                    Y,
+                    reduce_func=_argmin_min_reduce,
+                    metric=metric,
+                    force_all_finite=False,
+                    **metric_kwargs,
                 )
             )
         indices = np.concatenate(indices)
@@ -812,7 +817,12 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
                     # This returns a np.ndarray generator whose arrays we need
                     # to flatten into one.
                     pairwise_distances_chunked(
-                        X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
+                        X,
+                        Y,
+                        reduce_func=_argmin_reduce,
+                        metric=metric,
+                        force_all_finite=False,
+                        **metric_kwargs,
                     )
                 )
             )
