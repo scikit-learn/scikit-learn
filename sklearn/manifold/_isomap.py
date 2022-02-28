@@ -6,7 +6,6 @@ import warnings
 
 import numpy as np
 
-import scipy
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components

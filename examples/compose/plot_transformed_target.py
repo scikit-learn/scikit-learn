@@ -16,7 +16,6 @@ example is based on the Ames housing data set.
 # License: BSD 3 clause
 
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_regression

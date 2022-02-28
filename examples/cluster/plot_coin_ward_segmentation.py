@@ -20,7 +20,6 @@ from scipy.ndimage.filters import gaussian_filter
 
 import matplotlib.pyplot as plt
 
-import skimage
 from skimage.data import coins
 from skimage.transform import rescale
 

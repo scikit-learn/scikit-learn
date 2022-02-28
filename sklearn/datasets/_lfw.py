@@ -14,7 +14,6 @@ from os.path import join, exists, isdir
 import logging
 
 import numpy as np
-import joblib
 from joblib import Memory
 
 from ._base import (
