@@ -232,7 +232,9 @@ def test_sparse_input():
 
 
 def test_isomap_fit_precomputed_radius_graph():
-    # Test fit_transform yields similar result as using precomputed distance matrix
+    # Isomap.fit_transform must yield similar result when using
+    # a precomputed distance matrix.
+
     X, y = datasets.make_s_curve(200, random_state=0)
     radius = 10
 
@@ -247,9 +249,10 @@ def test_isomap_fit_precomputed_radius_graph():
 
 
 def test_isomap_raise_error_when_neighbor_and_radius_both_set():
-    X, _ = datasets.load_digits(return_X_y=True)
+    # Isomap.fit_transform must raise a ValueError if
+    # radius and n_neighbors are provided.
 
-    # raise ValueError when both arguments are provided
+    X, _ = datasets.load_digits(return_X_y=True)
     isomap = manifold.Isomap(n_neighbors=3, radius=5.5)
     msg = "Both n_neighbors and radius are provided"
     with pytest.raises(ValueError, match=msg):
