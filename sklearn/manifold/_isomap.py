@@ -18,7 +18,6 @@ from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 from ..utils.graph import _fix_connected_components
-from ..externals._packaging.version import parse as parse_version
 
 
 class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -275,11 +274,6 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 metric=self.nbrs_.effective_metric_,
                 **self.nbrs_.effective_metric_params_,
             )
-
-        if parse_version(scipy.__version__) < parse_version("1.3.2"):
-            # make identical samples have a nonzero distance, to account for
-            # issues in old scipy Floyd-Warshall implementation.
-            nbg.data += 1e-15
 
         self.dist_matrix_ = shortest_path(nbg, method=self.path_method, directed=False)
 

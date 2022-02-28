@@ -30,9 +30,7 @@ from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
 from sklearn.utils import _approximate_mode
-from sklearn.utils.fixes import parse_version
 from sklearn.utils._mocking import MockDataFrame
-from sklearn.utils._testing import SkipTest
 from sklearn import config_context
 
 # toy array
@@ -471,10 +469,7 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     # Using safe_indexing with an array-like indexer gives a copy of the
     # DataFrame -> ensure it doesn't raise a warning if modified
     pd = pytest.importorskip("pandas")
-    if parse_version(pd.__version__) < parse_version("0.25.0"):
-        raise SkipTest(
-            "Older pandas version still raise a SettingWithCopyWarning warning"
-        )
+
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
     with pytest.warns(None) as record:

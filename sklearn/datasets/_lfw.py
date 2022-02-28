@@ -24,7 +24,6 @@ from ._base import (
     load_descr,
 )
 from ..utils import Bunch
-from ..utils.fixes import parse_version
 
 logger = logging.getLogger(__name__)
 
@@ -316,11 +315,7 @@ def fetch_lfw_people(
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
-    else:
-        m = Memory(location=lfw_home, compress=6, verbose=0)
+    m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_people)
 
     # load and memoize the pairs as np arrays
@@ -497,11 +492,7 @@ def fetch_lfw_pairs(
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
-    else:
-        m = Memory(location=lfw_home, compress=6, verbose=0)
+    m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_pairs)
 
     # select the right metadata file according to the requested subset
