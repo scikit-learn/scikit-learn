@@ -23,8 +23,8 @@ jobs:
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
-      - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+      # - restore_cache:
+      #     key: v1-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
