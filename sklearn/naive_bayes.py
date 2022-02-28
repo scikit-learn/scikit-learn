@@ -512,7 +512,39 @@ class _BaseDiscreteNB(_BaseNB):
 
     __init__
     _joint_log_likelihood(X) as per _BaseNB
+    _update_feature_log_prob(alpha)
+    _count(X, Y)
     """
+
+    @abstractmethod
+    def _count(self, X, Y):
+        """Update counts that are used to calculate probabilities.
+
+        The counts make up a sufficient statistic extracted from the data.
+        Accordingly, this method is called each time `fit` or `partial_fit`
+        update the model. `class_count_` and `feature_count_` must be updated
+        here along with any model specific counts.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
+        Y : ndarray of shape (n_samples, n_classes)
+            Binarized class labels.
+        """
+
+    @abstractmethod
+    def _update_feature_log_prob(self, alpha):
+        """Update feature log probabilities based on counts.
+
+        This method is called each time `fit` or `partial_fit` update the
+        model.
+
+        Parameters
+        ----------
+        alpha : float
+            smoothing parameter. See :meth:`_check_alpha`.
+        """
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
