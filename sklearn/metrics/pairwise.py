@@ -226,7 +226,13 @@ def check_paired_arrays(X, Y):
 
 # Pairwise distances
 def euclidean_distances(
-    X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
+    X,
+    Y=None,
+    *,
+    Y_norm_squared=None,
+    squared=False,
+    X_norm_squared=None,
+    force_all_finite=True,
 ):
     """
     Compute the distance matrix between each pair from a vector array X and Y.
@@ -301,7 +307,7 @@ def euclidean_distances(
     array([[1.        ],
            [1.41421356]])
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
 
     if X_norm_squared is not None:
         X_norm_squared = check_array(X_norm_squared, ensure_2d=False)
@@ -384,7 +390,13 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
 
 
 def nan_euclidean_distances(
-    X, Y=None, *, squared=False, missing_values=np.nan, copy=True
+    X,
+    Y=None,
+    *,
+    squared=False,
+    missing_values=np.nan,
+    copy=True,
+    force_all_finite="allow-nan",
 ):
     """Calculate the euclidean distances in the presence of missing values.
 
@@ -460,8 +472,8 @@ def nan_euclidean_distances(
     array([[1.        ],
            [1.41421356]])
     """
-
-    force_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
+    if force_all_finite is True and is_scalar_nan(missing_values):
+        force_all_finite = "allow-nan"
     X, Y = check_pairwise_arrays(
         X, Y, accept_sparse=False, force_all_finite=force_all_finite, copy=copy
     )
@@ -880,7 +892,7 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
-def manhattan_distances(X, Y=None, *, sum_over_features=True):
+def manhattan_distances(X, Y=None, *, sum_over_features=True, force_all_finite=True):
     """Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -938,7 +950,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     array([[1., 1.],
            [1., 1.]])
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
 
     if issparse(X) or issparse(Y):
         if not sum_over_features:
@@ -963,7 +975,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     return D.reshape((-1, X.shape[1]))
 
 
-def cosine_distances(X, Y=None):
+def cosine_distances(X, Y=None, force_all_finite=True):
     """Compute cosine distance between samples in X and Y.
 
     Cosine distance is defined as 1.0 minus the cosine similarity.
@@ -989,7 +1001,7 @@ def cosine_distances(X, Y=None):
     scipy.spatial.distance.cosine : Dense matrices only.
     """
     # 1.0 - cosine_similarity(X, Y) without copy
-    S = cosine_similarity(X, Y)
+    S = cosine_similarity(X, Y, force_all_finite=force_all_finite)
     S *= -1
     S += 1
     np.clip(S, 0, 2, out=S)
@@ -1317,7 +1329,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     return K
 
 
-def cosine_similarity(X, Y=None, dense_output=True):
+def cosine_similarity(X, Y=None, dense_output=True, force_all_finite=True):
     """Compute cosine similarity between samples in X and Y.
 
     Cosine similarity, or the cosine kernel, computes similarity as the
@@ -1352,7 +1364,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     """
     # to avoid recursive import
 
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
 
     X_normalized = normalize(X, copy=True)
     if X is Y:
@@ -1963,7 +1975,9 @@ def pairwise_distances(
         check_non_negative(X, whom=whom)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
-        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+        func = partial(
+            PAIRWISE_DISTANCE_FUNCTIONS[metric], force_all_finite=force_all_finite
+        )
     elif callable(metric):
         func = partial(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
