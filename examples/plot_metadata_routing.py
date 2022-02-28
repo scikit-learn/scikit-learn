@@ -5,16 +5,16 @@ Metadata Routing
 
 .. currentmodule:: sklearn
 
-This document shows how you can use the metadata routing mechanism in
-scikit-learn to route metadata through meta-estimators to the estimators
-consuming them. To better understand the rest of the document, we need to
-introduce two concepts: routers and consumers. A router is an object, in most
-cases a meta-estimator, which routes given data and metadata to other objects
-and estimators. A consumer, on the other hand, is an object which accepts and
-uses a certain given metadata. For instance, an estimator taking into account
-``sample_weight`` in its :term:`fit` method, is a consumer of
-``sample_weight``. It is possible for an object to be both a router and a
-consumer. For instance, a meta-estimator may take into account
+This document shows how you can use the :ref:`metadata routing mechanism
+<metadata_routing>` in scikit-learn to route metadata through meta-estimators
+to the estimators consuming them. To better understand the rest of the
+document, we need to introduce two concepts: routers and consumers. A router is
+an object, in most cases a meta-estimator, which forwards given data and
+metadata to other objects and estimators. A consumer, on the other hand, is an
+object which accepts and uses a certain given metadata. For instance, an
+estimator taking into account ``sample_weight`` in its :term:`fit` method is a
+consumer of ``sample_weight``. It is possible for an object to be both a router
+and a consumer. For instance, a meta-estimator may take into account
 ``sample_weight`` in certain calculations, but it may also route it to the
 underlying estimator.
 
@@ -89,13 +89,14 @@ class ExampleClassifier(ClassifierMixin, BaseEstimator):
 
 
 # %%
-# The above estimator now has all it needs to consume metadata. This is done by
-# some magic done in :class:`~base.BaseEstimator`. There are now three methods
-# exposed by the above class: ``set_fit_request``, ``set_predict_request``, and
-# ``get_metadata_routing``. There is also a ``set_score_request`` for
-# ``sample_weight`` which is present since :class:`~base.ClassifierMixin`
-# implements a ``score``` method accepting ``sample_weight``. The same applies
-# to regressors which inherit from :class:`~base.RegressorMixin`.
+# The above estimator now has all it needs to consume metadata. This is
+# accomplished by some magic done in :class:`~base.BaseEstimator`. There are
+# now three methods exposed by the above class: ``set_fit_request``,
+# ``set_predict_request``, and ``get_metadata_routing``. There is also a
+# ``set_score_request`` for ``sample_weight`` which is present since
+# :class:`~base.ClassifierMixin` implements a ``score`` method accepting
+# ``sample_weight``. The same applies to regressors which inherit from
+# :class:`~base.RegressorMixin`.
 #
 # By default, no metadata is requested, which we can see as:
 
@@ -105,9 +106,9 @@ print_routing(ExampleClassifier())
 # The above output means that ``sample_weight`` and ``groups`` are not
 # requested, but if a router is given those metadata, it should raise an error,
 # since the user has not explicitly set whether they are required or not. The
-# same is true for ``sample_weight`` in ``score`` method, which is inherited
-# from :class:`~base.ClassifierMixin`. In order to explicitly set request
-# values for those metadata, we can use these methods:
+# same is true for ``sample_weight`` in the ``score`` method, which is
+# inherited from :class:`~base.ClassifierMixin`. In order to explicitly set
+# request values for those metadata, we can use these methods:
 
 est = (
     ExampleClassifier()
@@ -118,7 +119,7 @@ est = (
 print_routing(est)
 
 # %%
-# As you can see, now the metadata have explicit request values, one is
+# As you can see, the metadata have now explicit request values, one is
 # requested and one is not. Instead of ``True`` and ``False``, we could also
 # use the :class:`~sklearn.utils.metadata_routing.RequestType` values.
 
@@ -154,7 +155,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def get_metadata_routing(self):
         # This method defines the routing for this meta-estimator.
         # In order to do so, a `MetadataRouter` instance is created, and the
-        # right routing is added to it. More explanation follows.
+        # right routing is added to it. More explanations follow.
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator, method_mapping="one-to-one"
         )
@@ -174,7 +175,7 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # the output has a key for each object's method which is used here,
         # i.e. parent's `fit` method, containing the metadata which should be
         # routed to them, based on the information provided in
-        # ``get_metadata_routing``.
+        # `get_metadata_routing`.
         self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
         self.classes_ = self.estimator_.classes_
         return self
@@ -185,25 +186,26 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         request_router = get_routing_for_object(self)
         request_router.validate_metadata(params=predict_params, method="predict")
         # and then prepare the input to the underlying `predict` method.
-        params = request_router.route_params(params=predict_params, caller="predict")
-        return self.estimator_.predict(X, **params.estimator.predict)
+        routed_params = request_router.route_params(
+            params=predict_params, caller="predict"
+        )
+        return self.estimator_.predict(X, **routed_params.estimator.predict)
 
 
 # %%
 # Let's break down different parts of the above code.
 #
-# First, the :meth:`~utils.metadata_routing.get_routing_for_object` takes
-# an object from which a :class:`~utils.metadata_routing.MetadataRouter` or a
-# :class:`~utils.metadata_routing.MetadataRequest` can be constructed. This
-# may be an estimator, or a dictionary representing a ``MetadataRequest`` or
-# ``MetadataRouter`` object. If an estimator is given, it tries to call the
-# estimator's ``get_metadata_routing`` and construct the object from that, and
-# if the estimator doesn't have such a method, then a default empty
-# ``MetadataRequest`` is returned.
+# First, the :meth:`~utils.metadata_routing.get_routing_for_object` takes an
+# estimator (``self``) and returns a
+# :class:`~utils.metadata_requests.MetadataRouter` or a
+# :class:`~utils.metadata_requests.MetadataRequest` based on the output of the
+# estimator's ``get_metadata_routing`` method.
 #
 # Then in each method, we use the ``route_params`` method to construct a
 # dictionary of the form ``{"object_name": {"method_name": {"metadata":
-# value}}}`` to pass to the underlying estimator's method.
+# value}}}`` to pass to the underlying estimator's method. The ``object_name``
+# (``estimator`` in the above ``routed_params.estimator.fit`` example) is the
+# same as the one ``add``ed in the ``get_metadata_routing``.
 # ``validate_metadata`` makes sure all given metadata are requested. This is to
 # avoid silent bugs, and this is how it will work:
 
@@ -270,14 +272,13 @@ except TypeError as e:
 # %%
 # This leads us to the ``get_metadata_routing``. The way routing works in
 # scikit-learn is that consumers request what they need, and routers pass that
-# along. But another thing a router does, is that it also exposes what it
-# requires so that it can be used inside another router, e.g. a pipeline inside
-# a grid search object. The output of the ``get_metadata_routing`` which is a
-# dictionary representation of a
-# :class:`~utils.metadata_routing.MetadataRouter`, includes the complete tree
-# of requested metadata by all nested objects and their corresponding method
-# routings, i.e. which method of a sub-estimator is used in which method of a
-# meta-estimator:
+# along. Additionally, a router exposes what it requires itself so that it can
+# be used inside another router, e.g. a pipeline inside a grid search object.
+# The output of the ``get_metadata_routing`` which is a dictionary
+# representation of a :class:`~utils.metadata_routing.MetadataRouter`, includes
+# the complete tree of requested metadata by all nested objects and their
+# corresponding method routings, i.e. which method of a sub-estimator is used
+# in which method of a meta-estimator:
 
 print_routing(est)
 

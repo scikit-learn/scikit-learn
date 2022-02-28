@@ -848,9 +848,9 @@ def get_routing_for_object(obj=None):
             of that.
         - If the object provides a `get_metadata_routing` method, return a copy
             of the output of the method.
-        - If the object is a dict, return the deserialized instance from it.
         - If ``None``, return an empty
             :class:`~utils.metadata_requests.MetadataRequest`.
+        - Raise a ``ValueError`` otherwise.
 
     Returns
     -------
