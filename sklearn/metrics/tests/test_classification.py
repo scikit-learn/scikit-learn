@@ -34,6 +34,7 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
+from sklearn.metrics import likelihood_ratios
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
@@ -597,6 +598,55 @@ def test_confusion_matrix_normalize_single_class():
     with pytest.warns(None) as rec:
         cm_pred = confusion_matrix(y_pred, y_test, normalize="true")
     assert not rec
+
+
+@pytest.mark.parametrize(
+    "params, warn_msg",
+    [
+        (
+            {
+                "y_true": np.array([1, 1, 1, 0, 0, 0]),
+                "y_pred": np.array([1, 1, 1, 0, 0, 0]),
+            },
+            "positive_likelihood_ratio ill-defined and being set to inf",
+        ),
+        (
+            {
+                "y_true": np.array([1, 1, 1, 0, 0, 0]),
+                "y_pred": np.array([0, 0, 0, 1, 1, 1]),
+            },
+            "negative_likelihood_ratio ill-defined and being set to inf",
+        ),
+        (
+            {
+                "y_true": np.array([1, 1, 1, 0, 0, 0]),
+                "y_pred": np.array([1, 1, 1, 1, 1, 1]),
+            },
+            "positive_likelihood_ratio ill-defined and being set to inf",
+        ),
+    ],
+)
+def test_likelihood_ratios_warnings(params, warn_msg):
+    """Check the `alphas` validation in RidgeCV and RidgeClassifierCV."""
+
+    with pytest.warns(UndefinedMetricWarning, match=warn_msg):
+        likelihood_ratios(**params)
+
+
+def test_likelihood_ratios():
+    # Build confusion matrix with tp=2, fp=8, fn=1, tn=9 when
+    # class “1” is the positive class.
+    y_true = np.array([1] * 3 + [0] * 17)
+    y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
+
+    pos, neg = likelihood_ratios(y_true, y_pred, labels=[1, 0])
+    assert_almost_equal(pos[0], 34 / 24, decimal=5)
+    assert_almost_equal(neg[0], 17 / 27, decimal=5)
+
+    # Build limit case with y_pred = y_true
+    pos, neg = likelihood_ratios(y_true, y_true, labels=[1, 0])
+    assert_almost_equal(pos, np.array([float("inf")] * 2), decimal=5)
+    assert_almost_equal(neg, np.zeros(2), decimal=5)
 
 
 def test_cohen_kappa():
