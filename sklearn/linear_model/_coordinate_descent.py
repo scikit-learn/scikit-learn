@@ -9,6 +9,7 @@ import sys
 import warnings
 import numbers
 from abc import ABC, abstractmethod
+from functools import partial
 
 import numpy as np
 from scipy import sparse
@@ -22,7 +23,6 @@ from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _astype_copy_false
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
@@ -68,9 +68,7 @@ def _set_order(X, y, order="C"):
     if order is not None:
         sparse_format = "csc" if order == "F" else "csr"
         if sparse_X:
-            # As of scipy 1.1.0, new argument copy=False by default.
-            # This is what we want.
-            X = X.asformat(sparse_format, **_astype_copy_false(X))
+            X = X.asformat(sparse_format, copy=False)
         else:
             X = np.asarray(X, order=order)
         if sparse_y:
@@ -1634,6 +1632,14 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
+
+        check_scalar_alpha = partial(
+            check_scalar,
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
         if alphas is None:
             alphas = [
                 _alpha_grid(
@@ -1649,8 +1655,16 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 for l1_ratio in l1_ratios
             ]
         else:
+            # Making sure alphas entries are scalars.
+            if np.isscalar(alphas):
+                check_scalar_alpha(alphas, "alphas")
+            else:
+                # alphas is an iterable item in this case.
+                for index, alpha in enumerate(alphas):
+                    check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
+
         # We want n_alphas to be the number of alphas used for each l1_ratio.
         n_alphas = len(alphas[0])
         path_params.update({"n_alphas": n_alphas})
