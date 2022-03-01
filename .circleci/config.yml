@@ -3,12 +3,12 @@ version: 2.1
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.7-buster
+      - image: cimg/python:3.8.12
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.7
+      - PYTHON_VERSION: 3.8
       - NUMPY_VERSION: 'min'
       - SCIPY_VERSION: 'min'
       - MATPLOTLIB_VERSION: 'min'
@@ -48,7 +48,7 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.7-buster
+      - image: cimg/python:3.8.12
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
@@ -100,13 +100,13 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.8.12
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - run:
           name: dependencies
-          command: sudo pip install flake8
+          command: pip install flake8
       - run:
           name: linting
           command: ./build_tools/circle/linting.sh
@@ -142,7 +142,7 @@ jobs:
             - ~/scikit_learn_data
   deploy:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.8.12
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
