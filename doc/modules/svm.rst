@@ -796,9 +796,9 @@ used, please refer to their respective papers.
       chapter 7 Sparse Kernel Machines
 
    .. [#6] :doi:`"A Tutorial on Support Vector Regression"
+      <10.1023/B:STCO.0000035301.49549.88>`
       Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
       Volume 14 Issue 3, August 2004, p. 199-222.
-      <10.1023/B:STCO.0000035301.49549.88>`
 
    .. [#7] Schölkopf et. al `New Support Vector Algorithms
       <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_

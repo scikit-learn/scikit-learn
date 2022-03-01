@@ -31,7 +31,7 @@ The same task has been used in a number of papers including:
 
  * :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
-   <10.1007/s10107-010-0420-4>`
+   <10.1145/1273496.1273598>`
 
  * `"Training Linear SVMs in Linear Time"
    <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>`_

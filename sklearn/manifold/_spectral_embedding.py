@@ -228,7 +228,7 @@ def spectral_embedding(
     * :doi:`"Toward the Optimal Preconditioned Eigensolver: Locally Optimal
       Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
-      <10.1137%2FS1064827500366124>`
+      <10.1137/S1064827500366124>`
     """
     adjacency = check_symmetric(adjacency)
 
@@ -487,9 +487,9 @@ class SpectralEmbedding(BaseEstimator):
       Ulrike von Luxburg
       <10.1007/s11222-007-9033-z>`
 
-    - :doi:`On Spectral Clustering: Analysis and an algorithm, 2001
+    - On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
-      <10.5555/2980539.2980649>`
+      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
 
     - :doi:`Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
