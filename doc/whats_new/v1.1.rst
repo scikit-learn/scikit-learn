@@ -436,6 +436,13 @@ Changelog
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+
+- |Enhancement| :class:`linear_model.GeneralizedLinearRegressor` fit method
+  will now allow penalty term `alpha` to be an iterable of same length as the number
+  of features in X in addition to a scalar value. Will also check that X matrix
+  is full rank if penalty term `alpha` is set to 0.0 or array of 0.0s.
+  :pr:`22485` by :user:`Xiao Wei <xiaowei1234>`.
+
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
   with a shape that respects the docstring and that is consistent with the shape
