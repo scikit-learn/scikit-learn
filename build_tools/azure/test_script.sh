@@ -19,12 +19,7 @@ mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
-# sklearn.show_versions() now strictly requires Python 3.8+
-# TODO: remove this once PyPy 3.8+ is released on conda-forge
-PYTHON_IMPL=`python -c "import platform; print(platform.python_implementation())"`
-if [[ "$PYTHON_IMPL" != "PyPy" ]]; then
-    python -c "import sklearn; sklearn.show_versions()"
-fi
+python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
 
