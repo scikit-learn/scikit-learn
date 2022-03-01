@@ -265,7 +265,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
-        if isinstance(self.alpha, Iterable):
+        if isinstance(self.alpha, Iterable) and not isinstance(self.alpha, str):
             for i, val in enumerate(self.alpha):
                 check_scalar(
                     val,
