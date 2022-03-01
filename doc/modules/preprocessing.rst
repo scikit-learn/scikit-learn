@@ -623,7 +623,8 @@ since co-linearity would cause the covariance matrix to be non-invertible::
     ...      ['female', 'from Europe', 'uses Firefox']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object),
+     array(['uses Firefox', 'uses Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 1., 1.],
            [0., 0., 0.]])
@@ -636,7 +637,8 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
     ...      ['female', 'Asia', 'Chrome']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object), array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object),
+     array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 0., 0., 1., 0., 0., 1.],
            [0., 0., 1., 0., 0., 1., 0.],
@@ -714,7 +716,8 @@ categories are `min_frequency` and `max_categories`.
    the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
    a cardinality smaller than `min_frequency`  will be considered infrequent.
    If `min_frequency` is a float, categories with a cardinality smaller than
-   this fraction of the total number of samples will be considered infrequent. The default value is 1, which means every category is encoded separately.
+   this fraction of the total number of samples will be considered infrequent.
+   The default value is 1, which means every category is encoded separately.
 
 2. `max_categories` is either `None` or any integer greater than 1. This
    parameter sets an upper limit to the number of output features for each
@@ -742,10 +745,10 @@ be considered infrequent::
    >>> enc.transform(np.array([['dragon']]))
    array([[0., 0., 1.]])
 
-:meth:`OneHotEncoder.get_feature_names` uses 'infrequent' as the infrequent
+:meth:`OneHotEncoder.get_feature_names_out` uses 'infrequent' as the infrequent
 feature name::
 
-   >>> enc.get_feature_names()
+   >>> enc.get_feature_names_out()
    array(['x0_cat', 'x0_rabbit', 'x0_infrequent_sklearn'], dtype=object)
 
 When `'handle_unknown'` is set to `'infrequent_if_exist'` and an unknown
@@ -767,8 +770,8 @@ infrequent, leading to two features, one for `'cat'` and one for infrequent
 categories - which are all the others::
 
    >>> enc = preprocessing.OneHotEncoder(max_categories=2, sparse=False)
-   >>> env = enc.fit(X)
-   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
+   >>> enc = enc.fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
    array([[0., 1.],
           [1., 0.],
           [0., 1.],
@@ -776,7 +779,17 @@ categories - which are all the others::
 
 If both `max_categories` and `min_frequency` are non-default values, then
 categories are selected based on `min_frequency` first and `max_categories`
-categories are kept.
+categories are kept. In the following example, `min_frequency=4` considers
+only `snake` to be infrequent, but `max_categories=3`, forces `dog` to also be
+infrequent::
+
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=4, max_categories=3, sparse=False)
+   >>> enc = enc.fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
+   array([[0., 0., 1.],
+          [1., 0., 0.],
+          [0., 1., 0.],
+          [0., 0., 1.]])
 
 .. _preprocessing_discretization:
 

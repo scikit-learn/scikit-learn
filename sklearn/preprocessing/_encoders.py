@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
@@ -37,7 +37,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         - return list of features (arrays): this list of features is
           constructed feature by feature to preserve the data types
           of pandas DataFrame columns, as otherwise information is lost
-          and cannot be used, eg for the `categories_` attribute.
+          and cannot be used, e.g. for the `categories_` attribute.
 
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
@@ -236,12 +236,12 @@ class OneHotEncoder(_BaseEncoder):
 
         .. versionadded:: 0.20
 
-    drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
+    drop : {'first', 'if_binary'} or an array-like of shape (n_features,), \
             default=None
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression.
+        into an unregularized linear regression model.
 
         However, dropping one category breaks the symmetry of the original
         representation and can therefore induce a bias in downstream models,
@@ -273,10 +273,9 @@ class OneHotEncoder(_BaseEncoder):
 
     handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
                      default='error'
-        Specifies a methodology for handling unknown categories during
-        :meth:`transform`.
+        Specifies the way unknown categories are handled during :meth:`transform`.
 
-        - 'error' : Raise an error if an unknown categorical feature
+        - 'error' : Raise an error if an unknown category feature
           is present during transform.
         - 'ignore' : When an unknown category is encountered during
           transform, the resulting one-hot encoded columns for this feature
@@ -290,10 +289,11 @@ class OneHotEncoder(_BaseEncoder):
           mapped to the category denoted `'infrequent'` if it exists. If the
           `'infrequent'` category does not exist, then :meth:`transform` and
           :meth:`inverse_transform` will handle an unknown category with
-          `handle_unknown='ignore'`. Read more in the
+          `handle_unknown='ignore'`. Infrequent categories exist based on
+          `min_frequency` and `max_categories`. Read more in the
           :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
-        .. versionadded:: 1.0
+        .. versionchanged:: 1.1
             `'infrequent_if_exist'` was added to automatically handle unknown
             categories and infrequent categories.
 
@@ -307,16 +307,18 @@ class OneHotEncoder(_BaseEncoder):
         - If `float`, categories with a smaller cardinality than
           `min_frequency * n_samples`  will be considered infrequent.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
+            Read more in the :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
     max_categories : int, default=None
-        Specifies an upper limit to the number of output features for each
-        input feature when considering infrequent categories. Note that
-        `max_categories` includes the category representing the infrequent
-        categories along with the frequent categories. If `None`, there is no
-        limit to the number of output features.
+        Specifies an upper limit to the number of output features for each input
+        feature when considering infrequent categories. If there are infrequent
+        categories, `max_categories` includes the category representing the
+        infrequent categories along with the frequent categories. If `None`,
+        there is no limit to the number of output features.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
+            Read more in the :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
     Attributes
     ----------
@@ -740,9 +742,9 @@ class OneHotEncoder(_BaseEncoder):
     def _compute_transformed_categories(self, i, remove_dropped=True):
         """Compute the transformed categories used for column `i`.
 
-        1. Dropped columns are removed.
-        2. If there are infrequent categories, the category is named
+        1. If there are infrequent categories, the category is named
         'infrequent_sklearn'.
+        2. Dropped columns are removed when remove_dropped=True.
         """
         cats = self.categories_[i]
 
@@ -921,7 +923,7 @@ class OneHotEncoder(_BaseEncoder):
 
         When unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category. If the
-        feature with the unknown category has a dropped caregory, the dropped
+        feature with the unknown category has a dropped category, the dropped
         category will be its inverse.
 
         For a given input feature, if there is an infrequent category,
@@ -1104,7 +1106,7 @@ class OneHotEncoder(_BaseEncoder):
         return np.array(feature_names, dtype=object)
 
 
-class OrdinalEncoder(_BaseEncoder):
+class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
     """
     Encode categorical features as an integer array.
 
