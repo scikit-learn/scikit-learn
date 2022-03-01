@@ -8,6 +8,7 @@ from scipy.optimize import (
     minimize,
     minimize_scalar,
     newton,
+    LinearConstraint,
 )
 from scipy.special import logsumexp
 
@@ -840,18 +841,13 @@ def test_loss_intercept_only(loss, sample_weight):
     else:
         # The constraint corresponds to sum(raw_prediction) = 0. Without it, we would
         # need to apply loss.symmetrize_raw_prediction to opt.x before comparing.
-        # TODO: With scipy 1.1.0, one could use
-        # LinearConstraint(np.ones((1, loss.n_classes)), 0, 0)
         opt = minimize(
             fun,
             np.zeros((loss.n_classes)),
             tol=1e-13,
             options={"maxiter": 100},
             method="SLSQP",
-            constraints={
-                "type": "eq",
-                "fun": lambda x: np.ones((1, loss.n_classes)) @ x,
-            },
+            constraints=LinearConstraint(np.ones((1, loss.n_classes)), 0, 0),
         )
         grad = loss.gradient(
             y_true=y_true,
