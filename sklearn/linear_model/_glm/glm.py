@@ -76,7 +76,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Values must be in the range `[0.0, inf)`.
         If alpha is a scalar then the value is applied to all non-intercept terms
         If alpha is an array-like then each value must be in the range `[0.0, inf)`
-            and the length must equal to n_features.
+        and the length must equal to n_features.
         If alpha is greater than 1 dimension it will be converted to 1 dimension.
 
     fit_intercept : bool, default=True
