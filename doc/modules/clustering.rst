@@ -558,7 +558,7 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    Marina Meila, Jianbo Shi, 2001
 
  * `"On Spectral Clustering: Analysis and an algorithm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
