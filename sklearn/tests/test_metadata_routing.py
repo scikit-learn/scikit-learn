@@ -613,8 +613,7 @@ def test_get_routing_for_object():
         __metadata_request__fit = {"prop": RequestType.ERROR_IF_PASSED}
 
     assert_request_is_empty(get_routing_for_object(None))
-    with pytest.raises(ValueError, match="Given object"):
-        assert_request_is_empty(get_routing_for_object(object()))
+    assert_request_is_empty(get_routing_for_object(object()))
 
     mr = MetadataRequest(owner="test")
     mr.fit.add_request(param="foo", alias="bar")
