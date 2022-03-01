@@ -112,14 +112,6 @@ cdef class PairwiseDistancesReduction:
         scikit-learn configuration for `pairwise_dist_chunk_size`,
         and use 256 if it is not set.
 
-    n_threads: int, default=None
-        The number of OpenMP threads to use for the reduction.
-        Parallelism is done on chunks and the sharding of chunks
-        depends on the `strategy` set on :method:`~PairwiseDistancesReduction.compute`.
-
-        See _openmp_effective_n_threads, for details about
-        the specification of n_threads.
-
     strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
         The chunking strategy defining which dataset parallelization are made on.
 
@@ -220,7 +212,6 @@ cdef class PairwiseDistancesReduction:
         self,
         DatasetsPair datasets_pair,
         chunk_size=None,
-        n_threads=None,
         strategy=None,
      ):
         cdef:
@@ -231,7 +222,7 @@ cdef class PairwiseDistancesReduction:
 
         self.chunk_size = check_scalar(chunk_size, "chunk_size", Integral, min_val=20)
 
-        self.effective_n_threads = _openmp_effective_n_threads(n_threads)
+        self.effective_n_threads = _openmp_effective_n_threads()
 
         self.datasets_pair = datasets_pair
 
@@ -512,15 +503,6 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         scikit-learn configuration for `pairwise_dist_chunk_size`,
         and use 256 if it is not set.
 
-    n_threads: int, default=None
-        The number of OpenMP threads to use for the reduction.
-        Parallelism is done on chunks and the sharding of chunks
-        depends on the `strategy` set on
-        :meth:`~PairwiseDistancesArgKmin.compute`.
-
-        See _openmp_effective_n_threads, for details about
-        the specification of n_threads.
-
     k: int, default=1
         The k for the argkmin reduction.
     """
@@ -544,7 +526,6 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         str metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
-        n_threads=None,
         str strategy=None,
         bint return_distance=False,
     ):
@@ -573,15 +554,6 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         metric_kwargs : dict, default=None
             Keyword arguments to pass to specified metric function.
-
-        n_threads : int, default=None
-            The number of OpenMP threads to use for the reduction.
-            Parallelism is done on chunks and the sharding of chunks
-            depends on the `strategy` set on
-            :meth:`~PairwiseDistancesArgKmin.compute`.
-
-            See _openmp_effective_n_threads, for details about
-            the specification of n_threads.
 
         strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
             The chunking strategy defining which dataset parallelization are made on.
@@ -686,14 +658,12 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         self,
         DatasetsPair datasets_pair,
         chunk_size=None,
-        n_threads=None,
         strategy=None,
         ITYPE_t k=1,
     ):
         super().__init__(
             datasets_pair=datasets_pair,
             chunk_size=chunk_size,
-            n_threads=n_threads,
             strategy=strategy,
         )
         self.k = check_scalar(k, "k", Integral, min_val=1)
@@ -932,7 +902,6 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         ITYPE_t k,
         bint use_squared_distances=False,
         chunk_size=None,
-        n_threads=None,
         strategy=None,
         metric_kwargs=None,
     ):
@@ -948,7 +917,6 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
             chunk_size=chunk_size,
-            n_threads=n_threads,
             strategy=strategy,
             k=k,
         )

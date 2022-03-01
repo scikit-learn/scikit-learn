@@ -5,6 +5,7 @@
 import warnings
 
 import numpy as np
+
 import scipy
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
@@ -12,6 +13,7 @@ from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..neighbors import radius_neighbors_graph
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -28,8 +30,15 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_neighbors : int, default=5
-        Number of neighbors to consider for each point.
+    n_neighbors : int or None, default=5
+        Number of neighbors to consider for each point. If `n_neighbors` is an int,
+        then `radius` must be `None`.
+
+    radius : float or None, default=None
+        Limiting distance of neighbors to return. If `radius` is a float,
+        then `n_neighbors` must be set to `None`.
+
+        .. versionadded:: 1.1
 
     n_components : int, default=2
         Number of coordinates for the manifold.
@@ -156,6 +165,7 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self,
         *,
         n_neighbors=5,
+        radius=None,
         n_components=2,
         eigen_solver="auto",
         tol=0,
@@ -168,6 +178,7 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         metric_params=None,
     ):
         self.n_neighbors = n_neighbors
+        self.radius = radius
         self.n_components = n_components
         self.eigen_solver = eigen_solver
         self.tol = tol
@@ -180,8 +191,16 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.metric_params = metric_params
 
     def _fit_transform(self, X):
+        if self.n_neighbors is not None and self.radius is not None:
+            raise ValueError(
+                "Both n_neighbors and radius are provided. Use"
+                f" Isomap(radius={self.radius}, n_neighbors=None) if intended to use"
+                " radius-based neighbors"
+            )
+
         self.nbrs_ = NearestNeighbors(
             n_neighbors=self.n_neighbors,
+            radius=self.radius,
             algorithm=self.neighbors_algorithm,
             metric=self.metric,
             p=self.p,
@@ -202,21 +221,32 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             n_jobs=self.n_jobs,
         )
 
-        kng = kneighbors_graph(
-            self.nbrs_,
-            self.n_neighbors,
-            metric=self.metric,
-            p=self.p,
-            metric_params=self.metric_params,
-            mode="distance",
-            n_jobs=self.n_jobs,
-        )
+        if self.n_neighbors is not None:
+            nbg = kneighbors_graph(
+                self.nbrs_,
+                self.n_neighbors,
+                metric=self.metric,
+                p=self.p,
+                metric_params=self.metric_params,
+                mode="distance",
+                n_jobs=self.n_jobs,
+            )
+        else:
+            nbg = radius_neighbors_graph(
+                self.nbrs_,
+                radius=self.radius,
+                metric=self.metric,
+                p=self.p,
+                metric_params=self.metric_params,
+                mode="distance",
+                n_jobs=self.n_jobs,
+            )
 
         # Compute the number of connected components, and connect the different
         # components to be able to compute a shortest path between all pairs
         # of samples in the graph.
         # Similar fix to cluster._agglomerative._fix_connectivity.
-        n_connected_components, labels = connected_components(kng)
+        n_connected_components, labels = connected_components(nbg)
         if n_connected_components > 1:
             if self.metric == "precomputed" and issparse(X):
                 raise RuntimeError(
@@ -236,9 +266,9 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             )
 
             # use array validated by NearestNeighbors
-            kng = _fix_connected_components(
+            nbg = _fix_connected_components(
                 X=self.nbrs_._fit_X,
-                graph=kng,
+                graph=nbg,
                 n_connected_components=n_connected_components,
                 component_labels=labels,
                 mode="distance",
@@ -249,9 +279,9 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         if parse_version(scipy.__version__) < parse_version("1.3.2"):
             # make identical samples have a nonzero distance, to account for
             # issues in old scipy Floyd-Warshall implementation.
-            kng.data += 1e-15
+            nbg.data += 1e-15
 
-        self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
+        self.dist_matrix_ = shortest_path(nbg, method=self.path_method, directed=False)
 
         G = self.dist_matrix_**2
         G *= -0.5
@@ -349,7 +379,10 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             X transformed in the new space.
         """
         check_is_fitted(self)
-        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        if self.n_neighbors is not None:
+            distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        else:
+            distances, indices = self.nbrs_.radius_neighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to
         # training data via the nearest neighbors of X.
