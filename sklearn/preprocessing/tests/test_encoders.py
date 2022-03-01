@@ -1020,10 +1020,12 @@ def test_ohe_missing_value_support_pandas():
     assert_allclose(Xtr, expected_df_trans)
 
 
-@pytest.mark.parametrize("pd_missing_value", ["pd.NA", "np.nan"])
-def test_ohe_missing_value_support_pandas_categorical(pd_missing_value):
+@pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
+def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
     # checks pandas dataframe with categorical features
     pd = pytest.importorskip("pandas")
+
+    pd_missing_value = pd.NA if pd_nan_type == "pd.NA" else np.nan
 
     df = pd.DataFrame(
         {
@@ -1174,11 +1176,13 @@ def test_ordinal_encoder_passthrough_missing_values_float():
     assert_allclose(X_inverse, X)
 
 
-@pytest.mark.parametrize("pd_missing_value", ["pd.NA", "np.nan"])
-def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_missing_value):
+@pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
+def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
     """Check ordinal encoder is compatible with pandas."""
     # checks pandas dataframe with categorical features
     pd = pytest.importorskip("pandas")
+
+    pd_missing_value = pd.NA if pd_nan_type == "pd.NA" else np.nan
 
     df = pd.DataFrame(
         {
