@@ -7,6 +7,7 @@ Generalized Linear Models with Exponential Dispersion Family
 # License: BSD 3 clause
 
 import numbers
+from collections.abc import Iterable
 
 import numpy as np
 import scipy.optimize
@@ -264,7 +265,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
-        if hasattr(self.alpha, "__iter__") and not isinstance(self.alpha, str):
+        if isinstance(self.alpha, Iterable):
             for i, val in enumerate(self.alpha):
                 check_scalar(
                     val,
@@ -273,7 +274,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     min_val=0.0,
                     include_boundaries="left",
                 )
-            self.alpha = np.asarray(self.alpha, dtype=np.float_).ravel()
+            self.alpha = np.asarray(self.alpha, dtype=np.float64).ravel()
             if self.alpha.size != X.shape[1]:
                 raise ValueError(
                     f"X width is {X.shape[1]} while alpha is of length"
