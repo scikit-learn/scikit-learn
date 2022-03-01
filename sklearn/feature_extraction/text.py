@@ -32,7 +32,6 @@ from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
-from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 
 
@@ -633,7 +632,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     preprocessor : callable, default=None
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     tokenizer : callable, default=None
         Override the string tokenization step while preserving the
@@ -665,7 +664,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
         unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
         only bigrams.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     analyzer : {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word or character n-grams.
@@ -739,7 +738,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         token_pattern=r"(?u)\b\w\w+\b",
         ngram_range=(1, 1),
         analyzer="word",
-        n_features=(2 ** 20),
+        n_features=(2**20),
         binary=False,
         norm="l2",
         alternate_sign=True,
@@ -933,7 +932,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     preprocessor : callable, default=None
         Override the preprocessing (strip_accents and lowercase) stage while
         preserving the tokenizing and n-grams generation steps.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     tokenizer : callable, default=None
         Override the string tokenization step while preserving the
@@ -969,7 +968,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         such that min_n <= n <= max_n will be used. For example an
         ``ngram_range`` of ``(1, 1)`` means only unigrams, ``(1, 2)`` means
         unigrams and bigrams, and ``(2, 2)`` means only bigrams.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     analyzer : {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word n-gram or character
@@ -1621,7 +1620,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if self.use_idf:
             n_samples, n_features = X.shape
             df = _document_frequency(X)
-            df = df.astype(dtype, **_astype_copy_false(df))
+            df = df.astype(dtype, copy=False)
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
@@ -1753,7 +1752,7 @@ class TfidfVectorizer(CountVectorizer):
     preprocessor : callable, default=None
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     tokenizer : callable, default=None
         Override the string tokenization step while preserving the
@@ -1804,7 +1803,7 @@ class TfidfVectorizer(CountVectorizer):
         will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
         unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
         only bigrams.
-        Only applies if ``analyzer is not callable``.
+        Only applies if ``analyzer`` is not callable.
 
     max_df : float or int, default=1.0
         When building the vocabulary ignore terms that have a document
@@ -1959,49 +1958,13 @@ class TfidfVectorizer(CountVectorizer):
             binary=binary,
             dtype=dtype,
         )
-
-        self._tfidf = TfidfTransformer(
-            norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
-        )
+        self.norm = norm
+        self.use_idf = use_idf
+        self.smooth_idf = smooth_idf
+        self.sublinear_tf = sublinear_tf
 
     # Broadcast the TF-IDF parameters to the underlying transformer instance
     # for easy grid search and repr
-
-    @property
-    def norm(self):
-        """Norm of each row output, can be either "l1" or "l2"."""
-        return self._tfidf.norm
-
-    @norm.setter
-    def norm(self, value):
-        self._tfidf.norm = value
-
-    @property
-    def use_idf(self):
-        """Whether or not IDF re-weighting is used."""
-        return self._tfidf.use_idf
-
-    @use_idf.setter
-    def use_idf(self, value):
-        self._tfidf.use_idf = value
-
-    @property
-    def smooth_idf(self):
-        """Whether or not IDF weights are smoothed."""
-        return self._tfidf.smooth_idf
-
-    @smooth_idf.setter
-    def smooth_idf(self, value):
-        self._tfidf.smooth_idf = value
-
-    @property
-    def sublinear_tf(self):
-        """Whether or not sublinear TF scaling is applied."""
-        return self._tfidf.sublinear_tf
-
-    @sublinear_tf.setter
-    def sublinear_tf(self, value):
-        self._tfidf.sublinear_tf = value
 
     @property
     def idf_(self):
@@ -2011,10 +1974,27 @@ class TfidfVectorizer(CountVectorizer):
         -------
         ndarray of shape (n_features,)
         """
+        if not hasattr(self, "_tfidf"):
+            raise NotFittedError(
+                f"{self.__class__.__name__} is not fitted yet. Call 'fit' with "
+                "appropriate arguments before using this attribute."
+            )
         return self._tfidf.idf_
 
     @idf_.setter
     def idf_(self, value):
+        if not self.use_idf:
+            raise ValueError("`idf_` cannot be set when `user_idf=False`.")
+        if not hasattr(self, "_tfidf"):
+            # We should support transfering `idf_` from another `TfidfTransformer`
+            # and therefore, we need to create the transformer instance it does not
+            # exist yet.
+            self._tfidf = TfidfTransformer(
+                norm=self.norm,
+                use_idf=self.use_idf,
+                smooth_idf=self.smooth_idf,
+                sublinear_tf=self.sublinear_tf,
+            )
         self._validate_vocabulary()
         if hasattr(self, "vocabulary_"):
             if len(self.vocabulary_) != len(value):
@@ -2050,6 +2030,12 @@ class TfidfVectorizer(CountVectorizer):
         """
         self._check_params()
         self._warn_for_unused_params()
+        self._tfidf = TfidfTransformer(
+            norm=self.norm,
+            use_idf=self.use_idf,
+            smooth_idf=self.smooth_idf,
+            sublinear_tf=self.sublinear_tf,
+        )
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
@@ -2074,6 +2060,12 @@ class TfidfVectorizer(CountVectorizer):
             Tf-idf-weighted document-term matrix.
         """
         self._check_params()
+        self._tfidf = TfidfTransformer(
+            norm=self.norm,
+            use_idf=self.use_idf,
+            smooth_idf=self.smooth_idf,
+            sublinear_tf=self.sublinear_tf,
+        )
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so

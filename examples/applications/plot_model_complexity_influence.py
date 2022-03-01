@@ -165,7 +165,8 @@ configurations = [
             "alpha": 0.001,
             "loss": "modified_huber",
             "fit_intercept": True,
-            "tol": 1e-3,
+            "tol": 1e-1,
+            "n_iter_no_change": 2,
         },
         "changing_param": "l1_ratio",
         "changing_param_values": [0.25, 0.5, 0.75, 0.9],
@@ -179,7 +180,7 @@ configurations = [
     },
     {
         "estimator": NuSVR,
-        "tuned_params": {"C": 1e3, "gamma": 2 ** -15},
+        "tuned_params": {"C": 1e3, "gamma": 2**-15},
         "changing_param": "nu",
         "changing_param_values": [0.05, 0.1, 0.2, 0.35, 0.5],
         "complexity_label": "n_support_vectors",

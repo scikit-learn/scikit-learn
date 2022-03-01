@@ -9,7 +9,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import _astype_copy_false
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -219,7 +218,7 @@ def test_minibatch_update_consistency():
     weight_sums = np.zeros(centers_old.shape[0], dtype=X.dtype)
     weight_sums_csr = np.zeros(centers_old.shape[0], dtype=X.dtype)
 
-    x_squared_norms = (X ** 2).sum(axis=1)
+    x_squared_norms = (X**2).sum(axis=1)
     x_squared_norms_csr = row_norms(X_csr, squared=True)
 
     sample_weight = np.ones(X.shape[0], dtype=X.dtype)
@@ -783,7 +782,7 @@ def test_float_precision(Estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = data.astype(dtype, **_astype_copy_false(data))
+        X = data.astype(dtype, copy=False)
         km.fit(X)
 
         inertia[dtype] = km.inertia_
@@ -943,20 +942,6 @@ def test_result_equal_in_diff_n_threads(Estimator):
     assert_array_equal(result_1, result_2)
 
 
-@pytest.mark.parametrize("attr", ["counts_", "init_size_", "random_state_"])
-def test_minibatch_kmeans_deprecated_attributes(attr):
-    # check that we raise a deprecation warning when accessing `init_size_`
-    # FIXME: remove in 1.1
-    depr_msg = (
-        f"The attribute `{attr}` is deprecated in 0.24 and will be removed in 1.1"
-    )
-    km = MiniBatchKMeans(n_clusters=2, n_init=1, init="random", random_state=0)
-    km.fit(X)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        getattr(km, attr)
-
-
 def test_warning_elkan_1_cluster():
     # Check warning messages specific to KMeans
     with pytest.warns(
@@ -1008,7 +993,7 @@ def test_euclidean_distance(dtype, squared):
     )
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
-    b_squared_norm = (b ** 2).sum()
+    b_squared_norm = (b**2).sum()
 
     expected = ((a_dense - b) ** 2).sum()
     expected = expected if squared else np.sqrt(expected)
@@ -1088,7 +1073,7 @@ def test_sample_weight_unchanged(Estimator):
         (
             {"init": "wrong"},
             r"init should be either 'k-means\+\+', 'random', "
-            r"a ndarray or a callable",
+            r"an array-like or a callable",
         ),
     ],
 )
@@ -1205,3 +1190,33 @@ def test_is_same_clustering():
     # mapped to a same value
     labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
     assert not _is_same_clustering(labels1, labels3, 3)
+
+
+@pytest.mark.parametrize(
+    "kwargs", ({"init": np.str_("k-means++")}, {"init": [[0, 0], [1, 1]], "n_init": 1})
+)
+def test_kmeans_with_array_like_or_np_scalar_init(kwargs):
+    """Check that init works with numpy scalar strings.
+
+    Non-regression test for #21964.
+    """
+    X = np.asarray([[0, 0], [0.5, 0], [0.5, 1], [1, 1]], dtype=np.float64)
+
+    clustering = KMeans(n_clusters=2, **kwargs)
+    # Does not raise
+    clustering.fit(X)
+
+
+@pytest.mark.parametrize(
+    "Klass, method",
+    [(KMeans, "fit"), (MiniBatchKMeans, "fit"), (MiniBatchKMeans, "partial_fit")],
+)
+def test_feature_names_out(Klass, method):
+    """Check `feature_names_out` for `KMeans` and `MiniBatchKMeans`."""
+    class_name = Klass.__name__.lower()
+    kmeans = Klass()
+    getattr(kmeans, method)(X)
+    n_clusters = kmeans.cluster_centers_.shape[0]
+
+    names_out = kmeans.get_feature_names_out()
+    assert_array_equal([f"{class_name}{i}" for i in range(n_clusters)], names_out)

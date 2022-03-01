@@ -7,8 +7,9 @@ adapted from :func:`pandas.show_versions`
 
 import platform
 import sys
-import importlib
+from importlib.metadata import version, PackageNotFoundError
 from ..utils.fixes import threadpool_info
+from .. import __version__
 
 
 from ._openmp_helpers import _openmp_parallelism_enabled
@@ -37,6 +38,9 @@ def _get_sys_info():
 def _get_deps_info():
     """Overview of the installed version of main dependencies
 
+    This function does not import the modules to collect the version numbers
+    but instead relies on standard Python package metadata.
+
     Returns
     -------
     deps_info: dict
@@ -46,7 +50,6 @@ def _get_deps_info():
     deps = [
         "pip",
         "setuptools",
-        "sklearn",
         "numpy",
         "scipy",
         "Cython",
@@ -56,20 +59,14 @@ def _get_deps_info():
         "threadpoolctl",
     ]
 
-    def get_version(module):
-        return module.__version__
-
-    deps_info = {}
+    deps_info = {
+        "sklearn": __version__,
+    }
 
     for modname in deps:
         try:
-            if modname in sys.modules:
-                mod = sys.modules[modname]
-            else:
-                mod = importlib.import_module(modname)
-            ver = get_version(mod)
-            deps_info[modname] = ver
-        except ImportError:
+            deps_info[modname] = version(modname)
+        except PackageNotFoundError:
             deps_info[modname] = None
 
     return deps_info

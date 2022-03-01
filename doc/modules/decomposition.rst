@@ -168,14 +168,11 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
     * Algorithm 4.3 in
       :arxiv:`"Finding structure with randomness: Stochastic algorithms for
-      constructing approximate matrix decompositions"
-      <0909.4061>`
+      constructing approximate matrix decompositions" <0909.4061>`
       Halko, et al., 2009
 
-    * `"An implementation of a randomized algorithm for principal component
-      analysis"
-      <https://arxiv.org/pdf/1412.3510.pdf>`_
-      A. Szlam et al. 2014
+    * :arxiv:`"An implementation of a randomized algorithm for principal component
+      analysis" <1412.3510>` A. Szlam et al. 2014
 
 .. _SparsePCA:
 
@@ -355,20 +352,18 @@ components is less than 10 (strict) and the number of samples is more than 200
     * *randomized* solver:
 
         * Algorithm 4.3 in
-          :arxiv:`"Finding structure with randomness: Stochastic algorithms for
-          constructing approximate matrix decompositions"
-          <0909.4061>`
-          Halko, et al., 2009
+          :arxiv:`"Finding structure with randomness: Stochastic
+          algorithms for constructing approximate matrix decompositions" <0909.4061>`
+          Halko, et al. (2009)
 
-        * `"An implementation of a randomized algorithm for principal component
-          analysis"
-          <https://arxiv.org/pdf/1412.3510.pdf>`_
-          A. Szlam et al. 2014
+        * :arxiv:`"An implementation of a randomized algorithm
+          for principal component analysis" <1412.3510>`
+          A. Szlam et al. (2014)
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
       <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
-      R. B. Lehoucq, D. C. Sorensen, and C. Yang, 1998
+      R. B. Lehoucq, D. C. Sorensen, and C. Yang, (1998)
 
 
 .. _LSA:
@@ -929,7 +924,7 @@ stored components::
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
+      <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -943,12 +938,12 @@ stored components::
 
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
-      <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
+      <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.214.6398&rep=rep1&type=pdf>`_
       A. Cichocki, A. Phan, 2009
 
-    .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <https://arxiv.org/pdf/1010.1763.pdf>`_
-      C. Fevotte, J. Idier, 2011
+    .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with
+           the beta-divergence" <1010.1763>`
+           C. Fevotte, J. Idier, 2011
 
 
 .. _LatentDirichletAllocation:
