@@ -16,8 +16,8 @@ requires = [
 
 [tool.black]
 line-length = 88
-target_version = ['py37', 'py38', 'py39']
-experimental_string_processing = true
+target_version = ['py38', 'py39', 'py310']
+preview = true
 exclude = '''
 /(
     \.eggs         # exclude a few common directories in the
