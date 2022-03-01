@@ -16,7 +16,6 @@ better.
 # License: BSD 3 clause
 
 
-from tkinter import N
 import warnings
 from math import log
 
