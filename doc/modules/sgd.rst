@@ -546,8 +546,8 @@ The code is written in Cython.
    .. [#1] `"Stochastic Gradient Descent"
        <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
-   .. [#2] `"Pegasos: Primal estimated sub-gradient solver for svm"
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+   .. [#2] :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
+      <10.1145/1273496.1273598>`
       S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
    .. [#3] `"Stochastic gradient descent training for l1-regularized
