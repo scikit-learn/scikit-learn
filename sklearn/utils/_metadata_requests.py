@@ -854,7 +854,6 @@ def get_routing_for_object(obj=None):
         - Returns an empty :class:`~utils.metadata_requests.MetadataRequest`
             otherwise.
 
-
     Returns
     -------
     obj : MetadataRequest or MetadataRouting
