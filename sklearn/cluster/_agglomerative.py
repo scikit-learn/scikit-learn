@@ -20,7 +20,6 @@ from ..metrics import DistanceMetric
 from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
-from ..utils.fixes import _astype_copy_false
 from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory
 
@@ -123,7 +122,7 @@ def _single_linkage_tree(
     from scipy.sparse.csgraph import minimum_spanning_tree
 
     # explicitly cast connectivity to ensure safety
-    connectivity = connectivity.astype("float64", **_astype_copy_false(connectivity))
+    connectivity = connectivity.astype(np.float64, copy=False)
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
     epsilon_value = np.finfo(dtype=connectivity.data.dtype).eps
@@ -559,9 +558,7 @@ def linkage_tree(
     del diag_mask
 
     if affinity == "precomputed":
-        distances = X[connectivity.row, connectivity.col].astype(
-            "float64", **_astype_copy_false(X)
-        )
+        distances = X[connectivity.row, connectivity.col].astype(np.float64, copy=False)
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances

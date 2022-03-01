@@ -23,7 +23,6 @@ import numpy as np
 from scipy import sparse as sp
 
 from ._expected_mutual_info_fast import expected_mutual_information
-from ...utils.fixes import _astype_copy_false
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 
@@ -919,7 +918,7 @@ def adjusted_mutual_info_score(
     ):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
@@ -1029,7 +1028,7 @@ def normalized_mutual_info_score(
     ):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
@@ -1113,7 +1112,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     (n_samples,) = labels_true.shape
 
     c = contingency_matrix(labels_true, labels_pred, sparse=True)
-    c = c.astype(np.int64, **_astype_copy_false(c))
+    c = c.astype(np.int64, copy=False)
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
