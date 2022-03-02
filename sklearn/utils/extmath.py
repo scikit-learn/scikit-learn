@@ -18,7 +18,6 @@ from scipy import linalg, sparse
 
 from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
-from .fixes import np_version, parse_version
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
@@ -963,17 +962,11 @@ def _incremental_mean_and_var(
     else:
         sum_op = np.sum
     if sample_weight is not None:
-        if np_version >= parse_version("1.16.6"):
-            # equivalent to np.nansum(X * sample_weight, axis=0)
-            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-            # dtype arg of np.matmul only exists since version 1.16
-            new_sum = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
-            )
-        else:
-            new_sum = _safe_accumulator_op(
-                np.nansum, X * sample_weight[:, None], axis=0
-            )
+        # equivalent to np.nansum(X * sample_weight, axis=0)
+        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+        new_sum = _safe_accumulator_op(
+            np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+        )
         new_sample_count = _safe_accumulator_op(
             np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
         )
@@ -992,25 +985,15 @@ def _incremental_mean_and_var(
         T = new_sum / new_sample_count
         temp = X - T
         if sample_weight is not None:
-            if np_version >= parse_version("1.16.6"):
-                # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
-                # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-                # dtype arg of np.matmul only exists since version 1.16
-                correction = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
-                )
-                temp **= 2
-                new_unnormalized_variance = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
-                )
-            else:
-                correction = _safe_accumulator_op(
-                    sum_op, temp * sample_weight[:, None], axis=0
-                )
-                temp *= temp
-                new_unnormalized_variance = _safe_accumulator_op(
-                    sum_op, temp * sample_weight[:, None], axis=0
-                )
+            # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
+            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+            correction = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
+            temp **= 2
+            new_unnormalized_variance = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
         else:
             correction = _safe_accumulator_op(sum_op, temp, axis=0)
             temp **= 2
