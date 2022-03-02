@@ -128,7 +128,7 @@ narrow down the cause of the bug.
 In particular, for  this specific example:
 
 - the warning has nothing to do with the `train_test_split` since it already appears
-   in the training set.
+   in the training step, before we use the test set.
 - similarly, the lines that compute the scores on the test set are not necessary;
 - the bug can be reproduced for any value of`random_state` so leave it to its
    default;
