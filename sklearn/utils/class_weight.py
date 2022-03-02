@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import difflib
 
 
 def compute_class_weight(class_weight, *, classes, y):
@@ -58,9 +59,13 @@ def compute_class_weight(class_weight, *, classes, y):
             raise ValueError(
                 "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
             )
-        for c in class_weight:
+        for c in classes:
             i = np.searchsorted(classes, c)
-            if i >= len(classes) or classes[i] != c:
+            if i >= len(classes) or c not in class_weight:
+                # # Get possible suggestion
+                if isinstance(c,str):
+                    suggestion = difflib.get_close_matches(c,class_weight.keys(),1)[0]
+                    raise ValueError("Class label {} not present.".format(c) + " Did you mean " + suggestion + "?")
                 raise ValueError("Class label {} not present.".format(c))
             else:
                 weight[i] = class_weight[c]
