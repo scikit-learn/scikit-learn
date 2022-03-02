@@ -1613,14 +1613,20 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     0.5
 
     """
-    if (y_true.min() < 0):
-        raise DeprecationWarning("ndcg_score should not use negative y_true values")
 
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
+
+    if (isinstance(y_true, np.ndarray)):
+        if (y_true.min() < 0):
+            raise DeprecationWarning("ndcg_score should not use negative y_true values")
+    else:
+        for value in y_true:
+            if (value < 0):
+                raise DeprecationWarning("ndcg_score should not use negative y_true values")
     return np.average(gain, weights=sample_weight)
 
 
