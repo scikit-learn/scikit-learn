@@ -839,8 +839,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
     * When bibliographic references are available with `arxiv <https://arxiv.org/>`_
       or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
-      use the sphinx directives `:arxiv:` or `:doi:` (se for example references in
-      :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`).
+      use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
+      :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
