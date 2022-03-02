@@ -837,6 +837,10 @@ Finally, follow the formatting rules below to make it consistently good:
 
 * For unwritten formatting rules, try to follow existing good works:
 
+    * When bibliographic references are available with `arxiv <https://arxiv.org/>`_
+      or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
+      use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
+      :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
