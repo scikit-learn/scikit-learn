@@ -74,12 +74,14 @@ description in the **Describe the bug** section of the `Issue template
 <https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
 
 **Improved example**
-The following code, while **still not minimal**, is already **much better** because
-it can be copy-pasted in a python terminal to reproduce the problem in one step.
-In particular:
-- it contains **all necessary imports statements**;
-- it can fetch the public dataset without having to manually download a
-  file and put it in the expected location on the disk.
+The following code, while **still not minimal**, is already **much better**
+because it can be copy-pasted in a python terminal to reproduce the problem in
+one step. In particular:
+
+    - it contains **all necessary imports statements**;
+    - it can fetch the public dataset without having to manually download a
+      file and put it in the expected location on the disk.
+
 .. code-block:: python
 
     import pandas as pd
@@ -142,37 +144,6 @@ feature names.
 .. code-block:: python
 
     import pandas as pd
-    df = pd.DataFrame({"feature_name": [-12.32, 1.43, 30.01, 22.17], "target": [72, 55, 32, 43]})
-    X = df[["feature_name"]]
-    y = df["target"]
-
-    from sklearn.ensemble import GradientBoostingRegressor
-
-    gbdt = GradientBoostingRegressor()
-    gbdt.fit(X, y)  # no warning
-
-    gbdt = GradientBoostingRegressor(n_iter_no_change=5)
-    gbdt.fit(X, y) # raises warning
-
-Improve your formatting as much as possible
--------------------------------------------
-
-As already mentioned, the key to communication is the readability of the code
-and good formatting can really improve it.
-
-Try to follow the `PEP 8 convention <https://www.python.org/dev/peps/pep-0008/>`_.
-In a nutshell:
-
-    - try to limit all lines to a maximum of 79 characters
-    - use blank lines to separate groups of related functions
-
-Place all your imports in their own group at the beginning of the snippet.
-
-**Improved example**
-
-.. code-block:: python
-
-    import pandas as pd
     from sklearn.ensemble import GradientBoostingRegressor
 
     df = pd.DataFrame(
@@ -185,7 +156,7 @@ Place all your imports in their own group at the beginning of the snippet.
     y = df["target"]
 
     gbdt = GradientBoostingRegressor()
-    gbdt.fit(X, y) # compiles
+    gbdt.fit(X, y) # no warning
     gbdt = GradientBoostingRegressor(n_iter_no_change=5)
     gbdt.fit(X, y) # raises warning
 
