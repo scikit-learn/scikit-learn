@@ -429,8 +429,8 @@ given sample.
 
 .. topic:: References:
 
- * `"Mean shift: A robust approach toward feature space analysis."
-   <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8968&rep=rep1&type=pdf>`_
+ * :doi:`"Mean shift: A robust approach toward feature space analysis"
+   <10.1109/34.1000236>`
    D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
 
 
@@ -523,13 +523,13 @@ below.
 ================================  ================================  ================================
 
 .. topic:: References:
-       
+
  * `"Multiclass spectral clustering"
    <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
    Stella X. Yu, Jianbo Shi, 2003
 
  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
-    Anil Damle, Victor Minden, Lexing Ying, 2019
+   Anil Damle, Victor Minden, Lexing Ying, 2019
 
 Spectral Clustering Graphs
 --------------------------
@@ -545,12 +545,12 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
 .. topic:: References:
 
- * `"A Tutorial on Spectral Clustering"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+ * :doi:`"A Tutorial on Spectral Clustering"
+   <10.1007/s11222-007-9033-z>`
    Ulrike von Luxburg, 2007
 
- * `"Normalized cuts and image segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+ * :doi:`"Normalized cuts and image segmentation"
+   <10.1109/34.868688>`
    Jianbo Shi, Jitendra Malik, 2000
 
  * `"A Random Walks View of Spectral Segmentation"
@@ -563,7 +563,7 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
    Block Partition Streaming Graph Challenge"
-   <1309.0238>`
+   <1708.07481>`
    David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:

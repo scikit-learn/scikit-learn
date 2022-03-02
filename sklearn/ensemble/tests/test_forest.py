@@ -35,7 +35,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
-from sklearn.utils.fixes import parse_version
 
 from sklearn.exceptions import NotFittedError
 
@@ -1257,7 +1256,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight ** 2)
+    clf1.fit(iris.data, iris.target, sample_weight**2)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -1577,10 +1576,6 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
 joblib.register_parallel_backend("testing", MyBackend)
 
 
-@pytest.mark.skipif(
-    parse_version(joblib.__version__) < parse_version("0.12"),
-    reason="tests not yet supported in joblib <0.12",
-)
 @skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)

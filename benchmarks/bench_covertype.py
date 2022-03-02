@@ -25,13 +25,13 @@ magnitude faster to train::
 
 The same task has been used in a number of papers including:
 
- * `"SVM Optimization: Inverse Dependence on Training Set Size"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.139.2112>`_
+ * :doi:`"SVM Optimization: Inverse Dependence on Training Set Size"
    S. Shalev-Shwartz, N. Srebro - In Proceedings of ICML '08.
+   <10.1145/1390156.1390273>`
 
- * `"Pegasos: Primal estimated sub-gradient solver for svm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+ * :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
+   <10.1145/1273496.1273598>`
 
  * `"Training Linear SVMs in Linear Time"
    <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>`_

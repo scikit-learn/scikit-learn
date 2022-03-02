@@ -16,20 +16,12 @@ space while controlling the distortion in the pairwise distances.
 import sys
 from time import time
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.datasets import load_digits
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.utils.fixes import parse_version
-
-# `normed` is being deprecated in favor of `density` in histograms
-if parse_version(matplotlib.__version__) >= parse_version("2.1"):
-    density_param = {"density": True}
-else:
-    density_param = {"normed": True}
 
 # %%
 # Theoretical bounds
@@ -179,7 +171,7 @@ for n_components in n_components_range:
     print("Mean distances rate: %0.2f (%0.2f)" % (np.mean(rates), np.std(rates)))
 
     plt.figure()
-    plt.hist(rates, bins=50, range=(0.0, 2.0), edgecolor="k", **density_param)
+    plt.hist(rates, bins=50, range=(0.0, 2.0), edgecolor="k", density=True)
     plt.xlabel("Squared distances rate: projected / original")
     plt.ylabel("Distribution of samples pairs")
     plt.title("Histogram of pairwise distance rates for n_components=%d" % n_components)

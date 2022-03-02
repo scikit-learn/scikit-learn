@@ -29,7 +29,6 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import parse_version
 from sklearn.utils import check_random_state
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -115,20 +114,19 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
         (
             {"l1_ratio": "1"},
             TypeError,
-            "l1_ratio must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "l1_ratio must be an instance of float, not str",
         ),
         ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
         (
             {"tol": "1"},
             TypeError,
-            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "tol must be an instance of float, not str",
         ),
         ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
         (
             {"max_iter": "1"},
             TypeError,
-            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'str'>",
+            "max_iter must be an instance of int, not str",
         ),
     ],
 )
@@ -302,10 +300,10 @@ def test_lasso_dual_gap():
     clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
     w = clf.coef_
     R = y - X @ w
-    primal = 0.5 * np.mean(R ** 2) + clf.alpha * np.sum(np.abs(w))
+    primal = 0.5 * np.mean(R**2) + clf.alpha * np.sum(np.abs(w))
     # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
     R /= np.max(np.abs(X.T @ R) / (n_samples * alpha))
-    dual = 0.5 * (np.mean(y ** 2) - np.mean((y - R) ** 2))
+    dual = 0.5 * (np.mean(y**2) - np.mean((y - R) ** 2))
     assert_allclose(clf.dual_gap_, primal - dual)
 
 
@@ -386,6 +384,35 @@ def test_lasso_cv_positive_constraint():
     )
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
+
+
+@pytest.mark.parametrize(
+    "alphas, err_type, err_msg",
+    [
+        (-2, ValueError, r"alphas == -2, must be >= 0.0."),
+        ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
+        (
+            (-0.1, -1.0, -10.0),
+            ValueError,
+            r"alphas\[0\] == -0.1, must be >= 0.0.",
+        ),
+        (
+            (1, 1.0, "1"),
+            TypeError,
+            r"alphas\[2\] must be an instance of float, not str",
+        ),
+    ],
+)
+def test_lassocv_alphas_validation(alphas, err_type, err_msg):
+    """Check the `alphas` validation in LassoCV."""
+
+    n_samples, n_features = 5, 5
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randint(0, 2, n_samples)
+    lassocv = LassoCV(alphas=alphas)
+    with pytest.raises(err_type, match=err_msg):
+        lassocv.fit(X, y)
 
 
 def _scale_alpha_inplace(estimator, n_samples):
@@ -1686,9 +1713,6 @@ def test_linear_models_cv_fit_with_loky(estimator):
     # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
     # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
-
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        pytest.skip("loky backend does not exist in joblib <0.12")
 
     # Create a problem sufficiently large to cause memmapping (1MB).
     # Unfortunately the scikit-learn and joblib APIs do not make it possible to
