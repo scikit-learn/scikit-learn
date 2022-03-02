@@ -352,6 +352,12 @@ class IterativeImputer(_BaseImputer):
                 imputed_values, self._min_value[feat_idx], self._max_value[feat_idx]
             )
 
+        # Ensure that all the arrays in the multidimensional array has the 
+        # same length to avoid value error due to shape mismatch 
+        if len(imputed_values.shape) > 1:
+            len_of_first_row = imputed_values.shape[0]
+            imputed_values = imputed_values.reshape(len_of_first_row)
+        
         # update the feature
         X_filled[missing_row_mask, feat_idx] = imputed_values
         return X_filled, estimator
