@@ -22,3 +22,12 @@ jobs:
           pip install check-manifest scipy cython
       - run: |
           check-manifest -v
+
+  update-tracker:
+    uses: ./.github/workflows/update_tracking_issue.yml
+    if: ${{ always() }}
+    needs: [check-manifest]
+    with:
+      job_status: ${{ needs.check-manifest.result }}
+    secrets:
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}

@@ -14,7 +14,6 @@ from ...utils import deprecated
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import check_random_state
 from ...utils import _safe_indexing
-from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import delayed
 
 
@@ -1267,7 +1266,6 @@ class PartialDependenceDisplay:
             ax.set_xlabel(self.feature_names[feature_idx[0]])
         ax.set_ylabel(self.feature_names[feature_idx[1]])
 
-    @_deprecate_positional_args(version="1.1")
     def plot(
         self,
         *,
