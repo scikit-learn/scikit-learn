@@ -253,7 +253,6 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 from sklearn.inspection import partial_dependence
 
 fig = plt.figure()
