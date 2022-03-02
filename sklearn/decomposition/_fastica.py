@@ -72,7 +72,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     # j is the index of the extracted component
     for j in range(n_components):
         w = w_init[j, :].copy()
-        w /= np.sqrt((w ** 2).sum())
+        w /= np.sqrt((w**2).sum())
 
         for i in range(max_iter):
             gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
@@ -81,7 +81,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
 
             _gs_decorrelation(w1, W, j)
 
-            w1 /= np.sqrt((w1 ** 2).sum())
+            w1 /= np.sqrt((w1**2).sum())
 
             lim = np.abs(np.abs((w1 * w).sum()) - 1)
             w = w1
@@ -132,19 +132,19 @@ def _logcosh(x, fun_args=None):
     g_x = np.empty(x.shape[0])
     # XXX compute in chunks to avoid extra allocation
     for i, gx_i in enumerate(gx):  # please don't vectorize.
-        g_x[i] = (alpha * (1 - gx_i ** 2)).mean()
+        g_x[i] = (alpha * (1 - gx_i**2)).mean()
     return gx, g_x
 
 
 def _exp(x, fun_args):
-    exp = np.exp(-(x ** 2) / 2)
+    exp = np.exp(-(x**2) / 2)
     gx = x * exp
-    g_x = (1 - x ** 2) * exp
+    g_x = (1 - x**2) * exp
     return gx, g_x.mean(axis=-1)
 
 
 def _cube(x, fun_args):
-    return x ** 3, (3 * x ** 2).mean(axis=-1)
+    return x**3, (3 * x**2).mean(axis=-1)
 
 
 def fastica(

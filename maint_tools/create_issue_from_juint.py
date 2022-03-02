@@ -77,7 +77,7 @@ failure_cases = []
 error = tree.find("./testsuite/testcase/error")
 if error is not None:
     # Get information for test collection error
-    failure_cases.append({"title": "Test Collection Failure", "body": error.text})
+    failure_cases.append("Test Collection Failure")
 
 for item in tree.iter("testcase"):
     failure = item.find("failure")
