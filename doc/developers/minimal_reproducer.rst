@@ -41,21 +41,19 @@ MCVE from it.
     # I am currently working in a ML project and when I tried to fit a
     # GradientBoostingRegressor instance to my_data.csv I get a UserWarning:
     # "X has feature names, but DecisionTreeRegressor was fitted without feature
-    # names". You can get a copy of my dataset from www.this_link.com and verify
-    # my features do have names. The problem seems to arise during fit when I pass
-    # an integer to the n_iter_no_change parameter.
+    # names". You can get a copy of my dataset from
+    # https://example.com/my_data.csv and verify my features do have
+    # names. The problem seems to arise during fit when I pass an integer
+    # to the n_iter_no_change parameter.
 
-    import pandas as pd
     df = pd.read_csv('my_data.csv')
     X = df[["feature_name"]] # my features do have names
     y = df["target"]
 
     # We set random_state=42 for the train_test_split
-    from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.33, random_state=42)
 
-    from sklearn.ensemble import GradientBoostingRegressor
 
     # An instance with default n_iter_no_change raises no error nor warnings
     gbdt = GradientBoostingRegressor(random_state=0)
@@ -74,11 +72,16 @@ from the code itself. Besides, by this point you already provided a concise
 description in the **Describe the bug** section of the Issue template.
 
 **Improved example**
-
+The following code, while **still not minimal**, is already **much better** because
+it can be copy-pasted in a python terminal to reproduce the problem in one step.
+In particular:
+- it contains **all necessary imports statements**;
+- it can fetch the public dataset without having to manually download a
+  file and put it in the expected location on the disk.
 .. code-block:: python
 
     import pandas as pd
-    df = pd.read_csv('my_data.csv')
+    df = pd.read_csv("https://example.com/my_data.csv")
     X = df[["feature_name"]]
     y = df["target"]
 
@@ -89,7 +92,7 @@ description in the **Describe the bug** section of the Issue template.
     from sklearn.ensemble import GradientBoostingRegressor
 
     gbdt = GradientBoostingRegressor(random_state=0)
-    gbdt.fit(X_train, y_train) # compiles
+    gbdt.fit(X_train, y_train)  # no warning
 
     gbdt = GradientBoostingRegressor(random_state=0, n_iter_no_change=5)
     gbdt.fit(X_train, y_train) # raises warning
@@ -108,14 +111,14 @@ do with the `train_test_split`, nor the `random_state`.
 .. code-block:: python
 
     import pandas as pd
-    df = pd.read_csv('my_data.csv')
+    df = pd.read_csv("https://example.com/my_data.csv")
     X = df[["feature_name"]]
     y = df["target"]
 
     from sklearn.ensemble import GradientBoostingRegressor
 
     gbdt = GradientBoostingRegressor()
-    gbdt.fit(X, y) # compiles
+    gbdt.fit(X, y)  # no warning
 
     gbdt = GradientBoostingRegressor(n_iter_no_change=5)
     gbdt.fit(X, y) # raises warning
@@ -144,7 +147,7 @@ feature names.
     from sklearn.ensemble import GradientBoostingRegressor
 
     gbdt = GradientBoostingRegressor()
-    gbdt.fit(X, y) # compiles
+    gbdt.fit(X, y)  # no warning
 
     gbdt = GradientBoostingRegressor(n_iter_no_change=5)
     gbdt.fit(X, y) # raises warning
@@ -185,8 +188,8 @@ Place all your imports in their own group at the beginning of the snippet.
     gbdt.fit(X, y) # raises warning
 
 
-Use markdown
-------------
+Use markdown formatting
+-----------------------
 
 To format code or text into its own distinct block, use triple backticks.
 `Markdown
@@ -267,12 +270,12 @@ Once that you narrowed down the type of problem, you need to provide a synthetic
 dataset accordingly. Most of the times you only need a minimalistic dataset.
 Here is a non-exhaustive list of tools that may help you.
 
-Numpy
+NumPy
 -----
 
-Numpy tools such as `random.randn
+NumPy tools such as `numpy.random.randn
 <https://numpy.org/doc/stable/reference/random/generated/numpy.random.randn.html>`_
-and `random.randint
+and `numpy.random.randint
 <https://numpy.org/doc/stable/reference/random/generated/numpy.random.randint.html>`_
 can be used to create dummy numeric data.
 
@@ -305,7 +308,7 @@ as :class:`sklearn.preprocessing.StandardScaler`.
         rng = np.random.RandomState(0)
         n_samples, n_features = 5, 5
         X = rng.randn(n_samples, n_features)
-        y = rng.randint(0, 2, n_samples)
+        y = rng.randint(0, 2, n_samples)  # binary target with values in {0, 1}
 
     If you need to test encoding, you may prefer to start from non-numeric data.
     In such case you may use `numpy.random.choice
@@ -338,10 +341,14 @@ transform numpy arrays into pandas objects using `pandas.DataFrame
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 5, 5
-    X = rng.randn(n_samples, n_features)
-    y = rng.randn(n_samples)
-    X = pd.DataFrame(X)
-    y = pd.Series(y)
+    X = pd.DataFrame(
+        {
+            "continuous_feature": rng.randn(n_samples),
+            "positive_feature": rng.uniform(low=0.0, high=100.0, size=n_samples),
+            "categorical_feature": rng.choice(["a", "b", "c"], size=n_samples),
+        }
+    )
+    y = pd.Series(rng.randn(n_samples))
 
 In addition, scikit-learn includes various :ref:`sample_generators` that can be
 used to build artificial datasets of controlled size and complexity.
@@ -399,6 +406,4 @@ of the data, e.g. dealing with missing values or image recognition.
 
     from sklearn.datasets import load_breast_cancer
 
-    cancer = load_breast_cancer()
-    X = cancer.data
-    y = cancer.target
+    X, y = load_breast_cancer(return_X_y=True)
