@@ -1,8 +1,8 @@
 .. _minimal_reproducer:
 
-===========================================
-Craft a minimal reproducer for scikit-learn
-===========================================
+=============================================
+Crafting a minimal reproducer for scikit-learn
+=============================================
 
 
 Whether submitting a bug report, designing a suite of tests, or simply posting a
@@ -54,7 +54,8 @@ that has room for readability improvement. We then craft a MCVE from it.
 
     # We set random_state=42 for the train_test_split
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.33, random_state=42)
+        X, y, test_size=0.33, random_state=42
+    )
 
     scaler = StandardScaler(with_mean=False)
     X_train = scaler.fit_transform(X_train)
@@ -63,12 +64,13 @@ that has room for readability improvement. We then craft a MCVE from it.
     # An instance with default n_iter_no_change raises no error nor warnings
     gbdt = GradientBoostingRegressor(random_state=0)
     gbdt.fit(X_train, y_train)
-
     default_score = gbdt.score(X_test, y_test)
 
     # the bug appears when I change the value for n_iter_no_change
     gbdt = GradientBoostingRegressor(random_state=0, n_iter_no_change=5)
     gbdt.fit(X_train, y_train)
+    other_score = gbdt.score(X_test, y_test)
+
     other_score = gbdt.score(X_test, y_test)
 
 
@@ -83,7 +85,7 @@ section of the `Issue template
 <https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
 
 The following code, while **still not minimal**, is already **much better**
-because it can be copy-pasted in a python terminal to reproduce the problem in
+because it can be copy-pasted in a Python terminal to reproduce the problem in
 one step. In particular:
 
     - it contains **all necessary imports statements**;
@@ -95,13 +97,16 @@ one step. In particular:
 .. code-block:: python
 
     import pandas as pd
+
     df = pd.read_csv("https://example.com/my_data.csv")
     X = df[["feature_name"]]
     y = df["target"]
 
     from sklearn.model_selection import train_test_split
+
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.33, random_state=42)
+        X, y, test_size=0.33, random_state=42
+    )
 
     from sklearn.preprocessing import StandardScaler
 
@@ -116,7 +121,8 @@ one step. In particular:
     default_score = gbdt.score(X_test, y_test)
 
     gbdt = GradientBoostingRegressor(random_state=0, n_iter_no_change=5)
-    gbdt.fit(X_train, y_train) # raises warning
+    gbdt.fit(X_train, y_train)  # raises warning
+    other_score = gbdt.score(X_test, y_test)
     other_score = gbdt.score(X_test, y_test)
 
 
@@ -154,7 +160,7 @@ In particular, for this specific example:
     gbdt.fit(X, y)  # no warning
 
     gbdt = GradientBoostingRegressor(n_iter_no_change=5)
-    gbdt.fit(X, y) # raises warning
+    gbdt.fit(X, y)  # raises warning
 
 
 **DO NOT** report your data unless it is extremely necessary
@@ -193,7 +199,8 @@ As already mentioned, the key to communication is the readability of the code
 and good formatting can really be a plus. Notice that in the previous snippet
 we:
 
-    - try to limit all lines to a maximum of 79 characters;
+    - try to limit all lines to a maximum of 79 characters to avoid horizontal
+      scrollbars in the code snippets blocks rendered on the GitHub issue;
     - use blank lines to separate groups of related functions;
     - place all the imports in their own group at the beginning.
 
@@ -240,7 +247,7 @@ It is not necessary to create several blocks of code when submitting a bug
 report. Remember other reviewers are going to copy-paste your code and having a
 single cell will make their task easier.
 
-In the section `**Actual results**` of the `Issue template
+In the section named **Actual results** of the `Issue template
 <https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_
 you are asked to provide the error message including the full traceback of the
 exception. In this case, use the `python-traceback` qualifier. For example::
@@ -327,8 +334,9 @@ as :class:`sklearn.preprocessing.StandardScaler`.
         X = rng.randn(n_samples, n_features)
         y = rng.randint(0, 2, n_samples)  # binary target with values in {0, 1}
 
-    If you need to test encoding, you may prefer to start from non-numeric data.
-    In such case you may use `numpy.random.choice
+
+    If the bug only happens with non-numeric class labels, you might want to
+    generate a random target with `numpy.random.choice
     <https://numpy.org/doc/stable/reference/random/generated/numpy.random.choice.html>`_.
 
     .. code-block:: python
