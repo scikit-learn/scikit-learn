@@ -36,7 +36,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: doc-min-deps-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
