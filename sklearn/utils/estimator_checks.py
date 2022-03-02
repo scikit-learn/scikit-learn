@@ -3661,7 +3661,6 @@ def check_requires_y_none(name, estimator_orig):
 
     try:
         estimator.fit(X, None)
-        print(estimator.__class__.__name__)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
             raise ve
