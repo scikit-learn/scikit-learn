@@ -14,7 +14,6 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
-from ..utils.fixes import linspace
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
 from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
@@ -667,7 +666,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             x_min = np.amin(X[mask], axis=0)
             x_max = np.amax(X[mask], axis=0)
 
-            knots = linspace(
+            knots = np.linspace(
                 start=x_min,
                 stop=x_max,
                 num=n_knots,
@@ -853,13 +852,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             dist_max = base_knots[-1] - base_knots[-2]
 
             knots = np.r_[
-                linspace(
+                np.linspace(
                     base_knots[0] - degree * dist_min,
                     base_knots[0] - dist_min,
                     num=degree,
                 ),
                 base_knots,
-                linspace(
+                np.linspace(
                     base_knots[-1] + dist_max,
                     base_knots[-1] + degree * dist_max,
                     num=degree,

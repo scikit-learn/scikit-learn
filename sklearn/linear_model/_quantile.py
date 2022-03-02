@@ -174,11 +174,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             "revised simplex",
         ):
             raise ValueError(f"Invalid value for argument solver, got {self.solver}")
-        elif self.solver == "revised simplex" and sp_version < parse_version("1.3.0"):
-            raise ValueError(
-                "Solver 'revised simplex' is only available "
-                f"with scipy>=1.3.0, got {sp_version}"
-            )
         elif self.solver in (
             "highs-ds",
             "highs-ipm",
