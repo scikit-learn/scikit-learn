@@ -480,10 +480,7 @@ def test_warning_bounds():
     )
     gpr_sum = GaussianProcessRegressor(kernel=kernel_sum)
     with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            gpr_sum.fit(X, y)
+        gpr_sum.fit(X, y)
 
     assert len(record) == 2
     assert (
@@ -511,10 +508,7 @@ def test_warning_bounds():
     gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
 
     with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            gpr_dims.fit(X_tile, y)
+        gpr_dims.fit(X_tile, y)
 
     assert len(record) == 2
     assert (
