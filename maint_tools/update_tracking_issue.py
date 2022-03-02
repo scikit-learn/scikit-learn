@@ -87,7 +87,7 @@ def close_issue_if_opened():
         new_body = (
             "## Closed issue because CI is no longer failing! ✅\n\n"
             f"[Successful run]({args.link_to_ci_run})\n\n"
-            "## Previous failing issue\n\n"
+            "## Previous failure report\n\n"
             f"{issue.body}"
         )
         issue.edit(state="closed", body=new_body)
