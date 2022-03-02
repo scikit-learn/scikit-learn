@@ -680,8 +680,7 @@ Changelog
 
 - |Feature| :class:`preprocessing.OneHotEncoder` now supports grouping
   infrequent categories into a single feature. Grouping infrequent categories
-  is enabled by setting `handle_unknown` to `'infrequent_if_exist'` or
-  `'error'` and specifying how to select infrequent categories with
+  is enabled by specifying how to select infrequent categories with
   `min_frequency` or `max_categories`. :pr:`16018` by `Thomas Fan`_.
 
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.

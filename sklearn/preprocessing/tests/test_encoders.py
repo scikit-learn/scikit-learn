@@ -1046,6 +1046,14 @@ def test_ohe_infrequent_two_levels_drop_infrequent(drop):
     X_inverse = ohe.inverse_transform(X_trans)
     assert_array_equal([["b"], ["infrequent_sklearn"]], X_inverse)
 
+    # Check handle_unknown="ignore"
+    ohe.set_params(handle_unknown="ignore").fit(X_train)
+    msg = "Found unknown categories"
+    with pytest.warns(UserWarning, match=msg):
+        X_trans = ohe.transform([["b"], ["e"]])
+
+    assert_allclose([[1], [0]], X_trans)
+
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
@@ -1107,6 +1115,14 @@ def test_ohe_infrequent_three_levels_drop_frequent(drop):
 
     X_test = np.array([["b"], ["c"], ["d"]])
     assert_allclose([[0, 0], [1, 0], [0, 1]], ohe.transform(X_test))
+
+    # Check handle_unknown="ignore"
+    ohe.set_params(handle_unknown="ignore").fit(X_train)
+    msg = "Found unknown categories"
+    with pytest.warns(UserWarning, match=msg):
+        X_trans = ohe.transform([["b"], ["e"]])
+
+    assert_allclose([[0, 0], [0, 0]], X_trans)
 
 
 @pytest.mark.parametrize("drop", [["a"], ["d"]])
