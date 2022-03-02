@@ -260,6 +260,7 @@ def test_entropy():
     ent = entropy([0, 0, 42.0])
     assert_almost_equal(ent, 0.6365141, 5)
     assert_almost_equal(entropy([]), 1)
+    assert entropy([1, 1, 1, 1]) == 0
 
 
 def test_contingency_matrix():
@@ -366,11 +367,13 @@ def test_fowlkes_mallows_score_properties():
         ([1] * 6, [1, 1, 0, 0, 1, 1]),
         ([1, 1, 0, 0, 1, 1], ["a"] * 6),
         ([1, 1, 0, 0, 1, 1], [1] * 6),
+        (["a"] * 6, ["a"] * 6),
     ],
 )
 def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
+    # Check that MI = 0 when one or both labelling are constant
     # non-regression test for #16355
-    assert mutual_info_score(labels_true, labels_pred) >= 0
+    assert mutual_info_score(labels_true, labels_pred) == 0
 
 
 def test_check_clustering_error():
@@ -461,3 +464,23 @@ def test_adjusted_rand_score_overflow():
     with pytest.warns(None) as record:
         adjusted_rand_score(y_true, y_pred)
     assert not [w.message for w in record]
+
+
+@pytest.mark.parametrize("average_method", ["min", "arithmetic", "geometric", "max"])
+def test_normalized_mutual_info_score_bounded(average_method):
+    """Check that nmi returns a score between 0 (included) and 1 (excluded
+    for non-perfect match)
+
+    Non-regression test for issue #13836
+    """
+    labels1 = [0] * 469
+    labels2 = [1] + labels1[1:]
+    labels3 = [0, 1] + labels1[2:]
+
+    # labels1 is constant. The mutual info between labels1 and any other labelling is 0.
+    nmi = normalized_mutual_info_score(labels1, labels2, average_method=average_method)
+    assert nmi == 0
+
+    # non constant, non perfect matching labels
+    nmi = normalized_mutual_info_score(labels2, labels3, average_method=average_method)
+    assert 0 <= nmi < 1
