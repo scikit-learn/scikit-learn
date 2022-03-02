@@ -160,6 +160,13 @@ feature names.
     gbdt = GradientBoostingRegressor(n_iter_no_change=5)
     gbdt.fit(X, y) # raises warning
 
+As already mentioned, the key to communication is the readability of the code
+and good formatting can really be a plus. Notice that in the previous snippet
+we:
+
+    - try to limit all lines to a maximum of 79 characters;
+    - use blank lines to separate groups of related functions;
+    - place all the imports in their own group at the beginning.
 
 Use markdown formatting
 -----------------------
