@@ -74,10 +74,11 @@ that has room for readability improvement. We then craft a MCVE from it.
 Provide a failing code example with minimal comments
 ----------------------------------------------------
 
-Instructions may get lost in translation for non-native english speakers.
-Hence, it is better that all the necessary information can be read
-from the code itself. Besides, by this point you already provided a concise
-description in the **Describe the bug** section of the `Issue template
+
+Writing instructions to reproduce the problem in English is often ambiguous.
+Better make sure that all the necessary details to reproduce the problem are
+illustrated in the Python code snippet to avoid any ambiguity. Besides, by this
+point you already provided a concise description in the **Describe the bug** section of the `Issue template
 <https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
 
 **Improved example**
