@@ -3,7 +3,7 @@ from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils._testing import ignore_warnings, fails_if_pypy
+from sklearn.utils._testing import fails_if_pypy
 
 pytestmark = fails_if_pypy
 

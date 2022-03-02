@@ -16,7 +16,6 @@ from sklearn.feature_extraction.image import (
     PatchExtractor,
     _extract_patches,
 )
-from sklearn.utils._testing import ignore_warnings
 
 
 def test_img_to_graph():

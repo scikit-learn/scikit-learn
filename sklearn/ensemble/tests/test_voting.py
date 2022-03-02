@@ -1,6 +1,5 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
-import warnings
 import pytest
 import re
 import numpy as np
