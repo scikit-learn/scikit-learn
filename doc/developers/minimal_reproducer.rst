@@ -42,8 +42,8 @@ that has room for readability improvement. We then craft a MCVE from it.
 
     # I am currently working in a ML project and when I tried to fit a
     # GradientBoostingRegressor instance to my_data.csv I get a UserWarning:
-    # "X has feature names, but DecisionTreeRegressor was fitted without feature
-    # names". You can get a copy of my dataset from
+    # "X has feature names, but DecisionTreeRegressor was fitted without
+    # feature names". You can get a copy of my dataset from
     # https://example.com/my_data.csv and verify my features do have
     # names. The problem seems to arise during fit when I pass an integer
     # to the n_iter_no_change parameter.
@@ -124,9 +124,9 @@ Boil down your script to something as small as possible
 -------------------------------------------------------
 
 You have to ask yourself which lines of code are relevant and which are not for
-reproducing the bug. Deleting unnecessary lines of code or simplifying the function
-calls by omitting unrelated non-default options will help you and other contributors
-narrow down the cause of the bug.
+reproducing the bug. Deleting unnecessary lines of code or simplifying the
+function calls by omitting unrelated non-default options will help you and other
+contributors narrow down the cause of the bug.
 
 In particular, for this specific example:
 
@@ -135,7 +135,7 @@ In particular, for this specific example:
 - similarly, the lines that compute the scores on the test set are not
   necessary;
 - the bug can be reproduced for any value of `random_state` so leave it to its
-   default;
+  default;
 - the bug can be reproduced without preprocessing the data with the
   `StandardScaler`.
 
@@ -401,10 +401,10 @@ uninformative features.
 `make_blobs`
 ------------
 
-Similarly to `make_classification`, :class:`sklearn.datasets.make_blobs` creates multiclass
-datasets using normally-distributed clusters of points. It provides greater
-control regarding the centers and standard deviations of each cluster, and
-therefore it is useful to demonstrate clustering.
+Similarly to `make_classification`, :class:`sklearn.datasets.make_blobs` creates
+multiclass datasets using normally-distributed clusters of points. It provides
+greater control regarding the centers and standard deviations of each cluster,
+and therefore it is useful to demonstrate clustering.
 
 .. code-block:: python
 
