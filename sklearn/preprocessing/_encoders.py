@@ -265,6 +265,9 @@ class OneHotEncoder(_BaseEncoder):
         .. versionchanged:: 0.23
            The option `drop='if_binary'` was added in 0.23.
 
+        .. versionchanged:: 1.1
+            Support for dropping infrequent categories.
+
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
@@ -275,8 +278,7 @@ class OneHotEncoder(_BaseEncoder):
                      default='error'
         Specifies the way unknown categories are handled during :meth:`transform`.
 
-        - 'error' : Raise an error if an unknown category feature
-          is present during transform.
+        - 'error' : Raise an error if an unknown category is present during transform.
         - 'ignore' : When an unknown category is encountered during
           transform, the resulting one-hot encoded columns for this feature
           will be all zeros. In the inverse transform, an unknown category
@@ -671,8 +673,8 @@ class OneHotEncoder(_BaseEncoder):
         n_samples : int
             Number of samples in training set.
         category_counts: list of ndarray
-            List of counts corresponding where `category_counts[i]` are the
-            counts for each category in `self.categories_[i]`.
+            `category_counts[i]` is the category counts corresponding to
+            `self.categories_[i]`.
         """
         self.infrequent_indices_ = [
             self._identify_infrequent(category_count, n_samples, col_idx)
