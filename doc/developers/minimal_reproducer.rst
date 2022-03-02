@@ -1,8 +1,8 @@
 .. _minimal_reproducer:
 
-=============================================
+==============================================
 Crafting a minimal reproducer for scikit-learn
-=============================================
+==============================================
 
 
 Whether submitting a bug report, designing a suite of tests, or simply posting a
