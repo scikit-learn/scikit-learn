@@ -459,7 +459,7 @@ Changelog
   now raise consistent error messages when passed invalid values for `l1_ratio`,
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
-  
+
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
   with a shape that respects the docstring and that is consistent with the shape
@@ -500,6 +500,10 @@ Changelog
 - |Enhancement| :func:`metrics.roc_auc_score` now supports ``average=None``
   in the multiclass case when ``multiclass='ovr'`` which will return the score
   per class. :pr:`19158` by :user:`Nicki Skafte <SkafteNicki>`.
+
+- |Feature| :func:`likelihood_ratios` is added to compute the positive and negative
+  likelihood ratios derived from the class-wise multilabel confusion matrix.
+  :pr:`22518` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.manifold`
 .......................
