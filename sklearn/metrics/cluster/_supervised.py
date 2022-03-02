@@ -800,6 +800,12 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
     pj = np.ravel(contingency.sum(axis=0))
+
+    # Since MI <= min(H(X), H(Y)), any labelling with zero entropy, i.e. containing a
+    # single cluster, implies MI = 0
+    if pi.size == 1 or pj.size == 1:
+        return 0.0
+
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
@@ -910,13 +916,16 @@ def adjusted_mutual_info_score(
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
+
     # Special limit cases: no clustering since the data is not split.
+    # It corresponds to both labellings having zero entropy.
     # This is a perfect match hence return 1.0.
     if (
         classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
@@ -1021,24 +1030,30 @@ def normalized_mutual_info_score(
     clusters = np.unique(labels_pred)
 
     # Special limit cases: no clustering since the data is not split.
+    # It corresponds to both labellings having zero entropy.
     # This is a perfect match hence return 1.0.
     if (
         classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
-    # Calculate the expected value for the mutual information
+
+    # At this point mi = 0 can't be a perfect match (the special case of a single
+    # cluster has been dealt with before). Hence, if mi = 0, the nmi must be 0 whatever
+    # the normalization.
+    if mi == 0:
+        return 0.0
+
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    # Avoid 0.0 / 0.0 when either entropy is zero.
-    normalizer = max(normalizer, np.finfo("float64").eps)
-    nmi = mi / normalizer
-    return nmi
+    return mi / normalizer
 
 
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
@@ -1124,8 +1139,8 @@ def entropy(labels):
 
     Parameters
     ----------
-    labels : int array, shape = [n_samples]
-        The labels
+    labels : array-like of shape (n_samples,), dtype=int
+        The labels.
 
     Notes
     -----
@@ -1136,6 +1151,11 @@ def entropy(labels):
     label_idx = np.unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float64)
     pi = pi[pi > 0]
+
+    # single cluster => zero entropy
+    if pi.size == 1:
+        return 0.0
+
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
