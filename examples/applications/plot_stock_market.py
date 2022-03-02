@@ -8,8 +8,6 @@ the stock market structure from variations in historical quotes.
 
 The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to fluctuate in relation to each other during a day.
-
-.. _stock_market:
 """
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
@@ -107,6 +105,8 @@ open_prices = np.vstack([q["open"] for q in quotes])
 variation = close_prices - open_prices
 
 # %%
+# .. _stock_market:
+#
 # Learning a graph structure
 # --------------------------
 #
