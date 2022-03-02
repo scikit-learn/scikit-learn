@@ -83,15 +83,8 @@ def test_grid_to_graph():
     assert A.dtype == np.float64
 
 
-@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
-
-        face = misc.face(gray=True)
+    face = sp.misc.face(gray=True)
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
     for thr in (50, 150):
@@ -100,15 +93,8 @@ def test_connect_regions():
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
-@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions_with_grid():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
-
-        face = misc.face(gray=True)
+    face = sp.misc.face(gray=True)
 
     # subsample by 4 to reduce run time
     face = face[::4, ::4]

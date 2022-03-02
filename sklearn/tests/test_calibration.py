@@ -491,7 +491,6 @@ def test_calibration_less_classes(ensemble):
             assert np.allclose(proba, 1 / proba.shape[0])
 
 
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "X",
     [
