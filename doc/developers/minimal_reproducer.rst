@@ -55,14 +55,21 @@ that has room for readability improvement. We then craft a MCVE from it.
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.33, random_state=42)
 
+    scaler = StandardScaler(with_mean=False)
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
     # An instance with default n_iter_no_change raises no error nor warnings
     gbdt = GradientBoostingRegressor(random_state=0)
     gbdt.fit(X_train, y_train)
 
+    default_score = gbdt.score(X_test, y_test)
+
     # the bug appears when I change the value for n_iter_no_change
     gbdt = GradientBoostingRegressor(random_state=0, n_iter_no_change=5)
     gbdt.fit(X_train, y_train)
+    other_score = gbdt.score(X_test, y_test)
+
 
 Provide a failing code example with minimal comments
 ----------------------------------------------------
@@ -93,22 +100,39 @@ one step. In particular:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.33, random_state=42)
 
+    from sklearn.preprocessing import StandardScaler
+
+    scaler = StandardScaler(with_mean=False)
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
     from sklearn.ensemble import GradientBoostingRegressor
 
     gbdt = GradientBoostingRegressor(random_state=0)
     gbdt.fit(X_train, y_train)  # no warning
+    default_score = gbdt.score(X_test, y_test)
 
     gbdt = GradientBoostingRegressor(random_state=0, n_iter_no_change=5)
     gbdt.fit(X_train, y_train) # raises warning
+    other_score = gbdt.score(X_test, y_test)
 
 
 Boil down your script to something as small as possible
 -------------------------------------------------------
 
 You have to ask yourself which lines of code are relevant and which are not for
-raising the bug. Erasing unnecessary lines of code will help you and other
-contributors narrow down the bug. In this example the warning has nothing to
-do with the `train_test_split`, nor the `random_state`.
+reproducing the bug. Deleting unnecessary lines of code or simplifying the function
+calls by omitting unrelated non-default options will help you and other contributors
+narrow down the cause of the bug.
+
+In particular, for  this specific example:
+
+- the warning has nothing to do with the `train_test_split` since it already appears
+   in the training set.
+- similarly, the lines that compute the scores on the test set are not necessary;
+- the bug can be reproduced for any value of`random_state` so leave it to its
+   default;
+- the bug can be reproduced without preprocessing the data with the
+  `StandardScaler`.
 
 **Improved example**
 
