@@ -874,8 +874,8 @@ def check_array(
             warnings.warn(
                 "Arrays of bytes/strings is being converted to decimal "
                 "numbers if dtype='numeric'. This behavior is deprecated in "
-                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
-                "convert your data to numeric values explicitly instead.",
+                "0.24 and will be removed in 1.3. Please convert your data to numeric "
+                "values explicitly instead.",
                 FutureWarning,
                 stacklevel=2,
             )

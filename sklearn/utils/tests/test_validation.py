@@ -401,7 +401,7 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 1.1 when implicit conversion is removed
+# TODO: Check for error in 1.3 when implicit conversion is removed
 @pytest.mark.parametrize(
     "X",
     [
@@ -417,13 +417,13 @@ def test_check_array_numeric_warns(X):
     float."""
     expected_msg = (
         r"Arrays of bytes/strings is being converted to decimal .*"
-        r"deprecated in 0.24 and will be removed in 1.1"
+        r"deprecated in 0.24 and will be removed in 1.3"
     )
     with pytest.warns(FutureWarning, match=expected_msg):
         check_array(X, dtype="numeric")
 
 
-# TODO: remove in 1.1
+# TODO: remove in 1.3
 @ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "X",
@@ -481,7 +481,7 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
         check_array(X, force_all_finite=True)
 
 
-# TODO: remove test in 1.1 once this behavior is deprecated
+# TODO: remove test in 1.3 once this behavior is deprecated
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
     # get converted
