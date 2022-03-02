@@ -971,7 +971,6 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
         sparse=False,
         **kwargs,
     ).fit(X_train)
-    assert_array_equal(ohe.infrequent_indices_, [[0, 2, 3]])
     assert_array_equal(ohe.infrequent_categories_, [["a", "c", "d"]])
 
     X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
@@ -1077,7 +1076,6 @@ def test_ohe_infrequent_three_levels(kwargs):
     ohe = OneHotEncoder(
         handle_unknown="infrequent_if_exist", sparse=False, **kwargs
     ).fit(X_train)
-    assert_array_equal(ohe.infrequent_indices_, [[0, 3]])
     assert_array_equal(ohe.infrequent_categories_, [["a", "d"]])
 
     X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
@@ -1145,7 +1143,7 @@ def test_ohe_infrequent_handle_unknown_error():
     ohe = OneHotEncoder(handle_unknown="error", sparse=False, max_categories=3).fit(
         X_train
     )
-    assert_array_equal(ohe.infrequent_indices_, [[0, 3]])
+    assert_array_equal(ohe.infrequent_categories_, [["a", "d"]])
 
     # all categories are known
     X_test = [["b"], ["a"], ["c"], ["d"]]
@@ -1193,9 +1191,7 @@ def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
 
 
 def test_ohe_infrequent_two_levels_user_cats():
-    """Test that the order of the categories provided by a user is respected.
-    Specifically, the infrequent_indices_ correspond to the user provided
-    categories."""
+    """Test that the order of the categories provided by a user is respected."""
     X_train = np.array(
         [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object
     ).T
@@ -1206,7 +1202,7 @@ def test_ohe_infrequent_two_levels_user_cats():
         max_categories=2,
     ).fit(X_train)
 
-    assert_array_equal(ohe.infrequent_indices_, [[0, 1, 2]])
+    assert_array_equal(ohe.infrequent_categories_, [["c", "d", "a"]])
 
     X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
     expected = np.array([[1, 0], [0, 1], [0, 1], [0, 1], [0, 1]])
@@ -1236,7 +1232,6 @@ def test_ohe_infrequent_three_levels_user_cats():
         max_categories=3,
     ).fit(X_train)
 
-    assert_array_equal(ohe.infrequent_indices_, [[1, 3]])
     assert_array_equal(ohe.infrequent_categories_, [["d", "a"]])
 
     X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
@@ -1300,11 +1295,8 @@ def test_ohe_infrequent_multiple_categories():
     # X[:, 2] nothing is infrequent
 
     X_trans = ohe.fit_transform(X).toarray()
-    assert_array_equal(ohe.infrequent_indices_[0], [1, 2])
     assert_array_equal(ohe.infrequent_categories_[0], [1, 2])
-    assert_array_equal(ohe.infrequent_indices_[1], [1, 3])
     assert_array_equal(ohe.infrequent_categories_[1], [1, 10])
-    assert_array_equal(ohe.infrequent_indices_[2], None)
     assert_array_equal(ohe.infrequent_categories_[2], None)
 
     # 'infrequent' is used to denote the infrequent categories
@@ -1400,8 +1392,8 @@ def test_ohe_infrequent_multiple_categories_dtypes():
     # 0, 3, 12 will be considered infrequent
 
     X_trans = ohe.fit_transform(X).toarray()
-    assert_allclose(ohe.infrequent_indices_[0], [0, 1])
-    assert_allclose(ohe.infrequent_indices_[1], [0, 1, 4])
+    assert_array_equal(ohe.infrequent_categories_[0], ["a", "b"])
+    assert_array_equal(ohe.infrequent_categories_[1], [0, 3, 12])
 
     expected = [
         [0, 0, 1, 1, 0, 0],

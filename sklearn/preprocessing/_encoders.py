@@ -290,7 +290,7 @@ class OneHotEncoder(_BaseEncoder):
           encoding. During inverse transform, an unknown category will be
           mapped to the category denoted `'infrequent'` if it exists. If the
           `'infrequent'` category does not exist, then :meth:`transform` and
-          :meth:`inverse_transform` will handle an unknown category with
+          :meth:`inverse_transform` will handle an unknown category as with
           `handle_unknown='ignore'`. Infrequent categories exist based on
           `min_frequency` and `max_categories`. Read more in the
           :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
@@ -350,21 +350,12 @@ class OneHotEncoder(_BaseEncoder):
     infrequent_categories_ : list of ndarray
         Defined only if infrequent categories are enabled by setting
         `min_frequency` or `max_categories` to a non-default value.
-        `infrequent_indices_[i]` are the infrequent categories for feature `i`.
-        If the feature `i` has no infrequent categories
+        `infrequent_categories_[i]` are the infrequent categories for feature
+        `i`. If the feature `i` has no infrequent categories
         `infrequent_categories_[i]` is None.
 
         .. versionadded:: 1.1
 
-    infrequent_indices_ : list of ndarray
-        Defined only if infrequent categories are enabled by setting
-        `min_frequency` or `max_categories` to a non-default value.
-        `infrequent_indices_[i]` is an array of indices such that
-        `categories_[i][infrequent_indices_[i]]` are all the infrequent
-        category labels. If the feature `i` has no infrequent categories
-        `infrequent_indices_[i]` is None.
-
-        .. versionadded:: 1.1
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -430,6 +421,17 @@ class OneHotEncoder(_BaseEncoder):
     >>> drop_binary_enc.transform([['Female', 1], ['Male', 2]]).toarray()
     array([[0., 1., 0., 0.],
            [1., 0., 1., 0.]])
+
+    Infrequent categories are enabled by setting `max_categories` or `min_frequency`.
+
+    >>> import numpy as np
+    >>> X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
+    >>> ohe = OneHotEncoder(max_categories=3, sparse=False).fit(X)
+    >>> ohe.infrequent_categories_
+    [array(['a', 'd'], dtype=object)]
+    >>> ohe.transform([["a"], ["b"]])
+    array([[0., 0., 1.],
+           [1., 0., 0.]])
     """
 
     def __init__(
@@ -454,8 +456,8 @@ class OneHotEncoder(_BaseEncoder):
     @property
     def infrequent_categories_(self):
         """Infrequent categories for each feature."""
-        # raises an AttributeError if `infrequent_indices_` is not defined
-        infrequent_indices = self.infrequent_indices_
+        # raises an AttributeError if `_infrequent_indices` is not defined
+        infrequent_indices = self._infrequent_indices
         return [
             None if indices is None else category[indices]
             for category, indices in zip(self.categories_, infrequent_indices)
@@ -536,7 +538,7 @@ class OneHotEncoder(_BaseEncoder):
             elif self.drop == "if_binary":
                 n_features_out_no_drop = [len(cat) for cat in self.categories_]
                 if self._infrequent_enabled:
-                    for i, infreq_idx in enumerate(self.infrequent_indices_):
+                    for i, infreq_idx in enumerate(self._infrequent_indices):
                         if infreq_idx is None:
                             continue
                         n_features_out_no_drop[i] -= infreq_idx.size - 1
@@ -668,6 +670,14 @@ class OneHotEncoder(_BaseEncoder):
         to a single output:
         `_default_to_infrequent_mappings[7] = array([0, 3, 1, 3, 2, 3])`
 
+        Defines private attrite: `_infrequent_indices`. `_infrequent_indices[i]`
+        is an array of indices such that
+        `categories_[i][_infrequent_indices[i]]` are all the infrequent category
+        labels. If the feature `i` has no infrequent categories
+        `_infrequent_indices[i]` is None.
+
+        .. versionadded:: 1.1
+
         Parameters
         ----------
         n_samples : int
@@ -676,7 +686,7 @@ class OneHotEncoder(_BaseEncoder):
             `category_counts[i]` is the category counts corresponding to
             `self.categories_[i]`.
         """
-        self.infrequent_indices_ = [
+        self._infrequent_indices = [
             self._identify_infrequent(category_count, n_samples, col_idx)
             for col_idx, category_count in enumerate(category_counts)
         ]
@@ -684,7 +694,7 @@ class OneHotEncoder(_BaseEncoder):
         # compute mapping from default mapping to infrequent mapping
         self._default_to_infrequent_mappings = []
 
-        for cats, infreq_idx in zip(self.categories_, self.infrequent_indices_):
+        for cats, infreq_idx in zip(self.categories_, self._infrequent_indices):
             # no infrequent categories
             if infreq_idx is None:
                 self._default_to_infrequent_mappings.append(None)
@@ -722,7 +732,7 @@ class OneHotEncoder(_BaseEncoder):
             return
 
         for col_idx in range(X_int.shape[1]):
-            infrequent_idx = self.infrequent_indices_[col_idx]
+            infrequent_idx = self._infrequent_indices[col_idx]
             if infrequent_idx is None:
                 continue
 
@@ -784,7 +794,7 @@ class OneHotEncoder(_BaseEncoder):
 
         # infrequent is enabled, the number of features out are reduced
         # because the infrequent categories are grouped together
-        for i, infreq_idx in enumerate(self.infrequent_indices_):
+        for i, infreq_idx in enumerate(self._infrequent_indices):
             if infreq_idx is None:
                 continue
             output[i] -= infreq_idx.size - 1
@@ -970,7 +980,7 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         if self._infrequent_enabled:
-            infrequent_indices = self.infrequent_indices_
+            infrequent_indices = self._infrequent_indices
         else:
             infrequent_indices = [None] * n_features
 
