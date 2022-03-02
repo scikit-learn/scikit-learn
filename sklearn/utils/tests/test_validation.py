@@ -454,7 +454,7 @@ def test_check_array_dtype_numeric_errors(X):
 )
 def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     # Test pandas numerical extension arrays with pd.NA
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     if pd_dtype in {"Float32", "Float64"}:
         # Extension dtypes with Floats was added in 1.2
@@ -1484,7 +1484,7 @@ def test_check_fit_params(indices):
 def test_check_sparse_pandas_sp_format(sp_format):
     # check_array converts pandas dataframe with only sparse arrays into
     # sparse matrix
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
@@ -1518,7 +1518,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     sparse extension arrays with unsupported mixed dtype
     and pandas version below 1.1. pandas versions 1.1 and
     above fixed this issue so no error will be raised."""
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
             "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
@@ -1560,7 +1560,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
             "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
