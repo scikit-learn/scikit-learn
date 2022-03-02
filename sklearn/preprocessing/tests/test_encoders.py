@@ -947,7 +947,7 @@ def test_encoders_has_categorical_tags(Encoder):
     assert "categorical" in Encoder()._get_tags()["X_types"]
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "kwargs",
@@ -984,15 +984,15 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
     X_inv = ohe.inverse_transform(X_trans)
     assert_array_equal(expected_inv, X_inv)
 
+    # TODO(1.2) Remove when get_feature_names is removed
     feature_names = ohe.get_feature_names()
     assert_array_equal(["x0_b", "x0_infrequent_sklearn"], feature_names)
 
-    # TODO(1.2) Remove when get_feature_names is removed
     feature_names = ohe.get_feature_names_out()
     assert_array_equal(["x0_b", "x0_infrequent_sklearn"], feature_names)
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("drop", ["if_binary", "first", ["b"]])
 def test_ohe_infrequent_two_levels_drop_frequent(drop):
@@ -1008,10 +1008,10 @@ def test_ohe_infrequent_two_levels_drop_frequent(drop):
     X_trans = ohe.transform(X_test)
     assert_allclose([[0], [1]], X_trans)
 
+    # TODO(1.2) Remove when get_feature_names is removed
     feature_names = ohe.get_feature_names()
     assert_array_equal(["x0_infrequent_sklearn"], feature_names)
 
-    # TODO(1.2) Remove when get_feature_names is removed
     feature_names = ohe.get_feature_names_out()
     assert_array_equal(["x0_infrequent_sklearn"], feature_names)
 
@@ -1019,7 +1019,7 @@ def test_ohe_infrequent_two_levels_drop_frequent(drop):
     assert_array_equal([["b"], ["infrequent_sklearn"]], X_inverse)
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize("drop", [["a"], ["c"], ["d"]])
 def test_ohe_infrequent_two_levels_drop_infrequent(drop):
@@ -1036,10 +1036,10 @@ def test_ohe_infrequent_two_levels_drop_infrequent(drop):
     X_trans = ohe.transform(X_test)
     assert_allclose([[1], [0]], X_trans)
 
+    # TODO(1.2): Remove get_feature_names is removed.
     feature_names = ohe.get_feature_names()
     assert_array_equal(["x0_b"], feature_names)
 
-    # TODO(1.2) Remove when get_feature_names is removed
     feature_names = ohe.get_feature_names_out()
     assert_array_equal(["x0_b"], feature_names)
 
@@ -1047,7 +1047,7 @@ def test_ohe_infrequent_two_levels_drop_infrequent(drop):
     assert_array_equal([["b"], ["infrequent_sklearn"]], X_inverse)
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "kwargs",
@@ -1088,10 +1088,10 @@ def test_ohe_infrequent_three_levels(kwargs):
     X_inv = ohe.inverse_transform(X_trans)
     assert_array_equal(expected_inv, X_inv)
 
+    # TODO(1.2): Remove get_feature_names is removed.
     feature_names = ohe.get_feature_names()
     assert_array_equal(["x0_b", "x0_c", "x0_infrequent_sklearn"], feature_names)
 
-    # TODO(1.2) Remove when get_feature_names is removed
     feature_names = ohe.get_feature_names_out()
     assert_array_equal(["x0_b", "x0_c", "x0_infrequent_sklearn"], feature_names)
 
@@ -1265,7 +1265,7 @@ def test_ohe_infrequent_mixed():
     assert_allclose(X_trans, [[0, 1, 1], [0, 0, 0]])
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 def test_ohe_infrequent_multiple_categories():
     """Test infrequent categories with feature matrix with 3 features."""
