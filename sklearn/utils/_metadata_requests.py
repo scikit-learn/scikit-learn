@@ -202,14 +202,13 @@ class MethodMetadataRequest:
 
             - None or RequestType.ERROR_IF_PASSED: error if passed
         """
-        try:
+        if RequestType.is_valid(alias):
             alias = RequestType(alias)
-        except ValueError:
-            if not RequestType.is_alias(alias):
-                raise ValueError(
-                    "alias should be either a valid identifier or one of "
-                    "{None, True, False}, or a RequestType."
-                )
+        elif not RequestType.is_alias(alias):
+            raise ValueError(
+                "alias should be either a valid identifier or one of "
+                "{None, True, False}, or a RequestType."
+            )
 
         if alias == param:
             alias = RequestType.REQUESTED
@@ -239,12 +238,10 @@ class MethodMetadataRequest:
             A set of strings with the names of all parameters.
         """
         return set(
-            [
-                alias if return_alias and not RequestType.is_valid(alias) else prop
-                for prop, alias in self._requests.items()
-                if not RequestType.is_valid(alias)
-                or RequestType(alias) != RequestType.UNREQUESTED
-            ]
+            alias if return_alias and not RequestType.is_valid(alias) else prop
+            for prop, alias in self._requests.items()
+            if not RequestType.is_valid(alias)
+            or RequestType(alias) != RequestType.UNREQUESTED
         )
 
     def _check_warnings(self, *, params):
@@ -294,11 +291,8 @@ class MethodMetadataRequest:
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
         for prop, alias in self._requests.items():
-            try:
+            if RequestType.is_valid(alias):
                 alias = RequestType(alias)
-            except ValueError:
-                # we leave alias as is (str) if it's not a RequestType
-                pass
 
             if alias == RequestType.UNREQUESTED or alias == RequestType.WARN:
                 continue
