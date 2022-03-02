@@ -21,7 +21,8 @@ shortest possible code to reproduce it.
 The first step before submitting a bug report to scikit-learn is to read the
 `Issue template
 <https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
-It is already quite informative about the information you will be asked to provide.
+It is already quite informative about the information you will be asked to
+provide.
 
 
 .. _good_practices:
@@ -74,14 +75,13 @@ that has room for readability improvement. We then craft a MCVE from it.
 Provide a failing code example with minimal comments
 ----------------------------------------------------
 
-
 Writing instructions to reproduce the problem in English is often ambiguous.
 Better make sure that all the necessary details to reproduce the problem are
 illustrated in the Python code snippet to avoid any ambiguity. Besides, by this
-point you already provided a concise description in the **Describe the bug** section of the `Issue template
+point you already provided a concise description in the **Describe the bug**
+section of the `Issue template
 <https://github.com/scikit-learn/scikit-learn/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml>`_.
 
-**Improved example**
 The following code, while **still not minimal**, is already **much better**
 because it can be copy-pasted in a python terminal to reproduce the problem in
 one step. In particular:
@@ -89,6 +89,8 @@ one step. In particular:
     - it contains **all necessary imports statements**;
     - it can fetch the public dataset without having to manually download a
       file and put it in the expected location on the disk.
+
+**Improved example**
 
 .. code-block:: python
 
@@ -106,6 +108,7 @@ one step. In particular:
     scaler = StandardScaler(with_mean=False)
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
+
     from sklearn.ensemble import GradientBoostingRegressor
 
     gbdt = GradientBoostingRegressor(random_state=0)
@@ -125,12 +128,13 @@ reproducing the bug. Deleting unnecessary lines of code or simplifying the funct
 calls by omitting unrelated non-default options will help you and other contributors
 narrow down the cause of the bug.
 
-In particular, for  this specific example:
+In particular, for this specific example:
 
-- the warning has nothing to do with the `train_test_split` since it already appears
-   in the training step, before we use the test set.
-- similarly, the lines that compute the scores on the test set are not necessary;
-- the bug can be reproduced for any value of`random_state` so leave it to its
+- the warning has nothing to do with the `train_test_split` since it already
+  appears in the training step, before we use the test set.
+- similarly, the lines that compute the scores on the test set are not
+  necessary;
+- the bug can be reproduced for any value of `random_state` so leave it to its
    default;
 - the bug can be reproduced without preprocessing the data with the
   `StandardScaler`.
