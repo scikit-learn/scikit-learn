@@ -168,6 +168,18 @@ we:
     - use blank lines to separate groups of related functions;
     - place all the imports in their own group at the beginning.
 
+The simplification steps presented in this guide can be implemented in a
+different order than the progression we have shown here. The important points
+are:
+
+    - a minimal reproducer should be runnable by a simple copy-and-paste in a
+      python terminal;
+    - it should be simplified as much as possible by removing any code steps
+      that are not strictly needed to reproducing the original problem;
+    - it should ideally only rely on a minimal dataset generated on-the-fly by
+      running the code instead of relying on external data, if possible.
+
+
 Use markdown formatting
 -----------------------
 
@@ -231,10 +243,6 @@ yields the following when rendered:
         8     learning_method='online',
 
     TypeError: __init__() got an unexpected keyword argument 'n_topics'
-
-The above steps can be implemented in a different order than the progression we
-show in this example. Take into account that having a pipeline that makes sense
-as a model is not important when creating a MCVE.
 
 
 .. _synth_data:
