@@ -16,7 +16,6 @@ import functools
 import sklearn
 import numpy as np
 import pandas as pd
-import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
