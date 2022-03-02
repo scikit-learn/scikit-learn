@@ -15,6 +15,7 @@ import functools
 
 import sklearn
 import numpy as np
+import pandas as pd
 import scipy.sparse as sp
 import scipy
 import scipy.stats
@@ -43,7 +44,10 @@ except ImportError:  # SciPy < 1.8
 
 
 def _object_dtype_isnan(X):
-    return X != X
+    if pd.isna(X).any():
+        return pd.isna(X)
+    else:
+        return X != X
 
 
 # TODO: replace by copy=False, when only scipy > 1.1 is supported.
