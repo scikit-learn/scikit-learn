@@ -257,7 +257,8 @@ class OneHotEncoder(_BaseEncoder):
           should be dropped.
 
         If there are infrequent categories and `drop` selects any of the
-        infrequent categories, then all these categories are dropped.
+        infrequent categories, then the category representing the
+        infrequent categories is dropped.
 
         .. versionadded:: 0.21
            The parameter `drop` was added in 0.21.
