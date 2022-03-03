@@ -1948,17 +1948,17 @@ class MiniBatchNMF(NMF):
     References
     ----------
     .. [1] :doi:`"Fast local algorithms for large scale nonnegative matrix and tensor
-    factorizations" <10.1587/transfun.E92.A.708>`
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals of
-    electronics, communications and computer sciences 92.3: 708-721, 2009.
+       factorizations" <10.1587/transfun.E92.A.708>`
+       Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals of
+       electronics, communications and computer sciences 92.3: 708-721, 2009.
 
     .. [2] :doi:`"Algorithms for nonnegative matrix factorization with the
-    beta-divergence" <10.1162/NECO_a_00168>`
-    Fevotte, C., & Idier, J. (2011). Neural Computation, 23(9).
+       beta-divergence" <10.1162/NECO_a_00168>`
+       Fevotte, C., & Idier, J. (2011). Neural Computation, 23(9).
 
     .. [3] :doi:`"Online algorithms for nonnegative matrix factorization with the
-    Itakura-Saito divergence" <10.1109/ASPAA.2011.6082314>`
-    Lefevre, A., Bach, F., Fevotte, C. (2011). WASPA.
+       Itakura-Saito divergence" <10.1109/ASPAA.2011.6082314>`
+       Lefevre, A., Bach, F., Fevotte, C. (2011). WASPA.
 
     Examples
     --------
@@ -2089,8 +2089,8 @@ class MiniBatchNMF(NMF):
             _beta_divergence(X, W, H, self._beta_loss)
             + l1_reg_W * W.sum()
             + l1_reg_H * H.sum()
-            + l2_reg_W * (W ** 2).sum()
-            + l2_reg_H * (H ** 2).sum()
+            + l2_reg_W * (W**2).sum()
+            + l2_reg_H * (H**2).sum()
         ) / batch_size
 
         # update H
