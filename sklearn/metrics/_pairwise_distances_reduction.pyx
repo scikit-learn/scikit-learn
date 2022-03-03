@@ -1588,7 +1588,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         const DTYPE_t[::1] Y_norm_squared
 
         # Buffers for GEMM
-        DTYPE_t ** dist_middle_terms_chunks
+        vector[vector[DTYPE_t]] dist_middle_terms_chunks
         bint use_squared_distances
 
     @classmethod
@@ -1639,13 +1639,9 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
             self.r_radius = radius
 
         # Temporary datastructures used in threads
-        self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
-            sizeof(DTYPE_t *) * self.effective_n_threads
+        self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](
+            self.effective_n_threads
         )
-
-    def __dealloc__(self):
-        if self.dist_middle_terms_chunks is not NULL:
-            free(self.dist_middle_terms_chunks)
 
     @final
     cdef void compute_exact_distances(self) nogil:
@@ -1660,17 +1656,9 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         PairwiseDistancesRadiusNeighborhood._parallel_on_X_parallel_init(self, thread_num)
 
         # Temporary buffer for the `-2 * X_c @ Y_c.T` term
-        self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
-            self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
+        self.dist_middle_terms_chunks[thread_num].resize(
+            self.Y_n_samples_chunk * self.X_n_samples_chunk
         )
-
-    @final
-    cdef void _parallel_on_X_parallel_finalize(
-        self,
-        ITYPE_t thread_num
-    ) nogil:
-        PairwiseDistancesRadiusNeighborhood._parallel_on_X_parallel_finalize(self, thread_num)
-        free(self.dist_middle_terms_chunks[thread_num])
 
     @final
     cdef void _parallel_on_Y_init(
@@ -1681,19 +1669,9 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
 
         for thread_num in range(self.chunks_n_threads):
             # Temporary buffer for the `-2 * X_c @ Y_c.T` term
-            self.dist_middle_terms_chunks[thread_num] = <DTYPE_t *> malloc(
-                self.Y_n_samples_chunk * self.X_n_samples_chunk * sizeof(DTYPE_t)
+            self.dist_middle_terms_chunks[thread_num].resize(
+                self.Y_n_samples_chunk * self.X_n_samples_chunk
             )
-
-    @final
-    cdef void _parallel_on_Y_finalize(
-        self,
-    ) nogil:
-        cdef ITYPE_t thread_num
-        PairwiseDistancesRadiusNeighborhood._parallel_on_Y_finalize(self)
-
-        for thread_num in range(self.chunks_n_threads):
-            free(self.dist_middle_terms_chunks[thread_num])
 
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
@@ -1710,7 +1688,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
 
             const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
-            DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
+            DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num].data()
 
             # Careful: LDA, LDB and LDC are given for F-ordered arrays
             # in BLAS documentations, for instance:
