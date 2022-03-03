@@ -18,10 +18,14 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 
+DTYPES = (np.float64, np.float32)
 
-def test_n_samples_leaves_roots():
+
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_n_samples_leaves_roots(dtype):
     # Sanity check for the number of samples in leaves and roots
     X, y = make_blobs(n_samples=10)
+    X = X.astype(dtype)
     brc = Birch()
     brc.fit(X)
     n_samples_root = sum([sc.n_samples_ for sc in brc.root_.subclusters_])
@@ -32,9 +36,11 @@ def test_n_samples_leaves_roots():
     assert n_samples_root == X.shape[0]
 
 
-def test_partial_fit():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_partial_fit(dtype):
     # Test that fit is equivalent to calling partial_fit multiple times
     X, y = make_blobs(n_samples=100)
+    X = X.astype(dtype)
     brc = Birch(n_clusters=3)
     brc.fit(X)
     brc_partial = Birch(n_clusters=None)
@@ -49,10 +55,12 @@ def test_partial_fit():
     assert_array_equal(brc_partial.subcluster_labels_, brc.subcluster_labels_)
 
 
-def test_birch_predict():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_birch_predict(dtype):
     # Test the predict method predicts the nearest centroid.
     rng = np.random.RandomState(0)
     X = generate_clustered_data(n_clusters=3, n_features=3, n_samples_per_cluster=10)
+    X = X.astype(dtype)
 
     # n_samples * n_samples_per_cluster
     shuffle_indices = np.arange(30)
@@ -66,9 +74,11 @@ def test_birch_predict():
     assert_almost_equal(v_measure_score(nearest_centroid, brc.labels_), 1.0)
 
 
-def test_n_clusters():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_n_clusters(dtype):
     # Test that n_clusters param works properly
     X, y = make_blobs(n_samples=100, centers=10)
+    X = X.astype(dtype)
     brc1 = Birch(n_clusters=10)
     brc1.fit(X)
     assert len(brc1.subcluster_centers_) > 10
@@ -95,9 +105,11 @@ def test_n_clusters():
         brc4.fit(X)
 
 
-def test_sparse_X():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_sparse_X(dtype):
     # Test that sparse and dense data give same results
     X, y = make_blobs(n_samples=100, centers=10)
+    X = X.astype(dtype)
     brc = Birch(n_clusters=10)
     brc.fit(X)
 
@@ -109,10 +121,12 @@ def test_sparse_X():
     assert_array_almost_equal(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
 
 
-def test_partial_fit_second_call_error_checks():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_partial_fit_second_call_error_checks(dtype):
     # second partial fit calls will error when n_features is not consistent
     # with the first call
     X, y = make_blobs(n_samples=100)
+    X = X.astype(dtype)
     brc = Birch(n_clusters=3)
     brc.partial_fit(X, y)
 
@@ -129,9 +143,11 @@ def check_branching_factor(node, branching_factor):
             check_branching_factor(cluster.child_, branching_factor)
 
 
-def test_branching_factor():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_branching_factor(dtype):
     # Test that nodes have at max branching_factor number of subclusters
     X, y = make_blobs()
+    X = X.astype(dtype)
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
@@ -153,9 +169,11 @@ def check_threshold(birch_instance, threshold):
         current_leaf = current_leaf.next_leaf_
 
 
-def test_threshold():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_threshold(dtype):
     # Test that the leaf subclusters have a threshold lesser than radius
     X, y = make_blobs(n_samples=80, centers=4)
+    X = X.astype(dtype)
     brc = Birch(threshold=0.5, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 0.5)
@@ -219,9 +237,11 @@ def test_birch_params_validation(params, err_type, err_msg):
         Birch(**params).fit(X)
 
 
-def test_feature_names_out():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_feature_names_out(dtype):
     """Check `get_feature_names_out` for `Birch`."""
     X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    X = X.astype(dtype)
     brc = Birch(n_clusters=4)
     brc.fit(X)
     n_clusters = brc.subcluster_centers_.shape[0]
