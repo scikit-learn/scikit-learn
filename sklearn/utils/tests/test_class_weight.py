@@ -33,7 +33,7 @@ def test_compute_class_weight_not_present():
     # Fix exception in error message formatting when missing label is a string
     # https://github.com/scikit-learn/scikit-learn/issues/8312
     with pytest.raises(
-        ValueError, match=r"classes: \[0, 1, 2, 3\] are not in class_weight"
+        ValueError, match=r"The classes, \[0, 1, 2, 3\], are not in class_weight"
     ):
         compute_class_weight({"label_not_present": 1.0}, classes=classes, y=y)
     # Raise error when y has items not in classes
@@ -47,7 +47,7 @@ def test_compute_class_weight_not_present():
     classes = np.asarray(["cat", "dog"])
     y = np.asarray(["dog", "cat", "dog"])
     class_weights = {"dogs": 3, "cat": 2}
-    msg = r"classes: \['dog'\] are not in class_weight"
+    msg = r"The classes, \['dog'\], are not in class_weight"
 
     with pytest.raises(ValueError, match=msg):
         compute_class_weight(class_weights, classes=classes, y=y)
