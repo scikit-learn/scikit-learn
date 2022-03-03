@@ -7,12 +7,15 @@ from sklearn.utils._testing import assert_array_equal, assert_almost_equal
 from sklearn.feature_selection._mutual_info import _compute_mi
 from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
 
+DTYPES = (np.float64, np.float32)
 
-def test_compute_mi_dd():
+
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_compute_mi_dd(dtype):
     # In discrete case computations are straightforward and can be done
     # by hand on given vectors.
-    x = np.array([0, 1, 1, 0, 0])
-    y = np.array([1, 0, 0, 0, 1])
+    x = np.array([0, 1, 1, 0, 0], dtype=dtype)
+    y = np.array([1, 0, 0, 0, 1], dtype=dtype)
 
     H_x = H_y = -(3 / 5) * np.log(3 / 5) - (2 / 5) * np.log(2 / 5)
     H_xy = -1 / 5 * np.log(1 / 5) - 2 / 5 * np.log(2 / 5) - 2 / 5 * np.log(2 / 5)
@@ -21,7 +24,8 @@ def test_compute_mi_dd():
     assert_almost_equal(_compute_mi(x, y, True, True), I_xy)
 
 
-def test_compute_mi_cc():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_compute_mi_cc(dtype):
     # For two continuous variables a good approach is to test on bivariate
     # normal distribution, where mutual information is known.
 
@@ -43,7 +47,7 @@ def test_compute_mi_cc():
     I_theory = np.log(sigma_1) + np.log(sigma_2) - 0.5 * np.log(np.linalg.det(cov))
 
     rng = check_random_state(0)
-    Z = rng.multivariate_normal(mean, cov, size=1000)
+    Z = rng.multivariate_normal(mean, cov, size=1000).astype(dtype)
 
     x, y = Z[:, 0], Z[:, 1]
 
@@ -54,7 +58,8 @@ def test_compute_mi_cc():
         assert_almost_equal(I_computed, I_theory, 1)
 
 
-def test_compute_mi_cd():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_compute_mi_cd(dtype):
     # To test define a joint distribution as follows:
     # p(x, y) = p(x) p(y | x)
     # X ~ Bernoulli(p)
@@ -76,10 +81,10 @@ def test_compute_mi_cd():
     for p in [0.3, 0.5, 0.7]:
         x = rng.uniform(size=n_samples) > p
 
-        y = np.empty(n_samples)
+        y = np.empty(n_samples, dtype)
         mask = x == 0
-        y[mask] = rng.uniform(-1, 1, size=np.sum(mask))
-        y[~mask] = rng.uniform(0, 2, size=np.sum(~mask))
+        y[mask] = rng.uniform(-1, 1, size=np.sum(mask)).astype(dtype)
+        y[~mask] = rng.uniform(0, 2, size=np.sum(~mask)).astype(dtype)
 
         I_theory = -0.5 * (
             (1 - p) * np.log(0.5 * (1 - p)) + p * np.log(0.5 * p) + np.log(0.5)
@@ -91,15 +96,16 @@ def test_compute_mi_cd():
             assert_almost_equal(I_computed, I_theory, 1)
 
 
-def test_compute_mi_cd_unique_label():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_compute_mi_cd_unique_label(dtype):
     # Test that adding unique label doesn't change MI.
     n_samples = 100
     x = np.random.uniform(size=n_samples) > 0.5
 
-    y = np.empty(n_samples)
+    y = np.empty(n_samples, dtype)
     mask = x == 0
-    y[mask] = np.random.uniform(-1, 1, size=np.sum(mask))
-    y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask))
+    y[mask] = np.random.uniform(-1, 1, size=np.sum(mask)).astype(dtype)
+    y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask)).astype(dtype)
 
     mi_1 = _compute_mi(x, y, True, False)
 
@@ -111,9 +117,10 @@ def test_compute_mi_cd_unique_label():
 
 
 # We are going test that feature ordering by MI matches our expectations.
-def test_mutual_info_classif_discrete():
-    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]])
-    y = np.array([0, 1, 2, 2, 1])
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_mutual_info_classif_discrete(dtype):
+    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=dtype)
+    y = np.array([0, 1, 2, 2, 1], dtype=dtype)
 
     # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
     # informative.
@@ -121,7 +128,8 @@ def test_mutual_info_classif_discrete():
     assert_array_equal(np.argsort(-mi), np.array([0, 2, 1]))
 
 
-def test_mutual_info_regression():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_mutual_info_regression(dtype):
     # We generate sample from multivariate normal distribution, using
     # transformation from initially uncorrelated variables. The zero
     # variables after transformation is selected as the target vector,
@@ -132,7 +140,7 @@ def test_mutual_info_regression():
     mean = np.zeros(4)
 
     rng = check_random_state(0)
-    Z = rng.multivariate_normal(mean, cov, size=1000)
+    Z = rng.multivariate_normal(mean, cov, size=1000).astype(dtype)
     X = Z[:, 1:]
     y = Z[:, 0]
 
@@ -140,11 +148,12 @@ def test_mutual_info_regression():
     assert_array_equal(np.argsort(-mi), np.array([1, 2, 0]))
 
 
-def test_mutual_info_classif_mixed():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_mutual_info_classif_mixed(dtype):
     # Here the target is discrete and there are two continuous and one
     # discrete feature. The idea of this test is clear from the code.
     rng = check_random_state(0)
-    X = rng.rand(1000, 3)
+    X = rng.rand(1000, 3).astype(dtype)
     X[:, 1] += X[:, 0]
     y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
     X[:, 2] = X[:, 2] > 0.5
@@ -164,9 +173,10 @@ def test_mutual_info_classif_mixed():
         assert mi_nn[2] == mi[2]
 
 
-def test_mutual_info_options():
-    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=float)
-    y = np.array([0, 1, 2, 2, 1], dtype=float)
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_mutual_info_options(dtype):
+    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=dtype)
+    y = np.array([0, 1, 2, 2, 1], dtype=dtype)
     X_csr = csr_matrix(X)
 
     for mutual_info in (mutual_info_regression, mutual_info_classif):
