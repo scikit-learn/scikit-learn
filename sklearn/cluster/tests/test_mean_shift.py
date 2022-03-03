@@ -32,6 +32,8 @@ X, _ = make_blobs(
     random_state=11,
 )
 
+DTYPES = (np.float64, np.float32)
+
 
 def test_estimate_bandwidth():
     # Test estimate_bandwidth
@@ -39,10 +41,11 @@ def test_estimate_bandwidth():
     assert 0.9 <= bandwidth <= 1.5
 
 
-def test_estimate_bandwidth_1sample():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_estimate_bandwidth_1sample(dtype):
     # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
     # n_neighbors is set to 1.
-    bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
+    bandwidth = estimate_bandwidth(X.astype(dtype), n_samples=1, quantile=0.3)
     assert bandwidth == pytest.approx(0.0, abs=1e-5)
 
 
@@ -50,10 +53,11 @@ def test_estimate_bandwidth_1sample():
     "bandwidth, cluster_all, expected, first_cluster_label",
     [(1.2, True, 3, 0), (1.2, False, 4, -1)],
 )
-def test_mean_shift(bandwidth, cluster_all, expected, first_cluster_label):
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_mean_shift(dtype, bandwidth, cluster_all, expected, first_cluster_label):
     # Test MeanShift algorithm
     ms = MeanShift(bandwidth=bandwidth, cluster_all=cluster_all)
-    labels = ms.fit(X).labels_
+    labels = ms.fit(X.astype(dtype)).labels_
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert n_clusters_ == expected
@@ -82,7 +86,8 @@ def test_estimate_bandwidth_with_sparse_matrix():
         estimate_bandwidth(X)
 
 
-def test_parallel():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_parallel(dtype):
     centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
     X, _ = make_blobs(
         n_samples=50,
@@ -92,6 +97,8 @@ def test_parallel():
         shuffle=True,
         random_state=11,
     )
+
+    X = X.astype(dtype)
 
     ms1 = MeanShift(n_jobs=2)
     ms1.fit(X)
@@ -103,11 +110,13 @@ def test_parallel():
     assert_array_equal(ms1.labels_, ms2.labels_)
 
 
-def test_meanshift_predict():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_meanshift_predict(dtype):
     # Test MeanShift.predict
     ms = MeanShift(bandwidth=1.2)
-    labels = ms.fit_predict(X)
-    labels2 = ms.predict(X)
+    Y = X.astype(dtype)
+    labels = ms.fit_predict(Y)
+    labels2 = ms.predict(Y)
     assert_array_equal(labels, labels2)
 
 
@@ -128,22 +137,25 @@ def test_unfitted():
     assert not hasattr(ms, "labels_")
 
 
-def test_cluster_intensity_tie():
-    X = np.array([[1, 1], [2, 1], [1, 0], [4, 7], [3, 5], [3, 6]])
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_cluster_intensity_tie(dtype):
+    X = np.array([[1, 1], [2, 1], [1, 0], [4, 7], [3, 5], [3, 6]], dtype=dtype)
     c1 = MeanShift(bandwidth=2).fit(X)
 
-    X = np.array([[4, 7], [3, 5], [3, 6], [1, 1], [2, 1], [1, 0]])
+    X = np.array([[4, 7], [3, 5], [3, 6], [1, 1], [2, 1], [1, 0]], dtype=dtype)
     c2 = MeanShift(bandwidth=2).fit(X)
     assert_array_equal(c1.labels_, [1, 1, 1, 0, 0, 0])
     assert_array_equal(c2.labels_, [0, 0, 0, 1, 1, 1])
 
 
-def test_bin_seeds():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_bin_seeds(dtype):
     # Test the bin seeding technique which can be used in the mean shift
     # algorithm
     # Data is just 6 points in the plane
     X = np.array(
-        [[1.0, 1.0], [1.4, 1.4], [1.8, 1.2], [2.0, 1.0], [2.1, 1.1], [0.0, 0.0]]
+        [[1.0, 1.0], [1.4, 1.4], [1.8, 1.2], [2.0, 1.0], [2.1, 1.1], [0.0, 0.0]],
+        dtype=dtype,
     )
 
     # With a bin coarseness of 1.0 and min_bin_freq of 1, 3 bins should be
@@ -174,6 +186,7 @@ def test_bin_seeds():
         cluster_std=0.1,
         random_state=0,
     )
+    X = X.astype(dtype)
     test_bins = get_bin_seeds(X, 1)
     assert_array_equal(test_bins, [[0, 0], [1, 1]])
 
@@ -191,9 +204,10 @@ def test_max_iter(max_iter):
         assert np.allclose(c1, c2)
 
 
-def test_mean_shift_zero_bandwidth():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_mean_shift_zero_bandwidth(dtype):
     # Check that mean shift works when the estimated bandwidth is 0.
-    X = np.array([1, 1, 1, 2, 2, 2, 3, 3]).reshape(-1, 1)
+    X = np.array([1, 1, 1, 2, 2, 2, 3, 3]).reshape(-1, 1).astype(dtype)
 
     # estimate_bandwidth with default args returns 0 on this dataset
     bandwidth = estimate_bandwidth(X)
@@ -206,7 +220,7 @@ def test_mean_shift_zero_bandwidth():
     # to no binning.
     ms_binning = MeanShift(bin_seeding=True, bandwidth=None).fit(X)
     ms_nobinning = MeanShift(bin_seeding=False).fit(X)
-    expected_labels = np.array([0, 0, 0, 1, 1, 1, 2, 2])
+    expected_labels = np.array([0, 0, 0, 1, 1, 1, 2, 2], dtype=dtype)
 
     assert v_measure_score(ms_binning.labels_, expected_labels) == 1
     assert v_measure_score(ms_nobinning.labels_, expected_labels) == 1
