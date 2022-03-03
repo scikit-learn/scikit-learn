@@ -59,15 +59,15 @@ def compute_class_weight(class_weight, *, classes, y):
                 "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
             )
         unweighted_classes = []
-        weighted_classes = []
+        n_weighted_classes = 0
         for i, c in enumerate(classes):
             if c in class_weight:
                 weight[i] = class_weight[c]
-                weighted_classes.append(c)
+                n_weighted_classes += 1
             else:
                 unweighted_classes.append(c)
 
-        if unweighted_classes and len(weighted_classes) != len(class_weight):
+        if unweighted_classes and n_weighted_classes < len(class_weight):
             raise ValueError(f"classes: {unweighted_classes} are not in class_weight")
 
     return weight
