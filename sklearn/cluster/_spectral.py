@@ -42,9 +42,9 @@ def cluster_qr(vectors):
 
         References
         ----------
-        .. [1] `Simple, direct, and efficient multi-way spectral clustering, 2019
+        .. [1] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
             Anil Damle, Victor Minden, Lexing Ying
-            <:doi:`10.1093/imaiai/iay008`>`_
+            <10.1093/imaiai/iay008>`
 
     """
 
@@ -299,37 +299,37 @@ def spectral_clustering(
     References
     ----------
 
-    .. [1] `Normalized cuts and image segmentation, 2000
+    .. [1] :doi:`Normalized cuts and image segmentation, 2000
            Jianbo Shi, Jitendra Malik
-           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+           <10.1109/34.868688>`
 
-    .. [2] `A Tutorial on Spectral Clustering, 2007
+    .. [2] :doi:`A Tutorial on Spectral Clustering, 2007
            Ulrike von Luxburg
-           <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+           <10.1007/s11222-007-9033-z>`
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
            <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
-    .. [4] `Toward the Optimal Preconditioned Eigensolver:
+    .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
            Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
-           <:doi:`10.1137/S1064827500366124`>`_
+           <10.1137/S1064827500366124>`
 
-    .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
+    .. [5] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
-           <:doi:`10.1093/imaiai/iay008`>`_
+           <10.1093/imaiai/iay008>`
 
-    .. [6] `Multiscale Spectral Image Segmentation Multiscale preconditioning
+    .. [6] :doi:`Multiscale Spectral Image Segmentation Multiscale preconditioning
            for computing eigenvalues of graph Laplacians in image segmentation, 2006
            Andrew Knyazev
-           <:doi:`10.13140/RG.2.2.35280.02565`>`_
+           <10.13140/RG.2.2.35280.02565>`
 
-    .. [7] `Preconditioned spectral clustering for stochastic block partition
+    .. [7] :doi:`Preconditioned spectral clustering for stochastic block partition
            streaming graph challenge (Preliminary version at arXiv.)
            David Zhuzhunashvili, Andrew Knyazev
-           <:doi:`10.1109/HPEC.2017.8091045`>`_
+           <10.1109/HPEC.2017.8091045>`
     """
     if assign_labels not in ("kmeans", "discretize", "cluster_qr"):
         raise ValueError(
@@ -550,13 +550,13 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] `Normalized cuts and image segmentation, 2000
+    .. [1] :doi:`Normalized cuts and image segmentation, 2000
            Jianbo Shi, Jitendra Malik
-           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+           <10.1109/34.868688>`
 
-    .. [2] `A Tutorial on Spectral Clustering, 2007
+    .. [2] :doi:`A Tutorial on Spectral Clustering, 2007
            Ulrike von Luxburg
-           <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+           <10.1007/s11222-007-9033-z>`
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
@@ -568,9 +568,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
            <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
 
-    .. [5] `Simple, direct, and efficient multi-way spectral clustering, 2019
+    .. [5] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
-           <:doi:`10.1093/imaiai/iay008`>`_
+           <10.1093/imaiai/iay008>`
 
     Examples
     --------

@@ -387,9 +387,9 @@ The overall complexity of standard LTSA is
 
 .. topic:: References:
 
-   * `"Principal manifolds and nonlinear dimensionality reduction via
+   * :arxiv:`"Principal manifolds and nonlinear dimensionality reduction via
      tangent space alignment"
-     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.4.3693>`_
+     <cs/0212008>`
      Zhang, Z. & Zha, H. Journal of Shanghai Univ. 8:406 (2004)
 
 .. _multidimensional_scaling:
@@ -620,12 +620,12 @@ the internal structure of the data.
   * `"Accelerating t-SNE using Tree-Based Algorithms"
     <https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
     van der Maaten, L.J.P.; Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
-    
+
   * `"Automated optimized parameters for T-distributed stochastic neighbor
     embedding improve visualization and analysis of large datasets"
     <https://www.nature.com/articles/s41467-019-13055-y>`_
     Belkina, A.C., Ciccolella, C.O., Anno, R., Halpert, R., Spidlen, J.,
-    Snyder-Cappione, J.E., Nature Communications 10, 5415 (2019). 
+    Snyder-Cappione, J.E., Nature Communications 10, 5415 (2019).
 
 Tips on practical use
 =====================

@@ -13,7 +13,6 @@ from sklearn.utils._testing import assert_array_equal
 
 from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.fixes import loguniform
-from sklearn.utils.fixes import linspace, parse_version, np_version
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -47,36 +46,3 @@ def test_loguniform(low, high, base):
     assert loguniform(base**low, base**high).rvs(random_state=0) == loguniform(
         base**low, base**high
     ).rvs(random_state=0)
-
-
-def test_linspace():
-    """Test that linespace works like np.linespace as of numpy version 1.16."""
-    start, stop = 0, 10
-    num = 6
-    out = linspace(start=start, stop=stop, num=num, endpoint=True)
-    assert_array_equal(out, np.array([0.0, 2, 4, 6, 8, 10]))
-
-    start, stop = [0, 100], [10, 1100]
-    num = 6
-    out = linspace(start=start, stop=stop, num=num, endpoint=True)
-    res = np.c_[[0.0, 2, 4, 6, 8, 10], [100, 300, 500, 700, 900, 1100]]
-    assert_array_equal(out, res)
-
-    out2 = linspace(start=start, stop=stop, num=num, endpoint=True, axis=1)
-    assert_array_equal(out2, out.T)
-
-    out, step = linspace(
-        start=start,
-        stop=stop,
-        num=num,
-        endpoint=True,
-        retstep=True,
-    )
-    assert_array_equal(out, res)
-    assert_array_equal(step, [2, 200])
-
-    if np_version < parse_version("1.16"):
-        with pytest.raises(ValueError):
-            linspace(start=[0, 1], stop=10)
-    else:
-        linspace(start=[0, 1], stop=10)

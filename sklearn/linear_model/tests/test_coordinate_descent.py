@@ -29,7 +29,6 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import parse_version
 from sklearn.utils import check_random_state
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -385,6 +384,35 @@ def test_lasso_cv_positive_constraint():
     )
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
+
+
+@pytest.mark.parametrize(
+    "alphas, err_type, err_msg",
+    [
+        (-2, ValueError, r"alphas == -2, must be >= 0.0."),
+        ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
+        (
+            (-0.1, -1.0, -10.0),
+            ValueError,
+            r"alphas\[0\] == -0.1, must be >= 0.0.",
+        ),
+        (
+            (1, 1.0, "1"),
+            TypeError,
+            r"alphas\[2\] must be an instance of float, not str",
+        ),
+    ],
+)
+def test_lassocv_alphas_validation(alphas, err_type, err_msg):
+    """Check the `alphas` validation in LassoCV."""
+
+    n_samples, n_features = 5, 5
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randint(0, 2, n_samples)
+    lassocv = LassoCV(alphas=alphas)
+    with pytest.raises(err_type, match=err_msg):
+        lassocv.fit(X, y)
 
 
 def _scale_alpha_inplace(estimator, n_samples):
@@ -1685,9 +1713,6 @@ def test_linear_models_cv_fit_with_loky(estimator):
     # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
     # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
-
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        pytest.skip("loky backend does not exist in joblib <0.12")
 
     # Create a problem sufficiently large to cause memmapping (1MB).
     # Unfortunately the scikit-learn and joblib APIs do not make it possible to

@@ -37,7 +37,6 @@ from ..utils.validation import (
     _num_samples,
     column_or_1d,
     _check_sample_weight,
-    _deprecate_positional_args,
 )
 from ..utils.stats import _weighted_percentile
 
@@ -288,7 +287,6 @@ def mean_pinball_loss(
     return np.average(output_errors, weights=multioutput)
 
 
-@_deprecate_positional_args(version="1.1")
 def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):

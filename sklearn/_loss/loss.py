@@ -863,10 +863,10 @@ class HalfMultinomialLoss(BaseLoss):
 
     Reference
     ---------
-    .. [1] Simon, Noah, J. Friedman and T. Hastie.
+    .. [1] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
-        Multinomial Regression."
-        https://arxiv.org/pdf/1311.6529.pdf
+        Multinomial Regression".
+        <1311.6529>`
     """
 
     is_multiclass = True

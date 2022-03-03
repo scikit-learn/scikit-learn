@@ -262,19 +262,11 @@ def callable_rbf_kernel(x, y, **kwds):
             pairwise_distances,
             minkowski,
             _minkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
-            ),
         ),
         pytest.param(
             pairwise_distances,
             "minkowski",
             _minkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version < parse_version("1.0"),
-                reason="minkowski does not accept the w parameter prior to scipy 1.0.",
-            ),
         ),
         pytest.param(
             pairwise_distances,

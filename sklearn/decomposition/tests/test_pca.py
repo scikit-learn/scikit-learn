@@ -95,7 +95,7 @@ def test_whitening(solver, copy):
     X_ = X.copy()
     pca = PCA(
         n_components=n_components, whiten=False, copy=copy, svd_solver=solver
-    ).fit(X_)
+    ).fit(X_.copy())
     X_unwhitened = pca.transform(X_)
     assert X_unwhitened.shape == (n_samples, n_components)
 
@@ -720,3 +720,14 @@ def test_feature_names_out():
 
     names = pca.get_feature_names_out()
     assert_array_equal([f"pca{i}" for i in range(2)], names)
+
+
+@pytest.mark.parametrize("copy", [True, False])
+def test_variance_correctness(copy):
+    """Check the accuracy of PCA's internal variance calculation"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(1000, 200)
+    pca = PCA().fit(X)
+    pca_var = pca.explained_variance_ / pca.explained_variance_ratio_
+    true_var = np.var(X, ddof=1, axis=0).sum()
+    np.testing.assert_allclose(pca_var, true_var)
