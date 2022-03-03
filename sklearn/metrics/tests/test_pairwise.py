@@ -57,24 +57,28 @@ from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
 
 
-def test_pairwise_distances():
+DTYPES = (np.float32, np.float64)
+
+
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_pairwise_distances(dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
 
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((5, 4))
+    X = rng.random_sample((5, 4)).astype(dtype)
     S = pairwise_distances(X, metric="euclidean")
     S2 = euclidean_distances(X)
     assert_array_almost_equal(S, S2)
 
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((2, 4))
+    Y = rng.random_sample((2, 4)).astype(dtype)
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
     assert_array_almost_equal(S, S2)
     # Check to ensure NaNs work with pairwise_distances.
-    X_masked = rng.random_sample((5, 4))
-    Y_masked = rng.random_sample((2, 4))
+    X_masked = rng.random_sample((5, 4)).astype(dtype)
+    Y_masked = rng.random_sample((2, 4)).astype(dtype)
     X_masked[0, 0] = np.nan
     Y_masked[0, 0] = np.nan
     S_masked = pairwise_distances(X_masked, Y_masked, metric="nan_euclidean")
@@ -88,7 +92,7 @@ def test_pairwise_distances():
 
     # Test haversine distance
     # The data should be valid latitude and longitude
-    X = rng.random_sample((5, 2))
+    X = rng.random_sample((5, 2)).astype(dtype)
     X[:, 0] = (X[:, 0] - 0.5) * 2 * np.pi / 2
     X[:, 1] = (X[:, 1] - 0.5) * 2 * np.pi
     S = pairwise_distances(X, metric="haversine")
@@ -96,7 +100,7 @@ def test_pairwise_distances():
     assert_array_almost_equal(S, S2)
 
     # Test haversine distance, with Y != X
-    Y = rng.random_sample((2, 2))
+    Y = rng.random_sample((2, 2)).astype(dtype)
     Y[:, 0] = (Y[:, 0] - 0.5) * 2 * np.pi / 2
     Y[:, 1] = (Y[:, 1] - 0.5) * 2 * np.pi
     S = pairwise_distances(X, Y, metric="haversine")
@@ -412,14 +416,15 @@ def test_paired_distances(metric, func):
         assert_array_almost_equal(distances, S)
 
 
-def test_paired_distances_callable():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_paired_distances_callable(dtype):
     # Test the pairwise_distance helper function
     # with the callable implementation
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((5, 4))
+    X = rng.random_sample((5, 4)).astype(dtype)
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((5, 4))
+    Y = rng.random_sample((5, 4)).astype(dtype)
 
     S = paired_distances(X, Y, metric="manhattan")
     S2 = paired_distances(X, Y, metric=lambda x, y: np.abs(x - y).sum(axis=0))
@@ -427,19 +432,19 @@ def test_paired_distances_callable():
 
     # Test that a value error is raised when the lengths of X and Y should not
     # differ
-    Y = rng.random_sample((3, 4))
+    Y = rng.random_sample((3, 4)).astype(dtype)
     with pytest.raises(ValueError):
         paired_distances(X, Y)
 
 
-@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", DTYPES)
 def test_pairwise_distances_argmin_min(dtype):
     # Check pairwise minimum distances computation for any metric
     X = np.asarray([[0], [1]], dtype=dtype)
     Y = np.asarray([[-2], [3]], dtype=dtype)
 
     Xsp = dok_matrix(X)
-    Ysp = csr_matrix(Y, dtype=np.float32)
+    Ysp = csr_matrix(Y, dtype=dtype)
 
     expected_idx = [0, 1]
     expected_vals = [2, 2]
@@ -546,9 +551,10 @@ def _reduce_func(dist, start):
     return dist[:, :100]
 
 
-def test_pairwise_distances_chunked_reduce():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_pairwise_distances_chunked_reduce(dtype):
     rng = np.random.RandomState(0)
-    X = rng.random_sample((400, 4))
+    X = rng.random_sample((400, 4)).astype(dtype)
     # Reduced Euclidean distance
     S = pairwise_distances(X)[:, :100]
     S_chunks = pairwise_distances_chunked(
@@ -561,10 +567,11 @@ def test_pairwise_distances_chunked_reduce():
     assert_allclose(np.vstack(S_chunks), S, atol=1e-7)
 
 
-def test_pairwise_distances_chunked_reduce_none():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_pairwise_distances_chunked_reduce_none(dtype):
     # check that the reduce func is allowed to return None
     rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 4))
+    X = rng.random_sample((10, 4)).astype(dtype)
     S_chunks = pairwise_distances_chunked(
         X, None, reduce_func=lambda dist, start: None, working_memory=2**-16
     )
@@ -623,8 +630,11 @@ def test_pairwise_distances_chunked_reduce_valid(good_reduce):
         ),
     ],
 )
-def test_pairwise_distances_chunked_reduce_invalid(bad_reduce, err_type, message):
-    X = np.arange(10).reshape(-1, 1)
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_pairwise_distances_chunked_reduce_invalid(
+    dtype, bad_reduce, err_type, message
+):
+    X = np.arange(10).reshape(-1, 1).astype(dtype)
     S_chunks = pairwise_distances_chunked(
         X, None, reduce_func=bad_reduce, working_memory=64
     )
@@ -649,18 +659,20 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
 
 
 @pytest.mark.parametrize("metric", ("euclidean", "l2", "sqeuclidean"))
-def test_pairwise_distances_chunked_diagonal(metric):
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_pairwise_distances_chunked_diagonal(metric, dtype):
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(1000, 10), scale=1e10)
+    X = rng.normal(size=(1000, 10), scale=1e10).astype(dtype)
     chunks = list(pairwise_distances_chunked(X, working_memory=1, metric=metric))
     assert len(chunks) > 1
     assert_array_almost_equal(np.diag(np.vstack(chunks)), 0, decimal=10)
 
 
 @pytest.mark.parametrize("metric", ("euclidean", "l2", "sqeuclidean"))
-def test_parallel_pairwise_distances_diagonal(metric):
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_parallel_pairwise_distances_diagonal(metric, dtype):
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(1000, 10), scale=1e10)
+    X = rng.normal(size=(1000, 10), scale=1e10).astype(dtype)
     distances = pairwise_distances(X, metric=metric, n_jobs=2)
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
@@ -719,7 +731,7 @@ def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
     assert_allclose(D, [[1.0, 2.0]])
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize(
     "y_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
 )
@@ -789,7 +801,7 @@ def test_euclidean_distances_norm_shapes():
         euclidean_distances(X, Y, Y_norm_squared=Y_norm_squared[:5])
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize(
     "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
 )
@@ -817,7 +829,7 @@ def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
     assert distances.dtype == dtype
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize(
     "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
 )
@@ -1468,7 +1480,7 @@ def test_pairwise_distances_data_derived_params_error(metric):
         "euclidean",
     ],
 )
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
 def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # Check that pairwise distances gives the same result as pdist and cdist
