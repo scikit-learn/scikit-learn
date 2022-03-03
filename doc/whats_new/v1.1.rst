@@ -520,18 +520,6 @@ Changelog
   :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Andrés Babino <ababino>`.
 
-:mod:`sklearn.manifold`
-.......................
-
-- |Enhancement| :func:`manifold.spectral_embedding` and
-  :class:`manifold.SpectralEmbedding` supports `np.float32` dtype and will
-  preserve this dtype.
-  :pr:`21534` by :user:`Andrew Knyazev <lobpcg>`.
-
-- |Enhancement| added `metric_params` to :class:`manifold.TSNE` constructor for additional 
-  parameters of distance metric to use in optimization. 
-  :pr:`21805` by :user:`Jeanne Dionisi <jeannedionisi>`.
-
 - |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`
@@ -577,6 +565,11 @@ Changelog
   the previous uniform on [0, 1] random initial approximations to eigenvectors
   in eigen_solvers `lobpcg` and `amg` to improve their numerical stability.
   :pr:`21565` by :user:`Andrew Knyazev <lobpcg>`.
+
+- |Enhancement| added `metric_params` to :class:`manifold.TSNE` constructor for
+  additional parameters of distance metric to use in optimization.
+  :pr:`21805` by :user:`Jeanne Dionisi <jeannedionisi>` and :pr:`` by
+  :user:<Meekail Zain `micky774`>.
 
 :mod:`sklearn.metrics`
 ......................

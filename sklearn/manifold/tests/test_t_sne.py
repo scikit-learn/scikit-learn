@@ -1201,53 +1201,34 @@ def test_tsne_n_jobs(method):
 # TODO: Remove filterwarnings in 1.2
 @pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
 def test_tsne_with_mahalanobis_distance():
-    """Make sure that method_parameters works with mahalanobis distance"""
+    """Make sure that method_parameters works with mahalanobis distance."""
     random_state = check_random_state(0)
     n_features = 10
-    n_embedding = 3
-    n_samples = 500
+    n_samples = 300
     X = random_state.randn(n_samples, n_features)
+    default_params = {
+        "perplexity": 40,
+        "n_iter": 250,
+        "learning_rate": "auto",
+        "n_components": 3,
+        "random_state": 0,
+    }
 
     # 1. raises error here (original issue)
-    tsne = TSNE(
-        verbose=1,
-        perplexity=40,
-        n_iter=250,
-        learning_rate=50,
-        n_components=n_embedding,
-        random_state=0,
-        metric="mahalanobis",
-        square_distances=True,
-    )
-    ref = "Must provide either V or VI for Mahalanobis distance"
-    with pytest.raises(ValueError, match=ref):
+    tsne = TSNE(metric="mahalanobis", **default_params)
+    msg = "Must provide either V or VI for Mahalanobis distance"
+    with pytest.raises(ValueError, match=msg):
         tsne.fit_transform(X)
 
     # 2. check for correct answer
     precomputed_X = squareform(pdist(X, metric="mahalanobis"), checks=True)
-    ref = TSNE(
-        verbose=1,
-        perplexity=40,
-        n_iter=250,
-        learning_rate=50,
-        n_components=n_embedding,
-        random_state=0,
-        metric="precomputed",
-        square_distances=True,
-    ).fit_transform(precomputed_X)
+    ref = TSNE(metric="precomputed", **default_params).fit_transform(precomputed_X)
 
     now = TSNE(
-        verbose=1,
-        perplexity=40,
-        n_iter=250,
-        learning_rate=50,
-        n_components=n_embedding,
-        random_state=0,
-        metric="mahalanobis",
-        metric_params={"V": np.cov(X.T)},
-        square_distances=True,
+        metric="mahalanobis", metric_params={"V": np.cov(X.T)}, **default_params
     ).fit_transform(X)
-    assert_array_equal(ref, now)
+    assert_allclose(ref, now)
+
 
 @pytest.mark.filterwarnings("ignore:The PCA initialization in TSNE will change")
 # FIXME: remove in 1.3 after deprecation of `square_distances`
