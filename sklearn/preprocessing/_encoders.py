@@ -357,7 +357,6 @@ class OneHotEncoder(_BaseEncoder):
 
         .. versionadded:: 1.1
 
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
