@@ -1249,10 +1249,10 @@ class Lasso(ElasticNet):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    Alpha must be a positive float for regularization strenght.
+    Alpha must be a positive float for regularization strength.
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
-    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
+    regularization. Alpha corresponds to `1 / (2C)` in other linear
     models such as :class:`~sklearn.linear_model.LogisticRegression` or
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in

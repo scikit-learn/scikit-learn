@@ -335,11 +335,11 @@ def ridge_regression(
         Target values
 
     alpha : float or array-like of shape (n_targets,)
-        Constant that multiplies the L1 term. Defaults to 1.0.
-        ``alpha = 0`` is equivalent to an ordinary least square, solved
-        by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
-        Given this, you should use the :class:`LinearRegression` object.
+        Constant that multiplies the L2 term. Defaults to 1.0.
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Ridge` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
 
     sample_weight : float or array-like of shape (n_samples,), default=None
         Individual weights for each sample. If given a float, every sample
