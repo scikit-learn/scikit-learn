@@ -728,8 +728,10 @@ In the following example, the categories, `'dog', 'snake'` are considered
 infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
-   ...               ['snake'] * 3]).T
+   ...               ['snake'] * 3], dtype=object).T
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse=False).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['dog', 'snake'], dtype=object)]
    >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
    array([[0., 0., 1.],
           [1., 0., 0.],
@@ -790,6 +792,17 @@ infrequent::
           [1., 0., 0.],
           [0., 1., 0.],
           [0., 0., 1.]])
+
+If there are infrequent categories with the same cardinality at the cutoff of
+`max_categories`, then then the first `max_categories` are taken based on lexicon
+ordering. In the following example, "b", "c", and "d", have the same cardinality
+and with `max_categories=2`, "b" and "c" are infrequent because they have a higher
+lexicon order.
+
+   >>> X = np.asarray([["a"] * 20 + ["b"] * 10 + ["c"] * 10 + ["d"] * 10], dtype=object).T
+   >>> enc = preprocessing.OneHotEncoder(max_categories=3).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['b', 'c'], dtype=object)]
 
 .. _preprocessing_discretization:
 
