@@ -39,8 +39,8 @@ an array of shape ``n_samples`` * ``n_features`` with
 key ``data`` (except for 20newsgroups) and a numpy array of
 length ``n_samples``, containing the target values, with key ``target``.
 
-The Bunch object is a dictionary that exposes its keys are attributes.
-For more information about Bunch object, see :class:`~sklearn.utils.Bunch`:
+The Bunch object is a dictionary that exposes its keys as attributes.
+For more information about Bunch object, see :class:`~sklearn.utils.Bunch`.
 
 It's also possible for almost all of these function to constrain the output
 to be a tuple containing only the data and the target, by setting the

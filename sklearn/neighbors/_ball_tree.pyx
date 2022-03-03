@@ -1,8 +1,3 @@
-#!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: cdivision=True
-
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
 # License: BSD 3 clause
 
@@ -44,11 +39,11 @@ cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
     """Allocate arrays needed for the KD Tree"""
     tree.node_bounds_arr = np.zeros((1, n_nodes, n_features), dtype=DTYPE)
-    tree.node_bounds = get_memview_DTYPE_3D(tree.node_bounds_arr)
+    tree.node_bounds = tree.node_bounds_arr
     return 0
 
 
-cdef int init_node(BinaryTree tree, ITYPE_t i_node,
+cdef int init_node(BinaryTree tree, NodeData_t[::1] node_data, ITYPE_t i_node,
                    ITYPE_t idx_start, ITYPE_t idx_end) except -1:
     """Initialize the node for the dataset stored in tree.data"""
     cdef ITYPE_t n_features = tree.data.shape[1]
@@ -99,9 +94,9 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
                                  data + n_features * idx_array[i],
                                  n_features))
 
-    tree.node_data[i_node].radius = tree.dist_metric._rdist_to_dist(radius)
-    tree.node_data[i_node].idx_start = idx_start
-    tree.node_data[i_node].idx_end = idx_end
+    node_data[i_node].radius = tree.dist_metric._rdist_to_dist(radius)
+    node_data[i_node].idx_start = idx_start
+    node_data[i_node].idx_end = idx_end
     return 0
 
 

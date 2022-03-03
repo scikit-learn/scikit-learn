@@ -12,7 +12,7 @@
     // The URL or local path of the source code repository for the
     // project being benchmarked
     "repo": "..",
-    
+
     // The Python project's subdirectory in your repo.  If missing or
     // the empty string, the project is assumed to be located at the root
     // of the repository.
@@ -28,9 +28,9 @@
     //     "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
     // ],
 
-    // List of branches to benchmark. If not provided, defaults to "master"
+    // List of branches to benchmark. If not provided, defaults to "master
     // (for git) or "default" (for mercurial).
-    // "branches": ["master"], // for git
+    "branches": ["main"],
     // "branches": ["default"],    // for mercurial
 
     // The DVCS being used.  If not set, it will be automatically
@@ -73,7 +73,7 @@
     //
     "matrix": {
         "numpy": [],
-	    "scipy": [],
+        "scipy": [],
         "cython": [],
         "joblib": [],
         "threadpoolctl": []

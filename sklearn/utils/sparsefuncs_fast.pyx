@@ -7,7 +7,6 @@
 # License: BSD 3 clause
 
 #!python
-# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs, sqrt, pow
 cimport numpy as np
@@ -56,6 +55,8 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSR matrix
+
+    Uses a np.float64 accumulator.
 
     Parameters
     ----------
@@ -109,38 +110,40 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         np.npy_intp i
         unsigned long long row_ind
         integral col_ind
-        floating diff
+        np.float64_t diff
         # means[j] contains the mean of feature j
-        np.ndarray[floating, ndim=1] means
+        np.ndarray[np.float64_t, ndim=1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        np.ndarray[floating, ndim=1] variances
+        np.ndarray[np.float64_t, ndim=1] variances = np.zeros(n_features)
 
-    if floating is float:
-        dtype = np.float32
-    else:
-        dtype = np.float64
+        np.ndarray[np.float64_t, ndim=1] sum_weights = np.full(
+            fill_value=np.sum(weights, dtype=np.float64), shape=n_features)
+        np.ndarray[np.float64_t, ndim=1] sum_weights_nz = np.zeros(
+            shape=n_features)
+        np.ndarray[np.float64_t, ndim=1] correction = np.zeros(
+            shape=n_features)
 
-    means = np.zeros(n_features, dtype=dtype)
-    variances = np.zeros_like(means, dtype=dtype)
-
-    cdef:
-        np.ndarray[floating, ndim=1] sum_weights = \
-            np.full(fill_value=np.sum(weights), shape=n_features, dtype=dtype)
-        np.ndarray[floating, ndim=1] sum_weights_nan = \
-            np.zeros(shape=n_features, dtype=dtype)
-        np.ndarray[floating, ndim=1] sum_weights_nz = \
-            np.zeros(shape=n_features, dtype=dtype)
+        np.ndarray[np.uint64_t, ndim=1] counts = np.full(
+            fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
+        np.ndarray[np.uint64_t, ndim=1] counts_nz = np.zeros(
+            shape=n_features, dtype=np.uint64)
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
-                means[col_ind] += (X_data[i] * weights[row_ind])
+                means[col_ind] += <np.float64_t>(X_data[i]) * weights[row_ind]
+                # sum of weights where X[:, col_ind] is non-zero
+                sum_weights_nz[col_ind] += weights[row_ind]
+                # number of non-zero elements of X[:, col_ind]
+                counts_nz[col_ind] += 1
             else:
-                sum_weights_nan[col_ind] += weights[row_ind]
+                # sum of weights where X[:, col_ind] is not nan
+                sum_weights[col_ind] -= weights[row_ind]
+                # number of non nan elements of X[:, col_ind]
+                counts[col_ind] -= 1
 
     for i in range(n_features):
-        sum_weights[i] -= sum_weights_nan[i]
         means[i] /= sum_weights[i]
 
     for row_ind in range(len(X_indptr) - 1):
@@ -148,18 +151,34 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
+                # correction term of the corrected 2 pass algorithm.
+                # See "Algorithms for computing the sample variance: analysis
+                # and recommendations", by Chan, Golub, and LeVeque.
+                correction[col_ind] += diff * weights[row_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
-                sum_weights_nz[col_ind] += weights[row_ind]
 
     for i in range(n_features):
-        variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
-        variances[i] /= sum_weights[i]
+        if counts[i] != counts_nz[i]:
+            correction[i] -= (sum_weights[i] - sum_weights_nz[i]) * means[i]
+        correction[i] = correction[i]**2 / sum_weights[i]
+        if counts[i] != counts_nz[i]:
+            # only compute it when it's guaranteed to be non-zero to avoid
+            # catastrophic cancellation.
+            variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
+        variances[i] = (variances[i] - correction[i]) / sum_weights[i]
 
-    return means, variances, sum_weights
+    if floating is float:
+        return (np.array(means, dtype=np.float32),
+                np.array(variances, dtype=np.float32),
+                np.array(sum_weights, dtype=np.float32))
+    else:
+        return means, variances, sum_weights
 
 
 def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSC matrix
+
+    Uses a np.float64 accumulator.
 
     Parameters
     ----------
@@ -213,38 +232,40 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         np.npy_intp i
         unsigned long long col_ind
         integral row_ind
-        floating diff
+        np.float64_t diff
         # means[j] contains the mean of feature j
-        np.ndarray[floating, ndim=1] means
+        np.ndarray[np.float64_t, ndim=1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        np.ndarray[floating, ndim=1] variances
+        np.ndarray[np.float64_t, ndim=1] variances = np.zeros(n_features)
 
-    if floating is float:
-        dtype = np.float32
-    else:
-        dtype = np.float64
+        np.ndarray[np.float64_t, ndim=1] sum_weights = np.full(
+            fill_value=np.sum(weights, dtype=np.float64), shape=n_features)
+        np.ndarray[np.float64_t, ndim=1] sum_weights_nz = np.zeros(
+            shape=n_features)
+        np.ndarray[np.float64_t, ndim=1] correction = np.zeros(
+            shape=n_features)
 
-    means = np.zeros(n_features, dtype=dtype)
-    variances = np.zeros_like(means, dtype=dtype)
-
-    cdef:
-        np.ndarray[floating, ndim=1] sum_weights = \
-            np.full(fill_value=np.sum(weights), shape=n_features, dtype=dtype)
-        np.ndarray[floating, ndim=1] sum_weights_nan = \
-            np.zeros(shape=n_features, dtype=dtype)
-        np.ndarray[floating, ndim=1] sum_weights_nz = \
-            np.zeros(shape=n_features, dtype=dtype)
+        np.ndarray[np.uint64_t, ndim=1] counts = np.full(
+            fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
+        np.ndarray[np.uint64_t, ndim=1] counts_nz = np.zeros(
+            shape=n_features, dtype=np.uint64)
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
-                means[col_ind] += (X_data[i] * weights[row_ind])
+                means[col_ind] += <np.float64_t>(X_data[i]) * weights[row_ind]
+                # sum of weights where X[:, col_ind] is non-zero
+                sum_weights_nz[col_ind] += weights[row_ind]
+                # number of non-zero elements of X[:, col_ind]
+                counts_nz[col_ind] += 1
             else:
-                sum_weights_nan[col_ind] += weights[row_ind]
+                # sum of weights where X[:, col_ind] is not nan
+                sum_weights[col_ind] -= weights[row_ind]
+                # number of non nan elements of X[:, col_ind]
+                counts[col_ind] -= 1
 
     for i in range(n_features):
-        sum_weights[i] -= sum_weights_nan[i]
         means[i] /= sum_weights[i]
 
     for col_ind in range(n_features):
@@ -252,14 +273,28 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
+                # correction term of the corrected 2 pass algorithm.
+                # See "Algorithms for computing the sample variance: analysis
+                # and recommendations", by Chan, Golub, and LeVeque.
+                correction[col_ind] += diff * weights[row_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
-                sum_weights_nz[col_ind] += weights[row_ind]
 
     for i in range(n_features):
-        variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
-        variances[i] /= sum_weights[i]
+        if counts[i] != counts_nz[i]:
+            correction[i] -= (sum_weights[i] - sum_weights_nz[i]) * means[i]
+        correction[i] = correction[i]**2 / sum_weights[i]
+        if counts[i] != counts_nz[i]:
+            # only compute it when it's guaranteed to be non-zero to avoid
+            # catastrophic cancellation.
+            variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
+        variances[i] = (variances[i] - correction[i]) / sum_weights[i]
 
-    return means, variances, sum_weights
+    if floating is float:
+        return (np.array(means, dtype=np.float32),
+                np.array(variances, dtype=np.float32),
+                np.array(sum_weights, dtype=np.float32))
+    else:
+        return means, variances, sum_weights
 
 
 def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):

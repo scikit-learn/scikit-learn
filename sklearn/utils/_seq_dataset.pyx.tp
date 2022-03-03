@@ -1,6 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
 {{py:
 
 """
@@ -20,16 +17,12 @@ Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 License: BSD 3 clause
 """
 
-# name, c_type, np_type
+# name_suffix, c_type, np_type
 dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
-def get_dispatch(dtypes):
-    for name, c_type, np_type in dtypes:
-        yield name, c_type, np_type
-
 }}
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
+{{for name_suffix, c_type, np_type in dtypes}}
 
 #------------------------------------------------------------------------------
 
@@ -47,7 +40,7 @@ np.import_array()
 
 from ._random cimport our_rand_r
 
-cdef class SequentialDataset{{name}}:
+cdef class SequentialDataset{{name_suffix}}:
     """Base class for datasets with sequential data access.
 
     SequentialDataset is used to iterate over the rows of a matrix X and
@@ -219,7 +212,7 @@ cdef class SequentialDataset{{name}}:
         return (x_data, x_indices, x_indptr), y, sample_weight, sample_idx
 
 
-cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
+cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
     """Dataset backed by a two-dimensional numpy array.
 
     The dtype of the numpy array is expected to be ``{{np_type}}`` ({{c_type}})
@@ -262,7 +255,7 @@ cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
         self.feature_indices_ptr = <int *> feature_indices.data
 
         self.current_index = -1
-        self.X_stride = X.strides[0] / X.itemsize
+        self.X_stride = X.strides[0] // X.itemsize
         self.X_data_ptr = <{{c_type}} *>X.data
         self.Y_data_ptr = <{{c_type}} *>Y.data
         self.sample_weight_data = <{{c_type}} *>sample_weights.data
@@ -288,7 +281,7 @@ cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
         sample_weight[0] = self.sample_weight_data[sample_idx]
 
 
-cdef class CSRDataset{{name}}(SequentialDataset{{name}}):
+cdef class CSRDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
 
     def __cinit__(self, np.ndarray[{{c_type}}, ndim=1, mode='c'] X_data,
