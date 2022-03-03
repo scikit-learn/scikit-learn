@@ -640,7 +640,9 @@ def _multiplicative_update_w(
     if gamma != 1:
         delta_W **= gamma
 
-    return delta_W, H_sum, HHt, XHt
+    W *= delta_W
+
+    return W, H_sum, HHt, XHt
 
 
 def _multiplicative_update_h(
@@ -842,7 +844,7 @@ def _fit_multiplicative_update(
     for n_iter in range(1, max_iter + 1):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
-        delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+        W, H_sum, HHt, XHt = _multiplicative_update_w(
             X,
             W,
             H,
@@ -855,7 +857,6 @@ def _fit_multiplicative_update(
             XHt=XHt,
             update_H=update_H,
         )
-        W *= delta_W
 
         # necessary for stability with beta_loss < 1
         if beta_loss < 1:
@@ -1946,18 +1947,18 @@ class MiniBatchNMF(NMF):
 
     References
     ----------
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
-    large scale nonnegative matrix and tensor factorizations."
-    IEICE transactions on fundamentals of electronics, communications and
-    computer sciences 92.3: 708-721, 2009.
+    .. [1] :doi:`"Fast local algorithms for large scale nonnegative matrix and tensor
+    factorizations" <10.1587/transfun.E92.A.708>`
+    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals of
+    electronics, communications and computer sciences 92.3: 708-721, 2009.
 
-    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
-    factorization with the beta-divergence. Neural Computation, 23(9).
+    .. [2] :doi:`"Algorithms for nonnegative matrix factorization with the
+    beta-divergence" <10.1162/NECO_a_00168>`
+    Fevotte, C., & Idier, J. (2011). Neural Computation, 23(9).
 
-    Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
-    nonnegative matrix factorization with the Itakura-Saito divergence.
-    WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
-    https://hal.archives-ouvertes.fr/hal-00602050)
+    .. [3] :doi:`"Online algorithms for nonnegative matrix factorization with the
+    Itakura-Saito divergence" <10.1109/ASPAA.2011.6082314>`
+    Lefevre, A., Bach, F., Fevotte, C. (2011). WASPA.
 
     Examples
     --------
@@ -2053,10 +2054,9 @@ class MiniBatchNMF(NMF):
         l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X)
 
         for i in range(max_iter):
-            delta_W, *_ = _multiplicative_update_w(
+            W, *_ = _multiplicative_update_w(
                 X, W, H, self._beta_loss, l1_reg_W, l2_reg_W, self._gamma
             )
-            W *= delta_W
 
             W_diff = linalg.norm(W - W_buffer) / linalg.norm(W)
             if self.tol > 0 and W_diff <= self.tol:
@@ -2077,10 +2077,9 @@ class MiniBatchNMF(NMF):
         if self.fresh_restarts or W is None:
             W = self._solve_W(X, H, self.fresh_restarts_max_iter)
         else:
-            delta_W, *_ = _multiplicative_update_w(
+            W, *_ = _multiplicative_update_w(
                 X, W, H, self._beta_loss, l1_reg_W, l2_reg_W, self._gamma
             )
-            W *= delta_W
 
         # necessary for stability with beta_loss < 1
         if self._beta_loss < 1:
@@ -2092,8 +2091,7 @@ class MiniBatchNMF(NMF):
             + l1_reg_H * H.sum()
             + l2_reg_W * (W ** 2).sum()
             + l2_reg_H * (H ** 2).sum()
-        )
-        batch_cost /= batch_size
+        ) / batch_size
 
         # update H
         if update_H:
@@ -2291,8 +2289,8 @@ class MiniBatchNMF(NMF):
 
         batches = gen_batches(n_samples, self._batch_size)
         batches = itertools.cycle(batches)
-        n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
-        n_steps = self.max_iter * n_steps_per_epoch
+        n_steps_per_iter = int(np.ceil(n_samples / self._batch_size))
+        n_steps = self.max_iter * n_steps_per_iter
 
         for i, batch in zip(range(n_steps), batches):
 
@@ -2309,7 +2307,7 @@ class MiniBatchNMF(NMF):
             W = self._solve_W(X, H, self._transform_max_iter)
 
         n_steps = i + 1
-        n_iter = int(np.ceil((i + 1) / n_steps_per_epoch))
+        n_iter = int(np.ceil(n_steps / n_steps_per_iter))
 
         return W, H, n_iter, n_steps
 
