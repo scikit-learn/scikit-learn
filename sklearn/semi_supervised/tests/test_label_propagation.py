@@ -28,17 +28,21 @@ ESTIMATORS = [
     ),
 ]
 
+DTYPES = (np.float32, np.float64)
 
-def test_fit_transduction():
-    samples = [[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]]
+
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_fit_transduction(dtype):
+    samples = np.asarray([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], dtype=dtype)
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
         assert clf.transduction_[2] == 1
 
 
-def test_distribution():
-    samples = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_distribution(dtype):
+    samples = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], dtype=dtype)
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
@@ -53,16 +57,18 @@ def test_distribution():
             )
 
 
-def test_predict():
-    samples = [[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]]
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_predict(dtype):
+    samples = np.asarray([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], dtype=dtype)
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
 
 
-def test_predict_proba():
-    samples = [[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]]
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_predict_proba(dtype):
+    samples = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], dtype=dtype)
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
@@ -71,9 +77,12 @@ def test_predict_proba():
         )
 
 
-def test_label_spreading_closed_form():
+@pytest.mark.parametrize("dtype", DTYPES)
+@pytest.mark.parametrize("alpha", [0.1, 0.3, 0.5, 0.7, 0.9])
+def test_label_spreading_closed_form(dtype, alpha):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    X = X.astype(dtype)
     y[::3] = -1
     clf = label_propagation.LabelSpreading().fit(X, y)
     # adopting notation from Zhou et al (2004):
@@ -81,17 +90,18 @@ def test_label_spreading_closed_form():
     Y = np.zeros((len(y), n_classes + 1))
     Y[np.arange(len(y)), y] = 1
     Y = Y[:, :-1]
-    for alpha in [0.1, 0.3, 0.5, 0.7, 0.9]:
-        expected = np.dot(np.linalg.inv(np.eye(len(S)) - alpha * S), Y)
-        expected /= expected.sum(axis=1)[:, np.newaxis]
-        clf = label_propagation.LabelSpreading(max_iter=10000, alpha=alpha)
-        clf.fit(X, y)
-        assert_array_almost_equal(expected, clf.label_distributions_, 4)
+    expected = np.dot(np.linalg.inv(np.eye(len(S)) - alpha * S), Y)
+    expected /= expected.sum(axis=1)[:, np.newaxis]
+    clf = label_propagation.LabelSpreading(max_iter=10000, alpha=alpha)
+    clf.fit(X, y)
+    assert_array_almost_equal(expected, clf.label_distributions_, 4)
 
 
-def test_label_propagation_closed_form():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_label_propagation_closed_form(dtype):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    X = X.astype(dtype)
     y[::3] = -1
     Y = np.zeros((len(y), n_classes + 1))
     Y[np.arange(len(y)), y] = 1
@@ -115,18 +125,22 @@ def test_label_propagation_closed_form():
     assert_array_almost_equal(expected, clf.label_distributions_, 4)
 
 
-def test_valid_alpha():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_valid_alpha(dtype):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    X = X.astype(dtype)
     for alpha in [-0.1, 0, 1, 1.1, None]:
         with pytest.raises(ValueError):
             label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
-def test_convergence_speed():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_convergence_speed(dtype):
     # This is a non-regression test for #5774
     X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
     y = np.array([0, 1, -1])
+    X = X.astype(dtype)
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=5000)
     mdl.fit(X, y)
 
@@ -135,10 +149,12 @@ def test_convergence_speed():
     assert_array_equal(mdl.predict(X), [0, 1, 1])
 
 
-def test_convergence_warning():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_convergence_warning(dtype):
     # This is a non-regression test for #5774
     X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
     y = np.array([0, 1, -1])
+    X = X.astype(dtype)
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=1)
     warn_msg = "max_iter=1 was reached without convergence."
     with pytest.warns(ConvergenceWarning, match=warn_msg):
@@ -165,12 +181,13 @@ def test_convergence_warning():
     "LabelPropagationCls",
     [label_propagation.LabelSpreading, label_propagation.LabelPropagation],
 )
-def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_label_propagation_non_zero_normalizer(LabelPropagationCls, dtype):
     # check that we don't divide by zero in case of null normalizer
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/15946
     # https://github.com/scikit-learn/scikit-learn/issues/9292
-    X = np.array([[100.0, 100.0], [100.0, 100.0], [0.0, 0.0], [0.0, 0.0]])
+    X = np.array([[100.0, 100.0], [100.0, 100.0], [0.0, 0.0], [0.0, 0.0]], dtype=dtype)
     y = np.array([0, 1, -1, -1])
     mdl = LabelPropagationCls(kernel="knn", max_iter=100, n_neighbors=1)
     with pytest.warns(None) as record:
@@ -178,7 +195,8 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     assert not [w.message for w in record]
 
 
-def test_predict_sparse_callable_kernel():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_predict_sparse_callable_kernel(dtype):
     # This is a non-regression test for #15866
 
     # Custom sparse kernel (top-K RBF)
@@ -206,6 +224,7 @@ def test_predict_sparse_callable_kernel():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=n_test, random_state=0
     )
+    X = X.astype(dtype)
 
     model = label_propagation.LabelSpreading(kernel=topk_rbf)
     model.fit(X_train, y_train)
