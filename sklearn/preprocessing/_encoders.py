@@ -709,10 +709,11 @@ class OneHotEncoder(_BaseEncoder):
             self._default_to_infrequent_mappings.append(mapping)
 
     def _map_infrequent_categories(self, X_int, X_mask):
-        """Map categories to infrequent categories. This modifies X_int
-        in-place. Values that were invalid based on `X_mask` are mapped to
-        the infrequent category if there was an infrequent category for that
-        feature.
+        """Map infrequent categories to integer representing the infrequent category.
+
+        This modifies X_int in-place. Values that were invalid based on `X_mask`
+        are mapped to the infrequent category if there was an infrequent
+        category for that feature.
 
         Parameters
         ----------

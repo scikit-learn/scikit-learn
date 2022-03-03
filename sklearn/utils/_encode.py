@@ -340,10 +340,10 @@ class _NaNCounter(Counter):
 
 
 def _get_counts(values, uniques):
-    """Get the count of each of the `uniques` in `values`. The counts will use
-    the order passed in by `uniques`.
+    """Get the count of each of the `uniques` in `values`.
 
-    For non-object dtypes, `uniques` is assumed to be sorted.
+    The counts will use the order passed in by `uniques`. For non-object dtypes,
+    `uniques` is assumed to be sorted and `np.nan` is at the end.
     """
     if values.dtype.kind in "OU":
         counter = _NaNCounter(values)
@@ -354,14 +354,13 @@ def _get_counts(values, uniques):
         return output
 
     unique_values, counts = _unique_np(values, return_counts=True)
-    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
 
-    # If there are nans, they will be mapped to the end.
+    # Recorder unique_values based on input: `uniques`
+    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
     if np.isnan(unique_values[-1]) and np.isnan(uniques[-1]):
         uniques_in_values[-1] = True
 
     unique_valid_indices = np.searchsorted(unique_values, uniques[uniques_in_values])
-
     output = np.zeros_like(uniques, dtype=np.int64)
     output[uniques_in_values] = counts[unique_valid_indices]
     return output
