@@ -63,6 +63,16 @@ def test_compute_class_weight_dict():
     cw = compute_class_weight(class_weights, classes=classes, y=y)
     assert_allclose([4.0, 2.0, 3.0], cw)
 
+    # y contains a unweighted class
+    classes = np.asarray(["cat", "dog"])
+    y = np.asarray(["dog", "cat", "dog"])
+    class_weights = {"dogs": 3, "cat": 2}
+    msg = r"The following classes in y do not have a weight in class_weight: \['dog'\]"
+
+    with pytest.warns(UserWarning, match=msg):
+        cw = compute_class_weight(class_weights, classes=classes, y=y)
+    assert_allclose([2.0, 1.0], cw)
+
 
 def test_compute_class_weight_invariance():
     # Test that results with class_weight="balanced" is invariant wrt
