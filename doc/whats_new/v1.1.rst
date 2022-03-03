@@ -633,16 +633,6 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
-  now accept an `input_name` parameter to make the error message more
-  informative when passed invalid input data (e.g. with NaN or infinite
-  values).
-  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
-
-- |Enhancement| :func:`utils.validation.check_array` returns a float
-  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
-  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
-
 - |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`neighbors.RadiusNeighborsTransformer`, :class:`neighbors.KNeighborsTransformer`
   and :class:`neighbors.NeighborhoodComponentsAnalysis`. :pr:`22212` by
@@ -762,6 +752,16 @@ Changelog
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
 
+- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
+  now accept an `input_name` parameter to make the error message more
+  informative when passed invalid input data (e.g. with NaN or infinite
+  values).
+  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| :func:`utils.validation.check_array` returns a float
+  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
+  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
+
 - |API| :func:`utils.estimator_checks.check_estimator`'s argument is now called
   `estimator` (previous name was `Estimator`). :pr:`22188` by
   :user:`Mathurin Massias <mathurinm>`.
@@ -776,6 +776,12 @@ Changelog
 - |Fix| Estimators with `non_deterministic` tag set to `True` will skip both
   `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
   :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
+
+- |API| Converting arrays of objects in :func:`utils.validation.check_array` with
+  `dtype="numeric"` is deprecated. An error will be raised from version 1.3. Please
+  convert your data to numeric values explicitly instead. Note that the already
+  deprecated behavior of converting arrays of bytes/strings is extended to version 1.3.
+  :pr:`` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------

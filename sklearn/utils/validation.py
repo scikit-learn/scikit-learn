@@ -756,11 +756,7 @@ def check_array(
             dtype_orig = np.result_type(*dtypes_orig)
 
     if dtype_numeric:
-        if dtype_orig is not None and dtype_orig.kind == "O":
-            # if input is object, convert to float.
-            dtype = np.float64
-        else:
-            dtype = None
+        dtype = None
 
     if isinstance(dtype, (list, tuple)):
         if dtype_orig is not None and dtype_orig in dtype:
@@ -872,7 +868,7 @@ def check_array(
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind in "OUSV":
             warnings.warn(
-                "Arrays of bytes/strings is being converted to decimal "
+                "Arrays of objects/bytes/strings is being converted to decimal "
                 "numbers if dtype='numeric'. This behavior is deprecated in "
                 "0.24 and will be removed in 1.3. Please convert your data to numeric "
                 "values explicitly instead.",
@@ -883,7 +879,7 @@ def check_array(
                 array = array.astype(np.float64)
             except ValueError as e:
                 raise ValueError(
-                    "Unable to convert array of bytes/strings "
+                    "Unable to convert array of objects/bytes/strings "
                     "into decimal numbers with dtype='numeric'"
                 ) from e
         if not allow_nd and array.ndim >= 3:

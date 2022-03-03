@@ -410,13 +410,15 @@ def test_check_array():
         np.array([["1", "2"], ["3", "4"]], dtype="S"),
         [[b"1", b"2"], [b"3", b"4"]],
         np.array([[b"1", b"2"], [b"3", b"4"]], dtype="V1"),
+        np.array([[1, 2], [3, 4]], dtype=object),
+        np.array([["1", "2"], ["3", "4"]], dtype=object),
     ],
 )
 def test_check_array_numeric_warns(X):
     """Test that check_array warns when it converts a bytes/string into a
     float."""
     expected_msg = (
-        r"Arrays of bytes/strings is being converted to decimal .*"
+        r"Arrays of objects/bytes/strings is being converted to decimal .*"
         r"deprecated in 0.24 and will be removed in 1.3"
     )
     with pytest.warns(FutureWarning, match=expected_msg):
@@ -432,11 +434,12 @@ def test_check_array_numeric_warns(X):
         np.array([["11", "12"], ["13", "xx"]], dtype="U"),
         np.array([["11", "12"], ["13", "xx"]], dtype="S"),
         [[b"a", b"b"], [b"c", b"d"]],
+        np.array([[11, "12"], [13, "xx"]], dtype=object),
     ],
 )
 def test_check_array_dtype_numeric_errors(X):
     """Error when string-ike array can not be converted"""
-    expected_warn_msg = "Unable to convert array of bytes/strings"
+    expected_warn_msg = "Unable to convert array of objects/bytes/strings"
     with pytest.raises(ValueError, match=expected_warn_msg):
         check_array(X, dtype="numeric")
 
