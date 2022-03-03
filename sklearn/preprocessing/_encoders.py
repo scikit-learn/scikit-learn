@@ -299,7 +299,7 @@ class OneHotEncoder(_BaseEncoder):
             `'infrequent_if_exist'` was added to automatically handle unknown
             categories and infrequent categories.
 
-    min_frequency : int or float, default=1
+    min_frequency : int or float, default=None
         Specifies the minimum frequency below which a category will be
         considered infrequent.
 
@@ -442,7 +442,7 @@ class OneHotEncoder(_BaseEncoder):
         sparse=True,
         dtype=np.float64,
         handle_unknown="error",
-        min_frequency=1,
+        min_frequency=None,
         max_categories=None,
     ):
         self.categories = categories
@@ -482,7 +482,7 @@ class OneHotEncoder(_BaseEncoder):
                     "1 or a float in (0.0, 1.0); got the "
                     f"integer {self.min_frequency}"
                 )
-        else:  # float
+        elif isinstance(self.min_frequency, numbers.Real):
             if not (0.0 < self.min_frequency < 1.0):
                 raise ValueError(
                     "min_frequency must be an integer at least "
@@ -491,16 +491,8 @@ class OneHotEncoder(_BaseEncoder):
                 )
 
         self._infrequent_enabled = (
-            (self.max_categories is not None and self.max_categories > 1)
-            or (
-                isinstance(self.min_frequency, numbers.Integral)
-                and self.min_frequency > 1
-            )
-            or (
-                isinstance(self.min_frequency, numbers.Real)
-                and self.min_frequency < 1.0
-            )
-        )
+            self.max_categories is not None and self.max_categories > 1
+        ) or self.min_frequency is not None
 
     def _convert_to_infrequent_idx(self, feature_idx, original_idx):
         """Convert `original_idx` for `feature_idx` into the
@@ -636,9 +628,11 @@ class OneHotEncoder(_BaseEncoder):
         """
         if isinstance(self.min_frequency, numbers.Integral):
             infrequent_mask = category_count < self.min_frequency
-        else:  # float
+        elif isinstance(self.min_frequency, numbers.Real):
             min_frequency_abs = n_samples * self.min_frequency
             infrequent_mask = category_count < min_frequency_abs
+        else:
+            infrequent_mask = np.zeros(category_count.shape[0], dtype=bool)
 
         n_current_features = category_count.size - infrequent_mask.sum() + 1
         if self.max_categories is not None and self.max_categories < n_current_features:
@@ -714,7 +708,7 @@ class OneHotEncoder(_BaseEncoder):
 
             self._default_to_infrequent_mappings.append(mapping)
 
-    def _map_to_infrequent_categories(self, X_int, X_mask):
+    def _map_infrequent_categories(self, X_int, X_mask):
         """Map categories to infrequent categories. This modifies X_int
         in-place. Values that were invalid based on `X_mask` are mapped to
         the infrequent category if there was an infrequent category for that
@@ -890,7 +884,7 @@ class OneHotEncoder(_BaseEncoder):
             force_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
-        self._map_to_infrequent_categories(X_int, X_mask)
+        self._map_infrequent_categories(X_int, X_mask)
 
         n_samples, n_features = X_int.shape
 

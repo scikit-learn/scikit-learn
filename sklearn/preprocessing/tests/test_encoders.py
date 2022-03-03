@@ -1159,7 +1159,9 @@ def test_ohe_infrequent_handle_unknown_error():
         ohe.transform(X_test)
 
 
-@pytest.mark.parametrize("kwargs", [{"max_categories": 3}, {"min_frequency": 4}])
+@pytest.mark.parametrize(
+    "kwargs", [{"max_categories": 3, "min_frequency": 1}, {"min_frequency": 4}]
+)
 def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
     """'a' is the only frequent category, all other categories are infrequent."""
 
