@@ -65,7 +65,8 @@ def compute_class_weight(class_weight, *, classes, y):
                 # # Get possible suggestion
                 if isinstance(c, str):
                     suggestion = difflib.get_close_matches(c, class_weight.keys(), 1)[0]
-                    raise ValueError("Class label {} not present.".format(c) + " Did you mean " + suggestion + "?")
+                    raise ValueError("Class label {} not present.".format(c) +
+                                     " Did you mean " + suggestion + "?")
                 raise ValueError("Class label {} not present.".format(c))
             else:
                 weight[i] = class_weight[c]
