@@ -1437,18 +1437,16 @@ def test_ohe_infrequent_multiple_categories_dtypes():
     assert_array_equal(expected_inv, X_inv)
 
 
-@pytest.mark.parametrize("min_frequency", [21])
-def test_ohe_infrequent_one_level_errors(min_frequency):
+@pytest.mark.parametrize("kwargs", [{"min_frequency": 21, "max_categories": 1}])
+def test_ohe_infrequent_one_level_errors(kwargs):
     """All user provided categories are infrequent."""
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 2]).T
 
-    ohe = OneHotEncoder(
-        handle_unknown="infrequent_if_exist", sparse=False, min_frequency=min_frequency
-    )
+    ohe = OneHotEncoder(handle_unknown="infrequent_if_exist", sparse=False, **kwargs)
+    ohe.fit(X_train)
 
-    msg = "All categories in column 0 are infrequent"
-    with pytest.raises(ValueError, match=msg):
-        ohe.fit(X_train)
+    X_trans = ohe.transform([["a"]])
+    assert_allclose(X_trans, [[1]])
 
 
 @pytest.mark.parametrize("kwargs", [{"min_frequency": 2, "max_categories": 3}])
@@ -1461,17 +1459,15 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
         sparse=False,
         handle_unknown="infrequent_if_exist",
         **kwargs,
-    )
+    ).fit(X_train)
 
-    msg = "All categories in column 0 are infrequent"
-    with pytest.raises(ValueError, match=msg):
-        ohe.fit(X_train)
+    X_trans = ohe.transform([["a"], ["e"]])
+    assert_allclose(X_trans, [[1], [1]])
 
 
 @pytest.mark.parametrize(
     "kwargs, error_msg",
     [
-        ({"max_categories": 1}, "max_categories must be greater than 1"),
         ({"max_categories": -2}, "max_categories must be greater than 1"),
         ({"min_frequency": -1}, "min_frequency must be an integer at least"),
         ({"min_frequency": 1.1}, "min_frequency must be an integer at least"),

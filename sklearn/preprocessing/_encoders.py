@@ -472,7 +472,7 @@ class OneHotEncoder(_BaseEncoder):
             )
             raise ValueError(msg)
 
-        if self.max_categories is not None and self.max_categories <= 1:
+        if self.max_categories is not None and self.max_categories < 1:
             raise ValueError("max_categories must be greater than 1")
 
         if isinstance(self.min_frequency, numbers.Integral):
@@ -491,7 +491,7 @@ class OneHotEncoder(_BaseEncoder):
                 )
 
         self._infrequent_enabled = (
-            self.max_categories is not None and self.max_categories > 1
+            self.max_categories is not None and self.max_categories >= 1
         ) or self.min_frequency is not None
 
     def _convert_to_infrequent_idx(self, feature_idx, original_idx):
@@ -643,11 +643,6 @@ class OneHotEncoder(_BaseEncoder):
             infrequent_mask[smallest_levels] = True
 
         output = np.flatnonzero(infrequent_mask)
-        if output.size == category_count.size:
-            raise ValueError(
-                f"All categories in column {col_idx} are "
-                "infrequent, try decreasing min_frequency"
-            )
         return output if output.size > 0 else None
 
     def _fit_infrequent_category_mapping(self, n_samples, category_counts):
