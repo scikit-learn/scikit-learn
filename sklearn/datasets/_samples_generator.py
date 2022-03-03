@@ -29,7 +29,7 @@ def _generate_hypercube(samples, dimensions, rng):
                 _generate_hypercube(samples, 30, rng),
             ]
         )
-    out = sample_without_replacement(2 ** dimensions, samples, random_state=rng).astype(
+    out = sample_without_replacement(2**dimensions, samples, random_state=rng).astype(
         dtype=">u4", copy=False
     )
     out = np.unpackbits(out.view(">u1")).reshape((-1, 32))[:, -dimensions:]
@@ -185,7 +185,7 @@ def make_classification(
         msg += " smaller or equal 2**n_informative({})={}"
         raise ValueError(
             msg.format(
-                n_classes, n_clusters_per_class, n_informative, 2 ** n_informative
+                n_classes, n_clusters_per_class, n_informative, 2**n_informative
             )
         )
 
@@ -496,7 +496,7 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
 
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
-    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
+    y = ((X**2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
     y[y == 0.0] = -1.0
 
     return X, y
@@ -931,9 +931,6 @@ def make_blobs(
     if isinstance(cluster_std, numbers.Real):
         cluster_std = np.full(len(centers), cluster_std)
 
-    X = []
-    y = []
-
     if isinstance(n_samples, Iterable):
         n_samples_per_center = n_samples
     else:
@@ -942,19 +939,20 @@ def make_blobs(
         for i in range(n_samples % n_centers):
             n_samples_per_center[i] += 1
 
-    for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
-        X.append(generator.normal(loc=centers[i], scale=std, size=(n, n_features)))
-        y += [i] * n
+    cum_sum_n_samples = np.cumsum(n_samples_per_center)
+    X = np.empty(shape=(sum(n_samples_per_center), n_features), dtype=np.float64)
+    y = np.empty(shape=(sum(n_samples_per_center),), dtype=int)
 
-    X = np.concatenate(X)
-    y = np.array(y)
+    for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
+        start_idx = cum_sum_n_samples[i - 1] if i > 0 else 0
+        end_idx = cum_sum_n_samples[i]
+        X[start_idx:end_idx] = generator.normal(
+            loc=centers[i], scale=std, size=(n, n_features)
+        )
+        y[start_idx:end_idx] = i
 
     if shuffle:
-        total_n_samples = np.sum(n_samples)
-        indices = np.arange(total_n_samples)
-        generator.shuffle(indices)
-        X = X[indices]
-        y = y[indices]
+        X, y = util_shuffle(X, y, random_state=generator)
 
     if return_centers:
         return X, y, centers
@@ -1288,7 +1286,7 @@ def make_sparse_coded_signal(
 
     # generate dictionary
     D = generator.standard_normal(size=(n_features, n_components))
-    D /= np.sqrt(np.sum((D ** 2), axis=0))
+    D /= np.sqrt(np.sum((D**2), axis=0))
 
     # generate code
     X = np.zeros((n_components, n_samples))
@@ -1563,13 +1561,11 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     generator = check_random_state(random_state)
 
     t = 3 * np.pi * (generator.uniform(size=(1, n_samples)) - 0.5)
-    x = np.sin(t)
-    y = 2.0 * generator.uniform(size=(1, n_samples))
-    z = np.sign(t) * (np.cos(t) - 1)
-
-    X = np.concatenate((x, y, z))
-    X += noise * generator.standard_normal(size=(3, n_samples))
-    X = X.T
+    X = np.empty(shape=(n_samples, 3), dtype=np.float64)
+    X[:, 0] = np.sin(t)
+    X[:, 1] = 2.0 * generator.uniform(size=n_samples)
+    X[:, 2] = np.sign(t) * (np.cos(t) - 1)
+    X += noise * generator.standard_normal(size=(3, n_samples)).T
     t = np.squeeze(t)
 
     return X, t
@@ -1787,8 +1783,7 @@ def make_checkerboard(
     shuffle=True,
     random_state=None,
 ):
-    """Generate an array with block checkerboard structure for
-    biclustering.
+    """Generate an array with block checkerboard structure for biclustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1828,17 +1823,16 @@ def make_checkerboard(
     cols : ndarray of shape (n_clusters, X.shape[1])
         The indicators for cluster membership of each column.
 
+    See Also
+    --------
+    make_biclusters : Generate an array with constant block diagonal structure
+        for biclustering.
 
     References
     ----------
-
     .. [1] Kluger, Y., Basri, R., Chang, J. T., & Gerstein, M. (2003).
         Spectral biclustering of microarray data: coclustering genes
         and conditions. Genome research, 13(4), 703-716.
-
-    See Also
-    --------
-    make_biclusters
     """
     generator = check_random_state(random_state)
 

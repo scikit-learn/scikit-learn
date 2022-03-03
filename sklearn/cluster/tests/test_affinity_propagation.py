@@ -280,11 +280,3 @@ def test_sparse_input_for_fit_predict():
     X = csr_matrix(rng.randint(0, 2, size=(5, 5)))
     labels = af.fit_predict(X)
     assert_array_equal(labels, (0, 1, 1, 2, 3))
-
-
-# TODO: Remove in 1.1
-def test_affinity_propagation_pairwise_is_deprecated():
-    afp = AffinityPropagation(affinity="precomputed")
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        afp._pairwise

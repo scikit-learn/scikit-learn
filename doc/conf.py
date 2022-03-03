@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.abspath("sphinxext"))
 from github_link import make_linkcode_resolve
 import sphinx_gallery
 import matplotlib as mpl
+from sphinx_gallery.sorting import ExampleTitleSortKey
 
 # -- General configuration ---------------------------------------------------
 
@@ -253,6 +254,7 @@ redirects = {
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
+    "modules/model_persistence": "model_persistence",
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -303,7 +305,7 @@ trim_doctests_flags = True
 intersphinx_mapping = {
     "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
     "numpy": ("https://numpy.org/doc/stable", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "matplotlib": ("https://matplotlib.org/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "joblib": ("https://joblib.readthedocs.io/en/latest/", None),
@@ -358,6 +360,24 @@ class SubSectionTitleOrder:
         return directory
 
 
+class SKExampleTitleSortKey(ExampleTitleSortKey):
+    """Sorts release highlights based on version number."""
+
+    def __call__(self, filename):
+        title = super().__call__(filename)
+        prefix = "plot_release_highlights_"
+
+        # Use title to sort if not a release highlight
+        if not filename.startswith(prefix):
+            return title
+
+        major_minor = filename[len(prefix) :].split("_")[:2]
+        version_float = float(".".join(major_minor))
+
+        # negate to place the newest version highlights first
+        return -version_float
+
+
 sphinx_gallery_conf = {
     "doc_module": "sklearn",
     "backreferences_dir": os.path.join("modules", "generated"),
@@ -366,6 +386,7 @@ sphinx_gallery_conf = {
     "examples_dirs": ["../examples"],
     "gallery_dirs": ["auto_examples"],
     "subsection_order": SubSectionTitleOrder("../examples"),
+    "within_subsection_order": SKExampleTitleSortKey,
     "binder": {
         "org": "scikit-learn",
         "repo": "scikit-learn",

@@ -94,7 +94,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        n_features=(2 ** 20),
+        n_features=(2**20),
         *,
         input_type="dict",
         dtype=np.float64,
