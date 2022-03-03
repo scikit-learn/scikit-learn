@@ -13,7 +13,6 @@ import warnings
 
 import numpy as np
 from scipy import linalg
-
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 
@@ -563,18 +562,24 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             # Whitening and preprocessing by PCA
             if self.svd_solver == "eigh":
                 # Faster when num_samples >> n_features
-                D, u = linalg.eigh(XT.dot(X))
+                d, u = linalg.eigh(XT.dot(X))
+                sort_indices = np.argsort(d)[::-1]
                 eps = np.finfo(np.double).eps
-                degenerate_idx = D < eps
+                degenerate_idx = d < eps
                 if np.any(degenerate_idx):
                     warnings.warn(
                         "There are some small singular values, using "
                         "svd_solver = 'svd' might lead to more "
                         "accurate results."
                     )
-                D[degenerate_idx] = eps  # For numerical issues
-                d = np.sqrt(D)
-                del D
+                d[degenerate_idx] = eps  # For numerical issues
+                d = np.sqrt(d, d)
+                d, u = d[sort_indices], u[sort_indices]
+                # Resize and reorder to match svd
+                u = u[:, : min(X.shape)]
+                L = np.eye(u.shape[0])[::-1]
+                R = np.eye(u.shape[1])[::-1]
+                u = L @ u @ R
             else:
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 

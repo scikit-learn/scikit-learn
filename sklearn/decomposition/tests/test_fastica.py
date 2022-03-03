@@ -142,6 +142,12 @@ def test_fastica_simple(add_noise, seed):
 
         with pytest.raises(TypeError):
             FastICA(fun=range(10), svd_solver=solver).fit(m.T)
+
+    # Check equality up to column parity
+    for A in (outs["eigh"], outs["svd"]):
+        for c in range(A.shape[1]):
+            if A[0, c] < 0:
+                A[:, c] *= -1
     assert_array_almost_equal(outs["eigh"], outs["svd"])
 
 
