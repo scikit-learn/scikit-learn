@@ -16,6 +16,8 @@ from sklearn.utils._testing import ignore_warnings
 
 eigen_solvers = ["dense", "arpack"]
 
+DTYPES = (np.float64, np.float32)
+
 
 # ----------------------------------------------------------------------
 # Test utility routines
@@ -38,7 +40,8 @@ def test_barycenter_kneighbors_graph():
 # Test LLE by computing the reconstruction error on some manifolds.
 
 
-def test_lle_simple_grid():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_lle_simple_grid(dtype):
     # note: ARPACK is numerically unstable, so this test will fail for
     #       some random seeds.  We choose 42 because the tests pass.
     #       for arm64 platforms 2 makes the test fail.
@@ -47,7 +50,7 @@ def test_lle_simple_grid():
     rng = np.random.RandomState(42)
 
     # grid of equidistant points in 2D, n_components = n_dim
-    X = np.array(list(product(range(5), repeat=2)))
+    X = np.array(list(product(range(5), repeat=2)), dtype=dtype)
     X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(
@@ -71,15 +74,16 @@ def test_lle_simple_grid():
         assert_almost_equal(clf.reconstruction_error_, reconstruction_error, decimal=1)
 
     # re-embed a noisy version of X using the transform method
-    noise = rng.randn(*X.shape) / 100
+    noise = rng.randn(*X.shape).astype(dtype) / 100
     X_reembedded = clf.transform(X + noise)
     assert linalg.norm(X_reembedded - clf.embedding_) < tol
 
 
-def test_lle_manifold():
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_lle_manifold(dtype):
     rng = np.random.RandomState(0)
     # similar test on a slightly more complex manifold
-    X = np.array(list(product(np.arange(18), repeat=2)))
+    X = np.array(list(product(np.arange(18), repeat=2)), dtype=dtype)
     X = np.c_[X, X[:, 0] ** 2 / 18]
     X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
@@ -109,8 +113,9 @@ def test_lle_manifold():
 
 
 # Test the error raised when parameter passed to lle is invalid
-def test_lle_init_parameters():
-    X = np.random.rand(5, 3)
+@pytest.mark.parametrize("dtype", DTYPES)
+def test_lle_init_parameters(dtype):
+    X = np.random.rand(5, 3).astype(dtype)
 
     clf = manifold.LocallyLinearEmbedding(eigen_solver="error")
     msg = "unrecognized eigen_solver 'error'"
