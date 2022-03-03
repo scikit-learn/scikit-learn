@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 
 
 def compute_class_weight(class_weight, *, classes, y):
@@ -60,20 +59,16 @@ def compute_class_weight(class_weight, *, classes, y):
                 "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
             )
         unweighted_classes = []
+        weighted_classes = []
         for i, c in enumerate(classes):
             if c in class_weight:
                 weight[i] = class_weight[c]
+                weighted_classes.append(c)
             else:
                 unweighted_classes.append(c)
 
-        if len(unweighted_classes) == len(classes):
-            raise ValueError("class_weight does not contain any classes in y")
-
-        if unweighted_classes:
-            warnings.warn(
-                "The following classes in y do not have a weight in class_weight:"
-                f" {unweighted_classes}"
-            )
+        if unweighted_classes and len(weighted_classes) != len(class_weight):
+            raise ValueError(f"classes: {unweighted_classes} are not in class_weight")
 
     return weight
 
