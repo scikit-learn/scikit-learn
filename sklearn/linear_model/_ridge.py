@@ -235,7 +235,7 @@ def _solve_svd(X, y, alpha):
     s_nnz = s[idx][:, np.newaxis]
     UTy = np.dot(U.T, y)
     d = np.zeros((s.size, alpha.size), dtype=X.dtype)
-    d[idx] = s_nnz / (s_nnz ** 2 + alpha)
+    d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
     return np.dot(Vt.T, d_UT_y).T
 
@@ -1517,7 +1517,7 @@ class _RidgeGCV(LinearModel):
     @staticmethod
     def _decomp_diag(v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-        return (v_prime * Q ** 2).sum(axis=-1)
+        return (v_prime * Q**2).sum(axis=-1)
 
     @staticmethod
     def _diag_dot(D, B):
@@ -1799,7 +1799,7 @@ class _RidgeGCV(LinearModel):
             intercept_column = sqrt_sw[:, None]
             X = np.hstack((X, intercept_column))
         U, singvals, _ = linalg.svd(X, full_matrices=0)
-        singvals_sq = singvals ** 2
+        singvals_sq = singvals**2
         UT_y = np.dot(U.T, y)
         return X_mean, singvals_sq, U, UT_y
 
@@ -1809,15 +1809,15 @@ class _RidgeGCV(LinearModel):
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
-        w = ((singvals_sq + alpha) ** -1) - (alpha ** -1)
+        w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
         if self.fit_intercept:
             # detect intercept column
             normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, U)
             # cancel the regularization for the intercept
-            w[intercept_dim] = -(alpha ** -1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-        G_inverse_diag = self._decomp_diag(w, U) + (alpha ** -1)
+            w[intercept_dim] = -(alpha**-1)
+        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha**-1) * y
+        G_inverse_diag = self._decomp_diag(w, U) + (alpha**-1)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             G_inverse_diag = G_inverse_diag[:, np.newaxis]

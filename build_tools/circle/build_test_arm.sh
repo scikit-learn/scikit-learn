@@ -62,7 +62,7 @@ fi
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     # numpydoc requires sphinx
     mamba install --verbose -y sphinx
-    mamba install --verbose -y "numpydoc<1.2"
+    mamba install --verbose -y numpydoc
 fi
 
 python --version

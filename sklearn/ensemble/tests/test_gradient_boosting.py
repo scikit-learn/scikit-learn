@@ -84,13 +84,13 @@ def test_classification_toy(loss):
         (
             {"learning_rate": "foo"},
             TypeError,
-            "learning_rate must be an instance of <class 'numbers.Real'>",
+            "learning_rate must be an instance of float",
         ),
         ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
         (
             {"n_estimators": 1.5},
             TypeError,
-            "n_estimators must be an instance of <class 'numbers.Integral'>,",
+            "n_estimators must be an instance of int,",
         ),
         ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
         ({"subsample": 0.0}, ValueError, "subsample == 0.0, must be > 0.0"),
@@ -98,7 +98,7 @@ def test_classification_toy(loss):
         (
             {"subsample": "foo"},
             TypeError,
-            "subsample must be an instance of <class 'numbers.Real'>",
+            "subsample must be an instance of float",
         ),
         ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
         ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
@@ -125,19 +125,19 @@ def test_classification_toy(loss):
         (
             {"validation_fraction": "foo"},
             TypeError,
-            "validation_fraction must be an instance of <class 'numbers.Real'>",
+            "validation_fraction must be an instance of float",
         ),
         ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be >= 1"),
         (
             {"n_iter_no_change": 1.5},
             TypeError,
-            "n_iter_no_change must be an instance of <class 'numbers.Integral'>,",
+            "n_iter_no_change must be an instance of int,",
         ),
         ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
         (
             {"tol": "foo"},
             TypeError,
-            "tol must be an instance of <class 'numbers.Real'>,",
+            "tol must be an instance of float,",
         ),
         # The following parameters are checked in BaseDecisionTree
         ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
@@ -145,7 +145,7 @@ def test_classification_toy(loss):
         (
             {"min_samples_leaf": "foo"},
             TypeError,
-            "min_samples_leaf must be an instance of <class 'numbers.Real'>",
+            "min_samples_leaf must be an instance of float",
         ),
         ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
         (
@@ -161,7 +161,7 @@ def test_classification_toy(loss):
         (
             {"min_samples_split": "foo"},
             TypeError,
-            "min_samples_split must be an instance of <class 'numbers.Real'>",
+            "min_samples_split must be an instance of float",
         ),
         (
             {"min_weight_fraction_leaf": -1},
@@ -176,19 +176,19 @@ def test_classification_toy(loss):
         (
             {"min_weight_fraction_leaf": "foo"},
             TypeError,
-            "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
+            "min_weight_fraction_leaf must be an instance of float",
         ),
         ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
         (
             {"max_leaf_nodes": 1.5},
             TypeError,
-            "max_leaf_nodes must be an instance of <class 'numbers.Integral'>",
+            "max_leaf_nodes must be an instance of int",
         ),
         ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
         (
             {"max_depth": 1.1},
             TypeError,
-            "max_depth must be an instance of <class 'numbers.Integral'>",
+            "max_depth must be an instance of int",
         ),
         (
             {"min_impurity_decrease": -1},
@@ -198,13 +198,13 @@ def test_classification_toy(loss):
         (
             {"min_impurity_decrease": "foo"},
             TypeError,
-            "min_impurity_decrease must be an instance of <class 'numbers.Real'>",
+            "min_impurity_decrease must be an instance of float",
         ),
         ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
         (
             {"ccp_alpha": "foo"},
             TypeError,
-            "ccp_alpha must be an instance of <class 'numbers.Real'>",
+            "ccp_alpha must be an instance of float",
         ),
         ({"criterion": "mae"}, ValueError, "criterion='mae' is not supported."),
     ],

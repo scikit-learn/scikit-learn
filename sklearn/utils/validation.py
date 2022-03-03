@@ -24,7 +24,7 @@ import joblib
 
 from contextlib import suppress
 
-from .fixes import _object_dtype_isnan, parse_version
+from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
@@ -33,7 +33,10 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
+# This function is not used anymore at this moment in the code base but we keep it in
+# case that we merge a new public function without kwarg only by mistake, which would
+# require a deprecation cycle to fix.
+def _deprecate_positional_args(func=None, *, version="1.3"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -43,7 +46,7 @@ def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
     ----------
     func : callable, default=None
         Function to check arguments on.
-    version : callable, default="1.1 (renaming of 0.26)"
+    version : callable, default="1.3"
         The version when positional arguments will result in error.
     """
 
@@ -156,8 +159,10 @@ def assert_all_finite(
     Parameters
     ----------
     X : {ndarray, sparse matrix}
+        The input data.
 
     allow_nan : bool, default=False
+        If True, do not throw error when `X` contains NaN.
 
     estimator_name : str, default=None
         The estimator name, used to construct the error message.
@@ -238,6 +243,11 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 def _is_arraylike(x):
     """Returns whether the input is array-like."""
     return hasattr(x, "__len__") or hasattr(x, "shape") or hasattr(x, "__array__")
+
+
+def _is_arraylike_not_scalar(array):
+    """Return True if array is array-like and not a scalar"""
+    return _is_arraylike(array) and not np.isscalar(array)
 
 
 def _num_features(X):
@@ -344,10 +354,7 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, str):
-        if parse_version(joblib.__version__) < parse_version("0.12"):
-            memory = joblib.Memory(cachedir=memory, verbose=0)
-        else:
-            memory = joblib.Memory(location=memory, verbose=0)
+        memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, "cache"):
         raise ValueError(
             "'memory' should be None, a string or have the same"
@@ -1409,8 +1416,29 @@ def check_scalar(
         If `min_val`, `max_val` and `include_boundaries` are inconsistent.
     """
 
+    def type_name(t):
+        """Convert type into humman readable string."""
+        module = t.__module__
+        qualname = t.__qualname__
+        if module == "builtins":
+            return qualname
+        elif t == numbers.Real:
+            return "float"
+        elif t == numbers.Integral:
+            return "int"
+        return f"{module}.{qualname}"
+
     if not isinstance(x, target_type):
-        raise TypeError(f"{name} must be an instance of {target_type}, not {type(x)}.")
+        if isinstance(target_type, tuple):
+            types_str = ", ".join(type_name(t) for t in target_type)
+            target_type_str = f"{{{types_str}}}"
+        else:
+            target_type_str = type_name(target_type)
+
+        raise TypeError(
+            f"{name} must be an instance of {target_type_str}, not"
+            f" {type(x).__qualname__}."
+        )
 
     expected_include_boundaries = ("left", "right", "both", "neither")
     if include_boundaries not in expected_include_boundaries:
@@ -1810,9 +1838,8 @@ def _get_feature_names(X):
 
     types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
 
-    # Warn when types are mixed.
-    # ints and strings do not warn
-    if len(types) > 1 or not (types[0].startswith("int") or types[0] == "str"):
+    # Warn when types are mixed and string is one of the types
+    if len(types) > 1 and "str" in types:
         # TODO: Convert to an error in 1.2
         warnings.warn(
             "Feature names only support names that are all strings. "
@@ -1823,7 +1850,7 @@ def _get_feature_names(X):
         return
 
     # Only feature names of all strings are supported
-    if types[0] == "str":
+    if len(types) == 1 and types[0] == "str":
         return feature_names
 
 
