@@ -1,7 +1,6 @@
 import itertools
 import os
 import re
-import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -442,12 +441,9 @@ def test_logistic_regression_path_convergence_fail():
     # advice (scaling the data) and to the logistic regression specific
     # documentation that includes hints on the solver configuration.
     with pytest.warns(ConvergenceWarning) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            _logistic_regression_path(
-                X, y, Cs=Cs, tol=0.0, max_iter=1, random_state=0, verbose=0
-            )
+        _logistic_regression_path(
+            X, y, Cs=Cs, tol=0.0, max_iter=1, random_state=0, verbose=0
+        )
 
     assert len(record) == 1
     warn_msg = record[0].message.args[0]
@@ -1230,58 +1226,46 @@ def test_max_iter(max_iter, multi_class, solver, message):
 def test_n_iter(solver):
     # Test that self.n_iter_ has the correct format.
     X, y = iris.data, iris.target
+    n_classes = np.unique(y).shape[0]
+    assert n_classes == 3
 
+    # Also generate a binary classification sub-problem.
     y_bin = y.copy()
     y_bin[y_bin == 2] = 0
 
     n_Cs = 4
     n_cv_fold = 2
 
-    # OvR case
-    n_classes = 1 if solver == "liblinear" else np.unique(y).shape[0]
-    clf = LogisticRegression(
-        tol=1e-2, multi_class="ovr", solver=solver, C=1.0, random_state=42
+    # Binary classification case
+    clf = LogisticRegression(tol=1e-2, C=1.0, solver=solver, random_state=42)
+    clf.fit(X, y_bin)
+    assert clf.n_iter_.shape == (1,)
+
+    clf_cv = LogisticRegressionCV(
+        tol=1e-2, solver=solver, Cs=n_Cs, cv=n_cv_fold, random_state=42
     )
-    clf.fit(X, y)
+    clf_cv.fit(X, y_bin)
+    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+
+    # OvR case
+    clf.set_params(multi_class="ovr").fit(X, y)
     assert clf.n_iter_.shape == (n_classes,)
 
-    n_classes = np.unique(y).shape[0]
-    clf = LogisticRegressionCV(
-        tol=1e-2,
-        multi_class="ovr",
-        solver=solver,
-        Cs=n_Cs,
-        cv=n_cv_fold,
-        random_state=42,
-    )
-    clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
-    clf.fit(X, y_bin)
-    assert clf.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    clf_cv.set_params(multi_class="ovr").fit(X, y)
+    assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
 
     # multinomial case
-    n_classes = 1
-    if solver in ("liblinear", "sag", "saga"):
+    if solver == "liblinear":
+        # This solver only supports one-vs-rest multiclass classification.
         return
 
-    clf = LogisticRegression(
-        tol=1e-2, multi_class="multinomial", solver=solver, C=1.0, random_state=42
-    )
-    clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes,)
+    # When using the multinomial objective function, there is a single
+    # optimization problem to solve for all classes at once:
+    clf.set_params(multi_class="multinomial").fit(X, y)
+    assert clf.n_iter_.shape == (1,)
 
-    clf = LogisticRegressionCV(
-        tol=1e-2,
-        multi_class="multinomial",
-        solver=solver,
-        Cs=n_Cs,
-        cv=n_cv_fold,
-        random_state=42,
-    )
-    clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
-    clf.fit(X, y_bin)
-    assert clf.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    clf_cv.set_params(multi_class="multinomial").fit(X, y)
+    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
 
 
 @pytest.mark.parametrize("solver", ("newton-cg", "sag", "saga", "lbfgs"))
@@ -2035,14 +2019,14 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
 
     Reference
     ---------
-    .. [1] Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
+    .. [1] :doi:`Zhu, Ji and Trevor J. Hastie. "Classification of gene microarrays by
            penalized logistic regression". Biostatistics 5 3 (2004): 427-43.
-           https://doi.org/10.1093/biostatistics%2Fkxg046
+           <10.1093/biostatistics/kxg046>`
 
     .. [2] :arxiv:`Powers, Scott, Trevor J. Hastie and Robert Tibshirani. (2017)
            "Nuclear penalized multinomial regression with an application to
-           predicting at bat outcomes in baseball."
-           Statistical modelling, 18, 5-6, pp. 388-410. <1706.10272>.`
+           predicting at bat outcomes in baseball".
+           Statistical modelling, 18, 5-6, pp. 388-410. <1706.10272>`
     """
     # Test logistic regression with the iris dataset
     n_samples, n_features = iris.data.shape

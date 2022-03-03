@@ -216,6 +216,15 @@ class OneVsRestClassifier(
         .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
 
+    verbose : int, default=0
+        The verbosity level, if non zero, progress messages are printed.
+        Below 50, the output is sent to stderr. Otherwise, the output is sent
+        to stdout. The frequency of the messages increases with the verbosity
+        level, reporting all iterations at 10. See :class:`joblib.Parallel` for
+        more details.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
@@ -272,9 +281,10 @@ class OneVsRestClassifier(
     array([2, 0, 1])
     """
 
-    def __init__(self, estimator, *, n_jobs=None):
+    def __init__(self, estimator, *, n_jobs=None, verbose=0):
         self.estimator = estimator
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -305,7 +315,7 @@ class OneVsRestClassifier(
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_fit_binary)(
                 self.estimator,
                 X,
