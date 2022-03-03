@@ -14,7 +14,6 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
@@ -491,7 +490,6 @@ def test_calibration_less_classes(ensemble):
             assert np.allclose(proba, 1 / proba.shape[0])
 
 
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "X",
     [

@@ -3,7 +3,7 @@ from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils._testing import ignore_warnings, fails_if_pypy
+from sklearn.utils._testing import fails_if_pypy
 
 pytestmark = fails_if_pypy
 
@@ -152,7 +152,6 @@ def test_hasher_zeros():
     assert X.data.shape == (0,)
 
 
-@ignore_warnings(category=FutureWarning)
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
 
