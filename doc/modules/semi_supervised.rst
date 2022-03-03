@@ -67,11 +67,11 @@ until all samples have labels or no new samples are selected in that iteration.
 
 .. topic:: References
 
-    .. [1] David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
-       supervised methods. In Proceedings of the 33rd annual meeting on
-       Association for Computational Linguistics (ACL '95). Association for
-       Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
-       https://doi.org/10.3115/981658.981684
+    .. [1] :doi:`"Unsupervised word sense disambiguation rivaling supervised methods"
+       <10.3115/981658.981684>`
+       David Yarowsky, Proceedings of the 33rd annual meeting on Association for
+       Computational Linguistics (ACL '95). Association for Computational Linguistics,
+       Stroudsburg, PA, USA, 189-196.
 
 .. _label_propagation:
 
@@ -79,7 +79,7 @@ Label Propagation
 =================
 
 Label propagation denotes a few variations of semi-supervised graph
-inference algorithms. 
+inference algorithms.
 
 A few features available in this model:
   * Used for classification tasks
@@ -87,7 +87,7 @@ A few features available in this model:
 
 `scikit-learn` provides two label propagation models:
 :class:`LabelPropagation` and :class:`LabelSpreading`. Both work by
-constructing a similarity graph over all items in the input dataset. 
+constructing a similarity graph over all items in the input dataset.
 
 .. figure:: ../auto_examples/semi_supervised/images/sphx_glr_plot_label_propagation_structure_001.png
     :target: ../auto_examples/semi_supervised/plot_label_propagation_structure.html
