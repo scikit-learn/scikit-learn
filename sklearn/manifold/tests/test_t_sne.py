@@ -1213,17 +1213,17 @@ def test_tsne_with_mahalanobis_distance():
         "random_state": 0,
     }
 
-    # 1. raises error here (original issue)
     tsne = TSNE(metric="mahalanobis", **default_params)
     msg = "Must provide either V or VI for Mahalanobis distance"
     with pytest.raises(ValueError, match=msg):
         tsne.fit_transform(X)
 
-    # 2. check for correct answer
     precomputed_X = squareform(pdist(X, metric="mahalanobis"), checks=True)
-    ref = TSNE(metric="precomputed", **default_params).fit_transform(precomputed_X)
+    X_trans_expected = TSNE(metric="precomputed", **default_params).fit_transform(
+        precomputed_X
+    )
 
-    now = TSNE(
+    X_trans = TSNE(
         metric="mahalanobis", metric_params={"V": np.cov(X.T)}, **default_params
     ).fit_transform(X)
     assert_allclose(X_trans, X_trans_expected)
