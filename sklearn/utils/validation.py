@@ -33,7 +33,10 @@ from ..exceptions import DataConversionWarning
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
+# This function is not used anymore at this moment in the code base but we keep it in
+# case that we merge a new public function without kwarg only by mistake, which would
+# require a deprecation cycle to fix.
+def _deprecate_positional_args(func=None, *, version="1.3"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -43,7 +46,7 @@ def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
     ----------
     func : callable, default=None
         Function to check arguments on.
-    version : callable, default="1.1 (renaming of 0.26)"
+    version : callable, default="1.3"
         The version when positional arguments will result in error.
     """
 

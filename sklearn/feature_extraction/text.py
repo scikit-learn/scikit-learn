@@ -32,7 +32,6 @@ from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES, check_scalar
 from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
-from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 
 
@@ -1621,7 +1620,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if self.use_idf:
             n_samples, n_features = X.shape
             df = _document_frequency(X)
-            df = df.astype(dtype, **_astype_copy_false(df))
+            df = df.astype(dtype, copy=False)
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
