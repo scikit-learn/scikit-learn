@@ -2044,7 +2044,12 @@ def test_valid_metrics_has_no_duplicate():
 
 
 def test_regressor_predict_on_arraylikes():
-    """Non-regression test for #22687"""
+    """
+    Ensures that `KNeighborsRegressor.predict` works for array-likes when
+    the `weights` parameter is passed a callable.
+
+    Non-regression test for #22687
+    """
     X = [[5, 1], [3, 1], [4, 3], [0, 3]]
     y = [2, 3, 5, 6]
 
