@@ -1141,7 +1141,7 @@ class Lasso(ElasticNet):
     Parameters
     ----------
     alpha : float, default=1.0
-        Constant that multiplies the L2 term. Defaults to 1.0.
+        Constant that multiplies the L1 term. Defaults to 1.0.
         When `alpha = 0`, the objective is equivalent to ordinary least
         squares, solved by the :class:`LinearRegression` object. For numerical
         reasons, using `alpha = 0` with the `Lasso` object is not advised.
