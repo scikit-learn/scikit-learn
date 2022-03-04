@@ -344,7 +344,7 @@ Changelog
 
 - |API| Adds :meth:`get_feature_names_out` to
   :class:`ensemble.StackingClassifier`, and
-  :class:`ensemble.StackingRegressor`. :pr:`xxxxx` by `Thomas Fan`_.
+  :class:`ensemble.StackingRegressor`. :pr:`22695` by `Thomas Fan`_.
 
 - |Fix| Removed a potential source of CPU oversubscription in
   :class:`ensemble.HistGradientBoostingClassifier` and
