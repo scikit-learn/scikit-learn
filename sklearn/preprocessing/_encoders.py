@@ -495,7 +495,7 @@ class OneHotEncoder(_BaseEncoder):
 
         If there are no infrequent categories, then `drop_idx` is
         returned. This method is called in `_compute_drop_idx` when the `drop`
-        parameter is a array-like.
+        parameter is an array-like.
         """
         if not self._infrequent_enabled:
             return drop_idx
