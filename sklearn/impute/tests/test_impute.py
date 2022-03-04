@@ -13,7 +13,8 @@ from sklearn.utils._testing import assert_array_almost_equal
 
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
-
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.datasets import load_diabetes, fetch_california_housing
 from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
@@ -663,7 +664,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
 
 
 @pytest.mark.parametrize(
-    "estimator", [None, DummyRegressor(), BayesianRidge(), ARDRegression(), RidgeCV()]
+    "estimator", [None, DummyRegressor(), BayesianRidge(), ARDRegression(), RidgeCV(),PLSRegression()]
 )
 def test_iterative_imputer_estimators(estimator):
     rng = np.random.RandomState(0)
@@ -688,6 +689,96 @@ def test_iterative_imputer_estimators(estimator):
 
     # check that each estimator is unique
     assert len(set(hashes)) == len(hashes)
+
+def test_multiple_dimension_PLS_dataset1():
+
+    #Import random field generator
+    rng = np.random.RandomState(42)
+
+    #Fetch the values from the california housing dataset
+    X_california, y_california = fetch_california_housing(return_X_y=True)
+
+    #Collect a subset for the values for the test
+    X_california = X_california[:400]
+    y_california = y_california[:400]
+
+    #Used to remove values 75% of values from dataset array
+    def add_missing_values(X_full, y_full):
+        n_samples, n_features = X_full.shape
+
+        # Determine the number of Nans to be set 
+        missing_rate = 0.75
+        n_missing_samples = int(n_samples * missing_rate)
+        
+        # Determine ranom indices to be changed to Nans in the dataset array
+        missing_samples = np.zeros(n_samples, dtype=bool)
+        missing_samples[: n_missing_samples] = True
+        rng.shuffle(missing_samples)
+
+        # Change the values from the dataset array to Nans
+        missing_features = rng.randint(0, n_features, n_missing_samples)
+        X_missing = X_full.copy()
+        X_missing[missing_samples, missing_features] = np.nan
+        y_missing = y_full.copy()
+
+        return X_missing, y_missing
+
+    # Generate 2D array with missing data
+    X_miss_california, y_miss_california = add_missing_values(
+        X_california, y_california)
+
+    # Create imputer with estimator as PLSRegression
+    imputer = IterativeImputer(estimator=PLSRegression(n_components=2))
+
+    X_imputed = imputer.fit_transform(X_miss_california)
+
+    # Verify the dimension
+    assert X_california.shape == X_imputed.shape
+
+def test_multiple_dimension_PLS2_dataset2():
+
+    #Import random field generator
+    rng = np.random.RandomState(42)
+
+    #Fetch the values from the california housing dataset
+    X_diabetes, Y_diabetes = load_diabetes(return_X_y=True)
+
+    #Collect a subset for the values for the test
+    X_diabetes = X_diabetes[:200]
+    Y_diabetes = Y_diabetes[:200]
+
+    #Used to remove values 80% of values from dataset array
+    def add_missing_values(X_full, y_full):
+        n_samples, n_features = X_full.shape
+
+        # Determine the number of Nans to be set 
+        missing_rate = 0.80
+        n_missing_samples = int(n_samples * missing_rate)
+
+        # Determine ranom indices to be changed to Nans in the dataset array
+        missing_samples = np.zeros(n_samples, dtype=bool)
+        missing_samples[: n_missing_samples] = True
+        rng.shuffle(missing_samples)
+
+        # Change the values from the dataset array to Nans
+        missing_features = rng.randint(0, n_features, n_missing_samples)
+        X_missing = X_full.copy()
+        X_missing[missing_samples, missing_features] = np.nan
+        y_missing = y_full.copy()
+
+        return X_missing, y_missing
+
+    # Generate 2D array with missing data
+    X_miss_diabetes, Y_miss_diabetes = add_missing_values(
+        X_diabetes, Y_diabetes)
+
+    # Create imputer with estimator as PLSRegression
+    imputer = IterativeImputer(estimator=PLSRegression(n_components=2))
+
+    X_imputed = imputer.fit_transform(X_miss_diabetes)
+
+    # Verify the dimension
+    assert X_diabetes.shape == X_imputed.shape    
 
 
 def test_iterative_imputer_clip():
@@ -1617,3 +1708,4 @@ def test_missing_indicator_feature_names_out():
     feature_names = indicator.get_feature_names_out()
     expected_names = ["missingindicator_a", "missingindicator_b", "missingindicator_d"]
     assert_array_equal(expected_names, feature_names)
+
