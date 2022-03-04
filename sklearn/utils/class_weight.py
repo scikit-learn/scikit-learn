@@ -66,7 +66,7 @@ def compute_class_weight(class_weight, *, classes, y):
                 unweighted_classes.append(c)
 
         n_weighted_classes = len(classes) - len(unweighted_classes)
-        if unweighted_classes and n_weighted_classes < len(class_weight):
+        if unweighted_classes and n_weighted_classes != len(class_weight):
             raise ValueError(
                 f"The classes, {unweighted_classes}, are not in class_weight"
             )
