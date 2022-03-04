@@ -124,7 +124,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
             "0. For other values of l1_ratio, no analytic formula is "
             "available."
         )
-    elif estimator_name == "RidgeCV" or estimator_name == "RidgeClassifierCV":
+    elif estimator_name in ("RidgeCV", "RidgeClassifierCV", "_RidgeGCV"):
         alpha_msg = "Set parameter alphas to: original_alphas * n_samples. "
     else:
         alpha_msg = ""

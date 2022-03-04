@@ -8,7 +8,7 @@ requires = [
     # use oldest-supported-numpy which provides the oldest numpy version with
     # wheels on PyPI
     #
-    # see: https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
+    # see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
     "oldest-supported-numpy",
 
     "scipy>=1.3.2",
