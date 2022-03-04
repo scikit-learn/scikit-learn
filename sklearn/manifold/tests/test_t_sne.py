@@ -1203,8 +1203,7 @@ def test_tsne_n_jobs(method):
 def test_tsne_with_mahalanobis_distance():
     """Make sure that method_parameters works with mahalanobis distance."""
     random_state = check_random_state(0)
-    n_features = 10
-    n_samples = 300
+    n_samples, n_features = 300, 10
     X = random_state.randn(n_samples, n_features)
     default_params = {
         "perplexity": 40,
@@ -1227,7 +1226,7 @@ def test_tsne_with_mahalanobis_distance():
     now = TSNE(
         metric="mahalanobis", metric_params={"V": np.cov(X.T)}, **default_params
     ).fit_transform(X)
-    assert_allclose(ref, now)
+    assert_allclose(X_trans, X_trans_expected)
 
 
 @pytest.mark.filterwarnings("ignore:The PCA initialization in TSNE will change")

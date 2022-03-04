@@ -606,7 +606,7 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    metric_params : dict, default = None
+    metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
         .. versionadded:: 1.1
