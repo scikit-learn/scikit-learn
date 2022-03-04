@@ -1141,7 +1141,9 @@ class Lasso(ElasticNet):
     Parameters
     ----------
     alpha : float, default=1.0
-        Constant that multiplies the L1 term. Defaults to 1.0.
+        Constant that multiplies the L1 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
         When `alpha = 0`, the objective is equivalent to ordinary least
         squares, solved by the :class:`LinearRegression` object. For numerical
         reasons, using `alpha = 0` with the `Lasso` object is not advised.
@@ -1249,7 +1251,6 @@ class Lasso(ElasticNet):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
-    Alpha must be a positive float for regularization strength.
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
     regularization. Alpha corresponds to `1 / (2C)` in other linear
