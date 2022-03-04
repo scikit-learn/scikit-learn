@@ -93,6 +93,7 @@ cdef class StdVectorSentinelDTYPE(StdVectorSentinel):
     @staticmethod
     cdef StdVectorSentinel create_for(vector[DTYPE_t] * vec_ptr):
         # This initializes the object directly without calling __init__
+        # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
         cdef StdVectorSentinelDTYPE sentinel = StdVectorSentinelDTYPE.__new__(StdVectorSentinelDTYPE)
         sentinel.vec.swap(deref(vec_ptr))
         return sentinel
@@ -104,6 +105,7 @@ cdef class StdVectorSentinelITYPE(StdVectorSentinel):
     @staticmethod
     cdef StdVectorSentinel create_for(vector[ITYPE_t] * vec_ptr):
         # This initializes the object directly without calling __init__
+        # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
         cdef StdVectorSentinelITYPE sentinel = StdVectorSentinelITYPE.__new__(StdVectorSentinelITYPE)
         sentinel.vec.swap(deref(vec_ptr))
         return sentinel
@@ -129,8 +131,8 @@ cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
         sentinel = StdVectorSentinelITYPE.create_for(vect_ptr)
 
     # Makes the numpy array responsible of the life-cycle of its buffer.
-    # A reference to the StdVectorSentinel will be stolen by the call bellow,
-    # so we increase its reference counter.
+    # A reference to the StdVectorSentinel will be stolen by the call to
+    # `PyArray_SetBaseObject` below, so we increase its reference counter.
     # See: https://docs.python.org/3/c-api/intro.html#reference-count-details
     Py_INCREF(sentinel)
     np.PyArray_SetBaseObject(arr, sentinel)
