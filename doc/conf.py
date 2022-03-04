@@ -29,7 +29,6 @@ sys.path.insert(0, os.path.abspath("sphinxext"))
 
 from github_link import make_linkcode_resolve
 import sphinx_gallery
-import matplotlib as mpl
 from sphinx_gallery.sorting import ExampleTitleSortKey
 
 # -- General configuration ---------------------------------------------------
@@ -50,22 +49,19 @@ extensions = [
     "sphinx-prompt",
     "sphinxext.opengraph",
     "doi_role",
+    "matplotlib.sphinxext.plot_directive",
 ]
 
-# Support for `plot::` directives in sphinx 3.2 requires matplotlib 3.1.0 or newer
-if parse(mpl.__version__) >= parse("3.1.0"):
-    extensions.append("matplotlib.sphinxext.plot_directive")
+# Produce `plot::` directives for examples that contain `import matplotlib` or
+# `from matplotlib import`.
+numpydoc_use_plots = True
 
-    # Produce `plot::` directives for examples that contain `import matplotlib` or
-    # `from matplotlib import`.
-    numpydoc_use_plots = True
-
-    # Options for the `::plot` directive:
-    # https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
-    plot_formats = ["png"]
-    plot_include_source = True
-    plot_html_show_formats = False
-    plot_html_show_source_link = False
+# Options for the `::plot` directive:
+# https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
+plot_formats = ["png"]
+plot_include_source = True
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
