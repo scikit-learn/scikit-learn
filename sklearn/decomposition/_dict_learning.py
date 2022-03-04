@@ -958,7 +958,7 @@ def dict_learning_online(
         if ii < batch_size - 1:
             theta = float((ii + 1) * batch_size)
         else:
-            theta = float(batch_size ** 2 + ii + 1 - batch_size)
+            theta = float(batch_size**2 + ii + 1 - batch_size)
         beta = (theta + 1 - batch_size) / (theta + 1)
 
         A *= beta

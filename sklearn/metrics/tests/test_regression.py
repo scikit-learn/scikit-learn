@@ -71,7 +71,7 @@ def test_regression_metrics(n_samples=50):
     n = n_samples
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=-1),
-        5 / 12 * n * (n ** 2 + 2 * n + 1),
+        5 / 12 * n * (n**2 + 2 * n + 1),
     )
     assert_almost_equal(
         mean_tweedie_deviance(y_true, y_pred, power=1), (n + 1) * (1 - np.log(2))
@@ -442,19 +442,6 @@ def test_regression_single_sample(metric):
     with pytest.warns(UndefinedMetricWarning, match=warning_msg):
         score = metric(y_true, y_pred)
         assert np.isnan(score)
-
-
-def test_deprecation_positional_arguments_mape():
-    y_true = [1, 1, 1]
-    y_pred = [1, 0, 1]
-    sample_weights = [0.5, 0.1, 0.2]
-    multioutput = "raw_values"
-
-    warning_msg = "passing these as positional arguments will result in an error"
-
-    # Trigger the warning
-    with pytest.warns(FutureWarning, match=warning_msg):
-        mean_absolute_percentage_error(y_true, y_pred, sample_weights, multioutput)
 
 
 def test_tweedie_deviance_continuity():

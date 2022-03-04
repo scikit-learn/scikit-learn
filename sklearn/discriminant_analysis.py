@@ -382,9 +382,7 @@ class LinearDiscriminantAnalysis(
         self.covariance_ = _class_cov(
             X, y, self.priors_, shrinkage, covariance_estimator
         )
-        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T, check_finite=False)[
-            0
-        ].T
+        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
         self.intercept_ = -0.5 * np.diag(np.dot(self.means_, self.coef_.T)) + np.log(
             self.priors_
         )
@@ -443,7 +441,7 @@ class LinearDiscriminantAnalysis(
         St = _cov(X, shrinkage, covariance_estimator)  # total scatter
         Sb = St - Sw  # between scatter
 
-        evals, evecs = linalg.eigh(Sb, Sw, check_finite=False)
+        evals, evecs = linalg.eigh(Sb, Sw)
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals))[::-1][
             : self._max_components
         ]
@@ -491,7 +489,7 @@ class LinearDiscriminantAnalysis(
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
@@ -509,19 +507,19 @@ class LinearDiscriminantAnalysis(
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        _, S, Vt = linalg.svd(X, full_matrices=0, check_finite=False)
+        _, S, Vt = linalg.svd(X, full_matrices=0)
 
         if self._max_components == 0:
             self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
         else:
-            self.explained_variance_ratio_ = (S ** 2 / np.sum(S ** 2))[
+            self.explained_variance_ratio_ = (S**2 / np.sum(S**2))[
                 : self._max_components
             ]
 
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
-        self.intercept_ = -0.5 * np.sum(coef ** 2, axis=1) + np.log(self.priors_)
+        self.intercept_ = -0.5 * np.sum(coef**2, axis=1) + np.log(self.priors_)
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
@@ -885,7 +883,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             rank = np.sum(S > self.tol)
             if rank < n_features:
                 warnings.warn("Variables are collinear")
-            S2 = (S ** 2) / (len(Xg) - 1)
+            S2 = (S**2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
@@ -910,7 +908,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             S = self.scalings_[i]
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
-            norm2.append(np.sum(X2 ** 2, axis=1))
+            norm2.append(np.sum(X2**2, axis=1))
         norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return -0.5 * (norm2 + u) + np.log(self.priors_)

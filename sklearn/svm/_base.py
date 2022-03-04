@@ -1151,8 +1151,8 @@ def _fit_liblinear(
     intercept_ : float
         The intercept term added to the vector.
 
-    n_iter_ : int
-        Maximum number of iterations run across all classes.
+    n_iter_ : array of int
+        Number of iterations run across for each class.
     """
     if loss not in ["epsilon_insensitive", "squared_epsilon_insensitive"]:
         enc = LabelEncoder()
@@ -1220,8 +1220,8 @@ def _fit_liblinear(
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports
-    n_iter_ = max(n_iter_)
-    if n_iter_ >= max_iter:
+    n_iter_max = max(n_iter_)
+    if n_iter_max >= max_iter:
         warnings.warn(
             "Liblinear failed to converge, increase the number of iterations.",
             ConvergenceWarning,

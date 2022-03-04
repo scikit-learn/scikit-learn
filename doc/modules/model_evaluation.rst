@@ -1967,8 +1967,8 @@ Regression metrics
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_squared_error`,
-:func:`mean_absolute_error`, :func:`explained_variance_score`,
-:func:`r2_score` and :func:`mean_pinball_loss`.
+:func:`mean_absolute_error`, :func:`r2_score`,
+:func:`explained_variance_score` and :func:`mean_pinball_loss`.
 
 
 These functions have an ``multioutput`` keyword argument which specifies the
@@ -1991,96 +1991,87 @@ score puts more importance on well explaining the higher variance variables.
 for backward compatibility. This will be changed to ``uniform_average`` in the
 future.
 
-.. _explained_variance_score:
+.. _r2_score:
 
-Explained variance score
--------------------------
+R² score, the coefficient of determination
+-------------------------------------------
 
-The :func:`explained_variance_score` computes the `explained variance
-regression score <https://en.wikipedia.org/wiki/Explained_variation>`_.
+The :func:`r2_score` function computes the `coefficient of
+determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
+usually denoted as R².
 
-If :math:`\hat{y}` is the estimated target output, :math:`y` the corresponding
-(correct) target output, and :math:`Var` is `Variance
-<https://en.wikipedia.org/wiki/Variance>`_, the square of the standard deviation,
-then the explained variance is estimated as follow:
+It represents the proportion of variance (of y) that has been explained by the
+independent variables in the model. It provides an indication of goodness of
+fit and therefore a measure of how well unseen samples are likely to be
+predicted by the model, through the proportion of explained variance.
 
-.. math::
+As such variance is dataset dependent, R² may not be meaningfully comparable
+across different datasets. Best possible score is 1.0 and it can be negative
+(because the model can be arbitrarily worse). A constant model that always
+predicts the expected (average) value of y, disregarding the input features,
+would get an :math:`R^2` score of 0.0.
 
-  explained\_{}variance(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+Note: when the prediction residuals have zero mean, the :math:`R^2` score and
+the :ref:`explained_variance_score` are identical.
 
-The best possible score is 1.0, lower values are worse.
-
-Note: when the prediction residuals have zero mean, the Explained Variance
-score and the :ref:`r2_score` are identical.
-
-In the particular case where the true target is constant, the Explained
-Variance score is not finite: it is either ``NaN`` (perfect predictions) or
-``-Inf`` (imperfect predictions). Such non-finite scores may prevent correct
-model optimization such as grid-search cross-validation to be performed
-correctly. For this reason the default behaviour of
-:func:`explained_variance_score` is to replace them with 1.0 (perfect
-predictions) or 0.0 (imperfect predictions). You can set the ``force_finite``
-parameter to ``False`` to prevent this fix from happening and fallback on the
-original Explained Variance score.
-
-Here is a small example of usage of the :func:`explained_variance_score`
-function::
-
-    >>> from sklearn.metrics import explained_variance_score
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> explained_variance_score(y_true, y_pred)
-    0.957...
-    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
-    array([0.967..., 1.        ])
-    >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.990...
-    >>> y_true = [-2, -2, -2]
-    >>> y_pred = [-2, -2, -2]
-    >>> explained_variance_score(y_true, y_pred)
-    1.0
-    >>> explained_variance_score(y_true, y_pred, force_finite=False)
-    nan
-    >>> y_true = [-2, -2, -2]
-    >>> y_pred = [-2, -2, -2 + 1e-8]
-    >>> explained_variance_score(y_true, y_pred)
-    0.0
-    >>> explained_variance_score(y_true, y_pred, force_finite=False)
-    -inf
-
-.. _max_error:
-
-Max error
--------------------
-
-The :func:`max_error` function computes the maximum `residual error
-<https://en.wikipedia.org/wiki/Errors_and_residuals>`_ , a metric
-that captures the worst case error between the predicted value and
-the true value. In a perfectly fitted single output regression
-model, ``max_error`` would be ``0`` on the training set and though this
-would be highly unlikely in the real world, this metric shows the
-extent of error that the model had when it was fitted.
-
-
-If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
-and :math:`y_i` is the corresponding true value, then the max error is
-defined as
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value for total :math:`n` samples,
+the estimated R² is defined as:
 
 .. math::
 
-  \text{Max Error}(y, \hat{y}) = max(| y_i - \hat{y}_i |)
+  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
 
-Here is a small example of usage of the :func:`max_error` function::
+where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
 
-  >>> from sklearn.metrics import max_error
-  >>> y_true = [3, 2, 7, 1]
-  >>> y_pred = [9, 2, 7, 1]
-  >>> max_error(y_true, y_pred)
-  6
+Note that :func:`r2_score` calculates unadjusted R² without correcting for
+bias in sample variance of y.
 
-The :func:`max_error` does not support multioutput.
+In the particular case where the true target is constant, the :math:`R^2` score is
+not finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+predictions). Such non-finite scores may prevent correct model optimization
+such as grid-search cross-validation to be performed correctly. For this reason
+the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). If ``force_finite``
+is set to ``False``, this score falls back on the original :math:`R^2` definition.
+
+Here is a small example of usage of the :func:`r2_score` function::
+
+  >>> from sklearn.metrics import r2_score
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> r2_score(y_true, y_pred)
+  0.948...
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
+  0.938...
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> r2_score(y_true, y_pred, multioutput='uniform_average')
+  0.936...
+  >>> r2_score(y_true, y_pred, multioutput='raw_values')
+  array([0.965..., 0.908...])
+  >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
+  0.925...
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2]
+  >>> r2_score(y_true, y_pred)
+  1.0
+  >>> r2_score(y_true, y_pred, force_finite=False)
+  nan
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2 + 1e-8]
+  >>> r2_score(y_true, y_pred)
+  0.0
+  >>> r2_score(y_true, y_pred, force_finite=False)
+  -inf
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+    for an example of R² score usage to
+    evaluate Lasso and Elastic Net on sparse signals.
 
 .. _mean_absolute_error:
 
@@ -2254,87 +2245,102 @@ function::
   >>> median_absolute_error(y_true, y_pred)
   0.5
 
-.. _r2_score:
 
-R² score, the coefficient of determination
--------------------------------------------
 
-The :func:`r2_score` function computes the `coefficient of
-determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
-usually denoted as R².
+.. _max_error:
 
-It represents the proportion of variance (of y) that has been explained by the
-independent variables in the model. It provides an indication of goodness of
-fit and therefore a measure of how well unseen samples are likely to be
-predicted by the model, through the proportion of explained variance.
+Max error
+-------------------
 
-As such variance is dataset dependent, R² may not be meaningfully comparable
-across different datasets. Best possible score is 1.0 and it can be negative
-(because the model can be arbitrarily worse). A constant model that always
-predicts the expected (average) value of y, disregarding the input features,
-would get an :math:`R^2` score of 0.0.
+The :func:`max_error` function computes the maximum `residual error
+<https://en.wikipedia.org/wiki/Errors_and_residuals>`_ , a metric
+that captures the worst case error between the predicted value and
+the true value. In a perfectly fitted single output regression
+model, ``max_error`` would be ``0`` on the training set and though this
+would be highly unlikely in the real world, this metric shows the
+extent of error that the model had when it was fitted.
 
-Note: when the prediction residuals have zero mean, the :math:`R^2` score and
-the :ref:`explained_variance_score` are identical.
 
-If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
-and :math:`y_i` is the corresponding true value for total :math:`n` samples,
-the estimated R² is defined as:
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the max error is
+defined as
 
 .. math::
 
-  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
+  \text{Max Error}(y, \hat{y}) = max(| y_i - \hat{y}_i |)
 
-where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
+Here is a small example of usage of the :func:`max_error` function::
 
-Note that :func:`r2_score` calculates unadjusted R² without correcting for
-bias in sample variance of y.
+  >>> from sklearn.metrics import max_error
+  >>> y_true = [3, 2, 7, 1]
+  >>> y_pred = [9, 2, 7, 1]
+  >>> max_error(y_true, y_pred)
+  6
 
-In the particular case where the true target is constant, the :math:`R^2` score is
-not finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
-predictions). Such non-finite scores may prevent correct model optimization
-such as grid-search cross-validation to be performed correctly. For this reason
-the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
-predictions) or 0.0 (imperfect predictions). If ``force_finite``
-is set to ``False``, this score falls back on the original :math:`R^2` definition.
+The :func:`max_error` does not support multioutput.
 
-Here is a small example of usage of the :func:`r2_score` function::
+.. _explained_variance_score:
 
-  >>> from sklearn.metrics import r2_score
-  >>> y_true = [3, -0.5, 2, 7]
-  >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> r2_score(y_true, y_pred)
-  0.948...
-  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
-  0.938...
-  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> r2_score(y_true, y_pred, multioutput='uniform_average')
-  0.936...
-  >>> r2_score(y_true, y_pred, multioutput='raw_values')
-  array([0.965..., 0.908...])
-  >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
-  0.925...
-  >>> y_true = [-2, -2, -2]
-  >>> y_pred = [-2, -2, -2]
-  >>> r2_score(y_true, y_pred)
-  1.0
-  >>> r2_score(y_true, y_pred, force_finite=False)
-  nan
-  >>> y_true = [-2, -2, -2]
-  >>> y_pred = [-2, -2, -2 + 1e-8]
-  >>> r2_score(y_true, y_pred)
-  0.0
-  >>> r2_score(y_true, y_pred, force_finite=False)
-  -inf
+Explained variance score
+-------------------------
 
-.. topic:: Example:
+The :func:`explained_variance_score` computes the `explained variance
+regression score <https://en.wikipedia.org/wiki/Explained_variation>`_.
 
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-    for an example of R² score usage to
-    evaluate Lasso and Elastic Net on sparse signals.
+If :math:`\hat{y}` is the estimated target output, :math:`y` the corresponding
+(correct) target output, and :math:`Var` is `Variance
+<https://en.wikipedia.org/wiki/Variance>`_, the square of the standard deviation,
+then the explained variance is estimated as follow:
+
+.. math::
+
+  explained\_{}variance(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+
+The best possible score is 1.0, lower values are worse.
+
+.. topic:: Link to :ref:`r2_score`
+
+    The difference between the explained variance score and the :ref:`r2_score`
+    is that when the explained variance score does not account for
+    systematic offset in the prediction. For this reason, the
+    :ref:`r2_score` should be prefered in general.
+
+In the particular case where the true target is constant, the Explained
+Variance score is not finite: it is either ``NaN`` (perfect predictions) or
+``-Inf`` (imperfect predictions). Such non-finite scores may prevent correct
+model optimization such as grid-search cross-validation to be performed
+correctly. For this reason the default behaviour of
+:func:`explained_variance_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). You can set the ``force_finite``
+parameter to ``False`` to prevent this fix from happening and fallback on the
+original Explained Variance score.
+
+Here is a small example of usage of the :func:`explained_variance_score`
+function::
+
+    >>> from sklearn.metrics import explained_variance_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.957...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
+    array([0.967..., 1.        ])
+    >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.990...
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2]
+    >>> explained_variance_score(y_true, y_pred)
+    1.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    nan
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2 + 1e-8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.0
+    >>> explained_variance_score(y_true, y_pred, force_finite=False)
+    -inf
 
 
 .. _mean_tweedie_deviance:
