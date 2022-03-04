@@ -1018,40 +1018,19 @@ def test_ohe_infrequent_two_levels_drop_frequent(drop):
     assert_array_equal([["b"], ["infrequent_sklearn"]], X_inverse)
 
 
-# TODO(1.2): Remove filterwarning when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("drop", [["a"], ["c"], ["d"]])
-def test_ohe_infrequent_two_levels_drop_infrequent(drop):
+@pytest.mark.parametrize("drop", [["a"], ["d"]])
+def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
     """Test two levels and dropping any infrequent category removes the
     whole infrequent category."""
 
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ohe = OneHotEncoder(
         handle_unknown="infrequent_if_exist", sparse=False, max_categories=2, drop=drop
-    ).fit(X_train)
-    assert_array_equal(ohe.drop_idx_, [1])
+    )
 
-    X_test = np.array([["b"], ["c"]])
-    X_trans = ohe.transform(X_test)
-    assert_allclose([[1], [0]], X_trans)
-
-    # TODO(1.2): Remove get_feature_names is removed.
-    feature_names = ohe.get_feature_names()
-    assert_array_equal(["x0_b"], feature_names)
-
-    feature_names = ohe.get_feature_names_out()
-    assert_array_equal(["x0_b"], feature_names)
-
-    X_inverse = ohe.inverse_transform(X_trans)
-    assert_array_equal([["b"], ["infrequent_sklearn"]], X_inverse)
-
-    # Check handle_unknown="ignore"
-    ohe.set_params(handle_unknown="ignore").fit(X_train)
-    msg = "Found unknown categories"
-    with pytest.warns(UserWarning, match=msg):
-        X_trans = ohe.transform([["b"], ["e"]])
-
-    assert_allclose([[1], [0]], X_trans)
+    msg = f"Unable to drop category {drop[0]!r} from feature 0 because it is infrequent"
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit(X_train)
 
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.
@@ -1124,15 +1103,16 @@ def test_ohe_infrequent_three_levels_drop_frequent(drop):
 
 
 @pytest.mark.parametrize("drop", [["a"], ["d"]])
-def test_ohe_infrequent_three_levels_drop_infrequent(drop):
+def test_ohe_infrequent_three_levels_drop_infrequent_errors(drop):
     """Test three levels and dropping the infrequent category."""
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ohe = OneHotEncoder(
         handle_unknown="infrequent_if_exist", sparse=False, max_categories=3, drop=drop
-    ).fit(X_train)
+    )
 
-    X_test = np.array([["b"], ["c"], ["d"]])
-    assert_allclose([[1, 0], [0, 1], [0, 0]], ohe.transform(X_test))
+    msg = f"Unable to drop category {drop[0]!r} from feature 0 because it is infrequent"
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit(X_train)
 
 
 def test_ohe_infrequent_handle_unknown_error():
@@ -1185,11 +1165,6 @@ def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
     for drop in drops:
         ohe.set_params(drop=drop).fit(X_train)
         assert_allclose([[0], [1]], ohe.transform(X_test))
-
-    # dropping 'c' means the infrequent category is dropped because
-    # 'c' in infrequent
-    ohe.set_params(drop=["c"]).fit(X_train)
-    assert_allclose([[1], [0]], ohe.transform(X_test))
 
 
 def test_ohe_infrequent_two_levels_user_cats():
@@ -1271,11 +1246,6 @@ def test_ohe_infrequent_mixed():
 
     # feature 1 is binary so it drops a category 0
     assert_allclose(X_trans, [[0, 1, 0, 0], [0, 0, 1, 1]])
-
-    # dropping a infrequent category in feature 0
-    ohe.set_params(drop=[1, 1]).fit(X)
-    X_trans = ohe.transform(X_test)
-    assert_allclose(X_trans, [[0, 1, 1], [0, 0, 0]])
 
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.

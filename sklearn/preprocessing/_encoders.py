@@ -256,10 +256,6 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
-        If there are infrequent categories and `drop` selects any of the
-        infrequent categories, then the category representing the
-        infrequent categories is dropped.
-
         .. versionadded:: 0.21
            The parameter `drop` was added in 0.21.
 
@@ -494,20 +490,29 @@ class OneHotEncoder(_BaseEncoder):
             self.max_categories is not None and self.max_categories >= 1
         ) or self.min_frequency is not None
 
-    def _convert_to_infrequent_idx(self, feature_idx, original_idx):
-        """Convert `original_idx` for `feature_idx` into the
-        index for infrequent categories.
+    def _map_drop_idx_to_infrequent(self, feature_idx, drop_idx):
+        """Convert `drop_idx` into the index for infrequent categories.
 
-        If there are no infrequent categories, then `original_idx` is
-        returned."""
-
+        If there are no infrequent categories, then `drop_idx` is
+        returned. This method is called in `_compute_drop_idx` when the `drop`
+        parameter is a array-like.
+        """
         if not self._infrequent_enabled:
-            return original_idx
+            return drop_idx
 
         default_to_infrequent = self._default_to_infrequent_mappings[feature_idx]
         if default_to_infrequent is None:
-            return original_idx
-        return default_to_infrequent[original_idx]
+            return drop_idx
+
+        # Raise error when explicitly dropping a category that is infrequent
+        infrequent_indices = self._infrequent_indices[feature_idx]
+        if infrequent_indices is not None and drop_idx in infrequent_indices:
+            categories = self.categories_[feature_idx]
+            raise ValueError(
+                f"Unable to drop category {categories[drop_idx]!r} from feature"
+                f" {feature_idx} because it is infrequent"
+            )
+        return default_to_infrequent[drop_idx]
 
     def _compute_drop_idx(self):
         """Compute the drop indices associated with `self.categories_`.
@@ -567,28 +572,28 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError(msg.format(len(self.categories_), droplen))
             missing_drops = []
             drop_indices = []
-            for col_idx, (drop_val, cat_list) in enumerate(
+            for feature_idx, (drop_val, cat_list) in enumerate(
                 zip(drop_array, self.categories_)
             ):
                 if not is_scalar_nan(drop_val):
                     drop_idx = np.where(cat_list == drop_val)[0]
                     if drop_idx.size:  # found drop idx
                         drop_indices.append(
-                            self._convert_to_infrequent_idx(col_idx, drop_idx[0])
+                            self._map_drop_idx_to_infrequent(feature_idx, drop_idx[0])
                         )
                     else:
-                        missing_drops.append((col_idx, drop_val))
+                        missing_drops.append((feature_idx, drop_val))
                     continue
 
                 # drop_val is nan, find nan in categories manually
                 for cat_idx, cat in enumerate(cat_list):
                     if is_scalar_nan(cat):
                         drop_indices.append(
-                            self._convert_to_infrequent_idx(col_idx, cat_idx)
+                            self._map_drop_idx_to_infrequent(feature_idx, cat_idx)
                         )
                         break
-                else:  # no break
-                    missing_drops.append((col_idx, drop_val))
+                else:  # loop did not break thus drop is missing
+                    missing_drops.append((feature_idx, drop_val))
 
             if any(missing_drops):
                 msg = (
