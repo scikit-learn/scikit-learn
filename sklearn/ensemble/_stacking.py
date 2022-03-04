@@ -278,6 +278,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        input_features = _check_feature_names_in(
+            self, input_features, generate_names=self.passthrough
+        )
+
         class_name = self.__class__.__name__.lower()
         non_dropped_estimators = (
             name for name, est in self.estimators if est != "drop"
@@ -292,7 +296,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 )
 
         if self.passthrough:
-            input_features = _check_feature_names_in(self, input_features)
             return np.concatenate((meta_names, input_features), dtype=object)
 
         return np.asarray(meta_names, dtype=object)
