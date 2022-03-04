@@ -27,7 +27,6 @@ from sklearn._loss.loss import (
 )
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
-from sklearn.utils.fixes import sp_version, parse_version
 
 
 ALL_LOSSES = list(_LOSSES.values())
@@ -741,10 +740,6 @@ def test_gradients_hessians_numerically(loss, sample_weight):
         ("poisson_loss", 0.0, 2.0),
         ("poisson_loss", -22.0, 10.0),
     ],
-)
-@pytest.mark.skipif(
-    sp_version == parse_version("1.2.0"),
-    reason="bug in scipy 1.2.0, see scipy issue #9608",
 )
 @skip_if_32bit
 def test_derivatives(loss, x0, y_true):
