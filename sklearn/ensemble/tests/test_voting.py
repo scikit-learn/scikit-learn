@@ -1,6 +1,5 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
-import warnings
 import pytest
 import re
 import numpy as np
@@ -428,10 +427,7 @@ def test_set_estimator_drop():
         weights=[1, 1, 0.5],
     )
     with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            eclf2.set_params(rf="drop").fit(X, y)
+        eclf2.set_params(rf="drop").fit(X, y)
 
     assert not [w.message for w in record]
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
@@ -445,10 +441,7 @@ def test_set_estimator_drop():
 
     eclf1.set_params(voting="soft").fit(X, y)
     with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            eclf2.set_params(voting="soft").fit(X, y)
+        eclf2.set_params(voting="soft").fit(X, y)
 
     assert not [w.message for w in record]
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
@@ -476,10 +469,7 @@ def test_set_estimator_drop():
         flatten_transform=False,
     )
     with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            eclf2.set_params(rf="drop").fit(X1, y1)
+        eclf2.set_params(rf="drop").fit(X1, y1)
     assert not [w.message for w in record]
     assert_array_almost_equal(
         eclf1.transform(X1),
