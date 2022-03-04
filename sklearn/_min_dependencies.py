@@ -7,16 +7,9 @@ import argparse
 if platform.python_implementation() == "PyPy":
     NUMPY_MIN_VERSION = "1.19.0"
 else:
-    # We pinned PyWavelet (a scikit-image dependence) to 1.1.1 in the minimum
-    # documentation CI builds that is the latest version that support our
-    # minimum NumPy version required. If PyWavelets 1.2+ is installed, it would
-    # require NumPy 1.17+ that trigger a bug with Pandas 0.25:
-    # https://github.com/numpy/numpy/issues/18355#issuecomment-774610226
-    # When upgrading NumPy, we can unpin PyWavelets but we need to update the
-    # minimum version of Pandas >= 1.0.5.
-    NUMPY_MIN_VERSION = "1.14.6"
+    NUMPY_MIN_VERSION = "1.16.6"
 
-SCIPY_MIN_VERSION = "1.1.0"
+SCIPY_MIN_VERSION = "1.3.2"
 JOBLIB_MIN_VERSION = "1.0.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "5.0.1"
@@ -32,9 +25,9 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "matplotlib": ("2.2.3", "benchmark, docs, examples, tests"),
+    "matplotlib": ("3.1.2", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.14.5", "docs, examples, tests"),
-    "pandas": ("0.25.0", "benchmark, docs, examples, tests"),
+    "pandas": ("1.0.5", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
