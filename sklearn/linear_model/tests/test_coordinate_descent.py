@@ -29,7 +29,6 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import parse_version
 from sklearn.utils import check_random_state
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -1714,9 +1713,6 @@ def test_linear_models_cv_fit_with_loky(estimator):
     # LinearModelsCV.fit performs inplace operations on fancy-indexed memmapped
     # data when using the loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
-
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        pytest.skip("loky backend does not exist in joblib <0.12")
 
     # Create a problem sufficiently large to cause memmapping (1MB).
     # Unfortunately the scikit-learn and joblib APIs do not make it possible to
