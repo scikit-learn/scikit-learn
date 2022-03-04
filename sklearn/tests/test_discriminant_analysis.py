@@ -667,3 +667,15 @@ def test_get_feature_names_out():
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
+def test_single_class_svd_error():
+    """
+    Tests that if the number of samples equals the number
+    of classes, a ValueError is raised.
+    """
+    X = np.array([[1, 0], [2, -1]])
+    y = np.array(["a", "a"])
+    clf = LinearDiscriminantAnalysis(solver="svd")
+    with pytest.raises(ValueError, match="The number of classes has to be greater"):
+        clf.fit(X, y)
