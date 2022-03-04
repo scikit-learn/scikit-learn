@@ -22,7 +22,6 @@ from sklearn.utils._testing import (
     SkipTest,
 )
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.fixes import np_version, parse_version
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -430,8 +429,6 @@ class PartialFitChecksName(BaseEstimator):
 
 
 def test_not_an_array_array_function():
-    if np_version < parse_version("1.17"):
-        raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
     with raises(TypeError, match=msg):

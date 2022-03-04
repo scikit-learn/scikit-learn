@@ -93,7 +93,12 @@ jobs:
         ISSUE_REPO="$BUILD_REPOSITORY_NAME"
 
         pip install defusedxml PyGithub
-        python maint_tools/create_issue_from_juint.py $(BOT_GITHUB_TOKEN) $CI_NAME $ISSUE_REPO $LINK_TO_RUN $JUNIT_FILE
+        python maint_tools/update_tracking_issue.py \
+          $(BOT_GITHUB_TOKEN) \
+          $CI_NAME \
+          $ISSUE_REPO \
+          $LINK_TO_RUN \
+          --junit-file $JUNIT_FILE
       displayName: 'Update issue tracker'
       env:
         JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
