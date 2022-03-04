@@ -17,7 +17,6 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
 
 
 def test_n_samples_leaves_roots():
@@ -26,8 +25,9 @@ def test_n_samples_leaves_roots():
     brc = Birch()
     brc.fit(X)
     n_samples_root = sum([sc.n_samples_ for sc in brc.root_.subclusters_])
-    n_samples_leaves = sum([sc.n_samples_ for leaf in brc._get_leaves()
-                            for sc in leaf.subclusters_])
+    n_samples_leaves = sum(
+        [sc.n_samples_ for leaf in brc._get_leaves() for sc in leaf.subclusters_]
+    )
     assert n_samples_leaves == X.shape[0]
     assert n_samples_root == X.shape[0]
 
@@ -40,8 +40,7 @@ def test_partial_fit():
     brc_partial = Birch(n_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_almost_equal(brc_partial.subcluster_centers_,
-                              brc.subcluster_centers_)
+    assert_array_almost_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
 
     # Test that same global labels are obtained after calling partial_fit
     # with None
@@ -53,14 +52,13 @@ def test_partial_fit():
 def test_birch_predict():
     # Test the predict method predicts the nearest centroid.
     rng = np.random.RandomState(0)
-    X = generate_clustered_data(n_clusters=3, n_features=3,
-                                n_samples_per_cluster=10)
+    X = generate_clustered_data(n_clusters=3, n_features=3, n_samples_per_cluster=10)
 
     # n_samples * n_samples_per_cluster
     shuffle_indices = np.arange(30)
     rng.shuffle(shuffle_indices)
     X_shuffle = X[shuffle_indices, :]
-    brc = Birch(n_clusters=4, threshold=1.)
+    brc = Birch(n_clusters=4, threshold=1.0)
     brc.fit(X_shuffle)
     centroids = brc.subcluster_centers_
     assert_array_equal(brc.labels_, brc.predict(X_shuffle))
@@ -87,12 +85,14 @@ def test_n_clusters():
     # Test that the wrong global clustering step raises an Error.
     clf = ElasticNet()
     brc3 = Birch(n_clusters=clf)
-    with pytest.raises(ValueError):
+    err_msg = "n_clusters should be an instance of ClusterMixin or an int"
+    with pytest.raises(TypeError, match=err_msg):
         brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
-    brc4 = Birch(threshold=10000.)
-    assert_warns(ConvergenceWarning, brc4.fit, X)
+    brc4 = Birch(threshold=10000.0)
+    with pytest.warns(ConvergenceWarning):
+        brc4.fit(X)
 
 
 def test_sparse_X():
@@ -106,8 +106,19 @@ def test_sparse_X():
     brc_sparse.fit(csr)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_almost_equal(brc.subcluster_centers_,
-                              brc_sparse.subcluster_centers_)
+    assert_array_almost_equal(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
+
+
+def test_partial_fit_second_call_error_checks():
+    # second partial fit calls will error when n_features is not consistent
+    # with the first call
+    X, y = make_blobs(n_samples=100)
+    brc = Birch(n_clusters=3)
+    brc.partial_fit(X, y)
+
+    msg = "X has 1 features, but Birch is expecting 2 features"
+    with pytest.raises(ValueError, match=msg):
+        brc.partial_fit(X[:, [0]], y)
 
 
 def check_branching_factor(node, branching_factor):
@@ -124,19 +135,12 @@ def test_branching_factor():
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
-    brc = Birch(n_clusters=None, branching_factor=branching_factor,
-                threshold=0.01)
+    brc = Birch(n_clusters=None, branching_factor=branching_factor, threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
-    brc = Birch(n_clusters=3, branching_factor=branching_factor,
-                threshold=0.01)
+    brc = Birch(n_clusters=3, branching_factor=branching_factor, threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
-
-    # Raises error when branching_factor is set to one.
-    brc = Birch(n_clusters=None, branching_factor=1, threshold=0.01)
-    with pytest.raises(ValueError):
-        brc.fit(X)
 
 
 def check_threshold(birch_instance, threshold):
@@ -158,4 +162,69 @@ def test_threshold():
 
     brc = Birch(threshold=5.0, n_clusters=None)
     brc.fit(X)
-    check_threshold(brc, 5.)
+    check_threshold(brc, 5.0)
+
+
+def test_birch_n_clusters_long_int():
+    # Check that birch supports n_clusters with np.int64 dtype, for instance
+    # coming from np.arange. #16484
+    X, _ = make_blobs(random_state=0)
+    n_clusters = np.int64(5)
+    Birch(n_clusters=n_clusters).fit(X)
+
+
+# TODO: Remove in 1.2
+@pytest.mark.parametrize("attribute", ["fit_", "partial_fit_"])
+def test_birch_fit_attributes_deprecated(attribute):
+    """Test that fit_ and partial_fit_ attributes are deprecated."""
+    msg = f"`{attribute}` is deprecated in 1.0 and will be removed in 1.2"
+    X, y = make_blobs(n_samples=10)
+    brc = Birch().fit(X, y)
+
+    with pytest.warns(FutureWarning, match=msg):
+        getattr(brc, attribute)
+
+
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"threshold": -1.0}, ValueError, "threshold == -1.0, must be > 0.0."),
+        ({"threshold": 0.0}, ValueError, "threshold == 0.0, must be > 0.0."),
+        ({"branching_factor": 0}, ValueError, "branching_factor == 0, must be > 1."),
+        ({"branching_factor": 1}, ValueError, "branching_factor == 1, must be > 1."),
+        (
+            {"branching_factor": 1.5},
+            TypeError,
+            "branching_factor must be an instance of int, not float.",
+        ),
+        ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
+        ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
+        (
+            {"n_clusters": 2.5},
+            TypeError,
+            "n_clusters must be an instance of int, not float.",
+        ),
+        (
+            {"n_clusters": "whatever"},
+            TypeError,
+            "n_clusters should be an instance of ClusterMixin or an int",
+        ),
+        ({"n_clusters": -3}, ValueError, "n_clusters == -3, must be >= 1."),
+    ],
+)
+def test_birch_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in `Birch`."""
+    X, _ = make_blobs(n_samples=80, centers=4)
+    with pytest.raises(err_type, match=err_msg):
+        Birch(**params).fit(X)
+
+
+def test_feature_names_out():
+    """Check `get_feature_names_out` for `Birch`."""
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    brc = Birch(n_clusters=4)
+    brc.fit(X)
+    n_clusters = brc.subcluster_centers_.shape[0]
+
+    names_out = brc.get_feature_names_out()
+    assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)

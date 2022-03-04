@@ -5,7 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 import numbers
-import warnings
+from typing import List
 
 import numpy as np
 
@@ -15,25 +15,31 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import Bunch
+from ..tree import DecisionTreeRegressor, ExtraTreeRegressor
+from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
 
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+def _fit_single_estimator(
+    estimator, X, y, sample_weight=None, message_clsname=None, message=None
+):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
         try:
-            estimator.fit(X, y, sample_weight=sample_weight)
+            with _print_elapsed_time(message_clsname, message):
+                estimator.fit(X, y, sample_weight=sample_weight)
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
-                    "Underlying estimator {} does not support sample weights."
-                    .format(estimator.__class__.__name__)
+                    "Underlying estimator {} does not support sample weights.".format(
+                        estimator.__class__.__name__
+                    )
                 ) from exc
             raise
     else:
-        estimator.fit(X, y)
+        with _print_elapsed_time(message_clsname, message):
+            estimator.fit(X, y)
     return estimator
 
 
@@ -49,11 +55,11 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pseudo-random number generator to control the generation of the random
+        integers. Pass an int for reproducible output across multiple function
+        calls.
+        See :term:`Glossary <random_state>`.
 
     Notes
     -----
@@ -68,7 +74,7 @@ def _set_random_states(estimator, random_state=None):
     random_state = check_random_state(random_state)
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
-        if key == 'random_state' or key.endswith('__random_state'):
+        if key == "random_state" or key.endswith("__random_state"):
             to_set[key] = random_state.randint(np.iinfo(np.int32).max)
 
     if to_set:
@@ -83,13 +89,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
+    base_estimator : object
         The base estimator from which the ensemble is built.
 
-    n_estimators : integer
+    n_estimators : int, default=10
         The number of estimators in the ensemble.
 
-    estimator_params : list of strings
+    estimator_params : list of str, default=tuple()
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 
@@ -103,11 +109,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters = []
+    _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, n_estimators=10,
-                 estimator_params=tuple()):
+    def __init__(self, base_estimator, *, n_estimators=10, estimator_params=tuple()):
         # Set parameters
         self.base_estimator = base_estimator
         self.n_estimators = n_estimators
@@ -123,12 +128,18 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Sets the base_estimator_` attributes.
         """
         if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError("n_estimators must be an integer, "
-                             "got {0}.".format(type(self.n_estimators)))
+            raise ValueError(
+                "n_estimators must be an integer, got {0}.".format(
+                    type(self.n_estimators)
+                )
+            )
 
         if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than zero, "
-                             "got {0}.".format(self.n_estimators))
+            raise ValueError(
+                "n_estimators must be greater than zero, got {0}.".format(
+                    self.n_estimators
+                )
+            )
 
         if self.base_estimator is not None:
             self.base_estimator_ = self.base_estimator
@@ -145,8 +156,16 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**{p: getattr(self, p)
-                                for p in self.estimator_params})
+        estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
+
+        # TODO: Remove in v1.2
+        # criterion "mse" and "mae" would cause warnings in every call to
+        # DecisionTreeRegressor.fit(..)
+        if isinstance(estimator, (DecisionTreeRegressor, ExtraTreeRegressor)):
+            if getattr(estimator, "criterion", None) == "mse":
+                estimator.set_params(criterion="squared_error")
+            elif getattr(estimator, "criterion", None) == "mae":
+                estimator.set_params(criterion="absolute_error")
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
@@ -175,16 +194,16 @@ def _partition_estimators(n_estimators, n_jobs):
     n_jobs = min(effective_n_jobs(n_jobs), n_estimators)
 
     # Partition estimators between jobs
-    n_estimators_per_job = np.full(n_jobs, n_estimators // n_jobs,
-                                   dtype=np.int)
-    n_estimators_per_job[:n_estimators % n_jobs] += 1
+    n_estimators_per_job = np.full(n_jobs, n_estimators // n_jobs, dtype=int)
+    n_estimators_per_job[: n_estimators % n_jobs] += 1
     starts = np.cumsum(n_estimators_per_job)
 
     return n_jobs, n_estimators_per_job.tolist(), [0] + starts.tolist()
 
 
-class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
-                                 metaclass=ABCMeta):
+class _BaseHeterogeneousEnsemble(
+    MetaEstimatorMixin, _BaseComposition, metaclass=ABCMeta
+):
     """Base class for heterogeneous ensemble of learners.
 
     Parameters
@@ -203,10 +222,16 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         appear in `estimators_`.
     """
 
-    _required_parameters = ['estimators']
+    _required_parameters = ["estimators"]
 
     @property
     def named_estimators(self):
+        """Dictionary to access any fitted sub-estimators by name.
+
+        Returns
+        -------
+        :class:`~sklearn.utils.Bunch`
+        """
         return Bunch(**dict(self.estimators))
 
     @abstractmethod
@@ -223,27 +248,17 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         # defined by MetaEstimatorMixin
         self._validate_names(names)
 
-        # FIXME: deprecate the usage of None to drop an estimator from the
-        # ensemble. Remove in 0.24
-        if any(est is None for est in estimators):
-            warnings.warn(
-                "Using 'None' to drop an estimator from the ensemble is "
-                "deprecated in 0.22 and support will be dropped in 0.24. "
-                "Use the string 'drop' instead.", FutureWarning
-            )
-
-        has_estimator = any(est not in (None, 'drop') for est in estimators)
+        has_estimator = any(est != "drop" for est in estimators)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
                 "to be an estimator."
             )
 
-        is_estimator_type = (is_classifier if is_classifier(self)
-                             else is_regressor)
+        is_estimator_type = is_classifier if is_classifier(self) else is_regressor
 
         for est in estimators:
-            if est not in (None, 'drop') and not is_estimator_type(est):
+            if est != "drop" and not is_estimator_type(est):
                 raise ValueError(
                     "The estimator {} should be a {}.".format(
                         est.__class__.__name__, is_estimator_type.__name__[3:]
@@ -256,28 +271,44 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         """
         Set the parameters of an estimator from the ensemble.
 
-        Valid parameter keys can be listed with `get_params()`.
+        Valid parameter keys can be listed with `get_params()`. Note that you
+        can directly set the parameters of the estimators contained in
+        `estimators`.
 
         Parameters
         ----------
         **params : keyword arguments
             Specific parameters using e.g.
             `set_params(parameter_name=new_value)`. In addition, to setting the
-            parameters of the stacking estimator, the individual estimator of
-            the stacking estimators can also be set, or can be removed by
-            setting them to 'drop'.
+            parameters of the estimator, the individual estimator of the
+            estimators can also be set, or can be removed by setting them to
+            'drop'.
+
+        Returns
+        -------
+        self : object
+            Estimator instance.
         """
-        super()._set_params('estimators', **params)
+        super()._set_params("estimators", **params)
         return self
 
     def get_params(self, deep=True):
         """
         Get the parameters of an estimator from the ensemble.
 
+        Returns the parameters given in the constructor as well as the
+        estimators contained within the `estimators` parameter.
+
         Parameters
         ----------
-        deep : bool
-            Setting it to True gets the various classifiers and the parameters
-            of the classifiers as well.
+        deep : bool, default=True
+            Setting it to True gets the various estimators and the parameters
+            of the estimators as well.
+
+        Returns
+        -------
+        params : dict
+            Parameter and estimator names mapped to their values or parameter
+            names mapped to their values.
         """
-        return super()._get_params('estimators', deep=deep)
+        return super()._get_params("estimators", deep=deep)

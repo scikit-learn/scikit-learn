@@ -1,4 +1,4 @@
-'''
+"""
 ==================
 RBF SVM parameters
 ==================
@@ -16,7 +16,7 @@ against maximization of the decision function's margin. For larger values of
 ``C``, a smaller margin will be accepted if the decision function is better at
 classifying all training points correctly. A lower ``C`` will encourage a
 larger margin, therefore a simpler decision function, at the cost of training
-accuracy. In other words``C`` behaves as a regularization parameter in the
+accuracy. In other words ``C`` behaves as a regularization parameter in the
 SVM.
 
 The first plot is a visualization of the decision function for a variety of
@@ -53,13 +53,18 @@ values) can be made more complex by increasing the importance of classifying
 each point correctly (larger ``C`` values) hence the diagonal of good
 performing models.
 
-Finally one can also observe that for some intermediate values of ``gamma`` we
-get equally performing models when ``C`` becomes very large: it is not
-necessary to regularize by enforcing a larger margin. The radius of the RBF
-kernel alone acts as a good structural regularizer. In practice though it
-might still be interesting to simplify the decision function with a lower
-value of ``C`` so as to favor models that use less memory and that are faster
-to predict.
+Finally, one can also observe that for some intermediate values of ``gamma`` we
+get equally performing models when ``C`` becomes very large. This suggests that
+the set of support vectors does not change anymore. The radius of the RBF
+kernel alone acts as a good structural regularizer. Increasing ``C`` further
+doesn't help, likely because there are no more training points in violation
+(inside the margin or wrongly classified), or at least no better solution can
+be found. Scores being equal, it may make sense to use the smaller ``C``
+values, since very high ``C`` values typically increase fitting time.
+
+On the other hand, lower ``C`` values generally lead to more support vectors,
+which may increase prediction time. Therefore, lowering the value of ``C``
+involves a trade-off between fitting time and prediction time.
 
 We should also note that small differences in scores results from the random
 splits of the cross-validation procedure. Those spurious variations can be
@@ -68,8 +73,7 @@ expense of compute time. Increasing the value number of ``C_range`` and
 ``gamma_range`` steps will increase the resolution of the hyper-parameter heat
 map.
 
-'''
-print(__doc__)
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -85,8 +89,8 @@ from sklearn.model_selection import GridSearchCV
 # Utility function to move the midpoint of a colormap to be around
 # the values of interest.
 
-class MidpointNormalize(Normalize):
 
+class MidpointNormalize(Normalize):
     def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
         self.midpoint = midpoint
         Normalize.__init__(self, vmin, vmax, clip)
@@ -95,10 +99,12 @@ class MidpointNormalize(Normalize):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
 
+
 # #############################################################################
 # Load and prepare data set
 #
 # dataset for grid search
+
 
 iris = load_iris()
 X = iris.data
@@ -136,8 +142,10 @@ cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
 grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv)
 grid.fit(X, y)
 
-print("The best parameters are %s with a score of %0.2f"
-      % (grid.best_params_, grid.best_score_))
+print(
+    "The best parameters are %s with a score of %0.2f"
+    % (grid.best_params_, grid.best_score_)
+)
 
 # Now we need to fit a classifier for all parameters in the 2d version
 # (we use a smaller set of parameters here because it takes a while to train)
@@ -165,19 +173,16 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
 
     # visualize decision function for these parameters
     plt.subplot(len(C_2d_range), len(gamma_2d_range), k + 1)
-    plt.title("gamma=10^%d, C=10^%d" % (np.log10(gamma), np.log10(C)),
-              size='medium')
+    plt.title("gamma=10^%d, C=10^%d" % (np.log10(gamma), np.log10(C)), size="medium")
 
     # visualize parameter's effect on decision function
     plt.pcolormesh(xx, yy, -Z, cmap=plt.cm.RdBu)
-    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y_2d, cmap=plt.cm.RdBu_r,
-                edgecolors='k')
+    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y_2d, cmap=plt.cm.RdBu_r, edgecolors="k")
     plt.xticks(())
     plt.yticks(())
-    plt.axis('tight')
+    plt.axis("tight")
 
-scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
-                                                     len(gamma_range))
+scores = grid.cv_results_["mean_test_score"].reshape(len(C_range), len(gamma_range))
 
 # Draw heatmap of the validation accuracy as a function of gamma and C
 #
@@ -189,13 +194,17 @@ scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
 # the same color.
 
 plt.figure(figsize=(8, 6))
-plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
-plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot,
-           norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
-plt.xlabel('gamma')
-plt.ylabel('C')
+plt.subplots_adjust(left=0.2, right=0.95, bottom=0.15, top=0.95)
+plt.imshow(
+    scores,
+    interpolation="nearest",
+    cmap=plt.cm.hot,
+    norm=MidpointNormalize(vmin=0.2, midpoint=0.92),
+)
+plt.xlabel("gamma")
+plt.ylabel("C")
 plt.colorbar()
 plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
 plt.yticks(np.arange(len(C_range)), C_range)
-plt.title('Validation accuracy')
+plt.title("Validation accuracy")
 plt.show()

@@ -2,44 +2,36 @@
 set -x
 set -e
 
+# System build tools
 apt-get -yq update
-apt-get -yq install libatlas-dev libatlas-base-dev liblapack-dev gfortran ccache libopenblas-dev
+apt-get -yq install wget bzip2 build-essential ccache
 
-pip install virtualenv
+# Install pypy and all the scikit-learn dependencies from conda-forge. In
+# particular, we want to install pypy compatible binary packages for numpy and
+# scipy as it would be to costly to build those from source.
+conda install -y mamba
+mamba create -n pypy -y \
+    pypy numpy scipy cython \
+    joblib threadpoolctl pillow pytest \
+    sphinx numpydoc docutils
 
-if command -v pypy3; then
-    virtualenv -p $(command -v pypy3) pypy-env
-elif command -v pypy; then
-    virtualenv -p $(command -v pypy) pypy-env
-fi
+eval "$(conda shell.bash hook)"
+conda activate pypy
 
-source pypy-env/bin/activate
-
+# Check that we are running PyPy instead of CPython in this environment.
 python --version
 which python
+python -c "import platform; assert platform.python_implementation() == 'PyPy'"
 
-# XXX: numpy version pinning can be reverted once PyPy
-#      compatibility is resolved for numpy v1.6.x. For instance,
-#      when PyPy3 >6.0 is released (see numpy/numpy#12740)
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
-pip install scipy sphinx numpydoc docutils joblib pillow
-
+# Build and install scikit-learn in dev mode
 ccache -M 512M
 export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
 export LOKY_MAX_CPU_COUNT="2"
 export OMP_NUM_THREADS="1"
+# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
+# workers with 2 cores when building the compiled extensions of scikit-learn.
+export SKLEARN_BUILD_PARALLEL=3
+pip install --no-build-isolation -e .
 
-python setup.py build_ext --inplace -j 3
-pip install -e .
-
-# Check that Python implementation is PyPy
-python - << EOL
-import platform
-from sklearn.utils import IS_PYPY
-assert IS_PYPY is True, "platform={}!=PyPy".format(platform.python_implementation())
-EOL
-
-python -m pytest sklearn/
-python -m pytest doc/sphinxext/
-python -m pytest $(find doc -name '*.rst' | sort)
+python -m pytest sklearn

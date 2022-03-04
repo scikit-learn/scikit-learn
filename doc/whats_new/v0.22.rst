@@ -2,12 +2,59 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_22_2:
+
+Version 0.22.2.post1
+====================
+
+**March 3 2020**
+
+The 0.22.2.post1 release includes a packaging fix for the source distribution
+but the content of the packages is otherwise identical to the content of the
+wheels with the 0.22.2 version (without the .post1 suffix). Both contain the
+following changes.
+
+Changelog
+---------
+
+:mod:`sklearn.impute`
+.....................
+
+- |Efficiency| Reduce :func:`impute.KNNImputer` asymptotic memory usage by
+  chunking pairwise distance computation.
+  :pr:`16397` by `Joel Nothman`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
+  the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
+  instead of the parameter `name`. It results in a different plot when calling
+  :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
+  :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
+  name of the estimator was passed in the
+  :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
+  results in a different plot when calling
+  :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.
+  :pr:`16505` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neighbors`
+..............................
+
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+  array instead of a 1-D array containing NumPy arrays. This bug
+  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :user:`Alex Shacked <alexshacked>`.
+
 .. _changes_0_22_1:
 
 Version 0.22.1
 ==============
 
-**In Development**
+**January 2 2020**
 
 This is a bug-fix release to primarily resolve some packaging issues in version
 0.22.0. It also includes minor documentation improvements and some bug fixes.
@@ -53,7 +100,35 @@ Changelog
 - |Fix| :func:`metrics.classification_report` does no longer ignore the
   value of the ``zero_division`` keyword argument. :pr:`15879`
   by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
-  
+
+- |Fix| Fixed a bug in :func:`metrics.plot_confusion_matrix` to correctly
+  pass the `values_format` parameter to the :class:`ConfusionMatrixDisplay`
+  plot() call. :pr:`15937` by :user:`Stephen Blystone <blynotes>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` accept scalar values provided in
+  `fit_params`. Change in 0.22 was breaking backward compatibility.
+  :pr:`15863` by :user:`Adrin Jalali <adrinjalali>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Fix| Removed `abstractmethod` decorator for the method `_check_X` in
+  :class:`naive_bayes.BaseNB` that could break downstream projects inheriting
+  from this deprecated public base class. :pr:`15996` by
+  :user:`Brigitta Sipőcz <bsipocz>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.QuantileTransformer` now guarantees the
+  `quantiles_` attribute to be completely sorted in non-decreasing manner.
+  :pr:`15751` by :user:`Tirth Patel <tirthasheshpatel>`.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
@@ -365,11 +440,11 @@ Changelog
   <glemaitre>` and :user:`Caio Oliveira <caioaao>` and :pr:`15138` by
   :user:`Jon Cusick <jcusick13>`..
 
-- Many improvements were made to
+- |MajorFeature| Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`:
 
-  - |MajorFeature| Estimators now natively support dense data with missing
+  - |Feature| Estimators now natively support dense data with missing
     values both for training and predicting. They also support infinite
     values. :pr:`13911` and :pr:`14406` by `Nicolas Hug`_, `Adrin Jalali`_
     and `Olivier Grisel`_.
@@ -838,10 +913,6 @@ Changelog
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
-- |Fix| :class:`preprocessing.QuantileTransformer` now guarantees the 
-  `quantiles_` attribute to be completely sorted in non-decreasing manner.
-  :pr:`15751` by :user:`Tirth Patel <tirthasheshpatel>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -1035,7 +1106,7 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
-project since version 0.20, including:
+project since version 0.21, including:
 
 Aaron Alphonsus, Abbie Popa, Abdur-Rahmaan Janhangeer, abenbihi, Abhinav Sagar,
 Abhishek Jana, Abraham K. Lagat, Adam J. Stewart, Aditya Vyas, Adrin Jalali,

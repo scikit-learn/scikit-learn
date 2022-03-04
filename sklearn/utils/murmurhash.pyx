@@ -1,4 +1,4 @@
-"""Cython wrapper for MurmurHash3 non-cryptographic hash function
+"""Cython wrapper for MurmurHash3 non-cryptographic hash function.
 
 MurmurHash is an extensively tested and very fast hash function that has
 good distribution properties suitable for machine learning use cases
@@ -55,7 +55,6 @@ cpdef np.int32_t murmurhash3_bytes_s32(bytes key, unsigned int seed):
     return out
 
 
-@cython.boundscheck(False)
 cpdef np.ndarray[np.uint32_t, ndim=1] murmurhash3_bytes_array_u32(
     np.ndarray[np.int32_t] key, unsigned int seed):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
@@ -67,7 +66,6 @@ cpdef np.ndarray[np.uint32_t, ndim=1] murmurhash3_bytes_array_u32(
     return out
 
 
-@cython.boundscheck(False)
 cpdef np.ndarray[np.int32_t, ndim=1] murmurhash3_bytes_array_s32(
     np.ndarray[np.int32_t] key, unsigned int seed):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
@@ -88,13 +86,13 @@ def murmurhash3_32(key, seed=0, positive=False):
 
     Parameters
     ----------
-    key : int32, bytes, unicode or ndarray with dtype int32
-        the physical object to hash
+    key : np.int32, bytes, unicode or ndarray of dtype=np.int32
+        The physical object to hash.
 
-    seed : int, optional default is 0
-        integer seed for the hashing algorithm.
+    seed : int, default=0
+        Integer seed for the hashing algorithm.
 
-    positive : boolean, optional default is False
+    positive : bool, default=False
         True: the results is casted to an unsigned int
           from 0 to 2 ** 32 - 1
         False: the results is casted to a signed int

@@ -9,10 +9,13 @@ from scipy.sparse.csgraph import connected_components
 import pytest
 
 from sklearn.feature_extraction.image import (
-    img_to_graph, grid_to_graph, extract_patches_2d,
-    reconstruct_from_patches_2d, PatchExtractor, _extract_patches,
-    extract_patches)
-from sklearn.utils._testing import ignore_warnings
+    img_to_graph,
+    grid_to_graph,
+    extract_patches_2d,
+    reconstruct_from_patches_2d,
+    PatchExtractor,
+    _extract_patches,
+)
 
 
 def test_img_to_graph():
@@ -23,8 +26,24 @@ def test_img_to_graph():
     # Negative elements are the diagonal: the elements of the original
     # image. Positive elements are the values of the gradient, they
     # should all be equal on grad_x and grad_y
-    np.testing.assert_array_equal(grad_x.data[grad_x.data > 0],
-                                  grad_y.data[grad_y.data > 0])
+    np.testing.assert_array_equal(
+        grad_x.data[grad_x.data > 0], grad_y.data[grad_y.data > 0]
+    )
+
+
+def test_img_to_graph_sparse():
+    # Check that the edges are in the right position
+    #  when using a sparse image with a singleton component
+    mask = np.zeros((2, 3), dtype=bool)
+    mask[0, 0] = 1
+    mask[:, 2] = 1
+    x = np.zeros((2, 3))
+    x[0, 0] = 1
+    x[0, 2] = -1
+    x[1, 2] = -2
+    grad_x = img_to_graph(x, mask=mask).todense()
+    desired = np.array([[1, 0, 0], [0, -1, 1], [0, 1, -2]])
+    np.testing.assert_array_equal(grad_x, desired)
 
 
 def test_grid_to_graph():
@@ -33,12 +52,20 @@ def test_grid_to_graph():
     roi_size = 1
     # Generating two convex parts with one vertex
     # Thus, edges will be empty in _to_graph
-    mask = np.zeros((size, size), dtype=np.bool)
+    mask = np.zeros((size, size), dtype=bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
-    mask = mask.reshape(size ** 2)
+    mask = mask.reshape(size**2)
     A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
     assert connected_components(A)[0] == 2
+
+    # check ordering
+    mask = np.zeros((2, 3), dtype=bool)
+    mask[0, 0] = 1
+    mask[:, 2] = 1
+    graph = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
+    desired = np.array([[1, 0, 0], [0, 1, 1], [0, 1, 1]])
+    np.testing.assert_array_equal(graph, desired)
 
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)
@@ -47,39 +74,26 @@ def test_grid_to_graph():
 
     # Checking dtype of the graph
     mask = np.ones((size, size))
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.bool)
-    assert A.dtype == np.bool
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
-    assert A.dtype == np.int
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask,
-                      dtype=np.float64)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=bool)
+    assert A.dtype == bool
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=int)
+    assert A.dtype == int
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float64)
     assert A.dtype == np.float64
 
 
-@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
-        face = misc.face(gray=True)
+    face = sp.misc.face(gray=True)
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
     for thr in (50, 150):
         mask = face > thr
-        graph = img_to_graph(face, mask)
+        graph = img_to_graph(face, mask=mask)
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
-@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions_with_grid():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
-        face = misc.face(gray=True)
+    face = sp.misc.face(gray=True)
 
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
@@ -99,12 +113,11 @@ def _downsampled_face():
     except AttributeError:
         # Newer versions of scipy have face in misc
         from scipy import misc
+
         face = misc.face(gray=True)
     face = face.astype(np.float32)
-    face = (face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2]
-            + face[1::2, 1::2])
-    face = (face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2]
-            + face[1::2, 1::2])
+    face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
+    face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
     face = face.astype(np.float32)
     face /= 16.0
     return face
@@ -127,6 +140,7 @@ def _make_images(face=None):
     images[1] = face + 1
     images[2] = face + 2
     return images
+
 
 downsampled_face = _downsampled_face()
 orange_face = _orange_face(downsampled_face)
@@ -230,16 +244,19 @@ def test_patch_extractor_max_patches():
 
     max_patches = 100
     expected_n_patches = len(faces) * max_patches
-    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches,
-                          random_state=0)
+    extr = PatchExtractor(
+        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
+    )
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
     max_patches = 0.5
-    expected_n_patches = len(faces) * int((i_h - p_h + 1) * (i_w - p_w + 1)
-                                          * max_patches)
-    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches,
-                          random_state=0)
+    expected_n_patches = len(faces) * int(
+        (i_h - p_h + 1) * (i_w - p_w + 1) * max_patches
+    )
+    extr = PatchExtractor(
+        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
+    )
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
@@ -300,20 +317,23 @@ def test_extract_patches_strided():
     expected_views = expected_views_1D + expected_views_2D + expected_views_3D
     last_patches = last_patch_1D + last_patch_2D + last_patch_3D
 
-    for (image_shape, patch_size, patch_step, expected_view,
-         last_patch) in zip(image_shapes, patch_sizes, patch_steps,
-                            expected_views, last_patches):
+    for (image_shape, patch_size, patch_step, expected_view, last_patch) in zip(
+        image_shapes, patch_sizes, patch_steps, expected_views, last_patches
+    ):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)
-        patches = _extract_patches(image, patch_shape=patch_size,
-                                   extraction_step=patch_step)
+        patches = _extract_patches(
+            image, patch_shape=patch_size, extraction_step=patch_step
+        )
 
         ndim = len(image_shape)
 
         assert patches.shape[:ndim] == expected_view
-        last_patch_slices = tuple(slice(i, i + j, None) for i, j in
-                                  zip(last_patch, patch_size))
-        assert (patches[(-1, None, None) * ndim] ==
-                image[last_patch_slices].squeeze()).all()
+        last_patch_slices = tuple(
+            slice(i, i + j, None) for i, j in zip(last_patch, patch_size)
+        )
+        assert (
+            patches[(-1, None, None) * ndim] == image[last_patch_slices].squeeze()
+        ).all()
 
 
 def test_extract_patches_square():
@@ -323,8 +343,7 @@ def test_extract_patches_square():
     p = 8
     expected_n_patches = ((i_h - p + 1), (i_w - p + 1))
     patches = _extract_patches(face, patch_shape=p)
-    assert patches.shape == (expected_n_patches[0],
-                             expected_n_patches[1], p, p)
+    assert patches.shape == (expected_n_patches[0], expected_n_patches[1], p, p)
 
 
 def test_width_patch():
@@ -334,11 +353,3 @@ def test_width_patch():
         extract_patches_2d(x, (4, 1))
     with pytest.raises(ValueError):
         extract_patches_2d(x, (1, 4))
-
-
-# TODO: Remove in 0.24
-def test_extract_patches_deprecated():
-    msg = ("The function feature_extraction.image.extract_patches has been "
-           "deprecated in 0.22 and will be removed in 0.24.")
-    with pytest.warns(FutureWarning, match=msg):
-        extract_patches(downsampled_face)

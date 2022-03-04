@@ -1,15 +1,14 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import re
 import numpy as np
 import scipy.sparse as sp
 import pytest
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
@@ -23,13 +22,13 @@ from sklearn import datasets
 
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
+from sklearn import config_context
 import pickle
 
 
 #############################################################################
 # A few test classes
 class MyEstimator(BaseEstimator):
-
     def __init__(self, l1=0, empty=None):
         self.l1 = l1
         self.empty = empty
@@ -49,17 +48,17 @@ class T(BaseEstimator):
 
 class NaNTag(BaseEstimator):
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {"allow_nan": True}
 
 
 class NoNaNTag(BaseEstimator):
     def _more_tags(self):
-        return {'allow_nan': False}
+        return {"allow_nan": False}
 
 
 class OverrideTag(NaNTag):
     def _more_tags(self):
-        return {'allow_nan': False}
+        return {"allow_nan": False}
 
 
 class DiamondOverwriteTag(NaNTag, NoNaNTag):
@@ -76,12 +75,13 @@ class ModifyInitParams(BaseEstimator):
     Equal parameters but with a type cast.
     Doesn't fulfill a is a
     """
+
     def __init__(self, a=np.array([0])):
         self.a = a.copy()
 
 
 class Buggy(BaseEstimator):
-    " A buggy estimator that does not set its parameters right. "
+    "A buggy estimator that does not set its parameters right."
 
     def __init__(self, a=None):
         self.a = 1
@@ -100,12 +100,14 @@ class NoEstimator:
 
 class VargEstimator(BaseEstimator):
     """scikit-learn estimators shouldn't have vargs."""
+
     def __init__(self, *vargs):
         pass
 
 
 #############################################################################
 # The tests
+
 
 def test_clone():
     # Tests that clone creates a correct deep copy.
@@ -143,16 +145,20 @@ def test_clone_buggy():
     # Check that clone raises an error on buggy estimators.
     buggy = Buggy()
     buggy.a = 2
-    assert_raises(RuntimeError, clone, buggy)
+    with pytest.raises(RuntimeError):
+        clone(buggy)
 
     no_estimator = NoEstimator()
-    assert_raises(TypeError, clone, no_estimator)
+    with pytest.raises(TypeError):
+        clone(no_estimator)
 
     varg_est = VargEstimator()
-    assert_raises(RuntimeError, clone, varg_est)
+    with pytest.raises(RuntimeError):
+        clone(varg_est)
 
     est = ModifyInitParams()
-    assert_raises(RuntimeError, clone, est)
+    with pytest.raises(RuntimeError):
+        clone(est)
 
 
 def test_clone_empty_array():
@@ -176,8 +182,8 @@ def test_clone_nan():
 
 def test_clone_sparse_matrices():
     sparse_matrix_classes = [
-        getattr(sp, name)
-        for name in dir(sp) if name.endswith('_matrix')]
+        getattr(sp, name) for name in dir(sp) if name.endswith("_matrix")
+    ]
 
     for cls in sparse_matrix_classes:
         sparse_matrix = cls(np.eye(5))
@@ -196,17 +202,23 @@ def test_clone_estimator_types():
     assert clf.empty is clf2.empty
 
 
+def test_clone_class_rather_than_instance():
+    # Check that clone raises expected error message when
+    # cloning class rather than instance
+    msg = "You should provide an instance of scikit-learn estimator"
+    with pytest.raises(TypeError, match=msg):
+        clone(MyEstimator)
+
+
 def test_repr():
     # Smoke test the repr of the base estimator.
     my_estimator = MyEstimator()
     repr(my_estimator)
     test = T(K(), K())
-    assert (
-        repr(test) ==
-        "T(a=K(c=None, d=None), b=K(c=None, d=None))")
+    assert repr(test) == "T(a=K(), b=K())"
 
     some_est = T(a=["long_params"] * 1000)
-    assert len(repr(some_est)) == 495
+    assert len(repr(some_est)) == 485
 
 
 def test_str():
@@ -218,30 +230,36 @@ def test_str():
 def test_get_params():
     test = T(K(), K())
 
-    assert 'a__d' in test.get_params(deep=True)
-    assert 'a__d' not in test.get_params(deep=False)
+    assert "a__d" in test.get_params(deep=True)
+    assert "a__d" not in test.get_params(deep=False)
 
     test.set_params(a__d=2)
     assert test.a.d == 2
-    assert_raises(ValueError, test.set_params, a__a=2)
+
+    with pytest.raises(ValueError):
+        test.set_params(a__a=2)
 
 
 def test_is_classifier():
     svc = SVC()
     assert is_classifier(svc)
-    assert is_classifier(GridSearchCV(svc, {'C': [0.1, 1]}))
-    assert is_classifier(Pipeline([('svc', svc)]))
-    assert is_classifier(Pipeline(
-        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))]))
+    assert is_classifier(GridSearchCV(svc, {"C": [0.1, 1]}))
+    assert is_classifier(Pipeline([("svc", svc)]))
+    assert is_classifier(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
 
 
 def test_set_params():
     # test nested estimator parameter setting
     clf = Pipeline([("svc", SVC())])
+
     # non-existing parameter in svc
-    assert_raises(ValueError, clf.set_params, svc__stupid_param=True)
+    with pytest.raises(ValueError):
+        clf.set_params(svc__stupid_param=True)
+
     # non-existing parameter of pipeline
-    assert_raises(ValueError, clf.set_params, svm__stupid_param=True)
+    with pytest.raises(ValueError):
+        clf.set_params(svm__stupid_param=True)
+
     # we don't currently catch if the things in pipeline are estimators
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
     # assert_raises(AttributeError, bad_pipeline.set_params,
@@ -259,11 +277,12 @@ def test_set_params_passes_all_parameters():
             assert kwargs == expected_kwargs
             return self
 
-    expected_kwargs = {'max_depth': 5, 'min_samples_leaf': 2}
-    for est in [Pipeline([('estimator', TestDecisionTree())]),
-                GridSearchCV(TestDecisionTree(), {})]:
-        est.set_params(estimator__max_depth=5,
-                       estimator__min_samples_leaf=2)
+    expected_kwargs = {"max_depth": 5, "min_samples_leaf": 2}
+    for est in [
+        Pipeline([("estimator", TestDecisionTree())]),
+        GridSearchCV(TestDecisionTree(), {}),
+    ]:
+        est.set_params(estimator__max_depth=5, estimator__min_samples_leaf=2)
 
 
 def test_set_params_updates_valid_params():
@@ -274,30 +293,34 @@ def test_set_params_updates_valid_params():
     assert gscv.estimator.C == 42.0
 
 
-def test_score_sample_weight():
-
+@pytest.mark.parametrize(
+    "tree,dataset",
+    [
+        (
+            DecisionTreeClassifier(max_depth=2, random_state=0),
+            datasets.make_classification(random_state=0),
+        ),
+        (
+            DecisionTreeRegressor(max_depth=2, random_state=0),
+            datasets.make_regression(random_state=0),
+        ),
+    ],
+)
+def test_score_sample_weight(tree, dataset):
     rng = np.random.RandomState(0)
+    # check that the score with and without sample weights are different
+    X, y = dataset
 
-    # test both ClassifierMixin and RegressorMixin
-    estimators = [DecisionTreeClassifier(max_depth=2),
-                  DecisionTreeRegressor(max_depth=2)]
-    sets = [datasets.load_iris(),
-            datasets.load_boston()]
-
-    for est, ds in zip(estimators, sets):
-        est.fit(ds.data, ds.target)
-        # generate random sample weights
-        sample_weight = rng.randint(1, 10, size=len(ds.target))
-        # check that the score with and without sample weights are different
-        assert (est.score(ds.data, ds.target) !=
-                est.score(ds.data, ds.target,
-                          sample_weight=sample_weight)), (
-                              "Unweighted and weighted scores "
-                              "are unexpectedly equal")
+    tree.fit(X, y)
+    # generate random sample weights
+    sample_weight = rng.randint(1, 10, size=len(y))
+    score_unweighted = tree.score(X, y)
+    score_weighted = tree.score(X, y, sample_weight=sample_weight)
+    msg = "Unweighted and weighted scores are unexpectedly equal"
+    assert score_unweighted != score_weighted, msg
 
 
 def test_clone_pandas_dataframe():
-
     class DummyEstimator(TransformerMixin, BaseEstimator):
         """This is a dummy class for generating numerical features
 
@@ -313,6 +336,7 @@ def test_clone_pandas_dataframe():
         Notes
         -----
         """
+
         def __init__(self, df=None, scalar_param=1):
             self.df = df
             self.scalar_param = scalar_param
@@ -357,17 +381,21 @@ pickle_error_message = (
     "version {old_version} when using version "
     "{current_version}. This might "
     "lead to breaking code or invalid results. "
-    "Use at your own risk.")
+    "Use at your own risk."
+)
 
 
 def test_pickle_version_warning_is_issued_upon_different_version():
     iris = datasets.load_iris()
     tree = TreeBadVersion().fit(iris.data, iris.target)
     tree_pickle_other = pickle.dumps(tree)
-    message = pickle_error_message.format(estimator="TreeBadVersion",
-                                          old_version="something",
-                                          current_version=sklearn.__version__)
-    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_other)
+    message = pickle_error_message.format(
+        estimator="TreeBadVersion",
+        old_version="something",
+        current_version=sklearn.__version__,
+    )
+    with pytest.warns(UserWarning, match=message):
+        pickle.loads(tree_pickle_other)
 
 
 class TreeNoVersion(DecisionTreeClassifier):
@@ -382,12 +410,14 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
 
     tree_pickle_noversion = pickle.dumps(tree)
     assert b"version" not in tree_pickle_noversion
-    message = pickle_error_message.format(estimator="TreeNoVersion",
-                                          old_version="pre-0.18",
-                                          current_version=sklearn.__version__)
+    message = pickle_error_message.format(
+        estimator="TreeNoVersion",
+        old_version="pre-0.18",
+        current_version=sklearn.__version__,
+    )
     # check we got the warning about using pre-0.18 pickle
-    assert_warns_message(UserWarning, message, pickle.loads,
-                         tree_pickle_noversion)
+    with pytest.warns(UserWarning, match=message):
+        pickle.loads(tree_pickle_noversion)
 
 
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
@@ -439,10 +469,9 @@ def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
         type(estimator).__module__ = "notsklearn"
 
         serialized = estimator.__getstate__()
-        assert serialized == {'_attribute_not_pickled': None,
-                              'attribute_pickled': 5}
+        assert serialized == {"_attribute_not_pickled": None, "attribute_pickled": 5}
 
-        serialized['attribute_pickled'] = 4
+        serialized["attribute_pickled"] = 4
         estimator.__setstate__(serialized)
         assert estimator.attribute_pickled == 4
         assert estimator._restored
@@ -477,20 +506,20 @@ def test_tag_inheritance():
 
     nan_tag_est = NaNTag()
     no_nan_tag_est = NoNaNTag()
-    assert nan_tag_est._get_tags()['allow_nan']
-    assert not no_nan_tag_est._get_tags()['allow_nan']
+    assert nan_tag_est._get_tags()["allow_nan"]
+    assert not no_nan_tag_est._get_tags()["allow_nan"]
 
     redefine_tags_est = OverrideTag()
-    assert not redefine_tags_est._get_tags()['allow_nan']
+    assert not redefine_tags_est._get_tags()["allow_nan"]
 
     diamond_tag_est = DiamondOverwriteTag()
-    assert diamond_tag_est._get_tags()['allow_nan']
+    assert diamond_tag_est._get_tags()["allow_nan"]
 
     inherit_diamond_tag_est = InheritDiamondOverwriteTag()
-    assert inherit_diamond_tag_est._get_tags()['allow_nan']
+    assert inherit_diamond_tag_est._get_tags()["allow_nan"]
 
 
-def test_warns_on_get_params_non_attribute():
+def test_raises_on_get_params_non_attribute():
     class MyEstimator(BaseEstimator):
         def __init__(self, param=5):
             pass
@@ -499,7 +528,132 @@ def test_warns_on_get_params_non_attribute():
             return self
 
     est = MyEstimator()
-    with pytest.warns(FutureWarning, match='AttributeError'):
-        params = est.get_params()
+    msg = "'MyEstimator' object has no attribute 'param'"
 
-    assert params['param'] is None
+    with pytest.raises(AttributeError, match=msg):
+        est.get_params()
+
+
+def test_repr_mimebundle_():
+    # Checks the display configuration flag controls the json output
+    tree = DecisionTreeClassifier()
+    output = tree._repr_mimebundle_()
+    assert "text/plain" in output
+    assert "text/html" not in output
+
+    with config_context(display="diagram"):
+        output = tree._repr_mimebundle_()
+        assert "text/plain" in output
+        assert "text/html" in output
+
+
+def test_repr_html_wraps():
+    # Checks the display configuration flag controls the html output
+    tree = DecisionTreeClassifier()
+    msg = "_repr_html_ is only defined when"
+    with pytest.raises(AttributeError, match=msg):
+        output = tree._repr_html_()
+
+    with config_context(display="diagram"):
+        output = tree._repr_html_()
+        assert "<style>" in output
+
+
+def test_n_features_in_validation():
+    """Check that `_check_n_features` validates data when reset=False"""
+    est = MyEstimator()
+    X_train = [[1, 2, 3], [4, 5, 6]]
+    est._check_n_features(X_train, reset=True)
+
+    assert est.n_features_in_ == 3
+
+    msg = "X does not contain any features, but MyEstimator is expecting 3 features"
+    with pytest.raises(ValueError, match=msg):
+        est._check_n_features("invalid X", reset=False)
+
+
+def test_n_features_in_no_validation():
+    """Check that `_check_n_features` does not validate data when
+    n_features_in_ is not defined."""
+    est = MyEstimator()
+    est._check_n_features("invalid X", reset=True)
+
+    assert not hasattr(est, "n_features_in_")
+
+    # does not raise
+    est._check_n_features("invalid X", reset=False)
+
+
+def test_feature_names_in():
+    """Check that feature_name_in are recorded by `_validate_data`"""
+    pd = pytest.importorskip("pandas")
+    iris = datasets.load_iris()
+    X_np = iris.data
+    df = pd.DataFrame(X_np, columns=iris.feature_names)
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            self._validate_data(X)
+            return self
+
+        def transform(self, X):
+            self._validate_data(X, reset=False)
+            return X
+
+    # fit on dataframe saves the feature names
+    trans = NoOpTransformer().fit(df)
+    assert_array_equal(trans.feature_names_in_, df.columns)
+
+    # fit again but on ndarray does not keep the previous feature names (see #21383)
+    trans.fit(X_np)
+    assert not hasattr(trans, "feature_names_in_")
+
+    trans.fit(df)
+    msg = "The feature names should match those that were passed"
+    df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
+    with pytest.warns(FutureWarning, match=msg):
+        trans.transform(df_bad)
+
+    # warns when fitted on dataframe and transforming a ndarray
+    msg = (
+        "X does not have valid feature names, but NoOpTransformer was "
+        "fitted with feature names"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        trans.transform(X_np)
+
+    # warns when fitted on a ndarray and transforming dataframe
+    msg = "X has feature names, but NoOpTransformer was fitted without feature names"
+    trans = NoOpTransformer().fit(X_np)
+    with pytest.warns(UserWarning, match=msg):
+        trans.transform(df)
+
+    # fit on dataframe with all integer feature names works without warning
+    df_int_names = pd.DataFrame(X_np)
+    trans = NoOpTransformer()
+    with pytest.warns(None) as record:
+        trans.fit(df_int_names)
+    assert not [w.message for w in record]
+
+    # fit on dataframe with no feature names or all integer feature names
+    # -> do not warn on transform
+    Xs = [X_np, df_int_names]
+    for X in Xs:
+        with pytest.warns(None) as record:
+            trans.transform(X)
+        assert not [w.message for w in record]
+
+    # TODO: Convert to a error in 1.2
+    # fit on dataframe with feature names that are mixed warns:
+    df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
+    trans = NoOpTransformer()
+    msg = re.escape(
+        "Feature names only support names that are all strings. "
+        "Got feature names with dtypes: ['int', 'str']"
+    )
+    with pytest.warns(FutureWarning, match=msg) as record:
+        trans.fit(df_mixed)
+
+    # transform on feature names that are mixed also warns:
+    with pytest.warns(FutureWarning, match=msg) as record:
+        trans.transform(df_mixed)

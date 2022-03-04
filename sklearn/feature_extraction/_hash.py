@@ -12,11 +12,13 @@ from ..base import BaseEstimator, TransformerMixin
 if not IS_PYPY:
     from ._hashing_fast import transform as _hashing_transform
 else:
+
     def _hashing_transform(*args, **kwargs):
         raise NotImplementedError(
-                'FeatureHasher is not compatible with PyPy (see '
-                'https://github.com/scikit-learn/scikit-learn/issues/11540 '
-                'for the status updates).')
+            "FeatureHasher is not compatible with PyPy (see "
+            "https://github.com/scikit-learn/scikit-learn/issues/11540 "
+            "for the status updates)."
+        )
 
 
 def _iteritems(d):
@@ -47,11 +49,12 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_features : integer, optional
+    n_features : int, default=2**20
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-    input_type : string, optional, default "dict"
+    input_type : str, default='dict'
+        Choose a string from {'dict', 'pair', 'string'}.
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
         or "string" to accept single strings.
@@ -60,14 +63,23 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
-    dtype : numpy type, optional, default np.float64
+    dtype : numpy dtype, default=np.float64
         The type of feature values. Passed to scipy.sparse matrix constructors
         as the dtype argument. Do not set this to bool, np.boolean or any
         unsigned integer type.
-    alternate_sign : boolean, optional, default True
+    alternate_sign : bool, default=True
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
+
+        .. versionchanged:: 0.19
+            ``alternate_sign`` replaces the now deprecated ``non_negative``
+            parameter.
+
+    See Also
+    --------
+    DictVectorizer : Vectorizes string-valued features using a hash table.
+    sklearn.preprocessing.OneHotEncoder : Handles nominal/categorical features.
 
     Examples
     --------
@@ -78,17 +90,16 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     >>> f.toarray()
     array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
-
-    See also
-    --------
-    DictVectorizer : vectorizes string-valued features using a hash table.
-    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features.
     """
 
-    def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, alternate_sign=True):
-        self._validate_params(n_features, input_type)
-
+    def __init__(
+        self,
+        n_features=(2**20),
+        *,
+        input_type="dict",
+        dtype=np.float64,
+        alternate_sign=True,
+    ):
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
@@ -99,14 +110,17 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         # strangely, np.int16 instances are not instances of Integral,
         # while np.int64 instances are...
         if not isinstance(n_features, numbers.Integral):
-            raise TypeError("n_features must be integral, got %r (%s)."
-                            % (n_features, type(n_features)))
+            raise TypeError(
+                "n_features must be integral, got %r (%s)."
+                % (n_features, type(n_features))
+            )
         elif n_features < 1 or n_features >= np.iinfo(np.int32).max + 1:
             raise ValueError("Invalid number of features (%d)." % n_features)
 
         if input_type not in ("dict", "pair", "string"):
-            raise ValueError("input_type must be 'dict', 'pair' or 'string',"
-                             " got %r." % input_type)
+            raise ValueError(
+                "input_type must be 'dict', 'pair' or 'string', got %r." % input_type
+            )
 
     def fit(self, X=None, y=None):
         """No-op.
@@ -116,12 +130,16 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like
+        X : Ignored
+            Not used, present here for API consistency by convention.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
-        self : FeatureHasher
-
+        self : object
+            FeatureHasher class instance.
         """
         # repeat input validation for grid search (which calls set_params)
         self._validate_params(self.n_features, self.input_type)
@@ -143,26 +161,29 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         -------
         X : sparse matrix of shape (n_samples, n_features)
             Feature matrix, for use with estimators or further transformers.
-
         """
+        self._validate_params(self.n_features, self.input_type)
         raw_X = iter(raw_X)
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
-        indices, indptr, values = \
-            _hashing_transform(raw_X, self.n_features, self.dtype,
-                               self.alternate_sign, seed=0)
+        indices, indptr, values = _hashing_transform(
+            raw_X, self.n_features, self.dtype, self.alternate_sign, seed=0
+        )
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
 
-        X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
-                          shape=(n_samples, self.n_features))
+        X = sp.csr_matrix(
+            (values, indices, indptr),
+            dtype=self.dtype,
+            shape=(n_samples, self.n_features),
+        )
         X.sum_duplicates()  # also sorts the indices
 
         return X
 
     def _more_tags(self):
-        return {'X_types': [self.input_type]}
+        return {"X_types": [self.input_type]}

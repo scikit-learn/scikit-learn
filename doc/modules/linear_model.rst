@@ -50,7 +50,7 @@ and will store the coefficients :math:`w` of the linear model in its
 
 The coefficient estimates for Ordinary Least Squares rely on the
 independence of the features. When features are correlated and the
-columns of the design matrix :math:`X` have an approximate linear
+columns of the design matrix :math:`X` have an approximately linear
 dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
 to random errors in the observed target, producing a large
@@ -61,6 +61,19 @@ example, when data are collected without an experimental design.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
+Non-Negative Least Squares
+--------------------------
+
+It is possible to constrain all the coefficients to be non-negative, which may
+be useful when they represent some physical or naturally non-negative
+quantities (e.g., frequency counts or prices of goods).
+:class:`LinearRegression` accepts a boolean ``positive``
+parameter: when set to `True` `Non-Negative Least Squares
+<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
+
+.. topic:: Examples:
+
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`
 
 Ordinary Least Squares Complexity
 ---------------------------------
@@ -127,15 +140,15 @@ the output with the highest value.
 
 It might seem questionable to use a (penalized) Least Squares loss to fit a
 classification model instead of the more traditional logistic or hinge
-losses. However in practice all those models can lead to similar
+losses. However, in practice, all those models can lead to similar
 cross-validation scores in terms of accuracy or precision/recall, while the
 penalized least squares loss used by the :class:`RidgeClassifier` allows for
 a very different choice of the numerical solvers with distinct computational
 performance profiles.
 
 The :class:`RidgeClassifier` can be significantly faster than e.g.
-:class:`LogisticRegression` with a high number of classes, because it is
-able to compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
+:class:`LogisticRegression` with a high number of classes because it can
+compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
 
 This classifier is sometimes referred to as a `Least Squares Support Vector
 Machines
@@ -146,7 +159,7 @@ a linear kernel.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-
+   * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 Ridge Complexity
 ----------------
@@ -160,13 +173,12 @@ This method has the same order of complexity as
 .. between these
 
 
-Setting the regularization parameter: generalized Cross-Validation
-------------------------------------------------------------------
+Setting the regularization parameter: leave-one-out Cross-Validation
+--------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
 cross-validation of the alpha parameter. The object works in the same way
-as GridSearchCV except that it defaults to Generalized Cross-Validation
-(GCV), an efficient form of leave-one-out cross-validation::
+as GridSearchCV except that it defaults to Leave-One-Out Cross-Validation::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
@@ -179,7 +191,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
-example `cv=10` for 10-fold cross-validation, rather than Generalized
+example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
 .. topic:: References
@@ -198,7 +210,7 @@ Lasso
 The :class:`Lasso` is a linear model that estimates sparse coefficients.
 It is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
-features upon which the given solution is dependent. For this reason
+features upon which the given solution is dependent. For this reason,
 Lasso and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero
 coefficients (see
@@ -232,6 +244,7 @@ computes the coefficients along the full path of possible values.
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
+  * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 
 .. note:: **Feature selection with Lasso**
@@ -285,6 +298,7 @@ features, it is often faster than :class:`LassoCV`.
 
 .. centered:: |lasso_cv_1| |lasso_cv_2|
 
+.. _lasso_lars_ic:
 
 Information-criteria based model selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -293,22 +307,92 @@ Alternatively, the estimator :class:`LassoLarsIC` proposes to use the
 Akaike information criterion (AIC) and the Bayes Information criterion (BIC).
 It is a computationally cheaper alternative to find the optimal value of alpha
 as the regularization path is computed only once instead of k+1 times
-when using k-fold cross-validation. However, such criteria needs a
-proper estimation of the degrees of freedom of the solution, are
-derived for large samples (asymptotic results) and assume the model
-is correct, i.e. that the data are actually generated by this model.
-They also tend to break when the problem is badly conditioned
-(more features than samples).
+when using k-fold cross-validation.
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_model_selection_001.png
-    :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
+Indeed, these criteria are computed on the in-sample training set. In short,
+they penalize the over-optimistic scores of the different Lasso models by
+their flexibility (cf. to "Mathematical details" section below).
+
+However, such criteria need a proper estimation of the degrees of freedom of
+the solution, are derived for large samples (asymptotic results) and assume the
+correct model is candidates under investigation. They also tend to break when
+the problem is badly conditioned (e.g. more features than samples).
+
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_ic_001.png
+    :target: ../auto_examples/linear_model/plot_lasso_lars_ic.html
     :align: center
     :scale: 50%
 
+.. _aic_bic:
+
+**Mathematical details**
+
+The definition of AIC (and thus BIC) might differ in the literature. In this
+section, we give more information regarding the criterion computed in
+scikit-learn. The AIC criterion is defined as:
+
+.. math::
+    AIC = -2 \log(\hat{L}) + 2 d
+
+where :math:`\hat{L}` is the maximum likelihood of the model and
+:math:`d` is the number of parameters (as well referred to as degrees of
+freedom in the previous section).
+
+The definition of BIC replace the constant :math:`2` by :math:`\log(N)`:
+
+.. math::
+    BIC = -2 \log(\hat{L}) + \log(N) d
+
+where :math:`N` is the number of samples.
+
+For a linear Gaussian model, the maximum log-likelihood is defined as:
+
+.. math::
+    \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \ln(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+
+where :math:`\sigma^2` is an estimate of the noise variance,
+:math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
+targets, and :math:`n` is the number of samples.
+
+Plugging the maximum log-likelihood in the AIC formula yields:
+
+.. math::
+    AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2 d
+
+The first term of the above expression is sometimes discarded since it is a
+constant when :math:`\sigma^2` is provided. In addition,
+it is sometimes stated that the AIC is equivalent to the :math:`C_p` statistic
+[12]_. In a strict sense, however, it is equivalent only up to some constant
+and a multiplicative factor.
+
+At last, we mentioned above that :math:`\sigma^2` is an estimate of the
+noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
+not provided (default), the noise variance is estimated via the unbiased
+estimator [13]_ defined as:
+
+.. math::
+    \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{n - p}
+
+where :math:`p` is the number of features and :math:`\hat{y}_i` is the
+predicted target using an ordinary least squares regression. Note, that this
+formula is valid only when `n_samples > n_features`.
 
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`
+
+.. topic:: References
+
+  .. [12] :arxiv:`Zou, Hui, Trevor Hastie, and Robert Tibshirani.
+           "On the degrees of freedom of the lasso."
+           The Annals of Statistics 35.5 (2007): 2173-2192.
+           <0712.0881.pdf>`
+
+  .. [13] `Cherkassky, Vladimir, and Yunqian Ma.
+           "Comparison of model selection for regression."
+           Neural computation 15.7 (2003): 1691-1714.
+           <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.392.8794&rep=rep1&type=pdf>`_
 
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -354,7 +438,7 @@ Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2`-norm for regularization.
 The objective function to minimize is:
 
-.. math::  \min_{w} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
+.. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
 
 where :math:`\text{Fro}` indicates the Frobenius norm
 
@@ -380,7 +464,7 @@ the regularization properties of :class:`Ridge`. We control the convex
 combination of :math:`\ell_1` and :math:`\ell_2` using the ``l1_ratio``
 parameter.
 
-Elastic-net is useful when there are multiple features which are
+Elastic-net is useful when there are multiple features that are
 correlated with one another. Lasso is likely to pick one of these
 at random, while elastic-net is likely to pick both.
 
@@ -487,7 +571,7 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-The LARS model can be used using estimator :class:`Lars`, or its
+The LARS model can be used using via the estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path` or :func:`lars_path_gram`.
 
 
@@ -507,11 +591,11 @@ function of the norm of its coefficients.
 ::
 
    >>> from sklearn import linear_model
-   >>> reg = linear_model.LassoLars(alpha=.1)
+   >>> reg = linear_model.LassoLars(alpha=.1, normalize=False)
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
-   LassoLars(alpha=0.1)
+   LassoLars(alpha=0.1, normalize=False)
    >>> reg.coef_
-   array([0.717157..., 0.        ])
+   array([0.6..., 0.        ])
 
 .. topic:: Examples:
 
@@ -533,7 +617,7 @@ the residual.
 Instead of giving a vector result, the LARS solution consists of a
 curve denoting the solution for each value of the :math:`\ell_1` norm of the
 parameter vector. The full coefficients path is stored in the array
-``coef_path_``, which has size (n_features, max_features+1). The first
+``coef_path_`` of shape `(n_features, max_features + 1)`. The first
 column is always zero.
 
 .. topic:: References:
@@ -556,13 +640,13 @@ orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
 .. math::
-    \underset{\gamma}{\operatorname{arg\,min\,}}  ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{\text{nonzero\_coefs}}
+    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero\_coefs}}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
 .. math::
-    \underset{\gamma}{\operatorname{arg\,min\,}} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
+    \underset{w}{\operatorname{arg\,min\,}} ||w||_0 \text{ subject to } ||y-Xw||_2^2 \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
@@ -581,7 +665,7 @@ previously chosen dictionary elements.
  * https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
  * `Matching pursuits with time-frequency dictionaries
-   <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
+   <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
    S. G. Mallat, Z. Zhang,
 
 
@@ -906,7 +990,7 @@ with 'log' loss, which might be even faster but requires more tuning.
     It is possible to obtain the p-values and confidence intervals for
     coefficients in cases of regression without penalization. The `statsmodels
     package <https://pypi.org/project/statsmodels/>` natively supports this.
-    Within sklearn, one could use bootstrapping instead as well.  
+    Within sklearn, one could use bootstrapping instead as well.
 
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
@@ -921,13 +1005,158 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
-    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: `SAGA: A Fast Incremental Gradient Method With Support for Non-Strongly Convex Composite Objectives. <https://arxiv.org/abs/1407.0202>`_
+    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien:
+        :arxiv:`SAGA: A Fast Incremental Gradient Method With Support for
+        Non-Strongly Convex Composite Objectives. <1407.0202>`
 
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
     .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
 
+.. _Generalized_linear_regression:
+
+Generalized Linear Regression
+=============================
+
+Generalized Linear Models (GLM) extend linear models in two ways
+[10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
+combination of the input variables :math:`X` via an inverse link function
+:math:`h` as
+
+.. math::    \hat{y}(w, X) = h(Xw).
+
+Secondly, the squared loss function is replaced by the unit deviance
+:math:`d` of a distribution in the exponential family (or more precisely, a
+reproductive exponential dispersion model (EDM) [11]_).
+
+The minimization problem becomes:
+
+.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2,
+
+where :math:`\alpha` is the L2 regularization penalty. When sample weights are
+provided, the average becomes a weighted average.
+
+The following table lists some specific EDMs and their unit deviance (all of
+these are instances of the Tweedie family):
+
+================= ===============================  ============================================
+Distribution       Target Domain                    Unit Deviance :math:`d(y, \hat{y})`
+================= ===============================  ============================================
+Normal            :math:`y \in (-\infty, \infty)`  :math:`(y-\hat{y})^2`
+Poisson           :math:`y \in [0, \infty)`        :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
+Gamma             :math:`y \in (0, \infty)`        :math:`2(\log\frac{\hat{y}}{y}+\frac{y}{\hat{y}}-1)`
+Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
+================= ===============================  ============================================
+
+The Probability Density Functions (PDF) of these distributions are illustrated
+in the following figure,
+
+.. figure:: ./glm_data/poisson_gamma_tweedie_distributions.png
+   :align: center
+   :scale: 100%
+
+   PDF of a random variable Y following Poisson, Tweedie (power=1.5) and Gamma
+   distributions with different mean values (:math:`\mu`). Observe the point
+   mass at :math:`Y=0` for the Poisson distribution and the Tweedie (power=1.5)
+   distribution, but not for the Gamma distribution which has a strictly
+   positive target domain.
+
+The choice of the distribution depends on the problem at hand:
+
+* If the target values :math:`y` are counts (non-negative integer valued) or
+  relative frequencies (non-negative), you might use a Poisson deviance
+  with log-link.
+* If the target values are positive valued and skewed, you might try a
+  Gamma deviance with log-link.
+* If the target values seem to be heavier tailed than a Gamma distribution,
+  you might try an Inverse Gaussian deviance (or even higher variance powers
+  of the Tweedie family).
+
+
+Examples of use cases include:
+
+* Agriculture / weather modeling:  number of rain events per year (Poisson),
+  amount of rainfall per event (Gamma), total rainfall per year (Tweedie /
+  Compound Poisson Gamma).
+* Risk modeling / insurance policy pricing:  number of claim events /
+  policyholder per year (Poisson), cost per event (Gamma), total cost per
+  policyholder per year (Tweedie / Compound Poisson Gamma).
+* Predictive maintenance: number of production interruption events per year
+  (Poisson), duration of interruption (Gamma), total interruption time per year
+  (Tweedie / Compound Poisson Gamma).
+
+
+.. topic:: References:
+
+    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
+       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+
+    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models
+       and analysis of deviance. Monografias de matemática, no. 51.  See also
+       `Exponential dispersion model.
+       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
+
+Usage
+-----
+
+:class:`TweedieRegressor` implements a generalized linear model for the
+Tweedie distribution, that allows to model any of the above mentioned
+distributions using the appropriate ``power`` parameter. In particular:
+
+- ``power = 0``: Normal distribution. Specific estimators such as
+  :class:`Ridge`, :class:`ElasticNet` are generally more appropriate in
+  this case.
+- ``power = 1``: Poisson distribution. :class:`PoissonRegressor` is exposed
+  for convenience. However, it is strictly equivalent to
+  `TweedieRegressor(power=1, link='log')`.
+- ``power = 2``: Gamma distribution. :class:`GammaRegressor` is exposed for
+  convenience. However, it is strictly equivalent to
+  `TweedieRegressor(power=2, link='log')`.
+- ``power = 3``: Inverse Gaussian distribution.
+
+The link function is determined by the `link` parameter.
+
+Usage example::
+
+    >>> from sklearn.linear_model import TweedieRegressor
+    >>> reg = TweedieRegressor(power=1, alpha=0.5, link='log')
+    >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
+    TweedieRegressor(alpha=0.5, link='log', power=1)
+    >>> reg.coef_
+    array([0.2463..., 0.4337...])
+    >>> reg.intercept_
+    -0.7638...
+
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
+
+Practical considerations
+------------------------
+
+The feature matrix `X` should be standardized before fitting. This ensures
+that the penalty treats features equally.
+
+Since the linear predictor :math:`Xw` can be negative and Poisson,
+Gamma and Inverse Gaussian distributions don't support negative values, it
+is necessary to apply an inverse link function that guarantees the
+non-negativeness. For example with `link='log'`, the inverse link function
+becomes :math:`h(Xw)=\exp(Xw)`.
+
+If you want to model a relative frequency, i.e. counts per exposure (time,
+volume, ...) you can do so by using a Poisson distribution and passing
+:math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values
+together with :math:`\mathrm{exposure}` as sample weights. For a concrete
+example see e.g.
+:ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`.
+
+When performing cross-validation for the `power` parameter of
+`TweedieRegressor`, it is advisable to specify an explicit `scoring` function,
+because the default scorer :meth:`TweedieRegressor.score` is a function of
+`power` itself.
 
 Stochastic Gradient Descent - SGD
 =================================
@@ -1109,8 +1338,8 @@ Each iteration performs the following steps:
    whether the estimated model is valid (see ``is_model_valid``).
 3. Classify all data as inliers or outliers by calculating the residuals
    to the estimated model (``base_estimator.predict(X) - y``) - all data
-   samples with absolute residuals smaller than the ``residual_threshold``
-   are considered as inliers.
+   samples with absolute residuals smaller than or equal to the
+   ``residual_threshold`` are considered as inliers.
 4. Save fitted model as best model if number of inlier samples is
    maximal. In case the current estimated model has the same number of
    inliers, it is only considered as the best model if it has better score.
@@ -1137,7 +1366,7 @@ performance.
  * https://en.wikipedia.org/wiki/RANSAC
  * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
    Image Analysis and Automated Cartography"
-   <https://www.sri.com/sites/default/files/publications/ransac-publication.pdf>`_
+   <https://www.cs.ait.ac.th/~mdailey/cvreadings/Fischler-RANSAC.pdf>`_
    Martin A. Fischler and Robert C. Bolles - SRI International (1981)
  * `"Performance Evaluation of RANSAC Family"
    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
@@ -1266,6 +1495,83 @@ Note that this estimator is different from the R implementation of Robust Regres
 (http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least
 squares implementation with weights given to each sample on the basis of how much the residual is
 greater than a certain threshold.
+
+.. _quantile_regression:
+
+Quantile Regression
+===================
+
+Quantile regression estimates the median or other quantiles of :math:`y`
+conditional on :math:`X`, while ordinary least squares (OLS) estimates the
+conditional mean.
+
+As a linear model, the :class:`QuantileRegressor` gives linear predictions
+:math:`\hat{y}(w, X) = Xw` for the :math:`q`-th quantile, :math:`q \in (0, 1)`.
+The weights or coefficients :math:`w` are then found by the following
+minimization problem:
+
+.. math::
+    \min_{w} {\frac{1}{n_{\text{samples}}}
+    \sum_i PB_q(y_i - X_i w) + \alpha ||w||_1}.
+
+This consists of the pinball loss (also known as linear loss),
+see also :class:`~sklearn.metrics.mean_pinball_loss`,
+
+.. math::
+    PB_q(t) = q \max(t, 0) + (1 - q) \max(-t, 0) =
+    \begin{cases}
+        q t, & t > 0, \\
+        0,    & t = 0, \\
+        (1-q) t, & t < 0
+    \end{cases}
+
+and the L1 penalty controlled by parameter ``alpha``, similar to
+:class:`Lasso`.
+
+As the pinball loss is only linear in the residuals, quantile regression is
+much more robust to outliers than squared error based estimation of the mean.
+Somewhat in between is the :class:`HuberRegressor`.
+
+Quantile regression may be useful if one is interested in predicting an
+interval instead of point prediction. Sometimes, prediction intervals are
+calculated based on the assumption that prediction error is distributed
+normally with zero mean and constant variance. Quantile regression provides
+sensible prediction intervals even for errors with non-constant (but
+predictable) variance or non-normal distribution.
+
+.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_002.png
+   :target: ../auto_examples/linear_model/plot_quantile_regression.html
+   :align: center
+   :scale: 50%
+
+Based on minimizing the pinball loss, conditional quantiles can also be
+estimated by models other than linear models. For example,
+:class:`~sklearn.ensemble.GradientBoostingRegressor` can predict conditional
+quantiles if its parameter ``loss`` is set to ``"quantile"`` and parameter
+``alpha`` is set to the quantile that should be predicted. See the example in
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`.
+
+Most implementations of quantile regression are based on linear programming
+problem. The current implementation is based on
+:func:`scipy.optimize.linprog`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_quantile_regression.py`
+
+.. topic:: References:
+
+  * Koenker, R., & Bassett Jr, G. (1978). `Regression quantiles.
+    <https://gib.people.uic.edu/RQ.pdf>`_
+    Econometrica: journal of the Econometric Society, 33-50.
+
+  * Portnoy, S., & Koenker, R. (1997). :doi:`The Gaussian hare and the Laplacian
+    tortoise: computability of squared-error versus absolute-error estimators.
+    Statistical Science, 12, 279-300 <10.1214/ss/1030037960>`.
+
+  * Koenker, R. (2005). :doi:`Quantile Regression <10.1017/CBO9780511754098>`.
+    Cambridge University Press.
+
 
 .. _polynomial_regression:
 

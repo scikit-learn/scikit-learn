@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
@@ -116,8 +112,7 @@ cdef class Splitter:
     cdef int init(self,
                    object X,
                    const DOUBLE_t[:, ::1] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except -1:
+                   DOUBLE_t* sample_weight) except -1:
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
@@ -137,9 +132,6 @@ cdef class Splitter:
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
-
-        X_idx_sorted : ndarray, default=None
-            The indexes of the sorted training input samples
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -240,25 +232,12 @@ cdef class Splitter:
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
 
-    cdef np.ndarray X_idx_sorted
-    cdef INT32_t* X_idx_sorted_ptr
-    cdef SIZE_t X_idx_sorted_stride
     cdef SIZE_t n_total_samples
-    cdef SIZE_t* sample_mask
-
-    def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
-
-        self.X_idx_sorted_ptr = NULL
-        self.X_idx_sorted_stride = 0
-        self.sample_mask = NULL
 
     cdef int init(self,
                   object X,
                   const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight,
-                  np.ndarray X_idx_sorted=None) except -1:
+                  DOUBLE_t* sample_weight) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -302,9 +281,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
-
-        cdef INT32_t* X_idx_sorted = self.X_idx_sorted_ptr
-        cdef SIZE_t* sample_mask = self.sample_mask
 
         cdef SplitRecord best, current
         cdef double current_proxy_improvement = -INFINITY
@@ -454,9 +430,10 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -765,9 +742,10 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -818,8 +796,7 @@ cdef class BaseSparseSplitter(Splitter):
     cdef int init(self,
                   object X,
                   const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight,
-                  np.ndarray X_idx_sorted=None) except -1:
+                  DOUBLE_t* sample_weight) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1314,9 +1291,10 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -1525,10 +1503,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
                     if current_proxy_improvement > best_proxy_improvement:
                         best_proxy_improvement = current_proxy_improvement
-                        current.improvement = self.criterion.impurity_improvement(impurity)
-
                         self.criterion.children_impurity(&current.impurity_left,
                                                          &current.impurity_right)
+                        current.improvement = self.criterion.impurity_improvement(
+                            impurity, current.impurity_left, current.impurity_right)
                         best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
@@ -1542,9 +1520,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
             self.criterion.reset()
             self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling

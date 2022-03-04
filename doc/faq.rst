@@ -20,7 +20,6 @@ sy-kit learn. sci stands for science!
 Why scikit?
 ------------
 There are multiple scikits, which are scientific toolboxes built around SciPy.
-You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <https://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
@@ -74,14 +73,12 @@ See :ref:`model_persistence`.
 How can I create a bunch object?
 ------------------------------------------------
 
-Don't make a bunch object! They are not part of the scikit-learn API. Bunch
-objects are just a way to package some numpy arrays. As a scikit-learn user you
-only ever need numpy arrays to feed your model with data.
+Bunch objects are sometimes used as an output for functions and methods. They
+extend dictionaries by enabling values to be accessed by key,
+`bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
-For instance to train a classifier, all you need is a 2D array ``X`` for the
-input variables and a 1D array ``y`` for the target variables. The array ``X``
-holds the features as columns and samples as rows . The array ``y`` contains
-integer values to encode the class membership of each sample in ``X``.
+They should not be used as an input; therefore you almost never need to create
+a ``Bunch`` object, unless you are extending the scikit-learn's API.
 
 How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------
@@ -99,7 +96,7 @@ What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
 
 We only consider well-established algorithms for inclusion. A rule of thumb is
-at least 3 years since publication, 200+ citations and wide use and
+at least 3 years since publication, 200+ citations, and wide use and
 usefulness. A technique that provides a clear-cut improvement (e.g. an
 enhanced data structure or a more efficient approximation technique) on
 a widely-used method will also be considered for inclusion.
@@ -125,7 +122,7 @@ Inclusion of a new algorithm speeding up an existing model is easier if:
   n_samples",
 - benchmarks clearly show a speed up.
 
-Also note that your implementation need not be in scikit-learn to be used
+Also, note that your implementation need not be in scikit-learn to be used
 together with scikit-learn tools. You can implement your favorite algorithm
 in a scikit-learn compatible way, upload it to GitHub and let us know. We
 will be happy to list it under :ref:`related_projects`. If you already have
@@ -137,7 +134,7 @@ interested to look at `scikit-learn-contrib
 
 Why are you so selective on what algorithms you include in scikit-learn?
 ------------------------------------------------------------------------
-Code is maintenance cost, and we need to balance the amount of
+Code comes with maintenance cost, and we need to balance the amount of
 code we have with the size of the team (and add to this the fact that
 complexity scales non linearly with the number of features).
 The package relies on core developers using their free time to
@@ -193,10 +190,13 @@ careful choice of algorithms.
 Do you support PyPy?
 --------------------
 
-In case you didn't know, `PyPy <https://pypy.org/>`_ is an alternative
-Python implementation with a built-in just-in-time compiler. Experimental
-support for PyPy3-v5.10+ has been added, which requires Numpy 1.14.0+,
-and scipy 1.1.0+.
+scikit-learn is regularly tested and maintained to work with
+`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
+a built-in just-in-time compiler).
+
+Note however that this support is still considered experimental and specific
+components might behave slightly differently. Please refer to the test
+suite of a the specific module of interest for more details.
 
 How do I deal with string data (or trees, graphs...)?
 -----------------------------------------------------
@@ -252,7 +252,7 @@ Why do I sometime get a crash/freeze with n_jobs > 1 under OSX or Linux?
 
 Several scikit-learn tools such as ``GridSearchCV`` and ``cross_val_score``
 rely internally on Python's `multiprocessing` module to parallelize execution
-onto several Python processes by passing ``n_jobs > 1`` as argument.
+onto several Python processes by passing ``n_jobs > 1`` as an argument.
 
 The problem is that Python ``multiprocessing`` does a ``fork`` system call
 without following it with an ``exec`` system call for performance reasons. Many
@@ -263,7 +263,7 @@ state in the child process is corrupted: the thread pool believes it has many
 threads while only the main thread state has been forked. It is possible to
 change the libraries to make them detect when a fork happens and reinitialize
 the thread pool in that case: we did that for OpenBLAS (merged upstream in
-master since 0.2.10) and we contributed a `patch
+main since 0.2.10) and we contributed a `patch
 <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=60035>`_ to GCC's OpenMP runtime
 (not yet reviewed).
 
@@ -328,6 +328,14 @@ scikit-learn seeks to achieve.
 You can find more information about addition of gpu support at
 `Will you add GPU support?`_.
 
+Note that scikit-learn currently implements a simple multilayer perceptron
+in :mod:`sklearn.neural_network`. We will only accept bug fixes for this module.
+If you want to implement more complex deep learning models, please turn to
+popular deep learning frameworks such as
+`tensorflow <https://www.tensorflow.org/>`_,
+`keras <https://keras.io/>`_
+and `pytorch <https://pytorch.org/>`_.
+
 Why is my pull request not getting any attention?
 -------------------------------------------------
 
@@ -349,22 +357,7 @@ this reason.
 How do I set a ``random_state`` for an entire execution?
 ---------------------------------------------------------
 
-For testing and replicability, it is often important to have the entire execution
-controlled by a single seed for the pseudo-random number generator used in
-algorithms that have a randomized component. Scikit-learn does not use its own
-global random state; whenever a RandomState instance or an integer random seed
-is not provided as an argument, it relies on the numpy global random state,
-which can be set using :func:`numpy.random.seed`.
-For example, to set an execution's numpy global random state to 42, one could
-execute the following in his or her script::
-
-    import numpy as np
-    np.random.seed(42)
-
-However, a global random state is prone to modification by other code during
-execution. Thus, the only way to ensure replicability is to pass ``RandomState``
-instances everywhere and ensure that both estimators and cross-validation
-splitters have their ``random_state`` parameter set.
+Please refer to :ref:`randomness`.
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 -----------------------------------------------------------------------------------------
@@ -388,20 +381,61 @@ data structures.
 
 Do you plan to implement transform for target y in a pipeline?
 ----------------------------------------------------------------------------
-Currently transform only works for features X in a pipeline. 
-There's a long-standing discussion about 
+Currently transform only works for features X in a pipeline.
+There's a long-standing discussion about
 not being able to transform y in a pipeline.
 Follow on github issue
 `#4143 <https://github.com/scikit-learn/scikit-learn/issues/4143>`_.
 Meanwhile check out
-:class:`sklearn.compose.TransformedTargetRegressor`,
+:class:`~compose.TransformedTargetRegressor`,
 `pipegraph <https://github.com/mcasl/PipeGraph>`_,
 `imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
-Note that Scikit-learn solved for the case where y 
-has an invertible transformation applied before training 
+Note that Scikit-learn solved for the case where y
+has an invertible transformation applied before training
 and inverted after prediction. Scikit-learn intends to solve for
-use cases where y should be transformed at training time 
-and not at test time, for resampling and similar uses, 
-like at imbalanced learn. 
-In general, these use cases can be solved 
+use cases where y should be transformed at training time
+and not at test time, for resampling and similar uses,
+like at `imbalanced-learn`.
+In general, these use cases can be solved
 with a custom meta estimator rather than a Pipeline
+
+Why are there so many different estimators for linear models?
+-------------------------------------------------------------
+Usually, there is one classifier and one regressor per model type, e.g.
+:class:`~ensemble.GradientBoostingClassifier` and
+:class:`~ensemble.GradientBoostingRegressor`. Both have similar options and
+both have the parameter `loss`, which is especially useful in the regression
+case as it enables the estimation of conditional mean as well as conditional
+quantiles.
+
+For linear models, there are many estimator classes which are very close to
+each other. Let us have a look at
+
+- :class:`~linear_model.LinearRegression`, no penalty
+- :class:`~linear_model.Ridge`, L2 penalty
+- :class:`~linear_model.Lasso`, L1 penalty (sparse models)
+- :class:`~linear_model.ElasticNet`, L1 + L2 penalty (less sparse models)
+- :class:`~linear_model.SGDRegressor` with `loss='squared_loss'`
+
+**Maintainer perspective:**
+They all do in principle the same and are different only by the penalty they
+impose. This, however, has a large impact on the way the underlying
+optimization problem is solved. In the end, this amounts to usage of different
+methods and tricks from linear algebra. A special case is `SGDRegressor` which
+comprises all 4 previous models and is different by the optimization procedure.
+A further side effect is that the different estimators favor different data
+layouts (`X` c-contiguous or f-contiguous, sparse csr or csc). This complexity
+of the seemingly simple linear models is the reason for having different
+estimator classes for different penalties.
+
+**User perspective:**
+First, the current design is inspired by the scientific literature where linear
+regression models with different regularization/penalty were given different
+names, e.g. *ridge regression*. Having different model classes with according
+names makes it easier for users to find those regression models.
+Secondly, if all the 5 above mentioned linear models were unified into a single
+class, there would be parameters with a lot of options like the ``solver``
+parameter. On top of that, there would be a lot of exclusive interactions
+between different parameters. For example, the possible options of the
+parameters ``solver``, ``precompute`` and ``selection`` would depend on the
+chosen values of the penalty parameters ``alpha`` and ``l1_ratio``.

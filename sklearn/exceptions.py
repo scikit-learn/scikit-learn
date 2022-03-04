@@ -3,17 +3,17 @@ The :mod:`sklearn.exceptions` module includes all custom warnings and error
 classes used across scikit-learn.
 """
 
-__all__ = ['NotFittedError',
-           'ChangedBehaviorWarning',
-           'ConvergenceWarning',
-           'DataConversionWarning',
-           'DataDimensionalityWarning',
-           'EfficiencyWarning',
-           'FitFailedWarning',
-           'NonBLASDotWarning',
-           'SkipTestWarning',
-           'UndefinedMetricWarning',
-           'PositiveSpectrumWarning']
+__all__ = [
+    "NotFittedError",
+    "ConvergenceWarning",
+    "DataConversionWarning",
+    "DataDimensionalityWarning",
+    "EfficiencyWarning",
+    "FitFailedWarning",
+    "SkipTestWarning",
+    "UndefinedMetricWarning",
+    "PositiveSpectrumWarning",
+]
 
 
 class NotFittedError(ValueError, AttributeError):
@@ -38,34 +38,8 @@ class NotFittedError(ValueError, AttributeError):
     """
 
 
-class ChangedBehaviorWarning(UserWarning):
-    """Warning class used to notify the user of any change in the behavior.
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.base.
-    """
-
-
 class ConvergenceWarning(UserWarning):
     """Custom warning to capture convergence problems
-
-    Examples
-    --------
-
-    >>> import numpy as np
-    >>> import warnings
-    >>> from sklearn.cluster import KMeans
-    >>> from sklearn.exceptions import ConvergenceWarning
-    >>> warnings.simplefilter("always", ConvergenceWarning)
-    >>> X = np.asarray([[0, 0],
-    ...                 [0, 1],
-    ...                 [1, 0],
-    ...                 [1, 0]])  # last point is duplicated
-    >>> with warnings.catch_warnings(record=True) as w:
-    ...     km = KMeans(n_clusters=4).fit(X)
-    ...     print(w[-1].message)
-    Number of distinct clusters (3) found smaller than n_clusters (4).
-    Possibly due to duplicate points in X.
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.
@@ -122,41 +96,8 @@ class FitFailedWarning(RuntimeWarning):
     and the cross-validation helper function cross_val_score to warn when there
     is an error while fitting the estimator.
 
-    Examples
-    --------
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> from sklearn.svm import LinearSVC
-    >>> from sklearn.exceptions import FitFailedWarning
-    >>> import warnings
-    >>> warnings.simplefilter('always', FitFailedWarning)
-    >>> gs = GridSearchCV(LinearSVC(), {'C': [-1, -2]}, error_score=0, cv=2)
-    >>> X, y = [[1, 2], [3, 4], [5, 6], [7, 8]], [0, 0, 1, 1]
-    >>> with warnings.catch_warnings(record=True) as w:
-    ...     try:
-    ...         gs.fit(X, y)  # This will raise a ValueError since C is < 0
-    ...     except ValueError:
-    ...         pass
-    ...     print(repr(w[-1].message))
-    FitFailedWarning('Estimator fit failed. The score on this train-test
-    partition for these parameters will be set to 0.000000.
-    Details:
-    \\nTraceback (most recent call last):...\\nValueError:
-    Penalty term must be positive; got (C=-2)\\n')
-
-
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
-    """
-
-
-class NonBLASDotWarning(EfficiencyWarning):
-    """Warning used when the dot operation does not use BLAS.
-
-    This warning is used to notify the user that BLAS was not used for dot
-    operation and hence the efficiency may be affected.
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.utils.validation, extends EfficiencyWarning.
     """
 
 

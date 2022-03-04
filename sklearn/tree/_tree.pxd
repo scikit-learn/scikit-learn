@@ -58,7 +58,7 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_samples) nogil except -1
+                          double weighted_n_node_samples) nogil except -1
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
@@ -96,10 +96,8 @@ cdef class TreeBuilder:
     cdef SIZE_t min_samples_leaf        # Minimum number of samples in a leaf
     cdef double min_weight_leaf         # Minimum weight in a leaf
     cdef SIZE_t max_depth               # Maximal tree depth
-    cdef double min_impurity_split
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=*,
-                np.ndarray X_idx_sorted=*)
+                np.ndarray sample_weight=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
