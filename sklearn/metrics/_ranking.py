@@ -1623,11 +1623,17 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
 
     if (isinstance(y_true, np.ndarray)):
         if (y_true.min() < 0):
-            raise DeprecationWarning("ndcg_score should not use negative y_true values")
+            warnings.warn(
+                "ndcg_score should not use negative y_true values",
+                DeprecationWarning,
+            )
     else:
         for value in y_true:
             if (value < 0):
-                raise DeprecationWarning("ndcg_score should not use negative y_true values")
+                warnings.warn(
+                    "ndcg_score should not use negative y_true values",
+                    DeprecationWarning,
+                )
     return np.average(gain, weights=sample_weight)
 
 
