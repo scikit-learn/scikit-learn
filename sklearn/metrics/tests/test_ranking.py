@@ -1640,6 +1640,23 @@ def test_ndcg_ignore_ties_with_k():
         ndcg_score(a, a, k=3, ignore_ties=True)
     )
 
+def test_ndcg_negative_ndarray_warn():
+    y_true  = np.array([-0.89, -0.53, -0.47, 0.39, 0.56]).reshape(1,-1)
+    y_score = np.array([0.07,0.31,0.75,0.33,0.27]).reshape(1,-1)
+    expected_message = "ndcg_score should not use negative y_true values"
+    with pytest.warns(DeprecationWarning, match=expected_message):
+        ndcg_score(y_true, y_score)
+
+def test_ndcg_negative_output():
+    y_true  = np.array([-0.89, -0.53, -0.47, 0.39, 0.56]).reshape(1,-1)
+    y_score = np.array([0.07,0.31,0.75,0.33,0.27]).reshape(1,-1)
+    assert ndcg_score(y_true, y_score) == pytest.approx(396.0329)
+
+def test_ndcg_positive_ndarray():
+    y_true  = np.array([0.11, 0.47, 0.53, 1.39, 1.56]).reshape(1,-1)
+    y_score = np.array([1.07, 1.31, 1.75, 1.33, 1.27]).reshape(1,-1)
+    with pytest.warns(None):
+        ndcg_score(y_true, y_score)
 
 def test_ndcg_invariant():
     y_true = np.arange(70).reshape(7, 10)
