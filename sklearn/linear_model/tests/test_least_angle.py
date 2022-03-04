@@ -11,7 +11,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils import check_random_state
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
@@ -149,9 +148,7 @@ def test_lars_lstsq():
     X1 = 3 * X  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.0)
     clf.fit(X1, y)
-    # Avoid FutureWarning about default value change when numpy >= 1.14
-    rcond = None if np_version >= parse_version("1.14") else -1
-    coef_lstsq = np.linalg.lstsq(X1, y, rcond=rcond)[0]
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
