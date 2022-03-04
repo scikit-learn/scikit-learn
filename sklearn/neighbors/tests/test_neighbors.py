@@ -2045,14 +2045,12 @@ def test_valid_metrics_has_no_duplicate():
 
 def test_regressor_predict_on_arraylikes():
     """Non-regression test for #22687"""
-    x = [5, 6, 4, 3, 4, 3, 1]
-    x = [k for k in zip(x, x)]
-
-    y = [2, 5, 2, 3, 7, 6, 8]
+    X = [[5, 1], [3, 1], [4, 3], [0, 3]]
+    y = [2, 3, 5, 6]
 
     def _weights(dist):
-        return [[1] * dist.shape[0]]
+        return np.ones_like(dist)
 
-    est = KNeighborsRegressor(algorithm="brute", weights=_weights)
-    est.fit(x, y)
-    assert_allclose(est.predict([[2, 4]])[0], 20.0)
+    est = KNeighborsRegressor(n_neighbors=1, algorithm="brute", weights=_weights)
+    est.fit(X, y)
+    assert_allclose(est.predict([[0, 2.5]]), [6])
