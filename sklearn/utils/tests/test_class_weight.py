@@ -274,9 +274,10 @@ def test_compute_sample_weight_more_than_32():
 
 
 def test_class_weight_does_not_contains_more_classses():
-    """Check that class_weight can contain more labels then in y.
+    """Check that class_weight can contain more labels than in y.
 
-    Non-regression test for #22413"""
+    Non-regression test for #22413
+    """
     tree = DecisionTreeClassifier(class_weight={0: 1, 1: 10, 2: 20})
 
     # Does not raise
