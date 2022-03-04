@@ -668,12 +668,12 @@ def test_sparse_coder_n_features_in():
 @pytest.mark.parametrize(
     "param, match",
     [
-        ({"n_components": 0}, "n_components should be > 0"),
+        ({"n_components": 0}, "n_components == 0, must be >= 1"),
         ({"fit_algorithm": "wrong"}, "Coding method 'wrong' not supported"),
-        ({"batch_size": 0}, "batch_size should be > 0"),
-        ({"n_iter": -1}, "n_iter should be >= 0"),
-        ({"max_iter": -1}, "max_iter should be >= 0"),
-        ({"max_no_improvement": -1}, "max_no_improvement should be >= 0"),
+        ({"batch_size": 0}, "batch_size == 0, must be >= 1"),
+        ({"n_iter": -1}, "n_iter == -1, must be >= 0"),
+        ({"max_iter": -1}, "max_iter == -1, must be >= 0"),
+        ({"max_no_improvement": -1}, "max_no_improvement == -1, must be >= 0"),
     ],
 )
 def test_minibatch_dict_learning_wrong_params(param, match):
@@ -797,7 +797,7 @@ def test_warning_default_transform_alpha(Estimator):
 def test_dict_learning_online_n_iter_deprecated():
     # Check that an error is raised when a deprecated argument is set when max_iter
     # is also set.
-    msg = "the following args are incompatible with 'max_iter'"
+    msg = "The following arguments are incompatible with 'max_iter'"
     with pytest.raises(ValueError, match=msg):
         dict_learning_online(X, max_iter=10, return_inner_stats=True)
 

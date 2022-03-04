@@ -419,8 +419,25 @@ class MiniBatchSparsePCA(SparsePCA):
             n_components = self.n_components
 
         with warnings.catch_warnings():
-            # return_n_iter is deprecated. Remove in 1.3
-            warnings.simplefilter("ignore", category=FutureWarning)
+            # return_n_iter and n_iter are deprecated. TODO Remove in 1.3
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "'return_n_iter' is deprecated in version 1.1 and will be "
+                    "removed in version 1.3. From 1.3 'n_iter' will never be "
+                    "returned. Refer to the 'n_iter_' and 'n_steps_' attributes "
+                    "of the MiniBatchDictionaryLearning object instead."
+                ),
+                category=FutureWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "'n_iter' is deprecated in version 1.1 and will be removed in "
+                    "version 1.3. Use 'max_iter' instead."
+                ),
+                category=FutureWarning,
+            )
             Vt, _, self.n_iter_ = dict_learning_online(
                 X.T,
                 n_components,

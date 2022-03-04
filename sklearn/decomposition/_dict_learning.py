@@ -19,6 +19,7 @@ from ..utils import check_array, check_random_state, gen_even_slices, gen_batche
 from ..utils import deprecated
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
+from ..utils.validation import check_scalar
 from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
@@ -755,6 +756,7 @@ def dict_learning_online(
     positive_dict=False,
     positive_code=False,
     method_max_iter=1000,
+    tol=1e-3,
     max_no_improvement=10,
 ):
     """Solves a dictionary learning matrix factorization problem online.
@@ -807,7 +809,7 @@ def dict_learning_online(
         Initial value for the dictionary for warm restart scenarios.
 
     callback : callable, default=None
-        callable that gets invoked at the end of each iteration.
+        A callable that gets invoked at the end of each iteration.
 
     batch_size : int, default=3
         The number of samples to take in each batch.
@@ -885,11 +887,22 @@ def dict_learning_online(
 
         .. versionadded:: 0.22
 
+    tol : float, default=1e-3
+        Control early stopping based on the norm of the differences in the
+        dictionary between 2 steps. Used only if `max_iter` is not None.
+
+        To disable early stopping based on changes in the dictionary, set
+        `tol` to 0.0.
+
+        .. versionadded:: 1.1
+
     max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini batches
-        that do not yield an improvement on the smoothed cost function. To
-        disable early stopping set `max_no_improvement` to None. Only used if
+        that does not yield an improvement on the smoothed cost function. Used only if
         `max_iter` is not None.
+
+        To disable convergence detection based on cost function, set
+        `max_no_improvement` to None.
 
         .. versionadded:: 1.1
 
@@ -916,7 +929,7 @@ def dict_learning_online(
     deps = (return_n_iter, return_inner_stats, iter_offset, inner_stats)
     if max_iter is not None and not all(arg == "deprecated" for arg in deps):
         raise ValueError(
-            "the following args are incompatible with 'max_iter': "
+            "The following arguments are incompatible with 'max_iter': "
             "return_n_iter, return_inner_stats, iter_offset, inner_stats"
         )
 
@@ -958,6 +971,7 @@ def dict_learning_online(
             transform_max_iter=method_max_iter,
             verbose=verbose,
             callback=callback,
+            tol=tol,
             max_no_improvement=max_no_improvement,
         ).fit(X)
 
@@ -1835,13 +1849,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         .. versionadded:: 0.22
 
     callback : callable, default=None
-        Callable that gets invoked at the end of each iteration.
+        A callable that gets invoked at the end of each iteration.
 
         .. versionadded:: 1.1
 
     tol : float, default=1e-3
         Control early stopping based on the norm of the differences in the
-        dictionary between 2 steps.
+        dictionary between 2 steps. Used only if `max_iter` is not None.
 
         To disable early stopping based on changes in the dictionary, set
         `tol` to 0.0.
@@ -1850,7 +1864,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini batches
-        that does not yield an improvement on the smoothed cost function.
+        that does not yield an improvement on the smoothed cost function. Used only if
+        `max_iter` is not None.
 
         To disable convergence detection based on cost function, set
         `max_no_improvement` to None.
@@ -2020,10 +2035,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     def _check_params(self, X):
         # n_components
-        if self.n_components is not None and self.n_components <= 0:
-            raise ValueError(
-                f"n_components should be > 0, got {self.n_components} instead."
-            )
+        if self.n_components is not None:
+            check_scalar(self.n_components, "n_components", int, min_val=1)
         self._n_components = self.n_components
         if self._n_components is None:
             self._n_components = X.shape[1]
@@ -2039,29 +2052,23 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # batch_size
         if hasattr(self, "_batch_size"):
-            if self._batch_size <= 0:
-                raise ValueError(
-                    f"batch_size should be > 0, got {self._batch_size} instead."
-                )
+            check_scalar(self._batch_size, "batch_size", int, min_val=1)
             self._batch_size = min(self._batch_size, X.shape[0])
 
         # n_iter
-        if self.n_iter != "deprecated" and self.n_iter < 0:
-            raise ValueError(f"n_iter should be >= 0, got {self.n_iter} instead.")
+        if self.n_iter != "deprecated":
+            check_scalar(self.n_iter, "n_iter", int, min_val=0)
 
         # max_iter
-        if self.max_iter is not None and self.max_iter < 0:
-            raise ValueError(f"max_iter should be >= 0, got {self.max_iter} instead.")
+        if self.max_iter is not None:
+            check_scalar(self.max_iter, "max_iter", int, min_val=0)
 
         # max_no_improvement
-        if self.max_no_improvement is not None and self.max_no_improvement < 0:
-            raise ValueError(
-                "max_no_improvement should be >= 0, got "
-                f"{self.max_no_improvement} instead."
-            )
+        if self.max_no_improvement is not None:
+            check_scalar(self.max_no_improvement, "max_no_improvement", int, min_val=0)
 
     def _initialize_dict(self, X, random_state):
-        """Initialization of the dictionary"""
+        """Initialization of the dictionary."""
         if self.dict_init is not None:
             dictionary = self.dict_init
         else:
@@ -2070,25 +2077,41 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 X, self._n_components, random_state=random_state
             )
             dictionary = S[:, np.newaxis] * dictionary
-        r = len(dictionary)
-        if self._n_components <= r:
+
+        if self._n_components <= len(dictionary):
             dictionary = dictionary[: self._n_components, :]
         else:
-            dictionary = np.r_[
-                dictionary,
-                np.zeros(
-                    (self._n_components - r, dictionary.shape[1]),
-                    dtype=dictionary.dtype,
-                ),
-            ]
+            dictionary = np.concatenate(
+                (
+                    dictionary,
+                    np.zeros(
+                        (self._n_components - len(dictionary), dictionary.shape[1]),
+                        dtype=dictionary.dtype,
+                    ),
+                )
+            )
 
         dictionary = check_array(dictionary, order="F", dtype=X.dtype, copy=False)
         dictionary = np.require(dictionary, requirements="W")
 
         return dictionary
 
+    def _update_inner_stats(self, X, code, batch_size, step):
+        """Update the inner stats inplace."""
+        if step < batch_size - 1:
+            theta = (step + 1) * batch_size
+        else:
+            theta = batch_size**2 + step + 1 - batch_size
+        beta = (theta + 1 - batch_size) / (theta + 1)
+
+        A, B = self._inner_stats
+        A *= beta
+        A += code.T @ code
+        B *= beta
+        B += X.T @ code
+
     def _minibatch_step(self, X, dictionary, random_state, step):
-        """The guts of the algorithm"""
+        """Perform the update on the dictionary for one minibatch."""
         batch_size = X.shape[0]
 
         # Compute code for this batch
@@ -2127,24 +2150,18 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return batch_cost
 
-    def _update_inner_stats(self, X, code, batch_size, step):
-        """Update the inner stats inplace"""
-        if step < batch_size - 1:
-            theta = (step + 1) * batch_size
-        else:
-            theta = batch_size**2 + step + 1 - batch_size
-        beta = (theta + 1 - batch_size) / (theta + 1)
-
-        A, B = self._inner_stats
-        A *= beta
-        A += np.dot(code.T, code)
-        B *= beta
-        B += np.dot(X.T, code)
-
-    def _minibatch_convergence(
-        self, X, batch_cost, dictionary, dict_buffer, n_samples, step, n_steps
+    def _check_convergence(
+        self, X, batch_cost, new_dict, old_dict, n_samples, step, n_steps
     ):
-        """Helper function to encapsulate the early stopping logic"""
+        """Helper function to encapsulate the early stopping logic.
+
+        Early stopping is based on two factors:
+        - A small change of the dictionary between two minibatch updates. This is
+          controlled by the tol parameter.
+        - No more improvement on a smoothed estimate of the objective function for a
+          a certain number of consecutive minibatch updates. This is controlled by
+          the max_no_improvement parameter.
+        """
         batch_size = X.shape[0]
 
         # counts steps starting from 1 for user friendly verbose mode.
@@ -2167,7 +2184,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             alpha = min(alpha, 1)
             self._ewa_cost = self._ewa_cost * (1 - alpha) + batch_cost * alpha
 
-        # Log progress to be able to monitor convergence
         if self.verbose:
             print(
                 f"Minibatch step {step}/{n_steps}: mean batch cost: "
@@ -2175,7 +2191,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             )
 
         # Early stopping based on change of dictionary
-        dict_diff = linalg.norm(dictionary - dict_buffer) / self._n_components
+        dict_diff = linalg.norm(new_dict - old_dict) / self._n_components
         if self.tol > 0 and dict_diff <= self.tol:
             if self.verbose:
                 print(f"Converged (small dictionary change) at step {step}/{n_steps}")
@@ -2235,7 +2251,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._random_state = check_random_state(self.random_state)
 
         dictionary = self._initialize_dict(X, self._random_state)
-        dict_buffer = dictionary.copy()
+        old_dict = dictionary.copy()
 
         if self.shuffle:
             X_train = X.copy()
@@ -2263,21 +2279,20 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
             batches = gen_batches(n_samples, self._batch_size)
             batches = itertools.cycle(batches)
-            n_steps_per_epoch = int(np.ceil(n_samples / self._batch_size))
-            n_steps = self.max_iter * n_steps_per_epoch
+            n_steps_per_iter = int(np.ceil(n_samples / self._batch_size))
+            n_steps = self.max_iter * n_steps_per_iter
 
-            # allow max_iter = 0
-            i = -1
+            i = -1  # to allow max_iter = 0
 
             for i, batch in zip(range(n_steps), batches):
-                this_X = X_train[batch]
+                X_batch = X_train[batch]
 
                 batch_cost = self._minibatch_step(
-                    this_X, dictionary, self._random_state, i
+                    X_batch, dictionary, self._random_state, i
                 )
 
-                if self._minibatch_convergence(
-                    this_X, batch_cost, dictionary, dict_buffer, n_samples, i, n_steps
+                if self._check_convergence(
+                    X_batch, batch_cost, dictionary, old_dict, n_samples, i, n_steps
                 ):
                     break
 
@@ -2286,10 +2301,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
                 if self.callback is not None:
                     self.callback(locals())
 
-                dict_buffer[:] = dictionary
+                old_dict[:] = dictionary
 
             self.n_steps_ = i + 1
-            self.n_iter_ = np.ceil((i + 1) / n_steps_per_epoch)
+            self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         else:
             # TODO remove this branch in 1.3
             if self.n_iter != "deprecated":

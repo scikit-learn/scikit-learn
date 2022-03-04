@@ -89,7 +89,7 @@ dico = MiniBatchDictionaryLearning(
 )
 V = dico.fit(data).components_
 dt = time() - t0
-print(f"{dico.n_iter_} iterations / {dico.n_steps_} steps in %.2fs." % dt)
+print(f"{dico.n_iter_} iterations / {dico.n_steps_} steps in {dt:.2f}.")
 
 plt.figure(figsize=(4.2, 4))
 for i, comp in enumerate(V[:100]):
