@@ -160,7 +160,7 @@ def test_missing_value_handling(
 )
 def test_missing_value_pandas_na_support(est, func):
     # Test pandas IntegerArray with pd.NA
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     X = np.array(
         [
