@@ -1533,8 +1533,9 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ----------
     y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
-        to be ranked. Non-negative values in y_true may result in an output
-        that is not between 0 and 1.
+        to be ranked. Negative values in y_true may result in an output
+        that is not between 0 and 1. These negative values are deprecated, and
+        may cause an error in the future.
 
     y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
