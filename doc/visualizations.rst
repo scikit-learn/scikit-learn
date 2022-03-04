@@ -22,6 +22,7 @@ vector machine:
 
 .. plot::
    :context:
+   :align: center
 
     from sklearn.model_selection import train_test_split
     from sklearn.svm import SVC
@@ -47,6 +48,7 @@ the previously computed roc curve again by using the `plot` method of the
 
 .. plot::
    :context: close-figs
+   :align: center
 
     import matplotlib.pyplot as plt
     from sklearn.ensemble import RandomForestClassifier
