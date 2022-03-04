@@ -491,7 +491,7 @@ Changelog
   :class:`kernel_approximation.Nystroem`,
   :class:`kernel_approximation.PolynomialCountSketch`,
   :class:`kernel_approximation.RBFSampler`, and
-  :class:`kernel_approximation.SkewedChi2Sampler`. :pr:`xxxxx` by `Thomas Fan`_.
+  :class:`kernel_approximation.SkewedChi2Sampler`. :pr:`22694` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
