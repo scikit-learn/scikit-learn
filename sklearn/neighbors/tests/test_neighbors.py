@@ -27,7 +27,10 @@ from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import VALID_METRICS_SPARSE
+from sklearn.neighbors import (
+    VALID_METRICS_SPARSE,
+    KNeighborsRegressor,
+)
 from sklearn.neighbors._base import (
     _is_sorted_by_data,
     _check_precomputed,
@@ -2038,3 +2041,18 @@ def test_neighbors_distance_metric_deprecation():
 def test_valid_metrics_has_no_duplicate():
     for val in neighbors.VALID_METRICS.values():
         assert len(val) == len(set(val))
+
+
+def test_regressor_predict_on_arraylikes():
+    """Non-regression test for #22687"""
+    x = [5, 6, 4, 3, 4, 3, 1]
+    x = [k for k in zip(x, x)]
+
+    y = [2, 5, 2, 3, 7, 6, 8]
+
+    def _weights(dist):
+        return [[1] * dist.shape[0]]
+
+    est = KNeighborsRegressor(algorithm="brute", weights=_weights)
+    est.fit(x, y)
+    assert_allclose(est.predict([[2, 4]])[0], 20.0)
