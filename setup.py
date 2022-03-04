@@ -307,6 +307,15 @@ def setup_package():
         # may use numpy.distutils compiler classes.
         from numpy.distutils.core import setup
 
+        # Monkeypatchs CCompiler.spawn to prevent random wheel build errors
+        # https://github.com/scikit-learn/scikit-learn/issues/22310
+        # https://github.com/numpy/numpy/pull/20640
+        from numpy.distutils.ccompiler import replace_method
+        from distutils.ccompiler import CCompiler
+        from sklearn.externals._numpy_complier_patch import CCompiler_spawn  # noqa
+
+        replace_method(CCompiler, "spawn", CCompiler_spawn)
+
         metadata["configuration"] = configuration
 
     setup(**metadata)
