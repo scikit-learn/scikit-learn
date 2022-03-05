@@ -664,6 +664,11 @@ Changelog
   instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
   :user:`Lucy Jimenez <LucyJimenez>`.
 
+- |Fix| :func:`neighbors.KNeighborsRegressor.predict` now works properly when
+  given an array-like input if `KNeighborsRegressor` is first constructed with a
+  callable passed to the `weights` parameter. :pr:`22687` by
+  :user:`Meekail Zain <micky774>`
+
 :mod:`sklearn.neural_network`
 .............................
 
