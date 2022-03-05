@@ -576,8 +576,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 d = np.sqrt(d, d)
                 d, u = d[sort_indices], u[sort_indices]
                 # Resize and reorder to match svd
-                u = u[:, : min(X.shape)]
-                u = u[::-1, ::-1]
+                u = u[::-1, : min(X.shape) : -1]
             else:
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 
