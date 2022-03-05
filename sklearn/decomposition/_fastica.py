@@ -577,9 +577,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 d, u = d[sort_indices], u[sort_indices]
                 # Resize and reorder to match svd
                 u = u[:, : min(X.shape)]
-                L = np.eye(u.shape[0])[::-1]
-                R = np.eye(u.shape[1])[::-1]
-                u = L @ u @ R
+                u = u[::-1, ::-1]
             else:
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 
