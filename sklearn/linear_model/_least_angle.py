@@ -49,7 +49,7 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
+    """Compute Least Angle Regression or Lasso path using LARS algorithm [1].
 
     The optimization objective for the case method='lasso' is::
 
@@ -135,7 +135,7 @@ def lars_path(
         Indices of active variables at the end of the path.
 
     coefs : array-like of shape (n_features, n_alphas + 1)
-        Coefficients along the path
+        Coefficients along the path.
 
     n_iter : int
         Number of iterations run. Returned only if return_n_iter is set
@@ -143,14 +143,13 @@ def lars_path(
 
     See Also
     --------
-    lars_path_gram
-    lasso_path
-    lasso_path_gram
-    LassoLars
-    Lars
-    LassoLarsCV
-    LarsCV
-    sklearn.decomposition.sparse_encode
+    lars_path_gram : Compute LARS path in the sufficient stats mode.
+    lasso_path : Compute Lasso path with coordinate descent.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     References
     ----------
@@ -162,7 +161,6 @@ def lars_path(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
-
     """
     if X is None and Gram is not None:
         raise ValueError(

@@ -9,7 +9,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import _astype_copy_false
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -783,7 +782,7 @@ def test_float_precision(Estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = data.astype(dtype, **_astype_copy_false(data))
+        X = data.astype(dtype, copy=False)
         km.fit(X)
 
         inertia[dtype] = km.inertia_
