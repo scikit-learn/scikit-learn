@@ -135,13 +135,13 @@ def robust_single_linkage(
     gamma=5,
     metric="euclidean",
     algorithm="best",
-    memory=Memory(cachedir=None, verbose=0),
+    memory=None,
     leaf_size=40,
     core_dist_n_jobs=4,
     **kwargs,
 ):
-    """Perform robust single linkage clustering from a vector array
-    or distance matrix.
+    """
+    Perform robust single linkage clustering.
 
     Parameters
     ----------
@@ -154,30 +154,31 @@ def robust_single_linkage(
         The reachability distance value to cut the cluster heirarchy at
         to derive a flat cluster labelling.
 
-    k : int, optional (default=5)
+    k : int, default=5
         Reachability distances will be computed with regard to the `k`
         nearest neighbors.
 
-    alpha : float, optional (default=np.sqrt(2))
+    alpha : float, default=np.sqrt(2)
         Distance scaling for reachability distance computation. Reachability
         distance is computed as
 
         .. math::
-            `\max(core_k(a), core_k(b), 1/\alpha d(a,b))`.
 
-    gamma : int, optional (default=5)
+            \\max (core_k(a), core_k(b), 1/\\alpha d(a,b)).
+
+    gamma : int, default=5
         Ignore any clusters in the flat clustering with size less than gamma,
         and declare points in such clusters as noise points.
 
-    metric : string, or callable, optional (default='euclidean')
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.pairwise_distances for its
+        the options allowed by `metrics.pairwise.pairwise_distances` for its
         metric parameter.
-        If metric is "precomputed", X is assumed to be a distance matrix and
+        If `metric="precomputed"`, X is assumed to be a distance matrix and
         must be square.
 
-    algorithm : string, optional (default='best')
+    algorithm : str, default='best'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
         to ``best`` which chooses the "best" algorithm given the nature of
@@ -190,20 +191,22 @@ def robust_single_linkage(
             * ``boruvka_kdtree``
             * ``boruvka_balltree``
 
-    memory : Instance of joblib.Memory or string (optional)
+    memory : str, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    leaf_size : int, optional (default=40)
+    leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest
         neighbour queries.
 
-    core_dist_n_jobs : int, optional
+    core_dist_n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
         supported by the specific algorithm). For ``core_dist_n_jobs``
         below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
-        (default 4)
+
+    **kwargs : optional
+        Arguments passed to the distance metric.
 
     Returns
     -------
@@ -220,7 +223,6 @@ def robust_single_linkage(
     .. [1] Chaudhuri, K., & Dasgupta, S. (2010). Rates of convergence for the
        cluster tree. In Advances in Neural Information Processing Systems
        (pp. 343-351).
-
     """
 
     if not isinstance(k, int) or k < 1:
@@ -242,8 +244,7 @@ def robust_single_linkage(
             raise ValueError("Minkowski metric with negative p value is not defined!")
 
     X = check_array(X, accept_sparse="csr")
-    if isinstance(memory, str):
-        memory = Memory(cachedir=memory, verbose=0)
+    memory = Memory(cachedir=memory, verbose=0)
 
     if algorithm != "best":
         if algorithm == "generic":

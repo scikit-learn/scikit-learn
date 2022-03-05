@@ -28,21 +28,21 @@ class PredictionData(object):
     ----------
 
     data : array (n_samples, n_features)
-        The original data set that was clustered
+        The original data set that was clustered.
 
     condensed_tree : CondensedTree
-        The condensed tree object created by a clustering
+        The condensed tree object created by a clustering.
 
     min_samples : int
-        The min_samples value used in clustering
+        The min_samples value used in clustering.
 
-    tree_type : string, optional
+    tree_type : str, default="kdtree"
         Which type of space tree to use for core distance computation.
         One of:
             * ``kdtree``
             * ``balltree``
 
-    metric : string, optional
+    metric : str, default="euclidean"
         The metric used to determine distance for the clustering.
         This is the metric that will be used for the space tree to determine
         core distances etc.
@@ -355,10 +355,12 @@ def _find_cluster_and_probability(
 
 
 def approximate_predict(clusterer, points_to_predict):
-    """Predict the cluster label of new points. The returned labels
-    will be those of the original clustering found by ``clusterer``,
-    and therefore are not (necessarily) the cluster labels that would
-    be found by clustering the original data combined with
+    """
+    Predict the cluster label of new points.
+
+    The returned labels will be those of the original clustering found by
+    ``clusterer``, and therefore are not (necessarily) the cluster labels that
+    would be found by clustering the original data combined with
     ``points_to_predict``, hence the 'approximate' label.
 
     If you simply wish to assign new points to an existing clustering
@@ -382,16 +384,18 @@ def approximate_predict(clusterer, points_to_predict):
     Returns
     -------
     labels : array (n_samples,)
-        The predicted labels of the ``points_to_predict``
+        The predicted labels of the ``points_to_predict``.
 
     probabilities : array (n_samples,)
-        The soft cluster scores for each of the ``points_to_predict``
+        The soft cluster scores for each of the ``points_to_predict``.
 
     See Also
     --------
-    :py:func:`hdbscan.predict.membership_vector`
-    :py:func:`hdbscan.predict.all_points_membership_vectors`
-
+    sklearn.cluster.hdbscan.prediction.membership_vector : Predict soft cluster
+        membership.
+    sklearn.cluster.hdbscan.prediction.all_points_membership_vectors : Predict
+        soft cluster membership vectors for all points in the original dataset
+        the clusterer was trained on.
     """
     if clusterer.prediction_data_ is None:
         raise ValueError(
@@ -440,10 +444,12 @@ def approximate_predict(clusterer, points_to_predict):
 
 
 def approximate_predict_scores(clusterer, points_to_predict):
-    """Predict the outlier score of new points. The returned scores
-    will be based on the original clustering found by ``clusterer``,
-    and therefore are not (necessarily) the outlier scores that would
-    be found by clustering the original data combined with
+    """
+    Predict the outlier score of new points.
+
+    The returned scores will be based on the original clustering found by
+    ``clusterer``, and therefore are not (necessarily) the outlier scores that
+    would be found by clustering the original data combined with
     ``points_to_predict``, hence the 'approximate' label.
 
     If you simply wish to calculate the outlier scores for new points
@@ -467,13 +473,15 @@ def approximate_predict_scores(clusterer, points_to_predict):
     Returns
     -------
     scores : array (n_samples,)
-        The predicted scores of the ``points_to_predict``
+        The predicted scores of the ``points_to_predict``.
 
     See Also
     --------
-    :py:func:`hdbscan.predict.membership_vector`
-    :py:func:`hdbscan.predict.all_points_membership_vectors`
-
+    sklearn.cluster.hdbscan.prediction.membership_vector : Predict soft cluster
+        membership.
+    sklearn.cluster.hdbscan.prediction.all_points_membership_vectors : Predict
+        soft cluster membership vectors for all points in the original dataset
+        the clusterer was trained on.
     """
     try:
         clusterer.prediction_data_
@@ -548,10 +556,12 @@ def approximate_predict_scores(clusterer, points_to_predict):
 
 
 def membership_vector(clusterer, points_to_predict):
-    """Predict soft cluster membership. The result produces a vector
-    for each point in ``points_to_predict`` that gives a probability that
-    the given point is a member of a cluster for each of the selected clusters
-    of the ``clusterer``.
+    """
+    Predict soft cluster membership.
+
+    Predicts sofr cluster membership, producing a vector for each point in
+    ``points_to_predict`` that gives a probability that the given point is a
+    member of a cluster for each of the selected clusters of the ``clusterer``.
 
     Parameters
     ----------
@@ -573,8 +583,12 @@ def membership_vector(clusterer, points_to_predict):
 
     See Also
     --------
-    :py:func:`hdbscan.predict.predict`
-    :py:func:`hdbscan.predict.all_points_membership_vectors`"""
+    sklearn.cluster.hdbscan.prediction.approximate_predict : Predict the
+        cluster label of new points.
+    sklearn.cluster.hdbscan.prediction.all_points_membership_vectors : Predict
+        soft cluster membership vectors for all points in the original dataset
+        the clusterer was trained on.
+    """
 
     points_to_predict = points_to_predict.astype(np.float64)
     clusters = np.array(
@@ -636,10 +650,11 @@ def membership_vector(clusterer, points_to_predict):
 
 
 def all_points_membership_vectors(clusterer):
-    """Predict soft cluster membership vectors for all points in the
-    original dataset the clusterer was trained on. This function is more
-    efficient by making use of the fact that all points are already in the
-    condensed tree, and processing in bulk.
+    """
+    Predict soft cluster membership for all points in the original dataset.
+
+    This function is more efficient by making use of the fact that all points
+    are already in the condensed tree, and processing in bulk.
 
     Parameters
     ----------
@@ -658,8 +673,10 @@ def all_points_membership_vectors(clusterer):
 
     See Also
     --------
-    :py:func:`hdbscan.predict.predict`
-    :py:func:`hdbscan.predict.all_points_membership_vectors`
+    sklearn.cluster.hdbscan.prediction.approximate_predict : Predict the
+        cluster label of new points.
+    sklearn.cluster.hdbscan.prediction.membership_vectors : Predict soft cluster
+        membership.
     """
     clusters = np.array(
         sorted(list(clusterer.condensed_tree_._select_clusters()))

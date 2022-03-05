@@ -509,7 +509,7 @@ def hdbscan(
     p=2,
     leaf_size=40,
     algorithm="best",
-    memory=Memory(cachedir=None, verbose=0),
+    memory=None,
     approx_min_span_tree=True,
     gen_min_span_tree=False,
     core_dist_n_jobs=4,
@@ -537,16 +537,16 @@ def hdbscan(
         to be considered as a core point. This includes the point itself.
         defaults to the min_cluster_size.
 
-    cluster_selection_epsilon: float, default=0.0
+    alpha : float, default=1.0
+        A distance scaling parameter as used in robust single linkage.
+        See [2]_ for more information.
+
+    cluster_selection_epsilon : float, default=0.0
         A distance threshold. Clusters below this value will be merged.
         See [3]_ for more information. Note that this should not be used
         if we want to predict the cluster labels for new points in future
         (e.g. using approximate_predict), as the approximate_predict function
         is not aware of this argument.
-
-    alpha : float, default=1.0
-        A distance scaling parameter as used in robust single linkage.
-        See [2]_ for more information.
 
     max_cluster_size : int, default=0
         A limit to the size of clusters returned by the eom algorithm.
@@ -557,22 +557,25 @@ def hdbscan(
         for new points in future (e.g. using approximate_predict), as
         the approximate_predict function is not aware of this argument.
 
-    metric : string or callable, default='minkowski'
+    metric : str or callable, default='minkowski'
         The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.pairwise_distances for its
+        feature array.
+
+        If metric is a string or callable, it must be one of
+        the options allowed by `metrics.pairwise.pairwise_distances` for its
         metric parameter.
+
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
 
     p : int, default=2
-        p value to use if using the minkowski metric.
+        Value of `p` if using the minkowski metric.
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest
         neighbour queries.
 
-    algorithm : string, default='best'
+    algorithm : str, default='best'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
         to `best` which chooses the "best" algorithm given the nature of
@@ -585,7 +588,7 @@ def hdbscan(
             * `boruvka_kdtree`
             * `boruvka_balltree`
 
-    memory : instance of joblib.Memory or string, optional
+    memory : str, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -605,7 +608,7 @@ def hdbscan(
         supported by the specific algorithm). For `core_dist_n_jobs`
         below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
 
-    cluster_selection_method : string, default='eom'
+    cluster_selection_method : str, default='eom'
         The method used to select clusters from the condensed tree. The
         standard approach for HDBSCAN* is to use an Excess of Mass algorithm
         to find the most persistent clusters. Alternatively you can instead
@@ -618,7 +621,6 @@ def hdbscan(
         By default HDBSCAN* will not produce a single cluster, setting this
         to t=True will override this and allow single cluster results in
         the case that you feel this is a valid result for your dataset.
-        (default False)
 
     match_reference_implementation : bool, default=False
         There exist some interpretational differences between this
@@ -629,7 +631,7 @@ def hdbscan(
         reference implementation.
 
     **kwargs : optional
-        Arguments passed to the distance metric
+        Arguments passed to the distance metric.
 
     Returns
     -------
@@ -723,8 +725,7 @@ def hdbscan(
         check_precomputed_distance_matrix(X)
 
     # Python 2 and 3 compliant string_type checking
-    if isinstance(memory, str):
-        memory = Memory(cachedir=memory, verbose=0)
+    memory = Memory(cachedir=memory, verbose=0)
 
     size = X.shape[0]
     min_samples = min(size - 1, min_samples)
@@ -897,7 +898,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         considered a core point.
 
     cluster_selection_epsilon : float, default=0.0
-                A distance threshold. Clusters below this value will be merged.
+        A distance threshold. Clusters below this value will be merged.
         See [5]_ for more information.
 
     max_cluster_size : int, default=0
@@ -909,11 +910,14 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         for new points in future (e.g. using approximate_predict), as
         the approximate_predict function is not aware of this argument.
 
-    metric : str, or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.pairwise_distances for its
+        feature array.
+
+        If metric is a string or callable, it must be one of
+        the options allowed by `metrics.pairwise.pairwise_distances` for its
         metric parameter.
+
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
 
