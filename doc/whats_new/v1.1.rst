@@ -344,7 +344,7 @@ Changelog
 
 - |API| Adds :meth:`get_feature_names_out` to
   :class:`ensemble.VotingClassifier` and
-  :class:`ensemble.VotingRegressor`. :pr:`xxxxx` by `Thomas Fan`_.
+  :class:`ensemble.VotingRegressor`. :pr:`22697` by `Thomas Fan`_.
 
 - |Fix| Removed a potential source of CPU oversubscription in
   :class:`ensemble.HistGradientBoostingClassifier` and
