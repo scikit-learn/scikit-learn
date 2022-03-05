@@ -569,6 +569,11 @@ Changelog
   in eigen_solvers `lobpcg` and `amg` to improve their numerical stability.
   :pr:`21565` by :user:`Andrew Knyazev <lobpcg>`.
 
+- |Enhancement| added `metric_params` to :class:`manifold.TSNE` constructor for
+  additional parameters of distance metric to use in optimization.
+  :pr:`21805` by :user:`Jeanne Dionisi <jeannedionisi>` and :pr:`22685` by
+  :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.metrics`
 ......................
 
