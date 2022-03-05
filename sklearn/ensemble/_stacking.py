@@ -296,7 +296,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 )
 
         if self.passthrough:
-            return np.concatenate((meta_names, input_features), dtype=object)
+            return np.concatenate((meta_names, input_features))
 
         return np.asarray(meta_names, dtype=object)
 
