@@ -319,13 +319,22 @@ class BaseEstimator:
             state = self.__dict__.copy()
 
         if type(self).__module__.startswith("sklearn."):
-            return dict(state.items(), _sklearn_version=__version__)
+            return dict(state.items(), _sklearn_pickle_version=__version__)
         else:
             return state
 
     def __setstate__(self, state):
         if type(self).__module__.startswith("sklearn."):
+            # If scikit learn has been upgraded and 
+            # the pickle file contains the old _sklearn_version attribute
+            # the following code checks for that case
             pickle_version = state.pop("_sklearn_version", "pre-0.18")
+            
+            if not "_sklearn_pickle_version" in state:
+                state["_sklearn_pickle_version"] = pickle_version
+
+            pickle_version = state["_sklearn_pickle_version"]
+
             if pickle_version != __version__:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "

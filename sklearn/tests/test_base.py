@@ -374,7 +374,8 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
 
 class TreeBadVersion(DecisionTreeClassifier):
     def __getstate__(self):
-        return dict(self.__dict__.items(), _sklearn_version="something")
+        # changed _sklearn_version to _sklearn_pickle_version as per issue 22055
+        return dict(self.__dict__.items(), _sklearn_pickle_version="something")
 
 
 pickle_error_message = (
@@ -691,3 +692,48 @@ def test_feature_names_in():
     # transform on feature names that are mixed also warns:
     with pytest.warns(FutureWarning, match=msg) as record:
         trans.transform(df_mixed)
+
+
+def test_sklearn_pickle_version_existance(monkeypatch):
+    """check if _sklearn_pickle_version is stored correctly 
+       when pickling and unpickling
+    """
+    v_old = "old_version"
+    # mock sklearn.base module
+    monkeypatch.setattr(sklearn.base, "__version__", v_old)
+    # create an estimator then pickle and unpickle it
+    test_estimator = MyEstimator()
+    pickled_estimator = pickle.dumps(test_estimator)
+    loaded_pickled_estimator = pickle.loads(pickled_estimator)
+
+    # check if the _sklearn_pickle_version stored in loaded_pickled_estimator
+    # is the same as v_old
+    assert loaded_pickled_estimator._sklearn_pickle_version == v_old
+
+
+def test_old_sklearn_pickle_version_maintained(monkeypatch):
+    """check if _sklearn_pickle_version is maintained if the 
+       __version__ value changes in sklearn.base
+    """
+    v_old = "old_version"
+    # mock sklearn.base module with v_old
+    monkeypatch.setattr(sklearn.base, "__version__", v_old)
+    # create an estimator then pickle and unpickle it
+    test_estimator = MyEstimator()
+    pickled_estimator = pickle.dumps(test_estimator)
+    
+    v_new = "new_version"
+    # mock sklearn.base module with v_new
+    monkeypatch.setattr(sklearn.base, "__version__", v_new)
+
+    message = pickle_error_message.format(
+        estimator="MyEstimator",
+        old_version=v_old,
+        current_version=v_new,
+    )
+
+    # check for warning about using a different pickle version than v_new
+    with pytest.warns(UserWarning, match=message):
+        loaded_pickled_estimator = pickle.loads(pickled_estimator)
+        assert loaded_pickled_estimator._sklearn_pickle_version == v_old    
+        
