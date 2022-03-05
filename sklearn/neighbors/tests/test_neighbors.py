@@ -30,7 +30,10 @@ from sklearn.metrics.tests.test_pairwise_distances_reduction import (
 )
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import VALID_METRICS_SPARSE
+from sklearn.neighbors import (
+    VALID_METRICS_SPARSE,
+    KNeighborsRegressor,
+)
 from sklearn.neighbors._base import (
     _is_sorted_by_data,
     _check_precomputed,
@@ -2096,3 +2099,19 @@ def test_radius_neighbors_brute_backend(
 def test_valid_metrics_has_no_duplicate():
     for val in neighbors.VALID_METRICS.values():
         assert len(val) == len(set(val))
+
+
+def test_regressor_predict_on_arraylikes():
+    """Ensures that `predict` works for array-likes when `weights` is a callable.
+
+    Non-regression test for #22687.
+    """
+    X = [[5, 1], [3, 1], [4, 3], [0, 3]]
+    y = [2, 3, 5, 6]
+
+    def _weights(dist):
+        return np.ones_like(dist)
+
+    est = KNeighborsRegressor(n_neighbors=1, algorithm="brute", weights=_weights)
+    est.fit(X, y)
+    assert_allclose(est.predict([[0, 2.5]]), [6])
