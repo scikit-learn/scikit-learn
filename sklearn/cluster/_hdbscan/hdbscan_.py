@@ -319,6 +319,14 @@ def _hdbscan_boruvka_kdtree(
         X = X.astype(np.float64)
 
     tree = KDTree(X, metric=metric, leaf_size=leaf_size, **kwargs)
+
+    n_samples = X.shape[0]
+    if min_samples + 1 > n_samples:
+        raise ValueError(
+            "Expected min_samples + 1 <= n_samples, "
+            f" but {min_samples+1=}, {n_samples=}"
+        )
+
     alg = KDTreeBoruvkaAlgorithm(
         tree,
         min_samples,
@@ -996,7 +1004,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         performance cost, ensure that the clustering results match the
         reference implementation.
 
-    **kwargs : optional
+    **metric_params : optional
         Arguments passed to the distance metric.
 
     Attributes
@@ -1063,6 +1071,13 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         across different choices of hyper-parameters, therefore is only a
         relative score.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
     See Also
     --------
     DBSCAN : Density-Based Spatial Clustering of Applications
@@ -1125,7 +1140,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         allow_single_cluster=False,
         prediction_data=False,
         match_reference_implementation=False,
-        **kwargs,
+        **metric_params,
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -1144,16 +1159,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         self.allow_single_cluster = allow_single_cluster
         self.match_reference_implementation = match_reference_implementation
         self.prediction_data = prediction_data
-
-        self._metric_kwargs = kwargs
-
-        self._condensed_tree = None
-        self._single_linkage_tree = None
-        self._min_spanning_tree = None
-        self._raw_data = None
-        self._outlier_scores = None
-        self._prediction_data = None
-        self._relative_validity = None
+        self.metric_params = metric_params or {}
 
     def fit(self, X, y=None):
         """Perform HDBSCAN clustering from features or distance matrix.
@@ -1176,37 +1182,32 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
             # Rows with these values
-            X = check_array(X, accept_sparse="csr", force_all_finite=False)
+            X = self._validate_data(X, force_all_finite=False)
             self._raw_data = X
 
             self._all_finite = is_finite(X)
-            if ~self._all_finite:
+            if not self._all_finite:
                 # Pass only the purely finite indices into hdbscan
                 # We will later assign all non-finite points to the
                 # background-1 cluster
                 finite_index = get_finite_row_indices(X)
-                clean_data = X[finite_index]
-                internal_to_raw = {
-                    x: y for x, y in zip(range(len(finite_index)), finite_index)
-                }
+                X = X[finite_index]
+                internal_to_raw = {x: y for x, y in enumerate(finite_index)}
                 outliers = list(set(range(X.shape[0])) - set(finite_index))
-            else:
-                clean_data = X
         elif issparse(X):
             # Handle sparse precomputed distance matrices separately
-            X = check_array(X, accept_sparse="csr")
-            clean_data = X
+            X = self._validate_data(X, accept_sparse="csr")
         else:
             # Only non-sparse, precomputed distance matrices are allowed
             #   to have numpy.inf values indicating missing distances
-            check_precomputed_distance_matrix(X)
-            clean_data = X
+            X = self._validate_data(X, force_all_finite="allow-nan")
 
+        self.n_features_in_ = X.shape[1]
         kwargs = self.get_params()
         # prediction data only applies to the persistent model, so remove
         # it from the keyword args we pass on the the function
         kwargs.pop("prediction_data", None)
-        kwargs.update(self._metric_kwargs)
+        kwargs.update(self.metric_params)
 
         (
             self.labels_,
@@ -1215,7 +1216,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
             self._condensed_tree,
             self._single_linkage_tree,
             self._min_spanning_tree,
-        ) = hdbscan(clean_data, **kwargs)
+        ) = hdbscan(X, **kwargs)
 
         if self.metric != "precomputed" and not self._all_finite:
             # remap indices to align with original data in the case of
@@ -1226,11 +1227,11 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
             self._single_linkage_tree = remap_single_linkage_tree(
                 self._single_linkage_tree, internal_to_raw, outliers
             )
-            new_labels = np.full(X.shape[0], -1)
+            new_labels = np.full(self._raw_data.shape[0], -1)
             new_labels[finite_index] = self.labels_
             self.labels_ = new_labels
 
-            new_probabilities = np.zeros(X.shape[0])
+            new_probabilities = np.zeros(self._raw_data.shape[0])
             new_probabilities[finite_index] = self.probabilities_
             self.probabilities_ = new_probabilities
 
@@ -1285,7 +1286,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
                 min_samples,
                 tree_type=tree_type,
                 metric=self.metric,
-                **self._metric_kwargs,
+                **self.metric_params,
             )
         else:
             warn(
@@ -1359,7 +1360,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         cluster_membership_strengths = self.probabilities_[mask]
 
         dist_mat = pairwise_distances(
-            cluster_data, metric=self.metric, **self._metric_kwargs
+            cluster_data, metric=self.metric, **self.metric_params
         )
 
         dist_mat = dist_mat * cluster_membership_strengths
@@ -1411,7 +1412,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         """
         Cached data for predicting cluster labels of new or unseen points.
         """
-        if self._prediction_data is None:
+        if getattr(self, "_prediction_data", None) is not None:
             raise AttributeError("No prediction data was generated")
         else:
             return self._prediction_data
@@ -1421,7 +1422,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         """
         Points with larger scores are more outlier-like points.
         """
-        if self._outlier_scores is not None:
+        if getattr(self, "_outlier_scores", None) is not None:
             return self._outlier_scores
         else:
             if self._condensed_tree is not None:
@@ -1435,7 +1436,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     @property
     def condensed_tree_(self):
         """A simplified or smoothed version of `sinkle_linkage_tree_`."""
-        if self._condensed_tree is not None:
+        if getattr(self, "_condensed_tree", None) is not None:
             return CondensedTree(
                 self._condensed_tree,
                 self.cluster_selection_method,
@@ -1449,7 +1450,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     @property
     def single_linkage_tree_(self):
         """A single linkage format dendrogram tree."""
-        if self._single_linkage_tree is not None:
+        if getattr(self, "_single_linkage_tree", None) is not None:
             return SingleLinkageTree(self._single_linkage_tree)
         else:
             raise AttributeError(
@@ -1461,7 +1462,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         """
         The minimum spanning tree of the mutual reachability graph.
         """
-        if self._min_spanning_tree is not None:
+        if getattr(self, "_min_spanning_tree", None) is not None:
             if self._raw_data is not None:
                 return MinimumSpanningTree(self._min_spanning_tree, self._raw_data)
             else:
@@ -1486,7 +1487,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         These are the "most representative" points of the arbitrarily shaped
         clusters.
         """
-        if self._prediction_data is not None:
+        if getattr(self, "_prediction_data", None) is not None:
             return self._prediction_data.exemplars
         elif self.metric in FAST_METRICS:
             self.generate_prediction_data()
@@ -1503,7 +1504,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         """
         A fast approximation of the Density Based Cluster Validity (DBCV) score.
         """
-        if self._relative_validity is not None:
+        if getattr(self, "_relative_validity", None) is not None:
             return self._relative_validity
 
         if not self.gen_min_span_tree:
