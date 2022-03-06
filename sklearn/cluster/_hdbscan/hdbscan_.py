@@ -32,7 +32,7 @@ from ._hdbscan_tree import (
 from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachability
 
 from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
-from .dist_metrics import DistanceMetric
+from sklearn.metrics._dist_metrics import DistanceMetric
 
 from ._trees import CondensedTree, SingleLinkageTree, MinimumSpanningTree
 from .prediction import PredictionData
