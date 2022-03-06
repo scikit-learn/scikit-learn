@@ -524,7 +524,7 @@ def hdbscan(
     cluster_selection_method="eom",
     allow_single_cluster=False,
     match_reference_implementation=False,
-    **kwargs,
+    metric_params=None,
 ):
     """Perform HDBSCAN clustering from a vector array or distance matrix.
 
@@ -638,7 +638,7 @@ def hdbscan(
         performance cost, ensure that the clustering results match the
         reference implementation.
 
-    **kwargs : optional
+    metric_params : dict, default=None
         Arguments passed to the distance metric.
 
     Returns
@@ -740,6 +740,7 @@ def hdbscan(
     if min_samples == 0:
         min_samples = 1
 
+    metric_params = metric_params or {}
     if algorithm != "best":
         if metric != "precomputed" and issparse(X) and algorithm != "generic":
             raise ValueError("Sparse data matrices only support algorithm 'generic'.")
@@ -747,19 +748,46 @@ def hdbscan(
         if algorithm == "generic":
             (single_linkage_tree, result_min_span_tree) = memory.cache(
                 _hdbscan_generic
-            )(X, min_samples, alpha, metric, p, leaf_size, gen_min_span_tree, **kwargs)
+            )(
+                X,
+                min_samples,
+                alpha,
+                metric,
+                p,
+                leaf_size,
+                gen_min_span_tree,
+                **metric_params,
+            )
         elif algorithm == "prims_kdtree":
             if metric not in KDTree.valid_metrics:
                 raise ValueError("Cannot use Prim's with KDTree for this metric!")
             (single_linkage_tree, result_min_span_tree) = memory.cache(
                 _hdbscan_prims_kdtree
-            )(X, min_samples, alpha, metric, p, leaf_size, gen_min_span_tree, **kwargs)
+            )(
+                X,
+                min_samples,
+                alpha,
+                metric,
+                p,
+                leaf_size,
+                gen_min_span_tree,
+                **metric_params,
+            )
         elif algorithm == "prims_balltree":
             if metric not in BallTree.valid_metrics:
                 raise ValueError("Cannot use Prim's with BallTree for this metric!")
             (single_linkage_tree, result_min_span_tree) = memory.cache(
                 _hdbscan_prims_balltree
-            )(X, min_samples, alpha, metric, p, leaf_size, gen_min_span_tree, **kwargs)
+            )(
+                X,
+                min_samples,
+                alpha,
+                metric,
+                p,
+                leaf_size,
+                gen_min_span_tree,
+                **metric_params,
+            )
         elif algorithm == "boruvka_kdtree":
             if metric not in BallTree.valid_metrics:
                 raise ValueError("Cannot use Boruvka with KDTree for this metric!")
@@ -775,7 +803,7 @@ def hdbscan(
                 approx_min_span_tree,
                 gen_min_span_tree,
                 core_dist_n_jobs,
-                **kwargs,
+                **metric_params,
             )
         elif algorithm == "boruvka_balltree":
             if metric not in BallTree.valid_metrics:
@@ -798,7 +826,7 @@ def hdbscan(
                 approx_min_span_tree,
                 gen_min_span_tree,
                 core_dist_n_jobs,
-                **kwargs,
+                **metric_params,
             )
         else:
             raise TypeError("Unknown algorithm type %s specified" % algorithm)
@@ -808,7 +836,16 @@ def hdbscan(
             # We can't do much with sparse matrices ...
             (single_linkage_tree, result_min_span_tree) = memory.cache(
                 _hdbscan_generic
-            )(X, min_samples, alpha, metric, p, leaf_size, gen_min_span_tree, **kwargs)
+            )(
+                X,
+                min_samples,
+                alpha,
+                metric,
+                p,
+                leaf_size,
+                gen_min_span_tree,
+                **metric_params,
+            )
         elif metric in KDTree.valid_metrics:
             # TO DO: Need heuristic to decide when to go to boruvka;
             # still debugging for now
@@ -823,7 +860,7 @@ def hdbscan(
                     p,
                     leaf_size,
                     gen_min_span_tree,
-                    **kwargs,
+                    **metric_params,
                 )
             else:
                 (single_linkage_tree, result_min_span_tree) = memory.cache(
@@ -838,7 +875,7 @@ def hdbscan(
                     approx_min_span_tree,
                     gen_min_span_tree,
                     core_dist_n_jobs,
-                    **kwargs,
+                    **metric_params,
                 )
         else:  # Metric is a valid BallTree metric
             # TO DO: Need heuristic to decide when to go to boruvka;
@@ -854,7 +891,7 @@ def hdbscan(
                     p,
                     leaf_size,
                     gen_min_span_tree,
-                    **kwargs,
+                    **metric_params,
                 )
             else:
                 (single_linkage_tree, result_min_span_tree) = memory.cache(
@@ -869,7 +906,7 @@ def hdbscan(
                     approx_min_span_tree,
                     gen_min_span_tree,
                     core_dist_n_jobs,
-                    **kwargs,
+                    **metric_params,
                 )
 
     return _tree_to_labels(
@@ -1004,7 +1041,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         performance cost, ensure that the clustering results match the
         reference implementation.
 
-    **metric_params : optional
+    metric_params : dict, default=None
         Arguments passed to the distance metric.
 
     Attributes
@@ -1121,6 +1158,9 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     array([ 2,  6, -1, ..., -1, -1, -1], dtype=int64)
     """
 
+    def _more_tags(self):
+        return {"allow_nan": True}
+
     def __init__(
         self,
         min_cluster_size=5,
@@ -1140,7 +1180,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         allow_single_cluster=False,
         prediction_data=False,
         match_reference_implementation=False,
-        **metric_params,
+        metric_params=None,
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -1159,7 +1199,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         self.allow_single_cluster = allow_single_cluster
         self.match_reference_implementation = match_reference_implementation
         self.prediction_data = prediction_data
-        self.metric_params = metric_params or {}
+        self.metric_params = metric_params
 
     def fit(self, X, y=None):
         """Perform HDBSCAN clustering from features or distance matrix.
@@ -1179,6 +1219,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         self : object
             Returns self.
         """
+        metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
             # Rows with these values
@@ -1207,7 +1248,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         # prediction data only applies to the persistent model, so remove
         # it from the keyword args we pass on the the function
         kwargs.pop("prediction_data", None)
-        kwargs.update(self.metric_params)
+        kwargs.update(metric_params)
 
         (
             self.labels_,
@@ -1280,13 +1321,14 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
                 warn("Metric {} not supported for prediction data!".format(self.metric))
                 return
 
+            metric_params = self.metric_params or {}
             self._prediction_data = PredictionData(
                 self._raw_data,
                 self.condensed_tree_,
                 min_samples,
                 tree_type=tree_type,
                 metric=self.metric,
-                **self.metric_params,
+                **metric_params,
             )
         else:
             warn(
@@ -1358,10 +1400,9 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         mask = self.labels_ == cluster_id
         cluster_data = self._raw_data[mask]
         cluster_membership_strengths = self.probabilities_[mask]
+        metric_params = self.metric_params or {}
 
-        dist_mat = pairwise_distances(
-            cluster_data, metric=self.metric, **self.metric_params
-        )
+        dist_mat = pairwise_distances(cluster_data, metric=self.metric, **metric_params)
 
         dist_mat = dist_mat * cluster_membership_strengths
         medoid_index = np.argmin(dist_mat.sum(axis=1))
