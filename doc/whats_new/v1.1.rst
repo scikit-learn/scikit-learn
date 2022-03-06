@@ -581,6 +581,14 @@ Changelog
   and the boundaries are not set.
   :pr:`22027` by `Marie Lanternier <mlant>`.
 
+
+:mod: `sklearn.metrics`
+
+- |Fix| :func: `metrics.ndcg_score` will now trigger a warning when the y_true
+  value contains a negative value. It will allow the user to still use negative
+  values, but the result may not be between 0 and 1.
+  by :user:`Conroy Trinh <trinhcon>`
+
 Code and Documentation Contributors
 -----------------------------------
 
