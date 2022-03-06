@@ -111,16 +111,16 @@ def test_pairwise_distances():
     # test paired haversine
     X = rng.randn(5, 3)
     Y = rng.randn(5, 3)
-    err_msg = "Haversine distance only valid in 2 dimensions"
+    err_msg = "X and Y should both be of shape (n_samples, 2)"
     with pytest.raises(ValueError, match=err_msg):
         paired_haversine_distances(X, Y)
 
     # compare paired to pairwise implementations
     X = rng.randn(5, 2)
     Y = np.tile(X[0, :], (5, 1))
-    S1 = haversine_distances(X, Y[0].reshape(1, -1)).ravel()
+    S = haversine_distances(X, Y[0].reshape(1, -1)).ravel()
     S2 = paired_haversine_distances(X, Y).ravel()
-    assert_array_almost_equal(S1, S2)
+    assert_array_almost_equal(S, S2)
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.

@@ -902,7 +902,7 @@ def paired_haversine_distances(X, Y):
     if not (len(X.shape) == len(Y.shape) == 2) or not (X.shape[1] == Y.shape[1] == 2):
         raise ValueError(
             "For paired distances and the metric `haversine`, "
-            "X and Y should both be of shape `(n_samples, 2)`, "
+            "X and Y should both be of shape (n_samples, 2), "
             "but X.shape is {0} and Y.shape is {1}".format(X.shape, Y.shape)
         )
     dlat, dlon = (Y - X).T
