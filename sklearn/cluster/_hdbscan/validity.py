@@ -39,7 +39,7 @@ def all_points_core_distance(distance_matrix, d=2.0):
 
 
 def all_points_mutual_reachability(
-    X, labels, cluster_id, metric="euclidean", d=None, **kwd_args
+    X, labels, cluster_id, metric="euclidean", d=None, metric_params=None
 ):
     """
     Compute the all-points-mutual-reachability distances for all the points of
@@ -76,9 +76,8 @@ def all_points_mutual_reachability(
         be set in the case of metric being set to `precomputed`, where
         the ambient dimension of the data is unknown to the function.
 
-    **kwd_args :
-        Extra arguments to pass to the distance computation for other
-        metrics, such as minkowski, Mahanalobis etc.
+    metric_params : dict, default=None
+        Arguments passed to the distance metric.
 
     Returns
     -------
@@ -102,7 +101,8 @@ def all_points_mutual_reachability(
         distance_matrix = X[labels == cluster_id, :][:, labels == cluster_id]
     else:
         subset_X = X[labels == cluster_id, :]
-        distance_matrix = pairwise_distances(subset_X, metric=metric, **kwd_args)
+        metric_params = metric_params or {}
+        distance_matrix = pairwise_distances(subset_X, metric=metric, **metric_params)
         d = X.shape[1]
 
     core_distances = all_points_core_distance(distance_matrix.copy(), d=d)
@@ -276,7 +276,7 @@ def density_separation(
 
 
 def validity_index(
-    X, labels, metric="euclidean", d=None, per_cluster_scores=False, kwargs=None
+    X, labels, metric="euclidean", d=None, per_cluster_scores=False, metric_params=None
 ):
     """
     Compute the density based cluster validity index.
@@ -312,9 +312,8 @@ def validity_index(
         Defaults to False with the function returning a single float
         value for the whole clustering.
 
-    kwargs : dict, default=None
-        Extra arguments to pass to the distance computation for other
-        metrics, such as minkowski, Mahanalobis etc.
+    metric_params : dict, default=None
+        Arguments passed to the distance metric.
 
     Returns
     -------
@@ -337,6 +336,7 @@ def validity_index(
     density_sparseness = {}
     mst_nodes = {}
     mst_edges = {}
+    metric_params = metric_params or {}
 
     max_cluster_id = labels.max() + 1
     density_sep = np.inf * np.ones((max_cluster_id, max_cluster_id), dtype=np.float64)
@@ -348,7 +348,7 @@ def validity_index(
             continue
 
         mr_distances, core_distances[cluster_id] = all_points_mutual_reachability(
-            X, labels, cluster_id, metric, d, **kwargs
+            X, labels, cluster_id, metric, d, **metric_params
         )
 
         mst_nodes[cluster_id], mst_edges[cluster_id] = internal_minimum_spanning_tree(
@@ -378,7 +378,7 @@ def validity_index(
                 core_distances[i],
                 core_distances[j],
                 metric=metric,
-                **kwargs,
+                **metric_params,
             )
             density_sep[j, i] = density_sep[i, j]
 

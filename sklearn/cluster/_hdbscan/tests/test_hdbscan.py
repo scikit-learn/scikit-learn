@@ -47,7 +47,10 @@ X_missing_data[5] = [np.nan, np.nan]
 
 
 def test_missing_data():
-    """Tests if nan data are treated as infinite distance from all other points and assigned to -1 cluster"""
+    """
+    Tests if nan data are treated as infinite distance from all other points
+    and assigned to -1 cluster.
+    """
     model = HDBSCAN().fit(X_missing_data)
     assert model.labels_[0] == -1
     assert model.labels_[5] == -1
@@ -267,7 +270,11 @@ def test_hdbscan_high_dimensional():
     assert n_clusters_1 == n_clusters
 
     labels = (
-        HDBSCAN(algorithm="best", metric="seuclidean", V=np.ones(H.shape[1]))
+        HDBSCAN(
+            algorithm="best",
+            metric="seuclidean",
+            metric_params={"V": np.ones(H.shape[1])},
+        )
         .fit(H)
         .labels_
     )
@@ -277,12 +284,16 @@ def test_hdbscan_high_dimensional():
 
 def test_hdbscan_best_balltree_metric():
     labels, p, persist, ctree, ltree, mtree = hdbscan(
-        X, metric="seuclidean", V=np.ones(X.shape[1])
+        X, metric="seuclidean", metric_params={"V": np.ones(X.shape[1])}
     )
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
-    labels = HDBSCAN(metric="seuclidean", V=np.ones(X.shape[1])).fit(X).labels_
+    labels = (
+        HDBSCAN(metric="seuclidean", metric_params={"V": np.ones(X.shape[1])})
+        .fit(X)
+        .labels_
+    )
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 

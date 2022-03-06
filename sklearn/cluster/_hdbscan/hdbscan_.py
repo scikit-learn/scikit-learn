@@ -1223,7 +1223,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
             # Rows with these values
-            X = self._validate_data(X, force_all_finite=False)
+            X = self._validate_data(X, force_all_finite=False, accept_sparse="csr")
             self._raw_data = X
 
             self._all_finite = is_finite(X)
@@ -1248,7 +1248,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         # prediction data only applies to the persistent model, so remove
         # it from the keyword args we pass on the the function
         kwargs.pop("prediction_data", None)
-        kwargs.update(metric_params)
+        kwargs["metric_params"] = metric_params
 
         (
             self.labels_,
@@ -1453,7 +1453,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         """
         Cached data for predicting cluster labels of new or unseen points.
         """
-        if getattr(self, "_prediction_data", None) is not None:
+        if getattr(self, "_prediction_data", None) is None:
             raise AttributeError("No prediction data was generated")
         else:
             return self._prediction_data
