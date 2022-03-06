@@ -51,10 +51,15 @@ from sklearn.metrics.pairwise import check_pairwise_arrays
 from sklearn.metrics.pairwise import check_paired_arrays
 from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
+from sklearn.metrics.pairwise import paired_haversine_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.metrics.pairwise import _euclidean_distances_upcast
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
+
+
+# filter out haversine because it is a special case and only works with 2 dims
+PAIRED_DISTANCES.pop('haversine')
 
 
 def test_pairwise_distances():
@@ -102,6 +107,20 @@ def test_pairwise_distances():
     S = pairwise_distances(X, Y, metric="haversine")
     S2 = haversine_distances(X, Y)
     assert_array_almost_equal(S, S2)
+
+    # test paired haversine
+    X = rng.randn((5, 3))
+    Y = rng.randn((5, 3))
+    err_msg = "Haversine distance only valid in 2 dimensions"
+    with pytest.raises(ValueError, match=err_msg):
+        paired_haversine_distances(X, Y)
+
+    # compare paired to pairwise implementations
+    X = rng.randn(5, 2)
+    Y = np.tile(X[0, :], (5, 1))
+    S1 = haversine_distances(X, Y[0].reshape(1, -1)).ravel()
+    S2 = paired_haversine_distances(X, Y).ravel()
+    assert_array_almost_equal(S1, S2)
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.

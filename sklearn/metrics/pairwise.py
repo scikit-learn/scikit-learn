@@ -870,6 +870,50 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
+def paired_haversine_distances(X, Y):
+    """Compute the Haversine distance between paired samples in X and Y.
+
+    The Haversine (or great circle) distance is the angular distance between
+    two points on the surface of a sphere. The first coordinate of each point
+    is assumed to be the latitude, the second is the longitude, given
+    in radians. The dimension of the data must be 2.
+
+    .. math::
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples_X, 2)
+
+    Y : array-like of shape (n_samples_Y, 2)
+
+    Returns
+    -------
+    distance : ndarray of shape (n_samples_X, )
+
+    Notes
+    -----
+    As the Earth is nearly spherical, the haversine formula provides a good
+    approximation of the distance between two points of the Earth surface, with
+    a less than 1% error on average.
+    """
+    X, Y = check_paired_arrays(X, Y)
+    if not (len(X.shape) == len(Y.shape) == 2) or not (X.shape[1] == Y.shape[1] == 2):
+        raise ValueError(
+            "For paired distances and the metric `haversine`, "
+            "X and Y should both be of shape `(n_samples, 2)`, "
+            "but X.shape is {0} and Y.shape is {1}".format(X.shape, Y.shape)
+        )
+    dlat, dlon = (Y - X).T
+    lat1, lat2 = X[:, 0], Y[:, 0]
+
+    a_1 = np.sin(dlat / 2.0) ** 2
+    a_2 = np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0) ** 2
+    c = 2 * np.arcsin(np.sqrt(a_1 + a_2))
+    return c
+
+
 def manhattan_distances(X, Y=None, *, sum_over_features=True):
     """Compute the L1 distances between the vectors in X and Y.
 
@@ -1072,6 +1116,7 @@ PAIRED_DISTANCES = {
     "l1": paired_manhattan_distances,
     "manhattan": paired_manhattan_distances,
     "cityblock": paired_manhattan_distances,
+    "haversine": paired_haversine_distances,  # limited to m == 2
 }
 
 
