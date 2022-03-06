@@ -581,7 +581,6 @@ Changelog
   and the boundaries are not set.
   :pr:`22027` by `Marie Lanternier <mlant>`.
 
-
 :mod:`sklearn.metrics`
 ......................
 
