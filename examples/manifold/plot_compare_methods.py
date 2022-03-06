@@ -18,10 +18,9 @@ the distances in the original high-dimensional space, unlike other
 manifold-learning algorithms, it does not seeks an isotropic
 representation of the data in the low-dimensional space.
 
-- Author: Jake Vanderplas
-
 """
 
+# Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
 
 # %%
 # Dataset preparation
@@ -83,7 +82,7 @@ def add_2d_scatter(ax, points, points_color, title=None):
 plot_3d(S_points, S_color, "Original S-curve samples")
 
 # %%
-# Define algorithms for the Manifold learning
+# Define algorithms for the manifold learning
 # -------------------------------------------
 #
 # Manifold learning is an approach to non-linear dimensionality reduction.
@@ -111,7 +110,6 @@ params = {
     "random_state": rng,
 }
 
-# --- Points representation
 lle_standart = manifold.LocallyLinearEmbedding(method="standard", **params)
 S_standart = lle_standart.fit_transform(S_points)
 
@@ -124,7 +122,7 @@ S_hessian = lle_hessian.fit_transform(S_points)
 lle_mod = manifold.LocallyLinearEmbedding(method="modified", modified_tol=0.8, **params)
 S_mod = lle_mod.fit_transform(S_points)
 
-# --- Plot
+# %%
 fig, axs = plt.subplots(
     nrows=2, ncols=2, figsize=(7, 7), facecolor="white", constrained_layout=True
 )
