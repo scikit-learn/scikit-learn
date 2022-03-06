@@ -621,6 +621,7 @@ Changelog
   0, which was earlier automatically changed to `1e-10` instead.
   :pr:`16747`, :pr:`18805`, :pr:`22269` by :user:`arka204`, :user:`hongshaoyang`,
   and :user:`Meekail Zain <micky774>`.
+
 :mod:`sklearn.multiclass`
 .........................
 
