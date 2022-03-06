@@ -31,6 +31,12 @@ from ._hdbscan.prediction import (
     all_points_membership_vectors,
     approximate_predict_scores,
 )
+from ._hdbscan.flat import (
+    HDBSCAN_flat,
+    approximate_predict_flat,
+    membership_vector_flat,
+    all_points_membership_vectors_flat,
+)
 
 __all__ = [
     "AffinityPropagation",
@@ -71,5 +77,4 @@ __all__ = [
     "approximate_predict_flat",
     "membership_vector_flat",
     "all_points_membership_vectors_flat",
-    "safe_always_positive_division",
 ]
