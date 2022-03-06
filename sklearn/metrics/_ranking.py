@@ -170,6 +170,7 @@ def average_precision_score(
     Returns
     -------
     average_precision : float
+        Summary of the precision-recall curve in a single value representing the average of all precisions.
 
     See Also
     --------
