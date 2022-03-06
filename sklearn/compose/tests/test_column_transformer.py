@@ -1327,8 +1327,7 @@ def test_column_transformer_negative_column_indexes():
 @pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
 def test_column_transformer_mask_indexing(array_type):
     # Regression test for #14510
-    # Boolean array-like does not behave as boolean array with NumPy < 1.12
-    # and sparse matrices as well
+    # Boolean array-like does not behave as boolean array with sparse matrices.
     X = np.transpose([[1, 2, 3], [4, 5, 6], [5, 6, 7], [8, 9, 10]])
     X = array_type(X)
     column_transformer = ColumnTransformer(

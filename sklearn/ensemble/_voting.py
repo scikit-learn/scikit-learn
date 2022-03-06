@@ -15,6 +15,7 @@ This module contains:
 
 from abc import abstractmethod
 
+import numbers
 import numpy as np
 
 from joblib import Parallel
@@ -27,6 +28,7 @@ from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
+from ..utils import check_scalar
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
@@ -46,7 +48,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return "(%d of %d) Processing %s" % (idx, total, name)
+        return f"({idx} of {total}) Processing {name}"
 
     @property
     def _weights_not_none(self):
@@ -64,11 +66,17 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
+        check_scalar(
+            self.verbose,
+            name="verbose",
+            target_type=(numbers.Integral, np.bool_),
+            min_val=0,
+        )
+
         if self.weights is not None and len(self.weights) != len(self.estimators):
             raise ValueError(
-                "Number of `estimators` and weights must be equal"
-                "; got %d weights, %d estimators"
-                % (len(self.weights), len(self.estimators))
+                "Number of `estimators` and weights must be equal; got"
+                f" {len(self.weights)} weights, {len(self.estimators)} estimators"
             )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
@@ -324,9 +332,15 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                 "Multilabel and multi-output classification is not supported."
             )
 
+        check_scalar(
+            self.flatten_transform,
+            name="flatten_transform",
+            target_type=(numbers.Integral, np.bool_),
+        )
+
         if self.voting not in ("soft", "hard"):
             raise ValueError(
-                "Voting must be 'soft' or 'hard'; got (voting=%r)" % self.voting
+                f"Voting must be 'soft' or 'hard'; got (voting={self.voting!r})"
             )
 
         self.le_ = LabelEncoder().fit(y)

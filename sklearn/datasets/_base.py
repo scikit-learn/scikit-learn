@@ -11,9 +11,11 @@ import hashlib
 import gzip
 import shutil
 from collections import namedtuple
+import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from importlib import resources
+from pathlib import Path
 
 from ..preprocessing import scale
 from ..utils import Bunch
@@ -106,6 +108,7 @@ def load_files(
     encoding=None,
     decode_error="strict",
     random_state=0,
+    allowed_extensions=None,
 ):
     """Load text files with categories as subfolder names.
 
@@ -142,6 +145,9 @@ def load_files(
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
+
+    If you want files with a specific file extension (e.g. `.txt`) then you
+    can pass a list of those file extensions to `allowed_extensions`.
 
     Read more in the :ref:`User Guide <datasets>`.
 
@@ -184,6 +190,9 @@ def load_files(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    allowed_extensions : list of str, default=None
+        List of desired file extensions to filter the files to be loaded.
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -201,6 +210,7 @@ def load_files(
         filenames: ndarray
             The filenames holding the dataset.
     """
+
     target = []
     target_names = []
     filenames = []
@@ -212,10 +222,21 @@ def load_files(
     if categories is not None:
         folders = [f for f in folders if f in categories]
 
+    if allowed_extensions is not None:
+        allowed_extensions = frozenset(allowed_extensions)
+
     for label, folder in enumerate(folders):
         target_names.append(folder)
         folder_path = join(container_path, folder)
-        documents = [join(folder_path, d) for d in sorted(listdir(folder_path))]
+        files = sorted(listdir(folder_path))
+        if allowed_extensions is not None:
+            documents = [
+                join(folder_path, file)
+                for file in files
+                if os.path.splitext(file)[1] in allowed_extensions
+            ]
+        else:
+            documents = [join(folder_path, file) for file in files]
         target.extend(len(documents) * [label])
         filenames.extend(documents)
 
@@ -233,8 +254,7 @@ def load_files(
     if load_content:
         data = []
         for filename in filenames:
-            with open(filename, "rb") as f:
-                data.append(f.read())
+            data.append(Path(filename).read_bytes())
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(
@@ -660,6 +680,10 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     Features            real, positive
     =================   ==============
 
+    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
+    downloaded from:
+    https://goo.gl/U2Uwz2
+
     Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
     Parameters
@@ -687,32 +711,33 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        target: {ndarray, Series} of shape (569,)
+        target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names: list
+        feature_names : list
             The names of the dataset columns.
-        target_names: list
+        target_names : list
             The names of target classes.
-        frame: DataFrame of shape (569, 31)
+        frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
             .. versionadded:: 0.23
-        DESCR: str
+        DESCR : str
             The full description of the dataset.
-        filename: str
+        filename : str
             The path to the location of the data.
 
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (569, 30) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (569,) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
-
-    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
-    downloaded from:
-    https://goo.gl/U2Uwz2
 
     Examples
     --------
@@ -803,6 +828,9 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     Features             integers 0-16
     =================   ==============
 
+    This is a copy of the test set of the UCI ML hand-written digits datasets
+    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+
     Read more in the :ref:`User Guide <digits_dataset>`.
 
     Parameters
@@ -854,11 +882,13 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarrays by default. The first contains a 2D ndarray of
+        shape (1797, 64) with each row representing one sample and each column
+        representing the features. The second ndarray of shape (1797) contains
+        the target samples.  If `as_frame=True`, both arrays are pandas objects,
+        i.e. `X` a dataframe and `y` a series.
 
         .. versionadded:: 0.18
-
-    This is a copy of the test set of the UCI ML hand-written digits datasets
-    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 
     Examples
     --------
@@ -989,6 +1019,7 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         Returns a tuple of two ndarray of shape (n_samples, n_features)
         A 2D array with each row representing one sample and each column
         representing the features and/or target of a given sample.
+
         .. versionadded:: 0.18
     """
     data_filename = "diabetes_data_raw.csv.gz"
@@ -1089,6 +1120,9 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        Returns a tuple of two ndarrays or dataframe of shape
+        `(20, 3)`. Each row represents one sample and each column represents the
+        features in `X` and a target in `y` of a given sample.
 
         .. versionadded:: 0.18
     """

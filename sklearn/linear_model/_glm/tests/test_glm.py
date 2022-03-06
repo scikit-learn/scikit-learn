@@ -142,26 +142,23 @@ def test_glm_solver_argument(solver):
         (
             {"max_iter": "not a number"},
             TypeError,
-            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'str'>",
+            "max_iter must be an instance of int, not str",
         ),
         (
             {"max_iter": [1]},
             TypeError,
-            "max_iter must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'list'>",
+            "max_iter must be an instance of int, not list",
         ),
         (
             {"max_iter": 5.5},
             TypeError,
-            "max_iter must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'float'>",
+            "max_iter must be an instance of int, not float",
         ),
         ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
         (
             {"alpha": "1"},
             TypeError,
-            "alpha must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "alpha must be an instance of float, not str",
         ),
         ({"tol": -1.0}, ValueError, "tol == -1.0, must be > 0."),
         ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
@@ -169,25 +166,23 @@ def test_glm_solver_argument(solver):
         (
             {"tol": "1"},
             TypeError,
-            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "tol must be an instance of float, not str",
         ),
         (
             {"tol": [1e-3]},
             TypeError,
-            "tol must be an instance of <class 'numbers.Real'>, not <class 'list'>",
+            "tol must be an instance of float, not list",
         ),
         ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0."),
         (
             {"verbose": "1"},
             TypeError,
-            "verbose must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'str'>",
+            "verbose must be an instance of int, not str",
         ),
         (
             {"verbose": 1.0},
             TypeError,
-            "verbose must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'float'>",
+            "verbose must be an instance of int, not float",
         ),
     ],
 )

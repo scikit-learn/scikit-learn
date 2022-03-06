@@ -764,7 +764,7 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Feature| Added :class:`linear_model.QuantileRegressor` which implements
+- |MajorFeature| Added :class:`linear_model.QuantileRegressor` which implements
   linear quantile regression with L1 penalty.
   :pr:`9978` by :user:`David Dale <avidale>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
