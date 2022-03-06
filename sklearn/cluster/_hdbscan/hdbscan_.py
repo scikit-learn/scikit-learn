@@ -34,7 +34,7 @@ from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachabili
 from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
 from .dist_metrics import DistanceMetric
 
-from .plots import CondensedTree, SingleLinkageTree, MinimumSpanningTree
+from ._trees import CondensedTree, SingleLinkageTree, MinimumSpanningTree
 from .prediction import PredictionData
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics + ["cosine", "arccos"]

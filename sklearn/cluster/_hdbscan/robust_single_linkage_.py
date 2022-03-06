@@ -15,7 +15,7 @@ from ._hdbscan_linkage import mst_linkage_core, mst_linkage_core_vector, label
 from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
 from .dist_metrics import DistanceMetric
 from ._hdbscan_reachability import mutual_reachability
-from .plots import SingleLinkageTree
+from ._trees import SingleLinkageTree
 from sklearn.neighbors import KDTree, BallTree
 
 # Author: Leland McInnes <leland.mcinnes@gmail.com>

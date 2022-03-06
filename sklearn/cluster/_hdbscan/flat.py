@@ -32,7 +32,7 @@ from warnings import warn
 import numpy as np
 from ._hdbscan_tree import compute_stability, get_cluster_tree_leaves
 from .hdbscan_ import HDBSCAN, _tree_to_labels
-from .plots import _bfs_from_cluster_tree
+from ._trees import _bfs_from_cluster_tree
 from .prediction import (
     PredictionData,
     _find_cluster_and_probability,
