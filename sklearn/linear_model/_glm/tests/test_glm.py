@@ -230,6 +230,24 @@ def test_glm_alpha_array(Estimator, params, err_type, err_msg):
         glm.fit(X, y)
 
 
+@pytest.mark.parametrize(
+    "Estimator",
+    [GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
+)
+def test_glm_alpha_array_reg(Estimator):
+    """Test GLM regression when alpha is an array and 2nd column
+    has different alpha than 1st column
+    """
+    X = np.asarray([[1, 2], [1, 3], [1, 4], [1, 3]])
+    y = np.asarray([2, 2, 3, 2])
+    scalar_coefs = Estimator(alpha=1., fit_intercept=False).fit(X, y).coef_
+    X_scaled = X.copy()
+    X_scaled[:, 1] = X_scaled[:, 1] * 2.
+    array_coefs = Estimator(alpha=[1., 4.], fit_intercept=False).fit(X_scaled, y).coef_
+    array_coefs[1] *= 2
+    assert_allclose(scalar_coefs, array_coefs, atol=1e-4)
+
+
 @pytest.mark.parametrize("warm_start", ["not bool", 1, 0, [True]])
 def test_glm_warm_start_argument(warm_start):
     """Test GLM for invalid warm_start argument."""
