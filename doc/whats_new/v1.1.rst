@@ -610,6 +610,11 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.normalized_mutual_info_score` which could return
   unbounded values. :pr:`22635` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the y_true
+  value contains a negative value. It will allow the user to still use negative
+  values, but the result may not be between 0 and 1.
+  :pr:`14` by :user:`Conroy Trinh <trinhcon>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -790,13 +795,6 @@ Changelog
   and the boundaries are not set.
   :pr:`22027` by `Marie Lanternier <mlant>`.
 
-:mod:`sklearn.metrics`
-......................
-
-- |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the y_true
-  value contains a negative value. It will allow the user to still use negative
-  values, but the result may not be between 0 and 1.
-  :pr:`14` by :user:`Conroy Trinh <trinhcon>`
 - |Fix| Estimators with `non_deterministic` tag set to `True` will skip both
   `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
   :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
