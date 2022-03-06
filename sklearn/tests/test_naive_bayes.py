@@ -12,7 +12,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -289,8 +288,6 @@ def test_NB_partial_fit_no_first_classes(NaiveBayes):
         clf.partial_fit(X2, y2, classes=np.arange(42))
 
 
-# TODO: Remove in version 1.1
-@ignore_warnings(category=FutureWarning)
 def test_discretenb_predict_proba():
     # Test discrete NB classes' probability scores
 
@@ -518,7 +515,7 @@ def test_mnb_prior_unobserved_targets():
 
     with pytest.warns(None) as record:
         clf.partial_fit(X, y, classes=[0, 1, 2])
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
@@ -527,7 +524,7 @@ def test_mnb_prior_unobserved_targets():
     # add a training example with previously unobserved class
     with pytest.warns(None) as record:
         clf.partial_fit([[1, 1]], [2])
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1

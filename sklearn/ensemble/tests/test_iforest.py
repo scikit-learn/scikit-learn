@@ -108,11 +108,12 @@ def test_iforest_error():
     with pytest.warns(None) as record:
         IsolationForest(max_samples="auto").fit(X)
     user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
-    assert len(user_warnings) == 0
+    assert not user_warnings
+
     with pytest.warns(None) as record:
         IsolationForest(max_samples=np.int64(2)).fit(X)
     user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
-    assert len(user_warnings) == 0
+    assert not user_warnings
 
     with pytest.raises(ValueError):
         IsolationForest(max_samples="foobar").fit(X)

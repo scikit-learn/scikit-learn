@@ -152,7 +152,7 @@ projection transformer::
 
  * D. Achlioptas. 2003.
    `Database-friendly random projections: Johnson-Lindenstrauss  with binary
-   coins <http://www.cs.ucsc.edu/~optas/papers/jl.pdf>`_.
+   coins <https://www.sciencedirect.com/science/article/pii/S0022000003000254>`_.
    Journal of Computer and System Sciences 66 (2003) 671–687
 
  * Ping Li, Trevor J. Hastie, and Kenneth W. Church. 2006.
