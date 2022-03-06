@@ -28,7 +28,6 @@ from sklearn.preprocessing import StandardScaler
 from scipy.stats import mode
 
 from tempfile import mkdtemp
-from functools import wraps
 import pytest
 
 from sklearn import datasets
@@ -60,62 +59,6 @@ def test_missing_data():
     clean_indices = list(range(1, 5)) + list(range(6, 200))
     clean_model = HDBSCAN().fit(X_missing_data[clean_indices])
     assert np.allclose(clean_model.labels_, model.labels_[clean_indices])
-
-
-def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed.
-
-    Parameters
-    ----------
-    func
-    """
-
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        try:
-            import matplotlib
-
-            matplotlib.use("Agg")
-            # this fails if no $DISPLAY specified
-            import matplotlib.pyplot as plt
-
-            plt.figure()
-        except ImportError:
-            pytest.skip("Matplotlib not available.")
-        else:
-            return func(*args, **kwargs)
-
-    return run_test
-
-
-def if_pandas(func):
-    """Test decorator that skips test if pandas not installed."""
-
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        try:
-            import pandas
-        except ImportError:
-            pytest.skip("Pandas not available.")
-        else:
-            return func(*args, **kwargs)
-
-    return run_test
-
-
-def if_networkx(func):
-    """Test decorator that skips test if networkx not installed."""
-
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        try:
-            import networkx
-        except ImportError:
-            pytest.skip("NetworkX not available.")
-        else:
-            return func(*args, **kwargs)
-
-    return run_test
 
 
 def generate_noisy_data():
@@ -383,48 +326,6 @@ def test_hdbscan_boruvka_balltree_matches():
     assert (num_mismatches / float(data.shape[0])) < 0.15
 
 
-def test_condensed_tree_plot():
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
-    if_matplotlib(clusterer.condensed_tree_.plot)(
-        select_clusters=True,
-        label_clusters=True,
-        selection_palette=("r", "g", "b"),
-        cmap="Reds",
-    )
-    if_matplotlib(clusterer.condensed_tree_.plot)(
-        log_size=True, colorbar=False, cmap="none"
-    )
-
-
-def test_single_linkage_tree_plot():
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
-    if_matplotlib(clusterer.single_linkage_tree_.plot)(cmap="Reds")
-    if_matplotlib(clusterer.single_linkage_tree_.plot)(
-        vary_line_width=False, truncate_mode="lastp", p=10, cmap="none", colorbar=False
-    )
-
-
-def test_min_span_tree_plot():
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
-    if_matplotlib(clusterer.minimum_spanning_tree_.plot)(edge_cmap="Reds")
-
-    H, y = make_blobs(n_samples=50, random_state=0, n_features=10)
-    H = StandardScaler().fit_transform(H)
-
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(H)
-    if_matplotlib(clusterer.minimum_spanning_tree_.plot)(
-        edge_cmap="Reds", vary_line_width=False, colorbar=False
-    )
-
-    H, y = make_blobs(n_samples=50, random_state=0, n_features=40)
-    H = StandardScaler().fit_transform(H)
-
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(H)
-    if_matplotlib(clusterer.minimum_spanning_tree_.plot)(
-        edge_cmap="Reds", vary_line_width=False, colorbar=False
-    )
-
-
 def test_tree_numpy_output_formats():
 
     clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
@@ -432,22 +333,6 @@ def test_tree_numpy_output_formats():
     clusterer.single_linkage_tree_.to_numpy()
     clusterer.condensed_tree_.to_numpy()
     clusterer.minimum_spanning_tree_.to_numpy()
-
-
-def test_tree_pandas_output_formats():
-
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
-    if_pandas(clusterer.condensed_tree_.to_pandas)()
-    if_pandas(clusterer.single_linkage_tree_.to_pandas)()
-    if_pandas(clusterer.minimum_spanning_tree_.to_pandas)()
-
-
-def test_tree_networkx_output_formats():
-
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
-    if_networkx(clusterer.condensed_tree_.to_networkx)()
-    if_networkx(clusterer.single_linkage_tree_.to_networkx)()
-    if_networkx(clusterer.minimum_spanning_tree_.to_networkx)()
 
 
 def test_hdbscan_outliers():
