@@ -59,7 +59,7 @@ from sklearn.exceptions import DataConversionWarning
 
 
 # filter out haversine because it is a special case and only works with 2 dims
-PAIRED_DISTANCES.pop('haversine')
+PAIRED_DISTANCES.pop("haversine")
 
 
 def test_pairwise_distances():
@@ -109,8 +109,8 @@ def test_pairwise_distances():
     assert_array_almost_equal(S, S2)
 
     # test paired haversine
-    X = rng.randn((5, 3))
-    Y = rng.randn((5, 3))
+    X = rng.randn(5, 3)
+    Y = rng.randn(5, 3)
     err_msg = "Haversine distance only valid in 2 dimensions"
     with pytest.raises(ValueError, match=err_msg):
         paired_haversine_distances(X, Y)
