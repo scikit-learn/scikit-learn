@@ -239,11 +239,13 @@ def test_glm_alpha_array_reg(Estimator):
     """
     X = np.asarray([[1, 2], [1, 3], [1, 4], [1, 3]])
     y = np.asarray([2, 2, 3, 2])
-    scalar_coefs = Estimator(alpha=1., fit_intercept=False).fit(X, y).coef_
+    scalar_coefs = Estimator(alpha=1.0, fit_intercept=False).fit(X, y).coef_
     X_scaled = X.copy()
-    X_scaled[:, 1] = X_scaled[:, 1] * 2.
-    array_coefs = Estimator(alpha=[1., 4.], fit_intercept=False).fit(X_scaled, y).coef_
-    array_coefs[1] *= 2
+    X_scaled[:, 1] = X_scaled[:, 1] * 2.0
+    array_coefs = (
+        Estimator(alpha=[1.0, 4.0], fit_intercept=False).fit(X_scaled, y).coef_
+    )
+    array_coefs[1] *= 2.0
     assert_allclose(scalar_coefs, array_coefs, atol=1e-4)
 
 
