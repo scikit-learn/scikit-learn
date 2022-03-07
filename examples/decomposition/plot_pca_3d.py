@@ -17,7 +17,6 @@ comes in to choose a direction that is not flat.
 
 from sklearn.decomposition import PCA
 
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -57,7 +56,8 @@ b /= norm
 def plot_figs(fig_num, elev, azim):
     fig = plt.figure(fig_num, figsize=(4, 3))
     plt.clf()
-    ax = Axes3D(fig, rect=[0, 0, 0.95, 1], elev=elev, azim=azim)
+    ax = fig.add_subplot(111, projection="3d", elev=elev, azim=azim)
+    ax.set_position([0, 0, 0.95, 1])
 
     ax.scatter(a[::10], b[::10], c[::10], c=density[::10], marker="+", alpha=0.4)
     Y = np.c_[a, b, c]
