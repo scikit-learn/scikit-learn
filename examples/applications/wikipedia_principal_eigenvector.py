@@ -47,8 +47,9 @@ from sklearn.decomposition import randomized_svd
 from urllib.request import urlopen
 
 
-# #############################################################################
-# Where to download the data, if not already on disk
+# %%
+# Download data, if not already on disk
+# -------------------------------------
 redirects_url = "http://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
 redirects_filename = redirects_url.rsplit("/", 1)[1]
 
@@ -68,10 +69,9 @@ for url, filename in resources:
         print()
 
 
-# #############################################################################
+# %%
 # Loading the redirect files
-
-
+# --------------------------
 def index(redirects, index_map, k):
     """Find the index of an article name after redirect resolution"""
     k = redirects.get(k, k)
@@ -119,6 +119,9 @@ def get_redirects(redirects_filename):
     return redirects
 
 
+# %%
+# Computing the Adjacency matrix
+# ------------------------------
 def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     """Extract the adjacency graph as a scipy sparse matrix
 
@@ -166,6 +169,10 @@ X, redirects, index_map = get_adjacency_matrix(
 )
 names = {i: name for name, i in index_map.items()}
 
+
+# %%
+# Computing Principal Singular Vector using Randomized SVD
+# --------------------------------------------------------
 print("Computing the principal singular vectors using randomized_svd")
 t0 = time()
 U, s, V = randomized_svd(X, 5, n_iter=3)
@@ -178,6 +185,9 @@ pprint([names[i] for i in np.abs(U.T[0]).argsort()[-10:]])
 pprint([names[i] for i in np.abs(V[0]).argsort()[-10:]])
 
 
+# %%
+# Computing Centrality scores
+# ---------------------------
 def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
     """Power iteration computation of the principal eigenvector
 
