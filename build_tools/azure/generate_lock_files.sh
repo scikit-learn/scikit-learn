@@ -24,7 +24,7 @@ for platform in ${platforms}; do
     conda_lock_func ${build_name} ${platform} ${build_name}_${platform}
 done
 
-build_name=py37_conda_defaults_openblas
+build_name=py38_conda_defaults_openblas
 conda_lock_func ${build_name} linux-64
 
 # TODO: how to make sure that python 3.8 (Ubuntu 20.04 has python 3.8.10)is

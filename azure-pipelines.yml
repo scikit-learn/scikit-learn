@@ -189,15 +189,16 @@ jobs:
         COVERAGE: 'false'
       # Linux + Python 3.7 build with OpenBLAS
       py38_conda_defaults_openblas:
-        LOCK_FILE: ./build_tools/azure/py37_conda_defaults_openblas_linux-64_conda-lock.yml
+        LOCK_FILE: ./build_tools/azure/py38_conda_defaults_openblas_linux-64_conda-lock.yml
         # DISTRIB used in azure posix.yml template
         DISTRIB: 'conda'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
       # Linux environment to test the latest available dependencies.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
-        LOCK_FILE: ./build_tools/azure/pylatest_pip_openblas_pandas_conda-lock.yml
         DISTRIB: 'conda-pip-latest'
+        PYTHON_VERSION: '3.9'
+        PYTEST_VERSION: '6.2.5'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
