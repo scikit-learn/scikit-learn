@@ -58,58 +58,71 @@ def HDBSCAN_flat(
     **kwargs,
 ):
     """
-    Train a HDBSCAN clusterer by specifying n_clusters.
-    Or, modify a trained clusterer to return specific n_clusters.
+    Train a HDBSCAN clusterer by specifying `n_clusters`.
+
+    Or, modify a trained clusterer to return specific `n_clusters`.
 
     Parameters
     ----------
-    X: array-like
-        Data to be passed to HDBSCAN for training.
+    X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+            array of shape (n_samples, n_samples)
+        A feature array, or array of distances between samples if
+        `metric='precomputed'`.
 
-    n_clusters: int, default=None
-        Number of clusters to produce.
-        If None, revert to default HDBSCAN
+    n_clusters : int, default=None
+        Number of clusters to produce. If `None`, revert to default `HDBSCAN`.
 
-    cluster_selection_epsilon: float, default=0.
-        core-distance below which to stop splitting clusters.
-        This can indirectly impose n_clusters.
-        This argument is ignored if n_clusters is supplied.
+    cluster_selection_epsilon : float, default=0
+        Core-distance below which to stop splitting clusters. This can
+        indirectly impose `n_clusters`. This argument is ignored if
+        `n_clusters` is supplied.
 
-    clusterer: HDBSCAN, default=None
-        If supplied, modify this clusterer to produce n_clusters clusters.
+    clusterer : HDBSCAN, default=None
+        If supplied, modify this clusterer to produce `n_clusters` clusters.
 
-    inplace: bool, default=False
-        If 'clusterer' parameter is supplied, and inplace is True,
-            modify the previous clusterer inplace.
-            If False, return a modified copy of the previous clusterer.
+    inplace : bool, default=False
+        If 'clusterer' parameter is supplied, and `inplace=True`, modify
+        `clusterer` inplace. If `inplace=False`, return a modified copy of
+        `clusterer`.
 
-    **kwargs: keyword arguments
-        All init arguments for HDBSCAN
+    **kwargs : keyword arguments
+        All keyword arguments to pass to `HDBSCAN`.
 
     Returns
     -------
-    new_clusterer: HDBSCAN
-        New HDBSCAN instance; returned irrespective of inplace=True or False
+    new_clusterer : HDBSCAN
+        New `HDBSCAN` instance; returned irrespective of `inplace`.
 
-    Usage
-    -----
-    # Extract flat clustering from HDBSCAN's hierarchy for 7 clusters
-    clusterer = HDBSCAN_flat(X_train, n_clusters=7,
-                             min_cluster_size=12, min_samples=8)
-    labels = clusterer.labels_
-    proba = clusterer.probabilities_
-
-    # Use a previously initialized/trained HDBSCAN
-    old_clusterer = HDBSCAN(min_cluster_size=12, min_samples=8)
-    clusterer = HDBSCAN_flat(X_train, n_clusters=7,
-                             clusterer=old_clusterer, inplace=True)
-    labels = clusterer.labels_
-    proba = clusterer.probabilities_
+    Examples
+    --------
+    >>> from sklearn.cluster import HDBSCAN, HDBSCAN_flat
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.utils import shuffle
+    >>> from sklearn.preprocessing import StandardScaler
+    >>>
+    >>> X, y = make_blobs(n_samples=200, random_state=10)
+    >>> X, y = shuffle(X, y, random_state=7)
+    >>> X = StandardScaler().fit_transform(X)
+    >>>
+    >>> # Extract flat clustering from HDBSCAN's hierarchy for 7 clusters
+    >>> clusterer = HDBSCAN_flat(X, n_clusters=7,
+    ...                             min_cluster_size=12, min_samples=8)
+    >>> labels = clusterer.labels_
+    >>> proba = clusterer.probabilities_
+    >>>
+    >>> # Use a previously initialized/trained HDBSCAN
+    >>> old_clusterer = HDBSCAN(min_cluster_size=12, min_samples=8)
+    >>> clusterer = HDBSCAN_flat(X, n_clusters=7,
+    ...                             clusterer=old_clusterer, inplace=True)
+    >>> labels = clusterer.labels_
+    >>> proba = clusterer.probabilities_
 
     See Also
     ---------
-    :py:func:`hdbscan.HDBSCAN`
-    :py:func:`re_init`
+    sklearn.cluster.hdbscan.HDBSCAN: Perform HDBSCAN clustering from vector
+        array or distance matrix.
+    sklearn.cluster.hdbscan.flat.re_init: Modify PredictionData of HDBSCAN to
+        account for epsilon.
     """
     # Handle the trivial case first.
     if (n_clusters is None) and (cluster_selection_epsilon == 0.0):
@@ -222,74 +235,88 @@ def approximate_predict_flat(
     return_prediction_data=False,
 ):
     """
-    Predict the cluster label of new points at a particular flat clustering,
-        specified by n_clusters. This is a modified version of
-        hdbscan.approximate_predict to allow selection of n_clusters.
+    Predict the cluster label of new points at a particular flat clustering.
+
+    The clustering produced is specified by `n_clusters`. This is a modified
+    version of `hdbscan.approximate_predict` to allow selection of
+    `n_clusters`.
 
     Parameters
     ----------
     clusterer : HDBSCAN
-        A clustering object that has been fit to the data and
-        either had ``prediction_data=True`` set, or called the
-        ``generate_prediction_data`` method after the fact.
+        A clustering object that has been fit to the data and either had
+        `prediction_data=True` set, or called the `generate_prediction_data`
+        method after the fact.
 
     points_to_predict : array, or array-like (n_samples, n_features)
         The new data points to predict cluster labels for. They should
         have the same dimensionality as the original dataset over which
-        clusterer was fit.
+        `clusterer` was fit.
 
-    n_clusters: int, default=None
+    n_clusters : int, default=None
         The number of clusters to have in the flat clustering
             (over the training data, not points_to_predict)
         Ignored when prediction_data is supplied.
 
-    cluster_selection_epsilon: float, default=None
-        core-distance below which to stop splitting clusters.
-        This can indirectly impose n_clusters.
-        This argument is ignored if n_clusters is supplied.
+    cluster_selection_epsilon : float, default=None
+        Core-distance below which to stop splitting clusters. This can
+        indirectly impose `n_clusters`. This argument is ignored if
+        `n_clusters` is supplied.
 
-    prediction_data: PredictionData, default=None
+    prediction_data : PredictionData, default=None
         If supplied, use this to predict clusters for points_to_predict.
         This allows predicting on multiple datasets without corrupting
-            prediction data associated with clusterer.
+        prediction data associated with `clusterer`.
 
-        If neither n_clusters, nor prediction_data are supplied,
-            then the prediction_data associated with clusterer is used.
+        If neither `n_clusters`, nor `prediction_data` are supplied,
+            then the `prediction_data` associated with `clusterer` is used.
 
-    return_prediction_data: bool, default=False
-        If True, return prediction_data along with labels and proba.
+    return_prediction_data : bool, default=False
+        If True, return `prediction_data` along with labels and proba.
 
     Returns
     -------
     labels : array (n_samples,)
-        The predicted labels of the ``points_to_predict``
+        The predicted labels of the ``points_to_predict``.
 
     probabilities : array (n_samples,)
-        The soft cluster scores for each of the ``points_to_predict``
+        The soft cluster scores for each of the ``points_to_predict``.
 
-    prediction_data: PredictionData, optional
-        prediction_data used to predict.
-        Returned if return_prediciton_data is set to True.
+    prediction_data : PredictionData, optional
+        The `prediction_data` used to predict. Returned if
+        `return_prediciton_data=True`.
 
-
-    Usage
-    -----
-    # From a fitted HDBSCAN model, predict for n_clusters=5
-    labels, proba = approximate_predict_flat(
-                        clusterer, X_predict, n_clusters=5)
-
-    # Store prediciton data for later use.
-    labels, proba, pred_data = approximate_predict_flat(
-                                    clusterer, X_predict, n_clusters=5,
-                                    return_prediction_data=True)
-    # and use this prediction data to predict on new points
-    labels1, proba1 = approximate_predict_flat(
-                                    clusterer, X_pred1,
-                                    prediction_data=pred_data)
-
+    Examples
+    --------
+    >>> from sklearn.cluster import HDBSCAN, approximate_predict_flat
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.utils import shuffle
+    >>> from sklearn.preprocessing import StandardScaler
+    >>>
+    >>> X, y = make_blobs(n_samples=200, random_state=10)
+    >>> X, y = shuffle(X, y, random_state=7)
+    >>> X = StandardScaler().fit_transform(X)
+    >>>
+    >>> hdb = HDBSCAN(prediction_data=True)
+    >>> hdb.fit(X)
+    HDBSCAN(prediction_data=True)
+    >>> # From a fitted HDBSCAN model, predict for n_clusters=5
+    >>> labels, proba = approximate_predict_flat(
+    ...                     hdb, X, n_clusters=5)
+    >>>
+    >>> # Store prediciton data for later use.
+    >>> labels, proba, pred_data = approximate_predict_flat(
+    ...                             hdb, X, n_clusters=5,
+    ...                             return_prediction_data=True)
+    >>>
+    >>> # Use this prediction data to predict on new points
+    >>> labels1, proba1 = approximate_predict_flat(
+    ...                             hdb, X,
+    ...                             prediction_data=pred_data)
     See Also
     ---------
-    :py:func:`hdbscan.prediction.approximate_predict`
+    sklearn.cluster.hdbscan.prediction.approximate_predict : Predict the
+        cluster label of new points.
     """
     # Get number of fitted clusters for later use.
     n_clusters_fit = np.sum(np.unique(clusterer.labels_) >= 0)
@@ -399,39 +426,36 @@ def membership_vector_flat(
     cluster_selection_epsilon=0.0,
 ):
     """
-    (Adaptation of hdbscan's membership_vector for n_clusters, epsilon)
-    Predict soft cluster membership probabilities;
-        a vector for each point in ``points_to_predict`` that gives
-        a probability that the given point is a member of a cluster
-        for each of the selected clusters of the ``clusterer``.
+    Predict soft cluster membership probabilities.
+
+    Produces a vector for each point in ``points_to_predict`` that gives a
+    probability that the given point is a member of a cluster for each of the
+    selected clusters of the ``clusterer``.
 
     Parameters
     ----------
-    clusterer: HDBSCAN
-        A clustering object that has been fit to the data and
-        either had ``prediction_data=True`` set, or called the
-        ``generate_prediction_data`` method after the fact.
+    clusterer : HDBSCAN
+        A clustering object that has been fit to the data and either had
+        `prediction_data=True` set, or called the `generate_prediction_data`
+        method after the fact.
 
-    points_to_predict: array, or array-like (n_samples, n_features)
+    points_to_predict : array, or array-like (n_samples, n_features)
         The new data points to predict cluster labels for. They should
         have the same dimensionality as the original dataset over which
         clusterer was fit.
 
-    prediction_data: PredictionData, default=None
-        Prediction data associated with HDBSCAN for some flat clustering
+    prediction_data : PredictionData, default=None
+        Prediction data associated with HDBSCAN for some flat clustering.
 
-    n_clusters: int, default=None
+    n_clusters : int, default=None
         Number of clusters over which to compute membership probabilities.
         These clusters are obtained as a flat clustering at some
-            cluster_selection_epsilon.
+        `cluster_selection_epsilon`.
 
-    cluster_selection_epsilon: float, default=0.
-        core-distance below which to stop splitting clusters.
-        This can indirectly impose n_clusters.
-        This argument is ignored if n_clusters is supplied.
-
-    Note: If neither n_clusters nor cluster_selection_epsilon are supplied,
-        the clusterer's original clustering is used.
+    cluster_selection_epsilon : float, default=0
+        Core-distance below which to stop splitting clusters. This can
+        indirectly impose `n_clusters`. This argument is ignored if
+        `n_clusters` is supplied.
 
     Returns
     -------
@@ -441,8 +465,18 @@ def membership_vector_flat(
 
     See Also
     --------
-    :py:func:`hdbscan.predict.membership_vector`
-    :py:func:`hdbscan.predict.all_points_membership_vectors`
+    sklearn.cluster.hdbscan.prediction.membership_vectors : Predict soft cluster
+        membership.
+    sklearn.cluster.hdbscan.prediction.all_points_membership_vectors : Predict
+        soft cluster membership vectors for all points in the original dataset
+        the clusterer was trained on.
+
+    Notes
+    -----
+    This function is an adaptation of hdbscan's membership_vector for
+    `n_clusters`, `epsilon`. If neither `n_clusters` nor
+    `cluster_selection_epsilon` are supplied, the `clusterer`'s original
+    clustering is used.
     """
     points_to_predict = points_to_predict.astype(np.float64)
     # Extract condensed tree for later use
@@ -555,47 +589,54 @@ def all_points_membership_vectors_flat(
     clusterer, prediction_data=None, n_clusters=None, cluster_selection_epsilon=None
 ):
     """
-    (Adaptation of hdbscan's all_points_membership_vector
-        for n_clusters, epsilon)
-    Predict soft cluster membership vectors for all points in the
-    original dataset the clusterer was trained on. This function is more
+    Predict soft cluster membership vectors for all points in the dataset.
+
+    This function predicts soft cluster membership vectors for all the points
+    in the dataset that the clusterer was trained on. This function is more
     efficient by making use of the fact that all points are already in the
     condensed tree, and processing in bulk.
 
     Parameters
     ----------
     clusterer : HDBSCAN
-         A clustering object that has been fit to the data and
-        either had ``prediction_data=True`` set, or called the
-        ``generate_prediction_data`` method after the fact.
-        This method does not work if the clusterer was trained
-        with ``metric='precomputed'``.
+        A clustering object that has been fit to the data and either had
+        `prediction_data=True` set, or called the `generate_prediction_data`
+        method after the fact. This method does not work if the clusterer was
+        trained with `metric='precomputed'`.
 
-    prediction_data: PredictionData, default=None
-        Prediction data associated with HDBSCAN for some flat clustering
+    prediction_data : PredictionData, default=None
+        Prediction data associated with HDBSCAN for some flat clustering.
 
-    n_clusters: int, optional, default=None
+    n_clusters : int, default=None
         Number of clusters over which to compute membership probabilities.
         These clusters are obtained as a flat clustering at some
-            cluster_selection_epsilon.
+        `cluster_selection_epsilon`.
 
-    cluster_selection_epsilon: float, optional, default=None
-        core-distance below which to stop splitting clusters.
-        This can indirectly impose n_clusters.
-        This argument is ignored if n_clusters is supplied.
-
-    Note: If neither n_clusters nor cluster_selection_epsilon are supplied,
-        the clusterer's original clustering is used.
+    cluster_selection_epsilon : float, default=0
+        Core-distance below which to stop splitting clusters. This can
+        indirectly impose `n_clusters`. This argument is ignored if
+        `n_clusters` is supplied.
 
     Returns
     -------
     membership_vectors : array (n_samples, n_clusters)
-        The probability that point ``i`` of the original dataset is a member of
-        cluster ``j`` is in ``membership_vectors[i, j]``.
+        The probability that point `i` of the original dataset is a member of
+        cluster `j` is in `membership_vectors[i, j]`.
+
     See Also
     --------
-    :py:func:`hdbscan.prediction.all_points_membership_vectors`
-    :py:func:`hdbscan.prediction.membership_vector`
+    sklearn.cluster.hdbscan.prediction.all_points_membership_vectors : Predict
+        soft cluster membership vectors for all points in the original dataset
+        the clusterer was trained on.
+    sklearn.cluster.hdbscan.prediction.membership_vectors : Predict soft cluster
+        membership.
+
+    Notes
+    -----
+    This function is an adaptation of hdbscan's `all_points_membership_vector`
+    for `n_clusters`, `epsilon`. If neither `n_clusters` nor
+    `cluster_selection_epsilon` are supplied, the `clusterer`'s original
+    clustering is used.
     """
     # Extract condensed tree for later use
     condensed_tree = clusterer.condensed_tree_
