@@ -1477,13 +1477,13 @@ def check_scalar(
         operator.lt if include_boundaries in ("left", "both") else operator.le
     )
     if min_val is not None and comparison_operator(x, min_val):
-        raise ValueError(f"{name} == {x}, must be in the range {boundary}")
+        raise ValueError(f"{name} == {x}, must be in the range {boundary}.")
 
     comparison_operator = (
         operator.gt if include_boundaries in ("right", "both") else operator.ge
     )
     if max_val is not None and comparison_operator(x, max_val):
-        raise ValueError(f"{name} == {x}, must be in the range {boundary}")
+        raise ValueError(f"{name} == {x}, must be in the range {boundary}.")
 
     return x
 
