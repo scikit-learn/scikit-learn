@@ -85,7 +85,7 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
 
-
+# %%
 # Utility function to move the midpoint of a colormap to be around
 # the values of interest.
 
@@ -100,11 +100,11 @@ class MidpointNormalize(Normalize):
         return np.ma.masked_array(np.interp(value, x, y))
 
 
-# #############################################################################
+# %%
 # Load and prepare data set
+# ---------------------------------------------------
 #
 # dataset for grid search
-
 
 iris = load_iris()
 X = iris.data
@@ -128,8 +128,9 @@ scaler = StandardScaler()
 X = scaler.fit_transform(X)
 X_2d = scaler.fit_transform(X_2d)
 
-# #############################################################################
+# %%
 # Train classifiers
+# ---------------------------------------------------
 #
 # For an initial search, a logarithmic grid with basis
 # 10 is often helpful. Using a basis of 2, a finer
@@ -159,8 +160,9 @@ for C in C_2d_range:
         clf.fit(X_2d, y_2d)
         classifiers.append((C, gamma, clf))
 
-# #############################################################################
+# ##
 # Visualization
+# ---------------------------------------------------
 #
 # draw visualization of parameter effects
 
