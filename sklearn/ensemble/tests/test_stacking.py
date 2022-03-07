@@ -679,6 +679,7 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
             StackingClassifier(
                 estimators=[
                     ("lr", LogisticRegression(random_state=0)),
+                    ("other", "drop"),
                     ("svm", LinearSVC(random_state=0)),
                 ]
             ),
@@ -694,7 +695,6 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("other", "drop"),
                     ("svm", LinearSVR(random_state=0)),
                 ]
             ),
