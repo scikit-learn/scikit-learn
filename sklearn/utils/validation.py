@@ -1459,23 +1459,31 @@ def check_scalar(
             "is inconsistent."
         )
 
+    boundary = (
+        (
+            "(-inf"
+            if min_val is None
+            else f"{'[' if include_boundaries in ('left', 'both') else '('}{min_val}"
+        )
+        + ", "
+        + (
+            "inf)"
+            if max_val is None
+            else f"{max_val}{']' if include_boundaries in ('right', 'both') else ')'}"
+        )
+    )
+
     comparison_operator = (
         operator.lt if include_boundaries in ("left", "both") else operator.le
     )
     if min_val is not None and comparison_operator(x, min_val):
-        raise ValueError(
-            f"{name} == {x}, must be"
-            f" {'>=' if include_boundaries in ('left', 'both') else '>'} {min_val}."
-        )
+        raise ValueError(f"{name} == {x}, must be in the range {boundary}")
 
     comparison_operator = (
         operator.gt if include_boundaries in ("right", "both") else operator.ge
     )
     if max_val is not None and comparison_operator(x, max_val):
-        raise ValueError(
-            f"{name} == {x}, must be"
-            f" {'<=' if include_boundaries in ('right', 'both') else '<'} {max_val}."
-        )
+        raise ValueError(f"{name} == {x}, must be in the range {boundary}")
 
     return x
 
