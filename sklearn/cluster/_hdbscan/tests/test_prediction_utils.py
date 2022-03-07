@@ -7,6 +7,6 @@ from sklearn.cluster._hdbscan._prediction_utils import safe_always_positive_divi
 def test_safe_always_positive_division(denominator):
     numerator = 1
     # Given negative, zero and positive denominator and positive numerator
-    value = safe_always_positive_division(numerator, 0)
+    value = safe_always_positive_division(numerator, denominator)
     # Make sure safe division is always positive and doesn't raise ZeroDivision error
     assert value >= 0

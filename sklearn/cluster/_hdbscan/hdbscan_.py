@@ -35,7 +35,7 @@ from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
 from .dist_metrics import DistanceMetric
 
 from ._trees import CondensedTree, SingleLinkageTree, MinimumSpanningTree
-from .prediction import PredictionData
+from ._prediction import PredictionData
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics + ["cosine", "arccos"]
 

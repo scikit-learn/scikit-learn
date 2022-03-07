@@ -33,7 +33,7 @@ import numpy as np
 from ._hdbscan_tree import compute_stability, get_cluster_tree_leaves
 from .hdbscan_ import HDBSCAN, _tree_to_labels
 from ._trees import _bfs_from_cluster_tree
-from .prediction import (
+from ._prediction import (
     PredictionData,
     _find_cluster_and_probability,
     _find_neighbor_and_lambda,
