@@ -149,7 +149,7 @@ def validate_param(param_name, param_val, expected_type_and_vals):
     if not has_a_valid_type:
         valid_types = [t for t, *_ in expected_type_and_vals]
         raise TypeError(
-            f"{param_name} must be {_format_valid_types_str(valid_types)}."
+            f"{param_name} must be {_format_valid_types_str(valid_types)}. "
             f"Got {type(param_val).__qualname__} instead."
         )
 
