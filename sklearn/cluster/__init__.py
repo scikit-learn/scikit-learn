@@ -31,7 +31,7 @@ from ._hdbscan.prediction import (
     all_points_membership_vectors,
     approximate_predict_scores,
 )
-from ._hdbscan.flat import (
+from ._hdbscan._flat import (
     HDBSCAN_flat,
     approximate_predict_flat,
     membership_vector_flat,

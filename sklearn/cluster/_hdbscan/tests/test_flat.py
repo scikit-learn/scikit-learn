@@ -4,8 +4,9 @@ Simple tests for flat clustering over HDBSCAN hierarchy
 import warnings
 import numpy as np
 
-from sklearn.cluster import HDBSCAN, approximate_predict
-from sklearn.cluster._hdbscan.flat import (
+from sklearn.cluster import (
+    HDBSCAN,
+    approximate_predict,
     HDBSCAN_flat,
     approximate_predict_flat,
     membership_vector_flat,
