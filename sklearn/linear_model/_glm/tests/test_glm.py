@@ -218,7 +218,6 @@ def test_glm_scalar_argument(Estimator, params, err_type, err_msg):
             "X width is 2 while alpha is of length 3",
         ),
         ({"alpha": [-2, 2]}, ValueError, "alpha at index 0 == -2, must be >= 0.0"),
-        ({"alpha": [0.0, 0.0]}, ValueError, "X must be full rank when alpha = 0."),
     ],
 )
 def test_glm_alpha_array(Estimator, params, err_type, err_msg):

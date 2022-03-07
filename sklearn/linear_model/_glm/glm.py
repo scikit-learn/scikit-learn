@@ -298,9 +298,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     family.__class__.__name__
                 )
             )
-        # check that matrix is full rank when alpha = 0.
-        if np.max(self.alpha) == 0.0 and np.linalg.matrix_rank(X) < X.shape[1]:
-            raise ValueError("X must be full rank when alpha = 0.")
+        # TODO: if alpha=0 check that X is not rank deficient
 
         # rescaling of sample_weight
         #
