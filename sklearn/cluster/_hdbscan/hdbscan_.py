@@ -221,7 +221,6 @@ def _hdbscan_prims_kdtree(
     min_samples=5,
     alpha=1.0,
     metric="minkowski",
-    p=2,
     leaf_size=40,
     gen_min_span_tree=False,
     **kwargs,
@@ -263,7 +262,6 @@ def _hdbscan_prims_balltree(
     min_samples=5,
     alpha=1.0,
     metric="minkowski",
-    p=2,
     leaf_size=40,
     gen_min_span_tree=False,
     **kwargs,
@@ -302,7 +300,6 @@ def _hdbscan_boruvka_kdtree(
     min_samples=5,
     alpha=1.0,
     metric="minkowski",
-    p=2,
     leaf_size=40,
     approx_min_span_tree=True,
     gen_min_span_tree=False,
@@ -354,7 +351,6 @@ def _hdbscan_boruvka_balltree(
     min_samples=5,
     alpha=1.0,
     metric="minkowski",
-    p=2,
     leaf_size=40,
     approx_min_span_tree=True,
     gen_min_span_tree=False,
@@ -514,7 +510,6 @@ def hdbscan(
     cluster_selection_epsilon=0.0,
     max_cluster_size=0,
     metric="minkowski",
-    p=2,
     leaf_size=40,
     algorithm="best",
     memory=None,
@@ -575,9 +570,6 @@ def hdbscan(
 
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-
-    p : int, default=2
-        Value of `p` if using the minkowski metric.
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest
@@ -708,12 +700,6 @@ def hdbscan(
     if leaf_size < 1:
         raise ValueError("Leaf size must be greater than 0!")
 
-    if metric == "minkowski":
-        if p is None:
-            raise TypeError("Minkowski metric given but no p value supplied!")
-        if p < 0:
-            raise ValueError("Minkowski metric with negative p value is not defined!")
-
     if match_reference_implementation:
         min_samples = min_samples - 1
         min_cluster_size = min_cluster_size + 1
@@ -753,7 +739,6 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                p,
                 leaf_size,
                 gen_min_span_tree,
                 **metric_params,
@@ -768,7 +753,6 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                p,
                 leaf_size,
                 gen_min_span_tree,
                 **metric_params,
@@ -783,13 +767,12 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                p,
                 leaf_size,
                 gen_min_span_tree,
                 **metric_params,
             )
         elif algorithm == "boruvka_kdtree":
-            if metric not in BallTree.valid_metrics:
+            if metric not in KDTree.valid_metrics:
                 raise ValueError("Cannot use Boruvka with KDTree for this metric!")
             (single_linkage_tree, result_min_span_tree) = memory.cache(
                 _hdbscan_boruvka_kdtree
@@ -798,7 +781,6 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                p,
                 leaf_size,
                 approx_min_span_tree,
                 gen_min_span_tree,
@@ -821,7 +803,6 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                p,
                 leaf_size,
                 approx_min_span_tree,
                 gen_min_span_tree,
@@ -841,7 +822,6 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                p,
                 leaf_size,
                 gen_min_span_tree,
                 **metric_params,
@@ -857,7 +837,6 @@ def hdbscan(
                     min_samples,
                     alpha,
                     metric,
-                    p,
                     leaf_size,
                     gen_min_span_tree,
                     **metric_params,
@@ -870,7 +849,6 @@ def hdbscan(
                     min_samples,
                     alpha,
                     metric,
-                    p,
                     leaf_size,
                     approx_min_span_tree,
                     gen_min_span_tree,
@@ -888,7 +866,6 @@ def hdbscan(
                     min_samples,
                     alpha,
                     metric,
-                    p,
                     leaf_size,
                     gen_min_span_tree,
                     **metric_params,
@@ -901,7 +878,6 @@ def hdbscan(
                     min_samples,
                     alpha,
                     metric,
-                    p,
                     leaf_size,
                     approx_min_span_tree,
                     gen_min_span_tree,
@@ -969,9 +945,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     alpha : float, default=1.0
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
-
-    p : int, default=None
-        Value of `p` if using the minkowski metric.
 
     algorithm : str, default='best'
         Exactly which algorithm to use; hdbscan has variants specialised
@@ -1169,7 +1142,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         max_cluster_size=0,
         metric="euclidean",
         alpha=1.0,
-        p=None,
         algorithm="best",
         leaf_size=40,
         memory=Memory(cachedir=None, verbose=0),
@@ -1188,7 +1160,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         self.max_cluster_size = max_cluster_size
         self.cluster_selection_epsilon = cluster_selection_epsilon
         self.metric = metric
-        self.p = p
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.memory = memory

@@ -6,7 +6,6 @@ import numpy as np
 from scipy.spatial import distance
 from scipy import sparse
 from scipy import stats
-from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_array_almost_equal,
@@ -26,7 +25,8 @@ from sklearn.datasets import make_blobs
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler
 from scipy.stats import mode
-
+from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.neighbors import KDTree, BallTree
 from tempfile import mkdtemp
 import pytest
 
@@ -89,7 +89,7 @@ def test_hdbscan_distance_matrix():
     D = distance.squareform(distance.pdist(X))
     D /= np.max(D)
 
-    labels, p, persist, ctree, ltree, mtree = hdbscan(D, metric="precomputed")
+    labels = hdbscan(D, metric="precomputed")[0]
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)  # ignore noise
     assert n_clusters_1 == n_clusters
@@ -112,7 +112,7 @@ def test_hdbscan_sparse_distance_matrix():
     D = sparse.csr_matrix(D)
     D.eliminate_zeros()
 
-    labels, p, persist, ctree, ltree, mtree = hdbscan(D, metric="precomputed")
+    labels = hdbscan(D, metric="precomputed")[0]
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)  # ignore noise
     assert n_clusters_1 == n_clusters
@@ -123,7 +123,7 @@ def test_hdbscan_sparse_distance_matrix():
 
 
 def test_hdbscan_feature_vector():
-    labels, p, persist, ctree, ltree, mtree = hdbscan(X)
+    labels = hdbscan(X)[0]
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -135,66 +135,55 @@ def test_hdbscan_feature_vector():
     assert validity >= 0.4
 
 
-def test_hdbscan_prims_kdtree():
-    labels, p, persist, ctree, ltree, mtree = hdbscan(X, algorithm="prims_kdtree")
+@pytest.mark.parametrize(
+    "algo",
+    [
+        "prims_kdtree",
+        "prims_balltree",
+        "boruvka_kdtree",
+        "boruvka_balltree",
+        "generic",
+        "best",
+    ],
+)
+@pytest.mark.parametrize("metric", _VALID_METRICS)
+def test_hdbscan_algorithms(algo, metric):
+    labels = hdbscan(X, algorithm=algo)[0]
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
-    labels = HDBSCAN(algorithm="prims_kdtree", gen_min_span_tree=True).fit(X).labels_
+    labels = HDBSCAN(algorithm=algo, gen_min_span_tree=True).fit(X).labels_
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 
-    assert_raises(ValueError, hdbscan, X, algorithm="prims_kdtree", metric="russelrao")
-
-
-def test_hdbscan_prims_balltree():
-    labels, p, persist, ctree, ltree, mtree = hdbscan(X, algorithm="prims_balltree")
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert n_clusters_1 == n_clusters
-
-    labels = HDBSCAN(algorithm="prims_balltree", gen_min_span_tree=True).fit(X).labels_
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert n_clusters_2 == n_clusters
-
-    assert_raises(ValueError, hdbscan, X, algorithm="prims_balltree", metric="cosine")
-
-
-def test_hdbscan_boruvka_kdtree():
-    labels, p, persist, ctree, ltree, mtree = hdbscan(X, algorithm="boruvka_kdtree")
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert n_clusters_1 == n_clusters
-
-    labels = HDBSCAN(algorithm="boruvka_kdtree", gen_min_span_tree=True).fit(X).labels_
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert n_clusters_2 == n_clusters
-
-    assert_raises(
-        ValueError, hdbscan, X, algorithm="boruvka_kdtree", metric="russelrao"
-    )
-
-
-def test_hdbscan_boruvka_balltree():
-    labels, p, persist, ctree, ltree, mtree = hdbscan(X, algorithm="boruvka_balltree")
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert n_clusters_1 == n_clusters
-
-    labels = (
-        HDBSCAN(algorithm="boruvka_balltree", gen_min_span_tree=True).fit(X).labels_
-    )
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert n_clusters_2 == n_clusters
-
-    assert_raises(ValueError, hdbscan, X, algorithm="boruvka_balltree", metric="cosine")
-
-
-def test_hdbscan_generic():
-    labels, p, persist, ctree, ltree, mtree = hdbscan(X, algorithm="generic")
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)
-    assert n_clusters_1 == n_clusters
-
-    labels = HDBSCAN(algorithm="generic", gen_min_span_tree=True).fit(X).labels_
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
-    assert n_clusters_2 == n_clusters
+    ALGOS_TREES = {
+        "prims_kdtree": KDTree,
+        "prims_balltree": BallTree,
+        "boruvka_kdtree": KDTree,
+        "boruvka_balltree": BallTree,
+    }
+    METRIC_PARAMS = {
+        "mahalanobis": {"V": np.eye(X.shape[1])},
+        "seuclidean": {"V": np.ones(X.shape[1])},
+        "minkowski": {"p": 2},
+        "wminkowski": {"p": 2, "w": np.ones(X.shape[1])},
+    }
+    if algo not in ("best", "generic"):
+        if metric not in ALGOS_TREES[algo].valid_metrics:
+            with pytest.raises(ValueError):
+                hdbscan(
+                    X,
+                    algorithm=algo,
+                    metric=metric,
+                    metric_params=METRIC_PARAMS.get(metric, None),
+                )
+        else:
+            hdbscan(
+                X,
+                algorithm=algo,
+                metric=metric,
+                metric_params=METRIC_PARAMS.get(metric, None),
+            )
 
 
 def test_hdbscan_dbscan_clustering():
@@ -242,7 +231,7 @@ def test_hdbscan_best_balltree_metric():
 
 
 def test_hdbscan_no_clusters():
-    labels, p, persist, ctree, ltree, mtree = hdbscan(X, min_cluster_size=len(X) + 1)
+    labels = hdbscan(X, min_cluster_size=len(X) + 1)[0]
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == 0
 
@@ -253,9 +242,7 @@ def test_hdbscan_no_clusters():
 
 def test_hdbscan_min_cluster_size():
     for min_cluster_size in range(2, len(X) + 1, 1):
-        labels, p, persist, ctree, ltree, mtree = hdbscan(
-            X, min_cluster_size=min_cluster_size
-        )
+        labels = hdbscan(X, min_cluster_size=min_cluster_size)[0]
         true_labels = [label for label in labels if label != -1]
         if len(true_labels) != 0:
             assert np.min(np.bincount(true_labels)) >= min_cluster_size
@@ -267,10 +254,9 @@ def test_hdbscan_min_cluster_size():
 
 
 def test_hdbscan_callable_metric():
-    # metric is the function reference, not the string key.
     metric = distance.euclidean
 
-    labels, p, persist, ctree, ltree, mtree = hdbscan(X, metric=metric)
+    labels = hdbscan(X, metric=metric)[0]
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -281,45 +267,23 @@ def test_hdbscan_callable_metric():
 
 def test_hdbscan_input_lists():
     X = [[1.0, 2.0], [3.0, 4.0]]
-    HDBSCAN().fit(X)  # must not raise exception
+    HDBSCAN().fit(X)
 
 
-def test_hdbscan_boruvka_kdtree_matches():
+@pytest.mark.parametrize("tree", ["kdtree", "balltree"])
+def test_hdbscan_boruvka_matches(tree):
 
     data = generate_noisy_data()
 
-    labels_prims, p, persist, ctree, ltree, mtree = hdbscan(data, algorithm="generic")
-    labels_boruvka, p, persist, ctree, ltree, mtree = hdbscan(
-        data, algorithm="boruvka_kdtree"
-    )
+    labels_prims = hdbscan(data, algorithm="generic")[0]
+    labels_boruvka = hdbscan(data, algorithm=f"boruvka_{tree}")[0]
 
     num_mismatches = homogeneity(labels_prims, labels_boruvka)
 
     assert (num_mismatches / float(data.shape[0])) < 0.15
 
     labels_prims = HDBSCAN(algorithm="generic").fit_predict(data)
-    labels_boruvka = HDBSCAN(algorithm="boruvka_kdtree").fit_predict(data)
-
-    num_mismatches = homogeneity(labels_prims, labels_boruvka)
-
-    assert (num_mismatches / float(data.shape[0])) < 0.15
-
-
-def test_hdbscan_boruvka_balltree_matches():
-
-    data = generate_noisy_data()
-
-    labels_prims, p, persist, ctree, ltree, mtree = hdbscan(data, algorithm="generic")
-    labels_boruvka, p, persist, ctree, ltree, mtree = hdbscan(
-        data, algorithm="boruvka_balltree"
-    )
-
-    num_mismatches = homogeneity(labels_prims, labels_boruvka)
-
-    assert (num_mismatches / float(data.shape[0])) < 0.15
-
-    labels_prims = HDBSCAN(algorithm="generic").fit_predict(data)
-    labels_boruvka = HDBSCAN(algorithm="boruvka_balltree").fit_predict(data)
+    labels_boruvka = HDBSCAN(algorithm=f"boruvka_{tree}").fit_predict(data)
 
     num_mismatches = homogeneity(labels_prims, labels_boruvka)
 
@@ -341,44 +305,13 @@ def test_hdbscan_outliers():
     assert scores is not None
 
 
-# def test_hdbscan_unavailable_attributes():
-#     clusterer = HDBSCAN(gen_min_span_tree=False)
-#     with warnings.catch_warnings(record=True) as w:
-#         tree = clusterer.condensed_tree_
-#         assert len(w) > 0
-#         assert tree is None
-#     with warnings.catch_warnings(record=True) as w:
-#         tree = clusterer.single_linkage_tree_
-#         assert len(w) > 0
-#         assert tree is None
-#     with warnings.catch_warnings(record=True) as w:
-#         scores = clusterer.outlier_scores_
-#         assert len(w) > 0
-#         assert scores is None
-#     with warnings.catch_warnings(record=True) as w:
-#         tree = clusterer.minimum_spanning_tree_
-#         assert len(w) > 0
-#         assert tree is None
-
-
-# def test_hdbscan_min_span_tree_availability():
-#     clusterer = HDBSCAN().fit(X)
-#     tree = clusterer.minimum_spanning_tree_
-#     assert tree is None
-#     D = distance.squareform(distance.pdist(X))
-#     D /= np.max(D)
-#     HDBSCAN(metric='precomputed').fit(D)
-#     tree = clusterer.minimum_spanning_tree_
-#     assert tree is None
-
-
 def test_hdbscan_approximate_predict():
     clusterer = HDBSCAN(prediction_data=True).fit(X)
-    cluster, prob = approximate_predict(clusterer, np.array([[-1.5, -1.0]]))
+    cluster, _ = approximate_predict(clusterer, np.array([[-1.5, -1.0]]))
     assert cluster == 2
-    cluster, prob = approximate_predict(clusterer, np.array([[1.5, -1.0]]))
+    cluster, _ = approximate_predict(clusterer, np.array([[1.5, -1.0]]))
     assert cluster == 1
-    cluster, prob = approximate_predict(clusterer, np.array([[0.0, 0.0]]))
+    cluster, _ = approximate_predict(clusterer, np.array([[0.0, 0.0]]))
     assert cluster == -1
 
 
@@ -403,32 +336,6 @@ def test_hdbscan_approximate_predict_score():
     assert scores.max() <= 1
 
 
-# def test_hdbscan_membership_vector():
-#     clusterer = HDBSCAN(prediction_data=True).fit(X)
-#     vector = membership_vector(clusterer, np.array([[-1.5, -1.0]]))
-#     assert_array_almost_equal(
-#         vector,
-#         np.array([[ 0.05705305,  0.05974177,  0.12228153]]))
-#     vector = membership_vector(clusterer, np.array([[1.5, -1.0]]))
-#     assert_array_almost_equal(
-#         vector,
-#         np.array([[ 0.09462176,  0.32061556,  0.10112905]]))
-#     vector = membership_vector(clusterer, np.array([[0.0, 0.0]]))
-#     assert_array_almost_equal(
-#         vector,
-#         np.array([[ 0.03545607,  0.03363318,  0.04643177]]))
-#
-# def test_hdbscan_all_points_membership_vectors():
-#     clusterer = HDBSCAN(prediction_data=True).fit(X)
-#     vects = all_points_membership_vectors(clusterer)
-#     assert_array_almost_equal(vects[0], np.array([7.86400992e-002,
-#                                                    2.52734246e-001,
-#                                                    8.38299608e-002]))
-#     assert_array_almost_equal(vects[-1], np.array([8.09055344e-001,
-#                                                    8.35882503e-002,
-#                                                    1.07356406e-001]))
-
-
 def test_hdbscan_all_points_membership_vectors():
     clusterer = HDBSCAN(prediction_data=True, min_cluster_size=200).fit(X)
     vects = all_points_membership_vectors(clusterer)
@@ -443,16 +350,6 @@ def test_hdbscan_badargs():
     assert_raises(ValueError, hdbscan, X, min_samples=-1)
     assert_raises(ValueError, hdbscan, X, metric="imperial")
     assert_raises(ValueError, hdbscan, X, metric=None)
-    assert_raises(ValueError, hdbscan, X, metric="minkowski", p=-1)
-    assert_raises(
-        ValueError, hdbscan, X, metric="minkowski", p=-1, algorithm="prims_kdtree"
-    )
-    assert_raises(
-        ValueError, hdbscan, X, metric="minkowski", p=-1, algorithm="prims_balltree"
-    )
-    assert_raises(
-        ValueError, hdbscan, X, metric="minkowski", p=-1, algorithm="boruvka_balltree"
-    )
     assert_raises(
         ValueError, hdbscan, X, metric="precomputed", algorithm="boruvka_kdtree"
     )
@@ -493,7 +390,7 @@ def test_hdbscan_caching():
 
 def test_hdbscan_centroids_medoids():
     centers = [(0.0, 0.0), (3.0, 3.0)]
-    H, y = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
+    H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
     clusterer = HDBSCAN().fit(H)
 
     for idx, center in enumerate(centers):
@@ -535,17 +432,3 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
     assert counts[unique_labels == -1] == 2
-
-
-# Disable for now -- need to refactor to meet newer standards
-@pytest.mark.skip(reason="need to refactor to meet newer standards")
-def test_hdbscan_is_sklearn_estimator():
-    check_estimator(HDBSCAN)
-
-
-# Probably not applicable now #
-# def test_dbscan_sparse():
-# def test_dbscan_balltree():
-# def test_pickle():
-# def test_dbscan_core_samples_toy():
-# def test_boundaries():
