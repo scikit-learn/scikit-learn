@@ -265,13 +265,17 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         Parameters
         ----------
         input_features : array-like of str or None, default=None
-            Input features.
+            Input features. The input feature names are only used when `passthrough` is
+            `True`.
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
               then names are generated: `[x0, x1, ..., x(n_features_in_ - 1)]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
+
+            If `passthrough` is `False`, then only the names of `estimators` are used
+            to generate the output feature names.
 
         Returns
         -------
