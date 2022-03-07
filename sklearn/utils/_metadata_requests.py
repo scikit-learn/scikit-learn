@@ -562,6 +562,9 @@ class MetadataRouter:
 
     def __init__(self, owner):
         self._route_mappings = dict()
+        # `_self` is used if the router is also a consumer. _self, (added using
+        # `add_self()`) is treated differently from the other objects which are
+        # stored in _route_mappings.
         self._self = None
         self.owner = owner
 
@@ -570,7 +573,12 @@ class MetadataRouter:
 
         This method is used if the router is also a consumer, and hence the
         router itself needs to be included in the routing. The passed object
-        can be an estimator or a :class:``~utils.metadata_requests.MetadataRequest``.
+        can be an estimator or a
+        :class:``~utils.metadata_requests.MetadataRequest``.
+
+        A router should add itself using this method instead of `add` since it
+        should be treated differently than the other objects to which metadata
+        is routed by the router.
 
         Parameters
         ----------
@@ -590,8 +598,8 @@ class MetadataRouter:
             self._self = deepcopy(obj._get_metadata_request())
         else:
             raise ValueError(
-                "Given object is neither a `MetadataRequest` nor does it implement the"
-                " require API. Inheriting from `BaseEstimator` implements the required"
+                "Given `obj` is neither a `MetadataRequest` nor does it implement the"
+                " required API. Inheriting from `BaseEstimator` implements the required"
                 " API."
             )
         return self
