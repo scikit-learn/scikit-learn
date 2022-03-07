@@ -66,3 +66,6 @@ code-analysis:
 
 flake8-diff:
 	git diff upstream/main -u -- "*.py" | flake8 --diff
+
+build-dev:
+	pip install --verbose --no-build-isolation --editable .
