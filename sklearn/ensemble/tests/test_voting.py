@@ -666,7 +666,7 @@ def test_get_features_names_out_regressor():
     ],
 )
 def test_get_features_names_out_classifier(kwargs, expected_names):
-    """Check that get_feature_names_out for differnet settings."""
+    """Check get_feature_names_out for different settings."""
     X = [[1, 2], [3, 4], [5, 6], [1, 1.2]]
     y = [0, 1, 2, 0]
 
