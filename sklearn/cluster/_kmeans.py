@@ -120,11 +120,17 @@ def kmeans_plusplus(
     """
     validate_params(
         {
-            "X" : (X, [("array-like",), ("sparse matrix",)]),
-            "n_clusters" : (n_clusters, [(numbers.Integral, Interval(1, None, closed="left"))]),
-            "x_squared_norms" : (x_squared_norms, [("array-like",), (type(None),)]),
+            "X": (X, [("array-like",), ("sparse matrix",)]),
+            "n_clusters": (
+                n_clusters,
+                [(numbers.Integral, Interval(1, None, closed="left"))],
+            ),
+            "x_squared_norms": (x_squared_norms, [("array-like",), (type(None),)]),
             **get_random_state_param_spec(random_state, estimator=False),
-            "n_local_trials" : (n_local_trials, [(numbers.Integral, Interval(1, None, closed="left")), (type(None),)]),
+            "n_local_trials": (
+                n_local_trials,
+                [(numbers.Integral, Interval(1, None, closed="left")), (type(None),)],
+            ),
         }
     )
 
@@ -953,7 +959,17 @@ class KMeans(
         "verbose": [(numbers.Integral, Interval(0, None, closed="left")), (bool,)],
         **get_random_state_param_spec(),
         "copy_x": [(bool,)],
-        "algorithm": [(str, {"lloyd", "elkan", DeprecatedParamStr("auto"), DeprecatedParamStr("full")})],
+        "algorithm": [
+            (
+                str,
+                {
+                    "lloyd",
+                    "elkan",
+                    DeprecatedParamStr("auto"),
+                    DeprecatedParamStr("full"),
+                },
+            )
+        ],
     }
 
     def __init__(

@@ -235,25 +235,26 @@ def generate_invalid_param_val(target_type, valid_vals):
 
 class DeprecatedParamStr(UserString):
     """Mark a valid parameter value of type str as deprecated."""
+
     def __repr__(self):
         return f"{self.data!r} (deprecated)"
 
 
 def get_random_state_param_spec(val=None, estimator=True):
     """Appropriate valid types and values for the random_state parameter validation.
-    
+
     Parameters
     ----------
     val : object, default=None
         The value of the random_state parameter. Unused for parameter validation of
         an estimator.
-    
+
     estimator: bool, default=True
         Whether this is used to validate parameters of an estimator or not.
     """
     specs = [
-            (numbers.Integral, Interval(0, 2**32 - 1, closed="both")),
-            (np.random.RandomState,),
-            (type(None),),
-        ]
+        (numbers.Integral, Interval(0, 2**32 - 1, closed="both")),
+        (np.random.RandomState,),
+        (type(None),),
+    ]
     return {"random_state": specs if estimator else (val, specs)}
