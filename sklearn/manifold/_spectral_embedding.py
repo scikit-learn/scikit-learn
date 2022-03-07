@@ -225,10 +225,10 @@ def spectral_embedding(
     ----------
     * https://en.wikipedia.org/wiki/LOBPCG
 
-    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
-      Block Preconditioned Conjugate Gradient Method
+    * :doi:`"Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
-      https://doi.org/10.1137%2FS1064827500366124
+      <10.1137/S1064827500366124>`
     """
     adjacency = check_symmetric(adjacency)
 
@@ -483,17 +483,17 @@ class SpectralEmbedding(BaseEstimator):
     References
     ----------
 
-    - A Tutorial on Spectral Clustering, 2007
+    - :doi:`A Tutorial on Spectral Clustering, 2007
       Ulrike von Luxburg
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+      <10.1007/s11222-007-9033-z>`
 
     - On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
 
-    - Normalized cuts and image segmentation, 2000
+    - :doi:`Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+      <10.1109/34.868688>`
 
     Examples
     --------
