@@ -306,7 +306,7 @@ def test_row_norms(dtype):
         precision = 5
 
     X = X.astype(dtype, copy=False)
-    sq_norm = (X ** 2).sum(axis=1)
+    sq_norm = (X**2).sum(axis=1)
 
     assert_array_almost_equal(sq_norm, row_norms(X, squared=True), precision)
     assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
@@ -624,7 +624,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = (
-        np.average(X ** 2, weights=sample_weight, axis=0) - expected_mean ** 2
+        np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
     )
     assert_almost_equal(mean, expected_mean)
     assert_almost_equal(var, expected_var)
@@ -776,7 +776,7 @@ def test_incremental_variance_numerical_stability():
     # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
     def one_pass_var(X):
         n = X.shape[0]
-        exp_x2 = (X ** 2).sum(axis=0) / n
+        exp_x2 = (X**2).sum(axis=0) / n
         expx_2 = (X.sum(axis=0) / n) ** 2
         return exp_x2 - expx_2
 

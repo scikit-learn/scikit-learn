@@ -410,6 +410,8 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     assess_same_labelling(cut, cut_scipy)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 def test_mst_linkage_core_memory_mapped(metric_param_grid):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.

@@ -632,9 +632,9 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     References
     ----------
-    .. [1] J. Cohen (1960). "A coefficient of agreement for nominal scales".
+    .. [1] :doi:`J. Cohen (1960). "A coefficient of agreement for nominal scales".
            Educational and Psychological Measurement 20(1):37-46.
-           doi:10.1177/001316446002000104.
+           <10.1177/001316446002000104>`
     .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
            computational linguistics". Computational Linguistics 34(4):555-596
            <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_.
@@ -771,6 +771,11 @@ def jaccard_score(
     >>> jaccard_score(y_true[0], y_pred[0])
     0.6666...
 
+    In the 2D comparison case (e.g. image similarity):
+
+    >>> jaccard_score(y_true, y_pred, average="micro")
+    0.6
+
     In the multilabel case:
 
     >>> jaccard_score(y_true, y_pred, average='samples')
@@ -866,9 +871,9 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     References
     ----------
-    .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
-       accuracy of prediction algorithms for classification: an overview
-       <https://doi.org/10.1093/bioinformatics/16.5.412>`_.
+    .. [1] :doi:`Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
+       accuracy of prediction algorithms for classification: an overview.
+       <10.1093/bioinformatics/16.5.412>`
 
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_.
@@ -905,8 +910,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     n_correct = np.trace(C, dtype=np.float64)
     n_samples = p_sum.sum()
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
-    cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
-    cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
+    cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
+    cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
     if cov_ypyp * cov_ytyt == 0:
         return 0.0
@@ -1484,12 +1489,15 @@ def precision_recall_fscore_support(
     -------
     precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        Precision score.
 
     recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        Recall score.
 
     fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        F-beta score.
 
     support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
@@ -1562,7 +1570,7 @@ def precision_recall_fscore_support(
         true_sum = np.array([true_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
-    beta2 = beta ** 2
+    beta2 = beta**2
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:

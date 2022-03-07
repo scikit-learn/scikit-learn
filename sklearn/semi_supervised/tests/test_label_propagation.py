@@ -153,12 +153,12 @@ def test_convergence_warning():
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=500)
     with pytest.warns(None) as record:
         mdl.fit(X, y)
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
     mdl = label_propagation.LabelPropagation(kernel="rbf", max_iter=500)
     with pytest.warns(None) as record:
         mdl.fit(X, y)
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize(
@@ -175,7 +175,7 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     mdl = LabelPropagationCls(kernel="knn", max_iter=100, n_neighbors=1)
     with pytest.warns(None) as record:
         mdl.fit(X, y)
-    assert len(record) == 0
+    assert not [w.message for w in record]
 
 
 def test_predict_sparse_callable_kernel():

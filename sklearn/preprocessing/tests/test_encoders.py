@@ -1023,13 +1023,9 @@ def test_ohe_missing_value_support_pandas():
 @pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
 def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
     # checks pandas dataframe with categorical features
-    if pd_nan_type == "pd.NA":
-        # pd.NA is in pandas 1.0
-        pd = pytest.importorskip("pandas", minversion="1.0")
-        pd_missing_value = pd.NA
-    else:  # np.nan
-        pd = pytest.importorskip("pandas")
-        pd_missing_value = np.nan
+    pd = pytest.importorskip("pandas")
+
+    pd_missing_value = pd.NA if pd_nan_type == "pd.NA" else np.nan
 
     df = pd.DataFrame(
         {
@@ -1184,13 +1180,9 @@ def test_ordinal_encoder_passthrough_missing_values_float():
 def test_ordinal_encoder_missing_value_support_pandas_categorical(pd_nan_type):
     """Check ordinal encoder is compatible with pandas."""
     # checks pandas dataframe with categorical features
-    if pd_nan_type == "pd.NA":
-        # pd.NA is in pandas 1.0
-        pd = pytest.importorskip("pandas", minversion="1.0")
-        pd_missing_value = pd.NA
-    else:  # np.nan
-        pd = pytest.importorskip("pandas")
-        pd_missing_value = np.nan
+    pd = pytest.importorskip("pandas")
+
+    pd_missing_value = pd.NA if pd_nan_type == "pd.NA" else np.nan
 
     df = pd.DataFrame(
         {
@@ -1387,3 +1379,15 @@ def test_ordinal_encoder_python_integer():
     assert_array_equal(encoder.categories_, np.sort(X, axis=0).T)
     X_trans = encoder.transform(X)
     assert_array_equal(X_trans, [[0], [3], [2], [1]])
+
+
+def test_ordinal_encoder_features_names_out_pandas():
+    """Check feature names out is same as the input."""
+    pd = pytest.importorskip("pandas")
+
+    names = ["b", "c", "a"]
+    X = pd.DataFrame([[1, 2, 3]], columns=names)
+    enc = OrdinalEncoder().fit(X)
+
+    feature_names_out = enc.get_feature_names_out()
+    assert_array_equal(names, feature_names_out)

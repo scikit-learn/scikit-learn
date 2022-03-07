@@ -5,6 +5,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -14,13 +15,12 @@ from scipy.linalg import svd
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
 from ..base import _ClassNamePrefixFeaturesOutMixin
-from ..utils import check_array, check_consistent_length
+from ..utils import check_array, check_scalar, check_consistent_length
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..exceptions import ConvergenceWarning
-from ..utils.deprecation import deprecated
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -233,33 +233,24 @@ class _PLS(
             # With PLSRegression n_components is bounded by the rank of (X.T X)
             # see Wegelin page 25
             rank_upper_bound = p
-            if not 1 <= n_components <= rank_upper_bound:
-                # TODO: raise an error in 1.1
-                warnings.warn(
-                    f"As of version 0.24, n_components({n_components}) should "
-                    "be in [1, n_features]."
-                    f"n_components={rank_upper_bound} will be used instead. "
-                    "In version 1.1 (renaming of 0.26), an error will be "
-                    "raised.",
-                    FutureWarning,
-                )
-                n_components = rank_upper_bound
+            check_scalar(
+                n_components,
+                "n_components",
+                numbers.Integral,
+                min_val=1,
+                max_val=rank_upper_bound,
+            )
         else:
             # With CCA and PLSCanonical, n_components is bounded by the rank of
             # X and the rank of Y: see Wegelin page 12
             rank_upper_bound = min(n, p, q)
-            if not 1 <= self.n_components <= rank_upper_bound:
-                # TODO: raise an error in 1.1
-                warnings.warn(
-                    f"As of version 0.24, n_components({n_components}) should "
-                    "be in [1, min(n_features, n_samples, n_targets)] = "
-                    f"[1, {rank_upper_bound}]. "
-                    f"n_components={rank_upper_bound} will be used instead. "
-                    "In version 1.1 (renaming of 0.26), an error will be "
-                    "raised.",
-                    FutureWarning,
-                )
-                n_components = rank_upper_bound
+            check_scalar(
+                n_components,
+                "n_components",
+                numbers.Integral,
+                min_val=1,
+                max_val=rank_upper_bound,
+            )
 
         if self.algorithm not in ("svd", "nipals"):
             raise ValueError(
@@ -503,74 +494,6 @@ class _PLS(
         """
         return self.fit(X, y).transform(X, y)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `norm_y_weights` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def norm_y_weights(self):
-        return self._norm_y_weights
-
-    @deprecated(  # type: ignore
-        "Attribute `x_mean_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def x_mean_(self):
-        return self._x_mean
-
-    @deprecated(  # type: ignore
-        "Attribute `y_mean_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def y_mean_(self):
-        return self._y_mean
-
-    @deprecated(  # type: ignore
-        "Attribute `x_std_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def x_std_(self):
-        return self._x_std
-
-    @deprecated(  # type: ignore
-        "Attribute `y_std_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def y_std_(self):
-        return self._y_std
-
-    @property
-    def x_scores_(self):
-        """Attribute `x_scores_` was deprecated in version 0.24."""
-        # TODO: raise error in 1.1 instead
-        if not isinstance(self, PLSRegression):
-            pass
-            warnings.warn(
-                "Attribute `x_scores_` was deprecated in version 0.24 and "
-                "will be removed in 1.1 (renaming of 0.26). Use "
-                "est.transform(X) on the training data instead.",
-                FutureWarning,
-            )
-        return self._x_scores
-
-    @property
-    def y_scores_(self):
-        """Attribute `y_scores_` was deprecated in version 0.24."""
-        # TODO: raise error in 1.1 instead
-        if not isinstance(self, PLSRegression):
-            warnings.warn(
-                "Attribute `y_scores_` was deprecated in version 0.24 and "
-                "will be removed in 1.1 (renaming of 0.26). Use "
-                "est.transform(X) on the training data instead.",
-                FutureWarning,
-            )
-        return self._y_scores
-
     def _more_tags(self):
         return {"poor_score": True, "requires_y": False}
 
@@ -688,6 +611,30 @@ class PLSRegression(_PLS):
             copy=copy,
         )
 
+    def fit(self, X, Y):
+        """Fit model to data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
+
+        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
+
+        Returns
+        -------
+        self : object
+            Fitted model.
+        """
+        super().fit(X, Y)
+        # expose the fitted attributes `x_scores_` and `y_scores_`
+        self.x_scores_ = self._x_scores
+        self.y_scores_ = self._y_scores
+        return self
+
 
 class PLSCanonical(_PLS):
     """Partial Least Squares transformer and regressor.
@@ -739,22 +686,6 @@ class PLSCanonical(_PLS):
 
     y_loadings_ : ndarray of shape (n_targets, n_components)
         The loadings of `Y`.
-
-    x_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training samples.
-
-        .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
-    y_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training targets.
-
-        .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
 
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
@@ -868,22 +799,6 @@ class CCA(_PLS):
     y_loadings_ : ndarray of shape (n_targets, n_components)
         The loadings of `Y`.
 
-    x_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training samples.
-
-        .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
-    y_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training targets.
-
-        .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
@@ -974,22 +889,6 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         The right singular vectors of the SVD of the cross-covariance matrix.
         Used to project `X` in :meth:`transform`.
 
-    x_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training samples.
-
-        .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
-    y_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training targets.
-
-        .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1058,17 +957,13 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         # n_components cannot be bigger than that.
         n_components = self.n_components
         rank_upper_bound = min(X.shape[0], X.shape[1], Y.shape[1])
-        if not 1 <= n_components <= rank_upper_bound:
-            # TODO: raise an error in 1.1
-            warnings.warn(
-                f"As of version 0.24, n_components({n_components}) should be "
-                "in [1, min(n_features, n_samples, n_targets)] = "
-                f"[1, {rank_upper_bound}]. "
-                f"n_components={rank_upper_bound} will be used instead. "
-                "In version 1.1 (renaming of 0.26), an error will be raised.",
-                FutureWarning,
-            )
-            n_components = rank_upper_bound
+        check_scalar(
+            n_components,
+            "n_components",
+            numbers.Integral,
+            min_val=1,
+            max_val=rank_upper_bound,
+        )
 
         X, Y, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
             X, Y, self.scale
@@ -1082,64 +977,10 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         U, Vt = svd_flip(U, Vt)
         V = Vt.T
 
-        self._x_scores = np.dot(X, U)  # TODO: remove in 1.1
-        self._y_scores = np.dot(Y, V)  # TODO: remove in 1.1
         self.x_weights_ = U
         self.y_weights_ = V
         self._n_features_out = self.x_weights_.shape[1]
         return self
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `x_scores_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26). Use est.transform(X) on "
-        "the training data instead."
-    )
-    @property
-    def x_scores_(self):
-        return self._x_scores
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `y_scores_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26). Use est.transform(X, Y) "
-        "on the training data instead."
-    )
-    @property
-    def y_scores_(self):
-        return self._y_scores
-
-    @deprecated(  # type: ignore
-        "Attribute `x_mean_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def x_mean_(self):
-        return self._x_mean
-
-    @deprecated(  # type: ignore
-        "Attribute `y_mean_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def y_mean_(self):
-        return self._y_mean
-
-    @deprecated(  # type: ignore
-        "Attribute `x_std_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def x_std_(self):
-        return self._x_std
-
-    @deprecated(  # type: ignore
-        "Attribute `y_std_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def y_std_(self):
-        return self._y_std
 
     def transform(self, X, Y=None):
         """
