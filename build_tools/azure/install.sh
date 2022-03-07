@@ -67,7 +67,7 @@ python_environment_install_and_activate() {
             conda list
             # FIXME install conda-lock dev version with a fixed commit while waiting
             # for the release
-            python -m pip install git+https://github.com/conda-incubator/conda-lock@67f8da
+            python -m pip install git+https://github.com/conda-incubator/conda-lock@4203aef
             conda-lock install --name $VIRTUALENV $LOCK_FILE
             source activate $VIRTUALENV
         elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
