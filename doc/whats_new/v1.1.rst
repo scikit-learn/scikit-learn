@@ -801,10 +801,16 @@ Changelog
   `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
   :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
 
+- |Fix| Changes the error message of the `ValidationError` raised by
+  :func:`utils.validation.check_X_y` when y is None so that it is compatible
+  with :func:`utils.estimator_checks.check_requires_y_none`. :pr:`22578` by
+  :user:`Claudio Salvatore Arcidiacono <ClaudioSalvatoreArcidiacono>`.
+
 - |Fix| :func:`utils.class_weight.compute_class_weight` now only requires that
   all classes in `y` have a weight in `class_weight`. An error is still raised
   when a class is present in `y` but not in `class_weight`. :pr:`22595` by
   `Thomas Fan`_.
+
 
 Code and Documentation Contributors
 -----------------------------------

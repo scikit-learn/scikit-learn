@@ -1060,7 +1060,13 @@ def check_X_y(
         The converted and validated y.
     """
     if y is None:
-        raise ValueError("y cannot be None")
+        if estimator is None:
+            estimator_name = "estimator"
+        else:
+            estimator_name = _check_estimator_name(estimator)
+        raise ValueError(
+            f"{estimator_name} requires y to be passed, but the target y is None"
+        )
 
     X = check_array(
         X,
