@@ -231,7 +231,6 @@ jobs:
         PYTEST_XDIST_VERSION: 'none'
         PYTEST_VERSION: 'min'
         THREADPOOLCTL_VERSION: '2.2.0'
-        PANDAS_VERSION: 'min'
 
 - template: build_tools/azure/posix.yml
   parameters:
