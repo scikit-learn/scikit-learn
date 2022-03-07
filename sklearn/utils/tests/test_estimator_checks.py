@@ -23,7 +23,6 @@ from sklearn.utils._testing import (
 )
 
 from sklearn.utils.validation import check_is_fitted, check_X_y
-from sklearn.utils.fixes import np_version, parse_version
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
