@@ -28,12 +28,12 @@ labels = np.full(n_samples, -1.0)
 labels[0] = outer
 labels[-1] = inner
 
-# #############################################################################
+# %%
 # Learn with LabelSpreading
 label_spread = LabelSpreading(kernel="knn", alpha=0.8)
 label_spread.fit(X, labels)
 
-# #############################################################################
+# %%
 # Plot output labels
 output_labels = label_spread.transduction_
 plt.figure(figsize=(8.5, 4))
