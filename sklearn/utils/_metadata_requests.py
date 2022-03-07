@@ -347,7 +347,7 @@ class MetadataRequest:
     # this is here for us to use this attribute's value instead of doing
     # `isinstance` in our checks, so that we avoid issues when people vendor
     # this file instead of using it directly from scikit-learn.
-    type = "metadata_request"
+    _type = "metadata_request"
 
     def __init__(self, owner):
         for method in METHODS:
@@ -558,7 +558,7 @@ class MetadataRouter:
     # this is here for us to use this attribute's value instead of doing
     # `isinstance`` in our checks, so that we avoid issues when people vendor
     # this file instad of using it directly from scikit-learn.
-    type = "metadata_router"
+    _type = "metadata_router"
 
     def __init__(self, owner):
         self._route_mappings = dict()
@@ -584,7 +584,7 @@ class MetadataRouter:
         self : MetadataRouter
             Returns `self`.
         """
-        if getattr(obj, "type", None) == "metadata_request":
+        if getattr(obj, "_type", None) == "metadata_request":
             self._self = deepcopy(obj)
         elif hasattr(obj, "_get_metadata_request"):
             self._self = deepcopy(obj._get_metadata_request())
@@ -862,7 +862,7 @@ def get_routing_for_object(obj=None):
     if hasattr(obj, "get_metadata_routing"):
         return deepcopy(obj.get_metadata_routing())
 
-    if getattr(obj, "type", None) in ["metadata_request", "metadata_router"]:
+    if getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
         return deepcopy(obj)
 
     return MetadataRequest(owner=None)
