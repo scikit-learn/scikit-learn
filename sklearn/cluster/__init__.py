@@ -24,7 +24,7 @@ from ._bicluster import SpectralBiclustering, SpectralCoclustering
 from ._birch import Birch
 from ._hdbscan.hdbscan_ import HDBSCAN, hdbscan
 from ._hdbscan.robust_single_linkage_ import RobustSingleLinkage, robust_single_linkage
-from ._hdbscan.validity import validity_index
+from ._hdbscan._validity import validity_index
 from ._hdbscan._prediction import (
     approximate_predict,
     membership_vector,
