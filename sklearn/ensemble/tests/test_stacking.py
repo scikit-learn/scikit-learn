@@ -716,13 +716,13 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
 def test_get_feature_names_out(
     stacker, feature_names, X, y, expected_names, passthrough
 ):
-    """Check get_feature_names_out."""
+    """Check get_feature_names_out works for stacking."""
 
     stacker.set_params(passthrough=passthrough)
     stacker.fit(scale(X), y)
 
     if passthrough:
-        expected_names = np.r_[expected_names, feature_names]
+        expected_names = np.concatenate((expected_names, feature_names))
 
     names_out = stacker.get_feature_names_out(feature_names)
     assert_array_equal(names_out, expected_names)
