@@ -707,7 +707,7 @@ def test_string_representations(obj, string):
             "add_self",
             {"obj": MetadataRouter(owner="test")},
             ValueError,
-            "Given object is neither a `MetadataRequest` nor does it implement",
+            "Given `obj` is neither a `MetadataRequest` nor does it implement",
         ),
         (
             ClassifierFitMetadata(),
