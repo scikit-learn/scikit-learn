@@ -225,7 +225,7 @@ def test_error_bad_response(pyplot, response_method, msg):
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict", "predict_proba"])
-def test_multilabel_classifier_error(response_method):
+def test_multilabel_classifier_error(pyplot, response_method):
     """Check that multilabel classifier raises correct error."""
     X, y = make_multilabel_classification(random_state=0)
     X = X[:, :2]
@@ -241,7 +241,7 @@ def test_multilabel_classifier_error(response_method):
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict", "predict_proba"])
-def test_multi_output_multi_class_classifier_error(response_method):
+def test_multi_output_multi_class_classifier_error(pyplot, response_method):
     """Check that multi-output multi-class classifier raises correct error."""
     X = np.asarray([[0, 1], [1, 2]])
     y = np.asarray([["tree", "cat"], ["cat", "tree"]])
