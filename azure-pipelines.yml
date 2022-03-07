@@ -196,9 +196,8 @@ jobs:
       # Linux environment to test the latest available dependencies.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
+        LOCK_FILE: ./build_tools/azure/pylatest_pip_openblas_pandas_conda-lock.yml
         DISTRIB: 'conda-pip-latest'
-        PYTHON_VERSION: '3.9'
-        PYTEST_VERSION: '6.2.5'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'

@@ -1,0 +1,22 @@
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - ccache
+  - pip
+  - pip:
+    - numpy
+    - scipy
+    - cython
+    - joblib
+    - threadpoolctl
+    - pandas
+    - matplotlib
+    - scikit-image
+    - pyamg
+    - lightgbm>=3.0.0
+    - pytest==6.2.5
+    - pytest-xdist
+    - codecov
+    - pytest-cov
+    - coverage==6.2
