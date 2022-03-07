@@ -25,8 +25,9 @@ from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
 from .utils.validation import _generate_get_feature_names_out
 from .utils.validation import check_is_fitted
-from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _get_feature_names
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils._param_validation import validate_param
 
 
 def clone(estimator, *, safe=True):
@@ -600,6 +601,22 @@ class BaseEstimator:
             self._check_n_features(X, reset=reset)
 
         return out
+
+    def _validate_params(self):
+        """Validate types and values of constructor parameters
+
+        The expected type and values must be defined in the
+        `_expected_params_type_and_vals` class attribute, which is a dictionary where
+        the keys are the paramter names. Each entry is a list of tuples, each tuple
+        consisting of:
+        - A type. It can be: any type, callable, "array-like" or "sparse matrix".
+        - The valid values for this type. It can be a list, a set or an Interval.
+          If not provided, it means any value of this type is valid.
+        """
+        for param_name, param_val in self.get_params().items():
+            validate_param(
+                param_name, param_val, self._expected_params_type_and_vals[param_name]
+            )
 
     @property
     def _repr_html_(self):
