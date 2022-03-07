@@ -22,19 +22,108 @@ metadata:
   - pylatest_pip_openblas_pandas_environment.yml
 package:
 - category: main
-  dependencies:
-    python: '>=3.7'
-    setuptools: ''
-    wheel: ''
+  dependencies: {}
   hash:
-    md5: b1239ce8ef2a1eec485c398a683c5bff
-    sha256: d36bb23fa250be2d6a21cafe1760a7ae434318fb397c85223dd6a0c8e6e5562b
+    md5: d7c89558ba9fa0495403155b64376d81
+    sha256: fe51de6107f9edc7aa4f786a70f4a883943bc9d39b3bb7307c04c41410990726
   manager: conda
-  name: pip
+  name: _libgcc_mutex
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/noarch/pip-22.0.4-pyhd8ed1ab_0.tar.bz2
-  version: 22.0.4
+  url: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
+  version: '0.1'
+- category: main
+  dependencies: {}
+  hash:
+    md5: 575611b8a84f45960e87722eeb51fa26
+    sha256: d13c8774129e0d8d1427f5758fba53cfa915b6a12cd4dbd2bfe612d9eab0506d
+  manager: conda
+  name: ca-certificates
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/ca-certificates-2021.10.8-ha878542_0.tar.bz2
+  version: 2021.10.8
+- category: main
+  dependencies: {}
+  hash:
+    md5: bd4f2e711b39af170e7ff15163fe87ee
+    sha256: ad7985a9ff622880cf87c42db1ffe2dfb040d8175c1bb352fc8f3705c7e0962f
+  manager: conda
+  name: ld_impl_linux-64
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.36.1-hea4e1c9_2.tar.bz2
+  version: 2.36.1
+- category: main
+  dependencies: {}
+  hash:
+    md5: b62e87134ec17e1180cfcb3951624db4
+    sha256: 9f9b476797cc7f4fc3af849240d3c7b8599164ac5de8925b74df87f031cb160f
+  manager: conda
+  name: libgfortran5
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libgfortran5-11.2.0-h5c6108e_13.tar.bz2
+  version: 11.2.0
+- category: main
+  dependencies: {}
+  hash:
+    md5: 573a74710fad22a27da784cc238150b9
+    sha256: 736caa40ec35bb092b1059dfcc4ce048dd2cb8e57004b402127ae45c6d24349e
+  manager: conda
+  name: libstdcxx-ng
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-ng-11.2.0-he4da1e4_13.tar.bz2
+  version: 11.2.0
+- category: main
+  dependencies: {}
+  hash:
+    md5: a751ec502589ebdc2eceb183ff602569
+    sha256: df50dce9c5d44daf1233ec4be7b1b6c4674a4d715ff55fe43ad27c272765da82
+  manager: conda
+  name: tzdata
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/noarch/tzdata-2021e-he74cb21_0.tar.bz2
+  version: 2021e
+- category: main
+  dependencies:
+    libgfortran5: 11.2.0 h5c6108e_13
+  hash:
+    md5: a3a07a89af69d1eada078695b42e4961
+    sha256: da78bfe1708428493e15416f9b36b3a9b519ea2758bcc4a424e35fc19c3aaef2
+  manager: conda
+  name: libgfortran-ng
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libgfortran-ng-11.2.0-h69a702a_13.tar.bz2
+  version: 11.2.0
+- category: main
+  dependencies:
+    _libgcc_mutex: 0.1 conda_forge
+  hash:
+    md5: 8e91f1f21417c9ab1265240ee4f9db1e
+    sha256: 4d705a82c554d1abb80aedd0593e0abde54f71b7a5c87492c750c9759b7706fd
+  manager: conda
+  name: libgomp
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libgomp-11.2.0-h1d223b6_13.tar.bz2
+  version: 11.2.0
+- category: main
+  dependencies:
+    _libgcc_mutex: 0.1 conda_forge
+    libgomp: '>=7.5.0'
+  hash:
+    md5: 561e277319a41d4f24f5c05a9ef63c04
+    sha256: 81c74d38c80345e195106dc3a5b4063b61f2209402bf9f6c7e2abadef4f544a3
+  manager: conda
+  name: _openmp_mutex
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-1_gnu.tar.bz2
+  version: '4.5'
 - category: main
   dependencies:
     _libgcc_mutex: 0.1 conda_forge
@@ -50,27 +139,199 @@ package:
   version: 11.2.0
 - category: main
   dependencies:
-    python: 3.9.*
+    libgcc-ng: '>=9.3.0'
   hash:
-    md5: 39adde4247484de2bb4000122fdcf665
-    sha256: 67231829ea0101fee30c68f788fdba40a11bbee8fdac556daaab5832bd27bf3d
+    md5: a1fd65c7ccbf10880423d82bca54eb54
+    sha256: cb521319804640ff2ad6a9f118d972ed76d86bea44e5626c09a13d38f562e1fa
   manager: conda
-  name: python_abi
+  name: bzip2
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/python_abi-3.9-2_cp39.tar.bz2
-  version: '3.9'
+  url: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-h7f98852_4.tar.bz2
+  version: 1.0.8
 - category: main
-  dependencies: {}
+  dependencies:
+    libgcc-ng: '>=9.4.0'
   hash:
-    md5: d7c89558ba9fa0495403155b64376d81
-    sha256: fe51de6107f9edc7aa4f786a70f4a883943bc9d39b3bb7307c04c41410990726
+    md5: d645c6d2ac96843a2bfaccd2d62b3ac3
+    sha256: ab6e9856c21709b7b517e940ae7028ae0737546122f83c2aa5d692860c3b149e
   manager: conda
-  name: _libgcc_mutex
+  name: libffi
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
-  version: '0.1'
+  url: https://conda.anaconda.org/conda-forge/linux-64/libffi-3.4.2-h7f98852_5.tar.bz2
+  version: 3.4.2
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.4.0'
+    libgfortran-ng: ''
+    libgfortran5: '>=9.4.0'
+    libstdcxx-ng: '>=9.4.0'
+  hash:
+    md5: b34907d3a81a3cd8095ee83d174c074a
+    sha256: ee39c69df4fb39cfe1139ac4f7405bb066eba773e11ba3ab7c33835be00c2e48
+  manager: conda
+  name: libhiredis
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libhiredis-1.0.2-h2cc385e_0.tar.bz2
+  version: 1.0.2
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.4.0'
+  hash:
+    md5: 39b1328babf85c7c3a61636d9cd50206
+    sha256: 32f4fb94d99946b0dabfbbfd442b25852baf909637f2eed1ffe3baea15d02aad
+  manager: conda
+  name: libnsl
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libnsl-2.0.0-h7f98852_0.tar.bz2
+  version: 2.0.0
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.3.0'
+  hash:
+    md5: 772d69f030955d9646d3d0eaf21d859d
+    sha256: 54f118845498353c936826f8da79b5377d23032bcac8c4a02de2019e26c3f6b3
+  manager: conda
+  name: libuuid
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.32.1-h7f98852_1000.tar.bz2
+  version: 2.32.1
+- category: main
+  dependencies:
+    libgcc-ng: '>=7.5.0'
+  hash:
+    md5: dcddf696ff5dfcab567100d691678e18
+    sha256: 8292882ea5cfbe2e6b708432dfab0668f2acddb96ab7618163001acbd13678e4
+  manager: conda
+  name: libzlib
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.2.11-h36c2ea0_1013.tar.bz2
+  version: 1.2.11
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.3.0'
+    libstdcxx-ng: '>=9.3.0'
+  hash:
+    md5: fbe97e8fa6f275d7c76a09e795adc3e6
+    sha256: 56313fe4e602319682d4ea05c0ed3c5c45fc79884a5896f2cb7436b15d6987f9
+  manager: conda
+  name: lz4-c
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/lz4-c-1.9.3-h9c3ff4c_1.tar.bz2
+  version: 1.9.3
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.4.0'
+  hash:
+    md5: fb31bcb7af058244479ca635d20f0f4a
+    sha256: bcb38449634bfe58e821c28d6814795b5bbad73514f0c7a9af7a710bbffc8243
+  manager: conda
+  name: ncurses
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.3-h9c3ff4c_0.tar.bz2
+  version: '6.3'
+- category: main
+  dependencies:
+    ca-certificates: ''
+    libgcc-ng: '>=9.4.0'
+  hash:
+    md5: 3f9cc59705e5ee0c4ec99bd58fe94b94
+    sha256: 2adf6dd85c85de9307b207934d880f87228828926ba4c117ab643902d3dab202
+  manager: conda
+  name: openssl
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/openssl-3.0.0-h7f98852_2.tar.bz2
+  version: 3.0.0
+- category: main
+  dependencies:
+    libgcc-ng: '>=7.5.0'
+  hash:
+    md5: 33f601066901f3e1a85af3522a8113f9
+    sha256: 1e2823cb2a526bc3a7031ad5dbfb992891f9ff9740d1c17cb6dbb8ebdfd33b27
+  manager: conda
+  name: xz
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.5-h516909a_1.tar.bz2
+  version: 5.2.5
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.3.0'
+    ncurses: '>=6.2,<7.0.0a0'
+  hash:
+    md5: 5788de3c8d7a7d64ac56c784c4ef48e6
+    sha256: 30464670b3c81ac739e8df6b2c3c57b56d1e1408572540dec63bf4b8713163e4
+  manager: conda
+  name: readline
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/readline-8.1-h46c0cb4_0.tar.bz2
+  version: '8.1'
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.4.0'
+    libzlib: '>=1.2.11,<1.3.0a0'
+  hash:
+    md5: 5b8c42eb62e9fc961af70bdd6a26e168
+    sha256: 032fd769aad9d4cad40ba261ab222675acb7ec951a8832455fce18ef33fa8df0
+  manager: conda
+  name: tk
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.12-h27826a3_0.tar.bz2
+  version: 8.6.12
+- category: main
+  dependencies:
+    libgcc-ng: '>=7.5.0'
+    libzlib: 1.2.11 h36c2ea0_1013
+  hash:
+    md5: cf7190238072a41e9579e4476a6a60b8
+    sha256: cec48db35a7def0011bfdaa2b91e5e05d2a0ad788b8871a213eb8cacfeb7418a
+  manager: conda
+  name: zlib
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/zlib-1.2.11-h36c2ea0_1013.tar.bz2
+  version: 1.2.11
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.4.0'
+    libstdcxx-ng: '>=9.4.0'
+    libzlib: '>=1.2.11,<1.3.0a0'
+    lz4-c: '>=1.9.3,<1.9.4.0a0'
+    xz: '>=5.2.5,<5.3.0a0'
+  hash:
+    md5: 5222b231b1ef49a7f60d40b363469b70
+    sha256: fa7ad3325cfdfda4cc7d6955e05b63bc7e93698cce2b9abc5f4d642927d50218
+  manager: conda
+  name: zstd
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.2-ha95c52a_0.tar.bz2
+  version: 1.5.2
+- category: main
+  dependencies:
+    libgcc-ng: '>=9.4.0'
+    libhiredis: '>=1.0.2,<1.1.0a0'
+    libstdcxx-ng: '>=9.4.0'
+    zstd: '>=1.5.0,<1.6.0a0'
+  hash:
+    md5: 8458e509920a0bb14bb6fedd248bed57
+    sha256: 990aa89845f268f4a07ea2ac10d5d6aa347bafaceddc2b34043f6124974782fb
+  manager: conda
+  name: ccache
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/ccache-4.5.1-haef5404_0.tar.bz2
+  version: 4.5.1
 - category: main
   dependencies:
     libgcc-ng: '>=9.4.0'
@@ -87,114 +348,6 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/linux-64/sqlite-3.37.0-h9cd32fc_0.tar.bz2
   version: 3.37.0
-- category: main
-  dependencies:
-    _libgcc_mutex: 0.1 conda_forge
-    libgomp: '>=7.5.0'
-  hash:
-    md5: 561e277319a41d4f24f5c05a9ef63c04
-    sha256: 81c74d38c80345e195106dc3a5b4063b61f2209402bf9f6c7e2abadef4f544a3
-  manager: conda
-  name: _openmp_mutex
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-1_gnu.tar.bz2
-  version: '4.5'
-- category: main
-  dependencies:
-    python: '!=3.0,!=3.1,!=3.2,!=3.3,!=3.4'
-  hash:
-    md5: 1ca02aaf78d9c70d9a81a3bed5752022
-    sha256: aede66e6370f3b936164a703e48362f9080d7162234058fb2ee63cc84d528afc
-  manager: conda
-  name: wheel
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/noarch/wheel-0.37.1-pyhd8ed1ab_0.tar.bz2
-  version: 0.37.1
-- category: main
-  dependencies:
-    libgcc-ng: '>=7.5.0'
-  hash:
-    md5: 33f601066901f3e1a85af3522a8113f9
-    sha256: 1e2823cb2a526bc3a7031ad5dbfb992891f9ff9740d1c17cb6dbb8ebdfd33b27
-  manager: conda
-  name: xz
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.5-h516909a_1.tar.bz2
-  version: 5.2.5
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.4.0'
-  hash:
-    md5: fb31bcb7af058244479ca635d20f0f4a
-    sha256: bcb38449634bfe58e821c28d6814795b5bbad73514f0c7a9af7a710bbffc8243
-  manager: conda
-  name: ncurses
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.3-h9c3ff4c_0.tar.bz2
-  version: '6.3'
-- category: main
-  dependencies: {}
-  hash:
-    md5: bd4f2e711b39af170e7ff15163fe87ee
-    sha256: ad7985a9ff622880cf87c42db1ffe2dfb040d8175c1bb352fc8f3705c7e0962f
-  manager: conda
-  name: ld_impl_linux-64
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.36.1-hea4e1c9_2.tar.bz2
-  version: 2.36.1
-- category: main
-  dependencies:
-    libgcc-ng: '>=7.5.0'
-  hash:
-    md5: dcddf696ff5dfcab567100d691678e18
-    sha256: 8292882ea5cfbe2e6b708432dfab0668f2acddb96ab7618163001acbd13678e4
-  manager: conda
-  name: libzlib
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.2.11-h36c2ea0_1013.tar.bz2
-  version: 1.2.11
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.4.0'
-  hash:
-    md5: 39b1328babf85c7c3a61636d9cd50206
-    sha256: 32f4fb94d99946b0dabfbbfd442b25852baf909637f2eed1ffe3baea15d02aad
-  manager: conda
-  name: libnsl
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libnsl-2.0.0-h7f98852_0.tar.bz2
-  version: 2.0.0
-- category: main
-  dependencies:
-    libgfortran5: 11.2.0 h5c6108e_13
-  hash:
-    md5: a3a07a89af69d1eada078695b42e4961
-    sha256: da78bfe1708428493e15416f9b36b3a9b519ea2758bcc4a424e35fc19c3aaef2
-  manager: conda
-  name: libgfortran-ng
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libgfortran-ng-11.2.0-h69a702a_13.tar.bz2
-  version: 11.2.0
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.3.0'
-  hash:
-    md5: 772d69f030955d9646d3d0eaf21d859d
-    sha256: 54f118845498353c936826f8da79b5377d23032bcac8c4a02de2019e26c3f6b3
-  manager: conda
-  name: libuuid
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.32.1-h7f98852_1000.tar.bz2
-  version: 2.32.1
 - category: main
   dependencies:
     bzip2: '>=1.0.8,<2.0a0'
@@ -221,116 +374,29 @@ package:
   url: https://conda.anaconda.org/conda-forge/linux-64/python-3.9.10-hc74c709_2_cpython.tar.bz2
   version: 3.9.10
 - category: main
-  dependencies: {}
+  dependencies:
+    python: 3.9.*
   hash:
-    md5: b62e87134ec17e1180cfcb3951624db4
-    sha256: 9f9b476797cc7f4fc3af849240d3c7b8599164ac5de8925b74df87f031cb160f
+    md5: 39adde4247484de2bb4000122fdcf665
+    sha256: 67231829ea0101fee30c68f788fdba40a11bbee8fdac556daaab5832bd27bf3d
   manager: conda
-  name: libgfortran5
+  name: python_abi
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libgfortran5-11.2.0-h5c6108e_13.tar.bz2
-  version: 11.2.0
+  url: https://conda.anaconda.org/conda-forge/linux-64/python_abi-3.9-2_cp39.tar.bz2
+  version: '3.9'
 - category: main
   dependencies:
-    libgcc-ng: '>=9.4.0'
+    python: '!=3.0,!=3.1,!=3.2,!=3.3,!=3.4'
   hash:
-    md5: d645c6d2ac96843a2bfaccd2d62b3ac3
-    sha256: ab6e9856c21709b7b517e940ae7028ae0737546122f83c2aa5d692860c3b149e
+    md5: 1ca02aaf78d9c70d9a81a3bed5752022
+    sha256: aede66e6370f3b936164a703e48362f9080d7162234058fb2ee63cc84d528afc
   manager: conda
-  name: libffi
+  name: wheel
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libffi-3.4.2-h7f98852_5.tar.bz2
-  version: 3.4.2
-- category: main
-  dependencies:
-    ca-certificates: ''
-    libgcc-ng: '>=9.4.0'
-  hash:
-    md5: 3f9cc59705e5ee0c4ec99bd58fe94b94
-    sha256: 2adf6dd85c85de9307b207934d880f87228828926ba4c117ab643902d3dab202
-  manager: conda
-  name: openssl
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/openssl-3.0.0-h7f98852_2.tar.bz2
-  version: 3.0.0
-- category: main
-  dependencies:
-    libgcc-ng: '>=7.5.0'
-    libzlib: 1.2.11 h36c2ea0_1013
-  hash:
-    md5: cf7190238072a41e9579e4476a6a60b8
-    sha256: cec48db35a7def0011bfdaa2b91e5e05d2a0ad788b8871a213eb8cacfeb7418a
-  manager: conda
-  name: zlib
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/zlib-1.2.11-h36c2ea0_1013.tar.bz2
-  version: 1.2.11
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.3.0'
-    ncurses: '>=6.2,<7.0.0a0'
-  hash:
-    md5: 5788de3c8d7a7d64ac56c784c4ef48e6
-    sha256: 30464670b3c81ac739e8df6b2c3c57b56d1e1408572540dec63bf4b8713163e4
-  manager: conda
-  name: readline
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/readline-8.1-h46c0cb4_0.tar.bz2
-  version: '8.1'
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.3.0'
-  hash:
-    md5: a1fd65c7ccbf10880423d82bca54eb54
-    sha256: cb521319804640ff2ad6a9f118d972ed76d86bea44e5626c09a13d38f562e1fa
-  manager: conda
-  name: bzip2
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-h7f98852_4.tar.bz2
-  version: 1.0.8
-- category: main
-  dependencies: {}
-  hash:
-    md5: 575611b8a84f45960e87722eeb51fa26
-    sha256: d13c8774129e0d8d1427f5758fba53cfa915b6a12cd4dbd2bfe612d9eab0506d
-  manager: conda
-  name: ca-certificates
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/ca-certificates-2021.10.8-ha878542_0.tar.bz2
-  version: 2021.10.8
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.4.0'
-    libzlib: '>=1.2.11,<1.3.0a0'
-  hash:
-    md5: 5b8c42eb62e9fc961af70bdd6a26e168
-    sha256: 032fd769aad9d4cad40ba261ab222675acb7ec951a8832455fce18ef33fa8df0
-  manager: conda
-  name: tk
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.12-h27826a3_0.tar.bz2
-  version: 8.6.12
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.3.0'
-    libstdcxx-ng: '>=9.3.0'
-  hash:
-    md5: fbe97e8fa6f275d7c76a09e795adc3e6
-    sha256: 56313fe4e602319682d4ea05c0ed3c5c45fc79884a5896f2cb7436b15d6987f9
-  manager: conda
-  name: lz4-c
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/lz4-c-1.9.3-h9c3ff4c_1.tar.bz2
-  version: 1.9.3
+  url: https://conda.anaconda.org/conda-forge/noarch/wheel-0.37.1-pyhd8ed1ab_0.tar.bz2
+  version: 0.37.1
 - category: main
   dependencies:
     python: '>=3.9,<3.10.0a0'
@@ -346,95 +412,18 @@ package:
   version: 60.9.3
 - category: main
   dependencies:
-    libgcc-ng: '>=9.4.0'
-    libgfortran-ng: ''
-    libgfortran5: '>=9.4.0'
-    libstdcxx-ng: '>=9.4.0'
+    python: '>=3.7'
+    setuptools: ''
+    wheel: ''
   hash:
-    md5: b34907d3a81a3cd8095ee83d174c074a
-    sha256: ee39c69df4fb39cfe1139ac4f7405bb066eba773e11ba3ab7c33835be00c2e48
+    md5: b1239ce8ef2a1eec485c398a683c5bff
+    sha256: d36bb23fa250be2d6a21cafe1760a7ae434318fb397c85223dd6a0c8e6e5562b
   manager: conda
-  name: libhiredis
+  name: pip
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libhiredis-1.0.2-h2cc385e_0.tar.bz2
-  version: 1.0.2
-- category: main
-  dependencies: {}
-  hash:
-    md5: 573a74710fad22a27da784cc238150b9
-    sha256: 736caa40ec35bb092b1059dfcc4ce048dd2cb8e57004b402127ae45c6d24349e
-  manager: conda
-  name: libstdcxx-ng
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-ng-11.2.0-he4da1e4_13.tar.bz2
-  version: 11.2.0
-- category: main
-  dependencies:
-    _libgcc_mutex: 0.1 conda_forge
-  hash:
-    md5: 8e91f1f21417c9ab1265240ee4f9db1e
-    sha256: 4d705a82c554d1abb80aedd0593e0abde54f71b7a5c87492c750c9759b7706fd
-  manager: conda
-  name: libgomp
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/libgomp-11.2.0-h1d223b6_13.tar.bz2
-  version: 11.2.0
-- category: main
-  dependencies: {}
-  hash:
-    md5: a751ec502589ebdc2eceb183ff602569
-    sha256: df50dce9c5d44daf1233ec4be7b1b6c4674a4d715ff55fe43ad27c272765da82
-  manager: conda
-  name: tzdata
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/noarch/tzdata-2021e-he74cb21_0.tar.bz2
-  version: 2021e
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.4.0'
-    libhiredis: '>=1.0.2,<1.1.0a0'
-    libstdcxx-ng: '>=9.4.0'
-    zstd: '>=1.5.0,<1.6.0a0'
-  hash:
-    md5: 8458e509920a0bb14bb6fedd248bed57
-    sha256: 990aa89845f268f4a07ea2ac10d5d6aa347bafaceddc2b34043f6124974782fb
-  manager: conda
-  name: ccache
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/ccache-4.5.1-haef5404_0.tar.bz2
-  version: 4.5.1
-- category: main
-  dependencies:
-    libgcc-ng: '>=9.4.0'
-    libstdcxx-ng: '>=9.4.0'
-    libzlib: '>=1.2.11,<1.3.0a0'
-    lz4-c: '>=1.9.3,<1.9.4.0a0'
-    xz: '>=5.2.5,<5.3.0a0'
-  hash:
-    md5: 5222b231b1ef49a7f60d40b363469b70
-    sha256: fa7ad3325cfdfda4cc7d6955e05b63bc7e93698cce2b9abc5f4d642927d50218
-  manager: conda
-  name: zstd
-  optional: false
-  platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.2-ha95c52a_0.tar.bz2
-  version: 1.5.2
-- category: main
-  dependencies: {}
-  hash:
-    sha256: a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484
-  manager: pip
-  name: pyparsing
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/80/c1/23fd82ad3121656b585351aba6c19761926bb0db2ebed9e4ff09a43a3fcc/pyparsing-3.0.7-py3-none-any.whl
-  version: 3.0.7
+  url: https://conda.anaconda.org/conda-forge/noarch/pip-22.0.4-pyhd8ed1ab_0.tar.bz2
+  version: 22.0.4
 - category: main
   dependencies: {}
   hash:
@@ -446,73 +435,6 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/be/be/7abce643bfdf8ca01c48afa2ddf8308c2308b0c3b239a44e57d020afa0ef/attrs-21.4.0-py2.py3-none-any.whl
   version: 21.4.0
-- category: main
-  dependencies: {}
-  hash:
-    sha256: 011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3
-  manager: pip
-  name: iniconfig
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/9b/dd/b3c12c6d707058fa947864b67f0c4e0c39ef8610988d7baea9578f3c48f3/iniconfig-1.1.1-py2.py3-none-any.whl
-  version: 1.1.1
-- category: main
-  dependencies: {}
-  hash:
-    sha256: 94dd11d9f13ea1be17bac39c1942f527cbf7065f94953cf62dfe805653da2f8f
-  manager: pip
-  name: numpy
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/fb/65/d5d8303c7dd6a46964cc360e6d95137821493bbd7e4644165afdac13149e/numpy-1.22.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-  version: 1.22.2
-- category: main
-  dependencies:
-    pyparsing: '>=2.0.2,<3.0.5 || >3.0.5'
-  hash:
-    sha256: ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522
-  manager: pip
-  name: packaging
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/05/8e/8de486cbd03baba4deef4142bd643a3e7bbe954a784dc1bb17142572d127/packaging-21.3-py3-none-any.whl
-  version: '21.3'
-- category: main
-  dependencies: {}
-  hash:
-    sha256: 74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3
-  manager: pip
-  name: pluggy
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/9e/01/f38e2ff29715251cf25532b9082a1589ab7e4f571ced434f98d0139336dc/pluggy-1.0.0-py2.py3-none-any.whl
-  version: 1.0.0
-- category: main
-  dependencies: {}
-  hash:
-    sha256: 607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378
-  manager: pip
-  name: py
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/f6/f0/10642828a8dfb741e5f3fbaac830550a518a775c7fff6f04a007259b0548/py-1.11.0-py2.py3-none-any.whl
-  version: 1.11.0
-- category: main
-  dependencies: {}
-  hash:
-    sha256: 806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b
-  manager: pip
-  name: toml
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl
-  version: 0.10.2
 - category: main
   dependencies: {}
   hash:
@@ -538,6 +460,50 @@ package:
 - category: main
   dependencies: {}
   hash:
+    sha256: 3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3
+  manager: pip
+  name: cycler
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/5c/f9/695d6bedebd747e5eb0fe8fad57b72fdf25411273a39791cde838d5a8f51/cycler-0.11.0-py3-none-any.whl
+  version: 0.11.0
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 6626f9691ce2093ccbcc9932f449efe3b6e1c893b556910881d177c61612e8ff
+  manager: pip
+  name: cython
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/9a/26/d2b6bc4cb7d716c82ebc89690cbd5ba0f547db364809cd42dad34d593182/Cython-0.29.28-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl
+  version: 0.29.28
+- category: main
+  dependencies: {}
+  hash:
+    sha256: a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142
+  manager: pip
+  name: execnet
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/81/c0/3072ecc23f4c5e0a1af35e3a222855cfd9c80a1a105ca67be3b6172637dd/execnet-1.9.0-py2.py3-none-any.whl
+  version: 1.9.0
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 1933415e0fbdf068815cb1baaa1f159e17830215f7e8624e5731122761627557
+  manager: pip
+  name: fonttools
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/1d/46/65a58d7b92905e2767000b3f6eb1d0301e9ed7d459d14461075c1db63349/fonttools-4.29.1-py3-none-any.whl
+  version: 4.29.1
+- category: main
+  dependencies: {}
+  hash:
     sha256: 84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff
   manager: pip
   name: idna
@@ -546,6 +512,17 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/04/a2/d918dcd22354d8958fe113e1a3630137e0fc8b44859ade3063982eacd2a4/idna-3.3-py3-none-any.whl
   version: '3.3'
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3
+  manager: pip
+  name: iniconfig
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/9b/dd/b3c12c6d707058fa947864b67f0c4e0c39ef8610988d7baea9578f3c48f3/iniconfig-1.1.1-py2.py3-none-any.whl
+  version: 1.1.1
 - category: main
   dependencies: {}
   hash:
@@ -560,6 +537,39 @@ package:
 - category: main
   dependencies: {}
   hash:
+    sha256: 30fa008c172355c7768159983a7270cb23838c4d7db73d6c0f6b60dde0d432c6
+  manager: pip
+  name: kiwisolver
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/1f/99/58fe27c8e4a3de823f9fc28ab2c415347efc4139f1c85cac65a008007210/kiwisolver-1.3.2-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+  version: 1.3.2
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 011e85d277c89681e8fa661cf5ff0743443445049b0b68789ad55ef09340c6e0
+  manager: pip
+  name: networkx
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/f6/34/4913f651b8e178dde5abcf8d62495e4dcd0757a9a6840f1b1f7a290afaea/networkx-2.7.1-py3-none-any.whl
+  version: 2.7.1
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 94dd11d9f13ea1be17bac39c1942f527cbf7065f94953cf62dfe805653da2f8f
+  manager: pip
+  name: numpy
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/fb/65/d5d8303c7dd6a46964cc360e6d95137821493bbd7e4644165afdac13149e/numpy-1.22.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  version: 1.22.2
+- category: main
+  dependencies: {}
+  hash:
     sha256: d3c5c79ab7dfce6d88f1ba639b77e77a17ea33a01b07b99840d6ed08031cb2a7
   manager: pip
   name: pillow
@@ -569,34 +579,49 @@ package:
   url: https://files.pythonhosted.org/packages/f3/3b/d7bb231b3bc1414252e77463dc63554c1aeccffe0798524467aca7bad089/Pillow-9.0.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   version: 9.0.1
 - category: main
-  dependencies:
-    attrs: '>=19.2.0'
-    iniconfig: '*'
-    packaging: '*'
-    pluggy: '>=0.12,<2.0'
-    py: '>=1.8.2'
-    toml: '*'
+  dependencies: {}
   hash:
-    sha256: 7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134
+    sha256: 74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3
   manager: pip
-  name: pytest
+  name: pluggy
   optional: false
   platform: linux-64
   source: null
-  url: https://files.pythonhosted.org/packages/40/76/86f886e750b81a4357b6ed606b2bcf0ce6d6c27ad3c09ebf63ed674fc86e/pytest-6.2.5-py3-none-any.whl
-  version: 6.2.5
+  url: https://files.pythonhosted.org/packages/9e/01/f38e2ff29715251cf25532b9082a1589ab7e4f571ced434f98d0139336dc/pluggy-1.0.0-py2.py3-none-any.whl
+  version: 1.0.0
 - category: main
-  dependencies:
-    numpy: '>=1.17.3,<1.25.0'
+  dependencies: {}
   hash:
-    sha256: f3720d0124aced49f6f2198a6900304411dbbeed12f56951d7c66ebef05e3df6
+    sha256: 607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378
   manager: pip
-  name: scipy
+  name: py
   optional: false
   platform: linux-64
   source: null
-  url: https://files.pythonhosted.org/packages/b8/51/6a058c1c742c8365399c93685a5b3c4f9c39389957189725738954c427a0/scipy-1.8.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-  version: 1.8.0
+  url: https://files.pythonhosted.org/packages/f6/f0/10642828a8dfb741e5f3fbaac830550a518a775c7fff6f04a007259b0548/py-1.11.0-py2.py3-none-any.whl
+  version: 1.11.0
+- category: main
+  dependencies: {}
+  hash:
+    sha256: a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484
+  manager: pip
+  name: pyparsing
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/80/c1/23fd82ad3121656b585351aba6c19761926bb0db2ebed9e4ff09a43a3fcc/pyparsing-3.0.7-py3-none-any.whl
+  version: 3.0.7
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 3672058bc3453457b622aab7a1c3bfd5ab0bdae451512f6cf25f64ed37f5b87c
+  manager: pip
+  name: pytz
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/d3/e3/d9f046b5d1c94a3aeab15f1f867aa414f8ee9d196fae6865f1d6a0ee1a0b/pytz-2021.3-py2.py3-none-any.whl
+  version: '2021.3'
 - category: main
   dependencies: {}
   hash:
@@ -619,6 +644,17 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/61/cf/6e354304bcb9c6413c4e02a747b600061c21d38ba51e7e544ac7bc66aecc/threadpoolctl-3.1.0-py3-none-any.whl
   version: 3.1.0
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b
+  manager: pip
+  name: toml
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl
+  version: 0.10.2
 - category: main
   dependencies: {}
   hash:
@@ -654,39 +690,6 @@ package:
   url: https://files.pythonhosted.org/packages/d2/41/87d1e548a0418b24cff9c60815ea2cc2d0e0cd4891337a24236a30a1d141/coverage-6.2-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl
   version: '6.2'
 - category: main
-  dependencies: {}
-  hash:
-    sha256: 3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3
-  manager: pip
-  name: cycler
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/5c/f9/695d6bedebd747e5eb0fe8fad57b72fdf25411273a39791cde838d5a8f51/cycler-0.11.0-py3-none-any.whl
-  version: 0.11.0
-- category: main
-  dependencies: {}
-  hash:
-    sha256: a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142
-  manager: pip
-  name: execnet
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/81/c0/3072ecc23f4c5e0a1af35e3a222855cfd9c80a1a105ca67be3b6172637dd/execnet-1.9.0-py2.py3-none-any.whl
-  version: 1.9.0
-- category: main
-  dependencies: {}
-  hash:
-    sha256: 1933415e0fbdf068815cb1baaa1f159e17830215f7e8624e5731122761627557
-  manager: pip
-  name: fonttools
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/1d/46/65a58d7b92905e2767000b3f6eb1d0301e9ed7d459d14461075c1db63349/fonttools-4.29.1-py3-none-any.whl
-  version: 4.29.1
-- category: main
   dependencies:
     numpy: '>=1.20.0'
     pillow: '>=8.3.2'
@@ -700,40 +703,17 @@ package:
   url: https://files.pythonhosted.org/packages/29/24/a3a7aa7f1e7f1c3a5c9fe2ff3fec8d9d17e10741eafb710f06705744b35f/imageio-2.16.1-py3-none-any.whl
   version: 2.16.1
 - category: main
-  dependencies: {}
-  hash:
-    sha256: 30fa008c172355c7768159983a7270cb23838c4d7db73d6c0f6b60dde0d432c6
-  manager: pip
-  name: kiwisolver
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/1f/99/58fe27c8e4a3de823f9fc28ab2c415347efc4139f1c85cac65a008007210/kiwisolver-1.3.2-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
-  version: 1.3.2
-- category: main
-  dependencies: {}
-  hash:
-    sha256: 011e85d277c89681e8fa661cf5ff0743443445049b0b68789ad55ef09340c6e0
-  manager: pip
-  name: networkx
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/f6/34/4913f651b8e178dde5abcf8d62495e4dcd0757a9a6840f1b1f7a290afaea/networkx-2.7.1-py3-none-any.whl
-  version: 2.7.1
-- category: main
   dependencies:
-    py: '*'
-    pytest: '>=3.10'
+    pyparsing: '>=2.0.2,<3.0.5 || >3.0.5'
   hash:
-    sha256: bbbb6717efc886b9d64537b41fb1497cfaf3c9601276be8da2cccfea5a3c8ad8
+    sha256: ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522
   manager: pip
-  name: pytest-forked
+  name: packaging
   optional: false
   platform: linux-64
   source: null
-  url: https://files.pythonhosted.org/packages/0c/36/c56ef2aea73912190cdbcc39aaa860db8c07c1a5ce8566994ec9425453db/pytest_forked-1.4.0-py3-none-any.whl
-  version: 1.4.0
+  url: https://files.pythonhosted.org/packages/05/8e/8de486cbd03baba4deef4142bd643a3e7bbe954a784dc1bb17142572d127/packaging-21.3-py3-none-any.whl
+  version: '21.3'
 - category: main
   dependencies:
     six: '>=1.5'
@@ -746,17 +726,6 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/36/7a/87837f39d0296e723bb9b62bbb257d0355c7f6128853c78955f57342a56d/python_dateutil-2.8.2-py2.py3-none-any.whl
   version: 2.8.2
-- category: main
-  dependencies: {}
-  hash:
-    sha256: 3672058bc3453457b622aab7a1c3bfd5ab0bdae451512f6cf25f64ed37f5b87c
-  manager: pip
-  name: pytz
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/d3/e3/d9f046b5d1c94a3aeab15f1f867aa414f8ee9d196fae6865f1d6a0ee1a0b/pytz-2021.3-py2.py3-none-any.whl
-  version: '2021.3'
 - category: main
   dependencies:
     numpy: '>=1.17.3'
@@ -786,32 +755,16 @@ package:
   version: 2.27.1
 - category: main
   dependencies:
-    joblib: '>=0.11'
-    numpy: '>=1.14.6'
-    scipy: '>=1.1.0'
-    threadpoolctl: '>=2.0.0'
+    numpy: '>=1.17.3,<1.25.0'
   hash:
-    sha256: ff746a69ff2ef25f62b36338c615dd15954ddc3ab8e73530237dd73235e76d62
+    sha256: f3720d0124aced49f6f2198a6900304411dbbeed12f56951d7c66ebef05e3df6
   manager: pip
-  name: scikit-learn
+  name: scipy
   optional: false
   platform: linux-64
   source: null
-  url: https://files.pythonhosted.org/packages/57/aa/483fbe6b5314bce2d49801e6cec1f2139a9c220d0d51494788fff47233b3/scikit_learn-1.0.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-  version: 1.0.2
-- category: main
-  dependencies:
-    packaging: '>=20.0'
-    tomli: '>=1.0.0'
-  hash:
-    sha256: acea13255093849de7ccb11af9e1fb8bde7067783450cee9ef7a93139bddf6d4
-  manager: pip
-  name: setuptools-scm
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/e3/e5/c28b544051340e63e0d507eb893c9513d3a300e5e9183e2990518acbfe36/setuptools_scm-6.4.2-py3-none-any.whl
-  version: 6.4.2
+  url: https://files.pythonhosted.org/packages/b8/51/6a058c1c742c8365399c93685a5b3c4f9c39389957189725738954c427a0/scipy-1.8.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  version: 1.8.0
 - category: main
   dependencies:
     numpy: '>=1.19.2'
@@ -838,16 +791,83 @@ package:
   url: https://files.pythonhosted.org/packages/dc/e2/964d0881eff5a67bf5ddaea79a13c7b34a74bc4efe917b368830b475a0b9/codecov-2.1.12-py2.py3-none-any.whl
   version: 2.1.12
 - category: main
-  dependencies: {}
+  dependencies:
+    numpy: '>=1.20.0'
+    python-dateutil: '>=2.8.1'
+    pytz: '>=2020.1'
   hash:
-    sha256: 6626f9691ce2093ccbcc9932f449efe3b6e1c893b556910881d177c61612e8ff
+    sha256: 2e5a7a1e0ecaac652326af627a3eca84886da9e667d68286866d4e33f6547caf
   manager: pip
-  name: cython
+  name: pandas
   optional: false
   platform: linux-64
   source: null
-  url: https://files.pythonhosted.org/packages/9a/26/d2b6bc4cb7d716c82ebc89690cbd5ba0f547db364809cd42dad34d593182/Cython-0.29.28-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl
-  version: 0.29.28
+  url: https://files.pythonhosted.org/packages/8e/2f/192279e11738420be0fe0907d8751181f77c28ca59b6c29fac1f0d34e2e3/pandas-1.4.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  version: 1.4.1
+- category: main
+  dependencies:
+    attrs: '>=19.2.0'
+    iniconfig: '*'
+    packaging: '*'
+    pluggy: '>=0.12,<2.0'
+    py: '>=1.8.2'
+    toml: '*'
+  hash:
+    sha256: 7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134
+  manager: pip
+  name: pytest
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/40/76/86f886e750b81a4357b6ed606b2bcf0ce6d6c27ad3c09ebf63ed674fc86e/pytest-6.2.5-py3-none-any.whl
+  version: 6.2.5
+- category: main
+  dependencies:
+    imageio: '>=2.4.1'
+    networkx: '>=2.2'
+    numpy: '>=1.17.0'
+    packaging: '>=20.0'
+    pillow: '>=6.1.0,<7.1.0 || >7.1.0,<7.1.1 || >7.1.1,<8.3.0 || >8.3.0'
+    pywavelets: '>=1.1.1'
+    scipy: '>=1.4.1'
+    tifffile: '>=2019.7.26'
+  hash:
+    sha256: f0e5c6e7c7c54c0b827e6288d9f44ae6d290c0aef979e7de1511d2f5fc6f9c0f
+  manager: pip
+  name: scikit-image
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/b4/56/eed15f4aa01169db761d60552be8f3ff2d46ce587a2faade03a330afc311/scikit_image-0.19.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  version: 0.19.2
+- category: main
+  dependencies:
+    joblib: '>=0.11'
+    numpy: '>=1.14.6'
+    scipy: '>=1.1.0'
+    threadpoolctl: '>=2.0.0'
+  hash:
+    sha256: ff746a69ff2ef25f62b36338c615dd15954ddc3ab8e73530237dd73235e76d62
+  manager: pip
+  name: scikit-learn
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/57/aa/483fbe6b5314bce2d49801e6cec1f2139a9c220d0d51494788fff47233b3/scikit_learn-1.0.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  version: 1.0.2
+- category: main
+  dependencies:
+    packaging: '>=20.0'
+    tomli: '>=1.0.0'
+  hash:
+    sha256: acea13255093849de7ccb11af9e1fb8bde7067783450cee9ef7a93139bddf6d4
+  manager: pip
+  name: setuptools-scm
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/e3/e5/c28b544051340e63e0d507eb893c9513d3a300e5e9183e2990518acbfe36/setuptools_scm-6.4.2-py3-none-any.whl
+  version: 6.4.2
 - category: main
   dependencies:
     numpy: '*'
@@ -884,20 +904,6 @@ package:
   version: 3.5.1
 - category: main
   dependencies:
-    numpy: '>=1.20.0'
-    python-dateutil: '>=2.8.1'
-    pytz: '>=2020.1'
-  hash:
-    sha256: 2e5a7a1e0ecaac652326af627a3eca84886da9e667d68286866d4e33f6547caf
-  manager: pip
-  name: pandas
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/8e/2f/192279e11738420be0fe0907d8751181f77c28ca59b6c29fac1f0d34e2e3/pandas-1.4.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-  version: 1.4.1
-- category: main
-  dependencies:
     numpy: '>=1.7.0'
     pytest: '>=2'
     scipy: '>=0.12.0'
@@ -925,6 +931,19 @@ package:
   version: 3.0.0
 - category: main
   dependencies:
+    py: '*'
+    pytest: '>=3.10'
+  hash:
+    sha256: bbbb6717efc886b9d64537b41fb1497cfaf3c9601276be8da2cccfea5a3c8ad8
+  manager: pip
+  name: pytest-forked
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/0c/36/c56ef2aea73912190cdbcc39aaa860db8c07c1a5ce8566994ec9425453db/pytest_forked-1.4.0-py3-none-any.whl
+  version: 1.4.0
+- category: main
+  dependencies:
     execnet: '>=1.1'
     pytest: '>=6.2.0'
     pytest-forked: '*'
@@ -937,23 +956,4 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/21/08/b1945d4b4986eb1aa10cf84efc5293bba39da80a2f95db3573dd90678408/pytest_xdist-2.5.0-py3-none-any.whl
   version: 2.5.0
-- category: main
-  dependencies:
-    imageio: '>=2.4.1'
-    networkx: '>=2.2'
-    numpy: '>=1.17.0'
-    packaging: '>=20.0'
-    pillow: '>=6.1.0,<7.1.0 || >7.1.0,<7.1.1 || >7.1.1,<8.3.0 || >8.3.0'
-    pywavelets: '>=1.1.1'
-    scipy: '>=1.4.1'
-    tifffile: '>=2019.7.26'
-  hash:
-    sha256: f0e5c6e7c7c54c0b827e6288d9f44ae6d290c0aef979e7de1511d2f5fc6f9c0f
-  manager: pip
-  name: scikit-image
-  optional: false
-  platform: linux-64
-  source: null
-  url: https://files.pythonhosted.org/packages/b4/56/eed15f4aa01169db761d60552be8f3ff2d46ce587a2faade03a330afc311/scikit_image-0.19.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-  version: 0.19.2
 version: 1

@@ -7,6 +7,7 @@ function conda_lock_func() {
     platform=$2
     environment_base_name=${3:-${build_name}}
     conda-lock lock \
+        --mamba \
         --platform ${platform} \
         --file ${environment_base_name}_environment.yml \
         --lockfile "${build_name}_${platform}_conda-lock.yml"
