@@ -351,7 +351,6 @@ def test_convergence_fail():
         pls_nipals.fit(X, Y)
 
 
-@pytest.mark.filterwarnings("ignore:.*`scores_` was deprecated")  # 1.1
 @pytest.mark.parametrize("Est", (PLSSVD, PLSRegression, PLSCanonical))
 def test_attibutes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
@@ -476,7 +475,7 @@ def test_scale_and_stability(Est, X, Y):
         (
             2.0,
             TypeError,
-            "n_components must be an instance of <class 'numbers.Integral'>",
+            "n_components must be an instance of int",
         ),
     ],
 )
@@ -498,7 +497,7 @@ def test_n_components_bounds(Est, n_components, err_type, err_msg):
         (
             2.0,
             TypeError,
-            "n_components must be an instance of <class 'numbers.Integral'>",
+            "n_components must be an instance of int",
         ),
     ],
 )

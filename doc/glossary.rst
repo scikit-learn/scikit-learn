@@ -207,7 +207,7 @@ General Concepts
 
     deprecation
         We use deprecation to slowly violate our :term:`backwards
-        compatibility` assurances, usually to to:
+        compatibility` assurances, usually to:
 
         * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
@@ -1257,7 +1257,7 @@ Methods
         be generated.  If `input_features` is not passed in, then the
         `feature_names_in_` attribute will be used. If the
         `feature_names_in_` attribute is not defined, then the
-        input names are named `[x0, x1, ..., x(n_features_in_)]`.
+        input names are named `[x0, x1, ..., x(n_features_in_ - 1)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
@@ -1554,6 +1554,9 @@ functions or non-estimator constructors.
         ``n_jobs`` is ``None`` by default, which means *unset*; it will
         generally be interpreted as ``n_jobs=1``, unless the current
         :class:`joblib.Parallel` backend context specifies otherwise.
+
+        Note that even if ``n_jobs=1``, low-level parallelism (via Numpy and OpenMP)
+        might be used in some configuration.
 
         For more details on the use of ``joblib`` and its interactions with
         scikit-learn, please refer to our :ref:`parallelism notes

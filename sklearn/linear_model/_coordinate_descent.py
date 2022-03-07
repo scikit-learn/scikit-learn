@@ -9,6 +9,7 @@ import sys
 import warnings
 import numbers
 from abc import ABC, abstractmethod
+from functools import partial
 
 import numpy as np
 from scipy import sparse
@@ -22,7 +23,6 @@ from ..utils import check_scalar
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _astype_copy_false
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
@@ -68,9 +68,7 @@ def _set_order(X, y, order="C"):
     if order is not None:
         sparse_format = "csc" if order == "F" else "csr"
         if sparse_X:
-            # As of scipy 1.1.0, new argument copy=False by default.
-            # This is what we want.
-            X = X.asformat(sparse_format, **_astype_copy_false(X))
+            X = X.asformat(sparse_format, copy=False)
         else:
             X = np.asarray(X, order=order)
         if sparse_y:
@@ -179,7 +177,7 @@ def _alpha_grid(
         if normalize:
             Xy /= X_scale[:, np.newaxis]
 
-    alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (n_samples * l1_ratio)
+    alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (n_samples * l1_ratio)
 
     if alpha_max <= np.finfo(float).resolution:
         alphas = np.empty(n_alphas)
@@ -1143,11 +1141,13 @@ class Lasso(ElasticNet):
     Parameters
     ----------
     alpha : float, default=1.0
-        Constant that multiplies the L1 term. Defaults to 1.0.
-        ``alpha = 0`` is equivalent to an ordinary least square, solved
-        by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
-        Given this, you should use the :class:`LinearRegression` object.
+        Constant that multiplies the L1 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Lasso` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -1250,6 +1250,14 @@ class Lasso(ElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    Regularization improves the conditioning of the problem and
+    reduces the variance of the estimates. Larger values specify stronger
+    regularization. Alpha corresponds to `1 / (2C)` in other linear
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
+    assumed to be specific to the targets. Hence they must correspond in
+    number.
 
     Examples
     --------
@@ -1439,9 +1447,9 @@ def _path_residuals(
     residues = X_test_coefs - y_test[:, :, np.newaxis]
     residues += intercepts
     if sample_weight is None:
-        this_mse = (residues ** 2).mean(axis=0)
+        this_mse = (residues**2).mean(axis=0)
     else:
-        this_mse = np.average(residues ** 2, weights=sw_test, axis=0)
+        this_mse = np.average(residues**2, weights=sw_test, axis=0)
 
     return this_mse.mean(axis=0)
 
@@ -1634,6 +1642,14 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
+
+        check_scalar_alpha = partial(
+            check_scalar,
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
+
         if alphas is None:
             alphas = [
                 _alpha_grid(
@@ -1649,8 +1665,16 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 for l1_ratio in l1_ratios
             ]
         else:
+            # Making sure alphas entries are scalars.
+            if np.isscalar(alphas):
+                check_scalar_alpha(alphas, "alphas")
+            else:
+                # alphas is an iterable item in this case.
+                for index, alpha in enumerate(alphas):
+                    check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
+
         # We want n_alphas to be the number of alphas used for each l1_ratio.
         n_alphas = len(alphas[0])
         path_params.update({"n_alphas": n_alphas})
