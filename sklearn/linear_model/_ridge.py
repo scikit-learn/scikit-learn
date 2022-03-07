@@ -335,14 +335,16 @@ def ridge_regression(
         Target values
 
     alpha : float or array-like of shape (n_targets,)
-        Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduces the variance of
-        the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
-        assumed to be specific to the targets. Hence they must correspond in
-        number.
+        Constant that multiplies the L2 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Ridge` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
+
+        If an array is passed, penalties are assumed to be specific to the
+        targets. Hence they must correspond in number.
 
     sample_weight : float or array-like of shape (n_samples,), default=None
         Individual weights for each sample. If given a float, every sample
@@ -450,6 +452,14 @@ def ridge_regression(
     Notes
     -----
     This function won't compute the intercept.
+
+    Regularization improves the conditioning of the problem and
+    reduces the variance of the estimates. Larger values specify stronger
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
+    assumed to be specific to the targets. Hence they must correspond in
+    number.
     """
     return _ridge_regression(
         X,
@@ -838,14 +848,16 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     Parameters
     ----------
     alpha : {float, ndarray of shape (n_targets,)}, default=1.0
-        Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduces the variance of
-        the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
-        assumed to be specific to the targets. Hence they must correspond in
-        number.
+        Constant that multiplies the L2 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Ridge` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
+
+        If an array is passed, penalties are assumed to be specific to the
+        targets. Hence they must correspond in number.
 
     fit_intercept : bool, default=True
         Whether to fit the intercept for this model. If set
@@ -961,6 +973,14 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     RidgeCV : Ridge regression with built-in cross validation.
     :class:`~sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
         combines ridge regression with the kernel trick.
+
+    Notes
+    -----
+    Regularization improves the conditioning of the problem and
+    reduces the variance of the estimates. Larger values specify stronger
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`.
 
     Examples
     --------
