@@ -25,7 +25,7 @@ jobs:
 
   update-tracker:
     uses: ./.github/workflows/update_tracking_issue.yml
-    if: github.repository == 'scikit-learn/scikit-learn'
+    if: ${{ always() }}
     needs: [check-manifest]
     with:
       job_status: ${{ needs.check-manifest.result }}
