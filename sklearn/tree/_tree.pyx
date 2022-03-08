@@ -621,7 +621,7 @@ cdef class Tree:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
 
-    def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs, bint is_oblique=False):
+    def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs):
         """Constructor."""
         cdef SIZE_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
@@ -647,8 +647,6 @@ cdef class Tree:
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
-
-        self.is_oblique = is_oblique
 
     def __dealloc__(self):
         """Destructor."""
