@@ -597,6 +597,9 @@ Changelog
   instead of the finite approximation (`1.0` and `0.0` respectively) currently
   returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
 
+- |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
+  message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
+
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
   Using `neighbors.DistanceMetric` for imports is still valid for
