@@ -308,7 +308,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             )
             # Fit the OneHotEncoder with toy datasets
             # so that it's ready for use after the KBinsDiscretizer is fitted
-            self._encoder.fit(np.zeros((1, len(self.n_bins_))))
+            self._encoder.fit(np.zeros((1, len(self.n_bins_)), dtype=np.int64))
 
         return self
 
@@ -449,4 +449,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         input_features = _check_feature_names_in(self, input_features)
-        return self._encoder.get_feature_names_out(input_features)
+        if hasattr(self, "_encoder"):
+            return self._encoder.get_feature_names_out(input_features)
+
+        # ordinal encoding
+        return input_features

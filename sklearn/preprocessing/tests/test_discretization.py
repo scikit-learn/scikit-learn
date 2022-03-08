@@ -432,3 +432,31 @@ def test_kbinsdiscretizer_subsample_values(subsample):
             kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0]
         )
         assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
+
+
+@pytest.mark.parametrize(
+    "encode, expected_names",
+    [
+        (
+            "onehot",
+            [f"feat{i}_{j}" for i in range(3) for j in range(4)],
+        ),
+        (
+            "onehot-dense",
+            [f"feat{i}_{j}" for i in range(3) for j in range(4)],
+        ),
+        ("ordinal", [f"feat{i}" for i in range(3)]),
+    ],
+)
+def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
+    """Check get_feature_names_out for different settings."""
+    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
+
+    kbd = KBinsDiscretizer(n_bins=4, encode=encode).fit(X)
+    Xt = kbd.transform(X)
+
+    input_features = [f"feat{i}" for i in range(3)]
+    output_names = kbd.get_feature_names_out(input_features)
+    assert Xt.shape[1] == output_names.shape[0]
+
+    assert_array_equal(output_names, expected_names)
