@@ -240,8 +240,9 @@ jobs:
         LOCK_FILE: ./build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda-lock.yml
         CPU_COUNT: '3'
       pylatest_conda_mkl_no_openmp:
+        # DISTRIB used in azure posix.yml template
         DISTRIB: 'conda'
-        BLAS: 'mkl'
+        LOCK_FILE: ./build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda-lock.yml
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         CPU_COUNT: '3'
