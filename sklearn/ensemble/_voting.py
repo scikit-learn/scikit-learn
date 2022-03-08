@@ -16,7 +16,6 @@ This module contains:
 from abc import abstractmethod
 
 import numbers
-from itertools import chain
 import numpy as np
 
 from joblib import Parallel
@@ -475,13 +474,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         # voting == "soft"
         n_classes = len(self.classes_)
-        names_out = chain.from_iterable(
-            [
-                [f"{class_name}_{name}{i}" for i in range(n_classes)]
-                for name in active_names
-            ]
-        )
-        return np.asarray(list(names_out), dtype=object)
+        names_out = [
+            f"{class_name}_{name}{i}" for name in active_names for i in range(n_classes)
+        ]
+        return np.asarray(names_out, dtype=object)
 
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
