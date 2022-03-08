@@ -268,7 +268,7 @@ Changelog
   :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
   :user:`Krum Arnaudov <krumeto>`.
 
-- |Fix| :class:`decomposition.KernelPCA` now validates input parameters in
+- |Fix| :class:`decomposition.PCA` now validates input parameters in
   `fit` instead of `__init__`.
   :pr:`21567` by :user:`Maggie Chege <MaggieChege>`.
 
@@ -468,13 +468,6 @@ Changelog
   `max_iter` and `tol`.
   :pr:`21341` by :user:`Arturo Amor <ArturoAmorQ>`.
 
-:mod:`sklearn.kernel_approximation`
-...................................
-
-- |API| Adds :term:`get_feature_names_out` to the following transformers 
-  of the :mod:`~sklearn.kernel_approximation` module:
-  :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
-  :pr:`22137` by `Thomas Fan`_.
 :mod:`sklearn.inspection`
 .........................
 
@@ -499,6 +492,11 @@ Changelog
   :class:`kernel_approximation.PolynomialCountSketch`,
   :class:`kernel_approximation.RBFSampler`, and
   :class:`kernel_approximation.SkewedChi2Sampler`. :pr:`22694` by `Thomas Fan`_.
+
+- |API| Adds :term:`get_feature_names_out` to the following transformers 
+  of the :mod:`~sklearn.kernel_approximation` module:
+  :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
+  :pr:`22137` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
