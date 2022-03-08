@@ -438,6 +438,13 @@ Changelog
   a more informative error if `CompoundKernel` is passed via `kernel`.
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
 
+:mod:`sklearn.ensemble`
+.......................
+- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
+  :func:`get_feature_names_out` function that includes both tree index and leaf index in
+  the output feature names.
+  :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
+
 :mod:`sklearn.impute`
 .....................
 
