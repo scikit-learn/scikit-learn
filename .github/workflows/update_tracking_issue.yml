@@ -2,7 +2,7 @@
 #
 # update-tracker:
 #   uses: ./.github/workflows/update_tracking_issue.yml
-#   if: ${{ always() }}
+#   if: github.repository == 'scikit-learn/scikit-learn'
 #   needs: [JOB_NAME]
 #   with:
 #     job_status: ${{ needs.JOB_NAME.result }}
