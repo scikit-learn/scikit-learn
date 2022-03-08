@@ -343,8 +343,9 @@ Changelog
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
 - |API| Adds :meth:`get_feature_names_out` to
+  :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
   :class:`ensemble.StackingClassifier`, and
-  :class:`ensemble.StackingRegressor`. :pr:`22695` by `Thomas Fan`_.
+  :class:`ensemble.StackingRegressor`. :pr:`22695` and :pr:`22697`  by `Thomas Fan`_.
 
 - |Fix| Removed a potential source of CPU oversubscription in
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -504,7 +505,7 @@ Changelog
   :class:`kernel_approximation.RBFSampler`, and
   :class:`kernel_approximation.SkewedChi2Sampler`. :pr:`22694` by `Thomas Fan`_.
 
-- |API| Adds :term:`get_feature_names_out` to the following transformers 
+- |API| Adds :term:`get_feature_names_out` to the following transformers
   of the :mod:`~sklearn.kernel_approximation` module:
   :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
   :pr:`22137` by `Thomas Fan`_.
