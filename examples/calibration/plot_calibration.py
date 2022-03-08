@@ -22,12 +22,14 @@ cluster with heterogeneous labels. This results in a significantly improved
 Brier score.
 
 """
-
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-#         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#         Balazs Kegl <balazs.kegl@gmail.com>
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# Author:
+# Mathieu Blondel <mathieu@mblondel.org>
+# Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+# Balazs Kegl <balazs.kegl@gmail.com>
+# Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD Style.
+
+# %%
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,6 +42,9 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import train_test_split
 
 
+# %%
+# Generate synthetic dataset
+# --------------------------
 n_samples = 50000
 n_bins = 3  # use 3 bins for calibration_curve as we have 3 clusters here
 
@@ -58,17 +63,23 @@ X_train, X_test, y_train, y_test, sw_train, sw_test = train_test_split(
     X, y, sample_weight, test_size=0.9, random_state=42
 )
 
-# Gaussian Naive-Bayes with no calibration
+# %%
+# Gaussian Naive-Bayes
+# --------------------
+
+# %%
+
+# With no calibration
 clf = GaussianNB()
 clf.fit(X_train, y_train)  # GaussianNB itself does not support sample-weights
 prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
-# Gaussian Naive-Bayes with isotonic calibration
+# With isotonic calibration
 clf_isotonic = CalibratedClassifierCV(clf, cv=2, method="isotonic")
 clf_isotonic.fit(X_train, y_train, sample_weight=sw_train)
 prob_pos_isotonic = clf_isotonic.predict_proba(X_test)[:, 1]
 
-# Gaussian Naive-Bayes with sigmoid calibration
+# With sigmoid calibration
 clf_sigmoid = CalibratedClassifierCV(clf, cv=2, method="sigmoid")
 clf_sigmoid.fit(X_train, y_train, sample_weight=sw_train)
 prob_pos_sigmoid = clf_sigmoid.predict_proba(X_test)[:, 1]
@@ -84,8 +95,9 @@ print("With isotonic calibration: %1.3f" % clf_isotonic_score)
 clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid, sample_weight=sw_test)
 print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 
-# #############################################################################
-# Plot the data and the predicted probabilities
+# %%
+# Plot data and the predicted probabilities
+# -----------------------------------------
 plt.figure()
 y_unique = np.unique(y)
 colors = cm.rainbow(np.linspace(0.0, 1.0, y_unique.size))
@@ -105,6 +117,7 @@ plt.legend(loc="best")
 plt.title("Data")
 
 plt.figure()
+
 order = np.lexsort((prob_pos_clf,))
 plt.plot(prob_pos_clf[order], "r", label="No calibration (%1.3f)" % clf_score)
 plt.plot(
