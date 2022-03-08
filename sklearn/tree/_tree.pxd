@@ -48,7 +48,7 @@ cdef class Tree:
     # TreeBuilder. The tree structure is used for predictions and
     # feature importances.
 
-    cdef bool is_oblique
+    cdef bint is_oblique
 
     # Input/Output layout
     cdef public SIZE_t n_features        # Number of features in X

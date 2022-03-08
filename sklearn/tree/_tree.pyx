@@ -22,7 +22,6 @@ from libc.stdint cimport SIZE_MAX
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
-from libcpp cimport bool
 
 import struct
 
@@ -626,7 +625,7 @@ cdef class Tree:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
 
-    def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs, bool is_oblique=False):
+    def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs, bint is_oblique=False):
         """Constructor."""
         cdef SIZE_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
