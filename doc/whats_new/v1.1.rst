@@ -119,7 +119,7 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
-- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has a more informative
+- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
   :func:`get_feature_names_out` function that includes both tree index and leaf index in
   the output feature names.
   :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
