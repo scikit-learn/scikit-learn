@@ -342,6 +342,10 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`ensemble.StackingClassifier`, and
+  :class:`ensemble.StackingRegressor`. :pr:`22695` by `Thomas Fan`_.
+
 - |Fix| Removed a potential source of CPU oversubscription in
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` when CPU resource usage is limited,
