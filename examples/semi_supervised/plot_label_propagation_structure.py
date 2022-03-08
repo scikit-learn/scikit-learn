@@ -15,7 +15,7 @@ propagate correctly around the circle.
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD
 
-#%%
+# %%
 # Import the necessary modules
 # 
 import numpy as np
@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 from sklearn.semi_supervised import LabelSpreading
 from sklearn.datasets import make_circles
 
-#%%
+# %%
 # generate ring with inner box
 # 
 n_samples = 200
