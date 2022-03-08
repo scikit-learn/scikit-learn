@@ -87,7 +87,7 @@ NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 cdef class TreeBuilder:
     """Interface for different tree building strategies."""
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y, axis_oblique_split splitter,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -135,17 +135,16 @@ cdef struct StackRecord:
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
 
-    def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
+    def __cinit__(self, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
                   SIZE_t max_depth, double min_impurity_decrease):
-        self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y, axis_oblique_split splitter,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
@@ -167,7 +166,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         tree._resize(init_capacity)
 
         # Parameters
-        cdef Splitter splitter = self.splitter
         cdef SIZE_t max_depth = self.max_depth
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -185,8 +183,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef double weighted_n_samples = splitter.weighted_n_samples
         cdef double weighted_n_node_samples
-        cdef SplitRecord split
         cdef SIZE_t node_id
+        if tree.is_oblique:
+            cdef ObliqueSplitRecord split
+        else:
+            cdef SplitRecord split
 
         cdef double impurity = INFINITY
         cdef SIZE_t n_constant_features
@@ -329,11 +330,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     """
     cdef SIZE_t max_leaf_nodes
 
-    def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
+    def __cinit__(self, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf,  min_weight_leaf,
                   SIZE_t max_depth, SIZE_t max_leaf_nodes,
                   double min_impurity_decrease):
-        self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
@@ -341,7 +341,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y, axis_oblique_split splitter,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
@@ -353,7 +353,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
 
         # Parameters
-        cdef Splitter splitter = self.splitter
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -446,13 +445,16 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-    cdef inline int _add_split_node(self, Splitter splitter, Tree tree,
+    cdef inline int _add_split_node(self, axis_oblique_split splitter, Tree tree,
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
                                     FrontierRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
-        cdef SplitRecord split
+        if tree.is_oblique:
+            cdef ObliqueSplitRecord split
+        else:
+            cdef SplitRecord split
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
@@ -624,7 +626,7 @@ cdef class Tree:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
 
-    def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs):
+    def __cinit__(self, int n_features, np.ndarray n_classes, int n_outputs, bool is_oblique=False):
         """Constructor."""
         cdef SIZE_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
@@ -650,6 +652,8 @@ cdef class Tree:
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
+
+        self.is_oblique = is_oblique
 
     def __dealloc__(self):
         """Destructor."""

@@ -18,6 +18,14 @@ def configuration(parent_package="", top_path=None):
         extra_compile_args=["-O3"],
     )
     config.add_extension(
+        "_oblique_splitter",
+        sources=["_oblique_splitter.pyx"],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+        language="c++",
+        extra_compile_args=["-O3"],
+    )
+    config.add_extension(
         "_splitter",
         sources=["_splitter.pyx"],
         include_dirs=[numpy.get_include()],

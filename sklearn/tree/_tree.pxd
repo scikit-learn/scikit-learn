@@ -21,6 +21,15 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
+from ._oblique_splitter cimport BaseObliqueSplitter, ObliqueSplitRecord
+
+ctypedef fused axis_oblique_split:
+    Splitter
+    BaseObliqueSplitter
+
+ctypedef fused axis_oblique_record:
+    SplitRecord
+    ObliqueSplitRecord
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
@@ -38,6 +47,8 @@ cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
     # TreeBuilder. The tree structure is used for predictions and
     # feature importances.
+
+    cdef bool is_oblique
 
     # Input/Output layout
     cdef public SIZE_t n_features        # Number of features in X
@@ -90,14 +101,12 @@ cdef class TreeBuilder:
     # This class controls the various stopping criteria and the node splitting
     # evaluation order, e.g. depth-first or best-first.
 
-    cdef Splitter splitter              # Splitting algorithm
-
     cdef SIZE_t min_samples_split       # Minimum number of samples in an internal node
     cdef SIZE_t min_samples_leaf        # Minimum number of samples in a leaf
     cdef double min_weight_leaf         # Minimum weight in a leaf
     cdef SIZE_t max_depth               # Maximal tree depth
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y, axis_oblique_split splitter,
                 np.ndarray sample_weight=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)

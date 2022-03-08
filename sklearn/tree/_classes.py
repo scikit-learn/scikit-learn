@@ -409,7 +409,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if is_classifier(self):
-            self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_)
+            self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_,
+                              is_oblique=False)
         else:
             self.tree_ = Tree(
                 self.n_features_in_,
@@ -421,7 +422,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(
-                splitter,
+                # splitter,
                 min_samples_split,
                 min_samples_leaf,
                 min_weight_leaf,
@@ -430,7 +431,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         else:
             builder = BestFirstTreeBuilder(
-                splitter,
+                # splitter,
                 min_samples_split,
                 min_samples_leaf,
                 min_weight_leaf,
@@ -439,7 +440,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, splitter, sample_weight)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
