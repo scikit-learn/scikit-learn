@@ -1807,6 +1807,8 @@ def test_random_trees_embedding_feature_names_out():
     names = hasher.get_feature_names_out()
     expected_names = [
         f"randomtreesembedding_{tree}_{leaf}"
+        # Note: nodes with indices 0, 1 and 4 are internal split nodes and
+        # therefore do not appear in the expected output feature names.
         for tree, leaf in [
             (0, 2),
             (0, 3),
