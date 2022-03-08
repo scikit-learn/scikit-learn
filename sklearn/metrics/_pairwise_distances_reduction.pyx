@@ -40,7 +40,7 @@ from ..utils._cython_blas cimport (
 )
 from ..utils._heap cimport simultaneous_sort, heap_push
 from ..utils._openmp_helpers cimport _openmp_thread_num
-from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
+from ..utils._typedefs cimport ITYPE_t, DTYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 
 from numbers import Integral, Real
