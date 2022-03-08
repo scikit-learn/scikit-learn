@@ -18,7 +18,7 @@ cdef class StdVectorSentinel:
     """Wraps a reference to a vector which will be deallocated with this object.
 
     When created, the StdVectorSentinel swaps the reference of its internal
-    vectors with the provided one (vec_ptr), thus making the StdVectorSentinel
+    vectors with the provided one (vect_ptr), thus making the StdVectorSentinel
     manage the provided one's lifetime.
     """
     cdef void* get_data(self):
@@ -32,11 +32,11 @@ cdef class StdVectorSentinelFloat64(StdVectorSentinel):
     cdef vector[DTYPE_t] vec
 
     @staticmethod
-    cdef StdVectorSentinel create_for(vector[DTYPE_t] * vec_ptr):
+    cdef StdVectorSentinel create_for(vector[DTYPE_t] * vect_ptr):
         # This initializes the object directly without calling __init__
         # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
         cdef StdVectorSentinelFloat64 sentinel = StdVectorSentinelFloat64.__new__(StdVectorSentinelFloat64)
-        sentinel.vec.swap(deref(vec_ptr))
+        sentinel.vec.swap(deref(vect_ptr))
         return sentinel
 
     cdef void* get_data(self):
@@ -50,11 +50,11 @@ cdef class StdVectorSentinelIntP(StdVectorSentinel):
     cdef vector[ITYPE_t] vec
 
     @staticmethod
-    cdef StdVectorSentinel create_for(vector[ITYPE_t] * vec_ptr):
+    cdef StdVectorSentinel create_for(vector[ITYPE_t] * vect_ptr):
         # This initializes the object directly without calling __init__
         # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
         cdef StdVectorSentinelIntP sentinel = StdVectorSentinelIntP.__new__(StdVectorSentinelIntP)
-        sentinel.vec.swap(deref(vec_ptr))
+        sentinel.vec.swap(deref(vect_ptr))
         return sentinel
 
     cdef void* get_data(self):
