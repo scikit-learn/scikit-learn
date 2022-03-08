@@ -27,10 +27,6 @@ ctypedef fused axis_oblique_split:
     Splitter
     BaseObliqueSplitter
 
-# ctypedef fused axis_oblique_record:
-#     SplitRecord
-#     ObliqueSplitRecord
-
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
 
@@ -47,8 +43,6 @@ cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
     # TreeBuilder. The tree structure is used for predictions and
     # feature importances.
-
-    cdef bint is_oblique
 
     # Input/Output layout
     cdef public SIZE_t n_features        # Number of features in X

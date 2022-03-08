@@ -422,7 +422,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(
-                # splitter,
                 min_samples_split,
                 min_samples_leaf,
                 min_weight_leaf,
@@ -431,7 +430,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         else:
             builder = BestFirstTreeBuilder(
-                # splitter,
                 min_samples_split,
                 min_samples_leaf,
                 min_weight_leaf,

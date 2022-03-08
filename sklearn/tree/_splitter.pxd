@@ -34,6 +34,7 @@ cdef struct SplitRecord:
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
 
+    # the following are only used for oblique trees
     vector[DTYPE_t]* proj_vec_weights   # weights of the vector
     vector[SIZE_t]* proj_vec_indices    # indices of the features
 
