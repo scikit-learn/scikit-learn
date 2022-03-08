@@ -308,7 +308,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             )
             # Fit the OneHotEncoder with toy datasets
             # so that it's ready for use after the KBinsDiscretizer is fitted
-            self._encoder.fit(np.zeros((1, len(self.n_bins_)), dtype=np.int64))
+            self._encoder.fit(np.zeros((1, len(self.n_bins_))))
 
         return self
 
