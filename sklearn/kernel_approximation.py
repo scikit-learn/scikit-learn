@@ -25,6 +25,7 @@ from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
+from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
 
@@ -663,6 +664,33 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         transf = self._transform_sparse if sparse else self._transform_dense
         return transf(X)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(
+            self, input_features, generate_names=True
+        )
+        est_name = self.__class__.__name__.lower()
+
+        names_list = [f"{est_name}_{name}_sqrt" for name in input_features]
+
+        for j in range(1, self.sample_steps):
+            cos_names = [f"{est_name}_{name}_cos{j}" for name in input_features]
+            sin_names = [f"{est_name}_{name}_sin{j}" for name in input_features]
+            names_list.extend(cos_names + sin_names)
+
+        return np.asarray(names_list, dtype=object)
 
     def _transform_dense(self, X):
         non_zero = X != 0.0
