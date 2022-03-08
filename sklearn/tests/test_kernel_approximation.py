@@ -390,4 +390,3 @@ def test_additivechi2sampler_get_feature_names_out():
     names_out = chi2_sampler.get_feature_names_out(input_features=input_names)
     expected_names = [f"additivechi2sampler_{suffix}" for suffix in suffixes]
     assert_array_equal(names_out, expected_names)
-
