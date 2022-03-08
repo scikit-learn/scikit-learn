@@ -11,6 +11,7 @@
 #          Robert Layton <robertlayton@gmail.com>
 # License: BSD 3 clause
 
+from abc import ABC, abstractmethod
 import warnings
 
 import numpy as np
@@ -773,7 +774,7 @@ def _labels_inertia_threadpool_limit(
 
 
 class _BaseKMeans(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator
+    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
 ):
     """Base class for KMeans and MiniBatchKMeans"""
 
@@ -836,8 +837,16 @@ class _BaseKMeans(
             )
             self._n_init = 1
 
+    @abstractmethod
+    def _warn_mkl_vcomp(self, n_active_threads):
+        """Issue an estimator specific warning when vcomp and mkl are both present
+
+        This method is called by `_check_mkl_vcomp`.
+        """
+        pass
+
     def _check_mkl_vcomp(self, X, n_samples):
-        """Warns when vcomp and mkl are both present"""
+        """Check when vcomp and mkl are both present"""
         # The BLAS call inside a prange in lloyd_iter_chunked_dense is known to
         # cause a small memory leak when there are less chunks than the number
         # of available threads. It only happens when the OpenMP library is
@@ -845,8 +854,8 @@ class _BaseKMeans(
         if sp.issparse(X):
             return
 
-        active_threads = int(np.ceil(n_samples / CHUNK_SIZE))
-        if active_threads < self._n_threads:
+        n_active_threads = int(np.ceil(n_samples / CHUNK_SIZE))
+        if n_active_threads < self._n_threads:
             modules = threadpool_info()
             has_vcomp = "vcomp" in [module["prefix"] for module in modules]
             has_mkl = ("mkl", "intel") in [
@@ -854,22 +863,7 @@ class _BaseKMeans(
                 for module in modules
             ]
             if has_vcomp and has_mkl:
-                if not hasattr(self, "batch_size"):  # KMeans
-                    warnings.warn(
-                        "KMeans is known to have a memory leak on Windows "
-                        "with MKL, when there are less chunks than available "
-                        "threads. You can avoid it by setting the environment"
-                        f" variable OMP_NUM_THREADS={active_threads}."
-                    )
-                else:  # MiniBatchKMeans
-                    warnings.warn(
-                        "MiniBatchKMeans is known to have a memory leak on "
-                        "Windows with MKL, when there are less chunks than "
-                        "available threads. You can prevent it by setting "
-                        f"batch_size >= {self._n_threads * CHUNK_SIZE} or by "
-                        "setting the environment variable "
-                        f"OMP_NUM_THREADS={active_threads}"
-                    )
+                self._warn_mkl_vcomp(n_active_threads)
 
     def _validate_center_shape(self, X, centers):
         """Check if centers is compatible with X and n_clusters."""
@@ -1272,6 +1266,15 @@ class KMeans(_BaseKMeans):
                 RuntimeWarning,
             )
             self._algorithm = "lloyd"
+
+    def _warn_mkl_vcomp(self, n_active_threads):
+        """Warn when vcomp and mkl are both present"""
+        warnings.warn(
+            "KMeans is known to have a memory leak on Windows "
+            "with MKL, when there are less chunks than available "
+            "threads. You can avoid it by setting the environment"
+            f" variable OMP_NUM_THREADS={n_active_threads}."
+        )
 
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
@@ -1798,6 +1801,17 @@ class MiniBatchKMeans(_BaseKMeans):
                 "reassignment_ratio should be >= 0, got "
                 f"{self.reassignment_ratio} instead."
             )
+
+    def _warn_mkl_vcomp(self, n_active_threads):
+        """Warn when vcomp and mkl are both present"""
+        warnings.warn(
+            "MiniBatchKMeans is known to have a memory leak on "
+            "Windows with MKL, when there are less chunks than "
+            "available threads. You can prevent it by setting "
+            f"batch_size >= {self._n_threads * CHUNK_SIZE} or by "
+            "setting the environment variable "
+            f"OMP_NUM_THREADS={n_active_threads}"
+        )
 
     def _mini_batch_convergence(
         self, step, n_steps, n_samples, centers_squared_diff, batch_inertia
