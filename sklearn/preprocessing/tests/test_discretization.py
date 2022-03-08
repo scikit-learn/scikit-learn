@@ -439,19 +439,11 @@ def test_kbinsdiscretizer_subsample_values(subsample):
     [
         (
             "onehot",
-            [
-                f"feat{col_id}_{bin_id}"
-                for col_id in range(3)
-                for bin_id in np.arange(4, dtype=np.float32)
-            ],
+            [f"feat{col_id}_{bin_id}" for col_id in range(3) for bin_id in range(4)],
         ),
         (
             "onehot-dense",
-            [
-                f"feat{col_id}_{bin_id}"
-                for col_id in range(3)
-                for bin_id in np.arange(4, dtype=np.float32)
-            ],
+            [f"feat{col_id}_{bin_id}" for col_id in range(3) for bin_id in range(4)],
         ),
         ("ordinal", [f"feat{col_id}" for col_id in range(3)]),
     ],
