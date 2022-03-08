@@ -317,8 +317,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             score = 0.0
         return score
 
-    def _more_tags(self):
-        return {"_skip_test": True, "X_types": ["1dlabel"]}
+    def __sklearn_tags__(self):
+        more_tags = {"_skip_test": True, "X_types": ["1dlabel"]}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class NoSampleWeightWrapper(BaseEstimator):
@@ -342,5 +343,6 @@ class NoSampleWeightWrapper(BaseEstimator):
     def predict_proba(self, X):
         return self.est.predict_proba(X)
 
-    def _more_tags(self):
-        return {"_skip_test": True}
+    def __sklearn_tags__(self):
+        more_tags = {"_skip_test": True}
+        return {**super().__sklearn_tags__(), **more_tags}

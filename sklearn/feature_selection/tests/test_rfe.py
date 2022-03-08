@@ -23,6 +23,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._tags import _DEFAULT_TAGS
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -57,8 +58,9 @@ class MockClassifier:
     def set_params(self, **params):
         return self
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        more_tags = {"allow_nan": True}
+        return {**_DEFAULT_TAGS, **more_tags}
 
 
 def test_rfe_features_importance():

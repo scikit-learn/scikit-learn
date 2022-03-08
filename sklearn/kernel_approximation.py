@@ -747,8 +747,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return sp.hstack(X_new)
 
-    def _more_tags(self):
-        return {"stateless": True, "requires_positive_X": True}
+    def __sklearn_tags__(self):
+        more_tags = {"stateless": True, "requires_positive_X": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -1000,8 +1001,8 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
         return params
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_transformer_preserve_dtypes": (
                     "dtypes are preserved but not at a close enough precision"
@@ -1009,3 +1010,4 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             },
             "preserves_dtype": [np.float64, np.float32],
         }
+        return {**super().__sklearn_tags__(), **more_tags}

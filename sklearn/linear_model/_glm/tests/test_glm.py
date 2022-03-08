@@ -494,4 +494,4 @@ def test_tweedie_regression_family(regression_data):
     ],
 )
 def test_tags(estimator, value):
-    assert estimator._get_tags()["requires_positive_y"] is value
+    assert estimator.__sklearn_tags__()["requires_positive_y"] is value

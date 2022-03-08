@@ -430,7 +430,7 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         dev_null = self._family_instance.deviance(y, y_mean, weights=weights)
         return 1 - dev / dev_null
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         # create the _family_instance if fit wasn't called yet.
         if hasattr(self, "_family_instance"):
             _family_instance = self._family_instance
@@ -440,7 +440,8 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             _family_instance = EDM_DISTRIBUTIONS[self.family]()
         else:
             raise ValueError
-        return {"requires_positive_y": not _family_instance.in_y_range(-1.0)}
+        more_tags = {"requires_positive_y": not _family_instance.in_y_range(-1.0)}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class PoissonRegressor(GeneralizedLinearRegressor):

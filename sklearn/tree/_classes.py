@@ -1037,8 +1037,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     def n_features_(self):
         return self.n_features_in_
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multilabel": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):

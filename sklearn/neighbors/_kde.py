@@ -318,11 +318,12 @@ class KernelDensity(BaseEstimator):
             )
             return data[i] + X * correction[:, np.newaxis]
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "sample_weight must have positive values"
                 ),
             }
         }
+        return {**super().__sklearn_tags__(), **more_tags}

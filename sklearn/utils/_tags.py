@@ -1,3 +1,5 @@
+import warnings
+import inspect
 import numpy as np
 
 _DEFAULT_TAGS = {
@@ -22,6 +24,19 @@ _DEFAULT_TAGS = {
 }
 
 
+# TODO(1.3) Remove `_more_tags` support
+def _walk_mro_more_tags(estimator):
+    collected_tags = {}
+    for base_class in reversed(inspect.getmro(estimator.__class__)):
+        if hasattr(base_class, "_more_tags"):
+            # need the if because mixins might not have _more_tags
+            # but might do redundant work in estimators
+            # (i.e. calling more tags on BaseEstimator multiple times)
+            more_tags = base_class._more_tags(estimator)
+            collected_tags.update(more_tags)
+    return collected_tags
+
+
 def _safe_tags(estimator, key=None):
     """Safely get estimator tags.
 
@@ -30,7 +45,7 @@ def _safe_tags(estimator, key=None):
     fall-back to the default tags.
 
     For scikit-learn built-in estimators, we should still rely on
-    `self._get_tags()`. `_safe_tags(est)` should be used when we are not sure
+    `self.__sklearn_tags__()`. `_safe_tags(est)` should be used when we are not sure
     where `est` comes from: typically `_safe_tags(self.base_estimator)` where
     `self` is a meta-estimator, or in the common checks.
 
@@ -47,12 +62,27 @@ def _safe_tags(estimator, key=None):
     tags : dict or tag value
         The estimator tags. A single value is returned if `key` is not None.
     """
-    if hasattr(estimator, "_get_tags"):
+    if hasattr(estimator, "__sklearn_tags__"):
+        tags_provider = "__sklearn_tags__()"
+        tags = estimator.__sklearn_tags__()
+    elif hasattr(estimator, "_get_tags"):
+        # TODO(1.3) Remove `_get_tags` support
+        warnings.warn(
+            "_get_tags() was deprecated in 1.1 support will be removed in 1.3. "
+            "Please use __sklearn_tags__ instead.",
+            FutureWarning,
+        )
         tags_provider = "_get_tags()"
         tags = estimator._get_tags()
     elif hasattr(estimator, "_more_tags"):
+        # TODO(1.3) Remove `_more_tags` support
+        warnings.warn(
+            "_more_tags() was deprecated in 1.1 support will be removed in 1.3. "
+            "Please use __sklearn_tags__ instead.",
+            FutureWarning,
+        )
         tags_provider = "_more_tags()"
-        tags = {**_DEFAULT_TAGS, **estimator._more_tags()}
+        tags = {**_DEFAULT_TAGS, **_walk_mro_more_tags(estimator)}
     else:
         tags_provider = "_DEFAULT_TAGS"
         tags = _DEFAULT_TAGS

@@ -78,7 +78,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        # note: we use _safe_tags instead of _get_tags because this is a
+        # note: we use _safe_tags instead of __sklearn_tags__ because this is a
         # public Mixin.
         X = self._validate_data(
             X,

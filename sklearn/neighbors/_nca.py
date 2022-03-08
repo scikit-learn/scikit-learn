@@ -565,5 +565,6 @@ class NeighborhoodComponentsAnalysis(
 
         return sign * loss, sign * gradient.ravel()
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_y": True}
+        return {**super().__sklearn_tags__(), **more_tags}

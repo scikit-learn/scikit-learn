@@ -486,8 +486,9 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_y": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 ######################################################################
@@ -1014,8 +1015,9 @@ class GenericUnivariateSelect(_BaseFilter):
 
         return selector
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        more_tags = {"preserves_dtype": [np.float64, np.float32]}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def _check_params(self, X, y):
         if self.mode not in self._selection_modes:

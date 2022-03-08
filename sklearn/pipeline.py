@@ -703,9 +703,10 @@ class Pipeline(_BaseComposition):
         """The classes labels. Only exist if the last step is a classifier."""
         return self.steps[-1][1].classes_
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         # check if first estimator expects pairwise input
-        return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+        more_tags = {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

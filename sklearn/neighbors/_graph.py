@@ -441,12 +441,13 @@ class KNeighborsTransformer(
         """
         return self.fit(X).transform(X)
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_methods_sample_order_invariance": "check is not applicable."
             }
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class RadiusNeighborsTransformer(
@@ -670,9 +671,10 @@ class RadiusNeighborsTransformer(
         """
         return self.fit(X).transform(X)
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_methods_sample_order_invariance": "check is not applicable."
             }
         }
+        return {**super().__sklearn_tags__(), **more_tags}
