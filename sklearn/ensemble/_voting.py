@@ -422,9 +422,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         -------
         probabilities_or_labels
             If `voting='soft'` and `flatten_transform=True`:
-                returns ndarray of shape (n_classifiers, n_samples *
-                n_classes), being class probabilities calculated by each
-                classifier.
+                returns ndarray of shape (n_samples, n_classifiers * n_classes),
+                being class probabilities calculated by each classifier.
             If `voting='soft' and `flatten_transform=False`:
                 ndarray of shape (n_classifiers, n_samples, n_classes)
             If `voting='hard'`:
