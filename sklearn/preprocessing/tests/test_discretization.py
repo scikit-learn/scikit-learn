@@ -144,7 +144,7 @@ def test_numeric_stability(i):
     Xt_expected = np.array([0, 0, 1, 1, 1]).reshape(-1, 1)
 
     # Test up to discretizing nano units
-    X = X_init / 10 ** i
+    X = X_init / 10**i
     Xt = KBinsDiscretizer(n_bins=2, encode="ordinal").fit_transform(X)
     assert_array_equal(Xt_expected, Xt)
 
@@ -395,10 +395,7 @@ def test_kbinsdiscretizer_subsample_invalid_type():
         n_bins=10, encode="ordinal", strategy="quantile", subsample="full"
     )
 
-    msg = (
-        "subsample must be an instance of <class 'numbers.Integral'>, not "
-        "<class 'str'>."
-    )
+    msg = "subsample must be an instance of int, not str."
     with pytest.raises(TypeError, match=msg):
         kbd.fit(X)
 

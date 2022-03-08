@@ -517,10 +517,15 @@ class SimpleImputer(_BaseImputer):
             valid_statistics_indexes = np.flatnonzero(valid_mask)
 
             if invalid_mask.any():
-                missing = np.arange(X.shape[1])[invalid_mask]
+                invalid_features = np.arange(X.shape[1])[invalid_mask]
                 if self.verbose != "deprecated" and self.verbose:
+                    # use feature names warning if features are provided
+                    if hasattr(self, "feature_names_in_"):
+                        invalid_features = self.feature_names_in_[invalid_features]
                     warnings.warn(
-                        "Skipping features without observed values: %s" % missing
+                        "Skipping features without any observed values:"
+                        f" {invalid_features}. At least one non-missing value is needed"
+                        f" for imputation with strategy='{self.strategy}'."
                     )
                 X = X[:, valid_statistics_indexes]
 
@@ -638,10 +643,11 @@ class SimpleImputer(_BaseImputer):
             Input features.
 
             - If `input_features` is `None`, then `feature_names_in_` is
-                used as feature names in. If `feature_names_in_` is not defined,
-                then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              used as feature names in. If `feature_names_in_` is not defined,
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
-                match `feature_names_in_` if `feature_names_in_` is defined.
+              match `feature_names_in_` if `feature_names_in_` is defined.
 
         Returns
         -------
@@ -989,7 +995,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 

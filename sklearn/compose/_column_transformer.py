@@ -463,7 +463,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -930,6 +931,7 @@ def make_column_transformer(
     Returns
     -------
     ct : ColumnTransformer
+        Returns a :class:`ColumnTransformer` object.
 
     See Also
     --------
@@ -948,7 +950,6 @@ def make_column_transformer(
                                      ['numerical_column']),
                                     ('onehotencoder', OneHotEncoder(...),
                                      ['categorical_column'])])
-
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers

@@ -243,7 +243,11 @@ Making a release
 
        rm -r dist
        pip install -U wheelhouse_uploader twine
-       python setup.py fetch_artifacts
+       python -m wheelhouse_uploader fetch \
+         --version 0.99.0 \
+         --local-folder dist \
+         scikit-learn \
+         https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
 
    This command will download all the binary packages accumulated in the
    `staging area on the anaconda.org hosting service

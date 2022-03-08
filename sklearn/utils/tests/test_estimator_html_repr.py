@@ -18,6 +18,7 @@ from sklearn.feature_selection import SelectPercentile
 from sklearn.cluster import Birch
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.tree import DecisionTreeClassifier
@@ -290,5 +291,16 @@ def test_fallback_exists():
 
     assert (
         f'<div class="sk-text-repr-fallback"><pre>{html.escape(str(pca))}'
+        in html_output
+    )
+
+
+def test_show_arrow_pipeline():
+    """Show arrow in pipeline for top level in pipeline"""
+    pipe = Pipeline([("scale", StandardScaler()), ("log_Reg", LogisticRegression())])
+
+    html_output = estimator_html_repr(pipe)
+    assert (
+        'class="sk-toggleable__label sk-toggleable__label-arrow">Pipeline'
         in html_output
     )
