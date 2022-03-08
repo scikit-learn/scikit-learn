@@ -31,6 +31,7 @@ from ..utils import Bunch
 from ..utils import check_scalar
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 from ..exceptions import NotFittedError
@@ -441,6 +442,42 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         else:
             return self._predict(X)
 
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        if self.voting == "soft" and not self.flatten_transform:
+            raise ValueError(
+                "get_feature_names_out is not supported when `voting='soft'` and "
+                "`flatten_transform=False`"
+            )
+
+        _check_feature_names_in(self, input_features, generate_names=False)
+        class_name = self.__class__.__name__.lower()
+
+        active_names = [name for name, est in self.estimators if est != "drop"]
+
+        if self.voting == "hard":
+            return np.asarray(
+                [f"{class_name}_{name}" for name in active_names], dtype=object
+            )
+
+        # voting == "soft"
+        n_classes = len(self.classes_)
+        names_out = [
+            f"{class_name}_{name}{i}" for name in active_names for i in range(n_classes)
+        ]
+        return np.asarray(names_out, dtype=object)
+
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
@@ -597,3 +634,23 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         """
         check_is_fitted(self)
         return self._predict(X)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        _check_feature_names_in(self, input_features, generate_names=False)
+        class_name = self.__class__.__name__.lower()
+        return np.asarray(
+            [f"{class_name}_{name}" for name, est in self.estimators if est != "drop"],
+            dtype=object,
+        )
