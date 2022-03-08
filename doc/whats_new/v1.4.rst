@@ -145,6 +145,15 @@ Changelog
   of `predict` if fitted with one dimensional `y`.
   :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.load_wine`, :func:`datasets.load_iris`,
+  :func:`datasets.load_breast_cancer` and :func:`datasets.load_digits`
+  now return the target as a pandas categorical dtype when ``as_frame``
+  is set to ``True``.
+  :pr:`22733` by :user:`Matt Williams <milliams>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
