@@ -34,7 +34,7 @@ def test_cast_frame():
     X_casted = _cast_frame(X_original.copy(), columns_info)
     X_casted_dtypes = X_casted.dtypes
 
-    assert X_casted_dtypes["col_int_as_integer"].kind == "i"
+    assert X_casted_dtypes["col_int_as_integer"] == "Int64"
     assert X_casted_dtypes["col_int_as_numeric"].kind == "i"
     assert X_casted_dtypes["col_float_as_real"].kind == "f"
     assert X_casted_dtypes["col_float_as_numeric"].kind == "f"

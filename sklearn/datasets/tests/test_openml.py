@@ -15,7 +15,6 @@ import pytest
 import sklearn
 from sklearn import config_context
 from sklearn.utils import Bunch, check_pandas_support
-from sklearn.utils._mocking import _MockHTTPResponse
 from sklearn.utils._testing import (
     SkipTest,
     assert_allclose,
@@ -35,6 +34,32 @@ from sklearn.datasets._openml import (
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
+
+
+class _MockHTTPResponse:
+    def __init__(self, data, is_gzip):
+        self.data = data
+        self.is_gzip = is_gzip
+
+    def read(self, amt=-1):
+        return self.data.read(amt)
+
+    def close(self):
+        self.data.close()
+
+    def info(self):
+        if self.is_gzip:
+            return {"Content-Encoding": "gzip"}
+        return {}
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
 
 
 # Do not use a cache for `fetch_openml` to avoid concurrent writing
@@ -329,9 +354,22 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
     )
 
     frame_liac, frame_pandas = bunch_liac.frame, bunch_pandas.frame
-    frame_pandas_casted = frame_pandas.astype(frame_liac.dtypes)
 
-    pd.testing.assert_frame_equal(frame_liac, frame_pandas_casted)
+    # convert dtype of liac parser to make it comparable to the pandas parse
+    def convert_dtype(series):
+        pandas_series = frame_pandas[series.name]
+        if pd.api.types.is_numeric_dtype(pandas_series):
+            return series.astype(pandas_series.dtype)
+        elif pd.api.types.is_categorical_dtype(pandas_series):
+            # Compare categorical features by converting categorical
+            # liac uses strings to denote the categories, we rename the categories
+            # to make them comparable to the pandas parser
+            return series.cat.rename_categories(pandas_series.cat.categories)
+        else:
+            return series
+
+    frame_liac = frame_liac.apply(convert_dtype)
+    pd.testing.assert_frame_equal(frame_liac, frame_pandas)
 
 
 # Known failure of PyPy for OpenML. See the following issue:
@@ -1086,7 +1124,11 @@ def test_fetch_openml_types_inference(
     assert n_ints == expected_n_ints
 
     assert frame.columns.tolist() == datasets_column_names[data_id]
-    assert frame.isna().sum().to_dict() == datasets_missing_values[data_id]
+
+    frame_feature_to_n_nan = frame.isna().sum().to_dict()
+    for name, n_missing in frame_feature_to_n_nan.items():
+        expected_missing = datasets_missing_values[data_id].get(name, 0)
+        assert n_missing == expected_missing
 
 
 ###############################################################################

@@ -344,29 +344,3 @@ class NoSampleWeightWrapper(BaseEstimator):
 
     def _more_tags(self):
         return {"_skip_test": True}
-
-
-class _MockHTTPResponse:
-    def __init__(self, data, is_gzip):
-        self.data = data
-        self.is_gzip = is_gzip
-
-    def read(self, amt=-1):
-        return self.data.read(amt)
-
-    def close(self):
-        self.data.close()
-
-    def info(self):
-        if self.is_gzip:
-            return {"Content-Encoding": "gzip"}
-        return {}
-
-    def __iter__(self):
-        return iter(self.data)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
