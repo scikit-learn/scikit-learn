@@ -42,7 +42,7 @@ cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 
 
-cdef inline void _init_split(ObliqueSplitRecord* self, SIZE_t start_pos) nogil:
+cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
     self.impurity_left = INFINITY
     self.impurity_right = INFINITY
     self.pos = start_pos
@@ -245,7 +245,7 @@ cdef class BaseObliqueSplitter:
             self.proj_mat_weights[i].clear()
             self.proj_mat_indices[i].clear()
 
-    cdef int node_split(self, double impurity, ObliqueSplitRecord* split,
+    cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end].
 
@@ -358,7 +358,7 @@ cdef class ObliqueSplitter(DenseObliqueSplitter):
             proj_mat_indices[proj_i].push_back(feat_i)  # Store index of nonzero
             proj_mat_weights[proj_i].push_back(weight)  # Store weight of nonzero
 
-    cdef int node_split(self, double impurity, ObliqueSplitRecord* split,
+    cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end]
 
@@ -385,7 +385,7 @@ cdef class ObliqueSplitter(DenseObliqueSplitter):
 
         # keep track of split record for current node and the best split
         # found among the sampled projection vectors
-        cdef ObliqueSplitRecord best, current
+        cdef SplitRecord best, current
 
         cdef double current_proxy_improvement = -INFINITY
         cdef double best_proxy_improvement = -INFINITY

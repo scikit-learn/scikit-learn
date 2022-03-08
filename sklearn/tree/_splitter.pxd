@@ -20,6 +20,9 @@ from ._tree cimport SIZE_t           # Type for indices and counters
 from ._tree cimport INT32_t          # Signed 32 bit integer
 from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
+from libcpp.vector cimport vector
+
+
 cdef struct SplitRecord:
     # Data to track sample split
     SIZE_t feature         # Which feature to split on.
@@ -30,6 +33,9 @@ cdef struct SplitRecord:
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
+
+    vector[DTYPE_t]* proj_vec_weights   # weights of the vector
+    vector[SIZE_t]* proj_vec_indices    # indices of the features
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold

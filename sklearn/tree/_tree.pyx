@@ -22,6 +22,7 @@ from libc.stdint cimport SIZE_MAX
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
+from libcpp cimport bool
 
 import struct
 
@@ -183,10 +184,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double weighted_n_samples = splitter.weighted_n_samples
         cdef double weighted_n_node_samples
         cdef SIZE_t node_id
-        if tree.is_oblique:
-            cdef ObliqueSplitRecord split
-        else:
-            cdef SplitRecord split
+
+        cdef SplitRecord split
 
         cdef double impurity = INFINITY
         cdef SIZE_t n_constant_features
@@ -450,10 +449,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t depth,
                                     FrontierRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
-        if tree.is_oblique:
-            cdef ObliqueSplitRecord split
-        else:
-            cdef SplitRecord split
+        cdef SplitRecord split
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0

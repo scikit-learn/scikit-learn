@@ -21,15 +21,15 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
-from ._oblique_splitter cimport BaseObliqueSplitter, ObliqueSplitRecord
+from ._oblique_splitter cimport BaseObliqueSplitter
 
 ctypedef fused axis_oblique_split:
     Splitter
     BaseObliqueSplitter
 
-ctypedef fused axis_oblique_record:
-    SplitRecord
-    ObliqueSplitRecord
+# ctypedef fused axis_oblique_record:
+#     SplitRecord
+#     ObliqueSplitRecord
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
