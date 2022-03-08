@@ -346,3 +346,17 @@ def test_nystroem_component_indices():
     )
     feature_map_nystroem.fit(X)
     assert feature_map_nystroem.component_indices_.shape == (10,)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [PolynomialCountSketch, RBFSampler, SkewedChi2Sampler, Nystroem]
+)
+def test_get_feature_names_out(Estimator):
+    """Check get_feature_names_out"""
+    est = Estimator().fit(X)
+    X_trans = est.transform(X)
+
+    names_out = est.get_feature_names_out()
+    class_name = Estimator.__name__.lower()
+    expected_names = [f"{class_name}{i}" for i in range(X_trans.shape[1])]
+    assert_array_equal(names_out, expected_names)
