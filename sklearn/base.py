@@ -17,7 +17,6 @@ from ._config import get_config
 from .utils import _IS_32BIT
 from .utils._tags import (
     _DEFAULT_TAGS,
-    _safe_tags,
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
@@ -888,7 +887,8 @@ class _OneToOneFeatureMixin:
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -1044,44 +1044,3 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
-
-
-def _is_pairwise(estimator):
-    """Returns True if estimator is pairwise.
-
-    - If the `_pairwise` attribute and the tag are present and consistent,
-      then use the value and not issue a warning.
-    - If the `_pairwise` attribute and the tag are present and not
-      consistent, use the `_pairwise` value and issue a deprecation
-      warning.
-    - If only the `_pairwise` attribute is present and it is not False,
-      issue a deprecation warning and use the `_pairwise` value.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if the estimator is pairwise and False otherwise.
-    """
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=FutureWarning)
-        has_pairwise_attribute = hasattr(estimator, "_pairwise")
-        pairwise_attribute = getattr(estimator, "_pairwise", False)
-    pairwise_tag = _safe_tags(estimator, key="pairwise")
-
-    if has_pairwise_attribute:
-        if pairwise_attribute != pairwise_tag:
-            warnings.warn(
-                "_pairwise was deprecated in 0.24 and will be removed in 1.1 "
-                "(renaming of 0.26). Set the estimator tags of your estimator "
-                "instead",
-                FutureWarning,
-            )
-        return pairwise_attribute
-
-    # use pairwise tag when the attribute is not present
-    return pairwise_tag

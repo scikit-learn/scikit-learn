@@ -24,7 +24,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils._mocking import NoSampleWeightWrapper
-from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import skip_if_32bit
@@ -46,7 +45,7 @@ true_result = [-1, 1, 1]
 
 # also make regression dataset
 X_reg, y_reg = make_regression(
-    n_samples=500, n_features=10, n_informative=8, noise=10, random_state=7
+    n_samples=100, n_features=4, n_informative=8, noise=10, random_state=7
 )
 y_reg = scale(y_reg)
 
@@ -81,61 +80,133 @@ def test_classification_toy(loss):
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
-        ({"n_estimators": 0}, ValueError, "n_estimators must be greater than 0"),
-        ({"n_estimators": -1}, ValueError, "n_estimators must be greater than 0"),
-        ({"learning_rate": 0}, ValueError, "learning_rate must be greater than 0"),
-        ({"learning_rate": -1.0}, ValueError, "learning_rate must be greater than 0"),
+        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0.0"),
+        (
+            {"learning_rate": "foo"},
+            TypeError,
+            "learning_rate must be an instance of float",
+        ),
+        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
+        (
+            {"n_estimators": 1.5},
+            TypeError,
+            "n_estimators must be an instance of int,",
+        ),
         ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
+        ({"subsample": 0.0}, ValueError, "subsample == 0.0, must be > 0.0"),
+        ({"subsample": 1.1}, ValueError, "subsample == 1.1, must be <= 1.0"),
+        (
+            {"subsample": "foo"},
+            TypeError,
+            "subsample must be an instance of float",
+        ),
+        ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
+        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
+        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
+        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
+        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
+        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
+        (
+            {"verbose": "foo"},
+            TypeError,
+            "verbose must be an instance of",
+        ),
+        ({"warm_start": "foo"}, TypeError, "warm_start must be an instance of"),
+        (
+            {"validation_fraction": 0.0},
+            ValueError,
+            "validation_fraction == 0.0, must be > 0.0",
+        ),
+        (
+            {"validation_fraction": 1.0},
+            ValueError,
+            "validation_fraction == 1.0, must be < 1.0",
+        ),
+        (
+            {"validation_fraction": "foo"},
+            TypeError,
+            "validation_fraction must be an instance of float",
+        ),
+        ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be >= 1"),
+        (
+            {"n_iter_no_change": 1.5},
+            TypeError,
+            "n_iter_no_change must be an instance of int,",
+        ),
+        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
+        (
+            {"tol": "foo"},
+            TypeError,
+            "tol must be an instance of float,",
+        ),
+        # The following parameters are checked in BaseDecisionTree
+        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
+        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
+        (
+            {"min_samples_leaf": "foo"},
+            TypeError,
+            "min_samples_leaf must be an instance of float",
+        ),
+        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
         (
             {"min_samples_split": 0.0},
             ValueError,
             "min_samples_split == 0.0, must be > 0.0",
         ),
         (
-            {"min_samples_split": -1.0},
-            ValueError,
-            "min_samples_split == -1.0, must be > 0.0",
-        ),
-        (
             {"min_samples_split": 1.1},
             ValueError,
-            "min_samples_split == 1.1, must be <= 1.0.",
-        ),
-        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        (
-            {"min_samples_leaf": -1.0},
-            ValueError,
-            "min_samples_leaf == -1.0, must be > 0.0.",
+            "min_samples_split == 1.1, must be <= 1.0",
         ),
         (
-            {"min_weight_fraction_leaf": -1.0},
+            {"min_samples_split": "foo"},
+            TypeError,
+            "min_samples_split must be an instance of float",
+        ),
+        (
+            {"min_weight_fraction_leaf": -1},
             ValueError,
-            "min_weight_fraction_leaf == -1.0, must be >= 0",
+            "min_weight_fraction_leaf == -1, must be >= 0.0",
         ),
         (
             {"min_weight_fraction_leaf": 0.6},
             ValueError,
-            "min_weight_fraction_leaf == 0.6, must be <= 0.5.",
-        ),
-        ({"subsample": 0.0}, ValueError, r"subsample must be in \(0,1\]"),
-        ({"subsample": 1.1}, ValueError, r"subsample must be in \(0,1\]"),
-        ({"subsample": -0.1}, ValueError, r"subsample must be in \(0,1\]"),
-        ({"max_depth": -0.1}, TypeError, "max_depth must be an instance of"),
-        ({"max_depth": 0}, ValueError, "max_depth == 0, must be >= 1."),
-        ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
-        ({"max_features": "invalid"}, ValueError, "Invalid value for max_features:"),
-        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 100}, ValueError, "max_features == 100, must be <="),
-        (
-            {"max_features": -0.1},
-            ValueError,
-            r"max_features must be in \(0, n_features\]",
+            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
         ),
         (
-            {"n_iter_no_change": "invalid"},
-            ValueError,
-            "n_iter_no_change should either be",
+            {"min_weight_fraction_leaf": "foo"},
+            TypeError,
+            "min_weight_fraction_leaf must be an instance of float",
         ),
+        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
+        (
+            {"max_leaf_nodes": 1.5},
+            TypeError,
+            "max_leaf_nodes must be an instance of int",
+        ),
+        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
+        (
+            {"max_depth": 1.1},
+            TypeError,
+            "max_depth must be an instance of int",
+        ),
+        (
+            {"min_impurity_decrease": -1},
+            ValueError,
+            "min_impurity_decrease == -1, must be >= 0.0",
+        ),
+        (
+            {"min_impurity_decrease": "foo"},
+            TypeError,
+            "min_impurity_decrease must be an instance of float",
+        ),
+        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
+        (
+            {"ccp_alpha": "foo"},
+            TypeError,
+            "ccp_alpha must be an instance of float",
+        ),
+        ({"criterion": "mae"}, ValueError, "criterion='mae' is not supported."),
     ],
     # Avoid long error messages in test names:
     # https://github.com/scikit-learn/scikit-learn/issues/21362
@@ -158,8 +229,10 @@ def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"loss": "huber", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
-        ({"loss": "quantile", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
+        ({"loss": "huber", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
+        ({"loss": "quantile", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
+        ({"loss": "huber", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
+        ({"loss": "quantile", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
     ],
 )
 def test_gbdt_loss_alpha_error(params, err_msg):
@@ -230,18 +303,22 @@ def test_regression_dataset(loss, subsample):
     ones = np.ones(len(y_reg))
     last_y_pred = None
     for sample_weight in [None, ones, 2 * ones]:
+        # learning_rate, max_depth and n_estimators were adjusted to get a mode
+        # that is accurate enough to reach a low MSE on the training set while
+        # keeping the resource used to execute this test low enough.
         reg = GradientBoostingRegressor(
-            n_estimators=100,
+            n_estimators=30,
             loss=loss,
             max_depth=4,
             subsample=subsample,
             min_samples_split=2,
             random_state=1,
+            learning_rate=0.5,
         )
 
         reg.fit(X_reg, y_reg, sample_weight=sample_weight)
         leaves = reg.apply(X_reg)
-        assert leaves.shape == (500, 100)
+        assert leaves.shape == (100, 30)
 
         y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
@@ -1020,15 +1097,18 @@ def test_complete_regression():
 
 
 def test_zero_estimator_reg():
-    # Test if init='zero' works for regression.
+    # Test if init='zero' works for regression by checking that it is better
+    # than a simple baseline.
 
+    baseline = DummyRegressor(strategy="mean").fit(X_reg, y_reg)
+    mse_baseline = mean_squared_error(baseline.predict(X_reg), y_reg)
     est = GradientBoostingRegressor(
-        n_estimators=20, max_depth=1, random_state=1, init="zero"
+        n_estimators=5, max_depth=1, random_state=1, init="zero", learning_rate=0.5
     )
     est.fit(X_reg, y_reg)
     y_pred = est.predict(X_reg)
-    mse = mean_squared_error(y_reg, y_pred)
-    assert_almost_equal(mse, 0.52, decimal=2)
+    mse_gbdt = mean_squared_error(y_reg, y_pred)
+    assert mse_gbdt < mse_baseline
 
     est = GradientBoostingRegressor(
         n_estimators=20, max_depth=1, random_state=1, init="foobar"
@@ -1382,7 +1462,7 @@ def test_early_stopping_n_classes():
     X = [[1]] * 10
     y = [0, 0] + [1] * 8  # only 2 negative class over 10 samples
     gb = GradientBoostingClassifier(
-        n_iter_no_change=5, random_state=0, validation_fraction=8
+        n_iter_no_change=5, random_state=0, validation_fraction=0.8
     )
     with pytest.raises(
         ValueError, match="The training data after the early stopping split"
@@ -1391,7 +1471,7 @@ def test_early_stopping_n_classes():
 
     # No error if we let training data be big enough
     gb = GradientBoostingClassifier(
-        n_iter_no_change=5, random_state=0, validation_fraction=4
+        n_iter_no_change=5, random_state=0, validation_fraction=0.4
     )
 
 
@@ -1401,49 +1481,6 @@ def test_gbr_degenerate_feature_importances():
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
-
-
-# TODO: Remove in 1.1 when `n_classes_` is deprecated
-def test_gbr_deprecated_attr():
-    # check that accessing n_classes_ in GradientBoostingRegressor raises
-    # a deprecation warning
-    X = np.zeros((10, 10))
-    y = np.ones((10,))
-    gbr = GradientBoostingRegressor().fit(X, y)
-    msg = "Attribute `n_classes_` was deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        gbr.n_classes_
-
-
-# TODO: Remove in 1.1 when `n_classes_` is deprecated
-@pytest.mark.filterwarnings("ignore:Attribute `n_classes_` was deprecated")
-def test_attr_error_raised_if_not_fitted():
-    # check that accessing n_classes_ in not fitted GradientBoostingRegressor
-    # raises an AttributeError
-    gbr = GradientBoostingRegressor()
-    # test raise AttributeError if not fitted
-    msg = f"{GradientBoostingRegressor.__name__} object has no n_classes_ attribute."
-    with pytest.raises(AttributeError, match=msg):
-        gbr.n_classes_
-
-
-# TODO: Update in 1.1 to check for the error raised
-@pytest.mark.parametrize(
-    "estimator",
-    [
-        GradientBoostingClassifier(criterion="mae"),
-        GradientBoostingRegressor(criterion="mae"),
-    ],
-)
-def test_criterion_mae_deprecation(estimator):
-    # checks whether a deprecation warning is issues when criterion='mae'
-    # is used.
-    msg = (
-        "criterion='mae' was deprecated in version 0.24 and "
-        "will be removed in version 1.1"
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        estimator.fit(X, y)
 
 
 # FIXME: remove in 1.2

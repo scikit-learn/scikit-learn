@@ -7,7 +7,7 @@ import numpy as np
 from scipy import sparse
 import numbers
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
@@ -223,7 +223,7 @@ class OneHotEncoder(_BaseEncoder):
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression.
+        into an unregularized linear regression model.
 
         However, dropping one category breaks the symmetry of the original
         representation and can therefore induce a bias in downstream models,
@@ -709,7 +709,8 @@ class OneHotEncoder(_BaseEncoder):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -731,7 +732,7 @@ class OneHotEncoder(_BaseEncoder):
         return np.asarray(feature_names, dtype=object)
 
 
-class OrdinalEncoder(_BaseEncoder):
+class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
     """
     Encode categorical features as an integer array.
 

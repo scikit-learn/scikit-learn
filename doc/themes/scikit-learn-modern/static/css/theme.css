@@ -650,14 +650,16 @@ table.longtable tr.row-odd {
   overflow: auto;
 }
 
-code.descname {
+span.descname {
   font-weight: bold;
   background-color: transparent;
   padding: 0;
+  font-family: monospace;
 }
 
-code.descclassname {
+span.descclassname {
   background-color: transparent;
+  font-family: monospace;
 }
 
 .viewcode-link {
