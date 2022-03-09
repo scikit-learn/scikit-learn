@@ -973,6 +973,43 @@ class _BaseKMeans(
         """
         return self.fit(X, sample_weight=sample_weight).labels_
 
+    def predict(self, X, sample_weight=None):
+        """Predict the closest cluster each sample in X belongs to.
+
+        In the vector quantization literature, `cluster_centers_` is called
+        the code book and each value returned by `predict` is the index of
+        the closest code in the code book.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to predict.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+        Returns
+        -------
+        labels : ndarray of shape (n_samples,)
+            Index of the cluster each sample belongs to.
+        """
+        check_is_fitted(self)
+
+        X = self._check_test_data(X)
+        x_squared_norms = row_norms(X, squared=True)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        labels, _ = _labels_inertia_threadpool_limit(
+            X,
+            sample_weight,
+            x_squared_norms,
+            self.cluster_centers_,
+            n_threads=self._n_threads,
+        )
+
+        return labels
+
     def fit_transform(self, X, y=None, sample_weight=None):
         """Compute clustering and transform X to cluster-distance space.
 
@@ -1398,37 +1435,6 @@ class KMeans(_BaseKMeans):
         self.inertia_ = best_inertia
         self.n_iter_ = best_n_iter
         return self
-
-    def predict(self, X, sample_weight=None):
-        """Predict the closest cluster each sample in X belongs to.
-
-        In the vector quantization literature, `cluster_centers_` is called
-        the code book and each value returned by `predict` is the index of
-        the closest code in the code book.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            New data to predict.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight.
-
-        Returns
-        -------
-        labels : ndarray of shape (n_samples,)
-            Index of the cluster each sample belongs to.
-        """
-        check_is_fitted(self)
-
-        X = self._check_test_data(X)
-        x_squared_norms = row_norms(X, squared=True)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        return _labels_inertia_threadpool_limit(
-            X, sample_weight, x_squared_norms, self.cluster_centers_, self._n_threads
-        )[0]
 
 
 def _mini_batch_step(
@@ -2151,40 +2157,3 @@ class MiniBatchKMeans(_BaseKMeans):
         self._n_features_out = self.cluster_centers_.shape[0]
 
         return self
-
-    def predict(self, X, sample_weight=None):
-        """Predict the closest cluster each sample in X belongs to.
-
-        In the vector quantization literature, `cluster_centers_` is called
-        the code book and each value returned by `predict` is the index of
-        the closest code in the code book.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            New data to predict.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight.
-
-        Returns
-        -------
-        labels : ndarray of shape (n_samples,)
-            Index of the cluster each sample belongs to.
-        """
-        check_is_fitted(self)
-
-        X = self._check_test_data(X)
-        x_squared_norms = row_norms(X, squared=True)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        labels, _ = _labels_inertia_threadpool_limit(
-            X,
-            sample_weight,
-            x_squared_norms,
-            self.cluster_centers_,
-            n_threads=self._n_threads,
-        )
-
-        return labels
