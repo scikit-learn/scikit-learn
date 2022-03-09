@@ -606,6 +606,11 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
+    metric_params : dict, default=None
+        Additional keyword arguments for the metric function.
+
+        .. versionadded:: 1.1
+
     init : {'random', 'pca'} or ndarray of shape (n_samples, n_components), \
             default='random'
         Initialization of embedding. Possible options are 'random', 'pca',
@@ -744,6 +749,7 @@ class TSNE(BaseEstimator):
         n_iter_without_progress=300,
         min_grad_norm=1e-7,
         metric="euclidean",
+        metric_params=None,
         init="warn",
         verbose=0,
         random_state=None,
@@ -760,6 +766,7 @@ class TSNE(BaseEstimator):
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
+        self.metric_params = metric_params
         self.init = init
         self.verbose = verbose
         self.random_state = random_state
@@ -885,8 +892,9 @@ class TSNE(BaseEstimator):
                     # Also, Euclidean is slower for n_jobs>1, so don't set here
                     distances = pairwise_distances(X, metric=self.metric, squared=True)
                 else:
+                    metric_params_ = self.metric_params or {}
                     distances = pairwise_distances(
-                        X, metric=self.metric, n_jobs=self.n_jobs
+                        X, metric=self.metric, n_jobs=self.n_jobs, **metric_params_
                     )
 
             if np.any(distances < 0):
@@ -921,6 +929,7 @@ class TSNE(BaseEstimator):
                 n_jobs=self.n_jobs,
                 n_neighbors=n_neighbors,
                 metric=self.metric,
+                metric_params=self.metric_params,
             )
             t0 = time()
             knn.fit(X)
