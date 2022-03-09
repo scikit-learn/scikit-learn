@@ -35,7 +35,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
-from ..utils._param_validation import get_random_state_param_constraint
+from ..utils._param_validation import get_random_state_param_constraints
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import validate_params
@@ -820,7 +820,7 @@ class _BaseKMeans(
         self.verbose = verbose
         self.random_state = random_state
 
-    def _check_params_vs_init(self, X):
+    def _check_params_vs_input(self, X):
         # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(
@@ -831,6 +831,7 @@ class _BaseKMeans(
         self._tol = _tolerance(X, self.tol)
 
         # init
+        self._n_init = self.n_init
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
                 "Explicit initial center position passed: performing only"
@@ -1259,7 +1260,9 @@ class KMeans(_BaseKMeans):
     _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
         "copy_x": [bool],
-        "algorithm": [StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})],
+        "algorithm": [
+            StrOptions({"lloyd", "elkan", "auto", "full"}, deprecated={"auto", "full"})
+        ],
     }
 
     def __init__(
@@ -1738,7 +1741,7 @@ class MiniBatchKMeans(_BaseKMeans):
     array([0, 1], dtype=int32)
     """
 
-    _expected_params_type_and_vals = {
+    _parameter_constraints = {
         **_BaseKMeans._parameter_constraints,
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "compute_labels": [bool],

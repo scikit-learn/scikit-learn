@@ -4030,18 +4030,10 @@ def check_param_validation(name, estimator_orig):
     fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
     methods = [method for method in fit_methods if hasattr(estimator_orig, method)]
 
-    init_params = [
-        param_name
-        for param_name, param_val in signature(
-            estimator_orig.__init__
-        ).parameters.items()
-        if param_val.kind not in (param_val.VAR_KEYWORD, param_val.VAR_POSITIONAL)
-    ]
-
-    for param_name in init_params:
+    for param_name in estimator_orig.get_params(deep=False):
         match = rf"{param_name} must be .* Got .* instead."
         err_msg = (
-            f"{name} does not raise an informative error message when the"
+            f"{name} does not raise an informative error message when the "
             f"parameter {param_name} does not have a valid type or value."
         )
 
@@ -4058,7 +4050,7 @@ def check_param_validation(name, estimator_orig):
         # error is raised if param does match a valid type but does not match any valid
         # value for this type.
         constraints = estimator_orig._parameter_constraints[param_name]
-        constraints = map(make_constraint, constraints)
+        constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
             if not hasattr(constraint, "generate_invalid_param_val"):
