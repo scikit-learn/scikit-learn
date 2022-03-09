@@ -102,7 +102,7 @@ class MidpointNormalize(Normalize):
 
 # %%
 # Load and prepare data set
-# ---------------------------------------------------
+# -------------------------
 #
 # dataset for grid search
 
