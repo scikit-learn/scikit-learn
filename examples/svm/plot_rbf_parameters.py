@@ -86,7 +86,7 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
 
 # %%
-# Utility function to move the midpoint of a colormap to be around
+# Utility class to move the midpoint of a colormap to be around
 # the values of interest.
 
 
