@@ -10,18 +10,17 @@ from sklearn.feature_selection import mutual_info_regression, mutual_info_classi
 DTYPES = (np.float64, np.float32)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_compute_mi_dd(dtype):
+def test_compute_mi_dd():
     # In discrete case computations are straightforward and can be done
     # by hand on given vectors.
-    x = np.array([0, 1, 1, 0, 0], dtype=dtype)
-    y = np.array([1, 0, 0, 0, 1], dtype=dtype)
+    x = np.array([0, 1, 1, 0, 0])
+    y = np.array([1, 0, 0, 0, 1])
 
     H_x = H_y = -(3 / 5) * np.log(3 / 5) - (2 / 5) * np.log(2 / 5)
     H_xy = -1 / 5 * np.log(1 / 5) - 2 / 5 * np.log(2 / 5) - 2 / 5 * np.log(2 / 5)
     I_xy = H_x + H_y - H_xy
 
-    assert_almost_equal(_compute_mi(x, y, True, True), I_xy)
+    assert_almost_equal(_compute_mi(x, y, x_discrete=True, y_discrete=True), I_xy)
 
 
 @pytest.mark.parametrize("dtype", DTYPES)
@@ -54,7 +53,9 @@ def test_compute_mi_cc(dtype):
     # Theory and computed values won't be very close, assert that the
     # first figures after decimal point match.
     for n_neighbors in [3, 5, 7]:
-        I_computed = _compute_mi(x, y, False, False, n_neighbors)
+        I_computed = _compute_mi(
+            x, y, x_discrete=False, y_discrete=False, n_neighbors=n_neighbors
+        )
         assert_almost_equal(I_computed, I_theory, 1)
 
 
@@ -92,7 +93,9 @@ def test_compute_mi_cd(dtype):
 
         # Assert the same tolerance.
         for n_neighbors in [3, 5, 7]:
-            I_computed = _compute_mi(x, y, True, False, n_neighbors)
+            I_computed = _compute_mi(
+                x, y, x_discrete=True, y_discrete=False, n_neighbors=n_neighbors
+            )
             assert_almost_equal(I_computed, I_theory, 1)
 
 
@@ -107,11 +110,11 @@ def test_compute_mi_cd_unique_label(dtype):
     y[mask] = np.random.uniform(-1, 1, size=np.sum(mask)).astype(dtype)
     y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask)).astype(dtype)
 
-    mi_1 = _compute_mi(x, y, True, False)
+    mi_1 = _compute_mi(x, y, x_discrete=True, y_discrete=False)
 
     x = np.hstack((x, 2))
     y = np.hstack((y, 10))
-    mi_2 = _compute_mi(x, y, True, False)
+    mi_2 = _compute_mi(x, y, x_discrete=True, y_discrete=False)
 
     assert mi_1 == mi_2
 
@@ -146,6 +149,9 @@ def test_mutual_info_regression(dtype):
 
     mi = mutual_info_regression(X, y, random_state=0)
     assert_array_equal(np.argsort(-mi), np.array([1, 2, 0]))
+    # XXX: should mutual_info_regression be fixed to avoid
+    # up-casting float32 inputs to float64?
+    assert mi.dtype == np.float64
 
 
 @pytest.mark.parametrize("dtype", DTYPES)
@@ -176,10 +182,14 @@ def test_mutual_info_classif_mixed(dtype):
 @pytest.mark.parametrize("dtype", DTYPES)
 def test_mutual_info_options(dtype):
     X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=dtype)
-    y = np.array([0, 1, 2, 2, 1], dtype=dtype)
+    y = np.array([0, 1, 2, 2, 1])
     X_csr = csr_matrix(X)
 
-    for mutual_info in (mutual_info_regression, mutual_info_classif):
+    for mutual_info, y_dtype in (
+        (mutual_info_regression, dtype),
+        (mutual_info_classif, y.dtype),
+    ):
+        y = y.astype(dtype)
         with pytest.raises(ValueError):
             mutual_info(X_csr, y, discrete_features=False)
         with pytest.raises(ValueError):
