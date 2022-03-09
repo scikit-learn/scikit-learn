@@ -394,7 +394,6 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
 def test_fastica_simple_different_solvers(add_noise, seed):
     """Test FastICA is consistent between svd_solvers."""
     rng = np.random.RandomState(seed)
-    # scipy.stats uses the global RNG:
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
