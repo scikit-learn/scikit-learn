@@ -1085,9 +1085,10 @@ class _BaseKMeans(
         x_squared_norms = row_norms(X, squared=True)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        return -_labels_inertia_threadpool_limit(
+        _, scores = labels_inertia_threadpool_limit(
             X, sample_weight, x_squared_norms, self.cluster_centers_, self._n_threads
-        )[1]
+        )
+        return - scores
 
     def _more_tags(self):
         return {
