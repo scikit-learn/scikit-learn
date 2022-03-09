@@ -6,7 +6,7 @@ set -x
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
-if [[ -n "$LOCK_FILE " ]]; then
+if [[ -n "$LOCK_FILE" ]]; then
     if [[ "$DISTRIB" == "conda" ]]; then
         conda update -n base conda -y
         conda install pip -y
