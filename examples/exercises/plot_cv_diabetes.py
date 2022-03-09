@@ -19,6 +19,10 @@ from sklearn.linear_model import Lasso
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 
+# %%
+# Load dataset and apply GridSearchCV
+# -----------------------------------
+
 X, y = datasets.load_diabetes(return_X_y=True)
 X = X[:150]
 y = y[:150]
@@ -33,10 +37,16 @@ clf = GridSearchCV(lasso, tuned_parameters, cv=n_folds, refit=False)
 clf.fit(X, y)
 scores = clf.cv_results_["mean_test_score"]
 scores_std = clf.cv_results_["std_test_score"]
+
 plt.figure().set_size_inches(8, 6)
 plt.semilogx(alphas, scores)
+plt.xlabel("alphas")
+plt.ylabel("scores")
+plt.show()
 
-# plot error lines showing +/- std. errors of the scores
+# %%
+# Plot error lines showing +/- std. errors of the scores
+# ------------------------------------------------------
 std_error = scores_std / np.sqrt(n_folds)
 
 plt.semilogx(alphas, scores + std_error, "b--")
@@ -50,8 +60,9 @@ plt.xlabel("alpha")
 plt.axhline(np.max(scores), linestyle="--", color=".5")
 plt.xlim([alphas[0], alphas[-1]])
 
-# #############################################################################
+# %%
 # Bonus: how much can you trust the selection of alpha?
+# -----------------------------------------------------
 
 # To answer this question we use the LassoCV object that sets its alpha
 # parameter automatically from the data by internal cross-validation (i.e. it
