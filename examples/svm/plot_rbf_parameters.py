@@ -186,6 +186,7 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
 
 scores = grid.cv_results_["mean_test_score"].reshape(len(C_range), len(gamma_range))
 
+# %%
 # Draw heatmap of the validation accuracy as a function of gamma and C
 #
 # The score are encoded as colors with the hot colormap which varies from dark
