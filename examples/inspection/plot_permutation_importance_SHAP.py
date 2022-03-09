@@ -248,9 +248,7 @@ print(
 # %%
 # We can also plot the SHAP values:
 
-import matplotlib.pyplot as plt
-
-shap.plots.beeswarm(shap_values)
+shap.summary_plot(shap_values, X_test)
 
 # %%
 # In the plot above, each dot represents the SHAP value of one sample,
@@ -310,7 +308,7 @@ shap.plots.beeswarm(shap_values)
 explainer = shap.TreeExplainer(reg)
 shap_values = explainer.shap_values(X_test)
 
-shap.plots.beeswarm(shap_values)
+shap.summary_plot(shap_values, X_test)
 
 # %%
 # Note that the order of features is exactly the same as that calculated
