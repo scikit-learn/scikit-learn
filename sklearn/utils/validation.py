@@ -1060,7 +1060,13 @@ def check_X_y(
         The converted and validated y.
     """
     if y is None:
-        raise ValueError("y cannot be None")
+        if estimator is None:
+            estimator_name = "estimator"
+        else:
+            estimator_name = _check_estimator_name(estimator)
+        raise ValueError(
+            f"{estimator_name} requires y to be passed, but the target y is None"
+        )
 
     X = check_array(
         X,
@@ -1865,10 +1871,11 @@ def _check_feature_names_in(estimator, input_features=None, *, generate_names=Tr
         Input features.
 
         - If `input_features` is `None`, then `feature_names_in_` is
-            used as feature names in. If `feature_names_in_` is not defined,
-            then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+          used as feature names in. If `feature_names_in_` is not defined,
+          then the following input feature names are generated:
+          `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
         - If `input_features` is an array-like, then `input_features` must
-            match `feature_names_in_` if `feature_names_in_` is defined.
+          match `feature_names_in_` if `feature_names_in_` is defined.
 
     generate_names : bool, default=True
         Whether to generate names when `input_features` is `None` and
