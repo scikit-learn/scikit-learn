@@ -1597,7 +1597,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
     batch_size : int, default=1024
         Size of the mini batches.
-        For faster compuations, you can set the ``batch_size`` greater than
+        For faster computations, you can set the ``batch_size`` greater than
         256 * number of cores to enable parallelism on all cores.
 
         .. versionchanged:: 1.0
