@@ -75,12 +75,20 @@ map.
 
 """
 
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_iris
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import GridSearchCV
+
 # %%
 # Utility class to move the midpoint of a colormap to be around
 # the values of interest.
 
-import numpy as np
-from matplotlib.colors import Normalize
 
 class MidpointNormalize(Normalize):
     def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
@@ -97,8 +105,6 @@ class MidpointNormalize(Normalize):
 # -------------------------
 #
 # dataset for grid search
-
-from sklearn.datasets import load_iris
 
 iris = load_iris()
 X = iris.data
@@ -120,8 +126,6 @@ y_2d -= 1
 # instead of fitting the transformation on the training set and
 # just applying it on the test set.
 
-from sklearn.preprocessing import StandardScaler
-
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 X_2d = scaler.fit_transform(X_2d)
@@ -133,10 +137,6 @@ X_2d = scaler.fit_transform(X_2d)
 # For an initial search, a logarithmic grid with basis
 # 10 is often helpful. Using a basis of 2, a finer
 # tuning can be achieved but at a much higher cost.
-
-from sklearn.svm import SVC
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import GridSearchCV
 
 C_range = np.logspace(-2, 10, 13)
 gamma_range = np.logspace(-9, 3, 13)
@@ -168,8 +168,6 @@ for C in C_2d_range:
 # -------------
 #
 # draw visualization of parameter effects
-
-import matplotlib.pyplot as plt
 
 plt.figure(figsize=(8, 6))
 xx, yy = np.meshgrid(np.linspace(-3, 3, 200), np.linspace(-3, 3, 200))
