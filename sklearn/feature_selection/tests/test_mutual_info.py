@@ -8,10 +8,10 @@ from sklearn.feature_selection._mutual_info import _compute_mi
 from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
 
 
-def test_compute_mi_dd():
+def test_compute_mi_dd(dtype):
     # In discrete case computations are straightforward and can be done
     # by hand on given vectors.
-    x = np.array([0, 1, 1, 0, 0])
+    x = np.array([0, 1, 1, 0, 0], dtype=dtype)
     y = np.array([1, 0, 0, 0, 1])
 
     H_x = H_y = -(3 / 5) * np.log(3 / 5) - (2 / 5) * np.log(2 / 5)
