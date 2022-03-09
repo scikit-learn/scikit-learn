@@ -110,6 +110,7 @@ iris = load_iris()
 X = iris.data
 y = iris.target
 
+# %%
 # Dataset for decision function visualization: we only keep the first two
 # features in X and sub-sample the dataset to keep only 2 classes and
 # make it a binary classification problem.
@@ -119,6 +120,7 @@ X_2d = X_2d[y > 0]
 y_2d = y[y > 0]
 y_2d -= 1
 
+# %%
 # It is usually a good idea to scale the data for SVM training.
 # We are cheating a bit in this example in scaling all of the data,
 # instead of fitting the transformation on the training set and
@@ -148,6 +150,7 @@ print(
     % (grid.best_params_, grid.best_score_)
 )
 
+# %%
 # Now we need to fit a classifier for all parameters in the 2d version
 # (we use a smaller set of parameters here because it takes a while to train)
 
