@@ -8,10 +8,10 @@ from sklearn.feature_selection._mutual_info import _compute_mi
 from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
 
 
-def test_compute_mi_dd(dtype):
+def test_compute_mi_dd():
     # In discrete case computations are straightforward and can be done
     # by hand on given vectors.
-    x = np.array([0, 1, 1, 0, 0], dtype=dtype)
+    x = np.array([0, 1, 1, 0, 0])
     y = np.array([1, 0, 0, 0, 1])
 
     H_x = H_y = -(3 / 5) * np.log(3 / 5) - (2 / 5) * np.log(2 / 5)
@@ -21,7 +21,7 @@ def test_compute_mi_dd(dtype):
     assert_almost_equal(_compute_mi(x, y, True, True), I_xy)
 
 
-def test_compute_mi_cc():
+def test_compute_mi_cc(dtype):
     # For two continuous variables a good approach is to test on bivariate
     # normal distribution, where mutual information is known.
 
@@ -43,7 +43,7 @@ def test_compute_mi_cc():
     I_theory = np.log(sigma_1) + np.log(sigma_2) - 0.5 * np.log(np.linalg.det(cov))
 
     rng = check_random_state(0)
-    Z = rng.multivariate_normal(mean, cov, size=1000)
+    Z = rng.multivariate_normal(mean, cov, size=1000).astype(dtype)
 
     x, y = Z[:, 0], Z[:, 1]
 
