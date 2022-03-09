@@ -258,3 +258,36 @@ def get_random_state_param_spec(val=None, estimator=True):
         (type(None),),
     ]
     return {"random_state": specs if estimator else (val, specs)}
+
+
+class ParamValidator:
+    def __init__(self, **constraints):
+        
+
+
+    def validate(self, params):
+        pass
+
+
+@_validate_params(
+    {
+        "a": mlsdkfm
+        "b": msfkd
+    }
+)
+def f(a, b):
+    pass
+
+
+class A:
+    _param_constraints = {
+        "a": ljef
+        "b": lsjfls
+    }
+
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+
+    def fit(self):
+        self._validate_params()
