@@ -1,4 +1,8 @@
+from abc import ABC
+from abc import abstractmethod
 from collections import UserString
+import functools
+from inspect import signature
 import numbers
 import operator
 
@@ -8,11 +12,111 @@ from scipy.sparse import issparse
 from .validation import _is_arraylike_not_scalar
 
 
-class Interval:
-    """Class representing an interval.
+def _validate_params(parameter_constraints, params):
+    """Validate types and values of given parameters.
 
     Parameters
     ----------
+    param_specs : dict
+        A dictionary where the keys are the names of the parameters to validate. Each
+        entry is a tuple consisting of:
+        - The parameter value to validate
+        - A list of tuples describing the valid types and values consisting of:
+          - A type. It can be: any type, callable or "array-like".
+          - The valid values for this type. It can be a list, a set or an Interval.
+            If not provided, it means any value of this type is valid.
+    """
+    for param_name, constraints in parameter_constraints.items():
+        _validate_param(param_name, params[param_name], constraints)
+
+
+def _validate_param(param_name, param_val, constraints):
+    """Check if a parameter has an appropriate type and value.
+
+    Raises a TypeError if the type of the parameter is none of the valid types or a
+    ValueError if the parameter has a valid type but its value is not in the accepted
+    values for this type.
+
+    Parameters
+    ----------
+    param_name : str
+        The name of the parameter.
+
+    param_val : object
+        The value of the parameter.
+
+    constraints : list
+        The list of valid types and accepted values for each type.
+    """
+    constraints = map(make_constraint, constraints)
+
+    for constraint in constraints:
+        if constraint.is_satisfied_by(param_val):
+            return
+    else:
+        if len(constraints) == 1:
+            constraints_str = f"{constraints[0]}"
+        else:
+            constraints_str = f"{', '.join(constraints[:-1])} or {constraints[-1]}"
+
+        raise ValueError(
+            f"{param_name} must be {constraints_str}. Got {param_val} instead.")
+
+
+def make_constraint(constraint):
+    """"""
+    if isinstance(constraint, str) and constraint == "array-like":
+        return _ArrayLikes()
+    if isinstance(constraint, str) and constraint == "sparse matrix":
+        return _SparseMatrices()
+    if constraint is callable:
+        return _Callables()
+    if constraint is None:
+        return _NoneConstraint()
+    if isinstance(constraint, (Interval, StrOptions)):
+        return constraint
+    if isinstance(constraint, type):
+        return _InstancesOf(constraint)
+    raise ValueError("Unknown constraint type ???")
+
+
+def validate_params(parameter_constraints):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            param_names = [p.name for p in signature(func).parameters.values()]
+
+            params = {}
+            for i, val in enumerate(args):
+                name = param_names[i]
+                params[name] = val
+            for name, val in kwargs.items():
+                params[name] = val
+
+            _validate_params(parameter_constraints, params)
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+class Constraint(ABC):
+
+    @abstractmethod
+    def is_satisfied_by(self, val):
+        pass
+
+    @abstractmethod
+    def __repr__(self):
+        pass
+
+class Interval(Constraint):
+    """Class representing an typed interval constraint.
+
+    Parameters
+    ----------
+    type : {numbers.Integral, numbers.Real}
+        The set of numbers in which to set the interval.
+
     left : float or int or None
         The left bound of the interval. None means left bound is -∞.
 
@@ -38,18 +142,24 @@ class Interval:
     `[0, +∞) U {+∞}`.
     """
 
-    def __init__(self, left, right, *, closed="left"):
-        validate_params(
-            {
-                "left": (left, [(type(None),), (numbers.Real,)]),
-                "right": (right, [(type(None),), (numbers.Real,)]),
-                "closed": (closed, [(str, {"left", "right", "both", "neither"})]),
-            }
-        )
-
+    @_validate_params(
+        {
+            "type": [numbers.Integral, numbers.Real],
+            "left": [None, numbers.Real],
+            "right": [None, numbers.Real],
+            "closed": [Options({"left", "right", "both", "neither"})],
+        }
+    )
+    def __init__(self, type, left, right, *, closed="left"):
+        self.type = type
         self.left = left
         self.right = right
         self.closed = closed
+
+        if self.type is numbers.Integral and self.left is not None and not isinstance(self.left, numbers.Integral):
+            raise TypeError("Expecting left to be an int for an interval over the integers")
+        if self.type is numbers.Integral and self.left is not None and not isinstance(self.left, numbers.Integral):
+            raise TypeError("Expecting left to be an int for an interval over the integers")
 
     def __contains__(self, val):
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le
@@ -61,150 +171,101 @@ class Interval:
             return False
         return True
 
+    def is_satisfied_by(self, val):
+        if not isinstance(val, self.type):
+            return False
+
+        return val in self
+
     def __repr__(self):
+        type_str = "an int" if self.type is numbers.Integral else "a float"
         left_bracket = "[" if self.closed in ("left", "both") else "("
         left_bound = "-inf" if self.left is None else self.left
         right_bound = "inf" if self.right is None else self.right
         right_bracket = "]" if self.closed in ("right", "both") else ")"
-        return f"{left_bracket}{left_bound}, {right_bound}{right_bracket}"
-
-
-def _has_type(obj, target_type):
-    """Extension of isinstance to account for callable and array-like.
-
-    Parameters
-    ----------
-    obj : object
-        The object to test.
-
-    target_type : type, callable or "array-like"
-        The target type to check against.
-
-    Returns
-    -------
-    has_type : bool
-        Whether the object has the target type or not.
-    """
-    if isinstance(target_type, str) and target_type == "array-like":
-        return _is_arraylike_not_scalar(obj)
-    if isinstance(target_type, str) and target_type == "sparse matrix":
-        return issparse(obj)
-    if target_type is callable:
-        return callable(obj)
-    return isinstance(obj, target_type)
-
-
-def validate_params(param_specs):
-    """Validate types and values of given parameters.
-
-    Parameters
-    ----------
-    param_specs : dict
-        A dictionary where the keys are the names of the parameters to validate. Each
-        entry is a tuple consisting of:
-        - The parameter value to validate
-        - A list of tuples describing the valid types and values consisting of:
-          - A type. It can be: any type, callable or "array-like".
-          - The valid values for this type. It can be a list, a set or an Interval.
-            If not provided, it means any value of this type is valid.
-    """
-    for param_name, (param_val, expected_type_and_vals) in param_specs.items():
-        validate_param(param_name, param_val, expected_type_and_vals)
-
-
-def validate_param(param_name, param_val, expected_type_and_vals):
-    """Check if a parameter has an appropriate type and value.
-
-    Raises a TypeError if the type of the parameter is none of the valid types or a
-    ValueError if the parameter has a valid type but its value is not in the accepted
-    values for this type.
-
-    Parameters
-    ----------
-    param_name : str
-        The name of the parameter.
-
-    param_val : object
-        The value of the parameter.
-
-    expected_type_and_vals : list of tuples
-        The list of valid types and accepted values for each type.
-    """
-    has_a_valid_type = False
-
-    for target_type, *target_vals in expected_type_and_vals:
-        if _has_type(param_val, target_type):
-            has_a_valid_type = True
-
-            if not target_vals:
-                continue
-
-            if param_val not in target_vals[0]:
-                raise ValueError(
-                    f"{param_name} of type {_type_name(target_type)} must be "
-                    f"{_format_valid_vals_str(target_vals[0])}. "
-                    f"Got {param_val} instead."
-                )
-
-    if not has_a_valid_type:
-        valid_types = [t for t, *_ in expected_type_and_vals]
-        raise TypeError(
-            f"{param_name} must be {_format_valid_types_str(valid_types)}. "
-            f"Got {type(param_val).__qualname__} instead."
+        return (
+            f"{type_str} in the range "
+            f"{left_bracket}{left_bound}, {right_bound}{right_bracket}"
         )
 
 
-def _format_valid_vals_str(vals):
-    """Convert a collection of values into human readable string."""
-    if isinstance(vals, Interval):
-        valid_vals_str = f"in the range {vals}"
-    elif len(vals) == 1:
-        valid_vals_str = f"{vals[0]!r}"
-    else:
-        valid_vals_str = f"one of {{{', '.join([repr(v) for v in vals])}}}"
+class StrOptions(Constraint):
+    @validate_params(
+        {
+            "options": [set],
+            "deprecated": [None, set],
+        }
+    )
+    def __init__(self, options, deprecated=None):
+        self.options = options
+        self.deprecated = deprecated or {}
 
-    return valid_vals_str
-
-
-def _format_valid_types_str(types):
-    """Convert a list of types into human readable string."""
-    valid_types_str = []
-    if "array-like" in types:
-        types.remove("array-like")
-        valid_types_str.append("an array-like")
-    if "sparse matrix" in types:
-        types.remove("sparse matrix")
-        valid_types_str.append("a sparse matrix")
-    if callable in types:
-        types.remove(callable)
-        valid_types_str.append("a callable")
-
-    if len(types) == 1:
-        valid_types_str.append(f"an instance of {_type_name(types[0])}")
-    else:
-        valid_types_str.append(
-            f"an instance of {{{', '.join(_type_name(t) for t in types)}}}"
-        )
-
-    if len(valid_types_str) == 1:
-        valid_types_str = valid_types_str[0]
-    else:
-        valid_types_str = f"{', '.join(valid_types_str[:-1])} or {valid_types_str[-1]}"
-
-    return valid_types_str
+    def is_satisfied_by(self, val):
+        return val in self.options
+    
+    def _mark_if_deprecated(self, option):
+        option_str = f"{o!r}"
+        if option in self.deprecated:
+            option_str = f"{option_str} (deprecated)"
+        return option_str
+    
+    def __repr__(self):
+        f"a str among {{{[self._mark__if_deprecated(o) for o in self.options]}}}"
 
 
-def _type_name(t):
-    """Convert type into humman readable string."""
-    module = t.__module__
-    qualname = t.__qualname__
-    if module == "builtins":
-        return qualname
-    elif t == numbers.Real:
-        return "float"
-    elif t == numbers.Integral:
-        return "int"
-    return f"{module}.{qualname}"
+class _InstancesOf(Constraint):
+    def __init__(self, type):
+        self.type = type
+
+    def _type_name(t):
+        """Convert type into humman readable string."""
+        module = t.__module__
+        qualname = t.__qualname__
+        if module == "builtins":
+            return qualname
+        elif t == numbers.Real:
+            return "float"
+        elif t == numbers.Integral:
+            return "int"
+        return f"{module}.{qualname}"
+    
+    def is_satisfied_by(self, val):
+        return isinstance(val, self.type)
+
+    def __repr__(self):
+        return f"an instance of {self._type_name(self.type)!r}"
+
+
+class _ArrayLikes(Constraint):
+    def is_satisfied_by(self, val):
+        return _is_arraylike_not_scalar(val)
+
+    def __repr__(self):
+        return "an array-like"
+
+
+class _SparseMatrices(Constraint):
+    def is_satisfied_by(self, val):
+        return issparse(val)
+
+    def __repr__(self):
+        return "a sparse matrix"
+
+
+class _Callables(Constraint):
+    def is_satisfied_by(self, val):
+        return callable(val)
+
+    def __repr__(self):
+        return "a callable"
+
+
+class _NoneConstraint(Constraint):
+    def is_satisfied_by(self, val):
+        return val is None
+
+    def __repr__(self):
+        return "None"
 
 
 def generate_invalid_param_val(target_type, valid_vals):
@@ -233,13 +294,6 @@ def generate_invalid_param_val(target_type, valid_vals):
             return valid_vals.right + 1
 
 
-class DeprecatedParamStr(UserString):
-    """Mark a valid parameter value of type str as deprecated."""
-
-    def __repr__(self):
-        return f"{self.data!r} (deprecated)"
-
-
 def get_random_state_param_spec(val=None, estimator=True):
     """Appropriate valid types and values for the random_state parameter validation.
 
@@ -258,36 +312,3 @@ def get_random_state_param_spec(val=None, estimator=True):
         (type(None),),
     ]
     return {"random_state": specs if estimator else (val, specs)}
-
-
-class ParamValidator:
-    def __init__(self, **constraints):
-        
-
-
-    def validate(self, params):
-        pass
-
-
-@_validate_params(
-    {
-        "a": mlsdkfm
-        "b": msfkd
-    }
-)
-def f(a, b):
-    pass
-
-
-class A:
-    _param_constraints = {
-        "a": ljef
-        "b": lsjfls
-    }
-
-    def __init__(self, a, b):
-        self.a = a
-        self.b = b
-
-    def fit(self):
-        self._validate_params()

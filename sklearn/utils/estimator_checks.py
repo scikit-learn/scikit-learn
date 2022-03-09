@@ -54,7 +54,7 @@ from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import threadpool_info
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import generate_invalid_param_val
+from ..utils._param_validation import make_constraint
 
 from . import shuffle
 from ._tags import (
@@ -4039,27 +4039,34 @@ def check_param_validation(name, estimator_orig):
     ]
 
     for param_name in init_params:
+        match = rf"{param_name} must be .* Got .* instead."
         err_msg = (
             f"{name} does not raise an informative error message when the"
             f"parameter {param_name} does not have a valid type or value."
         )
 
         estimator = clone(estimator_orig)
+
+        # First, check that the error is raised if param doesn't match any valid type.
         estimator.set_params(**{param_name: param_with_bad_type})
 
         for method in methods:
-            with raises(TypeError, match=f"{param_name} must be", err_msg=err_msg):
+            with raises(ValueError, match=match, err_msg=err_msg):
                 getattr(estimator, method)(X, y)
 
-        exp_type_and_vals = estimator_orig._expected_params_type_and_vals[param_name]
-        for target_type, *target_vals in exp_type_and_vals:
-            if not target_vals:
+        # Then, for constraints that are more than a type constraint, check that the
+        # error is raised if param does match a valid type but does not match any valid
+        # value for this type.
+        constraints = estimator_orig._parameter_constraints[param_name]
+        constraints = map(make_constraint, constraints)
+
+        for constraint in constraints:
+            if not hasattr(constraint, "generate_invalid_param_val"):
                 continue
 
-            bad_value = generate_invalid_param_val(target_type, target_vals[0])
+            bad_value = constraint.generate_invalid_param_val()
             estimator.set_params(**{param_name: bad_value})
 
             for method in methods:
-                match = rf"{param_name} of type.* must be"
                 with raises(ValueError, match=match, err_msg=err_msg):
                     getattr(estimator, method)(X, y)
