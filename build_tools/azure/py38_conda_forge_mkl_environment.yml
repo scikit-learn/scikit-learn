@@ -1,0 +1,16 @@
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - numpy
+  - scipy
+  - cython
+  - joblib
+  - threadpoolctl
+  - matplotlib
+  - pillow
+  - pytest=6.2.5
+  - pytest-xdist
+  - codecov
+  - pytest-cov
+  - coverage=6.2
