@@ -457,7 +457,9 @@ def test_kbinsdiscretizer_subsample_values(subsample):
     ],
 )
 def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
-    """Check get_feature_names_out for different settings."""
+    """Check get_feature_names_out for different settings.
+    Non-regression test for #22731
+    """
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
 
     kbd = KBinsDiscretizer(n_bins=4, encode=encode).fit(X)
