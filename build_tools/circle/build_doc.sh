@@ -143,12 +143,13 @@ if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MINICONDA_PATH=$HOME/miniconda
-# Install dependencies with miniconda
+# Install dependencies with mambaforge. Note that the mambaforge installer
+# automatically configures the conda-forge channel by default.
+MAMBAFORGE_PATH=$HOME/mambaforge
 wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O miniconda.sh
-chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
+    -O mambaforge.sh
+chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MAMBAFORGE_PATH
+export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
@@ -173,24 +174,28 @@ mamba create -n $CONDA_ENV_NAME --yes --quiet \
     "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
     "$(get_dep sphinx $SPHINX_VERSION)" \
     "$(get_dep pandas $PANDAS_VERSION)" \
+    "$(get_dep shap $SHAP_VERSION)" \
+    "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)" \
+    "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)" \
+    "$(get_dep numpydoc $NUMPYDOC_VERSION)" \
+    "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)" \
     joblib memory_profiler packaging seaborn pillow pytest coverage \
     compilers
 
 source activate testenv
-pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
-pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
-pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
-pip install "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
+
+# sphinxext-opengraph not in conda-forge for now, use pip instead:
 pip install "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
-python setup.py develop
 
-# Install after scikit-learn to avoid circular import
-# SHAP is needed for the `plot_permutation_importance_SHAP` example.
-pip install "$(get_dep shap $SHAP_VERSION)"
+# Note: installing scikit-learn from source in develop mode should hopefully
+# override the scikit-learn potentially already installed as a dependency of
+# shap.
+python setup.py develop
+python -c "import sklearn; sklearn.show_versions()"
 
 export OMP_NUM_THREADS=1
 
