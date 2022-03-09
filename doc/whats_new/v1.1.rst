@@ -772,6 +772,9 @@ Changelog
 - |Fix| :class:`preprocessing.KBinDiscretizer` handles bin edges more consistently now.
   :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| Adds :meth:`preprocessing.KBinDiscretizer.get_feature_names_out` support when
+  `encode="ordinal"`. :pr:`22735` by `Thomas Fan`_.
+
 :mod:`sklearn.random_projection`
 ................................
 
