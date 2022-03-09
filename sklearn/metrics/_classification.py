@@ -1765,12 +1765,12 @@ def likelihood_ratios(
         fp = np.array([fp.sum()])
         fn = np.array([fn.sum()])
 
-    true_sum = tp + fn
-    false_sum = tn + fp
-    pos_num = tp * false_sum
-    pos_denom = fp * true_sum
-    neg_num = fn * false_sum
-    neg_denom = tn * true_sum
+    support_pos = tp + fn
+    support_neg = tn + fp
+    pos_num = tp * support_neg
+    pos_denom = fp * support_pos
+    neg_num = fn * support_neg
+    neg_denom = tn * support_pos
 
     # Divide, and on zero-division, warn and set scores to float('inf')
 
@@ -1791,7 +1791,7 @@ def likelihood_ratios(
 
     # Average the results
     if average == "weighted":
-        weights = true_sum
+        weights = support_pos
     elif average == "samples":
         weights = sample_weight
     else:
