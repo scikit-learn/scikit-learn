@@ -32,7 +32,10 @@ from sklearn.semi_supervised import LabelSpreading
 from sklearn.metrics import confusion_matrix, classification_report
 
 # %%
-# Load the digits dataset
+# Data generation
+# ---------------
+#
+# We use the digits dataset. We only use a subset of randomly selected samples.
 digits = datasets.load_digits()
 rng = np.random.RandomState(2)
 indices = np.arange(len(digits.data))
