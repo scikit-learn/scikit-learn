@@ -398,7 +398,7 @@ def test_fastica_simple_different_solvers(add_noise, seed):
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
-    s2 = stats.t.rvs(1, size=n_samples)
+    s2 = stats.t.rvs(1, size=n_samples, random_state=rng)
     s = np.c_[s1, s2].T
     center_and_norm(s)
     s1, s2 = s
