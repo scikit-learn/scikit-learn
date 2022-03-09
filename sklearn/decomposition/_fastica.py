@@ -578,8 +578,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             else:
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 
-            signs = np.sign(u[0])
-            u *= signs
+            u *= np.sign(u[0])
 
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d
