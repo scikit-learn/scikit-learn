@@ -2,6 +2,9 @@
 
 set -e
 
+# defines the show_installed_libraries function
+source build_tools/shared.sh
+
 if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
@@ -18,13 +21,7 @@ cd $TEST_DIR
 
 python -c "import sklearn; sklearn.show_versions()"
 
-if ! command -v conda &> /dev/null
-then
-    pip list
-else
-    # conda list provides more info than pip list (when available)
-    conda list
-fi
+show_installed_libraries
 
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
@@ -44,9 +41,6 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 
     # Python 3.10 deprecates disutils and is imported by numpy interally during import time
     TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
-
-    # Workaround for https://github.com/pypa/setuptools/issues/2885
-    TEST_CMD="$TEST_CMD -Wignore:Creating\ a\ LegacyVersion:DeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then

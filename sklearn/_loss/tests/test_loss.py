@@ -8,6 +8,7 @@ from scipy.optimize import (
     minimize,
     minimize_scalar,
     newton,
+    LinearConstraint,
 )
 from scipy.special import logsumexp
 
@@ -26,7 +27,6 @@ from sklearn._loss.loss import (
 )
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
-from sklearn.utils.fixes import sp_version, parse_version
 
 
 ALL_LOSSES = list(_LOSSES.values())
@@ -206,7 +206,7 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25),
         (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
         (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
-        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4 ** 2),
+        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2),
         (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
         (
             HalfMultinomialLoss(n_classes=3),
@@ -741,10 +741,6 @@ def test_gradients_hessians_numerically(loss, sample_weight):
         ("poisson_loss", -22.0, 10.0),
     ],
 )
-@pytest.mark.skipif(
-    sp_version == parse_version("1.2.0"),
-    reason="bug in scipy 1.2.0, see scipy issue #9608",
-)
 @skip_if_32bit
 def test_derivatives(loss, x0, y_true):
     """Test that gradients are zero at the minimum of the loss.
@@ -840,18 +836,13 @@ def test_loss_intercept_only(loss, sample_weight):
     else:
         # The constraint corresponds to sum(raw_prediction) = 0. Without it, we would
         # need to apply loss.symmetrize_raw_prediction to opt.x before comparing.
-        # TODO: With scipy 1.1.0, one could use
-        # LinearConstraint(np.ones((1, loss.n_classes)), 0, 0)
         opt = minimize(
             fun,
             np.zeros((loss.n_classes)),
             tol=1e-13,
             options={"maxiter": 100},
             method="SLSQP",
-            constraints={
-                "type": "eq",
-                "fun": lambda x: np.ones((1, loss.n_classes)) @ x,
-            },
+            constraints=LinearConstraint(np.ones((1, loss.n_classes)), 0, 0),
         )
         grad = loss.gradient(
             y_true=y_true,
@@ -989,6 +980,99 @@ def test_predict_proba(loss):
                     gradient_out=None,
                 ),
             )
+
+
+@pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize("sample_weight", [None, "range"])
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+@pytest.mark.parametrize("order", ("C", "F"))
+def test_init_gradient_and_hessians(loss, sample_weight, dtype, order):
+    """Test that init_gradient_and_hessian works as expected.
+
+    passing sample_weight to a loss correctly influences the constant_hessian
+    attribute, and consequently the shape of the hessian array.
+    """
+    n_samples = 5
+    if sample_weight == "range":
+        sample_weight = np.ones(n_samples)
+    loss = loss(sample_weight=sample_weight)
+    gradient, hessian = loss.init_gradient_and_hessian(
+        n_samples=n_samples,
+        dtype=dtype,
+        order=order,
+    )
+    if loss.constant_hessian:
+        assert gradient.shape == (n_samples,)
+        assert hessian.shape == (1,)
+    elif loss.is_multiclass:
+        assert gradient.shape == (n_samples, loss.n_classes)
+        assert hessian.shape == (n_samples, loss.n_classes)
+    else:
+        assert hessian.shape == (n_samples,)
+        assert hessian.shape == (n_samples,)
+
+    assert gradient.dtype == dtype
+    assert hessian.dtype == dtype
+
+    if order == "C":
+        assert gradient.flags.c_contiguous
+        assert hessian.flags.c_contiguous
+    else:
+        assert gradient.flags.f_contiguous
+        assert hessian.flags.f_contiguous
+
+
+@pytest.mark.parametrize("loss", ALL_LOSSES)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {"dtype": np.int64},
+            f"Valid options for 'dtype' are .* Got dtype={np.int64} instead.",
+        ),
+    ],
+)
+def test_init_gradient_and_hessian_raises(loss, params, err_msg):
+    """Test that init_gradient_and_hessian raises errors for invalid input."""
+    loss = loss()
+    with pytest.raises((ValueError, TypeError), match=err_msg):
+        gradient, hessian = loss.init_gradient_and_hessian(n_samples=5, **params)
+
+
+@pytest.mark.parametrize(
+    "loss, params, err_type, err_msg",
+    [
+        (
+            PinballLoss,
+            {"quantile": None},
+            TypeError,
+            "quantile must be an instance of float, not NoneType.",
+        ),
+        (
+            PinballLoss,
+            {"quantile": 0},
+            ValueError,
+            "quantile == 0, must be > 0.",
+        ),
+        (PinballLoss, {"quantile": 1.1}, ValueError, "quantile == 1.1, must be < 1."),
+        (
+            HalfTweedieLoss,
+            {"power": None},
+            TypeError,
+            "power must be an instance of float, not NoneType.",
+        ),
+        (
+            HalfTweedieLoss,
+            {"power": np.inf},
+            ValueError,
+            "power == inf, must be < inf.",
+        ),
+    ],
+)
+def test_loss_init_parameter_validation(loss, params, err_type, err_msg):
+    """Test that loss raises errors for invalid input."""
+    with pytest.raises(err_type, match=err_msg):
+        loss(**params)
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)

@@ -177,11 +177,6 @@ mamba create -n $CONDA_ENV_NAME --yes --quiet \
     compilers
 
 source activate testenv
-# Pin PyWavelet to 1.1.1 that is the latest version that support our minumum
-# NumPy version required. If PyWavelets 1.2+ is installed, it would require
-# NumPy 1.17+ that trigger a bug with Pandas 0.25:
-# https://github.com/numpy/numpy/issues/18355#issuecomment-774610226
-pip install PyWavelets==1.1.1
 pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
 pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
 pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"

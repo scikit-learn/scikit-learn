@@ -1,7 +1,7 @@
 """
-================================================================
-Plot the decision surface of a decision tree on the iris dataset
-================================================================
+=======================================================================
+Plot the decision surface of decision trees trained on the iris dataset
+=======================================================================
 
 Plot the decision surface of a decision tree trained on pairs
 of features of the iris dataset.
@@ -14,20 +14,24 @@ the training samples.
 
 We also show the tree structure of a model built on all of the features.
 """
+# %%
+# First load the copy of the Iris dataset shipped with scikit-learn:
+from sklearn.datasets import load_iris
 
+iris = load_iris()
+
+
+# %%
+# Display the decision functions of trees trained on all pairs of features.
 import numpy as np
 import matplotlib.pyplot as plt
-
-from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
 n_classes = 3
 plot_colors = "ryb"
 plot_step = 0.02
 
-# Load data
-iris = load_iris()
 
 for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]):
     # We only take the two corresponding features
@@ -67,11 +71,17 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]])
             s=15,
         )
 
-plt.suptitle("Decision surface of a decision tree using paired features")
+plt.suptitle("Decision surface of decision trees trained on pairs of features")
 plt.legend(loc="lower right", borderpad=0, handletextpad=0)
-plt.axis("tight")
+_ = plt.axis("tight")
+
+# %%
+# Display the structure of a single decision tree trained on all the features
+# together.
+from sklearn.tree import plot_tree
 
 plt.figure()
 clf = DecisionTreeClassifier().fit(iris.data, iris.target)
 plot_tree(clf, filled=True)
+plt.title("Decision tree trained on all the iris features")
 plt.show()
