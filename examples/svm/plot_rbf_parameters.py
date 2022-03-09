@@ -160,9 +160,9 @@ for C in C_2d_range:
         clf.fit(X_2d, y_2d)
         classifiers.append((C, gamma, clf))
 
-# ##
+# %%
 # Visualization
-# ---------------------------------------------------
+# -------------
 #
 # draw visualization of parameter effects
 
