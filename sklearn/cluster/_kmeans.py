@@ -843,7 +843,6 @@ class _BaseKMeans(
 
         This method is called by `_check_mkl_vcomp`.
         """
-        pass
 
     def _check_mkl_vcomp(self, X, n_samples):
         """Check when vcomp and mkl are both present"""
