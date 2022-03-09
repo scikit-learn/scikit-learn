@@ -171,6 +171,13 @@ Changelog
   `-1` and the original warning message is shown.
   :pr:`22217` by :user:`Meekail Zain <micky774>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` now removes validation errors from
+  `__init__` and `set_params` methods.
+  :pr:`22537` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 

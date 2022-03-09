@@ -222,14 +222,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         of get_params via BaseComposition._get_params which expects lists
         of tuples of len 2.
         """
-        return [(name, trans) for name, trans, _ in self.transformers]
+        try:
+            return [(name, trans) for name, trans, _ in self.transformers]
+        except (TypeError, ValueError):
+            return self.transformers
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformers = [
-            (name, trans, col)
-            for ((name, trans), (_, _, col)) in zip(value, self.transformers)
-        ]
+        try:
+            self.transformers = [
+                (name, trans, col)
+                for ((name, trans), (_, _, col)) in zip(value, self.transformers)
+            ]
+        except (TypeError, ValueError):
+            self.transformers = value
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
