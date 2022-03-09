@@ -55,7 +55,11 @@ y_train = np.copy(y)
 y_train[unlabeled_set] = -1
 
 # %%
-# Learn with LabelSpreading
+# Semi-supervised learning
+# ------------------------
+#
+# We fit a :class:`~sklearn.semi_supervised.LabelSpreading` and use it to predict
+# the unknown labels.
 lp_model = LabelSpreading(gamma=0.25, max_iter=20)
 lp_model.fit(X, y_train)
 predicted_labels = lp_model.transduction_[unlabeled_set]
