@@ -390,7 +390,7 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
 
 
 @pytest.mark.parametrize("add_noise", [True, False])
-@pytest.mark.parametrize("seed", range(1))
+@pytest.mark.parametrize("seed", range(2))
 def test_fastica_simple_different_solvers(add_noise, seed):
     """Test FastICA is consistent between svd_solvers."""
     rng = np.random.RandomState(seed)
