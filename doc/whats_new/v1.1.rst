@@ -171,6 +171,13 @@ Changelog
   `-1` and the original warning message is shown.
   :pr:`22217` by :user:`Meekail Zain <micky774>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` now removes validation errors from
+  `__init__` and `set_params` methods.
+  :pr:`22537` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -342,6 +349,11 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
 
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
+  :class:`ensemble.StackingClassifier`, and
+  :class:`ensemble.StackingRegressor`. :pr:`22695` and :pr:`22697`  by `Thomas Fan`_.
+
 - |Fix| Removed a potential source of CPU oversubscription in
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` when CPU resource usage is limited,
@@ -434,6 +446,13 @@ Changelog
   a more informative error if `CompoundKernel` is passed via `kernel`.
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
 
+:mod:`sklearn.ensemble`
+.......................
+- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
+  :func:`get_feature_names_out` function that includes both tree index and leaf index in
+  the output feature names.
+  :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -483,6 +502,20 @@ Changelog
 
 - |Enhancement| Adds :term:`get_feature_names_out` to `IsotonicRegression`.
   :pr:`22249` by `Thomas Fan`_.
+
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`kernel_approximation.Nystroem`,
+  :class:`kernel_approximation.PolynomialCountSketch`,
+  :class:`kernel_approximation.RBFSampler`, and
+  :class:`kernel_approximation.SkewedChi2Sampler`. :pr:`22694` by `Thomas Fan`_.
+
+- |API| Adds :term:`get_feature_names_out` to the following transformers
+  of the :mod:`~sklearn.kernel_approximation` module:
+  :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
+  :pr:`22137` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -582,6 +615,9 @@ Changelog
   actual non-finite score in case of perfect predictions or constant `y_true`,
   instead of the finite approximation (`1.0` and `0.0` respectively) currently
   returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
+
+- |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
+  message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
 
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
@@ -801,10 +837,16 @@ Changelog
   `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
   :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
 
+- |Fix| Changes the error message of the `ValidationError` raised by
+  :func:`utils.validation.check_X_y` when y is None so that it is compatible
+  with :func:`utils.estimator_checks.check_requires_y_none`. :pr:`22578` by
+  :user:`Claudio Salvatore Arcidiacono <ClaudioSalvatoreArcidiacono>`.
+
 - |Fix| :func:`utils.class_weight.compute_class_weight` now only requires that
   all classes in `y` have a weight in `class_weight`. An error is still raised
   when a class is present in `y` but not in `class_weight`. :pr:`22595` by
   `Thomas Fan`_.
+
 
 Code and Documentation Contributors
 -----------------------------------
