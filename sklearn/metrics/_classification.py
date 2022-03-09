@@ -1642,7 +1642,7 @@ def likelihood_ratios(
     average=None,
     sample_weight=None,
 ):
-    """Compute positive and negative likelihood ratio.
+    """Compute class-wise positive and negative likelihood ratios.
 
     The positive likelihood ratio is ``sensitivity / (1 - specificity)`` where
     the sensitivity or recall is the ratio ``tp / (tp + fn)`` and the
@@ -1692,8 +1692,7 @@ def likelihood_ratios(
         ``'weighted'``:
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance; it can result in an
-            F-score that is not between precision and recall.
+            alters 'macro' to account for label imbalance.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
