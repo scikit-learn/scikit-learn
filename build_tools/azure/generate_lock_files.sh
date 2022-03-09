@@ -2,6 +2,8 @@
 
 set -e
 
+dir_name=./build_tools/azure
+
 function conda_lock_func() {
     build_name=$1
     platform=$2
@@ -9,13 +11,13 @@ function conda_lock_func() {
     conda-lock lock \
         --mamba \
         --platform ${platform} \
-        --file ${environment_base_name}_environment.yml \
+        --file "${dir_name}/${environment_base_name}_environment.yml" \
         --lockfile "${build_name}_${platform}_conda-lock.yml"
 }
 
 function pip_lock_func() {
     build_name=$1
-    pip-compile "${build_name}_requirements.txt" -o "${build_name}_lock.txt"
+    pip-compile "${dir_name}/${build_name}_requirements.txt" -o "${dir_name}/${build_name}_lock.txt"
 }
 
 build_name=pylatest_conda_forge_mkl
