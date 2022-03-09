@@ -38,6 +38,11 @@ rng = np.random.RandomState(2)
 indices = np.arange(len(digits.data))
 rng.shuffle(indices)
 
+# %%
+#
+# We selected 340 samples of which only 40 will be associated with a known label.
+# Therefore, we store the indices of the 300 other samples for which we are not
+# supposed to know their labels.
 X = digits.data[indices[:340]]
 y = digits.target[indices[:340]]
 images = digits.images[indices[:340]]
