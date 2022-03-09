@@ -27,8 +27,8 @@ jobs:
 
   steps:
     - bash: echo "##vso[task.prependpath]$CONDA/Scripts"
-      displayName: Add conda to PATH
-      condition: startsWith(variables['DISTRIB'], 'conda')
+      displayName: Add conda to PATH for 64 bit Python
+      condition: eq(variables['PYTHON_ARCH'], '64')
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '$(PYTHON_VERSION)'
