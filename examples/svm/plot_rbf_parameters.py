@@ -130,7 +130,7 @@ X_2d = scaler.fit_transform(X_2d)
 
 # %%
 # Train classifiers
-# ---------------------------------------------------
+# -----------------
 #
 # For an initial search, a logarithmic grid with basis
 # 10 is often helpful. Using a basis of 2, a finer
