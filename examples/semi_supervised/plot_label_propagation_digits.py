@@ -74,7 +74,10 @@ print("Confusion matrix")
 print(cm)
 
 # %%
-# Calculate uncertainty values for each transduced distribution
+# Plot the most uncertain predictions
+# -----------------------------------
+#
+# Here, we will pick and show the 10 most uncertain predictions.
 pred_entropies = stats.distributions.entropy(lp_model.label_distributions_.T)
 
 # %%
