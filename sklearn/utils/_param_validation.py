@@ -274,7 +274,7 @@ class Interval(_Constraint):
 
         if self.left is None and self.right is None:
             raise ValueError(
-                f"This interval has no bounds. Set type constraint only instead."
+                "This interval has no bounds. Set a type constraint only instead."
             )
 
     def __init__(self, type, left, right, *, closed="left"):
