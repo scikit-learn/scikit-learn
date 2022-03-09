@@ -27,7 +27,7 @@ from .utils.validation import _generate_get_feature_names_out
 from .utils.validation import check_is_fitted
 from .utils.validation import _get_feature_names
 from .utils._estimator_html_repr import estimator_html_repr
-from .utils._param_validation import _validate_params
+from .utils._param_validation import validate_parameter_constraints
 
 
 def clone(estimator, *, safe=True):
@@ -606,9 +606,13 @@ class BaseEstimator:
         """Validate types and values of constructor parameters
 
         The expected type and values must be defined in the `_parameter_constraints`
-        class attribute, which is a dictionary `param_name: list of constraints`.
+        class attribute, which is a dictionary `param_name: list of constraints`. See
+        the docstring of `validate_parameter_constraints` for a description of the
+        accepted constraints.
         """
-        _validate_params(self._parameter_constraints, self.get_params(deep=False))
+        validate_parameter_constraints(
+            self._parameter_constraints, self.get_params(deep=False)
+        )
 
     @property
     def _repr_html_(self):

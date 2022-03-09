@@ -12,26 +12,34 @@ from scipy.sparse import issparse
 from .validation import _is_arraylike_not_scalar
 
 
-def _validate_params(parameter_constraints, params):
+def validate_parameter_constraints(parameter_constraints, params):
     """Validate types and values of given parameters.
 
     Parameters
     ----------
     parameter_constraints : dict
-        A dictionary `param_name: list of constraints`.
+        A dictionary `param_name: list of constraints`. A parameter is valid if it
+        satisfies one of the constraints from the list. Constraints can be:
+        - an Interval object, representing a continuous or discrete range of numbers
+        - the string "array-like"
+        - the string "sparse matrix"
+        - callable
+        - None, meaning that None is a valid value for the parameter
+        - any type, meaning that any instance of this type is valid
+        - a StrOptions object, representing a set of strings
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
         constraints.
     """
     for param_name, constraints in parameter_constraints.items():
-        _validate_param(param_name, params[param_name], constraints)
+        _validate_single_param(param_name, params[param_name], constraints)
 
 
-def _validate_param(param_name, param_val, constraints):
-    """Check if a parameter satisfies a given constraint.
+def _validate_single_param(param_name, param_val, constraints):
+    """Check if a parameter satisfies a given list of constraints.
 
-    Raises a ValueError if the constraint is not satified.
+    Raises a ValueError if none of the constraints is satified.
 
     Parameters
     ----------
@@ -66,12 +74,12 @@ def _validate_param(param_name, param_val, constraints):
 
 def make_constraint(constraint):
     """Convert the constraint into the appropriate Constraint object.
-    
+
     Parameters
     ----------
     constraint : object
         The constraint to convert.
-    
+
     Returns
     -------
     constraint : instance of _Constraint
@@ -87,7 +95,7 @@ def make_constraint(constraint):
         return _NoneConstraint()
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
-    if isinstance(constraint, (Interval, StrOptions, TypeOptions)):
+    if isinstance(constraint, (Interval, StrOptions)):
         return constraint
     raise ValueError(f"Unknown constraint type: {constraint}")
 
@@ -98,18 +106,20 @@ def validate_params(parameter_constraints):
     Parameters
     ----------
     parameter_constraints : dict
-        A dictionary `param_name: list of constraints`.
+        A dictionary `param_name: list of constraints`. See the docstring of
+        `validate_parameter_constraints` for a description of the accepted constraints.
 
     Returns
     -------
     decorated_function : function or method
         The decorated function.
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            param_names = [
-                p.name
+            sig_params = [
+                p
                 for p in signature(func).parameters.values()
                 if p.kind not in (p.VAR_KEYWORD, p.VAR_POSITIONAL)
             ]
@@ -117,20 +127,27 @@ def validate_params(parameter_constraints):
             # combine the signature and the actual args and kwargs to build a map
             # param_name: param_value
             params = {}
-            for i, val in enumerate(args):
-                # the signature objects holds the parameters in the same order as in the
-                # function definition
-                name = param_names[i]
 
-                if name == "self":
-                    # ignore self for methods
+            # First, the positional arguments for which we need to parse the signature
+            # to recover their names. The signature objects holds the parameters in the
+            # same order as in the function definition
+            for val, param in zip(args, sig_params):
+                # ignore self for methods
+                if param.name == "self":
                     continue
 
-                params[name] = val
+                params[param.name] = val
+
+            # Then, the keyword arguments which already hold both the name and the value
             for name, val in kwargs.items():
                 params[name] = val
 
-            _validate_params(parameter_constraints, params)
+            # Finally, the parameters with have a default that are unset
+            for param in [p for p in sig_params if p.default is not p.empty]:
+                if param.name not in params:
+                    params[param.name] = param.default
+
+            validate_parameter_constraints(parameter_constraints, params)
             return func(*args, **kwargs)
 
         return wrapper
@@ -140,10 +157,11 @@ def validate_params(parameter_constraints):
 
 class _Constraint(ABC):
     """Base class for the constraint objects."""
+
     @abstractmethod
     def is_satisfied_by(self, val):
         """Whether or not a value satisfies the constraint.
-        
+
         Parameters
         ----------
         val : object
@@ -162,7 +180,7 @@ class _Constraint(ABC):
 
 class StrOptions(_Constraint):
     """Constraint representing a set of strings.
-    
+
     Parameters
     ----------
     options : set of str
@@ -171,6 +189,7 @@ class StrOptions(_Constraint):
     deprecated : set of str or None, default=None
         A subset of the `options` to mark as deprecated in the repr of the constraint.
     """
+
     def __init__(self, options, deprecated=None):
         self.options = options
         self.deprecated = deprecated or {}
@@ -194,28 +213,6 @@ class StrOptions(_Constraint):
             f"{', '.join([self._mark_if_deprecated(o) for o in self.options])}"
         )
         return f"a str among {{{options_str}}}"
-
-
-class TypeOptions(_Constraint):
-    """Constraint representing a set of types.
-    
-    Parameters
-    ----------
-    options : set of instances of type
-        The set of valid types.
-    """
-    def __init__(self, options):
-        self.options = options
-
-    def generate_invalid_param_val(self):
-        """Return a value that does not satisfy the constraint."""
-        return type("BadType", (), {})
-
-    def is_satisfied_by(self, val):
-        return isinstance(val, type) and val in self.options
-
-    def __repr__(self):
-        return f"one of {{{self.options}}}"
 
 
 class Interval(_Constraint):
@@ -251,11 +248,12 @@ class Interval(_Constraint):
     `[0, +∞) U {+∞}`.
     """
 
-    def __init__(self, type, left, right, *, closed="left"):
-        self.type = type
-        self.left = left
-        self.right = right
-        self.closed = closed
+    def _validate_params(self):
+        if self.type not in (Integral, Real):
+            raise ValueError(
+                f"type must be numbers.Integral or numbers.Real. "
+                f"Got {self.type} instead."
+            )
 
         if (
             self.type is Integral
@@ -273,6 +271,21 @@ class Interval(_Constraint):
             raise TypeError(
                 "Expecting left to be an int for an interval over the integers"
             )
+
+        if self.left is None and self.right is None:
+            raise ValueError(
+                f"This interval has no bounds. Set type constraint only instead."
+            )
+
+        
+
+    def __init__(self, type, left, right, *, closed="left"):
+        self.type = type
+        self.left = left
+        self.right = right
+        self.closed = closed
+
+        self._validate_params()
 
     def __contains__(self, val):
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le
@@ -311,12 +324,13 @@ class Interval(_Constraint):
 
 class _InstancesOf(_Constraint):
     """Constraint representing instances of a given type.
-    
+
     Parameters
     ----------
     type : type
         The valid type.
     """
+
     def __init__(self, type):
         self.type = type
 
@@ -341,6 +355,7 @@ class _InstancesOf(_Constraint):
 
 class _ArrayLikes(_Constraint):
     """Constraint representing array-likes"""
+
     def is_satisfied_by(self, val):
         return _is_arraylike_not_scalar(val)
 
@@ -350,6 +365,7 @@ class _ArrayLikes(_Constraint):
 
 class _SparseMatrices(_Constraint):
     """Constraint representing sparse matrices."""
+
     def is_satisfied_by(self, val):
         return issparse(val)
 
@@ -359,6 +375,7 @@ class _SparseMatrices(_Constraint):
 
 class _Callables(_Constraint):
     """Constraint representing callables."""
+
     def is_satisfied_by(self, val):
         return callable(val)
 
@@ -368,6 +385,7 @@ class _Callables(_Constraint):
 
 class _NoneConstraint(_Constraint):
     """Constraint representing the None singleton."""
+
     def is_satisfied_by(self, val):
         return val is None
 

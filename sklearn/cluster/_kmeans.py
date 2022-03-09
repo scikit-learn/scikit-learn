@@ -148,12 +148,6 @@ def kmeans_plusplus(
             f"be equal to the length of n_samples {X.shape[0]}."
         )
 
-    if n_local_trials is not None and n_local_trials < 1:
-        raise ValueError(
-            f"n_local_trials is set to {n_local_trials} but should be an "
-            "integer value greater than zero."
-        )
-
     random_state = check_random_state(random_state)
 
     # Call private k-means++

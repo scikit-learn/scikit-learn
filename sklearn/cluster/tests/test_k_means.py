@@ -1083,11 +1083,6 @@ def test_wrong_params(Estimator, param, match):
     "param, match",
     [
         (
-            {"n_local_trials": 0},
-            r"n_local_trials of type int must be in the "
-            r"range \[1, inf\)\. Got 0 instead",
-        ),
-        (
             {"x_squared_norms": X[:2]},
             r"The length of x_squared_norms .* should "
             r"be equal to the length of n_samples",
