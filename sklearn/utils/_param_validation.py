@@ -251,7 +251,7 @@ class Interval(_Constraint):
     def _validate_params(self):
         if self.type not in (Integral, Real):
             raise ValueError(
-                f"type must be numbers.Integral or numbers.Real. "
+                "type must be numbers.Integral or numbers.Real. "
                 f"Got {self.type} instead."
             )
 
@@ -276,8 +276,6 @@ class Interval(_Constraint):
             raise ValueError(
                 f"This interval has no bounds. Set type constraint only instead."
             )
-
-        
 
     def __init__(self, type, left, right, *, closed="left"):
         self.type = type
