@@ -374,15 +374,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
-            # Values which are close to a bin edge are susceptible to numeric
-            # instability. Add eps to X so these values are binned correctly
-            # with respect to their decimal truncation. See documentation of
-            # numpy.isclose for an explanation of ``rtol`` and ``atol``.
-            rtol = 1.0e-5
-            atol = 1.0e-8
-            eps = atol + rtol * np.abs(Xt[:, jj])
-            Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
-        np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
+            Xt[:, jj] = np.searchsorted(bin_edges[jj][1:-1], Xt[:, jj], side="right")
 
         if self.encode == "ordinal":
             return Xt
@@ -446,7 +438,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 

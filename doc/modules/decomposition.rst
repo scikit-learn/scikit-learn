@@ -529,7 +529,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. |dict_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_006.png
+.. |dict_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_007.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -548,19 +548,19 @@ different positivity constraints applied. Red indicates negative values, blue
 indicates positive values, and white represents zeros.
 
 
-.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
+.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_010.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
+.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
+.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_014.png
+.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
@@ -689,7 +689,7 @@ about these components (e.g. whether they are orthogonal):
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |fa_img3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_009.png
+.. |fa_img3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_008.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -699,7 +699,7 @@ The main advantage for Factor Analysis over :class:`PCA` is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_008.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_009.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :align: center
     :scale: 75%
@@ -924,7 +924,7 @@ stored components::
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
+      <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -938,7 +938,7 @@ stored components::
 
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
-      <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
+      <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.214.6398&rep=rep1&type=pdf>`_
       A. Cichocki, A. Phan, 2009
 
     .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with

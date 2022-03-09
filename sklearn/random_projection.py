@@ -129,7 +129,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
             % n_samples
         )
 
-    denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
+    denominator = (eps**2 / 2) - (eps**3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int64)
 
 
