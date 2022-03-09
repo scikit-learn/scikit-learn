@@ -414,7 +414,6 @@ def test_transformers_get_feature_names_out(transformer):
 
 
 VALIDATE_ESTIMATOR_INIT = [
-    "ColumnTransformer",
     "SGDOneClassSVM",
     "TheilSenRegressor",
     "TweedieRegressor",
@@ -437,7 +436,7 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         if param.kind != Parameter.VAR_KEYWORD
     ]
 
-    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), {}, []]
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
     for value in smoke_test_values:
         new_params = {key: value for key in params}
 
