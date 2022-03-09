@@ -64,10 +64,8 @@ python_environment_install_and_activate() {
         if [[ "$DISTRIB" == "conda" || "$DISTRIB" == "conda-pip-latest" ]]; then
             conda update -n base conda -y
             conda install pip -y
+            conda install -c conda-forge conda-lock -y
             conda list
-            # FIXME install conda-lock dev version with a fixed commit while waiting
-            # for the release
-            python -m pip install git+https://github.com/conda-incubator/conda-lock@4203aef
             conda-lock install --name $VIRTUALENV $LOCK_FILE
             source activate $VIRTUALENV
         elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
