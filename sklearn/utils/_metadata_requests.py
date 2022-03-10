@@ -852,7 +852,7 @@ def get_routing_for_object(obj=None):
             :class:`~utils.metadata_requests.MetadataRouter`, return a copy
             of that.
         - If the object provides a `get_metadata_routing` method, return a copy
-            of the output of the method.
+            of the output of that method.
         - Returns an empty :class:`~utils.metadata_requests.MetadataRequest`
             otherwise.
 
@@ -1054,7 +1054,6 @@ class _MetadataRequester:
         class attributes, as well as determining request keys from method
         signatures.
         """
-
         requests = MetadataRequest(owner=cls.__name__)
         for method in METHODS:
             setattr(requests, method, cls._build_request_for_signature(method=method))
@@ -1062,20 +1061,20 @@ class _MetadataRequester:
         # Then overwrite those defaults with the ones provided in
         # __metadata_request__* attributes. Defaults set in
         # __metadata_request__* attributes take precedence over signature
-        # sniffing
+        # sniffing.
 
         # need to go through the MRO since this is a class attribute and
         # ``vars`` doesn't report the parent class attributes. We go through
         # the reverse of the MRO so that child classes have precedence over
         # their parents.
         defaults = dict()
-        for klass in reversed(inspect.getmro(cls)):
-            klass_defaults = {
+        for base_class in reversed(inspect.getmro(cls)):
+            base_defaults = {
                 attr: value
-                for attr, value in vars(klass).items()
+                for attr, value in vars(base_class).items()
                 if "__metadata_request__" in attr
             }
-            defaults.update(klass_defaults)
+            defaults.update(base_defaults)
         defaults = dict(sorted(defaults.items()))
 
         for attr, value in defaults.items():
