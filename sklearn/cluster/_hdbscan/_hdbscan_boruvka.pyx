@@ -288,7 +288,7 @@ cdef class KDTreeBoruvkaAlgorithm (object):
     cdef object core_dist_tree
     cdef DistanceMetric dist
     cdef np.ndarray _data
-    cdef np.double_t[:, ::1] _raw_data
+    cdef readonly const np.double_t[:, ::1] _raw_data
     cdef np.double_t[:, :, ::1] node_bounds
     cdef np.double_t alpha
     cdef np.int8_t approx_min_span_tree
