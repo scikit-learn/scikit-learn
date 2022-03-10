@@ -778,7 +778,8 @@ class HalfTweedieLossIdentity(BaseLoss):
     y_true in real numbers for power <= 0
     y_true in non-negative real numbers for 0 < power < 2
     y_true in positive real numbers for 2 <= power
-    y_pred in positive real numbers, all reals for power = 0
+    y_pred in positive real numbers for power != 0
+    y_pred in real numbers for power = 0
     power in real numbers
 
     Link:

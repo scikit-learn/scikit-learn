@@ -1,7 +1,7 @@
 {{py:
 
 """
-Template file for easily generate loops over samples using Tempita
+Template file to easily generate loops over samples using Tempita
 (https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
 
 Generated file: _loss.pyx
@@ -133,9 +133,6 @@ doc_HalfTweedieLossIdentity = (
         max(y_true, 0)**(2-p) / (1-p) / (2-p)
         - y_true * y_pred**(1-p) / (1-p)
         + y_pred**(2-p) / (2-p)
-        = max(y_true, 0)**(2-p) / (1-p) / (2-p)
-        - y_true * exp((1-p) * raw_prediction) / (1-p)
-        + exp((2-p) * raw_prediction) / (2-p)
 
     Notes:
     - Here, we do not drop constant terms in contrast to the version with log-link.

@@ -50,7 +50,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         1/(2*sum(s_i)) * sum(s_i * deviance(y_i, h(x_i*w)) + 1/2 * alpha * ||w||_2^2
 
     with inverse link function h, s=sample_weight and per observation (unit) deviance
-    deviance(y_i, h(x_i*w). Note that for an EDM 1/2 * deviance is the negative
+    deviance(y_i, h(x_i*w)). Note that for an EDM 1/2 * deviance is the negative
     log-likelihood up to a constant (in w) term.
     The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
 
@@ -89,6 +89,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         HalfGammaLoss            log       0 < y
         HalfInverseGaussianLoss  log       0 < y
         HalfTweedieLoss          log       dependend on tweedie power
+        HalfTweedieLossIdentity  identity  dependend on tweedie power
         =======================  ========  ==========================
 
         The link function of the GLM, i.e. mapping from linear predictor
@@ -857,5 +858,5 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         else:
             raise ValueError(
                 "The link must be an element of ['auto', 'identity', 'log']; "
-                "got (link={0})".format(self.link)
+                f"got (link={self.link!r})"
             )

@@ -493,7 +493,7 @@ Changelog
   :class:`kernel_approximation.RBFSampler`, and
   :class:`kernel_approximation.SkewedChi2Sampler`. :pr:`22694` by `Thomas Fan`_.
 
-- |API| Adds :term:`get_feature_names_out` to the following transformers 
+- |API| Adds :term:`get_feature_names_out` to the following transformers
   of the :mod:`~sklearn.kernel_approximation` module:
   :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
   :pr:`22137` by `Thomas Fan`_.
@@ -568,6 +568,7 @@ Changelog
 - |Fix| The input parameter `family` of :class:`linear_model.TweedieRegressor` is not
   validated in `__init__` anymore. This (private) parameter was removed.
   :pr:`22548` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| :class:`linear_model.BayesianRidge` and
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
   :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
