@@ -27,6 +27,7 @@ User Guide
    visualizations.rst
    data_transforms.rst
    datasets.rst
+   metadata_routing.rst
    computing.rst
    model_persistence.rst
    common_pitfalls.rst

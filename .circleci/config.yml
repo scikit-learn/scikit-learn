@@ -132,10 +132,10 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: linux-arm64-{{ .Branch }}
+          key: linux-arm64-ccache-v1-{{ .Branch }}
       - run: ./build_tools/circle/build_test_arm.sh
       - save_cache:
-          key: linux-arm64-{{ .Branch }}
+          key: linux-arm64-ccache-v1-{{ .Branch }}
           paths:
             - ~/.cache/ccache
             - ~/.cache/pip

@@ -34,6 +34,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   base.MetaEstimatorMixin
    feature_selection.SelectorMixin
 
 Functions
@@ -1640,6 +1641,12 @@ Plotting
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
    utils.all_estimators
+   utils.metadata_routing.RequestType
+   utils.metadata_routing.get_routing_for_object
+   utils.metadata_routing.MetadataRouter
+   utils.metadata_routing.MetadataRequest
+   utils.metadata_routing.MethodMapping
+   utils.metadata_routing.process_routing
 
 Utilities from joblib:
 
