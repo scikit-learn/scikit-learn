@@ -84,14 +84,8 @@ python_environment_install_and_activate() {
                 TO_INSTALL=""
             fi
 
-            if [[ "$DISTRIB" == *"pypy"* ]]; then
-                TO_INSTALL="$TO_INSTALL pypy"
-            else
-                TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
-            fi
-
+            TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
             TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
-
             TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
             TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
             TO_INSTALL="$TO_INSTALL $(get_dep cython $CYTHON_VERSION)"

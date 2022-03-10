@@ -100,7 +100,7 @@ jobs:
     matrix:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_no_coverage_conda-lock.yml'
+        LOCK_FILE: 'build_tools/azure/pylatest_conda_forge_mkl_no_coverage_linux-64_conda-lock.yml'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'true'
 
@@ -120,10 +120,9 @@ jobs:
       )
     matrix:
       pypy3:
-        DISTRIB: 'conda-mamba-pypy3'
         DOCKER_CONTAINER: 'condaforge/mambaforge-pypy3:4.10.3-5'
-        PILLOW_VERSION: 'none'
-        PANDAS_VERSION: 'none'
+        DISTRIB: 'conda-mamba-pypy3'
+        LOCK_FILE: './build_tools/azure/pypy3_conda-lock.yml'
         CREATE_ISSUE_ON_TRACKER: 'true'
 
 # Will run all the time regardless of linting outcome.

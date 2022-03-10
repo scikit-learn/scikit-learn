@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+dependencies:
+  - pypy
+  - numpy
+  - blas[build=openblas]
+  - scipy
+  - cython
+  - joblib
+  - threadpoolctl
+  - matplotlib
+  - pyamg
+  - pytest=6.2.5
+  - pytest-xdist
+  - ccache
