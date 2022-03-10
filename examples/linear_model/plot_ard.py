@@ -3,9 +3,8 @@
 Performance of Linear Regression Models
 =======================================
 
-Compare the performance of Automatic Relevance Determination (ARD) and Bayesian
-Ridge regressions. See :ref:`bayesian_ridge_regression` and
-:ref:`automatic_relevance_determination` for more information.
+Compare the performance of :ref:`automatic_relevance_determination` and
+:ref:`bayesian_ridge_regression`.
 
 Compared to the OLS (ordinary least squares) estimator, the coefficient weights
 using a Bayesian Ridge are slightly shifted toward zeros, which stabilises them.
@@ -64,20 +63,19 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import LogNorm
 
+plt.figure(figsize=(10, 6))
 ax = sns.heatmap(
     df.T,
     norm=LogNorm(),
     cbar_kws={"label": "weight value"},
     cmap="rocket_r",
-    linewidth=1.0,
-    linecolor="w",
 )
 plt.ylabel("predictor")
 plt.xlabel("coeficients")
+plt.tight_layout(rect=(0, 0, 1, 0.95))
 _ = plt.title("Weights as a function of the model")
 # %%
 # Plot the marginal log-likelihood
-plt.figure(figsize=(6, 5))
 plt.plot(ard.scores_, color="navy", label="Polynomial ARD")
 plt.plot(brr.scores_, color="red", label="Polynomial BayesianRidge")
 plt.ylabel("Score")
