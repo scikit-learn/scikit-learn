@@ -1128,40 +1128,46 @@ def test_loss_pickle(loss):
     )
 
 
-@pytest.mark.parametrize("p", [0, 1, 1.5, 2, 3])
+@pytest.mark.parametrize("p", [-1.5, 0, 1, 1.5, 2, 3])
 def test_tweedie_log_identity_consistency(p):
+    """Test for identical losses when only the link function is different."""
     half_tweedie_log = HalfTweedieLoss(power=p)
     half_tweedie_identity = HalfTweedieLossIdentity(power=p)
     n_samples = 10
-    # We intentionally pick an arbitrary value for y_true and keep it fixed
-    # because the dropped constant term in the HalfTweedieLoss class depends on
-    # y_true.
-    y_true = np.full(shape=n_samples, fill_value=0.1)
-    raw_prediction = np.linspace(-5.0, 5.0, n_samples)
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=half_tweedie_log, n_samples=n_samples, seed=42
+    )
+    y_pred = half_tweedie_log.link.inverse(raw_prediction)  # exp(raw_prediction)
 
     # Let's compare the loss values, up to some constant term that is dropped
     # in HalfTweedieLoss but not in HalfTweedieLossIdentity.
-    loss_log_without_constant_terms = half_tweedie_log.loss(
+    loss_log = half_tweedie_log.loss(
         y_true=y_true, raw_prediction=raw_prediction
-    )
-    loss_identity_with_constant_terms = half_tweedie_identity.loss(
-        y_true=y_true, raw_prediction=np.exp(raw_prediction)
-    )
-    # Check that the difference between the two ways of computing the loss
-    # values are just the constant terms that are computed by
-    # HalfTweedieLossIdentity but ignored by HalfTweedieLoss (with built-in log
-    # link)
-    diff = loss_log_without_constant_terms - loss_identity_with_constant_terms
-    assert_allclose(diff, diff[0])
+    ) + half_tweedie_log.constant_to_optimal_zero(y_true)
+    loss_identity = half_tweedie_identity.loss(
+        y_true=y_true, raw_prediction=y_pred
+    ) + half_tweedie_identity.constant_to_optimal_zero(y_true)
+    # Note that HalfTweedieLoss ignores different constant terms than
+    # HalfTweedieLossIdentity. Constant terms means terms not depending on
+    # raw_prediction. By adding these terms, `constant_to_optimal_zero`, both losses
+    # give the same values.
+    assert_allclose(loss_log, loss_identity)
 
-    # The gradient and hessian should be the same because they do not depend on
-    # the constant terms.
+    # For gradients and hessians, the constant terms do not matter. We have, however,
+    # to account for the chain rule, i.e. with x=raw_prediction
+    #     gradient_log(x) = d/dx loss_log(x)
+    #                     = d/dx loss_identity(exp(x))
+    #                     = exp(x) * gradient_identity(exp(x))
+    # Similarly,
+    #     hessian_log(x) = exp(x) * gradient_identity(exp(x))
+    #                    + exp(x)**2 * hessian_identity(x)
     gradient_log, hessian_log = half_tweedie_log.gradient_hessian(
         y_true=y_true, raw_prediction=raw_prediction
     )
     gradient_identity, hessian_identity = half_tweedie_identity.gradient_hessian(
-        y_true=y_true, raw_prediction=np.exp(raw_prediction)
+        y_true=y_true, raw_prediction=y_pred
     )
-    # XXX: the following always fails even for large values of atol
-    # assert_allclose(gradient_log, gradient_identity)
-    # assert_allclose(hessian_log, hessian_identity)
+    assert_allclose(gradient_log, y_pred * gradient_identity)
+    assert_allclose(
+        hessian_log, y_pred * gradient_identity + y_pred**2 * hessian_identity
+    )
