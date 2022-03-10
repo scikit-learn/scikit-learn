@@ -681,6 +681,10 @@ Changelog
 :mod:`sklearn.multiclass`
 .........................
 
+- |Enhancement| :class:`sklearn.multiclass.OneVsOneClassifier` now have a cached_property
+  `class_pairs_` storing classes for which each estimator is trained with.
+  :pr:`22549` by :user:`Diwakar-Gupta`.
+
 - |Enhancement| :class:`multiclass.OneVsRestClassifier` now supports a `verbose`
   parameter so progress on fitting can be seen.
   :pr:`22508` by :user:`Chris Combs <combscCode>`.
