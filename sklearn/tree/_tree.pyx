@@ -172,8 +172,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
         cdef double min_impurity_decrease = self.min_impurity_decrease
 
-        print('Using splitter, ', splitter)
-        print('Using tree, ', tree)
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr)
 
@@ -237,18 +235,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # impurity == 0 with tolerance due to rounding errors
                 is_leaf = is_leaf or impurity <= EPSILON
 
-                with gil:
-                    print('Trying to node split...')
-                    print(is_leaf)
-                    print(depth, max_depth)
-                    print(n_node_samples, min_samples_split)
-                    print(min_samples_leaf)
-                    print(weighted_n_node_samples, min_weight_leaf)
-
                 if not is_leaf:
-                    with gil:
-                        print('\n\nIs not leaf...')
-
                     splitter.node_split(impurity, &split, &n_constant_features)
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
@@ -257,15 +244,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                with gil:
-                    print('Trying to add node... ')
-                    print(is_leaf)
-                    print(impurity)
-                    print(EPSILON)
-                    print(split.pos, end)
-                    print(split.improvement, min_impurity_decrease)
-                    print('...')
-                    
                 node_id = tree._add_node(parent, is_left, is_leaf, split,
                                          impurity, n_node_samples,
                                          weighted_n_node_samples)
@@ -307,7 +285,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 tree.max_depth = max_depth_seen
-        print('Finished building inside...')
+                
         if rc == -1:
             raise MemoryError()
 
@@ -776,7 +754,7 @@ cdef class Tree:
         return 1
     
     cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray,
-            Node *node, SIZE_t node_id) nogil except -1:
+            Node *node, SIZE_t node_id) nogil:
         """Compute feature from a given data matrix, X.
 
         In axis-aligned trees, this is simply the value in the column of X
@@ -874,41 +852,26 @@ cdef class Tree:
         # the feature index
         cdef DOUBLE_t feature
 
-        print('Applying dense...')
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
                 node_id = 0
 
-                # with gil:
-                #     print(n_samples)
-                #     print(self.node_count)
-                #     print('Okay... printing')
-                #     print(node.left_child != _TREE_LEAF)
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
                     
                     # compute the feature value to compare against threshold
                     X_vector = X_ndarray[i, :]
-                    # with gil:
-                    #     print('About to compute feature....')
-                    #     print(i, node_id)
                     feature = self._compute_feature(X_vector, node, node_id)
-                    # with gil:
-                    #     print('Feature gotten was...', feature)
                     if feature <= node.threshold:
                         node_id = node.left_child
                         node = &self.nodes[node.left_child]
                     else:
                         node_id = node.right_child
                         node = &self.nodes[node.right_child]
-                #     with gil:
-                #         print('End of while leaf loop...')
-                # with gil:
-                #     print(i, node_id, n_samples)
+
                 out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
-        print('Got to the end for _apply_dense...')
         return out
 
     cdef inline np.ndarray _apply_sparse_csr(self, object X):
@@ -1822,48 +1785,54 @@ cdef _build_pruned_tree(
         stack[BuildPrunedRecord] prune_stack
         BuildPrunedRecord stack_record
 
-    # with nogil:
-#         # push root node onto stack
-#         prune_stack.push({"start": 0, "depth": 0, "parent": _TREE_UNDEFINED, "is_left": 0})
+        SplitRecord split
 
-#         while not prune_stack.empty():
-#             stack_record = prune_stack.top()
-#             prune_stack.pop()
+    with nogil:
+        # push root node onto stack
+        prune_stack.push({"start": 0, "depth": 0, "parent": _TREE_UNDEFINED, "is_left": 0})
 
-#             orig_node_id = stack_record.start
-#             depth = stack_record.depth
-#             parent = stack_record.parent
-#             is_left = stack_record.is_left
+        while not prune_stack.empty():
+            stack_record = prune_stack.top()
+            prune_stack.pop()
 
-#             is_leaf = leaves_in_subtree[orig_node_id]
-#             node = &orig_tree.nodes[orig_node_id]
+            orig_node_id = stack_record.start
+            depth = stack_record.depth
+            parent = stack_record.parent
+            is_left = stack_record.is_left
 
-#             new_node_id = tree._add_node(
-#                 parent, is_left, is_leaf, node,
-#                 node.impurity, node.n_node_samples,
-#                 node.weighted_n_node_samples)
+            is_leaf = leaves_in_subtree[orig_node_id]
+            node = &orig_tree.nodes[orig_node_id]
 
-#             if new_node_id == SIZE_MAX:
-#                 rc = -1
-#                 break
+            # redefine to a SplitRecord to pass into _add_node
+            split.feature = node.feature
+            split.threshold = node.threshold
 
-#             # copy value from original tree to new tree
-#             orig_value_ptr = orig_tree.value + value_stride * orig_node_id
-#             new_value_ptr = tree.value + value_stride * new_node_id
-#             memcpy(new_value_ptr, orig_value_ptr, sizeof(double) * value_stride)
+            new_node_id = tree._add_node(
+                parent, is_left, is_leaf, split,
+                node.impurity, node.n_node_samples,
+                node.weighted_n_node_samples)
 
-#             if not is_leaf:
-#                 # Push right child on stack
-#                 prune_stack.push({"start": node.right_child, "depth": depth + 1,
-#                                   "parent": new_node_id, "is_left": 0})
-#                 # push left child on stack
-#                 prune_stack.push({"start": node.left_child, "depth": depth + 1,
-#                                   "parent": new_node_id, "is_left": 1})
+            if new_node_id == SIZE_MAX:
+                rc = -1
+                break
 
-#             if depth > max_depth_seen:
-#                 max_depth_seen = depth
+            # copy value from original tree to new tree
+            orig_value_ptr = orig_tree.value + value_stride * orig_node_id
+            new_value_ptr = tree.value + value_stride * new_node_id
+            memcpy(new_value_ptr, orig_value_ptr, sizeof(double) * value_stride)
 
-#         if rc >= 0:
-#             tree.max_depth = max_depth_seen
-#     if rc == -1:
-#         raise MemoryError("pruning tree")
+            if not is_leaf:
+                # Push right child on stack
+                prune_stack.push({"start": node.right_child, "depth": depth + 1,
+                                  "parent": new_node_id, "is_left": 0})
+                # push left child on stack
+                prune_stack.push({"start": node.left_child, "depth": depth + 1,
+                                  "parent": new_node_id, "is_left": 1})
+
+            if depth > max_depth_seen:
+                max_depth_seen = depth
+
+        if rc >= 0:
+            tree.max_depth = max_depth_seen
+    if rc == -1:
+        raise MemoryError("pruning tree")

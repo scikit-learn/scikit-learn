@@ -86,8 +86,8 @@ SPARSE_SPLITTERS = {
 }
 
 OBLIQUE_DENSE_SPLITTERS = {
-     "best": _oblique_splitter.BestObliqueSplitter,
- }
+    "best": _oblique_splitter.BestObliqueSplitter,
+}
 
 # XXX: To add with sparse splitter
 OBLIQUE_SPARSE_SPLITTERS = {
@@ -420,13 +420,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # determine if we use axis-aligned, or oblique tree
         if self.is_oblique:
-            print('Selected oblique tree...')
             tree_func = ObliqueTree
         else:
             tree_func = Tree
 
         if is_classifier(self):
-            self.tree_ = tree_func(self.n_features_in_, self.n_classes_, self.n_outputs_)
+            self.tree_ = tree_func(self.n_features_in_, self.n_classes_,
+                                   self.n_outputs_)
         else:
             self.tree_ = tree_func(
                 self.n_features_in_,
@@ -453,9 +453,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_leaf_nodes,
                 self.min_impurity_decrease,
             )
-        print('Trying to build...')
+
         builder.build(self.tree_, splitter, X, y, sample_weight)
-        print('Finished building...')
+
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
@@ -464,11 +464,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _set_splitter(
-         self, issparse, criterion, min_samples_leaf, min_weight_leaf, random_state
-     ):
+        self, issparse, criterion, min_samples_leaf, min_weight_leaf, random_state
+    ):
         """Set splitting function."""
         SPLITTERS = SPARSE_SPLITTERS if issparse else DENSE_SPLITTERS
-        OBLIQUE_SPLITTERS = OBLIQUE_SPARSE_SPLITTERS if issparse else OBLIQUE_DENSE_SPLITTERS
+        if issparse:
+            OBLIQUE_SPLITTERS = OBLIQUE_SPARSE_SPLITTERS
+        else:
+            OBLIQUE_SPLITTERS = OBLIQUE_DENSE_SPLITTERS
 
         splitter = self.splitter
 
@@ -2108,6 +2111,7 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
+
     def __init__(
         self,
         *,

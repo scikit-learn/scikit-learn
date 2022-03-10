@@ -23,6 +23,7 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 from ._splitter cimport Splitter
 from ._split_record cimport SplitRecord
 
+from libc.stdint cimport uintptr_t
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
@@ -65,7 +66,7 @@ cdef class Tree:
     cdef int _set_node_values(self, SplitRecord split_node,
                               Node *node)  nogil except -1
     cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray,
-                            Node *node, SIZE_t node_id) nogil except -1
+                            Node *node, SIZE_t node_id) nogil
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
