@@ -252,11 +252,11 @@ else:
     else:
         random_seeds = [int(s) for s in random_seed_var.split(",")]
 
-if min(random_seeds) < 0 or max(random_seeds) > 99:
-    raise ValueError(
-        "The value(s) of the environment variable SKLEARN_TESTS_RANDOM_SEED "
-        f"must be in the range [0, 99] (or 'all'), got: {random_seed_var}"
-    )
+    if min(random_seeds) < 0 or max(random_seeds) > 99:
+        raise ValueError(
+            "The value(s) of the environment variable SKLEARN_TESTS_RANDOM_SEED "
+            f"must be in the range [0, 99] (or 'all'), got: {random_seed_var}"
+        )
 
 
 def pytest_report_header(config):
