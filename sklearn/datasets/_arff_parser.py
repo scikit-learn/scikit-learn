@@ -379,21 +379,17 @@ def _pandas_arff_parser(
 
     frame = _cast_frame(frame, openml_columns_info)
     X, y = _post_process_frame(frame, feature_names_to_select, target_names_to_select)
-    categories = {
-        col_name: frame[col_name].cat.categories.tolist()
-        for col_name in frame.columns
-        if hasattr(frame[col_name].dtype, "is_dtype")
-        and frame[col_name].dtype.is_dtype("category")
-    }
 
     if output_type == "pandas":
         return X, y, frame, None
     else:
-        # FIXME: we should only use `.to_numpy` when supporting more recent version
-        # of pandas.
-        X = X.to_numpy() if hasattr(X, "to_numpy") else X.values
-        if y is not None:
-            y = y.to_numpy() if hasattr(y, "to_numpy") else np.asarray(y)
+        X, y = X.to_numpy(), y.to_numpy()
+
+    categories = {
+        name: dtype.categories.tolist()
+        for name, dtype in frame.dtypes.items()
+        if dtype == "category"
+    }
     return X, y, None, categories
 
 
