@@ -60,6 +60,7 @@ pre_python_environment_install() {
 }
 
 python_environment_install_and_activate() {
+    echo 'environment variables'
     env
     if [[ -n "$LOCK_FILE" ]]; then
         if [[ "$DISTRIB" == "conda" || "$DISTRIB" == "conda-pip-latest" ]]; then

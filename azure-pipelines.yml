@@ -210,9 +210,9 @@ jobs:
       )
     matrix:
       debian_atlas_32bit:
-        DOCKER_CONTAINER: 'i386/debian:11.2'
         DISTRIB: 'debian-32'
         LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
+        DOCKER_CONTAINER: 'i386/debian:11.2'
 
 - template: build_tools/azure/posix.yml
   parameters:
