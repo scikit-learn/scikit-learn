@@ -789,6 +789,7 @@ is more robust to ill-posed problems.
 
     * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
+.. _automatic_relevance_determination:
 
 Automatic Relevance Determination - ARD
 ---------------------------------------
