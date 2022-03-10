@@ -45,7 +45,7 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     """
     inlier_ratio = n_inliers / float(n_samples)
     nom = max(_EPSILON, 1 - probability)
-    denom = max(_EPSILON, 1 - inlier_ratio ** min_samples)
+    denom = max(_EPSILON, 1 - inlier_ratio**min_samples)
     if nom == 1:
         return 0
     if denom == 1:

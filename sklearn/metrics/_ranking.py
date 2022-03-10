@@ -170,6 +170,7 @@ def average_precision_score(
     Returns
     -------
     average_precision : float
+        Average precision score.
 
     See Also
     --------
@@ -355,7 +356,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
 
     # McClish correction: standardize result to be 0.5 if non-discriminant
     # and 1 if maximal
-    min_area = 0.5 * max_fpr ** 2
+    min_area = 0.5 * max_fpr**2
     max_area = max_fpr
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
@@ -859,7 +860,6 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     array([1. , 0.5, 0.5, 0. ])
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
-
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
@@ -1532,7 +1532,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     score (Ideal DCG, obtained for a perfect ranking) to obtain a score between
     0 and 1.
 
-    This ranking metric yields a high value if true labels are ranked high by
+    This ranking metric returns a high value if true labels are ranked high by
     ``y_score``.
 
     Parameters
@@ -1616,7 +1616,6 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> ndcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
     0.5
-
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
@@ -1709,15 +1708,21 @@ def top_k_accuracy_score(
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type == "binary" and labels is not None and len(labels) > 2:
         y_type = "multiclass"
-    y_score = check_array(y_score, ensure_2d=False)
-    y_score = column_or_1d(y_score) if y_type == "binary" else y_score
-    check_consistent_length(y_true, y_score, sample_weight)
-
     if y_type not in {"binary", "multiclass"}:
         raise ValueError(
             f"y type must be 'binary' or 'multiclass', got '{y_type}' instead."
         )
+    y_score = check_array(y_score, ensure_2d=False)
+    if y_type == "binary":
+        if y_score.ndim == 2 and y_score.shape[1] != 1:
+            raise ValueError(
+                "`y_true` is binary while y_score is 2d with"
+                f" {y_score.shape[1]} classes. If `y_true` does not contain all the"
+                " labels, `labels` must be provided."
+            )
+        y_score = column_or_1d(y_score)
 
+    check_consistent_length(y_true, y_score, sample_weight)
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
 
     if labels is None:

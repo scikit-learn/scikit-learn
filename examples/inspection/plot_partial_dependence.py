@@ -111,24 +111,18 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 # We will plot the partial dependence, both individual (ICE) and averaged one
 # (PDP). We limit to only 50 ICE curves to not overcrowd the plot.
 
-import matplotlib.pyplot as plt
-from sklearn.inspection import partial_dependence
 from sklearn.inspection import PartialDependenceDisplay
+
+common_params = {"subsample": 50, "n_jobs": 2, "grid_resolution": 20, "random_state": 0}
 
 print("Computing partial dependence plots...")
 tic = time()
-features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
 display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
+    features=["MedInc", "AveOccup", "HouseAge", "AveRooms"],
     kind="both",
-    subsample=50,
-    n_jobs=3,
-    grid_resolution=20,
-    random_state=0,
-    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -171,14 +165,9 @@ tic = time()
 display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
+    features=["MedInc", "AveOccup", "HouseAge", "AveRooms"],
     kind="both",
-    subsample=50,
-    n_jobs=3,
-    grid_resolution=20,
-    random_state=0,
-    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -226,20 +215,23 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Another consideration is linked to the performance to compute the PDPs. With
 # the tree-based algorithm, when only PDPs are requested, they can be computed
 # on an efficient way using the `'recursion'` method.
+import matplotlib.pyplot as plt
 
-features = ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")]
 print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
+
+# Note that we could have called the method `from_estimator` three times and
+# provide one feature, one kind of plot, and one axis for each call.
 display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
-    kind="average",
-    n_jobs=2,
-    grid_resolution=10,
+    features=["AveOccup", "HouseAge", ("AveOccup", "HouseAge")],
+    kind=["both", "both", "average"],
     ax=ax,
+    **common_params,
 )
+
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
     "Partial dependence of house value on non-location features\n"
@@ -260,9 +252,9 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
-
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.inspection import partial_dependence
 
 fig = plt.figure()
 
