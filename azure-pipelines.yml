@@ -213,6 +213,8 @@ jobs:
         DOCKER_CONTAINER: 'i386/debian:11.2'
         DISTRIB: 'debian-32'
         LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
+        # disable pytest xdist due to unknown bug with 32-bit container
+        PYTEST_XDIST_VERSION: 'none'
 
 - template: build_tools/azure/posix.yml
   parameters:
