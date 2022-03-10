@@ -438,7 +438,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -448,4 +449,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         input_features = _check_feature_names_in(self, input_features)
-        return self._encoder.get_feature_names_out(input_features)
+        if hasattr(self, "_encoder"):
+            return self._encoder.get_feature_names_out(input_features)
+
+        # ordinal encoding
+        return input_features
