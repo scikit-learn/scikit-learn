@@ -264,10 +264,10 @@ def pytest_report_header(config):
         seed_values = "all"
     else:
         seed_values = ",".join(str(s) for s in random_seeds)
-    return (
-        "To reproduce this test run, set the following environment variable:\n"
-        f'    SKLEARN_TESTS_RANDOM_SEED="{seed_values}"'
-    )
+    return [
+        "To reproduce this test run, set the following environment variable:",
+        f'    SKLEARN_TESTS_RANDOM_SEED="{seed_values}"',
+    ]
 
 
 @pytest.fixture(params=random_seeds)
