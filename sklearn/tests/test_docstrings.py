@@ -13,7 +13,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.covariance._shrunk_covariance.ledoit_wolf",
-    "sklearn.covariance._shrunk_covariance.ledoit_wolf_shrinkage",
     "sklearn.datasets._base.load_sample_image",
     "sklearn.datasets._base.load_wine",
     "sklearn.datasets._california_housing.fetch_california_housing",
@@ -57,7 +56,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.brier_score_loss",
     "sklearn.metrics._classification.classification_report",
     "sklearn.metrics._classification.cohen_kappa_score",
-    "sklearn.metrics._classification.f1_score",
     "sklearn.metrics._classification.fbeta_score",
     "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
@@ -66,7 +64,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics._ranking.auc",
-    "sklearn.metrics._ranking.average_precision_score",
     "sklearn.metrics._ranking.coverage_error",
     "sklearn.metrics._ranking.dcg_score",
     "sklearn.metrics._ranking.label_ranking_average_precision_score",
