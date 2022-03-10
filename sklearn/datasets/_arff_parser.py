@@ -385,10 +385,19 @@ def _pandas_arff_parser(
     else:
         X, y = X.to_numpy(), y.to_numpy()
 
+    # With NumPy >= 1.21.5, we can simplify the following code with:
+    # categories = {
+    #     name: dtype.categories.tolist()
+    #     for name, dtype in frame.dtypes.items()
+    #     if dtype == "category"
+    # }
+    # Older versions of NumPy will trigger `np.dtype("category")` that raises
+    # an TypeError
     categories = {
-        name: dtype.categories.tolist()
-        for name, dtype in frame.dtypes.items()
-        if dtype == "category"
+        col_name: frame[col_name].cat.categories.tolist()
+        for col_name in frame.columns
+        if hasattr(frame[col_name].dtype, "is_dtype")
+        and frame[col_name].dtype.is_dtype("category")
     }
     return X, y, None, categories
 
