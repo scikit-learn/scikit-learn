@@ -217,20 +217,6 @@ Optional Arguments
 In iterative algorithms, the number of iterations should be specified by
 an integer called ``n_iter``.
 
-Pairwise Attributes
-^^^^^^^^^^^^^^^^^^^
-
-An estimator that accepts ``X`` of shape ``(n_samples, n_samples)`` and defines
-a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
-the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
-the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
-to slice rows and columns.
-
-.. deprecated:: 0.24
-
-    The _pairwise attribute is deprecated in 0.24. From 1.1 (renaming of 0.26)
-    onward, the `pairwise` estimator tag should be used instead.
-
 Universal attributes
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -549,10 +535,12 @@ pairwise (default=False)
     similar methods consists of pairwise measures over samples rather than a
     feature representation for each sample.  It is usually `True` where an
     estimator has a `metric` or `affinity` or `kernel` parameter with value
-    'precomputed'. Its primary purpose is that when a :term:`meta-estimator`
-    extracts a sub-sample of data intended for a pairwise estimator, the data
-    needs to be indexed on both axes, while other data is indexed only on the
-    first axis.
+    'precomputed'. Its primary purpose is to support a :term:`meta-estimator`
+    or a cross validation procedure that extracts a sub-sample of data intended
+    for a pairwise estimator, where the data needs to be indexed on both axes.
+    Specifically, this tag is used by
+    :func:`~sklearn.utils.metaestimators._safe_split` to slice rows and
+    columns.
 
 preserves_dtype (default=``[np.float64]``)
     applies only on transformers. It corresponds to the data types which will

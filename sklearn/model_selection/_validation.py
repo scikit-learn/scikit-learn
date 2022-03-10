@@ -226,7 +226,7 @@ def cross_validate(
     >>> sorted(cv_results.keys())
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']
-    array([0.33150734, 0.08022311, 0.03531764])
+    array([0.3315057 , 0.08022103, 0.03531816])
 
     Multiple metric evaluation using ``cross_validate``
     (please refer the ``scoring`` parameter doc for more information)
@@ -237,10 +237,10 @@ def cross_validate(
     >>> print(scores['test_neg_mean_squared_error'])
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])
-    [0.28010158 0.39088426 0.22784852]
+    [0.28009951 0.3908844  0.22784907]
 
     See Also
-    ---------
+    --------
     cross_val_score : Run cross-validation for single metric evaluation.
 
     cross_val_predict : Get predictions from each split of cross-validation for
@@ -488,6 +488,17 @@ def cross_val_score(
     scores : ndarray of float of shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
 
+    See Also
+    --------
+    cross_validate : To run cross-validation on multiple metrics and also to
+        return train scores, fit times and score times.
+
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
+
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
@@ -497,18 +508,7 @@ def cross_val_score(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> print(cross_val_score(lasso, X, y, cv=3))
-    [0.33150734 0.08022311 0.03531764]
-
-    See Also
-    ---------
-    cross_validate : To run cross-validation on multiple metrics and also to
-        return train scores, fit times and score times.
-
-    cross_val_predict : Get predictions from each split of cross-validation for
-        diagnostic purposes.
-
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
+    [0.3315057  0.08022103 0.03531816]
     """
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)
