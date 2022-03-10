@@ -2649,7 +2649,7 @@ def test_power_transformer_significantly_non_gaussian():
 
     with pytest.warns(None) as record:
         X_trans = pt.fit_transform(X_non_gaussian)
-    assert not record
+    assert not [w.message for w in record]
     assert not np.any(np.isnan(X_trans))
     assert X_trans.mean() == pytest.approx(0.0)
     assert X_trans.std() == pytest.approx(1.0)
