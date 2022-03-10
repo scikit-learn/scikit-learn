@@ -65,6 +65,7 @@ jobs:
         --detach
         --name skcontainer
         -e DISTRIB=$DISTRIB
+        -e LOCK_FILE=$LOCK_FILE
         -e TEST_DIR=/temp_dir
         -e JUNITXML=$JUNITXML
         -e VIRTUALENV=testvenv
