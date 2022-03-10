@@ -420,6 +420,11 @@ Support for Python 3.4 and below has been officially dropped.
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> # now you can import normally from sklearn.ensemble
     >>> from sklearn.ensemble import HistGradientBoostingClassifier
+  
+  .. note::
+      Update: since version 1.0, these estimators are not experimental
+      anymore and you don't need to use `from sklearn.experimental import
+      enable_hist_gradient_boosting`.
 
   :pr:`12807` by :user:`Nicolas Hug<NicolasHug>`.
 
@@ -1055,7 +1060,7 @@ These changes mostly affect library developers.
 
 - Add ``check_fit_idempotent`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
-  when `fit` is called twice with the same data, the ouput of
+  when `fit` is called twice with the same data, the output of
   `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :pr:`12328` by :user:`Nicolas Hug <NicolasHug>`
 

@@ -7,7 +7,6 @@ Simple usage of Support Vector Machines to classify a sample. It will
 plot the decision surface and the support vectors.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,7 +15,7 @@ from sklearn import svm, datasets
 # import some data to play with
 iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+# avoid this ugly slicing by using a two-dim dataset
 Y = iris.target
 
 
@@ -32,7 +31,7 @@ def my_kernel(X, Y):
     return np.dot(np.dot(X, M), Y.T)
 
 
-h = .02  # step size in the mesh
+h = 0.02  # step size in the mesh
 
 # we create an instance of SVM and fit out data.
 clf = svm.SVC(kernel=my_kernel)
@@ -50,8 +49,7 @@ Z = Z.reshape(xx.shape)
 plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
 
 # Plot also the training points
-plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired, edgecolors='k')
-plt.title('3-Class classification using Support Vector Machine with custom'
-          ' kernel')
-plt.axis('tight')
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired, edgecolors="k")
+plt.title("3-Class classification using Support Vector Machine with custom kernel")
+plt.axis("tight")
 plt.show()

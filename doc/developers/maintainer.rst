@@ -33,7 +33,7 @@ Before a release
 
    - ``maint_tools/sort_whats_new.py`` can put what's new entries into
      sections. It's not perfect, and requires manual checking of the changes.
-     If the whats new list is well curated, it may not be necessary.
+     If the what's new list is well curated, it may not be necessary.
 
    - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
      requests that were merged but likely missing from What's New.
@@ -48,8 +48,8 @@ permissions given to maintainers, which includes:
 
 - *maintainer* role on ``scikit-learn`` projects on ``pypi.org`` and
   ``test.pypi.org``, separately.
-- become a member of the *scikit-learn* team on conda-forge by editing the 
-  ``recipe/meta.yaml`` file on 
+- become a member of the *scikit-learn* team on conda-forge by editing the
+  ``recipe/meta.yaml`` file on
   ``https://github.com/conda-forge/scikit-learn-feedstock``
 
 .. _preparing_a_release_pr:
@@ -77,8 +77,8 @@ branch:
    .. prompt:: bash $
 
      # Assuming upstream is an alias for the main scikit-learn repo:
-     git fetch upstream master
-     git checkout upstream/master
+     git fetch upstream main
+     git checkout upstream/main
      git checkout -b 0.99.X
      git push --set-upstream upstream 0.99.X
 
@@ -98,11 +98,11 @@ in the description of the Pull Request to track progress.
 This PR will be used to push commits related to the release as explained in
 :ref:`making_a_release`.
 
-You can also create a second PR from master and targeting master to increment
+You can also create a second PR from main and targeting main to increment
 the ``__version__`` variable in `sklearn/__init__.py` to increment the dev
 version. This means while we're in the release candidate period, the latest
-stable is two versions behind the master branch, instead of one. In this PR
-targeting master you should also include a new file for the matching version
+stable is two versions behind the main branch, instead of one. In this PR
+targeting main you should also include a new file for the matching version
 under the ``doc/whats_new/`` folder so PRs that target the next version can
 contribute their changelog entries to this file in parallel to the release
 process.
@@ -118,11 +118,11 @@ First, create a branch, **on your own fork** (to release e.g. `0.99.3`):
 
 .. prompt:: bash $
 
-    # assuming master and upstream/master are the same
-    git checkout -b release-0.99.3 master
+    # assuming main and upstream/main are the same
+    git checkout -b release-0.99.3 main
 
 Then, create a PR **to the** `scikit-learn/0.99.X` **branch** (not to
-master!) with all the desired changes:
+main!) with all the desired changes:
 
 .. prompt:: bash $
 
@@ -145,7 +145,7 @@ Making a release
    in :ref:`preparing_a_release_pr` above.
 
 1. Update docs. Note that this is for the final release, not necessarily for
-   the RC releases. These changes should be made in master and cherry-picked
+   the RC releases. These changes should be made in main and cherry-picked
    into the release branch, only before the final release.
 
    - Edit the ``doc/whats_new/v0.99.rst`` file to add release title and list of
@@ -173,7 +173,7 @@ Making a release
 
 3. Trigger the wheel builder with the ``[cd build]`` commit marker using
    the command:
-   
+
    .. prompt:: bash $
 
     git commit --allow-empty -m "Trigger wheel builder workflow: [cd build]"
@@ -198,7 +198,7 @@ Making a release
   `Continuous Integration
   <https://en.wikipedia.org/wiki/Continuous_integration>`_. The CD workflow on
   GitHub Actions is also used to automatically create nightly builds and
-  publish packages for the developement branch of scikit-learn. See
+  publish packages for the development branch of scikit-learn. See
   :ref:`install_nightly_builds`.
 
 4. Once all the CD jobs have completed successfully in the PR, merge it,
@@ -210,6 +210,12 @@ Making a release
    following GitHub Actions workflow:
 
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Publish+to+Pypi%22
+
+4.1 You can test the conda-forge builds by submitting a PR to the feedstock
+    repo: https://github.com/conda-forge/scikit-learn-feedstock. If you want to
+    publish an RC release on conda-forge, the PR should target the `rc` branch
+    as opposed to the `master` branch. The two branches need to be kept sync
+    together otherwise.
 
 5. If this went fine, you can proceed with tagging. Proceed with caution.
    Ideally, tags should be created when you're almost certain that the release
@@ -237,7 +243,11 @@ Making a release
 
        rm -r dist
        pip install -U wheelhouse_uploader twine
-       python setup.py fetch_artifacts
+       python -m wheelhouse_uploader fetch \
+         --version 0.99.0 \
+         --local-folder dist \
+         scikit-learn \
+         https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
 
    This command will download all the binary packages accumulated in the
    `staging area on the anaconda.org hosting service
@@ -272,11 +282,11 @@ Making a release
        git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
        cd scikit-learn.github.io
        echo stable > .git/info/sparse-checkout
-       git checkout master
+       git checkout main
        rm stable
        ln -s 0.999 stable
        sed -i "s/latestStable = '.*/latestStable = '0.999';/" versionwarning.js
-       git add stable/ versionwarning.js
+       git add stable versionwarning.js
        git commit -m "Update stable to point to 0.999"
        git push origin master
 
@@ -288,19 +298,16 @@ Release checklist
 The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in release branch
-    * [ ] update news and what's new date and sklearn dev0 version in master branch
+    * [ ] update news and what's new date and sklearn dev0 version in main branch
     * [ ] check that the for the release wheels can be built successfully
     * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
     * [ ] create tag on the main github repo
-    * [ ] upload the wheels and source tarball to PyPI
-    * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
     * [ ] confirm bot detected at
       https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
+    * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
-    * [ ] fix the binder release version in ``.binder/requirement.txt`` (see
-      #15847)
-    * [ ] announce on mailing list and on twitter
+    * [ ] announce on mailing list and on Twitter, and LinkedIn
 
 Merging Pull Requests
 ---------------------
@@ -363,10 +370,17 @@ deprecation cycle.
 
 To create an experimental module, you can just copy and modify the content of
 `enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_hist_gradient_boosting.py>`_,
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_hist_gradient_boosting.py>`__,
 or
 `enable_iterative_imputer.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_iterative_imputer.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_iterative_imputer.py>`_.
+
+.. note::
+
+  These are permalink as in 0.24, where these estimators are still
+  experimental. They might be stable at the time of reading - hence the
+  permalink. See below for instructions on the transition from experimental
+  to stable.
 
 Note that the public import path must be to a public subpackage (like
 ``sklearn/ensemble`` or ``sklearn/impute``), not just a ``.py`` module.
@@ -379,14 +393,15 @@ in the future when the features aren't experimental anymore.
 To avoid type checker (e.g. mypy) errors a direct import of experimental
 estimators should be done in the parent module, protected by the
 ``if typing.TYPE_CHECKING`` check. See `sklearn/ensemble/__init__.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/ensemble/__init__.py>`_,
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/ensemble/__init__.py>`_,
 or `sklearn/impute/__init__.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/impute/__init__.py>`_
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/impute/__init__.py>`_
 for an example.
 
 Please also write basic tests following those in
 `test_enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`__.
+
 
 Make sure every user-facing code you write explicitly mentions that the feature
 is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
@@ -402,3 +417,14 @@ sklearn.experimental import *`` **does not work**.
 
 Note that some experimental classes / functions are not included in the
 :mod:`sklearn.experimental` module: ``sklearn.datasets.fetch_openml``.
+
+Once the feature become stable, remove all `enable_my_experimental_feature`
+in the scikit-learn code (even feature highlights etc.) and make the
+`enable_my_experimental_feature` a no-op that just raises a warning:
+`enable_hist_gradient_boosting.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/enable_hist_gradient_boosting.py>`__.
+The file should stay there indefinitely as we don't want to break users code:
+we just incentivize them to remove that import with the warning.
+
+Also update the tests accordingly: `test_enable_hist_gradient_boosting.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`__.
