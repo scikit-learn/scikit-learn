@@ -212,7 +212,11 @@ jobs:
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
         LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
+        TESTENVVAR: 'testenvvar'
+        TEST_ENV_VAR: 'test_env_var'
         DOCKER_CONTAINER: 'i386/debian:11.2'
+        LOCKFILE: 'lockfile'
+        LOCK_FILE_2: 'lock_file_2'
 
 - template: build_tools/azure/posix.yml
   parameters:
