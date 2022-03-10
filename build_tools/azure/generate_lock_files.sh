@@ -39,7 +39,12 @@ conda_lock_func ${build_name} linux-64
 build_name=pylatest_conda_mkl_no_openmp
 conda_lock_func ${build_name} osx-64
 
-# TODO: how to make sure that python 3.8 (Ubuntu 20.04 has python 3.8.10)is
+# TODO: how to make sure that python 3.8 (Ubuntu 20.04 has python 3.8.10) is
 # used for this command here
 build_name=ubuntu_atlas
+pip_lock_func ${build_name}
+
+# TODO: how to make sure that python 3.9 (debian-32 docker image has python
+# 3.9) is used for this command here
+build_name=debian_atlas_32bit
 pip_lock_func ${build_name}
