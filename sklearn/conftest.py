@@ -278,8 +278,8 @@ def random_seed(request):
     deterministically pass for any seed value from 0 to 99 included.
 
     If the SKLEARN_TESTS_RANDOM_SEED environment variable is not set (which
-    should be the default, in particular on the CI), the fixture will randomly
-    choose on seed in the above range and all fixtured tests will run for that
+    should be the default, in particular on the CI), the fixture will choose an
+    arbitrary seed in the above range and all fixtured tests will run for that
     specific seed. This ensures that over time, our CI will run all tests with
     different seeds while keeping the test duration of a single run of the full
     test suite limited. This will enforce that the tests assertions of tests
