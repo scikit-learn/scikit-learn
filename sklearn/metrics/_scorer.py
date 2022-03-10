@@ -18,6 +18,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+import copy
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
@@ -61,6 +62,10 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
+from ..utils.metadata_routing import _MetadataRequester
+from ..utils.metadata_routing import MetadataRequest
+from ..utils.metadata_routing import MetadataRouter
+from ..utils.metadata_routing import process_routing
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -99,11 +104,15 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
+        params = process_routing(self, "score", kwargs)
+
         for name, scorer in self._scorers.items():
             if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator, *args, **kwargs)
+                score = scorer._score(
+                    cached_call, estimator, *args, **params.get(name).score
+                )
             else:
-                score = scorer(estimator, *args, **kwargs)
+                score = scorer(estimator, *args, **params.get(name).score)
             scores[name] = score
         return scores
 
@@ -138,8 +147,23 @@ class _MultimetricScorer:
                 return True
         return False
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
 
-class _BaseScorer:
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : dict
+            A dict representing a MetadataRouter.
+        """
+        return MetadataRouter(owner=self.__class__.__name__).add(
+            **self._scorers, method_mapping="score"
+        )
+
+
+class _BaseScorer(_MetadataRequester):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -191,7 +215,7 @@ class _BaseScorer:
             kwargs_string,
         )
 
-    def __call__(self, estimator, X, y_true, sample_weight=None):
+    def __call__(self, estimator, X, y_true, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -206,29 +230,45 @@ class _BaseScorer:
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer.
+
+            .. versionadded:: 1.1
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
-        return self._score(
-            partial(_cached_call, None),
-            estimator,
-            X,
-            y_true,
-            sample_weight=sample_weight,
-        )
+        return self._score(partial(_cached_call, None), estimator, X, y_true, **kwargs)
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
 
+    def set_score_request(self, **kwargs):
+        """Set requested parameters by the scorer.
+
+        Note that this method returns a new instance of the scorer, and does
+        **not** change the original scorer object.
+
+        .. versionadded:: 1.1
+
+        Parameters
+        ----------
+        kwargs : dict
+            Arguments should be of the form param_name={True, False, None, str}.
+            The value can also be of the form RequestType
+        """
+        res = copy.deepcopy(self)
+        res._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        for param, alias in kwargs.items():
+            res._metadata_request.score.add_request(param=param, alias=alias)
+        return res
+
 
 class _PredictScorer(_BaseScorer):
-    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+    def _score(self, method_caller, estimator, X, y_true, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -247,8 +287,10 @@ class _PredictScorer(_BaseScorer):
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer.
+
+            .. versionadded:: 1.1
 
         Returns
         -------
@@ -257,16 +299,13 @@ class _PredictScorer(_BaseScorer):
         """
 
         y_pred = method_caller(estimator, "predict", X)
-        if sample_weight is not None:
-            return self._sign * self._score_func(
-                y_true, y_pred, sample_weight=sample_weight, **self._kwargs
-            )
-        else:
-            return self._sign * self._score_func(y_true, y_pred, **self._kwargs)
+        scoring_kwargs = copy.deepcopy(self._kwargs)
+        scoring_kwargs.update(kwargs)
+        return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -286,8 +325,10 @@ class _ProbaScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not probabilities.
 
-        sample_weight : array-like, default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer.
+
+            .. versionadded:: 1.1
 
         Returns
         -------
@@ -302,19 +343,23 @@ class _ProbaScorer(_BaseScorer):
             # problem: (when only 2 class are given to `y_true` during scoring)
             # Thus, we need to check for the shape of `y_pred`.
             y_pred = self._select_proba_binary(y_pred, clf.classes_)
-        if sample_weight is not None:
-            return self._sign * self._score_func(
-                y, y_pred, sample_weight=sample_weight, **self._kwargs
-            )
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+
+        scoring_kwargs = copy.deepcopy(self._kwargs)
+        scoring_kwargs.update(kwargs)
+        # this is for backward compatibility to avoid passing sample_weight
+        # to the scorer if it's None
+        # probably remove in v1.3
+        if scoring_kwargs.get("sample_weight", -1) is None:
+            del scoring_kwargs["sample_weight"]
+
+        return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
 
 
 class _ThresholdScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
@@ -336,8 +381,10 @@ class _ThresholdScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not decision function values.
 
-        sample_weight : array-like, default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer.
+
+            .. versionadded:: 1.1
 
         Returns
         -------
@@ -374,12 +421,14 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
-        if sample_weight is not None:
-            return self._sign * self._score_func(
-                y, y_pred, sample_weight=sample_weight, **self._kwargs
-            )
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        scoring_kwargs = copy.deepcopy(self._kwargs)
+        scoring_kwargs.update(kwargs)
+        # this is for backward compatibility to avoid passing sample_weight
+        # to the scorer if it's None
+        # probably remove in v1.3
+        if scoring_kwargs.get("sample_weight", -1) is None:
+            del scoring_kwargs["sample_weight"]
+        return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
@@ -414,9 +463,29 @@ def get_scorer(scoring):
     return scorer
 
 
-def _passthrough_scorer(estimator, *args, **kwargs):
-    """Function that wraps estimator.score"""
-    return estimator.score(*args, **kwargs)
+class _passthrough_scorer:
+    def __init__(self, estimator):
+        self._estimator = estimator
+
+    def __call__(self, estimator, *args, **kwargs):
+        """Method that wraps estimator.score"""
+        return estimator.score(*args, **kwargs)
+
+    def get_metadata_request(self):
+        """Get requested data properties.
+
+        .. versionadded:: 1.1
+
+        Returns
+        -------
+        request : dict
+            A dict of dict of str->value. The key to the first dict is the name
+            of the method, and the key to the second dict is the name of the
+            argument requested by the method.
+        """
+        return MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self._estimator, method_mapping="score"
+        )
 
 
 def check_scoring(estimator, scoring=None, *, allow_none=False):
@@ -471,7 +540,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         return get_scorer(scoring)
     elif scoring is None:
         if hasattr(estimator, "score"):
-            return _passthrough_scorer
+            return _passthrough_scorer(estimator)
         elif allow_none:
             return None
         else:
@@ -604,7 +673,7 @@ def make_scorer(
     ----------
     score_func : callable
         Score function (or loss function) with signature
-        `score_func(y, y_pred, **kwargs)`.
+        ``score_func(y, y_pred, **kwargs)``.
 
     greater_is_better : bool, default=True
         Whether `score_func` is a score function (default), meaning high is

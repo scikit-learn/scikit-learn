@@ -236,7 +236,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
-    assert scorer is _passthrough_scorer
+    assert isinstance(scorer, _passthrough_scorer)
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFitAndPredict()
@@ -629,11 +629,14 @@ def test_classification_scorer_sample_weight():
         else:
             target = y_test
         try:
+            scorer = scorer.set_score_request(sample_weight=True)
             weighted = scorer(
                 estimator[name], X_test, target, sample_weight=sample_weight
             )
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
+            # this should not raise. sample_weight should be ignored if None.
+            _ = scorer(estimator[name], X_test[:10], target[:10], sample_weight=None)
             assert weighted != unweighted, (
                 f"scorer {name} behaves identically when called with "
                 f"sample weights: {weighted} vs {unweighted}"
@@ -677,6 +680,7 @@ def test_regression_scorer_sample_weight():
             # skip classification scorers
             continue
         try:
+            scorer = scorer.set_score_request(sample_weight=True)
             weighted = scorer(reg, X_test, y_test, sample_weight=sample_weight)
             ignored = scorer(reg, X_test[11:], y_test[11:])
             unweighted = scorer(reg, X_test, y_test)
@@ -1140,3 +1144,19 @@ def test_scorer_no_op_multiclass_select_proba():
         labels=lr.classes_,
     )
     scorer(lr, X_test, y_test)
+
+
+@pytest.mark.parametrize("name, scorer", SCORERS.items())
+def test_scorer_metadata_request(name, scorer):
+    assert hasattr(scorer, "set_score_request")
+    assert hasattr(scorer, "get_metadata_routing")
+
+    weighted_scorer = scorer.set_score_request(sample_weight=True)
+    # set_score_request shouldn't mutate the instance
+    assert weighted_scorer is not scorer
+
+    assert str(scorer.get_metadata_routing()) == "{}"
+    assert (
+        str(weighted_scorer.get_metadata_routing())
+        == "{'score': {'sample_weight': <RequestType.REQUESTED: True>}}"
+    )
