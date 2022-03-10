@@ -3244,6 +3244,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
             x_trans_var = x_trans.var()
+
+            # Reject transformed data that is constant
             if x_trans_var < x_tiny:
                 return np.inf
 
