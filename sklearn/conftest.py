@@ -286,7 +286,8 @@ def random_seed(request):
     written to use this fixture are not dependent on a specific seed value.
 
     The range of admissible seed values is limited to [0, 99] because it is
-    often not possible to write a test that can work for any possible seed.
+    often not possible to write a test that can work for any possible seed
+    and we want to avoid having tests that randomly fail on the CI.
 
     Valid values for SKLEARN_TESTS_RANDOM_SEED:
 
