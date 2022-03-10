@@ -61,7 +61,7 @@ pre_python_environment_install() {
 
 python_environment_install_and_activate() {
     if [[ -n "$LOCK_FILE" ]]; then
-        if [[ "$DISTRIB" == "conda" || "$DISTRIB" == "conda-pip-latest" ]]; then
+        if [[ "$DISTRIB" == "conda"* ]]; then
             conda update -n base conda -y
             conda install pip -y
             conda install -c conda-forge conda-lock -y
