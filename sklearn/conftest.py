@@ -248,9 +248,9 @@ elif random_seed_var == "all":
 else:
     if "-" in random_seed_var:
         start, stop = random_seed_var.split("-")
-        random_seeds = list(range(int(start.strip()), int(stop.strip()) + 1))
+        random_seeds = list(range(int(start), int(stop) + 1))
     else:
-        random_seeds = [int(s.strip()) for s in random_seed_var.split(",")]
+        random_seeds = [int(s) for s in random_seed_var.split(",")]
 
 if min(random_seeds) < 0 or max(random_seeds) > 99:
     raise ValueError(
