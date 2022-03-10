@@ -16,7 +16,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.metadata_routing import MetadataRouter
-from sklearn.utils.metadata_routing import process_routing
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (
