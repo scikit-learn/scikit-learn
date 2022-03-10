@@ -1670,14 +1670,15 @@ def likelihood_ratios(
         ``y_pred`` are used in sorted order.
 
     pos_label : str or int, default=1
-        The class to report if ``average='binary'`` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
-        scores for that label only.
+        The class to report ratios for, if ``average='binary'`` and if the
+        data is binary.
+        If the targets are multiclass or multilabel, this will be ignored.
+        Setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        ratios for that label only.
 
     average : {'binary', 'micro', 'macro', 'samples','weighted'}, \
             default=None
-        If ``None``, the scores for each class are returned. Otherwise, this
+        If ``None``, the ratios for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
         ``'binary'``:
@@ -1713,8 +1714,8 @@ def likelihood_ratios(
 
     Notes
     -----
-    When ``false positive == 0``, positive likelihood ratio is undefined.
-    When ``true negative == 0``, negative likelihood ratio is undefined.
+    When ``false positive == 0``, the positive likelihood ratio is undefined.
+    When ``true negative == 0``, the negative likelihood ratio is undefined.
     When ``true positive + false negative == 0`` both ratios are undefined.
     In such cases, ``UndefinedMetricWarning`` will be raised.
 

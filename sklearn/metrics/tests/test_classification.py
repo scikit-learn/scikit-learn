@@ -627,7 +627,8 @@ def test_confusion_matrix_normalize_single_class():
     ],
 )
 def test_likelihood_ratios_warnings(params, warn_msg):
-    """Check the `alphas` validation in RidgeCV and RidgeClassifierCV."""
+    # likelihood_ratios must raise warnings when at
+    # least one of the ratios is ill-defined.
 
     with pytest.warns(UndefinedMetricWarning, match=warn_msg):
         likelihood_ratios(**params)
@@ -645,8 +646,8 @@ def test_likelihood_ratios():
 
     # Build limit case with y_pred = y_true
     pos, neg = likelihood_ratios(y_true, y_true, labels=[1, 0])
-    assert_almost_equal(pos, np.array([float("inf")] * 2), decimal=5)
-    assert_almost_equal(neg, np.zeros(2), decimal=5)
+    assert_all_close(pos, np.array([float("inf")] * 2), rtol=1e-5)
+    assert_all_close(neg, np.zeros(2), rtol=1e-5)
 
 
 def test_cohen_kappa():
