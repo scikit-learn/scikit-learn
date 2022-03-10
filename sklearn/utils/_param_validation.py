@@ -33,43 +33,27 @@ def validate_parameter_constraints(parameter_constraints, params):
         constraints.
     """
     for param_name, constraints in parameter_constraints.items():
-        _validate_single_param(param_name, params[param_name], constraints)
 
+        param_val = params[param_name]
+        constraints = [make_constraint(constraint) for constraint in constraints]
 
-def _validate_single_param(param_name, param_val, constraints):
-    """Check if a parameter satisfies a given list of constraints.
-
-    Raises a ValueError if none of the constraints is satified.
-
-    Parameters
-    ----------
-    param_name : str
-        The name of the parameter.
-
-    param_val : object
-        The value of the parameter.
-
-    constraints : list
-        To be valid, the parameter must satisfy one of these constraints.
-    """
-    constraints = [make_constraint(constraint) for constraint in constraints]
-
-    for constraint in constraints:
-        if constraint.is_satisfied_by(param_val):
-            # this constraint is satisfied, nothing to do.
-            return
-    else:
-        # No constraint is satisfied, raise with an informative message.
-        if len(constraints) == 1:
-            constraints_str = f"{constraints[0]}"
+        for constraint in constraints:
+            if constraint.is_satisfied_by(param_val):
+                # this constraint is satisfied, no need to check further.
+                break
         else:
-            constraints_str = (
-                f"{', '.join([repr(c) for c in constraints[:-1]])} or {constraints[-1]}"
-            )
+            # No constraint is satisfied, raise with an informative message.
+            if len(constraints) == 1:
+                constraints_str = f"{constraints[0]}"
+            else:
+                constraints_str = (
+                    f"{', '.join([repr(c) for c in constraints[:-1]])} or"
+                    f" {constraints[-1]}"
+                )
 
-        raise ValueError(
-            f"{param_name} must be {constraints_str}. Got {param_val!r} instead."
-        )
+            raise ValueError(
+                f"{param_name} must be {constraints_str}. Got {param_val!r} instead."
+            )
 
 
 def make_constraint(constraint):
