@@ -641,13 +641,13 @@ def test_likelihood_ratios():
     y_pred = np.array([1] * 2 + [0] * 10 + [1] * 8)
 
     pos, neg = likelihood_ratios(y_true, y_pred, labels=[1, 0])
-    assert_almost_equal(pos[0], 34 / 24, decimal=5)
-    assert_almost_equal(neg[0], 17 / 27, decimal=5)
+    assert_allclose(pos[0], 34 / 24, rtol=1e-5)
+    assert_allclose(neg[0], 17 / 27, rtol=1e-5)
 
     # Build limit case with y_pred = y_true
     pos, neg = likelihood_ratios(y_true, y_true, labels=[1, 0])
-    assert_all_close(pos, np.array([float("inf")] * 2), rtol=1e-5)
-    assert_all_close(neg, np.zeros(2), rtol=1e-5)
+    assert_allclose(pos, np.array([float("inf")] * 2), rtol=1e-5)
+    assert_allclose(neg, np.zeros(2), rtol=1e-5)
 
 
 def test_cohen_kappa():
