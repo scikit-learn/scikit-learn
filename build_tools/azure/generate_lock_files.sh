@@ -12,7 +12,7 @@ function conda_lock_func() {
         --mamba \
         --platform ${platform} \
         --file "${dir_name}/${environment_base_name}_environment.yml" \
-        --lockfile "${build_name}_${platform}_conda-lock.yml"
+        --lockfile "${dir_name}/${build_name}_${platform}_conda-lock.yml"
 }
 
 function pip_lock_func() {
@@ -34,6 +34,9 @@ build_name=pylatest_pip_openblas_pandas
 conda_lock_func ${build_name} linux-64
 
 build_name=pylatest_pip_openblas_pandas
+conda_lock_func ${build_name} linux-64
+
+build_name=pylatest_conda_forge_mkl_no_coverage
 conda_lock_func ${build_name} linux-64
 
 build_name=pylatest_conda_mkl_no_openmp

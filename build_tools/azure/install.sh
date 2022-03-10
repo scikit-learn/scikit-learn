@@ -60,14 +60,11 @@ pre_python_environment_install() {
 }
 
 python_environment_install_and_activate() {
-    echo 'environment variables'
-    env
     if [[ -n "$LOCK_FILE" ]]; then
         if [[ "$DISTRIB" == "conda" || "$DISTRIB" == "conda-pip-latest" ]]; then
             conda update -n base conda -y
             conda install pip -y
             conda install -c conda-forge conda-lock -y
-            conda list
             conda-lock install --name $VIRTUALENV $LOCK_FILE
             source activate $VIRTUALENV
         elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
