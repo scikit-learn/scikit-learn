@@ -746,10 +746,6 @@ Changelog
   the model. The option is only available when `strategy` is set to `quantile`.
   :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
 
-- |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
-  instead of `__init__`.
-  :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
-
 - |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
   better supports significantly non-Gaussian data when searching for an optimal
   lambda. :pr:`20653` by `Thomas Fan`_.
