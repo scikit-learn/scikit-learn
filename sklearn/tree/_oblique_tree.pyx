@@ -225,7 +225,7 @@ cdef class ObliqueTree(Tree):
         self.proj_vec_indices[node_id] = deref(split_node.proj_vec_indices)
         return 1
 
-    cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray, SIZE_t node_id) nogil except -1:
+    cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray, Node *node, SIZE_t node_id) nogil except -1:
         """Compute feature from a given data matrix, X.
 
         In oblique-aligned trees, this is the projection of X.

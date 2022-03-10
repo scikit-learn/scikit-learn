@@ -17,14 +17,14 @@ def configuration(parent_package="", top_path=None):
         language="c++",
         extra_compile_args=["-O3"],
     )
-    # config.add_extension(
-    #     "_oblique_tree",
-    #     sources=["_oblique_tree.pyx"],
-    #     include_dirs=[numpy.get_include()],
-    #     libraries=libraries,
-    #     language="c++",
-    #     extra_compile_args=["-O3"],
-    # )
+    config.add_extension(
+        "_oblique_tree",
+        sources=["_oblique_tree.pyx"],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+        language="c++",
+        extra_compile_args=["-O3"],
+    )
     config.add_extension(
         "_oblique_splitter",
         sources=["_oblique_splitter.pyx"],

@@ -775,6 +775,17 @@ cdef class Tree:
         node.threshold = split_node.threshold
         return 1
     
+    cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray,
+            Node *node, SIZE_t node_id) nogil except -1:
+        """Compute feature from a given data matrix, X.
+
+        In axis-aligned trees, this is simply the value in the column of X
+        for this specific feature.
+        """
+        # the feature index
+        cdef DTYPE_t feature = X_ndarray[node.feature]
+        return feature
+
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SplitRecord split_node, double impurity,
                           SIZE_t n_node_samples,
@@ -883,7 +894,7 @@ cdef class Tree:
                     # with gil:
                     #     print('About to compute feature....')
                     #     print(i, node_id)
-                    feature = self._compute_feature(X_vector, node_id)
+                    feature = self._compute_feature(X_vector, node, node_id)
                     # with gil:
                     #     print('Feature gotten was...', feature)
                     if feature <= node.threshold:
@@ -899,21 +910,6 @@ cdef class Tree:
                 out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
         print('Got to the end for _apply_dense...')
         return out
-
-    cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray,
-            SIZE_t index) nogil except -1:
-        """Compute feature from a given data matrix, X.
-
-        In axis-aligned trees, this is simply the value in the column of X
-        for this specific feature.
-        """
-        # the feature index
-        cdef DTYPE_t feature = 0
-
-        feature = X_ndarray[index]
-        with gil:
-            print('Computing axis-aligned features...')
-        return feature
 
     cdef inline np.ndarray _apply_sparse_csr(self, object X):
         """Finds the terminal region (=leaf node) for each sample in sparse X.
@@ -1045,7 +1041,7 @@ cdef class Tree:
 
                     # compute the feature value to compare against threshold
                     X_vector = X_ndarray[i, :]
-                    feature = self._compute_feature(X_vector, node.feature)
+                    feature = self._compute_feature(X_vector, node, node_id)
                     if feature <= node.threshold:
                         node_id = node.left_child
                         node = &self.nodes[node.left_child]
