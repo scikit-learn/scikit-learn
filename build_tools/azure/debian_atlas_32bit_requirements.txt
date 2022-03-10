@@ -1,0 +1,4 @@
+cython
+joblib==1.0.0
+threadpoolctl==2.2.0
+pytest==5.0.1
