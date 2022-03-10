@@ -533,3 +533,18 @@ def test_tweedie_score(regression_data, power, link):
 )
 def test_tags(estimator, value):
     assert estimator._get_tags()["requires_positive_y"] is value
+
+
+# FIXME: remove in v1.3
+@pytest.mark.parametrize(
+    "est, family",
+    [
+        (PoissonRegressor(), "poisson"),
+        (GammaRegressor(), "gamma"),
+        (TweedieRegressor(power=3), "inverse-gaussian"),
+        (TweedieRegressor(), "HalfTweedieLoss"),
+    ],
+)
+def test_family_deprecation(est, family):
+    with pytest.warns(FutureWarning, match="`family` was deprecated"):
+        assert est.family == family

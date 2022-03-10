@@ -21,7 +21,7 @@ from ..._loss.loss import (
 )
 from ...base import BaseEstimator, RegressorMixin
 from ...utils.optimize import _check_optimize_result
-from ...utils import check_scalar, check_array
+from ...utils import check_scalar, check_array, deprecated
 from ...utils.validation import check_is_fitted, _check_sample_weight
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._linear_loss import LinearModelLoss
@@ -75,6 +75,15 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
+
+    family : {'normal', 'poisson', 'gamma', 'inverse-gaussian'} \
+            or a BaseLoss instance, default='normal'
+        The distributional assumption of the GLM, i.e. which distribution from
+        the EDM, specifies the loss function to be minimized.
+
+        .. deprecated:: 1.1
+           `family` is deprecated in 1.1 and will be removed in 1.3.
+           Use `_base_loss_class` instead.
 
     _base_loss_class : subclass of BaseLoss, default=HalfSquaredError
         A `_base_loss_class` contains a specific loss function as well as the link
@@ -457,6 +466,22 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # Note that we do not need to pass sample_weight to the loss class as this is
         # only needed to set loss.constant_hessian on which GLMs do not rely.
         return self._base_loss_class(**self.base_loss_params)
+
+    # FIXME: remove in v1.3
+    @deprecated(  # type: ignore
+        "Attribute `family` was deprecated in version 1.1 and "
+        "will be removed in 1.3. Use `_base_loss_class` instead."
+    )
+    @property
+    def family(self):
+        if isinstance(self, PoissonRegressor):
+            return "poisson"
+        elif isinstance(self, GammaRegressor):
+            return "gamma"
+        elif isinstance(self, TweedieRegressor) and self.power == 3:
+            return "inverse-gaussian"
+        else:
+            return self._base_loss_class.__name__
 
 
 class PoissonRegressor(_GeneralizedLinearRegressor):
