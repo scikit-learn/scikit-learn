@@ -104,29 +104,7 @@ python_environment_install_and_activate() {
             TO_INSTALL="$TO_INSTALL $(get_dep Pillow $PILLOW_VERSION)"
             TO_INSTALL="$TO_INSTALL $(get_dep matplotlib $MATPLOTLIB_VERSION)"
 
-            if [[ "$UNAMESTR" == "Darwin" ]] && [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
-                    TO_INSTALL="$TO_INSTALL compilers llvm-openmp"
-            fi
-
             make_conda $TO_INSTALL
-
-        elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
-            python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-            source $VIRTUALENV/bin/activate
-
-            python -m pip install $(get_dep cython $CYTHON_VERSION) \
-                    $(get_dep joblib $JOBLIB_VERSION)
-
-        elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
-            # Since conda main channel usually lacks behind on the latest releases,
-            # we use pypi to test against the latest releases of the dependencies.
-            # conda is still used as a convenient way to install Python and pip.
-            make_conda "ccache python=$PYTHON_VERSION"
-            python -m pip install -U pip
-
-            python -m pip install pandas matplotlib scikit-image pyamg
-            # do not install dependencies for lightgbm since it requires scikit-learn.
-            python -m pip install "lightgbm>=3.0.0" --no-deps
 
         elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
             make_conda "ccache python=$PYTHON_VERSION"
@@ -167,7 +145,7 @@ scikit_learn_install() {
     # workers with 2 cores when building the compiled extensions of scikit-learn.
     export SKLEARN_BUILD_PARALLEL=3
 
-    if [[ "$UNAMESTR" == "Darwin" ]] && [[ "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
+    if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
         export AR=/usr/bin/ar
