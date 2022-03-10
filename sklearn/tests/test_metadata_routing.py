@@ -349,9 +349,9 @@ def test_simple_metadata_routing():
         clf.fit(X, y, sample_weight=my_weights)
 
     # Explicitly saying the estimator doesn't need it, makes the error go away,
-    # because in this case `SimpleMetaClassifier` consumes `sample_weight`.
-    # If there was no consumer of sample_weight, passing it would
-    # result in an error.
+    # because in this case `SimpleMetaClassifier` consumes `sample_weight`. If
+    # there was no consumer of sample_weight, passing it would result in an
+    # error.
     clf = SimpleMetaClassifier(
         estimator=ClassifierFitMetadata().set_fit_request(sample_weight=False)
     )
