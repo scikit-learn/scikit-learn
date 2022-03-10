@@ -574,6 +574,14 @@ Changelog
   :class:`random_projection.GaussianRandomProjection` preserves dtype for
   `numpy.float32`. :pr:`22114` by :user:`Takeshi Oura <takoika>`.
 
+- |Enhancement| Adds a `fit_inverse_transform` parameter to all transformers in
+  the :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. When set to True,
+  the pseudo-inverse of the components is computed during `fit` and stored in
+  `inverse_components_`, and `inverse_transform` becomes available.
+  :pr:`21701` by `Aurélien Geron <ageron>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.random_projection` module:
   :class:`~sklearn.random_projection.GaussianRandomProjection` and
@@ -613,42 +621,6 @@ Changelog
   message when running in a jupyter notebook that is not trusted. :pr:`21316`
   by `Thomas Fan`_.
 
-:mod:`sklearn.neighbors`
-........................
-
-- |Fix| :class:`neighbors.KernelDensity` now validates input parameters in `fit`
-  instead of `__init__`. :pr:`21430` by :user:`Desislava Vasileva <DessyVV>` and
-  :user:`Lucy Jimenez <LucyJimenez>`.
-
-- |Enhancement| `utils.validation.check_array` and `utils.validation.type_of_target`
-  now accept an `input_name` parameter to make the error message more
-  informative when passed invalid input data (e.g. with NaN or infinite
-  values).
-  :pr:`21219` by :user:`Olivier Grisel <ogrisel>`.
-
-- |Enhancement| :func:`utils.validation.check_array` returns a float
-  ndarray with `np.nan` when passed a `Float32` or `Float64` pandas extension
-  array with `pd.NA`. :pr:`21278` by `Thomas Fan`_.
-
-:mod:`sklearn.random_projection`
-................................
-
-- |API| Adds :term:`get_feature_names_out` to all transformers in the
-  :mod:`~sklearn.random_projection` module:
-  :class:`~sklearn.random_projection.GaussianRandomProjection` and
-  :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
-  :user:`Loïc Estève <lesteve>`.
-
-- |Enhancement| Adds a `fit_inverse_transform` parameter to all transformers in
-  the :mod:`~sklearn.random_projection` module:
-  :class:`~sklearn.random_projection.GaussianRandomProjection` and
-  :class:`~sklearn.random_projection.SparseRandomProjection`. When set to True,
-  the pseudo-inverse of the components is computed during `fit` and stored in
-  `inverse_components_`, and `inverse_transform` becomes available.
-  :pr:`21701` by `Aurélien Geron <ageron>`.
-
-:mod:`sklearn.tree`
-...................
 - |Enhancement| :func:`utils.estimator_html_repr` displays an arrow on the top
   left corner of the HTML representation to show how the elements are
   clickable. :pr:`21298` by `Thomas Fan`_.
