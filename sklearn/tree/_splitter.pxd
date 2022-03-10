@@ -91,3 +91,42 @@ cdef class Splitter:
     cdef void node_value(self, double* dest) nogil
 
     cdef double node_impurity(self) nogil
+
+cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil
+cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples, SIZE_t i, SIZE_t j) nogil
+cdef inline DTYPE_t median3(DTYPE_t* Xf, SIZE_t n) nogil
+cdef void introsort(DTYPE_t* Xf, SIZE_t *samples, SIZE_t n, int maxd) nogil
+cdef inline void sift_down(DTYPE_t* Xf, SIZE_t* samples,
+                        SIZE_t start, SIZE_t end) nogil
+cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil
+cdef int compare_SIZE_t(const void* a, const void* b) nogil
+cdef inline void binary_search(INT32_t* sorted_array,
+                            INT32_t start, INT32_t end,
+                            SIZE_t value, SIZE_t* index,
+                            INT32_t* new_start) nogil
+cdef inline void extract_nnz_index_to_samples(INT32_t* X_indices,
+                                            DTYPE_t* X_data,
+                                            INT32_t indptr_start,
+                                            INT32_t indptr_end,
+                                            SIZE_t* samples,
+                                            SIZE_t start,
+                                            SIZE_t end,
+                                            SIZE_t* index_to_samples,
+                                            DTYPE_t* Xf,
+                                            SIZE_t* end_negative,
+                                            SIZE_t* start_positive) nogil
+cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
+                                        DTYPE_t* X_data,
+                                        INT32_t indptr_start,
+                                        INT32_t indptr_end,
+                                        SIZE_t* samples,
+                                        SIZE_t start,
+                                        SIZE_t end,
+                                        SIZE_t* index_to_samples,
+                                        DTYPE_t* Xf,
+                                        SIZE_t* end_negative,
+                                        SIZE_t* start_positive,
+                                        SIZE_t* sorted_samples,
+                                        bint* is_samples_sorted) nogil
+cdef inline void sparse_swap(SIZE_t* index_to_samples, SIZE_t* samples,
+                            SIZE_t pos_1, SIZE_t pos_2) nogil 
