@@ -298,7 +298,7 @@ def random_seed(request):
 
     When writing a new test function that uses this fixture, please use the
     following command to make sure that it passes deterministically for all
-    adminissible seeds on your local machine:
+    admissible seeds on your local machine:
 
         SKLEARN_TESTS_RANDOM_SEED="all" pytest -v -k test_your_test_name
     """
