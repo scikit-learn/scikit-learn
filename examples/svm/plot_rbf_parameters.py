@@ -82,6 +82,7 @@ map.
 import numpy as np
 from matplotlib.colors import Normalize
 
+
 class MidpointNormalize(Normalize):
     def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
         self.midpoint = midpoint
