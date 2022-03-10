@@ -88,6 +88,7 @@ class ConfusionMatrixDisplay:
         values_format=None,
         ax=None,
         colorbar=True,
+        im_kw=None,
     ):
         """Plot visualization.
 
@@ -114,6 +115,9 @@ class ConfusionMatrixDisplay:
         colorbar : bool, default=True
             Whether or not to add a colorbar to the plot.
 
+        im_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.imshow` call.
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -128,7 +132,12 @@ class ConfusionMatrixDisplay:
 
         cm = self.confusion_matrix
         n_classes = cm.shape[0]
-        self.im_ = ax.imshow(cm, interpolation="nearest", cmap=cmap)
+
+        default_im_kw = dict(interpolation="nearest", cmap=cmap)
+        im_kw = im_kw or {}
+        im_kw = {**default_im_kw, **im_kw}
+
+        self.im_ = ax.imshow(cm, **im_kw)
         self.text_ = None
         cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(1.0)
 
@@ -193,6 +202,7 @@ class ConfusionMatrixDisplay:
         cmap="viridis",
         ax=None,
         colorbar=True,
+        im_kw=None,
     ):
         """Plot Confusion Matrix given an estimator and some data.
 
@@ -258,6 +268,9 @@ class ConfusionMatrixDisplay:
         colorbar : bool, default=True
             Whether or not to add a colorbar to the plot.
 
+        im_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.imshow` call.
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -304,6 +317,7 @@ class ConfusionMatrixDisplay:
             xticks_rotation=xticks_rotation,
             values_format=values_format,
             colorbar=colorbar,
+            im_kw=im_kw,
         )
 
     @classmethod
@@ -322,6 +336,7 @@ class ConfusionMatrixDisplay:
         cmap="viridis",
         ax=None,
         colorbar=True,
+        im_kw=None,
     ):
         """Plot Confusion Matrix given true and predicted labels.
 
@@ -384,6 +399,9 @@ class ConfusionMatrixDisplay:
         colorbar : bool, default=True
             Whether or not to add a colorbar to the plot.
 
+        im_kw : dict, default=None
+            Dict with keywords passed to `matplotlib.pyplot.imshow` call.
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -437,6 +455,7 @@ class ConfusionMatrixDisplay:
             xticks_rotation=xticks_rotation,
             values_format=values_format,
             colorbar=colorbar,
+            im_kw=im_kw,
         )
 
 

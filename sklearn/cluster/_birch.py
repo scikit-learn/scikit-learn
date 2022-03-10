@@ -328,7 +328,7 @@ class _CFSubcluster:
         #   r^2 = sum_i ||x_i||^2 / n - ||c||^2
         sq_radius = new_ss / new_n - new_sq_norm
 
-        if sq_radius <= threshold ** 2:
+        if sq_radius <= threshold**2:
             (
                 self.n_samples_,
                 self.linear_sum_,

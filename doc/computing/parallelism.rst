@@ -179,21 +179,6 @@ Environment variables
 
 These environment variables should be set before importing scikit-learn.
 
-:SKLEARN_SITE_JOBLIB:
-
-    When this environment variable is set to a non zero value,
-    scikit-learn uses the site joblib rather than its vendored version.
-    Consequently, joblib must be installed for scikit-learn to run.
-    Note that using the site joblib is at your own risks: the versions of
-    scikit-learn and joblib need to be compatible. Currently, joblib 0.11+
-    is supported. In addition, dumps from joblib.Memory might be incompatible,
-    and you might loose some caches and have to redownload some datasets.
-
-    .. deprecated:: 0.21
-
-       As of version 0.21 this parameter has no effect, vendored joblib was
-       removed and site joblib is always used.
-
 :SKLEARN_ASSUME_FINITE:
 
     Sets the default value for the `assume_finite` argument of

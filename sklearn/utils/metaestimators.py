@@ -8,10 +8,11 @@ from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 from functools import update_wrapper
 import numpy as np
+from contextlib import suppress
 
 from ..utils import _safe_indexing
+from ..utils._tags import _safe_tags
 from ..base import BaseEstimator
-from ..base import _is_pairwise
 
 __all__ = ["available_if", "if_delegate_has_method"]
 
@@ -56,10 +57,13 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         items = getattr(self, attr)
         if isinstance(items, list) and items:
             # Get item names used to identify valid names in params
-            item_names, _ = zip(*items)
-            for name in list(params.keys()):
-                if "__" not in name and name in item_names:
-                    self._replace_estimator(attr, name, params.pop(name))
+            # `zip` raises a TypeError when `items` does not contains
+            # elements of length 2
+            with suppress(TypeError):
+                item_names, _ = zip(*items)
+                for name in list(params.keys()):
+                    if "__" not in name and name in item_names:
+                        self._replace_estimator(attr, name, params.pop(name))
 
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
@@ -243,12 +247,6 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     we slice rows using ``indices`` (assumed the test set) and columns
     using ``train_indices``, indicating the training set.
 
-    .. deprecated:: 0.24
-
-        The _pairwise attribute is deprecated in 0.24. From 1.1
-        (renaming of 0.26) and onward, this function will check for the
-        pairwise estimator tag.
-
     Labels y will always be indexed only along the first axis.
 
     Parameters
@@ -282,7 +280,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         Indexed targets.
 
     """
-    if _is_pairwise(estimator):
+    if _safe_tags(estimator, key="pairwise"):
         if not hasattr(X, "shape"):
             raise ValueError(
                 "Precomputed kernels or affinity matrices have "
