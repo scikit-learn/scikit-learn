@@ -15,7 +15,7 @@ from ._hdbscan_linkage import mst_linkage_core, mst_linkage_core_vector, label
 from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
 from .dist_metrics import DistanceMetric
 from ._hdbscan_reachability import mutual_reachability
-from ._trees import SingleLinkageTree
+from ._hdbscan_tree import labelling_at_cut
 from sklearn.neighbors import KDTree, BallTree
 
 # Author: Leland McInnes <leland.mcinnes@gmail.com>
@@ -33,10 +33,7 @@ def _rsl_generic(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kwargs)
     min_spanning_tree = mst_linkage_core(mutual_reachability_)
     min_spanning_tree = min_spanning_tree[np.argsort(min_spanning_tree.T[2]), :]
 
-    single_linkage_tree = label(min_spanning_tree)
-    single_linkage_tree = SingleLinkageTree(single_linkage_tree)
-
-    return single_linkage_tree
+    return label(min_spanning_tree)
 
 
 def _rsl_prims_kdtree(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kwargs):
@@ -55,10 +52,7 @@ def _rsl_prims_kdtree(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kw
     core_distances = tree.query(X, k=k)[0][:, -1].copy(order="C")
     min_spanning_tree = mst_linkage_core_vector(X, core_distances, dist_metric, alpha)
 
-    single_linkage_tree = label(min_spanning_tree)
-    single_linkage_tree = SingleLinkageTree(single_linkage_tree)
-
-    return single_linkage_tree
+    return label(min_spanning_tree)
 
 
 def _rsl_prims_balltree(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kwargs):
@@ -77,10 +71,7 @@ def _rsl_prims_balltree(X, k=5, alpha=1.4142135623730951, metric="euclidean", **
     core_distances = tree.query(X, k=k)[0][:, -1].copy(order="C")
     min_spanning_tree = mst_linkage_core_vector(X, core_distances, dist_metric, alpha)
 
-    single_linkage_tree = label(min_spanning_tree)
-    single_linkage_tree = SingleLinkageTree(single_linkage_tree)
-
-    return single_linkage_tree
+    return label(min_spanning_tree)
 
 
 def _rsl_boruvka_kdtree(
@@ -99,10 +90,7 @@ def _rsl_boruvka_kdtree(
     )
     min_spanning_tree = alg.spanning_tree()
 
-    single_linkage_tree = label(min_spanning_tree)
-    single_linkage_tree = SingleLinkageTree(single_linkage_tree)
-
-    return single_linkage_tree
+    return label(min_spanning_tree)
 
 
 def _rsl_boruvka_balltree(
@@ -121,10 +109,7 @@ def _rsl_boruvka_balltree(
     )
     min_spanning_tree = alg.spanning_tree()
 
-    single_linkage_tree = label(min_spanning_tree)
-    single_linkage_tree = SingleLinkageTree(single_linkage_tree)
-
-    return single_linkage_tree
+    return label(min_spanning_tree)
 
 
 def robust_single_linkage(
@@ -298,9 +283,9 @@ def robust_single_linkage(
                     X, k, alpha, metric, leaf_size, core_dist_n_jobs, **kwargs
                 )
 
-    labels = single_linkage_tree.get_clusters(cut, gamma)
+    labels = labelling_at_cut(single_linkage_tree, cut, gamma)
 
-    return labels, single_linkage_tree.to_numpy()
+    return labels
 
 
 class RobustSingleLinkage(BaseEstimator, ClusterMixin):
@@ -372,14 +357,6 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
     labels_ : ndarray, shape (n_samples, )
         Cluster labels for each point.  Noisy samples are given the label -1.
 
-    cluster_hierarchy_ : SingleLinkageTree object
-        The single linkage tree produced during clustering.
-        This object provides several methods for:
-            * Plotting
-            * Generating a flat clustering
-            * Exporting to NetworkX
-            * Exporting to Pandas
-
     References
     ----------
     .. [1] Chaudhuri, K., & Dasgupta, S. (2010). Rates of convergence for the
@@ -431,7 +408,7 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
         del kwargs["metric_params"]
         kwargs.update(self.metric_params)
 
-        self.labels_, self._cluster_hierarchy = robust_single_linkage(X, **kwargs)
+        self.labels_ = robust_single_linkage(X, **kwargs)
 
         return self
 
@@ -453,12 +430,3 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
 
         self.fit(X)
         return self.labels_
-
-    @property
-    def cluster_hierarchy_(self):
-        if hasattr(self, "_cluster_hierarchy"):
-            return SingleLinkageTree(self._cluster_hierarchy)
-        else:
-            raise AttributeError(
-                "No single linkage tree was generated; try running fit first."
-            )

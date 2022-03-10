@@ -7,7 +7,6 @@ from scipy.spatial import distance
 from scipy import sparse
 from scipy import stats
 from sklearn.utils._testing import (
-    assert_array_equal,
     assert_array_almost_equal,
     assert_raises,
 )
@@ -15,9 +14,6 @@ from sklearn.cluster import (
     HDBSCAN,
     hdbscan,
     validity_index,
-    approximate_predict,
-    approximate_predict_scores,
-    all_points_membership_vectors,
 )
 
 # from sklearn.cluster.tests.common import generate_clustered_data
@@ -31,8 +27,6 @@ from tempfile import mkdtemp
 import pytest
 
 from sklearn import datasets
-
-import warnings
 
 n_clusters = 3
 # X = generate_clustered_data(n_clusters=n_clusters, n_samples_per_cluster=50)
@@ -290,56 +284,10 @@ def test_hdbscan_boruvka_matches(tree):
     assert (num_mismatches / float(data.shape[0])) < 0.15
 
 
-def test_tree_numpy_output_formats():
-
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
-
-    clusterer.single_linkage_tree_.to_numpy()
-    clusterer.condensed_tree_.to_numpy()
-    clusterer.minimum_spanning_tree_.to_numpy()
-
-
 def test_hdbscan_outliers():
     clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
     scores = clusterer.outlier_scores_
     assert scores is not None
-
-
-def test_hdbscan_approximate_predict():
-    clusterer = HDBSCAN(prediction_data=True).fit(X)
-    cluster, _ = approximate_predict(clusterer, np.array([[-1.5, -1.0]]))
-    assert cluster == 2
-    cluster, _ = approximate_predict(clusterer, np.array([[1.5, -1.0]]))
-    assert cluster == 1
-    cluster, _ = approximate_predict(clusterer, np.array([[0.0, 0.0]]))
-    assert cluster == -1
-
-
-def test_hdbscan_approximate_predict_score():
-    clusterer = HDBSCAN(min_cluster_size=200).fit(X)
-    # no prediction data error
-    assert_raises(ValueError, approximate_predict_scores, clusterer, X)
-    clusterer.generate_prediction_data()
-    # wrong dimensions error
-    assert_raises(
-        ValueError, approximate_predict_scores, clusterer, np.array([[1, 2, 3]])
-    )
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        approximate_predict_scores(clusterer, np.array([[1.5, -1.0]]))
-        # no clusters warning
-        assert "Clusterer does not have any defined clusters" in str(w[-1].message)
-    clusterer = HDBSCAN(prediction_data=True).fit(X)
-    scores = approximate_predict_scores(clusterer, X)
-    assert_array_almost_equal(scores, clusterer.outlier_scores_)
-    assert scores.min() >= 0
-    assert scores.max() <= 1
-
-
-def test_hdbscan_all_points_membership_vectors():
-    clusterer = HDBSCAN(prediction_data=True, min_cluster_size=200).fit(X)
-    vects = all_points_membership_vectors(clusterer)
-    assert_array_equal(vects, np.zeros(clusterer.prediction_data_.raw_data.shape[0]))
 
 
 def test_hdbscan_badargs():

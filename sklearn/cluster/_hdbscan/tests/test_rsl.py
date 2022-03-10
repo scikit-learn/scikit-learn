@@ -25,7 +25,7 @@ def test_rsl_distance_matrix():
     D = distance.squareform(distance.pdist(X))
     D /= np.max(D)
 
-    labels, tree = robust_single_linkage(D, 0.4, metric="precomputed")
+    labels = robust_single_linkage(D, 0.4, metric="precomputed")
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)  # ignore noise
     assert n_clusters_1 == 2
@@ -36,7 +36,7 @@ def test_rsl_distance_matrix():
 
 
 def test_rsl_feature_vector():
-    labels, tree = robust_single_linkage(X, 0.4)
+    labels = robust_single_linkage(X, 0.4)
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -49,7 +49,7 @@ def test_rsl_callable_metric():
     # metric is the function reference, not the string key.
     metric = distance.euclidean
 
-    labels, tree = robust_single_linkage(X, 0.4, metric=metric)
+    labels = robust_single_linkage(X, 0.4, metric=metric)
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -64,7 +64,7 @@ def test_rsl_input_lists():
 
 
 def test_rsl_boruvka_balltree():
-    labels, tree = robust_single_linkage(X, 0.45, algorithm="boruvka_balltree")
+    labels = robust_single_linkage(X, 0.45, algorithm="boruvka_balltree")
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -74,7 +74,7 @@ def test_rsl_boruvka_balltree():
 
 
 def test_rsl_prims_balltree():
-    labels, tree = robust_single_linkage(X, 0.4, algorithm="prims_balltree")
+    labels = robust_single_linkage(X, 0.4, algorithm="prims_balltree")
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -84,7 +84,7 @@ def test_rsl_prims_balltree():
 
 
 def test_rsl_prims_kdtree():
-    labels, tree = robust_single_linkage(X, 0.4, algorithm="prims_kdtree")
+    labels = robust_single_linkage(X, 0.4, algorithm="prims_kdtree")
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -93,24 +93,11 @@ def test_rsl_prims_kdtree():
     assert n_clusters_2 == n_clusters
 
 
-# def test_rsl_unavailable_hierarchy():
-#     clusterer = RobustSingleLinkage()
-#     with warnings.catch_warnings(record=True) as w:
-#         tree = clusterer.cluster_hierarchy_
-#         assert len(w) > 0
-#         assert tree is None
-
-
-def test_rsl_hierarchy():
-    clusterer = RobustSingleLinkage().fit(X)
-    assert clusterer.cluster_hierarchy_ is not None
-
-
 def test_rsl_high_dimensional():
     H, y = make_blobs(n_samples=50, random_state=0, n_features=64)
     # H, y = shuffle(X, y, random_state=7)
     H = StandardScaler().fit_transform(H)
-    labels, tree = robust_single_linkage(H, 5.5)
+    labels = robust_single_linkage(H, 5.5)
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 

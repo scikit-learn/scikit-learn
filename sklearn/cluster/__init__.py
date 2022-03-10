@@ -25,12 +25,6 @@ from ._birch import Birch
 from ._hdbscan.hdbscan_ import HDBSCAN, hdbscan
 from ._hdbscan._robust_single_linkage_ import RobustSingleLinkage, robust_single_linkage
 from ._hdbscan._validity import validity_index
-from ._hdbscan._prediction import (
-    approximate_predict,
-    membership_vector,
-    all_points_membership_vectors,
-    approximate_predict_scores,
-)
 
 __all__ = [
     "AffinityPropagation",
@@ -63,8 +57,4 @@ __all__ = [
     "RobustSingleLinkage",
     "robust_single_linkage",
     "validity_index",
-    "approximate_predict",
-    "membership_vector",
-    "all_points_membership_vectors",
-    "approximate_predict_scores",
 ]
