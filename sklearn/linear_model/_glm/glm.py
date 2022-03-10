@@ -37,7 +37,7 @@ class HalfInverseGaussianLoss(HalfTweedieLoss):
         super().__init__(sample_weight=sample_weight, power=3)
 
 
-# TODO: We could allow strings for _base_loss_class (as before for the now removed
+# TODO: We could allow strings for _base_loss (as before for the now removed
 # family parameter): 'normal', 'poisson', 'gamma', 'inverse-gaussian'
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
@@ -83,15 +83,15 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         .. deprecated:: 1.1
            `family` is deprecated in 1.1 and will be removed in 1.3.
-           Use `_base_loss_class` instead.
+           Use `_base_loss` instead.
 
-    _base_loss_class : subclass of BaseLoss, default=HalfSquaredError
-        A `_base_loss_class` contains a specific loss function as well as the link
+    _base_loss : BaseLoss, default=HalfSquaredError()
+        A `_base_loss` contains a specific loss function as well as the link
         function. The loss to be minimized specifies the distributional assumption of
         the GLM, i.e. the distribution from the EDM. Here are some examples:
 
         =======================  ========  ==========================
-        _base_loss_class          Link       Target Domain
+        _base_loss               Link      Target Domain
         =======================  ========  ==========================
         HalfSquaredError         identity  y any real number
         HalfPoissonLoss          log       0 <= y
@@ -104,10 +104,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         The link function of the GLM, i.e. mapping from linear predictor
         `X @ coeff + intercept` to prediction `y_pred`. For instance, with a log link,
         we have `y_pred = exp(X @ coeff + intercept)`.
-
-    base_loss_params : dictionary, default={}
-        Arguments to be passed to _base_loss_class, e.g. {"power": 1.5} with
-        `_base_loss_class=HalfTweedieLoss`.
 
     solver : 'lbfgs', default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -152,8 +148,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         *,
         alpha=1.0,
         fit_intercept=True,
-        _base_loss_class=HalfSquaredError,
-        base_loss_params={},
+        _base_loss=HalfSquaredError(),
         solver="lbfgs",
         max_iter=100,
         tol=1e-4,
@@ -162,8 +157,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self._base_loss_class = _base_loss_class
-        self.base_loss_params = base_loss_params
+        self._base_loss = _base_loss
         self.solver = solver
         self.max_iter = max_iter
         self.tol = tol
@@ -189,13 +183,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        if not issubclass(self._base_loss_class, BaseLoss):
-            raise ValueError(
-                "The _base_loss_class must be an subclass of"
-                " sklearn._loss.loss.BaseLoss; ; got"
-                f" (_base_loss_class={self._base_loss_class})"
-            )
-
         check_scalar(
             self.alpha,
             name="alpha",
@@ -266,14 +253,14 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         n_samples, n_features = X.shape
 
         self._linear_loss = LinearModelLoss(
-            base_loss=self._get_base_loss_instance(),
+            base_loss=self._validate_base_loss(),
             fit_intercept=self.fit_intercept,
         )
 
         if not self._linear_loss.base_loss.in_y_true_range(y):
             raise ValueError(
                 "Some value(s) of y are out of the valid range of the loss"
-                f" {self._base_loss_class.__name__}."
+                f" {self._base_loss.__class__.__name__!r}."
             )
 
         # TODO: if alpha=0 check that X is not rank deficient
@@ -388,7 +375,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         D^2 is a generalization of the coefficient of determination R^2.
         R^2 uses squared error and D^2 deviance. Note that those two are equal
-        for ``_base_loss_class=HalfSquaredError``.
+        for ``_base_loss=HalfSquaredError()``.
 
         D^2 is defined as
         :math:`D^2 = 1-\\frac{D(y_{true},y_{pred})}{D_{null}}`,
@@ -431,7 +418,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         if not base_loss.in_y_true_range(y):
             raise ValueError(
                 "Some value(s) of y are out of the valid range of the loss"
-                f" {self._base_loss_class.__name__}."
+                f" {self._base_loss.__name__}."
             )
 
         # Note that constant_to_optimal_zero is already multiplied by sample_weight.
@@ -456,21 +443,28 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         return 1 - (deviance + constant) / (deviance_null + constant)
 
     def _more_tags(self):
-        # create instance of BaseLoss if fit wasn't called yet.
-        base_loss = self._base_loss_class(**self.base_loss_params)
+        # Create instance of BaseLoss if fit wasn't called yet. This is necessary as
+        # TweedieRegressor might set the used loss during fit different from
+        # self._base_loss.
+        base_loss = self._validate_base_loss()
         return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
 
-    def _get_base_loss_instance(self):
+    def _validate_base_loss(self):
         # This is only necessary because of the link and power arguments of the
         # TweedieRegressor.
         # Note that we do not need to pass sample_weight to the loss class as this is
         # only needed to set loss.constant_hessian on which GLMs do not rely.
-        return self._base_loss_class(**self.base_loss_params)
+        if not isinstance(self._base_loss, BaseLoss):
+            raise ValueError(
+                "The _base_loss must be an instance of sklearn._loss.loss.BaseLoss; "
+                f"got _base_loss_class={self._base_loss}"
+            )
+        return self._base_loss
 
     # FIXME: remove in v1.3
     @deprecated(  # type: ignore
         "Attribute `family` was deprecated in version 1.1 and "
-        "will be removed in 1.3. Use `_base_loss_class` instead."
+        "will be removed in 1.3. Use `_base_loss` instead."
     )
     @property
     def family(self):
@@ -481,7 +475,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         elif isinstance(self, TweedieRegressor) and self.power == 3:
             return "inverse-gaussian"
         else:
-            return self._base_loss_class.__name__
+            return self._base_loss.__class__.__name__
 
 
 class PoissonRegressor(_GeneralizedLinearRegressor):
@@ -583,18 +577,16 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            _base_loss_class=HalfPoissonLoss,
+            _base_loss=HalfPoissonLoss(),
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
             verbose=verbose,
         )
 
-    def _get_base_loss_instance(self):
-        if self._base_loss_class != HalfPoissonLoss:
-            raise ValueError(
-                "PoissonRegressor._base_loss_class must be HalfPoissonLoss!"
-            )
+    def _validate_base_loss(self):
+        if not isinstance(self._base_loss, HalfPoissonLoss):
+            raise ValueError("PoissonRegressor._base_loss must be HalfPoissonLoss!")
         return HalfPoissonLoss()
 
 
@@ -698,16 +690,16 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            _base_loss_class=HalfGammaLoss,
+            _base_loss=HalfGammaLoss(),
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
             verbose=verbose,
         )
 
-    def _get_base_loss_instance(self):
-        if self._base_loss_class != HalfGammaLoss:
-            raise ValueError("GammaRegressor._base_loss_class must be HalfGammaLoss!")
+    def _validate_base_loss(self):
+        if not isinstance(self._base_loss, HalfGammaLoss):
+            raise ValueError("GammaRegressor._base_loss must be HalfGammaLoss!")
         return HalfGammaLoss()
 
 
@@ -843,8 +835,9 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            _base_loss_class=HalfTweedieLoss,
-            base_loss_params={"power": power},
+            # Initialize with fixed power. Otherwise, validation would happen in init.
+            # In the end, _validate_base_loss returns the used loss.
+            _base_loss=HalfTweedieLoss(power=1),
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
@@ -853,21 +846,21 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         self.link = link
         self.power = power
 
-    def _get_base_loss_instance(self):
+    def _validate_base_loss(self):
         # This is only necessary because of the link and power arguments of the
         # TweedieRegressor.
-        if self._base_loss_class not in [HalfTweedieLoss, HalfTweedieLossIdentity]:
+        if not isinstance(self._base_loss, (HalfTweedieLoss, HalfTweedieLossIdentity)):
             raise ValueError(
-                "TweedieRegressor._base_loss_class must be HalfTweedieLoss or"
+                "TweedieRegressor._base_loss must be HalfTweedieLoss or"
                 " HalfTweedieLossIdentity!"
             )
 
-        if list(self.base_loss_params.keys()) != ["power"]:
-            raise ValueError(
-                "TweedieRegressor must have base_loss_params={'power': some float}."
-            )
-        # In case parameter power was reset, make it consistent with base_loss_param
-        self.base_loss_params["power"] = self.power
+        # We could raise ValueError. But we want to be able to reset power
+        # gracefully.
+        # if self.power != self.base_loss.power:
+        #     raise ValueError(
+        #         "TweedieRegressor must have self.base_loss.power = self.power."
+        #     )
 
         if self.link == "auto":
             if self.power <= 0:
