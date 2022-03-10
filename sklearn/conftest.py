@@ -39,14 +39,14 @@ dataset_fetchers = {
 }
 
 _SKIP32_MARK = pytest.mark.skipif(
-    environ.get("SKLEARN_SKIP_FLOAT32", "1") != "0",
-    reason="Set SKLEARN_SKIP_FLOAT32=0 to run float32 dtype tests",
+    environ.get("SKLEARN_RUN_FLOAT32", "0") != "1",
+    reason="Set SKLEARN_RUN_FLOAT32=1 to run float32 dtype tests",
 )
 
 
-# Global fixture
+# Global fixtures
 @pytest.fixture(params=[pytest.param(np.float32, marks=_SKIP32_MARK), np.float64])
-def dtype(request):
+def global_dtype(request):
     yield request.param
 
 

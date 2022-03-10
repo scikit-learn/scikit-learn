@@ -21,7 +21,7 @@ def test_compute_mi_dd():
     assert_almost_equal(_compute_mi(x, y, True, True), I_xy)
 
 
-def test_compute_mi_cc(dtype):
+def test_compute_mi_cc(global_dtype):
     # For two continuous variables a good approach is to test on bivariate
     # normal distribution, where mutual information is known.
 
@@ -43,7 +43,7 @@ def test_compute_mi_cc(dtype):
     I_theory = np.log(sigma_1) + np.log(sigma_2) - 0.5 * np.log(np.linalg.det(cov))
 
     rng = check_random_state(0)
-    Z = rng.multivariate_normal(mean, cov, size=1000).astype(dtype)
+    Z = rng.multivariate_normal(mean, cov, size=1000).astype(global_dtype)
 
     x, y = Z[:, 0], Z[:, 1]
 
