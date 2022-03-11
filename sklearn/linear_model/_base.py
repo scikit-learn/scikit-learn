@@ -237,6 +237,21 @@ def _preprocess_data(
 
     This is here because nearly all linear models will want their data to be
     centered. This function also systematically makes y consistent with X.dtype
+
+    Returns
+    -------
+    X_out : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        If copy=True a copy of the input X is triggered, otherwise operations are
+        inplace.
+        If input X is dense, then X_out is centered.
+        If normalize is True, then X_out is rescaled (dense and sparse case)
+    y : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
+        Centered version of y. Likely performed inplace on input y.
+    X_offset : ndarray of shape (n_features,)
+        The mean per column of input X.
+    y_offset : float or ndarray of shape (n_features,)
+    X_scale : ndarray of shape (n_features,)
+        The standard deviation per column of input X.
     """
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
