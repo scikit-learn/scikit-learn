@@ -32,8 +32,8 @@ pre_python_environment_install() {
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache
 
-    elif [[ "$DISTRIB" == "conda-mamba-pypy3" ]]; then
-        # condaforge/mambaforge-pypy3 needs compilers
+    elif [[ "$DISTRIB" == "conda-pypy3" ]]; then
+        # need compilers
         apt-get -yq update
         apt-get -yq install build-essential
 

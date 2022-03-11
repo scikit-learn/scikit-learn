@@ -120,7 +120,7 @@ jobs:
       )
     matrix:
       pypy3:
-        DOCKER_CONTAINER: 'condaforge/mambaforge:4.10.3-5'
+        DOCKER_CONTAINER: 'condaforge/miniforge3:4.10.3-5'
         DISTRIB: 'conda-pypy3'
         LOCK_FILE: './build_tools/azure/pypy3_linux-64_conda-lock.yml'
         CREATE_ISSUE_ON_TRACKER: 'true'
