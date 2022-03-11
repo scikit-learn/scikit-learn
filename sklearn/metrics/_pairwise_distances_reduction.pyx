@@ -969,7 +969,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
 
 cdef class GEMMTermComputer:
-    """Component for FastEuclidean alternatives wrapping the logic for the call to GEMM."""
+    """Component for `FastEuclidean*` variant wrapping the logic for the call to GEMM."""
 
     cdef:
         const DTYPE_t[:, ::1] X
@@ -1051,7 +1051,7 @@ cdef class GEMMTermComputer:
 
 
 cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
-    """Fast specialized alternative for PairwiseDistancesArgKmin on EuclideanDistance.
+    """Fast specialized variant for PairwiseDistancesArgKmin on EuclideanDistance.
 
     The full pairwise squared distances matrix is computed as follows:
 
@@ -1062,7 +1062,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
     Notes
     -----
     This implementation has a superior arithmetic intensity and hence
-    better running time when the alternative is IO bound, but it can suffer
+    better running time when the variant is IO bound, but it can suffer
     from numerical instability caused by catastrophic cancellation potentially
     introduced by the subtraction in the arithmetic expression above.
     """
@@ -1595,7 +1595,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
 
 cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRadiusNeighborhood):
-    """Fast specialized alternative for PairwiseDistancesRadiusNeighborhood on EuclideanDistance.
+    """Fast specialized variant for PairwiseDistancesRadiusNeighborhood on EuclideanDistance.
 
     The full pairwise squared distances matrix is computed as follows:
 
@@ -1606,7 +1606,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
     Notes
     -----
     This implementation has a superior arithmetic intensity and hence
-    better running time when the alternative is IO bound, but it can suffer
+    better running time when the variant is IO bound, but it can suffer
     from numerical instability caused by catastrophic cancellation potentially
     introduced by the subtraction in the arithmetic expression above.
     numerical precision is needed.
