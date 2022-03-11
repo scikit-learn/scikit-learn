@@ -71,33 +71,8 @@ python_environment_install_and_activate() {
             python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
             source $VIRTUALENV/bin/activate
             pip install -r "${LOCK_FILE}"
-        else
-            echo "DISTRIB $DISTRIB does not support lockfile for now. LOCK_FILE=$LOCK_FILE"
-            exit 1
         fi
-    else
-        if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
-
-            if [[ "$CONDA_CHANNEL" != "" ]]; then
-                TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
-            else
-                TO_INSTALL=""
-            fi
-
-            TO_INSTALL="$TO_INSTALL python=$PYTHON_VERSION"
-            TO_INSTALL="$TO_INSTALL ccache pip blas[build=$BLAS]"
-            TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
-            TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
-            TO_INSTALL="$TO_INSTALL $(get_dep cython $CYTHON_VERSION)"
-            TO_INSTALL="$TO_INSTALL $(get_dep joblib $JOBLIB_VERSION)"
-            TO_INSTALL="$TO_INSTALL $(get_dep pandas $PANDAS_VERSION)"
-            TO_INSTALL="$TO_INSTALL $(get_dep pyamg $PYAMG_VERSION)"
-            TO_INSTALL="$TO_INSTALL $(get_dep Pillow $PILLOW_VERSION)"
-            TO_INSTALL="$TO_INSTALL $(get_dep matplotlib $MATPLOTLIB_VERSION)"
-
-            make_conda $TO_INSTALL
-
-        elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
             make_conda "ccache python=$PYTHON_VERSION"
             python -m pip install -U pip
             echo "Installing numpy and scipy master wheels"
@@ -108,23 +83,25 @@ python_environment_install_and_activate() {
             pip install https://github.com/joblib/joblib/archive/master.zip
             echo "Installing pillow master"
             pip install https://github.com/python-pillow/Pillow/archive/main.zip
-        fi
 
-        python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-                $(get_dep pytest $PYTEST_VERSION) \
-                $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
+            python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
+                    $(get_dep pytest $PYTEST_VERSION) \
+                    $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 
-        if [[ "$COVERAGE" == "true" ]]; then
-            # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
-            # cf. https://github.com/nedbat/coveragepy/issues/1310
-            python -m pip install codecov pytest-cov coverage==6.2
-        fi
+            if [[ "$COVERAGE" == "true" ]]; then
+                # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
+                # cf. https://github.com/nedbat/coveragepy/issues/1310
+                python -m pip install codecov pytest-cov coverage==6.2
+            fi
 
-        if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-            # numpydoc requires sphinx
-            python -m pip install sphinx
-            python -m pip install numpydoc
-        fi
+            if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
+                # numpydoc requires sphinx
+                python -m pip install sphinx
+                python -m pip install numpydoc
+            fi
+    else
+        echo "This combination of environment variables is not supported"
+        env
     fi
 }
 
