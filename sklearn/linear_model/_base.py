@@ -804,7 +804,10 @@ def _pre_fit(
     check_input=True,
     sample_weight=None,
 ):
-    """Aux function used at beginning of fit in linear models
+    """Aux function used at beginning of fit in linear models with L1 of L0 penalty.
+
+    This function applies _preprocess_data and additionally computes the gram matrix
+    `precompute` as needed as well as `Xy`.
 
     Parameters
     ----------
