@@ -969,7 +969,19 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
 
 cdef class GEMMTermComputer:
-    """Component for `FastEuclidean*` variant wrapping the logic for the call to GEMM."""
+    """Component for `FastEuclidean*` variant wrapping the logic for the call to GEMM.
+
+    `FastEuclidean*` classes internally compute the squared Euclidean distances between
+    chunks of vectors X_c and Y_c using using the decomposition:
+
+
+                ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+
+
+    This helper class is in charge of wrapping the common logic to compute
+    the middle term `- 2 X_c_i.Y_c_j^T` with a call to GEMM, which is has a high
+    arithmetic intensity.
+    """
 
     cdef:
         const DTYPE_t[:, ::1] X
