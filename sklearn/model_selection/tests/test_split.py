@@ -48,6 +48,29 @@ from sklearn.datasets import make_classification
 
 from sklearn.svm import SVC
 
+SIMPLE_SPLITTERS = [
+    KFold(),
+    StratifiedKFold(),
+    TimeSeriesSplit(),
+    LeaveOneOut(),
+    LeavePOut(p=2),
+    ShuffleSplit(),
+    StratifiedShuffleSplit(test_size=0.5),
+    PredefinedSplit([1, 1, 2, 2]),
+    RepeatedKFold(),
+    RepeatedStratifiedKFold(),
+]
+
+GROUP_SPLITTERS = [
+    GroupKFold(),
+    LeavePGroupsOut(n_groups=1),
+    StratifiedGroupKFold(),
+    LeaveOneGroupOut(),
+    GroupShuffleSplit(),
+]
+
+ALL_SPLITTERS = SIMPLE_SPLITTERS + GROUP_SPLITTERS
+
 X = np.ones(10)
 y = np.arange(10) // 2
 P_sparse = coo_matrix(np.eye(5))
@@ -1772,7 +1795,11 @@ def test_nested_cv():
     cvs = [
         LeaveOneGroupOut(),
         StratifiedKFold(n_splits=2),
+        LeaveOneOut(),
         GroupKFold(n_splits=3),
+        StratifiedKFold(),
+        StratifiedGroupKFold(),
+        StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
@@ -1901,3 +1928,23 @@ def test_random_state_shuffle_false(Klass):
 )
 def test_yields_constant_splits(cv, expected):
     assert _yields_constant_splits(cv) == expected
+
+
+@pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
+def test_splitter_get_metadata_routing(cv):
+    assert hasattr(cv, "get_metadata_routing")
+    if cv in GROUP_SPLITTERS:
+        assert (
+            str(cv.get_metadata_routing())
+            == "{'split': {'groups': <RequestType.REQUESTED: True>}}"
+        )
+    elif cv in SIMPLE_SPLITTERS:
+        assert str(cv.get_metadata_routing()) == "{}"
+
+
+@pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
+def test_splitter_set_split_request(cv):
+    if cv in GROUP_SPLITTERS:
+        assert hasattr(cv, "set_split_request")
+    elif cv in SIMPLE_SPLITTERS:
+        assert not hasattr(cv, "set_split_request")
