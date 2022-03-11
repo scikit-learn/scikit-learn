@@ -225,12 +225,10 @@ These environment variables should be set before importing scikit-learn.
     Valid values for SKLEARN_TESTS_GLOBAL_RANDOM_SEED:
 
     - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="42": run tests with a fixed seed of 42
-    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="0,1,42": run tests for seeds of 0, 1
-      and 42
-    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="40-42": integers between 40 and 42
-      included
-    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all": integers between 0 and 99
-      included
+    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="40-42": run the tests with all seeds
+      between 40 and 42 included
+    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all": run the tests with all seeds
+      between 0 and 99 included
 
     When writing a new test function that uses this fixture, please use the
     following command to make sure that it passes deterministically for all
