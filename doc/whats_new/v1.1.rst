@@ -58,6 +58,10 @@ random sampling procedures.
   edges slightly, which might result in a different output curve given the same
   data.
 
+- |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
+  the correct variance-scaling coefficient which may result in different model
+  behavior.
+
 Changelog
 ---------
 
@@ -305,6 +309,11 @@ Changelog
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
+
+- |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
+  the correct variance-scaling coefficient which may result in different model
+  behavior.:pr:`15984` by :user:`Okon Samuel <OkonSamuel>` :pr:`22696` by
+  :user:`Meekail Zain <micky774>`.
 
 - |API| Adds :term:`get_feature_names_out` to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
