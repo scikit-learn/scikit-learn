@@ -80,14 +80,14 @@ def global_random_seed(request):
       between 0 and 99 included
 
     If the variable is not set, then 42 is used as the global seed in a
-    deterministic manner. This will make sure by default, the scikit-learn test
-    suite is as deterministic as possible which is useful to avoid disruption
-    of friendly third-party package maintainers. Similarly, this variable
-    should not be set in the CI config of pull-request runs to make sure that
-    our friendly contributors are not the first people to encounter a
-    seed-sensitivity regression in a test unrelated to the changes of their PR.
-    Only the scikit-learn maintainers who watch the results of the nightly
-    builds are expected to be annoyed by this.
+    deterministic manner. This ensures that, by default, the scikit-learn test
+    suite is as deterministic as possible to avoid disrupting our friendly
+    third-party package maintainers. Similarly, this variable should not be set
+    in the CI config of pull-requests to make sure that our friendly
+    contributors are not the first people to encounter a seed-sensitivity
+    regression in a test unrelated to the changes of their own PR. Only the
+    scikit-learn maintainers who watch the results of the nightly builds are
+    expected to be annoyed by this.
 
     When writing a new test function that uses this fixture, please use the
     following command to make sure that it passes deterministically for all
