@@ -968,7 +968,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         return np.asarray(self.argkmin_indices)
 
 
-cdef class GEMMComponent:
+cdef class GEMMTermComputer:
     """Component for FastEuclidean alternatives wrapping the logic for the call to GEMM."""
 
     cdef:
@@ -1068,7 +1068,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
     """
 
     cdef:
-        GEMMComponent compo
+        GEMMTermComputer gemm_term_computer
         const DTYPE_t[::1] X_norm_squared
         const DTYPE_t[::1] Y_norm_squared
 
@@ -1109,7 +1109,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
             ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
-        self.compo = GEMMComponent(
+        self.gemm_term_computer = GEMMTermComputer(
             datasets_pair.X,
             datasets_pair.Y,
             self.effective_n_threads,
@@ -1140,7 +1140,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         ITYPE_t thread_num,
     ) nogil:
         PairwiseDistancesArgKmin._parallel_on_X_parallel_init(self, thread_num)
-        self.compo._parallel_on_X_parallel_init(thread_num)
+        self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
     cdef void _parallel_on_Y_init(
@@ -1148,7 +1148,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
     ) nogil:
         cdef ITYPE_t thread_num
         PairwiseDistancesArgKmin._parallel_on_Y_init(self)
-        self.compo._parallel_on_Y_init()
+        self.gemm_term_computer._parallel_on_Y_init()
 
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
@@ -1164,7 +1164,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
             DTYPE_t squared_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t * dist_middle_terms = self.compo._compute_distances_on_chunks(
+            DTYPE_t * dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
             DTYPE_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
@@ -1613,7 +1613,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
     """
 
     cdef:
-        GEMMComponent compo
+        GEMMTermComputer gemm_term_computer
         const DTYPE_t[::1] X_norm_squared
         const DTYPE_t[::1] Y_norm_squared
 
@@ -1649,7 +1649,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
             DenseDenseDatasetsPair datasets_pair = <DenseDenseDatasetsPair> self.datasets_pair
             ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
-        self.compo = GEMMComponent(
+        self.gemm_term_computer = GEMMTermComputer(
             datasets_pair.X,
             datasets_pair.Y,
             self.effective_n_threads,
@@ -1685,7 +1685,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         ITYPE_t thread_num,
     ) nogil:
         PairwiseDistancesRadiusNeighborhood._parallel_on_X_parallel_init(self, thread_num)
-        self.compo._parallel_on_X_parallel_init(thread_num)
+        self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
     cdef void _parallel_on_Y_init(
@@ -1693,7 +1693,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
     ) nogil:
         cdef ITYPE_t thread_num
         PairwiseDistancesRadiusNeighborhood._parallel_on_Y_init(self)
-        self.compo._parallel_on_Y_init()
+        self.gemm_term_computer._parallel_on_Y_init()
 
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
@@ -1709,7 +1709,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
             DTYPE_t squared_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t *dist_middle_terms = self.compo._compute_distances_on_chunks(
+            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
 
