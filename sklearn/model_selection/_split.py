@@ -1387,6 +1387,7 @@ class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
         Constructor parameters for cv. Must not contain random_state
         and shuffle.
     """
+
     # This indicates that by default CV splitters don't have a "groups" kwarg,
     # unless indicated by inheriting from ``GroupsComsumerMixin``.
     # This also prevents ``set_split_request`` to be generated for splitters
