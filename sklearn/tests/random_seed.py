@@ -11,7 +11,6 @@ https://scikit-learn.org/dev/computing/parallelism.html#environment-variables
 import pytest
 from os import environ
 from random import Random
-from datetime import datetime
 
 
 # Passes the main worker's random seeds to workers
@@ -35,8 +34,7 @@ def pytest_configure(config):
         random_seeds = [42]
     elif random_seed_var == "any":
         # Pick-up one seed at random in the range of admissible random seeds.
-        meta_seed = int(datetime.now().strftime("%Y%j"))
-        random_seeds = [Random(meta_seed).choice(RANDOM_SEED_RANGE)]
+        random_seeds = [Random().choice(RANDOM_SEED_RANGE)]
     elif random_seed_var == "all":
         random_seeds = RANDOM_SEED_RANGE
     else:
