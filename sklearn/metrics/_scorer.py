@@ -155,8 +155,9 @@ class _MultimetricScorer:
 
         Returns
         -------
-        routing : dict
-            A dict representing a MetadataRouter.
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
         """
         return MetadataRouter(owner=self.__class__.__name__).add(
             **self._scorers, method_mapping="score"
@@ -231,7 +232,7 @@ class _BaseScorer(_MetadataRequester):
             Gold standard target values for X.
 
         **kwargs : dict
-            Other parameters passed to the scorer.
+            Other parameters passed to the scorer, e.g. sample_weight.
 
             .. versionadded:: 1.1
 
@@ -288,7 +289,7 @@ class _PredictScorer(_BaseScorer):
             Gold standard target values for X.
 
         **kwargs : dict
-            Other parameters passed to the scorer.
+            Other parameters passed to the scorer, e.g. sample_weight.
 
             .. versionadded:: 1.1
 
@@ -326,7 +327,7 @@ class _ProbaScorer(_BaseScorer):
             not probabilities.
 
         **kwargs : dict
-            Other parameters passed to the scorer.
+            Other parameters passed to the scorer, e.g. sample_weight.
 
             .. versionadded:: 1.1
 
@@ -382,7 +383,7 @@ class _ThresholdScorer(_BaseScorer):
             not decision function values.
 
         **kwargs : dict
-            Other parameters passed to the scorer.
+            Other parameters passed to the scorer, e.g. sample_weight.
 
             .. versionadded:: 1.1
 
@@ -471,17 +472,16 @@ class _passthrough_scorer:
         """Method that wraps estimator.score"""
         return estimator.score(*args, **kwargs)
 
-    def get_metadata_request(self):
+    def get_metadata_routing(self):
         """Get requested data properties.
 
         .. versionadded:: 1.1
 
         Returns
         -------
-        request : dict
-            A dict of dict of str->value. The key to the first dict is the name
-            of the method, and the key to the second dict is the name of the
-            argument requested by the method.
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
         """
         return MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self._estimator, method_mapping="score"

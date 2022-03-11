@@ -681,7 +681,6 @@ def test_regression_scorer_sample_weight():
             # skip classification scorers
             continue
         try:
-            scorer = scorer.set_score_request(sample_weight=True)
             weighted = scorer(reg, X_test, y_test, sample_weight=sample_weight)
             ignored = scorer(reg, X_test[11:], y_test[11:])
             unweighted = scorer(reg, X_test, y_test)
@@ -1163,7 +1162,7 @@ def test_scorer_metadata_request(name, scorer):
     )
 
     # make sure putting the scorer in a router doesn't request anything
-    router = MetadataRouter(owner="test").add(scorer=scorer, method_mapping="score")
+    router = MetadataRouter(owner="test").add(method_mapping="score", scorer=scorer)
     with pytest.raises(TypeError, match="got unexpected argument"):
         router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
