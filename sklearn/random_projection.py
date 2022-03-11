@@ -291,7 +291,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class _BaseRandomProjection(
+class BaseRandomProjection(
     TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
 ):
     """Base class for random projections.
@@ -406,7 +406,7 @@ class _BaseRandomProjection(
         }
 
 
-class GaussianRandomProjection(_BaseRandomProjection):
+class GaussianRandomProjection(BaseRandomProjection):
     """Reduce dimensionality through Gaussian random projection.
 
     The components of the random matrix are drawn from N(0, 1 / n_components).
@@ -528,7 +528,7 @@ class GaussianRandomProjection(_BaseRandomProjection):
         return X @ self.components_.T
 
 
-class SparseRandomProjection(_BaseRandomProjection):
+class SparseRandomProjection(BaseRandomProjection):
     """Reduce dimensionality through sparse random projection.
 
     Sparse random matrix is an alternative to dense random
