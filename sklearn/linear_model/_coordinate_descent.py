@@ -994,7 +994,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             # Therefore, we use the freedom of Eq. (1) to rescale sw before
             # calling enet_path, i.e.
             #
-            #     sw = n_samples / sum(sw) * sw
+            #     sw *= n_samples / sum(sw)
             #
             # such that sum(sw) = n_samples. This way, (3) and (4) are the same.
             sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
