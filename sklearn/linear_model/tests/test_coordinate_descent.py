@@ -1185,29 +1185,6 @@ def test_sparse_dense_descent_paths():
         assert_array_almost_equal(coefs, sparse_coefs)
 
 
-@pytest.mark.parametrize("model", [Lasso, ElasticNet, LassoCV, ElasticNetCV])
-@pytest.mark.parametrize("fit_intercept", [False, True])
-@pytest.mark.parametrize("n_samples, n_features", [(24, 6), (6, 24)])
-def test_sparse_dense_equality(model, fit_intercept, n_samples, n_features):
-    X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
-        effective_rank=n_features // 2,
-        n_informative=n_features // 2,
-        bias=4 * fit_intercept,
-        noise=1,
-        random_state=42,
-    )
-    Xs = sparse.csc_matrix(X)
-    reg_dense = model(fit_intercept=fit_intercept).fit(X, y)
-    reg_sparse = model(fit_intercept=fit_intercept).fit(Xs, y)
-    if fit_intercept:
-        assert reg_sparse.intercept_ == pytest.approx(reg_dense.intercept_)
-        # balance property
-        assert reg_sparse.predict(X).mean() == pytest.approx(y.mean())
-    assert_allclose(reg_sparse.coef_, reg_dense.coef_)
-
-
 @pytest.mark.parametrize("path_func", [enet_path, lasso_path])
 def test_path_unknown_parameter(path_func):
     """Check that passing parameter not used by the coordinate descent solver
