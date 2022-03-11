@@ -404,8 +404,8 @@ def test_inverse_transform(n_samples, n_features, random_projection_cls):
             )
             projected = random_projection.fit_transform(X)
 
-        components = random_projection.components_   
-        inverse_components = random_projection.inverse_components_   
+        components = random_projection.components_
+        inverse_components = random_projection.inverse_components_
 
         assert inverse_components.shape == (n_features, n_components)
         if hasattr(components, "toarray"):
