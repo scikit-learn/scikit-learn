@@ -241,14 +241,10 @@ class Interval(_Constraint):
 
         if self.type is Integral:
             suffix = "for an interval over the integers."
-            if  self.left is not None and not isinstance(self.left, Integral):
-                raise TypeError(
-                    f"Expecting left to be an int {suffix}"
-                )
+            if self.left is not None and not isinstance(self.left, Integral):
+                raise TypeError(f"Expecting left to be an int {suffix}")
             if self.right is not None and not isinstance(self.right, Integral):
-                raise TypeError(
-                    f"Expecting right to be an int {suffix}"
-                )
+                raise TypeError(f"Expecting right to be an int {suffix}")
             if self.left is None and self.closed in ("left", "both"):
                 raise ValueError(
                     f"left can't be None when closed == {self.closed} {suffix}"
