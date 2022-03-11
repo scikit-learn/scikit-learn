@@ -545,7 +545,7 @@ class BaseRandomProjection(
         Returns
         -------
         X_original : ndarray of shape (n_samples, n_features)
-            Transformed data.
+            Reconstructed data.
         """
         check_is_fitted(self)
         X = check_array(X, accept_sparse=("csr", "csc"))
