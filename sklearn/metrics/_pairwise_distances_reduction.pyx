@@ -979,7 +979,7 @@ cdef class GEMMTermComputer:
 
 
     This helper class is in charge of wrapping the common logic to compute
-    the middle term `- 2 X_c_i.Y_c_j^T` with a call to GEMM, which is has a high
+    the middle term `- 2 X_c_i.Y_c_j^T` with a call to GEMM, which has a high
     arithmetic intensity.
     """
 
