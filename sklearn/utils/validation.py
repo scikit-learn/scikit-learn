@@ -15,7 +15,6 @@ import numbers
 import operator
 
 import numpy as np
-import numpy
 import scipy.sparse as sp
 from inspect import signature, isclass, Parameter
 

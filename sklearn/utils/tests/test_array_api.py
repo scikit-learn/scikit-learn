@@ -14,7 +14,7 @@ def test_get_namespace_ndarray():
 
     X_np = numpy.asarray([[1, 2, 3]])
 
-    # Dispatching on
+    # Dispatching on Numpy regardless or the value of array_api_dispatch.
     for array_api_dispatch in [True, False]:
         with config_context(array_api_dispatch=array_api_dispatch):
             xp_out, is_array_api = get_namespace(X_np)

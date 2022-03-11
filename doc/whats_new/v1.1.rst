@@ -292,9 +292,9 @@ Changelog
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
-- |Enhancement| Adds Array API support to
-  :class:`discriminant_analysis.LinearDiscriminantAnalysis` for `solver="svd"`.
-  :pr:`22554` by `Thomas Fan`_.
+- |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
+  support the `Array API <https://data-apis.org/array-api/latest/>`_ for
+  `solver="svd"`. :pr:`22554` by `Thomas Fan`_.
 
 - |API| Adds :term:`get_feature_names_out` to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
