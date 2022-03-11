@@ -39,8 +39,8 @@ dataset_fetchers = {
 }
 
 _SKIP32_MARK = pytest.mark.skipif(
-    environ.get("SKLEARN_TESTS_RUN_FLOAT32", "0") != "1",
-    reason="Set SKLEARN_TESTS_RUN_FLOAT32=1 to run float32 dtype tests",
+    environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
+    reason="Set SKLEARN_RUN_FLOAT32_TESTS=1 to run float32 dtype tests",
 )
 
 

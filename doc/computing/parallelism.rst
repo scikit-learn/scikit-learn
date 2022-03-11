@@ -200,6 +200,13 @@ These environment variables should be set before importing scikit-learn.
     that need network access are skipped. When this environment variable is
     not set then network tests are skipped.
 
+:SKLEARN_TESTS_RUN_FLOAT32:
+
+    When this environment variable is set to '1', the tests using the
+    `global_dtype` `pytest.fixture` are also run float32 data.
+    When this environment variable is not set, the tests are only run on
+    float64 data.
+
 :SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES:
 
     When this environment variable is set to a non zero value, the `Cython`
