@@ -74,7 +74,7 @@ jobs:
     matrix:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
-        LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda-lock.yml'
         CHECK_WARNINGS: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
