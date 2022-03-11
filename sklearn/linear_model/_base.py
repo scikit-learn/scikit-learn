@@ -245,7 +245,7 @@ def _preprocess_data(
         inplace.
         If input X is dense, then X_out is centered.
         If normalize is True, then X_out is rescaled (dense and sparse case)
-    y : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
+    y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
         Centered version of y. Likely performed inplace on input y.
     X_offset : ndarray of shape (n_features,)
         The mean per column of input X.
@@ -804,7 +804,7 @@ def _pre_fit(
     check_input=True,
     sample_weight=None,
 ):
-    """Aux function used at beginning of fit in linear models with L1 of L0 penalty.
+    """Function used at beginning of fit in linear models with L1 or L0 penalty.
 
     This function applies _preprocess_data and additionally computes the gram matrix
     `precompute` as needed as well as `Xy`.
