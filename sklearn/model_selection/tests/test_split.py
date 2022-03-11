@@ -69,7 +69,7 @@ GROUP_SPLITTERS = [
     GroupShuffleSplit(),
 ]
 
-ALL_SPLITTERS = SIMPLE_SPLITTERS + GROUP_SPLITTERS
+ALL_SPLITTERS = SIMPLE_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
 X = np.ones(10)
 y = np.arange(10) // 2
