@@ -384,37 +384,43 @@ def test_random_projection_feature_names_out(random_projection_cls):
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
 def test_inverse_transform(n_samples, n_features, random_projection_cls):
     n_components = 10
-    for data in make_sparse_random_data(
+
+    random_projection = random_projection_cls(
+        n_components=n_components, fit_inverse_transform=True
+    )
+
+    X_dense, X_csr = make_sparse_random_data(
         n_samples, n_features, n_samples * n_features // 100 + 1
-    ):
-        random_projection = random_projection_cls(
-            n_components=n_components, fit_inverse_transform=True
+    )
+
+    for X in [X_dense, X_csr]:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "The number of components is higher than the number of features"
+                ),
+                category=DataDimensionalityWarning,
+            )
+            projected = random_projection.fit_transform(X)
+
+        components = random_projection.components_   
+        inverse_components = random_projection.inverse_components_   
+
+        assert inverse_components.shape == (n_features, n_components)
+        if hasattr(components, "toarray"):
+            components = components.toarray()
+        assert_allclose(
+            inverse_components, linalg.pinv(components), atol=1e-10, rtol=1e-7
         )
-        if n_features < n_components:
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    message=(
-                        "The number of components is higher than the number of features"
-                    ),
-                    category=DataDimensionalityWarning,
-                )
-                projected = random_projection.fit_transform(data)
-        else:
-            projected = random_projection.fit_transform(data)
+
         projected_back = random_projection.inverse_transform(projected)
-        assert projected_back.shape == data.shape
+        assert projected_back.shape == X.shape
+
         projected_again = random_projection.transform(projected_back)
         if hasattr(projected, "toarray"):
             projected = projected.toarray()
-        assert_array_almost_equal(projected, projected_again)
-        assert random_projection.inverse_components_.shape == (n_features, n_components)
-        components = random_projection.components_
-        if hasattr(components, "toarray"):
-            components = components.toarray()
-        assert_array_almost_equal(
-            random_projection.inverse_components_, linalg.pinv(components)
-        )
+        assert_allclose(projected, projected_again, atol=1e-10, rtol=1e-7)
 
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
