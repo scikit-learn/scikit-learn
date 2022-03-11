@@ -170,6 +170,7 @@ def average_precision_score(
     Returns
     -------
     average_precision : float
+        Average precision score.
 
     See Also
     --------

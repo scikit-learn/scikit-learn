@@ -494,6 +494,7 @@ class LinearDiscriminantAnalysis(
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
         scalings = (Vt[:rank] / std).T / S[:rank]
+        fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
         # Scale weighted centers
