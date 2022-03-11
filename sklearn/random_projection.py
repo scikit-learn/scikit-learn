@@ -487,7 +487,7 @@ class GaussianRandomProjection(_BaseRandomProjection):
         )
 
     def _make_random_matrix(self, n_components, n_features):
-        """ Generate the random projection matrix.
+        """Generate the random projection matrix.
 
         Parameters
         ----------
@@ -664,11 +664,11 @@ class SparseRandomProjection(_BaseRandomProjection):
             random_state=random_state,
         )
 
-        self.dense_output=dense_output
+        self.dense_output = dense_output
         self.density = density
 
     def _make_random_matrix(self, n_components, n_features):
-        """ Generate the random projection matrix
+        """Generate the random projection matrix
 
         Parameters
         ----------
