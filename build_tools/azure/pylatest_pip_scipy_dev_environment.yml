@@ -1,6 +1,5 @@
 channels:
-  - conda-forge
-
+  - defaults
 dependencies:
   - ccache
   - pip

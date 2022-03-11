@@ -180,7 +180,7 @@ jobs:
         DISTRIB: 'ubuntu'
         LOCK_FILE: './build_tools/azure/ubuntu_atlas_lock.txt'
         COVERAGE: 'false'
-      # Linux + Python 3.7 build with OpenBLAS
+      # Linux + Python 3.8 build with OpenBLAS
       py38_conda_defaults_openblas:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/py38_conda_defaults_openblas_linux-64_conda-lock.yml'
