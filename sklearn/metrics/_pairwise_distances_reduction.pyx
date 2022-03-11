@@ -38,7 +38,8 @@ from ..utils._cython_blas cimport (
   _dot,
   _gemm,
 )
-from ..utils._heap cimport simultaneous_sort, heap_push
+from ..utils._heap cimport heap_push
+from ..utils._sorting cimport simultaneous_sort
 from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
