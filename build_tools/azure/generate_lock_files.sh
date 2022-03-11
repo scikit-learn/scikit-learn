@@ -42,6 +42,9 @@ conda_lock_func ${build_name} linux-64
 build_name=pypy3
 conda_lock_func ${build_name} linux-64
 
+build_name=pylatest_pip_scipy_dev
+conda_lock_func ${build_name} linux-64
+
 build_name=pylatest_conda_mkl_no_openmp
 conda_lock_func ${build_name} osx-64
 

@@ -74,7 +74,7 @@ jobs:
     matrix:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
-        PYTHON_VERSION: '*'
+        LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_conda-lock.yml'
         CHECK_WARNINGS: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
@@ -121,7 +121,7 @@ jobs:
     matrix:
       pypy3:
         DOCKER_CONTAINER: 'condaforge/mambaforge:4.10.3-5'
-        DISTRIB: 'conda-mamba-pypy3'
+        DISTRIB: 'conda-pypy3'
         LOCK_FILE: './build_tools/azure/pypy3_linux-64_conda-lock.yml'
         CREATE_ISSUE_ON_TRACKER: 'true'
 

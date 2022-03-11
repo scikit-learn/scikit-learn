@@ -8,17 +8,6 @@ source build_tools/shared.sh
 
 UNAMESTR=`uname`
 
-make_conda() {
-    TO_INSTALL="$@"
-    if [[ "$DISTRIB" == *"mamba"* ]]; then
-        mamba create -n $VIRTUALENV --yes $TO_INSTALL
-    else
-        conda config --show
-        conda create -n $VIRTUALENV --yes $TO_INSTALL
-    fi
-    source activate $VIRTUALENV
-}
-
 setup_ccache() {
     echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
     mkdir /tmp/ccache/
@@ -60,48 +49,26 @@ pre_python_environment_install() {
 }
 
 python_environment_install_and_activate() {
-    if [[ -n "$LOCK_FILE" ]]; then
-        if [[ "$DISTRIB" == "conda"* ]]; then
-            conda update -n base conda -y
-            conda install pip -y
-            conda install -c conda-forge conda-lock -y
-            conda-lock install --name $VIRTUALENV $LOCK_FILE
-            source activate $VIRTUALENV
-        elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
-            python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
-            source $VIRTUALENV/bin/activate
-            pip install -r "${LOCK_FILE}"
-        fi
-    elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
-            make_conda "ccache python=$PYTHON_VERSION"
-            python -m pip install -U pip
-            echo "Installing numpy and scipy master wheels"
-            dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-            pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-            pip install --pre cython
-            echo "Installing joblib master"
-            pip install https://github.com/joblib/joblib/archive/master.zip
-            echo "Installing pillow master"
-            pip install https://github.com/python-pillow/Pillow/archive/main.zip
+    if [[ "$DISTRIB" == "conda"* ]]; then
+        conda update -n base conda -y
+        conda install pip -y
+        conda install -c conda-forge conda-lock -y
+        conda-lock install --name $VIRTUALENV $LOCK_FILE
+        source activate $VIRTUALENV
+    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+        python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
+        source $VIRTUALENV/bin/activate
+        pip install -r "${LOCK_FILE}"
+    fi
 
-            python -m pip install $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-                    $(get_dep pytest $PYTEST_VERSION) \
-                    $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
-
-            if [[ "$COVERAGE" == "true" ]]; then
-                # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
-                # cf. https://github.com/nedbat/coveragepy/issues/1310
-                python -m pip install codecov pytest-cov coverage==6.2
-            fi
-
-            if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-                # numpydoc requires sphinx
-                python -m pip install sphinx
-                python -m pip install numpydoc
-            fi
-    else
-        echo "This combination of environment variables is not supported"
-        env
+    if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+        echo "Installing development dependency wheels"
+        dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
+        echo "Installing joblib master"
+        pip install https://github.com/joblib/joblib/archive/master.zip
+        echo "Installing pillow master"
+        pip install https://github.com/python-pillow/Pillow/archive/main.zip
     fi
 }
 

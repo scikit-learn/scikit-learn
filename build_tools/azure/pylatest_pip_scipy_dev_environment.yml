@@ -1,0 +1,21 @@
+channels:
+  - conda-forge
+
+dependencies:
+  - ccache
+  - pip
+  - pip:
+    - numpy
+    - pandas
+    - scipy
+    - joblib
+    - pillow
+    - cython
+    - threadpoolctl
+    - pytest
+    - pytest-xdist
+    - codecov
+    - pytest-cov
+    - coverage==6.2
+    - sphinx
+    - numpydoc
