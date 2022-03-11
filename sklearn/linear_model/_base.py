@@ -361,8 +361,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         """
         return self._decision_function(X)
 
-    _preprocess_data = staticmethod(_preprocess_data)
-
     def _set_intercept(self, X_offset, y_offset, X_scale):
         """Set the intercept_"""
         if self.fit_intercept:
@@ -668,7 +666,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 sample_weight, X, dtype=X.dtype, only_non_negative=True
             )
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
