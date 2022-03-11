@@ -10,11 +10,16 @@ RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
 random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
 if random_seed_var is None:
     # If the environment variable is not defined, pick-up one seed at random in
-    # the range of admissible random seeds. Note, to make sure that all
-    # pytest-xdist workers see the same seed, we seed the meta-random number
-    # generator with a value derived from the year and the day.
-    rng = Random(int(datetime.now().strftime("%Y%j")))
-    random_seeds = [rng.choice(RANDOM_SEED_RANGE)]
+    # the range of admissible random seeds.
+    #
+    # Note, to make sure that all pytest-xdist workers see the same seed, we
+    # seed the meta-random number generator with a value derived either from a
+    # CI build number variables, or from the year and the day for local builds
+    try:
+        meta_seed = int(environ["BUILD_NUMBER"])
+    except (KeyError, ValueError):
+        meta_seed = int(datetime.now().strftime("%Y%j"))
+    random_seeds = [Random(meta_seed).choice(RANDOM_SEED_RANGE)]
 elif random_seed_var == "all":
     random_seeds = RANDOM_SEED_RANGE
 else:
