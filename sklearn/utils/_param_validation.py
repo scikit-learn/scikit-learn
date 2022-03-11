@@ -239,27 +239,24 @@ class Interval(_Constraint):
                 f"Got {self.type} instead."
             )
 
-        if (
-            self.type is Integral
-            and self.left is not None
-            and not isinstance(self.left, Integral)
-        ):
-            raise TypeError(
-                "Expecting left to be an int for an interval over the integers"
-            )
-        if (
-            self.type is Integral
-            and self.left is not None
-            and not isinstance(self.left, Integral)
-        ):
-            raise TypeError(
-                "Expecting left to be an int for an interval over the integers"
-            )
-
-        if self.left is None and self.right is None:
-            raise ValueError(
-                "This interval has no bounds. Set a type constraint only instead."
-            )
+        if self.type is Integral:
+            suffix = "for an interval over the integers."
+            if  self.left is not None and not isinstance(self.left, Integral):
+                raise TypeError(
+                    f"Expecting left to be an int {suffix}"
+                )
+            if self.right is not None and not isinstance(self.right, Integral):
+                raise TypeError(
+                    f"Expecting right to be an int {suffix}"
+                )
+            if self.left is None and self.closed in ("left", "both"):
+                raise ValueError(
+                    f"left can't be None when closed == {self.closed} {suffix}"
+                )
+            if self.right is None and self.closed in ("right", "both"):
+                raise ValueError(
+                    f"right can't be None when closed == {self.closed} {suffix}"
+                )
 
     def __init__(self, type, left, right, *, closed="left"):
         self.type = type
@@ -281,6 +278,9 @@ class Interval(_Constraint):
 
     def generate_invalid_param_val(self):
         """Return a value that does not satisfy the constraint."""
+        if self.left is None and self.right is None:
+            raise AttributeError
+
         if self.left is not None:
             return self.left - 1
         else:
@@ -317,7 +317,7 @@ class _InstancesOf(_Constraint):
         self.type = type
 
     def _type_name(self, t):
-        """Convert type into humman readable string."""
+        """Convert type into human readable string."""
         module = t.__module__
         qualname = t.__qualname__
         if module == "builtins":
