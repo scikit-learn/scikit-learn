@@ -215,7 +215,7 @@ These environment variables should be set before importing scikit-learn.
     or the current day) and all fixtured tests will run for that specific seed.
     The goal is to ensure that, over time, our CI will run all tests with
     different seeds while keeping the test duration of a single run of the full
-    test suite limited. This will check that the tests assertions of tests
+    test suite limited. This will check that the assertions of tests
     written to use this fixture are not dependent on a specific seed value.
 
     The range of admissible seed values is limited to [0, 99] because it is
