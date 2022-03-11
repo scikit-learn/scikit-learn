@@ -186,9 +186,9 @@ Here a small code example which illustrates how to use the inverse transform
 feature::
 
   >>> import numpy as np
-  >>> from sklearn import random_projection
+  >>> from sklearn.random_projection import SparseRandomProjection
   >>> X = np.random.rand(100, 10000)
-  >>> transformer = random_projection.SparseRandomProjection(
+  >>> transformer = SparseRandomProjection(
   ...   fit_inverse_transform=True
   ... )
   ...
