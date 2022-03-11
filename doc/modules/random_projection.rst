@@ -201,8 +201,3 @@ feature::
   >>> X_new_again = transformer.transform(X_new_inversed)
   >>> np.allclose(X_new, X_new_again)
   True
-
-If ``components_`` is dense, then the pseudo-inverse is computed using
-``scipy.linalg.pinv``, which is based on SVD decomposition. If ``components_``
-is sparse, then the pseudo-inverse is computed using an implementation of
-``pinv`` based on ``scipy.sparse.linalg.svds``.
