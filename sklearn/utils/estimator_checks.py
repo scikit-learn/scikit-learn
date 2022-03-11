@@ -219,6 +219,8 @@ def _yield_regressor_checks(regressor):
     if tags["requires_fit"]:
         yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
+    if tags["preserves_dtype"]:
+        yield check_regressor_preserve_dtypes
 
 
 def _yield_transformer_checks(transformer):
@@ -1729,6 +1731,29 @@ def check_transformer_preserve_dtypes(name, transformer_orig):
         assert X_trans.dtype == dtype, (
             f"Estimator transform dtype: {X_trans.dtype} - "
             f"original/expected dtype: {dtype.__name__}"
+        )
+
+
+def check_regressor_preserve_dtypes(name, regressor_orig):
+    # Regressors predictions must have the same dtype
+    # than the one of the data.
+
+    X, y = _regression_dataset()
+    X = _pairwise_estimator_convert_X(X, regressor_orig)
+    regressor = clone(regressor_orig)
+    y = _enforce_estimator_tags_y(regressor, y)
+
+    for dtype in _safe_tags(regressor_orig, key="preserves_dtype"):
+        X_cast = X.astype(dtype)
+        y_cast = y.astype(dtype)
+        regressor = clone(regressor_orig)
+        regressor.fit(X_cast, y_cast)
+        y_pred = regressor.predict(X_cast)
+
+        assert y_pred.dtype == dtype, (
+            f"{regressor.__class__.__name__}.predict returns "
+            f"{y_pred.dtype} predictions instead of "
+            f"{dtype.__name__} predictions."
         )
 
 
