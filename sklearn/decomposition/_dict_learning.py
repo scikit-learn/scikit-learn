@@ -331,7 +331,7 @@ def sparse_encode(
 
     See Also
     --------
-    sklearn.linear_model.lars_path : Compute Least Angle Regression or Lasso 
+    sklearn.linear_model.lars_path : Compute Least Angle Regression or Lasso
         path using LARS algorithm.
     sklearn.linear_model.orthogonal_mp : Solves Orthogonal Matching Pursuit problems.
     sklearn.linear_model.Lasso : Train Linear Model with L1 prior as regularizer.
