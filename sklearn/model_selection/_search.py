@@ -47,6 +47,40 @@ from ..metrics import check_scoring
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
 
+def _generate_warm_start_groups(candidate_params, use_warm_start):
+    """Yield lists of parameter settings to perform warm start within
+
+    Groups by keys not specified in use_warm_start
+    """
+    use_warm_start = use_warm_start or ()
+    if not use_warm_start:
+        for parameters in candidate_params:
+            yield [parameters]
+        return
+
+    # we hide use_warm_start parameters' values so that they share a group
+    # if all other parameters match
+    if isinstance(use_warm_start, str):
+        use_warm_start = {use_warm_start: None}
+    else:
+        use_warm_start = {k: None for k in use_warm_start}
+
+    prev_key = None
+    group = []
+    for parameters in candidate_params:
+        param_key = parameters.copy()
+        param_key.update(use_warm_start)
+        if param_key == prev_key:
+            group.append(parameters)
+        else:
+            prev_key = param_key
+            if group:
+                yield group
+            group = [parameters]
+    if group:
+        yield group
+
+
 class ParameterGrid:
     """Grid of parameters with a discrete number of values for each.
 
@@ -637,39 +671,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.best_estimator_.inverse_transform(Xt)
 
-    def _generate_warm_start_groups(self, candidate_params):
-        """Yield lists of parameter settings to perform warm start within
-
-        Groups by keys not specified in use_warm_start
-        """
-        use_warm_start = getattr(self, "use_warm_start", None) or ()
-        if not use_warm_start:
-            for parameters in candidate_params:
-                yield [parameters]
-            return
-
-        # we hide use_warm_start parameters' values so that they share a group
-        # if all other parameters match
-        if isinstance(use_warm_start, str):
-            use_warm_start = {use_warm_start: None}
-        else:
-            use_warm_start = {k: None for k in use_warm_start}
-
-        prev_key = None
-        group = []
-        for parameters in candidate_params:
-            param_key = parameters.copy()
-            param_key.update(use_warm_start)
-            if param_key == prev_key:
-                group.append(parameters)
-            else:
-                prev_key = param_key
-                if group:
-                    yield group
-                group = [parameters]
-        if group:
-            yield group
-
     @property
     def n_features_in_(self):
         """Number of features seen during :term:`fit`.
@@ -881,8 +882,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
                 def _generate_jobs():
                     cand_idx = 0
-                    warm_start_groups = self._generate_warm_start_groups(
-                        candidate_params
+                    warm_start_groups = _generate_warm_start_groups(
+                        candidate_params, getattr(self, "use_warm_start", None)
                     )
                     splits = list(cv.split(X, y, groups))
                     for warm_candidates in warm_start_groups:
