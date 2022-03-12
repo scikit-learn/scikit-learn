@@ -10,6 +10,7 @@ import scipy.sparse as sp
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .base import MultiOutputMixin
 from .utils import check_random_state
+from .utils import deprecated
 from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
@@ -20,11 +21,23 @@ from .utils.multiclass import class_distribution
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
-    """
-    DummyClassifier is a classifier that makes predictions using simple rules.
+    """DummyClassifier makes predictions that ignore the input features.
 
-    This classifier is useful as a simple baseline to compare with other
-    (real) classifiers. Do not use it for real problems.
+    This classifier serves as a simple baseline to compare against other more
+    complex classifiers.
+
+    The specific behavior of the baseline is selected with the `strategy`
+    parameter.
+
+    All strategies make predictions that ignore the input feature values passed
+    as the `X` argument to `fit` and `predict`. The predictions, however,
+    typically depend on values observed in the `y` parameter passed to `fit`.
+
+    Note that the "stratified" and "uniform" strategies lead to
+    non-deterministic predictions that can be rendered deterministic by setting
+    the `random_state` parameter if needed. The other strategies are naturally
+    deterministic and, once fit, always return a the same constant prediction
+    for any value of `X`.
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
@@ -32,20 +45,32 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    strategy : {"stratified", "most_frequent", "prior", "uniform", \
+    strategy : {"most_frequent", "prior", "stratified", "uniform", \
             "constant"}, default="prior"
         Strategy to use to generate predictions.
 
-        * "stratified": generates predictions by respecting the training
-          set's class distribution.
-        * "most_frequent": always predicts the most frequent label in the
-          training set.
-        * "prior": always predicts the class that maximizes the class prior
-          (like "most_frequent") and ``predict_proba`` returns the class prior.
-        * "uniform": generates predictions uniformly at random.
+        * "most_frequent": the `predict` method always returns the most
+          frequent class label in the observed `y` argument passed to `fit`.
+          The `predict_proba` method returns the matching one-hot encoded
+          vector.
+        * "prior": the `predict` method always returns the most frequent
+          class label in the observed `y` argument passed to `fit` (like
+          "most_frequent"). ``predict_proba`` always returns the empirical
+          class distribution of `y` also known as the empirical class prior
+          distribution.
+        * "stratified": the `predict_proba` method randomly samples one-hot
+          vectors from a multinomial distribution parametrized by the empirical
+          class prior probabilities.
+          The `predict` method returns the class label which got probability
+          one in the one-hot vector of `predict_proba`.
+          Each sampled row of both methods is therefore independent and
+          identically distributed.
+        * "uniform": generates predictions uniformly at random from the list
+          of unique classes observed in `y`, i.e. each class has equal
+          probability.
         * "constant": always predicts a constant label that is provided by
           the user. This is useful for metrics that evaluate a non-majority
-          class
+          class.
 
           .. versionchanged:: 0.24
              The default value of `strategy` has changed to "prior" in version
@@ -57,32 +82,42 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    constant : int or str or array-like of shape (n_outputs,)
+    constant : int or str or array-like of shape (n_outputs,), default=None
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of such arrays
-        Class labels for each output.
+        Unique class labels observed in `y`. For multi-output classification
+        problems, this attribute is a list of arrays as each output has an
+        independent set of possible classes.
 
     n_classes_ : int or list of int
         Number of label for each output.
 
     class_prior_ : ndarray of shape (n_classes,) or list of such arrays
-        Probability of each class for each output.
+        Frequency of each class observed in `y`. For multioutput classification
+        problems, this is computed independently for each output.
 
     n_outputs_ : int
         Number of outputs.
 
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
+    n_features_in_ : `None`
+        Always set to `None`.
 
         .. versionadded:: 0.24
+        .. deprecated:: 1.0
+            Will be removed in 1.0
 
     sparse_output_ : bool
         True if the array returned from predict is to be in sparse CSC format.
-        Is automatically set to True if the input y is passed in sparse format.
+        Is automatically set to True if the input `y` is passed in sparse
+        format.
+
+    See Also
+    --------
+    DummyRegressor : Regressor that makes predictions using simple rules.
 
     Examples
     --------
@@ -105,7 +140,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self.constant = constant
 
     def fit(self, X, y, sample_weight=None):
-        """Fit the random classifier.
+        """Fit the baseline classifier.
 
         Parameters
         ----------
@@ -121,6 +156,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Returns the instance itself.
         """
         allowed_strategies = (
             "most_frequent",
@@ -158,8 +194,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
-
-        self.n_features_in_ = None  # No input validation is done for X
 
         check_consistent_length(X, y)
 
@@ -362,7 +396,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, object with finite length or shape}
-            Training data, requires length = n_samples
+            Training data.
 
         Returns
         -------
@@ -411,11 +445,20 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         -------
         score : float
             Mean accuracy of self.predict(X) wrt. y.
-
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "`n_features_in_` is deprecated in 1.0 and will be removed in 1.2."
+    )
+    @property
+    def n_features_in_(self):
+        check_is_fitted(self)
+        return None
 
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -455,10 +498,12 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
+    n_features_in_ : `None`
+        Always set to `None`.
 
         .. versionadded:: 0.24
+        .. deprecated:: 1.0
+            Will be removed in 1.0
 
     n_outputs_ : int
         Number of outputs.
@@ -513,8 +558,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 % (self.strategy, allowed_strategies)
             )
 
-        y = check_array(y, ensure_2d=False)
-        self.n_features_in_ = None  # No input validation is done for X
+        y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
@@ -562,19 +606,17 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     "when the constant strategy is used."
                 )
 
-            self.constant = check_array(
+            self.constant_ = check_array(
                 self.constant,
                 accept_sparse=["csr", "csc", "coo"],
                 ensure_2d=False,
                 ensure_min_samples=0,
             )
 
-            if self.n_outputs_ != 1 and self.constant.shape[0] != y.shape[1]:
+            if self.n_outputs_ != 1 and self.constant_.shape[0] != y.shape[1]:
                 raise ValueError(
                     "Constant target value should have shape (%d, 1)." % y.shape[1]
                 )
-
-            self.constant_ = self.constant
 
         self.constant_ = np.reshape(self.constant_, (1, -1))
         return self
@@ -652,3 +694,13 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
+    # TODO: Remove in 1.2
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "`n_features_in_` is deprecated in 1.0 and will be removed in 1.2."
+    )
+    @property
+    def n_features_in_(self):
+        check_is_fitted(self)
+        return None

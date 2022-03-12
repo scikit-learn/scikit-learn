@@ -49,7 +49,7 @@ class Perceptron(BaseSGDClassifier):
     verbose : int, default=0
         The verbosity level.
 
-    eta0 : double, default=1
+    eta0 : float, default=1
         Constant by which the updates are multiplied.
 
     n_jobs : int, default=None
@@ -59,7 +59,7 @@ class Perceptron(BaseSGDClassifier):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=0
         Used to shuffle the training data, when ``shuffle`` is set to
         ``True``. Pass an int for reproducible output across multiple
         function calls.
@@ -121,6 +121,12 @@ class Perceptron(BaseSGDClassifier):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.

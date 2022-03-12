@@ -18,7 +18,6 @@ from scipy import linalg, sparse
 
 from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
-from .fixes import np_version, parse_version
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
@@ -165,7 +164,7 @@ def safe_sparse_dot(a, b, *, dense_output=False):
 def randomized_range_finder(
     A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
 ):
-    """Computes an orthonormal matrix whose range approximates the range of A.
+    """Compute an orthonormal matrix whose range approximates the range of A.
 
     Parameters
     ----------
@@ -204,9 +203,10 @@ def randomized_range_finder(
     -----
 
     Follows Algorithm 4.3 of
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
+    :arxiv:`"Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions"
+    <0909.4061>`
+    Halko, et al. (2009)
 
     An implementation of a randomized algorithm for principal component
     analysis
@@ -346,9 +346,10 @@ def randomized_svd(
 
     References
     ----------
-    * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions (Algorithm 4.3)
-      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
+    * :arxiv:`"Finding structure with randomness:
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      <0909.4061>`
+      Halko, et al. (2009)
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -538,10 +539,10 @@ def _randomized_eigsh(
 
     References
     ----------
-    * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions (Algorithm 4.3 for strategy 'module')
-      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
-
+    * :arxiv:`"Finding structure with randomness:
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      (Algorithm 4.3 for strategy 'module') <0909.4061>`
+      Halko, et al. (2009)
     """
     if selection == "value":  # pragma: no cover
         # to do : an algorithm can be found in the Halko et al reference
@@ -659,17 +660,22 @@ def cartesian(arrays, out=None):
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
-    out : ndarray, default=None
+    out : ndarray of shape (M, len(arrays)), default=None
         Array to place the cartesian product in.
 
     Returns
     -------
-    out : ndarray
-        2-D array of shape (M, len(arrays)) containing cartesian products
-        formed of input arrays.
+    out : ndarray of shape (M, len(arrays))
+        Array containing the cartesian products formed of input arrays.
+
+    Notes
+    -----
+    This function may not be used on more than 32 arrays
+    because the underlying numpy functions do not support it.
 
     Examples
     --------
+    >>> from sklearn.utils.extmath import cartesian
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
     array([[1, 4, 6],
            [1, 4, 7],
@@ -683,11 +689,6 @@ def cartesian(arrays, out=None):
            [3, 4, 7],
            [3, 5, 6],
            [3, 5, 7]])
-
-    Notes
-    -----
-    This function may not be used on more than 32 arrays
-    because the underlying numpy functions do not support it.
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
@@ -723,7 +724,7 @@ def svd_flip(u, v, u_based_decision=True):
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
         The input v should really be called vt to be consistent with scipy's
-        ouput.
+        output.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.
@@ -955,24 +956,24 @@ def _incremental_mean_and_var(
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
+    X_nan_mask = np.isnan(X)
+    if np.any(X_nan_mask):
+        sum_op = np.nansum
+    else:
+        sum_op = np.sum
     if sample_weight is not None:
-        if np_version >= parse_version("1.16.6"):
-            # equivalent to np.nansum(X * sample_weight, axis=0)
-            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-            # dtype arg of np.matmul only exists since version 1.16
-            new_sum = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(np.isnan(X), 0, X)
-            )
-        else:
-            new_sum = _safe_accumulator_op(
-                np.nansum, X * sample_weight[:, None], axis=0
-            )
+        # equivalent to np.nansum(X * sample_weight, axis=0)
+        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+        new_sum = _safe_accumulator_op(
+            np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+        )
         new_sample_count = _safe_accumulator_op(
-            np.sum, sample_weight[:, None] * (~np.isnan(X)), axis=0
+            np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
         )
     else:
-        new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
-        new_sample_count = np.sum(~np.isnan(X), axis=0)
+        new_sum = _safe_accumulator_op(sum_op, X, axis=0)
+        n_samples = X.shape[0]
+        new_sample_count = n_samples - np.sum(X_nan_mask, axis=0)
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -982,34 +983,26 @@ def _incremental_mean_and_var(
         updated_variance = None
     else:
         T = new_sum / new_sample_count
+        temp = X - T
         if sample_weight is not None:
-            if np_version >= parse_version("1.16.6"):
-                # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
-                # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-                # dtype arg of np.matmul only exists since version 1.16
-                new_unnormalized_variance = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(np.isnan(X), 0, (X - T) ** 2)
-                )
-                correction = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(np.isnan(X), 0, X - T)
-                )
-            else:
-                new_unnormalized_variance = _safe_accumulator_op(
-                    np.nansum, (X - T) ** 2 * sample_weight[:, None], axis=0
-                )
-                correction = _safe_accumulator_op(
-                    np.nansum, (X - T) * sample_weight[:, None], axis=0
-                )
-        else:
-            new_unnormalized_variance = _safe_accumulator_op(
-                np.nansum, (X - T) ** 2, axis=0
+            # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
+            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+            correction = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
             )
-            correction = _safe_accumulator_op(np.nansum, X - T, axis=0)
+            temp **= 2
+            new_unnormalized_variance = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
+        else:
+            correction = _safe_accumulator_op(sum_op, temp, axis=0)
+            temp **= 2
+            new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
 
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
         # and recommendations", by Chan, Golub, and LeVeque.
-        new_unnormalized_variance -= correction ** 2 / new_sample_count
+        new_unnormalized_variance -= correction**2 / new_sample_count
 
         last_unnormalized_variance = last_variance * last_sample_count
 

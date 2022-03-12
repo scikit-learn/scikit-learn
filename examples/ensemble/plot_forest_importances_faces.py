@@ -9,9 +9,8 @@ dataset. The hotter the pixel, the more important it is.
 
 The code below also illustrates how the construction and the computation
 of the predictions can be parallelized within multiple jobs.
+
 """
-# %%
-print(__doc__)
 
 # %%
 # Loading the data and model fitting
@@ -44,8 +43,7 @@ y = y[mask]
 # A random forest classifier will be fitted to compute the feature importances.
 from sklearn.ensemble import RandomForestClassifier
 
-forest = RandomForestClassifier(
-    n_estimators=750, n_jobs=n_jobs, random_state=42)
+forest = RandomForestClassifier(n_estimators=750, n_jobs=n_jobs, random_state=42)
 
 forest.fit(X, y)
 
@@ -57,9 +55,9 @@ forest.fit(X, y)
 # deviation of accumulation of the impurity decrease within each tree.
 #
 # .. warning::
-#     Impurity-based feature importances can be misleading for high cardinality
-#     features (many unique values). See :ref:`permutation_importance` as
-#     an alternative.
+#     Impurity-based feature importances can be misleading for **high
+#     cardinality** features (many unique values). See
+#     :ref:`permutation_importance` as an alternative.
 import time
 import matplotlib.pyplot as plt
 
@@ -68,8 +66,7 @@ img_shape = data.images[0].shape
 importances = forest.feature_importances_
 elapsed_time = time.time() - start_time
 
-print(f"Elapsed time to compute the importances: "
-      f"{elapsed_time:.3f} seconds")
+print(f"Elapsed time to compute the importances: {elapsed_time:.3f} seconds")
 imp_reshaped = importances.reshape(img_shape)
 plt.matshow(imp_reshaped, cmap=plt.cm.hot)
 plt.title("Pixel importances using impurity values")

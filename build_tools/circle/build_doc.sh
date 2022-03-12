@@ -134,7 +134,7 @@ make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation and to optimize the image files
-sudo -E apt-get -yq update
+sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng gsfonts ccache zip optipng
 
@@ -145,8 +145,8 @@ fi
 
 MINICONDA_PATH=$HOME/miniconda
 # Install dependencies with miniconda
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-   -O miniconda.sh
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
+    -O miniconda.sh
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
 
@@ -165,7 +165,7 @@ fi
 source build_tools/shared.sh
 
 # packaging won't be needed once setuptools starts shipping packaging>=17.0
-conda create -n $CONDA_ENV_NAME --yes --quiet \
+mamba create -n $CONDA_ENV_NAME --yes --quiet \
     python="${PYTHON_VERSION:-*}" \
     "$(get_dep numpy $NUMPY_VERSION)" \
     "$(get_dep scipy $SCIPY_VERSION)" \
@@ -173,7 +173,8 @@ conda create -n $CONDA_ENV_NAME --yes --quiet \
     "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
     "$(get_dep sphinx $SPHINX_VERSION)" \
     "$(get_dep pandas $PANDAS_VERSION)" \
-    joblib memory_profiler packaging seaborn pillow pytest coverage
+    joblib memory_profiler packaging seaborn pillow pytest coverage \
+    compilers
 
 source activate testenv
 pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"

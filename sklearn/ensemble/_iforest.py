@@ -14,7 +14,6 @@ from ..utils import (
     gen_batches,
     get_chunk_n_rows,
 )
-from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
@@ -152,6 +151,22 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
+        Gaussian distributed dataset.
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+        Estimate the support of a high-dimensional distribution.
+        The implementation is based on libsvm.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
+        using Local Outlier Factor (LOF).
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
@@ -166,16 +181,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
     .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
-
-    See Also
-    ----------
-    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
-        Gaussian distributed dataset.
-    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
-        Estimate the support of a high-dimensional distribution.
-        The implementation is based on libsvm.
-    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
-        using Local Outlier Factor (LOF).
 
     Examples
     --------
@@ -225,7 +230,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # a thread-based backend rather than a process-based backend so as
         # to avoid suffering from communication overhead and extra memory
         # copies.
-        return _joblib_parallel_args(prefer="threads")
+        return {"prefer": "threads"}
 
     def fit(self, X, y=None, sample_weight=None):
         """
@@ -331,9 +336,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
             be considered as an inlier according to the fitted model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-        is_inlier = np.ones(X.shape[0], dtype=int)
-        is_inlier[self.decision_function(X) < 0] = -1
+        decision_func = self.decision_function(X)
+        is_inlier = np.ones_like(decision_func, dtype=int)
+        is_inlier[decision_func < 0] = -1
         return is_inlier
 
     def decision_function(self, X):

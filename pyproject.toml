@@ -20,16 +20,11 @@ requires = [
 [tool.black]
 line-length = 88
 target_version = ['py37', 'py38', 'py39']
-<<<<<<< HEAD
-=======
-experimental_string_processing = true
->>>>>>> upstream/main
 exclude = '''
 /(
     \.eggs         # exclude a few common directories in the
   | \.git          # root of the project
   | \.mypy_cache
-  | \.vscode
   | examples
   | build
   | dist

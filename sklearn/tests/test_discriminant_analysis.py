@@ -29,26 +29,7 @@ y3 = np.array([1, 1, 2, 2, 3, 3])
 
 # Degenerate data with only one feature (still should be separable)
 X1 = np.array(
-    [
-        [
-            -2,
-        ],
-        [
-            -1,
-        ],
-        [
-            -1,
-        ],
-        [
-            1,
-        ],
-        [
-            1,
-        ],
-        [
-            2,
-        ],
-    ],
+    [[-2], [-1], [-1], [1], [1], [2]],
     dtype="f",
 )
 
@@ -60,37 +41,7 @@ y6 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2])
 y7 = np.array([1, 2, 3, 2, 3, 1, 2, 3, 1])
 
 # Degenerate data with 1 feature (still should be separable)
-X7 = np.array(
-    [
-        [
-            -3,
-        ],
-        [
-            -2,
-        ],
-        [
-            -1,
-        ],
-        [
-            -1,
-        ],
-        [
-            0,
-        ],
-        [
-            1,
-        ],
-        [
-            1,
-        ],
-        [
-            2,
-        ],
-        [
-            3,
-        ],
-    ]
-)
+X7 = np.array([[-3], [-2], [-1], [-1], [0], [1], [1], [2], [3]])
 
 # Data that has zero variance in one dimension and needs regularization
 X2 = np.array(
@@ -417,8 +368,8 @@ def test_lda_orthogonality():
 
     d1 = means_transformed[3] - means_transformed[0]
     d2 = means_transformed[2] - means_transformed[1]
-    d1 /= np.sqrt(np.sum(d1 ** 2))
-    d2 /= np.sqrt(np.sum(d2 ** 2))
+    d1 /= np.sqrt(np.sum(d1**2))
+    d2 /= np.sqrt(np.sum(d2**2))
 
     # the transformed within-class covariance should be the identity matrix
     assert_almost_equal(np.cov(clf.transform(scatter).T), np.eye(2))
@@ -699,3 +650,20 @@ def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     clf = LinearDiscriminantAnalysis(solver=solver)
     with pytest.raises(ValueError, match="The number of samples must be more"):
         clf.fit(X, y)
+
+
+def test_get_feature_names_out():
+    """Check get_feature_names_out uses class name as prefix."""
+
+    est = LinearDiscriminantAnalysis().fit(X, y)
+    names_out = est.get_feature_names_out()
+
+    class_name_lower = "LinearDiscriminantAnalysis".lower()
+    expected_names_out = np.array(
+        [
+            f"{class_name_lower}{i}"
+            for i in range(est.explained_variance_ratio_.shape[0])
+        ],
+        dtype=object,
+    )
+    assert_array_equal(names_out, expected_names_out)
