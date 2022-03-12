@@ -45,7 +45,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.feature_extraction.text.strip_tags",
     "sklearn.feature_selection._univariate_selection.chi2",
     "sklearn.feature_selection._univariate_selection.f_oneway",
-    "sklearn.feature_selection._univariate_selection.r_regression",
     "sklearn.inspection._partial_dependence.partial_dependence",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
     "sklearn.linear_model._least_angle.lars_path_gram",
