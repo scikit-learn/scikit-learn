@@ -992,20 +992,23 @@ def cosine_distances(X, Y=None):
 
 # Paired distances
 def paired_euclidean_distances(X, Y):
-    """
-    Computes the paired euclidean distances between X and Y.
+    """Compute the paired euclidean distances between X and Y.
 
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
+        Input array/matrix X.
 
     Y : array-like of shape (n_samples, n_features)
+        Input array/matrix Y.
 
     Returns
     -------
     distances : ndarray of shape (n_samples,)
+        Output array/matrix containing the calculated paired euclidian
+        distances.
     """
     X, Y = check_paired_arrays(X, Y)
     return row_norms(X - Y)
