@@ -254,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy black==22.1.0
+        pip install pytest pytest-cov flake8 mypy numpydoc black==22.1.0
 
 .. _upstream:
 
