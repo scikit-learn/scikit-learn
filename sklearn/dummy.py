@@ -388,7 +388,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         }
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Return the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -419,9 +419,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
-    """
-    DummyRegressor is a regressor that makes predictions using
-    simple rules.
+    """Regressor that makes predictions using simple rules.
 
     This regressor is useful as a simple baseline to compare with other
     (real) regressors. Do not use it for real problems.
@@ -465,6 +463,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     n_outputs_ : int
         Number of outputs.
 
+    See Also
+    --------
+    DummyClassifier: Classifier that makes predictions using simple rules.
+
     Examples
     --------
     >>> import numpy as np
@@ -502,6 +504,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         allowed_strategies = ("mean", "median", "quantile", "constant")
         if self.strategy not in allowed_strategies:
@@ -577,8 +580,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X, return_std=False):
-        """
-        Perform classification on test vectors X.
+        """Perform classification on test vectors X.
 
         Parameters
         ----------
@@ -619,21 +621,21 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return {"poor_score": True, "no_validation": True}
 
     def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination R^2 of the prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
-        sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        The best possible score is 1.0 and it can be negative (because the
-        model can be arbitrarily worse). A constant model that always
-        predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
+        The coefficient R^2 is defined as `(1 - u/v)`, where `u` is the
+        residual sum of squares `((y_true - y_pred) ** 2).sum()` and `v` is the
+        total sum of squares `((y_true - y_true.mean()) ** 2).sum()`. The best
+        possible score is 1.0 and it can be negative (because the model can be
+        arbitrarily worse). A constant model that always predicts the expected
+        value of y, disregarding the input features, would get a R^2 score of
+        0.0.
 
         Parameters
         ----------
         X : None or array-like of shape (n_samples, n_features)
             Test samples. Passing None as test samples gives the same result
-            as passing real test samples, since DummyRegressor
+            as passing real test samples, since `DummyRegressor`
             operates independently of the sampled observations.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -645,7 +647,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            R^2 of self.predict(X) wrt. y.
+            R^2 of `self.predict(X)` wrt. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))

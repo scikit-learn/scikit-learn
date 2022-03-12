@@ -11,6 +11,9 @@ from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
+n_threads = _openmp_effective_n_threads()
 
 
 def get_derivatives_helper(loss):
@@ -134,7 +137,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
     raw_predictions = rng.normal(size=(prediction_dim, n_samples)).astype(Y_DTYPE)
-    loss = _LOSSES[loss](sample_weight=None)
+    loss = _LOSSES[loss](sample_weight=None, n_threads=n_threads)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
     # only take gradients and hessians of first tree / class.
@@ -297,7 +300,7 @@ def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
     else:
         sample_weight = rng.normal(size=n_samples).astype(Y_DTYPE)
 
-    loss_ = _LOSSES[loss](sample_weight=sample_weight)
+    loss_ = _LOSSES[loss](sample_weight=sample_weight, n_threads=n_threads)
 
     baseline_prediction = loss_.get_baseline_prediction(y_true, None, prediction_dim)
     raw_predictions = np.zeros(

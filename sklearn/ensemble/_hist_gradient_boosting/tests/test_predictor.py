@@ -20,6 +20,9 @@ from sklearn.ensemble._hist_gradient_boosting._bitset import (
     set_bitset_memoryview,
     set_raw_bitset_from_binned_bitset,
 )
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
+n_threads = _openmp_effective_n_threads()
 
 
 @pytest.mark.parametrize("n_bins", [200, 256])
@@ -54,10 +57,10 @@ def test_regression_dataset(n_bins):
     known_cat_bitsets = np.zeros((0, 8), dtype=X_BITSET_INNER_DTYPE)
     f_idx_map = np.zeros(0, dtype=np.uint32)
 
-    y_pred_train = predictor.predict(X_train, known_cat_bitsets, f_idx_map)
+    y_pred_train = predictor.predict(X_train, known_cat_bitsets, f_idx_map, n_threads)
     assert r2_score(y_train, y_pred_train) > 0.82
 
-    y_pred_test = predictor.predict(X_test, known_cat_bitsets, f_idx_map)
+    y_pred_test = predictor.predict(X_test, known_cat_bitsets, f_idx_map, n_threads)
     assert r2_score(y_test, y_pred_test) > 0.67
 
 
@@ -101,7 +104,7 @@ def test_infinite_values_and_thresholds(num_threshold, expected_predictions):
     f_idx_map = np.zeros(0, dtype=np.uint32)
 
     predictor = TreePredictor(nodes, binned_cat_bitsets, raw_categorical_bitsets)
-    predictions = predictor.predict(X, known_cat_bitset, f_idx_map)
+    predictions = predictor.predict(X, known_cat_bitset, f_idx_map, n_threads)
 
     assert np.all(predictions == expected_predictions)
 
@@ -151,7 +154,9 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     predictor = TreePredictor(nodes, binned_cat_bitsets, raw_categorical_bitsets)
 
     # Check binned data gives correct predictions
-    prediction_binned = predictor.predict_binned(X_binned, missing_values_bin_idx=6)
+    prediction_binned = predictor.predict_binned(
+        X_binned, missing_values_bin_idx=6, n_threads=n_threads
+    )
     assert_allclose(prediction_binned, expected_predictions)
 
     # manually construct bitset
@@ -161,17 +166,22 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
 
     # Check with un-binned data
     predictions = predictor.predict(
-        categories.reshape(-1, 1), known_cat_bitsets, f_idx_map
+        categories.reshape(-1, 1), known_cat_bitsets, f_idx_map, n_threads
     )
     assert_allclose(predictions, expected_predictions)
 
     # Check missing goes left because missing_values_bin_idx=6
     X_binned_missing = np.array([[6]], dtype=X_BINNED_DTYPE).T
-    predictions = predictor.predict_binned(X_binned_missing, missing_values_bin_idx=6)
+    predictions = predictor.predict_binned(
+        X_binned_missing, missing_values_bin_idx=6, n_threads=n_threads
+    )
     assert_allclose(predictions, [1])
 
     # missing and unknown go left
     predictions = predictor.predict(
-        np.array([[np.nan, 17]], dtype=X_DTYPE).T, known_cat_bitsets, f_idx_map
+        np.array([[np.nan, 17]], dtype=X_DTYPE).T,
+        known_cat_bitsets,
+        f_idx_map,
+        n_threads,
     )
     assert_allclose(predictions, [1, 1])

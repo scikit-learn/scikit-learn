@@ -74,7 +74,10 @@ def _fix_connectivity(X, connectivity, affinity):
             for j in range(i):
                 idx_j = np.where(labels == j)[0]
                 Xj = X[idx_j]
-                D = pairwise_distances(Xi, Xj, metric=affinity)
+                if affinity == "precomputed":
+                    D = X[np.ix_(idx_i, idx_j)]
+                else:
+                    D = pairwise_distances(Xi, Xj, metric=affinity)
                 ii, jj = np.where(D == np.min(D))
                 ii = ii[0]
                 jj = jj[0]

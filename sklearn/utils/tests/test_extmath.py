@@ -19,8 +19,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
@@ -492,16 +490,12 @@ def test_randomized_svd_sparse_warnings():
     n_components = 5
     for cls in (sparse.lil_matrix, sparse.dok_matrix):
         X = cls(X)
-        assert_warns_message(
-            sparse.SparseEfficiencyWarning,
+        warn_msg = (
             "Calculating SVD of a {} is expensive. "
-            "csr_matrix is more efficient.".format(cls.__name__),
-            randomized_svd,
-            X,
-            n_components,
-            n_iter=1,
-            power_iteration_normalizer="none",
+            "csr_matrix is more efficient.".format(cls.__name__)
         )
+        with pytest.warns(sparse.SparseEfficiencyWarning, match=warn_msg):
+            randomized_svd(X, n_components, n_iter=1, power_iteration_normalizer="none")
 
 
 def test_svd_flip():
@@ -898,7 +892,8 @@ def test_softmax():
 def test_stable_cumsum():
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
-    assert_warns(RuntimeWarning, stable_cumsum, r, rtol=0, atol=0)
+    with pytest.warns(RuntimeWarning):
+        stable_cumsum(r, rtol=0, atol=0)
 
     # test axis parameter
     A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))

@@ -49,6 +49,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     classes_ : ndarray of shape (n_classes,)
         Holds the label for each class.
 
+    See Also
+    --------
+    OrdinalEncoder : Encode categorical features using an ordinal encoding
+        scheme.
+    OneHotEncoder : Encode categorical features as a one-hot numeric array.
+
     Examples
     --------
     `LabelEncoder` can be used to normalize labels.
@@ -76,12 +82,6 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
-
-    See Also
-    --------
-    OrdinalEncoder : Encode categorical features using an ordinal encoding
-        scheme.
-    OneHotEncoder : Encode categorical features as a one-hot numeric array.
     """
 
     def fit(self, y):
@@ -95,6 +95,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : returns an instance of self.
+            Fitted label encoder.
         """
         y = column_or_1d(y, warn=True)
         self.classes_ = _unique(y)
@@ -111,6 +112,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         Returns
         -------
         y : array-like of shape (n_samples,)
+            Encoded labels.
         """
         y = column_or_1d(y, warn=True)
         self.classes_, y = _unique(y, return_inverse=True)
@@ -127,6 +129,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         Returns
         -------
         y : array-like of shape (n_samples,)
+            Labels as normalized encodings.
         """
         check_is_fitted(self)
         y = column_or_1d(y, warn=True)
@@ -147,6 +150,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         Returns
         -------
         y : ndarray of shape (n_samples,)
+            Original encoding.
         """
         check_is_fitted(self)
         y = column_or_1d(y, warn=True)

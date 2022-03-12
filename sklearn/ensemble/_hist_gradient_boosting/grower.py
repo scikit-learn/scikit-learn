@@ -20,6 +20,8 @@ from .common import X_BITSET_INNER_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
 from ._bitset import set_raw_bitset_from_binned_bitset
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
@@ -175,6 +177,11 @@ class TreeGrower:
     shrinkage : float, default=1.
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
+    n_threads : int, default=None
+        Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
+        to determine the effective number of threads use, which takes cgroups CPU
+        quotes into account. See the docstring of `_openmp_effective_n_threads`
+        for details.
     """
 
     def __init__(
@@ -194,6 +201,7 @@ class TreeGrower:
         l2_regularization=0.0,
         min_hessian_to_split=1e-3,
         shrinkage=1.0,
+        n_threads=None,
     ):
 
         self._validate_parameters(
@@ -205,6 +213,7 @@ class TreeGrower:
             l2_regularization,
             min_hessian_to_split,
         )
+        n_threads = _openmp_effective_n_threads(n_threads)
 
         if n_bins_non_missing is None:
             n_bins_non_missing = n_bins - 1
@@ -257,7 +266,7 @@ class TreeGrower:
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant
+            X_binned, n_bins, gradients, hessians, hessians_are_constant, n_threads
         )
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
@@ -272,6 +281,7 @@ class TreeGrower:
             min_samples_leaf,
             min_gain_to_split,
             hessians_are_constant,
+            n_threads,
         )
         self.n_bins_non_missing = n_bins_non_missing
         self.missing_values_bin_idx = missing_values_bin_idx
@@ -286,6 +296,7 @@ class TreeGrower:
         self.X_binned = X_binned
         self.min_gain_to_split = min_gain_to_split
         self.shrinkage = shrinkage
+        self.n_threads = n_threads
         self.splittable_nodes = []
         self.finalized_leaves = []
         self.total_find_split_time = 0.0  # time spent finding the best splits
@@ -366,11 +377,11 @@ class TreeGrower:
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
         depth = 0
-        sum_gradients = sum_parallel(gradients)
+        sum_gradients = sum_parallel(gradients, self.n_threads)
         if self.histogram_builder.hessians_are_constant:
             sum_hessians = hessians[0] * n_samples
         else:
-            sum_hessians = sum_parallel(hessians)
+            sum_hessians = sum_parallel(hessians, self.n_threads)
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,

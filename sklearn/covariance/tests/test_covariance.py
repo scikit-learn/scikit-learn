@@ -245,6 +245,16 @@ def test_ledoit_wolf_large():
     assert_almost_equal(lw.covariance_, cov)
 
 
+@pytest.mark.parametrize(
+    "ledoit_wolf_fitting_function", [LedoitWolf().fit, ledoit_wolf_shrinkage]
+)
+def test_ledoit_wolf_empty_array(ledoit_wolf_fitting_function):
+    """Check that we validate X and raise proper error with 0-sample array."""
+    X_empty = np.zeros((0, 2))
+    with pytest.raises(ValueError, match="Found array with 0 sample"):
+        ledoit_wolf_fitting_function(X_empty)
+
+
 def test_oas():
     # Tests OAS module on a simple dataset.
     # test shrinkage coeff on a simple data set

@@ -39,7 +39,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -78,6 +78,25 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     n_samples_fit_ : int
         Number of samples in the fitted data.
 
+    See Also
+    --------
+    KNeighborsClassifier : Classifier implementing the k-nearest neighbors
+        vote.
+    RadiusNeighborsClassifier : Classifier implementing a vote among neighbors
+        within a given radius.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    RadiusNeighborsRegressor : Regression based on neighbors within a fixed
+        radius.
+    BallTree : Space partitioning data structure for organizing points in a
+        multi-dimensional space, used for nearest neighbor search.
+
+    Notes
+    -----
+    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
+    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+
+    https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
+
     Examples
     --------
     >>> import numpy as np
@@ -96,21 +115,6 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     ... )
     >>> np.asarray(nbrs[0][0])
     array(2)
-
-    See Also
-    --------
-    KNeighborsClassifier
-    RadiusNeighborsClassifier
-    KNeighborsRegressor
-    RadiusNeighborsRegressor
-    BallTree
-
-    Notes
-    -----
-    See :ref:`Nearest Neighbors <neighbors>` in the online documentation
-    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
-
-    https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm
     """
 
     def __init__(

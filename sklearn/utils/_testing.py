@@ -48,7 +48,7 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.utils import IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT, deprecated
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -82,8 +82,17 @@ assert_raises_regex = _dummy.assertRaisesRegex
 assert_raises_regexp = assert_raises_regex
 
 
+# TODO: Remove in 1.2
+@deprecated(  # type: ignore
+    "`assert_warns` is deprecated in 1.0 and will be removed in 1.2."
+    "Use `pytest.warns` instead."
+)
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
+
+    .. deprecated:: 1.0
+        `assert_warns` is deprecated in 1.0 and will be removed in 1.2.
+        Use `pytest.warns` instead.
 
     Parameters
     ----------
@@ -124,9 +133,18 @@ def assert_warns(warning_class, func, *args, **kw):
     return result
 
 
+# TODO: Remove in 1.2
+@deprecated(  # type: ignore
+    "`assert_warns_message` is deprecated in 1.0 and will be removed in 1.2."
+    "Use `pytest.warns` instead."
+)
 def assert_warns_message(warning_class, message, func, *args, **kw):
     # very important to avoid uncontrolled state propagation
     """Test that a certain warning occurs and with a certain message.
+
+    .. deprecated:: 1.0
+        `assert_warns_message` is deprecated in 1.0 and will be removed in 1.2.
+        Use `pytest.warns` instead.
 
     Parameters
     ----------

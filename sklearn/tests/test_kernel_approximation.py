@@ -303,11 +303,11 @@ def test_nystroem_callable():
     ).fit(X)
     assert len(kernel_log) == n_samples * (n_samples - 1) / 2
 
-    # if degree, gamma or coef0 is passed, we raise a warning
+    # if degree, gamma or coef0 is passed, we raise a ValueError
     msg = "Don't pass gamma, coef0 or degree to Nystroem"
     params = ({"gamma": 1}, {"coef0": 1}, {"degree": 2})
     for param in params:
-        ny = Nystroem(kernel=_linear_kernel, **param)
+        ny = Nystroem(kernel=_linear_kernel, n_components=(n_samples - 1), **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(X)
 

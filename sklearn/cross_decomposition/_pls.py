@@ -201,6 +201,11 @@ class _PLS(
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target vectors, where `n_samples` is the number of samples and
             `n_targets` is the number of response variables.
+
+        Returns
+        -------
+        self : object
+            Fitted model.
         """
 
         check_consistent_length(X, Y)
@@ -372,7 +377,8 @@ class _PLS(
 
         Returns
         -------
-        `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
+        x_scores, y_scores : array-like or tuple of array-like
+            Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         check_is_fitted(self)
         X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
@@ -403,7 +409,8 @@ class _PLS(
 
         Returns
         -------
-        x_reconstructed : array-like of shape (n_samples, n_features)
+        self : ndarray of shape (n_samples, n_features)
+            Return the reconstructed array.
 
         Notes
         -----
@@ -429,6 +436,11 @@ class _PLS(
 
         copy : bool, default=True
             Whether to copy `X` and `Y`, or perform in-place normalization.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_targets)
+            Returns predicted values.
 
         Notes
         -----
@@ -459,7 +471,8 @@ class _PLS(
 
         Returns
         -------
-        x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        self : ndarray of shape (n_samples, n_components)
+            Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
 
@@ -506,6 +519,7 @@ class _PLS(
 
     @property
     def x_scores_(self):
+        """Attribute `x_scores_` was deprecated in version 0.24."""
         # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             pass
@@ -519,6 +533,7 @@ class _PLS(
 
     @property
     def y_scores_(self):
+        """Attribute `y_scores_` was deprecated in version 0.24."""
         # TODO: raise error in 1.1 instead
         if not isinstance(self, PLSRegression):
             warnings.warn(
@@ -782,7 +797,7 @@ class CCA(_PLS):
         Whether to scale `X` and `Y`.
 
     max_iter : int, default=500
-        the maximum number of iterations of the power method.
+        The maximum number of iterations of the power method.
 
     tol : float, default=1e-06
         The tolerance used as convergence criteria in the power method: the
@@ -843,6 +858,11 @@ class CCA(_PLS):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
+    See Also
+    --------
+    PLSCanonical : Partial Least Squares transformer and regressor.
+    PLSSVD : Partial Least Square SVD.
+
     Examples
     --------
     >>> from sklearn.cross_decomposition import CCA
@@ -852,11 +872,6 @@ class CCA(_PLS):
     >>> cca.fit(X, Y)
     CCA(n_components=1)
     >>> X_c, Y_c = cca.transform(X, Y)
-
-    See Also
-    --------
-    PLSCanonical
-    PLSSVD
     """
 
     def __init__(
@@ -1078,7 +1093,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        out : array-like or tuple of array-like
+        x_scores : array-like or tuple of array-like
             The transformed data `X_tranformed` if `Y` is not None,
             `(X_transformed, Y_transformed)` otherwise.
         """

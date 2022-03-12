@@ -189,55 +189,27 @@ def _special_sparse_dot(W, H, X):
         return np.dot(W, H)
 
 
-def _compute_regularization(alpha, l1_ratio, regularization):
+def _compute_regularization(alpha, alpha_W, alpha_H, l1_ratio, regularization):
     """Compute L1 and L2 regularization coefficients for W and H."""
-    alpha_H = 0.0
-    alpha_W = 0.0
-    if regularization in ("both", "components"):
-        alpha_H = float(alpha)
-    if regularization in ("both", "transformation"):
-        alpha_W = float(alpha)
+    if alpha_W != 0 or alpha_H != "same":
+        # if alpha_W or alpha_H is not left to its default value we ignore alpha and
+        # regularization.
+        alpha_H = alpha_W if alpha_H == "same" else alpha_H
+        l1_reg_W = alpha_W * l1_ratio
+        l1_reg_H = alpha_H * l1_ratio
+        l2_reg_W = alpha_W * (1.0 - l1_ratio)
+        l2_reg_H = alpha_H * (1.0 - l1_ratio)
+    else:
+        # TODO remove in 1.2
+        l1_reg_W, l2_reg_W, l1_reg_H, l2_reg_H = 0.0, 0.0, 0.0, 0.0
+        if regularization in ("both", "transformation"):
+            l1_reg_W = alpha * l1_ratio
+            l2_reg_W = alpha * (1.0 - l1_ratio)
+        if regularization in ("both", "components"):
+            l1_reg_H = alpha * l1_ratio
+            l2_reg_H = alpha * (1.0 - l1_ratio)
 
-    l1_reg_W = alpha_W * l1_ratio
-    l1_reg_H = alpha_H * l1_ratio
-    l2_reg_W = alpha_W * (1.0 - l1_ratio)
-    l2_reg_H = alpha_H * (1.0 - l1_ratio)
     return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
-
-
-def _check_string_param(solver, regularization, beta_loss, init):
-    allowed_solver = ("cd", "mu")
-    if solver not in allowed_solver:
-        raise ValueError(
-            "Invalid solver parameter: got %r instead of one of %r"
-            % (solver, allowed_solver)
-        )
-
-    allowed_regularization = ("both", "components", "transformation", None)
-    if regularization not in allowed_regularization:
-        raise ValueError(
-            "Invalid regularization parameter: got %r instead of one of %r"
-            % (regularization, allowed_regularization)
-        )
-
-    # 'mu' is the only solver that handles other beta losses than 'frobenius'
-    if solver != "mu" and beta_loss not in (2, "frobenius"):
-        raise ValueError(
-            "Invalid beta_loss parameter: solver %r does not handle beta_loss = %r"
-            % (solver, beta_loss)
-        )
-
-    if solver == "mu" and init == "nndsvd":
-        warnings.warn(
-            "The multiplicative update ('mu') solver cannot update "
-            "zeros present in the initialization, and so leads to "
-            "poorer results when used jointly with init='nndsvd'. "
-            "You may try init='nndsvda' or init='nndsvdar' instead.",
-            UserWarning,
-        )
-
-    beta_loss = _beta_loss_to_float(beta_loss)
-    return beta_loss
 
 
 def _beta_loss_to_float(beta_loss):
@@ -911,9 +883,11 @@ def non_negative_factorization(
     beta_loss="frobenius",
     tol=1e-4,
     max_iter=200,
-    alpha=0.0,
+    alpha="deprecated",
+    alpha_W=0.0,
+    alpha_H="same",
     l1_ratio=0.0,
-    regularization=None,
+    regularization="deprecated",
     random_state=None,
     verbose=0,
     shuffle=False,
@@ -928,13 +902,15 @@ def non_negative_factorization(
 
         .. math::
 
-            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
+            0.5 * ||X - WH||_{loss}^2
 
-            + alpha * l1_{ratio} * ||vec(H)||_1
+            + alpha\\_W * l1_{ratio} * n\\_features * ||vec(W)||_1
 
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+            + alpha\\_H * l1_{ratio} * n\\_samples * ||vec(H)||_1
 
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+            + 0.5 * alpha\\_W * (1 - l1_{ratio}) * n\\_features * ||W||_{Fro}^2
+
+            + 0.5 * alpha\\_H * (1 - l1_{ratio}) * n\\_samples * ||H||_{Fro}^2
 
     Where:
 
@@ -945,6 +921,10 @@ def non_negative_factorization(
     The generic norm :math:`||X - WH||_{loss}^2` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+
+    The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
+    `H` to keep their impact balanced with respect to one another and to the data fit
+    term as independant as possible of the size `n_samples` of the training set.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -1025,10 +1005,30 @@ def non_negative_factorization(
     max_iter : int, default=200
         Maximum number of iterations before timing out.
 
-    alpha : float, default=0.
-        Constant that multiplies the regularization terms.
+    alpha : float, default=0.0
+        Constant that multiplies the regularization terms. Set it to zero to have no
+        regularization. When using `alpha` instead of `alpha_W` and `alpha_H`, the
+        regularization terms are not scaled by the `n_features` (resp. `n_samples`)
+        factors for `W` (resp. `H`).
 
-    l1_ratio : float, default=0.
+        .. deprecated:: 1.0
+            The `alpha` parameter is deprecated in 1.0 and will be removed in 1.2.
+            Use `alpha_W` and `alpha_H` instead.
+
+    alpha_W : float, default=0.0
+        Constant that multiplies the regularization terms of `W`. Set it to zero
+        (default) to have no regularization on `W`.
+
+        .. versionadded:: 1.0
+
+    alpha_H : float or "same", default="same"
+        Constant that multiplies the regularization terms of `H`. Set it to zero to
+        have no regularization on `H`. If "same" (default), it takes the same value as
+        `alpha_W`.
+
+        .. versionadded:: 1.0
+
+    l1_ratio : float, default=0.0
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
@@ -1038,6 +1038,10 @@ def non_negative_factorization(
     regularization : {'both', 'components', 'transformation'}, default=None
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
+
+        .. deprecated:: 1.0
+            The `regularization` parameter is deprecated in 1.0 and will be removed in
+            1.2. Use `alpha_W` and `alpha_H` instead.
 
     random_state : int, RandomState instance or None, default=None
         Used for NMF initialisation (when ``init`` == 'nndsvdar' or
@@ -1091,6 +1095,8 @@ def non_negative_factorization(
         max_iter=max_iter,
         random_state=random_state,
         alpha=alpha,
+        alpha_W=alpha_W,
+        alpha_H=alpha_H,
         l1_ratio=l1_ratio,
         verbose=verbose,
         shuffle=shuffle,
@@ -1114,13 +1120,15 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. math::
 
-            0.5 * ||X - WH||_{loss}^2 + alpha * l1_{ratio} * ||vec(W)||_1
+            0.5 * ||X - WH||_{loss}^2
 
-            + alpha * l1_{ratio} * ||vec(H)||_1
+            + alpha\\_W * l1_{ratio} * n\\_features * ||vec(W)||_1
 
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+            + alpha\\_H * l1_{ratio} * n\\_samples * ||vec(H)||_1
 
-            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+            + 0.5 * alpha\\_W * (1 - l1_{ratio}) * n\\_features * ||W||_{Fro}^2
+
+            + 0.5 * alpha\\_H * (1 - l1_{ratio}) * n\\_samples * ||H||_{Fro}^2
 
     Where:
 
@@ -1131,6 +1139,10 @@ class NMF(TransformerMixin, BaseEstimator):
     The generic norm :math:`||X - WH||_{loss}` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+
+    The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
+    `H` to keep their impact balanced with respect to one another and to the data fit
+    term as independant as possible of the size `n_samples` of the training set.
 
     The objective function is minimized with an alternating minimization of W
     and H.
@@ -1199,14 +1211,33 @@ class NMF(TransformerMixin, BaseEstimator):
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    alpha : float, default=0.
+    alpha : float, default=0.0
         Constant that multiplies the regularization terms. Set it to zero to
-        have no regularization.
+        have no regularization. When using `alpha` instead of `alpha_W` and `alpha_H`,
+        the regularization terms are not scaled by the `n_features` (resp. `n_samples`)
+        factors for `W` (resp. `H`).
 
         .. versionadded:: 0.17
            *alpha* used in the Coordinate Descent solver.
 
-    l1_ratio : float, default=0.
+        .. deprecated:: 1.0
+            The `alpha` parameter is deprecated in 1.0 and will be removed in 1.2.
+            Use `alpha_W` and `alpha_H` instead.
+
+    alpha_W : float, default=0.0
+        Constant that multiplies the regularization terms of `W`. Set it to zero
+        (default) to have no regularization on `W`.
+
+        .. versionadded:: 1.0
+
+    alpha_H : float or "same", default="same"
+        Constant that multiplies the regularization terms of `H`. Set it to zero to
+        have no regularization on `H`. If "same" (default), it takes the same value as
+        `alpha_W`.
+
+        .. versionadded:: 1.0
+
+    l1_ratio : float, default=0.0
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
@@ -1232,6 +1263,10 @@ class NMF(TransformerMixin, BaseEstimator):
         transformation (W), both or none of them.
 
         .. versionadded:: 0.24
+
+        .. deprecated:: 1.0
+            The `regularization` parameter is deprecated in 1.0 and will be removed in
+            1.2. Use `alpha_W` and `alpha_H` instead.
 
     Attributes
     ----------
@@ -1286,11 +1321,13 @@ class NMF(TransformerMixin, BaseEstimator):
         tol=1e-4,
         max_iter=200,
         random_state=None,
-        alpha=0.0,
+        alpha="deprecated",
+        alpha_W=0.0,
+        alpha_H="same",
         l1_ratio=0.0,
         verbose=0,
         shuffle=False,
-        regularization="both",
+        regularization="deprecated",
     ):
         self.n_components = n_components
         self.init = init
@@ -1300,6 +1337,8 @@ class NMF(TransformerMixin, BaseEstimator):
         self.max_iter = max_iter
         self.random_state = random_state
         self.alpha = alpha
+        self.alpha_W = alpha_W
+        self.alpha_H = alpha_H
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
@@ -1309,6 +1348,7 @@ class NMF(TransformerMixin, BaseEstimator):
         return {"requires_positive_X": True}
 
     def _check_params(self, X):
+        # n_components
         self._n_components = self.n_components
         if self._n_components is None:
             self._n_components = X.shape[1]
@@ -1317,20 +1357,86 @@ class NMF(TransformerMixin, BaseEstimator):
             or self._n_components <= 0
         ):
             raise ValueError(
-                "Number of components must be a positive integer; got (n_components=%r)"
-                % self._n_components
+                "Number of components must be a positive integer; got "
+                f"(n_components={self._n_components!r})"
             )
+
+        # max_iter
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
                 "Maximum number of iterations must be a positive "
-                "integer; got (max_iter=%r)"
-                % self.max_iter
+                f"integer; got (max_iter={self.max_iter!r})"
             )
+
+        # tol
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
-                "Tolerance for stopping criteria must be positive; got (tol=%r)"
-                % self.tol
+                "Tolerance for stopping criteria must be positive; got "
+                f"(tol={self.tol!r})"
             )
+
+        # beta_loss
+        self._beta_loss = _beta_loss_to_float(self.beta_loss)
+
+        # solver
+        allowed_solver = ("cd", "mu")
+        if self.solver not in allowed_solver:
+            raise ValueError(
+                f"Invalid solver parameter: got {self.solver!r} instead of one of "
+                f"{allowed_solver}"
+            )
+        if self.solver != "mu" and self.beta_loss not in (2, "frobenius"):
+            # 'mu' is the only solver that handles other beta losses than 'frobenius'
+            raise ValueError(
+                f"Invalid beta_loss parameter: solver {self.solver!r} does not handle "
+                f"beta_loss = {self.beta_loss!r}"
+            )
+        if self.solver == "mu" and self.init == "nndsvd":
+            warnings.warn(
+                "The multiplicative update ('mu') solver cannot update "
+                "zeros present in the initialization, and so leads to "
+                "poorer results when used jointly with init='nndsvd'. "
+                "You may try init='nndsvda' or init='nndsvdar' instead.",
+                UserWarning,
+            )
+
+        # alpha and regularization are deprecated in favor of alpha_W and alpha_H
+        # TODO clean up in 1.2
+        if self.alpha != "deprecated":
+            warnings.warn(
+                "`alpha` was deprecated in version 1.0 and will be removed "
+                "in 1.2. Use `alpha_W` and `alpha_H` instead",
+                FutureWarning,
+            )
+            alpha = self.alpha
+        else:
+            alpha = 0.0
+
+        if self.regularization != "deprecated":
+            warnings.warn(
+                "`regularization` was deprecated in version 1.0 and will be "
+                "removed in 1.2. Use `alpha_W` and `alpha_H` instead",
+                FutureWarning,
+            )
+            allowed_regularization = ("both", "components", "transformation", None)
+            if self.regularization not in allowed_regularization:
+                raise ValueError(
+                    f"Invalid regularization parameter: got {self.regularization!r} "
+                    f"instead of one of {allowed_regularization}"
+                )
+            regularization = self.regularization
+        else:
+            regularization = "both"
+
+        (
+            self._l1_reg_W,
+            self._l1_reg_H,
+            self._l2_reg_W,
+            self._l2_reg_H,
+        ) = _compute_regularization(
+            alpha, self.alpha_W, self.alpha_H, self.l1_ratio, regularization
+        )
+
         return self
 
     def _check_w_h(self, X, W, H, update_H):
@@ -1363,6 +1469,25 @@ class NMF(TransformerMixin, BaseEstimator):
                 X, self._n_components, init=self.init, random_state=self.random_state
             )
         return W, H
+
+    def _scale_regularization(self, X):
+        n_samples, n_features = X.shape
+        if self.alpha_W != 0 or self.alpha_H != "same":
+            # if alpha_W or alpha_H is not left to its default value we ignore alpha
+            # and regularization, and we scale the regularization terms.
+            l1_reg_W = n_features * self._l1_reg_W
+            l1_reg_H = n_samples * self._l1_reg_H
+            l2_reg_W = n_features * self._l2_reg_W
+            l2_reg_H = n_samples * self._l2_reg_H
+        else:
+            # Otherwise we keep the old behavior with no scaling
+            # TODO remove in 1.2
+            l1_reg_W = self._l1_reg_W
+            l1_reg_H = self._l1_reg_H
+            l2_reg_W = self._l2_reg_W
+            l2_reg_H = self._l2_reg_H
+
+        return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -1439,9 +1564,9 @@ class NMF(TransformerMixin, BaseEstimator):
             Actual number of iterations.
         """
         check_non_negative(X, "NMF (input X)")
-        self._beta_loss = _check_string_param(
-            self.solver, self.regularization, self.beta_loss, self.init
-        )
+
+        # check parameters
+        self._check_params(X)
 
         if X.min() == 0 and self._beta_loss <= 0:
             raise ValueError(
@@ -1450,15 +1575,11 @@ class NMF(TransformerMixin, BaseEstimator):
                 "to X, or use a positive beta_loss."
             )
 
-        # check parameters
-        self._check_params(X)
-
         # initialize or check W and H
         W, H = self._check_w_h(X, W, H, update_H)
 
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-            self.alpha, self.l1_ratio, self.regularization
-        )
+        # scale the regularization terms
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
 
         if self.solver == "cd":
             W, H, n_iter = _fit_coordinate_descent(

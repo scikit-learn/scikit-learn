@@ -46,6 +46,7 @@ extensions = [
     "sphinx_issues",
     "add_toctree_functions",
     "sphinx-prompt",
+    "sphinxext.opengraph",
 ]
 
 # this is needed for some reason...
@@ -506,3 +507,11 @@ autosummary_filename_map = {
     "sklearn.covariance.oas": "oas-function",
     "sklearn.decomposition.fastica": "fastica-function",
 }
+
+
+# Config for sphinxext.opengraph
+
+ogp_site_url = "https://scikit-learn/stable/"
+ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
+ogp_use_first_image = True
+ogp_site_name = "scikit-learn"

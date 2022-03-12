@@ -13,3 +13,6 @@
 
 # PR 20294: Use target_version >= 3.7 in Black
 351ace7935a4ea685171cc6d174890f08facd561
+
+# PR 20412: Use experimental_string_processing=true in Black
+3ae7c7615343bbd36acece57825d8b0d70fd9da4

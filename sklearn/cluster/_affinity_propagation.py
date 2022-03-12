@@ -332,6 +332,18 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    AgglomerativeClustering : Recursively merges the pair of
+        clusters that minimally increases a given linkage distance.
+    FeatureAgglomeration : Similar to AgglomerativeClustering,
+        but recursively merges features instead of samples.
+    KMeans : K-Means clustering.
+    MiniBatchKMeans : Mini-Batch K-Means clustering.
+    MeanShift : Mean shift clustering using a flat kernel.
+    SpectralClustering : Apply clustering to a projection
+        of the normalized Laplacian.
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
@@ -427,7 +439,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Returns
         -------
         self
-
+            Returns the instance itself.
         """
         if self.affinity == "precomputed":
             accept_sparse = False
@@ -499,8 +511,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             return np.array([-1] * X.shape[0])
 
     def fit_predict(self, X, y=None):
-        """Fit the clustering from features or affinity matrix, and return
-        cluster labels.
+        """Fit clustering from features/affinity matrix; return cluster labels.
 
         Parameters
         ----------

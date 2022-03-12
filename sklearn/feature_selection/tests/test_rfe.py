@@ -8,6 +8,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
@@ -106,6 +107,31 @@ def test_rfe():
     assert_array_almost_equal(rfe.predict(X), clf.predict(iris.data))
     assert rfe.score(X, y) == clf.score(iris.data, iris.target)
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
+
+
+def test_RFE_fit_score_params():
+    # Make sure RFE passes the metadata down to fit and score methods of the
+    # underlying estimator
+    class TestEstimator(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("fit: prop cannot be None")
+            self.svc_ = SVC(kernel="linear").fit(X, y)
+            self.coef_ = self.svc_.coef_
+            return self
+
+        def score(self, X, y, prop=None):
+            if prop is None:
+                raise ValueError("score: prop cannot be None")
+            return self.svc_.score(X, y)
+
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(ValueError, match="fit: prop cannot be None"):
+        RFE(estimator=TestEstimator()).fit(X, y)
+    with pytest.raises(ValueError, match="score: prop cannot be None"):
+        RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y)
+
+    RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
 
 
 @pytest.mark.parametrize("n_features_to_select", [-1, 2.1])

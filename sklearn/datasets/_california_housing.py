@@ -21,7 +21,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
+from os.path import exists
 from os import makedirs, remove
 import tarfile
 
@@ -35,6 +35,7 @@ from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
+from ._base import load_descr
 from ..utils import Bunch
 
 
@@ -173,9 +174,7 @@ def fetch_california_housing(
     # target in units of 100,000
     target = target / 100000.0
 
-    module_path = dirname(__file__)
-    with open(join(module_path, "descr", "california_housing.rst")) as dfile:
-        descr = dfile.read()
+    descr = load_descr("california_housing.rst")
 
     X = data
     y = target

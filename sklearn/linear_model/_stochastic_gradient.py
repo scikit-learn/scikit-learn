@@ -823,8 +823,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
-        it once. Matters such as objective convergence and early stopping
-        should be handled by the user.
+        it once. Matters such as objective convergence, early stopping, and
+        learning rate adjustments should be handled by the user.
 
         Parameters
         ----------
@@ -2000,7 +2000,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         instance used by `np.random`.
 
     learning_rate : string, optional
-        The learning rate schedule:
+        The learning rate schedule to use with `fit`. (If using `partial_fit`,
+        learning rate must be controlled directly).
 
         'constant':
             eta = eta0

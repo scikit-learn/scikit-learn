@@ -7,7 +7,7 @@ This example illustrates the need for robust covariance estimation
 on a real data set. It is useful both for outlier detection and for
 a better understanding of the data structure.
 
-We selected two sets of two variables from the Boston housing data set
+We selected two sets of two variables from the Wine data set
 as an illustration of what kind of analysis can be done with several
 outlier detection tools. For the purpose of visualization, we are working
 with two-dimensional examples, but one should be aware that things are

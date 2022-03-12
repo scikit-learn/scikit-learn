@@ -973,6 +973,7 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
 .. topic:: References:
 
@@ -1014,4 +1015,5 @@ error with a ``filterwarnings``::
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to extract features from text data see
-:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py` and
+:ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.

@@ -88,6 +88,29 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         .. versionadded:: 0.24
 
+    See Also
+    --------
+    EmpiricalCovariance : Maximum likelihood covariance estimator.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    LedoitWolf : LedoitWolf Estimator.
+    MinCovDet : Minimum Covariance Determinant
+        (robust estimator of covariance).
+    OAS : Oracle Approximating Shrinkage Estimator.
+    ShrunkCovariance : Covariance estimator with shrinkage.
+
+    Notes
+    -----
+    Outlier detection from covariance estimation may break or not
+    perform well in high-dimensional settings. In particular, one will
+    always take care to work with ``n_samples > n_features ** 2``.
+
+    References
+    ----------
+    .. [1] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the
+       minimum covariance determinant estimator" Technometrics 41(3), 212
+       (1999)
+
     Examples
     --------
     >>> import numpy as np
@@ -107,22 +130,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
            [0.2535..., 0.3053...]])
     >>> cov.location_
     array([0.0813... , 0.0427...])
-
-    See Also
-    --------
-    EmpiricalCovariance, MinCovDet
-
-    Notes
-    -----
-    Outlier detection from covariance estimation may break or not
-    perform well in high-dimensional settings. In particular, one will
-    always take care to work with ``n_samples > n_features ** 2``.
-
-    References
-    ----------
-    .. [1] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the
-       minimum covariance determinant estimator" Technometrics 41(3), 212
-       (1999)
     """
 
     def __init__(
@@ -152,6 +159,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         y : Ignored
             Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
         """
         if self.contamination != "auto":
             if not (0.0 < self.contamination <= 0.5):
@@ -202,8 +214,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     def predict(self, X):
         """
-        Predict the labels (1 inlier, -1 outlier) of X according to the
-        fitted model.
+        Predict labels (1 inlier, -1 outlier) of X according to fitted model.
 
         Parameters
         ----------
@@ -222,7 +233,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         return is_inlier
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Return the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that

@@ -1308,6 +1308,23 @@ def test_ordinal_encoder_sparse():
         encoder.inverse_transform(X_trans_sparse)
 
 
+def test_ordinal_encoder_fit_with_unseen_category():
+    """Check OrdinalEncoder.fit works with unseen category when
+    `handle_unknown="use_encoded_value"`.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19872
+    """
+    X = np.array([0, 0, 1, 0, 2, 5])[:, np.newaxis]
+    oe = OrdinalEncoder(
+        categories=[[-1, 0, 1]], handle_unknown="use_encoded_value", unknown_value=-999
+    )
+    oe.fit(X)
+
+    oe = OrdinalEncoder(categories=[[-1, 0, 1]], handle_unknown="error")
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        oe.fit(X)
+
+
 @pytest.mark.parametrize(
     "X_train",
     [
@@ -1325,8 +1342,10 @@ def test_ordinal_encoder_sparse():
     ],
 )
 def test_ordinal_encoder_handle_unknown_string_dtypes(X_train, X_test):
-    """Checks that ordinal encoder transforms string dtypes. Non-regression
-    test for #19872."""
+    """Checks that `OrdinalEncoder` transforms string dtypes.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/19872
+    """
     enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-9)
     enc.fit(X_train)
 
