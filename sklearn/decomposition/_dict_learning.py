@@ -335,8 +335,7 @@ def sparse_encode(
         path using LARS algorithm.
     sklearn.linear_model.orthogonal_mp : Solves Orthogonal Matching Pursuit problems.
     sklearn.linear_model.Lasso : Train Linear Model with L1 prior as regularizer.
-    SparseCoder: Find a sparse representation of data from a fixed,
-        precomputed dictionary.
+    SparseCoder: Find a sparse representation of data from a fixed, precomputed dictionary.
     """
     if check_input:
         if algorithm == "lasso_cd":
