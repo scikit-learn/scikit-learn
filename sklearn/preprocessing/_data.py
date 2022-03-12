@@ -1745,12 +1745,12 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         each sample, otherwise (if 0) normalize each feature.
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
     return_norm : bool, default=False
-        whether to return the computed norms
+        Whether to return the computed norms.
 
     Returns
     -------
