@@ -60,7 +60,7 @@ from sklearn.datasets import make_sparse_spd_matrix
 from sklearn.covariance import GraphicalLassoCV, ledoit_wolf
 import matplotlib.pyplot as plt
 
-# #############################################################################
+# %%
 # Generate the data
 n_samples = 60
 n_features = 20
