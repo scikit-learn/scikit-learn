@@ -108,23 +108,22 @@ parameters = {
 # %%
 # Find the best parameters for both the feature extraction and the
 # classifier
-if __name__ == "__main__":
-    # multiprocessing requires the fork to happen in a __main__ protected
-    # block
+# multiprocessing requires the fork to happen in a __main__ protected
+# block
 
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
+grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
 
-    print("Performing grid search...")
-    print("pipeline:", [name for name, _ in pipeline.steps])
-    print("parameters:")
-    pprint(parameters)
-    t0 = time()
-    grid_search.fit(data.data, data.target)
-    print("done in %0.3fs" % (time() - t0))
-    print()
+print("Performing grid search...")
+print("pipeline:", [name for name, _ in pipeline.steps])
+print("parameters:")
+pprint(parameters)
+t0 = time()
+grid_search.fit(data.data, data.target)
+print("done in %0.3fs" % (time() - t0))
+print()
 
-    print("Best score: %0.3f" % grid_search.best_score_)
-    print("Best parameters set:")
-    best_parameters = grid_search.best_estimator_.get_params()
-    for param_name in sorted(parameters.keys()):
-        print("\t%s: %r" % (param_name, best_parameters[param_name]))
+print("Best score: %0.3f" % grid_search.best_score_)
+print("Best parameters set:")
+best_parameters = grid_search.best_estimator_.get_params()
+for param_name in sorted(parameters.keys()):
+    print("\t%s: %r" % (param_name, best_parameters[param_name]))
