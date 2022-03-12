@@ -340,7 +340,7 @@ def make_multilabel_classification(
         If ``True``, some instances might not belong to any class.
 
     sparse : bool, default=False
-        If ``True``, return a sparse feature matrix
+        If ``True``, return a sparse feature matrix.
 
         .. versionadded:: 0.17
            parameter to allow *sparse* output.
@@ -375,7 +375,6 @@ def make_multilabel_classification(
     p_w_c : ndarray of shape (n_features, n_classes)
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
-
     """
     if n_classes < 1:
         raise ValueError(
