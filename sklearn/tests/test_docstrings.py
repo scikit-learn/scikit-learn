@@ -105,7 +105,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.pipeline.make_union",
     "sklearn.preprocessing._data.binarize",
     "sklearn.preprocessing._data.maxabs_scale",
-    "sklearn.preprocessing._data.normalize",
     "sklearn.preprocessing._data.power_transform",
     "sklearn.preprocessing._data.robust_scale",
     "sklearn.preprocessing._data.scale",
