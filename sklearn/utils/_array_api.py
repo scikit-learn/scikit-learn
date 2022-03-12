@@ -17,6 +17,7 @@ class _ArrayAPIWrapper:
     Documentation of the NumPy implementation:
     https://numpy.org/neps/nep-0047-array-api-standard.html
     """
+
     def __init__(self, array_namespace):
         self._namespace = array_namespace
 
@@ -68,6 +69,7 @@ class _NumPyApiWrapper:
 
     See the `get_namespace()` public function for more details.
     """
+
     def __getattr__(self, name):
         return getattr(numpy, name)
 
@@ -110,14 +112,14 @@ def get_namespace(*arrays):
 
     Namespace support is not enabled by default. To enabled it
     call:
-    
+
       sklearn.set_config(array_api_dispatch=True)
-      
+
     or:
-    
+
       with sklearn.config_context(array_api_dispatch=True):
           # your code here
- 
+
     Otherwise an instance of the `_NumPyApiWrapper`
     compatibility wrapper is always returned irrespective of
     the fact that arrays implement the `__array_namespace__`
