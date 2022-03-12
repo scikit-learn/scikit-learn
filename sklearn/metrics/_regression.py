@@ -288,7 +288,7 @@ def mean_pinball_loss(
 
 
 def mean_absolute_percentage_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", symmetric=False
 ):
     """Mean absolute percentage error (MAPE) regression loss.
 
@@ -322,6 +322,9 @@ def mean_absolute_percentage_error(
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+    
+    symmetric : bool, default=False
+        If True returns SMAPE value, if False returns MAPE value.
 
     Returns
     -------
@@ -361,7 +364,10 @@ def mean_absolute_percentage_error(
     )
     check_consistent_length(y_true, y_pred, sample_weight)
     epsilon = np.finfo(np.float64).eps
-    mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
+    if not symmetric:
+       mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
+    else:
+        mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true) + np.abs(y_pred), epsilon)
     output_errors = np.average(mape, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
