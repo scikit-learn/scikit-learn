@@ -332,7 +332,7 @@ def ridge_regression(
         Training data
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)
-        Target values
+        Target values.
 
     alpha : float or array-like of shape (n_targets,)
         Constant that multiplies the L2 term, controlling regularization
