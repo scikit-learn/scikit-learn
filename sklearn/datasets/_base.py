@@ -26,6 +26,7 @@ from ..utils.deprecation import deprecated
 import numpy as np
 
 from urllib.request import urlretrieve
+from platformdirs import user_cache_dir
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"
@@ -53,7 +54,7 @@ def get_data_home(data_home=None) -> str:
     ----------
     data_home : str, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `user_cache_dir("sklearn")`.
 
     Returns
     -------
@@ -61,7 +62,7 @@ def get_data_home(data_home=None) -> str:
         The path to scikit-learn data directory.
     """
     if data_home is None:
-        data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
+        data_home = environ.get("SCIKIT_LEARN_DATA", user_cache_dir("sklearn"))
     data_home = expanduser(data_home)
     makedirs(data_home, exist_ok=True)
     return data_home

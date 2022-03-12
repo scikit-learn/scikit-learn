@@ -16,6 +16,7 @@ else:
 SCIPY_MIN_VERSION = "1.3.2"
 JOBLIB_MIN_VERSION = "1.0.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
+PLATFORMDIRS_MIN_VERSION = "2"
 PYTEST_MIN_VERSION = "5.0.1"
 CYTHON_MIN_VERSION = "0.29.24"
 
@@ -28,6 +29,7 @@ dependent_packages = {
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
+    "platformdirs": (PLATFORMDIRS_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
     "matplotlib": ("3.1.2", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.14.5", "docs, examples, tests"),
