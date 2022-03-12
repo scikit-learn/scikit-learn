@@ -154,7 +154,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.min_max_axis",
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",
-    "sklearn.utils.validation.check_random_state",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
