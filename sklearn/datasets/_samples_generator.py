@@ -548,12 +548,12 @@ def make_regression(
         The bias term in the underlying linear model.
 
     effective_rank : int, default=None
-        if not None:
+        If not None:
             The approximate number of singular vectors required to explain most
             of the input data by linear combinations. Using this kind of
             singular spectrum in the input allows the generator to reproduce
             the correlations often observed in practice.
-        if None:
+        If None:
             The input set is well conditioned, centered and gaussian with
             unit variance.
 
