@@ -34,7 +34,10 @@ from ..utils._array_api import get_namespace
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
+# This function is not used anymore at this moment in the code base but we keep it in
+# case that we merge a new public function without kwarg only by mistake, which would
+# require a deprecation cycle to fix.
+def _deprecate_positional_args(func=None, *, version="1.3"):
     """Decorator for methods that issues warnings for positional arguments.
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -44,7 +47,7 @@ def _deprecate_positional_args(func=None, *, version="1.1 (renaming of 0.26)"):
     ----------
     func : callable, default=None
         Function to check arguments on.
-    version : callable, default="1.1 (renaming of 0.26)"
+    version : callable, default="1.3"
         The version when positional arguments will result in error.
     """
 
@@ -1065,7 +1068,13 @@ def check_X_y(
         The converted and validated y.
     """
     if y is None:
-        raise ValueError("y cannot be None")
+        if estimator is None:
+            estimator_name = "estimator"
+        else:
+            estimator_name = _check_estimator_name(estimator)
+        raise ValueError(
+            f"{estimator_name} requires y to be passed, but the target y is None"
+        )
 
     X = check_array(
         X,
@@ -1872,10 +1881,11 @@ def _check_feature_names_in(estimator, input_features=None, *, generate_names=Tr
         Input features.
 
         - If `input_features` is `None`, then `feature_names_in_` is
-            used as feature names in. If `feature_names_in_` is not defined,
-            then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+          used as feature names in. If `feature_names_in_` is not defined,
+          then the following input feature names are generated:
+          `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
         - If `input_features` is an array-like, then `input_features` must
-            match `feature_names_in_` if `feature_names_in_` is defined.
+          match `feature_names_in_` if `feature_names_in_` is defined.
 
     generate_names : bool, default=True
         Whether to generate names when `input_features` is `None` and
