@@ -23,14 +23,14 @@ This is because these test samples are outside of the range of the training
 samples.
 
 """
-
+# %%
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
 from sklearn.linear_model import BayesianRidge, LinearRegression
 
-# #############################################################################
+# %%
 # Generating simulated data with Gaussian weights
 np.random.seed(0)
 n_samples, n_features = 100, 100
@@ -119,3 +119,5 @@ plt.ylabel("Output y")
 plt.xlabel("Feature X")
 plt.legend(loc="lower left")
 plt.show()
+
+# %%
