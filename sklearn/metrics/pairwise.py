@@ -837,6 +837,7 @@ def haversine_distances(X, Y=None):
     X : array-like of shape (n_samples_X, 2)
 
     Y : array-like of shape (n_samples_Y, 2), default=None
+        If `None`, uses `Y=X`.
 
     Returns
     -------
