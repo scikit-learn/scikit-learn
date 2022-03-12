@@ -186,7 +186,7 @@ def check_classification_targets(y):
 
     Parameters
     ----------
-    y : array-like 
+    y : array-like
         Target values.
     """
     y_type = type_of_target(y, input_name="y")
