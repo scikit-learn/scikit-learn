@@ -1728,7 +1728,8 @@ def make_biclusters(
 
     See Also
     --------
-    make_checkerboard: Generate an array with block checkerboard structure for biclustering.
+    make_checkerboard: Generate an array with block checkerboard structure for
+        biclustering.
 
     References
     ----------
