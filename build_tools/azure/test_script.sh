@@ -23,7 +23,7 @@ python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
 
-TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML --maxfail=30"
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
 if [[ "$COVERAGE" == "true" ]]; then
     # Note: --cov-report= is used to disable to long text output report in the
