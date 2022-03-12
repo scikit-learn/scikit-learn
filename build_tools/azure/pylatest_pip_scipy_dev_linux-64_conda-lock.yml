@@ -15,7 +15,7 @@ metadata:
   - url: defaults
     used_env_vars: []
   content_hash:
-    linux-64: 9fe77519e88ae4b3b3ce24dea4166ad3d912797789a8aa63b1b3dce4cc47ce0e
+    linux-64: 7725e3ea25034b2b3b7c15f27ade0d3401ea080ee39988b9f18fe1ac96c4e038
   platforms:
   - linux-64
   sources:
@@ -630,6 +630,17 @@ package:
 - category: main
   dependencies: {}
   hash:
+    sha256: 806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b
+  manager: pip
+  name: toml
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl
+  version: 0.10.2
+- category: main
+  dependencies: {}
+  hash:
     sha256: 939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc
   manager: pip
   name: tomli
@@ -770,16 +781,16 @@ package:
     packaging: '*'
     pluggy: '>=0.12,<2.0'
     py: '>=1.8.2'
-    tomli: '>=1.0.0'
+    toml: '*'
   hash:
-    sha256: 9ce3ff477af913ecf6321fe337b93a2c0dcf2a0a1439c43f5452112c1e4280db
+    sha256: 7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134
   manager: pip
   name: pytest
   optional: false
   platform: linux-64
   source: null
-  url: https://files.pythonhosted.org/packages/38/93/c7c0bd1e932b287fb948eb9ce5a3d6307c9fc619db1e199f8c8bc5dad95f/pytest-7.0.1-py3-none-any.whl
-  version: 7.0.1
+  url: https://files.pythonhosted.org/packages/40/76/86f886e750b81a4357b6ed606b2bcf0ce6d6c27ad3c09ebf63ed674fc86e/pytest-6.2.5-py3-none-any.whl
+  version: 6.2.5
 - category: main
   dependencies:
     alabaster: '>=0.7,<0.8'

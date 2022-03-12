@@ -11,7 +11,7 @@ dependencies:
     - pillow
     - cython
     - threadpoolctl
-    - pytest
+    - pytest==6.2.5
     - pytest-xdist
     - codecov
     - pytest-cov
