@@ -5,6 +5,18 @@ import scipy.special as special
 
 
 class _ArrayAPIWrapper:
+    """sklearn specific Array API compatibility wrapper
+
+    This wrapper makes it possible for scikit-learn maintainers to
+    deal with discrepancies between different implementations of the
+    Python array API standard and its evolution over time.
+
+    The Python array API standard specification:
+    https://data-apis.org/array-api/latest/
+
+    Documentation of the NumPy implementation:
+    https://numpy.org/neps/nep-0047-array-api-standard.html
+    """
     def __init__(self, array_namespace):
         self._namespace = array_namespace
 
@@ -12,7 +24,7 @@ class _ArrayAPIWrapper:
         return getattr(self._namespace, name)
 
     def astype(self, x, dtype, *, copy=True, casting="unsafe"):
-        # support casting for NumPy
+        # Extend Array API to support `casting` for NumPy containers
         if self._namespace.__name__ == "numpy.array_api":
             x_np = numpy.asarray(x).astype(dtype, casting=casting, copy=copy)
             return self._namespace.asarray(x_np)
@@ -23,7 +35,7 @@ class _ArrayAPIWrapper:
     def asarray(self, obj, *, dtype=None, device=None, copy=None, order=None):
         f = self._namespace.asarray
 
-        # support order in NumPy
+        # Extend Array API to support `order` in NumPy
         if self._namespace.__name__ == "numpy.array_api":
             if copy:
                 x_np = numpy.array(obj, dtype=dtype, order=order, copy=True)
@@ -47,6 +59,15 @@ class _ArrayAPIWrapper:
 
 
 class _NumPyApiWrapper:
+    """Array API compat wrapper for any numpy version
+
+    NumPy < 1.22 does not expose the numpy.array_api namespace. This
+    wrapper makes it possible to write code that uses the standard
+    Array API while working with any version of NumPy supported by
+    scikit-learn.
+
+    See the `get_namespace()` public function for more details.
+    """
     def __getattr__(self, name):
         return getattr(numpy, name)
 
@@ -77,6 +98,30 @@ class _NumPyApiWrapper:
 def get_namespace(*arrays):
     """Get namespace of arrays.
 
+    Introspect `arrays` arguments and return their common Array API
+    compatible namespace object, if any. NumPy 1.22 and later can
+    construct such containers using the `numpy.array_api` namespace
+    for instance.
+
+    See: https://numpy.org/neps/nep-0047-array-api-standard.html
+
+    If `arrays` are regular numpy arrays, an instance of the
+    `_NumPyApiWrapper` compatibility wrapper is returned instead.
+
+    Namespace support is not enabled by default. To enabled it
+    call:
+    
+      sklearn.set_config(array_api_dispatch=True)
+      
+    or:
+    
+      with sklearn.config_context(array_api_dispatch=True):
+          # your code here
+ 
+    Otherwise an instance of the `_NumPyApiWrapper`
+    compatibility wrapper is always returned irrespective of
+    the fact that arrays implement the `__array_namespace__`
+    protocol or not.
     Parameters
     ----------
     *arrays : array objects
