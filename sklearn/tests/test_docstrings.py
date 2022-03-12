@@ -23,8 +23,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._samples_generator.make_biclusters",
     "sklearn.datasets._samples_generator.make_classification",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
-    "sklearn.datasets._samples_generator.make_multilabel_classification",
-    "sklearn.datasets._samples_generator.make_regression",
     "sklearn.datasets._samples_generator.make_sparse_coded_signal",
     "sklearn.datasets._samples_generator.make_spd_matrix",
     "sklearn.datasets._species_distributions.fetch_species_distributions",

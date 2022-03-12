@@ -340,7 +340,7 @@ def make_multilabel_classification(
         If ``True``, some instances might not belong to any class.
 
     sparse : bool, default=False
-        If ``True``, return a sparse feature matrix
+        If ``True``, return a sparse feature matrix.
 
         .. versionadded:: 0.17
            parameter to allow *sparse* output.
@@ -375,7 +375,6 @@ def make_multilabel_classification(
     p_w_c : ndarray of shape (n_features, n_classes)
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
-
     """
     if n_classes < 1:
         raise ValueError(
@@ -549,12 +548,12 @@ def make_regression(
         The bias term in the underlying linear model.
 
     effective_rank : int, default=None
-        if not None:
+        If not None:
             The approximate number of singular vectors required to explain most
             of the input data by linear combinations. Using this kind of
             singular spectrum in the input allows the generator to reproduce
             the correlations often observed in practice.
-        if None:
+        If None:
             The input set is well conditioned, centered and gaussian with
             unit variance.
 
