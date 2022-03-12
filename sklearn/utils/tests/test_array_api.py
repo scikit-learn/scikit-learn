@@ -22,13 +22,12 @@ def test_get_namespace_ndarray():
             assert isinstance(xp_out, _NumPyApiWrapper)
 
 
+@pytest.mark.filterwarnings("ignore:The numpy.array_api submodule:UserWarning")
 def test_get_namespace_array_api():
     """Test get_namespace for ArrayAPI arrays."""
-    pytest.importorskip("numpy", minversion="1.22", reason="Requires Array API")
-
-    X_np = numpy.asarray([[1, 2, 3]])
     xp = pytest.importorskip("numpy.array_api")
 
+    X_np = numpy.asarray([[1, 2, 3]])
     X_xp = xp.asarray(X_np)
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api = get_namespace(X_xp)
@@ -53,6 +52,7 @@ class _NumPyArrayAPIWrapper:
         return getattr(self._namespace, name)
 
 
+@pytest.mark.filterwarnings("ignore:The numpy.array_api submodule:UserWarning")
 def test_array_api_wrapper():
     """Test _ArrayAPIWrapper for ArrayAPIs that is not NumPy."""
     xp = pytest.importorskip("numpy.array_api")
