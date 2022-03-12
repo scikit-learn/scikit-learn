@@ -21,7 +21,7 @@ from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
-from ._base import _deprecate_normalize, _rescale_data
+from ._base import _deprecate_normalize, _preprocess_data, _rescale_data
 from ._sag import sag_solver
 from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
@@ -774,7 +774,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -1885,7 +1885,7 @@ class _RidgeGCV(LinearModel):
 
         self.alphas = np.asarray(self.alphas)
 
-        X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             self.fit_intercept,
