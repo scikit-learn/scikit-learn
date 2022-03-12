@@ -8,9 +8,10 @@ from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn._config import config_context
 
 
+@pytest.mark.filterwarnings("ignore:The numpy.array_api submodule:UserWarning")
 def test_get_namespace_ndarray():
     """Test get_namespace on NumPy ndarrays."""
-    pytest.importorskip("numpy", minversion="1.22", reason="Requires Array API")
+    pytest.importorskip("numpy.array_api")
 
     X_np = numpy.asarray([[1, 2, 3]])
 
