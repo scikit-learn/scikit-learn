@@ -45,9 +45,11 @@ Here is a sample output of a run on a quad-core machine::
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD 3 clause
+
 # %%
-# Load categories from the training set
-# -------------------------------------
+# Data loading
+# ------------
+
 from pprint import pprint
 from time import time
 import logging
@@ -62,10 +64,12 @@ from sklearn.pipeline import Pipeline
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
+# Load some categories from the training set
 categories = [
     "alt.atheism",
     "talk.religion.misc",
 ]
+
 # Uncomment the following to do the analysis on all the categories
 # categories = None
 
@@ -78,10 +82,10 @@ print("%d categories" % len(data.target_names))
 print()
 
 # %%
-# Tuning a pipeline
-# -----------------
-# Define a pipeline combining a text feature extractor with a simple
-# classifier
+# Pipeline with hyperparameter tuning
+# -----------------------------------
+
+# Define a pipeline combining a text feature extractor with a simple classifier
 pipeline = Pipeline(
     [
         ("vect", CountVectorizer()),
@@ -90,9 +94,9 @@ pipeline = Pipeline(
     ]
 )
 
-# %%
 # Parameters to use for grid search. Uncommenting more parameters will give
-# better exploring power but will increase processing time in a combinatorial way
+# better exploring power but will increase processing time in a combinatorial
+# way
 parameters = {
     "vect__max_df": (0.5, 0.75, 1.0),
     # 'vect__max_features': (None, 5000, 10000, 50000),
@@ -105,12 +109,8 @@ parameters = {
     # 'clf__max_iter': (10, 50, 80),
 }
 
-# %%
 # Find the best parameters for both the feature extraction and the
 # classifier
-# multiprocessing requires the fork to happen in a __main__ protected
-# block
-
 grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
 
 print("Performing grid search...")
