@@ -29,26 +29,23 @@ SVR scales better. With regard to prediction time, SVR is faster than
 KRR for all sizes of the training set because of the learned sparse
 solution. Note that the degree of sparsity and thus the prediction time depends
 on the parameters epsilon and C of the SVR.
-
 """
-
+# %%
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
-import time
+# %%
+# Set the random seed
+# ------------------
 
 import numpy as np
 
-from sklearn.svm import SVR
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import learning_curve
-from sklearn.kernel_ridge import KernelRidge
-import matplotlib.pyplot as plt
-
 rng = np.random.RandomState(0)
 
-# #############################################################################
+# %%
 # Generate sample data
+# ------------------
+
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
 
@@ -57,18 +54,33 @@ y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 
 X_plot = np.linspace(0, 5, 100000)[:, None]
 
-# #############################################################################
-# Fit regression model
+# %%
+# Fit the regression models
+# -------------------------
+
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVR
+from sklearn.kernel_ridge import KernelRidge
+
 train_size = 100
+
+# Fit the SVR
 svr = GridSearchCV(
     SVR(kernel="rbf", gamma=0.1),
     param_grid={"C": [1e0, 1e1, 1e2, 1e3], "gamma": np.logspace(-2, 2, 5)},
 )
 
+# Fit the Kernel Ridge Regression
 kr = GridSearchCV(
     KernelRidge(kernel="rbf", gamma=0.1),
     param_grid={"alpha": [1e0, 0.1, 1e-2, 1e-3], "gamma": np.logspace(-2, 2, 5)},
 )
+
+# %%
+# Compare times of SVR and Kernel Ridge Regression
+# ----------------------------------------------
+
+import time
 
 t0 = time.time()
 svr.fit(X[:train_size], y[:train_size])
@@ -93,9 +105,12 @@ y_kr = kr.predict(X_plot)
 kr_predict = time.time() - t0
 print("KRR prediction for %d inputs in %.3f s" % (X_plot.shape[0], kr_predict))
 
-
-# #############################################################################
+# %%
 # Look at the results
+# -------------------
+
+import matplotlib.pyplot as plt
+
 sv_ind = svr.best_estimator_.support_
 plt.scatter(
     X[sv_ind],
@@ -121,7 +136,9 @@ plt.ylabel("target")
 plt.title("SVR versus Kernel Ridge")
 plt.legend()
 
+# %%
 # Visualize training and prediction time
+
 plt.figure()
 
 # Generate sample data
@@ -166,7 +183,11 @@ plt.ylabel("Time (seconds)")
 plt.title("Execution Time")
 plt.legend(loc="best")
 
+# %%
 # Visualize learning curves
+
+from sklearn.model_selection import learning_curve
+
 plt.figure()
 
 svr = SVR(kernel="rbf", C=1e1, gamma=0.1)
