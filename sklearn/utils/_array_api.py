@@ -124,6 +124,7 @@ def get_namespace(*arrays):
     compatibility wrapper is always returned irrespective of
     the fact that arrays implement the `__array_namespace__`
     protocol or not.
+
     Parameters
     ----------
     *arrays : array objects
