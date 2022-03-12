@@ -387,3 +387,22 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
     assert len(out) == expected_len
     if not whiten:
         assert out[0] is None
+
+@pytest.mark.parametrize("dtype_in, dtype_out", [
+     (np.float32, np.float32),
+     (np.float64, np.float64),
+     (np.int, np.float64)])
+def test_fastica_float_shape(whiten, return_X_mean, return_n_iter):
+    n_features = 3
+    n_samples = 10
+    vals_f32 = np.zeros(shape=(n_samples, n_features), dtype=np.float32)
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((n_samples, n_features))
+    vals_f32[:] = X
+
+    output = fastica(
+        vals_f32, whiten=whiten, return_n_iter=return_n_iter, return_X_mean=return_X_mean
+    )
+
+    assert output.d
+

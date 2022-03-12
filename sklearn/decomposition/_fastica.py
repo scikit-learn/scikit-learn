@@ -129,7 +129,7 @@ def _logcosh(x, fun_args=None):
 
     x *= alpha
     gx = np.tanh(x, x)  # apply the tanh inplace
-    g_x = np.empty(x.shape[0])
+    g_x = np.empty(x.shape[0], dtype=x.dtype)
     # XXX compute in chunks to avoid extra allocation
     for i, gx_i in enumerate(gx):  # please don't vectorize.
         g_x[i] = (alpha * (1 - gx_i**2)).mean()
@@ -435,6 +435,8 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     >>> X_transformed.shape
     (1797, 7)
     """
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float32, np.float64]}
 
     def __init__(
         self,
@@ -527,7 +529,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             )
 
         n_features, n_samples = XT.shape
-
         n_components = self.n_components
         if not self._whiten and n_components is not None:
             n_components = None
