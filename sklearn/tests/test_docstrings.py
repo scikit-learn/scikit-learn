@@ -110,7 +110,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.preprocessing._data.maxabs_scale",
     "sklearn.preprocessing._data.normalize",
     "sklearn.preprocessing._data.power_transform",
-    "sklearn.preprocessing._data.quantile_transform",
     "sklearn.preprocessing._data.robust_scale",
     "sklearn.preprocessing._data.scale",
     "sklearn.preprocessing._label.label_binarize",

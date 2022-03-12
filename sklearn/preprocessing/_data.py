@@ -2839,7 +2839,7 @@ def quantile_transform(
         noise.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     copy : bool, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
@@ -2853,15 +2853,6 @@ def quantile_transform(
     -------
     Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import quantile_transform
-    >>> rng = np.random.RandomState(0)
-    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
-    array([...])
 
     See Also
     --------
@@ -2897,6 +2888,15 @@ def quantile_transform(
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import quantile_transform
+    >>> rng = np.random.RandomState(0)
+    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
+    array([...])
     """
     n = QuantileTransformer(
         n_quantiles=n_quantiles,
