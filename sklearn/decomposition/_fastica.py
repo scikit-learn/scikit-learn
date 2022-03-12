@@ -435,6 +435,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     >>> X_transformed.shape
     (1797, 7)
     """
+
     def _more_tags(self):
         return {"preserves_dtype": [np.float32, np.float64]}
 
