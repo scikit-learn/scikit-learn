@@ -4,7 +4,6 @@ Robust Single Linkage: Density based single linkage clustering.
 """
 import numpy as np
 
-from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.metrics import pairwise_distances
 from scipy.sparse import issparse
 
@@ -224,6 +223,7 @@ def robust_single_linkage(
 
     X = check_array(X, accept_sparse="csr")
     memory = Memory(cachedir=memory, verbose=0)
+    metric_params = metric_params or {}
 
     if algorithm != "best":
         if algorithm == "generic":
@@ -280,162 +280,3 @@ def robust_single_linkage(
     labels = labelling_at_cut(single_linkage_tree, cut, gamma)
 
     return labels
-
-
-class RobustSingleLinkage(BaseEstimator, ClusterMixin):
-    r"""
-    Perform robust single linkage clustering.
-
-    Robust single linkage is a modified version of single linkage that
-    attempts to be more robust to noise. Specifically the goal is to
-    more accurately approximate the level set tree of the unknown
-    probability density function from which the sample data has
-    been drawn.
-
-    Parameters
-    ----------
-    cut : float, default=0.4
-        The reachability distance value to cut the cluster heirarchy at
-        to derive a flat cluster labelling.
-
-    k : int, default=5
-        Reachability distances will be computed with regard to the `k`
-        nearest neighbors.
-
-    alpha : float, default=`np.sqrt(2)`
-        Distance scaling for reachability distance computation. Reachability
-        distance is computed as
-
-        .. math::
-
-            max \\{ core_k(a), core_k(b), 1/\\alpha d(a,b) \\}.
-
-    gamma : int, default=5
-        Ignore any clusters in the flat clustering with size less than gamma,
-        and declare points in such clusters as noise points.
-
-    metric : str, or callable, default='euclidean'
-        The metric to use when calculating distance between instances in a
-        feature array.
-
-        If metric is a string or callable, it must be one of
-        the options allowed by `metrics.pairwise.pairwise_distances` for its
-        metric parameter.
-
-        If `metric="precomputed"`, `X` is assumed to be a distance matrix and
-        must be square.
-
-    algorithm : str, default='best'
-        Exactly which algorithm to use; hdbscan has variants specialised
-        for different characteristics of the data. By default this is set
-        to ``best`` which chooses the "best" algorithm given the nature of
-        the data. You can force other options if you believe you know
-        better. Options are:
-            * ``small``
-            * ``small_kdtree``
-            * ``large_kdtree``
-            * ``large_kdtree_fastcluster``
-
-    core_dist_n_jobs : int, default=4
-        Number of parallel jobs to run in core distance computations (if
-        supported by the specific algorithm). For ``core_dist_n_jobs``
-        below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
-
-    metric_params : dict, default=None
-        Arguments passed to the distance metric.
-
-    Attributes
-    ----------
-    labels_ : ndarray, shape (n_samples, )
-        Cluster labels for each point.  Noisy samples are given the label -1.
-
-    References
-    ----------
-    .. [1] Chaudhuri, K., & Dasgupta, S. (2010). Rates of convergence for the
-       cluster tree. In Advances in Neural Information Processing Systems
-       (pp. 343-351).
-
-    See Also
-    --------
-
-
-    Examples
-    --------
-    >>> import numpy as np
-    """
-
-    def __init__(
-        self,
-        cut=0.4,
-        k=5,
-        alpha=1.4142135623730951,
-        gamma=5,
-        metric="euclidean",
-        algorithm="best",
-        core_dist_n_jobs=4,
-        metric_params=None,
-    ):
-
-        self.cut = cut
-        self.k = k
-        self.alpha = alpha
-        self.gamma = gamma
-        self.metric = metric
-        self.algorithm = algorithm
-        self.core_dist_n_jobs = core_dist_n_jobs
-        self.metric_params = metric_params
-
-    def fit(self, X, y=None):
-        """
-        Perform robust single linkage clustering on `X`.
-
-        Assumes `X` is either a series of feature vectors or a distance matrix.
-
-        Parameters
-        ----------
-        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-                array of shape (n_samples, n_samples)
-            A feature array, or array of distances between samples if
-            ``metric='precomputed'``.
-
-        y : Ignored
-            Ignored.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        X = check_array(X, accept_sparse="csr")
-
-        kwargs = self.get_params()
-        kwargs["metric_params"] = self.metric_params or {}
-
-        self.labels_ = robust_single_linkage(X, **kwargs)
-
-        return self
-
-    def fit_predict(self, X, y=None):
-        """
-        Perform clustering on X and return cluster labels.
-
-        Assumes `X` is either a series of feature vectors or a distance matrix.
-
-        Parameters
-        ----------
-        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-                array of shape (n_samples, n_samples)
-            A feature array, or array of distances between samples if
-            ``metric='precomputed'``.
-
-        y : Ignored
-            Ignored.
-
-        Returns
-        -------
-        y : ndarray, shape (n_samples, )
-            Cluster labels.
-        """
-
-        self.fit(X)
-        return self.labels_
