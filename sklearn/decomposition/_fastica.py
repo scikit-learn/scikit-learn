@@ -157,7 +157,7 @@ def fastica(
     max_iter=200,
     tol=1e-04,
     w_init=None,
-    svd_solver="svd",
+    whiten_solver="svd",
     random_state=None,
     return_X_mean=False,
     compute_sources=True,
@@ -223,10 +223,15 @@ def fastica(
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    svd_solver : str, default='svd'
+    whiten_solver : str, default='svd'
         The solver to use for whitening. Can either be 'svd' or 'eigh'.
-        'svd' is more stable numerically if the problem is degenerate.
-        'eigh' is generally faster.
+
+        * 'svd' is more stable numerically if the problem is degenerate, and
+        often faster when `num_samples<=num_features`.
+
+        * 'eigh' is generally more memory efficient when
+        `num_samples>=num_features`, and can be faster when
+        `num_samples>= 50*num_features`.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -300,7 +305,7 @@ def fastica(
         max_iter=max_iter,
         tol=tol,
         w_init=w_init,
-        svd_solver=svd_solver,
+        whiten_solver=whiten_solver,
         random_state=random_state,
     )
     S = est._fit(X, compute_sources=compute_sources)
@@ -376,8 +381,13 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     whiten_solver : str, default='svd'
         The solver to use for whitening. Can either be 'svd' or 'eigh'.
-        'svd' is more stable numerically if the problem is degenerate.
-        'eigh' is generally faster.
+
+        * 'svd' is more stable numerically if the problem is degenerate, and
+        often faster when `num_samples<=num_features`.
+
+        * 'eigh' is generally more memory efficient when
+        `num_samples>=num_features`, and can be faster when
+        `num_samples>= 50*num_features`.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -458,7 +468,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         max_iter=200,
         tol=1e-4,
         w_init=None,
-        svd_solver="svd",
+        whiten_solver="svd",
         random_state=None,
     ):
         super().__init__()
@@ -470,7 +480,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self.max_iter = max_iter
         self.tol = tol
         self.w_init = w_init
-        self.svd_solver = svd_solver
+        self.whiten_solver = whiten_solver
         self.random_state = random_state
 
     def _fit(self, X, compute_sources=False):
@@ -560,7 +570,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             XT -= X_mean[:, np.newaxis]
 
             # Whitening and preprocessing by PCA
-            if self.svd_solver == "eigh":
+            if self.whiten_solver == "eigh":
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
@@ -569,7 +579,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 if np.any(degenerate_idx):
                     warnings.warn(
                         "There are some small singular values, using "
-                        "svd_solver = 'svd' might lead to more "
+                        "whiten_solver = 'svd' might lead to more "
                         "accurate results."
                     )
                 d[degenerate_idx] = eps  # For numerical issues
