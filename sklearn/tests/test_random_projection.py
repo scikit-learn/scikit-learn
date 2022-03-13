@@ -32,8 +32,8 @@ all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 # Make some random data with uniformly located non zero entries with
 # Gaussian distributed values
-def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=0):
-    rng = np.random.RandomState(random_state)
+def make_sparse_random_data(n_samples, n_features, n_nonzeros):
+    rng = np.random.RandomState(0)
     data_coo = sp.coo_matrix(
         (
             rng.randn(n_nonzeros),
