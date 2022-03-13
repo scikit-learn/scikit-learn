@@ -47,7 +47,6 @@ def _report_nonhermitian(M, name):
               UserWarning, stacklevel=4
          )
 
-
 def _as2d(ar):
     """
     If the input array is 2D return it, if it is 1D, append a dimension,
