@@ -203,12 +203,11 @@ def test_kernel_pca_n_components():
             assert shape == (2, c)
 
 
-@pytest.mark.parametrize("solver", ["dense", "arpack", "randomized"])
 @pytest.mark.parametrize("n_components", [-1, 0])
-def test_kernal_pca_too_few_components(solver, n_components):
+def test_kernal_pca_too_few_components(n_components):
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
-    kpca = KernelPCA(n_components=n_components, eigen_solver=solver)
+    kpca = KernelPCA(n_components=n_components)
     msg = "n_components.* must be >= 1"
     with pytest.raises(ValueError, match=msg):
         kpca.fit(X_fit)
