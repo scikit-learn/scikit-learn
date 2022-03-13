@@ -296,8 +296,9 @@ Changelog
   how whitening is performed through the new `svd_solver` parameter, which
   supports `svd` and `eigh`. `svd_solver` defaults to `svd` although `eigh` may
   be faster in cases where `num_features > num_samples` :pr:`11860` by
-  :user:`Pierre Ablin <pierreablin>` and :pr:`22527` by
-  :user:`Meekail Zain <micky774>`.
+  :user:`Pierre Ablin <pierreablin>`, :pr:`22527` by
+  :user:`Meekail Zain <micky774>` and :user:`Thomas Fan`_.
+
 - |Fix| Greatly reduced peak memory usage in :class:`decomposition.PCA` when
   calling `fit` or `fit_transform`.
   :pr:`22553` by :user:`Meekail Zain <micky774>`.
