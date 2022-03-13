@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 import numpy as np
 import pytest
+import warnings
 
 from sklearn.datasets import make_blobs
 from sklearn.cluster import OPTICS
@@ -224,7 +225,7 @@ def test_nowarn_if_metric_bool_data_bool():
     pairwise_metric = "rogerstanimoto"
     X = np.random.randint(2, size=(5, 2), dtype=bool)
 
-    with pytest.warns(None) as warn_record:
+    with warnings.catch_warnings(record=True)  as warn_record:
         OPTICS(metric=pairwise_metric).fit(X)
         assert len(warn_record) == 0
 
@@ -251,7 +252,7 @@ def test_nowarn_if_metric_no_bool():
     X_bool = np.random.randint(2, size=(5, 2), dtype=bool)
     X_num = np.random.randint(2, size=(5, 2), dtype=np.int32)
 
-    with pytest.warns(None) as warn_record:
+    with warnings.catch_warnings(record=True)  as warn_record:
         # fit boolean data
         OPTICS(metric=pairwise_metric).fit(X_bool)
         # fit numeric data

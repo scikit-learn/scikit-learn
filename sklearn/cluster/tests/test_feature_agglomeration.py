@@ -4,6 +4,7 @@ Tests for sklearn.cluster._feature_agglomeration
 # Authors: Sergul Aydore 2017
 import numpy as np
 import pytest
+import warnings
 
 from numpy.testing import assert_array_equal
 from sklearn.cluster import FeatureAgglomeration
@@ -17,10 +18,10 @@ def test_feature_agglomeration():
 
     agglo_mean = FeatureAgglomeration(n_clusters=n_clusters, pooling_func=np.mean)
     agglo_median = FeatureAgglomeration(n_clusters=n_clusters, pooling_func=np.median)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True)  as record:
         agglo_mean.fit(X)
     assert not [w.message for w in record]
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True)  as record:
         agglo_median.fit(X)
     assert not [w.message for w in record]
 
