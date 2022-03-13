@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 
 from sklearn.utils._testing import (
     assert_array_almost_equal,
@@ -234,7 +235,7 @@ def test_leave_zero_eig():
     X_fit = np.array([[1, 1], [0, 0]])
 
     # Assert that even with all np warnings on, there is no div by zero warning
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         with np.errstate(all="warn"):
             k = KernelPCA(n_components=2, remove_zero_eig=False, eigen_solver="dense")
             # Fit, then transform

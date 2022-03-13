@@ -1,5 +1,7 @@
 import pytest
 import numpy as np
+import warnings
+
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 
 from sklearn.datasets import load_linnerud
@@ -560,7 +562,7 @@ def test_loadings_converges():
 
     cca = CCA(n_components=10, max_iter=500)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         cca.fit(X, y)
     # ConvergenceWarning should not be raised
     assert not [w.message for w in record]

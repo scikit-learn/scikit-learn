@@ -3,6 +3,7 @@ import scipy as sp
 from numpy.testing import assert_array_equal
 
 import pytest
+import warnings
 
 from sklearn.utils._testing import assert_allclose
 
@@ -44,7 +45,7 @@ def test_no_empty_slice_warning():
     n_features = n_components + 2  # anything > n_comps triggered it in 0.16
     X = np.random.uniform(-1, 1, size=(n_components, n_features))
     pca = PCA(n_components=n_components)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         pca.fit(X)
     assert not [w.message for w in record]
 

@@ -7,6 +7,7 @@ Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 # License: BSD 3 clause
 
 import pytest
+import warnings
 
 import numpy as np
 
@@ -105,12 +106,12 @@ def test_iforest_error():
     # note that assert_no_warnings does not apply since it enables a
     # PendingDeprecationWarning triggered by scipy.sparse's use of
     # np.matrix. See issue #11251.
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         IsolationForest(max_samples="auto").fit(X)
     user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
     assert not user_warnings
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         IsolationForest(max_samples=np.int64(2)).fit(X)
     user_warnings = [each for each in record if issubclass(each.category, UserWarning)]
     assert not user_warnings

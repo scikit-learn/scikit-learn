@@ -1,4 +1,5 @@
 import pytest
+import warnings
 
 import numpy as np
 from functools import partial
@@ -111,7 +112,7 @@ def test_max_iter():
         model.fit_transform(X)
 
     # check that the underlying model converges w/o warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         model = SparseCoder(
             D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
         )
