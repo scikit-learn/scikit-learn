@@ -15,6 +15,7 @@ import os
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from importlib import resources
+from pathlib import Path
 
 from ..preprocessing import scale
 from ..utils import Bunch
@@ -253,8 +254,7 @@ def load_files(
     if load_content:
         data = []
         for filename in filenames:
-            with open(filename, "rb") as f:
-                data.append(f.read())
+            data.append(Path(filename).read_bytes())
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(
@@ -1120,6 +1120,9 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
             .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
+        Returns a tuple of two ndarrays or dataframe of shape
+        `(20, 3)`. Each row represents one sample and each column represents the
+        features in `X` and a target in `y` of a given sample.
 
         .. versionadded:: 0.18
     """
@@ -1401,7 +1404,7 @@ def load_sample_images():
 
 
 def load_sample_image(image_name):
-    """Load the numpy array of a single sample image
+    """Load the numpy array of a single sample image.
 
     Read more in the :ref:`User Guide <sample_images>`.
 
@@ -1413,7 +1416,7 @@ def load_sample_image(image_name):
     Returns
     -------
     img : 3D array
-        The image as a numpy array: height x width x color
+        The image as a numpy array: height x width x color.
 
     Examples
     --------

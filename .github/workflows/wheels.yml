@@ -36,7 +36,7 @@ jobs:
         name: Check build trigger
         run: bash build_tools/github/check_build_trigger.sh
 
-  # Build the wheels for Linux, Windows and macOS for Python 3.7 and newer
+  # Build the wheels for Linux, Windows and macOS for Python 3.8 and newer
   build_wheels:
     name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
@@ -52,10 +52,6 @@ jobs:
           # Note: windows-2019 is needed for older Python versions:
           # https://github.com/scikit-learn/scikit-learn/issues/22530
           - os: windows-2019
-            python: 37
-            bitness: 64
-            platform_id: win_amd64
-          - os: windows-2019
             python: 38
             bitness: 64
             platform_id: win_amd64
@@ -70,10 +66,6 @@ jobs:
 
           # Window 32 bit
           - os: windows-latest
-            python: 37
-            bitness: 32
-            platform_id: win32
-          - os: windows-latest
             python: 38
             bitness: 32
             platform_id: win32
@@ -83,11 +75,6 @@ jobs:
             platform_id: win32
 
           # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
-            python: 37
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 38
             bitness: 64
@@ -100,11 +87,6 @@ jobs:
             manylinux_image: manylinux2014
 
           # Linux 64 bit manylinux2010
-          - os: ubuntu-latest
-            python: 37
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2010
           - os: ubuntu-latest
             python: 38
             bitness: 64
@@ -124,10 +106,6 @@ jobs:
             manylinux_image: manylinux2014
 
           # MacOS x86_64
-          - os: macos-latest
-            bitness: 64
-            python: 37
-            platform_id: macosx_x86_64
           - os: macos-latest
             bitness: 64
             python: 38
