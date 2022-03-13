@@ -10,22 +10,25 @@ Ridge regression
 
 
 from abc import ABCMeta, abstractmethod
+from functools import partial
 import warnings
 
 import numpy as np
+import numbers
 from scipy import linalg
 from scipy import sparse
 from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
-from ._base import _deprecate_normalize, _rescale_data
+from ._base import _deprecate_normalize, _preprocess_data, _rescale_data
 from ._sag import sag_solver
 from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
 from ..utils import check_consistent_length
+from ..utils import check_scalar
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
@@ -232,7 +235,7 @@ def _solve_svd(X, y, alpha):
     s_nnz = s[idx][:, np.newaxis]
     UTy = np.dot(U.T, y)
     d = np.zeros((s.size, alpha.size), dtype=X.dtype)
-    d[idx] = s_nnz / (s_nnz ** 2 + alpha)
+    d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
     return np.dot(Vt.T, d_UT_y).T
 
@@ -329,17 +332,19 @@ def ridge_regression(
         Training data
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)
-        Target values
+        Target values.
 
     alpha : float or array-like of shape (n_targets,)
-        Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduces the variance of
-        the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
-        assumed to be specific to the targets. Hence they must correspond in
-        number.
+        Constant that multiplies the L2 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Ridge` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
+
+        If an array is passed, penalties are assumed to be specific to the
+        targets. Hence they must correspond in number.
 
     sample_weight : float or array-like of shape (n_samples,), default=None
         Individual weights for each sample. If given a float, every sample
@@ -447,6 +452,14 @@ def ridge_regression(
     Notes
     -----
     This function won't compute the intercept.
+
+    Regularization improves the conditioning of the problem and
+    reduces the variance of the estimates. Larger values specify stronger
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
+    assumed to be specific to the targets. Hence they must correspond in
+    number.
     """
     return _ridge_regression(
         X,
@@ -556,6 +569,17 @@ def _ridge_regression(
             # SAG supports sample_weight directly. For other solvers,
             # we implement sample_weight via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
+
+    # Some callers of this method might pass alpha as single
+    # element array which already has been validated.
+    if alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
+        alpha = check_scalar(
+            alpha,
+            "alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="left",
+        )
 
     # There should be either 1 or n_targets penalties
     alpha = np.asarray(alpha, dtype=X.dtype).ravel()
@@ -742,8 +766,15 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
+        if self.max_iter is not None:
+            self.max_iter = check_scalar(
+                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
+            )
+
+        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
+
         # when X is sparse we only remove offset from y
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -817,14 +848,16 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     Parameters
     ----------
     alpha : {float, ndarray of shape (n_targets,)}, default=1.0
-        Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduces the variance of
-        the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
-        assumed to be specific to the targets. Hence they must correspond in
-        number.
+        Constant that multiplies the L2 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Ridge` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
+
+        If an array is passed, penalties are assumed to be specific to the
+        targets. Hence they must correspond in number.
 
     fit_intercept : bool, default=True
         Whether to fit the intercept for this model. If set
@@ -940,6 +973,14 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     RidgeCV : Ridge regression with built-in cross validation.
     :class:`~sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
         combines ridge regression with the kernel trick.
+
+    Notes
+    -----
+    Regularization improves the conditioning of the problem and
+    reduces the variance of the estimates. Larger values specify stronger
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`.
 
     Examples
     --------
@@ -1483,7 +1524,7 @@ class _RidgeGCV(LinearModel):
         is_clf=False,
         alpha_per_target=False,
     ):
-        self.alphas = np.asarray(alphas)
+        self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -1496,7 +1537,7 @@ class _RidgeGCV(LinearModel):
     @staticmethod
     def _decomp_diag(v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-        return (v_prime * Q ** 2).sum(axis=-1)
+        return (v_prime * Q**2).sum(axis=-1)
 
     @staticmethod
     def _diag_dot(D, B):
@@ -1778,7 +1819,7 @@ class _RidgeGCV(LinearModel):
             intercept_column = sqrt_sw[:, None]
             X = np.hstack((X, intercept_column))
         U, singvals, _ = linalg.svd(X, full_matrices=0)
-        singvals_sq = singvals ** 2
+        singvals_sq = singvals**2
         UT_y = np.dot(U.T, y)
         return X_mean, singvals_sq, U, UT_y
 
@@ -1788,15 +1829,15 @@ class _RidgeGCV(LinearModel):
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
-        w = ((singvals_sq + alpha) ** -1) - (alpha ** -1)
+        w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
         if self.fit_intercept:
             # detect intercept column
             normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
             intercept_dim = _find_smallest_angle(normalized_sw, U)
             # cancel the regularization for the intercept
-            w[intercept_dim] = -(alpha ** -1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-        G_inverse_diag = self._decomp_diag(w, U) + (alpha ** -1)
+            w[intercept_dim] = -(alpha**-1)
+        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha**-1) * y
+        G_inverse_diag = self._decomp_diag(w, U) + (alpha**-1)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             G_inverse_diag = G_inverse_diag[:, np.newaxis]
@@ -1842,13 +1883,9 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        if np.any(self.alphas <= 0):
-            raise ValueError(
-                "alphas must be strictly positive. Got {} containing some "
-                "negative or null value instead.".format(self.alphas)
-            )
+        self.alphas = np.asarray(self.alphas)
 
-        X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -1977,7 +2014,7 @@ class _BaseRidgeCV(LinearModel):
         store_cv_values=False,
         alpha_per_target=False,
     ):
-        self.alphas = np.asarray(alphas)
+        self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -2016,9 +2053,30 @@ class _BaseRidgeCV(LinearModel):
         the validation score.
         """
         cv = self.cv
+
+        check_scalar_alpha = partial(
+            check_scalar,
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+
+        if isinstance(self.alphas, (np.ndarray, list, tuple)):
+            n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
+            if n_alphas != 1:
+                for index, alpha in enumerate(self.alphas):
+                    alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
+            else:
+                self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
+        else:
+            # check for single non-iterable item
+            self.alphas = check_scalar_alpha(self.alphas, "alphas")
+
+        alphas = np.asarray(self.alphas)
+
         if cv is None:
             estimator = _RidgeGCV(
-                self.alphas,
+                alphas,
                 fit_intercept=self.fit_intercept,
                 normalize=self.normalize,
                 scoring=self.scoring,
@@ -2037,7 +2095,8 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True are incompatible")
             if self.alpha_per_target:
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
-            parameters = {"alpha": self.alphas}
+
+            parameters = {"alpha": alphas}
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
             gs = GridSearchCV(

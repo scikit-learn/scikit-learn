@@ -186,7 +186,7 @@ def stream_reuters_documents(data_path=None):
 # maximum
 
 vectorizer = HashingVectorizer(
-    decode_error="ignore", n_features=2 ** 18, alternate_sign=False
+    decode_error="ignore", n_features=2**18, alternate_sign=False
 )
 
 

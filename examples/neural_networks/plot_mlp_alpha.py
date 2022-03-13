@@ -45,7 +45,7 @@ for alpha in alphas:
                 random_state=1,
                 max_iter=2000,
                 early_stopping=True,
-                hidden_layer_sizes=[100, 100],
+                hidden_layer_sizes=[10, 10],
             ),
         )
     )
@@ -69,7 +69,9 @@ i = 1
 # iterate over datasets
 for X, y in datasets:
     # split into training and test part
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.4, random_state=42
+    )
 
     x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
     y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
@@ -98,9 +100,9 @@ for X, y in datasets:
         # Plot the decision boundary. For that, we will assign a color to each
         # point in the mesh [x_min, x_max] x [y_min, y_max].
         if hasattr(clf, "decision_function"):
-            Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+            Z = clf.decision_function(np.column_stack([xx.ravel(), yy.ravel()]))
         else:
-            Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+            Z = clf.predict_proba(np.column_stack([xx.ravel(), yy.ravel()]))[:, 1]
 
         # Put the result into a color plot
         Z = Z.reshape(xx.shape)
@@ -134,7 +136,7 @@ for X, y in datasets:
         ax.text(
             xx.max() - 0.3,
             yy.min() + 0.3,
-            ("%.2f" % score).lstrip("0"),
+            f"{score:.3f}".lstrip("0"),
             size=15,
             horizontalalignment="right",
         )
