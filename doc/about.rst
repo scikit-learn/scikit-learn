@@ -18,6 +18,7 @@ been leading the development.
 
 Governance
 ----------
+
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
@@ -46,6 +47,15 @@ The following people are active contributors who also help with
 maintenance:
 
 .. include:: triage_team.rst
+
+Communication Team
+------------------
+
+The following people help with :ref:`communication around scikit-learn
+<communication_team>`.
+
+.. include:: communication_team.rst
+
 
 Emeritus Core Developers
 ------------------------
@@ -85,8 +95,8 @@ citations to the following paper:
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-  `API design for machine learning software: experiences from the scikit-learn
-  project <https://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+  :arxiv:`API design for machine learning software: experiences from the scikit-learn
+  project <1309.0238>`, Buitinck *et al.*, 2013.
 
   Bibtex entry::
 
@@ -130,7 +140,7 @@ The project would like to thank the following funders.
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
 <https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
+Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 
 .. raw:: html
 
@@ -234,8 +244,7 @@ July 2017.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Zalando SE <https://corporate.zalando.com/en>`_ funds Adrin Jalali since
-August 2020.
+`Hugging Face <https://huggingface.co/>`_ funds Adrin Jalali since 2022.
 
 .. raw:: html
 
@@ -243,10 +252,10 @@ August 2020.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/zalando_logo.png
-   :width: 100pt
+.. image:: images/huggingface_logo-noborder.png
+   :width: 55pt
    :align: center
-   :target: https://corporate.zalando.com/en
+   :target: https://huggingface.co/
 
 .. raw:: html
 
@@ -407,31 +416,6 @@ time of Joris van den Bossche (2017-2018).
    :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-............
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/anaconda.png
-   :width: 100pt
-   :align: center
-   :target: https://www.anaconda.com/
 
 .. raw:: html
 

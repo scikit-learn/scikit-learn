@@ -15,22 +15,15 @@ More details on tools available for model selection can be found in the
 sections on :ref:`cross_validation` and :ref:`grid_search`.
 
 """
+
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.svm import SVC
 
-print(__doc__)
-
 # Loading the Digits dataset
-digits = datasets.load_digits()
-
-# To apply an classifier on this data, we need to flatten the image, to
-# turn the data in a (samples, feature) matrix:
-n_samples = len(digits.images)
-X = digits.images.reshape((n_samples, -1))
-y = digits.target
+X, y = datasets.load_digits(return_X_y=True)
 
 # Split the dataset in two equal parts
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)

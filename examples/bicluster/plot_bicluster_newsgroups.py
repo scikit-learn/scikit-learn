@@ -22,6 +22,7 @@ MiniBatchKMeans. The document clusters derived from the biclusters
 achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
+
 from collections import defaultdict
 import operator
 from time import time
@@ -33,8 +34,6 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score
-
-print(__doc__)
 
 
 def number_normalizer(tokens):

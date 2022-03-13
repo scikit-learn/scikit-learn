@@ -13,6 +13,7 @@ Unlike Bayesian procedures, such inferences are prior-free.
 
 In that case, the model with 2 components and full covariance
 (which corresponds to the true generative model) is selected.
+
 """
 
 import numpy as np
@@ -23,8 +24,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 from sklearn import mixture
-
-print(__doc__)
 
 # Number of samples per component
 n_samples = 500

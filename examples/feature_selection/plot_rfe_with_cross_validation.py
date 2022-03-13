@@ -5,8 +5,8 @@ Recursive feature elimination with cross-validation
 
 A recursive feature elimination example with automatic tuning of the
 number of features selected with cross-validation.
+
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC

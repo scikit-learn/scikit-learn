@@ -35,8 +35,8 @@ four correct classifications and fails on one.
 .. [1] Haussler, D. (1999). Convolution kernels on discrete structures
        (Vol. 646). Technical report, Department of Computer Science, University
        of California at Santa Cruz.
+
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -113,7 +113,7 @@ K = kernel(X)
 D = kernel.diag(X)
 
 plt.figure(figsize=(8, 5))
-plt.imshow(np.diag(D ** -0.5).dot(K).dot(np.diag(D ** -0.5)))
+plt.imshow(np.diag(D**-0.5).dot(K).dot(np.diag(D**-0.5)))
 plt.xticks(np.arange(len(X)), X)
 plt.yticks(np.arange(len(X)), X)
 plt.title("Sequence similarity under the kernel")

@@ -42,6 +42,10 @@
     <p>Adrin Jalali</p>
     </div>
     <div>
+    <a href='https://github.com/jjerphan'><img src='https://avatars.githubusercontent.com/u/13029839?v=4' class='avatar' /></a> <br />
+    <p>Julien Jerphanion</p>
+    </div>
+    <div>
     <a href='https://github.com/glemaitre'><img src='https://avatars.githubusercontent.com/u/7454015?v=4' class='avatar' /></a> <br />
     <p>Guillaume Lemaitre</p>
     </div>

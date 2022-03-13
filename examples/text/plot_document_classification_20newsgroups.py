@@ -18,6 +18,7 @@ automatically downloaded, then cached.
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck
 # License: BSD 3 clause
+
 import logging
 import numpy as np
 from optparse import OptionParser
@@ -84,7 +85,7 @@ op.add_option(
     "--n_features",
     action="store",
     type=int,
-    default=2 ** 16,
+    default=2**16,
     help="n_features when using the hashing vectorizer.",
 )
 op.add_option(

@@ -10,8 +10,8 @@ and posterior distributions.
 
 Here, we only give some illustration. To know more about kernels' formulation,
 refer to the :ref:`User Guide <gp_kernels>`.
+
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>

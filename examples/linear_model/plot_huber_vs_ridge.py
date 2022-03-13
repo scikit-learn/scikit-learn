@@ -10,12 +10,11 @@ by the outliers present in the dataset. The Huber regressor is less
 influenced by the outliers since the model uses the linear loss for these.
 As the parameter epsilon is increased for the Huber regressor, the decision
 function approaches that of the ridge.
+
 """
 
 # Authors: Manoj Kumar mks542@nyu.edu
 # License: BSD 3 clause
-
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

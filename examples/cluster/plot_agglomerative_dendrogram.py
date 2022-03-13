@@ -6,6 +6,7 @@ Plot Hierarchical Clustering Dendrogram
 =========================================
 This example plots the corresponding dendrogram of a hierarchical clustering
 using AgglomerativeClustering and the dendrogram method available in scipy.
+
 """
 
 import numpy as np

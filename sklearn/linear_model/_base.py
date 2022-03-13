@@ -124,7 +124,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
             "0. For other values of l1_ratio, no analytic formula is "
             "available."
         )
-    elif estimator_name == "RidgeCV" or estimator_name == "RidgeClassifierCV":
+    elif estimator_name in ("RidgeCV", "RidgeClassifierCV", "_RidgeGCV"):
         alpha_msg = "Set parameter alphas to: original_alphas * n_samples. "
     else:
         alpha_msg = ""
@@ -237,6 +237,21 @@ def _preprocess_data(
 
     This is here because nearly all linear models will want their data to be
     centered. This function also systematically makes y consistent with X.dtype
+
+    Returns
+    -------
+    X_out : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        If copy=True a copy of the input X is triggered, otherwise operations are
+        inplace.
+        If input X is dense, then X_out is centered.
+        If normalize is True, then X_out is rescaled (dense and sparse case)
+    y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
+        Centered version of y. Likely performed inplace on input y.
+    X_offset : ndarray of shape (n_features,)
+        The mean per column of input X.
+    y_offset : float or ndarray of shape (n_features,)
+    X_scale : ndarray of shape (n_features,)
+        The standard deviation per column of input X.
     """
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
@@ -361,8 +376,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         """
         return self._decision_function(X)
 
-    _preprocess_data = staticmethod(_preprocess_data)
-
     def _set_intercept(self, X_offset, y_offset, X_scale):
         """Set the intercept_"""
         if self.fit_intercept:
@@ -392,15 +405,15 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the confidence scores.
 
         Returns
         -------
-        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
-            Confidence scores per (sample, class) combination. In the binary
-            case, confidence score for self.classes_[1] where >0 means this
-            class would be predicted.
+        scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Confidence scores per `(n_samples, n_classes)` combination. In the
+            binary case, confidence score for `self.classes_[1]` where >0 means
+            this class would be predicted.
         """
         check_is_fitted(self)
 
@@ -414,13 +427,13 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the predictions.
 
         Returns
         -------
-        C : array, shape [n_samples]
-            Predicted class label per sample.
+        y_pred : ndarray of shape (n_samples,)
+            Vector containing the class labels for each sample.
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
@@ -668,7 +681,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 sample_weight, X, dtype=X.dtype, only_non_negative=True
             )
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
@@ -684,13 +697,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = optimize.nnls(X, y)
+                self.coef_ = optimize.nnls(X, y)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
                 )
-                self.coef_, self._residues = map(np.vstack, zip(*outs))
+                self.coef_ = np.vstack([out[0] for out in outs])
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
@@ -705,9 +718,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
             if y.ndim < 2:
-                out = sparse_lsqr(X_centered, y)
-                self.coef_ = out[0]
-                self._residues = out[3]
+                self.coef_ = sparse_lsqr(X_centered, y)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
@@ -715,9 +726,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
-                self._residues = np.vstack([out[3] for out in outs])
         else:
-            self.coef_, self._residues, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
@@ -794,7 +804,10 @@ def _pre_fit(
     check_input=True,
     sample_weight=None,
 ):
-    """Aux function used at beginning of fit in linear models
+    """Function used at beginning of fit in linear models with L1 or L0 penalty.
+
+    This function applies _preprocess_data and additionally computes the gram matrix
+    `precompute` as needed as well as `Xy`.
 
     Parameters
     ----------

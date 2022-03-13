@@ -12,7 +12,6 @@ detail.
 .. [1] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
 """
-print(__doc__)
 
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #

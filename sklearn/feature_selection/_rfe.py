@@ -736,7 +736,7 @@ class RFECV(RFE):
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(self.transform(X), y)
+        self.estimator_.fit(self._transform(X), y)
 
         # reverse to stay consistent with before
         scores_rev = scores[:, ::-1]

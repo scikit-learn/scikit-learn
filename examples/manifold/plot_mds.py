@@ -7,12 +7,12 @@ An illustration of the metric and non-metric MDS on generated noisy data.
 
 The reconstructed points using the metric MDS and non metric MDS are slightly
 shifted to avoid overlapping.
+
 """
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD
 
-print(__doc__)
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -61,8 +61,8 @@ nmds = manifold.MDS(
 npos = nmds.fit_transform(similarities, init=pos)
 
 # Rescale the data
-pos *= np.sqrt((X_true ** 2).sum()) / np.sqrt((pos ** 2).sum())
-npos *= np.sqrt((X_true ** 2).sum()) / np.sqrt((npos ** 2).sum())
+pos *= np.sqrt((X_true**2).sum()) / np.sqrt((pos**2).sum())
+npos *= np.sqrt((X_true**2).sum()) / np.sqrt((npos**2).sum())
 
 # Rotate the data
 clf = PCA(n_components=2)

@@ -1,6 +1,4 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 """
 =========================================================
 Vector Quantization Example
@@ -11,8 +9,6 @@ is used here to illustrate how `k`-means is
 used for vector quantization.
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler

@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-#
 # Authors: Robert Layton <robertlayton@gmail.com>
 #           Corey Lynch <coreylynch9@gmail.com>
 # License: BSD 3 clause
@@ -29,6 +25,11 @@ def expected_mutual_information(contingency, int n_samples):
     N = <DOUBLE>n_samples
     a = np.ravel(contingency.sum(axis=1).astype(np.int32, copy=False))
     b = np.ravel(contingency.sum(axis=0).astype(np.int32, copy=False))
+
+    # any labelling with zero entropy implies EMI = 0
+    if a.size == 1 or b.size == 1:
+        return 0.0
+
     # There are three major terms to the EMI equation, which are multiplied to
     # and then summed over varying nij values.
     # While nijs[0] will never be used, having it simplifies the indexing.

@@ -33,9 +33,8 @@ errors for the pixels. Important artifacts are observed on the
 reconstructed image, contrary to the L1 penalization. Note in particular
 the circular artifact separating the pixels in the corners, that have
 contributed to fewer projections than the central disk.
-"""
 
-print(__doc__)
+"""
 
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
 # License: BSD 3 clause
@@ -82,7 +81,7 @@ def build_projection_operator(l_x, n_dir):
     X, Y = _generate_center_coordinates(l_x)
     angles = np.linspace(0, np.pi, n_dir, endpoint=False)
     data_inds, weights, camera_inds = [], [], []
-    data_unravel_indices = np.arange(l_x ** 2)
+    data_unravel_indices = np.arange(l_x**2)
     data_unravel_indices = np.hstack((data_unravel_indices, data_unravel_indices))
     for i, angle in enumerate(angles):
         Xrot = np.cos(angle) * X - np.sin(angle) * Y

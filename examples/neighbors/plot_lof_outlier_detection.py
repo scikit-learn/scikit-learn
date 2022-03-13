@@ -21,13 +21,12 @@ smaller than the maximum number of close by samples that can potentially be
 local outliers.
 In practice, such information is generally not available, and taking
 n_neighbors=20 appears to work well in general.
+
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import LocalOutlierFactor
-
-print(__doc__)
 
 np.random.seed(42)
 

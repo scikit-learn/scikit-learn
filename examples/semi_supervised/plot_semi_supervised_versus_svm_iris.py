@@ -13,7 +13,6 @@ Note that Self-training with 100% of the data is omitted as it is functionally
 identical to training the SVC on 100% of the data.
 
 """
-print(__doc__)
 
 # Authors: Clay Woolam   <clay@woolam.org>
 #          Oliver Rausch <rauscho@ethz.ch>

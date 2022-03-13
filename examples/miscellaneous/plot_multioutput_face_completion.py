@@ -11,7 +11,6 @@ how extremely randomized trees, k nearest neighbors, linear
 regression and ridge regression complete the lower half of those faces.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

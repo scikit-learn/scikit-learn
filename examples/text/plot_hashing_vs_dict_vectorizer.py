@@ -13,10 +13,12 @@ on text documents.
 
 A discrepancy between the number of terms reported for DictVectorizer and
 for FeatureHasher is to be expected due to hash collisions.
+
 """
 
 # Author: Lars Buitinck
 # License: BSD 3 clause
+
 from collections import defaultdict
 import re
 import sys
@@ -70,7 +72,7 @@ print()
 try:
     n_features = int(sys.argv[1])
 except IndexError:
-    n_features = 2 ** 18
+    n_features = 2**18
 except ValueError:
     print("not a valid number of features: %r" % sys.argv[1])
     sys.exit(1)

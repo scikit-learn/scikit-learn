@@ -7,7 +7,7 @@ import numpy as np
 from scipy import sparse
 import numbers
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
@@ -36,7 +36,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         - return list of features (arrays): this list of features is
           constructed feature by feature to preserve the data types
           of pandas DataFrame columns, as otherwise information is lost
-          and cannot be used, eg for the `categories_` attribute.
+          and cannot be used, e.g. for the `categories_` attribute.
 
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
@@ -218,12 +218,12 @@ class OneHotEncoder(_BaseEncoder):
 
         .. versionadded:: 0.20
 
-    drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
+    drop : {'first', 'if_binary'} or an array-like of shape (n_features,), \
             default=None
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression.
+        into an unregularized linear regression model.
 
         However, dropping one category breaks the symmetry of the original
         representation and can therefore induce a bias in downstream models,
@@ -544,7 +544,7 @@ class OneHotEncoder(_BaseEncoder):
 
         indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
-        np.sum(X_mask, axis=1, out=indptr[1:])
+        np.sum(X_mask, axis=1, out=indptr[1:], dtype=indptr.dtype)
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
@@ -564,7 +564,7 @@ class OneHotEncoder(_BaseEncoder):
 
         When unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category. If the
-        feature with the unknown category has a dropped caregory, the dropped
+        feature with the unknown category has a dropped category, the dropped
         category will be its inverse.
 
         Parameters
@@ -702,9 +702,6 @@ class OneHotEncoder(_BaseEncoder):
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
-        Returns `input_features` as this transformation doesn't add or drop
-        features.
-
         Parameters
         ----------
         input_features : array-like of str or None, default=None
@@ -712,7 +709,8 @@ class OneHotEncoder(_BaseEncoder):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -734,7 +732,7 @@ class OneHotEncoder(_BaseEncoder):
         return np.asarray(feature_names, dtype=object)
 
 
-class OrdinalEncoder(_BaseEncoder):
+class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
     """
     Encode categorical features as an integer array.
 

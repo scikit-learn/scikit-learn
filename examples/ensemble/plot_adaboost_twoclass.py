@@ -16,7 +16,6 @@ containing a desired purity of class B, for example, by only selecting samples
 with a decision score above some value.
 
 """
-print(__doc__)
 
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #

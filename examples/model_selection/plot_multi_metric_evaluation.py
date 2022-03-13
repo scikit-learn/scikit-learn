@@ -13,6 +13,7 @@ ending in ``'_<scorer_name>'`` (``'mean_test_precision'``,
 
 The ``best_estimator_``, ``best_index_``, ``best_score_`` and ``best_params_``
 correspond to the scorer (key) that is set to the ``refit`` attribute.
+
 """
 
 # Author: Raghav RV <rvraghav93@gmail.com>
@@ -26,8 +27,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
-
-print(__doc__)
 
 # %%
 # Running ``GridSearchCV`` using multiple evaluation metrics
@@ -47,9 +46,10 @@ scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
 # ``gs.best_index_``
 gs = GridSearchCV(
     DecisionTreeClassifier(random_state=42),
-    param_grid={"min_samples_split": range(2, 403, 10)},
+    param_grid={"min_samples_split": range(2, 403, 20)},
     scoring=scoring,
     refit="AUC",
+    n_jobs=2,
     return_train_score=True,
 )
 gs.fit(X, y)

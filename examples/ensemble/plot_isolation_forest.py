@@ -22,7 +22,6 @@ Hence, when a forest of random trees collectively produce shorter path lengths
 for particular samples, they are highly likely to be anomalies.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
