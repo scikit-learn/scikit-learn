@@ -165,21 +165,19 @@ projection transformer::
 .. _random_projection_inverse_transform:
 
 Inverse Transform
-========================
-By default, the random projection transformers do not have an
-``inverse_transform`` method. However, if the constructor option
-``fit_inverse_transform`` is set to ``True``, then the ``inverse_transform``
-method is enabled.
-
-In this case, after creating the random ``components_`` matrix during fitting,
-the transformer computes the pseudo-inverse of this matrix and stores it in
+=================
+The random projection transformers have ``compute_inverse_components`` parameter. When
+set to True, after creating the random ``components_`` matrix during fitting,
+the transformer computes the pseudo-inverse of this matrix and stores it as
 ``inverse_components_``. The ``inverse_components_`` matrix has shape
 :math:`n_{features} \times n_{components}`, and it is always a dense matrix,
 regardless of whether the components matrix is sparse or dense. So depending on
 the number of features and components, it may use a lot of memory.
 
 When the ``inverse_transform`` method is called, it computes the product of the
-input ``X`` and the transpose of ``inverse_components_``. The result is always
+input ``X`` and the transpose of the inverse components. If the inverse components have
+been computed during fit, they are reused at each call to ``inverse_transform``.
+Otherwise they are recomputed each time, which can be costly. The result is always
 dense, even if ``X`` is sparse.
 
 Here a small code example which illustrates how to use the inverse transform
@@ -189,7 +187,7 @@ feature::
   >>> from sklearn.random_projection import SparseRandomProjection
   >>> X = np.random.rand(100, 10000)
   >>> transformer = SparseRandomProjection(
-  ...   fit_inverse_transform=True
+  ...   compute_inverse_components=True
   ... )
   ...
   >>> X_new = transformer.fit_transform(X)
