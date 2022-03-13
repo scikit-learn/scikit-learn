@@ -292,84 +292,6 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-def _svd_for_sparse_matrix(a):
-    """SVD decomposition for sparse matrices, based on `scipy.sparse.linalg.svds`.
-
-    Parameters
-    ----------
-    a : sparse matrix,
-        The sparse matrix to decompose.
-
-    Returns
-    -------
-    U : ndarray
-        Unitary matrix having left singular vectors as columns.
-        Of shape ``(M, K)``.
-    s : ndarray
-        The singular values, sorted in non-increasing order.
-        Of shape (K,), with ``K = min(M, N)``.
-    Vt : ndarray
-        Unitary matrix having right singular vectors as rows.
-        Of shape ``(K, N)``.
-    """
-    # To work around the fact that `svds`` can only return up to max(a.shape) - 1
-    # components (missing one), we add an extra row or column (or both) full of
-    # zeros, and at the end we truncate the results to the appropriate size.
-    n_rows, n_cols = a.shape
-    if n_rows <= n_cols:
-        zeros_row = sp.csr_matrix(([], [], [0, 0]), shape=(1, n_cols))
-        a = sp.vstack([a, zeros_row])  # add an extra row full of zeros
-    if n_rows >= n_cols:
-        new_n_rows = n_rows + 1 if n_rows <= n_cols else n_rows
-        zeros_col = sp.csr_matrix(
-            ([], [], np.zeros(new_n_rows + 1)), shape=(new_n_rows, 1)
-        )
-        a = sp.hstack([a, zeros_col])  # add an extra column full of zeros
-    u, s, vt = sp.linalg.svds(a, k=min(a.shape) - 1)
-    # Since svds() does not sort the components, we must do it here.
-    sorted_idx = np.flip(np.argsort(s), axis=0)
-    u = u[:-1, sorted_idx] if n_rows <= n_cols else u[:, sorted_idx]
-    s = s[sorted_idx]
-    vt = vt[sorted_idx, :-1] if n_rows >= n_cols else vt[sorted_idx]
-    return u, s, vt
-
-
-def _pinv_for_sparse_matrix(a):
-    """Compute the (Moore-Penrose) pseudo-inverse of a sparse matrix.
-
-    Calculate a generalized inverse of a sparse matrix using its singular-value
-    decomposition ``U @ S @ V`` and using only the columns/rows that are
-    associated with significant singular values.
-
-    If ``s`` is the maximum singular value of ``a``, then the significance
-    cut-off value is determined by ``rtol * s``, where ``rtol`` is equal to
-    ``max(a.shape) * eps``, and ``eps`` is the machine precision value of the
-    datatype of ``a``. Any singular value below this value is assumed
-    insignificant.
-
-    This function is adapted from ``scipy.linalg.pinv`` and will probably be
-    removed once SciPy provides an implementation of ``pinv`` compatible with
-    sparse arrays.
-
-    Parameters
-    ----------
-    a : (M, N) sparse matrix
-        Sparse matrix to be pseudo-inverted.
-
-    Returns
-    -------
-    B : (N, M) ndarray
-        The dense pseudo-inverse of the sparse matrix `a`.
-    """
-    u, s, vt = _svd_for_sparse_matrix(a)
-    type_ = u.dtype.char.lower()
-    min_s = np.max(s) * max(a.shape) * np.finfo(type_).eps
-    rank = np.sum(s > min_s)
-    u = u[:, :rank]
-    u /= s[:rank]
-    return (u @ vt[:rank]).conj().T
-
-
 class BaseRandomProjection(
     TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
 ):
@@ -386,13 +308,13 @@ class BaseRandomProjection(
         *,
         eps=0.1,
         dense_output=False,
-        fit_inverse_transform=False,
+        compute_inverse_components=False,
         random_state=None,
     ):
         self.n_components = n_components
         self.eps = eps
         self.dense_output = dense_output
-        self.fit_inverse_transform = fit_inverse_transform
+        self.compute_inverse_components = compute_inverse_components
         self.random_state = random_state
 
     @abstractmethod
@@ -409,11 +331,17 @@ class BaseRandomProjection(
 
         Returns
         -------
-        components : {ndarray, sparse matrix} of shape \
-                (n_components, n_features)
+        components : {ndarray, sparse matrix} of shape (n_components, n_features)
             The generated random matrix. Sparse matrix will be of CSR format.
 
         """
+
+    def _compute_inverse_components(self):
+        """Compute the pseudo-inverse of the (densified) components."""
+        components = self.components_
+        if sp.issparse(components):
+            components = components.toarray()
+        return linalg.pinv(components, check_finite=False)
 
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix.
@@ -485,12 +413,8 @@ class BaseRandomProjection(
             " not the proper shape."
         )
 
-        if self.fit_inverse_transform:
-            components = self.components_
-            if sp.issparse(components):
-                self.inverse_components_ = _pinv_for_sparse_matrix(components)
-            else:
-                self.inverse_components_ = linalg.pinv(components, check_finite=False)
+        if self.compute_inverse_components:
+            self.inverse_components_ = self._compute_inverse_components()
 
         return self
 
@@ -530,12 +454,14 @@ class BaseRandomProjection(
         """
         return self.n_components
 
-    @available_if(lambda self: self.fit_inverse_transform)
     def inverse_transform(self, X):
         """Project data back to its original space.
 
         Returns an array X_original whose transform would be X. Note that even
         if X is sparse, X_original is dense: this may use a lot of RAM.
+
+        If `compute_inverse_components` is False, the inverse of the components is
+        computed during each call to `inverse_transform` which can be costly.
 
         Parameters
         ----------
@@ -548,8 +474,15 @@ class BaseRandomProjection(
             Reconstructed data.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=("csr", "csc"))
-        return X @ self.inverse_components_.T
+
+        X = check_array(
+            X, dtype=[np.float64, np.float32], accept_sparse=("csr", "csc"))
+
+        if self.compute_inverse_components:
+            return X @ self.inverse_components_.T
+
+        inverse_components = self._compute_inverse_components()
+        return X @ inverse_components.T
 
     def _more_tags(self):
         return {
@@ -588,7 +521,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
-    fit_inverse_transform : bool, default=False
+    compute_inverse_components : bool, default=False
         Learn the inverse transform by computing the pseudo-inverse of the
         components during fit. Note that computing the pseudo-inverse does not
         scale well to large matrices.
@@ -609,7 +542,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     inverse_components_ : ndarray of shape (n_features, n_components)
         Pseudo-inverse of the components, only computed if
-        `fit_inverse_transform` is True.
+        `compute_inverse_components` is True.
 
         .. versionadded:: 1.1
 
@@ -646,14 +579,14 @@ class GaussianRandomProjection(BaseRandomProjection):
         n_components="auto",
         *,
         eps=0.1,
-        fit_inverse_transform=False,
+        compute_inverse_components=False,
         random_state=None,
     ):
         super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=True,
-            fit_inverse_transform=fit_inverse_transform,
+            compute_inverse_components=compute_inverse_components,
             random_state=random_state,
         )
 
@@ -743,7 +676,7 @@ class SparseRandomProjection(BaseRandomProjection):
         If False, the projected data uses a sparse representation if
         the input is sparse.
 
-    fit_inverse_transform : bool, default=False
+    compute_inverse_components : bool, default=False
         Learn the inverse transform by computing the pseudo-inverse of the
         components during fit. Note that the pseudo-inverse is always a dense
         array, even if the training data was sparse. This means that it might be
@@ -768,7 +701,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     inverse_components_ : ndarray of shape (n_features, n_components)
         Pseudo-inverse of the components, only computed if
-        `fit_inverse_transform` is True.
+        `compute_inverse_components` is True.
 
         .. versionadded:: 1.1
 
@@ -823,14 +756,14 @@ class SparseRandomProjection(BaseRandomProjection):
         density="auto",
         eps=0.1,
         dense_output=False,
-        fit_inverse_transform=False,
+        compute_inverse_components=False,
         random_state=None,
     ):
         super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=dense_output,
-            fit_inverse_transform=fit_inverse_transform,
+            compute_inverse_components=compute_inverse_components,
             random_state=random_state,
         )
 

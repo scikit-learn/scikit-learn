@@ -386,7 +386,7 @@ def test_inverse_transform(n_samples, n_features, random_projection_cls):
     n_components = 10
 
     random_projection = random_projection_cls(
-        n_components=n_components, fit_inverse_transform=True
+        n_components=n_components, compute_inverse_components=True
     )
 
     X_dense, X_csr = make_sparse_random_data(
@@ -404,15 +404,8 @@ def test_inverse_transform(n_samples, n_features, random_projection_cls):
             )
             projected = random_projection.fit_transform(X)
 
-        components = random_projection.components_
-        inverse_components = random_projection.inverse_components_
-
-        assert inverse_components.shape == (n_features, n_components)
-        if hasattr(components, "toarray"):
-            components = components.toarray()
-        assert_allclose(
-            inverse_components, linalg.pinv(components), atol=1e-10, rtol=1e-7
-        )
+        assert hasattr(random_projection, "inverse_components_")
+        assert random_projection.inverse_components_.shape == (n_features, n_components)
 
         projected_back = random_projection.inverse_transform(projected)
         assert projected_back.shape == X.shape
@@ -420,17 +413,7 @@ def test_inverse_transform(n_samples, n_features, random_projection_cls):
         projected_again = random_projection.transform(projected_back)
         if hasattr(projected, "toarray"):
             projected = projected.toarray()
-        assert_allclose(projected, projected_again, atol=1e-10, rtol=1e-7)
-
-
-@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
-def test_no_inverse_transform_by_default(random_projection_cls):
-    random_projection = random_projection_cls(n_components=2)
-    projected = random_projection.fit_transform(data)
-    with pytest.raises(AttributeError):
-        random_projection.inverse_transform(projected)
-    with pytest.raises(AttributeError):
-        random_projection.inverse_components_
+        assert_allclose(projected, projected_again, rtol=1e-7, atol=1e-10)
 
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
