@@ -154,7 +154,7 @@ def make_classification(
 
     y : ndarray of shape (n_samples,)
         The integer labels for class membership of each sample.
-    
+
     See Also
     --------
     make_blobs : Simplified variant.
@@ -168,7 +168,7 @@ def make_classification(
     References
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
-           selection benchmark", 2003.  
+           selection benchmark", 2003.
     """
     generator = check_random_state(random_state)
 
