@@ -3,7 +3,6 @@ Tests for sklearn.cluster._feature_agglomeration
 """
 # Authors: Sergul Aydore 2017
 import numpy as np
-import pytest
 import warnings
 
 from numpy.testing import assert_array_equal
