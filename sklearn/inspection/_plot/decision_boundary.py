@@ -2,6 +2,7 @@ from functools import reduce
 
 import numpy as np
 
+from ...preprocessing import LabelEncoder
 from ...utils import check_matplotlib_support
 from ...utils import _safe_indexing
 from ...base import is_regressor
@@ -299,14 +300,11 @@ class DecisionBoundaryDisplay:
         pred_func = _check_boundary_response_method(estimator, response_method)
         response = pred_func(np.c_[xx0.ravel(), xx1.ravel()])
 
-        # convert strings predictions to integers
-        if pred_func.__name__ == "predict" and response.dtype.kind in {"O", "U"}:
-            class_name_to_idx = {
-                name: idx for idx, name in enumerate(estimator.classes_)
-            }
-            response = np.asarray(
-                [class_name_to_idx[target] for target in response], dtype=np.int32
-            )
+        # convert classes predictions into integers
+        if pred_func.__name__ == "predict" and hasattr(estimator, "classes_"):
+            encoder = LabelEncoder()
+            encoder.classes_ = estimator.classes_
+            response = encoder.transform(response)
 
         if response.ndim != 1:
             if is_regressor(estimator):
