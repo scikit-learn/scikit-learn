@@ -391,7 +391,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    with `pytest`, but it is usually not recommended since it takes a long
    time. It is often enough to only run the test related to your changes:
    for example, if you changed something in
-   `sklearn/linear_model/logistic.py`, running the following commands will
+   `sklearn/linear_model/_logistic.py`, running the following commands will
    usually be enough:
 
    - `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
