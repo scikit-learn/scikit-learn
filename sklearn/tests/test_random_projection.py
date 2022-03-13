@@ -3,7 +3,6 @@ from typing import List, Any
 import warnings
 
 import numpy as np
-import scipy.linalg as linalg
 import scipy.sparse as sp
 import pytest
 
