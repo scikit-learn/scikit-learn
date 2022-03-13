@@ -589,7 +589,10 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 
             # Give consistent eigenvectors for both svd solvers
-            u *= np.sign(u[0])
+            # Uses same semantics as svd_flip
+            max_abs_cols = np.argmax(np.abs(u), axis=0)
+            signs = np.sign(u[max_abs_cols, range(u.shape[1])])
+            u *= signs
 
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d
