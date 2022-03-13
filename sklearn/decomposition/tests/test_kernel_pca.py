@@ -196,15 +196,22 @@ def test_kernel_pca_n_components():
     X_pred = rng.random_sample((2, 4))
 
     for eigen_solver in ("dense", "arpack", "randomized"):
-        with pytest.raises(ValueError):
-            kpca = KernelPCA(n_components=0, eigen_solver=eigen_solver)
-            shape = kpca.fit(X_fit)
-
         for c in [1, 2, 4]:
             kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver)
             shape = kpca.fit(X_fit).transform(X_pred).shape
 
             assert shape == (2, c)
+
+
+@pytest.mark.parametrize("solver", ["dense", "arpack", "randomized"])
+@pytest.mark.parametrize("n_components", [-1, 0])
+def test_kernal_pca_too_few_components(solver, n_components):
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
+    kpca = KernelPCA(n_components=n_components, eigen_solver=solver)
+    msg = "n_components.* must be >= 1"
+    with pytest.raises(ValueError, match=msg):
+        kpca.fit(X_fit)
 
 
 def test_remove_zero_eig():
