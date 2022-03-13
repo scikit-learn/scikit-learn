@@ -254,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy black==22.1.0
+        pip install pytest pytest-cov flake8 mypy numpydoc black==22.1.0
 
 .. _upstream:
 
@@ -391,10 +391,10 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    with `pytest`, but it is usually not recommended since it takes a long
    time. It is often enough to only run the test related to your changes:
    for example, if you changed something in
-   `sklearn/linear_model/logistic.py`, running the following commands will
+   `sklearn/linear_model/_logistic.py`, running the following commands will
    usually be enough:
 
-   - `pytest sklearn/linear_model/logistic.py` to make sure the doctest
+   - `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
      examples are correct
    - `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
      specific to the file

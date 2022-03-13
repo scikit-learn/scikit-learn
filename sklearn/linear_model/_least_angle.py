@@ -17,9 +17,8 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel
 
-from ._base import LinearModel
-from ._base import _deprecate_normalize
-from ._base import LinearRegression
+from ._base import LinearModel, LinearRegression
+from ._base import _deprecate_normalize, _preprocess_data
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -1010,7 +1009,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, normalize, self.copy_X
         )
 
@@ -2187,7 +2186,7 @@ class LassoLarsIC(LassoLars):
             copy_X = self.copy_X
         X, y = self._validate_data(X, y, y_numeric=True)
 
-        X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
+        X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, self.fit_intercept, _normalize, copy_X
         )
 
