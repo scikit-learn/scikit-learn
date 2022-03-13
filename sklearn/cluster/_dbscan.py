@@ -458,3 +458,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}
