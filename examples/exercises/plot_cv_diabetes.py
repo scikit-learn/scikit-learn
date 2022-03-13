@@ -10,18 +10,15 @@ This exercise is used in the :ref:`cv_estimators_tut` part of the
 
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn import datasets
-from sklearn.linear_model import LassoCV
-from sklearn.linear_model import Lasso
-from sklearn.model_selection import KFold
-from sklearn.model_selection import GridSearchCV
-
 # %%
 # Load dataset and apply GridSearchCV
 # -----------------------------------
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn import datasets
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import GridSearchCV
 
 X, y = datasets.load_diabetes(return_X_y=True)
 X = X[:150]
@@ -69,6 +66,10 @@ plt.xlim([alphas[0], alphas[-1]])
 # performs cross-validation on the training data it receives).
 # We use external cross-validation to see how much the automatically obtained
 # alphas differ across different cross-validation folds.
+
+from sklearn.linear_model import LassoCV
+from sklearn.model_selection import KFold
+
 lasso_cv = LassoCV(alphas=alphas, random_state=0, max_iter=10000)
 k_fold = KFold(3)
 
