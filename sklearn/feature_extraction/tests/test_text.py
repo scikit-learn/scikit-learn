@@ -3,6 +3,8 @@ from collections.abc import Mapping
 import re
 
 import pytest
+import warnings
+
 from scipy import sparse
 
 from sklearn.feature_extraction.text import strip_tags
@@ -451,7 +453,7 @@ def test_countvectorizer_uppercase_in_vocab():
     with pytest.warns(UserWarning, match=message):
         vectorizer.fit(vocabulary)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         vectorizer.transform(vocabulary)
     assert not [w.message for w in record]
 
@@ -1421,7 +1423,7 @@ def test_vectorizer_stop_words_inconsistent():
         assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         vec.fit_transform(["hello world"])
     assert not [w.message for w in record]
     assert _check_stop_words_consistency(vec) is None

@@ -11,6 +11,7 @@ import numpy as np
 from scipy.optimize import approx_fprime
 
 import pytest
+import warnings
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
@@ -478,7 +479,7 @@ def test_warning_bounds():
         length_scale_bounds=[1e3, 1e5]
     )
     gpr_sum = GaussianProcessRegressor(kernel=kernel_sum)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         gpr_sum.fit(X, y)
 
     assert len(record) == 2
@@ -506,7 +507,7 @@ def test_warning_bounds():
     kernel_dims = RBF(length_scale=[1.0, 2.0], length_scale_bounds=[1e1, 1e2])
     gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         gpr_dims.fit(X_tile, y)
 
     assert len(record) == 2

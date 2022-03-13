@@ -8,6 +8,7 @@ import numpy as np
 from scipy.optimize import approx_fprime
 
 import pytest
+import warnings
 
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import (
@@ -207,7 +208,7 @@ def test_warning_bounds():
         length_scale_bounds=[1e3, 1e5]
     )
     gpc_sum = GaussianProcessClassifier(kernel=kernel_sum)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         gpc_sum.fit(X, y)
 
     assert len(record) == 2
@@ -235,7 +236,7 @@ def test_warning_bounds():
     kernel_dims = RBF(length_scale=[1.0, 2.0], length_scale_bounds=[1e1, 1e2])
     gpc_dims = GaussianProcessClassifier(kernel=kernel_dims)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         gpc_dims.fit(X_tile, y)
 
     assert len(record) == 2

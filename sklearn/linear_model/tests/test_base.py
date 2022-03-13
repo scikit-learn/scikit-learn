@@ -5,7 +5,7 @@
 # License: BSD 3 clause
 
 import pytest
-
+import warnings
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -358,7 +358,7 @@ def test_linear_regression_pd_sparse_dataframe_warning():
     df["0"] = pd.arrays.SparseArray(df["0"], fill_value=0)
     assert hasattr(df, "sparse")
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
     assert not [w.message for w in record]
 

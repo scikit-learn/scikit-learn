@@ -4,6 +4,7 @@
 
 import numpy as np
 import pytest
+import warnings
 from scipy import interpolate, sparse
 from copy import deepcopy
 import joblib
@@ -98,7 +99,7 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
         y = np.stack((y, y), axis=1)
 
     model = CoordinateDescentModel(normalize=normalize)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]
@@ -1428,7 +1429,7 @@ def test_convergence_warnings():
         MultiTaskElasticNet(max_iter=1, tol=-1).fit(X, y)
 
     # check that the model converges w/o warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         MultiTaskElasticNet().fit(X, y)
 
     assert not [w.message for w in record]
@@ -1441,7 +1442,7 @@ def test_sparse_input_convergence_warning():
         ElasticNet(max_iter=1, tol=0).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     # check that the model converges w/o warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         Lasso().fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not [w.message for w in record]
