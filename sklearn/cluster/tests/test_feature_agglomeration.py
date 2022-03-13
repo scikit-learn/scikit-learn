@@ -18,10 +18,10 @@ def test_feature_agglomeration():
 
     agglo_mean = FeatureAgglomeration(n_clusters=n_clusters, pooling_func=np.mean)
     agglo_median = FeatureAgglomeration(n_clusters=n_clusters, pooling_func=np.median)
-    with warnings.catch_warnings(record=True)  as record:
+    with warnings.catch_warnings(record=True) as record:
         agglo_mean.fit(X)
     assert not [w.message for w in record]
-    with warnings.catch_warnings(record=True)  as record:
+    with warnings.catch_warnings(record=True) as record:
         agglo_median.fit(X)
     assert not [w.message for w in record]
 
