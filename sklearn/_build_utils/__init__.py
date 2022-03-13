@@ -64,11 +64,12 @@ def cythonize_extensions(top_path, config):
     with contextlib.suppress(ImportError):
         import joblib
 
-        if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
-            # earlier joblib versions don't account for CPU affinity
-            # constraints, and may over-estimate the number of available
-            # CPU particularly in CI (cf loky#114)
-            n_jobs = joblib.cpu_count()
+        n_jobs = joblib.cpu_count()
+
+    # Additional checks for Cython
+    cython_enable_debug_directives = (
+        os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
+    )
 
     config.ext_modules = cythonize(
         config.ext_modules,
@@ -76,11 +77,18 @@ def cythonize_extensions(top_path, config):
         compile_time_env={
             "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
         },
-        compiler_directives={"language_level": 3},
+        compiler_directives={
+            "language_level": 3,
+            "boundscheck": cython_enable_debug_directives,
+            "wraparound": False,
+            "initializedcheck": False,
+            "nonecheck": False,
+            "cdivision": True,
+        },
     )
 
 
-def gen_from_templates(templates, top_path):
+def gen_from_templates(templates):
     """Generate cython files from a list of templates"""
     # Lazy import because cython is not a runtime dependency.
     from Cython import Tempita

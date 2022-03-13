@@ -935,8 +935,8 @@ class ExponentialLoss(ClassificationLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
-        y_ = -(2.0 * y - 1.0)
-        return y_ * np.exp(y_ * raw_predictions.ravel())
+        y_ = 2.0 * y - 1.0
+        return y_ * np.exp(-y_ * raw_predictions.ravel())
 
     def _update_terminal_region(
         self,

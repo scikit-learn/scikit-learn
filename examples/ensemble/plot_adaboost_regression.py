@@ -12,7 +12,6 @@ detail.
 .. [1] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
 """
-print(__doc__)
 
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #
@@ -32,8 +31,9 @@ y = np.sin(X).ravel() + np.sin(6 * X).ravel() + rng.normal(0, 0.1, X.shape[0])
 # Fit regression model
 regr_1 = DecisionTreeRegressor(max_depth=4)
 
-regr_2 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=4),
-                           n_estimators=300, random_state=rng)
+regr_2 = AdaBoostRegressor(
+    DecisionTreeRegressor(max_depth=4), n_estimators=300, random_state=rng
+)
 
 regr_1.fit(X, y)
 regr_2.fit(X, y)

@@ -5,6 +5,7 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import numbers
 
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
@@ -13,6 +14,7 @@ from scipy.sparse.linalg import eigsh, svds
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..utils import check_random_state
+from ..utils import check_scalar
 
 from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
 
@@ -27,7 +29,6 @@ def _scale_normalize(X):
 
     Returns the normalized matrix and the row and column scaling
     factors.
-
     """
     X = make_nonnegative(X)
     row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1))).squeeze()
@@ -48,7 +49,6 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     """Normalize rows and columns of ``X`` simultaneously so that all
     rows sum to one constant and all columns sum to a different
     constant.
-
     """
     # According to paper, this can also be done more efficiently with
     # deviation reduction and balancing algorithms.
@@ -104,7 +104,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_init = n_init
         self.random_state = random_state
 
-    def _check_parameters(self):
+    def _check_parameters(self, n_samples):
         legal_svd_methods = ("randomized", "arpack")
         if self.svd_method not in legal_svd_methods:
             raise ValueError(
@@ -112,26 +112,32 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                     self.svd_method, legal_svd_methods
                 )
             )
+        check_scalar(self.n_init, "n_init", target_type=numbers.Integral, min_val=1)
 
     def fit(self, X, y=None):
-        """Creates a biclustering for X.
+        """Create a biclustering for X.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Training data.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
+        Returns
+        -------
+        self : object
+            SpectralBiclustering instance.
         """
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
-        self._check_parameters()
+        self._check_parameters(X.shape[0])
         self._fit(X)
         return self
 
     def _svd(self, array, n_components, n_discard):
         """Returns first `n_components` left and right singular
         vectors u and v, discarding the first `n_discard`.
-
         """
         if self.svd_method == "randomized":
             kwargs = {}
@@ -195,7 +201,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                 "check_estimator_sparse_data": "does not fail gracefully",
                 "check_methods_subset_invariance": "empty array passed inside",
                 "check_dont_overwrite_parameters": "empty array passed inside",
-                "check_fit2d_predict1d": "emptry array passed inside",
+                "check_fit2d_predict1d": "empty array passed inside",
             }
         }
 
@@ -278,6 +284,23 @@ class SpectralCoclustering(BaseSpectral):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    SpectralBiclustering : Partitions rows and columns under the assumption
+        that the data has an underlying checkerboard structure.
+
+    References
+    ----------
+    * :doi:`Dhillon, Inderjit S, 2001. Co-clustering documents and words using
+      bipartite spectral graph partitioning.
+      <10.1145/502512.502550>`
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralCoclustering
@@ -291,14 +314,6 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 0], dtype=int32)
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
-
-    References
-    ----------
-
-    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
-      bipartite spectral graph partitioning
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
-
     """
 
     def __init__(
@@ -314,6 +329,16 @@ class SpectralCoclustering(BaseSpectral):
     ):
         super().__init__(
             n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state
+        )
+
+    def _check_parameters(self, n_samples):
+        super()._check_parameters(n_samples)
+        check_scalar(
+            self.n_clusters,
+            "n_clusters",
+            target_type=numbers.Integral,
+            min_val=1,
+            max_val=n_samples,
         )
 
     def _fit(self, X):
@@ -427,6 +452,23 @@ class SpectralBiclustering(BaseSpectral):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    SpectralCoclustering : Spectral Co-Clustering algorithm (Dhillon, 2001).
+
+    References
+    ----------
+
+    * :doi:`Kluger, Yuval, et. al., 2003. Spectral biclustering of microarray
+      data: coclustering genes and conditions.
+      <10.1101/gr.648603>`
+
     Examples
     --------
     >>> from sklearn.cluster import SpectralBiclustering
@@ -440,14 +482,6 @@ class SpectralBiclustering(BaseSpectral):
     array([0, 1], dtype=int32)
     >>> clustering
     SpectralBiclustering(n_clusters=2, random_state=0)
-
-    References
-    ----------
-
-    * Kluger, Yuval, et. al., 2003. `Spectral biclustering of microarray
-      data: coclustering genes and conditions
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
-
     """
 
     def __init__(
@@ -471,8 +505,8 @@ class SpectralBiclustering(BaseSpectral):
         self.n_components = n_components
         self.n_best = n_best
 
-    def _check_parameters(self):
-        super()._check_parameters()
+    def _check_parameters(self, n_samples):
+        super()._check_parameters(n_samples)
         legal_methods = ("bistochastic", "scale", "log")
         if self.method not in legal_methods:
             raise ValueError(
@@ -481,36 +515,49 @@ class SpectralBiclustering(BaseSpectral):
                 )
             )
         try:
-            int(self.n_clusters)
-        except TypeError:
+            check_scalar(
+                self.n_clusters,
+                "n_clusters",
+                target_type=numbers.Integral,
+                min_val=1,
+                max_val=n_samples,
+            )
+        except (ValueError, TypeError):
             try:
-                r, c = self.n_clusters
-                int(r)
-                int(c)
+                n_row_clusters, n_column_clusters = self.n_clusters
+                check_scalar(
+                    n_row_clusters,
+                    "n_row_clusters",
+                    target_type=numbers.Integral,
+                    min_val=1,
+                    max_val=n_samples,
+                )
+                check_scalar(
+                    n_column_clusters,
+                    "n_column_clusters",
+                    target_type=numbers.Integral,
+                    min_val=1,
+                    max_val=n_samples,
+                )
             except (ValueError, TypeError) as e:
                 raise ValueError(
                     "Incorrect parameter n_clusters has value:"
-                    " {}. It should either be a single integer"
+                    f" {self.n_clusters}. It should either be a single integer"
                     " or an iterable with two integers:"
                     " (n_row_clusters, n_column_clusters)"
+                    " And the values are should be in the"
+                    " range: (1, n_samples)"
                 ) from e
-        if self.n_components < 1:
-            raise ValueError(
-                "Parameter n_components must be greater than 0,"
-                " but its value is {}".format(self.n_components)
-            )
-        if self.n_best < 1:
-            raise ValueError(
-                "Parameter n_best must be greater than 0, but its value is {}".format(
-                    self.n_best
-                )
-            )
-        if self.n_best > self.n_components:
-            raise ValueError(
-                "n_best cannot be larger than n_components, but {} >  {}".format(
-                    self.n_best, self.n_components
-                )
-            )
+        check_scalar(
+            self.n_components, "n_components", target_type=numbers.Integral, min_val=1
+        )
+        check_scalar(
+            self.n_best,
+            "n_best",
+            target_type=numbers.Integral,
+            min_val=1,
+            max_val=self.n_components,
+        )
 
     def _fit(self, X):
         n_sv = self.n_components

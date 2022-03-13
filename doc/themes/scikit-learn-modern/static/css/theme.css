@@ -650,14 +650,16 @@ table.longtable tr.row-odd {
   overflow: auto;
 }
 
-code.descname {
+span.descname {
   font-weight: bold;
   background-color: transparent;
   padding: 0;
+  font-family: monospace;
 }
 
-code.descclassname {
+span.descclassname {
   background-color: transparent;
+  font-family: monospace;
 }
 
 .viewcode-link {
@@ -714,8 +716,9 @@ dl.field-list > dt:after {
 
 .classifier::before {
   font-style: normal;
-  margin: 0.3em;
+  margin: 0 0.3em;
   content: ":";
+  display: inline-block;
 }
 
 dd {
@@ -1159,8 +1162,8 @@ div.highlight span.sk-expandable:before {
   display: block;
 }
 
-#quickstart-conda:checked ~ label[for="quickstart-venv"]:before  {
-  content: "Use conda environment";
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] {
+  display: none;
 }
 
 /* for pip */
@@ -1237,7 +1240,7 @@ table.sk-sponsor-table td {
   text-align: center
 }
 
-/* pygments - highlightning */
+/* pygments - highlighting */
 
 .highlight .hll { background-color: #ffffcc }
 .highlight  { background: #f8f8f8; }

@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -69,6 +70,12 @@ class HasNoPredict:
     pass
 
 
+class HasPredictAsNDArray:
+    """A mock sub-estimator where predict is a NumPy array"""
+
+    predict = np.ones((10, 2), dtype=np.int64)
+
+
 def test_if_delegate_has_method():
     assert hasattr(MetaEst(HasPredict()), "predict")
     assert not hasattr(MetaEst(HasNoPredict()), "predict")
@@ -122,3 +129,13 @@ def test_available_if_unbound_method():
         match="This 'AvailableParameterEstimator' has no attribute 'available_func'",
     ):
         AvailableParameterEstimator.available_func(est)
+
+
+def test_if_delegate_has_method_numpy_array():
+    """Check that we can check for an attribute that is a NumPy array.
+
+    This is a non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/21144
+    """
+    estimator = MetaEst(HasPredictAsNDArray())
+    assert hasattr(estimator, "predict")

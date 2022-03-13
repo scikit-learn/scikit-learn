@@ -69,13 +69,15 @@ def _write_label_html(
     name = html.escape(name)
 
     if name_details is not None:
+        name_details = html.escape(str(name_details))
+        label_class = "sk-toggleable__label sk-toggleable__label-arrow"
+
         checked_str = "checked" if checked else ""
         est_id = uuid.uuid4()
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id="{est_id}" type="checkbox" {checked_str}>'
-            f'<label class="sk-toggleable__label" for="{est_id}">'
-            f"{name}</label>"
+            f'<label for="{est_id}" class="{label_class}">{name}</label>'
             f'<div class="sk-toggleable__content"><pre>{name_details}'
             "</pre></div>"
         )
@@ -174,9 +176,21 @@ _STYLE = """
   display: block;
   width: 100%;
   margin-bottom: 0;
-  padding: 0.2em 0.3em;
+  padding: 0.3em;
   box-sizing: border-box;
   text-align: center;
+}
+#$id label.sk-toggleable__label-arrow:before {
+  content: "▸";
+  float: left;
+  margin-right: 0.25em;
+  color: #696969;
+}
+#$id label.sk-toggleable__label-arrow:hover:before {
+  color: black;
+}
+#$id div.sk-estimator:hover label.sk-toggleable__label-arrow:before {
+  color: black;
 }
 #$id div.sk-toggleable__content {
   max-height: 0;
@@ -195,6 +209,9 @@ _STYLE = """
   max-height: 200px;
   max-width: 100%;
   overflow: auto;
+}
+#$id input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
+  content: "▾";
 }
 #$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
   background-color: #d4ebff;
@@ -216,10 +233,10 @@ _STYLE = """
 #$id div.sk-estimator {
   font-family: monospace;
   background-color: #f0f8ff;
-  margin: 0.25em 0.25em;
   border: 1px dotted black;
   border-radius: 0.25em;
   box-sizing: border-box;
+  margin-bottom: 0.5em;
 }
 #$id div.sk-estimator:hover {
   background-color: #d4ebff;
@@ -247,6 +264,8 @@ _STYLE = """
   flex-direction: column;
   align-items: center;
   background-color: white;
+  padding-right: 0.2em;
+  padding-left: 0.2em;
 }
 #$id div.sk-item {
   z-index: 1;
@@ -256,6 +275,15 @@ _STYLE = """
   align-items: stretch;
   justify-content: center;
   background-color: white;
+}
+#$id div.sk-parallel::before {
+  content: "";
+  position: absolute;
+  border-left: 1px solid gray;
+  box-sizing: border-box;
+  top: 2em;
+  bottom: 0;
+  left: 50%;
 }
 #$id div.sk-parallel-item {
   display: flex;
@@ -276,9 +304,9 @@ _STYLE = """
 }
 #$id div.sk-dashed-wrapped {
   border: 1px dashed gray;
-  margin: 0.2em;
+  margin: 0 0.4em 0.5em 0.4em;
   box-sizing: border-box;
-  padding-bottom: 0.1em;
+  padding-bottom: 0.4em;
   background-color: white;
   position: relative;
 }
@@ -295,8 +323,16 @@ _STYLE = """
   text-align: center;
 }
 #$id div.sk-container {
-  display: inline-block;
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org.
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+  display: inline-block !important;
   position: relative;
+}
+#$id div.sk-text-repr-fallback {
+  display: none;
 }
 """.replace(
     "  ", ""
@@ -324,16 +360,33 @@ def estimator_html_repr(estimator):
         container_id = "sk-" + str(uuid.uuid4())
         style_template = Template(_STYLE)
         style_with_id = style_template.substitute(id=container_id)
+        estimator_str = str(estimator)
+
+        # The fallback message is shown by default and loading the CSS sets
+        # div.sk-text-repr-fallback to display: none to hide the fallback message.
+        #
+        # If the notebook is trusted, the CSS is loaded which hides the fallback
+        # message. If the notebook is not trusted, then the CSS is not loaded and the
+        # fallback message is shown by default.
+        #
+        # The reverse logic applies to HTML repr div.sk-container.
+        # div.sk-container is hidden by default and the loading the CSS displays it.
+        fallback_msg = (
+            "Please rerun this cell to show the HTML repr or trust the notebook."
+        )
         out.write(
             f"<style>{style_with_id}</style>"
-            f'<div id="{container_id}" class"sk-top-container">'
-            '<div class="sk-container">'
+            f'<div id="{container_id}" class="sk-top-container">'
+            '<div class="sk-text-repr-fallback">'
+            f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
+            "</div>"
+            '<div class="sk-container" hidden>'
         )
         _write_estimator_html(
             out,
             estimator,
             estimator.__class__.__name__,
-            str(estimator),
+            estimator_str,
             first_call=True,
         )
         out.write("</div></div>")

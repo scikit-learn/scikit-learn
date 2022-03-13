@@ -257,6 +257,15 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+        # Convert data (X is required to be 2d and indexable)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            dtype=None,
+            force_all_finite=False,
+            multi_output=True,
+        )
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
     def _parallel_args(self):
@@ -295,15 +304,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
         random_state = check_random_state(self.random_state)
 
-        # Convert data (X is required to be 2d and indexable)
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse=["csr", "csc"],
-            dtype=None,
-            force_all_finite=False,
-            multi_output=True,
-        )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
 
@@ -574,6 +574,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     estimators_ : list of estimators
         The collection of fitted base estimators.
@@ -997,6 +1003,12 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     estimators_ : list of estimators
         The collection of fitted sub-estimators.

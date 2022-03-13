@@ -23,7 +23,6 @@ import numpy as np
 from scipy import sparse as sp
 
 from ._expected_mutual_info_fast import expected_mutual_information
-from ...utils.fixes import _astype_copy_false
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 
@@ -228,12 +227,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
     )
     n_c = np.ravel(contingency.sum(axis=1))
     n_k = np.ravel(contingency.sum(axis=0))
-    sum_squares = (contingency.data ** 2).sum()
+    sum_squares = (contingency.data**2).sum()
     C = np.empty((2, 2), dtype=np.int64)
     C[1, 1] = sum_squares - n_samples
     C[0, 1] = contingency.dot(n_k).sum() - sum_squares
     C[1, 0] = contingency.transpose().dot(n_c).sum() - sum_squares
-    C[0, 0] = n_samples ** 2 - C[0, 1] - C[1, 0] - sum_squares
+    C[0, 0] = n_samples**2 - C[0, 1] - C[1, 0] - sum_squares
     return C
 
 
@@ -724,8 +723,8 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     """Mutual Information between two clusterings.
 
-    The Mutual Information is a measure of the similarity between two labels of
-    the same data. Where :math:`|U_i|` is the number of the samples
+    The Mutual Information is a measure of the similarity between two labels
+    of the same data. Where :math:`|U_i|` is the number of the samples
     in cluster :math:`U_i` and :math:`|V_j|` is the number of the
     samples in cluster :math:`V_j`, the Mutual Information
     between clusterings :math:`U` and :math:`V` is given as:
@@ -739,20 +738,23 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching ``label_true`` with
-    ``label_pred`` will return the same score value. This can be useful to
-    measure the agreement of two independent label assignments strategies
-    on the same dataset when the real ground truth is not known.
+    This metric is furthermore symmetric: switching :math:`U` (i.e
+    ``label_true``) with :math:`V` (i.e. ``label_pred``) will return the
+    same score value. This can be useful to measure the agreement of two
+    independent label assignments strategies on the same dataset when the
+    real ground truth is not known.
 
     Read more in the :ref:`User Guide <mutual_info_score>`.
 
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets, called :math:`U` in
+        the above formula.
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets, called :math:`V` in
+        the above formula.
 
     contingency : {ndarray, sparse matrix} of shape \
             (n_classes_true, n_classes_pred), default=None
@@ -763,7 +765,8 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Returns
     -------
     mi : float
-       Mutual information, a non-negative value
+       Mutual information, a non-negative value, measured in nats using the
+       natural logarithm.
 
     Notes
     -----
@@ -797,6 +800,12 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
     pj = np.ravel(contingency.sum(axis=0))
+
+    # Since MI <= min(H(X), H(Y)), any labelling with zero entropy, i.e. containing a
+    # single cluster, implies MI = 0
+    if pi.size == 1 or pj.size == 1:
+        return 0.0
+
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
@@ -829,10 +838,10 @@ def adjusted_mutual_info_score(
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching ``label_true`` with
-    ``label_pred`` will return the same score value. This can be useful to
-    measure the agreement of two independent label assignments strategies
-    on the same dataset when the real ground truth is not known.
+    This metric is furthermore symmetric: switching :math:`U` (``label_true``)
+    with :math:`V` (``labels_pred``) will return the same score value. This can
+    be useful to measure the agreement of two independent label assignments
+    strategies on the same dataset when the real ground truth is not known.
 
     Be mindful that this function is an order of magnitude slower than other
     metrics, such as the Adjusted Rand Index.
@@ -842,10 +851,12 @@ def adjusted_mutual_info_score(
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets, called :math:`U` in
+        the above formula.
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets, called :math:`V` in
+        the above formula.
 
     average_method : str, default='arithmetic'
         How to compute the normalizer in the denominator. Possible options
@@ -862,7 +873,8 @@ def adjusted_mutual_info_score(
     ami: float (upperlimited by 1.0)
        The AMI returns a value of 1 when the two partitions are identical
        (ie perfectly matched). Random partitions (independent labellings) have
-       an expected AMI around 0 on average hence can be negative.
+       an expected AMI around 0 on average hence can be negative. The value is
+       in adjusted nats (based on the natural logarithm).
 
     See Also
     --------
@@ -904,15 +916,18 @@ def adjusted_mutual_info_score(
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
+
     # Special limit cases: no clustering since the data is not split.
+    # It corresponds to both labellings having zero entropy.
     # This is a perfect match hence return 1.0.
     if (
         classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
@@ -979,7 +994,8 @@ def normalized_mutual_info_score(
     Returns
     -------
     nmi : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+       Score between 0.0 and 1.0 in normalized nats (based on the natural
+       logarithm). 1.0 stands for perfectly complete labeling.
 
     See Also
     --------
@@ -1014,24 +1030,30 @@ def normalized_mutual_info_score(
     clusters = np.unique(labels_pred)
 
     # Special limit cases: no clustering since the data is not split.
+    # It corresponds to both labellings having zero entropy.
     # This is a perfect match hence return 1.0.
     if (
         classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
-    # Calculate the expected value for the mutual information
+
+    # At this point mi = 0 can't be a perfect match (the special case of a single
+    # cluster has been dealt with before). Hence, if mi = 0, the nmi must be 0 whatever
+    # the normalization.
+    if mi == 0:
+        return 0.0
+
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    # Avoid 0.0 / 0.0 when either entropy is zero.
-    normalizer = max(normalizer, np.finfo("float64").eps)
-    nmi = mi / normalizer
-    return nmi
+    return mi / normalizer
 
 
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
@@ -1105,7 +1127,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     (n_samples,) = labels_true.shape
 
     c = contingency_matrix(labels_true, labels_pred, sparse=True)
-    c = c.astype(np.int64, **_astype_copy_false(c))
+    c = c.astype(np.int64, copy=False)
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
@@ -1117,8 +1139,8 @@ def entropy(labels):
 
     Parameters
     ----------
-    labels : int array, shape = [n_samples]
-        The labels
+    labels : array-like of shape (n_samples,), dtype=int
+        The labels.
 
     Notes
     -----
@@ -1129,6 +1151,11 @@ def entropy(labels):
     label_idx = np.unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float64)
     pi = pi[pi > 0]
+
+    # single cluster => zero entropy
+    if pi.size == 1:
+        return 0.0
+
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
