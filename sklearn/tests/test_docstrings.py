@@ -22,7 +22,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._lfw.fetch_lfw_pairs",
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._samples_generator.make_biclusters",
-    "sklearn.datasets._samples_generator.make_classification",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
     "sklearn.datasets._samples_generator.make_multilabel_classification",
     "sklearn.datasets._samples_generator.make_regression",
