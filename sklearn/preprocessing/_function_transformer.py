@@ -242,7 +242,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             - If `input_features` is None, then `feature_names_in_` is
               used as the input feature names. If `feature_names_in_` is not
               defined, then names are generated:
-              `[x0, x1, ..., x(n_features_in_)]`.
+              `[x0, x1, ..., x(n_features_in_ - 1)]`.
             - If `input_features` is array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 

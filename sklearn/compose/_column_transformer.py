@@ -222,14 +222,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         of get_params via BaseComposition._get_params which expects lists
         of tuples of len 2.
         """
-        return [(name, trans) for name, trans, _ in self.transformers]
+        try:
+            return [(name, trans) for name, trans, _ in self.transformers]
+        except (TypeError, ValueError):
+            return self.transformers
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformers = [
-            (name, trans, col)
-            for ((name, trans), (_, _, col)) in zip(value, self.transformers)
-        ]
+        try:
+            self.transformers = [
+                (name, trans, col)
+                for ((name, trans), (_, _, col)) in zip(value, self.transformers)
+            ]
+        except (TypeError, ValueError):
+            self.transformers = value
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -463,7 +469,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
