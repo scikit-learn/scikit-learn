@@ -123,7 +123,7 @@ def robust_single_linkage(
     memory=None,
     leaf_size=40,
     core_dist_n_jobs=4,
-    **kwargs,
+    metric_params=None,
 ):
     """
     Perform robust single linkage clustering.
@@ -190,7 +190,7 @@ def robust_single_linkage(
         supported by the specific algorithm). For ``core_dist_n_jobs``
         below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
 
-    **kwargs : optional
+    metric_params : dict, default=None
         Arguments passed to the distance metric.
 
     Returns
@@ -222,35 +222,29 @@ def robust_single_linkage(
     if not isinstance(leaf_size, int) or leaf_size < 1:
         raise ValueError("Leaf size must be at least one!")
 
-    if metric == "minkowski":
-        if "p" not in kwargs or kwargs["p"] is None:
-            raise TypeError("Minkowski metric given but no p value supplied!")
-        if kwargs["p"] < 0:
-            raise ValueError("Minkowski metric with negative p value is not defined!")
-
     X = check_array(X, accept_sparse="csr")
     memory = Memory(cachedir=memory, verbose=0)
 
     if algorithm != "best":
         if algorithm == "generic":
             single_linkage_tree = memory.cache(_rsl_generic)(
-                X, k, alpha, metric, **kwargs
+                X, k, alpha, metric, **metric_params
             )
         elif algorithm == "prims_kdtree":
             single_linkage_tree = memory.cache(_rsl_prims_kdtree)(
-                X, k, alpha, metric, **kwargs
+                X, k, alpha, metric, **metric_params
             )
         elif algorithm == "prims_balltree":
             single_linkage_tree = memory.cache(_rsl_prims_balltree)(
-                X, k, alpha, metric, **kwargs
+                X, k, alpha, metric, **metric_params
             )
         elif algorithm == "boruvka_kdtree":
             single_linkage_tree = memory.cache(_rsl_boruvka_kdtree)(
-                X, k, alpha, metric, leaf_size, core_dist_n_jobs, **kwargs
+                X, k, alpha, metric, leaf_size, core_dist_n_jobs, **metric_params
             )
         elif algorithm == "boruvka_balltree":
             single_linkage_tree = memory.cache(_rsl_boruvka_balltree)(
-                X, k, alpha, metric, leaf_size, core_dist_n_jobs, **kwargs
+                X, k, alpha, metric, leaf_size, core_dist_n_jobs, **metric_params
             )
         else:
             raise TypeError("Unknown algorithm type %s specified" % algorithm)
@@ -258,29 +252,29 @@ def robust_single_linkage(
         if issparse(X) or metric not in FAST_METRICS:
             # We can't do much with sparse matrices ...
             single_linkage_tree = memory.cache(_rsl_generic)(
-                X, k, alpha, metric, **kwargs
+                X, k, alpha, metric, **metric_params
             )
         elif metric in KDTree.valid_metrics:
             # Need heuristic to decide when to go to boruvka;
             # still debugging for now
             if X.shape[1] > 128:
                 single_linkage_tree = memory.cache(_rsl_prims_kdtree)(
-                    X, k, alpha, metric, **kwargs
+                    X, k, alpha, metric, **metric_params
                 )
             else:
                 single_linkage_tree = memory.cache(_rsl_boruvka_kdtree)(
-                    X, k, alpha, metric, leaf_size, core_dist_n_jobs, **kwargs
+                    X, k, alpha, metric, leaf_size, core_dist_n_jobs, **metric_params
                 )
         else:  # Metric is a valid BallTree metric
             # Need heuristic to decide when to go to boruvka;
             # still debugging for now
             if X.shape[1] > 128:
                 single_linkage_tree = memory.cache(_rsl_prims_kdtree)(
-                    X, k, alpha, metric, **kwargs
+                    X, k, alpha, metric, **metric_params
                 )
             else:
                 single_linkage_tree = memory.cache(_rsl_boruvka_balltree)(
-                    X, k, alpha, metric, leaf_size, core_dist_n_jobs, **kwargs
+                    X, k, alpha, metric, leaf_size, core_dist_n_jobs, **metric_params
                 )
 
     labels = labelling_at_cut(single_linkage_tree, cut, gamma)
@@ -289,8 +283,8 @@ def robust_single_linkage(
 
 
 class RobustSingleLinkage(BaseEstimator, ClusterMixin):
-    r"""Perform robust single linkage clustering from a vector array
-    or distance matrix.
+    r"""
+    Perform robust single linkage clustering.
 
     Robust single linkage is a modified version of single linkage that
     attempts to be more robust to noise. Specifically the goal is to
@@ -300,41 +294,38 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-            array of shape (n_samples, n_samples)
-        A feature array, or array of distances between samples if
-        ``metric='precomputed'``.
-
-    cut : float
+    cut : float, default=0.4
         The reachability distance value to cut the cluster heirarchy at
         to derive a flat cluster labelling.
 
-    k : int, optional (default=5)
+    k : int, default=5
         Reachability distances will be computed with regard to the `k`
         nearest neighbors.
 
-    alpha : float, optional (default=np.sqrt(2))
+    alpha : float, default=`np.sqrt(2)`
         Distance scaling for reachability distance computation. Reachability
         distance is computed as
-        $max \{ core_k(a), core_k(b), 1/\alpha d(a,b) \}$.
 
-    gamma : int, optional (default=5)
+        .. math::
+
+            max \\{ core_k(a), core_k(b), 1/\\alpha d(a,b) \\}.
+
+    gamma : int, default=5
         Ignore any clusters in the flat clustering with size less than gamma,
         and declare points in such clusters as noise points.
 
-    metric : string, or callable, optional (default='euclidean')
+    metric : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.pairwise_distances for its
+        feature array.
+
+        If metric is a string or callable, it must be one of
+        the options allowed by `metrics.pairwise.pairwise_distances` for its
         metric parameter.
-        If metric is "precomputed", X is assumed to be a distance matrix and
+
+        If `metric="precomputed"`, `X` is assumed to be a distance matrix and
         must be square.
 
-    metric_params : dict, option (default={})
-        Keyword parameter arguments for calling the metric (for example
-        the p values if using the minkowski metric).
-
-    algorithm : string, optional (default='best')
+    algorithm : str, default='best'
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
         to ``best`` which chooses the "best" algorithm given the nature of
@@ -345,15 +336,16 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
             * ``large_kdtree``
             * ``large_kdtree_fastcluster``
 
-
-    core_dist_n_jobs : int, optional
+    core_dist_n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
         supported by the specific algorithm). For ``core_dist_n_jobs``
         below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
-        (default 4)
+
+    metric_params : dict, default=None
+        Arguments passed to the distance metric.
 
     Attributes
-    -------
+    ----------
     labels_ : ndarray, shape (n_samples, )
         Cluster labels for each point.  Noisy samples are given the label -1.
 
@@ -363,6 +355,13 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
        cluster tree. In Advances in Neural Information Processing Systems
        (pp. 343-351).
 
+    See Also
+    --------
+
+
+    Examples
+    --------
+    >>> import numpy as np
     """
 
     def __init__(
@@ -374,7 +373,7 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
         metric="euclidean",
         algorithm="best",
         core_dist_n_jobs=4,
-        metric_params={},
+        metric_params=None,
     ):
 
         self.cut = cut
@@ -387,8 +386,10 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
         self.metric_params = metric_params
 
     def fit(self, X, y=None):
-        """Perform robust single linkage clustering from features or
-        distance matrix.
+        """
+        Perform robust single linkage clustering on `X`.
+
+        Assumes `X` is either a series of feature vectors or a distance matrix.
 
         Parameters
         ----------
@@ -397,23 +398,28 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
             A feature array, or array of distances between samples if
             ``metric='precomputed'``.
 
+        y : Ignored
+            Ignored.
+
         Returns
         -------
         self : object
-            Returns self
+            Returns self.
         """
         X = check_array(X, accept_sparse="csr")
 
         kwargs = self.get_params()
-        del kwargs["metric_params"]
-        kwargs.update(self.metric_params)
+        kwargs["metric_params"] = self.metric_params or {}
 
         self.labels_ = robust_single_linkage(X, **kwargs)
 
         return self
 
     def fit_predict(self, X, y=None):
-        """Performs clustering on X and returns cluster labels.
+        """
+        Perform clustering on X and return cluster labels.
+
+        Assumes `X` is either a series of feature vectors or a distance matrix.
 
         Parameters
         ----------
@@ -422,10 +428,13 @@ class RobustSingleLinkage(BaseEstimator, ClusterMixin):
             A feature array, or array of distances between samples if
             ``metric='precomputed'``.
 
+        y : Ignored
+            Ignored.
+
         Returns
         -------
         y : ndarray, shape (n_samples, )
-            cluster labels
+            Cluster labels.
         """
 
         self.fit(X)
