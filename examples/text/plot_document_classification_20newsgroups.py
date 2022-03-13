@@ -21,8 +21,8 @@ automatically downloaded, then cached.
 
 
 # %%
-# Some choices on the analysis
-# -----------------------------
+# Configuration options for the analysis
+# --------------------------------------
 
 # If True, we use `HashingVectorizer`, otherwise we use a `TfidfVectorizer`
 USE_HASHING = False
