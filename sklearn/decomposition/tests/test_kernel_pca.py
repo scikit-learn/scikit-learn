@@ -196,6 +196,10 @@ def test_kernel_pca_n_components():
     X_pred = rng.random_sample((2, 4))
 
     for eigen_solver in ("dense", "arpack", "randomized"):
+        with pytest.raises(ValueError):
+            kpca = KernelPCA(n_components=0, eigen_solver=eigen_solver)
+            shape = kpca.fit(X_fit)
+
         for c in [1, 2, 4]:
             kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver)
             shape = kpca.fit(X_fit).transform(X_pred).shape
