@@ -24,7 +24,7 @@ from sklearn.neighbors import KDTree, BallTree
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 
 
-def _rsl_generic(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kwargs):
+def _rsl_generic(X, k=5, metric="euclidean", **kwargs):
     distance_matrix = pairwise_distances(X, metric=metric, **kwargs)
 
     mutual_reachability_ = mutual_reachability(distance_matrix, k)
@@ -35,7 +35,7 @@ def _rsl_generic(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kwargs)
     return label(min_spanning_tree)
 
 
-def _rsl_prims_kdtree(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kwargs):
+def _rsl_prims_kdtree(X, k=5, alpha=np.sqrt(2), metric="euclidean", **kwargs):
 
     # The Cython routines used require contiguous arrays
     if not X.flags["C_CONTIGUOUS"]:
@@ -54,7 +54,7 @@ def _rsl_prims_kdtree(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kw
     return label(min_spanning_tree)
 
 
-def _rsl_prims_balltree(X, k=5, alpha=1.4142135623730951, metric="euclidean", **kwargs):
+def _rsl_prims_balltree(X, k=5, alpha=np.sqrt(2), metric="euclidean", **kwargs):
 
     # The Cython routines used require contiguous arrays
     if not X.flags["C_CONTIGUOUS"]:
@@ -228,7 +228,7 @@ def robust_single_linkage(
     if algorithm != "best":
         if algorithm == "generic":
             single_linkage_tree = memory.cache(_rsl_generic)(
-                X, k, alpha, metric, **metric_params
+                X, k, metric, **metric_params
             )
         elif algorithm == "prims_kdtree":
             single_linkage_tree = memory.cache(_rsl_prims_kdtree)(
@@ -252,7 +252,7 @@ def robust_single_linkage(
         if issparse(X) or metric not in FAST_METRICS:
             # We can't do much with sparse matrices ...
             single_linkage_tree = memory.cache(_rsl_generic)(
-                X, k, alpha, metric, **metric_params
+                X, k, metric, **metric_params
             )
         elif metric in KDTree.valid_metrics:
             # Need heuristic to decide when to go to boruvka;
