@@ -583,7 +583,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                         "accurate results."
                     )
                 d[degenerate_idx] = eps  # For numerical issues
-                d = np.sqrt(d, d)
+                np.sqrt(d, out=d)
                 d, u = d[sort_indices], u[:, sort_indices]
             else:
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
