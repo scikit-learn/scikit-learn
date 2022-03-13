@@ -469,7 +469,7 @@ def test_set_estimator_drop():
         weights=[1, 0.5],
         flatten_transform=False,
     )
-    with warnings.catch_warnings(record=True)  as record:
+    with warnings.catch_warnings(record=True) as record:
         eclf2.set_params(rf="drop").fit(X1, y1)
     assert not [w.message for w in record]
     assert_array_almost_equal(
