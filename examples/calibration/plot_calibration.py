@@ -30,21 +30,13 @@ Brier score.
 # License: BSD Style.
 
 # %%
-
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import cm
-
-from sklearn.datasets import make_blobs
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import brier_score_loss
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.model_selection import train_test_split
-
-
-# %%
 # Generate synthetic dataset
 # --------------------------
+import numpy as np
+
+from sklearn.datasets import make_blobs
+from sklearn.model_selection import train_test_split
+
 n_samples = 50000
 n_bins = 3  # use 3 bins for calibration_curve as we have 3 clusters here
 
@@ -66,8 +58,9 @@ X_train, X_test, y_train, y_test, sw_train, sw_test = train_test_split(
 # %%
 # Gaussian Naive-Bayes
 # --------------------
-
-# %%
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.metrics import brier_score_loss
+from sklearn.naive_bayes import GaussianNB
 
 # With no calibration
 clf = GaussianNB()
@@ -98,6 +91,9 @@ print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 # %%
 # Plot data and the predicted probabilities
 # -----------------------------------------
+from matplotlib import cm
+import matplotlib.pyplot as plt
+
 plt.figure()
 y_unique = np.unique(y)
 colors = cm.rainbow(np.linspace(0.0, 1.0, y_unique.size))
