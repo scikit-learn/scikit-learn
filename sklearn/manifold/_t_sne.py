@@ -29,7 +29,6 @@ from . import _utils  # type: ignore
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from . import _barnes_hut_tsne  # type: ignore
 
-
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
@@ -124,13 +123,13 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
 
 
 def _kl_divergence(
-    params,
-    P,
-    degrees_of_freedom,
-    n_samples,
-    n_components,
-    skip_num_points=0,
-    compute_error=True,
+        params,
+        P,
+        degrees_of_freedom,
+        n_samples,
+        n_components,
+        skip_num_points=0,
+        compute_error=True,
 ):
     """t-SNE objective function: gradient of the KL divergence
     of p_ijs and q_ijs and the absolute error.
@@ -201,16 +200,16 @@ def _kl_divergence(
 
 
 def _kl_divergence_bh(
-    params,
-    P,
-    degrees_of_freedom,
-    n_samples,
-    n_components,
-    angle=0.5,
-    skip_num_points=0,
-    verbose=False,
-    compute_error=True,
-    num_threads=1,
+        params,
+        P,
+        degrees_of_freedom,
+        n_samples,
+        n_components,
+        angle=0.5,
+        skip_num_points=0,
+        verbose=False,
+        compute_error=True,
+        num_threads=1,
 ):
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
@@ -297,19 +296,19 @@ def _kl_divergence_bh(
 
 
 def _gradient_descent(
-    objective,
-    p0,
-    it,
-    n_iter,
-    n_iter_check=1,
-    n_iter_without_progress=300,
-    momentum=0.8,
-    learning_rate=200.0,
-    min_gain=0.01,
-    min_grad_norm=1e-7,
-    verbose=0,
-    args=None,
-    kwargs=None,
+        objective,
+        p0,
+        it,
+        n_iter,
+        n_iter_check=1,
+        n_iter_without_progress=300,
+        momentum=0.8,
+        learning_rate=200.0,
+        min_gain=0.01,
+        min_grad_norm=1e-7,
+        verbose=0,
+        args=None,
+        kwargs=None,
 ):
     """Batch gradient descent with momentum and individual gains.
 
@@ -502,8 +501,8 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     # `ind_X[i]` is the index of sorted distances between i and other samples
     ind_X_embedded = (
         NearestNeighbors(n_neighbors=n_neighbors)
-        .fit(X_embedded)
-        .kneighbors(return_distance=False)
+            .fit(X_embedded)
+            .kneighbors(return_distance=False)
     )
 
     # We build an inverted index of neighbors in the input space: For sample i,
@@ -514,11 +513,11 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     ordered_indices = np.arange(n_samples + 1)
     inverted_index[ordered_indices[:-1, np.newaxis], ind_X] = ordered_indices[1:]
     ranks = (
-        inverted_index[ordered_indices[:-1, np.newaxis], ind_X_embedded] - n_neighbors
+            inverted_index[ordered_indices[:-1, np.newaxis], ind_X_embedded] - n_neighbors
     )
     t = np.sum(ranks[ranks > 0])
     t = 1.0 - t * (
-        2.0 / (n_samples * n_neighbors * (2.0 * n_samples - 3.0 * n_neighbors - 1.0))
+            2.0 / (n_samples * n_neighbors * (2.0 * n_samples - 3.0 * n_neighbors - 1.0))
     )
     return t
 
@@ -739,24 +738,24 @@ class TSNE(BaseEstimator):
     _N_ITER_CHECK = 50
 
     def __init__(
-        self,
-        n_components=2,
-        *,
-        perplexity=30.0,
-        early_exaggeration=12.0,
-        learning_rate="warn",
-        n_iter=1000,
-        n_iter_without_progress=300,
-        min_grad_norm=1e-7,
-        metric="euclidean",
-        metric_params=None,
-        init="warn",
-        verbose=0,
-        random_state=None,
-        method="barnes_hut",
-        angle=0.5,
-        n_jobs=None,
-        square_distances="deprecated",
+            self,
+            n_components=2,
+            *,
+            perplexity=30.0,
+            early_exaggeration=12.0,
+            learning_rate="warn",
+            n_iter=1000,
+            n_iter_without_progress=300,
+            min_grad_norm=1e-7,
+            metric="euclidean",
+            metric_params=None,
+            init="warn",
+            verbose=0,
+            random_state=None,
+            method="barnes_hut",
+            angle=0.5,
+            n_jobs=None,
+            square_distances="deprecated",
     ):
         self.n_components = n_components
         self.perplexity = perplexity
@@ -1008,13 +1007,13 @@ class TSNE(BaseEstimator):
         )
 
     def _tsne(
-        self,
-        P,
-        degrees_of_freedom,
-        n_samples,
-        X_embedded,
-        neighbors=None,
-        skip_num_points=0,
+            self,
+            P,
+            degrees_of_freedom,
+            n_samples,
+            X_embedded,
+            neighbors=None,
+            skip_num_points=0,
     ):
         """Runs t-SNE."""
         # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P
@@ -1128,3 +1127,6 @@ class TSNE(BaseEstimator):
         """
         self.fit_transform(X)
         return self
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}

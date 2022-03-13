@@ -23,17 +23,17 @@ from ._dbscan_inner import dbscan_inner
 
 
 def dbscan(
-    X,
-    eps=0.5,
-    *,
-    min_samples=5,
-    metric="minkowski",
-    metric_params=None,
-    algorithm="auto",
-    leaf_size=30,
-    p=2,
-    sample_weight=None,
-    n_jobs=None,
+        X,
+        eps=0.5,
+        *,
+        min_samples=5,
+        metric="minkowski",
+        metric_params=None,
+        algorithm="auto",
+        leaf_size=30,
+        p=2,
+        sample_weight=None,
+        n_jobs=None,
 ):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
@@ -300,16 +300,16 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     """
 
     def __init__(
-        self,
-        eps=0.5,
-        *,
-        min_samples=5,
-        metric="euclidean",
-        metric_params=None,
-        algorithm="auto",
-        leaf_size=30,
-        p=None,
-        n_jobs=None,
+            self,
+            eps=0.5,
+            *,
+            min_samples=5,
+            metric="euclidean",
+            metric_params=None,
+            algorithm="auto",
+            leaf_size=30,
+            p=None,
+            n_jobs=None,
     ):
         self.eps = eps
         self.min_samples = min_samples
@@ -458,3 +458,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}
