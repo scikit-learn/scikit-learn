@@ -475,8 +475,7 @@ class BaseRandomProjection(
         """
         check_is_fitted(self)
 
-        X = check_array(
-            X, dtype=[np.float64, np.float32], accept_sparse=("csr", "csc"))
+        X = check_array(X, dtype=[np.float64, np.float32], accept_sparse=("csr", "csc"))
 
         if self.compute_inverse_components:
             return X @ self.inverse_components_.T
