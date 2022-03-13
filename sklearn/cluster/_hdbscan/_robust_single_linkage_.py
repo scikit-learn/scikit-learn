@@ -115,7 +115,7 @@ def robust_single_linkage(
     X,
     cut,
     k=5,
-    alpha=1.4142135623730951,
+    alpha=np.sqrt(2),
     gamma=5,
     metric="euclidean",
     algorithm="best",
