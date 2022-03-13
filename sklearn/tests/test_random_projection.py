@@ -381,11 +381,14 @@ def test_random_projection_feature_names_out(random_projection_cls):
 @pytest.mark.parametrize("n_samples", (2, 9, 10, 11, 1000))
 @pytest.mark.parametrize("n_features", (2, 9, 10, 11, 1000))
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
-def test_inverse_transform(n_samples, n_features, random_projection_cls):
+@pytest.mark.parametrize("compute_inverse_components", [True, False])
+def test_inverse_transform(
+    n_samples, n_features, random_projection_cls, compute_inverse_components
+):
     n_components = 10
 
     random_projection = random_projection_cls(
-        n_components=n_components, compute_inverse_components=True
+        n_components=n_components, compute_inverse_components=compute_inverse_components
     )
 
     X_dense, X_csr = make_sparse_random_data(
@@ -403,8 +406,10 @@ def test_inverse_transform(n_samples, n_features, random_projection_cls):
             )
             projected = random_projection.fit_transform(X)
 
-        assert hasattr(random_projection, "inverse_components_")
-        assert random_projection.inverse_components_.shape == (n_features, n_components)
+        if compute_inverse_components:
+            assert hasattr(random_projection, "inverse_components_")
+            inv_components = random_projection.inverse_components_
+            assert inv_components.shape == (n_features, n_components)
 
         projected_back = random_projection.inverse_transform(projected)
         assert projected_back.shape == X.shape
