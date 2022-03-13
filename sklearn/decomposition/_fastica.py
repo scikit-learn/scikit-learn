@@ -574,11 +574,12 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                     )
                 d[degenerate_idx] = eps  # For numerical issues
                 d = np.sqrt(d, d)
-                d, u = d[sort_indices], u[sort_indices]
-                # Resize and reorder to match svd
-                u = u[::-1, : min(X.shape) : -1]
+                d, u = d[sort_indices], u[:, sort_indices]
             else:
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
+
+            # Give consistent eigenvectors for both svd solvers
+            u *= np.sign(u[0])
 
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d

@@ -119,36 +119,24 @@ def test_fastica_simple(add_noise, seed):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
-    outs = {}
-    for solver in ("eigh", "svd"):
-        _, _, sources_fun = fastica(
-            m.T, fun=nl, algorithm=algo, random_state=0, svd_solver=solver
-        )
-        ica = FastICA(fun=nl, algorithm=algo, random_state=0, svd_solver=solver)
-        sources = ica.fit_transform(m.T)
-        outs[solver] = sources
-        assert ica.components_.shape == (2, 2)
-        assert sources.shape == (1000, 2)
+    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo, random_state=seed)
+    ica = FastICA(fun=nl, algorithm=algo, random_state=seed)
+    sources = ica.fit_transform(m.T)
+    assert ica.components_.shape == (2, 2)
+    assert sources.shape == (1000, 2)
 
-        assert_array_almost_equal(sources_fun, sources)
-        assert_array_almost_equal(sources, ica.transform(m.T))
+    assert_array_almost_equal(sources_fun, sources)
+    assert_array_almost_equal(sources, ica.transform(m.T))
 
-        assert ica.mixing_.shape == (2, 2)
+    assert ica.mixing_.shape == (2, 2)
 
-        for fn in [np.tanh, "exp(-.5(x^2))"]:
-            ica = FastICA(fun=fn, algorithm=algo, svd_solver=solver)
-            with pytest.raises(ValueError):
-                ica.fit(m.T)
+    for fn in [np.tanh, "exp(-.5(x^2))"]:
+        ica = FastICA(fun=fn, algorithm=algo)
+        with pytest.raises(ValueError):
+            ica.fit(m.T)
 
-        with pytest.raises(TypeError):
-            FastICA(fun=range(10), svd_solver=solver).fit(m.T)
-
-    # Check equality up to column parity
-    for A in (outs["eigh"], outs["svd"]):
-        for c in range(A.shape[1]):
-            if A[0, c] < 0:
-                A[:, c] *= -1
-    assert_array_almost_equal(outs["eigh"], outs["svd"])
+    with pytest.raises(TypeError):
+        FastICA(fun=range(10)).fit(m.T)
 
 
 def test_fastica_nowhiten():
@@ -399,3 +387,37 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
     assert len(out) == expected_len
     if not whiten:
         assert out[0] is None
+
+
+@pytest.mark.parametrize("add_noise", [True, False])
+@pytest.mark.parametrize("seed", range(2))
+def test_fastica_simple_different_solvers(add_noise, seed):
+    """Test FastICA is consistent between svd_solvers."""
+    rng = np.random.RandomState(seed)
+    n_samples = 1000
+    # Generate two sources:
+    s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
+    s2 = stats.t.rvs(1, size=n_samples, random_state=rng)
+    s = np.c_[s1, s2].T
+    center_and_norm(s)
+    s1, s2 = s
+
+    # Mixing angle
+    phi = 0.6
+    mixing = np.array([[np.cos(phi), np.sin(phi)], [np.sin(phi), -np.cos(phi)]])
+    m = np.dot(mixing, s)
+
+    if add_noise:
+        m += 0.1 * rng.randn(2, 1000)
+
+    center_and_norm(m)
+
+    outs = {}
+    for solver in ("svd", "eigh"):
+        ica = FastICA(random_state=0, svd_solver=solver)
+        sources = ica.fit_transform(m.T)
+        outs[solver] = sources
+        assert ica.components_.shape == (2, 2)
+        assert sources.shape == (1000, 2)
+
+    assert_array_almost_equal(outs["eigh"], outs["svd"])
