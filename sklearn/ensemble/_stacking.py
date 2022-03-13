@@ -33,6 +33,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
+from ..utils.validation import _check_feature_names_in
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
@@ -93,6 +94,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                     X_meta.append(preds[:, 1:])
                 else:
                     X_meta.append(preds)
+
+        self._n_feature_outs = [pred.shape[1] for pred in X_meta]
         if self.passthrough:
             X_meta.append(X)
             if sparse.issparse(X):
@@ -255,6 +258,51 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             if est != "drop"
         ]
         return self._concatenate_predictions(X, predictions)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features. The input feature names are only used when `passthrough` is
+            `True`.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_ - 1)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+            If `passthrough` is `False`, then only the names of `estimators` are used
+            to generate the output feature names.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(
+            self, input_features, generate_names=self.passthrough
+        )
+
+        class_name = self.__class__.__name__.lower()
+        non_dropped_estimators = (
+            name for name, est in self.estimators if est != "drop"
+        )
+        meta_names = []
+        for est, n_features_out in zip(non_dropped_estimators, self._n_feature_outs):
+            if n_features_out == 1:
+                meta_names.append(f"{class_name}_{est}")
+            else:
+                meta_names.extend(
+                    f"{class_name}_{est}{i}" for i in range(n_features_out)
+                )
+
+        if self.passthrough:
+            return np.concatenate((meta_names, input_features))
+
+        return np.asarray(meta_names, dtype=object)
 
     @if_delegate_has_method(delegate="final_estimator_")
     def predict(self, X, **predict_params):
