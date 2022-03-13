@@ -32,20 +32,12 @@ necessarily related to visualisation.
 
 """
 
-from time import time
-
-import matplotlib.pyplot as plt
-import numpy as np
-import scipy as sp
-
-from sklearn.decomposition import MiniBatchDictionaryLearning
-from sklearn.feature_extraction.image import extract_patches_2d
-from sklearn.feature_extraction.image import reconstruct_from_patches_2d
-
-
 # %%
 # Generate distorted image
 # ------------------------
+import numpy as np
+import scipy as sp
+
 try:  # SciPy >= 0.16 have face in misc
     from scipy.misc import face
 
@@ -71,6 +63,9 @@ distorted[:, width // 2 :] += 0.075 * np.random.randn(height, width // 2)
 # %%
 # Extract reference patches
 # ----------------------------
+from time import time
+
+from sklearn.feature_extraction.image import extract_patches_2d
 
 # Extract all reference patches from the left half of the image
 print("Extracting reference patches...")
@@ -86,6 +81,9 @@ print("done in %.2fs." % (time() - t0))
 # %%
 # Learn the dictionary from reference patches
 # -------------------------------------------
+import matplotlib.pyplot as plt
+
+from sklearn.decomposition import MiniBatchDictionaryLearning
 
 print("Learning the dictionary...")
 t0 = time()
@@ -140,6 +138,7 @@ show_with_diff(distorted, face, "Distorted image")
 # %%
 # Extract noisy patches and reconstruct them using the dictionary
 # ---------------------------------------------------------------
+from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
 print("Extracting noisy patches... ")
 t0 = time()
