@@ -1,4 +1,5 @@
 from contextlib import closing
+import html
 from io import StringIO
 
 import pytest
@@ -17,6 +18,7 @@ from sklearn.feature_selection import SelectPercentile
 from sklearn.cluster import Birch
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.tree import DecisionTreeClassifier
@@ -166,36 +168,38 @@ def test_estimator_html_repr_pipeline():
     html_output = estimator_html_repr(pipe)
 
     # top level estimators show estimator with changes
-    assert str(pipe) in html_output
+    assert html.escape(str(pipe)) in html_output
     for _, est in pipe.steps:
-        assert f'<div class="sk-toggleable__content"><pre>{str(est)}' in html_output
+        assert (
+            '<div class="sk-toggleable__content"><pre>' + html.escape(str(est))
+        ) in html_output
 
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
-        assert str(num_trans["pass"]) in html_output
+        assert html.escape(str(num_trans["pass"])) in html_output
         assert "passthrough</label>" in html_output
-        assert str(num_trans["imputer"]) in html_output
+        assert html.escape(str(num_trans["imputer"])) in html_output
 
         for _, _, cols in preprocess.transformers:
-            assert f"<pre>{cols}</pre>" in html_output
+            assert f"<pre>{html.escape(str(cols))}</pre>" in html_output
 
         # feature union
         for name, _ in feat_u.transformer_list:
-            assert f"<label>{name}</label>" in html_output
+            assert f"<label>{html.escape(name)}</label>" in html_output
 
         pca = feat_u.transformer_list[0][1]
-        assert f"<pre>{str(pca)}</pre>" in html_output
+        assert f"<pre>{html.escape(str(pca))}</pre>" in html_output
 
         tsvd = feat_u.transformer_list[1][1]
         first = tsvd["first"]
         select = tsvd["select"]
-        assert f"<pre>{str(first)}</pre>" in html_output
-        assert f"<pre>{str(select)}</pre>" in html_output
+        assert f"<pre>{html.escape(str(first))}</pre>" in html_output
+        assert f"<pre>{html.escape(str(select))}</pre>" in html_output
 
         # voting classifier
         for name, est in clf.estimators:
-            assert f"<label>{name}</label>" in html_output
-            assert f"<pre>{str(est)}</pre>" in html_output
+            assert f"<label>{html.escape(name)}</label>" in html_output
+            assert f"<pre>{html.escape(str(est))}</pre>" in html_output
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
@@ -208,7 +212,7 @@ def test_stacking_classsifer(final_estimator):
 
     html_output = estimator_html_repr(clf)
 
-    assert str(clf) in html_output
+    assert html.escape(str(clf)) in html_output
     # If final_estimator's default changes from LogisticRegression
     # this should be updated
     if final_estimator is None:
@@ -224,12 +228,12 @@ def test_stacking_regressor(final_estimator):
     )
     html_output = estimator_html_repr(reg)
 
-    assert str(reg.estimators[0][0]) in html_output
+    assert html.escape(str(reg.estimators[0][0])) in html_output
     assert "LinearSVR</label>" in html_output
     if final_estimator is None:
         assert "RidgeCV</label>" in html_output
     else:
-        assert final_estimator.__class__.__name__ in html_output
+        assert html.escape(final_estimator.__class__.__name__) in html_output
 
 
 def test_birch_duck_typing_meta():
@@ -239,11 +243,11 @@ def test_birch_duck_typing_meta():
 
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
-        assert f"<pre>{str(birch.n_clusters)}" in html_output
+        assert f"<pre>{html.escape(str(birch.n_clusters))}" in html_output
         assert "AgglomerativeClustering</label>" in html_output
 
     # outer estimator contains all changes
-    assert f"<pre>{str(birch)}" in html_output
+    assert f"<pre>{html.escape(str(birch))}" in html_output
 
 
 def test_ovo_classifier_duck_typing_meta():
@@ -253,11 +257,11 @@ def test_ovo_classifier_duck_typing_meta():
 
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
-        assert f"<pre>{str(ovo.estimator)}" in html_output
+        assert f"<pre>{html.escape(str(ovo.estimator))}" in html_output
         assert "LinearSVC</label>" in html_output
 
     # outer estimator
-    assert f"<pre>{str(ovo)}" in html_output
+    assert f"<pre>{html.escape(str(ovo))}" in html_output
 
 
 def test_duck_typing_nested_estimator():
@@ -266,8 +270,8 @@ def test_duck_typing_nested_estimator():
     gp = GaussianProcessRegressor(kernel=kernel)
     html_output = estimator_html_repr(gp)
 
-    assert f"<pre>{str(kernel)}" in html_output
-    assert f"<pre>{str(gp)}" in html_output
+    assert f"<pre>{html.escape(str(kernel))}" in html_output
+    assert f"<pre>{html.escape(str(gp))}" in html_output
 
 
 @pytest.mark.parametrize("print_changed_only", [True, False])
@@ -275,6 +279,28 @@ def test_one_estimator_print_change_only(print_changed_only):
     pca = PCA(n_components=10)
 
     with config_context(print_changed_only=print_changed_only):
-        pca_repr = str(pca)
+        pca_repr = html.escape(str(pca))
         html_output = estimator_html_repr(pca)
         assert pca_repr in html_output
+
+
+def test_fallback_exists():
+    """Check that repr fallback is in the HTML."""
+    pca = PCA(n_components=10)
+    html_output = estimator_html_repr(pca)
+
+    assert (
+        f'<div class="sk-text-repr-fallback"><pre>{html.escape(str(pca))}'
+        in html_output
+    )
+
+
+def test_show_arrow_pipeline():
+    """Show arrow in pipeline for top level in pipeline"""
+    pipe = Pipeline([("scale", StandardScaler()), ("log_Reg", LogisticRegression())])
+
+    html_output = estimator_html_repr(pipe)
+    assert (
+        'class="sk-toggleable__label sk-toggleable__label-arrow">Pipeline'
+        in html_output
+    )

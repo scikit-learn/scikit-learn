@@ -1,7 +1,9 @@
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 import scipy.sparse as sp
 
+from sklearn.datasets import make_regression
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 
@@ -269,6 +271,29 @@ def test_path_parameters():
     sparse_mse_path = clf.mse_path_
     ignore_warnings(clf.fit)(X.toarray(), y)  # compare with dense data
     assert_almost_equal(clf.mse_path_, sparse_mse_path)
+
+
+@pytest.mark.parametrize("Model", [Lasso, ElasticNet, LassoCV, ElasticNetCV])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("n_samples, n_features", [(24, 6), (6, 24)])
+def test_sparse_dense_equality(Model, fit_intercept, n_samples, n_features):
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        effective_rank=n_features // 2,
+        n_informative=n_features // 2,
+        bias=4 * fit_intercept,
+        noise=1,
+        random_state=42,
+    )
+    Xs = sp.csc_matrix(X)
+    reg_dense = Model(fit_intercept=fit_intercept).fit(X, y)
+    reg_sparse = Model(fit_intercept=fit_intercept).fit(Xs, y)
+    if fit_intercept:
+        assert reg_sparse.intercept_ == pytest.approx(reg_dense.intercept_)
+        # balance property
+        assert reg_sparse.predict(X).mean() == pytest.approx(y.mean())
+    assert_allclose(reg_sparse.coef_, reg_dense.coef_)
 
 
 def test_same_output_sparse_dense_lasso_and_enet_cv():

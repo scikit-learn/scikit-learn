@@ -67,9 +67,9 @@ def test_max_iter():
         """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
         x = np.linspace(0, resolution - 1, resolution)
         x = (
-            (2 / (np.sqrt(3 * width) * np.pi ** 0.25))
-            * (1 - (x - center) ** 2 / width ** 2)
-            * np.exp(-((x - center) ** 2) / (2 * width ** 2))
+            (2 / (np.sqrt(3 * width) * np.pi**0.25))
+            * (1 - (x - center) ** 2 / width**2)
+            * np.exp(-((x - center) ** 2) / (2 * width**2))
         )
         return x
 
@@ -79,7 +79,7 @@ def test_max_iter():
         D = np.empty((n_components, resolution))
         for i, center in enumerate(centers):
             D[i] = ricker_function(resolution, center, width)
-        D /= np.sqrt(np.sum(D ** 2, axis=1))[:, np.newaxis]
+        D /= np.sqrt(np.sum(D**2, axis=1))[:, np.newaxis]
         return D
 
     transform_algorithm = "lasso_cd"
@@ -116,7 +116,7 @@ def test_max_iter():
             D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
         )
         model.fit_transform(X)
-    assert not record.list
+    assert not [w.message for w in record]
 
 
 def test_dict_learning_lars_positive_parameter():
@@ -441,7 +441,7 @@ def test_dict_learning_online_partial_fit():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    V /= np.sum(V**2, axis=1)[:, np.newaxis]
     dict1 = MiniBatchDictionaryLearning(
         n_components,
         n_iter=10 * len(X),
@@ -483,7 +483,7 @@ def test_sparse_encode_shapes():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    V /= np.sum(V**2, axis=1)[:, np.newaxis]
     for algo in ("lasso_lars", "lasso_cd", "lars", "omp", "threshold"):
         code = sparse_encode(X, V, algorithm=algo)
         assert code.shape == (n_samples, n_components)
@@ -495,7 +495,7 @@ def test_sparse_encode_positivity(algo, positive):
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    V /= np.sum(V**2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, algorithm=algo, positive=positive)
     if positive:
         assert (code >= 0).all()
@@ -508,7 +508,7 @@ def test_sparse_encode_unavailable_positivity(algo):
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    V /= np.sum(V**2, axis=1)[:, np.newaxis]
     err_msg = "Positive constraint not supported for '{}' coding method."
     err_msg = err_msg.format(algo)
     with pytest.raises(ValueError, match=err_msg):
@@ -519,7 +519,7 @@ def test_sparse_encode_input():
     n_components = 100
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    V /= np.sum(V**2, axis=1)[:, np.newaxis]
     Xf = check_array(X, order="F")
     for algo in ("lasso_lars", "lasso_cd", "lars", "omp", "threshold"):
         a = sparse_encode(X, V, algorithm=algo)
@@ -531,7 +531,7 @@ def test_sparse_encode_error():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    V /= np.sum(V**2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
     assert not np.all(code == 0)
     assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
@@ -557,7 +557,7 @@ def test_sparse_coder_estimator():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    V /= np.sum(V**2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
     ).transform(X)
@@ -569,7 +569,7 @@ def test_sparse_coder_estimator_clone():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    V /= np.sum(V**2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
     )
@@ -618,18 +618,6 @@ def test_sparse_coder_common_transformer():
     check_transformers_unfitted(sc.__class__.__name__, sc)
 
 
-# TODO: remove in 1.1
-def test_sparse_coder_deprecation():
-    # check that we raise a deprecation warning when accessing `components_`
-    rng = np.random.RandomState(777)
-    n_components, n_features = 40, 64
-    init_dict = rng.rand(n_components, n_features)
-    sc = SparseCoder(init_dict)
-
-    with pytest.warns(FutureWarning, match="`components_` is deprecated"):
-        sc.components_
-
-
 def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
     sc = SparseCoder(d)
@@ -664,3 +652,234 @@ def test_warning_default_transform_alpha(Estimator):
     dl = Estimator(alpha=0.1)
     with pytest.warns(FutureWarning, match="default transform_alpha"):
         dl.fit_transform(X)
+
+
+@pytest.mark.parametrize(
+    "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+# Note: do not check integer input because `lasso_lars` and `lars` fail with
+# `ValueError` in `_lars_path_solver`
+def test_sparse_encode_dtype_match(data_type, algorithm):
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    code = sparse_encode(
+        X.astype(data_type), dictionary.astype(data_type), algorithm=algorithm
+    )
+    assert code.dtype == data_type
+
+
+@pytest.mark.parametrize(
+    "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+def test_sparse_encode_numerical_consistency(algorithm):
+    # verify numerical consistency among np.float32 and np.float64
+    rtol = 1e-4
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    code_32 = sparse_encode(
+        X.astype(np.float32), dictionary.astype(np.float32), algorithm=algorithm
+    )
+    code_64 = sparse_encode(
+        X.astype(np.float64), dictionary.astype(np.float64), algorithm=algorithm
+    )
+    assert_allclose(code_32, code_64, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+# Note: do not check integer input because `lasso_lars` and `lars` fail with
+# `ValueError` in `_lars_path_solver`
+def test_sparse_coder_dtype_match(data_type, transform_algorithm):
+    # Verify preserving dtype for transform in sparse coder
+    n_components = 6
+    rng = np.random.RandomState(0)
+    dictionary = rng.randn(n_components, n_features)
+    coder = SparseCoder(
+        dictionary.astype(data_type), transform_algorithm=transform_algorithm
+    )
+    code = coder.transform(X.astype(data_type))
+    assert code.dtype == data_type
+
+
+@pytest.mark.parametrize(
+    "dictionary_learning_transformer", (DictionaryLearning, MiniBatchDictionaryLearning)
+)
+@pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_dictionary_learning_dtype_match(
+    data_type,
+    expected_type,
+    dictionary_learning_transformer,
+    fit_algorithm,
+    transform_algorithm,
+):
+    # Verify preserving dtype for fit and transform in dictionary learning class
+    dict_learner = dictionary_learning_transformer(
+        n_components=8,
+        fit_algorithm=fit_algorithm,
+        transform_algorithm=transform_algorithm,
+        random_state=0,
+    )
+    dict_learner.fit(X.astype(data_type))
+    assert dict_learner.components_.dtype == expected_type
+    assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
+
+    if dictionary_learning_transformer is MiniBatchDictionaryLearning:
+        assert dict_learner.inner_stats_[0].dtype == expected_type
+        assert dict_learner.inner_stats_[1].dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_dict_learning_dtype_match(data_type, expected_type, method):
+    # Verify output matrix dtype
+    rng = np.random.RandomState(0)
+    n_components = 8
+    code, dictionary, _ = dict_learning(
+        X.astype(data_type),
+        n_components=n_components,
+        alpha=1,
+        random_state=rng,
+        method=method,
+    )
+    assert code.dtype == expected_type
+    assert dictionary.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+def test_dict_learning_numerical_consistency(method):
+    # verify numerically consistent among np.float32 and np.float64
+    rtol = 1e-6
+    n_components = 4
+    alpha = 2
+
+    U_64, V_64, _ = dict_learning(
+        X.astype(np.float64),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=0,
+        method=method,
+    )
+    U_32, V_32, _ = dict_learning(
+        X.astype(np.float32),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=0,
+        method=method,
+    )
+
+    # Optimal solution (U*, V*) is not unique.
+    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
+    # and (column permutated U*, row permutated V*) are also optional
+    # as long as holding UV.
+    # So here UV, ||U||_1,1 and sum(||V_k||_2^2) are verified
+    # instead of comparing directly U and V.
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
+    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=rtol)
+    # verify an obtained solution is not degenerate
+    assert np.mean(U_64 != 0.0) > 0.05
+    assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_dict_learning_online_dtype_match(data_type, expected_type, method):
+    # Verify output matrix dtype
+    rng = np.random.RandomState(0)
+    n_components = 8
+    code, dictionary = dict_learning_online(
+        X.astype(data_type),
+        n_components=n_components,
+        alpha=1,
+        random_state=rng,
+        method=method,
+    )
+    assert code.dtype == expected_type
+    assert dictionary.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ("lars", "cd"))
+def test_dict_learning_online_numerical_consistency(method):
+    # verify numerically consistent among np.float32 and np.float64
+    rtol = 1e-4
+    n_components = 4
+    alpha = 1
+
+    U_64, V_64 = dict_learning_online(
+        X.astype(np.float64),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=0,
+        method=method,
+    )
+    U_32, V_32 = dict_learning_online(
+        X.astype(np.float32),
+        n_components=n_components,
+        alpha=alpha,
+        random_state=0,
+        method=method,
+    )
+
+    # Optimal solution (U*, V*) is not unique.
+    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
+    # and (column permutated U*, row permutated V*) are also optional
+    # as long as holding UV.
+    # So here UV, ||U||_1,1 and sum(||V_k||_2) are verified
+    # instead of comparing directly U and V.
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
+    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=rtol)
+    # verify an obtained solution is not degenerate
+    assert np.mean(U_64 != 0.0) > 0.05
+    assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning()],
+    ids=lambda x: x.__class__.__name__,
+)
+def test_get_feature_names_out(estimator):
+    """Check feature names for dict learning estimators."""
+    estimator.fit(X)
+    n_components = X.shape[1]
+
+    feature_names_out = estimator.get_feature_names_out()
+    estimator_name = estimator.__class__.__name__.lower()
+    assert_array_equal(
+        feature_names_out,
+        [f"{estimator_name}{i}" for i in range(n_components)],
+    )

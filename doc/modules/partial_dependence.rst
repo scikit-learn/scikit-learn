@@ -94,10 +94,10 @@ the plots, you can use the
 
     >>> from sklearn.inspection import partial_dependence
 
-    >>> pdp, axes = partial_dependence(clf, X, [0])
-    >>> pdp
+    >>> results = partial_dependence(clf, X, [0])
+    >>> results["average"]
     array([[ 2.466...,  2.466..., ...
-    >>> axes
+    >>> results["values"]
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly
@@ -262,8 +262,8 @@ estimators that support it, and 'brute' is used for the rest.
     C. Molnar, `Interpretable Machine Learning
     <https://christophm.github.io/interpretable-ml-book/>`_, Section 5.1, 2019.
 
-    A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin, `Peeking Inside the
+    A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin, :arxiv:`Peeking Inside the
     Black Box: Visualizing Statistical Learning With Plots of Individual
-    Conditional Expectation <https://arxiv.org/abs/1309.6392>`_,
+    Conditional Expectation <1309.6392>`,
     Journal of Computational and Graphical Statistics, 24(1): 44-65, Springer,
     2015.

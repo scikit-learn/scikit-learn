@@ -225,7 +225,7 @@ def cross_validate(
     >>> sorted(cv_results.keys())
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']
-    array([0.33150734, 0.08022311, 0.03531764])
+    array([0.3315057 , 0.08022103, 0.03531816])
 
     Multiple metric evaluation using ``cross_validate``
     (please refer the ``scoring`` parameter doc for more information)
@@ -236,10 +236,10 @@ def cross_validate(
     >>> print(scores['test_neg_mean_squared_error'])
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])
-    [0.28010158 0.39088426 0.22784852]
+    [0.28009951 0.3908844  0.22784907]
 
     See Also
-    ---------
+    --------
     cross_val_score : Run cross-validation for single metric evaluation.
 
     cross_val_predict : Get predictions from each split of cross-validation for
@@ -392,7 +392,7 @@ def cross_val_score(
     pre_dispatch="2*n_jobs",
     error_score=np.nan,
 ):
-    """Evaluate a score by cross-validation
+    """Evaluate a score by cross-validation.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -432,7 +432,7 @@ def cross_val_score(
         - `None`, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For `int`/`None` inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -487,19 +487,8 @@ def cross_val_score(
     scores : ndarray of float of shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
 
-    Examples
-    --------
-    >>> from sklearn import datasets, linear_model
-    >>> from sklearn.model_selection import cross_val_score
-    >>> diabetes = datasets.load_diabetes()
-    >>> X = diabetes.data[:150]
-    >>> y = diabetes.target[:150]
-    >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y, cv=3))
-    [0.33150734 0.08022311 0.03531764]
-
     See Also
-    ---------
+    --------
     cross_validate : To run cross-validation on multiple metrics and also to
         return train scores, fit times and score times.
 
@@ -509,6 +498,16 @@ def cross_val_score(
     sklearn.metrics.make_scorer : Make a scorer from a performance metric or
         loss function.
 
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.model_selection import cross_val_score
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> print(cross_val_score(lasso, X, y, cv=3))
+    [0.3315057  0.08022103 0.03531816]
     """
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)
@@ -814,7 +813,7 @@ def cross_val_predict(
     pre_dispatch="2*n_jobs",
     method="predict",
 ):
-    """Generate cross-validated estimates for each input data point
+    """Generate cross-validated estimates for each input data point.
 
     The data is split according to the cv parameter. Each sample belongs
     to exactly one test set, and its prediction is computed with an
@@ -852,7 +851,7 @@ def cross_val_predict(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all

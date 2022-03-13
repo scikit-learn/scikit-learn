@@ -7,7 +7,6 @@ We show that linear_model.Lasso provides the same results for dense and sparse
 data and that in the case of sparse data the speed is improved.
 
 """
-print(__doc__)
 
 from time import time
 from scipy import sparse
@@ -36,8 +35,10 @@ t0 = time()
 dense_lasso.fit(X, y)
 print("Dense Lasso done in %fs" % (time() - t0))
 
-print("Distance between coefficients : %s"
-      % linalg.norm(sparse_lasso.coef_ - dense_lasso.coef_))
+print(
+    "Distance between coefficients : %s"
+    % linalg.norm(sparse_lasso.coef_ - dense_lasso.coef_)
+)
 
 # #############################################################################
 # The two Lasso implementations on Sparse data
@@ -62,5 +63,7 @@ t0 = time()
 dense_lasso.fit(Xs.toarray(), y)
 print("Dense Lasso done in %fs" % (time() - t0))
 
-print("Distance between coefficients : %s"
-      % linalg.norm(sparse_lasso.coef_ - dense_lasso.coef_))
+print(
+    "Distance between coefficients : %s"
+    % linalg.norm(sparse_lasso.coef_ - dense_lasso.coef_)
+)

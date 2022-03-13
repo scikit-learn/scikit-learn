@@ -26,9 +26,8 @@ wage as a function of various features such as experience, age, or education.
 .. contents::
    :local:
    :depth: 1
-"""
 
-print(__doc__)
+"""
 
 import numpy as np
 import scipy as sp
@@ -312,7 +311,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -367,7 +366,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -466,7 +465,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -572,7 +571,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [

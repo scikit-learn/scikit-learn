@@ -13,7 +13,6 @@ at recovering our `instruments` since the related signals reflect
 non-Gaussian processes.
 
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,11 +56,13 @@ H = pca.fit_transform(X)  # Reconstruct signals based on orthogonal components
 plt.figure()
 
 models = [X, S, S_, H]
-names = ['Observations (mixed signal)',
-         'True Sources',
-         'ICA recovered signals',
-         'PCA recovered signals']
-colors = ['red', 'steelblue', 'orange']
+names = [
+    "Observations (mixed signal)",
+    "True Sources",
+    "ICA recovered signals",
+    "PCA recovered signals",
+]
+colors = ["red", "steelblue", "orange"]
 
 for ii, (model, name) in enumerate(zip(models, names), 1):
     plt.subplot(4, 1, ii)
