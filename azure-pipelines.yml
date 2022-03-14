@@ -276,10 +276,10 @@ jobs:
         PYTHON_ARCH: '64'
         # Unpin when pytest stalling issue is fixed
         PYTEST_VERSION: '6.2.5'
-        COVERAGE: 'true'
         # Temporary fix for setuptools to use disutils from standard lib
         # https://github.com/numpy/numpy/issues/17216
         SETUPTOOLS_USE_DISTUTILS: 'stdlib'
       py38_pip_openblas_32bit:
         PYTHON_VERSION: '3.8'
         PYTHON_ARCH: '32'
+        COVERAGE: 'true'
