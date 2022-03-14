@@ -47,11 +47,6 @@ def test_interval_inf_in_bounds():
     "params, error, match",
     [
         (
-            [int, 0, 1, "left"],
-            ValueError,
-            r"type must be numbers\.Integral or numbers\.Real",
-        ),
-        (
             [Integral, 1.0, 2, "both"],
             TypeError,
             r"Expecting left to be an int for an interval over the integers",
@@ -129,6 +124,7 @@ class _SomeClass:
         ("random_state", None),
         (_SomeClass, _SomeClass()),
         (int, 1),
+        (Real, 0.5),
     ],
 )
 def test_is_satisified_by(constraint_declaration, value):

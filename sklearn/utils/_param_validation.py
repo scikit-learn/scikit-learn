@@ -164,6 +164,47 @@ class _Constraint(ABC):
         """A human readable representational string of the constraint."""
 
 
+class _InstancesOf(_Constraint):
+    """Constraint representing instances of a given type.
+
+    Parameters
+    ----------
+    type : type
+        The valid type.
+    """
+
+    def __init__(self, type):
+        self.type = type
+
+    def _type_name(self, t):
+        """Convert type into human readable string."""
+        module = t.__module__
+        qualname = t.__qualname__
+        if module == "builtins":
+            return qualname
+        elif t == Real:
+            return "float"
+        elif t == Integral:
+            return "int"
+        return f"{module}.{qualname}"
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, self.type)
+
+    def __repr__(self):
+        return f"an instance of {self._type_name(self.type)!r}"
+
+
+class _NoneConstraint(_Constraint):
+    """Constraint representing the None singleton."""
+
+    def is_satisfied_by(self, val):
+        return val is None
+
+    def __repr__(self):
+        return "None"
+
+
 class StrOptions(_Constraint):
     """Constraint representing a set of strings.
 
@@ -176,6 +217,7 @@ class StrOptions(_Constraint):
         A subset of the `options` to mark as deprecated in the repr of the constraint.
     """
 
+    @validate_params({"options": [set], "deprecated": [set, None]})
     def __init__(self, options, deprecated=None):
         self.options = options
         self.deprecated = deprecated or {}
@@ -234,13 +276,7 @@ class Interval(_Constraint):
     `[0, +∞) U {+∞}`.
     """
 
-    def _validate_params(self):
-        if self.type not in (Integral, Real):
-            raise ValueError(
-                "type must be numbers.Integral or numbers.Real. "
-                f"Got {self.type} instead."
-            )
-
+    def _check_params(self):
         if self.type is Integral:
             suffix = "for an interval over the integers."
             if self.left is not None and not isinstance(self.left, Integral):
@@ -262,13 +298,21 @@ class Interval(_Constraint):
                 f"right={self.right}"
             )
 
+    @validate_params(
+        {
+            "type": [type],
+            "left": [Integral, Real, None],
+            "right": [Integral, Real, None],
+            "closed": [StrOptions({"left", "right", "both", "neither"})],
+        }
+    )
     def __init__(self, type, left, right, closed):
         self.type = type
         self.left = left
         self.right = right
         self.closed = closed
 
-        self._validate_params()
+        self._check_params()
 
     def __contains__(self, val):
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le
@@ -308,37 +352,6 @@ class Interval(_Constraint):
         )
 
 
-class _InstancesOf(_Constraint):
-    """Constraint representing instances of a given type.
-
-    Parameters
-    ----------
-    type : type
-        The valid type.
-    """
-
-    def __init__(self, type):
-        self.type = type
-
-    def _type_name(self, t):
-        """Convert type into human readable string."""
-        module = t.__module__
-        qualname = t.__qualname__
-        if module == "builtins":
-            return qualname
-        elif t == Real:
-            return "float"
-        elif t == Integral:
-            return "int"
-        return f"{module}.{qualname}"
-
-    def is_satisfied_by(self, val):
-        return isinstance(val, self.type)
-
-    def __repr__(self):
-        return f"an instance of {self._type_name(self.type)!r}"
-
-
 class _ArrayLikes(_Constraint):
     """Constraint representing array-likes"""
 
@@ -369,16 +382,6 @@ class _Callables(_Constraint):
         return "a callable"
 
 
-class _NoneConstraint(_Constraint):
-    """Constraint representing the None singleton."""
-
-    def is_satisfied_by(self, val):
-        return val is None
-
-    def __repr__(self):
-        return "None"
-
-
 class _RandomStates(_Constraint):
     """Constraint representing random states.
 
@@ -401,19 +404,3 @@ class _RandomStates(_Constraint):
             f"{', '.join([repr(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
         )
-
-
-def get_random_state_param_constraints():
-    """Appropriate constraints for the validation of the random_state parameter.
-
-    Return
-    ------
-    constraints : list
-        The constraints for random_state.
-    """
-    constraints = [
-        Interval(Integral, 0, 2**32 - 1, closed="both"),
-        np.random.RandomState,
-        None,
-    ]
-    return {"random_state": constraints}
