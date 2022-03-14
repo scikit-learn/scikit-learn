@@ -226,7 +226,6 @@ def test_nowarn_if_metric_bool_data_bool():
     X = np.random.randint(2, size=(5, 2), dtype=bool)
 
     with warnings.catch_warnings():
-        # DataConversionWarning should not be raised 
         warnings.simplefilter("error", DataConversionWarning)
 
         OPTICS(metric=pairwise_metric).fit(X)
@@ -255,7 +254,6 @@ def test_nowarn_if_metric_no_bool():
     X_num = np.random.randint(2, size=(5, 2), dtype=np.int32)
 
     with warnings.catch_warnings():
-        # DataConversionWarning should not be raised 
         warnings.simplefilter("error", DataConversionWarning)
 
         # fit boolean data
