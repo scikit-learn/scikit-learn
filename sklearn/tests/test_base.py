@@ -5,6 +5,7 @@ import re
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
@@ -631,7 +632,7 @@ def test_feature_names_in():
     # fit on dataframe with all integer feature names works without warning
     df_int_names = pd.DataFrame(X_np)
     trans = NoOpTransformer()
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         trans.fit(df_int_names)
     assert not [w.message for w in record]
 
@@ -639,7 +640,7 @@ def test_feature_names_in():
     # -> do not warn on transform
     Xs = [X_np, df_int_names]
     for X in Xs:
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings(record=True) as record:
             trans.transform(X)
         assert not [w.message for w in record]
 

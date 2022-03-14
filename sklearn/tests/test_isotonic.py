@@ -42,7 +42,7 @@ def test_check_increasing_small_number_of_samples():
     x = [0, 1, 2]
     y = [1, 1.1, 1.05]
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         is_increasing = check_increasing(x, y)
     assert not [w.message for w in record]
 
@@ -54,7 +54,7 @@ def test_check_increasing_up():
     y = [0, 1.5, 2.77, 8.99, 8.99, 50]
 
     # Check that we got increasing=True and no warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         is_increasing = check_increasing(x, y)
     assert not [w.message for w in record]
 
@@ -66,7 +66,7 @@ def test_check_increasing_up_extreme():
     y = [0, 1, 2, 3, 4, 5]
 
     # Check that we got increasing=True and no warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         is_increasing = check_increasing(x, y)
     assert not [w.message for w in record]
 
@@ -78,7 +78,7 @@ def test_check_increasing_down():
     y = [0, -1.5, -2.77, -8.99, -8.99, -50]
 
     # Check that we got increasing=False and no warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         is_increasing = check_increasing(x, y)
     assert not [w.message for w in record]
 
@@ -90,7 +90,7 @@ def test_check_increasing_down_extreme():
     y = [0, -1, -2, -3, -4, -5]
 
     # Check that we got increasing=False and no warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         is_increasing = check_increasing(x, y)
     assert not [w.message for w in record]
 

@@ -3,6 +3,7 @@ import re
 import numpy as np
 import scipy.sparse
 import pytest
+import warnings
 
 from sklearn.datasets import load_digits, load_iris
 
@@ -513,7 +514,7 @@ def test_mnb_prior_unobserved_targets():
 
     clf = MultinomialNB()
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         clf.partial_fit(X, y, classes=[0, 1, 2])
     assert not [w.message for w in record]
 
@@ -522,7 +523,7 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[1, 1]]) == 0
 
     # add a training example with previously unobserved class
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         clf.partial_fit([[1, 1]], [2])
     assert not [w.message for w in record]
 

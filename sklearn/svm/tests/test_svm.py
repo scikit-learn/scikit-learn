@@ -7,6 +7,7 @@ import numpy as np
 import itertools
 import pytest
 import re
+import warnings
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
@@ -1334,11 +1335,11 @@ def test_svc_ovr_tie_breaking(SVCClass):
 def test_gamma_auto():
     X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         svm.SVC(kernel="linear").fit(X, y)
     assert not [w.message for w in record]
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         svm.SVC(kernel="precomputed").fit(X, y)
     assert not [w.message for w in record]
 
@@ -1347,7 +1348,7 @@ def test_gamma_scale():
     X, y = [[0.0], [1.0]], [0, 1]
 
     clf = svm.SVC()
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         clf.fit(X, y)
     assert not [w.message for w in record]
     assert_almost_equal(clf._gamma, 4)
@@ -1355,7 +1356,7 @@ def test_gamma_scale():
     # X_var ~= 1 shouldn't raise warning, for when
     # gamma is not explicitly set.
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         clf.fit(X, y)
     assert not [w.message for w in record]
 

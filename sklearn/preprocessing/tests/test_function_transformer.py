@@ -1,4 +1,5 @@
 import pytest
+import warnings
 import numpy as np
 from scipy import sparse
 from sklearn.utils import _safe_indexing
@@ -152,7 +153,7 @@ def test_check_inverse():
             check_inverse=True,
             validate=True,
         )
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings(record=True) as record:
             Xt = trans.fit_transform(X)
         assert not [w.message for w in record]
         assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
@@ -162,13 +163,13 @@ def test_check_inverse():
     trans = FunctionTransformer(
         func=np.expm1, inverse_func=None, check_inverse=True, validate=True
     )
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         trans.fit(X_dense)
     assert not [w.message for w in record]
     trans = FunctionTransformer(
         func=None, inverse_func=np.expm1, check_inverse=True, validate=True
     )
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         trans.fit(X_dense)
     assert not [w.message for w in record]
 

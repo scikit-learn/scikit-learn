@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import warnings 
 
 from scipy.sparse import issparse
 from sklearn.semi_supervised import _label_propagation as label_propagation
@@ -151,12 +152,12 @@ def test_convergence_warning():
     assert mdl.n_iter_ == mdl.max_iter
 
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=500)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         mdl.fit(X, y)
     assert not [w.message for w in record]
 
     mdl = label_propagation.LabelPropagation(kernel="rbf", max_iter=500)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         mdl.fit(X, y)
     assert not [w.message for w in record]
 
@@ -173,7 +174,7 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     X = np.array([[100.0, 100.0], [100.0, 100.0], [0.0, 0.0], [0.0, 0.0]])
     y = np.array([0, 1, -1, -1])
     mdl = LabelPropagationCls(kernel="knn", max_iter=100, n_neighbors=1)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         mdl.fit(X, y)
     assert not [w.message for w in record]
 
