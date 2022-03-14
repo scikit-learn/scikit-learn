@@ -47,7 +47,7 @@ def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     y = rng.rand(n_samples)
 
     model = LeastAngleModel(normalize=normalize)
-    with warnings.catch_warnings(record=True) as record:
+    with pytest.warns(None) as record:
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]

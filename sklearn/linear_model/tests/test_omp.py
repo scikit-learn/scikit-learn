@@ -3,7 +3,6 @@
 
 import numpy as np
 import pytest
-import warnings
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
@@ -54,7 +53,7 @@ def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
     y = rng.rand(n_samples)
 
     model = OmpModel(normalize=normalize)
-    with warnings.catch_warnings(record=True) as record:
+    with pytest.warns(None) as record:
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]

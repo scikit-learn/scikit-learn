@@ -99,7 +99,7 @@ def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warn
         y = np.stack((y, y), axis=1)
 
     model = CoordinateDescentModel(normalize=normalize)
-    with warnings.catch_warnings(record=True) as record:
+    with pytest.warns(None) as record:
         model.fit(X, y)
 
     record = [r for r in record if r.category == FutureWarning]
