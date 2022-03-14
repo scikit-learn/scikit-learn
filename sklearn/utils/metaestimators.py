@@ -178,7 +178,7 @@ def available_if(check):
     return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
 
 
-# TODO remove in version 1.3
+# TODO(1.3) remove
 class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     """Implements a conditional property using the descriptor protocol.
 
@@ -222,12 +222,16 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         return True
 
 
-# TODO remove in version 1.3
+# TODO(1.3) remove
 def if_delegate_has_method(delegate):
     """Create a decorator for methods that are delegated to a sub-estimator
 
     This enables ducktyping by hasattr returning True according to the
     sub-estimator.
+
+    .. deprecated:: 1.3
+        `if_delegate_has_method` is deprecated in version 1.1 and will be removed in
+        version 1.3. Use `available_if` instead.
 
     Parameters
     ----------
