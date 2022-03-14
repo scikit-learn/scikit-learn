@@ -196,13 +196,7 @@ jobs:
       # Linux + Python 3.8 build with OpenBLAS
       py38_conda_defaults_openblas:
         DISTRIB: 'conda'
-        CONDA_CHANNEL: 'defaults'  # Anaconda main channel
-        PYTHON_VERSION: '3.8'
-        BLAS: 'openblas'
-        NUMPY_VERSION: 'min'
-        SCIPY_VERSION: 'min'
-        MATPLOTLIB_VERSION: 'min'
-        THREADPOOLCTL_VERSION: '2.2.0'
+        CONDA_ENV: 'build_tools/azure/lock_files/py38_conda_defaults_openblas.yml'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
       # Linux environment to test the latest available dependencies.

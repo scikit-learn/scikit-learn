@@ -1,0 +1,21 @@
+channels:
+- defaults
+dependencies:
+- python=3.8
+- numpy=1.17.3    # min
+- blas[build=openblas]
+- scipy=1.3.2    # min
+- cython=0.29.25
+- joblib=1.1.0
+- threadpoolctl=2.2.0
+- pandas=1.2.4
+- matplotlib=3.1.2    # min
+- pyamg=4.1.0
+- pillow=9.0.1
+- pytest=6.2.5
+- pytest-xdist=2.3.0
+- codecov=2.1.11
+- pytest-cov=3.0.0
+- coverage=6.2
+- ccache=3.7.9
+- pip=21.2.4

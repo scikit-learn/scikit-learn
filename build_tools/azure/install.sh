@@ -60,7 +60,11 @@ pre_python_environment_install() {
 }
 
 python_environment_install() {
-    if [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
+    if [[ "$CONDA_ENV" ]]; then
+        conda env create -n $VIRTUALENV -f $CONDA_ENV
+        source activate $VIRTUALENV
+
+    elif [[ "$DISTRIB" == "conda" || "$DISTRIB" == *"mamba"* ]]; then
 
         if [[ "$CONDA_CHANNEL" != "" ]]; then
             TO_INSTALL="--override-channels -c $CONDA_CHANNEL"
