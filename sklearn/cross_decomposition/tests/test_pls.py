@@ -562,7 +562,6 @@ def test_loadings_converges():
     cca = CCA(n_components=10, max_iter=500)
 
     with warnings.catch_warnings():
-        # ConvergenceWarning should not be raised
         warnings.simplefilter("error", ConvergenceWarning)
 
         cca.fit(X, y)
