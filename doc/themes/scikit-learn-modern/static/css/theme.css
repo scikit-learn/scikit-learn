@@ -1162,8 +1162,8 @@ div.highlight span.sk-expandable:before {
   display: block;
 }
 
-#quickstart-conda:checked ~ label[for="quickstart-venv"]:before  {
-  content: "Use conda environment";
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] {
+  display: none;
 }
 
 /* for pip */
