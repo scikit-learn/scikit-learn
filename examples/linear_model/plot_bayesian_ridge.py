@@ -27,6 +27,7 @@ samples.
 # %%
 # Generating simulated data with Gaussian weights
 import numpy as np
+from scipy import stats
 
 np.random.seed(0)
 n_samples, n_features = 100, 100
@@ -37,7 +38,7 @@ w = np.zeros(n_features)
 # Only keep 10 weights of interest
 relevant_features = np.random.randint(0, n_features, 10)
 
-from scipy import stats
+
 
 for i in relevant_features:
     w[i] = stats.norm.rvs(loc=0, scale=1.0 / np.sqrt(lambda_))
