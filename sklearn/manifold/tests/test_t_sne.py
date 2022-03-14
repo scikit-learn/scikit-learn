@@ -4,7 +4,6 @@ import numpy as np
 from numpy.testing import assert_allclose
 import scipy.sparse as sp
 import pytest
-import warnings
 
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
@@ -1135,7 +1134,7 @@ def test_tsne_init_futurewarning(init):
         with pytest.warns(FutureWarning, match="The PCA initialization.*"):
             tsne.fit_transform(X)
     else:
-        with warnings.catch_warnings(record=True) as record:
+        with pytest.warns(None) as record:
             tsne.fit_transform(X)
         assert not [w.message for w in record]
 
@@ -1155,7 +1154,7 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
         with pytest.warns(FutureWarning, match="The default learning rate.*"):
             tsne.fit_transform(X)
     else:
-        with warnings.catch_warnings(record=True) as record:
+        with pytest.warns(None) as record:
             tsne.fit_transform(X)
         assert not [w.message for w in record]
 
