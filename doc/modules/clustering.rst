@@ -880,6 +880,16 @@ by black points below.
    Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
    In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
+.. _hdbscan:
+
+HDBSCAN [WIP]
+=============
+
+The :class:`HDBSCAN` algorithm views clusters as areas of high density
+separated by areas of low density, similarly to :class:`DBSCAN`. However
+
+
+
 .. _optics:
 
 OPTICS
