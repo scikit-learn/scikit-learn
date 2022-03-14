@@ -18,6 +18,7 @@ from ..utils import (
     safe_sqr,
 )
 from ..utils._tags import _safe_tags
+from ..utils.validation import _check_feature_names_in
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -86,6 +87,10 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             force_all_finite=not _safe_tags(self, key="allow_nan"),
             reset=False,
         )
+        return self._transform(X)
+
+    def _transform(self, X):
+        """Reduce X to the selected features."""
         mask = self.get_support()
         if not mask.any():
             warn(
@@ -93,7 +98,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
                 " too noisy or the selection test too strict.",
                 UserWarning,
             )
-            return np.empty(0).reshape((X.shape[0], 0))
+            return np.empty(0, dtype=X.dtype).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
         return X[:, safe_mask(X, mask)]
@@ -137,6 +142,29 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         Xt = np.zeros((X.shape[0], support.size), dtype=X.dtype)
         Xt[:, support] = X
         return Xt
+
+    def get_feature_names_out(self, input_features=None):
+        """Mask feature names according to selected features.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(self, input_features)
+        return input_features[self.get_support()]
 
 
 def _get_feature_importances(estimator, getter, transform_func=None, norm_order=1):

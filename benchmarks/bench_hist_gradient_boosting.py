@@ -140,7 +140,9 @@ def one_run(n_samples):
     lightgbm_score_duration = None
     if args.lightgbm:
         print("Fitting a LightGBM model...")
-        lightgbm_est = get_equivalent_estimator(est, lib="lightgbm")
+        lightgbm_est = get_equivalent_estimator(
+            est, lib="lightgbm", n_classes=args.n_classes
+        )
 
         tic = time()
         lightgbm_est.fit(X_train, y_train, sample_weight=sample_weight_train)

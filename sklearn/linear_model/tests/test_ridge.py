@@ -335,6 +335,41 @@ def test_ridge_individual_penalties():
         ridge.fit(X, y)
 
 
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
+        (
+            {"alpha": "1"},
+            TypeError,
+            "alpha must be an instance of float, not str",
+        ),
+        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
+        (
+            {"max_iter": "1"},
+            TypeError,
+            "max_iter must be an instance of int, not str",
+        ),
+        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
+        (
+            {"tol": "1"},
+            TypeError,
+            "tol must be an instance of float, not str",
+        ),
+    ],
+)
+def test_ridge_params_validation(params, err_type, err_msg):
+    """Check the parameters validation in Ridge."""
+
+    rng = np.random.RandomState(42)
+    n_samples, n_features, n_targets = 20, 10, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_targets)
+
+    with pytest.raises(err_type, match=err_msg):
+        Ridge(**params).fit(X, y)
+
+
 @pytest.mark.parametrize("n_col", [(), (1,), (3,)])
 def test_X_CenterStackOp(n_col):
     rng = np.random.RandomState(0)
@@ -1028,7 +1063,7 @@ def test_class_weight_vs_sample_weight(reg):
 
     # Check that sample_weight and class_weight are multiplicative
     reg1 = reg()
-    reg1.fit(iris.data, iris.target, sample_weight ** 2)
+    reg1.fit(iris.data, iris.target, sample_weight**2)
     reg2 = reg(class_weight=class_weight)
     reg2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(reg1.coef_, reg2.coef_)
@@ -1108,6 +1143,27 @@ def test_ridge_classifier_cv_store_cv_values(scoring):
     n_targets = y.shape[1]
     r.fit(x, y)
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+
+
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+def test_ridgecv_alphas_conversion(Estimator):
+    rng = np.random.RandomState(0)
+    alphas = (0.1, 1.0, 10.0)
+
+    n_samples, n_features = 5, 5
+    if Estimator is RidgeCV:
+        y = rng.randn(n_samples)
+    else:
+        y = rng.randint(0, 2, n_samples)
+    X = rng.randn(n_samples, n_features)
+
+    ridge_est = Estimator(alphas=alphas)
+    assert (
+        ridge_est.alphas is alphas
+    ), f"`alphas` was mutated in `{Estimator.__name__}.__init__`"
+
+    ridge_est.fit(X, y)
+    assert_array_equal(ridge_est.alphas, np.asarray(alphas))
 
 
 def test_ridgecv_sample_weight():
@@ -1213,19 +1269,50 @@ def test_ridgecv_int_alphas():
     ridge.fit(X, y)
 
 
-def test_ridgecv_negative_alphas():
-    X = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
-    y = [1, 1, 1, -1, -1]
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alphas": (1, -1, -100)}, ValueError, r"alphas\[1\] == -1, must be > 0.0"),
+        (
+            {"alphas": (-0.1, -1.0, -10.0)},
+            ValueError,
+            r"alphas\[0\] == -0.1, must be > 0.0",
+        ),
+        (
+            {"alphas": (1, 1.0, "1")},
+            TypeError,
+            r"alphas\[2\] must be an instance of float, not str",
+        ),
+    ],
+)
+def test_ridgecv_alphas_validation(Estimator, params, err_type, err_msg):
+    """Check the `alphas` validation in RidgeCV and RidgeClassifierCV."""
 
-    # Negative integers
-    ridge = RidgeCV(alphas=(-1, -10, -100))
-    with pytest.raises(ValueError, match="alphas must be strictly positive"):
-        ridge.fit(X, y)
+    n_samples, n_features = 5, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randint(0, 2, n_samples)
 
-    # Negative floats
-    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
-    with pytest.raises(ValueError, match="alphas must be strictly positive"):
-        ridge.fit(X, y)
+    with pytest.raises(err_type, match=err_msg):
+        Estimator(**params).fit(X, y)
+
+
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+def test_ridgecv_alphas_scalar(Estimator):
+    """Check the case when `alphas` is a scalar.
+    This case was supported in the past when `alphas` where converted
+    into array in `__init__`.
+    We add this test to ensure backward compatibility.
+    """
+
+    n_samples, n_features = 5, 5
+    X = rng.randn(n_samples, n_features)
+    if Estimator is RidgeCV:
+        y = rng.randn(n_samples)
+    else:
+        y = rng.randint(0, 2, n_samples)
+
+    Estimator(alphas=1).fit(X, y)
 
 
 def test_raises_value_error_if_solver_not_supported():
@@ -1299,7 +1386,7 @@ def test_ridge_fit_intercept_sparse(solver):
     dense_ridge.fit(X, y)
     with pytest.warns(None) as record:
         sparse_ridge.fit(X_csr, y)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
     assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
@@ -1328,7 +1415,7 @@ def test_ridge_fit_intercept_sparse_sag():
     dense_ridge.fit(X, y)
     with pytest.warns(None) as record:
         sparse_ridge.fit(X_csr, y)
-    assert len(record) == 0
+    assert not [w.message for w in record]
     assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
     assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
     with pytest.warns(UserWarning, match='"sag" solver requires.*'):
@@ -1394,12 +1481,6 @@ def test_ridge_regression_check_arguments_validity(
         assert_allclose(intercept, true_intercept, rtol=0, atol=atol)
     else:
         assert_allclose(out, true_coefs, rtol=0, atol=atol)
-
-
-def test_ridge_classifier_no_support_multilabel():
-    X, y = make_multilabel_classification(n_samples=10, random_state=0)
-    with pytest.raises(ValueError):
-        RidgeClassifier().fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -1515,6 +1596,28 @@ def test_ridge_sag_with_X_fortran():
     Ridge(solver="sag").fit(X, y)
 
 
+@pytest.mark.parametrize(
+    "Classifier, params",
+    [
+        (RidgeClassifier, {}),
+        (RidgeClassifierCV, {"cv": None}),
+        (RidgeClassifierCV, {"cv": 3}),
+    ],
+)
+def test_ridgeclassifier_multilabel(Classifier, params):
+    """Check that multilabel classification is supported and give meaningful
+    results."""
+    X, y = make_multilabel_classification(n_classes=1, random_state=0)
+    y = y.reshape(-1, 1)
+    Y = np.concatenate([y, y], axis=1)
+    clf = Classifier(**params).fit(X, Y)
+    Y_pred = clf.predict(X)
+
+    assert Y_pred.shape == Y.shape
+    assert_array_equal(Y_pred[:, 0], Y_pred[:, 1])
+    Ridge(solver="sag").fit(X, y)
+
+
 @pytest.mark.parametrize("solver", ["auto", "lbfgs"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
@@ -1598,7 +1701,7 @@ def test_positive_ridge_loss(alpha):
             coef = model.coef_
 
         return 0.5 * np.sum((y - X @ coef - intercept) ** 2) + 0.5 * alpha * np.sum(
-            coef ** 2
+            coef**2
         )
 
     model = Ridge(alpha=alpha).fit(X, y)
@@ -1701,3 +1804,22 @@ def test_ridge_sample_weight_invariance(normalize, solver):
 
     assert_allclose(ridge_2sw.coef_, ridge_dup.coef_)
     assert_allclose(ridge_2sw.intercept_, ridge_dup.intercept_)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [RidgeCV, RidgeClassifierCV], ids=["RidgeCV", "RidgeClassifierCV"]
+)
+def test_ridgecv_normalize_deprecated(Estimator):
+    """Check that the normalize deprecation warning mentions the rescaling of alphas
+
+    Non-regression test for issue #22540
+    """
+    X = np.array([[1, -1], [1, 1]])
+    y = np.array([0, 1])
+
+    estimator = Estimator(normalize=True)
+
+    with pytest.warns(
+        FutureWarning, match=r"Set parameter alphas to: original_alphas \* n_samples"
+    ):
+        estimator.fit(X, y)

@@ -63,8 +63,8 @@ class BaseCrossValidator(metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
@@ -171,8 +171,8 @@ class LeaveOneOut(BaseCrossValidator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : object
             Always ignored, exists for compatibility.
@@ -256,8 +256,8 @@ class LeavePOut(BaseCrossValidator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : object
             Always ignored, exists for compatibility.
@@ -309,8 +309,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -508,7 +508,7 @@ class GroupKFold(_BaseKFold):
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
 
         unique_groups, groups = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
@@ -549,8 +549,8 @@ class GroupKFold(_BaseKFold):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -716,8 +716,8 @@ class StratifiedKFold(_BaseKFold):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             Note that providing ``y`` is sufficient to generate the splits and
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
@@ -744,7 +744,7 @@ class StratifiedKFold(_BaseKFold):
         split. You can make the results identical by setting `random_state`
         to an integer.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
 
 
@@ -1043,8 +1043,8 @@ class TimeSeriesSplit(_BaseKFold):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
@@ -1144,7 +1144,9 @@ class LeaveOneGroupOut(BaseCrossValidator):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
         # We make a copy of groups to avoid side-effects during iteration
-        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
+        groups = check_array(
+            groups, input_name="groups", copy=True, ensure_2d=False, dtype=None
+        )
         unique_groups = np.unique(groups)
         if len(unique_groups) <= 1:
             raise ValueError(
@@ -1178,7 +1180,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
         return len(np.unique(groups))
 
     def split(self, X, y=None, groups=None):
@@ -1187,8 +1189,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -1270,7 +1272,9 @@ class LeavePGroupsOut(BaseCrossValidator):
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
+        groups = check_array(
+            groups, input_name="groups", copy=True, ensure_2d=False, dtype=None
+        )
         unique_groups = np.unique(groups)
         if self.n_groups >= len(unique_groups):
             raise ValueError(
@@ -1310,7 +1314,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
     def split(self, X, y=None, groups=None):
@@ -1319,8 +1323,8 @@ class LeavePGroupsOut(BaseCrossValidator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -1385,8 +1389,8 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
@@ -1572,8 +1576,8 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
@@ -1802,7 +1806,7 @@ class GroupShuffleSplit(ShuffleSplit):
     def _iter_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
-        groups = check_array(groups, ensure_2d=False, dtype=None)
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
         for group_train, group_test in super()._iter_indices(X=classes):
             # these are the indices of classes in the partition
@@ -1819,8 +1823,8 @@ class GroupShuffleSplit(ShuffleSplit):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
@@ -1919,7 +1923,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(
             n_samples,
             self.test_size,
@@ -1991,8 +1995,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             Note that providing ``y`` is sufficient to generate the splits and
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
@@ -2019,7 +2023,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         split. You can make the results identical by setting `random_state`
         to an integer.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
 
 
@@ -2260,7 +2264,7 @@ class _CVIterableWrapper(BaseCrossValidator):
 
 
 def check_cv(cv=5, y=None, *, classifier=False):
-    """Input checker utility for building a cross-validator
+    """Input checker utility for building a cross-validator.
 
     Parameters
     ----------
@@ -2270,7 +2274,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - An iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -2300,7 +2304,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         if (
             classifier
             and (y is not None)
-            and (type_of_target(y) in ("binary", "multiclass"))
+            and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
             return StratifiedKFold(cv)
         else:
@@ -2326,7 +2330,7 @@ def train_test_split(
     shuffle=True,
     stratify=None,
 ):
-    """Split arrays or matrices into random train and test subsets
+    """Split arrays or matrices into random train and test subsets.
 
     Quick utility that wraps input validation and
     ``next(ShuffleSplit().split(X, y))`` and application to input data
@@ -2358,7 +2362,6 @@ def train_test_split(
         Controls the shuffling applied to the data before applying the split.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-
 
     shuffle : bool, default=True
         Whether or not to shuffle the data before splitting. If shuffle=False
@@ -2410,7 +2413,6 @@ def train_test_split(
 
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
-
     """
     n_arrays = len(arrays)
     if n_arrays == 0:

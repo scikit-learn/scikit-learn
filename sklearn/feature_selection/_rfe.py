@@ -11,7 +11,7 @@ import numbers
 from joblib import Parallel, effective_n_jobs
 
 
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 from ..utils.metaestimators import _safe_split
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
@@ -41,6 +41,19 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
             estimator, X_test[:, features], y_test, scorer
         ),
     ).scores_
+
+
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the first fitted estimator if available, otherwise we
+    check the unfitted estimator.
+    """
+    return lambda self: (
+        hasattr(self.estimator_, attr)
+        if hasattr(self, "estimator_")
+        else hasattr(self.estimator, attr)
+    )
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -117,6 +130,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
         ranking position of the i-th feature. Selected (i.e., estimated
@@ -124,6 +143,26 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     support_ : ndarray of shape (n_features,)
         The mask of selected features.
+
+    See Also
+    --------
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
+    SequentialFeatureSelector : Sequential cross-validation based feature
+        selection. Does not rely on importance weights.
+
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
+    References
+    ----------
+
+    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
+           for cancer classification using support vector machines",
+           Mach. Learn., 46(1-3), 389--422, 2002.
 
     Examples
     --------
@@ -142,26 +181,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
-
-    Notes
-    -----
-    Allows NaN/Inf in the input if the underlying estimator does as well.
-
-    See Also
-    --------
-    RFECV : Recursive feature elimination with built-in cross-validated
-        selection of the best number of features.
-    SelectFromModel : Feature selection based on thresholds of importance
-        weights.
-    SequentialFeatureSelector : Sequential cross-validation based feature
-        selection. Does not rely on importance weights.
-
-    References
-    ----------
-
-    .. [1] Guyon, I., Weston, J., Barnhill, S., & Vapnik, V., "Gene selection
-           for cancer classification using support vector machines",
-           Mach. Learn., 46(1-3), 389--422, 2002.
     """
 
     def __init__(
@@ -312,7 +331,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         return self
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("predict"))
     def predict(self, X):
         """Reduce X to the selected features and then predict using the underlying estimator.
 
@@ -329,7 +348,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict(self.transform(X))
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("score"))
     def score(self, X, y, **fit_params):
         """Reduce X to the selected features and return the score of the underlying estimator.
 
@@ -360,7 +379,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.support_
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -382,7 +401,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.decision_function(self.transform(X))
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -402,7 +421,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_proba(self.transform(X))
 
-    @if_delegate_has_method(delegate="estimator")
+    @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
 
@@ -550,6 +569,12 @@ class RFECV(RFE):
         underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`
@@ -724,7 +749,7 @@ class RFECV(RFE):
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(self.transform(X), y)
+        self.estimator_.fit(self._transform(X), y)
 
         # reverse to stay consistent with before
         scores_rev = scores[:, ::-1]
