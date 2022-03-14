@@ -215,7 +215,7 @@ class Interval(_Constraint):
     right : float, int or None
         The right bound of the interval. None means right bound is +∞.
 
-    closed : {"left", "right", "both", "neither"}, default="left"
+    closed : {"left", "right", "both", "neither"}
         Whether the interval is open or closed. Possible choices are:
 
         - `"left"`: the interval is closed on the left and open on the rigth.
@@ -256,7 +256,13 @@ class Interval(_Constraint):
                     f"right can't be None when closed == {self.closed} {suffix}"
                 )
 
-    def __init__(self, type, left, right, *, closed="left"):
+        if self.right is not None and self.left is not None and self.right <= self.left:
+            raise ValueError(
+                f"right can't be less than left. Got left={self.left} and "
+                f"right={self.right}"
+            )
+
+    def __init__(self, type, left, right, closed):
         self.type = type
         self.left = left
         self.right = right

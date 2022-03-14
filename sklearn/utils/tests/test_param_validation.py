@@ -18,16 +18,16 @@ from sklearn.utils._param_validation import make_constraint
 @pytest.mark.parametrize("interval_type", [Integral, Real])
 def test_interval_range(interval_type):
     """Check the range of values depending on closed."""
-    interval = Interval(interval_type, -2, 2, closed="left")
+    interval = Interval(interval_type, -2, 2, "left")
     assert -2 in interval and 2 not in interval
 
-    interval = Interval(interval_type, -2, 2, closed="right")
+    interval = Interval(interval_type, -2, 2, "right")
     assert -2 not in interval and 2 in interval
 
-    interval = Interval(interval_type, -2, 2, closed="both")
+    interval = Interval(interval_type, -2, 2, "both")
     assert -2 in interval and 2 in interval
 
-    interval = Interval(interval_type, -2, 2, closed="neither")
+    interval = Interval(interval_type, -2, 2, "neither")
     assert -2 not in interval and 2 not in interval
 
 
@@ -36,10 +36,10 @@ def test_interval_inf_in_bounds():
 
     Only valid for real intervals.
     """
-    interval = Interval(Real, 0, None, closed="right")
+    interval = Interval(Real, 0, None, "right")
     assert np.inf in interval
 
-    interval = Interval(Real, None, 0, closed="left")
+    interval = Interval(Real, None, 0, "left")
     assert -np.inf in interval
 
 
@@ -47,36 +47,41 @@ def test_interval_inf_in_bounds():
     "params, error, match",
     [
         (
-            {"type": int, "left": 0, "right": 1},
+            [int, 0, 1, "left"],
             ValueError,
             r"type must be numbers\.Integral or numbers\.Real",
         ),
         (
-            {"type": Integral, "left": 1.0, "right": 2},
+            [Integral, 1.0, 2, "both"],
             TypeError,
             r"Expecting left to be an int for an interval over the integers",
         ),
         (
-            {"type": Integral, "left": 1, "right": 2.0},
+            [Integral, 1, 2.0, "neither"],
             TypeError,
             r"Expecting right to be an int for an interval over the integers",
         ),
         (
-            {"type": Integral, "left": None, "right": 0, "closed": "left"},
+            [Integral, None, 0, "left"],
             ValueError,
             r"left can't be None when closed == left",
         ),
         (
-            {"type": Integral, "left": 0, "right": None, "closed": "right"},
+            [Integral, 0, None, "right"],
             ValueError,
             r"right can't be None when closed == right",
+        ),
+        (
+            [Integral, 1, -1, "both"],
+            ValueError,
+            r"right can't be less than left",
         ),
     ],
 )
 def test_interval_errors(params, error, match):
     """Check that informative errors are raised for invalid combination of parameters"""
     with pytest.raises(error, match=match):
-        Interval(**params)
+        Interval(*params)
 
 
 def test_stroptions():
@@ -91,7 +96,11 @@ def test_stroptions():
 
 @pytest.mark.parametrize(
     "constraint",
-    [Interval(Real, None, 0), Interval(Real, 0, None), StrOptions({"a", "b", "c"})],
+    [
+        Interval(Real, None, 0, "left"),
+        Interval(Real, 0, None, "left"),
+        StrOptions({"a", "b", "c"}),
+    ],
 )
 def test_generate_invalid_param_val(constraint):
     """Check that the value generated does not satisfy the constraint"""
@@ -107,8 +116,8 @@ class _SomeClass:
 @pytest.mark.parametrize(
     "constraint_declaration, value",
     [
-        (Interval(Real, 0, 1), 0.42),
-        (Interval(Integral, 0, None), 42),
+        (Interval(Real, 0, 1, "both"), 0.42),
+        (Interval(Integral, 0, None, "neither"), 42),
         (StrOptions({"a", "b", "c"}), "b"),
         (callable, lambda x: x + 1),
         (None, None),
@@ -131,7 +140,7 @@ def test_is_satisified_by(constraint_declaration, value):
 @pytest.mark.parametrize(
     "constraint_declaration, expected_constraint_class",
     [
-        (Interval(Real, 0, 1), Interval),
+        (Interval(Real, 0, 1, "both"), Interval),
         (StrOptions({"option1", "option2"}), StrOptions),
         ("array-like", _ArrayLikes),
         ("sparse matrix", _SparseMatrices),
