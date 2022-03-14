@@ -45,7 +45,6 @@ FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics + ["cosine", "arcco
 
 
 def _tree_to_labels(
-    X,
     single_linkage_tree,
     min_cluster_size=10,
     cluster_selection_method="eom",
@@ -884,7 +883,6 @@ def hdbscan(
                 )
 
     return _tree_to_labels(
-        X,
         single_linkage_tree,
         min_cluster_size,
         cluster_selection_method,
