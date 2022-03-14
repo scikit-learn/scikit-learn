@@ -7,10 +7,11 @@ import pytest
 from sklearn.utils._param_validation import Interval
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._param_validation import _ArrayLikes
-from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import _Callables
 from sklearn.utils._param_validation import _InstancesOf
 from sklearn.utils._param_validation import _NoneConstraint
+from sklearn.utils._param_validation import _RandomStates
+from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import make_constraint
 
 
@@ -98,6 +99,11 @@ def test_generate_invalid_param_val(constraint):
     assert not constraint.is_satisfied_by(bad_value)
 
 
+# a class to test the _InstancesOf constraint
+class _SomeClass:
+    pass
+
+
 @pytest.mark.parametrize(
     "constraint_declaration, value",
     [
@@ -109,7 +115,10 @@ def test_generate_invalid_param_val(constraint):
         ("array-like", [[1, 2], [3, 4]]),
         ("array-like", np.array([[1, 2], [3, 4]])),
         ("sparse matrix", csr_matrix([[1, 2], [3, 4]])),
-        (np.random.RandomState, np.random.RandomState(0)),
+        ("random_state", 0),
+        ("random_state", np.random.RandomState(0)),
+        ("random_state", None),
+        (_SomeClass, _SomeClass()),
         (int, 1),
     ],
 )
@@ -126,6 +135,7 @@ def test_is_satisified_by(constraint_declaration, value):
         (StrOptions({"option1", "option2"}), StrOptions),
         ("array-like", _ArrayLikes),
         ("sparse matrix", _SparseMatrices),
+        ("random_state", _RandomStates),
         (None, _NoneConstraint),
         (callable, _Callables),
         (int, _InstancesOf),

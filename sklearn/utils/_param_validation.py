@@ -73,6 +73,8 @@ def make_constraint(constraint):
         return _ArrayLikes()
     if isinstance(constraint, str) and constraint == "sparse matrix":
         return _SparseMatrices()
+    if isinstance(constraint, str) and constraint == "random_state":
+        return _RandomStates()
     if constraint is callable:
         return _Callables()
     if constraint is None:
@@ -369,6 +371,30 @@ class _NoneConstraint(_Constraint):
 
     def __repr__(self):
         return "None"
+
+
+class _RandomStates(_Constraint):
+    """Constraint representing random states.
+
+    Convenience class for
+    [Interval(Integral, 0, 2**32 - 1, closed="both"), np.random.RandomState, None]
+    """
+
+    def __init__(self):
+        self._constraints = [
+            Interval(Integral, 0, 2**32 - 1, closed="both"),
+            _InstancesOf(np.random.RandomState),
+            _NoneConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __repr__(self):
+        return (
+            f"{', '.join([repr(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
 
 
 def get_random_state_param_constraints():

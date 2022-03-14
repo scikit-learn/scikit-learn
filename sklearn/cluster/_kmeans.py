@@ -65,7 +65,7 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
         "X": ["array-like", "sparse matrix"],
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "x_squared_norms": ["array-like", None],
-        **get_random_state_param_constraints(),
+        "random_state": ["random_state"],
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
     }
 )
@@ -792,7 +792,7 @@ class _BaseKMeans(
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "verbose": [Interval(Integral, 0, None, closed="left"), bool],
-        **get_random_state_param_constraints(),
+        "random_state": ["random_state"],
     }
 
     def __init__(
