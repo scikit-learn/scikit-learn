@@ -244,9 +244,9 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      pylatest_conda_forge_mkl:
+      pylatest_conda_forge_openblas:
         DISTRIB: 'conda'
-        BLAS: 'mkl'
+        BLAS: 'openblas'
         CONDA_CHANNEL: 'conda-forge'
         CPU_COUNT: '3'
       pylatest_conda_mkl_no_openmp:
