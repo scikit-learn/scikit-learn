@@ -872,6 +872,8 @@ Changelog
   when a class is present in `y` but not in `class_weight`. :pr:`22595` by
   `Thomas Fan`_.
 
+- |Fix| :func:`utils.estimator_html_repr` has an improved visualization for nested
+  meta-estimators. :pr:`21310` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
