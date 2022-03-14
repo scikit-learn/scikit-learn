@@ -38,7 +38,7 @@ try:
 except NameError:
     WindowsError = None
 
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_approx_equal
 from numpy.testing import assert_array_equal
@@ -59,6 +59,7 @@ from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
     check_X_y,
+    _is_arraylike_not_scalar,
 )
 
 
@@ -85,6 +86,13 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
+
+
+DTYPE_TOLERANCES = {
+    #            rtol, atol
+    np.float32: (1e-6, 1e-5),
+    np.float64: (1e-7, 1e-7),
+}
 
 
 # TODO: Remove in 1.2
@@ -385,6 +393,75 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
             names = exceptions.__name__
 
         raise AssertionError("%s not raised by %s" % (names, function.__name__))
+
+
+def assert_allclose(
+    actual, desired, rtol=None, atol=None, equal_nan=True, err_msg="", verbose=True
+):
+    """
+    Adaptation of numpy.testing.assert_allclose to have tolerances
+    be set based on the input arrays' dtypes.
+
+    Parameters
+    ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired.
+    rtol : float, optional, default=None
+        Relative tolerance.
+        If None, it is set based on the provided arrays' dtypes.
+    atol : float, optional, default=None
+        Absolute tolerance.
+        If None, it is set based on the provided arrays' dtypes.
+    equal_nan : bool, optional, default=True
+        If True, NaNs will compare equal.
+    err_msg : str, optional, default=''
+        The error message to be printed in case of failure.
+    verbose : bool, optional, default=True
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+        If actual and desired are not equal up to specified precision.
+
+    See Also
+    --------
+    numpy.testing.assert_allclose
+
+    Examples
+    --------
+    >>> x = [1e-5, 1e-3, 1e-1]
+    >>> y = np.arccos(np.cos(x))
+    >>> np.testing.assert_allclose(x, y, rtol=1e-5, atol=0)
+
+    """
+    dtypes = []
+
+    for input in (actual, desired):
+        if _is_arraylike_not_scalar(input):
+            dtypes.append(np.asarray(input).dtype)
+        elif isinstance(input, np.dtype):
+            dtypes.append(input)
+        elif np.isscalar(input):
+            dtypes.append(type(input))
+        else:
+            raise TypeError(
+                f"Expected a np.array or a np.dtype, but got {type(input)} instead."
+            )
+
+    rtols, atols = zip(
+        *[DTYPE_TOLERANCES.get(dtype, (1e-10, 1e-10)) for dtype in dtypes]
+    )
+
+    if rtol is None:
+        rtol = max(rtols)
+
+    if atol is None:
+        atol = max(atols)
+
+    np_assert_allclose(actual, desired, rtol, atol, equal_nan, err_msg, verbose)
 
 
 def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):
