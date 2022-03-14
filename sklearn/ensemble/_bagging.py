@@ -18,7 +18,7 @@ from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d, deprecated
 from ..utils import indices_to_mask
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
@@ -196,6 +196,19 @@ def _parallel_predict_regression(estimators, estimators_features, X):
     return sum(
         estimator.predict(X[:, features])
         for estimator, features in zip(estimators, estimators_features)
+    )
+
+
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the first fitted estimator if available, otherwise we
+    check the base estimator.
+    """
+    return lambda self: (
+        hasattr(self.estimators_[0], attr)
+        if hasattr(self, "estimators_")
+        else hasattr(self.base_estimator, attr)
     )
 
 
@@ -856,7 +869,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         else:
             return np.log(self.predict_proba(X))
 
-    @if_delegate_has_method(delegate="base_estimator")
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 

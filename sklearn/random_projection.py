@@ -31,6 +31,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from scipy import linalg
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
@@ -39,9 +40,8 @@ from .base import _ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_is_fitted
+from .utils.validation import check_array, check_is_fitted
 from .exceptions import DataDimensionalityWarning
-
 
 __all__ = [
     "SparseRandomProjection",
@@ -302,11 +302,18 @@ class BaseRandomProjection(
 
     @abstractmethod
     def __init__(
-        self, n_components="auto", *, eps=0.1, dense_output=False, random_state=None
+        self,
+        n_components="auto",
+        *,
+        eps=0.1,
+        dense_output=False,
+        compute_inverse_components=False,
+        random_state=None,
     ):
         self.n_components = n_components
         self.eps = eps
         self.dense_output = dense_output
+        self.compute_inverse_components = compute_inverse_components
         self.random_state = random_state
 
     @abstractmethod
@@ -323,11 +330,17 @@ class BaseRandomProjection(
 
         Returns
         -------
-        components : {ndarray, sparse matrix} of shape \
-                (n_components, n_features)
+        components : {ndarray, sparse matrix} of shape (n_components, n_features)
             The generated random matrix. Sparse matrix will be of CSR format.
 
         """
+
+    def _compute_inverse_components(self):
+        """Compute the pseudo-inverse of the (densified) components."""
+        components = self.components_
+        if sp.issparse(components):
+            components = components.toarray()
+        return linalg.pinv(components, check_finite=False)
 
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix.
@@ -399,6 +412,9 @@ class BaseRandomProjection(
             " not the proper shape."
         )
 
+        if self.compute_inverse_components:
+            self.inverse_components_ = self._compute_inverse_components()
+
         return self
 
     def transform(self, X):
@@ -437,6 +453,35 @@ class BaseRandomProjection(
         """
         return self.n_components
 
+    def inverse_transform(self, X):
+        """Project data back to its original space.
+
+        Returns an array X_original whose transform would be X. Note that even
+        if X is sparse, X_original is dense: this may use a lot of RAM.
+
+        If `compute_inverse_components` is False, the inverse of the components is
+        computed during each call to `inverse_transform` which can be costly.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_components)
+            Data to be transformed back.
+
+        Returns
+        -------
+        X_original : ndarray of shape (n_samples, n_features)
+            Reconstructed data.
+        """
+        check_is_fitted(self)
+
+        X = check_array(X, dtype=[np.float64, np.float32], accept_sparse=("csr", "csc"))
+
+        if self.compute_inverse_components:
+            return X @ self.inverse_components_.T
+
+        inverse_components = self._compute_inverse_components()
+        return X @ inverse_components.T
+
     def _more_tags(self):
         return {
             "preserves_dtype": [np.float64, np.float32],
@@ -474,6 +519,11 @@ class GaussianRandomProjection(BaseRandomProjection):
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
+    compute_inverse_components : bool, default=False
+        Learn the inverse transform by computing the pseudo-inverse of the
+        components during fit. Note that computing the pseudo-inverse does not
+        scale well to large matrices.
+
     random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generator used to generate the
         projection matrix at fit time.
@@ -487,6 +537,12 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     components_ : ndarray of shape (n_components, n_features)
         Random matrix used for the projection.
+
+    inverse_components_ : ndarray of shape (n_features, n_components)
+        Pseudo-inverse of the components, only computed if
+        `compute_inverse_components` is True.
+
+        .. versionadded:: 1.1
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -516,11 +572,19 @@ class GaussianRandomProjection(BaseRandomProjection):
     (25, 2759)
     """
 
-    def __init__(self, n_components="auto", *, eps=0.1, random_state=None):
+    def __init__(
+        self,
+        n_components="auto",
+        *,
+        eps=0.1,
+        compute_inverse_components=False,
+        random_state=None,
+    ):
         super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=True,
+            compute_inverse_components=compute_inverse_components,
             random_state=random_state,
         )
 
@@ -610,6 +674,14 @@ class SparseRandomProjection(BaseRandomProjection):
         If False, the projected data uses a sparse representation if
         the input is sparse.
 
+    compute_inverse_components : bool, default=False
+        Learn the inverse transform by computing the pseudo-inverse of the
+        components during fit. Note that the pseudo-inverse is always a dense
+        array, even if the training data was sparse. This means that it might be
+        necessary to call `inverse_transform` on a small batch of samples at a
+        time to avoid exhausting the available memory on the host. Moreover,
+        computing the pseudo-inverse does not scale well to large matrices.
+
     random_state : int, RandomState instance or None, default=None
         Controls the pseudo random number generator used to generate the
         projection matrix at fit time.
@@ -624,6 +696,12 @@ class SparseRandomProjection(BaseRandomProjection):
     components_ : sparse matrix of shape (n_components, n_features)
         Random matrix used for the projection. Sparse matrix will be of CSR
         format.
+
+    inverse_components_ : ndarray of shape (n_features, n_components)
+        Pseudo-inverse of the components, only computed if
+        `compute_inverse_components` is True.
+
+        .. versionadded:: 1.1
 
     density_ : float in range 0.0 - 1.0
         Concrete density computed from when density = "auto".
@@ -676,12 +754,14 @@ class SparseRandomProjection(BaseRandomProjection):
         density="auto",
         eps=0.1,
         dense_output=False,
+        compute_inverse_components=False,
         random_state=None,
     ):
         super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=dense_output,
+            compute_inverse_components=compute_inverse_components,
             random_state=random_state,
         )
 
