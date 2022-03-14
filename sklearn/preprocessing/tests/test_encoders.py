@@ -39,7 +39,8 @@ def test_one_hot_encoder_sparse_dense():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
-def test_one_hot_encoder_handle_unknown():
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+def test_one_hot_encoder_handle_unknown(handle_unknown):
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
     X2 = np.array([[4, 1, 1]])
 
@@ -51,7 +52,7 @@ def test_one_hot_encoder_handle_unknown():
         oh.transform(X2)
 
     # Test the ignore option, ignores unknown features (giving all 0's)
-    oh = OneHotEncoder(handle_unknown="ignore")
+    oh = OneHotEncoder(handle_unknown=handle_unknown)
     oh.fit(X)
     X2_passed = X2.copy()
     assert_array_equal(
@@ -63,7 +64,7 @@ def test_one_hot_encoder_handle_unknown():
 
     # Raise error if handle_unknown is neither ignore or error.
     oh = OneHotEncoder(handle_unknown="42")
-    with pytest.raises(ValueError, match="handle_unknown should be either"):
+    with pytest.raises(ValueError, match="handle_unknown should be one of"):
         oh.fit(X)
 
 
@@ -79,14 +80,15 @@ def test_one_hot_encoder_not_fitted():
         enc.transform(X)
 
 
-def test_one_hot_encoder_handle_unknown_strings():
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+def test_one_hot_encoder_handle_unknown_strings(handle_unknown):
     X = np.array(["11111111", "22", "333", "4444"]).reshape((-1, 1))
     X2 = np.array(["55555", "22"]).reshape((-1, 1))
     # Non Regression test for the issue #12470
     # Test the ignore option, when categories are numpy string dtype
     # particularly when the known category strings are larger
     # than the unknown category strings
-    oh = OneHotEncoder(handle_unknown="ignore")
+    oh = OneHotEncoder(handle_unknown=handle_unknown)
     oh.fit(X)
     X2_passed = X2.copy()
     assert_array_equal(
@@ -267,9 +269,10 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0, 1], [1, 0, 0, 1, 1]])
 
 
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 @pytest.mark.parametrize("sparse_", [False, True])
 @pytest.mark.parametrize("drop", [None, "first"])
-def test_one_hot_encoder_inverse(sparse_, drop):
+def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
     X = [["abc", 2, 55], ["def", 1, 55], ["abc", 3, 55]]
     enc = OneHotEncoder(sparse=sparse_, drop=drop)
     X_tr = enc.fit_transform(X)
@@ -288,7 +291,7 @@ def test_one_hot_encoder_inverse(sparse_, drop):
         X = [["abc", 2, 55], ["def", 1, 55], ["abc", 3, 55]]
         enc = OneHotEncoder(
             sparse=sparse_,
-            handle_unknown="ignore",
+            handle_unknown=handle_unknown,
             categories=[["abc", "def"], [1, 2], [54, 55, 56]],
         )
         X_tr = enc.fit_transform(X)
@@ -299,7 +302,7 @@ def test_one_hot_encoder_inverse(sparse_, drop):
         # with an otherwise numerical output, still object if unknown
         X = [[2, 55], [1, 55], [3, 55]]
         enc = OneHotEncoder(
-            sparse=sparse_, categories=[[1, 2], [54, 56]], handle_unknown="ignore"
+            sparse=sparse_, categories=[[1, 2], [54, 56]], handle_unknown=handle_unknown
         )
         X_tr = enc.fit_transform(X)
         exp = np.array(X, dtype=object)
@@ -442,6 +445,7 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
             assert np.issubdtype(res.dtype, cat_dtype)
 
 
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 @pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [
@@ -498,7 +502,7 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
         "object-nan-and-None",
     ],
 )
-def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype):
+def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype, handle_unknown):
     enc = OneHotEncoder(categories=cats)
     exp = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
@@ -513,7 +517,7 @@ def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype):
     enc = OneHotEncoder(categories=cats)
     with pytest.raises(ValueError, match="Found unknown categories"):
         enc.fit(X2)
-    enc = OneHotEncoder(categories=cats, handle_unknown="ignore")
+    enc = OneHotEncoder(categories=cats, handle_unknown=handle_unknown)
     exp = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     assert_array_equal(enc.fit(X2).transform(X2).toarray(), exp)
 
@@ -943,6 +947,510 @@ def test_encoders_has_categorical_tags(Encoder):
     assert "categorical" in Encoder()._get_tags()["X_types"]
 
 
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_categories": 2},
+        {"min_frequency": 11},
+        {"min_frequency": 0.29},
+        {"max_categories": 2, "min_frequency": 6},
+        {"max_categories": 4, "min_frequency": 12},
+    ],
+)
+@pytest.mark.parametrize("categories", ["auto", [["a", "b", "c", "d"]]])
+def test_ohe_infrequent_two_levels(kwargs, categories):
+    """Test that different parameters for combine 'a', 'c', and 'd' into
+    the infrequent category works as expected."""
+
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    ohe = OneHotEncoder(
+        categories=categories,
+        handle_unknown="infrequent_if_exist",
+        sparse=False,
+        **kwargs,
+    ).fit(X_train)
+    assert_array_equal(ohe.infrequent_categories_, [["a", "c", "d"]])
+
+    X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
+    expected = np.array([[1, 0], [0, 1], [0, 1], [0, 1], [0, 1]])
+
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected, X_trans)
+
+    expected_inv = [[col] for col in ["b"] + ["infrequent_sklearn"] * 4]
+    X_inv = ohe.inverse_transform(X_trans)
+    assert_array_equal(expected_inv, X_inv)
+
+    # TODO(1.2) Remove when get_feature_names is removed
+    feature_names = ohe.get_feature_names()
+    assert_array_equal(["x0_b", "x0_infrequent_sklearn"], feature_names)
+
+    feature_names = ohe.get_feature_names_out()
+    assert_array_equal(["x0_b", "x0_infrequent_sklearn"], feature_names)
+
+
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("drop", ["if_binary", "first", ["b"]])
+def test_ohe_infrequent_two_levels_drop_frequent(drop):
+    """Test two levels and dropping the frequent category."""
+
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    ohe = OneHotEncoder(
+        handle_unknown="infrequent_if_exist", sparse=False, max_categories=2, drop=drop
+    ).fit(X_train)
+    assert_array_equal(ohe.drop_idx_, [0])
+
+    X_test = np.array([["b"], ["c"]])
+    X_trans = ohe.transform(X_test)
+    assert_allclose([[0], [1]], X_trans)
+
+    # TODO(1.2) Remove when get_feature_names is removed
+    feature_names = ohe.get_feature_names()
+    assert_array_equal(["x0_infrequent_sklearn"], feature_names)
+
+    feature_names = ohe.get_feature_names_out()
+    assert_array_equal(["x0_infrequent_sklearn"], feature_names)
+
+    X_inverse = ohe.inverse_transform(X_trans)
+    assert_array_equal([["b"], ["infrequent_sklearn"]], X_inverse)
+
+
+@pytest.mark.parametrize("drop", [["a"], ["d"]])
+def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
+    """Test two levels and dropping any infrequent category removes the
+    whole infrequent category."""
+
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    ohe = OneHotEncoder(
+        handle_unknown="infrequent_if_exist", sparse=False, max_categories=2, drop=drop
+    )
+
+    msg = f"Unable to drop category {drop[0]!r} from feature 0 because it is infrequent"
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit(X_train)
+
+
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_categories": 3},
+        {"min_frequency": 6},
+        {"min_frequency": 9},
+        {"min_frequency": 0.24},
+        {"min_frequency": 0.16},
+        {"max_categories": 3, "min_frequency": 8},
+        {"max_categories": 4, "min_frequency": 6},
+    ],
+)
+def test_ohe_infrequent_three_levels(kwargs):
+    """Test that different parameters for combing 'a', and 'd' into
+    the infrequent category works as expected."""
+
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    ohe = OneHotEncoder(
+        handle_unknown="infrequent_if_exist", sparse=False, **kwargs
+    ).fit(X_train)
+    assert_array_equal(ohe.infrequent_categories_, [["a", "d"]])
+
+    X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
+    expected = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0], [0, 0, 1], [0, 0, 1]])
+
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected, X_trans)
+
+    expected_inv = [
+        ["b"],
+        ["infrequent_sklearn"],
+        ["c"],
+        ["infrequent_sklearn"],
+        ["infrequent_sklearn"],
+    ]
+    X_inv = ohe.inverse_transform(X_trans)
+    assert_array_equal(expected_inv, X_inv)
+
+    # TODO(1.2): Remove get_feature_names is removed.
+    feature_names = ohe.get_feature_names()
+    assert_array_equal(["x0_b", "x0_c", "x0_infrequent_sklearn"], feature_names)
+
+    feature_names = ohe.get_feature_names_out()
+    assert_array_equal(["x0_b", "x0_c", "x0_infrequent_sklearn"], feature_names)
+
+
+@pytest.mark.parametrize("drop", ["first", ["b"]])
+def test_ohe_infrequent_three_levels_drop_frequent(drop):
+    """Test three levels and dropping the frequent category."""
+
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    ohe = OneHotEncoder(
+        handle_unknown="infrequent_if_exist", sparse=False, max_categories=3, drop=drop
+    ).fit(X_train)
+
+    X_test = np.array([["b"], ["c"], ["d"]])
+    assert_allclose([[0, 0], [1, 0], [0, 1]], ohe.transform(X_test))
+
+    # Check handle_unknown="ignore"
+    ohe.set_params(handle_unknown="ignore").fit(X_train)
+    msg = "Found unknown categories"
+    with pytest.warns(UserWarning, match=msg):
+        X_trans = ohe.transform([["b"], ["e"]])
+
+    assert_allclose([[0, 0], [0, 0]], X_trans)
+
+
+@pytest.mark.parametrize("drop", [["a"], ["d"]])
+def test_ohe_infrequent_three_levels_drop_infrequent_errors(drop):
+    """Test three levels and dropping the infrequent category."""
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    ohe = OneHotEncoder(
+        handle_unknown="infrequent_if_exist", sparse=False, max_categories=3, drop=drop
+    )
+
+    msg = f"Unable to drop category {drop[0]!r} from feature 0 because it is infrequent"
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit(X_train)
+
+
+def test_ohe_infrequent_handle_unknown_error():
+    """Test that different parameters for combining 'a', and 'd' into
+    the infrequent category works as expected."""
+
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
+    ohe = OneHotEncoder(handle_unknown="error", sparse=False, max_categories=3).fit(
+        X_train
+    )
+    assert_array_equal(ohe.infrequent_categories_, [["a", "d"]])
+
+    # all categories are known
+    X_test = [["b"], ["a"], ["c"], ["d"]]
+    expected = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0], [0, 0, 1]])
+
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected, X_trans)
+
+    # 'bad' is not known and will error
+    X_test = [["bad"]]
+    msg = r"Found unknown categories \['bad'\] in column 0"
+    with pytest.raises(ValueError, match=msg):
+        ohe.transform(X_test)
+
+
+@pytest.mark.parametrize(
+    "kwargs", [{"max_categories": 3, "min_frequency": 1}, {"min_frequency": 4}]
+)
+def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
+    """'a' is the only frequent category, all other categories are infrequent."""
+
+    X_train = np.array([["a"] * 5 + ["e"] * 30], dtype=object).T
+    ohe = OneHotEncoder(
+        categories=[["c", "d", "a", "b"]],
+        sparse=False,
+        handle_unknown="infrequent_if_exist",
+        **kwargs,
+    ).fit(X_train)
+
+    X_test = [["a"], ["b"], ["c"], ["d"], ["e"]]
+    expected = np.array([[1, 0], [0, 1], [0, 1], [0, 1], [0, 1]])
+
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected, X_trans)
+
+    # 'a' is dropped
+    drops = ["first", "if_binary", ["a"]]
+    X_test = [["a"], ["c"]]
+    for drop in drops:
+        ohe.set_params(drop=drop).fit(X_train)
+        assert_allclose([[0], [1]], ohe.transform(X_test))
+
+
+def test_ohe_infrequent_two_levels_user_cats():
+    """Test that the order of the categories provided by a user is respected."""
+    X_train = np.array(
+        [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object
+    ).T
+    ohe = OneHotEncoder(
+        categories=[["c", "d", "a", "b"]],
+        sparse=False,
+        handle_unknown="infrequent_if_exist",
+        max_categories=2,
+    ).fit(X_train)
+
+    assert_array_equal(ohe.infrequent_categories_, [["c", "d", "a"]])
+
+    X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
+    expected = np.array([[1, 0], [0, 1], [0, 1], [0, 1], [0, 1]])
+
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected, X_trans)
+
+    # 'infrequent' is used to denote the infrequent categories for
+    # `inverse_transform`
+    expected_inv = [[col] for col in ["b"] + ["infrequent_sklearn"] * 4]
+    X_inv = ohe.inverse_transform(X_trans)
+    assert_array_equal(expected_inv, X_inv)
+
+
+def test_ohe_infrequent_three_levels_user_cats():
+    """Test that the order of the categories provided by a user is respected.
+    In this case 'c' is encoded as the first category and 'b' is encoded
+    as the second one."""
+
+    X_train = np.array(
+        [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object
+    ).T
+    ohe = OneHotEncoder(
+        categories=[["c", "d", "b", "a"]],
+        sparse=False,
+        handle_unknown="infrequent_if_exist",
+        max_categories=3,
+    ).fit(X_train)
+
+    assert_array_equal(ohe.infrequent_categories_, [["d", "a"]])
+
+    X_test = [["b"], ["a"], ["c"], ["d"], ["e"]]
+    expected = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0], [0, 0, 1], [0, 0, 1]])
+
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected, X_trans)
+
+    # 'infrequent' is used to denote the infrequent categories for
+    # `inverse_transform`
+    expected_inv = [
+        ["b"],
+        ["infrequent_sklearn"],
+        ["c"],
+        ["infrequent_sklearn"],
+        ["infrequent_sklearn"],
+    ]
+    X_inv = ohe.inverse_transform(X_trans)
+    assert_array_equal(expected_inv, X_inv)
+
+
+def test_ohe_infrequent_mixed():
+    """Test infrequent categories where feature 0 has infrequent categories,
+    and feature 1 does not."""
+
+    # X[:, 0] 1 and 2 are infrequent
+    # X[:, 1] nothing is infrequent
+    X = np.c_[[0, 1, 3, 3, 3, 3, 2, 0, 3], [0, 0, 0, 0, 1, 1, 1, 1, 1]]
+
+    ohe = OneHotEncoder(max_categories=3, drop="if_binary", sparse=False)
+    ohe.fit(X)
+
+    X_test = [[3, 0], [1, 1]]
+    X_trans = ohe.transform(X_test)
+
+    # feature 1 is binary so it drops a category 0
+    assert_allclose(X_trans, [[0, 1, 0, 0], [0, 0, 1, 1]])
+
+
+# TODO(1.2): Remove filterwarning when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+def test_ohe_infrequent_multiple_categories():
+    """Test infrequent categories with feature matrix with 3 features."""
+
+    X = np.c_[
+        [0, 1, 3, 3, 3, 3, 2, 0, 3],
+        [0, 0, 5, 1, 1, 10, 5, 5, 0],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1],
+    ]
+
+    ohe = OneHotEncoder(
+        categories="auto", max_categories=3, handle_unknown="infrequent_if_exist"
+    )
+    # X[:, 0] 1 and 2 are infrequent
+    # X[:, 1] 1 and 10 are infrequent
+    # X[:, 2] nothing is infrequent
+
+    X_trans = ohe.fit_transform(X).toarray()
+    assert_array_equal(ohe.infrequent_categories_[0], [1, 2])
+    assert_array_equal(ohe.infrequent_categories_[1], [1, 10])
+    assert_array_equal(ohe.infrequent_categories_[2], None)
+
+    # 'infrequent' is used to denote the infrequent categories
+    # For the first column, 1 and 2 have the same frequency. In this case,
+    # 1 will be chosen to be the feature name because is smaller lexiconically
+    for get_names in ["get_feature_names", "get_feature_names_out"]:
+        feature_names = getattr(ohe, get_names)()
+        assert_array_equal(
+            [
+                "x0_0",
+                "x0_3",
+                "x0_infrequent_sklearn",
+                "x1_0",
+                "x1_5",
+                "x1_infrequent_sklearn",
+                "x2_0",
+                "x2_1",
+            ],
+            feature_names,
+        )
+
+    expected = [
+        [1, 0, 0, 1, 0, 0, 0, 1],
+        [0, 0, 1, 1, 0, 0, 1, 0],
+        [0, 1, 0, 0, 1, 0, 0, 1],
+        [0, 1, 0, 0, 0, 1, 1, 0],
+        [0, 1, 0, 0, 0, 1, 0, 1],
+        [0, 1, 0, 0, 0, 1, 1, 0],
+        [0, 0, 1, 0, 1, 0, 0, 1],
+        [1, 0, 0, 0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 0, 0, 0, 1],
+    ]
+
+    assert_allclose(expected, X_trans)
+
+    X_test = [[3, 1, 2], [4, 0, 3]]
+
+    X_test_trans = ohe.transform(X_test)
+
+    # X[:, 2] does not have an infrequent category, thus it is encoded as all
+    # zeros
+    expected = [[0, 1, 0, 0, 0, 1, 0, 0], [0, 0, 1, 1, 0, 0, 0, 0]]
+    assert_allclose(expected, X_test_trans.toarray())
+
+    X_inv = ohe.inverse_transform(X_test_trans)
+    expected_inv = np.array(
+        [[3, "infrequent_sklearn", None], ["infrequent_sklearn", 0, None]], dtype=object
+    )
+    assert_array_equal(expected_inv, X_inv)
+
+    # error for unknown categories
+    ohe = OneHotEncoder(
+        categories="auto", max_categories=3, handle_unknown="error"
+    ).fit(X)
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        ohe.transform(X_test)
+
+    # only infrequent or known categories
+    X_test = [[1, 1, 1], [3, 10, 0]]
+    X_test_trans = ohe.transform(X_test)
+
+    expected = [[0, 0, 1, 0, 0, 1, 0, 1], [0, 1, 0, 0, 0, 1, 1, 0]]
+    assert_allclose(expected, X_test_trans.toarray())
+
+    X_inv = ohe.inverse_transform(X_test_trans)
+
+    expected_inv = np.array(
+        [["infrequent_sklearn", "infrequent_sklearn", 1], [3, "infrequent_sklearn", 0]],
+        dtype=object,
+    )
+    assert_array_equal(expected_inv, X_inv)
+
+
+def test_ohe_infrequent_multiple_categories_dtypes():
+    """Test infrequent categories with a pandas dataframe with multiple dtypes."""
+
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        {
+            "str": ["a", "f", "c", "f", "f", "a", "c", "b", "b"],
+            "int": [5, 3, 0, 10, 10, 12, 0, 3, 5],
+        },
+        columns=["str", "int"],
+    )
+
+    ohe = OneHotEncoder(
+        categories="auto", max_categories=3, handle_unknown="infrequent_if_exist"
+    )
+    # X[:, 0] 'a', 'b', 'c' have the same frequency. 'a' and 'b' will be
+    # considered infrequent because they are greater
+
+    # X[:, 1] 0, 3, 5, 10 has frequency 2 and 12 has frequency 1.
+    # 0, 3, 12 will be considered infrequent
+
+    X_trans = ohe.fit_transform(X).toarray()
+    assert_array_equal(ohe.infrequent_categories_[0], ["a", "b"])
+    assert_array_equal(ohe.infrequent_categories_[1], [0, 3, 12])
+
+    expected = [
+        [0, 0, 1, 1, 0, 0],
+        [0, 1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 1],
+        [0, 1, 0, 0, 1, 0],
+        [0, 1, 0, 0, 1, 0],
+        [0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 0, 0, 1],
+        [0, 0, 1, 0, 0, 1],
+        [0, 0, 1, 1, 0, 0],
+    ]
+
+    assert_allclose(expected, X_trans)
+
+    X_test = pd.DataFrame({"str": ["b", "f"], "int": [14, 12]}, columns=["str", "int"])
+
+    expected = [[0, 0, 1, 0, 0, 1], [0, 1, 0, 0, 0, 1]]
+    X_test_trans = ohe.transform(X_test)
+    assert_allclose(expected, X_test_trans.toarray())
+
+    X_inv = ohe.inverse_transform(X_test_trans)
+    expected_inv = np.array(
+        [["infrequent_sklearn", "infrequent_sklearn"], ["f", "infrequent_sklearn"]],
+        dtype=object,
+    )
+    assert_array_equal(expected_inv, X_inv)
+
+    # only infrequent or known categories
+    X_test = pd.DataFrame({"str": ["c", "b"], "int": [12, 5]}, columns=["str", "int"])
+    X_test_trans = ohe.transform(X_test).toarray()
+    expected = [[1, 0, 0, 0, 0, 1], [0, 0, 1, 1, 0, 0]]
+    assert_allclose(expected, X_test_trans)
+
+    X_inv = ohe.inverse_transform(X_test_trans)
+    expected_inv = np.array(
+        [["c", "infrequent_sklearn"], ["infrequent_sklearn", 5]], dtype=object
+    )
+    assert_array_equal(expected_inv, X_inv)
+
+
+@pytest.mark.parametrize("kwargs", [{"min_frequency": 21, "max_categories": 1}])
+def test_ohe_infrequent_one_level_errors(kwargs):
+    """All user provided categories are infrequent."""
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 2]).T
+
+    ohe = OneHotEncoder(handle_unknown="infrequent_if_exist", sparse=False, **kwargs)
+    ohe.fit(X_train)
+
+    X_trans = ohe.transform([["a"]])
+    assert_allclose(X_trans, [[1]])
+
+
+@pytest.mark.parametrize("kwargs", [{"min_frequency": 2, "max_categories": 3}])
+def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
+    """All user provided categories are infrequent."""
+
+    X_train = np.array([["e"] * 3], dtype=object).T
+    ohe = OneHotEncoder(
+        categories=[["c", "d", "a", "b"]],
+        sparse=False,
+        handle_unknown="infrequent_if_exist",
+        **kwargs,
+    ).fit(X_train)
+
+    X_trans = ohe.transform([["a"], ["e"]])
+    assert_allclose(X_trans, [[1], [1]])
+
+
+@pytest.mark.parametrize(
+    "kwargs, error_msg",
+    [
+        ({"max_categories": -2}, "max_categories must be greater than 1"),
+        ({"min_frequency": -1}, "min_frequency must be an integer at least"),
+        ({"min_frequency": 1.1}, "min_frequency must be an integer at least"),
+    ],
+)
+def test_ohe_infrequent_invalid_parameters_error(kwargs, error_msg):
+    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 2]).T
+
+    ohe = OneHotEncoder(handle_unknown="infrequent_if_exist", **kwargs)
+    with pytest.raises(ValueError, match=error_msg):
+        ohe.fit(X_train)
+
+
 # TODO: Remove in 1.2 when get_feature_names is removed
 def test_one_hot_encoder_get_feature_names_deprecated():
     X = np.array([["cat", "dog"]], dtype=object).T
@@ -1020,8 +1528,9 @@ def test_ohe_missing_value_support_pandas():
     assert_allclose(Xtr, expected_df_trans)
 
 
+@pytest.mark.parametrize("handle_unknown", ["infrequent_if_exist", "ignore"])
 @pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
-def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
+def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknown):
     # checks pandas dataframe with categorical features
     pd = pytest.importorskip("pandas")
 
@@ -1042,7 +1551,7 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
         ]
     )
 
-    ohe = OneHotEncoder(sparse=False, handle_unknown="ignore")
+    ohe = OneHotEncoder(sparse=False, handle_unknown=handle_unknown)
     df_trans = ohe.fit_transform(df)
     assert_allclose(expected_df_trans, df_trans)
 
@@ -1051,11 +1560,13 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type):
     assert np.isnan(ohe.categories_[0][-1])
 
 
-def test_ohe_drop_first_handle_unknown_ignore_warns():
-    """Check drop='first' and handle_unknown='ignore' during transform."""
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
+    """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
+    during transform."""
     X = [["a", 0], ["b", 2], ["b", 1]]
 
-    ohe = OneHotEncoder(drop="first", sparse=False, handle_unknown="ignore")
+    ohe = OneHotEncoder(drop="first", sparse=False, handle_unknown=handle_unknown)
     X_trans = ohe.fit_transform(X)
 
     X_expected = np.array(
@@ -1085,11 +1596,12 @@ def test_ohe_drop_first_handle_unknown_ignore_warns():
     assert_array_equal(X_inv, np.array([["a", 0]], dtype=object))
 
 
-def test_ohe_drop_if_binary_handle_unknown_ignore_warns():
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='if_binary' and handle_unknown='ignore' during transform."""
     X = [["a", 0], ["b", 2], ["b", 1]]
 
-    ohe = OneHotEncoder(drop="if_binary", sparse=False, handle_unknown="ignore")
+    ohe = OneHotEncoder(drop="if_binary", sparse=False, handle_unknown=handle_unknown)
     X_trans = ohe.fit_transform(X)
 
     X_expected = np.array(
@@ -1119,16 +1631,17 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns():
     assert_array_equal(X_inv, np.array([["a", None]], dtype=object))
 
 
-def test_ohe_drop_first_explicit_categories():
-    """Check drop='first' and handle_unknown='ignore' during fit with
-    categories passed in."""
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
+def test_ohe_drop_first_explicit_categories(handle_unknown):
+    """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
+    during fit with categories passed in."""
 
     X = [["a", 0], ["b", 2], ["b", 1]]
 
     ohe = OneHotEncoder(
         drop="first",
         sparse=False,
-        handle_unknown="ignore",
+        handle_unknown=handle_unknown,
         categories=[["b", "a"], [1, 2]],
     )
     ohe.fit(X)
