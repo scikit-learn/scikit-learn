@@ -859,6 +859,9 @@ Changelog
   when a class is present in `y` but not in `class_weight`. :pr:`22595` by
   `Thomas Fan`_.
 
+- |API| :func:`utils.metaestimators.if_delegate_has_method` is deprecated and will be
+  removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.
+  :pr:`` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------
