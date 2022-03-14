@@ -1086,8 +1086,20 @@ def f1_score(
 
     See Also
     --------
-    fbeta_score, precision_recall_fscore_support, jaccard_score,
-    multilabel_confusion_matrix
+    fbeta_score : Compute the F-beta score.
+    precision_recall_fscore_support : Compute the precision, recall, F-score,
+        and support.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
+
+    Notes
+    -----
+    When ``true positive + false positive == 0``, precision is undefined.
+    When ``true positive + false negative == 0``, recall is undefined.
+    In such cases, by default the metric will be set to 0, as will f-score,
+    and ``UndefinedMetricWarning`` will be raised. This behavior can be
+    modified with ``zero_division``.
 
     References
     ----------
@@ -1116,14 +1128,6 @@ def f1_score(
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> f1_score(y_true, y_pred, average=None)
     array([0.66666667, 1.        , 0.66666667])
-
-    Notes
-    -----
-    When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``.
     """
     return fbeta_score(
         y_true,
@@ -2080,8 +2084,11 @@ def classification_report(
 
     See Also
     --------
-    precision_recall_fscore_support, confusion_matrix,
-    multilabel_confusion_matrix
+    precision_recall_fscore_support: Compute precision, recall, F-measure and
+        support for each class.
+    confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
+        classification.
+    multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
 
     Examples
     --------

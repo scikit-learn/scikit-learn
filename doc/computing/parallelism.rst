@@ -194,6 +194,60 @@ These environment variables should be set before importing scikit-learn.
     Sets the seed of the global random generator when running the tests,
     for reproducibility.
 
+    Note that scikit-learn tests are expected to run deterministically with
+    explicit seeding of their own independent RNG instances instead of relying
+    on the numpy or Python standard library RNG singletons to make sure that
+    test results are independent of the test execution order. However some
+    tests might forget to use explicit seeding and this variable is a way to
+    control the intial state of the aforementioned singletons.
+
+:SKLEARN_TESTS_GLOBAL_RANDOM_SEED:
+
+    Controls the seeding of the random number generator used in tests that
+    rely on the `global_random_seed`` fixture.
+
+    All tests that use this fixture accept the contract that they should
+    deterministically pass for any seed value from 0 to 99 included.
+
+    If the SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable is set to
+    "any" (which should be the case on nightly builds on the CI), the fixture
+    will choose an arbitrary seed in the above range (based on the BUILD_NUMBER
+    or the current day) and all fixtured tests will run for that specific seed.
+    The goal is to ensure that, over time, our CI will run all tests with
+    different seeds while keeping the test duration of a single run of the full
+    test suite limited. This will check that the assertions of tests
+    written to use this fixture are not dependent on a specific seed value.
+
+    The range of admissible seed values is limited to [0, 99] because it is
+    often not possible to write a test that can work for any possible seed and
+    we want to avoid having tests that randomly fail on the CI.
+
+    Valid values for SKLEARN_TESTS_GLOBAL_RANDOM_SEED:
+
+    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="42": run tests with a fixed seed of 42
+    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="40-42": run the tests with all seeds
+      between 40 and 42 included
+    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any": run the tests with an arbitrary
+      seed selected between 0 and 99 included
+    - SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all": run the tests with all seeds
+      between 0 and 99 included
+
+    If the variable is not set, then 42 is used as the global seed in a
+    deterministic manner. This ensures that, by default, the scikit-learn test
+    suite is as deterministic as possible to avoid disrupting our friendly
+    third-party package maintainers. Similarly, this variable should not be set
+    in the CI config of pull-requests to make sure that our friendly
+    contributors are not the first people to encounter a seed-sensitivity
+    regression in a test unrelated to the changes of their own PR. Only the
+    scikit-learn maintainers who watch the results of the nightly builds are
+    expected to be annoyed by this.
+
+    When writing a new test function that uses this fixture, please use the
+    following command to make sure that it passes deterministically for all
+    admissible seeds on your local machine:
+
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
+
 :SKLEARN_SKIP_NETWORK_TESTS:
 
     When this environment variable is set to a non zero value, the tests
