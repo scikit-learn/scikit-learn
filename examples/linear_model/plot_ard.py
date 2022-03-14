@@ -26,10 +26,9 @@ the limitations of a polynomial regression, both models fail when extrapolating.
 # Generating simulated data with Gaussian weights
 from sklearn.datasets import make_regression
 
-n_features = 100
 X, y, w = make_regression(
     n_samples=100,
-    n_features=n_features,
+    n_features=100,
     n_informative=10,
     noise=8,
     coef=True,
