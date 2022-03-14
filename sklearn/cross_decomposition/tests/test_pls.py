@@ -564,7 +564,7 @@ def test_loadings_converges():
     with warnings.catch_warnings():
         # ConvergenceWarning should not be raised
         warnings.simplefilter("error", ConvergenceWarning)
-        
+
         cca.fit(X, y)
 
     # Loadings converges to reasonable values
