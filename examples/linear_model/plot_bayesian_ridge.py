@@ -127,5 +127,3 @@ plt.plot(X_plot, y_plot, color="gold", linewidth=lw, label="Ground Truth")
 plt.ylabel("Output y")
 plt.xlabel("Feature X")
 _ = plt.legend(loc="lower left")
-
-# %%
