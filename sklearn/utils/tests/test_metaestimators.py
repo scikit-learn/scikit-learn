@@ -151,7 +151,7 @@ def test_if_delegate_has_method_deprecated():
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
         decorator = if_delegate_has_method(delegate="predict")
-    
+
     # Only when calling it
     with pytest.warns(FutureWarning, match="if_delegate_has_method was deprecated"):
         hasattr(MetaEst(HasPredict()), "predict")
