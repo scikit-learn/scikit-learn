@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 from scipy.sparse import csr_matrix
 
 from sklearn import datasets
@@ -341,7 +342,7 @@ def test_davies_bouldin_score():
     pytest.approx(davies_bouldin_score(X, labels), 2 * np.sqrt(0.5) / 3)
 
     # Ensure divide by zero warning is not raised in general case
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         davies_bouldin_score(X, labels)
     div_zero_warnings = [
         warning

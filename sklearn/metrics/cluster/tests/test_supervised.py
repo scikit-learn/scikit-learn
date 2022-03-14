@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import warnings
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -456,7 +457,7 @@ def test_adjusted_rand_score_overflow():
     rng = np.random.RandomState(0)
     y_true = rng.randint(0, 2, 100_000, dtype=np.int8)
     y_pred = rng.randint(0, 2, 100_000, dtype=np.int8)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         adjusted_rand_score(y_true, y_pred)
     assert not [w.message for w in record]
 
