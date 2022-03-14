@@ -750,6 +750,11 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports grouping
+  infrequent categories into a single feature. Grouping infrequent categories
+  is enabled by specifying how to select infrequent categories with
+  `min_frequency` or `max_categories`. :pr:`16018` by `Thomas Fan`_.
+
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
   This allows specifying a maximum number of samples to be used while fitting
   the model. The option is only available when `strategy` is set to `quantile`.
