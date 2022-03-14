@@ -35,7 +35,6 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
-from ..utils._param_validation import get_random_state_param_constraints
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import validate_params
