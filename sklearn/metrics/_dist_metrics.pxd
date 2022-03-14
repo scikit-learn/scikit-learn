@@ -1,14 +1,7 @@
-#!python
-#cython: boundscheck=False
-#cython: wraparound=False
-#cython: cdivision=True
-
-cimport cython
 cimport numpy as np
-from libc.math cimport fabs, sqrt, exp, cos, pow
+from libc.math cimport sqrt, exp
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from ._typedefs import DTYPE, ITYPE
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 
 ######################################################################
 # Inline distance functions
@@ -60,7 +53,7 @@ cdef class DistanceMetric:
     cdef DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                       ITYPE_t size) nogil except -1
 
-    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+    cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                        ITYPE_t size) nogil except -1
 
     cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1
@@ -71,3 +64,24 @@ cdef class DistanceMetric:
     cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1
 
     cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) nogil except -1
+
+
+######################################################################
+# DatasetsPair base class
+cdef class DatasetsPair:
+    cdef DistanceMetric distance_metric
+
+    cdef ITYPE_t n_samples_X(self) nogil
+
+    cdef ITYPE_t n_samples_Y(self) nogil
+
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
+
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil
+
+
+cdef class DenseDenseDatasetsPair(DatasetsPair):
+    cdef:
+        const DTYPE_t[:, ::1] X
+        const DTYPE_t[:, ::1] Y
+        ITYPE_t d

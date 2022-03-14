@@ -6,16 +6,16 @@
       img.avatar {border-radius: 10px;}
     </style>
     <div>
-    <a href='https://github.com/jjerphan'><img src='https://avatars.githubusercontent.com/u/13029839?v=4' class='avatar' /></a> <br />
-    <p>Julien Jerphanion</p>
-    </div>
-    <div>
     <a href='https://github.com/alfaro96'><img src='https://avatars.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
     <p>Juan Carlos Alfaro Jiménez</p>
     </div>
     <div>
     <a href='https://github.com/lucyleeow'><img src='https://avatars.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
     <p>Lucy Liu</p>
+    </div>
+    <div>
+    <a href='https://github.com/jmloyola'><img src='https://avatars.githubusercontent.com/u/2133361?v=4' class='avatar' /></a> <br />
+    <p>Juan Martín Loyola</p>
     </div>
     <div>
     <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />

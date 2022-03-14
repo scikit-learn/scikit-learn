@@ -256,20 +256,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
-        if neg_label >= pos_label:
-            raise ValueError(
-                "neg_label={0} must be strictly less than pos_label={1}.".format(
-                    neg_label, pos_label
-                )
-            )
-
-        if sparse_output and (pos_label == 0 or neg_label != 0):
-            raise ValueError(
-                "Sparse binarization is only supported with non "
-                "zero pos_label and zero neg_label, got "
-                "pos_label={0} and neg_label={1}"
-                "".format(pos_label, neg_label)
-            )
 
         self.neg_label = neg_label
         self.pos_label = pos_label
@@ -289,7 +275,22 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self.y_type_ = type_of_target(y)
+
+        if self.neg_label >= self.pos_label:
+            raise ValueError(
+                f"neg_label={self.neg_label} must be strictly less than "
+                f"pos_label={self.pos_label}."
+            )
+
+        if self.sparse_output and (self.pos_label == 0 or self.neg_label != 0):
+            raise ValueError(
+                "Sparse binarization is only supported with non "
+                "zero pos_label and zero neg_label, got "
+                f"pos_label={self.pos_label} and neg_label={self.neg_label}"
+            )
+
+        self.y_type_ = type_of_target(y, input_name="y")
+
         if "multioutput" in self.y_type_:
             raise ValueError(
                 "Multioutput target data is not supported with label binarization"
@@ -475,7 +476,9 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
         # dropped
-        y = check_array(y, accept_sparse="csr", ensure_2d=False, dtype=None)
+        y = check_array(
+            y, input_name="y", accept_sparse="csr", ensure_2d=False, dtype=None
+        )
     else:
         if _num_samples(y) == 0:
             raise ValueError("y has 0 samples: %r" % y)
@@ -692,6 +695,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         Otherwise it corresponds to the sorted set of classes found
         when fitting.
 
+    See Also
+    --------
+    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
+        scheme.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MultiLabelBinarizer
@@ -724,11 +732,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     MultiLabelBinarizer()
     >>> mlb.classes_
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
-
-    See Also
-    --------
-    OneHotEncoder : Encode categorical features using a one-hot aka one-of-K
-        scheme.
     """
 
     def __init__(self, *, classes=None, sparse_output=False):
@@ -747,7 +750,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns this MultiLabelBinarizer instance
+        self : object
+            Fitted estimator.
         """
         self._cached_dict = None
         if self.classes is None:
@@ -778,7 +782,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         Returns
         -------
         y_indicator : {ndarray, sparse matrix} of shape (n_samples, n_classes)
-            A matrix such that `y_indicator[i, j] = 1` i.f.f. `classes_[j]`
+            A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]`
             is in `y[i]`, and 0 otherwise. Sparse matrix will be of CSR
             format.
         """
@@ -846,6 +850,10 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         y : iterable of iterables
+            A set of labels (any orderable and hashable object) for each
+            sample. If the `classes` parameter is set, `y` will not be
+            iterated.
+
         class_mapping : Mapping
             Maps from label to column index in label indicator matrix.
 
