@@ -58,8 +58,7 @@ ols = LinearRegression()
 ols.fit(X, y)
 
 # %%
-# Plot true weights, estimated weights, histogram of the weights, and
-# predictions with standard deviations
+# Plot true weights and estimated weights
 import matplotlib.pyplot as plt
 
 lw = 2
@@ -70,7 +69,10 @@ plt.plot(w, color="gold", linewidth=lw, label="Ground truth")
 plt.plot(ols.coef_, color="navy", linestyle="--", label="OLS estimate")
 plt.xlabel("Features")
 plt.ylabel("Values of the weights")
-plt.legend(loc="best", prop=dict(size=12))
+_ = plt.legend(loc="best", prop=dict(size=12))
+
+# %%
+# Plot histogram of the weights
 
 plt.figure(figsize=(6, 5))
 plt.title("Histogram of the weights")
@@ -83,16 +85,20 @@ plt.scatter(
 )
 plt.ylabel("Features")
 plt.xlabel("Values of the weights")
-plt.legend(loc="upper left")
+_ = plt.legend(loc="upper left")
+
+# %%
+# Plot marginal log-likelihood
 
 plt.figure(figsize=(6, 5))
 plt.title("Marginal log-likelihood")
 plt.plot(clf.scores_, color="navy", linewidth=lw)
 plt.ylabel("Score")
-plt.xlabel("Iterations")
+_ = plt.xlabel("Iterations")
 
+# %%
+# Plotting some predictions for polynomial regression with standard deviations
 
-# Plotting some predictions for polynomial regression
 def f(x, noise_amount):
     y = np.sqrt(x) * np.sin(x)
     noise = np.random.normal(0, 1, len(x))
@@ -120,7 +126,7 @@ plt.errorbar(
 plt.plot(X_plot, y_plot, color="gold", linewidth=lw, label="Ground Truth")
 plt.ylabel("Output y")
 plt.xlabel("Feature X")
-plt.legend(loc="lower left")
-plt.show()
+_ = plt.legend(loc="lower left")
+
 
 # %%
