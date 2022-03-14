@@ -150,7 +150,7 @@ def test_if_delegate_has_method_deprecated():
     # don't warn when creating the decorator
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
-        decorator = if_delegate_has_method(delegate="predict")
+        _ = if_delegate_has_method(delegate="predict")
 
     # Only when calling it
     with pytest.warns(FutureWarning, match="if_delegate_has_method was deprecated"):
