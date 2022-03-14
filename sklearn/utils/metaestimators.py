@@ -203,7 +203,7 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         warnings.warn(
             "if_delegate_has_method was deprecated in version 1.1 and will be "
             "removed in version 1.3. Use if_available instead.",
-            FutureWarning
+            FutureWarning,
         )
 
         delegate = None
