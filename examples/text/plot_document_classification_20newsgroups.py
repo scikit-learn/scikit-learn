@@ -26,8 +26,12 @@ automatically downloaded, then cached.
 
 # If True, we use `HashingVectorizer`, otherwise we use a `TfidfVectorizer`
 USE_HASHING = False
+
 # Number of features used by `HashingVectorizer`
 N_FEATURES = 2**16
+
+# Optional feature selection: either False, or an integer: the number of
+# features to select
 SELECT_CHI2 = False
 
 
