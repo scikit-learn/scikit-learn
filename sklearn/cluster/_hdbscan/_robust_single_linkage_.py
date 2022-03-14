@@ -12,7 +12,7 @@ from sklearn.utils import check_array
 
 from ._hdbscan_linkage import mst_linkage_core, mst_linkage_core_vector, label
 from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
-from .dist_metrics import DistanceMetric
+from sklearn.metrics._dist_metrics import DistanceMetric
 from ._hdbscan_reachability import mutual_reachability
 from ._hdbscan_tree import labelling_at_cut
 from sklearn.neighbors import KDTree, BallTree

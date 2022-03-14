@@ -65,7 +65,7 @@ from libc.math cimport fabs, pow
 
 from sklearn.neighbors import KDTree, BallTree
 
-from .dist_metrics cimport DistanceMetric
+from sklearn.metrics._dist_metrics cimport DistanceMetric
 
 from joblib import Parallel, delayed
 

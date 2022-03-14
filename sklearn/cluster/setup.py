@@ -91,13 +91,6 @@ def configuration(parent_package="", top_path=None):
         include_dirs=[numpy.get_include()],
         libraries=libraries,
     )
-    config.add_extension(
-        "_hdbscan.dist_metrics",
-        sources=["_hdbscan/dist_metrics.pyx"],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
-
     return config
 
 

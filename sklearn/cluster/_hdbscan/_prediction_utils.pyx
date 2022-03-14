@@ -6,7 +6,7 @@
 import numpy as np
 cimport numpy as np
 
-from .dist_metrics cimport DistanceMetric
+from sklearn.metrics._dist_metrics cimport DistanceMetric
 
 from libc.float cimport DBL_MAX
 from libc.math cimport exp
