@@ -791,6 +791,14 @@ Changelog
   :class:`random_projection.GaussianRandomProjection` preserves dtype for
   `numpy.float32`. :pr:`22114` by :user:`Takeshi Oura <takoika>`.
 
+- |Enhancement| Adds an :meth:`inverse_transform` method and a
+  `compute_inverse_transform` parameter to all transformers in the
+  :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. When the parameter is set
+  to True, the pseudo-inverse of the components is computed during `fit` and stored as
+  `inverse_components_`. :pr:`21701` by `Aurélien Geron <ageron>`.
+
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.random_projection` module:
   :class:`~sklearn.random_projection.GaussianRandomProjection` and
