@@ -38,8 +38,6 @@ w = np.zeros(n_features)
 # Only keep 10 weights of interest
 relevant_features = np.random.randint(0, n_features, 10)
 
-
-
 for i in relevant_features:
     w[i] = stats.norm.rvs(loc=0, scale=1.0 / np.sqrt(lambda_))
 # Create noise with a precision alpha of 50.
@@ -100,6 +98,7 @@ _ = plt.xlabel("Iterations")
 # %%
 # Plotting some predictions for polynomial regression with standard deviations
 
+
 def f(x, noise_amount):
     y = np.sqrt(x) * np.sin(x)
     noise = np.random.normal(0, 1, len(x))
@@ -128,6 +127,5 @@ plt.plot(X_plot, y_plot, color="gold", linewidth=lw, label="Ground Truth")
 plt.ylabel("Output y")
 plt.xlabel("Feature X")
 _ = plt.legend(loc="lower left")
-
 
 # %%
