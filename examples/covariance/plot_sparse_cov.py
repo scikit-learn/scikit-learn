@@ -53,10 +53,6 @@ iteratively refined in the neighborhood of the maximum.
 # author: Gael Varoquaux <gael.varoquaux@inria.fr>
 # License: BSD 3 clause
 # Copyright: INRIA
-
-
-
-
 # %%
 # Generate the data
 import numpy as np
