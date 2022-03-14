@@ -203,6 +203,16 @@ def test_kernel_pca_n_components():
             assert shape == (2, c)
 
 
+@pytest.mark.parametrize("n_components", [-1, 0])
+def test_kernal_pca_too_few_components(n_components):
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
+    kpca = KernelPCA(n_components=n_components)
+    msg = "n_components.* must be >= 1"
+    with pytest.raises(ValueError, match=msg):
+        kpca.fit(X_fit)
+
+
 def test_remove_zero_eig():
     """Check that the ``remove_zero_eig`` parameter works correctly.
 
