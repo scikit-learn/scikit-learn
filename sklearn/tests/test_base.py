@@ -559,6 +559,7 @@ def test_repr_html_wraps():
         with pytest.raises(AttributeError, match=msg):
             output = tree._repr_html_()
 
+
 def test_n_features_in_validation():
     """Check that `_check_n_features` validates data when reset=False"""
     est = MyEstimator()

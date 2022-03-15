@@ -875,6 +875,11 @@ Changelog
 - |Fix| :func:`utils.estimator_html_repr` has an improved visualization for nested
   meta-estimators. :pr:`21310` by `Thomas Fan`_.
 
+- |API| Rich html representation of estimators is now enabled by default in Jupyter
+  notebooks. It can be deactivated by setting `display='text'` in
+  :func:`~sklearn.set_config`.
+  :pr:`22856` by `Jérémie du Boisberranger <jeremiedbb>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
