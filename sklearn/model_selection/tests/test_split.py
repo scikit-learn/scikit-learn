@@ -48,7 +48,7 @@ from sklearn.datasets import make_classification
 
 from sklearn.svm import SVC
 
-SIMPLE_SPLITTERS = [
+NO_GROUP_SPLITTERS = [
     KFold(),
     StratifiedKFold(),
     TimeSeriesSplit(),
@@ -69,7 +69,7 @@ GROUP_SPLITTERS = [
     GroupShuffleSplit(),
 ]
 
-ALL_SPLITTERS = SIMPLE_SPLITTERS + GROUP_SPLITTERS  # type: ignore
+ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
 X = np.ones(10)
 y = np.arange(10) // 2
@@ -1938,7 +1938,7 @@ def test_splitter_get_metadata_routing(cv):
             str(cv.get_metadata_routing())
             == "{'split': {'groups': <RequestType.REQUESTED: True>}}"
         )
-    elif cv in SIMPLE_SPLITTERS:
+    elif cv in NO_GROUP_SPLITTERS:
         assert str(cv.get_metadata_routing()) == "{}"
 
 
@@ -1946,5 +1946,5 @@ def test_splitter_get_metadata_routing(cv):
 def test_splitter_set_split_request(cv):
     if cv in GROUP_SPLITTERS:
         assert hasattr(cv, "set_split_request")
-    elif cv in SIMPLE_SPLITTERS:
+    elif cv in NO_GROUP_SPLITTERS:
         assert not hasattr(cv, "set_split_request")
