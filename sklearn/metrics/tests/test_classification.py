@@ -1937,12 +1937,11 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
         f, [-1, -1], [1, 1], average="binary", zero_division=zero_division
     )
 
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         precision_recall_fscore_support(
             [0, 0], [0, 0], average="binary", zero_division=zero_division
         )
-        assert len(record) == 0
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1])
