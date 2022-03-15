@@ -425,8 +425,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             tree_func = Tree
 
         if is_classifier(self):
-            self.tree_ = tree_func(self.n_features_in_, self.n_classes_,
-                                   self.n_outputs_)
+            self.tree_ = tree_func(
+                self.n_features_in_, self.n_classes_, self.n_outputs_
+            )
         else:
             self.tree_ = tree_func(
                 self.n_features_in_,
