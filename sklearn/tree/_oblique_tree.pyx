@@ -211,18 +211,19 @@ cdef class ObliqueTree(Tree):
         self.capacity = capacity
         return 0
 
-    cdef int _set_node_values(self, SplitRecord split_node, Node *node) nogil except -1:
+    cdef int _set_node_values(self, SplitRecord* split_node, Node *node) nogil except -1:
         """Set node data.
         """
+        cdef ObliqueSplitRecord* oblique_split_node = <ObliqueSplitRecord*>(split_node)
         cdef SIZE_t node_id = self.node_count
 
-        node.feature = split_node.feature
-        node.threshold = split_node.threshold
+        node.feature = deref(oblique_split_node).feature
+        node.threshold = deref(oblique_split_node).threshold
 
         # oblique trees store the projection indices and weights
         # inside the tree itself
-        self.proj_vec_weights[node_id] = deref(split_node.proj_vec_weights)
-        self.proj_vec_indices[node_id] = deref(split_node.proj_vec_indices)
+        self.proj_vec_weights[node_id] = deref(deref(oblique_split_node).proj_vec_weights)
+        self.proj_vec_indices[node_id] = deref(deref(oblique_split_node).proj_vec_indices)
         return 1
 
     cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray, Node *node, SIZE_t node_id) nogil:

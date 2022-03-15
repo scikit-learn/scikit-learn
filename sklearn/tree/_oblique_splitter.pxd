@@ -24,6 +24,20 @@ from ._splitter cimport sort
 from ._split_record cimport SplitRecord
 from libcpp.vector cimport vector
 
+cdef struct ObliqueSplitRecord:
+    # Data to track sample split
+    SIZE_t feature         # Which feature to split on.
+    SIZE_t pos             # Split samples array at the given position,
+                           # i.e. count of samples below threshold for feature.
+                           # pos is >= end if the node is a leaf.
+    double threshold       # Threshold to split at.
+    double improvement     # Impurity improvement given parent node.
+    double impurity_left   # Impurity of the left split.
+    double impurity_right  # Impurity of the right split.
+
+    vector[DTYPE_t]* proj_vec_weights   # weights of the vector
+    vector[SIZE_t]* proj_vec_indices    # indices of the features
+
 
 cdef class ObliqueSplitter(Splitter):
     # The splitter searches in the input space for a combination of features and a threshold

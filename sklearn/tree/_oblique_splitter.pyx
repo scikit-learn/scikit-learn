@@ -42,7 +42,7 @@ cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 
 
-cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
+cdef inline void _init_split(ObliqueSplitRecord* self, SIZE_t start_pos) nogil:
     self.impurity_left = INFINITY
     self.impurity_right = INFINITY
     self.pos = start_pos
@@ -164,6 +164,10 @@ cdef class ObliqueSplitter(Splitter):
 
         pass
 
+    cdef int pointer_size(self) nogil:
+        """Get size of a pointer to record for ObliqueSplitter."""
+
+        return sizeof(ObliqueSplitRecord)
 
 cdef class BaseDenseObliqueSplitter(ObliqueSplitter):
     
@@ -243,6 +247,9 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
+        # typecast the pointer to an ObliqueSplitRecord
+        cdef ObliqueSplitRecord* oblique_split = <ObliqueSplitRecord*>(split)
+
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
@@ -262,7 +269,7 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
 
         # keep track of split record for current node and the best split
         # found among the sampled projection vectors
-        cdef SplitRecord best, current
+        cdef ObliqueSplitRecord best, current
 
         cdef double current_proxy_improvement = -INFINITY
         cdef double best_proxy_improvement = -INFINITY
@@ -365,6 +372,14 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
                 impurity, best.impurity_left, best.impurity_right)
 
         # Return values
-        split[0] = best
+        deref(oblique_split).proj_vec_indices = best.proj_vec_indices
+        deref(oblique_split).proj_vec_weights = best.proj_vec_weights
+        deref(oblique_split).feature = best.feature
+        deref(oblique_split).pos = best.pos
+        deref(oblique_split).threshold = best.threshold
+        deref(oblique_split).improvement = best.improvement
+        deref(oblique_split).impurity_left = best.impurity_left
+        deref(oblique_split).impurity_right = best.impurity_right
+
         # n_constant_features[0] = n_total_constants
         return 0

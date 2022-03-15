@@ -21,11 +21,12 @@ from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 from ._tree cimport Tree, Node, TreeBuilder
 
 from ._split_record cimport SplitRecord
+from ._oblique_splitter cimport ObliqueSplitRecord
 
 cdef class ObliqueTree(Tree):
     cdef vector[vector[DTYPE_t]] proj_vec_weights # (capacity, n_features) array of projection vectors
     cdef vector[vector[SIZE_t]] proj_vec_indices  # (capacity, n_features) array of projection vectors
 
-    cdef int _set_node_values(self, SplitRecord split_node, Node *node)  nogil except -1
+    cdef int _set_node_values(self, SplitRecord* split_node, Node *node)  nogil except -1
     cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray, Node *node, SIZE_t node_id) nogil
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1

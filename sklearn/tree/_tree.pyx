@@ -22,6 +22,8 @@ from libc.stdint cimport SIZE_MAX
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
 from libcpp cimport bool
+from cython.operator cimport dereference as deref
+from libc.stdlib cimport malloc, free
 
 import struct
 
@@ -188,6 +190,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t node_id
 
         cdef SplitRecord split
+        cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
 
         cdef double impurity = INFINITY
         cdef SIZE_t n_constant_features
@@ -238,7 +241,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
-                    splitter.node_split(impurity, &split, &n_constant_features)
+                    splitter.node_split(impurity, split_ptr, &n_constant_features)
+
+                    # assign local copy of SplitRecord to assign
+                    # pos, improvement, and impurity scores
+                    split = deref(split_ptr)
+
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
                     # dissimilar to v0.18
@@ -246,7 +254,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                node_id = tree._add_node(parent, is_left, is_leaf, split,
+                node_id = tree._add_node(parent, is_left, is_leaf, split_ptr,
                                          impurity, n_node_samples,
                                          weighted_n_node_samples)
 
@@ -287,7 +295,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 tree.max_depth = max_depth_seen
-                
+        
+        # free the memory created for the SplitRecord pointer
+        free(split_ptr)
+
         if rc == -1:
             raise MemoryError()
 
@@ -455,6 +466,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     FrontierRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
+        cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
+        
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
@@ -479,7 +492,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    )
 
         if not is_leaf:
-            splitter.node_split(impurity, &split, &n_constant_features)
+            splitter.node_split(impurity, split_ptr, &n_constant_features)
+            # assign local copy of SplitRecord to assign
+            # pos, improvement, and impurity scores
+            split = deref(split_ptr)
+
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
             is_leaf = (is_leaf or split.pos >= end or
@@ -489,7 +506,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  if parent != NULL
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
-                                 split, impurity, n_node_samples,
+                                 split_ptr, impurity, n_node_samples,
                                  weighted_n_node_samples)
         if node_id == SIZE_MAX:
             return -1
@@ -749,7 +766,7 @@ cdef class Tree:
         self.capacity = capacity
         return 0
     
-    cdef int _set_node_values(self, SplitRecord split_node,
+    cdef int _set_node_values(self, SplitRecord* split_node,
             Node *node) nogil except -1:
         """Set node data.
         """
@@ -769,7 +786,7 @@ cdef class Tree:
         return feature
 
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SplitRecord split_node, double impurity,
+                          SplitRecord* split_node, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_node_samples) nogil except -1:
         """Add a node to the tree.
@@ -1812,7 +1829,7 @@ cdef _build_pruned_tree(
             split.threshold = node.threshold
 
             new_node_id = tree._add_node(
-                parent, is_left, is_leaf, split,
+                parent, is_left, is_leaf, &split,
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples)
 

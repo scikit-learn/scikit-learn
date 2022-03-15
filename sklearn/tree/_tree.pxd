@@ -58,11 +58,11 @@ cdef class Tree:
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SplitRecord split_node,
+                          SplitRecord* split_node,
                           double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_node_samples) nogil except -1
-    cdef int _set_node_values(self, SplitRecord split_node,
+    cdef int _set_node_values(self, SplitRecord* split_node,
                               Node *node)  nogil except -1
     cdef DTYPE_t _compute_feature(self, const DTYPE_t[:] X_ndarray,
                             Node *node, SIZE_t node_id) nogil
