@@ -1953,33 +1953,32 @@ def test_recall_warnings(zero_division):
         average="micro",
         zero_division=zero_division,
     )
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
-        recall_score(
-            np.array([[0, 0], [0, 0]]),
-            np.array([[1, 1], [1, 1]]),
-            average="micro",
-            zero_division=zero_division,
-        )
-        if zero_division == "warn":
-            assert (
-                str(record.pop().message)
-                == "Recall is ill-defined and "
-                "being set to 0.0 due to no true samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
-        else:
-            assert len(record) == 0
 
-        recall_score([0, 0], [0, 0])
-        if zero_division == "warn":
-            assert (
-                str(record.pop().message)
-                == "Recall is ill-defined and "
-                "being set to 0.0 due to no true samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
+    msg = (
+        "Recall is ill-defined and "
+        "being set to 0.0 due to no true samples."
+        " Use `zero_division` parameter to control"
+        " this behavior."
+    )
+
+    if zero_division == "warn":
+        with pytest.warns(UndefinedMetricWarning, match=msg):
+            recall_score(
+                np.array([[0, 0], [0, 0]]),
+                np.array([[1, 1], [1, 1]]),
+                average="micro",
+                zero_division=zero_division,
+            )
+
+            recall_score([0, 0], [0, 0])
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            recall_score(
+                np.array([[0, 0], [0, 0]]),
+                np.array([[1, 1], [1, 1]]),
+                average="micro",
+                zero_division=zero_division,
             )
 
 
