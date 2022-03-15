@@ -26,7 +26,7 @@ def pytest_configure(config):
 
     RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
     random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
-    if hasattr(config, "workinput"):
+    if hasattr(config, "workerinput") and "random_seeds" in config.workerinput:
         # Set worker random seed from seed generated from main process
         random_seeds = config.workerinput["random_seeds"]
     elif random_seed_var is None:
