@@ -288,7 +288,12 @@ def mean_pinball_loss(
 
 
 def mean_absolute_percentage_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", symmetric=False
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    symmetric=False,
 ):
     """Mean absolute percentage error (MAPE) regression loss.
 
@@ -322,7 +327,7 @@ def mean_absolute_percentage_error(
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
-    
+
     symmetric : bool, default=False
         If True returns SMAPE value, if False returns MAPE value.
 
@@ -338,6 +343,10 @@ def mean_absolute_percentage_error(
         But note that bad predictions can lead to arbitrarily large
         MAPE values, especially if some `y_true` values are very close to zero.
         Note that we return a large value instead of `inf` when `y_true` is zero.
+
+        If symmetric is True then the output is floating point between 0.0 and 1.0.
+        The diffrence from the non symetric version is that the diffrence between
+        y_true and y_pred is devided by both of the values y_true and y_pred.
 
     Examples
     --------
@@ -365,9 +374,11 @@ def mean_absolute_percentage_error(
     check_consistent_length(y_true, y_pred, sample_weight)
     epsilon = np.finfo(np.float64).eps
     if not symmetric:
-       mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
+        mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
     else:
-        mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true) + np.abs(y_pred), epsilon)
+        mape = np.abs(y_pred - y_true) / np.maximum(
+            np.abs(y_true) + np.abs(y_pred), epsilon
+        )
     output_errors = np.average(mape, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":

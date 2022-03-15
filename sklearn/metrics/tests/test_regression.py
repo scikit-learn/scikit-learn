@@ -131,6 +131,13 @@ def test_multioutput_regression():
     error = np.around(mean_absolute_percentage_error(y_true, y_pred), decimals=2)
     assert np.isfinite(error)
     assert error > 1e6
+
+    error = np.around(
+        mean_absolute_percentage_error(y_true, y_pred), decimals=2, symetsymmetric=True
+    )
+    assert np.isfinite(error)
+    assert error > 1e6
+
     error = median_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1.0 + 1.0) / 4.0)
 
@@ -186,6 +193,9 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(mean_absolute_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_pinball_loss([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_absolute_percentage_error([0.0], [0.0]), 0.0)
+    assert_almost_equal(
+        mean_absolute_percentage_error([0.0], [0.0], symmetric=True), 0.0
+    )
     assert_almost_equal(median_absolute_error([0.0], [0.0]), 0.0)
     assert_almost_equal(max_error([0.0], [0.0]), 0.0)
     assert_almost_equal(explained_variance_score([0.0], [0.0]), 1.0)
@@ -321,6 +331,9 @@ def test_regression_multioutput_array():
         mean_pinball_loss(y_true, y_pred, multioutput="variance_weighted")
     pbl = mean_pinball_loss(y_true, y_pred, multioutput="raw_values")
     mape = mean_absolute_percentage_error(y_true, y_pred, multioutput="raw_values")
+    smape = mean_absolute_percentage_error(
+        y_true, y_pred, multioutput="raw_values", symmetric=True
+    )
     r = r2_score(y_true, y_pred, multioutput="raw_values")
     evs = explained_variance_score(y_true, y_pred, multioutput="raw_values")
     evs2 = explained_variance_score(
@@ -331,6 +344,7 @@ def test_regression_multioutput_array():
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
     assert_array_almost_equal(pbl, [0.25 / 2, 0.625 / 2], decimal=2)
     assert_array_almost_equal(mape, [0.0778, 0.2262], decimal=2)
+    assert_array_almost_equal(smape, [0.01461, 0.05687], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs2, [0.95, 0.93], decimal=2)
@@ -408,6 +422,9 @@ def test_regression_custom_weights():
     rmsew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6], squared=False)
     maew = mean_absolute_error(y_true, y_pred, multioutput=[0.4, 0.6])
     mapew = mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.4, 0.6])
+    smapew = mean_absolute_percentage_error(
+        y_true, y_pred, multioutput=[0.4, 0.6], symmetric=True
+    )
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
     evsw = explained_variance_score(y_true, y_pred, multioutput=[0.4, 0.6])
     evsw2 = explained_variance_score(
@@ -418,6 +435,7 @@ def test_regression_custom_weights():
     assert_almost_equal(rmsew, 0.59, decimal=2)
     assert_almost_equal(maew, 0.475, decimal=3)
     assert_almost_equal(mapew, 0.1668, decimal=2)
+    assert_almost_equal(smapew, 0.09335, decimal=2)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
     assert_almost_equal(evsw2, 0.94, decimal=2)
@@ -483,6 +501,9 @@ def test_mean_absolute_percentage_error():
     y_true = random_number_generator.exponential(size=100)
     y_pred = 1.2 * y_true
     assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(0.2)
+    assert mean_absolute_percentage_error(
+        y_true, y_pred, symmetric=True
+    ) == pytest.approx(0.2 / 2.2)
 
 
 @pytest.mark.parametrize(
