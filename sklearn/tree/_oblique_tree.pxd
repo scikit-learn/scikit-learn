@@ -20,7 +20,7 @@ from ._tree cimport INT32_t          # Signed 32 bit integer
 from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 from ._tree cimport Tree, Node, TreeBuilder
 
-from ._split_record cimport SplitRecord
+from ._splitter cimport SplitRecord
 from ._oblique_splitter cimport ObliqueSplitRecord
 
 cdef class ObliqueTree(Tree):

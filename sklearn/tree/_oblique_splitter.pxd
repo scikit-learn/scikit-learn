@@ -21,7 +21,7 @@ from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 from ._splitter cimport Splitter
 from ._splitter cimport sort
-from ._split_record cimport SplitRecord
+from ._splitter cimport SplitRecord
 from libcpp.vector cimport vector
 
 cdef struct ObliqueSplitRecord:

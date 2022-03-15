@@ -14,8 +14,8 @@ X, y = iris.data, iris.target
 
 # either axis-aligned
 clf = DecisionTreeClassifier(random_state=random_state,
-    # max_leaf_nodes=5,
-)
+                             # max_leaf_nodes=5,
+                             )
 
 cv_scores = cross_val_score(clf, X, y, scoring='accuracy', cv=10)
 
