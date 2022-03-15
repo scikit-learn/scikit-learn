@@ -323,6 +323,7 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
                     (end - current.pos) < min_samples_leaf):
                     continue
 
+                # self.criterion.reset()
                 self.criterion.update(current.pos)
 
                 # reject if min_weight_leaf not satisfied

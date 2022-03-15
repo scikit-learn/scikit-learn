@@ -33,9 +33,9 @@ from ._utils cimport sizet_ptr_to_ndarray
 # =============================================================================
 
 cdef class ObliqueTree(Tree):
-    """Array-based representation of a binary decision tree.
+    """Array-based representation of a binary oblique decision tree.
 
-    The binary tree is represented as a number of parallel arrays. The i-th
+    The oblique decision tree is represented as a number of parallel arrays. The i-th
     element of each array holds information about the node `i`. Node 0 is the
     tree's root. You can find a detailed description of all arrays in
     `_tree.pxd`. NOTE: Some of the arrays only apply to either leaves or split

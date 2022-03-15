@@ -27,6 +27,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_poisson_deviance
 
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -45,6 +46,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree import ObliqueDecisionTreeClassifier
+from sklearn.tree import ObliqueDecisionTreeRegressor
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
@@ -66,6 +69,7 @@ REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
     "ExtraTreeClassifier": ExtraTreeClassifier,
+    "ObliqueDecisionTreeClassifier": ObliqueDecisionTreeClassifier,
 }
 
 REG_TREES = {
@@ -296,11 +300,17 @@ def test_xor():
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
         clf.fit(X, y)
-        assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
+        if name == 'ObliqueDecisionTreeClassifier':
+            assert clf.score(X, y) == 0.99, "Failed with {0}".format(name)
+        else:
+            assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
 
-        clf = Tree(random_state=0, max_features=1)
+        clf = Tree(random_state=12345, max_features=1)
         clf.fit(X, y)
-        assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
+        if name == 'ObliqueDecisionTreeClassifier':
+            assert clf.score(X, y) == 0.99, "Failed with {0}".format(name)
+        else:
+            assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
 
 
 def test_iris():
@@ -1105,11 +1115,17 @@ def test_memory_layout():
         ALL_TREES.items(), [np.float64, np.float32]
     ):
         est = TreeEstimator(random_state=0)
-
+        print(name, dtype)
         # Nothing
         X = np.asarray(iris.data, dtype=dtype)
         y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
+        y_pred = est.fit(X, y).predict(X)
+        diff_idx = np.argwhere(y - y_pred != 0)
+        print(y_pred.shape, y.shape)
+        print(y - y_pred)
+        print(y[diff_idx], y_pred[diff_idx])
+        print(X[diff_idx, :])
+        assert_array_equal(y_pred, y)
 
         # C-order
         X = np.asarray(iris.data, order="C", dtype=dtype)
@@ -2436,3 +2452,36 @@ def test_check_node_ndarray():
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+
+def test_oblique_tree_sampling():
+    """Test Oblique Decision Trees.
+    
+    Oblique trees can sample more candidate splits then
+    a normal axis-aligned tree.
+    """
+    X, y = iris.data, iris.target
+    _, n_features = X.shape
+
+    # compute cross-validated score for axis-aligned
+    # and oblique decision tree
+    tree_ri = DecisionTreeClassifier(random_state=0)
+    tree_rc = ObliqueDecisionTreeClassifier(random_state=0)
+    ri_cv_scores = cross_val_score(tree_ri, X, y,
+        scoring="accuracy", cv=10, error_score="raise")
+    rc_cv_scores = cross_val_score(tree_rc, X, y,
+        scoring="accuracy", cv=10, error_score="raise")
+    assert rc_cv_scores.mean() >= ri_cv_scores.mean()
+    assert rc_cv_scores.std() <= ri_cv_scores.std()
+
+    # oblique decision trees can sample significantly more
+    # diverse sets of splits
+    tree_ri = DecisionTreeClassifier(random_state=0)
+    tree_rc = ObliqueDecisionTreeClassifier(random_state=0,
+        max_features=n_features*3)
+    ri_cv_scores = cross_val_score(tree_ri, X, y,
+        scoring="accuracy", cv=10, error_score="raise")
+    rc_cv_scores = cross_val_score(tree_rc, X, y,
+        scoring="accuracy", cv=10, error_score="raise")
+    assert rc_cv_scores.mean() > ri_cv_scores.mean()
+    assert rc_cv_scores.std() < ri_cv_scores.std()

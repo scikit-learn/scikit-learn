@@ -56,3 +56,14 @@ print(
     "10-Fold CV score for oblique decision tree is: "
     f"{np.nanmean(cv_scores)} +/- {np.nanstd(cv_scores)}"
 )
+
+
+from sklearn.ensemble import ObliqueRandomForestClassifier
+from sklearn.datasets import make_classification
+X, y = make_classification(n_samples=1000, n_features=4,
+    n_informative=2, n_redundant=0,
+    random_state=0, shuffle=False)
+clf = ObliqueRandomForestClassifier(max_depth=2, random_state=0)
+clf.fit(X, y)
+
+print(clf.predict([[0, 0, 0, 0]]))

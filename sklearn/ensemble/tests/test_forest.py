@@ -45,13 +45,14 @@ from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import ObliqueRandomForestClassifier
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, accuracy_score
 
 from sklearn.tree._classes import SPARSE_SPLITTERS
 
@@ -95,6 +96,7 @@ DEFAULT_JOBLIB_BACKEND = joblib.parallel.get_active_backend()[0].__class__
 FOREST_CLASSIFIERS = {
     "ExtraTreesClassifier": ExtraTreesClassifier,
     "RandomForestClassifier": RandomForestClassifier,
+    "ObliqueRandomForestClassifier": ObliqueRandomForestClassifier,
 }
 
 FOREST_REGRESSORS = {
@@ -113,6 +115,122 @@ FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
 FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
+
+
+def _sparse_parity(n, p=20, p_star=3, random_state=None):
+    """Generate sparse parity dataset.
+
+    Sparse parity is a multivariate generalization of the
+    XOR problem.
+
+    Parameters
+    ----------
+    n : int
+        Number of sample to generate.
+    p : int, optional
+        The dimensionality of the dataset, by default 20
+    p_star : int, optional
+        The number of informative dimensions, by default 3.
+    random_state : Random State, optional
+        Random state, by default None.
+
+    Returns
+    -------
+    X : np.ndarray of shape (n, p)
+        Sparse parity dataset as a dense array.
+    y : np.ndarray of shape (n,)
+        Labels of the dataset
+    """
+    rng = np.random.RandomState(seed=random_state)
+    X = rng.uniform(-1, 1, (n, p))
+    y = np.zeros(n)
+
+    for i in range(0, n):
+        y[i] = sum(X[i, :p_star] > 0) % 2
+
+    return X, y
+
+
+def _orthant(n, p=6, random_state=None):
+    """Generate orthant dataset.
+
+    Parameters
+    ----------
+    n : int
+        Number of sample to generate.
+    p : int, optional
+        The dimensionality of the dataset and the number of
+        unique labels, by default 6.
+    rec : int, optional
+        _description_, by default 1
+    random_state : Random State, optional
+        Random state, by default None.
+
+    Returns
+    -------
+    X : np.ndarray of shape (n, p)
+        Orthant dataset as a dense array.
+    y : np.ndarray of shape (n,)
+        Labels of the dataset
+    """
+    rng = np.random.RandomState(seed=random_state)
+    orth_labels = np.asarray([2 ** i for i in range(0, p)][::-1])
+
+    X = rng.uniform(-1, 1, (n, p))
+    y = np.zeros(n)
+
+    for i in range(0, n):
+        idx = np.where(X[i, :] > 0)[0]
+        y[i] = sum(orth_labels[idx])
+
+    if len(np.unique(y)) < 2 ** p:
+        raise RuntimeError('Increase sample size to '
+                           'get a label in each orthant.')
+
+    return X, y
+
+
+def _trunk(n, p=10, random_state=None):
+    """Generate trunk dataset.
+
+    Parameters
+    ----------
+    n : int
+        Number of sample to generate.
+    p : int, optional
+        The dimensionality of the dataset and the number of
+        unique labels, by default 10.
+    random_state : Random State, optional
+        Random state, by default None.
+
+    Returns
+    -------
+    X : np.ndarray of shape (n, p)
+        Trunk dataset as a dense array.
+    y : np.ndarray of shape (n,)
+        Labels of the dataset
+
+    References
+    ----------
+    [1] Gerard V. Trunk. A problem of dimensionality: A
+    simple example. IEEE Transactions on Pattern Analysis
+    and Machine Intelligence, 1(3):306–307, 1979.
+    """
+    rng = np.random.RandomState(seed=random_state)
+
+    mu_1 = np.array([1/i for i in range(1,p+1)])
+    mu_0 = -1 * mu_1
+    cov = np.identity(p)
+
+    X = np.vstack((
+        rng.multivariate_normal(mu_0, cov, int(n/2)),
+        rng.multivariate_normal(mu_1, cov, int(n/2))
+        ))
+    y = np.concatenate((
+        np.zeros(int(n/2)),
+        np.ones(int(n/2))
+        ))
+    return X, y
 
 
 def check_classification_toy(name):
@@ -505,6 +623,9 @@ def test_unfitted_feature_importances(name):
 )
 def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accuracy):
     """Check that OOB score is close to score on a test set."""
+    if ForestClassifier == ObliqueRandomForestClassifier:
+        pytest.skip(reason='Oblique forests do not have oob implemented yet.')
+
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
         X,
@@ -1101,9 +1222,9 @@ def test_min_weight_fraction_leaf(name):
     check_min_weight_fraction_leaf(name)
 
 
-def check_sparse_input(name, X, X_sparse, y):
+def check_sparse_input(name, X, X_sparse, y):   
     ForestEstimator = FOREST_ESTIMATORS[name]
-
+    
     dense = ForestEstimator(random_state=0, max_depth=2).fit(X, y)
     sparse = ForestEstimator(random_state=0, max_depth=2).fit(X_sparse, y)
 
@@ -1133,6 +1254,8 @@ def check_sparse_input(name, X, X_sparse, y):
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
 @pytest.mark.parametrize("sparse_matrix", (csr_matrix, csc_matrix, coo_matrix))
 def test_sparse_input(name, sparse_matrix):
+    if name == 'ObliqueRandomForestClassifier':
+        pytest.skip(reason='Oblique trees have not implemented sparse capability yet.')
     X, y = datasets.make_multilabel_classification(random_state=0, n_samples=50)
 
     check_sparse_input(name, X, sparse_matrix(X), y)
@@ -1188,6 +1311,8 @@ def check_memory_layout(name, dtype):
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize("dtype", (np.float64, np.float32))
 def test_memory_layout(name, dtype):
+    if name == 'ObliqueRandomForestClassifier':
+        pytest.skip(reason='Oblique trees do not work with sparse data yet.')
     check_memory_layout(name, dtype)
 
 
@@ -1868,3 +1993,81 @@ def test_random_trees_embedding_feature_names_out():
         ]
     ]
     assert_array_equal(expected_names, names)
+
+
+def test_oblique_forest_sparse_parity():
+    # Sparse parity dataset
+    n = 1000
+    X, y = _sparse_parity(n, random_state=0)
+    n_test = 0.1
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=n_test, random_state=0,
+    )
+
+    rc_clf = ObliqueRandomForestClassifier(
+        max_features=None, random_state=0)
+    rc_clf.fit(X_train, y_train)
+    y_hat = rc_clf.predict(X_test)
+    rc_accuracy = accuracy_score(y_test, y_hat)
+    
+    ri_clf = RandomForestClassifier(random_state=0)
+    ri_clf.fit(X_train, y_train)
+    y_hat = ri_clf.predict(X_test)
+    ri_accuracy = accuracy_score(y_test, y_hat)
+    
+    assert rc_accuracy > ri_accuracy
+    assert ri_accuracy > 0.45
+    assert rc_accuracy > 0.5
+    
+
+def test_oblique_forest_orthant():
+    """Test oblique forests on orthant problem.
+    
+    It is expected that axis-aligned and oblique-aligned
+    forests will perform similarly.
+    """
+    n = 500
+    X, y = _orthant(n, p=6, random_state=0)
+    n_test = 0.3
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=n_test, random_state=0,
+    )
+
+    rc_clf = ObliqueRandomForestClassifier(
+        max_features=None, random_state=0)
+    rc_clf.fit(X_train, y_train)
+    y_hat = rc_clf.predict(X_test)
+    rc_accuracy = accuracy_score(y_test, y_hat)
+    
+    ri_clf = RandomForestClassifier(random_state=0)
+    ri_clf.fit(X_train, y_train)
+    y_hat = ri_clf.predict(X_test)
+    ri_accuracy = accuracy_score(y_test, y_hat)
+    
+    assert rc_accuracy > ri_accuracy
+    assert ri_accuracy == 0.86
+    assert rc_accuracy >= 0.86
+    
+
+def test_oblique_forest_trunk():
+    """Test oblique vs axis-aligned forests on Trunk."""
+    n = 1000
+    X, y = _trunk(n, p=1000, random_state=0)
+    n_test = 0.1
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=n_test, random_state=0,
+    )
+
+    rc_clf = ObliqueRandomForestClassifier(random_state=0)
+    rc_clf.fit(X_train, y_train)
+    y_hat = rc_clf.predict(X_test)
+    rc_accuracy = accuracy_score(y_test, y_hat)
+    
+    ri_clf = RandomForestClassifier(random_state=0)
+    ri_clf.fit(X_train, y_train)
+    y_hat = ri_clf.predict(X_test)
+    ri_accuracy = accuracy_score(y_test, y_hat)
+    
+    assert rc_accuracy > ri_accuracy
+    assert ri_accuracy == 0.84
+    assert rc_accuracy >= 0.88
