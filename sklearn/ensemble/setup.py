@@ -8,6 +8,7 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_gradient_boosting",
         sources=["_gradient_boosting.pyx"],
+        language="c++",
         include_dirs=[numpy.get_include()],
     )
 

@@ -36,6 +36,7 @@ def configuration(parent_package="", top_path=None):
         "_quad_tree",
         sources=["_quad_tree.pyx"],
         include_dirs=[numpy.get_include()],
+        language="c++",
         libraries=libraries,
     )
 

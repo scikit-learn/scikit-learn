@@ -46,6 +46,7 @@ def configuration(parent_package="", top_path=None):
         sources=["_criterion.pyx"],
         include_dirs=[numpy.get_include()],
         libraries=libraries,
+        language="c++",
         extra_compile_args=["-O3"],
     )
     config.add_extension(
@@ -53,6 +54,7 @@ def configuration(parent_package="", top_path=None):
         sources=["_utils.pyx"],
         include_dirs=[numpy.get_include()],
         libraries=libraries,
+        language="c++",
         extra_compile_args=["-O3"],
     )
 
