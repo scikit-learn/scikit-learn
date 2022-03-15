@@ -750,6 +750,11 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports grouping
+  infrequent categories into a single feature. Grouping infrequent categories
+  is enabled by specifying how to select infrequent categories with
+  `min_frequency` or `max_categories`. :pr:`16018` by `Thomas Fan`_.
+
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
   This allows specifying a maximum number of samples to be used while fitting
   the model. The option is only available when `strategy` is set to `quantile`.
@@ -790,6 +795,14 @@ Changelog
 - |Enhancement| :class:`random_projection.SparseRandomProjection` and
   :class:`random_projection.GaussianRandomProjection` preserves dtype for
   `numpy.float32`. :pr:`22114` by :user:`Takeshi Oura <takoika>`.
+
+- |Enhancement| Adds an :meth:`inverse_transform` method and a
+  `compute_inverse_transform` parameter to all transformers in the
+  :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. When the parameter is set
+  to True, the pseudo-inverse of the components is computed during `fit` and stored as
+  `inverse_components_`. :pr:`21701` by `Aurélien Geron <ageron>`.
 
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.random_projection` module:
@@ -859,6 +872,8 @@ Changelog
   when a class is present in `y` but not in `class_weight`. :pr:`22595` by
   `Thomas Fan`_.
 
+- |Fix| :func:`utils.estimator_html_repr` has an improved visualization for nested
+  meta-estimators. :pr:`21310` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
