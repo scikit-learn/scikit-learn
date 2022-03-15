@@ -130,47 +130,48 @@ cdef class ObliqueTree(Tree):
         d['proj_vecs'] = proj_vecs
         return d
 
-    # def __setstate__(self, d):
-    #     """Setstate re-implementation, for unpickling."""
-    #     self.max_depth = d["max_depth"]
-    #     self.node_count = d["node_count"]
+    def __setstate__(self, d):
+        """Setstate re-implementation, for unpickling."""
+        self.max_depth = d["max_depth"]
+        self.node_count = d["node_count"]
 
-    #     if 'nodes' not in d:
-    #         raise ValueError('You have loaded ObliqueTree version which '
-    #                         'cannot be imported')
+        if 'nodes' not in d:
+            raise ValueError('You have loaded ObliqueTree version which '
+                            'cannot be imported')
 
-    #     node_ndarray = d['nodes']
-    #     value_ndarray = d['values']
+        node_ndarray = d['nodes']
+        value_ndarray = d['values']
 
-    #     value_shape = (node_ndarray.shape[0], self.n_outputs,
-    #                 self.max_n_classes)
-    #     if (node_ndarray.ndim != 1 or
-    #             node_ndarray.dtype != NODE_DTYPE or
-    #             not node_ndarray.flags.c_contiguous or
-    #             value_ndarray.shape != value_shape or
-    #             not value_ndarray.flags.c_contiguous or
-    #             value_ndarray.dtype != np.float64):
-    #         raise ValueError('Did not recognise loaded array layout')
+        value_shape = (node_ndarray.shape[0], self.n_outputs,
+                    self.max_n_classes)
+        if (node_ndarray.ndim != 1 or
+                node_ndarray.dtype != NODE_DTYPE or
+                not node_ndarray.flags.c_contiguous or
+                value_ndarray.shape != value_shape or
+                not value_ndarray.flags.c_contiguous or
+                value_ndarray.dtype != np.float64):
+            raise ValueError('Did not recognise loaded array layout')
 
-    #     self.capacity = node_ndarray.shape[0]
-    #     if self._resize_c(self.capacity) != 0:
-    #         raise MemoryError("resizing tree to %d" % self.capacity)
-    #     nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data,
-    #                 self.capacity * sizeof(Node))
-    #     value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
-    #                 self.capacity * self.value_stride * sizeof(double))
+        self.capacity = node_ndarray.shape[0]
+        if self._resize_c(self.capacity) != 0:
+            raise MemoryError("resizing tree to %d" % self.capacity)
+        nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data,
+                    self.capacity * sizeof(Node))
+        value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
+                    self.capacity * self.value_stride * sizeof(double))
 
-    #     proj_vecs = d['proj_vecs']
-    #     self.n_features = proj_vecs.shape[1]
-    #     self.proj_vec_weights = vector[vector[DTYPE_t]](self.node_count)
-    #     self.proj_vec_indices = vector[vector[SIZE_t]](self.node_count)
-    #     for i in range(0, self.node_count):
-    #         for j in range(0, self.n_features):
-    #             weight = proj_vecs[i, j]
-    #             if weight == 0:
-    #                 continue
-    #             self.proj_vec_weights[i].push_back(weight)
-    #             self.proj_vec_indices[i].push_back(j)
+        # now set the projection vector weights and indices
+        proj_vecs = d['proj_vecs']
+        self.n_features = proj_vecs.shape[1]
+        self.proj_vec_weights = vector[vector[DTYPE_t]](self.node_count)
+        self.proj_vec_indices = vector[vector[SIZE_t]](self.node_count)
+        for i in range(0, self.node_count):
+            for j in range(0, self.n_features):
+                weight = proj_vecs[i, j]
+                if weight == 0:
+                    continue
+                self.proj_vec_weights[i].push_back(weight)
+                self.proj_vec_indices[i].push_back(j)
 
     cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
         """Guts of _resize.

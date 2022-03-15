@@ -19,6 +19,7 @@ from ._tree cimport SIZE_t           # Type for indices and counters
 from ._tree cimport INT32_t          # Signed 32 bit integer
 from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 from ._tree cimport Tree, Node, TreeBuilder
+from ._tree cimport NODE_DTYPE
 
 from ._splitter cimport SplitRecord
 from ._oblique_splitter cimport ObliqueSplitRecord
