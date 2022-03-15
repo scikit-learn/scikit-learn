@@ -23,7 +23,8 @@ the limitations of a polynomial regression, both models fail when extrapolating.
 """
 
 # %%
-# Generating simulated data with Gaussian weights
+# Generate synthetic dataset
+# --------------------------
 from sklearn.datasets import make_regression
 
 X, y, w = make_regression(
@@ -37,6 +38,7 @@ X, y, w = make_regression(
 
 # %%
 # Fit the regressions
+# -------------------
 import pandas as pd
 from sklearn.linear_model import ARDRegression, LinearRegression, BayesianRidge
 
@@ -58,6 +60,7 @@ df = pd.DataFrame(
 )
 # %%
 # Plot the true and estimated weights
+# -----------------------------------
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import LogNorm
@@ -75,6 +78,7 @@ plt.tight_layout(rect=(0, 0, 1, 0.95))
 _ = plt.title("Weights as a function of the model")
 # %%
 # Plot the marginal log-likelihood
+# --------------------------------
 plt.plot(ard.scores_, color="navy", label="Polynomial ARD")
 plt.plot(brr.scores_, color="red", label="Polynomial BayesianRidge")
 plt.ylabel("Score")
@@ -83,7 +87,8 @@ plt.xlim(1, 30)
 plt.legend()
 _ = plt.title("Convergence of marginal log-likelihood")
 # %%
-# Plotting polynomial regressions with standard deviations
+# Plotting polynomial regressions with std errors of the scores
+# -------------------------------------------------------------
 import numpy as np
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
