@@ -57,7 +57,7 @@ class GroupsComsumerMixin(_MetadataRequester):
     """A Mixin to ``groups`` by default.
 
     This Mixin makes the object to request ``groups`` by default as
-    ``REQUESTED``, instead of the ``ERROR_IF_PASSED`` default value.
+    ``REQUESTED``.
 
     .. versionadded:: 1.1
     """
