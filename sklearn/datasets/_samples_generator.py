@@ -1280,6 +1280,14 @@ def make_sparse_coded_signal(
     data_transposed: bool, default=True
         By default, Y, D and X are transposed.
 
+        - If True, the function returns (Y, D, X) such that D has shape
+        (n_features, n_components), X has shape (n_components, n_samples) and
+        Y = DX has shape (n_features, n_samples).
+
+        - If False, the function returns (Y, X, D) such that X has shape
+        (n_samples, n_components), D has shape (n_components, n_features) and
+        Y = XD has shape (n_samples, n_features).
+
         .. versionadded:: 1.1
         .. deprecated:: 1.1
             In version 1.3, `data_transposed=False` will be the default.
@@ -1291,13 +1299,15 @@ def make_sparse_coded_signal(
         `data_transposed` is False.
 
     dictionary : ndarray of shape (n_features, n_components)
-        The dictionary with normalized components (D). The shape is
-        (n_components, n_features) if `data_transposed` is False.
+        The dictionary with normalized components (D).
+        If `data_transposed` is False, dictionary is the third element returned and
+        has shape (n_components, n_features).
 
     code : ndarray of shape (n_components, n_samples)
         The sparse code such that each row of this matrix has exactly
-        n_nonzero_coefs non-zero items (X). The shape is (n_samples, n_components) if
-        `data_transposed` is False.
+        n_nonzero_coefs non-zero items (X).
+        If `data_transposed` is False, code is the second element returned and
+        has shape (n_samples, n_components).
 
     """
     generator = check_random_state(random_state)
@@ -1326,9 +1336,9 @@ def make_sparse_coded_signal(
             FutureWarning,
         )
 
-    # transpose if needed
+    # transpose and switch return order if needed
     if not data_transposed:
-        Y, D, X = Y.T, D.T, X.T
+        Y, X, D = Y.T, D.T, X.T
 
     return map(np.squeeze, (Y, D, X))
 
