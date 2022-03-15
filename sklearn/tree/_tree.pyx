@@ -535,7 +535,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = 0.0
             res.impurity_left = impurity
             res.impurity_right = impurity
-
+        
+        free(split_ptr)
         return 0
 
 
