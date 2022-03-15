@@ -576,9 +576,9 @@ many estimators. This visualization is activated by default::
 It can be deactivated by setting the `text` option in :func:`~sklearn.set_config`::
 
   >>> from sklearn import set_config
-  >>> set_config(display='text')
+  >>> set_config(display='text')  # doctest: +SKIP
   >>> # displays text representation in a jupyter context
-  >>> column_trans
+  >>> column_trans  # doctest: +SKIP
 
 An example of the HTML output can be seen in the
 **HTML representation of Pipeline** section of
