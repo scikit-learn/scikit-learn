@@ -155,6 +155,11 @@ def make_classification(
     y : ndarray of shape (n_samples,)
         The integer labels for class membership of each sample.
 
+    See Also
+    --------
+    make_blobs : Simplified variant.
+    make_multilabel_classification : Unrelated generator for multilabel tasks.
+
     Notes
     -----
     The algorithm is adapted from Guyon [1] and was designed to generate
@@ -164,11 +169,6 @@ def make_classification(
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
-
-    See Also
-    --------
-    make_blobs : Simplified variant.
-    make_multilabel_classification : Unrelated generator for multilabel tasks.
     """
     generator = check_random_state(random_state)
 
