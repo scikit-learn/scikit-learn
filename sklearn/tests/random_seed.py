@@ -6,7 +6,7 @@ to a specific seed value while still being deterministic by default.
 See the documentation for the SKLEARN_TESTS_GLOBAL_RANDOM_SEED
 variable for insrtuctions on how to use this fixture.
 
-https://scikit-learn.org/dev/computing/parallelism.html#environment-variables
+https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
 """
 import pytest
 from os import environ
@@ -63,7 +63,7 @@ def pytest_configure(config):
             See the documentation for the SKLEARN_TESTS_GLOBAL_RANDOM_SEED
             variable for insrtuctions on how to use this fixture.
 
-            https://scikit-learn.org/dev/computing/parallelism.html#environment-variables
+            https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
             """
             yield request.param
 
@@ -77,5 +77,5 @@ def pytest_report_header(config):
             "To reproduce this test run, set the following environment variable:",
             f'    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="{config.option.random_seeds[0]}"',
             "See: https://scikit-learn.org/dev/computing/parallelism.html"
-            "#environment-variables",
+            "#sklearn-tests-global-random-seed",
         ]
