@@ -35,15 +35,13 @@ clf.fit(X, y)
 scores = clf.cv_results_["mean_test_score"]
 scores_std = clf.cv_results_["std_test_score"]
 
-plt.figure().set_size_inches(8, 6)
-plt.semilogx(alphas, scores)
-plt.xlabel("alphas")
-plt.ylabel("scores")
-plt.show()
-
 # %%
 # Plot error lines showing +/- std. errors of the scores
 # ------------------------------------------------------
+
+plt.figure().set_size_inches(8, 6)
+plt.semilogx(alphas, scores)
+
 std_error = scores_std / np.sqrt(n_folds)
 
 plt.semilogx(alphas, scores + std_error, "b--")
