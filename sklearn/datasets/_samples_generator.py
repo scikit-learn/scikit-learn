@@ -1303,7 +1303,7 @@ def make_sparse_coded_signal(
         has shape (n_components, n_features).
 
     code : ndarray of shape (n_components, n_samples)
-        The sparse code such that each row of this matrix has exactly
+        The sparse code such that each column of this matrix has exactly
         n_nonzero_coefs non-zero items (X).
         If `data_transposed` is False, code is the second element returned and
         has shape (n_samples, n_components).
