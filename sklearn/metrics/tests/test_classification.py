@@ -199,17 +199,22 @@ def test_classification_report_output_dict_empty_input():
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1])
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
-    with warnings.catch_warnings(record=True) as record:
-        classification_report(
-            y_true, y_pred, zero_division=zero_division, output_dict=True
+    if zero_division == "warn":
+        msg = (
+            "Precision and F-score are ill-defined and being set to 0.0 in labels with"
+            " no predicted samples. Use `zero_division` parameter to control this"
+            " behavior."
         )
-        if zero_division == "warn":
-            assert len(record) > 1
-            for item in record:
-                msg = "Use `zero_division` parameter to control this behavior."
-                assert msg in str(item.message)
-        else:
-            assert not record
+        with pytest.warns(UndefinedMetricWarning, match=msg):
+            classification_report(
+                y_true, y_pred, zero_division=zero_division, output_dict=True
+            )
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            classification_report(
+                y_true, y_pred, zero_division=zero_division, output_dict=True
+            )
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
