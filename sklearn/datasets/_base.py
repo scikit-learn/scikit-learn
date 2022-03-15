@@ -1404,7 +1404,7 @@ def load_sample_images():
 
 
 def load_sample_image(image_name):
-    """Load the numpy array of a single sample image
+    """Load the numpy array of a single sample image.
 
     Read more in the :ref:`User Guide <sample_images>`.
 
@@ -1416,7 +1416,7 @@ def load_sample_image(image_name):
     Returns
     -------
     img : 3D array
-        The image as a numpy array: height x width x color
+        The image as a numpy array: height x width x color.
 
     Examples
     --------
