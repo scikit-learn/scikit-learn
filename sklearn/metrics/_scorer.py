@@ -234,6 +234,7 @@ class _BaseScorer(_MetadataRequester):
 
         **kwargs : dict
             Other parameters passed to the scorer, e.g. sample_weight.
+            Refer to :func:`with_score_request` for more details.
 
             .. versionadded:: 1.1
 
@@ -266,6 +267,9 @@ class _BaseScorer(_MetadataRequester):
 
         Note that this method returns a new instance of the scorer, and does
         **not** change the original scorer object.
+
+        Please see :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
 
         .. versionadded:: 1.1
 
@@ -314,6 +318,7 @@ class _PredictScorer(_BaseScorer):
 
         **kwargs : dict
             Other parameters passed to the scorer, e.g. sample_weight.
+            Refer to :func:`with_score_request` for more details.
 
             .. versionadded:: 1.1
 
@@ -359,6 +364,7 @@ class _ProbaScorer(_BaseScorer):
 
         **kwargs : dict
             Other parameters passed to the scorer, e.g. sample_weight.
+            Refer to :func:`with_score_request` for more details.
 
             .. versionadded:: 1.1
 
@@ -423,6 +429,7 @@ class _ThresholdScorer(_BaseScorer):
 
         **kwargs : dict
             Other parameters passed to the scorer, e.g. sample_weight.
+            Refer to :func:`with_score_request` for more details.
 
             .. versionadded:: 1.1
 
