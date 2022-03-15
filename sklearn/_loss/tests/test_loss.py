@@ -800,7 +800,7 @@ def test_loss_intercept_only(loss, sample_weight):
         y_true = loss.link.inverse(np.linspace(-4, 4, num=n_samples))
     else:
         y_true = np.arange(n_samples).astype(np.float64) % loss.n_classes
-        y_true[::5] = 0  # exceedance of null events in the target
+        y_true[::5] = 0  # exceedance of class 0
 
     if sample_weight == "range":
         sample_weight = np.linspace(0.1, 2, num=n_samples)
