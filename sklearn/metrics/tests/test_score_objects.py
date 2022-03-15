@@ -630,7 +630,7 @@ def test_classification_scorer_sample_weight():
         else:
             target = y_test
         try:
-            scorer = scorer.set_score_request(sample_weight=True)
+            scorer = scorer.with_score_request(sample_weight=True)
             weighted = scorer(
                 estimator[name], X_test, target, sample_weight=sample_weight
             )
@@ -1148,11 +1148,11 @@ def test_scorer_no_op_multiclass_select_proba():
 
 @pytest.mark.parametrize("name, scorer", SCORERS.items())
 def test_scorer_metadata_request(name, scorer):
-    assert hasattr(scorer, "set_score_request")
+    assert hasattr(scorer, "with_score_request")
     assert hasattr(scorer, "get_metadata_routing")
 
-    weighted_scorer = scorer.set_score_request(sample_weight=True)
-    # set_score_request shouldn't mutate the instance
+    weighted_scorer = scorer.with_score_request(sample_weight=True)
+    # with_score_request shouldn't mutate the instance
     assert weighted_scorer is not scorer
 
     assert str(scorer.get_metadata_routing()) == "{}"

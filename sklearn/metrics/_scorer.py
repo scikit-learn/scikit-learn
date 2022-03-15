@@ -247,8 +247,8 @@ class _BaseScorer(_MetadataRequester):
         """Return non-default make_scorer arguments for repr."""
         return ""
 
-    def set_score_request(self, **kwargs):
-        """Set requested parameters by the scorer.
+    def with_score_request(self, **kwargs):
+        """Create a scorer that requests metadata parameters.
 
         Note that this method returns a new instance of the scorer, and does
         **not** change the original scorer object.
