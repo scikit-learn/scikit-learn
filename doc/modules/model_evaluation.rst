@@ -224,6 +224,13 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+- If it requires extra metadata to be passed to it, it should expose a
+  ``get_metadata_routing`` method returning the requested metadata. The user
+  should be able to set the requested metadata via a ``with_score_request``
+  method returning a copy of the scorer with the appropriate requests set.
+  Please see :ref:`User Guide <metadata_routing>` for more details.
+
+
 .. note:: **Using custom scorers in functions where n_jobs > 1**
 
     While defining the custom scoring function alongside the calling function
@@ -563,8 +570,8 @@ or *informedness*.
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
-  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description 
-      and evaluation of a scalable learning classifier 
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
+      and evaluation of a scalable learning classifier
       system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
