@@ -1175,3 +1175,22 @@ def test_scorer_metadata_request(name, scorer):
     router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
     assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
+
+
+def test_metadata_kwarg_conflict():
+    X, y = make_classification(
+        n_classes=3, n_informative=3, n_samples=20, random_state=0
+    )
+    lr = LogisticRegression().fit(X, y)
+
+    scorer = make_scorer(
+        roc_auc_score,
+        needs_proba=True,
+        multi_class="ovo",
+        labels=lr.classes_,
+    )
+    with pytest.warns(UserWarning, match="already set as kwargs"):
+        scorer = scorer.with_score_request(labels=True)
+
+    with pytest.warns(UserWarning, match="There is an overlap"):
+        scorer(lr, X, y, labels=lr.classes_)

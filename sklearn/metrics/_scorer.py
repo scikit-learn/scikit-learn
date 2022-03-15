@@ -19,6 +19,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 import copy
+import warnings
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
@@ -247,6 +248,19 @@ class _BaseScorer(_MetadataRequester):
         """Return non-default make_scorer arguments for repr."""
         return ""
 
+    def _warn_overlap(self, message, kwargs):
+        """Warn if there is any overlap between ``self._kwargs`` and kwargs.
+
+        This method is intended to be used to check for overlap between
+        ``self._kwargs`` and ``kwargs`` passed as metadata.
+        """
+        _kwargs = set() if self._kwargs is None else set(self._kwargs.keys())
+        overlap = _kwargs.intersection(kwargs.keys())
+        if overlap:
+            warnings.warn(
+                f"{message} Overlapping parameters are: {overlap}", UserWarning
+            )
+
     def with_score_request(self, **kwargs):
         """Create a scorer that requests metadata parameters.
 
@@ -258,9 +272,19 @@ class _BaseScorer(_MetadataRequester):
         Parameters
         ----------
         kwargs : dict
-            Arguments should be of the form param_name={True, False, None, str}.
-            The value can also be of the form RequestType
+            Arguments should be of the form ``param_name=alias``, and `alias`
+            can be either one of ``{True, False, None, str}`` or an instance of
+            RequestType.
         """
+        self._warn_overlap(
+            message=(
+                "You are setting metadata request for parameters which are "
+                "already set as kwargs for this metric. These set values will be "
+                "overridden by passed metadata if provided. Please pass them either "
+                "as metadata or kwargs to `make_scorer`."
+            ),
+            kwargs=kwargs,
+        )
         res = copy.deepcopy(self)
         res._metadata_request = MetadataRequest(owner=self.__class__.__name__)
         for param, alias in kwargs.items():
@@ -298,7 +322,14 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
         y_pred = method_caller(estimator, "predict", X)
         scoring_kwargs = copy.deepcopy(self._kwargs)
         scoring_kwargs.update(kwargs)
@@ -336,6 +367,14 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
 
         y_type = type_of_target(y)
         y_pred = method_caller(clf, "predict_proba", X)
@@ -392,6 +431,14 @@ class _ThresholdScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
 
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
