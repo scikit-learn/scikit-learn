@@ -1280,11 +1280,10 @@ def make_sparse_coded_signal(
     data_transposed: bool, default=True
         By default, Y, D and X are transposed.
 
-        - If True, the function returns (Y, D, X) such that D has shape
+        If True, the function returns (Y, D, X) such that D has shape
         (n_features, n_components), X has shape (n_components, n_samples) and
         Y = DX has shape (n_features, n_samples).
-
-        - If False, the function returns (Y, X, D) such that X has shape
+        If False, the function returns (Y, X, D) such that X has shape
         (n_samples, n_components), D has shape (n_components, n_features) and
         Y = XD has shape (n_samples, n_features).
 
