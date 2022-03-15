@@ -97,10 +97,7 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 # HTML representation of ``Pipeline`` (display diagram)
 ###############################################################################
 # When the ``Pipeline`` is printed out in a jupyter notebook an HTML
-# representation of the estimator is displayed as follows:
-from sklearn import set_config
-
-set_config(display="diagram")
+# representation of the estimator is displayed:
 clf
 
 # %%
@@ -150,6 +147,7 @@ clf = Pipeline(
 
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
+clf
 
 # %%
 # The resulting score is not exactly the same as the one from the previous

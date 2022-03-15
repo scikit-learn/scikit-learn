@@ -3,9 +3,9 @@
 Displaying Pipelines
 =================================================================
 
-The default configuration for displaying a pipeline is `'text'` where
-`set_config(display='text')`.  To visualize the diagram in Jupyter Notebook,
-use `set_config(display='diagram')` and then output the pipeline object.
+The default configuration for displaying a pipeline in a Jupyter Notebook is
+`'diagram'` where `set_config(display='diagram')`. To deactivate HTML representation,
+use `set_config(display='text')`.
 
 To see more detailed steps in the visualization of the pipeline, click on the
 steps in the pipeline.
@@ -31,14 +31,14 @@ steps = [
 pipe = Pipeline(steps)
 
 # %%
-# To view the text pipeline, the default is `display='text'`.
-set_config(display="text")
-pipe
-
-# %%
-# To visualize the diagram, change `display='diagram'`.
+# To visualize the diagram, the default is `display='diagram'`.
 set_config(display="diagram")
 pipe  # click on the diagram below to see the details of each step
+
+# %%
+# To view the text pipeline, change to `display='text'`.
+set_config(display="text")
+pipe
 
 # %%
 # Displaying a Pipeline Chaining Multiple Preprocessing Steps & Classifier
@@ -60,10 +60,6 @@ steps = [
     ("classifier", LogisticRegression(C=2.0)),
 ]
 pipe = Pipeline(steps)
-
-# %%
-# To visualize the diagram, change to display='diagram'
-set_config(display="diagram")
 pipe  # click on the diagram below to see the details of each step
 
 # %%
@@ -81,10 +77,6 @@ from sklearn import set_config
 
 steps = [("reduce_dim", PCA(n_components=4)), ("classifier", SVC(kernel="linear"))]
 pipe = Pipeline(steps)
-
-# %%
-# To visualize the diagram, change to `display='diagram'`.
-set_config(display="diagram")
 pipe  # click on the diagram below to see the details of each step
 
 # %%
@@ -129,10 +121,6 @@ preprocessor = ColumnTransformer(
 )
 
 pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=500))
-
-# %%
-# To visualize the diagram, change to `display='diagram'`
-set_config(display="diagram")
 pipe  # click on the diagram below to see the details of each step
 
 # %%
@@ -189,8 +177,4 @@ param_grid = {
 }
 
 grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=1)
-
-# %%
-# To visualize the diagram, change to `display='diagram'`.
-set_config(display="diagram")
 grid_search  # click on the diagram below to see the details of each step
