@@ -1,21 +1,27 @@
 """
-=======================================
-Performance of Linear Regression Models
-=======================================
+==========================================
+Comparison of Linear Models for Regression
+==========================================
 
-Compare the performance of :ref:`automatic_relevance_determination` and
-:ref:`bayesian_ridge_regression`.
+This example compares three kind of linear models for regression:
 
-Compared to the OLS (ordinary least squares) estimator, the coefficient weights
-using a Bayesian Ridge are slightly shifted toward zeros, which stabilises them.
-The ARD regression sets some of the non-informative cofficients exactly to zero,
-while shifting some them closer to zero. Some non-informative coefficients are
-still present and retain the order of magnitude of the ground truth weights.
+ - a :ref:`ordinary-least-squares`
+ - a :ref:`automatic_relevance_determination`
+ - a :ref:`bayesian_ridge_regression`
+
+The comparisons are based on the models' coefficients with respect to the true coefficients.
+
+Compared to the OLS (ordinary least squares) estimator, the coefficients
+using a Bayesian Ridge regression are slightly shifted toward zeros, which
+stabilises them. The ARD regression sets some of the non-informative coefficients
+exactly to zero, while shifting some them closer to zero. Some non-informative 
+coefficients are still present and retain the order of magnitude of the ground
+truth weights.
 
 The estimation of the model is done in both cases by iteratively maximizing the
 marginal log-likelihood of the observations.
 
-We also plot predictions and uncertainties for ARD and Bayesian Ridge
+We also plot predictions and uncertainties for the ARD and the Bayesian Ridge
 regressions using a polynomial feature expansion to fit a non-linear feature.
 Notice that the ARD regression captures the ground truth the best, but due to
 the limitations of a polynomial regression, both models fail when extrapolating.
@@ -55,7 +61,7 @@ df = pd.DataFrame(
         "LinearRegression": olr.coef_,
         "BayesianRidge": brr.coef_,
         "ARDRegression": ard.coef_,
-        "true weights": w,
+        "true coefficients": w,
     }
 )
 # %%
@@ -70,22 +76,22 @@ ax = sns.heatmap(
     df.T,
     norm=LogNorm(),
     cbar_kws={"label": "weight value"},
-    cmap="rocket_r",
+    cmap="viridis_r",
 )
-plt.ylabel("predictor")
-plt.xlabel("coeficients")
+plt.ylabel("linear model")
+plt.xlabel("coefficients")
 plt.tight_layout(rect=(0, 0, 1, 0.95))
-_ = plt.title("Weights as a function of the model")
+_ = plt.title("Models' coefficients")
 # %%
 # Plot the marginal log-likelihood
 # --------------------------------
-plt.plot(ard.scores_, color="navy", label="Polynomial ARD")
-plt.plot(brr.scores_, color="red", label="Polynomial BayesianRidge")
+plt.plot(ard.scores_, color="navy", label="ARD with polynomial features")
+plt.plot(brr.scores_, color="red", label="BayesianRidge with polynomial features")
 plt.ylabel("Score")
 plt.xlabel("Iterations")
 plt.xlim(1, 30)
 plt.legend()
-_ = plt.title("Convergence of marginal log-likelihood")
+_ = plt.title("Models log-likelihood")
 # %%
 # Plotting polynomial regressions with std errors of the scores
 # -------------------------------------------------------------
@@ -95,15 +101,14 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 rng = np.random.RandomState(0)
 n_samples = 100
-data_max, data_min = 0, 10
-len_data = data_max - data_min
+
 # sort the data to make plotting easier later
-data = np.sort(rng.rand(n_samples) * len_data - len_data)
+# X should be 2D for sklearn: (n_samples, n_features)
+data = np.sort(rng.rand(n_samples, 1) * 10)
 noise = rng.normal(0, 1, n_samples) * 1.35
 target = np.sqrt(data) * np.sin(data) + noise
 full_data = pd.DataFrame({"input_feature": data, "target": target})
-# X should be 2D for sklearn: (n_samples, n_features)
-data = data.reshape((-1, 1))
+
 
 # `fit_intercept=True` for `ARDRegression()` and `BayesianRidge()`,
 # then `PolynomialFeatures` should not introduce the bias feature
@@ -126,8 +131,8 @@ ax = sns.scatterplot(
     data=full_data, x="input_feature", y="target", color="black", alpha=0.75
 )
 ax.plot(data, target - noise, color="black", label="Ground Truth")
-ax.plot(data, y_brr, color="red", label="Polynomial BayesianRidge")
-ax.plot(data, y_ard, color="navy", label="Polynomial ARD")
+ax.plot(data, y_brr, color="red", label="BayesianRidge with polynomial features")
+ax.plot(data, y_ard, color="navy", label="ARD with polynomial features")
 ax.fill_between(
     full_data["input_feature"],
     y_ard - y_ard_std,
@@ -143,4 +148,4 @@ ax.fill_between(
     alpha=0.3,
 )
 ax.legend()
-_ = ax.set_title("Polynomial fit of non-linear feature")
+_ = ax.set_title("Polynomial fit of a non-linear feature")
