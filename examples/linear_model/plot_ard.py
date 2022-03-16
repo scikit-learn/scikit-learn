@@ -12,13 +12,6 @@ This example compares three kind of linear models for regression:
 The comparisons are based on the models' coefficients with respect to the true
 coefficients.
 
-Compared to the OLS (ordinary least squares) estimator, the coefficients using a
-Bayesian Ridge regression are slightly shifted toward zeros, which stabilises
-them. The ARD regression sets some of the non-informative coefficients exactly
-to zero, while shifting some them closer to zero. Some non-informative
-coefficients are still present and retain the order of magnitude of the ground
-truth coefficients.
-
 The estimation of the model is done in both cases by iteratively maximizing the
 marginal log-likelihood of the observations.
 
@@ -65,6 +58,7 @@ df = pd.DataFrame(
         "ground truth": w,
     }
 )
+
 # %%
 # Plot the true and estimated coefficients
 # ----------------------------------------
@@ -83,6 +77,15 @@ plt.ylabel("linear model")
 plt.xlabel("coefficients")
 plt.tight_layout(rect=(0, 0, 1, 0.95))
 _ = plt.title("Models' coefficients")
+
+# %%
+# Compared to the OLS (ordinary least squares) estimator, the coefficients using
+# a Bayesian Ridge regression are slightly shifted toward zeros, which
+# stabilises them. The ARD regression sets some of the non-informative
+# coefficients exactly to zero, while shifting some them closer to zero. Some
+# non-informative coefficients are still present and retain the order of
+# magnitude of the ground truth coefficients.
+
 # %%
 # Plot the marginal log-likelihood
 # --------------------------------
@@ -93,6 +96,7 @@ plt.xlabel("Iterations")
 plt.xlim(1, 30)
 plt.legend()
 _ = plt.title("Models log-likelihood")
+
 # %%
 # Plotting polynomial regressions with std errors of the scores
 # -------------------------------------------------------------
