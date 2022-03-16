@@ -48,6 +48,10 @@ h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
   background-color: transparent;
 }
 
+h4 .section-number, h5 .section-number, h6 .section-number {
+  display: none;
+}
+
 h1:hover a.headerlink,
 h2:hover a.headerlink,
 h3:hover a.headerlink,
@@ -650,14 +654,16 @@ table.longtable tr.row-odd {
   overflow: auto;
 }
 
-code.descname {
+span.descname {
   font-weight: bold;
   background-color: transparent;
   padding: 0;
+  font-family: monospace;
 }
 
-code.descclassname {
+span.descclassname {
   background-color: transparent;
+  font-family: monospace;
 }
 
 .viewcode-link {
@@ -714,8 +720,9 @@ dl.field-list > dt:after {
 
 .classifier::before {
   font-style: normal;
-  margin: 0.3em;
+  margin: 0 0.3em;
   content: ":";
+  display: inline-block;
 }
 
 dd {
@@ -1159,8 +1166,8 @@ div.highlight span.sk-expandable:before {
   display: block;
 }
 
-#quickstart-conda:checked ~ label[for="quickstart-venv"]:before  {
-  content: "Use conda environment";
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] {
+  display: none;
 }
 
 /* for pip */
