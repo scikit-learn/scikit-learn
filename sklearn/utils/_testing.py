@@ -17,7 +17,6 @@ import warnings
 import sys
 import functools
 import tempfile
-from numbers import Number
 from subprocess import check_output, STDOUT, CalledProcessError
 from subprocess import TimeoutExpired
 import re
@@ -60,7 +59,6 @@ from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
     check_X_y,
-    _is_arraylike_not_scalar,
 )
 
 
@@ -443,18 +441,8 @@ def assert_allclose(
     """
     dtypes = []
 
-    for input in (actual, desired):
-        if _is_arraylike_not_scalar(input):
-            dtypes.append(np.asarray(input).dtype)
-        elif isinstance(input, np.dtype):
-            dtypes.append(input)
-        elif isinstance(input, Number):
-            dtypes.append(np.dtype(type(input)))
-        else:
-            raise TypeError(
-                "Expected a scalar, a np.array or a np.dtype, but got"
-                f" {type(input)} instead."
-            )
+    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    dtypes = [actual.dtype, desired.dtype]
 
     if rtol is None:
         rtols = [DTYPE_RELATIVES_TOLERANCES.get(dtype, 1e-9) for dtype in dtypes]
