@@ -34,12 +34,6 @@ cdef struct Node:
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
 
-# Build the corresponding numpy dtype for Node.
-# This works by casting `dummy` to an array of Node of length 1, which numpy
-# can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
-# for a more detailed explanation.
-cdef Node dummy;
-NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the

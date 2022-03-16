@@ -172,27 +172,19 @@ cdef class ObliqueSplitter(Splitter):
 cdef class BaseDenseObliqueSplitter(ObliqueSplitter):
     
     cdef const DTYPE_t[:, :] X
-    cdef np.ndarray X_idx_sorted
-    cdef INT32_t* X_idx_sorted_ptr
-    cdef SIZE_t X_idx_sorted_stride
     cdef SIZE_t n_total_samples
-    cdef SIZE_t* sample_mask
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
                   double feature_combinations,
                   object random_state):
-        self.X_idx_sorted_ptr = NULL
-        self.X_idx_sorted_stride = 0
-        self.sample_mask = NULL
         self.max_features = max_features # number of proj_vecs
         self.feature_combinations = feature_combinations
 
     cdef int init(self,
                   object X,
                   const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight,
-                  np.ndarray X_idx_sorted=None) except -1:
+                  DOUBLE_t* sample_weight) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -250,6 +242,7 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
         # typecast the pointer to an ObliqueSplitRecord
         cdef ObliqueSplitRecord* oblique_split = <ObliqueSplitRecord*>(split)
 
+        # Draw random splits and pick the best
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
@@ -258,25 +251,23 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
         cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
+        # pointer array to store feature values to split on
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef INT32_t* X_idx_sorted = self.X_idx_sorted_ptr
-        cdef SIZE_t* sample_mask = self.sample_mask
-
         # keep track of split record for current node and the best split
         # found among the sampled projection vectors
         cdef ObliqueSplitRecord best, current
-
         cdef double current_proxy_improvement = -INFINITY
         cdef double best_proxy_improvement = -INFINITY
 
-        cdef SIZE_t f, p, i, j
+        cdef SIZE_t feat_i, p       # index over computed features and start/end
+        cdef SIZE_t idx, jdx        # index over max_feature, and 
         cdef SIZE_t partition_end
-        cdef DTYPE_t temp_d
+        cdef DTYPE_t temp_d         # to compute a projection feature value
 
         # instantiate the split records
         _init_split(&best, end)
@@ -284,67 +275,107 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
         # Sample the projection matrix
         self.sample_proj_mat(self.proj_mat_weights, self.proj_mat_indices)
 
-        # cdef DTYPE_t** X_proj = self.X_proj
+        # define vector pointers to the projection weights and indices
         cdef vector[DTYPE_t]* proj_vec_weights
         cdef vector[SIZE_t]* proj_vec_indices
 
         # For every vector in the projection matrix
-        # TODO: should be while, since projection matrix could be empty...
-        for f in range(max_features):
+        for feat_i in range(max_features):
             # Projection vector has no nonzeros
-            if self.proj_mat_weights[f].empty():
+            if self.proj_mat_weights[feat_i].empty():
                 continue
 
-            current.feature = f
-            current.proj_vec_weights = &self.proj_mat_weights[f]
-            current.proj_vec_indices = &self.proj_mat_indices[f]
+            # XXX: 'feature' is not actually used in oblique split records
+            # Just indicates which split was sampled
+            current.feature = feat_i
+            current.proj_vec_weights = &self.proj_mat_weights[feat_i]
+            current.proj_vec_indices = &self.proj_mat_indices[feat_i]
 
-            # Compute linear combination of features
+            # fill memory block with 0's for Xf from start to end with DTYPE_t
             memset(Xf + start, 0, (end - start) * sizeof(DTYPE_t))
-            for i in range(start, end):
-                for j in range(0, current.proj_vec_indices.size()):
-                    Xf[i] += self.X[samples[i], deref(current.proj_vec_indices)[j]] * deref(current.proj_vec_weights)[j]
+
+            # Compute linear combination of features and then
+            # sort samples according to the feature values.
+            for idx in range(start, end):
+                for jdx in range(0, current.proj_vec_indices.size()):
+                    Xf[idx] += self.X[samples[idx], deref(current.proj_vec_indices)[jdx]] * deref(current.proj_vec_weights)[jdx]
 
             # Sort the samples
             sort(Xf + start, samples + start, end - start)
 
             # Evaluate all splits
             self.criterion.reset()
-            for p in range(start, end-1):
+            p = start
+            while p < end:
+                while (p + 1 < end and
+                        Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                    p += 1
 
-                # invalid split
-                if (Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
-                    continue
+                p += 1
 
-                current.pos = p
+                if p < end:
+                    current.pos = p
 
-                # reject if min_samples_leaf not guaranteed
-                if ((current.pos - start) < min_samples_leaf or 
-                    (end - current.pos) < min_samples_leaf):
-                    continue
+                    # Reject if min_samples_leaf is not guaranteed
+                    if (((current.pos - start) < min_samples_leaf) or
+                            ((end - current.pos) < min_samples_leaf)):
+                        continue
+                    
+                    self.criterion.update(current.pos)
+                    # Reject if min_weight_leaf is not satisfied
+                    if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                            (self.criterion.weighted_n_right < min_weight_leaf)):
+                        continue
 
+                    current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+
+                    if current_proxy_improvement > best_proxy_improvement:
+                        best_proxy_improvement = current_proxy_improvement
+                        # sum of halves is used to avoid infinite value
+                        current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
+
+                        if ((current.threshold == Xf[p]) or
+                            (current.threshold == INFINITY) or
+                            (current.threshold == -INFINITY)):
+                            current.threshold = Xf[p - 1]
+
+                        best = current  # copy
+            # for p in range(start, end-1):
+
+            #     # invalid split
+            #     if (Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+            #         continue
+
+                # current.pos = p
+
+                # # Reject if min_samples_leaf is not guaranteed
+                # if ((current.pos - start) < min_samples_leaf or 
+                #     (end - current.pos) < min_samples_leaf):
+                #     continue
+
+                # # Evaluate split
                 # self.criterion.reset()
-                self.criterion.update(current.pos)
+                # self.criterion.update(current.pos)
 
-                # reject if min_weight_leaf not satisfied
-                if (self.criterion.weighted_n_left < min_weight_leaf or
-                    self.criterion.weighted_n_right < min_weight_leaf):
-                    continue
+                # # Reject if min_weight_leaf not satisfied
+                # if (self.criterion.weighted_n_left < min_weight_leaf or
+                #     self.criterion.weighted_n_right < min_weight_leaf):
+                #     continue
 
-                current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+                # current_proxy_improvement = self.criterion.proxy_impurity_improvement()
                 
-                if current_proxy_improvement > best_proxy_improvement:
-                    best_proxy_improvement = current_proxy_improvement
-                    # sum of halves is used to avoid infinite value
-                    current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
+                # if current_proxy_improvement > best_proxy_improvement:
+                #     best_proxy_improvement = current_proxy_improvement
+                #     # sum of halves is used to avoid infinite value
+                #     current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
 
-                    if (current.threshold == Xf[p] or
-                        current.threshold == INFINITY or
-                        current.threshold == -INFINITY):
+                #     if (current.threshold == Xf[p] or
+                #         current.threshold == INFINITY or
+                #         current.threshold == -INFINITY):
                         
-                        current.threshold = Xf[p-1]
+                #         current.threshold = Xf[p-1]
 
-                    best = current
+                #     best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:

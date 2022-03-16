@@ -43,7 +43,6 @@ ctypedef fused realloc_ptr:
     (Node*)
     (Cell*)
     (Node**)
-    (DTYPE_t**)  # oblique trees
 
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *

@@ -2015,9 +2015,8 @@ def test_oblique_forest_sparse_parity():
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)
     
-    assert rc_accuracy > ri_accuracy
-    assert ri_accuracy > 0.45
-    assert rc_accuracy > 0.5
+    assert ri_accuracy == 0.49
+    assert rc_accuracy == 0.55
     
 
 def test_oblique_forest_orthant():
@@ -2046,7 +2045,7 @@ def test_oblique_forest_orthant():
     
     assert rc_accuracy > ri_accuracy
     assert ri_accuracy == 0.86
-    assert rc_accuracy >= 0.86
+    assert rc_accuracy.round(2) == 0.87
     
 
 def test_oblique_forest_trunk():
@@ -2070,4 +2069,4 @@ def test_oblique_forest_trunk():
     
     assert rc_accuracy > ri_accuracy
     assert ri_accuracy == 0.84
-    assert rc_accuracy >= 0.88
+    assert rc_accuracy == 0.88

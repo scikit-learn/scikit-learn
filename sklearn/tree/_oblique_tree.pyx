@@ -28,6 +28,11 @@ from cython.operator cimport dereference as deref
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
 
+# Gets Node dtype exposed inside oblique_tree.
+# See "_tree.pyx" for more details.
+cdef Node dummy;
+NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+
 # =============================================================================
 # ObliqueTree
 # =============================================================================
@@ -112,6 +117,12 @@ cdef class ObliqueTree(Tree):
         self.proj_vec_weights = vector[vector[DTYPE_t]](self.capacity)
         self.proj_vec_indices = vector[vector[SIZE_t]](self.capacity)
 
+    def __reduce__(self):
+        """Reduce re-implementation, for pickling."""
+        return (ObliqueTree, (self.n_features,
+                       sizet_ptr_to_ndarray(self.n_classes, self.n_outputs),
+                       self.n_outputs), self.__getstate__())
+
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
         d = {}
@@ -121,12 +132,7 @@ cdef class ObliqueTree(Tree):
         d["nodes"] = self._get_node_ndarray()
         d["values"] = self._get_value_ndarray()
 
-        proj_vecs = np.zeros((self.node_count, self.n_features))
-        for i in range(0, self.node_count):
-            for j in range(0, self.proj_vec_weights[i].size()):
-                weight = self.proj_vec_weights[i][j]
-                feat = self.proj_vec_indices[i][j]
-                proj_vecs[i, feat] = weight
+        proj_vecs = self.get_projection_matrix()
         d['proj_vecs'] = proj_vecs
         return d
 
@@ -155,16 +161,10 @@ cdef class ObliqueTree(Tree):
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
-        nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data,
-                    self.capacity * sizeof(Node))
-        value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
-                    self.capacity * self.value_stride * sizeof(double))
 
         # now set the projection vector weights and indices
         proj_vecs = d['proj_vecs']
         self.n_features = proj_vecs.shape[1]
-        self.proj_vec_weights = vector[vector[DTYPE_t]](self.node_count)
-        self.proj_vec_indices = vector[vector[SIZE_t]](self.node_count)
         for i in range(0, self.node_count):
             for j in range(0, self.n_features):
                 weight = proj_vecs[i, j]
@@ -172,6 +172,21 @@ cdef class ObliqueTree(Tree):
                     continue
                 self.proj_vec_weights[i].push_back(weight)
                 self.proj_vec_indices[i].push_back(j)
+
+        nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data,
+                    self.capacity * sizeof(Node))
+        value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
+                    self.capacity * self.value_stride * sizeof(double))
+
+    cpdef np.ndarray get_projection_matrix(self):
+        """Get the projection matrix of shape (node_count, n_features)."""
+        proj_vecs = np.zeros((self.node_count, self.n_features))
+        for i in range(0, self.node_count):
+            for j in range(0, self.proj_vec_weights[i].size()):
+                weight = self.proj_vec_weights[i][j]
+                feat = self.proj_vec_indices[i][j]
+                proj_vecs[i, feat] = weight
+        return proj_vecs
 
     cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
         """Guts of _resize.
@@ -193,6 +208,8 @@ cdef class ObliqueTree(Tree):
         safe_realloc(&self.nodes, capacity)
         safe_realloc(&self.value, capacity * self.value_stride)
 
+        with gil:
+            print("Ran resize on obliqu etree...")
         # only thing added for oblique trees
         # TODO: this could possibly be removed if we can 
         # add projection indices and weights to Node
