@@ -23,8 +23,6 @@ from ._optics import (
 from ._bicluster import SpectralBiclustering, SpectralCoclustering
 from ._birch import Birch
 from ._hdbscan.hdbscan_ import HDBSCAN, hdbscan
-from ._hdbscan._robust_single_linkage_ import robust_single_linkage
-from ._hdbscan._validity import validity_index
 
 __all__ = [
     "AffinityPropagation",
@@ -54,6 +52,4 @@ __all__ = [
     "SpectralCoclustering",
     "HDBSCAN",
     "hdbscan",
-    "robust_single_linkage",
-    "validity_index",
 ]
