@@ -15,7 +15,6 @@ from libc.math cimport fabs
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
-from libc.math cimport round
 
 import numpy as np
 cimport numpy as np
@@ -260,10 +259,6 @@ cdef class ObliqueTree(Tree):
         proj_vec_weights = self.proj_vec_weights[node_id]
         proj_vec_indices = self.proj_vec_indices[node_id]
         for j in range(proj_vec_indices.size()):
-            # proj_feat += round(X_ndarray[proj_vec_indices[j]] * proj_vec_weights[j] * 1.0 / FEATURE_THRESHOLD)  * FEATURE_THRESHOLD
             proj_feat += X_ndarray[proj_vec_indices[j]] * proj_vec_weights[j]
-
-        # round to handle numerical precision
-        # proj_feat = round(proj_feat * 1.0 / FEATURE_THRESHOLD) * FEATURE_THRESHOLD
 
         return proj_feat
