@@ -239,7 +239,7 @@ def sparse_encode(
     verbose=0,
     positive=False,
 ):
-    """Sparse coding
+    """Sparse coding.
 
     Each row of the result is the solution to a sparse coding problem.
     The goal is to find a sparse array `code` such that::
@@ -327,14 +327,16 @@ def sparse_encode(
     Returns
     -------
     code : ndarray of shape (n_samples, n_components)
-        The sparse codes
+        The sparse codes.
 
     See Also
     --------
-    sklearn.linear_model.lars_path
-    sklearn.linear_model.orthogonal_mp
-    sklearn.linear_model.Lasso
-    SparseCoder
+    sklearn.linear_model.lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    sklearn.linear_model.orthogonal_mp : Solves Orthogonal Matching Pursuit problems.
+    sklearn.linear_model.Lasso : Train Linear Model with L1 prior as regularizer.
+    SparseCoder : Find a sparse representation of data from a fixed precomputed
+        dictionary.
     """
     if check_input:
         if algorithm == "lasso_cd":
