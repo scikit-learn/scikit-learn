@@ -2267,7 +2267,7 @@ defined as
 
 .. math::
 
-  \text{Max Error}(y, \hat{y}) = max(| y_i - \hat{y}_i |)
+  \text{Max Error}(y, \hat{y}) = \max(| y_i - \hat{y}_i |)
 
 Here is a small example of usage of the :func:`max_error` function::
 
