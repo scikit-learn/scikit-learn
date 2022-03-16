@@ -1,4 +1,3 @@
-#cython: boundscheck=False, nonecheck=False, initializedcheck=False
 # Utility routines in cython for prediction in hdbscan
 # Authors: Leland McInnes
 # License: 3-clause BSD
