@@ -10,11 +10,10 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
 # License: BSD 3 clause
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from numbers import Integral, Real
-from subprocess import call
-from tkinter import N
 import warnings
 
 import numpy as np
@@ -56,7 +55,6 @@ from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
 
-from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
