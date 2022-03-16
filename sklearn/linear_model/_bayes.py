@@ -6,6 +6,7 @@ Various bayesian regression
 # License: BSD 3 clause
 
 from math import log
+import numbers
 import numpy as np
 from scipy import linalg
 
@@ -13,6 +14,7 @@ from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
 from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
+from ..utils import check_scalar
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
 
@@ -230,12 +232,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
-        if self.n_iter < 1:
-            raise ValueError(
-                "n_iter should be greater than or equal to 1. Got {!r}.".format(
-                    self.n_iter
-                )
-            )
+        check_scalar(self.n_iter, "n_iter", numbers.Integral, min_val=1)
 
         X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
 

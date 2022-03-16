@@ -27,8 +27,12 @@ def test_n_iter():
     X = np.array([[1], [2], [6], [8], [10]])
     y = np.array([1, 2, 6, 8, 10])
     clf = BayesianRidge(n_iter=0)
-    msg = "n_iter should be greater than or equal to 1."
+    msg = "n_iter == 0, must be >= 1."
     with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+    clf = BayesianRidge(n_iter=2.5)
+    msg = "n_iter must be an instance of int, not float."
+    with pytest.raises(TypeError, match=msg):
         clf.fit(X, y)
 
 
