@@ -15,7 +15,7 @@ metadata:
   - url: defaults
     used_env_vars: []
   content_hash:
-    linux-64: 4f79d0c758d442b71a0f8318f91935bc61623ad8a8fadb04df49b349df76c5d1
+    linux-64: d91596671b52a17e757671b6ec100470a003803ffb5fa9df2cce7ba21b19e051
   platforms:
   - linux-64
   sources:
@@ -493,14 +493,14 @@ package:
     readline: '>=8.0,<9.0a0'
     zlib: '>=1.2.11,<1.3.0a0'
   hash:
-    md5: 2fed06925cc467368818d4f8e9f2a768
-    sha256: 43e4e0b8ea2618ca0e90d49d4e6144e7fb05d4e1de56870c64a88e8c87d175ae
+    md5: dfc123f873cc0acf02f74b32aeae7688
+    sha256: a89871bf65466ff50a34eccff69056ef9d90f459bd12b23a11eba29b91b95520
   manager: conda
   name: sqlite
   optional: false
   platform: linux-64
-  url: https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.37.2-hc218d9a_0.conda
-  version: 3.37.2
+  url: https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.38.0-hc218d9a_0.conda
+  version: 3.38.0
 - category: main
   dependencies:
     freetype: '>=2.10.4,<3.0a0'

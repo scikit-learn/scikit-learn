@@ -15,7 +15,7 @@ metadata:
   - url: conda-forge
     used_env_vars: []
   content_hash:
-    osx-64: b219e6e0f709b6c9dd91ad4b7d79a7bbd923fd583a69fde7d0b4e92d74e527b1
+    osx-64: bafcdf40fe6962b1f903f7cc91e2cd06d481688c80e4bf2d364a50660b97e729
   platforms:
   - osx-64
   sources:
@@ -90,14 +90,14 @@ package:
 - category: main
   dependencies: {}
   hash:
-    md5: 444dfb8ed0bf2a8864f73eb6436b29e0
-    sha256: a5d781ed2480d50c274af256d6e7ccfc9a64b65375959be946110ec7e46efd7e
+    md5: c451c3b02dea73d320d1395252fc006c
+    sha256: 27d6c8022ed151ee91097d88c74a8e6ae8822842cd15d10ef486b2a9fd8f6a1e
   manager: conda
   name: libcxx
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/libcxx-12.0.1-habf9029_1.tar.bz2
-  version: 12.0.1
+  url: https://conda.anaconda.org/conda-forge/osx-64/libcxx-13.0.1-hc203e6f_0.tar.bz2
+  version: 13.0.1
 - category: main
   dependencies: {}
   hash:
@@ -512,18 +512,18 @@ package:
 - category: main
   dependencies:
     libzlib: '>=1.2.11,<1.3.0a0'
-    ncurses: '>=6.2,<7.0.0a0'
+    ncurses: '>=6.3,<7.0a0'
     readline: '>=8.1,<9.0a0'
     zlib: '>=1.2.11,<1.3.0a0'
   hash:
-    md5: 68f13bbe00ac288ffc1c1b868bc4da23
-    sha256: 80ee9434db28668a6853950e3e7f77d72842373b13cc5a695b35c26689de3fde
+    md5: 74b34f1a97c76b71f5f2b1fecbb6bec8
+    sha256: 3622dd3df1179d7b6f468692bfae3ea862314759d037031f797432f68737741e
   manager: conda
   name: sqlite
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/sqlite-3.37.0-h23a322b_0.tar.bz2
-  version: 3.37.0
+  url: https://conda.anaconda.org/conda-forge/osx-64/sqlite-3.37.1-hb516253_0.tar.bz2
+  version: 3.37.1
 - category: main
   dependencies:
     libcxx: '>=11.1.0'
@@ -688,17 +688,17 @@ package:
     openssl: '>=1.1.1l,<1.1.2a'
     readline: '>=8.1,<9.0a0'
     sqlite: '>=3.37.0,<4.0a0'
-    tk: '>=8.6.11,<8.7.0a0'
+    tk: '>=8.6.12,<8.7.0a0'
     tzdata: ''
     xz: '>=5.2.5,<5.3.0a0'
   hash:
-    md5: 171d336b836892bbc87772975b61824a
-    sha256: 8069ce901c0ef4ae8d868d20de31170b27b992a3edeeeb117f28778237715079
+    md5: 49719836b745429d6e3751ac39d7efe6
+    sha256: cf68f8dc72f542988381e9a299b8b73276d266f98913252722232a318dd556e4
   manager: conda
   name: python
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/python-3.10.2-h1dd9edd_3_cpython.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/python-3.10.2-h1dd9edd_4_cpython.tar.bz2
   version: 3.10.2
 - category: main
   dependencies:
@@ -1121,18 +1121,18 @@ package:
   version: 0.29.28
 - category: main
   dependencies:
-    libcxx: '>=11.1.0'
+    libcxx: '>=12.0.1'
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
   hash:
-    md5: cf1f204dd0f1ee36039e5a6cd85cb9af
-    sha256: 030215d988f9251f9ff36ff4122ce9bfc7a11248b6c67f281ef523ba7bebf3bb
+    md5: 7630fc618bdc3c32caa48215a081ba1a
+    sha256: 9aea640a1e82ca16e9774ffc59228afd42465fd61882f545e8fbcbb5384cb87e
   manager: conda
   name: kiwisolver
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/kiwisolver-1.3.2-py310h2fea185_1.tar.bz2
-  version: 1.3.2
+  url: https://conda.anaconda.org/conda-forge/osx-64/kiwisolver-1.4.0-py310h6be76da_0.tar.bz2
+  version: 1.4.0
 - category: main
   dependencies:
     libblas: 3.9.0 13_osx64_mkl
@@ -1151,19 +1151,19 @@ package:
   dependencies:
     libblas: '>=3.8.0,<4.0a0'
     libcblas: '>=3.8.0,<4.0a0'
-    libcxx: '>=11.1.0'
+    libcxx: '>=12.0.1'
     liblapack: '>=3.8.0,<4.0a0'
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
   hash:
-    md5: 7b5bf6e9a297d142e4649c7de4c94f1e
-    sha256: 5c09fe6a5821ad24b6677294041bd53f233eee1ed96fbb918df4deec73f0a241
+    md5: 96ffcefa547dee00481409b2d0afd50d
+    sha256: 166b884a257285f202b24129c7b7241fc7f028526f723641ac9d1e09d7c6b456
   manager: conda
   name: numpy
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/numpy-1.22.2-py310hfbbbacf_0.tar.bz2
-  version: 1.22.2
+  url: https://conda.anaconda.org/conda-forge/osx-64/numpy-1.22.3-py310hb608527_0.tar.bz2
+  version: 1.22.3
 - category: main
   dependencies:
     pyparsing: '>=2.0.2,!=3.0.5'
@@ -1345,14 +1345,14 @@ package:
     python_abi: 3.10.* *_cp310
     unicodedata2: '>=14.0.0'
   hash:
-    md5: d14380ac852ac012d4cbe6d5143d98da
-    sha256: 3515b8b0dce2c734d5e9f7b4fa1689fa34f88d1cc104eb06d5b9671f61e466d3
+    md5: df61da3b8a7922cb48a7e4f024d38300
+    sha256: c1bbd5d949494140e117f297dbc878973c45d08eef09f2f7ed8d163078731e3c
   manager: conda
   name: fonttools
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/fonttools-4.29.1-py310he24745e_0.tar.bz2
-  version: 4.29.1
+  url: https://conda.anaconda.org/conda-forge/osx-64/fonttools-4.30.0-py310h1961e1f_0.tar.bz2
+  version: 4.30.0
 - category: main
   dependencies:
     python: '>=3.6'

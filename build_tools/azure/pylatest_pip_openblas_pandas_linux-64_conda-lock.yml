@@ -15,7 +15,7 @@ metadata:
   - url: defaults
     used_env_vars: []
   content_hash:
-    linux-64: 6a8981d727e7524a1461587a0d51aba75000e66a810d7ebf40d7eebc04c10cd5
+    linux-64: 5dc59d462d7953439da4b033dbb144e84f4b8c6f5ab63fa17195d6336914ee75
   platforms:
   - linux-64
   sources:
@@ -223,14 +223,14 @@ package:
     readline: '>=8.0,<9.0a0'
     zlib: '>=1.2.11,<1.3.0a0'
   hash:
-    md5: 2fed06925cc467368818d4f8e9f2a768
-    sha256: 43e4e0b8ea2618ca0e90d49d4e6144e7fb05d4e1de56870c64a88e8c87d175ae
+    md5: dfc123f873cc0acf02f74b32aeae7688
+    sha256: a89871bf65466ff50a34eccff69056ef9d90f459bd12b23a11eba29b91b95520
   manager: conda
   name: sqlite
   optional: false
   platform: linux-64
-  url: https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.37.2-hc218d9a_0.conda
-  version: 3.37.2
+  url: https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.38.0-hc218d9a_0.conda
+  version: 3.38.0
 - category: main
   dependencies:
     ld_impl_linux-64: ''
@@ -308,6 +308,17 @@ package:
 - category: main
   dependencies: {}
   hash:
+    sha256: 446438bdcca0e05bd45ea2de1668c1d9b032e1a9154c2c259092d77031ddd359
+  manager: pip
+  name: alabaster
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/10/ad/00b090d23a222943eb0eda509720a404f531a439e803f6538f35136cae9e/alabaster-0.7.12-py2.py3-none-any.whl
+  version: 0.7.12
+- category: main
+  dependencies: {}
+  hash:
     sha256: 2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4
   manager: pip
   name: attrs
@@ -352,6 +363,17 @@ package:
 - category: main
   dependencies: {}
   hash:
+    sha256: cf316c8370a737a022b72b56874f6602acf974a37a9fba42ec2876387549fc61
+  manager: pip
+  name: docutils
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/4c/5e/6003a0d1f37725ec2ebd4046b657abb9372202655f96e76795dca8c0063c/docutils-0.17.1-py2.py3-none-any.whl
+  version: 0.17.1
+- category: main
+  dependencies: {}
+  hash:
     sha256: a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142
   manager: pip
   name: execnet
@@ -385,6 +407,17 @@ package:
 - category: main
   dependencies: {}
   hash:
+    sha256: 1db2f82529e53c3e929e8926a1fa9235aa82d0bd0c580359c67ec31b2fddaa8c
+  manager: pip
+  name: imagesize
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/60/d6/5e803b17f4d42e085c365b44fda34deb0d8675a1a910635930b831c43f07/imagesize-1.3.0-py2.py3-none-any.whl
+  version: 1.3.0
+- category: main
+  dependencies: {}
+  hash:
     sha256: 011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3
   manager: pip
   name: iniconfig
@@ -415,6 +448,17 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/1f/99/58fe27c8e4a3de823f9fc28ab2c415347efc4139f1c85cac65a008007210/kiwisolver-1.3.2-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
   version: 1.3.2
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 56442863ed2b06d19c37f94d999035e15ee982988920e12a5b4ba29b62ad1f77
+  manager: pip
+  name: markupsafe
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/df/06/c515c5bc43b90462e753bc768e6798193c6520c9c7eb2054c7466779a9db/MarkupSafe-2.1.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  version: 2.1.1
 - category: main
   dependencies: {}
   hash:
@@ -473,6 +517,17 @@ package:
 - category: main
   dependencies: {}
   hash:
+    sha256: 44238f1b60a76d78fc8ca0528ee429702aae011c265fe6a8dd8b63049ae41c65
+  manager: pip
+  name: pygments
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/1d/17/ed4d2df187995561b28f1073df24137cb750e12f9879d291cc8ab67c65d2/Pygments-2.11.2-py3-none-any.whl
+  version: 2.11.2
+- category: main
+  dependencies: {}
+  hash:
     sha256: a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484
   manager: pip
   name: pyparsing
@@ -503,6 +558,83 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl
   version: 1.16.0
+- category: main
+  dependencies: {}
+  hash:
+    sha256: c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a
+  manager: pip
+  name: snowballstemmer
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/ed/dc/c02e01294f7265e63a7315fe086dd1df7dacb9f840a804da846b96d01b96/snowballstemmer-2.2.0-py2.py3-none-any.whl
+  version: 2.2.0
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 806111e5e962be97c29ec4c1e7fe277bfd19e9652fb1a4392105b43e01af885a
+  manager: pip
+  name: sphinxcontrib-applehelp
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/dc/47/86022665a9433d89a66f5911b558ddff69861766807ba685de2e324bd6ed/sphinxcontrib_applehelp-1.0.2-py2.py3-none-any.whl
+  version: 1.0.2
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 8165223f9a335cc1af7ffe1ed31d2871f325254c0423bc0c4c7cd1c1e4734a2e
+  manager: pip
+  name: sphinxcontrib-devhelp
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/c5/09/5de5ed43a521387f18bdf5f5af31d099605c992fd25372b2b9b825ce48ee/sphinxcontrib_devhelp-1.0.2-py2.py3-none-any.whl
+  version: 1.0.2
+- category: main
+  dependencies: {}
+  hash:
+    sha256: d412243dfb797ae3ec2b59eca0e52dac12e75a241bf0e4eb861e450d06c6ed07
+  manager: pip
+  name: sphinxcontrib-htmlhelp
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/63/40/c854ef09500e25f6432dcbad0f37df87fd7046d376272292d8654cc71c95/sphinxcontrib_htmlhelp-2.0.0-py2.py3-none-any.whl
+  version: 2.0.0
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 2ec2eaebfb78f3f2078e73666b1415417a116cc848b72e5172e596c871103178
+  manager: pip
+  name: sphinxcontrib-jsmath
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/c2/42/4c8646762ee83602e3fb3fbe774c2fac12f317deb0b5dbeeedd2d3ba4b77/sphinxcontrib_jsmath-1.0.1-py2.py3-none-any.whl
+  version: 1.0.1
+- category: main
+  dependencies: {}
+  hash:
+    sha256: bd9fc24bcb748a8d51fd4ecaade681350aa63009a347a8c14e637895444dfab6
+  manager: pip
+  name: sphinxcontrib-qthelp
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/2b/14/05f9206cf4e9cfca1afb5fd224c7cd434dcc3a433d6d9e4e0264d29c6cdb/sphinxcontrib_qthelp-1.0.3-py2.py3-none-any.whl
+  version: 1.0.3
+- category: main
+  dependencies: {}
+  hash:
+    sha256: 352a9a00ae864471d3a7ead8d7d79f5fc0b57e8b3f95e9867eb9eb28999b92fd
+  manager: pip
+  name: sphinxcontrib-serializinghtml
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/c6/77/5464ec50dd0f1c1037e3c93249b040c8fc8078fdda97530eeb02424b6eea/sphinxcontrib_serializinghtml-1.1.5-py2.py3-none-any.whl
+  version: 1.1.5
 - category: main
   dependencies: {}
   hash:
@@ -548,6 +680,29 @@ package:
   url: https://files.pythonhosted.org/packages/4e/b8/f5a25b22e803f0578e668daa33ba3701bb37858ec80e08a150bd7d2cf1b1/urllib3-1.26.8-py2.py3-none-any.whl
   version: 1.26.8
 - category: main
+  dependencies: {}
+  hash:
+    sha256: b47250dd24f92b7dd6a0a8fc5244da14608f3ca90a5efcd37a3b1642fac9a375
+  manager: pip
+  name: zipp
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/52/c5/df7953fe6065185af5956265e3b16f13c2826c2b1ba23d43154f3af453bc/zipp-3.7.0-py3-none-any.whl
+  version: 3.7.0
+- category: main
+  dependencies:
+    pytz: '>=2015.7'
+  hash:
+    sha256: ab49e12b91d937cd11f0b67cb259a57ab4ad2b59ac7a3b41d6c06c0ac5b0def9
+  manager: pip
+  name: babel
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/aa/96/4ba93c5f40459dc850d25f9ba93f869a623e77aaecc7a9344e19c01942cf/Babel-2.9.1-py2.py3-none-any.whl
+  version: 2.9.1
+- category: main
   dependencies:
     tomli: '*'
   hash:
@@ -572,6 +727,30 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/29/24/a3a7aa7f1e7f1c3a5c9fe2ff3fec8d9d17e10741eafb710f06705744b35f/imageio-2.16.1-py3-none-any.whl
   version: 2.16.1
+- category: main
+  dependencies:
+    zipp: '>=0.5'
+  hash:
+    sha256: 1208431ca90a8cca1a6b8af391bb53c1a2db74e5d1cef6ddced95d4b2062edc6
+  manager: pip
+  name: importlib-metadata
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/92/f2/c48787ca7d1e20daa185e1b6b2d4e16acd2fb5e0320bc50ffc89b91fa4d7/importlib_metadata-4.11.3-py3-none-any.whl
+  version: 4.11.3
+- category: main
+  dependencies:
+    markupsafe: '>=2.0'
+  hash:
+    sha256: 077ce6014f7b40d03b47d1f1ca4b0fc8328a692bd284016f806ed0eaca390ad8
+  manager: pip
+  name: jinja2
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/20/9a/e5d9ec41927401e41aea8af6d16e78b5e612bca4699d417f646a9610a076/Jinja2-3.0.3-py3-none-any.whl
+  version: 3.0.3
 - category: main
   dependencies:
     pyparsing: '>=2.0.2,<3.0.5 || >3.0.5'
@@ -740,6 +919,33 @@ package:
   version: 6.4.2
 - category: main
   dependencies:
+    alabaster: '>=0.7,<0.8'
+    babel: '>=1.3'
+    docutils: '>=0.14,<0.18'
+    imagesize: '*'
+    importlib-metadata: '>=4.4'
+    jinja2: '>=2.3'
+    packaging: '*'
+    pygments: '>=2.0'
+    requests: '>=2.5.0'
+    snowballstemmer: '>=1.1'
+    sphinxcontrib-applehelp: '*'
+    sphinxcontrib-devhelp: '*'
+    sphinxcontrib-htmlhelp: '>=2.0.0'
+    sphinxcontrib-jsmath: '*'
+    sphinxcontrib-qthelp: '*'
+    sphinxcontrib-serializinghtml: '>=1.1.5'
+  hash:
+    sha256: 5da895959511473857b6d0200f56865ed62c31e8f82dd338063b84ec022701fe
+  manager: pip
+  name: sphinx
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/c4/85/978c06c898331b72080242f18ab7a6021f1055285fb1db9e6554c79264cd/Sphinx-4.4.0-py3-none-any.whl
+  version: 4.4.0
+- category: main
+  dependencies:
     numpy: '*'
     scikit-learn: '!=0.22.0'
     scipy: '*'
@@ -772,6 +978,19 @@ package:
   source: null
   url: https://files.pythonhosted.org/packages/6a/52/703f568256a3e614a448503a698557d7832b7893fd63d3f7c2ebb54cd6e2/matplotlib-3.5.1-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl
   version: 3.5.1
+- category: main
+  dependencies:
+    jinja2: '>=2.10'
+    sphinx: '>=1.8'
+  hash:
+    sha256: 3ecbb9feae080031714b63128912988ebdfd4c582a085d25b8d9f7ac23c2d9ef
+  manager: pip
+  name: numpydoc
+  optional: false
+  platform: linux-64
+  source: null
+  url: https://files.pythonhosted.org/packages/61/25/499ff2b2b73c79de971f9dbafe5f188b751c834d9565b123f484b7247fba/numpydoc-1.2-py3-none-any.whl
+  version: '1.2'
 - category: main
   dependencies:
     numpy: '>=1.7.0'
