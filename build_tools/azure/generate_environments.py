@@ -165,7 +165,7 @@ dependencies:
   {% for pip_dep in build_metadata.get('pip_dependencies', []) %}
     - {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
   {% endfor %}
-  {% endif -%}"""
+  {% endif %}"""
     )
     return template.render(build_metadata=build_metadata)
 
@@ -183,9 +183,9 @@ def write_all_conda_environments(build_metadata_dict, folder_path):
 
 def get_pip_requirements_content(build_metadata):
     template = environment.from_string(
-        """{% for pip_dep in build_metadata['pip_dependencies'] -%}
+        """{% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
-{% endfor -%}"""
+{% endfor %}"""
     )
     return template.render(build_metadata=build_metadata)
 
@@ -225,12 +225,3 @@ pip_build_metadatata_dict = {
 output_path = Path("build_tools/azure/")
 write_all_conda_environments(conda_build_metadatata_dict, folder_path=output_path)
 write_all_pip_requirements(pip_build_metadatata_dict, folder_path=output_path)
-
-
-test_env = {
-    "channel": "conda-forge",
-    "conda_dependencies": ["ccache", "python", "numpy", "scipy"],
-    "pip_dependencies": ["pytest"],
-    "package_constraints": {"blas": "[build=mkl]", "scipy": "min", "pytest": "min"},
-}
-print(get_conda_environment_content(test_env))
