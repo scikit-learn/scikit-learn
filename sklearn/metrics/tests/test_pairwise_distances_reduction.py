@@ -31,11 +31,11 @@ CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
 ]
 
 
-def _get_metric_params_list(metric: str, n_features: int):
+def _get_metric_params_list(metric: str, n_features: int, seed: int = 1):
     """Return list of dummy DistanceMetric kwargs for tests."""
 
     # Distinguishing on cases not to compute unneeded datastructures.
-    rng = np.random.RandomState(1)
+    rng = np.random.RandomState(seed)
 
     if metric == "minkowski":
         minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
@@ -224,8 +224,8 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
 )
 def test_chunk_size_agnosticism(
-    PairwiseDistancesReduction,
     global_random_seed,
+    PairwiseDistancesReduction,
     n_samples,
     chunk_size,
     n_features=100,
@@ -269,8 +269,8 @@ def test_chunk_size_agnosticism(
     [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
 )
 def test_n_threads_agnosticism(
-    PairwiseDistancesReduction,
     global_random_seed,
+    PairwiseDistancesReduction,
     n_samples,
     chunk_size,
     n_features=100,
@@ -313,10 +313,10 @@ def test_n_threads_agnosticism(
     [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
 )
 def test_strategies_consistency(
+    global_random_seed,
     PairwiseDistancesReduction,
     metric,
     n_samples,
-    global_random_seed,
     n_features=10,
     dtype=np.float64,
 ):
@@ -344,7 +344,9 @@ def test_strategies_consistency(
         parameter,
         metric=metric,
         # Taking the first
-        metric_kwargs=_get_metric_params_list(metric, n_features)[0],
+        metric_kwargs=_get_metric_params_list(
+            metric, n_features, seed=global_random_seed
+        )[0],
         # To be sure to use parallelization
         chunk_size=n_samples // 4,
         strategy="parallel_on_X",
@@ -357,7 +359,9 @@ def test_strategies_consistency(
         parameter,
         metric=metric,
         # Taking the first
-        metric_kwargs=_get_metric_params_list(metric, n_features)[0],
+        metric_kwargs=_get_metric_params_list(
+            metric, n_features, seed=global_random_seed
+        )[0],
         # To be sure to use parallelization
         chunk_size=n_samples // 4,
         strategy="parallel_on_Y",
@@ -381,6 +385,7 @@ def test_strategies_consistency(
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
 def test_pairwise_distances_argkmin(
+    global_random_seed,
     n_features,
     translation,
     metric,
@@ -389,7 +394,7 @@ def test_pairwise_distances_argkmin(
     k=10,
     dtype=np.float64,
 ):
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     spread = 1000
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -440,6 +445,7 @@ def test_pairwise_distances_argkmin(
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
 def test_pairwise_distances_radius_neighbors(
+    global_random_seed,
     n_features,
     translation,
     metric,
@@ -447,13 +453,15 @@ def test_pairwise_distances_radius_neighbors(
     n_samples=100,
     dtype=np.float64,
 ):
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     spread = 1000
     radius = spread * np.log(n_features)
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    metric_kwargs = _get_metric_params_list(metric, n_features)[0]
+    metric_kwargs = _get_metric_params_list(
+        metric, n_features, seed=global_random_seed
+    )[0]
 
     # Reference for argkmin results
     if metric == "euclidean":
