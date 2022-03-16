@@ -105,7 +105,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 rng = np.random.RandomState(0)
-n_samples = 100
+n_samples = 110
 
 # sort the data to make plotting easier later
 X = np.sort(-10 * rng.rand(n_samples) + 10)
