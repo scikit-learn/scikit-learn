@@ -1120,6 +1120,12 @@ def test_scorer_select_proba_error(scorer):
         scorer(lr, X, y)
 
 
+def test_SCORERS_return_copy():
+    # test that SCORERS.__getitem__ returns a copy
+    assert SCORERS["roc_auc"] is not SCORERS["roc_auc"]
+    assert get_scorer("roc_auc") is not get_scorer("roc_auc")
+
+
 def test_scorer_no_op_multiclass_select_proba():
     # check that calling a ProbaScorer on a multiclass problem do not raise
     # even if `y_true` would be binary during the scoring.

@@ -23,6 +23,7 @@ from functools import partial
 from collections import Counter
 
 import numpy as np
+import copy
 
 from . import (
     r2_score,
@@ -747,7 +748,14 @@ normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 
-SCORERS = dict(
+class _Scorers(dict):
+    """A dictionary which returns a copy of the values."""
+
+    def __getitem__(self, item):
+        return copy.deepcopy(dict.__getitem__(self, item))
+
+
+SCORERS = _Scorers(
     explained_variance=explained_variance_scorer,
     r2=r2_scorer,
     max_error=max_error_scorer,
