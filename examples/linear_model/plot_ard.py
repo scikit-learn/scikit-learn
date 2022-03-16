@@ -104,12 +104,11 @@ rng = np.random.RandomState(0)
 n_samples = 100
 
 # sort the data to make plotting easier later
-# X should be 2D for sklearn: (n_samples, n_features)
-data = np.sort(rng.rand(n_samples, 1) * 10)
+X = np.sort(-10 * rng.rand(n_samples) + 10)
 noise = rng.normal(0, 1, n_samples) * 1.35
-target = np.sqrt(data) * np.sin(data) + noise
-full_data = pd.DataFrame({"input_feature": data, "target": target})
-
+y = np.sqrt(X) * np.sin(X) + noise
+full_data = pd.DataFrame({"input_feature": X, "target": y})
+X = X.reshape((-1, 1))
 
 # `fit_intercept=True` for `ARDRegression()` and `BayesianRidge()`,
 # then `PolynomialFeatures` should not introduce the bias feature
@@ -123,17 +122,17 @@ brr_poly = make_pipeline(
     StandardScaler(),
     BayesianRidge(),
 )
-ard_poly.fit(data, target)
-brr_poly.fit(data, target)
-y_ard, y_ard_std = ard_poly.predict(data, return_std=True)
-y_brr, y_brr_std = brr_poly.predict(data, return_std=True)
+ard_poly.fit(X, y)
+brr_poly.fit(X, y)
+y_ard, y_ard_std = ard_poly.predict(X, return_std=True)
+y_brr, y_brr_std = brr_poly.predict(X, return_std=True)
 
 ax = sns.scatterplot(
     data=full_data, x="input_feature", y="target", color="black", alpha=0.75
 )
-ax.plot(data, target - noise, color="black", label="Ground Truth")
-ax.plot(data, y_brr, color="red", label="BayesianRidge with polynomial features")
-ax.plot(data, y_ard, color="navy", label="ARD with polynomial features")
+ax.plot(X, y - noise, color="black", label="Ground Truth")
+ax.plot(X, y_brr, color="red", label="BayesianRidge with polynomial features")
+ax.plot(X, y_ard, color="navy", label="ARD with polynomial features")
 ax.fill_between(
     full_data["input_feature"],
     y_ard - y_ard_std,
