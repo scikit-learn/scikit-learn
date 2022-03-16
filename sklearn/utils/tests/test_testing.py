@@ -874,11 +874,12 @@ def test_assert_allclose_zeros_elements(global_dtype):
     # Arrays of quasi-zero elements must only be compared using
     # an absolute tolerance
     dtype_eps = np.finfo(global_dtype).eps
+    rtol = 0.0001 if global_dtype is np.float32 else 1e-07
 
     a = np.zeros(10, dtype=global_dtype) + dtype_eps
     b = np.zeros(10, dtype=global_dtype)
 
-    msg = "Not equal to tolerance rtol=1e-09, atol=0"
+    msg = f"Not equal to tolerance rtol={rtol}, atol=0"
     with pytest.raises(AssertionError, match=msg):
         assert_allclose(a, b)
 
@@ -887,17 +888,18 @@ def test_assert_allclose_zeros_elements(global_dtype):
 
 def test_assert_allclose(global_dtype):
     dtype_eps = np.finfo(global_dtype).eps
+    rtol = 0.0001 if global_dtype is np.float32 else 1e-07
 
     assert_allclose(6, 10, rtol=0.5)
     msg = "Not equal to tolerance rtol=0.5, atol=0"
     with pytest.raises(AssertionError, match=msg):
         assert_allclose(10, 6, rtol=0.5)
 
-    x = 1e-3
-    y = 1e-9
+    x = global_dtype(1e-3)
+    y = global_dtype(1e-9)
 
     assert_allclose(x, y, atol=1)
-    msg = "Not equal to tolerance rtol=1e-09, atol=0"
+    msg = f"Not equal to tolerance rtol={rtol}, atol=0"
     with pytest.raises(AssertionError, match=msg):
         assert_allclose(x, y)
 
@@ -905,7 +907,7 @@ def test_assert_allclose(global_dtype):
     b = np.array([x, y, x, x], dtype=global_dtype)
 
     assert_allclose(a, b, atol=1)
-    msg = "Not equal to tolerance rtol=1e-09, atol=0"
+    msg = f"Not equal to tolerance rtol={rtol}, atol=0"
     with pytest.raises(AssertionError, match=msg):
         assert_allclose(a, b)
 
