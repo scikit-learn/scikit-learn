@@ -663,7 +663,7 @@ Changelog
   unbounded values. :pr:`22635` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| Adds `symmetric` parameter to
-  :func:`metrics.mean_absolute_percentage_error` this enables the choise of symmetric
+  :func:`metrics.mean_absolute_percentage_error` this enables the choice of symmetric
   mean absolute error precentage. :pr:`22800` by :user:`Klas Holmgren <Klas96>`.
 
 :mod:`sklearn.model_selection`
