@@ -74,8 +74,7 @@ def fetch_california_housing(
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
@@ -90,7 +89,7 @@ def fetch_california_housing(
 
     Returns
     -------
-    dataset : :class:`~sklearn.utils.Bunch`
+    data : Class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
         data : ndarray, shape (20640, 8)
@@ -111,6 +110,10 @@ def fetch_california_housing(
             .. versionadded:: 0.23
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one sample
+        and each column representing the features. The second ndarray of
+        shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
 
