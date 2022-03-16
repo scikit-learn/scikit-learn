@@ -41,6 +41,10 @@ set_config(display="text")
 pipe
 
 # %%
+# Put back the default display
+set_config(display="diagram")
+
+# %%
 # Displaying a Pipeline Chaining Multiple Preprocessing Steps & Classifier
 ################################################################################
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with multiple
@@ -52,7 +56,6 @@ pipe
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.linear_model import LogisticRegression
-from sklearn import set_config
 
 steps = [
     ("standard_scaler", StandardScaler()),
@@ -73,7 +76,6 @@ pipe  # click on the diagram below to see the details of each step
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.decomposition import PCA
-from sklearn import set_config
 
 steps = [("reduce_dim", PCA(n_components=4)), ("classifier", SVC(kernel="linear"))]
 pipe = Pipeline(steps)
@@ -94,7 +96,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn import set_config
 
 numeric_preprocessor = Pipeline(
     steps=[
@@ -139,7 +140,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn import set_config
 
 numeric_preprocessor = Pipeline(
     steps=[
