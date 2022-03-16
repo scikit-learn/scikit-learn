@@ -9,14 +9,15 @@ This example compares three kind of linear models for regression:
  - a :ref:`automatic_relevance_determination`
  - a :ref:`bayesian_ridge_regression`
 
-The comparisons are based on the models' coefficients with respect to the true coefficients.
+The comparisons are based on the models' coefficients with respect to the true
+coefficients.
 
-Compared to the OLS (ordinary least squares) estimator, the coefficients
-using a Bayesian Ridge regression are slightly shifted toward zeros, which
-stabilises them. The ARD regression sets some of the non-informative coefficients
-exactly to zero, while shifting some them closer to zero. Some non-informative 
+Compared to the OLS (ordinary least squares) estimator, the coefficients using a
+Bayesian Ridge regression are slightly shifted toward zeros, which stabilises
+them. The ARD regression sets some of the non-informative coefficients exactly
+to zero, while shifting some them closer to zero. Some non-informative
 coefficients are still present and retain the order of magnitude of the ground
-truth weights.
+truth coefficients.
 
 The estimation of the model is done in both cases by iteratively maximizing the
 marginal log-likelihood of the observations.
@@ -61,12 +62,12 @@ df = pd.DataFrame(
         "LinearRegression": olr.coef_,
         "BayesianRidge": brr.coef_,
         "ARDRegression": ard.coef_,
-        "true coefficients": w,
+        "ground truth": w,
     }
 )
 # %%
-# Plot the true and estimated weights
-# -----------------------------------
+# Plot the true and estimated coefficients
+# ----------------------------------------
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import LogNorm
@@ -75,7 +76,7 @@ plt.figure(figsize=(10, 6))
 ax = sns.heatmap(
     df.T,
     norm=LogNorm(),
-    cbar_kws={"label": "weight value"},
+    cbar_kws={"label": "coefficients' values"},
     cmap="viridis_r",
 )
 plt.ylabel("linear model")
