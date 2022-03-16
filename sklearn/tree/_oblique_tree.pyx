@@ -208,8 +208,6 @@ cdef class ObliqueTree(Tree):
         safe_realloc(&self.nodes, capacity)
         safe_realloc(&self.value, capacity * self.value_stride)
 
-        with gil:
-            print("Ran resize on obliqu etree...")
         # only thing added for oblique trees
         # TODO: this could possibly be removed if we can 
         # add projection indices and weights to Node
