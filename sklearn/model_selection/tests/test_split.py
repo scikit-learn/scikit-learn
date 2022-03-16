@@ -1932,6 +1932,7 @@ def test_yields_constant_splits(cv, expected):
 
 @pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
 def test_splitter_get_metadata_routing(cv):
+    """Check get_metadata_routing returns the correct MetadataRouter."""
     assert hasattr(cv, "get_metadata_routing")
     if cv in GROUP_SPLITTERS:
         assert (
@@ -1944,6 +1945,7 @@ def test_splitter_get_metadata_routing(cv):
 
 @pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
 def test_splitter_set_split_request(cv):
+    """Check set_split_request is defined for group splitters and not for others."""
     if cv in GROUP_SPLITTERS:
         assert hasattr(cv, "set_split_request")
     elif cv in NO_GROUP_SPLITTERS:
