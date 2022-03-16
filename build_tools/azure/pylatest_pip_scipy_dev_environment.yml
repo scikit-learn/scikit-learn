@@ -1,18 +1,19 @@
 channels:
   - defaults
 dependencies:
+  - python
   - ccache
   - pip
   - pip:
     - numpy
-    - pandas
     - scipy
-    - joblib
-    - pillow
     - cython
+    - joblib
     - threadpoolctl
+    - pandas
     - pytest==6.2.5
     - pytest-xdist
+    - pillow
     - codecov
     - pytest-cov
     - coverage==6.2

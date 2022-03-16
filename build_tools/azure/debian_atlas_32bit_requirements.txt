@@ -1,4 +1,4 @@
 cython
-joblib==1.0.0
+joblib==1.0.0  # min
 threadpoolctl==2.2.0
-pytest==5.0.1
+pytest==5.0.1  # min

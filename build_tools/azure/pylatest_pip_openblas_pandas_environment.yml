@@ -10,13 +10,16 @@ dependencies:
     - cython
     - joblib
     - threadpoolctl
-    - pandas
     - matplotlib
-    - scikit-image
+    - pandas
     - pyamg
-    - lightgbm>=3.0.0
     - pytest==6.2.5
     - pytest-xdist
+    - pillow
     - codecov
     - pytest-cov
     - coverage==6.2
+    - sphinx
+    - numpydoc
+    - lightgbm
+    - scikit-image

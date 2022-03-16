@@ -1,18 +1,19 @@
 channels:
-  - conda-forge
+  - defaults
 dependencies:
+  - python
   - numpy
   - blas[build=mkl]
   - scipy
   - cython
   - joblib
   - threadpoolctl
-  - pandas
   - matplotlib
+  - pandas
   - pyamg
-  - pillow
   - pytest=6.2.5
   - pytest-xdist
+  - pillow
   - codecov
   - pytest-cov
   - coverage=6.2
