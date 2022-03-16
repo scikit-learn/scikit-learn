@@ -458,7 +458,7 @@ def test_importances():
         assert importances.shape[0] == 10, "Failed with {0}".format(name)
         if "Oblique" in name:
             # oblique trees can find multiple informative splits
-            assert n_important == 5, "Failed with {0}".format(name)
+            assert n_important > 3, "Failed with {0}".format(name)
         else:
             assert n_important == 3, "Failed with {0}".format(name)
 
@@ -1718,7 +1718,7 @@ def check_min_weight_leaf_split_level(name):
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
     if name == "ObliqueDecisionTreeClassifier":
-        pytest.skip(reason="Sparse data not supported yet.")
+        pytest.skip()
     _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y, sample_weight)
 
 

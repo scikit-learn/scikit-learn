@@ -19,9 +19,6 @@ from libc.string cimport memset
 from libc.stdio cimport printf
 from libcpp.vector cimport vector
 
-# TODO: allow sparse operations
-from scipy.sparse import csc_matrix
-
 from cython.operator cimport dereference as deref
 from cython.parallel import prange
 
@@ -299,7 +296,7 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
                     Xf[idx] += self.X[samples[idx], deref(current.proj_vec_indices)[jdx]] * deref(current.proj_vec_weights)[jdx]
 
             # Sort the samples
-            sort(Xf + start, samples + start, end - start)
+            simultaneous_sort(Xf + start, samples + start, end - start)
 
             # Evaluate all splits
             self.criterion.reset()

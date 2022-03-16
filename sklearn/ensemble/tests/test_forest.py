@@ -621,8 +621,8 @@ def test_unfitted_feature_importances(name):
 )
 def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accuracy):
     """Check that OOB score is close to score on a test set."""
-    if ForestClassifier == ObliqueRandomForestClassifier:
-        pytest.skip(reason="Oblique forests do not have oob implemented yet.")
+    if ForestClassifier == ObliqueRandomForestClassifier and X_type != 'array':
+        pytest.skip()
 
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -1253,7 +1253,7 @@ def check_sparse_input(name, X, X_sparse, y):
 @pytest.mark.parametrize("sparse_matrix", (csr_matrix, csc_matrix, coo_matrix))
 def test_sparse_input(name, sparse_matrix):
     if name == "ObliqueRandomForestClassifier":
-        pytest.skip(reason="Oblique trees have not implemented sparse capability yet.")
+        pytest.skip()
     X, y = datasets.make_multilabel_classification(random_state=0, n_samples=50)
 
     check_sparse_input(name, X, sparse_matrix(X), y)
@@ -1284,7 +1284,8 @@ def check_memory_layout(name, dtype):
     y = iris.target
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
-    if est.base_estimator.splitter in SPARSE_SPLITTERS:
+    if est.base_estimator.splitter in SPARSE_SPLITTERS and \
+            name != 'ObliqueRandomForestClassifier':
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
@@ -1309,8 +1310,6 @@ def check_memory_layout(name, dtype):
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize("dtype", (np.float64, np.float32))
 def test_memory_layout(name, dtype):
-    if name == "ObliqueRandomForestClassifier":
-        pytest.skip(reason="Oblique trees do not work with sparse data yet.")
     check_memory_layout(name, dtype)
 
 
