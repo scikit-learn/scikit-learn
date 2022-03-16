@@ -91,7 +91,9 @@ assert_raises_regexp = assert_raises_regex
 
 DTYPE_RELATIVES_TOLERANCES = {
     np.float32: 1e-4,
+    np.dtype("float32"): 1e-4,
     np.float64: 1e-7,
+    np.dtype("float64"): 1e-7,
 }
 
 
@@ -432,10 +434,10 @@ def assert_allclose(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = [1e-5, 1e-3, 1e-1]
     >>> y = np.arccos(np.cos(x))
     >>> assert_allclose(x, y, rtol=1e-5, atol=0)
-
     >>> a = np.full(shape=10, fill_value=1e-5, dtype=np.float32)
     >>> assert_allclose(a, 1e-5)
     """
