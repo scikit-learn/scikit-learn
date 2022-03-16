@@ -434,8 +434,10 @@ def assert_allclose(
     --------
     >>> x = [1e-5, 1e-3, 1e-1]
     >>> y = np.arccos(np.cos(x))
-    >>> np.testing.assert_allclose(x, y, rtol=1e-5, atol=0)
+    >>> assert_allclose(x, y, rtol=1e-5, atol=0)
 
+    >>> a = np.full(shape=10, fill_value=1e-5, dtype=np.float32)
+    >>> assert_allclose(a, 1e-5)
     """
     dtypes = []
 
@@ -445,15 +447,14 @@ def assert_allclose(
         elif isinstance(input, np.dtype):
             dtypes.append(input)
         elif np.isscalar(input):
-            dtypes.append(type(input))
+            dtypes.append(np.dtype(type(input)))
         else:
             raise TypeError(
-                f"Expected a np.array or a np.dtype, but got {type(input)} instead."
+                "Expected a scalar, a np.array or a np.dtype, but got"
+                f" {type(input)} instead."
             )
 
-    rtols, atols = zip(
-        *[DTYPE_TOLERANCES.get(dtype, (1e-10, 1e-10)) for dtype in dtypes]
-    )
+    rtols, atols = zip(*[DTYPE_TOLERANCES.get(dtype, (1e-9, 1e-9)) for dtype in dtypes])
 
     if rtol is None:
         rtol = max(rtols)
