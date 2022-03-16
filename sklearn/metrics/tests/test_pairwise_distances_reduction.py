@@ -217,7 +217,6 @@ def test_radius_neighborhood_factory_method_wrong_usages():
         )
 
 
-@pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
@@ -226,14 +225,14 @@ def test_radius_neighborhood_factory_method_wrong_usages():
 )
 def test_chunk_size_agnosticism(
     PairwiseDistancesReduction,
-    seed,
+    global_random_seed,
     n_samples,
     chunk_size,
     n_features=100,
     dtype=np.float64,
 ):
     # Results should not depend on the chunk size
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -263,7 +262,6 @@ def test_chunk_size_agnosticism(
     ASSERT_RESULT[PairwiseDistancesReduction](ref_dist, dist, ref_indices, indices)
 
 
-@pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
@@ -272,14 +270,14 @@ def test_chunk_size_agnosticism(
 )
 def test_n_threads_agnosticism(
     PairwiseDistancesReduction,
-    seed,
+    global_random_seed,
     n_samples,
     chunk_size,
     n_features=100,
     dtype=np.float64,
 ):
     # Results should not depend on the number of threads
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -308,7 +306,6 @@ def test_n_threads_agnosticism(
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
 @pytest.mark.parametrize(
@@ -319,12 +316,12 @@ def test_strategies_consistency(
     PairwiseDistancesReduction,
     metric,
     n_samples,
-    seed,
+    global_random_seed,
     n_features=10,
     dtype=np.float64,
 ):
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -500,18 +497,17 @@ def test_pairwise_distances_radius_neighbors(
     )
 
 
-@pytest.mark.parametrize("seed", range(10))
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
 def test_sqeuclidean_row_norms(
-    seed,
+    global_random_seed,
     n_samples,
     n_features,
     num_threads,
     dtype=np.float64,
 ):
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
 
