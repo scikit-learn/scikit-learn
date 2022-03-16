@@ -182,6 +182,11 @@ Changelog
   `__init__` and `set_params` methods.
   :pr:`22537` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
 
+- |Fix| :term:`get_feature_names_out` functionality in
+  :class:`compose.ColumnTransformer` was broken when columns were specified
+  using `slice`. This is fixed in :pr:`22775` by :user:`randomgeek78
+  <randomgeek78>`
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
