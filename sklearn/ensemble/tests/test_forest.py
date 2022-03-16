@@ -218,18 +218,18 @@ def _trunk(n, p=10, random_state=None):
     """
     rng = np.random.RandomState(seed=random_state)
 
-    mu_1 = np.array([1/i for i in range(1,p+1)])
+    mu_1 = np.array([1 / i for i in range(1, p + 1)])
     mu_0 = -1 * mu_1
     cov = np.identity(p)
 
     X = np.vstack((
-        rng.multivariate_normal(mu_0, cov, int(n/2)),
-        rng.multivariate_normal(mu_1, cov, int(n/2))
-        ))
+        rng.multivariate_normal(mu_0, cov, int(n / 2)),
+        rng.multivariate_normal(mu_1, cov, int(n / 2))
+    ))
     y = np.concatenate((
-        np.zeros(int(n/2)),
-        np.ones(int(n/2))
-        ))
+        np.zeros(int(n / 2)),
+        np.ones(int(n / 2))
+    ))
     return X, y
 
 
@@ -1222,9 +1222,9 @@ def test_min_weight_fraction_leaf(name):
     check_min_weight_fraction_leaf(name)
 
 
-def check_sparse_input(name, X, X_sparse, y):   
+def check_sparse_input(name, X, X_sparse, y):
     ForestEstimator = FOREST_ESTIMATORS[name]
-    
+
     dense = ForestEstimator(random_state=0, max_depth=2).fit(X, y)
     sparse = ForestEstimator(random_state=0, max_depth=2).fit(X_sparse, y)
 
@@ -1633,14 +1633,16 @@ def check_decision_path(name):
         np.diff(n_nodes_ptr), [e.tree_.node_count for e in est.estimators_]
     )
 
-    # Assert that leaves index are correct
-    leaves = est.apply(X)
-    for est_id in range(leaves.shape[1]):
-        leave_indicator = [
-            indicator[i, n_nodes_ptr[est_id] + j]
-            for i, j in enumerate(leaves[:, est_id])
-        ]
-        assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
+    if name != 'ObliqueRandomForestClassifier':
+        # Assert that leaves index are correct
+        leaves = est.apply(X)
+        for est_id in range(leaves.shape[1]):
+            leave_indicator = [
+                indicator[i, n_nodes_ptr[est_id] + j]
+                for i, j in enumerate(leaves[:, est_id])
+            ]
+            assert_array_almost_equal(
+                leave_indicator, np.ones(shape=n_samples))
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
@@ -2009,19 +2011,19 @@ def test_oblique_forest_sparse_parity():
     rc_clf.fit(X_train, y_train)
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
-    
+
     ri_clf = RandomForestClassifier(random_state=0)
     ri_clf.fit(X_train, y_train)
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)
-    
+
     assert ri_accuracy == 0.49
     assert rc_accuracy == 0.55
-    
+
 
 def test_oblique_forest_orthant():
     """Test oblique forests on orthant problem.
-    
+
     It is expected that axis-aligned and oblique-aligned
     forests will perform similarly.
     """
@@ -2037,16 +2039,16 @@ def test_oblique_forest_orthant():
     rc_clf.fit(X_train, y_train)
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
-    
+
     ri_clf = RandomForestClassifier(random_state=0)
     ri_clf.fit(X_train, y_train)
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)
-    
+
     assert rc_accuracy > ri_accuracy
     assert ri_accuracy == 0.86
     assert rc_accuracy.round(2) == 0.87
-    
+
 
 def test_oblique_forest_trunk():
     """Test oblique vs axis-aligned forests on Trunk."""
@@ -2061,12 +2063,12 @@ def test_oblique_forest_trunk():
     rc_clf.fit(X_train, y_train)
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
-    
+
     ri_clf = RandomForestClassifier(random_state=0)
     ri_clf.fit(X_train, y_train)
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)
-    
+
     assert rc_accuracy > ri_accuracy
     assert ri_accuracy == 0.84
     assert rc_accuracy == 0.88

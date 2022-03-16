@@ -61,7 +61,6 @@ from ..tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
     ObliqueDecisionTreeClassifier,
-    ObliqueDecisionTreeRegressor,
 )
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, compute_sample_weight, deprecated

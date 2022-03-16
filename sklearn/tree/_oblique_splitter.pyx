@@ -20,8 +20,7 @@ from libc.stdio cimport printf
 from libcpp.vector cimport vector
 
 # TODO: allow sparse operations
-# from scipy.sparse import csc_matrixfrom ._criterion cimport Criterion
-# from scipy.sparse import csc_matrix
+from scipy.sparse import csc_matrix
 
 from cython.operator cimport dereference as deref
 from cython.parallel import prange
@@ -172,7 +171,6 @@ cdef class ObliqueSplitter(Splitter):
 cdef class BaseDenseObliqueSplitter(ObliqueSplitter):
     
     cdef const DTYPE_t[:, :] X
-    cdef SIZE_t n_total_samples
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
@@ -340,42 +338,6 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
                             current.threshold = Xf[p - 1]
 
                         best = current  # copy
-            # for p in range(start, end-1):
-
-            #     # invalid split
-            #     if (Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
-            #         continue
-
-                # current.pos = p
-
-                # # Reject if min_samples_leaf is not guaranteed
-                # if ((current.pos - start) < min_samples_leaf or 
-                #     (end - current.pos) < min_samples_leaf):
-                #     continue
-
-                # # Evaluate split
-                # self.criterion.reset()
-                # self.criterion.update(current.pos)
-
-                # # Reject if min_weight_leaf not satisfied
-                # if (self.criterion.weighted_n_left < min_weight_leaf or
-                #     self.criterion.weighted_n_right < min_weight_leaf):
-                #     continue
-
-                # current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-                
-                # if current_proxy_improvement > best_proxy_improvement:
-                #     best_proxy_improvement = current_proxy_improvement
-                #     # sum of halves is used to avoid infinite value
-                #     current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
-
-                #     if (current.threshold == Xf[p] or
-                #         current.threshold == INFINITY or
-                #         current.threshold == -INFINITY):
-                        
-                #         current.threshold = Xf[p-1]
-
-                #     best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
@@ -385,7 +347,7 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
             while p < partition_end:
                 
                 # Account for projection vector
-                temp_d = 0
+                temp_d = 0.0
                 for j in range(best.proj_vec_indices.size()):
                     temp_d += self.X[samples[p], deref(best.proj_vec_indices)[j]] * deref(best.proj_vec_weights)[j]
 

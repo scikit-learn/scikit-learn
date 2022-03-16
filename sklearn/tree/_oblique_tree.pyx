@@ -15,6 +15,7 @@ from libc.math cimport fabs
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
+from libc.math cimport round
 
 import numpy as np
 cimport numpy as np
@@ -32,6 +33,9 @@ from ._utils cimport sizet_ptr_to_ndarray
 # See "_tree.pyx" for more details.
 cdef Node dummy;
 NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+
+# Mitigate precision differences between 32 bit and 64 bit
+cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 
 # =============================================================================
 # ObliqueTree
@@ -250,12 +254,16 @@ cdef class ObliqueTree(Tree):
         """
         cdef vector[DTYPE_t] proj_vec_weights
         cdef vector[SIZE_t] proj_vec_indices
-        cdef DTYPE_t proj_feat = 0
+        cdef DTYPE_t proj_feat = 0.0
 
         # compute projection of the data based on trained tree
         proj_vec_weights = self.proj_vec_weights[node_id]
         proj_vec_indices = self.proj_vec_indices[node_id]
         for j in range(proj_vec_indices.size()):
+            # proj_feat += round(X_ndarray[proj_vec_indices[j]] * proj_vec_weights[j] * 1.0 / FEATURE_THRESHOLD)  * FEATURE_THRESHOLD
             proj_feat += X_ndarray[proj_vec_indices[j]] * proj_vec_weights[j]
+
+        # round to handle numerical precision
+        # proj_feat = round(proj_feat * 1.0 / FEATURE_THRESHOLD) * FEATURE_THRESHOLD
 
         return proj_feat

@@ -4,7 +4,6 @@ Testing for the tree module (sklearn.tree).
 import copy
 import pickle
 from itertools import product
-from re import I
 import struct
 import io
 import copyreg
@@ -48,7 +47,6 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 from sklearn.tree import ObliqueDecisionTreeClassifier
-from sklearn.tree import ObliqueDecisionTreeRegressor
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
@@ -760,7 +758,6 @@ def test_min_samples_leaf():
         out = est.tree_.apply(X)
         node_counts = np.bincount(out)
 
-        print(name, max_leaf_nodes)
         # drop inner nodes
         leaf_count = node_counts[node_counts != 0]
         assert np.min(leaf_count) > 4, "Failed with {0}".format(name)
@@ -1021,7 +1018,7 @@ def test_min_impurity_decrease():
             est2_proj_mat = est2.tree_.get_projection_matrix()
             assert_array_equal(est_proj_mat, est2_proj_mat)
 
-        # TODO: this works when `max_depth=5`, but not 6? 
+        # TODO: this works when `max_depth=5`, but not 6?
         # Must be some machine rounding error occurring
         # probably needs ``_compute_feature`` to do some rounding?
         score2 = est2.score(X, y)
@@ -1135,17 +1132,10 @@ def test_memory_layout():
         ALL_TREES.items(), [np.float64, np.float32]
     ):
         est = TreeEstimator(random_state=0)
-        print(name, dtype)
         # Nothing
         X = np.asarray(iris.data, dtype=dtype)
         y = iris.target
-        y_pred = est.fit(X, y).predict(X)
-        diff_idx = np.argwhere(y - y_pred != 0)
-        print(y_pred.shape, y.shape)
-        print(y - y_pred)
-        print(y[diff_idx], y_pred[diff_idx])
-        print(X[diff_idx, :])
-        assert_array_equal(y_pred, y)
+        assert_array_equal(est.fit(X, y).predict(X), y)
 
         # C-order
         X = np.asarray(iris.data, order="C", dtype=dtype)
@@ -1168,7 +1158,7 @@ def test_memory_layout():
         assert_array_equal(est.fit(X, y).predict(X), y)
 
         if name == 'ObliqueDecisionTreeClassifier':
-            pytest.skip(reason='Cant operate on sparse data.')
+            continue
 
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
@@ -2524,5 +2514,7 @@ def test_oblique_tree_sampling():
                                    scoring="accuracy", cv=3, error_score="raise")
     rc_cv_scores = cross_val_score(tree_rc, X, y,
                                    scoring="accuracy", cv=3, error_score="raise")
+    print(tree_ri.max_features)
+    print(tree_rc.max_features)
     assert rc_cv_scores.mean() > ri_cv_scores.mean()
     assert rc_cv_scores.std() < ri_cv_scores.std()
