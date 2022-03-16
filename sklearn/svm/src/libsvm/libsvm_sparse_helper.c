@@ -3,6 +3,12 @@
 #include "svm.h"
 #include "_svm_cython_blas_helpers.h"
 
+
+#ifndef MAX
+    #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+
+
 /*
  * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
@@ -121,6 +127,9 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
         goto sv_coef_error;
     if ((model->rho = malloc( m * sizeof(double))) == NULL)
         goto rho_error;
+
+    // This is only allocated in dynamic memory while training.
+    model->n_iter = NULL;
 
     /* in the case of precomputed kernels we do not use
        dense_to_precomputed because we don't want the leading 0. As
@@ -349,6 +358,15 @@ void copy_sv_coef(char *data, struct svm_csr_model *model)
 }
 
 /*
+ * Get the number of iterations run in optimization
+ */
+void copy_n_iter(char *data, struct svm_csr_model *model)
+{
+    const int n_models = MAX(1, model->nr_class * (model->nr_class-1) / 2);
+    memcpy(data, model->n_iter, n_models * sizeof(int));
+}
+
+/*
  * Get the number of support vectors in a model.
  */
 npy_intp get_l(struct svm_csr_model *model)
@@ -402,6 +420,7 @@ int free_problem(struct svm_csr_problem *problem)
 int free_model(struct svm_csr_model *model)
 {
     /* like svm_free_and_destroy_model, but does not free sv_coef[i] */
+    /* We don't free n_iter, since we did not create them in set_model. */
     if (model == NULL) return -1;
     free(model->SV);
     free(model->sv_coef);

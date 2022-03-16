@@ -907,6 +907,15 @@ cdef class MSE(RegressionCriterion):
 
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
+
+        The MSE proxy is derived from
+
+            sum_{i left}(y_i - y_pred_L)^2 + sum_{i right}(y_i - y_pred_R)^2
+            = sum(y_i^2) - n_L * mean_{i left}(y_i)^2 - n_R * mean_{i right}(y_i)^2
+
+        Neglecting constant terms, this gives:
+
+            - 1/n_L * sum_{i left}(y_i)^2 - 1/n_R * sum_{i right}(y_i)^2
         """
         cdef double* sum_left = self.sum_left
         cdef double* sum_right = self.sum_right
@@ -1337,7 +1346,7 @@ cdef class Poisson(RegressionCriterion):
 
     Note that the deviance is >= 0, and since we have `y_pred = mean(y_true)`
     at the leaves, one always has `sum(y_pred - y_true) = 0`. It remains the
-    implemented impurity:
+    implemented impurity (factor 2 is skipped):
         1/n * sum(y_true * log(y_true/y_pred)
     """
     # FIXME in 1.0:
@@ -1372,8 +1381,17 @@ cdef class Poisson(RegressionCriterion):
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
 
-        Poisson proxy is:
-            - 1/n * sum(y_i * log(y_pred)) = -mean(y_i) * log(mean(y_i))
+        The Poisson proxy is derived from:
+
+              sum_{i left }(y_i * log(y_i / y_pred_L))
+            + sum_{i right}(y_i * log(y_i / y_pred_R))
+            = sum(y_i * log(y_i) - n_L * mean_{i left}(y_i) * log(mean_{i left}(y_i))
+                                 - n_R * mean_{i right}(y_i) * log(mean_{i right}(y_i))
+
+        Neglecting constant terms, this gives
+
+            - sum{i left }(y_i) * log(mean{i left}(y_i))
+            - sum{i right}(y_i) * log(mean{i right}(y_i))
         """
         cdef SIZE_t k
         cdef double proxy_impurity_left = 0.0
@@ -1393,8 +1411,8 @@ cdef class Poisson(RegressionCriterion):
             else:
                 y_mean_left = self.sum_left[k] / self.weighted_n_left
                 y_mean_right = self.sum_right[k] / self.weighted_n_right
-                proxy_impurity_left -= y_mean_left * log(y_mean_left)
-                proxy_impurity_right -= y_mean_right * log(y_mean_right)
+                proxy_impurity_left -= self.sum_left[k] * log(y_mean_left)
+                proxy_impurity_right -= self.sum_right[k] * log(y_mean_right)
 
         return - proxy_impurity_left - proxy_impurity_right
 

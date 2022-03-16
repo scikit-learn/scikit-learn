@@ -203,6 +203,16 @@ def test_kernel_pca_n_components():
             assert shape == (2, c)
 
 
+@pytest.mark.parametrize("n_components", [-1, 0])
+def test_kernal_pca_too_few_components(n_components):
+    rng = np.random.RandomState(0)
+    X_fit = rng.random_sample((5, 4))
+    kpca = KernelPCA(n_components=n_components)
+    msg = "n_components.* must be >= 1"
+    with pytest.raises(ValueError, match=msg):
+        kpca.fit(X_fit)
+
+
 def test_remove_zero_eig():
     """Check that the ``remove_zero_eig`` parameter works correctly.
 
@@ -533,18 +543,6 @@ def test_32_64_decomposition_shape():
     # Compare the shapes (corresponds to the number of non-zero eigenvalues)
     kpca = KernelPCA()
     assert kpca.fit_transform(X).shape == kpca.fit_transform(X.astype(np.float32)).shape
-
-
-# TODO: Remove in 1.1
-def test_kernel_pcc_pairwise_is_deprecated():
-    """Check that `_pairwise` is correctly marked with deprecation warning
-
-    Tests that a `FutureWarning` is issued when `_pairwise` is accessed.
-    """
-    kp = KernelPCA(kernel="precomputed")
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        kp._pairwise
 
 
 # TODO: Remove in 1.2

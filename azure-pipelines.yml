@@ -45,7 +45,7 @@ jobs:
         versionSpec: '3.9'
     - bash: |
         # Include pytest compatibility with mypy
-        pip install pytest flake8 mypy==0.782 black==21.6b0
+        pip install pytest flake8 mypy==0.782 black==22.1.0
       displayName: Install linters
     - bash: |
         black --check --diff .
@@ -147,6 +147,7 @@ jobs:
         BLAS: 'mkl'
         COVERAGE: 'true'
         SHOW_SHORT_SUMMARY: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
 # Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
 - template: build_tools/azure/posix.yml
@@ -161,13 +162,14 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py37_conda_forge_openblas_ubuntu_1804:
+      py38_conda_forge_openblas_ubuntu_1804:
         DISTRIB: 'conda'
         CONDA_CHANNEL: 'conda-forge'
-        PYTHON_VERSION: '3.7'
+        PYTHON_VERSION: '3.8'
         BLAS: 'openblas'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
 - template: build_tools/azure/posix.yml
   parameters:
@@ -190,26 +192,29 @@ jobs:
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
         COVERAGE: 'false'
-      # Linux + Python 3.7 build with OpenBLAS and without SITE_JOBLIB
-      py37_conda_defaults_openblas:
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '1'  # non-default seed
+      # Linux + Python 3.8 build with OpenBLAS
+      py38_conda_defaults_openblas:
         DISTRIB: 'conda'
         CONDA_CHANNEL: 'defaults'  # Anaconda main channel
-        PYTHON_VERSION: '3.7'
+        PYTHON_VERSION: '3.8'
         BLAS: 'openblas'
         NUMPY_VERSION: 'min'
         SCIPY_VERSION: 'min'
         MATPLOTLIB_VERSION: 'min'
         THREADPOOLCTL_VERSION: '2.2.0'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
-      # Linux environment to test the latest available dependencies and MKL.
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
+      # Linux environment to test the latest available dependencies.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         PYTHON_VERSION: '3.9'
-        PANDAS_VERSION: 'none'
+        PYTEST_VERSION: '6.2.5'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
 
 - template: build_tools/azure/posix-docker.yml
   parameters:
@@ -225,17 +230,18 @@ jobs:
     matrix:
       debian_atlas_32bit:
         DISTRIB: 'debian-32'
-        DOCKER_CONTAINER: 'i386/debian:10.9'
+        DOCKER_CONTAINER: 'i386/debian:11.2'
         JOBLIB_VERSION: 'min'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
         PYTEST_VERSION: 'min'
         THREADPOOLCTL_VERSION: '2.2.0'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
 
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: macOS-10.14
+    vmImage: macOS-10.15
     dependsOn: [linting, git_commit]
     condition: |
       and(
@@ -249,12 +255,14 @@ jobs:
         BLAS: 'mkl'
         CONDA_CHANNEL: 'conda-forge'
         CPU_COUNT: '3'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         CPU_COUNT: '3'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
 
 - template: build_tools/azure/windows.yml
   parameters:
@@ -268,14 +276,20 @@ jobs:
         ne(variables['Build.Reason'], 'Schedule')
       )
     matrix:
-      py37_conda_forge_mkl:
+      py38_conda_forge_mkl:
         DISTRIB: 'conda'
         CONDA_CHANNEL: 'conda-forge'
-        PYTHON_VERSION: '3.7'
+        PYTHON_VERSION: '3.8'
         CHECK_WARNINGS: 'true'
         PYTHON_ARCH: '64'
-        PYTEST_VERSION: '*'
+        # Unpin when pytest stalling issue is fixed
+        PYTEST_VERSION: '6.2.5'
         COVERAGE: 'true'
-      py37_pip_openblas_32bit:
-        PYTHON_VERSION: '3.7'
+        # Temporary fix for setuptools to use disutils from standard lib
+        # https://github.com/numpy/numpy/issues/17216
+        SETUPTOOLS_USE_DISTUTILS: 'stdlib'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
+      py38_pip_openblas_32bit:
+        PYTHON_VERSION: '3.8'
         PYTHON_ARCH: '32'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '8'  # non-default seed

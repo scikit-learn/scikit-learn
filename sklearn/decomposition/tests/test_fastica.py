@@ -3,6 +3,7 @@ Test the fastica algorithm.
 """
 import itertools
 import pytest
+import warnings
 
 import numpy as np
 from scipy import stats
@@ -39,7 +40,7 @@ def test_gs():
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
-    assert (w ** 2).sum() < 1.0e-10
+    assert (w**2).sum() < 1.0e-10
     w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
@@ -76,7 +77,7 @@ def test_fastica_simple(add_noise, seed):
 
     # function as fun arg
     def g_test(x):
-        return x ** 3, (3 * x ** 2).mean(axis=-1)
+        return x**3, (3 * x**2).mean(axis=-1)
 
     algos = ["parallel", "deflation"]
     nls = ["logcosh", "exp", "cube", g_test]
@@ -354,9 +355,9 @@ def test_fastica_whiten_backwards_compatibility():
     av_ica = FastICA(
         n_components=n_components, whiten="arbitrary-variance", random_state=0
     )
-    with pytest.warns(None) as warn_record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
         Xt_av = av_ica.fit_transform(X)
-        assert len(warn_record) == 0
 
     # The whitening strategy must be "arbitrary-variance" in all the cases.
     assert default_ica._whiten == "arbitrary-variance"

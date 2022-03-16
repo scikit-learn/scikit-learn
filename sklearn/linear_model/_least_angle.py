@@ -17,9 +17,8 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel
 
-from ._base import LinearModel
-from ._base import _deprecate_normalize
-from ._base import LinearRegression
+from ._base import LinearModel, LinearRegression
+from ._base import _deprecate_normalize, _preprocess_data
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -49,7 +48,7 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
+    """Compute Least Angle Regression or Lasso path using LARS algorithm [1].
 
     The optimization objective for the case method='lasso' is::
 
@@ -135,7 +134,7 @@ def lars_path(
         Indices of active variables at the end of the path.
 
     coefs : array-like of shape (n_features, n_alphas + 1)
-        Coefficients along the path
+        Coefficients along the path.
 
     n_iter : int
         Number of iterations run. Returned only if return_n_iter is set
@@ -143,14 +142,13 @@ def lars_path(
 
     See Also
     --------
-    lars_path_gram
-    lasso_path
-    lasso_path_gram
-    LassoLars
-    Lars
-    LassoLarsCV
-    LarsCV
-    sklearn.decomposition.sparse_encode
+    lars_path_gram : Compute LARS path in the sufficient stats mode.
+    lasso_path : Compute Lasso path with coordinate descent.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     References
     ----------
@@ -162,7 +160,6 @@ def lars_path(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
-
     """
     if X is None and Gram is not None:
         raise ValueError(
@@ -707,7 +704,7 @@ def _lars_path_solver(
                 i = 0
                 L_ = L[:n_active, :n_active].copy()
                 while not np.isfinite(AA):
-                    L_.flat[:: n_active + 1] += (2 ** i) * eps
+                    L_.flat[:: n_active + 1] += (2**i) * eps
                     least_squares, _ = solve_cholesky(
                         L_, sign_active[:n_active], lower=True
                     )
@@ -1012,7 +1009,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, normalize, self.copy_X
         )
 
@@ -1450,7 +1447,7 @@ def _lars_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -1602,6 +1599,11 @@ class LarsCV(Lars):
         or AIC for model selection.
     sklearn.decomposition.sparse_encode : Sparse coding.
 
+    Notes
+    -----
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
     Examples
     --------
     >>> from sklearn.linear_model import LarsCV
@@ -1738,7 +1740,7 @@ class LarsCV(Lars):
         self.cv_alphas_ = all_alphas
         self.mse_path_ = mse_path
 
-        # Now compute the full model
+        # Now compute the full model using best_alpha
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
         self._fit(
@@ -1900,14 +1902,19 @@ class LassoLarsCV(LarsCV):
 
     Notes
     -----
-    The object solves the same problem as the LassoCV object. However,
-    unlike the LassoCV, it find the relevant alphas values by itself.
-    In general, because of this property, it will be more stable.
+    The object solves the same problem as the
+    :class:`~sklearn.linear_model.LassoCV` object. However, unlike the
+    :class:`~sklearn.linear_model.LassoCV`, it find the relevant alphas values
+    by itself. In general, because of this property, it will be more stable.
     However, it is more fragile to heavily multicollinear datasets.
 
-    It is more efficient than the LassoCV if only a small number of
-    features are selected compared to the total number, for instance if
-    there are very few samples compared to the number of features.
+    It is more efficient than the :class:`~sklearn.linear_model.LassoCV` if
+    only a small number of features are selected compared to the total number,
+    for instance if there are very few samples compared to the number of
+    features.
+
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------
@@ -2179,7 +2186,7 @@ class LassoLarsIC(LassoLars):
             copy_X = self.copy_X
         X, y = self._validate_data(X, y, y_numeric=True)
 
-        X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
+        X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, self.fit_intercept, _normalize, copy_X
         )
 
@@ -2212,7 +2219,7 @@ class LassoLarsIC(LassoLars):
             )
 
         residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
-        residuals_sum_squares = np.sum(residuals ** 2, axis=0)
+        residuals_sum_squares = np.sum(residuals**2, axis=0)
         degrees_of_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps

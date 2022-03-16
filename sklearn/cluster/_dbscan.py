@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """
@@ -458,3 +457,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}
