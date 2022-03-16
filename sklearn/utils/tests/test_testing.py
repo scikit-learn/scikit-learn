@@ -28,6 +28,7 @@ from sklearn.utils._testing import (
     _delete_folder,
     _convert_container,
     raises,
+    assert_allclose,
 )
 
 from sklearn.tree import DecisionTreeClassifier
@@ -854,3 +855,61 @@ def test_raises():
     with pytest.raises(AssertionError):
         with raises((TypeError, ValueError)):
             pass
+
+
+@pytest.mark.parametrize(
+    "params, message",
+    [
+        ({"actual": np.zeros(10), "desired": None}, "got <class 'NoneType'> instead."),
+        ({"actual": np.zeros(10), "desired": "astring"}, "got <class 'str'> instead."),
+        ({"actual": np.zeros(10), "desired": float}, "got <class 'type'> instead."),
+    ],
+)
+def test_assert_allclose_bad_params(params, message):
+    with pytest.raises(TypeError, match=message):
+        assert_allclose(**params)
+
+
+def test_assert_allclose_zeros_elements(global_dtype):
+    # Arrays of quasi-zero elements must only be compared using
+    # an absolute tolerance
+    dtype_eps = np.finfo(global_dtype).eps
+
+    a = np.zeros(10, dtype=global_dtype) + dtype_eps
+    b = np.zeros(10, dtype=global_dtype)
+
+    msg = "Not equal to tolerance rtol=1e-09, atol=0"
+    with pytest.raises(AssertionError, match=msg):
+        assert_allclose(a, b)
+
+    assert_allclose(a, b, atol=dtype_eps)
+
+
+def test_assert_allclose(global_dtype):
+    dtype_eps = np.finfo(global_dtype).eps
+
+    assert_allclose(6, 10, rtol=0.5)
+    msg = "Not equal to tolerance rtol=0.5, atol=0"
+    with pytest.raises(AssertionError, match=msg):
+        assert_allclose(10, 6, rtol=0.5)
+
+    x = 1e-3
+    y = 1e-9
+
+    assert_allclose(x, y, atol=1)
+    msg = "Not equal to tolerance rtol=1e-09, atol=0"
+    with pytest.raises(AssertionError, match=msg):
+        assert_allclose(x, y)
+
+    a = np.array([x, y, x, y], dtype=global_dtype)
+    b = np.array([x, y, x, x], dtype=global_dtype)
+
+    assert_allclose(a, b, atol=1)
+    msg = "Not equal to tolerance rtol=1e-09, atol=0"
+    with pytest.raises(AssertionError, match=msg):
+        assert_allclose(a, b)
+
+    # Make a and b equal up to a `y * dtype_eps` absolute difference
+    b = a.copy()
+    b[-1] += dtype_eps
+    assert_allclose(a, b, atol=dtype_eps)

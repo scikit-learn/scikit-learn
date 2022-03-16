@@ -17,6 +17,7 @@ import warnings
 import sys
 import functools
 import tempfile
+from numbers import Number
 from subprocess import check_output, STDOUT, CalledProcessError
 from subprocess import TimeoutExpired
 import re
@@ -88,10 +89,9 @@ assert_raises_regex = _dummy.assertRaisesRegex
 assert_raises_regexp = assert_raises_regex
 
 
-DTYPE_TOLERANCES = {
-    #            rtol, atol
-    np.float32: (1e-6, 1e-5),
-    np.float64: (1e-7, 1e-7),
+DTYPE_RELATIVES_TOLERANCES = {
+    np.float32: 1e-4,
+    np.float64: 1e-7,
 }
 
 
@@ -396,7 +396,7 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
 
 
 def assert_allclose(
-    actual, desired, rtol=None, atol=None, equal_nan=True, err_msg="", verbose=True
+    actual, desired, rtol=None, atol=0.0, equal_nan=True, err_msg="", verbose=True
 ):
     """
     Adaptation of numpy.testing.assert_allclose to have tolerances
@@ -411,7 +411,7 @@ def assert_allclose(
     rtol : float, optional, default=None
         Relative tolerance.
         If None, it is set based on the provided arrays' dtypes.
-    atol : float, optional, default=None
+    atol : float, optional, default=0.
         Absolute tolerance.
         If None, it is set based on the provided arrays' dtypes.
     equal_nan : bool, optional, default=True
@@ -446,7 +446,7 @@ def assert_allclose(
             dtypes.append(np.asarray(input).dtype)
         elif isinstance(input, np.dtype):
             dtypes.append(input)
-        elif np.isscalar(input):
+        elif isinstance(input, Number):
             dtypes.append(np.dtype(type(input)))
         else:
             raise TypeError(
@@ -454,13 +454,9 @@ def assert_allclose(
                 f" {type(input)} instead."
             )
 
-    rtols, atols = zip(*[DTYPE_TOLERANCES.get(dtype, (1e-9, 1e-9)) for dtype in dtypes])
-
     if rtol is None:
+        rtols = [DTYPE_RELATIVES_TOLERANCES.get(dtype, 1e-9) for dtype in dtypes]
         rtol = max(rtols)
-
-    if atol is None:
-        atol = max(atols)
 
     np_assert_allclose(actual, desired, rtol, atol, equal_nan, err_msg, verbose)
 
