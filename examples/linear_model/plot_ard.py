@@ -5,7 +5,7 @@ Comparison of Linear Models for Regression
 
 This example compares three kind of linear models for regression:
 
- - a :ref:`ordinary-least-squares`
+ - a :ref:`ordinary_least_squares`
  - a :ref:`automatic_relevance_determination`
  - a :ref:`bayesian_ridge_regression`
 
