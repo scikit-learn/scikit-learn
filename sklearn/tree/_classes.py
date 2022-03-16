@@ -86,11 +86,7 @@ SPARSE_SPLITTERS = {
 
 OBLIQUE_DENSE_SPLITTERS = {
     "best": _oblique_splitter.BestObliqueSplitter,
-}
-
-# XXX: To add with sparse splitter
-OBLIQUE_SPARSE_SPLITTERS = {
-    "best": _oblique_splitter.ObliqueSplitter,
+    "random": _oblique_splitter.RandomObliqueSplitter,
 }
 
 
@@ -2012,6 +2008,10 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.22
 
+    feature_combinations : float, default=1.5
+        The number of features to combine on average at each split
+        of the decision trees.
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -2037,8 +2037,16 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
         or a list containing the number of classes for each
         output (for multi-output problems).
 
-    n_features_ : int
-        The number of features when ``fit`` is performed.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -2050,10 +2058,18 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
 
     See Also
     --------
-    ObliqueDecisionTreeRegressor : A decision tree regressor.
+    DecisionTreeClassifier : An axis-aligned decision tree classifier.
 
     Notes
     -----
+    Compared to ``DecisionTreeClassifier``, oblique trees can sample
+    more features then ``n_features``, where ``n_features`` is the number
+    of columns in ``X``. This is controlled via the ``max_features``
+    parameter. In fact, sampling more times results in better
+    trees with the caveat that there is an increased computation. It is
+    always recommended to sample more if one is willing to spend the
+    computational resources.
+
     The default values for the parameters controlling the size of the trees
     (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
@@ -2098,7 +2114,6 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
         *,
         criterion="gini",
         splitter="best",
-        feature_combinations=1.5,
         max_depth=None,
         min_samples_split=2,
         min_samples_leaf=1,
@@ -2109,6 +2124,7 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
         min_impurity_decrease=0.0,
         class_weight=None,
         ccp_alpha=0.0,
+        feature_combinations=1.5,
     ):
         super().__init__(
             criterion=criterion,
@@ -2131,13 +2147,17 @@ class ObliqueDecisionTreeClassifier(DecisionTreeClassifier):
         """Set tree function."""
         return ObliqueTree
 
-    def _set_splitter(self, issparse, criterion, min_samples_leaf,
-                      min_weight_leaf, random_state):
+    def _set_splitter(
+        self, issparse, criterion, min_samples_leaf, min_weight_leaf, random_state
+    ):
         """Set splitting function."""
         splitter = self.splitter
 
         if issparse:
-            OBLIQUE_SPLITTERS = OBLIQUE_SPARSE_SPLITTERS
+            raise ValueError(
+                "Sparse input is not supported for oblique trees. "
+                "Please convert your data to a dense array."
+            )
         else:
             OBLIQUE_SPLITTERS = OBLIQUE_DENSE_SPLITTERS
 

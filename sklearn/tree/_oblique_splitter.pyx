@@ -377,3 +377,175 @@ cdef class BestObliqueSplitter(BaseDenseObliqueSplitter):
 
         # n_constant_features[0] = n_total_constants
         return 0
+
+cdef class RandomObliqueSplitter(BaseDenseObliqueSplitter):
+    """Splitter for finding the best random split."""
+    def __reduce__(self):
+        return (RandomObliqueSplitter, (self.criterion,
+                                 self.max_features,
+                                 self.min_samples_leaf,
+                                 self.min_weight_leaf,
+                                 self.feature_combinations,
+                                 self.random_state), self.__getstate__())
+
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best random split on node samples[start:end]
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+        # typecast the pointer to an ObliqueSplitRecord
+        cdef ObliqueSplitRecord* oblique_split = <ObliqueSplitRecord*>(split)
+
+        # Draw random splits and pick the best
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t* constant_features = self.constant_features
+        cdef SIZE_t n_features = self.n_features
+
+        # pointer array to store feature values to split on
+        cdef DTYPE_t* Xf = self.feature_values
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_leaf = self.min_weight_leaf
+        cdef UINT32_t* random_state = &self.rand_r_state
+
+        # keep track of split record for current node and the best split
+        # found among the sampled projection vectors
+        cdef ObliqueSplitRecord best, current
+        cdef double current_proxy_improvement = -INFINITY
+        cdef double best_proxy_improvement = -INFINITY
+
+        cdef SIZE_t feat_i, p       # index over computed features and start/end
+        cdef SIZE_t idx, jdx        # index over max_feature, and 
+        cdef SIZE_t partition_end
+        cdef DTYPE_t temp_d         # to compute a projection feature value
+        cdef DTYPE_t min_feature_value
+        cdef DTYPE_t max_feature_value
+        cdef DTYPE_t current_feature_value
+
+        # instantiate the split records
+        _init_split(&best, end)
+
+        # Sample the projection matrix
+        self.sample_proj_mat(self.proj_mat_weights, self.proj_mat_indices)
+
+        # define vector pointers to the projection weights and indices
+        cdef vector[DTYPE_t]* proj_vec_weights
+        cdef vector[SIZE_t]* proj_vec_indices
+
+        # For every vector in the projection matrix
+        for feat_i in range(max_features):
+            # Projection vector has no nonzeros
+            if self.proj_mat_weights[feat_i].empty():
+                continue
+
+            # XXX: 'feature' is not actually used in oblique split records
+            # Just indicates which split was sampled
+            current.feature = feat_i
+            current.proj_vec_weights = &self.proj_mat_weights[feat_i]
+            current.proj_vec_indices = &self.proj_mat_indices[feat_i]
+
+            # fill memory block with 0's for Xf from start to end with DTYPE_t
+            memset(Xf + start, 0, (end - start) * sizeof(DTYPE_t))
+
+            # Find min and max
+            # First, compute the projection for the first sample
+            for jdx in range(0, current.proj_vec_indices.size()):
+                Xf[start] += self.X[samples[start], deref(current.proj_vec_indices)[jdx]] * deref(current.proj_vec_weights)[jdx]
+            min_feature_value = Xf[start]
+            max_feature_value = min_feature_value
+
+            # Second, compute the projection for the rest of the samples
+            # and then keep track of the minimum and maximum values
+            for p in range(start + 1, end):
+                for jdx in range(0, current.proj_vec_indices.size()):
+                    Xf[p] += self.X[samples[p], deref(current.proj_vec_indices)[jdx]] * deref(current.proj_vec_weights)[jdx]
+
+                current_feature_value = Xf[p]
+                Xf[p] = current_feature_value
+
+                if current_feature_value < min_feature_value:
+                    min_feature_value = current_feature_value
+                elif current_feature_value > max_feature_value:
+                    max_feature_value = current_feature_value
+
+            # Draw a random threshold
+            current.threshold = rand_uniform(min_feature_value,
+                                             max_feature_value,
+                                             random_state)
+
+            if current.threshold == max_feature_value:
+                current.threshold = min_feature_value
+
+            # Partition
+            p, partition_end = start, end
+            while p < partition_end:
+                if Xf[p] <= current.threshold:
+                    p += 1
+                else:
+                    partition_end -= 1
+
+                    Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+            current.pos = partition_end
+
+            # Reject if min_samples_leaf is not guaranteed
+            if (((current.pos - start) < min_samples_leaf) or
+                    ((end - current.pos) < min_samples_leaf)):
+                continue
+            # Evaluate split
+            self.criterion.reset()
+            self.criterion.update(current.pos)
+
+            # Reject if min_weight_leaf is not satisfied
+            if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                    (self.criterion.weighted_n_right < min_weight_leaf)):
+                continue
+
+            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+
+            if current_proxy_improvement > best_proxy_improvement:
+                best_proxy_improvement = current_proxy_improvement
+                best = current  # copy
+
+        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
+        if best.pos < end:
+            if current.feature != best.feature:
+                p, partition_end = start, end
+
+                while p < partition_end:
+                    # Account for projection vector
+                    temp_d = 0.0
+                    for j in range(best.proj_vec_indices.size()):
+                        temp_d += self.X[samples[p], deref(best.proj_vec_indices)[j]] * deref(best.proj_vec_weights)[j]
+
+                    if temp_d <= best.threshold:
+                        p += 1
+                    else:
+                        partition_end -= 1
+                        samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+            self.criterion.reset()
+            self.criterion.update(best.pos)
+            self.criterion.children_impurity(&best.impurity_left,
+                                             &best.impurity_right)
+            best.improvement = self.criterion.impurity_improvement(
+                impurity, best.impurity_left, best.impurity_right)
+
+        # Return values
+        deref(oblique_split).proj_vec_indices = best.proj_vec_indices
+        deref(oblique_split).proj_vec_weights = best.proj_vec_weights
+        deref(oblique_split).feature = best.feature
+        deref(oblique_split).pos = best.pos
+        deref(oblique_split).threshold = best.threshold
+        deref(oblique_split).improvement = best.improvement
+        deref(oblique_split).impurity_left = best.impurity_left
+        deref(oblique_split).impurity_right = best.impurity_right
+
+        return 0

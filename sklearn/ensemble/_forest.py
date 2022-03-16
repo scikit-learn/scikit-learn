@@ -82,7 +82,6 @@ __all__ = [
     "ExtraTreesClassifier",
     "ExtraTreesRegressor",
     "ObliqueRandomForestClassifier",
-    "ObliqueRandomForestRegressor",
     "RandomTreesEmbedding",
 ]
 
@@ -331,9 +330,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
-        X, y = self._validate_data(
-            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
-        )
+        if isinstance(self, ObliqueRandomForestClassifier):
+            X, y = self._validate_data(
+                X, y, multi_output=True, accept_sparse=False, dtype=DTYPE
+            )
+        else:
+            X, y = self._validate_data(
+                X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
+            )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 

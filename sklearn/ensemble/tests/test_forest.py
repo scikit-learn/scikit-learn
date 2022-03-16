@@ -174,7 +174,7 @@ def _orthant(n, p=6, random_state=None):
         Labels of the dataset
     """
     rng = np.random.RandomState(seed=random_state)
-    orth_labels = np.asarray([2 ** i for i in range(0, p)][::-1])
+    orth_labels = np.asarray([2**i for i in range(0, p)][::-1])
 
     X = rng.uniform(-1, 1, (n, p))
     y = np.zeros(n)
@@ -183,9 +183,8 @@ def _orthant(n, p=6, random_state=None):
         idx = np.where(X[i, :] > 0)[0]
         y[i] = sum(orth_labels[idx])
 
-    if len(np.unique(y)) < 2 ** p:
-        raise RuntimeError('Increase sample size to '
-                           'get a label in each orthant.')
+    if len(np.unique(y)) < 2**p:
+        raise RuntimeError("Increase sample size to get a label in each orthant.")
 
     return X, y
 
@@ -222,14 +221,13 @@ def _trunk(n, p=10, random_state=None):
     mu_0 = -1 * mu_1
     cov = np.identity(p)
 
-    X = np.vstack((
-        rng.multivariate_normal(mu_0, cov, int(n / 2)),
-        rng.multivariate_normal(mu_1, cov, int(n / 2))
-    ))
-    y = np.concatenate((
-        np.zeros(int(n / 2)),
-        np.ones(int(n / 2))
-    ))
+    X = np.vstack(
+        (
+            rng.multivariate_normal(mu_0, cov, int(n / 2)),
+            rng.multivariate_normal(mu_1, cov, int(n / 2)),
+        )
+    )
+    y = np.concatenate((np.zeros(int(n / 2)), np.ones(int(n / 2))))
     return X, y
 
 
@@ -624,7 +622,7 @@ def test_unfitted_feature_importances(name):
 def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accuracy):
     """Check that OOB score is close to score on a test set."""
     if ForestClassifier == ObliqueRandomForestClassifier:
-        pytest.skip(reason='Oblique forests do not have oob implemented yet.')
+        pytest.skip(reason="Oblique forests do not have oob implemented yet.")
 
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -1254,8 +1252,8 @@ def check_sparse_input(name, X, X_sparse, y):
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
 @pytest.mark.parametrize("sparse_matrix", (csr_matrix, csc_matrix, coo_matrix))
 def test_sparse_input(name, sparse_matrix):
-    if name == 'ObliqueRandomForestClassifier':
-        pytest.skip(reason='Oblique trees have not implemented sparse capability yet.')
+    if name == "ObliqueRandomForestClassifier":
+        pytest.skip(reason="Oblique trees have not implemented sparse capability yet.")
     X, y = datasets.make_multilabel_classification(random_state=0, n_samples=50)
 
     check_sparse_input(name, X, sparse_matrix(X), y)
@@ -1311,8 +1309,8 @@ def check_memory_layout(name, dtype):
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize("dtype", (np.float64, np.float32))
 def test_memory_layout(name, dtype):
-    if name == 'ObliqueRandomForestClassifier':
-        pytest.skip(reason='Oblique trees do not work with sparse data yet.')
+    if name == "ObliqueRandomForestClassifier":
+        pytest.skip(reason="Oblique trees do not work with sparse data yet.")
     check_memory_layout(name, dtype)
 
 
@@ -1633,7 +1631,7 @@ def check_decision_path(name):
         np.diff(n_nodes_ptr), [e.tree_.node_count for e in est.estimators_]
     )
 
-    if name != 'ObliqueRandomForestClassifier':
+    if name != "ObliqueRandomForestClassifier":
         # Assert that leaves index are correct
         leaves = est.apply(X)
         for est_id in range(leaves.shape[1]):
@@ -1641,8 +1639,7 @@ def check_decision_path(name):
                 indicator[i, n_nodes_ptr[est_id] + j]
                 for i, j in enumerate(leaves[:, est_id])
             ]
-            assert_array_almost_equal(
-                leave_indicator, np.ones(shape=n_samples))
+            assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
@@ -2003,11 +2000,13 @@ def test_oblique_forest_sparse_parity():
     X, y = _sparse_parity(n, random_state=0)
     n_test = 0.1
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=n_test, random_state=0,
+        X,
+        y,
+        test_size=n_test,
+        random_state=0,
     )
 
-    rc_clf = ObliqueRandomForestClassifier(
-        max_features=None, random_state=0)
+    rc_clf = ObliqueRandomForestClassifier(max_features=None, random_state=0)
     rc_clf.fit(X_train, y_train)
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
@@ -2017,8 +2016,9 @@ def test_oblique_forest_sparse_parity():
     y_hat = ri_clf.predict(X_test)
     ri_accuracy = accuracy_score(y_test, y_hat)
 
-    assert ri_accuracy == 0.49
-    assert rc_accuracy == 0.55
+    assert ri_accuracy < rc_accuracy
+    assert ri_accuracy > 0.45
+    assert rc_accuracy > 0.5
 
 
 def test_oblique_forest_orthant():
@@ -2031,11 +2031,13 @@ def test_oblique_forest_orthant():
     X, y = _orthant(n, p=6, random_state=0)
     n_test = 0.3
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=n_test, random_state=0,
+        X,
+        y,
+        test_size=n_test,
+        random_state=0,
     )
 
-    rc_clf = ObliqueRandomForestClassifier(
-        max_features=None, random_state=0)
+    rc_clf = ObliqueRandomForestClassifier(max_features=None, random_state=0)
     rc_clf.fit(X_train, y_train)
     y_hat = rc_clf.predict(X_test)
     rc_accuracy = accuracy_score(y_test, y_hat)
@@ -2046,8 +2048,8 @@ def test_oblique_forest_orthant():
     ri_accuracy = accuracy_score(y_test, y_hat)
 
     assert rc_accuracy > ri_accuracy
-    assert ri_accuracy == 0.86
-    assert rc_accuracy.round(2) == 0.87
+    assert ri_accuracy > 0.84
+    assert rc_accuracy > 0.86
 
 
 def test_oblique_forest_trunk():
@@ -2056,7 +2058,10 @@ def test_oblique_forest_trunk():
     X, y = _trunk(n, p=1000, random_state=0)
     n_test = 0.1
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=n_test, random_state=0,
+        X,
+        y,
+        test_size=n_test,
+        random_state=0,
     )
 
     rc_clf = ObliqueRandomForestClassifier(random_state=0)
@@ -2070,5 +2075,5 @@ def test_oblique_forest_trunk():
     ri_accuracy = accuracy_score(y_test, y_hat)
 
     assert rc_accuracy > ri_accuracy
-    assert ri_accuracy == 0.84
-    assert rc_accuracy == 0.88
+    assert ri_accuracy > 0.83
+    assert rc_accuracy > 0.87

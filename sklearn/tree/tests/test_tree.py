@@ -456,7 +456,7 @@ def test_importances():
         n_important = np.sum(importances > 0.1)
 
         assert importances.shape[0] == 10, "Failed with {0}".format(name)
-        if 'Oblique' in name:
+        if "Oblique" in name:
             # oblique trees can find multiple informative splits
             assert n_important == 5, "Failed with {0}".format(name)
         else:
@@ -1004,16 +1004,23 @@ def test_min_impurity_decrease():
         assert type(est2) == est.__class__
 
         for prop_name in [
-            'n_classes', 'children_left', 'children_right',
-            'n_leaves', 'feature', 'threshold', 'impurity',
-            'n_node_samples', 'weighted_n_node_samples', 'value'
+            "n_classes",
+            "children_left",
+            "children_right",
+            "n_leaves",
+            "feature",
+            "threshold",
+            "impurity",
+            "n_node_samples",
+            "weighted_n_node_samples",
+            "value",
         ]:
             est_prop = getattr(est.tree_, prop_name)
             est2_prop = getattr(est.tree_, prop_name)
             assert_array_equal(est_prop, est2_prop)
 
         # Oblique decision trees should have matching projection matrices
-        if name == 'ObliqueDecisionTreeClassifier':
+        if name == "ObliqueDecisionTreeClassifier":
             est_proj_mat = est.tree_.get_projection_matrix()
             est2_proj_mat = est2.tree_.get_projection_matrix()
             assert_array_equal(est_proj_mat, est2_proj_mat)
@@ -1157,7 +1164,8 @@ def test_memory_layout():
         y = iris.target[::3]
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        if name == 'ObliqueDecisionTreeClassifier':
+        # Oblique trees do not support sparse data
+        if name == "ObliqueDecisionTreeClassifier":
             continue
 
         # csr matrix
@@ -1386,10 +1394,10 @@ def test_with_only_one_non_constant_features():
 
     y = np.array([0.0, 1.0, 0.0, 1.0])
     for name, TreeEstimator in CLF_TREES.items():
+        if name == "ObliqueDecisionTreeClassifier":
+            continue
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
-        if name == 'ObliqueDecisionTreeClassifier':
-            continue
         assert est.tree_.max_depth == 1
         assert_array_equal(est.predict_proba(X), np.full((4, 2), 0.5))
 
@@ -1709,8 +1717,8 @@ def check_min_weight_leaf_split_level(name):
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
-    if name == 'ObliqueDecisionTreeClassifier':
-        pytest.skip(reason='Sparse data not supported yet.')
+    if name == "ObliqueDecisionTreeClassifier":
+        pytest.skip(reason="Sparse data not supported yet.")
     _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y, sample_weight)
 
 
@@ -1771,7 +1779,7 @@ def check_decision_path(name):
     leave_indicator = [node_indicator[i, j] for i, j in enumerate(leaves)]
 
     # Oblique trees have possibly different leaves
-    if 'Oblique' not in name:
+    if "Oblique" not in name:
         assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
 
     # Ensure only one leave node per sample
@@ -2492,29 +2500,25 @@ def test_oblique_tree_sampling():
     # and oblique decision tree
     tree_ri = DecisionTreeClassifier(random_state=0)
     tree_rc = ObliqueDecisionTreeClassifier(random_state=0)
-    ri_cv_scores = cross_val_score(tree_ri, X, y,
-                                   scoring="accuracy", cv=3, error_score="raise")
-    rc_cv_scores = cross_val_score(tree_rc, X, y,
-                                   scoring="accuracy", cv=3, error_score="raise")
+    ri_cv_scores = cross_val_score(
+        tree_ri, X, y, scoring="accuracy", cv=3, error_score="raise"
+    )
+    rc_cv_scores = cross_val_score(
+        tree_rc, X, y, scoring="accuracy", cv=3, error_score="raise"
+    )
     assert rc_cv_scores.mean() >= ri_cv_scores.mean()
     assert rc_cv_scores.std() <= ri_cv_scores.std()
-
-    print(rc_cv_scores)
-    print(ri_cv_scores)
-    print(f'{rc_cv_scores.mean()} +/- {rc_cv_scores.std()}')
-    print(f'{ri_cv_scores.mean()} +/- {ri_cv_scores.std()}')
     assert rc_cv_scores.mean() >= 0.9
 
     # oblique decision trees can sample significantly more
     # diverse sets of splits
     tree_ri = DecisionTreeClassifier(random_state=0)
-    tree_rc = ObliqueDecisionTreeClassifier(random_state=0,
-                                            max_features=n_features * 2)
-    ri_cv_scores = cross_val_score(tree_ri, X, y,
-                                   scoring="accuracy", cv=3, error_score="raise")
-    rc_cv_scores = cross_val_score(tree_rc, X, y,
-                                   scoring="accuracy", cv=3, error_score="raise")
-    print(tree_ri.max_features)
-    print(tree_rc.max_features)
+    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features * 2)
+    ri_cv_scores = cross_val_score(
+        tree_ri, X, y, scoring="accuracy", cv=3, error_score="raise"
+    )
+    rc_cv_scores = cross_val_score(
+        tree_rc, X, y, scoring="accuracy", cv=3, error_score="raise"
+    )
     assert rc_cv_scores.mean() > ri_cv_scores.mean()
     assert rc_cv_scores.std() < ri_cv_scores.std()

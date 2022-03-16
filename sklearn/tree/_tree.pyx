@@ -871,8 +871,8 @@ cdef class Tree:
         # to keep track of the current ID of each node
         cdef SIZE_t node_id = 0
 
-        # the feature index
-        cdef DOUBLE_t feature
+        # the feature value
+        cdef DTYPE_t feature_value = 0
 
         with nogil:
             for i in range(n_samples):
@@ -885,8 +885,8 @@ cdef class Tree:
                     
                     # compute the feature value to compare against threshold
                     X_vector = X_ndarray[i, :]
-                    feature = self._compute_feature(X_vector, node, node_id)
-                    if feature <= node.threshold:
+                    feature_value = self._compute_feature(X_vector, node, node_id)
+                    if feature_value <= node.threshold:
                         node_id = node.left_child
                         node = &self.nodes[node.left_child]
                     else:
@@ -936,6 +936,9 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
+        # to keep track of the current ID of each node
+        cdef SIZE_t node_id = 0
+
         safe_realloc(&X_sample, n_features)
         safe_realloc(&feature_to_sample, n_features)
 
@@ -944,6 +947,7 @@ cdef class Tree:
 
             for i in range(n_samples):
                 node = self.nodes
+                node_id = 0
 
                 for k in range(X_indptr[i], X_indptr[i + 1]):
                     feature_to_sample[X_indices[k]] = i
@@ -954,13 +958,18 @@ cdef class Tree:
                     # ... and node.right_child != _TREE_LEAF:
                     if feature_to_sample[node.feature] == i:
                         feature_value = X_sample[node.feature]
-
+                        
+                        # compute the feature value to compare against threshold
+                        # X_vector = X_ndarray[i, :]
+                        # feature = self._compute_feature(X_vector, node, node_id)
                     else:
                         feature_value = 0.
 
                     if feature_value <= node.threshold:
+                        node_id = node.left_child
                         node = &self.nodes[node.left_child]
                     else:
+                        node_id = node.right_child
                         node = &self.nodes[node.right_child]
 
                 out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset

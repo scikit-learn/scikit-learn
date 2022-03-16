@@ -851,9 +851,8 @@ def check_estimator_sparse_data(name, estimator_orig):
             may_pass=True,
             err_msg=err_msg,
         ):
-            if 'Oblique' not in name:
-                with ignore_warnings(category=FutureWarning):
-                    estimator.fit(X, y)
+            with ignore_warnings(category=FutureWarning):
+                estimator.fit(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 if tags["multioutput_only"]:
