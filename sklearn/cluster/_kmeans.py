@@ -71,7 +71,7 @@ SparseMatrix = spmatrix
 
 
 class interval:
-    def __init__(left, right, closed):
+    def __init__(self, left, right, closed):
         pass
 
 
