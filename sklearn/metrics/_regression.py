@@ -344,9 +344,9 @@ def mean_absolute_percentage_error(
         MAPE values, especially if some `y_true` values are very close to zero.
         Note that we return a large value instead of `inf` when `y_true` is zero.
 
-        If symmetric is True then the output is floating point between 0.0 and 1.0.
-        The diffrence from the non symetric version is that the diffrence between
-        y_true and y_pred is devided by both of the values y_true and y_pred.
+        If `symmetric=True` then the output is a floating point beteween 0.0 and 1.0.
+        SMAPE divides `abs(y_true-y_pred)` by `abs(y_true)+abs(y_pred)` instead of just
+        `abs(y_true)`.
 
     Examples
     --------
