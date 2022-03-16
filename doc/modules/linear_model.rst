@@ -794,23 +794,23 @@ is more robust to ill-posed problems.
 Automatic Relevance Determination - ARD
 ---------------------------------------
 
-:class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
-but can lead to sparser coefficients :math:`w` [1]_ [2]_.
-:class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
-assumption of the Gaussian being spherical.
+The Automatic Relevance Determination (as being implemented in :class:`ARDRegression`)
+is a kind of linear model with is very similar to the `Bayesian Ridge Regression`_,
+but which leads to sparser coefficients :math:`w` [1]_ [2]_.
 
-Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
-elliptical Gaussian distribution.
+:class:`ARDRegression` poses a different prior over :math:`w`: it drops
+the spherical Gaussian distribution for an centered elliptic Gaussian distribution.
 
-This means each coefficient :math:`w_{i}` is drawn from a Gaussian distribution,
-centered on zero and with a precision :math:`\lambda_{i}`:
+This means each coefficient :math:`w_{i}` can itself be drawn from a Gaussian
+distribution, centered on zero and with a precision :math:`\lambda_{i}`:
 
 .. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
 
-with :math:`\text{diag}(A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
+with :math:`A` being a positive definite diagonal matrix and
+:math:`\text{diag}(A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
 
-In contrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
-has its own standard deviation :math:`\lambda_i`. The prior over all
+In contrast to the `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
+has its own standard deviation :math:`\frac{1}{\lambda_i}`. The prior over all
 :math:`\lambda_i` is chosen to be the same gamma distribution given by
 hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
