@@ -317,16 +317,16 @@ class PCA(_BasePCA):
     For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
 
     For svd_solver == 'randomized', see:
-    `Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
+    :doi:`Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
     "Finding structure with randomness: Probabilistic algorithms for
     constructing approximate matrix decompositions".
     SIAM review, 53(2), 217-288.
-    <https://doi.org/10.1137/090771806>`_
+    <10.1137/090771806>`
     and also
-    `Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
+    :doi:`Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
-    Applied and Computational Harmonic Analysis, 30(1), 47-68
-    <https://doi.org/10.1016/j.acha.2010.02.003>`_.
+    Applied and Computational Harmonic Analysis, 30(1), 47-68.
+    <10.1016/j.acha.2010.02.003>`
 
     Examples
     --------
@@ -619,12 +619,19 @@ class PCA(_BasePCA):
 
         # Get variance explained by singular values
         self.explained_variance_ = (S**2) / (n_samples - 1)
-        total_var = np.var(X, ddof=1, axis=0)
-        self.explained_variance_ratio_ = self.explained_variance_ / total_var.sum()
+
+        # Workaround in-place variance calculation since at the time numpy
+        # did not have a way to calculate variance in-place.
+        N = X.shape[0] - 1
+        np.square(X, out=X)
+        np.sum(X, axis=0, out=X[0])
+        total_var = (X[0] / N).sum()
+
+        self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
 
         if self.n_components_ < min(n_features, n_samples):
-            self.noise_variance_ = total_var.sum() - self.explained_variance_.sum()
+            self.noise_variance_ = total_var - self.explained_variance_.sum()
             self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.0

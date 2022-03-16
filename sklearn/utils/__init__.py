@@ -26,7 +26,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version, parse_version, threadpool_info
+from .fixes import parse_version, threadpool_info
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (
     as_float_array,
@@ -178,11 +178,8 @@ def axis0_safe_slice(X, mask, len_mask):
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    if np_version < parse_version("1.12") or issparse(array):
-        # FIXME: Remove the check for NumPy when using >= 1.12
-        # check if we have an boolean array-likes to make the proper indexing
-        if key_dtype == "bool":
-            key = np.asarray(key)
+    if issparse(array) and key_dtype == "bool":
+        key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
     return array[key] if axis == 0 else array[:, key]

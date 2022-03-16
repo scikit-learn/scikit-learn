@@ -13,17 +13,16 @@ In this example we compare some estimators for the purpose of missing feature
 imputation with :class:`~impute.IterativeImputer`:
 
 * :class:`~linear_model.BayesianRidge`: regularized linear regression
-* :class:`~tree.DecisionTreeRegressor`: non-linear regression
-* :class:`~ensemble.ExtraTreesRegressor`: similar to missForest in R
+* :class:`~tree.RandomForestRegressor`: Forests of randomized trees regression
+* :func:`~pipeline.make_pipeline`(:class:`~kernel_approximation.Nystroem`,
+  :class:`~linear_model.Ridge`): a pipeline with the expansion of a degree 2
+  polynomial kernel and regularized linear regression
 * :class:`~neighbors.KNeighborsRegressor`: comparable to other KNN
   imputation approaches
 
 Of particular interest is the ability of
 :class:`~impute.IterativeImputer` to mimic the behavior of missForest, a
-popular imputation package for R. In this example, we have chosen to use
-:class:`~ensemble.ExtraTreesRegressor` instead of
-:class:`~ensemble.RandomForestRegressor` (as in missForest) due to its
-increased speed.
+popular imputation package for R.
 
 Note that :class:`~neighbors.KNeighborsRegressor` is different from KNN
 imputation, which learns from samples with missing values by using a distance
@@ -35,8 +34,13 @@ The goal is to compare different estimators to see which one is best for the
 dataset with a single value randomly removed from each row.
 
 For this particular pattern of missing values we see that
-:class:`~ensemble.ExtraTreesRegressor` and
-:class:`~linear_model.BayesianRidge` give the best results.
+:class:`~linear_model.BayesianRidge` and
+:class:`~ensemble.RandomForestRegressor` give the best results.
+
+It shoud be noted that some estimators such as
+:class:`~ensemble.HistGradientBoostingRegressor` can natively deal with
+missing features and are often recommended over building pipelines with
+complex and costly missing values imputation strategies.
 
 """
 
@@ -49,9 +53,9 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import fetch_california_housing
 from sklearn.impute import SimpleImputer
 from sklearn.impute import IterativeImputer
-from sklearn.linear_model import BayesianRidge
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.linear_model import BayesianRidge, Ridge
+from sklearn.kernel_approximation import Nystroem
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
@@ -97,14 +101,34 @@ for strategy in ("mean", "median"):
 # with different estimators
 estimators = [
     BayesianRidge(),
-    DecisionTreeRegressor(max_features="sqrt", random_state=0),
-    ExtraTreesRegressor(n_estimators=10, random_state=0),
+    RandomForestRegressor(
+        # We tuned the hyperparameters of the RandomForestRegressor to get a good
+        # enough predictive performance for a restricted execution time.
+        n_estimators=4,
+        max_depth=10,
+        bootstrap=True,
+        max_samples=0.5,
+        n_jobs=2,
+        random_state=0,
+    ),
+    make_pipeline(
+        Nystroem(kernel="polynomial", degree=2, random_state=0), Ridge(alpha=1e3)
+    ),
     KNeighborsRegressor(n_neighbors=15),
 ]
 score_iterative_imputer = pd.DataFrame()
-for impute_estimator in estimators:
+# iterative imputer is sensible to the tolerance and
+# dependent on the estimator used internally.
+# we tuned the tolerance to keep this example run with limited computational
+# resources while not changing the results too much compared to keeping the
+# stricter default value for the tolerance parameter.
+tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
+for impute_estimator, tol in zip(estimators, tolerances):
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, estimator=impute_estimator), br_estimator
+        IterativeImputer(
+            random_state=0, estimator=impute_estimator, max_iter=25, tol=tol
+        ),
+        br_estimator,
     )
     score_iterative_imputer[impute_estimator.__class__.__name__] = cross_val_score(
         estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
