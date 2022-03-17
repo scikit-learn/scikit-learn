@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-from asyncio import Future
 import numpy as np
 import pytest
 import warnings
