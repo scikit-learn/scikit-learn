@@ -428,6 +428,35 @@ def _warm_fit_and_score(estimator, warm_candidates, cand_idx, n_candidates, **kw
     ]
 
 
+def _generate_jobs(
+    *,
+    splits,
+    base_estimator,
+    use_warm_start,
+    candidate_params,
+    n_candidates,
+    fit_and_score_kwargs,
+):
+    cand_idx = 0
+    n_splits = len(splits)
+    warm_start_groups = _generate_warm_start_groups(candidate_params, use_warm_start)
+
+    for warm_candidates in warm_start_groups:
+        for (split_idx, (train, test)) in enumerate(splits):
+            yield delayed(_warm_fit_and_score)(
+                clone(base_estimator),
+                warm_candidates,
+                train=train,
+                test=test,
+                split_progress=(split_idx, n_splits),
+                cand_idx=cand_idx,
+                n_candidates=n_candidates,
+                **fit_and_score_kwargs,
+            )
+
+        cand_idx += len(warm_candidates)
+
+
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation."""
 
@@ -880,28 +909,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         )
                     )
 
-                def _generate_jobs():
-                    cand_idx = 0
-                    warm_start_groups = _generate_warm_start_groups(
-                        candidate_params, getattr(self, "use_warm_start", None)
+                out = parallel(
+                    _generate_jobs(
+                        splits=list(cv.split(X, y, groups)),
+                        base_estimator=base_estimator,
+                        use_warm_start=getattr(self, "use_warm_start", None),
+                        candidate_params=candidate_params,
+                        n_candidates=n_candidates,
+                        fit_and_score_kwargs=fit_and_score_kwargs,
                     )
-                    splits = list(cv.split(X, y, groups))
-                    for warm_candidates in warm_start_groups:
-                        for (split_idx, (train, test)) in enumerate(splits):
-                            yield delayed(_warm_fit_and_score)(
-                                clone(base_estimator),
-                                warm_candidates,
-                                train=train,
-                                test=test,
-                                split_progress=(split_idx, n_splits),
-                                cand_idx=cand_idx,
-                                n_candidates=n_candidates,
-                                **fit_and_score_kwargs,
-                            )
-
-                        cand_idx += len(warm_candidates)
-
-                out = parallel(_generate_jobs())
+                )
 
                 if len(out) < 1:
                     raise ValueError(
