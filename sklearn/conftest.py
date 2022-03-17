@@ -11,7 +11,7 @@ from sklearn.utils import _IS_32BIT
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.externals import _pilutil
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
-from sklearn.utils.fixes import np_version, parse_version
+from sklearn.utils.fixes import parse_version
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.datasets import fetch_california_housing
@@ -19,6 +19,10 @@ from sklearn.datasets import fetch_covtype
 from sklearn.datasets import fetch_kddcup99
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.datasets import fetch_rcv1
+
+
+# This plugin is necessary to define the random seed fixture
+pytest_plugins = ("sklearn.tests.random_seed",)
 
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
@@ -139,10 +143,7 @@ def pytest_collection_modifyitems(config, items):
         reason = "matplotlib is required to run the doctests"
 
     try:
-        if np_version < parse_version("1.14"):
-            reason = "doctests are only run for numpy >= 1.14"
-            skip_doctests = True
-        elif _IS_32BIT:
+        if _IS_32BIT:
             reason = "doctest are only run when the default numpy int is 64 bits."
             skip_doctests = True
         elif sys.platform.startswith("win32"):

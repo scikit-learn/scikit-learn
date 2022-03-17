@@ -147,6 +147,7 @@ jobs:
         BLAS: 'mkl'
         COVERAGE: 'true'
         SHOW_SHORT_SUMMARY: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
 # Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
 - template: build_tools/azure/posix.yml
@@ -168,6 +169,7 @@ jobs:
         BLAS: 'openblas'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
 - template: build_tools/azure/posix.yml
   parameters:
@@ -190,6 +192,7 @@ jobs:
         PANDAS_VERSION: 'none'
         THREADPOOLCTL_VERSION: 'min'
         COVERAGE: 'false'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '1'  # non-default seed
       # Linux + Python 3.8 build with OpenBLAS
       py38_conda_defaults_openblas:
         DISTRIB: 'conda'
@@ -201,6 +204,7 @@ jobs:
         MATPLOTLIB_VERSION: 'min'
         THREADPOOLCTL_VERSION: '2.2.0'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
       # Linux environment to test the latest available dependencies.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
@@ -210,6 +214,7 @@ jobs:
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
 
 - template: build_tools/azure/posix-docker.yml
   parameters:
@@ -231,6 +236,7 @@ jobs:
         PYTEST_XDIST_VERSION: 'none'
         PYTEST_VERSION: 'min'
         THREADPOOLCTL_VERSION: '2.2.0'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
 
 - template: build_tools/azure/posix.yml
   parameters:
@@ -249,12 +255,14 @@ jobs:
         BLAS: 'mkl'
         CONDA_CHANNEL: 'conda-forge'
         CPU_COUNT: '3'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         CPU_COUNT: '3'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
 
 - template: build_tools/azure/windows.yml
   parameters:
@@ -280,6 +288,8 @@ jobs:
         # Temporary fix for setuptools to use disutils from standard lib
         # https://github.com/numpy/numpy/issues/17216
         SETUPTOOLS_USE_DISTUTILS: 'stdlib'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
       py38_pip_openblas_32bit:
         PYTHON_VERSION: '3.8'
         PYTHON_ARCH: '32'
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '8'  # non-default seed

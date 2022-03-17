@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 from functools import update_wrapper
 import numpy as np
+from contextlib import suppress
 
 from ..utils import _safe_indexing
 from ..utils._tags import _safe_tags
@@ -56,10 +57,13 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         items = getattr(self, attr)
         if isinstance(items, list) and items:
             # Get item names used to identify valid names in params
-            item_names, _ = zip(*items)
-            for name in list(params.keys()):
-                if "__" not in name and name in item_names:
-                    self._replace_estimator(attr, name, params.pop(name))
+            # `zip` raises a TypeError when `items` does not contains
+            # elements of length 2
+            with suppress(TypeError):
+                item_names, _ = zip(*items)
+                for name in list(params.keys()):
+                    if "__" not in name and name in item_names:
+                        self._replace_estimator(attr, name, params.pop(name))
 
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
