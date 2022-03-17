@@ -778,11 +778,12 @@ hence the validation in ``fit``, not ``__init__``.
 Numerical assertions in tests
 -----------------------------
 
-When asserting the quasi-equality of arrays, do use
-:func:`sklearn.utils._testing.assert_allclose`.
+When asserting the quasi-equality of arrays of continuous values,
+do use :func:`sklearn.utils._testing.assert_allclose`.
 
-The relative tolerance is automatically inferred from the provided arrays dtypes,
-but you can override via ``rtol``.
+The relative tolerance is automatically inferred from the provided arrays
+dtypes (for float32 and float64 dtypes in particular) but you can override
+via ``rtol``.
 
 When comparing arrays of zero-elements, please do provide a non-zero value for
 the absolute tolerance via ``atol``.

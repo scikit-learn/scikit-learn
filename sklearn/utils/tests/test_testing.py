@@ -871,5 +871,5 @@ def test_float32_aware_assert_allclose():
 
     # atol is left to 0.0 by default, even for float32
     with pytest.raises(AssertionError):
-        assert_allclose(np.array([1.0 + 1e-5], dtype=np.float32), 0.0)
-    assert_allclose(np.array([1.0 + 1e-5], dtype=np.float32), 1.0, atol=2e-5)
+        assert_allclose(np.array([1e-5], dtype=np.float32), 0.0)
+    assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)

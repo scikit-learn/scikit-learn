@@ -450,7 +450,15 @@ def assert_allclose(
         rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
         rtol = max(rtols)
 
-    np_assert_allclose(actual, desired, rtol, atol, equal_nan, err_msg, verbose)
+    np_assert_allclose(
+        actual,
+        desired,
+        rtol=rtol,
+        atol=atol,
+        equal_nan=equal_nan,
+        err_msg=err_msg,
+        verbose=verbose,
+    )
 
 
 def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):
