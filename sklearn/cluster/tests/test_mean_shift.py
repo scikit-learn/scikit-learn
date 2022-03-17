@@ -109,10 +109,11 @@ def test_parallel(global_dtype):
 
 def test_meanshift_predict(global_dtype):
     # Test MeanShift.predict
+    global X
     ms = MeanShift(bandwidth=1.2)
-    Y = X.astype(global_dtype)
-    labels = ms.fit_predict(Y)
-    labels2 = ms.predict(Y)
+    X = X.astype(global_dtype)
+    labels = ms.fit_predict(X)
+    labels2 = ms.predict(X)
     assert_array_equal(labels, labels2)
 
 
@@ -213,8 +214,8 @@ def test_mean_shift_zero_bandwidth(global_dtype):
     # to no binning.
     ms_binning = MeanShift(bin_seeding=True, bandwidth=None).fit(X)
     ms_nobinning = MeanShift(bin_seeding=False).fit(X)
-    expected_labels = np.array([0, 0, 0, 1, 1, 1, 2, 2], dtype=global_dtype)
+    expected_labels = np.array([0, 0, 0, 1, 1, 1, 2, 2])
 
-    assert v_measure_score(ms_binning.labels_, expected_labels) == 1
-    assert v_measure_score(ms_nobinning.labels_, expected_labels) == 1
+    assert v_measure_score(ms_binning.labels_, expected_labels) == pytest.approx(1)
+    assert v_measure_score(ms_nobinning.labels_, expected_labels) == pytest.approx(1)
     assert_allclose(ms_binning.cluster_centers_, ms_nobinning.cluster_centers_)
