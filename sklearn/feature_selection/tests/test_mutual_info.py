@@ -3,7 +3,11 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_equal, assert_almost_equal
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_almost_equal,
+    assert_allclose,
+)
 from sklearn.feature_selection._mutual_info import _compute_mi
 from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
 
@@ -51,7 +55,7 @@ def test_compute_mi_cc(global_dtype):
     # first figures after decimal point match.
     for n_neighbors in [3, 5, 7]:
         I_computed = _compute_mi(x, y, False, False, n_neighbors)
-        assert_almost_equal(I_computed, I_theory, 1)
+        assert_allclose(I_computed, I_theory, 1)
 
 
 def test_compute_mi_cd():
