@@ -10,8 +10,6 @@ from sklearn.utils._testing import (
 from sklearn.feature_selection._mutual_info import _compute_mi
 from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
 
-DTYPES = (np.float64, np.float32)
-
 
 def test_compute_mi_dd():
     # In discrete case computations are straightforward and can be done
@@ -61,8 +59,7 @@ def test_compute_mi_cc(global_dtype):
         assert_allclose(I_computed, I_theory, rtol=1e-1)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_compute_mi_cd(dtype):
+def test_compute_mi_cd(global_dtype):
     # To test define a joint distribution as follows:
     # p(x, y) = p(x) p(y | x)
     # X ~ Bernoulli(p)
@@ -84,10 +81,10 @@ def test_compute_mi_cd(dtype):
     for p in [0.3, 0.5, 0.7]:
         x = rng.uniform(size=n_samples) > p
 
-        y = np.empty(n_samples, dtype)
+        y = np.empty(n_samples, global_dtype)
         mask = x == 0
-        y[mask] = rng.uniform(-1, 1, size=np.sum(mask)).astype(dtype)
-        y[~mask] = rng.uniform(0, 2, size=np.sum(~mask)).astype(dtype)
+        y[mask] = rng.uniform(-1, 1, size=np.sum(mask)).astype(global_dtype)
+        y[~mask] = rng.uniform(0, 2, size=np.sum(~mask)).astype(global_dtype)
 
         I_theory = -0.5 * (
             (1 - p) * np.log(0.5 * (1 - p)) + p * np.log(0.5 * p) + np.log(0.5)
@@ -101,16 +98,15 @@ def test_compute_mi_cd(dtype):
             assert_allclose(I_computed, I_theory, rtol=1e-1)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_compute_mi_cd_unique_label(dtype):
+def test_compute_mi_cd_unique_label(global_dtype):
     # Test that adding unique label doesn't change MI.
     n_samples = 100
     x = np.random.uniform(size=n_samples) > 0.5
 
-    y = np.empty(n_samples, dtype)
+    y = np.empty(n_samples, global_dtype)
     mask = x == 0
-    y[mask] = np.random.uniform(-1, 1, size=np.sum(mask)).astype(dtype)
-    y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask)).astype(dtype)
+    y[mask] = np.random.uniform(-1, 1, size=np.sum(mask)).astype(global_dtype)
+    y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask)).astype(global_dtype)
 
     mi_1 = _compute_mi(x, y, x_discrete=True, y_discrete=False)
 
@@ -122,10 +118,11 @@ def test_compute_mi_cd_unique_label(dtype):
 
 
 # We are going test that feature ordering by MI matches our expectations.
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_mutual_info_classif_discrete(dtype):
-    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=dtype)
-    y = np.array([0, 1, 2, 2, 1], dtype=dtype)
+def test_mutual_info_classif_discrete(global_dtype):
+    X = np.array(
+        [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=global_dtype
+    )
+    y = np.array([0, 1, 2, 2, 1], dtype=global_dtype)
 
     # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
     # informative.
@@ -133,8 +130,7 @@ def test_mutual_info_classif_discrete(dtype):
     assert_array_equal(np.argsort(-mi), np.array([0, 2, 1]))
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_mutual_info_regression(dtype):
+def test_mutual_info_regression(global_dtype):
     # We generate sample from multivariate normal distribution, using
     # transformation from initially uncorrelated variables. The zero
     # variables after transformation is selected as the target vector,
@@ -145,7 +141,7 @@ def test_mutual_info_regression(dtype):
     mean = np.zeros(4)
 
     rng = check_random_state(0)
-    Z = rng.multivariate_normal(mean, cov, size=1000).astype(dtype)
+    Z = rng.multivariate_normal(mean, cov, size=1000).astype(global_dtype)
     X = Z[:, 1:]
     y = Z[:, 0]
 
@@ -156,12 +152,11 @@ def test_mutual_info_regression(dtype):
     assert mi.dtype == np.float64
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_mutual_info_classif_mixed(dtype):
+def test_mutual_info_classif_mixed(global_dtype):
     # Here the target is discrete and there are two continuous and one
     # discrete feature. The idea of this test is clear from the code.
     rng = check_random_state(0)
-    X = rng.rand(1000, 3).astype(dtype)
+    X = rng.rand(1000, 3).astype(global_dtype)
     X[:, 1] += X[:, 0]
     y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
     X[:, 2] = X[:, 2] > 0.5
@@ -181,17 +176,18 @@ def test_mutual_info_classif_mixed(dtype):
         assert mi_nn[2] == mi[2]
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_mutual_info_options(dtype):
-    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=dtype)
+def test_mutual_info_options(global_dtype):
+    X = np.array(
+        [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=global_dtype
+    )
     y = np.array([0, 1, 2, 2, 1])
     X_csr = csr_matrix(X)
 
     for mutual_info, y_dtype in (
-        (mutual_info_regression, dtype),
+        (mutual_info_regression, global_dtype),
         (mutual_info_classif, y.dtype),
     ):
-        y = y.astype(dtype)
+        y = y.astype(global_dtype)
         with pytest.raises(ValueError):
             mutual_info(X_csr, y, discrete_features=False)
         with pytest.raises(ValueError):
