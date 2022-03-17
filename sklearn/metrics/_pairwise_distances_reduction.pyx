@@ -1101,9 +1101,13 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
         strategy=None,
         metric_kwargs=None,
     ):
-        if metric_kwargs is not None and len(metric_kwargs) > 0:
+        if (
+            metric_kwargs is not None and
+            len(metric_kwargs) > 0 and
+            "Y_norm_squared" not in metric_kwargs
+        ):
             warnings.warn(
-                f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't"
+                f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
                 f"usable for this case ({self.__class__.__name__}) and will be ignored.",
                 UserWarning,
                 stacklevel=3,
@@ -1647,6 +1651,18 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
         sort_results=False,
         metric_kwargs=None,
     ):
+        if (
+            metric_kwargs is not None and
+            len(metric_kwargs) > 0 and
+            "Y_norm_squared" not in metric_kwargs
+        ):
+            warnings.warn(
+                f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
+                f"usable for this case ({self.__class__.__name__}) and will be ignored.",
+                UserWarning,
+                stacklevel=3,
+            )
+
         super().__init__(
             # The datasets pair here is used for exact distances computations
             datasets_pair=DatasetsPair.get_for(X, Y, metric="euclidean"),
