@@ -117,7 +117,6 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
     try:
-
         from PIL import Image
     except ImportError:
         raise ImportError(
@@ -163,15 +162,14 @@ def _load_imgs(file_paths, slice_, color, resize):
         pil_img.crop((w_slice.start, h_slice.start, w_slice.stop, h_slice.stop))
         if resize is not None:
             pil_img = pil_img.resize((w, h))
-        img = np.asarray(pil_img)
+        face = np.asarray(pil_img, dtype=np.float32)
 
-        if img.ndim == 0:
+        if face.ndim == 0:
             raise RuntimeError(
                 "Failed to read the image file %s, "
                 "Please make sure that libjpeg is installed" % file_path
             )
 
-        face = np.asarray(img, dtype=np.float32)
         face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
         if not color:
             # average the color channels to compute a gray levels
