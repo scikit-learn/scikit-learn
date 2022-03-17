@@ -51,8 +51,8 @@ def test_compute_mi_cc(global_dtype):
 
     x, y = Z[:, 0], Z[:, 1]
 
-    # Theory and computed values won't be very close, assert that the
-    # first figures after decimal point match.
+    # Theory and computed values won't be very close
+    # We here check with a large relative tolerance
     for n_neighbors in [3, 5, 7]:
         I_computed = _compute_mi(x, y, False, False, n_neighbors)
         assert_allclose(I_computed, I_theory, rtol=1e-1)

@@ -785,7 +785,7 @@ The relative tolerance is automatically inferred from the provided arrays dtypes
 but you can override via ``rtol``.
 
 When comparing arrays of zero-elements, please do provide a non-zero value for
-the absolute via ``atol``.
+the absolute tolerance via ``atol``.
 
 For more information, please refer to the docstring of
 :func:`sklearn.utils._testing.assert_allclose`.
