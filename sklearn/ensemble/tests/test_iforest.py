@@ -7,6 +7,7 @@ Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 # License: BSD 3 clause
 
 import pytest
+import warnings
 
 import numpy as np
 
@@ -102,9 +103,12 @@ def test_iforest_error():
     warn_msg = "max_samples will be set to n_samples for estimation"
     with pytest.warns(UserWarning, match=warn_msg):
         IsolationForest(max_samples=1000).fit(X)
-
-    IsolationForest(max_samples="auto").fit(X)
-    IsolationForest(max_samples=np.int64(2)).fit(X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        IsolationForest(max_samples="auto").fit(X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        IsolationForest(max_samples=np.int64(2)).fit(X)
 
     with pytest.raises(ValueError):
         IsolationForest(max_samples="foobar").fit(X)
