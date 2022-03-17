@@ -211,7 +211,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     Using a callable to create a selector that can use no more than half
     of the input features.
 
-    >>> half_callable = lambda X: round(len(X[0]) / 2)
+    >>> def half_callable(X):
+    ...     return round(len(X[0]) / 2)
     >>> half_selector = SelectFromModel(estimator=LogisticRegression(),
     ...                                 max_features=half_callable)
     >>> _ = half_selector.fit(X, y)
