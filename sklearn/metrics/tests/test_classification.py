@@ -48,6 +48,7 @@ from sklearn.exceptions import UndefinedMetricWarning
 
 from scipy.spatial.distance import hamming as sp_hamming
 
+
 ###############################################################################
 # Utilities for testing
 
@@ -101,7 +102,6 @@ def make_prediction(dataset=None, binary=False):
 
 
 def test_classification_report_dictionary_output():
-
     # Test performance report with dictionary output
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
@@ -211,7 +211,7 @@ def test_classification_report_zero_division_warning(zero_division):
             )
     else:
         with warnings.catch_warnings():
-            warnings.simplefilter("error")
+            warnings.simplefilter("error", UndefinedMetricWarning)
             classification_report(
                 y_true, y_pred, zero_division=zero_division, output_dict=True
             )
@@ -1785,7 +1785,6 @@ def test_prf_warnings():
     # average of per-label scores
     f, w = precision_recall_fscore_support, UndefinedMetricWarning
     for average in [None, "weighted", "macro"]:
-
         msg = (
             "Precision and F-score are ill-defined and "
             "being set to 0.0 in labels with no predicted samples."
@@ -1860,24 +1859,7 @@ def test_prf_warnings():
     )
     with pytest.warns(w, match=msg):
         f([-1, -1], [1, 1], average="binary")
-
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
-        msg = (
-            "Recall and F-score are ill-defined and "
-            "being set to 0.0 due to no true samples."
-            " Use `zero_division` parameter to control"
-            " this behavior."
-        )
-        assert str(record.pop().message) == msg
-        msg = (
-            "Precision and F-score are ill-defined and "
-            "being set to 0.0 due to no predicted samples."
-            " Use `zero_division` parameter to control"
-            " this behavior."
-        )
-        assert str(record.pop().message) == msg
 
 
 @pytest.mark.parametrize("zero_division", [0, 1])
@@ -1885,7 +1867,6 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
     # average of per-label scores
     f = precision_recall_fscore_support
     for average in [None, "weighted", "macro"]:
-
         assert_no_warnings(
             f, [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
         )
@@ -1937,11 +1918,7 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
         f, [-1, -1], [1, 1], average="binary", zero_division=zero_division
     )
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        precision_recall_fscore_support(
-            [0, 0], [0, 0], average="binary", zero_division=zero_division
-        )
+    assert_no_warnings(f, [0, 0], [0, 0], average="binary", zero_division=zero_division)
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1])
@@ -1973,7 +1950,7 @@ def test_recall_warnings(zero_division):
             recall_score([0, 0], [0, 0])
     else:
         with warnings.catch_warnings():
-            warnings.simplefilter("error")
+            warnings.simplefilter("error", UndefinedMetricWarning)
             recall_score(
                 np.array([[0, 0], [0, 0]]),
                 np.array([[1, 1], [1, 1]]),
@@ -1984,34 +1961,32 @@ def test_recall_warnings(zero_division):
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1])
 def test_precision_warnings(zero_division):
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
-        precision_score(
+    msg = (
+        "Precision is ill-defined and "
+        "being set to 0.0 due to no predicted samples."
+        " Use `zero_division` parameter to control"
+        " this behavior."
+    )
+
+    if zero_division == "warn":
+        with pytest.warns(UndefinedMetricWarning, match=msg):
+            precision_score(
+                np.array([[1, 1], [1, 1]]),
+                np.array([[0, 0], [0, 0]]),
+                average="micro",
+                zero_division=zero_division,
+            )
+    else:
+        assert_no_warnings(
+            precision_score,
             np.array([[1, 1], [1, 1]]),
             np.array([[0, 0], [0, 0]]),
             average="micro",
             zero_division=zero_division,
         )
-        if zero_division == "warn":
-            assert (
-                str(record.pop().message)
-                == "Precision is ill-defined and "
-                "being set to 0.0 due to no predicted samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
-        else:
-            assert len(record) == 0
 
+    with pytest.warns(UndefinedMetricWarning, match=msg):
         precision_score([0, 0], [0, 0])
-        if zero_division == "warn":
-            assert (
-                str(record.pop().message)
-                == "Precision is ill-defined and "
-                "being set to 0.0 due to no predicted samples."
-                " Use `zero_division` parameter to control"
-                " this behavior."
-            )
 
     assert_no_warnings(
         precision_score,
@@ -2024,42 +1999,58 @@ def test_precision_warnings(zero_division):
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1])
 def test_fscore_warnings(zero_division):
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
-
+    msg = (
+        "F-score is ill-defined and being set to 0.0 due to no true nor predicted"
+        " samples. Use `zero_division` parameter to control this behavior."
+    )
+    if zero_division == "warn":
         for score in [f1_score, partial(fbeta_score, beta=2)]:
-            score(
-                np.array([[1, 1], [1, 1]]),
-                np.array([[0, 0], [0, 0]]),
-                average="micro",
-                zero_division=zero_division,
-            )
-            assert len(record) == 0
-
-            score(
-                np.array([[0, 0], [0, 0]]),
-                np.array([[1, 1], [1, 1]]),
-                average="micro",
-                zero_division=zero_division,
-            )
-            assert len(record) == 0
-
-            score(
-                np.array([[0, 0], [0, 0]]),
-                np.array([[0, 0], [0, 0]]),
-                average="micro",
-                zero_division=zero_division,
-            )
-            if zero_division == "warn":
-                assert (
-                    str(record.pop().message)
-                    == "F-score is ill-defined and "
-                    "being set to 0.0 due to no true nor predicted "
-                    "samples. Use `zero_division` parameter to "
-                    "control this behavior."
+            with pytest.warns(UndefinedMetricWarning, match=msg):
+                score(
+                    np.array([[1, 1], [1, 1]]),
+                    np.array([[0, 0], [0, 0]]),
+                    average="micro",
+                    zero_division=zero_division,
                 )
-            else:
-                assert len(record) == 0
+
+                score(
+                    np.array([[0, 0], [0, 0]]),
+                    np.array([[1, 1], [1, 1]]),
+                    average="micro",
+                    zero_division=zero_division,
+                )
+
+                score(
+                    np.array([[0, 0], [0, 0]]),
+                    np.array([[0, 0], [0, 0]]),
+                    average="micro",
+                    zero_division=zero_division,
+                )
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UndefinedMetricWarning)
+
+            for score in [f1_score, partial(fbeta_score, beta=2)]:
+                score(
+                    np.array([[1, 1], [1, 1]]),
+                    np.array([[0, 0], [0, 0]]),
+                    average="micro",
+                    zero_division=zero_division,
+                )
+
+                score(
+                    np.array([[0, 0], [0, 0]]),
+                    np.array([[1, 1], [1, 1]]),
+                    average="micro",
+                    zero_division=zero_division,
+                )
+
+                score(
+                    np.array([[0, 0], [0, 0]]),
+                    np.array([[0, 0], [0, 0]]),
+                    average="micro",
+                    zero_division=zero_division,
+                )
 
 
 def test_prf_average_binary_data_non_binary():
