@@ -1098,8 +1098,10 @@ def test_gradient_bh_multithread_match_sequential(global_dtype):
         assert_allclose(grad_multithread, grad_multithread)
 
 
-@pytest.mark.parametrize("metric", ["manhattan", "cosine"])
-@pytest.mark.parametrize("dist_func", [manhattan_distances, cosine_distances])
+@pytest.mark.parametrize(
+    "metric, dist_func",
+    [("manhattan", manhattan_distances), ("cosine", cosine_distances)],
+)
 def test_tsne_with_different_distance_metrics(global_dtype, metric, dist_func):
     """Make sure that TSNE works for different distance metrics"""
     random_state = check_random_state(0)
@@ -1110,7 +1112,7 @@ def test_tsne_with_different_distance_metrics(global_dtype, metric, dist_func):
         metric=metric,
         n_components=n_components_embedding,
         random_state=0,
-        n_iter=300,
+        n_iter=1000,
         init="random",
         learning_rate="auto",
     ).fit_transform(X)
@@ -1118,7 +1120,7 @@ def test_tsne_with_different_distance_metrics(global_dtype, metric, dist_func):
         metric="precomputed",
         n_components=n_components_embedding,
         random_state=0,
-        n_iter=300,
+        n_iter=1000,
         init="random",
         learning_rate="auto",
     ).fit_transform(dist_func(X))
