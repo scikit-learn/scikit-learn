@@ -7,6 +7,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
 import pytest
+import warnings
 
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
@@ -138,9 +139,9 @@ def test_logistic_cv_score_does_not_warn_by_default():
     lr = LogisticRegressionCV(cv=2)
     lr.fit(X, Y1)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         lr.score(X, lr.predict(X))
-    assert not [w.message for w in record]
 
 
 @skip_if_no_parallel
