@@ -287,7 +287,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     See Also
     --------
     f_regression: Univariate linear regression tests returning f-statistic
-        and p-values
+        and p-values.
     mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
