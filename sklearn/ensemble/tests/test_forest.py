@@ -621,7 +621,7 @@ def test_unfitted_feature_importances(name):
 )
 def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accuracy):
     """Check that OOB score is close to score on a test set."""
-    if ForestClassifier == ObliqueRandomForestClassifier and X_type != 'array':
+    if ForestClassifier == ObliqueRandomForestClassifier and X_type != "array":
         pytest.skip()
 
     X = _convert_container(X, constructor_name=X_type)
@@ -1284,8 +1284,10 @@ def check_memory_layout(name, dtype):
     y = iris.target
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
-    if est.base_estimator.splitter in SPARSE_SPLITTERS and \
-            name != 'ObliqueRandomForestClassifier':
+    if (
+        est.base_estimator.splitter in SPARSE_SPLITTERS
+        and name != "ObliqueRandomForestClassifier"
+    ):
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
