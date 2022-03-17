@@ -29,7 +29,7 @@ from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
 from ._utils cimport safe_realloc
-from ..utils._heap cimport simultaneous_sort
+from ..utils._sorting cimport simultaneous_sort
 
 cdef double INFINITY = np.inf
 
