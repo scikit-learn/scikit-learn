@@ -594,17 +594,19 @@ dataset::
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
 If there is a possibility that the training data might have missing categorical
-features, it can often be better to specify ``handle_unknown='ignore'`` instead
-of setting the ``categories`` manually as above. When
-``handle_unknown='ignore'`` is specified and unknown categories are encountered
-during transform, no error will be raised but the resulting one-hot encoded
-columns for this feature will be all zeros
-(``handle_unknown='ignore'`` is only supported for one-hot encoding)::
+features, it can often be better to specify
+`handle_unknown='infrequent_if_exist'` instead of setting the `categories`
+manually as above. When `handle_unknown='infrequent_if_exist'` is specified
+and unknown categories are encountered during transform, no error will be
+raised but the resulting one-hot encoded columns for this feature will be all
+zeros or considered as an infrequent category if enabled.
+(`handle_unknown='infrequent_if_exist'` is only supported for one-hot
+encoding)::
 
-    >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
+    >>> enc = preprocessing.OneHotEncoder(handle_unknown='infrequent_if_exist')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X)
-    OneHotEncoder(handle_unknown='ignore')
+    OneHotEncoder(handle_unknown='infrequent_if_exist')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
@@ -621,7 +623,8 @@ since co-linearity would cause the covariance matrix to be non-invertible::
     ...      ['female', 'from Europe', 'uses Firefox']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object),
+     array(['uses Firefox', 'uses Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 1., 1.],
            [0., 0., 0.]])
@@ -634,7 +637,8 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
     ...      ['female', 'Asia', 'Chrome']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object), array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object),
+     array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 0., 0., 1., 0., 0., 1.],
            [0., 0., 1., 0., 0., 1., 0.],
@@ -698,6 +702,107 @@ separate categories::
 
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
+
+.. _one_hot_encoder_infrequent_categories:
+
+Infrequent categories
+---------------------
+
+:class:`OneHotEncoder` supports aggregating infrequent categories into a single
+output for each feature. The parameters to enable the gathering of infrequent
+categories are `min_frequency` and `max_categories`.
+
+1. `min_frequency` is either an  integer greater or equal to 1, or a float in
+   the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
+   a cardinality smaller than `min_frequency`  will be considered infrequent.
+   If `min_frequency` is a float, categories with a cardinality smaller than
+   this fraction of the total number of samples will be considered infrequent.
+   The default value is 1, which means every category is encoded separately.
+
+2. `max_categories` is either `None` or any integer greater than 1. This
+   parameter sets an upper limit to the number of output features for each
+   input feature. `max_categories` includes the feature that combines
+   infrequent categories.
+
+In the following example, the categories, `'dog', 'snake'` are considered
+infrequent::
+
+   >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
+   ...               ['snake'] * 3], dtype=object).T
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse=False).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['dog', 'snake'], dtype=object)]
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
+   array([[0., 0., 1.],
+          [1., 0., 0.],
+          [0., 1., 0.],
+          [0., 0., 1.]])
+
+By setting handle_unknown to `'infrequent_if_exist'`, unknown categories will
+be considered infrequent::
+
+   >>> enc = preprocessing.OneHotEncoder(
+   ...    handle_unknown='infrequent_if_exist', sparse=False, min_frequency=6)
+   >>> enc = enc.fit(X)
+   >>> enc.transform(np.array([['dragon']]))
+   array([[0., 0., 1.]])
+
+:meth:`OneHotEncoder.get_feature_names_out` uses 'infrequent' as the infrequent
+feature name::
+
+   >>> enc.get_feature_names_out()
+   array(['x0_cat', 'x0_rabbit', 'x0_infrequent_sklearn'], dtype=object)
+
+When `'handle_unknown'` is set to `'infrequent_if_exist'` and an unknown
+category is encountered in transform:
+
+1. If infrequent category support was not configured or there was no
+   infrequent category during training, the resulting one-hot encoded columns
+   for this feature will be all zeros. In the inverse transform, an unknown
+   category will be denoted as `None`.
+
+2. If there is an infrequent category during training, the unknown category
+   will be considered infrequent. In the inverse transform, 'infrequent_sklearn'
+   will be used to represent the infrequent category.
+
+Infrequent categories can also be configured using `max_categories`. In the
+following example, we set `max_categories=2` to limit the number of features in
+the output. This will result in all but the `'cat'` category to be considered
+infrequent, leading to two features, one for `'cat'` and one for infrequent
+categories - which are all the others::
+
+   >>> enc = preprocessing.OneHotEncoder(max_categories=2, sparse=False)
+   >>> enc = enc.fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
+   array([[0., 1.],
+          [1., 0.],
+          [0., 1.],
+          [0., 1.]])
+
+If both `max_categories` and `min_frequency` are non-default values, then
+categories are selected based on `min_frequency` first and `max_categories`
+categories are kept. In the following example, `min_frequency=4` considers
+only `snake` to be infrequent, but `max_categories=3`, forces `dog` to also be
+infrequent::
+
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=4, max_categories=3, sparse=False)
+   >>> enc = enc.fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
+   array([[0., 0., 1.],
+          [1., 0., 0.],
+          [0., 1., 0.],
+          [0., 0., 1.]])
+
+If there are infrequent categories with the same cardinality at the cutoff of
+`max_categories`, then then the first `max_categories` are taken based on lexicon
+ordering. In the following example, "b", "c", and "d", have the same cardinality
+and with `max_categories=2`, "b" and "c" are infrequent because they have a higher
+lexicon order.
+
+   >>> X = np.asarray([["a"] * 20 + ["b"] * 10 + ["c"] * 10 + ["d"] * 10], dtype=object).T
+   >>> enc = preprocessing.OneHotEncoder(max_categories=3).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['b', 'c'], dtype=object)]
 
 .. _preprocessing_discretization:
 
@@ -981,7 +1086,7 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
       Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
 
     * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
-      spline function procedures in R <10.1186/s12874-019-0666-3>`. 
+      spline function procedures in R <10.1186/s12874-019-0666-3>`.
       BMC Med Res Methodol 19, 46 (2019).
 
 .. _function_transformer:

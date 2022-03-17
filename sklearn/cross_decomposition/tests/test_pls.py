@@ -1,4 +1,5 @@
 import pytest
+import warnings
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 
@@ -560,10 +561,10 @@ def test_loadings_converges():
 
     cca = CCA(n_components=10, max_iter=500)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+
         cca.fit(X, y)
-    # ConvergenceWarning should not be raised
-    assert not [w.message for w in record]
 
     # Loadings converges to reasonable values
     assert np.all(np.abs(cca.x_loadings_) < 1)
