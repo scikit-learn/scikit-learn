@@ -42,7 +42,6 @@ from sklearn.neighbors._base import (
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
     assert_allclose,
-    assert_array_almost_equal,
     assert_array_equal,
 )
 from sklearn.utils._testing import ignore_warnings
@@ -72,7 +71,6 @@ COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
 )
 P = (1, 2, 3, 4, np.inf)
-DTYPES = (np.float64, np.float32)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
@@ -143,15 +141,14 @@ WEIGHTS = ["uniform", "distance", _weight_func]
     ],
 )
 @pytest.mark.parametrize("query_is_train", [False, True])
-@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 def test_unsupervised_kneighbors(
+    global_dtype,
     n_samples,
     n_features,
     n_query_pts,
     n_neighbors,
     query_is_train,
-    dtype,
     metric,
 ):
     # The different algorithms must return identical results
@@ -160,10 +157,12 @@ def test_unsupervised_kneighbors(
 
     # Redefining the rng locally to use the same generated X
     local_rng = np.random.RandomState(0)
-    X = local_rng.rand(n_samples, n_features).astype(dtype)
+    X = local_rng.rand(n_samples, n_features).astype(global_dtype)
 
     query = (
-        X if query_is_train else local_rng.rand(n_query_pts, n_features).astype(dtype)
+        X
+        if query_is_train
+        else local_rng.rand(n_query_pts, n_features).astype(global_dtype)
     )
 
     results_nodist = []
@@ -221,7 +220,6 @@ def test_unsupervised_kneighbors(
 )
 @pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
-@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize(
     "NeighborsMixinSubclass",
     [
@@ -232,13 +230,13 @@ def test_unsupervised_kneighbors(
     ],
 )
 def test_neigh_predictions_algorithm_agnosticity(
+    global_dtype,
     n_samples,
     n_features,
     n_query_pts,
     metric,
     n_neighbors,
     radius,
-    dtype,
     NeighborsMixinSubclass,
 ):
     # The different algorithms must return identical predictions results
@@ -246,10 +244,10 @@ def test_neigh_predictions_algorithm_agnosticity(
 
     # Redefining the rng locally to use the same generated X
     local_rng = np.random.RandomState(0)
-    X = local_rng.rand(n_samples, n_features).astype(dtype)
+    X = local_rng.rand(n_samples, n_features).astype(global_dtype)
     y = local_rng.randint(3, size=n_samples)
 
-    query = local_rng.rand(n_query_pts, n_features).astype(dtype)
+    query = local_rng.rand(n_query_pts, n_features).astype(global_dtype)
 
     predict_results = []
 
@@ -289,11 +287,10 @@ def test_neigh_predictions_algorithm_agnosticity(
         neighbors.NearestNeighbors,
     ],
 )
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_unsupervised_inputs(KNeighborsMixinSubclass, dtype):
+def test_unsupervised_inputs(global_dtype, KNeighborsMixinSubclass):
     # Test unsupervised inputs for neighbors estimators
 
-    X = rng.random_sample((10, 3)).astype(dtype)
+    X = rng.random_sample((10, 3)).astype(global_dtype)
     y = rng.randint(3, size=10)
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
     nbrs_fid.fit(X)
@@ -307,8 +304,8 @@ def test_unsupervised_inputs(KNeighborsMixinSubclass, dtype):
 
         dist2, ind2 = nbrs.kneighbors(X)
 
-        assert_array_almost_equal(dist1, dist2)
-        assert_array_almost_equal(ind1, ind2)
+        assert_allclose(dist1, dist2)
+        assert_allclose(ind1, ind2)
 
 
 def test_n_neighbors_datatype():
@@ -359,8 +356,8 @@ def check_precomputed(make_train_test, estimators):
         )
         nbrs_D.fit(DXX)
         dist_D, ind_D = getattr(nbrs_D, method)(DYX)
-        assert_array_almost_equal(dist_X, dist_D)
-        assert_array_almost_equal(ind_X, ind_D)
+        assert_allclose(dist_X, dist_D)
+        assert_allclose(ind_X, ind_D)
 
         # Check auto works too
         nbrs_D = neighbors.NearestNeighbors(
@@ -368,14 +365,14 @@ def check_precomputed(make_train_test, estimators):
         )
         nbrs_D.fit(DXX)
         dist_D, ind_D = getattr(nbrs_D, method)(DYX)
-        assert_array_almost_equal(dist_X, dist_D)
-        assert_array_almost_equal(ind_X, ind_D)
+        assert_allclose(dist_X, dist_D)
+        assert_allclose(ind_X, ind_D)
 
         # Check X=None in prediction
         dist_X, ind_X = getattr(nbrs_X, method)(None)
         dist_D, ind_D = getattr(nbrs_D, method)(None)
-        assert_array_almost_equal(dist_X, dist_D)
-        assert_array_almost_equal(ind_X, ind_D)
+        assert_allclose(dist_X, dist_D)
+        assert_allclose(ind_X, ind_D)
 
         # Must raise a ValueError if the matrix is not of correct shape
         with pytest.raises(ValueError):
@@ -388,7 +385,7 @@ def check_precomputed(make_train_test, estimators):
         pred_X = est.fit(X, target).predict(Y)
         est.metric = "precomputed"
         pred_D = est.fit(DXX, target).predict(DYX)
-        assert_array_almost_equal(pred_X, pred_D)
+        assert_allclose(pred_X, pred_D)
 
 
 def test_precomputed_dense():
@@ -527,16 +524,15 @@ def test_precomputed_cross_validation():
         assert_array_equal(metric_score, precomp_score)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
 def test_unsupervised_radius_neighbors(
-    dtype, n_samples=20, n_features=5, n_query_pts=2, radius=0.5, random_state=0
+    global_dtype, n_samples=20, n_features=5, n_query_pts=2, radius=0.5, random_state=0
 ):
     # Test unsupervised radius-based query
     rng = np.random.RandomState(random_state)
 
-    X = rng.rand(n_samples, n_features).astype(dtype)
+    X = rng.rand(n_samples, n_features).astype(global_dtype)
 
-    test = rng.rand(n_query_pts, n_features).astype(dtype)
+    test = rng.rand(n_query_pts, n_features).astype(global_dtype)
 
     for p in P:
         results = []
@@ -557,26 +553,23 @@ def test_unsupervised_radius_neighbors(
                 i1[:] = i1[j]
             results.append((dist, ind))
 
-            assert_array_almost_equal(
-                np.concatenate(list(ind)), np.concatenate(list(ind1))
-            )
+            assert_allclose(np.concatenate(list(ind)), np.concatenate(list(ind1)))
 
         for i in range(len(results) - 1):
-            assert_array_almost_equal(
+            assert_allclose(
                 np.concatenate(list(results[i][0])),
                 np.concatenate(list(results[i + 1][0])),
             ),
-            assert_array_almost_equal(
+            assert_allclose(
                 np.concatenate(list(results[i][1])),
                 np.concatenate(list(results[i + 1][1])),
             )
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 def test_kneighbors_classifier(
-    dtype,
+    global_dtype,
     algorithm,
     weights,
     n_samples=40,
@@ -587,7 +580,7 @@ def test_kneighbors_classifier(
 ):
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features).astype(dtype) - 1
+    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
     y_str = y.astype(str)
 
@@ -604,13 +597,17 @@ def test_kneighbors_classifier(
     assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
 def test_kneighbors_classifier_float_labels(
-    dtype, n_samples=40, n_features=5, n_test_pts=10, n_neighbors=5, random_state=0
+    global_dtype,
+    n_samples=40,
+    n_features=5,
+    n_test_pts=10,
+    n_neighbors=5,
+    random_state=0,
 ):
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features).astype(dtype) - 1
+    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
 
     knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
@@ -620,12 +617,11 @@ def test_kneighbors_classifier_float_labels(
     assert_array_equal(y_pred, y[:n_test_pts])
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_kneighbors_classifier_predict_proba(dtype):
+def test_kneighbors_classifier_predict_proba(global_dtype):
     # Test KNeighborsClassifier.predict_proba() method
     X = np.array(
         [[0, 2, 0], [0, 2, 1], [2, 0, 0], [2, 2, 0], [0, 0, 2], [0, 0, 1]]
-    ).astype(dtype)
+    ).astype(global_dtype)
     y = np.array([4, 4, 5, 5, 1, 1])
     cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
     cls.fit(X, y)
@@ -650,14 +646,13 @@ def test_kneighbors_classifier_predict_proba(dtype):
     cls.fit(X, y)
     y_prob = cls.predict_proba(np.array([[0, 2, 0], [2, 2, 2]]))
     real_prob = np.array([[0, 1, 0], [0, 0.4, 0.6]])
-    assert_array_almost_equal(real_prob, y_prob)
+    assert_allclose(real_prob, y_prob)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 def test_radius_neighbors_classifier(
-    dtype,
+    global_dtype,
     algorithm,
     weights,
     n_samples=40,
@@ -668,7 +663,7 @@ def test_radius_neighbors_classifier(
 ):
     # Test radius-based classification
     rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features).astype(dtype) - 1
+    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
     y_str = y.astype(str)
 
@@ -699,22 +694,21 @@ def test_radius_neighbors_classifier_kwargs_is_deprecated():
         neighbors.RadiusNeighborsClassifier(**extra_kwargs)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 @pytest.mark.parametrize("outlier_label", [0, -1, None])
 def test_radius_neighbors_classifier_when_no_neighbors(
-    dtype, algorithm, weights, outlier_label
+    global_dtype, algorithm, weights, outlier_label
 ):
     # Test radius-based classifier when no neighbors found.
     # In this case it should rise an informative exception
 
-    X = np.array([[1.0, 1.0], [2.0, 2.0]]).astype(dtype)
+    X = np.array([[1.0, 1.0], [2.0, 2.0]]).astype(global_dtype)
     y = np.array([1, 2])
     radius = 0.1
 
-    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(dtype)  # no outliers
-    z2 = np.array([[1.01, 1.01], [1.4, 1.4]]).astype(dtype)  # one outlier
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(global_dtype)  # no outliers
+    z2 = np.array([[1.01, 1.01], [1.4, 1.4]]).astype(global_dtype)  # one outlier
 
     rnc = neighbors.RadiusNeighborsClassifier
     clf = rnc(
@@ -730,21 +724,22 @@ def test_radius_neighbors_classifier_when_no_neighbors(
             clf.predict(z2)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
-def test_radius_neighbors_classifier_outlier_labeling(dtype, algorithm, weights):
+def test_radius_neighbors_classifier_outlier_labeling(global_dtype, algorithm, weights):
     # Test radius-based classifier when no neighbors found and outliers
     # are labeled.
 
     X = np.array(
         [[1.0, 1.0], [2.0, 2.0], [0.99, 0.99], [0.98, 0.98], [2.01, 2.01]]
-    ).astype(dtype)
+    ).astype(global_dtype)
     y = np.array([1, 2, 1, 1, 2])
     radius = 0.1
 
-    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(dtype)  # no outliers
-    z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01, 2.01]]).astype(dtype)  # one outlier
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(global_dtype)  # no outliers
+    z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01, 2.01]]).astype(
+        global_dtype
+    )  # one outlier
     correct_labels1 = np.array([1, 2])
     correct_labels2 = np.array([-1, 1, 2])
     outlier_proba = np.array([0, 0])
@@ -759,7 +754,9 @@ def test_radius_neighbors_classifier_outlier_labeling(dtype, algorithm, weights)
 
     # test outlier_labeling of using predict_proba()
     RNC = neighbors.RadiusNeighborsClassifier
-    X = np.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]).astype(dtype)
+    X = np.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]).astype(
+        global_dtype
+    )
     y = np.array([0, 2, 2, 1, 1, 1, 3, 3, 3, 3])
 
     # test outlier_label scalar verification
@@ -896,7 +893,7 @@ def test_neighbors_regressors_zero_distance():
                 radius=radius, weights=weights, algorithm=algorithm
             )
             rnn.fit(X, y)
-            assert_array_almost_equal(rnn_correct_labels, rnn.predict(z))
+            assert_allclose(rnn_correct_labels, rnn.predict(z))
 
         for weights, corr_labels in zip(
             ["uniform", "distance"], [knn_correct_unif, knn_correct_dist]
@@ -905,7 +902,7 @@ def test_neighbors_regressors_zero_distance():
                 n_neighbors=2, weights=weights, algorithm=algorithm
             )
             knn.fit(X, y)
-            assert_array_almost_equal(corr_labels, knn.predict(z))
+            assert_allclose(corr_labels, knn.predict(z))
 
 
 def test_radius_neighbors_boundary_handling():
@@ -1037,7 +1034,7 @@ def test_RadiusNeighborsClassifier_multioutput():
         y_pred_mo = rnn_mo.predict(X_test)
 
         assert y_pred_mo.shape == y_test.shape
-        assert_array_almost_equal(y_pred_mo, y_pred_so)
+        assert_allclose(y_pred_mo, y_pred_so)
 
 
 def test_kneighbors_classifier_sparse(
@@ -1094,14 +1091,14 @@ def test_KNeighborsClassifier_multioutput():
         y_pred_mo = knn_mo.predict(X_test)
 
         assert y_pred_mo.shape == y_test.shape
-        assert_array_almost_equal(y_pred_mo, y_pred_so)
+        assert_allclose(y_pred_mo, y_pred_so)
 
         # Check proba
         y_pred_proba_mo = knn_mo.predict_proba(X_test)
         assert len(y_pred_proba_mo) == n_output
 
         for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
-            assert_array_almost_equal(proba_mo, proba_so)
+            assert_allclose(proba_mo, proba_so)
 
 
 def test_kneighbors_regressor(
@@ -1150,7 +1147,7 @@ def test_KNeighborsRegressor_multioutput_uniform_weight():
 
         assert y_pred.shape == y_test.shape
         assert y_pred_idx.shape == y_test.shape
-        assert_array_almost_equal(y_pred, y_pred_idx)
+        assert_allclose(y_pred, y_pred_idx)
 
 
 def test_kneighbors_regressor_multioutput(
@@ -1242,7 +1239,7 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
 
         assert y_pred_idx.shape == y_test.shape
         assert y_pred.shape == y_test.shape
-        assert_array_almost_equal(y_pred, y_pred_idx)
+        assert_allclose(y_pred, y_pred_idx)
 
 
 def test_RadiusNeighborsRegressor_multioutput(
@@ -1349,7 +1346,7 @@ def test_kneighbors_graph():
     assert_array_equal(A.toarray(), np.eye(A.shape[0]))
 
     A = neighbors.kneighbors_graph(X, 1, mode="distance")
-    assert_array_almost_equal(
+    assert_allclose(
         A.toarray(), [[0.00, 1.01, 0.0], [1.01, 0.0, 0.0], [0.00, 1.40716026, 0.0]]
     )
 
@@ -1358,7 +1355,7 @@ def test_kneighbors_graph():
     assert_array_equal(A.toarray(), [[1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 1.0]])
 
     A = neighbors.kneighbors_graph(X, 2, mode="distance")
-    assert_array_almost_equal(
+    assert_allclose(
         A.toarray(),
         [
             [0.0, 1.01, 2.23606798],
@@ -1369,7 +1366,7 @@ def test_kneighbors_graph():
 
     # n_neighbors = 3
     A = neighbors.kneighbors_graph(X, 3, mode="connectivity", include_self=True)
-    assert_array_almost_equal(A.toarray(), [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+    assert_allclose(A.toarray(), [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
 
 @pytest.mark.parametrize("n_neighbors", [1, 2, 3])
@@ -1381,7 +1378,7 @@ def test_kneighbors_graph_sparse(n_neighbors, mode, seed=36):
     X = rng.randn(10, 10)
     Xcsr = csr_matrix(X)
 
-    assert_array_almost_equal(
+    assert_allclose(
         neighbors.kneighbors_graph(X, n_neighbors, mode=mode).toarray(),
         neighbors.kneighbors_graph(Xcsr, n_neighbors, mode=mode).toarray(),
     )
@@ -1395,7 +1392,7 @@ def test_radius_neighbors_graph():
     assert_array_equal(A.toarray(), [[1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0]])
 
     A = neighbors.radius_neighbors_graph(X, 1.5, mode="distance")
-    assert_array_almost_equal(
+    assert_allclose(
         A.toarray(), [[0.0, 1.01, 0.0], [1.01, 0.0, 1.40716026], [0.0, 1.40716026, 0.0]]
     )
 
@@ -1409,7 +1406,7 @@ def test_radius_neighbors_graph_sparse(n_neighbors, mode, seed=36):
     X = rng.randn(10, 10)
     Xcsr = csr_matrix(X)
 
-    assert_array_almost_equal(
+    assert_allclose(
         neighbors.radius_neighbors_graph(X, n_neighbors, mode=mode).toarray(),
         neighbors.radius_neighbors_graph(Xcsr, n_neighbors, mode=mode).toarray(),
     )
@@ -1488,14 +1485,13 @@ def test_neighbors_badargs():
         - set(["pyfunc", *BOOL_METRICS])
     ),
 )
-@pytest.mark.parametrize("dtype", DTYPES)
 def test_neighbors_metrics(
-    dtype, metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
+    global_dtype, metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
 ):
     # Test computing the neighbors for various metrics
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    X_train = rng.rand(n_samples, n_features).astype(dtype)
-    X_test = rng.rand(n_query_pts, n_features).astype(dtype)
+    X_train = rng.rand(n_samples, n_features).astype(global_dtype)
+    X_test = rng.rand(n_query_pts, n_features).astype(global_dtype)
 
     metric_params_list = _generate_test_params_for(metric, n_features)
 
@@ -1535,10 +1531,10 @@ def test_neighbors_metrics(
                 and algorithm == "brute"
                 and sp_version >= parse_version("1.6.0")
             ):
-                if dtype == np.float64:
+                if global_dtype == np.float64:
                     # Warning from sklearn.metrics._dist_metrics.WMinkowskiDistance
                     ExceptionToAssert = FutureWarning
-                if dtype == np.float32:
+                if global_dtype == np.float32:
                     # Warning from Scipy
                     ExceptionToAssert = DeprecationWarning
 
@@ -1565,13 +1561,12 @@ def test_neighbors_metrics(
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
-@pytest.mark.parametrize("dtype", DTYPES)
 def test_kneighbors_brute_backend(
-    dtype, metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
+    global_dtype, metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
 ):
     # Both backend for the 'brute' algorithm of kneighbors must give identical results.
-    X_train = rng.rand(n_samples, n_features).astype(dtype)
-    X_test = rng.rand(n_query_pts, n_features).astype(dtype)
+    X_train = rng.rand(n_samples, n_features).astype(global_dtype)
+    X_test = rng.rand(n_query_pts, n_features).astype(global_dtype)
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -1584,10 +1579,10 @@ def test_kneighbors_brute_backend(
     # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
     ExceptionToAssert = None
     if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
-        if dtype == np.float64:
+        if global_dtype == np.float64:
             # Warning from sklearn.metrics._dist_metrics.WMinkowskiDistance
             ExceptionToAssert = FutureWarning
-        if dtype == np.float32:
+        if global_dtype == np.float32:
             # Warning from Scipy
             ExceptionToAssert = DeprecationWarning
 
@@ -1637,17 +1632,16 @@ def test_callable_metric():
     dist1, ind1 = nbrs1.kneighbors(X)
     dist2, ind2 = nbrs2.kneighbors(X)
 
-    assert_array_almost_equal(dist1, dist2)
+    assert_allclose(dist1, dist2)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
-@pytest.mark.parametrize("dtype", DTYPES)
 def test_valid_brute_metric_for_auto_algorithm(
-    dtype, metric, n_samples=20, n_features=12
+    global_dtype, metric, n_samples=20, n_features=12
 ):
-    X = rng.rand(n_samples, n_features).astype(dtype)
+    X = rng.rand(n_samples, n_features).astype(global_dtype)
     Xcsr = csr_matrix(X)
 
     metric_params_list = _generate_test_params_for(metric, n_features)
@@ -1892,9 +1886,9 @@ def test_same_knn_parallel(algorithm):
     graph_parallel = clf.kneighbors_graph(X_test, mode="distance").toarray()
 
     assert_array_equal(y, y_parallel)
-    assert_array_almost_equal(dist, dist_parallel)
+    assert_allclose(dist, dist_parallel)
     assert_array_equal(ind, ind_parallel)
-    assert_array_almost_equal(graph, graph_parallel)
+    assert_allclose(graph, graph_parallel)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -1918,9 +1912,9 @@ def test_same_radius_neighbors_parallel(algorithm):
 
     assert_array_equal(y, y_parallel)
     for i in range(len(dist)):
-        assert_array_almost_equal(dist[i], dist_parallel[i])
+        assert_allclose(dist[i], dist_parallel[i])
         assert_array_equal(ind[i], ind_parallel[i])
-    assert_array_almost_equal(graph, graph_parallel)
+    assert_allclose(graph, graph_parallel)
 
 
 @pytest.mark.parametrize("backend", JOBLIB_BACKENDS)
@@ -2054,7 +2048,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
         y_pred_chain = reg_chain.fit(X, y).predict(X2)
         y_pred_compact = reg_compact.fit(X, y).predict(X2)
-        assert_array_almost_equal(y_pred_chain, y_pred_compact)
+        assert_allclose(y_pred_chain, y_pred_compact)
 
 
 @pytest.mark.parametrize(
