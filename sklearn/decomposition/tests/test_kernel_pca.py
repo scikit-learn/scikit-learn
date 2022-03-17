@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 
 from sklearn.utils._testing import (
     assert_array_almost_equal,
@@ -244,7 +245,12 @@ def test_leave_zero_eig():
     X_fit = np.array([[1, 1], [0, 0]])
 
     # Assert that even with all np warnings on, there is no div by zero warning
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        # There might be warnings about the kernel being badly conditioned,
+        # but there should not be warnings about division by zero.
+        # (Numpy division by zero warning can have many message variants, but
+        # at least we know that it is a RuntimeWarning so lets check only this)
+        warnings.simplefilter("error", RuntimeWarning)
         with np.errstate(all="warn"):
             k = KernelPCA(n_components=2, remove_zero_eig=False, eigen_solver="dense")
             # Fit, then transform
@@ -253,13 +259,6 @@ def test_leave_zero_eig():
             B = k.fit_transform(X_fit)
             # Compare
             assert_array_almost_equal(np.abs(A), np.abs(B))
-
-    for w in record:
-        # There might be warnings about the kernel being badly conditioned,
-        # but there should not be warnings about division by zero.
-        # (Numpy division by zero warning can have many message variants, but
-        # at least we know that it is a RuntimeWarning so lets check only this)
-        assert not issubclass(w.category, RuntimeWarning)
 
 
 def test_kernel_pca_precomputed():

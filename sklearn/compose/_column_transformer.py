@@ -453,8 +453,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 f"Transformer {name} (type {type(trans).__name__}) does "
                 "not provide get_feature_names_out."
             )
-        if isinstance(column, Iterable) and not all(
-            isinstance(col, str) for col in column
+        if isinstance(column, slice) or (
+            isinstance(column, Iterable)
+            and not all(isinstance(col, str) for col in column)
         ):
             column = _safe_indexing(feature_names_in, column)
         return trans.get_feature_names_out(column)
