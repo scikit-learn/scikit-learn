@@ -145,14 +145,14 @@ package:
 - category: main
   dependencies: {}
   hash:
-    md5: a751ec502589ebdc2eceb183ff602569
-    sha256: df50dce9c5d44daf1233ec4be7b1b6c4674a4d715ff55fe43ad27c272765da82
+    md5: 84be5301069417a2221187d2f435e0f7
+    sha256: 74d8c1fbccae1a78c9bd2b2d1cda73df425cc28717a637198c23bd1c9b53b60e
   manager: conda
   name: tzdata
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/noarch/tzdata-2021e-he74cb21_0.tar.bz2
-  version: 2021e
+  url: https://conda.anaconda.org/conda-forge/noarch/tzdata-2022a-h191b570_0.tar.bz2
+  version: 2022a
 - category: main
   dependencies:
     font-ttf-dejavu-sans-mono: ''
@@ -1541,14 +1541,14 @@ package:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
   hash:
-    md5: 09625337da8fa8676b2ddbba6920f4a3
-    sha256: a1da57c89b227e68b6e0b006a90eb90349900714b0177d1c97194c7f76a772e8
+    md5: 09b5a2c6ef2f552f6b616e68e8cf14c5
+    sha256: a79ec40cd660b4f2857e3336db23b26feec00735fd7922d6a45c73db54cac4e9
   manager: conda
   name: setuptools
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/setuptools-60.9.3-py310hff52083_0.tar.bz2
-  version: 60.9.3
+  url: https://conda.anaconda.org/conda-forge/linux-64/setuptools-60.10.0-py310hff52083_0.tar.bz2
+  version: 60.10.0
 - category: main
   dependencies:
     libgcc-ng: '>=9.4.0'

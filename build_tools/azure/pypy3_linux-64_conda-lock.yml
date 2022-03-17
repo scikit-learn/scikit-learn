@@ -955,14 +955,14 @@ package:
     python: '>=3.7,<3.8.0a0'
     python_abi: 3.7 *_pypy37_pp73
   hash:
-    md5: 223befba39f27e5b4b5a11a4131b6dbd
-    sha256: 1b842337ca4bc2221781550575e869eae5b423bf15db6857435e72b3d20e5af6
+    md5: 674376de1c69a1fff675e06907b3a714
+    sha256: 6083471f7828acc922cc7d72f99836570efce218aa5a7cf6768f279a4ddb1df6
   manager: conda
   name: setuptools
   optional: false
   platform: linux-64
-  url: https://conda.anaconda.org/conda-forge/linux-64/setuptools-60.9.3-py37h9c2f6ca_0.tar.bz2
-  version: 60.9.3
+  url: https://conda.anaconda.org/conda-forge/linux-64/setuptools-60.10.0-py37h9c2f6ca_0.tar.bz2
+  version: 60.10.0
 - category: main
   dependencies:
     python: ''

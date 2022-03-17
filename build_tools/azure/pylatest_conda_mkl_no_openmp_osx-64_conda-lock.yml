@@ -921,13 +921,13 @@ package:
     python: '>=3.9,<3.10.0a0'
     tornado: ''
   hash:
-    md5: 25b857639a4a5e32f4e2cfb0e3754d07
-    sha256: a38f0b6fd1331f529f57248d3fe638c73a144ef661171b6cb8f1893873d7ed0f
+    md5: 7a58b76a491c78d0be87c83f63a36d02
+    sha256: eb004c2439fa349ada48f0870eff6e96815c7052245854f01581338d5d30d0d9
   manager: conda
   name: matplotlib
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-3.5.1-py39hecd8cb5_0.conda
+  url: https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-3.5.1-py39hecd8cb5_1.conda
   version: 3.5.1
 - category: main
   dependencies:
@@ -943,13 +943,13 @@ package:
     python: '>=3.9,<3.10.0a0'
     python-dateutil: '>=2.7'
   hash:
-    md5: 9266f74a4f7ab0b1dfff8802f530c790
-    sha256: 57cb587ccba2188734218bfc2a9beaab578abaff702b51494af3d85ee8797918
+    md5: 999c6f2f8542a0dd322f97c94de45a63
+    sha256: 78db95e98bef53c3c4b514368f321ac2601f4d68f4e95a35dbef2ffb489b13eb
   manager: conda
   name: matplotlib-base
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-base-3.5.1-py39hfb0c5b7_0.conda
+  url: https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-base-3.5.1-py39hfb0c5b7_1.conda
   version: 3.5.1
 - category: main
   dependencies:

@@ -211,14 +211,14 @@ package:
 - category: main
   dependencies: {}
   hash:
-    md5: a751ec502589ebdc2eceb183ff602569
-    sha256: df50dce9c5d44daf1233ec4be7b1b6c4674a4d715ff55fe43ad27c272765da82
+    md5: 84be5301069417a2221187d2f435e0f7
+    sha256: 74d8c1fbccae1a78c9bd2b2d1cda73df425cc28717a637198c23bd1c9b53b60e
   manager: conda
   name: tzdata
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/noarch/tzdata-2021e-he74cb21_0.tar.bz2
-  version: 2021e
+  url: https://conda.anaconda.org/conda-forge/noarch/tzdata-2022a-h191b570_0.tar.bz2
+  version: 2022a
 - category: main
   dependencies: {}
   hash:
@@ -573,13 +573,13 @@ package:
     sigtool: ''
     tapi: '>=1100.0.11,<1101.0a0'
   hash:
-    md5: 9f1b57a0523a855b34ad311ebbdbca73
-    sha256: ae3aa564c42018bc33c44e0b15b063f994abd5b8255ab9a12830898510693e79
+    md5: 4a5fdb42da6da735f2f4778d63b4b9f0
+    sha256: 63e76863feee9c153e861c057eea7a20f18cd0e3e841413323ef80e83a871c13
   manager: conda
   name: ld64_osx-64
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/ld64_osx-64-609-hc6b1d1e_9.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/ld64_osx-64-609-hc6b1d1e_10.tar.bz2
   version: '609'
 - category: main
   dependencies:
@@ -734,13 +734,13 @@ package:
     libzlib: '>=1.2.11,<1.3.0a0'
     sigtool: ''
   hash:
-    md5: 5837010cf2c88448f2e53cc76b58e0da
-    sha256: 9c90477cf773d0d1d9428e30110e64db8db5e3c67ef48a0dd71965a7b4f862f3
+    md5: 7a405e9a1e9e25749153928a70c4bc53
+    sha256: 0eaac53b611b77eedd6e55dc268a02512df0dc3c242df5d5d26f59affe0f0dd6
   manager: conda
   name: cctools_osx-64
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/cctools_osx-64-973.0.1-h609b070_9.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/cctools_osx-64-973.0.1-h609b070_10.tar.bz2
   version: 973.0.1
 - category: main
   dependencies:
@@ -851,16 +851,16 @@ package:
   version: '2.12'
 - category: main
   dependencies:
-    ld64_osx-64: 609 hc6b1d1e_9
+    ld64_osx-64: 609 hc6b1d1e_10
     libllvm12: '>=12.0.1,<12.1.0a0'
   hash:
-    md5: 81dfa85f2c9b3c771f257f58d7a89076
-    sha256: 9b21e68835a5e8172cda6bc567fac3a2d1da05a0dffda12581bc9ab3df6f8819
+    md5: 96b0003496104393c556588ed4b0ee91
+    sha256: cba857afd9e38fe789923789fe7128931a441f8b332c8a3d2904995d5eccca43
   manager: conda
   name: ld64
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/ld64-609-h4dfd969_9.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/ld64-609-h4dfd969_10.tar.bz2
   version: '609'
 - category: main
   dependencies:
@@ -1039,17 +1039,17 @@ package:
   version: 2.0.1
 - category: main
   dependencies:
-    cctools_osx-64: 973.0.1 h609b070_9
-    ld64: 609 h4dfd969_9
+    cctools_osx-64: 973.0.1 h609b070_10
+    ld64: 609 h4dfd969_10
     libllvm12: '>=12.0.1,<12.1.0a0'
   hash:
-    md5: 38a13034cb2a25a79bb58ba9ffe3dab5
-    sha256: 02fbba115b405c0415aef64b1382e7dfef22ce1cadb320f38ca3244a6f5bfc95
+    md5: 17630c65071c7aecc3e41bbcc9993e4c
+    sha256: ca1ee39f9d049b89743952dedc7d60910d1fdfcf1f9ec86f5e4afa13cd10439e
   manager: conda
   name: cctools
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/cctools-973.0.1-ha54d4a6_9.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/cctools-973.0.1-ha54d4a6_10.tar.bz2
   version: 973.0.1
 - category: main
   dependencies:
@@ -1245,14 +1245,14 @@ package:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
   hash:
-    md5: ee4182092a27ab5d12ca4c07a5a72c2f
-    sha256: f401264b39c1011faf84a464a61b13c3ce3ca1a9c9c47e50081897e5cc230e04
+    md5: 8b111f660850143319c7d3715b083246
+    sha256: f79d6a24e64d7f8704eec8b49519c5ff71affd38017f76b462020ee962dc6d0c
   manager: conda
   name: setuptools
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/setuptools-60.9.3-py310h2ec42d9_0.tar.bz2
-  version: 60.9.3
+  url: https://conda.anaconda.org/conda-forge/osx-64/setuptools-60.10.0-py310h2ec42d9_0.tar.bz2
+  version: 60.10.0
 - category: main
   dependencies:
     python: '>=3.10,<3.11.0a0'
@@ -1589,14 +1589,14 @@ package:
     pysocks: '>=1.5.6,<2.0,!=1.5.7'
     python: <4.0
   hash:
-    md5: 53f1387c68c21cecb386e2cde51b3f7c
-    sha256: 506fe851773a118b44e84ef97fab91dd5ef37fbb1922594dea830a8041e2d205
+    md5: 0ea179ee251aa7100807c35bc0252693
+    sha256: 111dec99470869fa03e72bf2102f16db55c29538797c08e7765e9d6515f810df
   manager: conda
   name: urllib3
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/noarch/urllib3-1.26.8-pyhd8ed1ab_1.tar.bz2
-  version: 1.26.8
+  url: https://conda.anaconda.org/conda-forge/noarch/urllib3-1.26.9-pyhd8ed1ab_0.tar.bz2
+  version: 1.26.9
 - category: main
   dependencies:
     cctools_osx-64: ''
