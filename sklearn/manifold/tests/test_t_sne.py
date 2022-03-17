@@ -47,8 +47,6 @@ pytestmark = pytest.mark.filterwarnings(
     "ignore:The PCA initialization in TSNE will change to have the standard deviation",
 )
 
-DTYPES = (np.float64, np.float32)
-
 
 def test_gradient_descent_stops():
     # Test stopping conditions of gradient descent.
@@ -237,8 +235,7 @@ def test_binary_perplexity_stability():
             assert_array_almost_equal(P1, last_P1, decimal=4)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_gradient(dtype):
+def test_gradient(global_dtype):
     # Test gradient of Kullback-Leibler divergence.
     random_state = check_random_state(0)
 
@@ -247,10 +244,10 @@ def test_gradient(dtype):
     n_components = 2
     alpha = 1.0
 
-    distances = random_state.randn(n_samples, n_features).astype(dtype)
+    distances = random_state.randn(n_samples, n_features).astype(global_dtype)
     distances = np.abs(distances.dot(distances.T))
     np.fill_diagonal(distances, 0.0)
-    X_embedded = random_state.randn(n_samples, n_components).astype(dtype)
+    X_embedded = random_state.randn(n_samples, n_components).astype(global_dtype)
 
     P = _joint_probabilities(distances, desired_perplexity=25.0, verbose=0)
 
@@ -263,13 +260,12 @@ def test_gradient(dtype):
     assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0, decimal=5)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_trustworthiness(dtype):
+def test_trustworthiness(global_dtype):
     # Test trustworthiness score.
     random_state = check_random_state(0)
 
     # Affine transformation
-    X = random_state.randn(100, 2).astype(dtype)
+    X = random_state.randn(100, 2).astype(global_dtype)
     assert trustworthiness(X, 5.0 + X / 10.0) == 1.0
 
     # Randomly shuffled
@@ -286,12 +282,11 @@ def test_trustworthiness(dtype):
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
 @pytest.mark.parametrize("init", ("random", "pca"))
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_preserve_trustworthiness_approximately(method, init, dtype):
+def test_preserve_trustworthiness_approximately(method, init, global_dtype):
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     n_components = 2
-    X = random_state.randn(50, n_components).astype(dtype)
+    X = random_state.randn(50, n_components).astype(global_dtype)
     tsne = TSNE(
         n_components=n_components,
         init=init,
@@ -305,12 +300,11 @@ def test_preserve_trustworthiness_approximately(method, init, dtype):
     assert t > 0.85
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_optimization_minimizes_kl_divergence(dtype):
+def test_optimization_minimizes_kl_divergence(global_dtype):
     """t-SNE should give a lower KL divergence with more iterations."""
     random_state = check_random_state(0)
     X, _ = make_blobs(n_features=3, random_state=random_state)
-    X = X.astype(dtype)
+    X = X.astype(global_dtype)
     kl_divergences = []
     for n_iter in [250, 300, 350]:
         tsne = TSNE(
@@ -328,11 +322,10 @@ def test_optimization_minimizes_kl_divergence(dtype):
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_fit_csr_matrix(method, dtype):
+def test_fit_csr_matrix(method, global_dtype):
     # X can be a sparse matrix.
     rng = check_random_state(0)
-    X = rng.randn(50, 2).astype(dtype)
+    X = rng.randn(50, 2).astype(global_dtype)
     X[(rng.randint(0, 50, 25), rng.randint(0, 2, 25))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(
@@ -370,12 +363,11 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
         assert t > 0.95
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_trustworthiness_not_euclidean_metric(dtype):
+def test_trustworthiness_not_euclidean_metric(global_dtype):
     # Test trustworthiness with a metric different from 'euclidean' and
     # 'precomputed'
     random_state = check_random_state(0)
-    X = random_state.randn(100, 2).astype(dtype)
+    X = random_state.randn(100, 2).astype(global_dtype)
     assert trustworthiness(X, X, metric="cosine") == trustworthiness(
         pairwise_distances(X, metric="cosine"), X, metric="precomputed"
     )
@@ -450,16 +442,15 @@ def test_high_perplexity_precomputed_sparse_distances():
 
 
 @ignore_warnings(category=EfficiencyWarning)
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_sparse_precomputed_distance(dtype):
+def test_sparse_precomputed_distance(global_dtype):
     """Make sure that TSNE works identically for sparse and dense matrix"""
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
 
     D_sparse = kneighbors_graph(
         X, n_neighbors=100, mode="distance", include_self=True
-    ).astype(dtype)
-    D = pairwise_distances(X).astype(dtype)
+    ).astype(global_dtype)
+    D = pairwise_distances(X).astype(global_dtype)
     assert sp.issparse(D_sparse)
     assert_almost_equal(D_sparse.A, D)
 
@@ -496,12 +487,11 @@ def test_init_not_available():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_init_ndarray(dtype):
+def test_init_ndarray(global_dtype):
     # Initialize TSNE with ndarray and test fit
-    tsne = TSNE(init=np.zeros((100, 2), dtype=dtype), learning_rate="auto")
-    X_embedded = tsne.fit_transform(np.ones((100, 5), dtype=dtype))
-    assert_array_equal(np.zeros((100, 2), dtype=dtype), X_embedded)
+    tsne = TSNE(init=np.zeros((100, 2), dtype=global_dtype), learning_rate="auto")
+    X_embedded = tsne.fit_transform(np.ones((100, 5), dtype=global_dtype))
+    assert_array_equal(np.zeros((100, 2), dtype=global_dtype), X_embedded)
 
 
 def test_init_ndarray_precomputed():
@@ -574,13 +564,12 @@ def test_n_components_range():
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_early_exaggeration_used(dtype):
+def test_early_exaggeration_used(global_dtype):
     # check that the ``early_exaggeration`` parameter has an effect
     random_state = check_random_state(0)
     n_components = 2
     methods = ["exact", "barnes_hut"]
-    X = random_state.randn(25, n_components).astype(dtype)
+    X = random_state.randn(25, n_components).astype(global_dtype)
     for method in methods:
         tsne = TSNE(
             n_components=n_components,
@@ -608,13 +597,12 @@ def test_early_exaggeration_used(dtype):
         assert not np.allclose(X_embedded1, X_embedded2)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_n_iter_used(dtype):
+def test_n_iter_used(global_dtype):
     # check that the ``n_iter`` parameter has an effect
     random_state = check_random_state(0)
     n_components = 2
     methods = ["exact", "barnes_hut"]
-    X = random_state.randn(25, n_components).astype(dtype)
+    X = random_state.randn(25, n_components).astype(global_dtype)
     for method in methods:
         for n_iter in [251, 500]:
             tsne = TSNE(
@@ -779,12 +767,10 @@ def test_reduction_to_one_component():
 
 
 @pytest.mark.parametrize("method", ["barnes_hut", "exact"])
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_64bit(method, dtype):
-    # Ensure 64bit arrays are handled correctly.
+def test_64bit(method):
     random_state = check_random_state(0)
 
-    X = random_state.randn(10, 2).astype(dtype, copy=False)
+    X = random_state.randn(10, 2).astype(np.float64, copy=False)
     tsne = TSNE(
         n_components=2,
         perplexity=2,
@@ -825,8 +811,7 @@ def test_kl_divergence_not_nan(method):
     assert not np.isnan(tsne.kl_divergence_)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_barnes_hut_angle(dtype):
+def test_barnes_hut_angle(global_dtype):
     # When Barnes-Hut's angle=0 this corresponds to the exact method.
     angle = 0.0
     perplexity = 10
@@ -836,9 +821,9 @@ def test_barnes_hut_angle(dtype):
         degrees_of_freedom = float(n_components - 1.0)
 
         random_state = check_random_state(0)
-        data = random_state.randn(n_samples, n_features).astype(dtype)
+        data = random_state.randn(n_samples, n_features).astype(global_dtype)
         distances = pairwise_distances(data)
-        params = random_state.randn(n_samples, n_components).astype(dtype)
+        params = random_state.randn(n_samples, n_components).astype(global_dtype)
         P = _joint_probabilities(distances, perplexity, verbose=0)
         kl_exact, grad_exact = _kl_divergence(
             params, P, degrees_of_freedom, n_samples, n_components
@@ -869,11 +854,10 @@ def test_barnes_hut_angle(dtype):
 
 
 @skip_if_32bit
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_n_iter_without_progress(dtype):
+def test_n_iter_without_progress(global_dtype):
     # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
-    X = random_state.randn(100, 10).astype(dtype)
+    X = random_state.randn(100, 10).astype(global_dtype)
     for method in ["barnes_hut", "exact"]:
         tsne = TSNE(
             n_iter_without_progress=-1,
@@ -902,11 +886,10 @@ def test_n_iter_without_progress(dtype):
 
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_min_grad_norm(dtype):
+def test_min_grad_norm(global_dtype):
     # Make sure that the parameter min_grad_norm is used correctly
     random_state = check_random_state(0)
-    X = random_state.randn(100, 2).astype(dtype)
+    X = random_state.randn(100, 2).astype(global_dtype)
     min_grad_norm = 0.002
     tsne = TSNE(min_grad_norm=min_grad_norm, verbose=2, random_state=0, method="exact")
 
@@ -948,11 +931,10 @@ def test_min_grad_norm(dtype):
 
 @pytest.mark.filterwarnings("ignore:The default learning rate in TSNE")
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_accessible_kl_divergence(dtype):
+def test_accessible_kl_divergence(global_dtype):
     # Ensures that the accessible kl_divergence matches the computed value
     random_state = check_random_state(0)
-    X = random_state.randn(50, 2).astype(dtype)
+    X = random_state.randn(50, 2).astype(global_dtype)
     tsne = TSNE(
         n_iter_without_progress=2, verbose=2, random_state=0, method="exact", n_iter=500
     )
@@ -1032,13 +1014,12 @@ def assert_uniform_grid(Y, try_name=None):
     assert largest_to_mean < 2, try_name
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_bh_match_exact(dtype):
+def test_bh_match_exact(global_dtype):
     # check that the ``barnes_hut`` method match the exact one when
     # ``angle = 0`` and ``perplexity > n_samples / 3``
     random_state = check_random_state(0)
     n_features = 10
-    X = random_state.randn(30, n_features).astype(dtype)
+    X = random_state.randn(30, n_features).astype(global_dtype)
     X_embeddeds = {}
     n_iter = {}
     for method in ["exact", "barnes_hut"]:
@@ -1061,8 +1042,7 @@ def test_bh_match_exact(dtype):
     assert_allclose(X_embeddeds["exact"], X_embeddeds["barnes_hut"], rtol=1e-4)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_gradient_bh_multithread_match_sequential(dtype):
+def test_gradient_bh_multithread_match_sequential(global_dtype):
     # check that the bh gradient with different num_threads gives the same
     # results
 
@@ -1075,8 +1055,8 @@ def test_gradient_bh_multithread_match_sequential(dtype):
     perplexity = 5
 
     random_state = check_random_state(0)
-    data = random_state.randn(n_samples, n_features).astype(dtype)
-    params = random_state.randn(n_samples, n_components).astype(dtype)
+    data = random_state.randn(n_samples, n_features).astype(global_dtype)
+    params = random_state.randn(n_samples, n_components).astype(global_dtype)
 
     n_neighbors = n_samples - 1
     distances_csr = (
@@ -1113,13 +1093,12 @@ def test_gradient_bh_multithread_match_sequential(dtype):
         assert_allclose(grad_multithread, grad_multithread)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_tsne_with_different_distance_metrics(dtype):
+def test_tsne_with_different_distance_metrics(global_dtype):
     """Make sure that TSNE works for different distance metrics"""
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
-    X = random_state.randn(50, n_components_original).astype(dtype)
+    X = random_state.randn(50, n_components_original).astype(global_dtype)
     metrics = ["manhattan", "cosine"]
     dist_funcs = [manhattan_distances, cosine_distances]
     for metric, dist_func in zip(metrics, dist_funcs):
@@ -1144,13 +1123,12 @@ def test_tsne_with_different_distance_metrics(dtype):
 
 # TODO: Remove in 1.2
 @pytest.mark.parametrize("init", [None, "random", "pca"])
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_tsne_init_futurewarning(init, dtype):
+def test_tsne_init_futurewarning(init, global_dtype):
     """Make sure that a FutureWarning is only raised when the
     init is not specified or is 'pca'."""
     random_state = check_random_state(0)
 
-    X = random_state.randn(5, 2).astype(dtype)
+    X = random_state.randn(5, 2).astype(global_dtype)
     kwargs = dict(learning_rate=200.0, init=init)
     tsne = TSNE(**{k: v for k, v in kwargs.items() if v is not None})
 
@@ -1168,13 +1146,12 @@ def test_tsne_init_futurewarning(init, dtype):
 
 # TODO: Remove in 1.2
 @pytest.mark.parametrize("learning_rate", [None, 200.0])
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_tsne_learning_rate_futurewarning(learning_rate, dtype):
+def test_tsne_learning_rate_futurewarning(learning_rate, global_dtype):
     """Make sure that a FutureWarning is only raised when the learning rate
     is not specified"""
     random_state = check_random_state(0)
 
-    X = random_state.randn(5, 2).astype(dtype)
+    X = random_state.randn(5, 2).astype(global_dtype)
     kwargs = dict(learning_rate=learning_rate, init="random")
     tsne = TSNE(**{k: v for k, v in kwargs.items() if v is not None})
 
@@ -1259,15 +1236,14 @@ def test_tsne_with_mahalanobis_distance():
 
 # FIXME: remove in 1.3 after deprecation of `square_distances`
 @pytest.mark.filterwarnings("ignore:The PCA initialization in TSNE will change")
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_tsne_deprecation_square_distances(dtype):
+def test_tsne_deprecation_square_distances(global_dtype):
     """Check that we raise a warning regarding the removal of
     `square_distances`.
 
     Also check the parameters do not have any effect.
     """
     random_state = check_random_state(0)
-    X = random_state.randn(30, 10).astype(dtype)
+    X = random_state.randn(30, 10).astype(global_dtype)
     tsne = TSNE(
         n_components=2,
         init="pca",
