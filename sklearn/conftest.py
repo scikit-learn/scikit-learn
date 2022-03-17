@@ -4,6 +4,7 @@ import platform
 import sys
 
 import pytest
+import numpy as np
 from threadpoolctl import threadpool_limits
 from _pytest.doctest import DoctestItem
 
@@ -40,6 +41,17 @@ dataset_fetchers = {
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
 }
+
+_SKIP32_MARK = pytest.mark.skipif(
+    environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
+    reason="Set SKLEARN_RUN_FLOAT32_TESTS=1 to run float32 dtype tests",
+)
+
+
+# Global fixtures
+@pytest.fixture(params=[pytest.param(np.float32, marks=_SKIP32_MARK), np.float64])
+def global_dtype(request):
+    yield request.param
 
 
 def _fetch_fixture(f):
