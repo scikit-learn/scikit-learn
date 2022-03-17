@@ -267,7 +267,7 @@ network tests are skipped.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When this environment variable is set to '1', the tests using the
-`global_dtype` `pytest.fixture` are also run float32 data.
+`global_dtype` fixture are also run on float32 data.
 When this environment variable is not set, the tests are only run on
 float64 data.
 

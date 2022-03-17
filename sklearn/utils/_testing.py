@@ -87,14 +87,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 assert_raises_regexp = assert_raises_regex
 
 
-DTYPE_RELATIVES_TOLERANCES = {
-    np.float32: 1e-4,
-    np.dtype("float32"): 1e-4,
-    np.float64: 1e-7,
-    np.dtype("float64"): 1e-7,
-}
-
-
 # TODO: Remove in 1.2
 @deprecated(  # type: ignore
     "`assert_warns` is deprecated in 1.0 and will be removed in 1.2."
@@ -398,9 +390,18 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
 def assert_allclose(
     actual, desired, rtol=None, atol=0.0, equal_nan=True, err_msg="", verbose=True
 ):
-    """
-    Adaptation of numpy.testing.assert_allclose to have tolerances
-    be set based on the input arrays' dtypes.
+    """dtype-aware variant of numpy.testing.assert_allclose
+
+    This variant introspects the least precise floating point dtype
+    in the input argument and automatically sets the relative tolerance
+    parameter to 1e-4 float32 and use 1e-7 otherwise (typically float64
+    in scikit-learn).
+
+    `atol` is always left to 0. by default. It should be adjusted manually
+    to an assertion-specific value in case there are null values expected
+    in `desired`.
+
+    The aggregate tolerance is `atol + rtol * abs(desired)`.
 
     Parameters
     ----------
@@ -446,7 +447,7 @@ def assert_allclose(
     dtypes = [actual.dtype, desired.dtype]
 
     if rtol is None:
-        rtols = [DTYPE_RELATIVES_TOLERANCES.get(dtype, 1e-9) for dtype in dtypes]
+        rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
         rtol = max(rtols)
 
     np_assert_allclose(actual, desired, rtol, atol, equal_nan, err_msg, verbose)

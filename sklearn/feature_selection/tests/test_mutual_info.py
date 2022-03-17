@@ -47,7 +47,7 @@ def test_compute_mi_cc(global_dtype):
     I_theory = np.log(sigma_1) + np.log(sigma_2) - 0.5 * np.log(np.linalg.det(cov))
 
     rng = check_random_state(0)
-    Z = rng.multivariate_normal(mean, cov, size=1000).astype(global_dtype)
+    Z = rng.multivariate_normal(mean, cov, size=1000).astype(global_dtype, copy=False)
 
     x, y = Z[:, 0], Z[:, 1]
 
@@ -55,7 +55,7 @@ def test_compute_mi_cc(global_dtype):
     # first figures after decimal point match.
     for n_neighbors in [3, 5, 7]:
         I_computed = _compute_mi(x, y, False, False, n_neighbors)
-        assert_allclose(I_computed, I_theory, 1)
+        assert_allclose(I_computed, I_theory, rtol=1e-1)
 
 
 def test_compute_mi_cd():

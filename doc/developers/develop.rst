@@ -774,3 +774,18 @@ The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
+
+Numerical assertions in tests
+-----------------------------
+
+When asserting the quasi-equality of arrays, do use
+:func:`sklearn.utils._testing.assert_allclose`.
+
+The relative tolerance is automatically inferred from the provided arrays dtypes,
+but you can override via ``rtol``.
+
+When comparing arrays of zero-elements, please do provide a non-zero value for
+the absolute via ``atol``.
+
+For more information, please refer to the docstring of
+:func:`sklearn.utils._testing.assert_allclose`.
