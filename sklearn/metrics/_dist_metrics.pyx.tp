@@ -43,7 +43,7 @@ cdef extern from "arrayobject.h":
                                      int typenum, void* data)
 
 from scipy.sparse import csr_matrix, issparse
-from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils import check_array
@@ -1155,10 +1155,11 @@ cdef class PyFuncDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             raise TypeError("Custom distance function must accept two "
                             "vectors and return a float.")
 
+{{endfor}}
 
 ######################################################################
 # Datasets Pair Classes
-cdef class DatasetsPair{{name_suffix}}:
+cdef class DatasetsPair:
     """Abstract class which wraps a pair of datasets (X, Y).
 
     This class allows computing distances between a single pair of rows of
@@ -1195,7 +1196,7 @@ cdef class DatasetsPair{{name_suffix}}:
         Y,
         str metric="euclidean",
         dict metric_kwargs=None,
-    ) -> DatasetsPair{{name_suffix}}:
+    ) -> DatasetsPair:
         """Return the DatasetsPair implementation for the given arguments.
 
         Parameters
@@ -1225,14 +1226,14 @@ cdef class DatasetsPair{{name_suffix}}:
             The suited DatasetsPair implementation.
         """
         cdef:
-            DistanceMetric{{name_suffix}} distance_metric = DistanceMetric{{name_suffix}}.get_metric(
+            DistanceMetric distance_metric = DistanceMetric.get_metric(
                 metric,
                 **(metric_kwargs or {})
             )
 
-        if not(X.dtype == Y.dtype == np.float{{bitness}}):
+        if not(X.dtype == Y.dtype == np.float64):
             raise ValueError(
-                f"Datasets must be of np.float{{bitness}} type. "
+                f"Datasets must be of np.float64 type. "
                 f"Currently: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
             )
 
@@ -1244,9 +1245,9 @@ cdef class DatasetsPair{{name_suffix}}:
         if issparse(X) or issparse(Y):
             raise ValueError("Only dense datasets are supported for X and Y.")
 
-        return DenseDenseDatasetsPair{{name_suffix}}(X, Y, distance_metric)
+        return DenseDenseDatasetsPair(X, Y, distance_metric)
 
-    def __init__(self, DistanceMetric{{name_suffix}} distance_metric):
+    def __init__(self, DistanceMetric distance_metric):
         self.distance_metric = distance_metric
 
     cdef ITYPE_t n_samples_X(self) nogil:
@@ -1273,7 +1274,7 @@ cdef class DatasetsPair{{name_suffix}}:
         return -1
 
 @final
-cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
+cdef class DenseDenseDatasetsPair(DatasetsPair):
     """Compute distances between row vectors of two arrays.
 
     Parameters
@@ -1289,7 +1290,7 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         between two row vectors of (X, Y).
     """
 
-    def __init__(self, X, Y, DistanceMetric{{name_suffix}} distance_metric):
+    def __init__(self, X, Y, DistanceMetric distance_metric):
         super().__init__(distance_metric)
         # Arrays have already been checked
         self.X = X
@@ -1315,5 +1316,3 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.distance_metric.dist(&self.X[i, 0],
                                          &self.Y[j, 0],
                                          self.d)
-
-{{endfor}}

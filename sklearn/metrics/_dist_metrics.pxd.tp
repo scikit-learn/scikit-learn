@@ -94,11 +94,12 @@ cdef class DistanceMetric{{name_suffix}}:
 
     cdef DTYPE_t _dist_to_rdist(self, {{DTYPE_t}} dist) nogil except -1
 
+{{endfor}}
 
 ######################################################################
 # DatasetsPair base class
-cdef class DatasetsPair{{name_suffix}}:
-    cdef DistanceMetric{{name_suffix}} distance_metric
+cdef class DatasetsPair:
+    cdef DistanceMetric distance_metric
 
     cdef ITYPE_t n_samples_X(self) nogil
 
@@ -109,10 +110,8 @@ cdef class DatasetsPair{{name_suffix}}:
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil
 
 
-cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
+cdef class DenseDenseDatasetsPair(DatasetsPair):
     cdef:
-        const {{DTYPE_t}}[:, ::1] X
-        const {{DTYPE_t}}[:, ::1] Y
+        const DTYPE_t[:, ::1] X
+        const DTYPE_t[:, ::1] Y
         ITYPE_t d
-
-{{endfor}}
