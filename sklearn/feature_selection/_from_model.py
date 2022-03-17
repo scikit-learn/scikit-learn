@@ -12,6 +12,7 @@ from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import available_if
+from ..utils.validation import check_scalar
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -287,18 +288,24 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         """
         if self.max_features is not None:
             if isinstance(self.max_features, numbers.Integral):
-                if self.max_features < 0 or self.max_features > X.shape[1]:
-                    raise ValueError(
-                        "When using an int, 'max_features' should be"
-                        f" between 0 and {X.shape[1]}. Got {self.max_features} instead."
-                    )
+                check_scalar(
+                    self.max_features,
+                    "max_features",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=len(X[0]),
+                )
                 self.max_features_ = self.max_features
             elif callable(self.max_features):
-                self.max_features_ = self.max_features(X)
-                if not isinstance(self.max_features_, numbers.Integral):
-                    raise ValueError(
-                        "When `max_features` is a callable, it must return an int"
-                    )
+                max_features = self.max_features(X)
+                check_scalar(
+                    max_features,
+                    "max_features(X)",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=len(X[0]),
+                )
+                self.max_features_ = max_features
             else:
                 raise TypeError(
                     "'max_features' must be either an int or a callable that takes"

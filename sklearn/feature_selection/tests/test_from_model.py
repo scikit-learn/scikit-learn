@@ -1,3 +1,4 @@
+import re
 import pytest
 import numpy as np
 from unittest.mock import Mock
@@ -61,16 +62,16 @@ def test_input_estimator_unchanged():
 @pytest.mark.parametrize(
     "max_features, err_type, err_msg",
     [
-        (-1, ValueError, "When using an int, 'max_features' should be"),
+        (-1, ValueError, "max_features =="),
         (
             data.shape[1] + 1,
             ValueError,
-            "When using an int, 'max_features' should be",
+            "max_features ==",
         ),
         (
             lambda X: 1.5,
-            ValueError,
-            "When `max_features` is a callable, it must return an int",
+            TypeError,
+            "max_features(X) must be an instance of int, not float.",
         ),
         (
             "gobbledigook",
@@ -85,6 +86,7 @@ def test_input_estimator_unchanged():
     ],
 )
 def test_max_features_error(max_features, err_type, err_msg):
+    err_msg = re.escape(err_msg)
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
 
     transformer = SelectFromModel(
@@ -118,6 +120,24 @@ def test_inferred_max_features_callable(max_features):
     )
     X_trans = transformer.fit_transform(data, y)
     assert transformer.max_features_ == max_features(data)
+    assert X_trans.shape[1] == transformer.max_features_
+
+
+@pytest.mark.parametrize("max_features", [lambda X: round(len(X[0]) / 2), 2])
+def test_max_features_array_like(max_features):
+    X = [
+        [0.87, -1.34, 0.31],
+        [-2.79, -0.02, -0.85],
+        [-1.34, -0.48, -2.55],
+        [1.92, 1.48, 0.65],
+    ]
+    y = [0, 1, 0, 1]
+
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
+    transformer = SelectFromModel(
+        estimator=clf, max_features=max_features, threshold=-np.inf
+    )
+    X_trans = transformer.fit_transform(X, y)
     assert X_trans.shape[1] == transformer.max_features_
 
 
