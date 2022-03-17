@@ -101,6 +101,14 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
     )
 
+    config.add_extension(
+        "_sorting",
+        sources=["_sorting.pyx"],
+        include_dirs=[numpy.get_include()],
+        language="c++",
+        libraries=libraries,
+    )
+
     config.add_subpackage("tests")
 
     return config
