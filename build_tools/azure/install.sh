@@ -51,9 +51,11 @@ pre_python_environment_install() {
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         conda update -n base conda -y
-        conda install -c conda-forge conda-lock -y
+        # pin conda-lock to latest released version (needs manual update from time to time)
+        conda install -c conda-forge conda-lock==1.0.3 -y
         conda-lock install --name $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
+
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
         source $VIRTUALENV/bin/activate
