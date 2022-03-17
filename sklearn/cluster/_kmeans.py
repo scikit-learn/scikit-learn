@@ -479,7 +479,15 @@ def _kmeans_single_elkan(
         elkan_iter = elkan_iter_chunked_dense
         _inertia = _inertia_dense
 
-    init_bounds(X, centers, center_half_distances, labels, upper_bounds, lower_bounds)
+    init_bounds(
+        X,
+        centers,
+        center_half_distances,
+        labels,
+        upper_bounds,
+        lower_bounds,
+        n_threads=n_threads,
+    )
 
     strict_convergence = False
 
