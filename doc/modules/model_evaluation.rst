@@ -2418,92 +2418,6 @@ the difference in errors decreases. Finally, by setting, ``power=2``::
 we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
 
-.. _d2_score:
-
-D² score
---------
-
-The D² score computes the fraction of deviance explained. 
-It is a generalization of R², where the squared error is generalized and replaced 
-by a deviance of choice :math:`\text{dev}(y, \hat{y})`
-(e.g., Tweedie, pinball or mean absolute error).
-It is calculated as
-
-.. math::
-
-  D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
-
-Where :math:`y_{\text{null}}` is the optimal intercept-only model's prediction 
-(e.g., the mean of `y_true` for the Tweedie case, the median for absolute 
-error and the alpha-quantile for pinball loss).
-
-Like R², the best possible score is 1.0 and it can be negative (because the
-model can be arbitrarily worse). A constant model that always predicts the
-expected value of y, disregarding the input features, would get a D² score
-of 0.0.
-
-D² Tweedie score
-^^^^^^^^^^^^^^^^
-
-The :func:`d2_tweedie_score` function implements the special case of D² 
-where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance. 
-It is also known as D² Tweedie or McFadden's likelihood ratio index.
-
-The argument ``power`` defines the Tweedie power as for
-:func:`mean_tweedie_deviance`. Note that for `power=0`,
-:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
-
-A scorer object with a specific choice of ``power`` can be built by::
-
-  >>> from sklearn.metrics import d2_tweedie_score, make_scorer
-  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
-
-D² pinball score
-^^^^^^^^^^^^^^^^^^^^^
-
-The :func:`d2_pinball_score` function implements the special case
-of D² with a pinball deviance, i.e.:
-
-.. math::
-
-  \text{dev}(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0).
-
-The argument ``alpha`` defines the slope of the pinball loss as for
-:func:`mean_pinball_loss`. It determines the quantile level ``alpha``
-for which the pinball deviance and also D2 are optimal.
-Note that for `alpha=0.5` (the defualt) :func:`d2_pinball_score`
-equals :func:`d2_absolute_error_score`.
-
-A scorer object with a specific choice of ``alpha`` can be built by::
-
-  >>> from sklearn.metrics import d2_pinball_score, make_scorer
-  >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
-
-D² absolute error score
-^^^^^^^^^^^^^^^^^^^^^^^
-
-The :func:`d2_absolute_error_score` function implements the special case of
-
-.. math::
-
-  \text{dev}(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
-
-Here are some usage examples of the :func:`d2_absolute_error_score` function::
-
-  >>> from sklearn.metrics import d2_absolute_error_score
-  >>> y_true = [3, -0.5, 2, 7]
-  >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> d2_absolute_error_score(y_true, y_pred)
-  0.764...
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [1, 2, 3]
-  >>> d2_absolute_error_score(y_true, y_pred)
-  1.0
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [2, 2, 2]
-  >>> d2_absolute_error_score(y_true, y_pred)
-  0.0
-
 .. _pinball_loss:
 
 Pinball loss
@@ -2567,6 +2481,92 @@ explained in the example linked below.
     for an example of using a the pinball loss to evaluate and tune the
     hyper-parameters of quantile regression models on data with non-symmetric
     noise and outliers.
+
+.. _d2_score:
+
+D² score
+--------
+
+The D² score computes the fraction of deviance explained. 
+It is a generalization of R², where the squared error is generalized and replaced 
+by a deviance of choice :math:`\text{dev}(y, \hat{y})`
+(e.g., Tweedie, pinball or mean absolute error).
+It is calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
+
+Where :math:`y_{\text{null}}` is the optimal intercept-only model's prediction 
+(e.g., the mean of `y_true` for the Tweedie case, the median for absolute 
+error and the alpha-quantile for pinball loss).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts the
+expected value of y, disregarding the input features, would get a D² score
+of 0.0.
+
+D² Tweedie score
+^^^^^^^^^^^^^^^^
+
+The :func:`d2_tweedie_score` function implements the special case of D² 
+where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance. 
+It is also known as D² Tweedie or McFadden's likelihood ratio index.
+
+The argument ``power`` defines the Tweedie power as for
+:func:`mean_tweedie_deviance`. Note that for `power=0`,
+:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+
+A scorer object with a specific choice of ``power`` can be built by::
+
+  >>> from sklearn.metrics import d2_tweedie_score, make_scorer
+  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
+
+D² pinball score
+^^^^^^^^^^^^^^^^^^^^^
+
+The :func:`d2_pinball_score` function implements the special case
+of D² with a pinball deviance, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0).
+
+The argument ``alpha`` defines the slope of the pinball loss as for
+:func:`mean_pinball_loss` (:ref:`pinball_loss`). It determines the 
+quantile level ``alpha`` for which the pinball deviance and also D2 
+are optimal. Note that for `alpha=0.5` (the default) :func:`d2_pinball_score`
+equals :func:`d2_absolute_error_score`.
+
+A scorer object with a specific choice of ``alpha`` can be built by::
+
+  >>> from sklearn.metrics import d2_pinball_score, make_scorer
+  >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
+
+D² absolute error score
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The :func:`d2_absolute_error_score` function implements the special case of
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
+
+Here are some usage examples of the :func:`d2_absolute_error_score` function::
+
+  >>> from sklearn.metrics import d2_absolute_error_score
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  0.764...
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [1, 2, 3]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  1.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [2, 2, 2]
+  >>> d2_absolute_error_score(y_true, y_pred)
+  0.0
 
 
 .. _clustering_metrics:
