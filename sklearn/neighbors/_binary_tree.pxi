@@ -158,15 +158,13 @@ from ..metrics._dist_metrics cimport (
     euclidean_dist_to_rdist,
 )
 
+from ._partition_nodes cimport partition_node_indices
 
 from ..utils import check_array
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._heap cimport heap_push
-from ..utils._sorting cimport (
-    partition_node_indices,
-    simultaneous_sort as _simultaneous_sort,
-)
+from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
 
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
