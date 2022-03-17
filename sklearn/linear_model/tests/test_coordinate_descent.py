@@ -1429,7 +1429,7 @@ def test_convergence_warnings():
     with pytest.warns(ConvergenceWarning):
         MultiTaskElasticNet(max_iter=1, tol=-1).fit(X, y)
 
-    # check that the model converges w/o warnings
+    # check that the model converges w/o convergence warnings
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         MultiTaskElasticNet().fit(X, y)
