@@ -22,70 +22,186 @@ representation of the data in the low-dimensional space.
 
 # Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
 
-from collections import OrderedDict
-from functools import partial
-from time import time
+# %%
+# Dataset preparation
+# -------------------
+#
+# We start by generating the S-curve dataset.
 
+from numpy.random import RandomState
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.ticker import NullFormatter
+from matplotlib import ticker
 
 from sklearn import manifold, datasets
 
-# Next line to silence pyflakes. This import is needed.
-Axes3D
+rng = RandomState(0)
 
-n_points = 1000
-X, color = datasets.make_s_curve(n_points, random_state=0)
-n_neighbors = 10
-n_components = 2
+n_samples = 1500
+S_points, S_color = datasets.make_s_curve(n_samples, random_state=rng)
 
-# Create figure
-fig = plt.figure(figsize=(15, 8))
-fig.suptitle(
-    "Manifold Learning with %i points, %i neighbors" % (n_points, n_neighbors),
-    fontsize=14,
+# %%
+# Let's look at the original data. Also define some helping
+# functions, which we will use further on.
+
+
+def plot_3d(points, points_color, title):
+    x, y, z = points.T
+
+    fig, ax = plt.subplots(
+        figsize=(6, 6),
+        facecolor="white",
+        tight_layout=True,
+        subplot_kw={"projection": "3d"},
+    )
+    fig.suptitle(title, size=16)
+    col = ax.scatter(x, y, z, c=points_color, s=50, alpha=0.8)
+    ax.view_init(azim=-60, elev=9)
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax.zaxis.set_major_locator(ticker.MultipleLocator(1))
+
+    fig.colorbar(col, ax=ax, orientation="horizontal", shrink=0.6, aspect=60, pad=0.01)
+    plt.show()
+
+
+def plot_2d(points, points_color, title):
+    fig, ax = plt.subplots(figsize=(3, 3), facecolor="white", constrained_layout=True)
+    fig.suptitle(title, size=16)
+    add_2d_scatter(ax, points, points_color)
+    plt.show()
+
+
+def add_2d_scatter(ax, points, points_color, title=None):
+    x, y = points.T
+    ax.scatter(x, y, c=points_color, s=50, alpha=0.8)
+    ax.set_title(title)
+    ax.xaxis.set_major_formatter(ticker.NullFormatter())
+    ax.yaxis.set_major_formatter(ticker.NullFormatter())
+
+
+plot_3d(S_points, S_color, "Original S-curve samples")
+
+# %%
+# Define algorithms for the manifold learning
+# -------------------------------------------
+#
+# Manifold learning is an approach to non-linear dimensionality reduction.
+# Algorithms for this task are based on the idea that the dimensionality of
+# many data sets is only artificially high.
+#
+# Read more in the :ref:`User Guide <manifold>`.
+
+n_neighbors = 12  # neighborhood which is used to recover the locally linear structure
+n_components = 2  # number of coordinates for the manifold
+
+# %%
+# Locally Linear Embeddings
+# ^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# Locally linear embedding (LLE) can be thought of as a series of local
+# Principal Component Analyses which are globally compared to find the
+# best non-linear embedding.
+# Read more in the :ref:`User Guide <locally_linear_embedding>`.
+
+params = {
+    "n_neighbors": n_neighbors,
+    "n_components": n_components,
+    "eigen_solver": "auto",
+    "random_state": rng,
+}
+
+lle_standart = manifold.LocallyLinearEmbedding(method="standard", **params)
+S_standart = lle_standart.fit_transform(S_points)
+
+lle_ltsa = manifold.LocallyLinearEmbedding(method="ltsa", **params)
+S_ltsa = lle_ltsa.fit_transform(S_points)
+
+lle_hessian = manifold.LocallyLinearEmbedding(method="hessian", **params)
+S_hessian = lle_hessian.fit_transform(S_points)
+
+lle_mod = manifold.LocallyLinearEmbedding(method="modified", modified_tol=0.8, **params)
+S_mod = lle_mod.fit_transform(S_points)
+
+# %%
+fig, axs = plt.subplots(
+    nrows=2, ncols=2, figsize=(7, 7), facecolor="white", constrained_layout=True
 )
+fig.suptitle("Locally Linear Embeddings", size=16)
 
-# Add 3d scatter plot
-ax = fig.add_subplot(251, projection="3d")
-ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
-ax.view_init(4, -72)
-
-# Set-up manifold methods
-LLE = partial(
-    manifold.LocallyLinearEmbedding,
-    n_neighbors=n_neighbors,
-    n_components=n_components,
-    eigen_solver="auto",
-    random_state=0,
-)
-
-methods = OrderedDict()
-methods["LLE"] = LLE(method="standard")
-methods["LTSA"] = LLE(method="ltsa")
-methods["Hessian LLE"] = LLE(method="hessian")
-methods["Modified LLE"] = LLE(method="modified")
-methods["Isomap"] = manifold.Isomap(n_neighbors=n_neighbors, n_components=n_components)
-methods["MDS"] = manifold.MDS(n_components, max_iter=50, n_init=1, random_state=0)
-methods["SE"] = manifold.SpectralEmbedding(
-    n_components=n_components, n_neighbors=n_neighbors, random_state=0
-)
-methods["t-SNE"] = manifold.TSNE(
-    n_components=n_components, perplexity=30, n_iter=250, init="pca", random_state=0
-)
-
-# Plot results
-for i, (label, method) in enumerate(methods.items()):
-    t0 = time()
-    Y = method.fit_transform(X)
-    t1 = time()
-    print("%s: %.2g sec" % (label, t1 - t0))
-    ax = fig.add_subplot(2, 5, 2 + i + (i > 3))
-    ax.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
-    ax.set_title("%s (%.2g sec)" % (label, t1 - t0))
-    ax.xaxis.set_major_formatter(NullFormatter())
-    ax.yaxis.set_major_formatter(NullFormatter())
-    ax.axis("tight")
+lle_methods = [
+    ("Standart locally linear embedding", S_standart),
+    ("Local tangent space alignment", S_ltsa),
+    ("Hessian eigenmap", S_hessian),
+    ("Modified locally linear embedding", S_mod),
+]
+for ax, method in zip(axs.flat, lle_methods):
+    name, points = method
+    add_2d_scatter(ax, points, S_color, name)
 
 plt.show()
+
+# %%
+# Isomap Embedding
+# ^^^^^^^^^^^^^^^^
+#
+# Non-linear dimensionality reduction through Isometric Mapping.
+# Isomap seeks a lower-dimensional embedding which maintains geodesic
+# distances between all points. Read more in the :ref:`User Guide <isomap>`.
+
+isomap = manifold.Isomap(n_neighbors=n_neighbors, n_components=n_components, p=1)
+S_isomap = isomap.fit_transform(S_points)
+
+plot_2d(S_isomap, S_color, "Isomap Embedding")
+
+# %%
+# Multidimensional scaling
+# ^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# Multidimensional scaling (MDS) seeks a low-dimensional representation
+# of the data in which the distances respect well the distances in the
+# original high-dimensional space.
+# Read more in the :ref:`User Guide <multidimensional_scaling>`.
+
+md_scaling = manifold.MDS(
+    n_components=n_components, max_iter=50, n_init=4, random_state=rng
+)
+S_scaling = md_scaling.fit_transform(S_points)
+
+plot_2d(S_scaling, S_color, "Multidimensional scaling")
+
+# %%
+# Spectral embedding for non-linear dimensionality reduction
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# This implementation uses Laplacian Eigenmaps, which finds a low dimensional
+# representation of the data using a spectral decomposition of the graph Laplacian.
+# Read more in the :ref:`User Guide <spectral_embedding>`.
+
+spectral = manifold.SpectralEmbedding(
+    n_components=n_components, n_neighbors=n_neighbors
+)
+S_spectral = spectral.fit_transform(S_points)
+
+plot_2d(S_spectral, S_color, "Spectral Embedding")
+
+# %%
+# T-distributed Stochastic Neighbor Embedding
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# It converts similarities between data points to joint probabilities and
+# tries to minimize the Kullback-Leibler divergence between the joint probabilities
+# of the low-dimensional embedding and the high-dimensional data. t-SNE has a cost
+# function that is not convex, i.e. with different initializations we can get
+# different results. Read more in the :ref:`User Guide <t_sne>`.
+
+t_sne = manifold.TSNE(
+    n_components=n_components,
+    learning_rate="auto",
+    perplexity=30,
+    n_iter=250,
+    init="random",
+    random_state=rng,
+)
+S_t_sne = t_sne.fit_transform(S_points)
+
+plot_2d(S_t_sne, S_color, "T-distributed Stochastic  \n Neighbor Embedding")
