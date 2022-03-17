@@ -46,6 +46,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._search import _generate_warm_start_groups
 
 from sklearn.model_selection._validation import FitFailedWarning
 
@@ -1970,6 +1971,92 @@ def test_grid_search_cv_use_warm_start():
     base_scores = _get_scores(clf.fit(X, y).cv_results_)
     for use_warm_start in ["alpha", ["l1_ratio"], ["alpha", "l1_ratio"]]:
         assert_array_almost_equal(base_scores, _get_scores(clf.fit(X, y).cv_results_))
+
+
+@pytest.mark.parametrize(
+    "candidate_params,use_warm_start,expected",
+    [
+        ([{"a": 1}, {"a": 2}], None, [[{"a": 1}], [{"a": 2}]]),
+        ([{"a": 1}, {"a": 2}], "a", [[{"a": 1}, {"a": 2}]]),
+        ([{"a": 1}, {"a": 2}], "b", [[{"a": 1}], [{"a": 2}]]),
+        ([{"a": 1}, {"a": 2}], ["a"], [[{"a": 1}, {"a": 2}]]),
+        # input order should be preserved
+        ([{"a": 2}, {"a": 1}], "a", [[{"a": 2}, {"a": 1}]]),
+        ([{"a": 2}, {"a": 1}], "b", [[{"a": 2}], [{"a": 1}]]),
+        # additional warm start keys are ignored
+        ([{"a": 1}, {"a": 2}], ["a", "b"], [[{"a": 1}, {"a": 2}]]),
+        # non-warm start parameters are grouped by value
+        (
+            [{"a": 1, "b": 1}, {"a": 2, "b": 1}],
+            ["a"],
+            [[{"a": 1, "b": 1}, {"a": 2, "b": 1}]],
+        ),
+        (
+            [{"a": 1, "b": 1}, {"a": 2, "b": 2}],
+            ["a"],
+            [[{"a": 1, "b": 1}], [{"a": 2, "b": 2}]],
+        ),
+        (
+            [{"a": 1, "b": 1}, {"a": 2, "b": 2}],
+            ["a", "b"],
+            [[{"a": 1, "b": 1}, {"a": 2, "b": 2}]],
+        ),
+        # warm start params may not appear in every candidate
+        (
+            [{"a": 1, "b": 1}, {"a": 2, "b": 1}, {"b": 2}],
+            ["a"],
+            [[{"a": 1, "b": 1}, {"a": 2, "b": 1}], [{"b": 2}]],
+        ),
+        (
+            [{"b": 2}, {"a": 1, "b": 1}, {"a": 2, "b": 1}],
+            ["a"],
+            [[{"b": 2}], [{"a": 1, "b": 1}, {"a": 2, "b": 1}]],
+        ),
+        # additional parameters should behave like "b"
+        (
+            [{"a": 1, "b": 1, "c": 2, "d": 3}, {"a": 2, "b": 1, "c": 2, "d": 3}],
+            ["a"],
+            [[{"a": 1, "b": 1, "c": 2, "d": 3}, {"a": 2, "b": 1, "c": 2, "d": 3}]],
+        ),
+        (
+            [{"a": 1, "b": 1, "c": 2, "d": 3}, {"a": 2, "b": 1, "c": 2, "d": 30}],
+            ["a"],
+            [[{"a": 1, "b": 1, "c": 2, "d": 3}], [{"a": 2, "b": 1, "c": 2, "d": 30}]],
+        ),
+    ],
+)
+def test_generate_warm_start_groups(candidate_params, use_warm_start, expected):
+    actual = list(
+        _generate_warm_start_groups(
+            candidate_params=candidate_params, use_warm_start=use_warm_start
+        )
+    )
+    assert expected == actual
+
+
+@pytest.mark.parametrize("candidate_values", [
+    [6, "string"],
+    [6, {"a": 6}],
+    ["string", None],
+    [np.arange(3), np.arange(1, 4)],
+    [np.arange(3), np.arange(4)],
+    [6, np.arange(4)],
+    ["string", np.arange(4)],
+])
+def test_generate_warm_start_groups_value_types(candidate_values):
+    """Check that different types of value are supported in _generate_wamr_start_groups"""
+    candidate_params = []
+    for val in candidate_values:
+        candidate_params.append({"param": val, "other": 1})
+        candidate_params.append({"param": val, "other": 2})
+
+    actual = list(_generate_warm_start_groups(candidate_params, "other"))
+    for warm_start_group, val in zip(actual, candidate_values):
+        assert len(warm_start_group) == 2
+        assert warm_start_group[0]["other"] == 1
+        assert warm_start_group[1]["other"] == 2
+        assert val is warm_start_group[0]["param"]
+        assert val is warm_start_group[1]["param"]
 
 
 def test_transform_inverse_transform_round_trip():

@@ -47,6 +47,30 @@ from ..metrics import check_scoring
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
 
+def _are_candidates_equal(dict1, dict2):
+    """Test equality between candidate dicts
+
+    Falls back to testing identity where equality is unsupported, as it is
+    for arrays.
+    """
+    try:
+        return bool(dict1 == dict2)
+    except ValueError:
+        pass
+    if dict1.keys() != dict2.keys():
+        return False
+    for k, v1 in dict1.items():
+        v2 = dict2[k]
+        if v1 is not v2:
+            return False
+        try:
+            if v1 != v2:
+                return False
+        except ValueError:
+            return False
+    return True
+
+
 def _generate_warm_start_groups(candidate_params, use_warm_start):
     """Yield lists of parameter settings to perform warm start within
 
@@ -70,7 +94,7 @@ def _generate_warm_start_groups(candidate_params, use_warm_start):
     for parameters in candidate_params:
         param_key = parameters.copy()
         param_key.update(use_warm_start)
-        if param_key == prev_key:
+        if _are_candidates_equal(param_key, prev_key):
             group.append(parameters)
         else:
             prev_key = param_key
