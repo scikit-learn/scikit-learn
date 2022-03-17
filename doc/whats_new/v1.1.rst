@@ -58,6 +58,10 @@ random sampling procedures.
   edges slightly, which might result in a different output curve given the same
   data.
 
+- |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
+  the correct variance-scaling coefficient which may result in different model
+  behavior.
+
 Changelog
 ---------
 
@@ -170,6 +174,18 @@ Changelog
   then the cluster centers remain an empty list with labels set to
   `-1` and the original warning message is shown.
   :pr:`22217` by :user:`Meekail Zain <micky774>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` now removes validation errors from
+  `__init__` and `set_params` methods.
+  :pr:`22537` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
+
+- |Fix| :term:`get_feature_names_out` functionality in
+  :class:`compose.ColumnTransformer` was broken when columns were specified
+  using `slice`. This is fixed in :pr:`22775` by :user:`randomgeek78
+  <randomgeek78>`
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -299,6 +315,11 @@ Changelog
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
+- |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
+  the correct variance-scaling coefficient which may result in different model
+  behavior.:pr:`15984` by :user:`Okon Samuel <OkonSamuel>` :pr:`22696` by
+  :user:`Meekail Zain <micky774>`.
+
 - |API| Adds :term:`get_feature_names_out` to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
   `Thomas Fan`_.
@@ -341,6 +362,11 @@ Changelog
   changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
+  :class:`ensemble.StackingClassifier`, and
+  :class:`ensemble.StackingRegressor`. :pr:`22695` and :pr:`22697`  by `Thomas Fan`_.
 
 - |Fix| Removed a potential source of CPU oversubscription in
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -434,6 +460,13 @@ Changelog
   a more informative error if `CompoundKernel` is passed via `kernel`.
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
 
+:mod:`sklearn.ensemble`
+.......................
+- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
+  :func:`get_feature_names_out` function that includes both tree index and leaf index in
+  the output feature names.
+  :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -483,6 +516,20 @@ Changelog
 
 - |Enhancement| Adds :term:`get_feature_names_out` to `IsotonicRegression`.
   :pr:`22249` by `Thomas Fan`_.
+
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |API| Adds :meth:`get_feature_names_out` to
+  :class:`kernel_approximation.Nystroem`,
+  :class:`kernel_approximation.PolynomialCountSketch`,
+  :class:`kernel_approximation.RBFSampler`, and
+  :class:`kernel_approximation.SkewedChi2Sampler`. :pr:`22694` by `Thomas Fan`_.
+
+- |API| Adds :term:`get_feature_names_out` to the following transformers
+  of the :mod:`~sklearn.kernel_approximation` module:
+  :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
+  :pr:`22137` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -582,6 +629,9 @@ Changelog
   actual non-finite score in case of perfect predictions or constant `y_true`,
   instead of the finite approximation (`1.0` and `0.0` respectively) currently
   returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
+
+- |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
+  message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
 
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
@@ -705,6 +755,11 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports grouping
+  infrequent categories into a single feature. Grouping infrequent categories
+  is enabled by specifying how to select infrequent categories with
+  `min_frequency` or `max_categories`. :pr:`16018` by `Thomas Fan`_.
+
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
   This allows specifying a maximum number of samples to be used while fitting
   the model. The option is only available when `strategy` is set to `quantile`.
@@ -736,12 +791,23 @@ Changelog
 - |Fix| :class:`preprocessing.KBinDiscretizer` handles bin edges more consistently now.
   :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| Adds :meth:`preprocessing.KBinDiscretizer.get_feature_names_out` support when
+  `encode="ordinal"`. :pr:`22735` by `Thomas Fan`_.
+
 :mod:`sklearn.random_projection`
 ................................
 
 - |Enhancement| :class:`random_projection.SparseRandomProjection` and
   :class:`random_projection.GaussianRandomProjection` preserves dtype for
   `numpy.float32`. :pr:`22114` by :user:`Takeshi Oura <takoika>`.
+
+- |Enhancement| Adds an :meth:`inverse_transform` method and a
+  `compute_inverse_transform` parameter to all transformers in the
+  :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. When the parameter is set
+  to True, the pseudo-inverse of the components is computed during `fit` and stored as
+  `inverse_components_`. :pr:`21701` by `Aurélien Geron <ageron>`.
 
 - |API| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.random_projection` module:
@@ -801,10 +867,18 @@ Changelog
   `check_methods_sample_order_invariance` and `check_methods_subset_invariance` tests.
   :pr:`22318` by `Zhehao Liu <MaxwellLZH>`.
 
+- |Fix| Changes the error message of the `ValidationError` raised by
+  :func:`utils.validation.check_X_y` when y is None so that it is compatible
+  with :func:`utils.estimator_checks.check_requires_y_none`. :pr:`22578` by
+  :user:`Claudio Salvatore Arcidiacono <ClaudioSalvatoreArcidiacono>`.
+
 - |Fix| :func:`utils.class_weight.compute_class_weight` now only requires that
   all classes in `y` have a weight in `class_weight`. An error is still raised
   when a class is present in `y` but not in `class_weight`. :pr:`22595` by
   `Thomas Fan`_.
+
+- |Fix| :func:`utils.estimator_html_repr` has an improved visualization for nested
+  meta-estimators. :pr:`21310` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------

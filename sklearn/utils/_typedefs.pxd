@@ -11,8 +11,3 @@ cdef enum:
 # Index/integer type.
 #  WARNING: ITYPE_t must be a signed integer type or you will have a bad time!
 ctypedef np.intp_t ITYPE_t  # WARNING: should match ITYPE in typedefs.pyx
-
-# Fused type for certain operations
-ctypedef fused DITYPE_t:
-    ITYPE_t
-    DTYPE_t

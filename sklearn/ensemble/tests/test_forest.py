@@ -851,7 +851,7 @@ def test_random_trees_dense_type():
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
-    # Assert that type is ndarray, not scipy.sparse.csr.csr_matrix
+    # Assert that type is ndarray, not scipy.sparse.csr_matrix
     assert type(X_transformed) == np.ndarray
 
 
@@ -1842,3 +1842,29 @@ def test_mse_criterion_object_segfault_smoke_test(Forest):
     est = FOREST_REGRESSORS[Forest](n_estimators=2, n_jobs=2, criterion=mse_criterion)
 
     est.fit(X_reg, y)
+
+
+def test_random_trees_embedding_feature_names_out():
+    """Check feature names out for Random Trees Embedding."""
+    random_state = np.random.RandomState(0)
+    X = np.abs(random_state.randn(100, 4))
+    hasher = RandomTreesEmbedding(
+        n_estimators=2, max_depth=2, sparse_output=False, random_state=0
+    ).fit(X)
+    names = hasher.get_feature_names_out()
+    expected_names = [
+        f"randomtreesembedding_{tree}_{leaf}"
+        # Note: nodes with indices 0, 1 and 4 are internal split nodes and
+        # therefore do not appear in the expected output feature names.
+        for tree, leaf in [
+            (0, 2),
+            (0, 3),
+            (0, 5),
+            (0, 6),
+            (1, 2),
+            (1, 3),
+            (1, 5),
+            (1, 6),
+        ]
+    ]
+    assert_array_equal(expected_names, names)

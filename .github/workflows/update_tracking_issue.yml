@@ -24,6 +24,7 @@ on:
 jobs:
   update_tracking_issue:
     runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
