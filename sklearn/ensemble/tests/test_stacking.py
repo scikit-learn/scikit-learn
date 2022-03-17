@@ -278,46 +278,6 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
 
 
 @pytest.mark.parametrize(
-    "stacker, X, y",
-    [
-        (
-            StackingClassifier(
-                estimators=[
-                    ("lr", LogisticRegression()),
-                    ("svm", LinearSVC(random_state=42)),
-                ],
-                final_estimator=LogisticRegression(),
-            ),
-            X_iris,
-            y_iris,
-        ),
-        (
-            StackingRegressor(
-                estimators=[
-                    ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=42)),
-                ],
-                final_estimator=LinearRegression(),
-            ),
-            X_diabetes,
-            y_diabetes,
-        ),
-    ],
-)
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"passthrough": "foo"}, TypeError, "passthrough must be an instance of"),
-    ],
-)
-def test_stacking_params_validation(stacker, X, y, params, err_type, err_msg):
-    with pytest.raises(err_type, match=err_msg):
-        final_estimator = clone(stacker)
-        final_estimator.set_params(**params)
-        final_estimator.fit(scale(X), y)
-
-
-@pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
         (y_iris, {"estimators": None}, ValueError, "Invalid 'estimators' attribute,"),
@@ -357,6 +317,12 @@ def test_stacking_params_validation(stacker, X, y, params, err_type, err_msg):
             TypeError,
             "does not support sample weight",
         ),
+        (
+            y_iris,
+            {"estimators": [("lr", LogisticRegression())], "passthrough": "foo"},
+            TypeError,
+            "passthrough must be an instance of",
+        ),
     ],
 )
 def test_stacking_classifier_error(y, params, type_err, msg_err):
@@ -389,6 +355,12 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
             },
             TypeError,
             "does not support sample weight",
+        ),
+        (
+            y_diabetes,
+            {"estimators": [("lr", LinearRegression())], "passthrough": "foo"},
+            TypeError,
+            "passthrough must be an instance of",
         ),
     ],
 )
