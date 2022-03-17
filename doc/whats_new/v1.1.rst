@@ -665,6 +665,10 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
+- |Feature| The new ``use_warm_start`` parameter in :class:`~model_selection.GridSearchCV`
+  allows for more efficient grid search over some parameter spaces, utilizing estimators'
+  :term:`warm_start` capabilities. :pr:`8230` by :user:`Joel Nothman <jnothman>`.
+
 - |Enhancement| raise an error during cross-validation when the fits for all the
   splits failed. Similarly raise an error during grid-search when the fits for
   all the models and all the splits failed. :pr:`21026` by :user:`Loïc Estève <lesteve>`.

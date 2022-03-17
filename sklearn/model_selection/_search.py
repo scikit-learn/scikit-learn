@@ -1296,7 +1296,7 @@ class GridSearchCV(BaseSearchCV):
         Candidate parameter settings will be reordered to maximise use of this
         efficiency feature.
 
-        .. versionadded:: TBC
+        .. versionadded:: 1.1
 
     Attributes
     ----------
