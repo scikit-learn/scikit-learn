@@ -16,7 +16,7 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 
 def test_n_samples_leaves_roots(global_dtype):
@@ -42,7 +42,7 @@ def test_partial_fit(global_dtype):
     brc_partial = Birch(n_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_almost_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
+    assert_allclose(brc_partial.subcluster_centers_, brc.subcluster_centers_)
 
     # Test that same global labels are obtained after calling partial_fit
     # with None
@@ -114,7 +114,7 @@ def test_sparse_X(global_dtype):
     brc_sparse.fit(csr)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_almost_equal(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
+    assert_allclose(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
 
 
 def test_partial_fit_second_call_error_checks(global_dtype):
