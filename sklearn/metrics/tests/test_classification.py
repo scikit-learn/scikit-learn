@@ -597,7 +597,7 @@ def test_confusion_matrix_normalize_single_class():
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", UndefinedMetricWarning)
-        _cm_pred = confusion_matrix(y_pred, y_test, normalize="true")  # noqa: F841
+        confusion_matrix(y_pred, y_test, normalize="true")
 
 
 def test_cohen_kappa():
