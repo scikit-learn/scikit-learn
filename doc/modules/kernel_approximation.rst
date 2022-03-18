@@ -234,10 +234,10 @@ or store training examples.
 .. topic:: References:
 
     .. [RR2007] `"Random features for large-scale kernel machines"
-      <https://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
+      <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
     .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
-      <http://www.maths.lth.se/matematiklth/personal/sminchis/papers/lis_dagm10.pdf>`_
+      <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.227.1802&rep=rep1&type=pdf>`_
       Random Fourier approximations for skewed multiplicative histogram kernels
       - Lecture Notes for Computer Sciencd (DAGM)
     .. [VZ2010] `"Efficient additive kernels via explicit feature maps"
