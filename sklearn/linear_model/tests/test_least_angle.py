@@ -48,11 +48,11 @@ def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     y = rng.rand(n_samples)
 
     model = LeastAngleModel(normalize=normalize)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as rec:
+        warnings.simplefilter("always", FutureWarning)
         model.fit(X, y)
 
-    record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings
+    assert len([w.message for w in rec]) == n_warnings
 
 
 def test_simple():
