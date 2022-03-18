@@ -120,6 +120,8 @@ def _class_means(X, y):
         for i in range(classes.shape[0]):
             means[i, :] = xp.mean(X[y == i], axis=0)
     else:
+        # TODO: Explore the choice of using bincount + add.at as it seems sub optimal
+        # from a performance-wise
         cnt = np.bincount(y)
         np.add.at(means, y, X)
         means /= cnt[:, None]
