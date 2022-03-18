@@ -11,6 +11,7 @@ import numbers
 import numpy as np
 import scipy.optimize
 
+from ..._loss.glm_distribution import TweedieDistribution
 from ..._loss.loss import (
     BaseLoss,
     HalfGammaLoss,
@@ -75,15 +76,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
-
-    family : {'normal', 'poisson', 'gamma', 'inverse-gaussian'} \
-            or a BaseLoss instance, default='normal'
-        The distributional assumption of the GLM, i.e. which distribution from
-        the EDM, specifies the loss function to be minimized.
-
-        .. deprecated:: 1.1
-           `family` is deprecated in 1.1 and will be removed in 1.3.
-           Use `_base_loss` instead.
 
     _base_loss : BaseLoss, default=HalfSquaredError()
         A `_base_loss` contains a specific loss function as well as the link
@@ -374,8 +366,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         """Compute D^2, the percentage of deviance explained.
 
         D^2 is a generalization of the coefficient of determination R^2.
-        R^2 uses squared error and D^2 deviance. Note that those two are equal
-        for ``_base_loss=HalfSquaredError()``.
+        R^2 uses squared error and D^2 uses the deviance of this GLM, see the
+        :ref:`User Guide <regression_metrics>`.
 
         D^2 is defined as
         :math:`D^2 = 1-\\frac{D(y_{true},y_{pred})}{D_{null}}`,
@@ -401,6 +393,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         score : float
             D^2 of self.predict(X) w.r.t. y.
         """
+        # TODO: Adapt link to User Guide in the docstring, once
+        # https://github.com/scikit-learn/scikit-learn/pull/22118 is merged.
+        #
         # Note, default score defined in RegressorMixin is R^2 score.
         # TODO: make D^2 a score function in module metrics (and thereby get
         #       input validation and so on)
@@ -463,19 +458,23 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     # FIXME: remove in v1.3
     @deprecated(  # type: ignore
-        "Attribute `family` was deprecated in version 1.1 and "
-        "will be removed in 1.3. Use `_base_loss` instead."
+        "Attribute `family` was deprecated in version 1.1 and will be removed in 1.3."
     )
     @property
     def family(self):
+        """Ensure backward compatibility for the time of deprecation."""
         if isinstance(self, PoissonRegressor):
             return "poisson"
         elif isinstance(self, GammaRegressor):
             return "gamma"
-        elif isinstance(self, TweedieRegressor) and self.power == 3:
-            return "inverse-gaussian"
+        elif isinstance(self, TweedieRegressor):
+            return TweedieDistribution(power=self.power)
         else:
-            return self._base_loss.__class__.__name__
+            raise ValueError(  # noqa
+                "This should never happen. You presumably accessed the deprecated "
+                "`family` attribute from a subclass of the private scikit-learn class "
+                "_GeneralizedLinearRegressor."
+            )
 
 
 class PoissonRegressor(_GeneralizedLinearRegressor):

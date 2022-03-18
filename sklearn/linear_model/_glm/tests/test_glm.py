@@ -8,6 +8,7 @@ from numpy.testing import assert_allclose
 import pytest
 import warnings
 
+from sklearn._loss.glm_distribution import TweedieDistribution
 from sklearn._loss.link import IdentityLink, LogLink
 from sklearn._loss.loss import (
     HalfGammaLoss,
@@ -532,10 +533,16 @@ def test_tags(estimator, value):
     [
         (PoissonRegressor(), "poisson"),
         (GammaRegressor(), "gamma"),
-        (TweedieRegressor(power=3), "inverse-gaussian"),
-        (TweedieRegressor(), "HalfTweedieLoss"),
+        (TweedieRegressor(), TweedieDistribution()),
+        (TweedieRegressor(power=2), TweedieDistribution(power=2)),
+        (TweedieRegressor(power=3), TweedieDistribution(power=3)),
     ],
 )
 def test_family_deprecation(est, family):
+    """Test backward compatibility of the family property."""
     with pytest.warns(FutureWarning, match="`family` was deprecated"):
-        assert est.family == family
+        if isinstance(family, str):
+            assert est.family == family
+        else:
+            assert est.family.__class__ == family.__class__
+            assert est.family.power == family.power
