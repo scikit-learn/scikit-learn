@@ -4,8 +4,6 @@
 #
 # License: BSD 3 clause
 
-from os import confstr_names
-from random import sample
 import pytest
 import warnings
 
