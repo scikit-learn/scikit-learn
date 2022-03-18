@@ -191,12 +191,6 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     else:
         model.fit(X, y)
 
-    if isinstance(model, LogisticRegression):
-        print(
-            np.average(model.predict_proba(X)[:, 1], weights=sw),
-            np.average(model.predict_proba(X)[:, 0], weights=sw),
-        )
-
     if is_classifier(model):
         assert np.average(model.predict_proba(X)[:, 1], weights=sw) == pytest.approx(
             np.average(y, weights=sw), rel=rel
