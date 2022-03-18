@@ -1613,7 +1613,6 @@ Plotting
    utils.gen_even_slices
    utils.graph.single_source_shortest_path_length
    utils.indexable
-   utils.metaestimators.if_delegate_has_method
    utils.metaestimators.available_if
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
@@ -1654,5 +1653,11 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 1.0 (renaming of 0.25)
----------------------------------------
+To be removed in 1.3
+--------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.metaestimators.if_delegate_has_method
