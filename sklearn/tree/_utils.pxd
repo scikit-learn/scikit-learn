@@ -44,7 +44,6 @@ ctypedef fused realloc_ptr:
     (Cell*)
     (Node**)
 
-
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
 
 
