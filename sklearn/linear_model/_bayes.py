@@ -9,7 +9,7 @@ from math import log
 import numpy as np
 from scipy import linalg
 
-from ._base import LinearModel, _rescale_data
+from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
 from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
@@ -242,7 +242,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -624,7 +624,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features, dtype=X.dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X, y, self.fit_intercept, self._normalize, self.copy_X
         )
 
