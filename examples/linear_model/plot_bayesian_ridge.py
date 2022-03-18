@@ -25,7 +25,8 @@ samples.
 """
 
 # %%
-# Generating simulated data with Gaussian weights
+# Generate simulated data with Gaussian weights
+# ---------------------------------------------
 import numpy as np
 from scipy import stats
 
@@ -48,6 +49,7 @@ y = np.dot(X, w) + noise
 
 # %%
 # Fit the Bayesian Ridge Regression and an OLS for comparison
+# -----------------------------------------------------------
 from sklearn.linear_model import BayesianRidge, LinearRegression
 
 clf = BayesianRidge(compute_score=True)
@@ -58,6 +60,7 @@ ols.fit(X, y)
 
 # %%
 # Plot true weights and estimated weights
+# ---------------------------------------
 import matplotlib.pyplot as plt
 
 lw = 2
@@ -72,6 +75,7 @@ _ = plt.legend(loc="best", prop=dict(size=12))
 
 # %%
 # Plot histogram of the weights
+# -----------------------------
 
 plt.figure(figsize=(6, 5))
 plt.title("Histogram of the weights")
@@ -88,6 +92,7 @@ _ = plt.legend(loc="upper left")
 
 # %%
 # Plot marginal log-likelihood
+# ----------------------------
 
 plt.figure(figsize=(6, 5))
 plt.title("Marginal log-likelihood")
@@ -96,7 +101,8 @@ plt.ylabel("Score")
 _ = plt.xlabel("Iterations")
 
 # %%
-# Plotting some predictions for polynomial regression with standard deviations
+# Plot some predictions for polynomial regression with standard deviations
+# ------------------------------------------------------------------------
 
 
 def f(x, noise_amount):
