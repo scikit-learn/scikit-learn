@@ -1444,12 +1444,12 @@ def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
     # check that we don't issue warning by passing the zero_division parameter
     y_true = np.array([[1, 0, 1], [0, 0, 0]])
     y_pred = np.array([[0, 0, 0], [0, 0, 0]])
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UndefinedMetricWarning)
         score = jaccard_score(
             y_true, y_pred, average="samples", zero_division=zero_division
         )
     assert score == pytest.approx(expected_score)
-    assert not [w.message for w in record]
 
 
 @ignore_warnings
