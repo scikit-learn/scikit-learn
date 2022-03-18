@@ -9,7 +9,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import _astype_copy_false
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -149,9 +148,9 @@ def test_relocate_empty_clusters(array_constr):
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
 @pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
-def test_kmeans_elkan_results(distribution, array_constr, tol):
+def test_kmeans_elkan_results(distribution, array_constr, tol, global_random_seed):
     # Check that results are identical between lloyd and elkan algorithms
-    rnd = np.random.RandomState(0)
+    rnd = np.random.RandomState(global_random_seed)
     if distribution == "normal":
         X = rnd.normal(size=(5000, 10))
     else:
@@ -783,7 +782,7 @@ def test_float_precision(Estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = data.astype(dtype, **_astype_copy_false(data))
+        X = data.astype(dtype, copy=False)
         km.fit(X)
 
         inertia[dtype] = km.inertia_
