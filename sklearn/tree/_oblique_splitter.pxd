@@ -21,7 +21,7 @@ from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
-from ..utils._heap cimport simultaneous_sort
+from ..utils._sorting cimport simultaneous_sort
 
 from libcpp.vector cimport vector
 
