@@ -48,8 +48,6 @@ class _ArrayAPIWrapper:
             else:
                 x_np = numpy.asarray(obj, dtype=dtype, order=order)
             return f(x_np)
-        elif order is not None:
-            raise ValueError("Only NumPy's Array API implementation supports order")
 
         return f(obj, dtype=dtype, device=device, copy=copy)
 

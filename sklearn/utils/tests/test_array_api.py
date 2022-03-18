@@ -91,7 +91,3 @@ def test_array_api_raises():
     msg = "Only NumPy's Array API implementation supports casting != 'unsafe'"
     with pytest.raises(ValueError, match=msg):
         xp_.astype(X, dtype=xp.float32, casting="same_kind")
-
-    msg = "Only NumPy's Array API implementation supports order"
-    with pytest.raises(ValueError, match=msg):
-        xp_.asarray(X, order="F")
