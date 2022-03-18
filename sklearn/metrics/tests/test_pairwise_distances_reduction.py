@@ -166,6 +166,19 @@ def test_argkmin_factory_method_wrong_usages():
             X=np.asfortranarray(X), Y=Y, k=k, metric=metric
         )
 
+    unused_metric_kwargs = {"p": 3}
+
+    message = (
+        r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
+        r" case \("
+        r"FastEuclideanPairwiseDistancesArgKmin\) and will be ignored."
+    )
+
+    with pytest.warns(UserWarning, match=message):
+        PairwiseDistancesArgKmin.compute(
+            X=X, Y=Y, k=k, metric=metric, metric_kwargs=unused_metric_kwargs
+        )
+
 
 def test_radius_neighborhood_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
@@ -214,6 +227,19 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
         PairwiseDistancesRadiusNeighborhood.compute(
             X=np.asfortranarray(X), Y=Y, radius=radius, metric=metric
+        )
+
+    unused_metric_kwargs = {"p": 3}
+
+    message = (
+        r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
+        r" case \(FastEuclideanPairwiseDistancesRadiusNeighborhood\) and will be"
+        r" ignored."
+    )
+
+    with pytest.warns(UserWarning, match=message):
+        PairwiseDistancesRadiusNeighborhood.compute(
+            X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=unused_metric_kwargs
         )
 
 
