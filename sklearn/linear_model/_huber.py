@@ -76,7 +76,7 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     n_sw_outliers = np.sum(outliers_sw)
     outlier_loss = (
         2.0 * epsilon * np.sum(outliers_sw * outliers)
-        - sigma * n_sw_outliers * epsilon ** 2
+        - sigma * n_sw_outliers * epsilon**2
     )
 
     # Calculate the quadratic loss due to the non-outliers.-
@@ -110,7 +110,7 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
 
     # Gradient due to sigma.
     grad[-1] = n_samples
-    grad[-1] -= n_sw_outliers * epsilon ** 2
+    grad[-1] -= n_sw_outliers * epsilon**2
     grad[-1] -= squared_loss / sigma
 
     # Gradient due to the intercept.

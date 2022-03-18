@@ -1,11 +1,16 @@
 from itertools import product
 
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from scipy import linalg
 import pytest
 
 from sklearn import neighbors, manifold
+from sklearn.datasets import make_blobs
 from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
 from sklearn.utils._testing import ignore_warnings
 
@@ -159,3 +164,16 @@ def test_integer_input():
     for method in ["standard", "hessian", "modified", "ltsa"]:
         clf = manifold.LocallyLinearEmbedding(method=method, n_neighbors=10)
         clf.fit(X)  # this previously raised a TypeError
+
+
+def test_get_feature_names_out():
+    """Check get_feature_names_out for LocallyLinearEmbedding."""
+    X, y = make_blobs(random_state=0, n_features=4)
+    n_components = 2
+
+    iso = manifold.LocallyLinearEmbedding(n_components=n_components)
+    iso.fit(X)
+    names = iso.get_feature_names_out()
+    assert_array_equal(
+        [f"locallylinearembedding{i}" for i in range(n_components)], names
+    )

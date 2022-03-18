@@ -116,6 +116,37 @@ def test_imputation_deletion_warning(strategy):
         imputer.transform(X)
 
 
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+def test_imputation_deletion_warning_feature_names(strategy):
+
+    pd = pytest.importorskip("pandas")
+
+    missing_values = np.nan
+    feature_names = np.array(["a", "b", "c", "d"], dtype=object)
+    X = pd.DataFrame(
+        [
+            [missing_values, missing_values, 1, missing_values],
+            [4, missing_values, 2, 10],
+        ],
+        columns=feature_names,
+    )
+
+    imputer = SimpleImputer(strategy=strategy, verbose=1)
+
+    # TODO: Remove in 1.3
+    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
+        imputer.fit(X)
+
+    # check SimpleImputer returning feature name attribute correctly
+    assert_array_equal(imputer.feature_names_in_, feature_names)
+
+    # ensure that skipped feature warning includes feature name
+    with pytest.warns(
+        UserWarning, match=r"Skipping features without any observed values: \['b'\]"
+    ):
+        imputer.transform(X)
+
+
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
 def test_imputation_error_sparse_0(strategy):
     # check that error are raised when missing_values = 0 and input is sparse
@@ -950,7 +981,7 @@ def test_iterative_imputer_catch_warning():
     imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
     with pytest.warns(None) as record:
         X_fill = imputer.fit_transform(X, y)
-    assert not [w.message for w in record.list]
+    assert not [w.message for w in record]
     assert not np.any(np.isnan(X_fill))
 
 
@@ -1510,7 +1541,7 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 
 
 def test_simple_impute_pd_na():
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     # Impute pandas array of string types.
     df = pd.DataFrame({"feature": pd.Series(["abc", None, "de"], dtype="string")})

@@ -4,7 +4,6 @@ from abc import abstractmethod
 from numbers import Integral
 
 import numpy as np
-from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
 from ..base import is_classifier
@@ -289,7 +288,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             last_iteration = n_required_iterations - 1
             self.min_resources_ = max(
                 self.min_resources_,
-                self.max_resources_ // self.factor ** last_iteration,
+                self.max_resources_ // self.factor**last_iteration,
             )
 
         # n_possible_iterations is the number of iterations that we can
@@ -328,7 +327,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # eliminated), and then go on as usual.
                 power = max(0, itr - n_required_iterations + n_possible_iterations)
 
-            n_resources = int(self.factor ** power * self.min_resources_)
+            n_resources = int(self.factor**power * self.min_resources_)
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
@@ -714,7 +713,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
             aggressive_elimination=aggressive_elimination,
         )
         self.param_grid = param_grid
-        _check_param_grid(self.param_grid)
 
     def _generate_candidate_params(self):
         return ParameterGrid(self.param_grid)

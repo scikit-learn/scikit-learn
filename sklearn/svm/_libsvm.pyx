@@ -152,6 +152,9 @@ def fit(
 
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates, empty array for probability=False.
+
+    n_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+        Number of iterations run by the optimization routine to fit the model.
     """
 
     cdef svm_parameter param
@@ -198,6 +201,10 @@ def fit(
     # svm_train
     SV_len  = get_l(model)
     n_class = get_nr(model)
+
+    cdef np.ndarray[int, ndim=1, mode='c'] n_iter
+    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
+    copy_n_iter(n_iter.data, model)
 
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
     sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
@@ -248,7 +255,7 @@ def fit(
     free(problem.x)
 
     return (support, support_vectors, n_class_SV, sv_coef, intercept,
-           probA, probB, fit_status)
+           probA, probB, fit_status, n_iter)
 
 
 cdef void set_predict_params(
