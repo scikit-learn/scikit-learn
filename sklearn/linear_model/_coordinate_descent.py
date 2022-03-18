@@ -974,30 +974,29 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             # Long: The objective function of Enet
             #
             #    1/2 * np.average(squared error, weights=sw)
-            #    + alpha * penalty                                   (1)
+            #    + alpha * penalty                                             (1)
             #
             # is invariant under rescaling of sw.
             # But enet_path coordinate descent minimizes
             #
-            #     1/2 * sum(squared error) + alpha * penalty
+            #     1/2 * sum(squared error) + alpha' * penalty                  (2)
             #
             # and therefore sets
             #
-            #     alpha = n_samples * alpha
+            #     alpha' = n_samples * alpha                                   (3)
             #
-            # inside its function body, which results in an objective
-            # equivalent to (1) without sw.
+            # inside its function body, which results in objective (2) being
+            # equivalent to (1) in case of no sw.
             # With sw, however, enet_path should set
             #
-            #     alpha = sum(sw) * alpha                            (2)
+            #     alpha' = sum(sw) * alpha                                     (4)
             #
-            # Therefore, using the freedom of Eq. (1) to rescale alpha before
-            # calling enet_path, we do
+            # Therefore, we use the freedom of Eq. (1) to rescale sw before
+            # calling enet_path, i.e.
             #
-            #     alpha = sum(sw) / n_samples * alpha
+            #     sw *= n_samples / sum(sw)
             #
-            # such that the rescaling inside enet_path is exactly Eq. (2)
-            # because now sum(sw) = n_samples.
+            # such that sum(sw) = n_samples. This way, (3) and (4) are the same.
             sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
             # Note: Alternatively, we could also have rescaled alpha instead
             # of sample_weight:
@@ -1141,11 +1140,13 @@ class Lasso(ElasticNet):
     Parameters
     ----------
     alpha : float, default=1.0
-        Constant that multiplies the L1 term. Defaults to 1.0.
-        ``alpha = 0`` is equivalent to an ordinary least square, solved
-        by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
-        Given this, you should use the :class:`LinearRegression` object.
+        Constant that multiplies the L1 term, controlling regularization
+        strength. `alpha` must be a non-negative float i.e. in `[0, inf)`.
+
+        When `alpha = 0`, the objective is equivalent to ordinary least
+        squares, solved by the :class:`LinearRegression` object. For numerical
+        reasons, using `alpha = 0` with the `Lasso` object is not advised.
+        Instead, you should use the :class:`LinearRegression` object.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -1248,6 +1249,14 @@ class Lasso(ElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    Regularization improves the conditioning of the problem and
+    reduces the variance of the estimates. Larger values specify stronger
+    regularization. Alpha corresponds to `1 / (2C)` in other linear
+    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
+    assumed to be specific to the targets. Hence they must correspond in
+    number.
 
     Examples
     --------

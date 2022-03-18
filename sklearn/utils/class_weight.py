@@ -58,12 +58,18 @@ def compute_class_weight(class_weight, *, classes, y):
             raise ValueError(
                 "class_weight must be dict, 'balanced', or None, got: %r" % class_weight
             )
-        for c in class_weight:
-            i = np.searchsorted(classes, c)
-            if i >= len(classes) or classes[i] != c:
-                raise ValueError("Class label {} not present.".format(c))
-            else:
+        unweighted_classes = []
+        for i, c in enumerate(classes):
+            if c in class_weight:
                 weight[i] = class_weight[c]
+            else:
+                unweighted_classes.append(c)
+
+        n_weighted_classes = len(classes) - len(unweighted_classes)
+        if unweighted_classes and n_weighted_classes != len(class_weight):
+            raise ValueError(
+                f"The classes, {unweighted_classes}, are not in class_weight"
+            )
 
     return weight
 
