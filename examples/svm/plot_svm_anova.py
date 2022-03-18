@@ -24,8 +24,8 @@ from sklearn.svm import SVC
 # Import some data to play with
 X, y = load_iris(return_X_y=True)
 # Add non-informative features
-np.random.seed(0)
-X = np.hstack((X, 2 * np.random.random((X.shape[0], 36))))
+rng = np.random.RandomState(0)
+X = np.hstack((X, 2 * rng.random((X.shape[0], 36))))
 
 # %%
 # Create a feature-selection transform, a scaler and an instance of SVM that we
