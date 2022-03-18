@@ -2196,7 +2196,7 @@ error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
 
 .. math::
 
-  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
+  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{\max(\epsilon, \left| y_i \right|)}
 
 where :math:`\epsilon` is an arbitrary small yet strictly positive number to
 avoid undefined results when y is zero.
@@ -2267,7 +2267,7 @@ defined as
 
 .. math::
 
-  \text{Max Error}(y, \hat{y}) = max(| y_i - \hat{y}_i |)
+  \text{Max Error}(y, \hat{y}) = \max(| y_i - \hat{y}_i |)
 
 Here is a small example of usage of the :func:`max_error` function::
 

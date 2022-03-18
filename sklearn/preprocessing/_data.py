@@ -1969,7 +1969,7 @@ def binarize(X, *, threshold=0.0, copy=True):
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : bool, default=True
-        set to False to perform inplace binarization and avoid a copy
+        Set to False to perform inplace binarization and avoid a copy
         (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
 
