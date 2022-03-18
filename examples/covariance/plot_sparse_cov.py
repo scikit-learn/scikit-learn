@@ -53,8 +53,10 @@ iteratively refined in the neighborhood of the maximum.
 # author: Gael Varoquaux <gael.varoquaux@inria.fr>
 # License: BSD 3 clause
 # Copyright: INRIA
+
 # %%
 # Generate the data
+# -----------------
 import numpy as np
 from scipy import linalg
 from sklearn.datasets import make_sparse_spd_matrix
@@ -78,6 +80,7 @@ X /= X.std(axis=0)
 
 # %%
 # Estimate the covariance
+# -----------------------
 from sklearn.covariance import GraphicalLassoCV, ledoit_wolf
 
 emp_cov = np.dot(X.T, X) / n_samples
@@ -92,6 +95,7 @@ lw_prec_ = linalg.inv(lw_cov_)
 
 # %%
 # Plot the results
+# ----------------
 import matplotlib.pyplot as plt
 
 plt.figure(figsize=(10, 6))
