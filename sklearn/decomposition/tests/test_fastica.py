@@ -48,8 +48,8 @@ def test_gs():
 
 def test_fastica_attributes_dtypes(global_dtype):
     rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10)).astype(global_dtype)
-    fica = FastICA(n_components=5, whiten=True).fit(X)
+    X = rng.random_sample((100, 10)).astype(global_dtype, copy=False)
+    fica = FastICA(n_components=5, whiten=True, random_state=0).fit(X)
     assert fica.components_.dtype == global_dtype
     assert fica.mixing_.dtype == global_dtype
     assert fica.mean_.dtype == global_dtype
@@ -58,7 +58,7 @@ def test_fastica_attributes_dtypes(global_dtype):
 
 def test_fastica_return_dtypes(global_dtype):
     rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10)).astype(global_dtype)
+    X = rng.random_sample((100, 10)).astype(global_dtype, copy=False)
     k_, mixing_, s_ = fastica(X, whiten=True, random_state=rng)
     assert k_.dtype == global_dtype
     assert mixing_.dtype == global_dtype
