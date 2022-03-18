@@ -2496,29 +2496,17 @@ def test_oblique_tree_sampling():
     X, y = iris.data, iris.target
     _, n_features = X.shape
 
-    # compute cross-validated score for axis-aligned
-    # and oblique decision tree
-    tree_ri = DecisionTreeClassifier(random_state=0)
-    tree_rc = ObliqueDecisionTreeClassifier(random_state=0)
-    ri_cv_scores = cross_val_score(
-        tree_ri, X, y, scoring="accuracy", cv=3, error_score="raise"
-    )
-    rc_cv_scores = cross_val_score(
-        tree_rc, X, y, scoring="accuracy", cv=3, error_score="raise"
-    )
-    assert rc_cv_scores.mean() >= ri_cv_scores.mean()
-    assert rc_cv_scores.std() <= ri_cv_scores.std()
-    assert rc_cv_scores.mean() >= 0.9
-
     # oblique decision trees can sample significantly more
-    # diverse sets of splits
+    # diverse sets of splits and will do better if allowed
+    # to sample more
     tree_ri = DecisionTreeClassifier(random_state=0)
-    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features * 2)
+    tree_rc = ObliqueDecisionTreeClassifier(random_state=0, max_features=n_features * 3)
     ri_cv_scores = cross_val_score(
-        tree_ri, X, y, scoring="accuracy", cv=3, error_score="raise"
+        tree_ri, X, y, scoring="accuracy", cv=10, error_score="raise"
     )
     rc_cv_scores = cross_val_score(
-        tree_rc, X, y, scoring="accuracy", cv=3, error_score="raise"
+        tree_rc, X, y, scoring="accuracy", cv=10, error_score="raise"
     )
     assert rc_cv_scores.mean() > ri_cv_scores.mean()
     assert rc_cv_scores.std() < ri_cv_scores.std()
+    assert rc_cv_scores.mean() > 0.95

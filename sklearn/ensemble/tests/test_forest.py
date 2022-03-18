@@ -2077,4 +2077,4 @@ def test_oblique_forest_trunk():
 
     assert rc_accuracy > ri_accuracy
     assert ri_accuracy > 0.83
-    assert rc_accuracy > 0.87
+    assert rc_accuracy > 0.86
