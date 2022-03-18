@@ -76,3 +76,21 @@ def test_array_api_wrapper():
     # Check take compared to NumPy's
     X_take = xp_.take(X, xp.asarray([0, 2]), axis=1)
     assert_array_equal(X_take, numpy.take(X, [0, 2], axis=1))
+
+
+def test_array_api_raises():
+    """Check that _ArrayAPIWrapper raises for non NumPy ArrayAPI arrays."""
+    xp = pytest.importorskip("numpy.array_api")
+
+    wrapped_np = _NumPyArrayAPIWrapper(xp)
+    xp_ = _ArrayAPIWrapper(wrapped_np)
+
+    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
+
+    msg = "Only NumPy's Array API implementation supports casting != 'unsafe'"
+    with pytest.raises(ValueError, match=msg):
+        xp_.astype(X, dtype=xp.float32, casting="same_kind")
+
+    msg = "Only NumPy's Array API implementation supports order"
+    with pytest.raises(ValueError, match=msg):
+        xp_.asarray(X, order="F")

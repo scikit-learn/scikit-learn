@@ -25,10 +25,15 @@ class _ArrayAPIWrapper:
         return getattr(self._namespace, name)
 
     def astype(self, x, dtype, *, copy=True, casting="unsafe"):
+
         # Extend Array API to support `casting` for NumPy containers
         if self._namespace.__name__ == "numpy.array_api":
             x_np = numpy.asarray(x).astype(dtype, casting=casting, copy=copy)
             return self._namespace.asarray(x_np)
+        elif casting != "unsafe":
+            raise ValueError(
+                "Only NumPy's Array API implementation supports casting != 'unsafe'"
+            )
 
         f = self._namespace.astype
         return f(x, dtype, copy=copy)
@@ -39,10 +44,13 @@ class _ArrayAPIWrapper:
         # Extend Array API to support `order` in NumPy
         if self._namespace.__name__ == "numpy.array_api":
             if copy:
-                x_np = numpy.array(obj, dtype=dtype, order=order, copy=True)
+                x_np = numpy.array(obj, dtype=dtype, order=order, copy=copy)
             else:
                 x_np = numpy.asarray(obj, dtype=dtype, order=order)
             return f(x_np)
+        elif order is not None:
+            raise ValueError("Only NumPy's Array API implementation supports order")
+
         return f(obj, dtype=dtype, device=device, copy=copy)
 
     def take(self, X, indices, *, axis):
