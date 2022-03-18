@@ -1,5 +1,6 @@
 import functools
 from typing import List, Any
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -31,8 +32,8 @@ all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 # Make some random data with uniformly located non zero entries with
 # Gaussian distributed values
-def make_sparse_random_data(n_samples, n_features, n_nonzeros):
-    rng = np.random.RandomState(0)
+def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=0):
+    rng = np.random.RandomState(random_state)
     data_coo = sp.coo_matrix(
         (
             rng.randn(n_nonzeros),
@@ -375,6 +376,57 @@ def test_random_projection_feature_names_out(random_projection_cls):
     )
 
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("n_samples", (2, 9, 10, 11, 1000))
+@pytest.mark.parametrize("n_features", (2, 9, 10, 11, 1000))
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+@pytest.mark.parametrize("compute_inverse_components", [True, False])
+def test_inverse_transform(
+    n_samples,
+    n_features,
+    random_projection_cls,
+    compute_inverse_components,
+    global_random_seed,
+):
+    n_components = 10
+
+    random_projection = random_projection_cls(
+        n_components=n_components,
+        compute_inverse_components=compute_inverse_components,
+        random_state=global_random_seed,
+    )
+
+    X_dense, X_csr = make_sparse_random_data(
+        n_samples,
+        n_features,
+        n_samples * n_features // 100 + 1,
+        random_state=global_random_seed,
+    )
+
+    for X in [X_dense, X_csr]:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "The number of components is higher than the number of features"
+                ),
+                category=DataDimensionalityWarning,
+            )
+            projected = random_projection.fit_transform(X)
+
+        if compute_inverse_components:
+            assert hasattr(random_projection, "inverse_components_")
+            inv_components = random_projection.inverse_components_
+            assert inv_components.shape == (n_features, n_components)
+
+        projected_back = random_projection.inverse_transform(projected)
+        assert projected_back.shape == X.shape
+
+        projected_again = random_projection.transform(projected_back)
+        if hasattr(projected, "toarray"):
+            projected = projected.toarray()
+        assert_allclose(projected, projected_again, rtol=1e-7, atol=1e-10)
 
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)

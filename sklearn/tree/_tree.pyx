@@ -19,6 +19,10 @@ from libc.math cimport fabs
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
+from libcpp.vector cimport vector
+from libcpp.algorithm cimport pop_heap
+from libcpp.algorithm cimport push_heap
+from libcpp cimport bool
 
 import struct
 
@@ -29,8 +33,6 @@ np.import_array()
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
-from ._utils cimport PriorityHeap
-from ._utils cimport PriorityHeapRecord
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
 
@@ -70,7 +72,6 @@ TREE_LEAF = -1
 TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
-cdef SIZE_t INITIAL_STACK_SIZE = 10
 
 # Build the corresponding numpy dtype for Node.
 # This works by casting `dummy` to an array of Node of length 1, which numpy
@@ -290,17 +291,34 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
 
 # Best first builder ----------------------------------------------------------
+cdef struct FrontierRecord:
+    # Record of information of a Node, the frontier for a split. Those records are
+    # maintained in a heap to access the Node with the best improvement in impurity,
+    # allowing growing trees greedily on this improvement.
+    SIZE_t node_id
+    SIZE_t start
+    SIZE_t end
+    SIZE_t pos
+    SIZE_t depth
+    bint is_leaf
+    double impurity
+    double impurity_left
+    double impurity_right
+    double improvement
 
-cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
-                                 PriorityHeap frontier) nogil except -1:
-    """Adds record ``rec`` to the priority queue ``frontier``
+cdef inline bool _compare_records(
+    const FrontierRecord& left,
+    const FrontierRecord& right,
+):
+    return left.improvement < right.improvement
 
-    Returns -1 in case of failure to allocate memory (and raise MemoryError)
-    or 0 otherwise.
-    """
-    return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
-                         rec.is_leaf, rec.improvement, rec.impurity,
-                         rec.impurity_left, rec.impurity_right)
+cdef inline void _add_to_frontier(
+    FrontierRecord rec,
+    vector[FrontierRecord]& frontier,
+) nogil:
+    """Adds record `rec` to the priority queue `frontier`."""
+    frontier.push_back(rec)
+    push_heap(frontier.begin(), frontier.end(), &_compare_records)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
@@ -344,10 +362,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr)
 
-        cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
-        cdef PriorityHeapRecord record
-        cdef PriorityHeapRecord split_node_left
-        cdef PriorityHeapRecord split_node_right
+        cdef vector[FrontierRecord] frontier
+        cdef FrontierRecord record
+        cdef FrontierRecord split_node_left
+        cdef FrontierRecord split_node_right
 
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef SIZE_t max_split_nodes = max_leaf_nodes - 1
@@ -366,14 +384,12 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                       INFINITY, IS_FIRST, IS_LEFT, NULL, 0,
                                       &split_node_left)
             if rc >= 0:
-                rc = _add_to_frontier(&split_node_left, frontier)
+                _add_to_frontier(split_node_left, frontier)
 
-            if rc == -1:
-                with gil:
-                    raise MemoryError()
-
-            while not frontier.is_empty():
-                frontier.pop(&record)
+            while not frontier.empty():
+                pop_heap(frontier.begin(), frontier.end(), &_compare_records)
+                record = frontier.back()
+                frontier.pop_back()
 
                 node = &tree.nodes[record.node_id]
                 is_leaf = (record.is_leaf or max_split_nodes <= 0)
@@ -415,13 +431,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                         break
 
                     # Add nodes to queue
-                    rc = _add_to_frontier(&split_node_left, frontier)
-                    if rc == -1:
-                        break
-
-                    rc = _add_to_frontier(&split_node_right, frontier)
-                    if rc == -1:
-                        break
+                    _add_to_frontier(split_node_left, frontier)
+                    _add_to_frontier(split_node_right, frontier)
 
                 if record.depth > max_depth_seen:
                     max_depth_seen = record.depth
@@ -439,7 +450,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
-                                    PriorityHeapRecord* res) nogil except -1:
+                                    FrontierRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id

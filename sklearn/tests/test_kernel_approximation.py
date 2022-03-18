@@ -346,3 +346,47 @@ def test_nystroem_component_indices():
     )
     feature_map_nystroem.fit(X)
     assert feature_map_nystroem.component_indices_.shape == (10,)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [PolynomialCountSketch, RBFSampler, SkewedChi2Sampler, Nystroem]
+)
+def test_get_feature_names_out(Estimator):
+    """Check get_feature_names_out"""
+    est = Estimator().fit(X)
+    X_trans = est.transform(X)
+
+    names_out = est.get_feature_names_out()
+    class_name = Estimator.__name__.lower()
+    expected_names = [f"{class_name}{i}" for i in range(X_trans.shape[1])]
+    assert_array_equal(names_out, expected_names)
+
+
+def test_additivechi2sampler_get_feature_names_out():
+    """Check get_feature_names_out for for AdditiveChi2Sampler."""
+    rng = np.random.RandomState(0)
+    X = rng.random_sample(size=(300, 3))
+
+    chi2_sampler = AdditiveChi2Sampler(sample_steps=3).fit(X)
+    input_names = ["f0", "f1", "f2"]
+    suffixes = [
+        "f0_sqrt",
+        "f1_sqrt",
+        "f2_sqrt",
+        "f0_cos1",
+        "f1_cos1",
+        "f2_cos1",
+        "f0_sin1",
+        "f1_sin1",
+        "f2_sin1",
+        "f0_cos2",
+        "f1_cos2",
+        "f2_cos2",
+        "f0_sin2",
+        "f1_sin2",
+        "f2_sin2",
+    ]
+
+    names_out = chi2_sampler.get_feature_names_out(input_features=input_names)
+    expected_names = [f"additivechi2sampler_{suffix}" for suffix in suffixes]
+    assert_array_equal(names_out, expected_names)
