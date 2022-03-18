@@ -276,6 +276,22 @@ class Interval(_Constraint):
     `[0, +∞) U {+∞}`.
     """
 
+    @validate_params(
+        {
+            "type": [type],
+            "left": [Integral, Real, None],
+            "right": [Integral, Real, None],
+            "closed": [StrOptions({"left", "right", "both", "neither"})],
+        }
+    )
+    def __init__(self, type, left, right, *, closed):
+        self.type = type
+        self.left = left
+        self.right = right
+        self.closed = closed
+
+        self._check_params()
+
     def _check_params(self):
         if self.type is Integral:
             suffix = "for an interval over the integers."
@@ -297,22 +313,6 @@ class Interval(_Constraint):
                 f"right can't be less than left. Got left={self.left} and "
                 f"right={self.right}"
             )
-
-    @validate_params(
-        {
-            "type": [type],
-            "left": [Integral, Real, None],
-            "right": [Integral, Real, None],
-            "closed": [StrOptions({"left", "right", "both", "neither"})],
-        }
-    )
-    def __init__(self, type, left, right, closed):
-        self.type = type
-        self.left = left
-        self.right = right
-        self.closed = closed
-
-        self._check_params()
 
     def __contains__(self, val):
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le

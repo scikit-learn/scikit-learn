@@ -18,16 +18,16 @@ from sklearn.utils._param_validation import make_constraint
 @pytest.mark.parametrize("interval_type", [Integral, Real])
 def test_interval_range(interval_type):
     """Check the range of values depending on closed."""
-    interval = Interval(interval_type, -2, 2, "left")
+    interval = Interval(interval_type, -2, 2, closed="left")
     assert -2 in interval and 2 not in interval
 
-    interval = Interval(interval_type, -2, 2, "right")
+    interval = Interval(interval_type, -2, 2, closed="right")
     assert -2 not in interval and 2 in interval
 
-    interval = Interval(interval_type, -2, 2, "both")
+    interval = Interval(interval_type, -2, 2, closed="both")
     assert -2 in interval and 2 in interval
 
-    interval = Interval(interval_type, -2, 2, "neither")
+    interval = Interval(interval_type, -2, 2, closed="neither")
     assert -2 not in interval and 2 not in interval
 
 
@@ -36,10 +36,10 @@ def test_interval_inf_in_bounds():
 
     Only valid for real intervals.
     """
-    interval = Interval(Real, 0, None, "right")
+    interval = Interval(Real, 0, None, closed="right")
     assert np.inf in interval
 
-    interval = Interval(Real, None, 0, "left")
+    interval = Interval(Real, None, 0, closed="left")
     assert -np.inf in interval
 
 
@@ -47,27 +47,27 @@ def test_interval_inf_in_bounds():
     "params, error, match",
     [
         (
-            [Integral, 1.0, 2, "both"],
+            {"type": Integral, "left": 1.0, "right": 2, "closed": "both"},
             TypeError,
             r"Expecting left to be an int for an interval over the integers",
         ),
         (
-            [Integral, 1, 2.0, "neither"],
+            {"type": Integral, "left": 1, "right": 2.0, "closed": "neither"},
             TypeError,
-            r"Expecting right to be an int for an interval over the integers",
+            "Expecting right to be an int for an interval over the integers",
         ),
         (
-            [Integral, None, 0, "left"],
+            {"type": Integral, "left": None, "right": 0, "closed": "left"},
             ValueError,
             r"left can't be None when closed == left",
         ),
         (
-            [Integral, 0, None, "right"],
+            {"type": Integral, "left": 0, "right": None, "closed": "right"},
             ValueError,
             r"right can't be None when closed == right",
         ),
         (
-            [Integral, 1, -1, "both"],
+            {"type": Integral, "left": 1, "right": -1, "closed": "both"},
             ValueError,
             r"right can't be less than left",
         ),
@@ -76,7 +76,7 @@ def test_interval_inf_in_bounds():
 def test_interval_errors(params, error, match):
     """Check that informative errors are raised for invalid combination of parameters"""
     with pytest.raises(error, match=match):
-        Interval(*params)
+        Interval(**params)
 
 
 def test_stroptions():
@@ -92,8 +92,8 @@ def test_stroptions():
 @pytest.mark.parametrize(
     "constraint",
     [
-        Interval(Real, None, 0, "left"),
-        Interval(Real, 0, None, "left"),
+        Interval(Real, None, 0, closed="left"),
+        Interval(Real, 0, None, closed="left"),
         StrOptions({"a", "b", "c"}),
     ],
 )
@@ -111,8 +111,8 @@ class _SomeClass:
 @pytest.mark.parametrize(
     "constraint_declaration, value",
     [
-        (Interval(Real, 0, 1, "both"), 0.42),
-        (Interval(Integral, 0, None, "neither"), 42),
+        (Interval(Real, 0, 1, closed="both"), 0.42),
+        (Interval(Integral, 0, None, closed="neither"), 42),
         (StrOptions({"a", "b", "c"}), "b"),
         (callable, lambda x: x + 1),
         (None, None),
@@ -136,7 +136,7 @@ def test_is_satisified_by(constraint_declaration, value):
 @pytest.mark.parametrize(
     "constraint_declaration, expected_constraint_class",
     [
-        (Interval(Real, 0, 1, "both"), Interval),
+        (Interval(Real, 0, 1, closed="both"), Interval),
         (StrOptions({"option1", "option2"}), StrOptions),
         ("array-like", _ArrayLikes),
         ("sparse matrix", _SparseMatrices),
