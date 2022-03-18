@@ -155,6 +155,11 @@ def make_classification(
     y : ndarray of shape (n_samples,)
         The integer labels for class membership of each sample.
 
+    See Also
+    --------
+    make_blobs : Simplified variant.
+    make_multilabel_classification : Unrelated generator for multilabel tasks.
+
     Notes
     -----
     The algorithm is adapted from Guyon [1] and was designed to generate
@@ -164,11 +169,6 @@ def make_classification(
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
-
-    See Also
-    --------
-    make_blobs : Simplified variant.
-    make_multilabel_classification : Unrelated generator for multilabel tasks.
     """
     generator = check_random_state(random_state)
 
@@ -1685,8 +1685,7 @@ def make_biclusters(
     shuffle=True,
     random_state=None,
 ):
-    """Generate an array with constant block diagonal structure for
-    biclustering.
+    """Generate a constant block diagonal structure array for biclustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1726,6 +1725,11 @@ def make_biclusters(
     cols : ndarray of shape (n_clusters, X.shape[1])
         The indicators for cluster membership of each column.
 
+    See Also
+    --------
+    make_checkerboard: Generate an array with block checkerboard structure for
+        biclustering.
+
     References
     ----------
 
@@ -1733,10 +1737,6 @@ def make_biclusters(
         words using bipartite spectral graph partitioning. In Proceedings
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
-
-    See Also
-    --------
-    make_checkerboard
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
