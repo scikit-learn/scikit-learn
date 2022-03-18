@@ -10,7 +10,6 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
 # License: BSD 3 clause
-from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from numbers import Integral, Real
@@ -54,32 +53,6 @@ from ._k_means_elkan import init_bounds_dense
 from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
-
-import typing
-
-if typing.TYPE_CHECKING:
-    from typing_extensions import Literal
-
-from typing import Union
-from typing import Annotated
-from numpy.typing import ArrayLike
-from scipy.sparse import spmatrix
-from collections.abc import Callable
-
-
-SparseMatrix = spmatrix
-
-
-class interval:
-    def __init__(self, left, right, closed):
-        pass
-
-
-random_state_t = Union[
-    Annotated[Integral, interval(0, 2**32 - 1, closed="both")],
-    np.random.RandomState,
-    None,
-]
 
 
 ###############################################################################
@@ -1295,23 +1268,16 @@ class KMeans(_BaseKMeans):
 
     def __init__(
         self,
-        n_clusters: Annotated[Integral, interval(1, None, closed="left")] = 8,
+        n_clusters=8,
         *,
-        init: Union[
-            Literal["k-means++", "random"],
-            ArrayLike,
-            Callable[
-                [Union[np.ndarray, SparseMatrix], Integral, random_state_t],
-                np.ndarray,
-            ],
-        ] = "k-means++",
-        n_init: Annotated[Integral, interval(1, None, closed="left")] = 10,
-        max_iter: Annotated[Integral, interval(1, None, closed="left")] = 300,
-        tol: Annotated[Real, interval(0, None, closed="left")] = 1e-4,
-        verbose: Integral = 0,
-        random_state: random_state_t = None,
-        copy_x: bool = True,
-        algorithm: Literal["lloyd", "elkan", "auto", "full"] = "lloyd",
+        init="k-means++",
+        n_init=10,
+        max_iter=300,
+        tol=1e-4,
+        verbose=0,
+        random_state=None,
+        copy_x=True,
+        algorithm="lloyd",
     ):
         super().__init__(
             n_clusters=n_clusters,
