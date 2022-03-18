@@ -39,10 +39,10 @@ random sampling procedures.
   :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.GradientBoostingClassifier`, and
-  :class:`ensemble.GradientBoostingRegressor` is on average 15% faster than
-  in previous versions thanks to a new sort algorithm to find the best split.
-  Models might be a slightly different due to the difference of stability
-  of between the previous and the new algorithms. :pr:`22868` by `Thomas Fan`_.
+  :class:`ensemble.GradientBoostingRegressor` is on average 15% faster than in
+  previous versions thanks to a new sort algorithm to find the best split.
+  Models might be different because of different stability in sorting between
+  the previous and the new algorithms. :pr:`22868` by `Thomas Fan`_.
 
 - |Fix| The eigenvectors initialization for :class:`cluster.SpectralClustering`
   and :class:`manifold.SpectralEmbedding` now samples from a Gaussian when
