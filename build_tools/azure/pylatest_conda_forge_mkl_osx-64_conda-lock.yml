@@ -1605,13 +1605,13 @@ package:
     ld64_osx-64: ''
     llvm-tools: 12.0.1.*
   hash:
-    md5: aa676ff4021638d0b737066f4d8ecbc9
-    sha256: eb69892c107ec1f2f94b49ce4d9590bb75d8e634ba393dd091304aafca096a70
+    md5: d14dde866f8edf087242359050f2194a
+    sha256: a3ba153f56de5251685831c2de74c79fe88cf1aecf11fee01471c1be223c4587
   manager: conda
   name: clang_osx-64
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/clang_osx-64-12.0.1-h633439f_7.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/clang_osx-64-12.0.1-h633439f_8.tar.bz2
   version: 12.0.1
 - category: main
   dependencies:
@@ -1646,18 +1646,18 @@ package:
   version: 1.4.1
 - category: main
   dependencies:
-    clang_osx-64: 12.0.1 h633439f_7
+    clang_osx-64: 12.0.1 h633439f_8
     clangxx: 12.0.1.*
     libcxx: '>=12.0.1'
     libllvm12: '>=12.0.1,<12.1.0a0'
   hash:
-    md5: 5613b979042e93425ff72a11e0fd89bf
-    sha256: 42a83c37ea2d1a41a42809fdbcb3cf33e818ba537b52c9430329b57ed190cacd
+    md5: 474e25e58b23d8b39c73a1cf0b530866
+    sha256: 447137f1a9a75a3bf887a0d409577a72e289a06260353a90d2cbd17963ea9b1c
   manager: conda
   name: clangxx_osx-64
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/clangxx_osx-64-12.0.1-hdb584c0_7.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/clangxx_osx-64-12.0.1-hdb584c0_8.tar.bz2
   version: 12.0.1
 - category: main
   dependencies:
