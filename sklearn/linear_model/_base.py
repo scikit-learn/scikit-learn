@@ -237,6 +237,21 @@ def _preprocess_data(
 
     This is here because nearly all linear models will want their data to be
     centered. This function also systematically makes y consistent with X.dtype
+
+    Returns
+    -------
+    X_out : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        If copy=True a copy of the input X is triggered, otherwise operations are
+        inplace.
+        If input X is dense, then X_out is centered.
+        If normalize is True, then X_out is rescaled (dense and sparse case)
+    y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
+        Centered version of y. Likely performed inplace on input y.
+    X_offset : ndarray of shape (n_features,)
+        The mean per column of input X.
+    y_offset : float or ndarray of shape (n_features,)
+    X_scale : ndarray of shape (n_features,)
+        The standard deviation per column of input X.
     """
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
@@ -310,10 +325,13 @@ def _preprocess_data(
 # sample_weight makes the refactoring tricky.
 
 
-def _rescale_data(X, y, sample_weight):
+def _rescale_data(X, y, sample_weight, sqrt_sample_weight=True):
     """Rescale data sample-wise by square root of sample_weight.
 
     For many linear models, this enables easy support for sample_weight.
+
+    Set sqrt_sample_weight=False if the square root of the sample weights has already
+    been done prior to calling this function.
 
     Returns
     -------
@@ -325,7 +343,8 @@ def _rescale_data(X, y, sample_weight):
     sample_weight = np.asarray(sample_weight)
     if sample_weight.ndim == 0:
         sample_weight = np.full(n_samples, sample_weight, dtype=sample_weight.dtype)
-    sample_weight = np.sqrt(sample_weight)
+    if sqrt_sample_weight:
+        sample_weight = np.sqrt(sample_weight)
     sw_matrix = sparse.dia_matrix((sample_weight, 0), shape=(n_samples, n_samples))
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
@@ -360,8 +379,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
             Returns predicted values.
         """
         return self._decision_function(X)
-
-    _preprocess_data = staticmethod(_preprocess_data)
 
     def _set_intercept(self, X_offset, y_offset, X_scale):
         """Set the intercept_"""
@@ -663,12 +680,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
         )
 
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype, only_non_negative=True
-            )
+        sample_weight = _check_sample_weight(
+            sample_weight, X, dtype=X.dtype, only_non_negative=True
+        )
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
@@ -678,9 +694,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             return_mean=True,
         )
 
-        if sample_weight is not None:
-            # Sample weight can be implemented via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+        # Sample weight can be implemented via a simple rescaling.
+        sample_weight_sqrt = np.sqrt(sample_weight)
+        X, y = _rescale_data(X, y, sample_weight_sqrt, sqrt_sample_weight=False)
 
         if self.positive:
             if y.ndim < 2:
@@ -695,10 +711,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             X_offset_scale = X_offset / X_scale
 
             def matvec(b):
-                return X.dot(b) - b.dot(X_offset_scale)
+                return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
 
             def rmatvec(b):
-                return X.T.dot(b) - X_offset_scale * np.sum(b)
+                return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
 
             X_centered = sparse.linalg.LinearOperator(
                 shape=X.shape, matvec=matvec, rmatvec=rmatvec
@@ -791,7 +807,10 @@ def _pre_fit(
     check_input=True,
     sample_weight=None,
 ):
-    """Aux function used at beginning of fit in linear models
+    """Function used at beginning of fit in linear models with L1 or L0 penalty.
+
+    This function applies _preprocess_data and additionally computes the gram matrix
+    `precompute` as needed as well as `Xy`.
 
     Parameters
     ----------
