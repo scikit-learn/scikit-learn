@@ -48,6 +48,9 @@ from sklearn.datasets import make_classification
 
 from sklearn.svm import SVC
 
+from sklearn.utils.metadata_routing import RequestType
+from sklearn.tests.test_metadata_routing import assert_request_is_empty
+
 NO_GROUP_SPLITTERS = [
     KFold(),
     StratifiedKFold(),
@@ -1934,13 +1937,13 @@ def test_yields_constant_splits(cv, expected):
 def test_splitter_get_metadata_routing(cv):
     """Check get_metadata_routing returns the correct MetadataRouter."""
     assert hasattr(cv, "get_metadata_routing")
+    metadata = cv.get_metadata_routing()
     if cv in GROUP_SPLITTERS:
-        assert (
-            str(cv.get_metadata_routing())
-            == "{'split': {'groups': <RequestType.REQUESTED: True>}}"
-        )
+        assert metadata.split.requests["groups"] == RequestType.REQUESTED
     elif cv in NO_GROUP_SPLITTERS:
-        assert str(cv.get_metadata_routing()) == "{}"
+        assert not metadata.split.requests
+
+    assert_request_is_empty(metadata, exclude=["split"])
 
 
 @pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
