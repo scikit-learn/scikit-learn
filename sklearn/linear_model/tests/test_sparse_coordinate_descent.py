@@ -299,13 +299,16 @@ def test_sparse_dense_equality(
     else:
         sw = None
     Xs = sp.csc_matrix(X)
-    reg_dense = Model(fit_intercept=fit_intercept).fit(X, y, sample_weight=sw)
-    reg_sparse = Model(fit_intercept=fit_intercept).fit(Xs, y, sample_weight=sw)
+    params = {"fit_intercept": fit_intercept, "tol": 1e-7}
+    reg_dense = Model(**params).fit(X, y, sample_weight=sw)
+    reg_sparse = Model(**params).fit(Xs, y, sample_weight=sw)
     if fit_intercept:
         assert reg_sparse.intercept_ == pytest.approx(reg_dense.intercept_)
         # balance property
-        assert reg_sparse.predict(X).mean() == pytest.approx(y.mean())
-    assert_allclose(reg_sparse.coef_, reg_dense.coef_)
+        assert np.average(reg_sparse.predict(X), weights=sw) == pytest.approx(
+            np.average(y, weights=sw)
+        )
+    assert_allclose(reg_sparse.coef_, reg_dense.coef_, atol=1e-5)
 
 
 def test_same_output_sparse_dense_lasso_and_enet_cv():
