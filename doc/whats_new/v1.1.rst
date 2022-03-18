@@ -594,6 +594,10 @@ Changelog
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
   :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
 
+- |Feature| :class:`ElasticNet`, :class:`ElasticNetCV`, :class:`Lasso` and
+  :class:`LassoCV` support `sample_weight` for sparse input `X`.
+  :pr:`22808` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.manifold`
 .......................
 
