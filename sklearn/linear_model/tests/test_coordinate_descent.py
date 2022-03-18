@@ -1495,7 +1495,7 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, precompute, sparse
         alpha=alpha,
         fit_intercept=fit_intercept,
         precompute=precompute,
-        tol=1e-8 if sparseX else 1e-6,
+        tol=1e-6,
         l1_ratio=0.5,
     )
 
