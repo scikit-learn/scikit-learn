@@ -1239,8 +1239,8 @@ def make_low_rank_matrix(
     return np.dot(np.dot(u, s), v.T)
 
 
-# TODO: Change argument `data_transposed` default from True to False in 1.3.
-# TODO: Deprecate data_transposed in 1.3, always return data not transposed.
+# TODO(1.3): Change argument `data_transposed` default from True to False.
+# TODO(1.3): Deprecate data_transposed, always return data not transposed.
 def make_sparse_coded_signal(
     n_samples,
     *,
@@ -1337,7 +1337,7 @@ def make_sparse_coded_signal(
 
     # transpose and switch return order if needed
     if not data_transposed:
-        Y, X, D = Y.T, D.T, X.T
+        return map(np.squeeze, (Y.T, X.T, D.T))
 
     return map(np.squeeze, (Y, D, X))
 

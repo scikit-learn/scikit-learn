@@ -526,7 +526,7 @@ def test_make_sparse_coded_signal_transposed():
     assert_allclose(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
 
 
-# TODO: to be removed in 1.3
+# TODO(1.3): remove
 def test_make_sparse_code_signal_warning():
     """Check the message for future deprecation."""
     warn_msg = "The default value of data_transposed will change from True to False"
