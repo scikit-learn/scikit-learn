@@ -66,8 +66,19 @@ def test_regression_metrics(n_samples=50):
     )
     dev_median = np.abs(y_true - np.median(y_true)).sum()
     assert_array_almost_equal(
-        d2_pinball_score(y_true, y_pred, alpha=0.5),
+        d2_absolute_error_score(y_true, y_pred),
         1 - np.abs(y_true - y_pred).sum() / dev_median,
+    )
+    alpha = 0.2
+    pinball_loss = lambda y_true, y_pred, alpha: alpha * np.maximum(
+        y_true - y_pred, 0
+    ) + (1 - alpha) * np.maximum(y_pred - y_true, 0)
+    y_quantile = np.percentile(y_true, q=alpha * 100)
+    assert_almost_equal(
+        d2_pinball_score(y_true, y_pred, alpha=alpha),
+        1
+        - pinball_loss(y_true, y_pred, alpha).sum()
+        / pinball_loss(y_true, y_quantile, alpha).sum(),
     )
     assert_almost_equal(
         d2_absolute_error_score(y_true, y_pred),
