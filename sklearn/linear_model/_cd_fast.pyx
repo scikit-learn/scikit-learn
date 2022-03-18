@@ -343,7 +343,7 @@ def sparse_enet_coordinate_descent(
         R = y.copy()
     else:
         yw = np.multiply(sample_weight, y)
-        R = yw
+        R = yw.copy()
 
     with nogil:
         # center = (X_mean != 0).any()
