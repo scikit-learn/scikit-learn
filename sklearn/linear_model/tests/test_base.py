@@ -25,6 +25,7 @@ from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import add_dummy_feature
 
 rng = np.random.RandomState(0)
 rtol = 1e-6
@@ -79,12 +80,7 @@ def test_linear_regression_sample_weights(array_constr, fit_intercept):
     # Closed form of the weighted least square
     # theta = (X^T W X)^(-1) @ X^T W y
     W = np.diag(sample_weight)
-    if not fit_intercept:
-        X_aug = X
-    else:
-        hstack = sparse.hstack if sparse.issparse(X) else np.hstack
-        dummy_column = np.ones(shape=(n_samples, 1))
-        X_aug = hstack((dummy_column, X))
+    X_aug = X if not fit_intercept else add_dummy_feature(X)
 
     Xw = X_aug.T @ W @ X_aug
     yw = X_aug.T @ W @ y

@@ -330,6 +330,9 @@ def _rescale_data(X, y, sample_weight, square_root=True):
 
     For many linear models, this enables easy support for sample_weight.
 
+    Set square_root=False if the square root of the sample weights has already been
+    done prior to calling this function.
+
     Returns
     -------
     X_rescaled : {array-like, sparse matrix}
