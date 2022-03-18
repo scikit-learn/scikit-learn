@@ -307,7 +307,9 @@ def setup_package():
         # may use numpy.distutils compiler classes.
         from numpy.distutils.core import setup
 
-        # Monkeypatchs CCompiler.spawn to prevent random wheel build errors
+        # Monkeypatchs CCompiler.spawn to prevent random wheel build errors on Windows
+        # The build errors on Windows was because msvccompiler spawn was not threadsafe
+        # https://github.com/pypa/distutils/issues/5
         # https://github.com/scikit-learn/scikit-learn/issues/22310
         # https://github.com/numpy/numpy/pull/20640
         from numpy.distutils.ccompiler import replace_method
