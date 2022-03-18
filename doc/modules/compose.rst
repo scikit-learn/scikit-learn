@@ -573,7 +573,8 @@ many estimators. This visualization is activated by default::
 
   >>> column_trans  # doctest: +SKIP
 
-It can be deactivated by setting the `text` option in :func:`~sklearn.set_config`::
+It can be deactivated by setting the `display` option in :func:`~sklearn.set_config`
+to 'text'::
 
   >>> from sklearn import set_config
   >>> set_config(display='text')  # doctest: +SKIP
