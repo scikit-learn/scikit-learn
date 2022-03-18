@@ -141,7 +141,8 @@ When you submit an issue to `Github
 follow these guidelines! This will make it a lot easier to provide you with good
 feedback:
 
-- The ideal bug report contains a **short reproducible code snippet**, this way
+- The ideal bug report contains a :ref:`short reproducible code snippet
+  <minimal_reproducer>`, this way
   anyone can try to reproduce the bug easily (see `this
   <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is
   longer than around 50 lines, please link to a `gist
@@ -158,17 +159,6 @@ feedback:
 
     >>> import sklearn
     >>> sklearn.show_versions()  # doctest: +SKIP
-
-  .. note::
-
-    This utility function is only available in scikit-learn v0.20+.
-    For previous versions, one has to explicitly run::
-
-     import platform; print(platform.platform())
-     import sys; print("Python", sys.version)
-     import numpy; print("NumPy", numpy.__version__)
-     import scipy; print("SciPy", scipy.__version__)
-     import sklearn; print("Scikit-Learn", sklearn.__version__)
 
 - Please ensure all **code snippets and error messages are formatted in
   appropriate code blocks**.  See `Creating and highlighting code blocks
@@ -194,7 +184,7 @@ Contributing code
   One easy way to find an issue to work on is by applying the "help wanted"
   label in your search. This lists all the issues that have been unclaimed
   so far. In order to claim an issue for yourself, please comment exactly
-  ``take`` on it for the CI to automatically assign the issue to you.
+  ``/take`` on it for the CI to automatically assign the issue to you.
 
 Video resources
 ---------------
@@ -264,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy black==21.6b0
+        pip install pytest pytest-cov flake8 mypy numpydoc black==22.1.0
 
 .. _upstream:
 
@@ -401,10 +391,10 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    with `pytest`, but it is usually not recommended since it takes a long
    time. It is often enough to only run the test related to your changes:
    for example, if you changed something in
-   `sklearn/linear_model/logistic.py`, running the following commands will
+   `sklearn/linear_model/_logistic.py`, running the following commands will
    usually be enough:
 
-   - `pytest sklearn/linear_model/logistic.py` to make sure the doctest
+   - `pytest sklearn/linear_model/_logistic.py` to make sure the doctest
      examples are correct
    - `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
      specific to the file
@@ -559,6 +549,7 @@ message, the following actions are taken.
     ---------------------- -------------------
     [ci skip]              CI is skipped completely
     [cd build]             CD is run (wheels and source distribution are built)
+    [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
     [icc-build]            Build & test with the Intel C compiler (ICC)
@@ -847,6 +838,10 @@ Finally, follow the formatting rules below to make it consistently good:
 
 * For unwritten formatting rules, try to follow existing good works:
 
+    * When bibliographic references are available with `arxiv <https://arxiv.org/>`_
+      or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
+      use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
+      :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
@@ -933,8 +928,9 @@ Monitoring performance
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
 `asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
-performance of a selection of common estimators and functions. The benchmark
-suite can be found in the `scikit-learn/asv_benchmarks` directory.
+performance of a selection of common estimators and functions. You can view
+these benchmarks on the `scikit-learn benchmark page <https://scikit-learn.org/scikit-learn-benchmarks>`_.
+The corresponding benchmark suite can be found in the `scikit-learn/asv_benchmarks` directory.
 
 To use all features of asv, you will need either `conda` or `virtualenv`. For
 more details please check the `asv installation webpage
@@ -1183,9 +1179,10 @@ Change the default value of a parameter
 
 If the default value of a parameter needs to be changed, please replace the
 default value with a specific value (e.g., ``warn``) and raise
-``FutureWarning`` when users are using the default value. In the following
-example, we change the default value of ``n_clusters`` from 5 to 10
-(current version is 0.20)::
+``FutureWarning`` when users are using the default value. The following
+example assumes that the current version is 0.20 and that we change the
+default value of ``n_clusters`` from 5 (old default for 0.20) to 10
+(new default for 0.22)::
 
     import warnings
 

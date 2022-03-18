@@ -30,36 +30,37 @@ and categorical features, where the houses' sales prices is the target.
 # are either categorical or numerical:
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(data_id=41211, as_frame=True, return_X_y=True)
+X, y = fetch_openml(data_id=42165, as_frame=True, return_X_y=True)
 
 # Select only a subset of features of X to make the example faster to run
 categorical_columns_subset = [
-    "Bldg_Type",
-    "Garage_Finish",
-    "Lot_Config",
+    "BldgType",
+    "GarageFinish",
+    "LotConfig",
     "Functional",
-    "Mas_Vnr_Type",
-    "House_Style",
-    "Fireplace_Qu",
-    "Exter_Cond",
-    "Exter_Qual",
-    "Pool_QC",
+    "MasVnrType",
+    "HouseStyle",
+    "FireplaceQu",
+    "ExterCond",
+    "ExterQual",
+    "PoolQC",
 ]
 
 numerical_columns_subset = [
-    "Three_season_porch",
+    "3SsnPorch",
     "Fireplaces",
-    "Bsmt_Half_Bath",
-    "Half_Bath",
-    "Garage_Cars",
-    "TotRms_AbvGrd",
-    "BsmtFin_SF_1",
-    "BsmtFin_SF_2",
-    "Gr_Liv_Area",
-    "Screen_Porch",
+    "BsmtHalfBath",
+    "HalfBath",
+    "GarageCars",
+    "TotRmsAbvGrd",
+    "BsmtFinSF1",
+    "BsmtFinSF2",
+    "GrLivArea",
+    "ScreenPorch",
 ]
 
 X = X[categorical_columns_subset + numerical_columns_subset]
+X[categorical_columns_subset] = X[categorical_columns_subset].astype("category")
 
 n_categorical_features = X.select_dtypes(include="category").shape[1]
 n_numerical_features = X.select_dtypes(include="number").shape[1]
@@ -153,7 +154,6 @@ hist_native = make_pipeline(
     ),
 )
 
-
 # %%
 # Model comparison
 # ----------------
@@ -230,7 +230,6 @@ plot_results("Gradient Boosting on Ames Housing")
 # %%
 # Limitting the number of splits
 # ------------------------------
-#
 # In general, one can expect poorer predictions from one-hot-encoded data,
 # especially when the tree depths or the number of nodes are limited: with
 # one-hot-encoded data, one needs more split points, i.e. more depth, in order

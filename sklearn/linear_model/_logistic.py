@@ -14,22 +14,22 @@ import numbers
 import warnings
 
 import numpy as np
-from scipy import optimize, sparse
-from scipy.special import expit, logsumexp
+from scipy import optimize
 from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+from ._linear_loss import LinearModelLoss
 from ._sag import sag_solver
+from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
-from ..utils.extmath import log_logistic, safe_sparse_dot, softmax, squared_norm
+from ..utils.extmath import softmax
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..utils.fixes import _joblib_parallel_args
 from ..utils.fixes import delayed
 from ..model_selection import check_cv
 from ..metrics import get_scorer
@@ -40,392 +40,6 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "    https://scikit-learn.org/stable/modules/linear_model.html"
     "#logistic-regression"
 )
-
-
-# .. some helper functions for logistic_regression_path ..
-def _intercept_dot(w, X, y):
-    """Computes y * np.dot(X, w).
-
-    It takes into consideration if the intercept should be fit or not.
-
-    Parameters
-    ----------
-    w : ndarray of shape (n_features,) or (n_features + 1,)
-        Coefficient vector.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training data.
-
-    y : ndarray of shape (n_samples,)
-        Array of labels.
-
-    Returns
-    -------
-    w : ndarray of shape (n_features,)
-        Coefficient vector without the intercept weight (w[-1]) if the
-        intercept should be fit. Unchanged otherwise.
-
-    c : float
-        The intercept.
-
-    yz : float
-        y * np.dot(X, w).
-    """
-    c = 0.0
-    if w.size == X.shape[1] + 1:
-        c = w[-1]
-        w = w[:-1]
-
-    z = safe_sparse_dot(X, w) + c
-    yz = y * z
-    return w, c, yz
-
-
-def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
-    """Computes the logistic loss and gradient.
-
-    Parameters
-    ----------
-    w : ndarray of shape (n_features,) or (n_features + 1,)
-        Coefficient vector.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training data.
-
-    y : ndarray of shape (n_samples,)
-        Array of labels.
-
-    alpha : float
-        Regularization parameter. alpha is equal to 1 / C.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Array of weights that are assigned to individual samples.
-        If not provided, then each sample is given unit weight.
-
-    Returns
-    -------
-    out : float
-        Logistic loss.
-
-    grad : ndarray of shape (n_features,) or (n_features + 1,)
-        Logistic gradient.
-    """
-    n_samples, n_features = X.shape
-    grad = np.empty_like(w)
-
-    w, c, yz = _intercept_dot(w, X, y)
-
-    if sample_weight is None:
-        sample_weight = np.ones(n_samples)
-
-    # Logistic loss is the negative of the log of the logistic function.
-    out = -np.sum(sample_weight * log_logistic(yz)) + 0.5 * alpha * np.dot(w, w)
-
-    z = expit(yz)
-    z0 = sample_weight * (z - 1) * y
-
-    grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
-
-    # Case where we fit the intercept.
-    if grad.shape[0] > n_features:
-        grad[-1] = z0.sum()
-    return out, grad
-
-
-def _logistic_loss(w, X, y, alpha, sample_weight=None):
-    """Computes the logistic loss.
-
-    Parameters
-    ----------
-    w : ndarray of shape (n_features,) or (n_features + 1,)
-        Coefficient vector.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training data.
-
-    y : ndarray of shape (n_samples,)
-        Array of labels.
-
-    alpha : float
-        Regularization parameter. alpha is equal to 1 / C.
-
-    sample_weight : array-like of shape (n_samples,) default=None
-        Array of weights that are assigned to individual samples.
-        If not provided, then each sample is given unit weight.
-
-    Returns
-    -------
-    out : float
-        Logistic loss.
-    """
-    w, c, yz = _intercept_dot(w, X, y)
-
-    if sample_weight is None:
-        sample_weight = np.ones(y.shape[0])
-
-    # Logistic loss is the negative of the log of the logistic function.
-    out = -np.sum(sample_weight * log_logistic(yz)) + 0.5 * alpha * np.dot(w, w)
-    return out
-
-
-def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
-    """Computes the gradient and the Hessian, in the case of a logistic loss.
-
-    Parameters
-    ----------
-    w : ndarray of shape (n_features,) or (n_features + 1,)
-        Coefficient vector.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training data.
-
-    y : ndarray of shape (n_samples,)
-        Array of labels.
-
-    alpha : float
-        Regularization parameter. alpha is equal to 1 / C.
-
-    sample_weight : array-like of shape (n_samples,) default=None
-        Array of weights that are assigned to individual samples.
-        If not provided, then each sample is given unit weight.
-
-    Returns
-    -------
-    grad : ndarray of shape (n_features,) or (n_features + 1,)
-        Logistic gradient.
-
-    Hs : callable
-        Function that takes the gradient as a parameter and returns the
-        matrix product of the Hessian and gradient.
-    """
-    n_samples, n_features = X.shape
-    grad = np.empty_like(w)
-    fit_intercept = grad.shape[0] > n_features
-
-    w, c, yz = _intercept_dot(w, X, y)
-
-    if sample_weight is None:
-        sample_weight = np.ones(y.shape[0])
-
-    z = expit(yz)
-    z0 = sample_weight * (z - 1) * y
-
-    grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
-
-    # Case where we fit the intercept.
-    if fit_intercept:
-        grad[-1] = z0.sum()
-
-    # The mat-vec product of the Hessian
-    d = sample_weight * z * (1 - z)
-    if sparse.issparse(X):
-        dX = safe_sparse_dot(sparse.dia_matrix((d, 0), shape=(n_samples, n_samples)), X)
-    else:
-        # Precompute as much as possible
-        dX = d[:, np.newaxis] * X
-
-    if fit_intercept:
-        # Calculate the double derivative with respect to intercept
-        # In the case of sparse matrices this returns a matrix object.
-        dd_intercept = np.squeeze(np.array(dX.sum(axis=0)))
-
-    def Hs(s):
-        ret = np.empty_like(s)
-        if sparse.issparse(X):
-            ret[:n_features] = X.T.dot(dX.dot(s[:n_features]))
-        else:
-            ret[:n_features] = np.linalg.multi_dot([X.T, dX, s[:n_features]])
-        ret[:n_features] += alpha * s[:n_features]
-
-        # For the fit intercept case.
-        if fit_intercept:
-            ret[:n_features] += s[-1] * dd_intercept
-            ret[-1] = dd_intercept.dot(s[:n_features])
-            ret[-1] += d.sum() * s[-1]
-        return ret
-
-    return grad, Hs
-
-
-def _multinomial_loss(w, X, Y, alpha, sample_weight):
-    """Computes multinomial loss and class probabilities.
-
-    Parameters
-    ----------
-    w : ndarray of shape (n_classes * n_features,) or
-        (n_classes * (n_features + 1),)
-        Coefficient vector.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training data.
-
-    Y : ndarray of shape (n_samples, n_classes)
-        Transformed labels according to the output of LabelBinarizer.
-
-    alpha : float
-        Regularization parameter. alpha is equal to 1 / C.
-
-    sample_weight : array-like of shape (n_samples,)
-        Array of weights that are assigned to individual samples.
-
-    Returns
-    -------
-    loss : float
-        Multinomial loss.
-
-    p : ndarray of shape (n_samples, n_classes)
-        Estimated class probabilities.
-
-    w : ndarray of shape (n_classes, n_features)
-        Reshaped param vector excluding intercept terms.
-
-    Reference
-    ---------
-    Bishop, C. M. (2006). Pattern recognition and machine learning.
-    Springer. (Chapter 4.3.4)
-    """
-    n_classes = Y.shape[1]
-    n_features = X.shape[1]
-    fit_intercept = w.size == (n_classes * (n_features + 1))
-    w = w.reshape(n_classes, -1)
-    sample_weight = sample_weight[:, np.newaxis]
-    if fit_intercept:
-        intercept = w[:, -1]
-        w = w[:, :-1]
-    else:
-        intercept = 0
-    p = safe_sparse_dot(X, w.T)
-    p += intercept
-    p -= logsumexp(p, axis=1)[:, np.newaxis]
-    loss = -(sample_weight * Y * p).sum()
-    loss += 0.5 * alpha * squared_norm(w)
-    p = np.exp(p, p)
-    return loss, p, w
-
-
-def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
-    """Computes the multinomial loss, gradient and class probabilities.
-
-    Parameters
-    ----------
-    w : ndarray of shape (n_classes * n_features,) or
-        (n_classes * (n_features + 1),)
-        Coefficient vector.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training data.
-
-    Y : ndarray of shape (n_samples, n_classes)
-        Transformed labels according to the output of LabelBinarizer.
-
-    alpha : float
-        Regularization parameter. alpha is equal to 1 / C.
-
-    sample_weight : array-like of shape (n_samples,)
-        Array of weights that are assigned to individual samples.
-
-    Returns
-    -------
-    loss : float
-        Multinomial loss.
-
-    grad : ndarray of shape (n_classes * n_features,) or \
-            (n_classes * (n_features + 1),)
-        Ravelled gradient of the multinomial loss.
-
-    p : ndarray of shape (n_samples, n_classes)
-        Estimated class probabilities
-
-    Reference
-    ---------
-    Bishop, C. M. (2006). Pattern recognition and machine learning.
-    Springer. (Chapter 4.3.4)
-    """
-    n_classes = Y.shape[1]
-    n_features = X.shape[1]
-    fit_intercept = w.size == n_classes * (n_features + 1)
-    grad = np.zeros((n_classes, n_features + bool(fit_intercept)), dtype=X.dtype)
-    loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight)
-    sample_weight = sample_weight[:, np.newaxis]
-    diff = sample_weight * (p - Y)
-    grad[:, :n_features] = safe_sparse_dot(diff.T, X)
-    grad[:, :n_features] += alpha * w
-    if fit_intercept:
-        grad[:, -1] = diff.sum(axis=0)
-    return loss, grad.ravel(), p
-
-
-def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
-    """
-    Computes the gradient and the Hessian, in the case of a multinomial loss.
-
-    Parameters
-    ----------
-    w : ndarray of shape (n_classes * n_features,) or
-        (n_classes * (n_features + 1),)
-        Coefficient vector.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Training data.
-
-    Y : ndarray of shape (n_samples, n_classes)
-        Transformed labels according to the output of LabelBinarizer.
-
-    alpha : float
-        Regularization parameter. alpha is equal to 1 / C.
-
-    sample_weight : array-like of shape (n_samples,)
-        Array of weights that are assigned to individual samples.
-
-    Returns
-    -------
-    grad : ndarray of shape (n_classes * n_features,) or \
-            (n_classes * (n_features + 1),)
-        Ravelled gradient of the multinomial loss.
-
-    hessp : callable
-        Function that takes in a vector input of shape (n_classes * n_features)
-        or (n_classes * (n_features + 1)) and returns matrix-vector product
-        with hessian.
-
-    References
-    ----------
-    Barak A. Pearlmutter (1993). Fast Exact Multiplication by the Hessian.
-        http://www.bcl.hamilton.ie/~barak/papers/nc-hessian.pdf
-    """
-    n_features = X.shape[1]
-    n_classes = Y.shape[1]
-    fit_intercept = w.size == (n_classes * (n_features + 1))
-
-    # `loss` is unused. Refactoring to avoid computing it does not
-    # significantly speed up the computation and decreases readability
-    loss, grad, p = _multinomial_loss_grad(w, X, Y, alpha, sample_weight)
-    sample_weight = sample_weight[:, np.newaxis]
-
-    # Hessian-vector product derived by applying the R-operator on the gradient
-    # of the multinomial loss function.
-    def hessp(v):
-        v = v.reshape(n_classes, -1)
-        if fit_intercept:
-            inter_terms = v[:, -1]
-            v = v[:, :-1]
-        else:
-            inter_terms = 0
-        # r_yhat holds the result of applying the R-operator on the multinomial
-        # estimator.
-        r_yhat = safe_sparse_dot(X, v.T)
-        r_yhat += inter_terms
-        r_yhat += (-p * r_yhat).sum(axis=1)[:, np.newaxis]
-        r_yhat *= p
-        r_yhat *= sample_weight
-        hessProd = np.zeros((n_classes, n_features + bool(fit_intercept)))
-        hessProd[:, :n_features] = safe_sparse_dot(r_yhat.T, X)
-        hessProd[:, :n_features] += v * alpha
-        if fit_intercept:
-            hessProd[:, -1] = r_yhat.sum(axis=0)
-        return hessProd.ravel()
-
-    return grad, hessp
 
 
 def _check_solver(solver, penalty, dual):
@@ -505,6 +119,7 @@ def _logistic_regression_path(
     max_squared_sum=None,
     sample_weight=None,
     l1_ratio=None,
+    n_threads=1,
 ):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -629,6 +244,9 @@ def _logistic_regression_path(
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
 
+    n_threads : int, default=1
+       Number of OpenMP threads to use.
+
     Returns
     -------
     coefs : ndarray of shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -696,12 +314,18 @@ def _logistic_regression_path(
     # multinomial case this is not necessary.
     if multi_class == "ovr":
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
-        mask_classes = np.array([-1, 1])
         mask = y == pos_class
         y_bin = np.ones(y.shape, dtype=X.dtype)
-        y_bin[~mask] = -1.0
-        # for compute_class_weight
+        if solver in ["lbfgs", "newton-cg"]:
+            # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
+            # of in [-1, 1].
+            mask_classes = np.array([0, 1])
+            y_bin[~mask] = 0.0
+        else:
+            mask_classes = np.array([-1, 1])
+            y_bin[~mask] = -1.0
 
+        # for compute_class_weight
         if class_weight == "balanced":
             class_weight_ = compute_class_weight(
                 class_weight, classes=mask_classes, y=y_bin
@@ -709,15 +333,19 @@ def _logistic_regression_path(
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
-        if solver not in ["sag", "saga"]:
+        if solver in ["sag", "saga", "lbfgs", "newton-cg"]:
+            # SAG, lbfgs and newton-cg multinomial solvers need LabelEncoder,
+            # not LabelBinarizer, i.e. y as a 1d-array of integers.
+            # LabelEncoder also saves memory compared to LabelBinarizer, especially
+            # when n_classes is large.
+            le = LabelEncoder()
+            Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
+        else:
+            # For liblinear solver, apply LabelBinarizer, i.e. y is one-hot encoded.
             lbin = LabelBinarizer()
             Y_multi = lbin.fit_transform(y)
             if Y_multi.shape[1] == 1:
                 Y_multi = np.hstack([1 - Y_multi, Y_multi])
-        else:
-            # SAG multinomial solver needs LabelEncoder, not LabelBinarizer
-            le = LabelEncoder()
-            Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
 
         w0 = np.zeros(
             (classes.size, n_features + int(fit_intercept)), order="F", dtype=X.dtype
@@ -763,43 +391,45 @@ def _logistic_regression_path(
                 w0[:, : coef.shape[1]] = coef
 
     if multi_class == "multinomial":
-        # scipy.optimize.minimize and newton-cg accepts only
-        # ravelled parameters.
         if solver in ["lbfgs", "newton-cg"]:
-            w0 = w0.ravel()
+            # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
+            # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
+            # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
+            # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
+            w0 = w0.ravel(order="F")
+            loss = LinearModelLoss(
+                base_loss=HalfMultinomialLoss(n_classes=classes.size),
+                fit_intercept=fit_intercept,
+            )
         target = Y_multi
-        if solver == "lbfgs":
-
-            def func(x, *args):
-                return _multinomial_loss_grad(x, *args)[0:2]
-
+        if solver in "lbfgs":
+            func = loss.loss_gradient
         elif solver == "newton-cg":
-
-            def func(x, *args):
-                return _multinomial_loss(x, *args)[0]
-
-            def grad(x, *args):
-                return _multinomial_loss_grad(x, *args)[1]
-
-            hess = _multinomial_grad_hess
+            func = loss.loss
+            grad = loss.gradient
+            hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         warm_start_sag = {"coef": w0.T}
     else:
         target = y_bin
         if solver == "lbfgs":
-            func = _logistic_loss_and_grad
+            loss = LinearModelLoss(
+                base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+            )
+            func = loss.loss_gradient
         elif solver == "newton-cg":
-            func = _logistic_loss
-
-            def grad(x, *args):
-                return _logistic_loss_and_grad(x, *args)[1]
-
-            hess = _logistic_grad_hess
+            loss = LinearModelLoss(
+                base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+            )
+            func = loss.loss
+            grad = loss.gradient
+            hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
+            l2_reg_strength = 1.0 / C
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
@@ -808,7 +438,7 @@ def _logistic_regression_path(
                 w0,
                 method="L-BFGS-B",
                 jac=True,
-                args=(X, target, 1.0 / C, sample_weight),
+                args=(X, target, sample_weight, l2_reg_strength, n_threads),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
             )
             n_iter_i = _check_optimize_result(
@@ -819,7 +449,8 @@ def _logistic_regression_path(
             )
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
-            args = (X, target, 1.0 / C, sample_weight)
+            l2_reg_strength = 1.0 / C
+            args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )
@@ -886,7 +517,10 @@ def _logistic_regression_path(
 
         if multi_class == "multinomial":
             n_classes = max(2, classes.size)
-            multi_w0 = np.reshape(w0, (n_classes, -1))
+            if solver in ["lbfgs", "newton-cg"]:
+                multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
+            else:
+                multi_w0 = w0
             if n_classes == 2:
                 multi_w0 = multi_w0[1][np.newaxis, :]
             coefs.append(multi_w0.copy())
@@ -1369,9 +1003,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         https://hal.inria.fr/hal-00860051/document
 
     SAGA -- Defazio, A., Bach F. & Lacoste-Julien S. (2014).
-        SAGA: A Fast Incremental Gradient Method With Support
-        for Non-Strongly Convex Composite Objectives
-        https://arxiv.org/abs/1407.0202
+            :arxiv:`"SAGA: A Fast Incremental Gradient Method With Support
+            for Non-Strongly Convex Composite Objectives" <1407.0202>`
 
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
@@ -1525,7 +1158,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     " 'solver' is set to 'liblinear'. Got 'n_jobs'"
                     " = {}.".format(effective_n_jobs(self.n_jobs))
                 )
-            self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
+            self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
                 y,
                 self.C,
@@ -1540,7 +1173,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.random_state,
                 sample_weight=sample_weight,
             )
-            self.n_iter_ = np.array([n_iter_])
             return self
 
         if solver in ["sag", "saga"]:
@@ -1586,11 +1218,22 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             prefer = "threads"
         else:
             prefer = "processes"
-        fold_coefs_ = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            **_joblib_parallel_args(prefer=prefer),
-        )(
+
+        # TODO: Refactor this to avoid joblib parallelism entirely when doing binary
+        # and multinomial multiclass classification and use joblib only for the
+        # one-vs-rest multiclass case.
+        if (
+            solver in ["lbfgs", "newton-cg"]
+            and len(classes_) == 1
+            and effective_n_jobs(self.n_jobs) == 1
+        ):
+            # In the future, we would like n_threads = _openmp_effective_n_threads()
+            # For the time being, we just do
+            n_threads = 1
+        else:
+            n_threads = 1
+
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
             path_func(
                 X,
                 y,
@@ -1610,6 +1253,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 penalty=penalty,
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
+                n_threads=n_threads,
             )
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef)
         )
@@ -2151,11 +1795,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             prefer = "processes"
 
-        fold_coefs_ = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            **_joblib_parallel_args(prefer=prefer),
-        )(
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
             path_func(
                 X,
                 y,

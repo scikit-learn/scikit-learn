@@ -15,24 +15,29 @@ measured using the explained variance a.k.a. R^2.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
+# %%
+# Generate sample data
+# --------------------
 import numpy as np
 from sklearn import linear_model
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
 
-# #############################################################################
-# Generate sample data
 n_samples_train, n_samples_test, n_features = 75, 150, 500
-np.random.seed(0)
-coef = np.random.randn(n_features)
-coef[50:] = 0.0  # only the top 10 features are impacting the model
-X = np.random.randn(n_samples_train + n_samples_test, n_features)
-y = np.dot(X, coef)
-
-# Split train and test data
-X_train, X_test = X[:n_samples_train], X[n_samples_train:]
-y_train, y_test = y[:n_samples_train], y[n_samples_train:]
-
-# #############################################################################
+X, y, coef = make_regression(
+    n_samples=n_samples_train + n_samples_test,
+    n_features=n_features,
+    n_informative=50,
+    shuffle=False,
+    noise=1.0,
+    coef=True,
+)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, train_size=n_samples_train, test_size=n_samples_test, shuffle=False
+)
+# %%
 # Compute train and test errors
+# -----------------------------
 alphas = np.logspace(-5, 1, 60)
 enet = linear_model.ElasticNet(l1_ratio=0.7, max_iter=10000)
 train_errors = list()
@@ -51,8 +56,9 @@ print("Optimal regularization parameter : %s" % alpha_optim)
 enet.set_params(alpha=alpha_optim)
 coef_ = enet.fit(X, y).coef_
 
-# #############################################################################
+# %%
 # Plot results functions
+# ----------------------
 
 import matplotlib.pyplot as plt
 

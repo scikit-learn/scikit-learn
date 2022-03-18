@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import pytest
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -15,7 +16,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils import check_random_state
-from sklearn.utils.fixes import parse_version
 
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import _deprecate_normalize
@@ -338,9 +338,6 @@ def test_linear_regression_positive_vs_nonpositive_when_positive():
 
 def test_linear_regression_pd_sparse_dataframe_warning():
     pd = pytest.importorskip("pandas")
-    # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
-    if parse_version(pd.__version__) < parse_version("0.24.0"):
-        pytest.skip("pandas 0.24+ required.")
 
     # Warning is raised only when some of the columns is sparse
     df = pd.DataFrame({"0": np.random.randn(10)})
@@ -362,9 +359,9 @@ def test_linear_regression_pd_sparse_dataframe_warning():
     df["0"] = pd.arrays.SparseArray(df["0"], fill_value=0)
     assert hasattr(df, "sparse")
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
-    assert not record
 
 
 def test_preprocess_data():
