@@ -7,8 +7,11 @@ from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn._config import config_context
 
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:The numpy.array_api submodule:UserWarning"
+)
 
-@pytest.mark.filterwarnings("ignore:The numpy.array_api submodule:UserWarning")
+
 def test_get_namespace_ndarray():
     """Test get_namespace on NumPy ndarrays."""
     pytest.importorskip("numpy.array_api")
@@ -23,7 +26,6 @@ def test_get_namespace_ndarray():
             assert isinstance(xp_out, _NumPyApiWrapper)
 
 
-@pytest.mark.filterwarnings("ignore:The numpy.array_api submodule:UserWarning")
 def test_get_namespace_array_api():
     """Test get_namespace for ArrayAPI arrays."""
     xp = pytest.importorskip("numpy.array_api")
@@ -53,7 +55,6 @@ class _NumPyArrayAPIWrapper:
         return getattr(self._namespace, name)
 
 
-@pytest.mark.filterwarnings("ignore:The numpy.array_api submodule:UserWarning")
 def test_array_api_wrapper():
     """Test _ArrayAPIWrapper for ArrayAPIs that is not NumPy."""
     xp = pytest.importorskip("numpy.array_api")
@@ -69,11 +70,11 @@ def test_array_api_wrapper():
     X_converted = xp_.asarray(X, dtype=xp.float32)
     assert X_converted.dtype == xp.float32
 
-    # Check take compared to NumPy's
+    # Check take compared to NumPy's with axis=0
     X_take = xp_.take(X, xp.asarray([0]), axis=0)
     assert_array_equal(X_take, numpy.take(X, [0], axis=0))
 
-    # Check take compared to NumPy's
+    # Check take compared to NumPy's with axis=1
     X_take = xp_.take(X, xp.asarray([0, 2]), axis=1)
     assert_array_equal(X_take, numpy.take(X, [0, 2], axis=1))
 
