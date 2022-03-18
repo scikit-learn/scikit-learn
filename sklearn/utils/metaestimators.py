@@ -3,6 +3,7 @@
 #         Andreas Mueller
 # License: BSD
 from typing import List, Any
+import warnings
 
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
@@ -177,6 +178,7 @@ def available_if(check):
     return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
 
 
+# TODO(1.3) remove
 class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     """Implements a conditional property using the descriptor protocol.
 
@@ -198,6 +200,12 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         self.delegate_names = delegate_names
 
     def _check(self, obj):
+        warnings.warn(
+            "if_delegate_has_method was deprecated in version 1.1 and will be "
+            "removed in version 1.3. Use if_available instead.",
+            FutureWarning,
+        )
+
         delegate = None
         for delegate_name in self.delegate_names:
             try:
@@ -214,11 +222,16 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         return True
 
 
+# TODO(1.3) remove
 def if_delegate_has_method(delegate):
     """Create a decorator for methods that are delegated to a sub-estimator
 
     This enables ducktyping by hasattr returning True according to the
     sub-estimator.
+
+    .. deprecated:: 1.3
+        `if_delegate_has_method` is deprecated in version 1.1 and will be removed in
+        version 1.3. Use `available_if` instead.
 
     Parameters
     ----------

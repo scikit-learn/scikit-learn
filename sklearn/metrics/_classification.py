@@ -2084,8 +2084,11 @@ def classification_report(
 
     See Also
     --------
-    precision_recall_fscore_support, confusion_matrix,
-    multilabel_confusion_matrix
+    precision_recall_fscore_support: Compute precision, recall, F-measure and
+        support for each class.
+    confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
+        classification.
+    multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
 
     Examples
     --------
