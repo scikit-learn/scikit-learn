@@ -28,15 +28,13 @@ iris = load_iris()
 perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
-DTYPES = (np.float64, np.float32)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_lof(dtype):
+def test_lof(global_dtype):
     # Toy sample (the last two samples are outliers):
     X = np.asarray(
         [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]],
-        dtype=dtype,
+        dtype=global_dtype,
     )
 
     # Test LocalOutlierFactor:
@@ -49,16 +47,15 @@ def test_lof(dtype):
 
     # Assert predict() works:
     clf = neighbors.LocalOutlierFactor(contamination=0.25, n_neighbors=5).fit(X)
-    expected_predictions = np.asarray(6 * [1] + 2 * [-1], dtype=dtype)
+    expected_predictions = np.asarray(6 * [1] + 2 * [-1], dtype=global_dtype)
     assert_array_equal(clf._predict(), expected_predictions)
     assert_array_equal(clf.fit_predict(X), expected_predictions)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_lof_performance(dtype):
+def test_lof_performance(global_dtype):
     # Generate train/test data
     rng = check_random_state(2)
-    X = 0.3 * rng.randn(120, 2).astype(dtype)
+    X = 0.3 * rng.randn(120, 2).astype(global_dtype)
     X_train = X[:100]
 
     # Generate some abnormal novel observations
@@ -76,10 +73,9 @@ def test_lof_performance(dtype):
     assert roc_auc_score(y_test, y_pred) > 0.99
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_lof_values(dtype):
+def test_lof_values(global_dtype):
     # toy samples:
-    X_train = np.asarray([[1, 1], [1, 2], [2, 1]], dtype=dtype)
+    X_train = np.asarray([[1, 1], [1, 2], [2, 1]], dtype=global_dtype)
     clf1 = neighbors.LocalOutlierFactor(
         n_neighbors=2, contamination=0.1, novelty=True
     ).fit(X_train)
@@ -97,13 +93,12 @@ def test_lof_values(dtype):
     assert_array_almost_equal(-clf2.score_samples([[1.0, 1.0]]), [s_1])
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_lof_precomputed(dtype, random_state=42):
+def test_lof_precomputed(global_dtype, random_state=42):
     """Tests LOF with a distance matrix."""
     # Note: smaller samples may result in spurious test success
     rng = np.random.RandomState(random_state)
-    X = rng.random_sample((10, 4)).astype(dtype)
-    Y = rng.random_sample((3, 4)).astype(dtype)
+    X = rng.random_sample((10, 4)).astype(global_dtype)
+    Y = rng.random_sample((3, 4)).astype(global_dtype)
     DXX = metrics.pairwise_distances(X, metric="euclidean")
     DYX = metrics.pairwise_distances(Y, X, metric="euclidean")
     # As a feature matrix (n_samples by n_features)
@@ -136,10 +131,9 @@ def test_n_neighbors_attribute():
     assert clf.n_neighbors_ == X.shape[0] - 1
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_score_samples(dtype):
-    X_train = np.asarray([[1, 1], [1, 2], [2, 1]], dtype=dtype)
-    X_test = np.asarray([[2.0, 2.0]], dtype=dtype)
+def test_score_samples(global_dtype):
+    X_train = np.asarray([[1, 1], [1, 2], [2, 1]], dtype=global_dtype)
+    X_test = np.asarray([[2.0, 2.0]], dtype=global_dtype)
     clf1 = neighbors.LocalOutlierFactor(
         n_neighbors=2, contamination=0.1, novelty=True
     ).fit(X_train)
