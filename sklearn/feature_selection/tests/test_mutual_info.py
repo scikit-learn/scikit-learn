@@ -83,7 +83,7 @@ def test_compute_mi_cd(global_dtype):
 
         y = np.empty(n_samples, global_dtype)
         mask = x == 0
-        y[mask] = rng.uniform(-1, 1, size=np.sum(mask)).astype(global_dtype)
+        y[mask] = rng.uniform(-1, 1, size=np.sum(mask))
         y[~mask] = rng.uniform(0, 2, size=np.sum(~mask)).astype(global_dtype)
 
         I_theory = -0.5 * (
@@ -106,7 +106,7 @@ def test_compute_mi_cd_unique_label(global_dtype):
     y = np.empty(n_samples, global_dtype)
     mask = x == 0
     y[mask] = np.random.uniform(-1, 1, size=np.sum(mask)).astype(global_dtype)
-    y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask)).astype(global_dtype)
+    y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask))
 
     mi_1 = _compute_mi(x, y, x_discrete=True, y_discrete=False)
 
@@ -122,7 +122,7 @@ def test_mutual_info_classif_discrete(global_dtype):
     X = np.array(
         [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=global_dtype
     )
-    y = np.array([0, 1, 2, 2, 1], dtype=global_dtype)
+    y = np.array([0, 1, 2, 2, 1])
 
     # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
     # informative.
@@ -206,8 +206,8 @@ def test_mutual_info_options(global_dtype):
         mi_5 = mutual_info(X, y, discrete_features=[True, False, True], random_state=0)
         mi_6 = mutual_info(X, y, discrete_features=[0, 2], random_state=0)
 
-        assert_array_equal(mi_1, mi_2)
-        assert_array_equal(mi_3, mi_4)
-        assert_array_equal(mi_5, mi_6)
+        assert_allclose(mi_1, mi_2)
+        assert_allclose(mi_3, mi_4)
+        assert_allclose(mi_5, mi_6)
 
     assert not np.allclose(mi_1, mi_3)
