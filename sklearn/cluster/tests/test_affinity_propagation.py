@@ -5,6 +5,8 @@ Testing for Clustering methods
 
 import numpy as np
 import pytest
+import warnings
+
 from scipy.sparse import csr_matrix
 
 from sklearn.exceptions import ConvergenceWarning
@@ -162,11 +164,11 @@ def test_affinity_propagation_equal_mutual_similarities(dtype):
     assert_array_equal([0, 0], labels)
 
     # setting different preferences
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         cluster_center_indices, labels = affinity_propagation(
             S, preference=[-20, -10], random_state=37
         )
-    assert not [w.message for w in record]
 
     # expect one cluster, with highest-preference sample as exemplar
     assert_array_equal([1], cluster_center_indices)
@@ -259,9 +261,9 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers, dtype):
     ap = AffinityPropagation(random_state=46)
     ap.fit(X, y)
     ap.cluster_centers_ = centers
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
         assert_array_equal(ap.predict(X), np.zeros(X.shape[0], dtype=int))
-    assert not [w.message for w in record]
 
 
 def test_affinity_propagation_float32():

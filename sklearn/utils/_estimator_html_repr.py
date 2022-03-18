@@ -100,13 +100,18 @@ def _get_visual_block(estimator):
 
     # check if estimator looks like a meta estimator wraps estimators
     if hasattr(estimator, "get_params"):
-        estimators = []
-        for key, value in estimator.get_params().items():
-            # Only look at the estimators in the first layer
-            if "__" not in key and hasattr(value, "get_params"):
-                estimators.append(value)
-        if len(estimators):
-            return _VisualBlock("parallel", estimators, names=None)
+        estimators = [
+            (key, est)
+            for key, est in estimator.get_params(deep=False).items()
+            if hasattr(est, "get_params") and hasattr(est, "fit")
+        ]
+        if estimators:
+            return _VisualBlock(
+                "parallel",
+                [est for _, est in estimators],
+                names=[f"{key}: {est.__class__.__name__}" for key, est in estimators],
+                name_details=[str(est) for _, est in estimators],
+            )
 
     return _VisualBlock(
         "single",
