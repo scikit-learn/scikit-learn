@@ -86,7 +86,7 @@ def test_stroptions():
     assert options.is_satisfied_by("c")
     assert not options.is_satisfied_by("d")
 
-    assert "(deprecated)" in repr(options)
+    assert "'c' (deprecated)" in str(options)
 
 
 @pytest.mark.parametrize(

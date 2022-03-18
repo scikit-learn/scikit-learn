@@ -47,7 +47,7 @@ def validate_parameter_constraints(parameter_constraints, params):
                 constraints_str = f"{constraints[0]}"
             else:
                 constraints_str = (
-                    f"{', '.join([repr(c) for c in constraints[:-1]])} or"
+                    f"{', '.join([str(c) for c in constraints[:-1]])} or"
                     f" {constraints[-1]}"
                 )
 
@@ -160,7 +160,7 @@ class _Constraint(ABC):
         """
 
     @abstractmethod
-    def __repr__(self):
+    def __str__(self):
         """A human readable representational string of the constraint."""
 
 
@@ -191,7 +191,7 @@ class _InstancesOf(_Constraint):
     def is_satisfied_by(self, val):
         return isinstance(val, self.type)
 
-    def __repr__(self):
+    def __str__(self):
         return f"an instance of {self._type_name(self.type)!r}"
 
 
@@ -201,7 +201,7 @@ class _NoneConstraint(_Constraint):
     def is_satisfied_by(self, val):
         return val is None
 
-    def __repr__(self):
+    def __str__(self):
         return "None"
 
 
@@ -236,7 +236,7 @@ class StrOptions(_Constraint):
             option_str = f"{option_str} (deprecated)"
         return option_str
 
-    def __repr__(self):
+    def __str__(self):
         options_str = (
             f"{', '.join([self._mark_if_deprecated(o) for o in self.options])}"
         )
@@ -340,7 +340,7 @@ class Interval(_Constraint):
 
         return val in self
 
-    def __repr__(self):
+    def __str__(self):
         type_str = "an int" if self.type is Integral else "a float"
         left_bracket = "[" if self.closed in ("left", "both") else "("
         left_bound = "-inf" if self.left is None else self.left
@@ -358,7 +358,7 @@ class _ArrayLikes(_Constraint):
     def is_satisfied_by(self, val):
         return _is_arraylike_not_scalar(val)
 
-    def __repr__(self):
+    def __str__(self):
         return "an array-like"
 
 
@@ -368,7 +368,7 @@ class _SparseMatrices(_Constraint):
     def is_satisfied_by(self, val):
         return issparse(val)
 
-    def __repr__(self):
+    def __str__(self):
         return "a sparse matrix"
 
 
@@ -378,7 +378,7 @@ class _Callables(_Constraint):
     def is_satisfied_by(self, val):
         return callable(val)
 
-    def __repr__(self):
+    def __str__(self):
         return "a callable"
 
 
@@ -399,7 +399,7 @@ class _RandomStates(_Constraint):
     def is_satisfied_by(self, val):
         return any(c.is_satisfied_by(val) for c in self._constraints)
 
-    def __repr__(self):
+    def __str__(self):
         return (
             f"{', '.join([repr(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
