@@ -1127,6 +1127,7 @@ def test_get_scorer_return_copy():
     assert get_scorer("roc_auc") is not get_scorer("roc_auc")
 
 
+# TODO(1.3) Remove
 def test_SCORERS_deprecated():
     with pytest.warns(FutureWarning, match="is deprecated and will be removed in v1.3"):
         SCORERS["roc_auc"]

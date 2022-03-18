@@ -933,6 +933,7 @@ details.
 
    metrics.check_scoring
    metrics.get_scorer
+   metrics.get_scorer_names
    metrics.make_scorer
 
 Classification metrics

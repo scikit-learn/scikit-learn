@@ -757,7 +757,8 @@ normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 
-class _Scorers(dict):
+# TODO(1.3) Remove
+class _DeprecatedScorers(dict):
     """A temporary class to deprecate SCORERS."""
 
     def __getitem__(self, item):
@@ -832,4 +833,4 @@ for name, metric in [
         qualified_name = "{0}_{1}".format(name, average)
         _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
 
-SCORERS = _Scorers(_SCORERS)
+SCORERS = _DeprecatedScorers(_SCORERS)
