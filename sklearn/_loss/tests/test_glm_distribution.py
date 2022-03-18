@@ -1,6 +1,8 @@
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #
 # License: BSD 3 clause
+#
+# TODO: Remove with v1.3
 import numpy as np
 from numpy.testing import (
     assert_allclose,
