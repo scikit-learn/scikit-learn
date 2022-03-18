@@ -23,6 +23,7 @@ import scipy.sparse as sp
 from scipy import linalg
 from scipy import optimize
 from scipy import sparse
+from scipy.sparse.linalg import lsqr
 from scipy.special import expit
 from joblib import Parallel
 
@@ -34,7 +35,6 @@ from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
-from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -721,11 +721,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
             if y.ndim < 2:
-                self.coef_ = sparse_lsqr(X_centered, y)[0]
+                self.coef_ = lsqr(X_centered, y)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(sparse_lsqr)(X_centered, y[:, j].ravel())
+                    delayed(lsqr)(X_centered, y[:, j].ravel())
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
