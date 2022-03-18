@@ -8,9 +8,8 @@ import warnings
 import numpy as np
 from scipy import stats
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition._fastica import _gs_decorrelation
@@ -71,22 +70,23 @@ def test_fastica_return_dtypes(global_dtype):
     "ignore:From version 1.3 whiten='unit-variance' will be used by default."
 )
 @pytest.mark.parametrize("add_noise", [True, False])
-@pytest.mark.parametrize("seed", range(1))
-def test_fastica_simple(add_noise, seed):
+def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     # Test the FastICA algorithm on very simple data.
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     # scipy.stats uses the global RNG:
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
-    s2 = stats.t.rvs(1, size=n_samples)
+    s2 = stats.t.rvs(1, size=n_samples, random_state=global_random_seed)
     s = np.c_[s1, s2].T
     center_and_norm(s)
+    s = s.astype(global_dtype)
     s1, s2 = s
 
     # Mixing angle
     phi = 0.6
     mixing = np.array([[np.cos(phi), np.sin(phi)], [np.sin(phi), -np.cos(phi)]])
+    mixing = mixing.astype(global_dtype)
     m = np.dot(mixing, s)
 
     if add_noise:
@@ -119,7 +119,13 @@ def test_fastica_simple(add_noise, seed):
         s_ = s_.T
         # Check that the mixing model described in the docstring holds:
         if whiten:
-            assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
+            # XXX: exact reconstruction to standard relative tolerance is not
+            # possible. This is probably expected when add_noise is True but we
+            # also need a non-trivial atol in float32 when add_noise is False.
+            #
+            # Note that the 2 sources are non-Gaussian in this test.
+            atol = 1e-5 if global_dtype == np.float32 else 0
+            assert_allclose(np.dot(np.dot(mixing_, k_), m), s_, atol=atol)
 
         center_and_norm(s_)
         s1_, s2_ = s_
@@ -132,21 +138,23 @@ def test_fastica_simple(add_noise, seed):
 
         # Check that we have estimated the original sources
         if not add_noise:
-            assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=2)
-            assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=2)
+            assert_allclose(np.dot(s1_, s1) / n_samples, 1, atol=1e-2)
+            assert_allclose(np.dot(s2_, s2) / n_samples, 1, atol=1e-2)
         else:
-            assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=1)
-            assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
+            assert_allclose(np.dot(s1_, s1) / n_samples, 1, atol=1e-1)
+            assert_allclose(np.dot(s2_, s2) / n_samples, 1, atol=1e-1)
 
     # Test FastICA class
-    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo, random_state=seed)
-    ica = FastICA(fun=nl, algorithm=algo, random_state=seed)
+    _, _, sources_fun = fastica(
+        m.T, fun=nl, algorithm=algo, random_state=global_random_seed
+    )
+    ica = FastICA(fun=nl, algorithm=algo, random_state=global_random_seed)
     sources = ica.fit_transform(m.T)
     assert ica.components_.shape == (2, 2)
     assert sources.shape == (1000, 2)
 
-    assert_array_almost_equal(sources_fun, sources)
-    assert_array_almost_equal(sources, ica.transform(m.T))
+    assert_allclose(sources_fun, sources)
+    assert_allclose(sources, ica.transform(m.T))
 
     assert ica.mixing_.shape == (2, 2)
 
@@ -229,7 +237,7 @@ def test_non_square_fastica(add_noise):
     s_ = s_.T
 
     # Check that the mixing model described in the docstring holds:
-    assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
+    assert_allclose(s_, np.dot(np.dot(mixing_, k_), m))
 
     center_and_norm(s_)
     s1_, s2_ = s_
@@ -242,11 +250,11 @@ def test_non_square_fastica(add_noise):
 
     # Check that we have estimated the original sources
     if not add_noise:
-        assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=3)
-        assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=3)
+        assert_allclose(np.dot(s1_, s1) / n_samples, 1, atol=1e-3)
+        assert_allclose(np.dot(s2_, s2) / n_samples, 1, atol=1e-3)
 
 
-def test_fit_transform():
+def test_fit_transform(global_random_seed):
     """Test unit variance of transformed data using FastICA algorithm.
 
     Check that `fit_transform` gives the same result as applying
@@ -254,8 +262,14 @@ def test_fit_transform():
 
     Bug #13056
     """
-    rng = np.random.RandomState(0)
+    # XXX: casting X with `.astype(global_dtype)` reveals a rare numerical
+    # stability problem of FastICA with float32 bit data. I can triggers
+    # NaN values somewhere in the computation, only for some random seeds.
+
+    # multivariate uniform data in [0, 1]
+    rng = np.random.RandomState(global_random_seed)
     X = rng.random_sample((100, 10))
+
     for whiten, n_components in [["unit-variance", 5], [False, None]]:
         n_components_ = n_components if n_components is not None else X.shape[1]
 
@@ -269,7 +283,7 @@ def test_fit_transform():
         assert ica.components_.shape == (n_components_, 10)
         Xt2 = ica.transform(X)
 
-        assert_array_almost_equal(Xt, Xt2)
+        assert_allclose(Xt, Xt2)
 
 
 @pytest.mark.filterwarnings("ignore:Ignoring n_components with whiten=False.")
@@ -284,10 +298,20 @@ def test_fit_transform():
         (False, 10, (10, 10)),
     ],
 )
-def test_inverse_transform(whiten, n_components, expected_mixing_shape):
+def test_inverse_transform(
+    whiten, n_components, expected_mixing_shape, global_random_seed
+):
+    # XXX: casting X with `.astype(global_dtype)` reveals a rare numerical
+    # stability problem of FastICA with float32 bit data. I can triggers
+    # NaN values somewhere in the computation, only for some random seeds.
+
+    # XXX: furthermore, even when we do not hit the NaN issue, the
+    # assert_allclose can only pass with rtol values significantly larger than
+    # the usual 1e-4 we expect for float32 data.
+
     # Test FastICA.inverse_transform
     n_samples = 100
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.random_sample((n_samples, 10))
 
     ica = FastICA(n_components=n_components, random_state=rng, whiten=whiten)
@@ -298,7 +322,7 @@ def test_inverse_transform(whiten, n_components, expected_mixing_shape):
 
     # reversibility test in non-reduction case
     if n_components == X.shape[1]:
-        assert_array_almost_equal(X, X2)
+        assert_allclose(X, X2)
 
 
 # FIXME remove filter in 1.3
