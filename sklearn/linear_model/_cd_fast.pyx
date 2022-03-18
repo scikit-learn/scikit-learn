@@ -290,6 +290,16 @@ def sparse_enet_coordinate_descent(
 
     and X_mean is the weighted average of X (per column).
     """
+    # Notes for sample_weight:
+    # For dense X, one centers X and y and then rescales them by sqrt(sample_weight).
+    # Here, for sparse X, we get the sample_weight averaged center X_mean. We take care
+    # that every calculation results as if we had rescaled y and X (and therefore also
+    # X_mean) by sqrt(sample_weight) without actually calculating the square root.
+    # We work with:
+    #     yw = sample_weight
+    #     R = sample_weight * residual
+    #     norm_cols_X = np.sum(sample_weight * (X - X_mean)**2, axis=0)
+
     # get the data information into easy vars
     cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = w.shape[0]
@@ -374,14 +384,11 @@ def sparse_enet_coordinate_descent(
                     normalize_sum += (tmp * (X_data[jj] - X_mean_ii) ** 2
                                       - tmp * X_mean_ii ** 2)
                     R[X_indices[jj]] -= tmp * X_data[jj] * w_ii
-                norm_cols_X[ii] = normalize_sum
                 if center:
                     for jj in range(n_samples):
-                        norm_cols_X[ii] += sample_weight[jj] * X_mean_ii ** 2
+                        normalize_sum += sample_weight[jj] * X_mean_ii ** 2
                         R[jj] += sample_weight[jj] * X_mean_ii * w_ii
-                else:
-                    for jj in range(n_samples):
-                        norm_cols_X[ii] += sample_weight[jj] * X_mean_ii ** 2
+                norm_cols_X[ii] = normalize_sum
             startptr = endptr
 
         # tol *= np.dot(y, y)
@@ -489,7 +496,14 @@ def sparse_enet_coordinate_descent(
                     dual_norm_XtA = abs_max(n_features, &XtA[0])
 
                 # R_norm2 = np.dot(R, R)
-                R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+                if no_sample_weights:
+                    R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+                else:
+                    R_norm2 = 0.0
+                    for jj in range(n_samples):
+                        # R is already multiplied by sample_weight
+                        if sample_weight[jj] != 0:
+                            R_norm2 += (R[jj] ** 2) / sample_weight[jj]
 
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)

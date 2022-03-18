@@ -1495,7 +1495,7 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, precompute, sparse
         alpha=alpha,
         fit_intercept=fit_intercept,
         precompute=precompute,
-        tol=1e-9 if sparseX else 1e-6,
+        tol=1e-8 if sparseX else 1e-6,
         l1_ratio=0.5,
     )
 
@@ -1567,9 +1567,7 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparseX):
     sw = np.ones_like(y)
     if sparseX:
         X = sparse.csc_matrix(X)
-    params = dict(
-        tol=1e-9 if sparseX else 1e-6,
-    )
+    params = dict(tol=1e-6)
 
     # Set alphas, otherwise the two cv models might use different ones.
     if fit_intercept:
