@@ -58,6 +58,10 @@ random sampling procedures.
   edges slightly, which might result in a different output curve given the same
   data.
 
+- |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
+  the correct variance-scaling coefficient which may result in different model
+  behavior.
+
 Changelog
 ---------
 
@@ -171,6 +175,18 @@ Changelog
   `-1` and the original warning message is shown.
   :pr:`22217` by :user:`Meekail Zain <micky774>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` now removes validation errors from
+  `__init__` and `set_params` methods.
+  :pr:`22537` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
+
+- |Fix| :term:`get_feature_names_out` functionality in
+  :class:`compose.ColumnTransformer` was broken when columns were specified
+  using `slice`. This is fixed in :pr:`22775` by :user:`randomgeek78
+  <randomgeek78>`
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -178,7 +194,7 @@ Changelog
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
   :user:`Robin Thibaut <robinthibaut>`.
 
-- |API| Adds :term:`get_feature_names_out` to all transformers in the
+- |Enhancement| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.cross_decomposition` module:
   :class:`cross_decomposition.CCA`,
   :class:`cross_decomposition.PLSSVD`,
@@ -242,7 +258,7 @@ Changelog
   `algorithm='randomized'`.
   :pr:`22181` by :user:`Zach Deane-Mayer <zachmayer>`.
 
-- |API| Adds :term:`get_feature_names_out` to all transformers in the
+- |Enhancement| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.decomposition` module:
   :class:`~sklearn.decomposition.DictionaryLearning`,
   :class:`~sklearn.decomposition.FactorAnalysis`,
@@ -299,7 +315,12 @@ Changelog
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
-- |API| Adds :term:`get_feature_names_out` to
+- |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
+  the correct variance-scaling coefficient which may result in different model
+  behavior.:pr:`15984` by :user:`Okon Samuel <OkonSamuel>` :pr:`22696` by
+  :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. :pr:`22120` by
   `Thomas Fan`_.
 
@@ -341,6 +362,11 @@ Changelog
   changes are also applied for :class:`ensemble.ExtraTreesRegressor` and
   :class:`ensemble.ExtraTreesClassifier`.
   :pr:`20803` by :user:`Brian Sun <bsun94>`.
+
+- |Enhancement| Adds :meth:`get_feature_names_out` to
+  :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
+  :class:`ensemble.StackingClassifier`, and
+  :class:`ensemble.StackingRegressor`. :pr:`22695` and :pr:`22697`  by `Thomas Fan`_.
 
 - |Fix| Removed a potential source of CPU oversubscription in
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -434,15 +460,23 @@ Changelog
   a more informative error if `CompoundKernel` is passed via `kernel`.
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
 
+:mod:`sklearn.ensemble`
+.......................
+- |Enhancement| :class:`ensemble.RandomTreesEmbedding` now has an informative
+  :func:`get_feature_names_out` function that includes both tree index and leaf index in
+  the output feature names.
+  :pr:`21762` by :user:`Zhehao Liu <MaxwellLZH>` and `Thomas Fan`_.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Enhancement| Added support for `pd.NA` in :class:`SimpleImputer`.
   :pr:`21114` by :user:`Ying Xiong <yxiong>`.
 
-- |API| Adds :meth:`get_feature_names_out` to :class:`impute.SimpleImputer`,
-  :class:`impute.KNNImputer`, :class:`impute.IterativeImputer`, and
-  :class:`impute.MissingIndicator`. :pr:`21078` by `Thomas Fan`_.
+- |Enhancement| Adds :meth:`get_feature_names_out` to
+  :class:`impute.SimpleImputer`, :class:`impute.KNNImputer`,
+  :class:`impute.IterativeImputer`, and :class:`impute.MissingIndicator`.
+  :pr:`21078` by `Thomas Fan`_.
 
 - |API| The `verbose` parameter was deprecated for :class:`impute.SimpleImputer`.
   A warning will always be raised upon the removal of empty columns.
@@ -487,7 +521,8 @@ Changelog
 :mod:`sklearn.kernel_approximation`
 ...................................
 
-- |API| Adds :meth:`get_feature_names_out` to
+- |Enhancement| Adds :meth:`get_feature_names_out` to
+  :class:`kernel_approximation.AdditiveChi2Sampler`.
   :class:`kernel_approximation.Nystroem`,
   :class:`kernel_approximation.PolynomialCountSketch`,
   :class:`kernel_approximation.RBFSampler`, and
@@ -497,6 +532,8 @@ Changelog
   of the :mod:`~sklearn.kernel_approximation` module:
   :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
   :pr:`22137` by `Thomas Fan`_.
+  :class:`kernel_approximation.SkewedChi2Sampler`.
+  :pr:`22137` and :pr:`22694` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -734,6 +771,11 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports grouping
+  infrequent categories into a single feature. Grouping infrequent categories
+  is enabled by specifying how to select infrequent categories with
+  `min_frequency` or `max_categories`. :pr:`16018` by `Thomas Fan`_.
+
 - |Enhancement| Adds a `subsample` parameter to :class:`preprocessing.KBinsDiscretizer`.
   This allows specifying a maximum number of samples to be used while fitting
   the model. The option is only available when `strategy` is set to `quantile`.
@@ -756,7 +798,7 @@ Changelog
   now provides informative error message when input has mixed dtypes. :pr:`19916` by
   :user:`Zhehao Liu <MaxwellLZH>`.
 
-- |API| Adds :meth:`get_feature_names_out` to
+- |Enhancement| Adds :meth:`get_feature_names_out` to
   :class:`preprocessing.Normalizer`,
   :class:`preprocessing.KernelCenterer`,
   :class:`preprocessing.OrdinalEncoder`, and
@@ -765,6 +807,9 @@ Changelog
 - |Fix| :class:`preprocessing.KBinDiscretizer` handles bin edges more consistently now.
   :pr:`14975` by `Andreas Müller`_ and :pr:`22526` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| Adds :meth:`preprocessing.KBinDiscretizer.get_feature_names_out` support when
+  `encode="ordinal"`. :pr:`22735` by `Thomas Fan`_.
+
 :mod:`sklearn.random_projection`
 ................................
 
@@ -772,7 +817,15 @@ Changelog
   :class:`random_projection.GaussianRandomProjection` preserves dtype for
   `numpy.float32`. :pr:`22114` by :user:`Takeshi Oura <takoika>`.
 
-- |API| Adds :term:`get_feature_names_out` to all transformers in the
+- |Enhancement| Adds an :meth:`inverse_transform` method and a
+  `compute_inverse_transform` parameter to all transformers in the
+  :mod:`~sklearn.random_projection` module:
+  :class:`~sklearn.random_projection.GaussianRandomProjection` and
+  :class:`~sklearn.random_projection.SparseRandomProjection`. When the parameter is set
+  to True, the pseudo-inverse of the components is computed during `fit` and stored as
+  `inverse_components_`. :pr:`21701` by `Aurélien Geron <ageron>`.
+
+- |Enhancement| Adds :term:`get_feature_names_out` to all transformers in the
   :mod:`~sklearn.random_projection` module:
   :class:`~sklearn.random_projection.GaussianRandomProjection` and
   :class:`~sklearn.random_projection.SparseRandomProjection`. :pr:`21330` by
@@ -840,6 +893,12 @@ Changelog
   when a class is present in `y` but not in `class_weight`. :pr:`22595` by
   `Thomas Fan`_.
 
+- |Fix| :func:`utils.estimator_html_repr` has an improved visualization for nested
+  meta-estimators. :pr:`21310` by `Thomas Fan`_.
+
+- |API| :func:`utils.metaestimators.if_delegate_has_method` is deprecated and will be
+  removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.
+  :pr:`22830` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------

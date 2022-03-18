@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Author: Henry Lin <hlin117@gmail.com>
 #         Tom Dupré la Tour
 
@@ -449,4 +447,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         input_features = _check_feature_names_in(self, input_features)
-        return self._encoder.get_feature_names_out(input_features)
+        if hasattr(self, "_encoder"):
+            return self._encoder.get_feature_names_out(input_features)
+
+        # ordinal encoding
+        return input_features
