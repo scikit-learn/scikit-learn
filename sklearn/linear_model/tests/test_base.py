@@ -13,7 +13,6 @@ from scipy import linalg
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils import check_random_state
 
@@ -26,6 +25,7 @@ from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import add_dummy_feature
 
 rng = np.random.RandomState(0)
 rtol = 1e-6
@@ -55,45 +55,42 @@ def test_linear_regression():
     assert_array_almost_equal(reg.predict(X), [0])
 
 
-def test_linear_regression_sample_weights():
-    # TODO: loop over sparse data as well
-
+@pytest.mark.parametrize("array_constr", [np.array, sparse.csr_matrix])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_linear_regression_sample_weights(array_constr, fit_intercept):
     rng = np.random.RandomState(0)
 
     # It would not work with under-determined systems
-    for n_samples, n_features in ((6, 5),):
+    n_samples, n_features = 6, 5
 
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
-        sample_weight = 1.0 + rng.rand(n_samples)
+    X = array_constr(rng.normal(size=(n_samples, n_features)))
+    y = rng.normal(size=n_samples)
 
-        for intercept in (True, False):
+    sample_weight = 1.0 + rng.uniform(size=n_samples)
 
-            # LinearRegression with explicit sample_weight
-            reg = LinearRegression(fit_intercept=intercept)
-            reg.fit(X, y, sample_weight=sample_weight)
-            coefs1 = reg.coef_
-            inter1 = reg.intercept_
+    # LinearRegression with explicit sample_weight
+    reg = LinearRegression(fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
+    coefs1 = reg.coef_
+    inter1 = reg.intercept_
 
-            assert reg.coef_.shape == (X.shape[1],)  # sanity checks
-            assert reg.score(X, y) > 0.5
+    assert reg.coef_.shape == (X.shape[1],)  # sanity checks
+    assert reg.score(X, y) > 0.5
 
-            # Closed form of the weighted least square
-            # theta = (X^T W X)^(-1) * X^T W y
-            W = np.diag(sample_weight)
-            if intercept is False:
-                X_aug = X
-            else:
-                dummy_column = np.ones(shape=(n_samples, 1))
-                X_aug = np.concatenate((dummy_column, X), axis=1)
+    # Closed form of the weighted least square
+    # theta = (X^T W X)^(-1) @ X^T W y
+    W = np.diag(sample_weight)
+    X_aug = X if not fit_intercept else add_dummy_feature(X)
 
-            coefs2 = linalg.solve(X_aug.T.dot(W).dot(X_aug), X_aug.T.dot(W).dot(y))
+    Xw = X_aug.T @ W @ X_aug
+    yw = X_aug.T @ W @ y
+    coefs2 = linalg.solve(Xw, yw)
 
-            if intercept is False:
-                assert_array_almost_equal(coefs1, coefs2)
-            else:
-                assert_array_almost_equal(coefs1, coefs2[1:])
-                assert_almost_equal(inter1, coefs2[0])
+    if not fit_intercept:
+        assert_allclose(coefs1, coefs2)
+    else:
+        assert_allclose(coefs1, coefs2[1:])
+        assert_allclose(inter1, coefs2[0])
 
 
 def test_raises_value_error_if_positive_and_sparse():

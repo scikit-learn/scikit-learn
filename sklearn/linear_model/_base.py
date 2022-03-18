@@ -322,7 +322,7 @@ def _preprocess_data(
 # sample_weight makes the refactoring tricky.
 
 
-def _rescale_data(X, y, sample_weight):
+def _rescale_data(X, y, sample_weight, sqrt_sample_weight=True):
     """Rescale data sample-wise by square root of sample_weight.
 
     For many linear models, this enables easy support for sample_weight because
@@ -338,6 +338,9 @@ def _rescale_data(X, y, sample_weight):
         y_rescaled = sqrt(S) y
         X_rescaled = sqrt(S) X
 
+    Set sqrt_sample_weight=False if the square root of the sample weights has already
+    been done prior to calling this function.
+
     Returns
     -------
     X_rescaled : {array-like, sparse matrix}
@@ -348,7 +351,8 @@ def _rescale_data(X, y, sample_weight):
     sample_weight = np.asarray(sample_weight)
     if sample_weight.ndim == 0:
         sample_weight = np.full(n_samples, sample_weight, dtype=sample_weight.dtype)
-    sample_weight = np.sqrt(sample_weight)
+    if sqrt_sample_weight:
+        sample_weight = np.sqrt(sample_weight)
     sw_matrix = sparse.dia_matrix((sample_weight, 0), shape=(n_samples, n_samples))
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
@@ -684,10 +688,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
         )
 
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype, only_non_negative=True
-            )
+        sample_weight = _check_sample_weight(
+            sample_weight, X, dtype=X.dtype, only_non_negative=True
+        )
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
@@ -698,9 +701,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             sample_weight=sample_weight,
         )
 
-        if sample_weight is not None:
-            # Sample weight can be implemented via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+        # Sample weight can be implemented via a simple rescaling.
+        sample_weight_sqrt = np.sqrt(sample_weight)
+        X, y = _rescale_data(X, y, sample_weight_sqrt, sqrt_sample_weight=False)
 
         if self.positive:
             if y.ndim < 2:
@@ -715,10 +718,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             X_offset_scale = X_offset / X_scale
 
             def matvec(b):
-                return X.dot(b) - b.dot(X_offset_scale)
+                return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
 
             def rmatvec(b):
-                return X.T.dot(b) - X_offset_scale * np.sum(b)
+                return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
 
             X_centered = sparse.linalg.LinearOperator(
                 shape=X.shape, matvec=matvec, rmatvec=rmatvec

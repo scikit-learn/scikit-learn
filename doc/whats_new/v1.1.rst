@@ -597,6 +597,9 @@ Changelog
 - |Feature| :class:`ElasticNet`, :class:`ElasticNetCV`, :class:`Lasso` and
   :class:`LassoCV` support `sample_weight` for sparse input `X`.
   :pr:`22808` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |Fix| The `intercept_` attribute of :class:`LinearRegression` is now correctly
+  computed in the presence of sample weights when the input is sparse.
+  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
 
 :mod:`sklearn.manifold`
 .......................
@@ -700,6 +703,9 @@ Changelog
 - |Enhancement| :class:`multiclass.OneVsRestClassifier` now supports a `verbose`
   parameter so progress on fitting can be seen.
   :pr:`22508` by :user:`Chris Combs <combscCode>`.
+
+- |Fix| :meth:`multiclass.OneVsOneClassifier.predict` returns correct predictions when
+  the inner classifier only has a :term:`predict_proba`. :pr:`22604` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
 ........................
