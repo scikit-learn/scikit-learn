@@ -164,7 +164,7 @@ def _alpha_grid(
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
             _, _, X_offset, _, X_scale = _preprocess_data(
-                X, y, fit_intercept, normalize, return_mean=True
+                X, y, fit_intercept, normalize
             )
             mean_dot = X_offset * np.sum(y)
 

@@ -217,7 +217,6 @@ def _preprocess_data(
     normalize=False,
     copy=True,
     sample_weight=None,
-    return_mean=False,
     check_input=True,
 ):
     """Center and scale data.
@@ -231,7 +230,7 @@ def _preprocess_data(
 
     X_scale is the L2 norm of X - X_offset. If sample_weight is not None,
     then the weighted mean of X and y is zero, and not the mean itself. If
-    return_mean=True, the mean, eventually weighted, is returned, independently
+    fit_intercept=True, the mean, eventually weighted, is returned, independently
     of whether X was centered (option used for optimization with sparse data in
     coordinate_descend).
 
@@ -271,8 +270,6 @@ def _preprocess_data(
     if fit_intercept:
         if sp.issparse(X):
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
-            if not return_mean:
-                X_offset[:] = X.dtype.type(0)
         else:
             if normalize:
                 X_offset, X_var, _ = _incremental_mean_and_var(
@@ -699,7 +696,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             normalize=_normalize,
             copy=self.copy_X,
             sample_weight=sample_weight,
-            return_mean=True,
         )
 
         if sample_weight is not None:
@@ -837,7 +833,6 @@ def _pre_fit(
             fit_intercept=fit_intercept,
             normalize=normalize,
             copy=False,
-            return_mean=True,
             check_input=check_input,
             sample_weight=sample_weight,
         )

@@ -474,7 +474,6 @@ def test_preprocess_data_weighted(is_sparse):
         fit_intercept=True,
         normalize=False,
         sample_weight=sample_weight,
-        return_mean=True,
     )
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
@@ -492,7 +491,6 @@ def test_preprocess_data_weighted(is_sparse):
         fit_intercept=True,
         normalize=True,
         sample_weight=sample_weight,
-        return_mean=True,
     )
 
     assert_array_almost_equal(X_mean, expected_X_mean)
@@ -533,7 +531,7 @@ def test_preprocess_data_weighted(is_sparse):
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-def test_sparse_preprocess_data_with_return_mean():
+def test_sparse_preprocess_data_offsets():
     n_samples = 200
     n_features = 2
     # random_state not supported yet in sparse.rand
@@ -544,7 +542,7 @@ def test_sparse_preprocess_data_with_return_mean():
     expected_X_scale = np.std(XA, axis=0) * np.sqrt(X.shape[0])
 
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=False, normalize=False, return_mean=True
+        X, y, fit_intercept=False, normalize=False
     )
     assert_array_almost_equal(X_mean, np.zeros(n_features))
     assert_array_almost_equal(y_mean, 0)
@@ -553,7 +551,7 @@ def test_sparse_preprocess_data_with_return_mean():
     assert_array_almost_equal(yt, y)
 
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=False, return_mean=True
+        X, y, fit_intercept=True, normalize=False
     )
     assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
     assert_array_almost_equal(y_mean, np.mean(y, axis=0))
@@ -562,7 +560,7 @@ def test_sparse_preprocess_data_with_return_mean():
     assert_array_almost_equal(yt, y - np.mean(y, axis=0))
 
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
-        X, y, fit_intercept=True, normalize=True, return_mean=True
+        X, y, fit_intercept=True, normalize=True
     )
     assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
     assert_array_almost_equal(y_mean, np.mean(y, axis=0))
@@ -620,7 +618,6 @@ def test_dtype_preprocess_data():
                 y_32,
                 fit_intercept=fit_intercept,
                 normalize=normalize,
-                return_mean=True,
             )
 
             Xt_64, yt_64, X_mean_64, y_mean_64, X_scale_64 = _preprocess_data(
@@ -628,7 +625,6 @@ def test_dtype_preprocess_data():
                 y_64,
                 fit_intercept=fit_intercept,
                 normalize=normalize,
-                return_mean=True,
             )
 
             Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264 = _preprocess_data(
@@ -636,7 +632,6 @@ def test_dtype_preprocess_data():
                 y_64,
                 fit_intercept=fit_intercept,
                 normalize=normalize,
-                return_mean=True,
             )
 
             Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432 = _preprocess_data(
@@ -644,7 +639,6 @@ def test_dtype_preprocess_data():
                 y_32,
                 fit_intercept=fit_intercept,
                 normalize=normalize,
-                return_mean=True,
             )
 
             assert Xt_32.dtype == np.float32
