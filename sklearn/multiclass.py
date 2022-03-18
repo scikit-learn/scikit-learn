@@ -38,6 +38,7 @@ import numpy as np
 import warnings
 import scipy.sparse as sp
 import itertools
+from functools import cached_property
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
@@ -603,6 +604,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Indices of samples used when training the estimators.
         ``None`` when ``estimator``'s `pairwise` tag is False.
 
+    class_pairs_ : a cached_property containing an
+        ndarray of shape ``(n_classes * (n_classes - 1) // 2, 2)``.
+        Store pairs of classes used to train each estimator.
+        .. versionadded:: 1.1
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -685,6 +691,18 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
 
         return self
+
+    @cached_property
+    def class_pairs_(self):
+        n_classes = self.classes_.shape[0]
+        return np.array(
+            [
+                [self.classes_[i], self.classes_[j]]
+                for i in range(n_classes)
+                for j in range(i + 1, n_classes)
+            ],
+            dtype=self.classes_.dtype,
+        )
 
     @available_if(_estimators_has("partial_fit"))
     def partial_fit(self, X, y, classes=None):

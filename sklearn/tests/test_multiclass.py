@@ -906,3 +906,33 @@ def test_constant_int_target(make_y):
     expected = np.zeros((X.shape[0], 2))
     expected[:, 0] = 1
     assert_allclose(y_pred, expected)
+
+
+def test_ovo_store_class_pairs():
+    # Check that class_pairs_ is created and has correct pairs.
+
+    X = iris.data
+
+    # Check with y of type int and string
+    y_int_string = [iris.target, iris.target_names[iris.target]]
+
+    for y in y_int_string:
+        clf = OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y)
+
+        classes = np.unique(y)
+        n_classes = classes.shape[0]
+
+        # Check dtype and shape is correct.
+        assert clf.class_pairs_.dtype == y.dtype
+        assert clf.class_pairs_.shape == (n_classes * (n_classes - 1) // 2, 2)
+
+        # Check pairs are correct or not.
+        correct_pairs = np.array(
+            [
+                [classes[i], classes[j]]
+                for i in range(n_classes)
+                for j in range(i + 1, n_classes)
+            ],
+            dtype=y.dtype,
+        )
+        assert np.all(clf.class_pairs_ == correct_pairs)
