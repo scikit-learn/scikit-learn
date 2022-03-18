@@ -3,6 +3,7 @@ Test the fastica algorithm.
 """
 import itertools
 import pytest
+import warnings
 
 import numpy as np
 from scipy import stats
@@ -354,9 +355,9 @@ def test_fastica_whiten_backwards_compatibility():
     av_ica = FastICA(
         n_components=n_components, whiten="arbitrary-variance", random_state=0
     )
-    with pytest.warns(None) as warn_record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
         Xt_av = av_ica.fit_transform(X)
-        assert len(warn_record) == 0
 
     # The whitening strategy must be "arbitrary-variance" in all the cases.
     assert default_ica._whiten == "arbitrary-variance"
