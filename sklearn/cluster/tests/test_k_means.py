@@ -148,9 +148,9 @@ def test_relocate_empty_clusters(array_constr):
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
 @pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
-def test_kmeans_elkan_results(distribution, array_constr, tol):
+def test_kmeans_elkan_results(distribution, array_constr, tol, global_random_seed):
     # Check that results are identical between lloyd and elkan algorithms
-    rnd = np.random.RandomState(0)
+    rnd = np.random.RandomState(global_random_seed)
     if distribution == "normal":
         X = rnd.normal(size=(5000, 10))
     else:
