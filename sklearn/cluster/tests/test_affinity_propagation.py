@@ -29,15 +29,15 @@ X, _ = make_blobs(
     random_state=0,
 )
 
-DTYPES = (np.float32, np.float64)
 
-
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinity_propagation(dtype):
+def test_affinity_propagation(global_dtype):
     # Affinity Propagation algorithm
     # Compute similarities
-    S = -euclidean_distances(X.astype(dtype), squared=True)
+    S = -euclidean_distances(X.astype(global_dtype), squared=True)
+    assert S.dtype == global_dtype
+
     preference = np.median(S) * 10
+
     # Compute Affinity Propagation
     cluster_centers_indices, labels = affinity_propagation(
         S, preference=preference, random_state=39
@@ -54,6 +54,12 @@ def test_affinity_propagation(dtype):
 
     af = AffinityPropagation(preference=preference, verbose=True, random_state=37)
     labels = af.fit(X).labels_
+
+    # Fitted attribute must have the same dtype
+    # TODO: preserve dtype for cluster_centers_
+    # assert af.cluster_centers_.dtype == global_dtype
+    # TODO: preserve dtype for affinity_matrix_
+    # assert af.affinity_matrix_.dtype == global_dtype
 
     assert_array_equal(labels, labels_precomputed)
 
@@ -100,38 +106,36 @@ def test_affinity_propagation_params_validation(input, params, err_type, err_msg
         AffinityPropagation(**params).fit(input)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinity_propagation_predict(dtype):
+def test_affinity_propagation_predict(global_dtype):
     # Test AffinityPropagation.predict
     af = AffinityPropagation(affinity="euclidean", random_state=63)
-    labels = af.fit_predict(X.astype(dtype))
-    labels2 = af.predict(X.astype(dtype))
+    labels = af.fit_predict(X.astype(global_dtype))
+    labels2 = af.predict(X.astype(global_dtype))
     assert_array_equal(labels, labels2)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinity_propagation_predict_error(dtype):
+def test_affinity_propagation_predict_error(global_dtype):
     # Test exception in AffinityPropagation.predict
     # Not fitted.
-    Y = X.astype(dtype)
+    global X
+    X = X.astype(global_dtype)
     af = AffinityPropagation(affinity="euclidean")
     with pytest.raises(ValueError):
-        af.predict(Y)
+        af.predict(X)
 
     # Predict not supported when affinity="precomputed".
-    S = np.dot(Y, Y.T)
+    S = np.dot(X, X.T)
     af = AffinityPropagation(affinity="precomputed", random_state=57)
     af.fit(S)
     with pytest.raises(ValueError):
-        af.predict(Y)
+        af.predict(X)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinity_propagation_fit_non_convergence(dtype):
+def test_affinity_propagation_fit_non_convergence(global_dtype):
     # In case of non-convergence of affinity_propagation(), the cluster
     # centers should be an empty array and training samples should be labelled
     # as noise (-1)
-    X = np.array([[0, 0], [1, 1], [-2, -2]]).astype(dtype)
+    X = np.array([[0, 0], [1, 1], [-2, -2]]).astype(global_dtype)
 
     # Force non-convergence by allowing only a single iteration
     af = AffinityPropagation(preference=-10, max_iter=1, random_state=82)
@@ -142,9 +146,8 @@ def test_affinity_propagation_fit_non_convergence(dtype):
     assert_array_equal(np.array([-1, -1, -1]), af.labels_)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinity_propagation_equal_mutual_similarities(dtype):
-    X = np.array([[-1, 1], [1, -1]]).astype(dtype)
+def test_affinity_propagation_equal_mutual_similarities(global_dtype):
+    X = np.array([[-1, 1], [1, -1]]).astype(global_dtype)
     S = -euclidean_distances(X, squared=True)
 
     # setting preference > similarity
@@ -175,11 +178,10 @@ def test_affinity_propagation_equal_mutual_similarities(dtype):
     assert_array_equal([0, 0], labels)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinity_propagation_predict_non_convergence(dtype):
+def test_affinity_propagation_predict_non_convergence(global_dtype):
     # In case of non-convergence of affinity_propagation(), the cluster
     # centers should be an empty array
-    X = np.array([[0, 0], [1, 1], [-2, -2]], dtype=dtype)
+    X = np.array([[0, 0], [1, 1], [-2, -2]], dtype=global_dtype)
 
     # Force non-convergence by allowing only a single iteration
     with pytest.warns(ConvergenceWarning):
@@ -193,10 +195,9 @@ def test_affinity_propagation_predict_non_convergence(dtype):
     assert_array_equal(np.array([-1, -1, -1]), y)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinity_propagation_non_convergence_regressiontest(dtype):
+def test_affinity_propagation_non_convergence_regressiontest(global_dtype):
     X = np.array(
-        [[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]], dtype=dtype
+        [[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]], dtype=global_dtype
     )
     af = AffinityPropagation(affinity="euclidean", max_iter=2, random_state=34)
     msg = (
@@ -209,19 +210,20 @@ def test_affinity_propagation_non_convergence_regressiontest(dtype):
     assert_array_equal(np.array([0, 0, 0]), af.labels_)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_equal_similarities_and_preferences(dtype):
+def test_equal_similarities_and_preferences(global_dtype):
     # Unequal distances
-    X = np.array([[0, 0], [1, 1], [-2, -2]]).astype(dtype)
+    X = np.array([[0, 0], [1, 1], [-2, -2]]).astype(global_dtype)
     S = -euclidean_distances(X, squared=True)
+    assert S.dtype == global_dtype
 
     assert not _equal_similarities_and_preferences(S, np.array(0))
     assert not _equal_similarities_and_preferences(S, np.array([0, 0]))
     assert not _equal_similarities_and_preferences(S, np.array([0, 1]))
 
     # Equal distances
-    X = np.array([[0, 0], [1, 1]]).astype(dtype)
+    X = np.array([[0, 0], [1, 1]]).astype(global_dtype)
     S = -euclidean_distances(X, squared=True)
+    assert S.dtype == global_dtype
 
     # Different preferences
     assert not _equal_similarities_and_preferences(S, np.array([0, 1]))
@@ -252,11 +254,10 @@ def test_affinity_propagation_random_state():
 
 
 @pytest.mark.parametrize("centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))])
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinity_propagation_convergence_warning_dense_sparse(centers, dtype):
+def test_affinity_propagation_convergence_warning_dense_sparse(centers, global_dtype):
     """Non-regression, see #13334"""
     rng = np.random.RandomState(42)
-    X = rng.rand(40, 10).astype(dtype)
+    X = rng.rand(40, 10).astype(global_dtype)
     y = (4 * rng.rand(40)).astype(int)
     ap = AffinityPropagation(random_state=46)
     ap.fit(X, y)
