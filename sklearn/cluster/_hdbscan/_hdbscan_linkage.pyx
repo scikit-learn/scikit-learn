@@ -1,5 +1,3 @@
-# cython: boundscheck=False
-# cython: nonecheck=False
 # Minimum spanning tree single linkage implementation for hdbscan
 # Authors: Leland McInnes, Steve Astels
 # License: 3-clause BSD

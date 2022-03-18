@@ -10,11 +10,8 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_raises,
 )
-from sklearn.cluster import (
-    HDBSCAN,
-    hdbscan,
-    validity_index,
-)
+from sklearn.cluster import HDBSCAN, hdbscan
+from sklearn.cluster._hdbscan._validity import validity_index
 
 # from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.datasets import make_blobs

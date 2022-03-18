@@ -1,6 +1,3 @@
-# cython: boundscheck=False
-# cython: nonecheck=False
-# cython: initializedcheck=False
 # mutual reachability distance compiutations
 # Authors: Leland McInnes
 # License: 3-clause BSD
