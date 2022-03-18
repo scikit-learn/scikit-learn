@@ -1213,7 +1213,7 @@ def d2_pinball_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
     """
-    :math:`D^2` regression score function, fraction of pinball deviance explained.
+    :math:`D^2` regression score function, fraction of pinball loss explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical alpha-quantile of
@@ -1359,7 +1359,7 @@ def d2_absolute_error_score(
 ):
     """
     :math:`D^2` regression score function, \
-    fraction of absolute error deviance explained.
+    fraction of absolute error explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical median of `y_true`

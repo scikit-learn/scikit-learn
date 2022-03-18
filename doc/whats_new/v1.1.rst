@@ -631,10 +631,10 @@ Changelog
   returned by default. :pr:`17266` by :user:`Sylvain Marié <smarie>`.
 
 - |Feature| :func:`d2_pinball_score` and :func:`d2_absolute_error_score`
-  calculate the :math:`D^2` regression score for the pinball and absolute error 
-  deviances respectively. :func:`d2_absolute_error_score` is a special case
-  of :func:`d2_pinball_score` with a quantile parameter `alpha=0.5` and is
-  exposed as well for easy discovery. The :math:`D^2` scores are generalizations 
+  calculate the :math:`D^2` regression score for the pinball loss and the
+  absolute error respectively. :func:`d2_absolute_error_score` is a special case
+  of :func:`d2_pinball_score` with a fixed quantile parameter `alpha=0.5` for
+  ease of use and discovery. The :math:`D^2` scores are generalizations
   of the `r2_score` and can be interpeted as the fraction of deviance explained.
   :pr:`22118` by :user:`Ohad Michel <ohadmich>`
 

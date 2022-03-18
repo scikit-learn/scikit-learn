@@ -2502,16 +2502,16 @@ Where :math:`y_{\text{null}}` is the optimal intercept-only model's prediction
 error and the alpha-quantile for pinball loss).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
-model can be arbitrarily worse). A constant model that always predicts the
-expected value of y, disregarding the input features, would get a D² score
+model can be arbitrarily worse). A constant model that always predicts
+:math:`y_{\text{null}}`, disregarding the input features, would get a D² score
 of 0.0.
 
 D² Tweedie score
 ^^^^^^^^^^^^^^^^
 
 The :func:`d2_tweedie_score` function implements the special case of D² 
-where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance. 
-It is also known as D² Tweedie or McFadden's likelihood ratio index.
+where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`. 
+It is also known as D² Tweedie and is related to McFadden's likelihood ratio index.
 
 The argument ``power`` defines the Tweedie power as for
 :func:`mean_tweedie_deviance`. Note that for `power=0`,
@@ -2526,15 +2526,15 @@ D² pinball score
 ^^^^^^^^^^^^^^^^^^^^^
 
 The :func:`d2_pinball_score` function implements the special case
-of D² with a pinball deviance, i.e.:
+of D² with the pinball loss, see :ref:`pinball_loss`, i.e.:
 
 .. math::
 
-  \text{dev}(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0).
+  \text{dev}(y, \hat{y}) = \text{pinball}(y, \hat{y}).
 
 The argument ``alpha`` defines the slope of the pinball loss as for
 :func:`mean_pinball_loss` (:ref:`pinball_loss`). It determines the 
-quantile level ``alpha`` for which the pinball deviance and also D2 
+quantile level ``alpha`` for which the pinball loss and also D²
 are optimal. Note that for `alpha=0.5` (the default) :func:`d2_pinball_score`
 equals :func:`d2_absolute_error_score`.
 
@@ -2547,10 +2547,11 @@ D² absolute error score
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 The :func:`d2_absolute_error_score` function implements the special case of
+the :ref:`mean_absolute_error`:
 
 .. math::
 
-  \text{dev}(y, \hat{y}) = \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
+  \text{dev}(y, \hat{y}) = \text{MAE}(y, \hat{y}).
 
 Here are some usage examples of the :func:`d2_absolute_error_score` function::
 
