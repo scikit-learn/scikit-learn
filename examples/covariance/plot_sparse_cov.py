@@ -144,6 +144,7 @@ for i, (name, this_prec) in enumerate(precs):
     else:
         ax.set_axis_bgcolor(".7")
 
+# %%
 # plot the model selection metric
 plt.figure(figsize=(4, 3))
 plt.axes([0.2, 0.15, 0.75, 0.7])
