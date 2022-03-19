@@ -58,9 +58,9 @@ def test_iforest():
             IsolationForest(random_state=rng, **params).fit(X_train).predict(X_test)
 
 
-def test_iforest_sparse():
+def test_iforest_sparse(global_random_seed):
     """Check IForest for various parameter settings on sparse input."""
-    rng = check_random_state(0)
+    rng = check_random_state(global_random_seed)
     X_train, X_test, y_train, y_test = train_test_split(
         diabetes.data[:50], diabetes.target[:50], random_state=rng
     )
@@ -143,9 +143,9 @@ def test_max_samples_attribute():
     assert clf.max_samples_ == 0.4 * X.shape[0]
 
 
-def test_iforest_parallel_regression():
+def test_iforest_parallel_regression(global_random_seed):
     """Check parallel regression."""
-    rng = check_random_state(0)
+    rng = check_random_state(global_random_seed)
 
     X_train, X_test, y_train, y_test = train_test_split(
         diabetes.data, diabetes.target, random_state=rng
@@ -165,19 +165,19 @@ def test_iforest_parallel_regression():
     assert_array_almost_equal(y1, y3)
 
 
-def test_iforest_performance():
+def test_iforest_performance(global_random_seed):
     """Test Isolation Forest performs well"""
 
     # Generate train/test data
-    rng = check_random_state(2)
-    X = 0.3 * rng.randn(120, 2)
+    rng = check_random_state(global_random_seed)
+    X = 0.3 * rng.randn(1200, 2)
     X_train = np.r_[X + 2, X - 2]
-    X_train = X[:100]
+    X_train = X[:1000]
 
     # Generate some abnormal novel observations
-    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
-    X_test = np.r_[X[100:], X_outliers]
-    y_test = np.array([0] * 20 + [1] * 20)
+    X_outliers = rng.uniform(low=-16, high=16, size=(200, 2))
+    X_test = np.r_[X[1000:], X_outliers]
+    y_test = np.array([0] * 200 + [1] * 200)
 
     # fit the model
     clf = IsolationForest(max_samples=100, random_state=rng).fit(X_train)
@@ -303,7 +303,7 @@ def test_iforest_chunks_works2(mocked_get_chunk, contamination, n_predict_calls)
     assert mocked_get_chunk.call_count == n_predict_calls
 
 
-def test_iforest_with_uniform_data():
+def test_iforest_with_uniform_data(global_random_seed):
     """Test whether iforest predicts inliers when using uniform data"""
 
     # 2-d array of all 1s
@@ -311,7 +311,7 @@ def test_iforest_with_uniform_data():
     iforest = IsolationForest()
     iforest.fit(X)
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     assert all(iforest.predict(X) == 1)
     assert all(iforest.predict(rng.randn(100, 10)) == 1)
