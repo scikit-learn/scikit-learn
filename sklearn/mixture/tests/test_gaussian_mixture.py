@@ -1272,7 +1272,7 @@ def test_init_param(init_params):
         max_iter=1000,
     )
     gmm.fit(X)
-    assert_almost_equal(default_means, np.sort(gmm.means_.flatten()), decimal=10)
+    assert_allclose(default_means, np.sort(gmm.means_.flatten()), rtol=1e-8)
 
 
 @pytest.mark.parametrize(
