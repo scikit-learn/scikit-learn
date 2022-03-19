@@ -596,7 +596,7 @@ Changelog
 
 - |Fix| The `intercept_` attribute of :class:`LinearRegression` is now correctly
   computed in the presence of sample weights when the input is sparse.
-  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -838,6 +838,10 @@ Changelog
   :class:`svm.SVR`, :class:`svm.OneClassSVM` now validate input
   parameters in `fit` instead of `__init__`.
   :pr:`21436` by :user:`Haidar Almubarak <Haidar13 >`.
+
+- |API| Attributes `n_support_` and `class_weight_` are noe deprecated for
+  :class:`svm.NuSVR`, :class:`svm.SVR`, :class:`svm.OneClassSVM`.
+  :pr:`22898` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.tree`
 ...................
