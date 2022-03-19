@@ -41,17 +41,28 @@ from ..utils.sparsefuncs import mean_variance_axis
 
 
 def _solve_sparse_cg(
-    X, y, alpha, max_iter=None, tol=1e-3, verbose=0, X_offset=None, X_scale=None
+    X,
+    y,
+    alpha,
+    max_iter=None,
+    tol=1e-3,
+    verbose=0,
+    X_offset=None,
+    X_scale=None,
+    sample_weight_sqrt=None,
 ):
+    if sample_weight_sqrt is None:
+        sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
+
     def _get_rescaled_operator(X):
 
         X_offset_scale = X_offset / X_scale
 
         def matvec(b):
-            return X.dot(b) - b.dot(X_offset_scale)
+            return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
 
         def rmatvec(b):
-            return X.T.dot(b) - X_offset_scale * np.sum(b)
+            return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
 
         X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
         return X1
@@ -568,7 +579,7 @@ def _ridge_regression(
         if solver not in ["sag", "saga"]:
             # SAG supports sample_weight directly. For other solvers,
             # we implement sample_weight via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+            X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
@@ -603,6 +614,7 @@ def _ridge_regression(
             verbose=verbose,
             X_offset=X_offset,
             X_scale=X_scale,
+            sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
         )
 
     elif solver == "lsqr":
@@ -1910,7 +1922,7 @@ class _RidgeGCV(LinearModel):
         n_samples = X.shape[0]
 
         if sample_weight is not None:
-            X, y = _rescale_data(X, y, sample_weight)
+            X, y, _ = _rescale_data(X, y, sample_weight)
             sqrt_sw = np.sqrt(sample_weight)
         else:
             sqrt_sw = np.ones(n_samples, dtype=X.dtype)

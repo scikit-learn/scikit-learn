@@ -1823,3 +1823,33 @@ def test_ridgecv_normalize_deprecated(Estimator):
         FutureWarning, match=r"Set parameter alphas to: original_alphas \* n_samples"
     ):
         estimator.fit(X, y)
+
+
+@pytest.mark.parametrize("solver", ["sparse_cg", "sag"])
+def test_ridge_sample_weights_dense_sparse(solver, global_random_seed):
+    """Check that ridge finds the same coefs and intercept on
+    dense and sparse input in the presence of sample weights.
+    """
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples, n_features = 10, 3
+
+    X = rng.uniform(size=(n_samples, n_features))
+    y = rng.uniform(size=n_samples)
+
+    sample_weight = 1.0 + rng.uniform(size=n_samples)
+
+    reg = Ridge(fit_intercept=True, solver=solver, random_state=global_random_seed)
+
+    # fit on dense X
+    reg.fit(X, y, sample_weight=sample_weight)
+    coefs_dense = reg.coef_
+    intercept_dense = reg.intercept_
+
+    # fit on sparse X
+    reg.fit(sp.csr_matrix(X), y, sample_weight=sample_weight)
+    coefs_sparse = reg.coef_
+    intercept_sparse = reg.intercept_
+
+    assert_allclose(coefs_dense, coefs_sparse)
+    assert_allclose(intercept_dense, intercept_sparse)

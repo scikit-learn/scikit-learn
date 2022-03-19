@@ -692,7 +692,7 @@ def test_rescale_data_dense(n_targets):
         y = rng.rand(n_samples)
     else:
         y = rng.rand(n_samples, n_targets)
-    rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight)
+    rescaled_X, rescaled_y, _ = _rescale_data(X, y, sample_weight)
     rescaled_X2 = X * np.sqrt(sample_weight)[:, np.newaxis]
     if n_targets is None:
         rescaled_y2 = y * np.sqrt(sample_weight)
