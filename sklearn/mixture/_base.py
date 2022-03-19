@@ -18,7 +18,6 @@ from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_scalar
-from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted
 
 
