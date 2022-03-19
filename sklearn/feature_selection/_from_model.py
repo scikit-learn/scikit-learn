@@ -117,9 +117,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         The maximum number of features to select.
 
         - If an integer, then it specifies the maximum number of features to
-        allow.
+          allow.
         - If a callable, then it specifies how to calculate the maximum number of
-        features allowed by using the output of `max_feaures(X)`.
+          features allowed by using the output of `max_feaures(X)`.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
