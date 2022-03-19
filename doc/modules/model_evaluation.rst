@@ -115,14 +115,15 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Use sorted(sklearn.metrics.SCORERS.keys()) to get valid options.
+    ValueError: 'wrong_choice' is not a valid scoring value. Use
+    sklearn.metrics.get_scorer_names() to get valid options.
 
 .. note::
 
-    The values listed by the ``ValueError`` exception correspond to the functions measuring
-    prediction accuracy described in the following sections.
-    The scorer objects for those functions are stored in the dictionary
-    ``sklearn.metrics.SCORERS``.
+    The values listed by the ``ValueError`` exception correspond to the
+    functions measuring prediction accuracy described in the following
+    sections. You can retrieve the names of all available scorers by calling
+    :func:`~sklearn.metrics.get_scorer_names`.
 
 .. currentmodule:: sklearn.metrics
 
@@ -563,8 +564,8 @@ or *informedness*.
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
-  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description 
-      and evaluation of a scalable learning classifier 
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
+      and evaluation of a scalable learning classifier
       system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
