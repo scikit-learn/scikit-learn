@@ -229,7 +229,7 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
         The covariance vector of the current components.
     """
     avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
-    avg_means2 = means**2
+    avg_means2 = means ** 2
     avg_X_means = means * np.dot(resp.T, X) / nk[:, np.newaxis]
     return avg_X2 - 2 * avg_X_means + avg_means2 + reg_covar
 
@@ -434,17 +434,17 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
             log_prob[:, k] = np.sum(np.square(y), axis=1)
 
     elif covariance_type == "diag":
-        precisions = precisions_chol**2
+        precisions = precisions_chol ** 2
         log_prob = (
-            np.sum((means**2 * precisions), 1)
+            np.sum((means ** 2 * precisions), 1)
             - 2.0 * np.dot(X, (means * precisions).T)
-            + np.dot(X**2, precisions.T)
+            + np.dot(X ** 2, precisions.T)
         )
 
     elif covariance_type == "spherical":
-        precisions = precisions_chol**2
+        precisions = precisions_chol ** 2
         log_prob = (
-            np.sum(means**2, 1) * precisions
+            np.sum(means ** 2, 1) * precisions
             - 2 * np.dot(X, means.T * precisions)
             + np.outer(row_norms(X, squared=True), precisions)
         )
@@ -469,7 +469,8 @@ class GaussianMixture(BaseMixture):
     n_components : int, default=1
         The number of mixture components.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}, default='full'
+    covariance_type : {'full', 'tied', 'diag', 'spherical'},
+    default='full'
         String describing the type of covariance parameters to use.
         Must be one of:
 
@@ -492,14 +493,20 @@ class GaussianMixture(BaseMixture):
     n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : str, default='kmeans'
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'},
+    default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
         String must be one of:
+
         - 'kmeans' : responsibilities are initialized using kmeans.
+        - 'k-means++' : use the k-means++ method to initialize.
         - 'random' : responsibilities are initialized randomly.
-        - 'random_from_data' : Initial means are randomly selected data points.
-        - 'k-means++' : Use the k-means++ method to initialize.
+        - 'random_from_data' : initial means are randomly selected data points.
+
+        .. versionchanged:: v1.1
+            `init_params` now accepts 'random_from_data' and 'k-means++' as
+            initialization methods.
 
     weights_init : array-like of shape (n_components, ), default=None
         The user-provided initial weights.
@@ -673,8 +680,7 @@ class GaussianMixture(BaseMixture):
             raise ValueError(
                 "Invalid value for 'covariance_type': %s "
                 "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']"
-                % self.covariance_type
+                "['spherical', 'tied', 'diag', 'full']" % self.covariance_type
             )
 
         if self.weights_init is not None:
@@ -791,7 +797,7 @@ class GaussianMixture(BaseMixture):
                 self.precisions_cholesky_, self.precisions_cholesky_.T
             )
         else:
-            self.precisions_ = self.precisions_cholesky_**2
+            self.precisions_ = self.precisions_cholesky_ ** 2
 
     def _n_parameters(self):
         """Return the number of free parameters in the model."""
