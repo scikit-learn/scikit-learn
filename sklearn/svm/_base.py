@@ -290,9 +290,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Default implementation for SVR and one-class; overridden in BaseSVC.
         """
-        # XXX this is ugly.
-        # Regression models should not have a class_weight_ attribute.
-        self.class_weight_ = np.empty(0)
         return column_or_1d(y, warn=True).astype(np.float64, copy=False)
 
     def _warn_from_fit_status(self):

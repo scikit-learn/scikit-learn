@@ -1,6 +1,8 @@
 import numpy as np
 import warnings
 
+from sklearn.utils import deprecated
+
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
@@ -1134,6 +1136,9 @@ class SVR(RegressorMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
+        .. deprecated::
+            `class_weight_` was deprecated in version 1.1 and will be removed in 1.3.
+
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1168,6 +1173,9 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
+
+        .. deprecated::
+            `n_support_` was deprecated in version 1.1 and will be removed in 1.3.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1246,6 +1254,22 @@ class SVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
+
+    @deprecated(
+        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def n_support_(self):
+        return np.array([len(self.support_)])
+
+    @deprecated(
+        "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
 
     def _more_tags(self):
         return {
@@ -1326,6 +1350,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
+        .. deprecated::
+            `class_weight_` was deprecated in version 1.1 and will be removed in 1.3.
+
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1360,6 +1387,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
+
+        .. deprecated::
+            `n_support_` was deprecated in version 1.1 and will be removed in 1.3.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1439,6 +1469,22 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
+    @deprecated(
+        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def n_support_(self):
+        return np.array([len(self.support_)])
+
+    @deprecated(
+        "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
+
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1514,6 +1560,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
+        .. deprecated::
+            `class_weight_` was deprecated in version 1.1 and will be removed in 1.3.
+
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1548,6 +1597,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
+
+        .. deprecated::
+            `n_support_` was deprecated in version 1.1 and will be removed in 1.3.
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
@@ -1619,6 +1671,22 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             max_iter,
             random_state=None,
         )
+
+    @deprecated(
+        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def n_support_(self):
+        return np.array([len(self.support_)])
+
+    @deprecated(
+        "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """Detect the soft boundary of the set of samples X.
