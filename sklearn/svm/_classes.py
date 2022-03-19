@@ -1255,6 +1255,7 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
+    # TODO: Remove in 1.3
     @deprecated(  # type: ignore
         "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
         " 1.3."
@@ -1263,6 +1264,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     def n_support_(self):
         return np.array([len(self.support_)])
 
+    # TODO: Remove in 1.3
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
         " 1.3."
@@ -1469,6 +1471,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
+    # TODO: Remove in 1.3
     @deprecated(  # type: ignore
         "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
         " 1.3."
@@ -1477,6 +1480,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     def n_support_(self):
         return np.array([len(self.support_)])
 
+    # TODO: Remove in 1.3
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
         " 1.3."
@@ -1672,6 +1676,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             random_state=None,
         )
 
+    # TODO: Remove in 1.3
     @deprecated(  # type: ignore
         "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
         " 1.3."
@@ -1680,6 +1685,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     def n_support_(self):
         return np.array([len(self.support_)])
 
+    # TODO: Remove in 1.3
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
         " 1.3."
