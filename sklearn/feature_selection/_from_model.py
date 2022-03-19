@@ -118,7 +118,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
         - If an integer, then it specifies the maximum number of features to
         allow.
-
         - If a callable, then it specifies how to calculate the maximum number of
         features allowed by using the output of `max_feaures(X)`.
 
