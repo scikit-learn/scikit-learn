@@ -974,10 +974,9 @@ Changelog
 
 - |Feature| :class:`mixture.GaussianMixture` and
   :class:`mixture.BayesianGaussianMixture` can now be initialized using
-  k-means++ and random data points. :issue:`11101` by
-  :user:`Gordon Walsh <g-walsh>`, conflicts solved in :pr:`20408` by
-  :user:`Alberto Ceballos<alceballosa>` and
-  :user:`Andres Rios<ariosramirez>`.
+  k-means++ and random data points. :pr:`20408` by
+  :user:`Gordon Walsh <g-walsh>`, :user:`Alberto Ceballos<alceballosa>`
+  and :user:`Andres Rios<ariosramirez>`.
 
 :mod:`sklearn.model_selection`
 ..............................
