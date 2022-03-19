@@ -1292,7 +1292,7 @@ def test_check_non_unique_means_initialisation(init_params):
         assert np.any(np.not_equal(i_mean, j_mean))
 
 
-def test_check_that_max_iter_with_zero_returns_initialisation_as_expected():
+def test_max_iter_zero():
     # Check that max_iter=0 returns initialisation as expected
     # Pick arbitrary initial means and check equal to max_iter=0
     rng = np.random.RandomState(0)
