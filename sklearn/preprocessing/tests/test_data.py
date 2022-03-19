@@ -345,9 +345,9 @@ def test_standard_scaler_numerical_stability():
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         scale(x)
-    assert not [w.message for w in record]
     assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
@@ -358,9 +358,9 @@ def test_standard_scaler_numerical_stability():
     assert_array_almost_equal(x_scaled, np.zeros(10))
 
     x = np.full(10, 1e-100, dtype=np.float64)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         x_small_scaled = scale(x)
-    assert not [w.message for w in record]
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
