@@ -142,7 +142,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         elif self.init_params == "random_from_data":
             resp = np.zeros((n_samples, self.n_components))
             indices = random_state.choice(
-                range(n_samples), self.n_components, replace=False
+                n_samples, size=self.n_components, replace=False
             )
             resp[indices, np.arange(self.n_components)] = 1
         elif self.init_params == "k-means++":
