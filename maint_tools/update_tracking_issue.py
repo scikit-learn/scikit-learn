@@ -27,9 +27,25 @@ parser.add_argument(
 parser.add_argument("ci_name", help="Name of CI run instance")
 parser.add_argument("issue_repo", help="Repo to track issues")
 parser.add_argument("link_to_ci_run", help="URL to link to")
-parser.add_argument("junit_file", help="JUnit file")
+parser.add_argument("--junit-file", help="JUnit file to determine if tests passed")
+parser.add_argument(
+    "--tests-passed",
+    help=(
+        "If --tests-passed is true, then the original issue is closed if the issue "
+        "exists. If tests-passed is false, then the an issue is updated or created."
+    ),
+)
 
 args = parser.parse_args()
+
+if args.junit_file is not None and args.tests_passed is not None:
+    print("--junit-file and --test-passed can not be set together")
+    sys.exit(1)
+
+if args.junit_file is None and args.tests_passed is None:
+    print("Either --junit-file or --test-passed must be passed in")
+    sys.exit(1)
+
 gh = Github(args.bot_github_token)
 issue_repo = gh.get_repo(args.issue_repo)
 title = f"⚠️ CI failed on {args.ci_name} ⚠️"
@@ -45,7 +61,7 @@ def get_issue():
     return first_page[0] if first_page else None
 
 
-def create_or_update_issue(body):
+def create_or_update_issue(body=""):
     # Interact with GitHub API to create issue
     header = f"**CI Failed on [{args.ci_name}]({args.link_to_ci_run})**"
     body_text = f"{header}\n{body}"
@@ -63,11 +79,31 @@ def create_or_update_issue(body):
         sys.exit()
 
 
+def close_issue_if_opened():
+    print("Test has no failures!")
+    issue = get_issue()
+    if issue is not None:
+        print(f"Closing issue #{issue.number}")
+        new_body = (
+            "## Closed issue because CI is no longer failing! ✅\n\n"
+            f"[Successful run]({args.link_to_ci_run})\n\n"
+            "## Previous failure report\n\n"
+            f"{issue.body}"
+        )
+        issue.edit(state="closed", body=new_body)
+    sys.exit()
+
+
+if args.tests_passed is not None:
+    if args.tests_passed.lower() == "true":
+        close_issue_if_opened()
+    else:
+        create_or_update_issue()
+
 junit_path = Path(args.junit_file)
 if not junit_path.exists():
     body = "Unable to find junit file. Please see link for details."
     create_or_update_issue(body)
-    sys.exit()
 
 # Find failures in junit file
 tree = ET.parse(args.junit_file)
@@ -77,38 +113,19 @@ failure_cases = []
 error = tree.find("./testsuite/testcase/error")
 if error is not None:
     # Get information for test collection error
-    failure_cases.append({"title": "Test Collection Failure", "body": error.text})
+    failure_cases.append("Test Collection Failure")
 
 for item in tree.iter("testcase"):
     failure = item.find("failure")
     if failure is None:
         continue
 
-    failure_cases.append(
-        {
-            "title": item.attrib["name"],
-            "body": failure.text,
-        }
-    )
+    failure_cases.append(item.attrib["name"])
 
 if not failure_cases:
-    print("Test has no failures!")
-    issue = get_issue()
-    if issue is not None:
-        print(f"Closing issue #{issue.number}")
-        new_body = (
-            "## Closed issue because CI is no longer failing! ✅\n\n"
-            f"[Successful run]({args.link_to_ci_run})\n\n"
-            "## Previous failing issue\n\n"
-            f"{issue.body}"
-        )
-        issue.edit(state="closed", body=new_body)
-    sys.exit()
+    close_issue_if_opened()
 
 # Create content for issue
-issue_summary = (
-    "<details><summary>{title}</summary>\n\n```python\n{body}\n```\n</details>\n"
-)
-body_list = [issue_summary.format(**case) for case in failure_cases]
+body_list = [f"- {case}" for case in failure_cases]
 body = "\n".join(body_list)
 create_or_update_issue(body)

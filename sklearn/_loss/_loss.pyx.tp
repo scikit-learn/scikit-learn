@@ -203,13 +203,19 @@ np.import_array()
 # -------------------------------------
 # Helper functions
 # -------------------------------------
-# Numerically stable version of log(1 + exp(x)) for double precision
-# See https://cran.r-project.org/web/packages/Rmpfr/vignettes/log1mexp-note.pdf
+# Numerically stable version of log(1 + exp(x)) for double precision, see Eq. (10) of
+# https://cran.r-project.org/web/packages/Rmpfr/vignettes/log1mexp-note.pdf
+# Note: The only important cutoff is at x = 18. All others are to save computation
+# time. Compared to the reference, we add the additional case distiction x <= -2 in
+# order to use log instead of log1p for improved performance. As with the other
+# cutoffs, this is accurate within machine precision of double.
 cdef inline double log1pexp(double x) nogil:
     if x <= -37:
         return exp(x)
-    elif x <= 18:
+    elif x <= -2:
         return log1p(exp(x))
+    elif x <= 18:
+        return log(1. + exp(x))
     elif x <= 33.3:
         return x + exp(-x)
     else:
