@@ -1,12 +1,10 @@
-from random import sample
 import numpy as np
 import scipy.sparse as sp
-from scipy import linalg, rand
+from scipy import linalg
 from itertools import product
 
 import pytest
 
-from sklearn.base import clone
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
