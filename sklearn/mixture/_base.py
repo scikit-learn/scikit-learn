@@ -257,7 +257,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
             if self.max_iter == 0:
                 best_params = self._get_parameters()
-                best_n_iter = 1
+                best_n_iter = 0
             else:
                 for n_iter in range(1, self.max_iter + 1):
                     prev_lower_bound = lower_bound
