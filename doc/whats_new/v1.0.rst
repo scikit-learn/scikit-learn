@@ -45,8 +45,6 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Fix| :class:`ensemble.BaggingRegressor` and :class:`ensemble.BaggingClassifier`
-  sets `feature_names_in_` in `estimators_`. :pr:`21811` by `Thomas Fan`_.
 - |Fix| :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
