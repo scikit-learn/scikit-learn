@@ -2,6 +2,9 @@
 
 set -e
 
+# defines the show_installed_libraries function
+source build_tools/shared.sh
+
 if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
@@ -12,19 +15,20 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     source /opt/intel/oneapi/setvars.sh
 fi
 
+if [[ "$BUILD_REASON" == "Schedule" ]]; then
+    # Enable global random seed randomization to discover seed-sensitive tests
+    # only on nightly builds.
+    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"
+fi
+
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 python -c "import sklearn; sklearn.show_versions()"
 
-if ! command -v conda &> /dev/null
-then
-    pip list
-else
-    # conda list provides more info than pip list (when available)
-    conda list
-fi
+show_installed_libraries
 
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 

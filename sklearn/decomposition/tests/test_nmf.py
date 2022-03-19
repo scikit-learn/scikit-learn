@@ -347,8 +347,8 @@ def _beta_divergence_dense(X, W, H, beta):
         div = X_nonzero / WH_Xnonzero
         res = np.sum(div) - X.size - np.sum(np.log(div))
     else:
-        res = (X_nonzero ** beta).sum()
-        res += (beta - 1) * (WH ** beta).sum()
+        res = (X_nonzero**beta).sum()
+        res += (beta - 1) * (WH**beta).sum()
         res -= beta * (X_nonzero * (WH_Xnonzero ** (beta - 1))).sum()
         res /= beta * (beta - 1)
 
@@ -636,8 +636,8 @@ def test_nmf_decreasing(solver):
                 nmf._beta_divergence(X, W, H, beta_loss)
                 + alpha * l1_ratio * n_features * W.sum()
                 + alpha * l1_ratio * n_samples * H.sum()
-                + alpha * (1 - l1_ratio) * n_features * (W ** 2).sum()
-                + alpha * (1 - l1_ratio) * n_samples * (H ** 2).sum()
+                + alpha * (1 - l1_ratio) * n_features * (W**2).sum()
+                + alpha * (1 - l1_ratio) * n_samples * (H**2).sum()
             )
             if previous_loss is not None:
                 assert previous_loss > loss

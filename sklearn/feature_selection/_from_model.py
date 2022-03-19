@@ -11,7 +11,7 @@ from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -58,6 +58,19 @@ def _calculate_threshold(estimator, importances, threshold):
         threshold = float(threshold)
 
     return threshold
+
+
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the fitted estimator if available, otherwise we
+    check the unfitted estimator.
+    """
+    return lambda self: (
+        hasattr(self.estimator_, attr)
+        if hasattr(self, "estimator_")
+        else hasattr(self.estimator, attr)
+    )
 
 
 class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
@@ -265,8 +278,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             raise NotFittedError("Since 'prefit=True', call transform directly")
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
+
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
+        else:
+            self._check_feature_names(X, reset=True)
+
         return self
 
     @property
@@ -280,7 +297,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         )
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
-    @if_delegate_has_method("estimator")
+    @available_if(_estimator_has("partial_fit"))
     def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 
