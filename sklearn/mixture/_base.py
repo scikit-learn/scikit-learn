@@ -150,7 +150,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             _, indices = kmeans_plusplus(
                 X,
                 self.n_components,
-                x_squared_norms=row_norms(X, squared=True),
                 random_state=random_state,
             )
             resp[indices.astype(int), np.arange(self.n_components)] = 1
