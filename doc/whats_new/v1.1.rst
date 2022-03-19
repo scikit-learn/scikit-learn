@@ -596,7 +596,7 @@ Changelog
 
 - |Fix| The `intercept_` attribute of :class:`LinearRegression` is now correctly
   computed in the presence of sample weights when the input is sparse.
-  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -668,6 +668,15 @@ Changelog
 
 - |Fix| Fixed a bug in :func:`metrics.normalized_mutual_info_score` which could return
   unbounded values. :pr:`22635` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Feature| :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture` can now be initialized using
+  k-means++ and random data points. :pr:`20408` by
+  :user:`Gordon Walsh <g-walsh>`, :user:`Alberto Ceballos<alceballosa>`
+  and :user:`Andres Rios<ariosramirez>`.
 
 :mod:`sklearn.model_selection`
 ..............................
