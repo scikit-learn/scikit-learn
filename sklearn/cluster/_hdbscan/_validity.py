@@ -1,3 +1,9 @@
+# Author: Leland McInnes <leland.mcinnes@gmail.com>
+#         Steve Astels <sastels@gmail.com>
+#         John Healy <jchealy@gmail.com>
+#
+# License: BSD 3 clause
+
 import numpy as np
 from sklearn.metrics import pairwise_distances
 from scipy.spatial.distance import cdist

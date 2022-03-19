@@ -1,8 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
+# Author: Leland McInnes <leland.mcinnes@gmail.com>
+#         Steve Astels <sastels@gmail.com>
+#         John Healy <jchealy@gmail.com>
+#
+# License: BSD 3 clause
 
 import numpy as np
 from numpy import isclose
@@ -36,12 +40,6 @@ from ._hdbscan_boruvka import KDTreeBoruvkaAlgorithm, BallTreeBoruvkaAlgorithm
 from sklearn.metrics._dist_metrics import DistanceMetric
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics + ["cosine", "arccos"]
-
-# Author: Leland McInnes <leland.mcinnes@gmail.com>
-#         Steve Astels <sastels@gmail.com>
-#         John Healy <jchealy@gmail.com>
-#
-# License: BSD 3 clause
 
 
 def _tree_to_labels(
