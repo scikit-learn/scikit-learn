@@ -950,6 +950,14 @@ than `minimum_cluster_size` many samples are considered noise. In practice, one
 can set `minimum_cluster_size = min_samples` to couple the parameters and
 simplify the hyperparameter space.
 
+.. topic:: References:
+
+ * Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based Clustering
+   Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S., Cao, L.,
+   Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data Mining.
+   PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer, Berlin,
+   Heidelberg. https://doi.org/10.1007/978-3-642-37456-2_14
+
 .. _optics:
 
 OPTICS
