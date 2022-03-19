@@ -378,8 +378,9 @@ def estimator_html_repr(estimator):
         # div.sk-container is hidden by default and the loading the CSS displays it.
         fallback_msg = (
             "In a Jupyter environment, please rerun this cell to show the HTML"
-            " representation or trust the notebook. <br />GitHub cannot render the HTML"
-            " representation, please try loading this page with nbviewer.org."
+            " representation or trust the notebook. <br />On GitHub, the"
+            " HTML representation is unable to render, please try loading this page"
+            " with nbviewer.org."
         )
         out.write(
             f"<style>{style_with_id}</style>"
