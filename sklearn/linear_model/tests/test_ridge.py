@@ -1395,9 +1395,6 @@ def test_ridge_fit_intercept_sparse(solver, with_sample_weight, global_random_se
     dense_ridge.fit(X, y, sample_weight=sample_weight)
     sparse_ridge.fit(sp.csr_matrix(X), y, sample_weight=sample_weight)
 
-    print(dense_ridge.intercept_, sparse_ridge.intercept_)
-    print(dense_ridge.coef_, sparse_ridge.coef_)
-
     assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
     assert_allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
