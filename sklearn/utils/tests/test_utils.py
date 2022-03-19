@@ -317,7 +317,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe", "list"])
 @pytest.mark.parametrize("indices_type", ["array", "series"])
 @pytest.mark.parametrize(
     "axis, expected_array", [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])]
@@ -394,7 +394,12 @@ def test_safe_indexing_1d_scalar(array_type):
 
 @pytest.mark.parametrize(
     "array_type, expected_output_type",
-    [("array", "array"), ("sparse", "sparse"), ("dataframe", "series")],
+    [
+        ("array", "array"),
+        ("sparse", "sparse"),
+        ("dataframe", "series"),
+        ("list", "list"),
+    ],
 )
 @pytest.mark.parametrize("indices", [2, "col_2"])
 def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indices):
@@ -441,7 +446,7 @@ def test_safe_indexing_error_axis(axis):
         _safe_indexing(X_toy, [0, 1], axis=axis)
 
 
-@pytest.mark.parametrize("X_constructor", ["array", "series"])
+@pytest.mark.parametrize("X_constructor", ["array", "series", "list"])
 def test_safe_indexing_1d_array_error(X_constructor):
     # check that we are raising an error if the array-like passed is 1D and
     # we try to index on the 2nd dimension
@@ -452,7 +457,9 @@ def test_safe_indexing_1d_array_error(X_constructor):
         pd = pytest.importorskip("pandas")
         X_constructor = pd.Series(X)
 
-    err_msg = "'X' should be a 2D NumPy array, 2D sparse matrix or pandas"
+    err_msg = (
+        "'X' should be a 2D NumPy array, 2D sparse matrix, list of list, or pandas"
+    )
     with pytest.raises(ValueError, match=err_msg):
         _safe_indexing(X_constructor, [0, 1], axis=1)
 
