@@ -13,8 +13,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.svm import LinearSVC
-from sklearn.svm import LinearSVR
+from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
@@ -1519,3 +1518,13 @@ def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
     if estimator in [svm.SVC, svm.NuSVC]:
         n_classes = len(np.unique(y))
         assert n_iter.shape == (n_classes * (n_classes - 1) // 2,)
+
+
+@pytest.mark.parametrize("Klass", [SVR, NuSVR, OneClassSVM])
+@pytest.mark.parametrize("attr", ["n_support_", "class_weight_"])
+def test_libsvm_nclass_attrs_deprecated(Klass, attr):
+    clf = Klass()
+    clf.fit(X, Y)
+    msg = f"Attribute `{attr}` was deprecated in version 1.1 and will be removed in 1.3"
+    with pytest.warns(FutureWarning, match=re.escape(msg)):
+        getattr(clf, attr)
