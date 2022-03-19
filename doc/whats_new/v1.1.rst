@@ -635,6 +635,10 @@ Changelog
 - |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
   message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
 
+- |API| `metrics.SCORERS` is now deprecated and will be removed in 1.3. Please
+  use :func:`~metrics.get_scorer_names` to retrieve the names of all available
+  scorers. :pr:`22866` by `Adrin Jalali`_.
+
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
   Using `neighbors.DistanceMetric` for imports is still valid for
