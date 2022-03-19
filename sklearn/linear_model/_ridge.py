@@ -252,7 +252,15 @@ def _solve_svd(X, y, alpha):
 
 
 def _solve_lbfgs(
-    X, y, alpha, positive=True, max_iter=None, tol=1e-3, X_offset=None, X_scale=None
+    X,
+    y,
+    alpha,
+    positive=True,
+    max_iter=None,
+    tol=1e-3,
+    X_offset=None,
+    X_scale=None,
+    sample_weight_sqrt=None,
 ):
     """Solve ridge regression with LBFGS.
 
@@ -280,6 +288,9 @@ def _solve_lbfgs(
     else:
         X_offset_scale = None
 
+    if sample_weight_sqrt is None:
+        sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
+
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
     for i in range(y.shape[1]):
@@ -289,11 +300,11 @@ def _solve_lbfgs(
         def func(w):
             residual = X.dot(w) - y_column
             if X_offset_scale is not None:
-                residual -= w.dot(X_offset_scale)
+                residual -= sample_weight_sqrt * w.dot(X_offset_scale)
             f = 0.5 * residual.dot(residual) + 0.5 * alpha[i] * w.dot(w)
             grad = X.T @ residual + alpha[i] * w
             if X_offset_scale is not None:
-                grad -= X_offset_scale * np.sum(residual)
+                grad -= X_offset_scale * residual.dot(sample_weight_sqrt)
 
             return f, grad
 
@@ -685,6 +696,7 @@ def _ridge_regression(
             max_iter=max_iter,
             X_offset=X_offset,
             X_scale=X_scale,
+            sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
         )
 
     if solver == "svd":
@@ -816,7 +828,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         else:
             if sparse.issparse(X) and self.fit_intercept:
-                # required to fit intercept with sparse_cg solver
+                # required to fit intercept with sparse_cg and lbfgs solver
                 params = {"X_offset": X_offset, "X_scale": X_scale}
             else:
                 # for dense matrices or when intercept is set to 0
@@ -1922,8 +1934,7 @@ class _RidgeGCV(LinearModel):
         n_samples = X.shape[0]
 
         if sample_weight is not None:
-            X, y, _ = _rescale_data(X, y, sample_weight)
-            sqrt_sw = np.sqrt(sample_weight)
+            X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
         else:
             sqrt_sw = np.ones(n_samples, dtype=X.dtype)
 

@@ -1,10 +1,12 @@
+from random import sample
 import numpy as np
 import scipy.sparse as sp
-from scipy import linalg
+from scipy import linalg, rand
 from itertools import product
 
 import pytest
 
+from sklearn.base import clone
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -1362,33 +1364,44 @@ def test_n_iter():
 
 
 @pytest.mark.parametrize("solver", ["sparse_cg", "lbfgs", "auto"])
-def test_ridge_fit_intercept_sparse(solver):
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+def test_ridge_fit_intercept_sparse(solver, with_sample_weight, global_random_seed):
+    """Check that ridge finds the same coefs and intercept on dense and sparse input
+    in the presence of sample weights.
+
+    For now only sparse_cg and lbfgs can correctly fit an intercept
+    with sparse X with default tol and max_iter.
+    'sag' is tested separately in test_ridge_fit_intercept_sparse_sag because it
+    requires more iterations and should raise a warning if default max_iter is used.
+    Other solvers raise an exception, as checked in
+    test_ridge_fit_intercept_sparse_error
+    """
     positive = solver == "lbfgs"
     X, y = _make_sparse_offset_regression(
-        n_features=20, random_state=0, positive=positive
+        n_features=20, random_state=global_random_seed, positive=positive
     )
-    X_csr = sp.csr_matrix(X)
 
-    # for now only sparse_cg and lbfgs can correctly fit an intercept
-    # with sparse X with default tol and max_iter.
-    # sag is tested separately in test_ridge_fit_intercept_sparse_sag
-    # because it requires more iterations and should raise a warning if default
-    # max_iter is used.
-    # other solvers raise an exception, as checked in
-    # test_ridge_fit_intercept_sparse_error
-    #
+    sample_weight = None
+    if with_sample_weight:
+        rng = np.random.RandomState(global_random_seed)
+        sample_weight = 1.0 + rng.uniform(size=X.shape[0])
+
     # "auto" should switch to "sparse_cg" when X is sparse
     # so the reference we use for both ("auto" and "sparse_cg") is
     # Ridge(solver="sparse_cg"), fitted using the dense representation (note
     # that "sparse_cg" can fit sparse or dense data)
-    dense_ridge = Ridge(solver="sparse_cg", tol=1e-12)
+    dense_solver = "sparse_cg" if solver == "auto" else solver
+    dense_ridge = Ridge(solver=dense_solver, tol=1e-12, positive=positive)
     sparse_ridge = Ridge(solver=solver, tol=1e-12, positive=positive)
-    dense_ridge.fit(X, y)
-    with pytest.warns(None) as record:
-        sparse_ridge.fit(X_csr, y)
-    assert not [w.message for w in record]
-    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
-    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_)
+
+    dense_ridge.fit(X, y, sample_weight=sample_weight)
+    sparse_ridge.fit(sp.csr_matrix(X), y, sample_weight=sample_weight)
+
+    print(dense_ridge.intercept_, sparse_ridge.intercept_)
+    print(dense_ridge.coef_, sparse_ridge.coef_)
+
+    assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
+    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
 
 @pytest.mark.parametrize("solver", ["saga", "lsqr", "svd", "cholesky"])
@@ -1823,33 +1836,3 @@ def test_ridgecv_normalize_deprecated(Estimator):
         FutureWarning, match=r"Set parameter alphas to: original_alphas \* n_samples"
     ):
         estimator.fit(X, y)
-
-
-@pytest.mark.parametrize("solver", ["sparse_cg", "sag"])
-def test_ridge_sample_weights_dense_sparse(solver, global_random_seed):
-    """Check that ridge finds the same coefs and intercept on
-    dense and sparse input in the presence of sample weights.
-    """
-    rng = np.random.RandomState(global_random_seed)
-
-    n_samples, n_features = 10, 3
-
-    X = rng.uniform(size=(n_samples, n_features))
-    y = rng.uniform(size=n_samples)
-
-    sample_weight = 1.0 + rng.uniform(size=n_samples)
-
-    reg = Ridge(fit_intercept=True, solver=solver, random_state=global_random_seed)
-
-    # fit on dense X
-    reg.fit(X, y, sample_weight=sample_weight)
-    coefs_dense = reg.coef_
-    intercept_dense = reg.intercept_
-
-    # fit on sparse X
-    reg.fit(sp.csr_matrix(X), y, sample_weight=sample_weight)
-    coefs_sparse = reg.coef_
-    intercept_sparse = reg.intercept_
-
-    assert_allclose(coefs_dense, coefs_sparse)
-    assert_allclose(intercept_dense, intercept_sparse)

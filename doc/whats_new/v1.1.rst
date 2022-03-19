@@ -599,8 +599,8 @@ Changelog
   :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| The `coef_` and `intercept_` attributes of :class:`Ridge` with
-  `solver="sparse_cg"` are now correctly computed in the presence of sample weights
-  when the input is sparse.
+  `solver="sparse_cg"` and `solver="lbfgs"` are now correctly computed in the presence
+  of sample weights when the input is sparse.
   :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
 
 :mod:`sklearn.manifold`
