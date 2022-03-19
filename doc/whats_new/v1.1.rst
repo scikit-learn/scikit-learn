@@ -37,7 +37,7 @@ random sampling procedures.
 - |Enhancement| :class:`decomposition.FastICA` now allows the user to select
   how whitening is performed through the new `whiten_solver` parameter, which
   supports `svd` and `eigh`. Minor parity changes in the internal workings of
-  `decomposition.FastICA` may result in different outputs.
+  :class:`decomposition.FastICA` may result in different outputs.
 
 - |Fix| The eigenvectors initialization for :class:`cluster.SpectralClustering`
   and :class:`manifold.SpectralEmbedding` now samples from a Gaussian when
@@ -609,7 +609,7 @@ Changelog
 
 - |Fix| The `intercept_` attribute of :class:`LinearRegression` is now correctly
   computed in the presence of sample weights when the input is sparse.
-  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.manifold`
 .......................
