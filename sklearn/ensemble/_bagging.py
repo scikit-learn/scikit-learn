@@ -17,11 +17,17 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d, deprecated
-from ..utils import indices_to_mask
+from ..utils import indices_to_mask, _safe_indexing
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
+from ..utils.validation import (
+    has_fit_parameter,
+    check_is_fitted,
+    _check_sample_weight,
+    _num_samples,
+    _num_features,
+)
 from ..utils.fixes import delayed
 
 
@@ -72,7 +78,8 @@ def _parallel_build_estimators(
 ):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
-    n_samples, n_features = X.shape
+    n_samples = _num_samples(X)
+    n_features = _num_features(X)
     max_features = ensemble._max_features
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
@@ -120,10 +127,14 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
-            estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
+            X_sliced = _safe_indexing(X, features, axis=1)
+            estimator.fit(X_sliced, y, sample_weight=curr_sample_weight)
 
         else:
-            estimator.fit((X[indices])[:, features], y[indices])
+            X_samples = _safe_indexing(X, indices, axis=0)
+            X_sliced = _safe_indexing(X_samples, features, axis=1)
+            y_sliced = _safe_indexing(y, indices)
+            estimator.fit(X_sliced, y_sliced)
 
         estimators.append(estimator)
         estimators_features.append(features)
@@ -271,14 +282,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Fitted estimator.
         """
         # Convert data (X is required to be 2d and indexable)
-        X, y = self._validate_data(
-            X,
-            y,
-            accept_sparse=["csr", "csc"],
-            dtype=None,
-            force_all_finite=False,
-            multi_output=True,
-        )
+        self._check_n_features(X, reset=True)
+        self._check_feature_names(X, reset=True)
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
     def _parallel_args(self):
@@ -321,7 +326,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
 
         # Remap output
-        n_samples = X.shape[0]
+        n_samples = _num_samples(X)
         self._n_samples = n_samples
         y = self._validate_y(y)
 
@@ -335,9 +340,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         if max_samples is None:
             max_samples = self.max_samples
         elif not isinstance(max_samples, numbers.Integral):
-            max_samples = int(max_samples * X.shape[0])
+            max_samples = int(max_samples * n_samples)
 
-        if not (0 < max_samples <= X.shape[0]):
+        if not (0 < max_samples <= n_samples):
             raise ValueError("max_samples must be in (0, n_samples]")
 
         # Store validated integer row sampling value
@@ -427,12 +432,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.estimators_features_ += list(
             itertools.chain.from_iterable(t[1] for t in all_results)
         )
-
-        # Set `feature_names_in_` in `estimators_`
-        if hasattr(self, "feature_names_in_"):
-            feature_names_in = self.feature_names_in_
-            for estimator, features in zip(self.estimators_, self.estimators_features_):
-                estimator.feature_names_in_ = feature_names_in[features]
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -696,7 +695,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         super()._validate_estimator(default=DecisionTreeClassifier())
 
     def _set_oob_score(self, X, y):
-        n_samples = y.shape[0]
+        n_samples = _num_samples(X)
         n_classes_ = self.n_classes_
 
         predictions = np.zeros((n_samples, n_classes_))
@@ -708,9 +707,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             mask = ~indices_to_mask(samples, n_samples)
 
             if hasattr(estimator, "predict_proba"):
-                predictions[mask, :] += estimator.predict_proba(
-                    (X[mask, :])[:, features]
-                )
+                X_samples = _safe_indexing(X, mask, axis=0)
+                X_sliced = _safe_indexing(X_samples, features, axis=1)
+                predictions[mask, :] += estimator.predict_proba(X_sliced)
 
             else:
                 p = estimator.predict((X[mask, :])[:, features])
@@ -786,14 +785,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        # Check data
-        X = self._validate_data(
-            X,
-            accept_sparse=["csr", "csc"],
-            dtype=None,
-            force_all_finite=False,
-            reset=False,
-        )
+        self._check_n_features(X, reset=False)
+        self._check_feature_names(X, reset=False)
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(
@@ -839,13 +832,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X = self._validate_data(
-                X,
-                accept_sparse=["csr", "csc"],
-                dtype=None,
-                force_all_finite=False,
-                reset=False,
-            )
+            self._check_n_features(X, reset=False)
+            self._check_feature_names(X, reset=False)
 
             # Parallel loop
             n_jobs, n_estimators, starts = _partition_estimators(
@@ -894,15 +882,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             cases with ``k == 1``, otherwise ``k==n_classes``.
         """
         check_is_fitted(self)
-
-        # Check data
-        X = self._validate_data(
-            X,
-            accept_sparse=["csr", "csc"],
-            dtype=None,
-            force_all_finite=False,
-            reset=False,
-        )
+        self._check_n_features(X, reset=False)
+        self._check_feature_names(X, reset=False)
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(
@@ -1131,14 +1112,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             The predicted values.
         """
         check_is_fitted(self)
-        # Check data
-        X = self._validate_data(
-            X,
-            accept_sparse=["csr", "csc"],
-            dtype=None,
-            force_all_finite=False,
-            reset=False,
-        )
+        self._check_n_features(X, reset=False)
+        self._check_feature_names(X, reset=False)
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(
@@ -1164,7 +1139,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         super()._validate_estimator(default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):
-        n_samples = y.shape[0]
+        n_samples = _num_samples(X)
 
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
@@ -1174,8 +1149,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         ):
             # Create mask for OOB samples
             mask = ~indices_to_mask(samples, n_samples)
+            X_samples = _safe_indexing(X, mask, axis=0)
+            X_sliced = _safe_indexing(X_samples, features, axis=1)
 
-            predictions[mask] += estimator.predict((X[mask, :])[:, features])
+            predictions[mask] += estimator.predict(X_sliced)
             n_predictions[mask] += 1
 
         if (n_predictions == 0).any():

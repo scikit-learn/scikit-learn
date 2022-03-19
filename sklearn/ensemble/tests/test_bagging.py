@@ -5,7 +5,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Author: Gilles Louppe
 # License: BSD 3 clause
 from itertools import product
-from functools import partial
+import warnings
 
 import numpy as np
 import joblib
@@ -965,27 +965,29 @@ def test_n_features_deprecation(Estimator):
 
 
 @pytest.mark.parametrize(
-    "BaggingEstimator, load_data",
+    "BaggingEstimator, BaseEstimator, load_data",
     [
         (
-            partial(BaggingClassifier, base_estimator=DecisionTreeClassifier()),
+            BaggingClassifier,
+            DecisionTreeClassifier,
             load_iris,
         ),
         (
-            partial(BaggingRegressor, base_estimator=DecisionTreeRegressor()),
+            BaggingRegressor,
+            DecisionTreeRegressor,
             load_diabetes,
         ),
     ],
 )
 @pytest.mark.parametrize("bootstrap_features", [True, False])
 def test_feature_names_are_set_in_estimators(
-    BaggingEstimator, load_data, bootstrap_features
+    BaggingEstimator, BaseEstimator, load_data, bootstrap_features, global_random_seed
 ):
-    """Test that feature names are set in in trained estimators.
+    """Test that feature names are set in trained estimators.
 
     Non-regression test for #21599.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_estimators = 2
     X, y = load_data(as_frame=True, return_X_y=True)
     feature_names = np.asarray(X.columns, dtype=object)
@@ -993,6 +995,7 @@ def test_feature_names_are_set_in_estimators(
     X_train, X_test, y_train, _ = train_test_split(X, y, random_state=rng)
 
     bagged_trees = BaggingEstimator(
+        BaseEstimator(),
         n_estimators=n_estimators,
         max_features=1.0,
         bootstrap_features=bootstrap_features,
@@ -1016,7 +1019,6 @@ def test_feature_names_are_set_in_estimators(
 
         assert inner_estimator.n_features_in_ == expected_features.shape[0]
 
-        with pytest.warns(None) as records:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
             inner_estimator.predict(X_test_inner)
-
-        assert not [str(record.message) for record in records]
