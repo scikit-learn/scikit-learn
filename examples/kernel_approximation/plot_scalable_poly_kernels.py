@@ -99,7 +99,7 @@ print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 # compensate for the stochastic nature of :class:`PolynomialCountSketch`.
 
 n_runs = 3
-for n_components in [250, 500, 1000, 2000]:
+for n_components in [250, 450, 650, 1350]:
 
     ps_lsvm_time = 0
     ps_lsvm_score = 0
@@ -148,7 +148,7 @@ ksvm_time = time.time() - start
 ksvm_score = 100 * ksvm.score(X_test, y_test)
 
 results["KSVM"] = {"time": ksvm_time, "score": ksvm_score}
-print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
+print(f"Kernel-SVM score on raw features: {ksvm_score:.2f}%")
 
 # %%
 # Finally, plot the results of the different methods against their training
@@ -156,7 +156,7 @@ print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
 # but its training time is much larger and, most importantly, will grow
 # much faster if the number of training samples increases.
 
-N_COMPONENTS = [250, 500, 1000, 2000]
+N_COMPONENTS = [250, 450, 850, 1750]
 
 fig, ax = plt.subplots(figsize=(7, 7))
 ax.scatter(
