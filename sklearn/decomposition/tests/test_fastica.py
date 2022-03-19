@@ -415,7 +415,7 @@ def test_fastica_simple_different_solvers(add_noise, seed):
 
     outs = {}
     for solver in ("svd", "eigh"):
-        ica = FastICA(random_state=0, whiten_solver=solver)
+        ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver=solver)
         sources = ica.fit_transform(m.T)
         outs[solver] = sources
         assert ica.components_.shape == (2, 2)
