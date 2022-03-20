@@ -315,13 +315,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         libsvm.set_verbosity_wrap(self.verbose)
 
-        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
-        # due to deprecation
-        class_weight = (
-            self.class_weight_
-            if LIBSVM_IMPL.index(self._impl) in (0, 1)
-            else np.empty(0)
-        )
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         (
@@ -339,7 +332,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             y,
             svm_type=solver_type,
             sample_weight=sample_weight,
-            class_weight=class_weight,
+            class_weight=self._class_weight,
             kernel=kernel,
             C=self.C,
             nu=self.nu,
@@ -365,14 +358,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
-        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
-        # due to deprecation
-        class_weight = (
-            self.class_weight_
-            if LIBSVM_IMPL.index(self._impl) in (0, 1)
-            else np.empty(0)
-        )
-
         (
             self.support_,
             self.support_vectors_,
@@ -396,7 +381,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            class_weight,
+            self._class_weight,
             sample_weight,
             self.nu,
             self.cache_size,
@@ -490,14 +475,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         C = 0.0  # C is not useful here
 
-        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
-        # due to deprecation
-        class_weight = (
-            self.class_weight_
-            if LIBSVM_IMPL.index(self._impl) in (0, 1)
-            else np.empty(0)
-        )
-
         return libsvm_sparse.libsvm_sparse_predict(
             X.data,
             X.indices,
@@ -514,7 +491,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             C,
-            class_weight,
+            self._class_weight,
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -598,14 +575,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         kernel_type = self._sparse_kernels.index(kernel)
 
-        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
-        # due to deprecation
-        class_weight = (
-            self.class_weight_
-            if LIBSVM_IMPL.index(self._impl) in (0, 1)
-            else np.empty(0)
-        )
-
         return libsvm_sparse.libsvm_sparse_decision_function(
             X.data,
             X.indices,
@@ -622,7 +591,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            class_weight,
+            self._class_weight,
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -725,6 +694,17 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             )
             # _n_support has size 2, we make it size 1
             return np.array([self._n_support[0]])
+
+    @property
+    def _class_weight(self):
+        """Weights per class"""
+        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
+        # due to deprecation
+        return (
+            self.class_weight_
+            if LIBSVM_IMPL.index(self._impl) in (0, 1)
+            else np.empty(0)
+        )
 
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
@@ -966,14 +946,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         kernel_type = self._sparse_kernels.index(kernel)
 
-        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
-        # due to deprecation
-        class_weight = (
-            self.class_weight_
-            if LIBSVM_IMPL.index(self._impl) in (0, 1)
-            else np.empty(0)
-        )
-
         return libsvm_sparse.libsvm_sparse_predict_proba(
             X.data,
             X.indices,
@@ -990,7 +962,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            class_weight,
+            self._class_weight,
             self.nu,
             self.epsilon,
             self.shrinking,
