@@ -896,7 +896,8 @@ class _BaseKMeans(
         )
         return X
 
-    def _init_centroids(self, X, x_squared_norms, init, random_state, init_size=None):
+    def _init_centroids(self, X, x_squared_norms, init, random_state, init_size=None,
+                        n_centroids=None):
         """Compute the initial centroids.
 
         Parameters
@@ -920,12 +921,17 @@ class _BaseKMeans(
             Number of samples to randomly sample for speeding up the
             initialization (sometimes at the expense of accuracy).
 
+        n_centroids : int, default=None
+            Number of centroids to initialize.
+            If left to 'None' the number of centroids will be equal to
+            number of clusters to form (self.n_clusters)
+
         Returns
         -------
         centers : ndarray of shape (n_clusters, n_features)
         """
         n_samples = X.shape[0]
-        n_clusters = self.n_clusters
+        n_clusters = self.n_clusters if n_centroids is None else n_centroids
 
         if init_size is not None and init_size < n_samples:
             init_indices = random_state.randint(0, n_samples, init_size)
