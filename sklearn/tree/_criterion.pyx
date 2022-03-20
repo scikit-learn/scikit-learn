@@ -705,7 +705,7 @@ cdef class HellingerDistance(ClassificationCriterion):
 
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return sqrt(impurity_right + impurity_left)
+        return impurity_right + impurity_left
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
