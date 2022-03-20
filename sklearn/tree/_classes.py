@@ -86,7 +86,6 @@ SPARSE_SPLITTERS = {
 
 OBLIQUE_DENSE_SPLITTERS = {
     "best": _oblique_splitter.BestObliqueSplitter,
-    "random": _oblique_splitter.RandomObliqueSplitter,
 }
 
 
