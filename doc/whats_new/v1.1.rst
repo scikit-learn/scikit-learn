@@ -377,7 +377,7 @@ Changelog
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` no longer warns when
   fitting on a pandas DataFrame with a non-default `scoring` parameter and
-  early_stopping enabled. :pr:`xxxxx` by `Thomas Fan`_.
+  early_stopping enabled. :pr:`22908` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
