@@ -34,8 +34,10 @@ from sklearn.linear_model._ridge import _solve_svd
 from sklearn.linear_model._ridge import _solve_lbfgs
 from sklearn.linear_model._ridge import _check_gcv_mode
 from sklearn.linear_model._ridge import _X_CenterStackOp
+from sklearn.datasets import make_low_rank_matrix
 from sklearn.datasets import make_regression
 from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
@@ -45,7 +47,6 @@ from sklearn.model_selection import LeaveOneOut
 
 from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
-from sklearn.datasets import make_multilabel_classification
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -77,41 +78,152 @@ def _mean_squared_error_callable(y_test, y_pred):
     return ((y_test - y_pred) ** 2).mean()
 
 
-@pytest.mark.parametrize("solver", ("svd", "sparse_cg", "cholesky", "lsqr", "sag"))
-def test_ridge(solver):
-    # Ridge regression convergence test using score
-    # TODO: for this test to be robust, we should use a dataset instead
-    # of np.random.
-    rng = np.random.RandomState(0)
-    alpha = 1.0
+@pytest.fixture(params=["long", "wide"])
+def ols_ridge_dataset(global_random_seed, request):
+    """Dataset with OLS and Ridge solutions, well conditioned X.
 
-    # With more samples than features
-    n_samples, n_features = 6, 5
-    y = rng.randn(n_samples)
-    X = rng.randn(n_samples, n_features)
+    The construction is based on the SVD decomposition of X = U S V'.
 
-    ridge = Ridge(alpha=alpha, solver=solver)
+    Parameters
+    ----------
+    type : {"long", "wide"}
+        If "long", then n_samples > n_features.
+        If "wide", then n_features > n_samples.
+
+    For "wide", we return the minimum norm solution w = X' (XX')^-1 y:
+
+        min ||w||_2 subject to X w = y
+
+    Returns
+    -------
+    X : ndarray
+    y : ndarray
+    coef_ols : ndarray of shape
+        OLS solutions, i.e. min ||X w - y||_2_2
+    intercept_ols : float
+        OLS intercept.
+    coef_ridge : ndarray of shape (5,)
+        Ridge solution with alpha=1, i.e. min ||X w - y||_2_2 + ||w||_2^2
+    intercept_ridge : float
+        Ridge intercept.
+    """
+    # Make larger dim more than double as big as the smaller one.
+    # This helps when constructing singular matrices like (X, X).
+    if request.param == "long":
+        n_samples, n_features = 12, 4
+    else:
+        n_samples, n_features = 4, 12
+    k = min(n_samples, n_features)
+    rng = np.random.RandomState(global_random_seed)
+    X = make_low_rank_matrix(
+        n_samples=n_samples, n_features=n_features, effective_rank=k
+    )
+    X[:, -1] = 1  # last columns acts as intercept
+    U, s, Vt = linalg.svd(X)
+    assert np.all(s) > 1e-3  # to be sure
+    U1, U2 = U[:, :k], U[:, k:]
+    Vt1, _ = Vt[:k, :], Vt[k:, :]
+
+    if request.param == "long":
+        # Add a term that vanishes in the product X'y
+        coef_ols = rng.uniform(low=-10, high=10, size=n_features)
+        y = X @ coef_ols
+        y += U2 @ rng.normal(size=n_samples - n_features) ** 2
+    else:
+        y = rng.uniform(low=-10, high=10, size=n_samples)
+        # w = X'(XX')^-1 y = V s^-1 U' y
+        coef_ols = Vt1.T @ np.diag(1 / s) @ U1.T @ y
+
+    # Add penalty alpha * ||coef||_2^2 for alpha=1 and solve via normal equations.
+    # Note that the problem is well conditioned such that we get accurate results.
+    alpha = 1
+    d = alpha * np.identity(n_features)
+    d[-1, -1] = 0  # intercept gets no penalty
+    coef_ridge = linalg.solve(X.T @ X + d, X.T @ y)
+
+    # To be sure
+    R_OLS = y - X @ coef_ols
+    R_Ridge = y - X @ coef_ridge
+    assert np.linalg.norm(R_OLS) < np.linalg.norm(R_Ridge)
+
+    return X[:, :-1], y, coef_ols[:-1], coef_ols[-1], coef_ridge[:-1], coef_ridge[-1]
+
+
+@pytest.mark.parametrize(
+    "solver", ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga")
+)
+def test_ridge(solver, ols_ridge_dataset):
+    """Ridge regression convergence test for all solvers."""
+    X, y, coef_ols, intercept_ols, coef_ridge, intercept_ridge = ols_ridge_dataset
+    alpha = 1.0  # because simple_regression_dataset uses this
+    n_samples, n_features = X.shape
+    params = {"solver": solver, "tol": 1e-11}
+
+    # Calculate residuals and R2.
+    res_null = y - np.mean(y)
+    res_Ridge = y - X @ coef_ridge - intercept_ridge
+    R2_Ridge = 1 - np.sum(res_Ridge**2) / np.sum(res_null**2)
+
+    # Check Ridge regression.
+    ridge = Ridge(alpha=alpha, **params)
     ridge.fit(X, y)
-    assert ridge.coef_.shape == (X.shape[1],)
-    assert ridge.score(X, y) > 0.47
+    assert ridge.intercept_ == pytest.approx(intercept_ridge)
+    assert_allclose(ridge.coef_, coef_ridge)
+    assert ridge.score(X, y) == pytest.approx(R2_Ridge)
 
-    if solver in ("cholesky", "sag"):
-        # Currently the only solvers to support sample_weight.
-        ridge.fit(X, y, sample_weight=np.ones(n_samples))
-        assert ridge.score(X, y) > 0.47
+    # Same with sample_weight.
+    ridge = Ridge(alpha=alpha, **params).fit(X, y, sample_weight=np.ones(n_samples))
+    assert ridge.intercept_ == pytest.approx(intercept_ridge)
+    assert_allclose(ridge.coef_, coef_ridge)
+    assert ridge.score(X, y) == pytest.approx(R2_Ridge)
 
-    # With more features than samples
-    n_samples, n_features = 5, 10
-    y = rng.randn(n_samples)
-    X = rng.randn(n_samples, n_features)
-    ridge = Ridge(alpha=alpha, solver=solver)
-    ridge.fit(X, y)
-    assert ridge.score(X, y) > 0.9
+    # Test unpenalized Ridge = OLS.
+    # Note that cholesky might give a warning: "Singular matrix in solving dual
+    # problem. Using least-squares solution instead."
+    ridge = Ridge(alpha=0, **params).fit(X, y)
+    # FIXME: The following fails for the wide/fat case with n_features > n_samples,
+    # i.e. current Ridge implementation does NOT return the minimum norm solution.
+    if n_samples > n_features:
+        assert ridge.intercept_ == pytest.approx(intercept_ols)
+        assert_allclose(ridge.coef_, coef_ols)
+    else:
+        # As it is an underdetermined problem, residuals = 0.
+        assert_allclose(ridge.predict(X), y)
 
-    if solver in ("cholesky", "sag"):
-        # Currently the only solvers to support sample_weight.
-        ridge.fit(X, y, sample_weight=np.ones(n_samples))
-        assert ridge.score(X, y) > 0.9
+    # Test Ridge on [X, X] which is singular for long X.
+    X2 = 0.5 * np.concatenate((X, X), axis=1)
+    assert np.linalg.matrix_rank(X2) <= min(n_samples, 2 * n_features - 1)
+    ridge = Ridge(alpha=alpha / 2, **params).fit(X2, y)
+    assert ridge.intercept_ == pytest.approx(intercept_ridge)
+    assert_allclose(ridge.coef_, np.r_[coef_ridge, coef_ridge])
+
+    # Test unpenalized Ridge = OLS on [X, X], singular for long X.
+    # Note that this checks that we obtain the minimum norm solution.
+    if n_samples > n_features and solver not in ["cholesky"]:
+        ridge = Ridge(alpha=0, **params).fit(X2, y)
+        assert ridge.intercept_ == pytest.approx(intercept_ols)
+        assert_allclose(ridge.coef_, np.r_[coef_ols, coef_ols])
+
+    # Test Ridge on [X]  [y]
+    #               [X], [y] which is singular for wide X.
+    X2 = np.concatenate((X, X), axis=0)
+    y2 = np.r_[y, y]
+    assert np.linalg.matrix_rank(X2) <= min(2 * n_samples - 1, n_features)
+    ridge = Ridge(alpha=2 * alpha, **params).fit(X2, y2)
+    assert ridge.intercept_ == pytest.approx(intercept_ridge)
+    assert_allclose(ridge.coef_, np.r_[coef_ridge])
+
+    # Test unpenalized Ridge = OLS on [X], [y]
+    #                                 [X], [y] which is singular for wide X.
+    ridge = Ridge(alpha=0, **params).fit(X2, y2)
+    # FIXME: The following fails for the wide/fat case with n_features > n_samples,
+    # i.e. current Ridge implementation does NOT return the minimum norm solution.
+    if n_samples > n_features:
+        assert ridge.intercept_ == pytest.approx(intercept_ols)
+        assert_allclose(ridge.coef_, coef_ols)
+    else:
+        # As it is an underdetermined problem, residuals = 0.
+        assert_allclose(ridge.predict(X), y)
 
 
 def test_primal_dual_relationship():
