@@ -281,7 +281,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        # Convert data (X is required to be 2d and indexable)
+        # Bagging may slice `X` along the features axis before passing `X` to the base
+        # estimators. This means that each estimator may get a different subset of
+        # features. For bagging to slice correctly during non-fit methods, bagging
+        # needs to set the feature names in `fit` and validate them in non-fit methods.
         self._check_n_features(X, reset=True)
         self._check_feature_names(X, reset=True)
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
@@ -706,13 +709,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             # Create mask for OOB samples
             mask = ~indices_to_mask(samples, n_samples)
 
+            X_samples = _safe_indexing(X, mask, axis=0)
+            X_sliced = _safe_indexing(X_samples, features, axis=1)
+
             if hasattr(estimator, "predict_proba"):
-                X_samples = _safe_indexing(X, mask, axis=0)
-                X_sliced = _safe_indexing(X_samples, features, axis=1)
                 predictions[mask, :] += estimator.predict_proba(X_sliced)
 
             else:
-                p = estimator.predict((X[mask, :])[:, features])
+                p = estimator.predict(X_sliced)
                 j = 0
 
                 for i in range(n_samples):
