@@ -2304,7 +2304,7 @@ The best possible score is 1.0, lower values are worse.
     The difference between the explained variance score and the :ref:`r2_score`
     is that when the explained variance score does not account for
     systematic offset in the prediction. For this reason, the
-    :ref:`r2_score` should be prefered in general.
+    :ref:`r2_score` should be preferred in general.
 
 In the particular case where the true target is constant, the Explained
 Variance score is not finite: it is either ``NaN`` (perfect predictions) or
