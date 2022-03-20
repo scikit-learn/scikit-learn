@@ -778,7 +778,6 @@ Difference between Bisect K-Means and regular K-Means can be seen on example
 :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py` - while regular K-Means tend to create non-related
 clusters, clusters from Bisect K-Means are well ordered and create quite visible hierarchy.
 
-That approach also prevents creating empty clusters.
 
 .. topic:: References:
 
