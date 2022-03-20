@@ -787,10 +787,10 @@ That approach also prevents creating empty clusters.
    Michael Steinbach, George Karypis and Vipin Kumar,
    Department of Computer Science and Egineering, University of Minnesota
    (June 2000)
- * `"PerformanceAnalysis of  K-Means and BisectingK-Means Algorithms in Weblog Data"
+ * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog Data"
    <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
-   K.Abirami and Dr.P.Mayilvahanan
-   International Journal of Emerging Technologies in Engineering Research(IJETER)
+   K.Abirami and Dr.P.Mayilvahanan,
+   International Journal of Emerging Technologies in Engineering Research (IJETER)
    Volume 4, Issue 8, (August 2016)
  * `"Bisecting K-means Algorithm Based on K-valued Self-determining and Clustering Center Optimization"
    <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
