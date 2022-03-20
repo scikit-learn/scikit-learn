@@ -315,6 +315,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         libsvm.set_verbosity_wrap(self.verbose)
 
+        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
+        # due to deprecation
+        class_weight = (
+            self.class_weight_
+            if LIBSVM_IMPL.index(self._impl) in (0, 1)
+            else np.empty(0)
+        )
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         (
@@ -332,7 +339,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             y,
             svm_type=solver_type,
             sample_weight=sample_weight,
-            class_weight=self.class_weight_,
+            class_weight=class_weight,
             kernel=kernel,
             C=self.C,
             nu=self.nu,
@@ -358,6 +365,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
+        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
+        # due to deprecation
+        class_weight = (
+            self.class_weight_
+            if LIBSVM_IMPL.index(self._impl) in (0, 1)
+            else np.empty(0)
+        )
+
         (
             self.support_,
             self.support_vectors_,
@@ -381,7 +396,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            class_weight,
             sample_weight,
             self.nu,
             self.cache_size,
@@ -475,6 +490,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         C = 0.0  # C is not useful here
 
+        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
+        # due to deprecation
+        class_weight = (
+            self.class_weight_
+            if LIBSVM_IMPL.index(self._impl) in (0, 1)
+            else np.empty(0)
+        )
+
         return libsvm_sparse.libsvm_sparse_predict(
             X.data,
             X.indices,
@@ -491,7 +514,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             C,
-            self.class_weight_,
+            class_weight,
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -575,6 +598,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         kernel_type = self._sparse_kernels.index(kernel)
 
+        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
+        # due to deprecation
+        class_weight = (
+            self.class_weight_
+            if LIBSVM_IMPL.index(self._impl) in (0, 1)
+            else np.empty(0)
+        )
+
         return libsvm_sparse.libsvm_sparse_decision_function(
             X.data,
             X.indices,
@@ -591,7 +622,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            class_weight,
             self.nu,
             self.epsilon,
             self.shrinking,
@@ -635,10 +666,17 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # Fixes https://nvd.nist.gov/vuln/detail/CVE-2020-28975
         # Check that _n_support is consistent with support_vectors
         sv = self.support_vectors_
-        if not self._sparse and sv.size > 0 and self.n_support_.sum() != sv.shape[0]:
-            raise ValueError(
-                f"The internal representation of {self.__class__.__name__} was altered"
-            )
+        svm_type = LIBSVM_IMPL.index(self._impl)
+        if svm_type in (0, 1):
+            if (
+                not self._sparse
+                and sv.size > 0
+                and self.n_support_.sum() != sv.shape[0]
+            ):
+                raise ValueError(
+                    f"The internal representation of {self.__class__.__name__} was"
+                    " altered"
+                )
         return X
 
     @property
@@ -679,7 +717,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if svm_type in (0, 1):
             return self._n_support
         else:
-            # SVR and OneClass
+            # SVR, NuSVR, and OneClass
+            warnings.warn(
+                "Attribute `n_support_` was deprecated in version 1.1 and will be"
+                " removed in 1.3.",
+                FutureWarning,
+            )
             # _n_support has size 2, we make it size 1
             return np.array([self._n_support[0]])
 
@@ -923,6 +966,14 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         kernel_type = self._sparse_kernels.index(kernel)
 
+        # Avoid using self.class_weight_ in SVR, NuSVR, OneClass due
+        # due to deprecation
+        class_weight = (
+            self.class_weight_
+            if LIBSVM_IMPL.index(self._impl) in (0, 1)
+            else np.empty(0)
+        )
+
         return libsvm_sparse.libsvm_sparse_predict_proba(
             X.data,
             X.indices,
@@ -939,7 +990,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.coef0,
             self.tol,
             self.C,
-            self.class_weight_,
+            class_weight,
             self.nu,
             self.epsilon,
             self.shrinking,
