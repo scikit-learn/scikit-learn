@@ -24,33 +24,6 @@ class _ArrayAPIWrapper:
     def __getattr__(self, name):
         return getattr(self._namespace, name)
 
-    def astype(self, x, dtype, *, copy=True, casting="unsafe"):
-
-        # Extend Array API to support `casting` for NumPy containers
-        if self._namespace.__name__ == "numpy.array_api":
-            x_np = numpy.asarray(x).astype(dtype, casting=casting, copy=copy)
-            return self._namespace.asarray(x_np)
-        elif casting != "unsafe":
-            raise ValueError(
-                "Only NumPy's Array API implementation supports casting != 'unsafe'"
-            )
-
-        f = self._namespace.astype
-        return f(x, dtype, copy=copy)
-
-    def asarray(self, obj, *, dtype=None, device=None, copy=None, order=None):
-        f = self._namespace.asarray
-
-        # Extend Array API to support `order` in NumPy
-        if self._namespace.__name__ == "numpy.array_api":
-            if copy:
-                x_np = numpy.array(obj, dtype=dtype, order=order, copy=copy)
-            else:
-                x_np = numpy.asarray(obj, dtype=dtype, order=order)
-            return f(x_np)
-
-        return f(obj, dtype=dtype, device=device, copy=copy)
-
     def take(self, X, indices, *, axis):
         # When array_api supports `take` we can use this directly
         # https://github.com/data-apis/array-api/issues/177
@@ -143,6 +116,7 @@ def get_namespace(*arrays):
 
     is_array_api : bool
         True of the arrays are containers that implement the Array API spec.
+
     """
     # `arrays` contains one or more arrays, or possibly Python scalars (accepting
     # those is a matter of taste, but doesn't seem unreasonable).

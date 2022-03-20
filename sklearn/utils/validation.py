@@ -842,9 +842,14 @@ def check_array(
                             estimator_name=estimator_name,
                             input_name=input_name,
                         )
-                    array = xp.astype(array, dtype, casting="unsafe", copy=False)
+                    array = xp.astype(array, dtype, copy=False)
                 else:
-                    array = xp.asarray(array, order=order, dtype=dtype)
+                    if xp.__name__ in {"numpy", "numpy.array_api"}:
+                        # Use NumPy API to support order
+                        array = np.asarray(array, order=order, dtype=dtype)
+                        array = xp.asarray(array)
+                    else:
+                        array = xp.asarray(array, dtype=dtype, copy=False)
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)
@@ -1147,7 +1152,12 @@ def column_or_1d(y, *, warn=False):
     y = xp.asarray(y)
     shape = y.shape
     if len(shape) == 1:
-        return xp.asarray(xp.reshape(y, -1), order="C")
+        if xp.__name__ in {"numpy", "numpy.array_api"}:
+            # Use NumPy API to support order
+            y = np.asarray(xp.reshape(y, -1), order="C")
+            return xp.asarray(y)
+        else:
+            return xp.reshape(y, -1)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1157,7 +1167,12 @@ def column_or_1d(y, *, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return xp.asarray(xp.reshape(y, -1), order="C")
+        if xp.__name__ in {"numpy", "numpy.array_api"}:
+            # Use NumPy API to support order
+            y = np.asarray(xp.reshape(y, -1), order="C")
+            return xp.asarray(y)
+        else:
+            return xp.reshape(y, -1)
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
