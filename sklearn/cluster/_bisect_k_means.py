@@ -167,13 +167,13 @@ class BisectKMeans(KMeans):
     bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
         Defines how should bisection by performed:
 
-        - "biggest_sse" means that Bisect K-Means will always check
+         - "biggest_sse" means that Bisect K-Means will always check
             all calculated cluster for cluster with biggest SSE
             (Sum of squared errors) and bisect it. This approach concentrates on
             precision, but may be costly in terms of execution time (especially for
             larger ammount of data points).
 
-        - "largest_cluster" - Bisect K-Means will always split cluster with
+         - "largest_cluster" - Bisect K-Means will always split cluster with
             largest amount of points assigned to it from all clusters
             previously calculated. That should work faster than picking by SSE
             ('biggest_sse') and may produce similar results in most cases.
