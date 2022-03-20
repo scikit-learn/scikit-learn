@@ -1250,34 +1250,6 @@ def test_gaussian_mixture_setting_best_params():
 @pytest.mark.parametrize(
     "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
 )
-def test_init_param(init_params):
-    # Check that the init_param options produces valid output.
-    # Compare all to default (kmeans).
-    rng = np.random.RandomState(0)
-    rand_data = RandomData(rng)
-
-    n_components = rand_data.n_components
-    X = rand_data.X["full"]
-    gmm = GaussianMixture(
-        n_components=n_components, random_state=rng, init_params="kmeans"
-    )
-    gmm.fit(X)
-    default_means = np.sort(gmm.means_.flatten())
-
-    gmm = GaussianMixture(
-        n_components=n_components,
-        random_state=rng,
-        init_params=init_params,
-        tol=1e-06,
-        max_iter=1000,
-    )
-    gmm.fit(X)
-    assert_allclose(default_means, np.sort(gmm.means_.flatten()), rtol=1e-7)
-
-
-@pytest.mark.parametrize(
-    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
-)
 def test_check_non_unique_means_initialisation(init_params):
     # Check that all initialisations provide unique starting means
     rng = np.random.RandomState(0)
