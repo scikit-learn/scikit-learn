@@ -914,7 +914,6 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
     converted_container
     """
     if constructor_name == "list":
-        if dtype is None:
             return np.asarray(container, dtype=dtype).tolist()
     elif constructor_name == "tuple":
         if dtype is None:
