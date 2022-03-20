@@ -116,7 +116,6 @@ def get_namespace(*arrays):
 
     is_array_api : bool
         True of the arrays are containers that implement the Array API spec.
-
     """
     # `arrays` contains one or more arrays, or possibly Python scalars (accepting
     # those is a matter of taste, but doesn't seem unreasonable).
