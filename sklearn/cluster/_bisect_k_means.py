@@ -330,9 +330,10 @@ class BisectKMeans(KMeans):
             raise ValueError("BisectKMeans does not support init as array.")
 
     def _bisect(self, X, sample_weight, random_state):
-        """Bisection of data
+        """Bisection of data.
+
         Attempts to get best bisection of data by performing regular K-Means
-        for different pairs of centroids
+        for different pairs of centroids.
 
         .. note:: Number of attempts is specified by self.n_init
 
