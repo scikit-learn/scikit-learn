@@ -551,13 +551,13 @@ def test_ridge_shapes_type():
     assert ridge.coef_.shape == (1, n_features)
     assert ridge.intercept_.shape == (1,)
     assert isinstance(ridge.coef_, np.ndarray)
-    assert isinstance(ridge.intercept_, np.array)
+    assert isinstance(ridge.intercept_, np.ndarray)
 
     ridge.fit(X, Y)
     assert ridge.coef_.shape == (2, n_features)
     assert ridge.intercept_.shape == (2,)
     assert isinstance(ridge.coef_, np.ndarray)
-    assert isinstance(ridge.intercept_, np.array)
+    assert isinstance(ridge.intercept_, np.ndarray)
 
 
 def test_ridge_intercept():
