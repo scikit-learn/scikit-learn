@@ -941,6 +941,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 X, dtype=X_DTYPE, force_all_finite=False, reset=False
             )
         check_is_fitted(self)
+        if X.shape[1] != self._n_features:
+            raise ValueError(
+                "X has {} features but this estimator was trained with "
+                "{} features.".format(X.shape[1], self._n_features)
+            )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
             shape=(n_samples, self.n_trees_per_iteration_),
