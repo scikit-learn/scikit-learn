@@ -415,7 +415,7 @@ def test_suffstat_sk_diag():
 
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred_diag, "diag")
-    assert_almost_equal(covars_pred_diag, 1.0 / precs_chol_pred ** 2)
+    assert_almost_equal(covars_pred_diag, 1.0 / precs_chol_pred**2)
 
 
 def test_gaussian_suffstat_sk_spherical():
@@ -437,7 +437,7 @@ def test_gaussian_suffstat_sk_spherical():
 
     # check the precision computation
     precs_chol_pred = _compute_precision_cholesky(covars_pred_spherical, "spherical")
-    assert_almost_equal(covars_pred_spherical, 1.0 / precs_chol_pred ** 2)
+    assert_almost_equal(covars_pred_spherical, 1.0 / precs_chol_pred**2)
 
 
 def test_compute_log_det_cholesky():
@@ -454,7 +454,7 @@ def test_compute_log_det_cholesky():
         elif covar_type == "diag":
             predected_det = np.array([np.prod(cov) for cov in covariance])
         elif covar_type == "spherical":
-            predected_det = covariance ** n_features
+            predected_det = covariance**n_features
 
         # We compute the cholesky decomposition of the covariance matrix
         expected_det = _compute_log_det_cholesky(
@@ -1272,7 +1272,7 @@ def test_init_param(init_params):
         max_iter=1000,
     )
     gmm.fit(X)
-    assert_allclose(default_means, np.sort(gmm.means_.flatten()), rtol=1e-8)
+    assert_allclose(default_means, np.sort(gmm.means_.flatten()), rtol=1e-7)
 
 
 @pytest.mark.parametrize(
