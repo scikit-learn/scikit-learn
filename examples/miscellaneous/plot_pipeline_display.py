@@ -45,7 +45,7 @@ pipe  # click on the diagram below to see the details of each step
 ################################################################################
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with multiple
 # preprocessing steps, :class:`~sklearn.preprocessing.PolynomialFeatures` and
-# :class:`~sklearn.preprocessing.StandardScaler`, and a classifer step,
+# :class:`~sklearn.preprocessing.StandardScaler`, and a classifier step,
 # :class:`~sklearn.linear_model.LogisticRegression`, and displays its visual
 # representation.
 

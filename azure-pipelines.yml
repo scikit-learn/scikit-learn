@@ -286,7 +286,7 @@ jobs:
         # Unpin when pytest stalling issue is fixed
         PYTEST_VERSION: '6.2.5'
         COVERAGE: 'true'
-        # Temporary fix for setuptools to use disutils from standard lib
+        # Temporary fix for setuptools to use distutils from standard lib
         # https://github.com/numpy/numpy/issues/17216
         SETUPTOOLS_USE_DISTUTILS: 'stdlib'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
