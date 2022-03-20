@@ -594,6 +594,10 @@ Changelog
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
   :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| The `intercept_` attribute of :class:`LinearRegression` is now correctly
+  computed in the presence of sample weights when the input is sparse.
+  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -630,6 +634,10 @@ Changelog
 
 - |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
   message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
+
+- |API| `metrics.SCORERS` is now deprecated and will be removed in 1.3. Please
+  use :func:`~metrics.get_scorer_names` to retrieve the names of all available
+  scorers. :pr:`22866` by `Adrin Jalali`_.
 
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
@@ -696,6 +704,9 @@ Changelog
 - |Enhancement| :class:`multiclass.OneVsRestClassifier` now supports a `verbose`
   parameter so progress on fitting can be seen.
   :pr:`22508` by :user:`Chris Combs <combscCode>`.
+
+- |Fix| :meth:`multiclass.OneVsOneClassifier.predict` returns correct predictions when
+  the inner classifier only has a :term:`predict_proba`. :pr:`22604` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
 ........................
