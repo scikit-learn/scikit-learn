@@ -60,7 +60,7 @@ lasso_lars_ic = make_pipeline(
 
 
 # %%
-# To be in line with the defintion in [ZHT2007]_, we need to rescale the
+# To be in line with the definition in [ZHT2007]_, we need to rescale the
 # AIC and the BIC. Indeed, Zou et al. are ignoring some constant terms
 # compared to the original definition of AIC derived from the maximum
 # log-likelihood of a linear model. You can refer to
