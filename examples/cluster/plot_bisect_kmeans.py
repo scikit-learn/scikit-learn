@@ -1,13 +1,14 @@
 """
-=========================================================
-Bisect K-Means and Regular K-Means Performance Comparison
-=========================================================
+=============================================================
+Bisecting K-Means and Regular K-Means Performance Comparison
+=============================================================
 
 This example shows differences between Regular K-Means algorithm and Bisecting K-Means.
 
-While with increasing n_clusters K-Means re-initializes cluster centers,
-Bisecting K-Means shows its divisive nature by splitting clusters obtained from its
-previous iterations.
+While K-Means clusterings are different when with increasing n_clusters,
+Bisecting K-Means clustering build on top of the previous ones.
+
+This difference can visually be observed.
 
 """
 import warnings
