@@ -528,7 +528,7 @@ def test_ridge_sample_weights():
                 assert_almost_equal(inter, cf_coefs[0])
 
 
-def test_ridge_shapes():
+def test_ridge_shapes_type():
     # Test shape of coef_ and intercept_
     rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
@@ -542,14 +542,20 @@ def test_ridge_shapes():
     ridge.fit(X, y)
     assert ridge.coef_.shape == (n_features,)
     assert ridge.intercept_.shape == ()
+    assert isinstance(ridge.coef_, np.ndarray)
+    assert isinstance(ridge.intercept_, float)
 
     ridge.fit(X, Y1)
     assert ridge.coef_.shape == (1, n_features)
     assert ridge.intercept_.shape == (1,)
+    assert isinstance(ridge.coef_, np.ndarray)
+    assert isinstance(ridge.intercept_, np.array)
 
     ridge.fit(X, Y)
     assert ridge.coef_.shape == (2, n_features)
     assert ridge.intercept_.shape == (2,)
+    assert isinstance(ridge.coef_, np.ndarray)
+    assert isinstance(ridge.intercept_, np.array)
 
 
 def test_ridge_intercept():
@@ -568,28 +574,6 @@ def test_ridge_intercept():
     ridge.fit(X, Y)
     assert_almost_equal(ridge.intercept_[0], intercept)
     assert_almost_equal(ridge.intercept_[1], intercept + 1.0)
-
-
-def test_toy_ridge_object():
-    # Test BayesianRegression ridge classifier
-    # TODO: test also n_samples > n_features
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
-    reg = Ridge(alpha=0.0)
-    reg.fit(X, Y)
-    X_test = [[1], [2], [3], [4]]
-    assert_almost_equal(reg.predict(X_test), [1.0, 2, 3, 4])
-
-    assert len(reg.coef_.shape) == 1
-    assert type(reg.intercept_) == np.float64
-
-    Y = np.vstack((Y, Y)).T
-
-    reg.fit(X, Y)
-    X_test = [[1], [2], [3], [4]]
-
-    assert len(reg.coef_.shape) == 2
-    assert type(reg.intercept_) == np.ndarray
 
 
 def test_ridge_vs_lstsq():
