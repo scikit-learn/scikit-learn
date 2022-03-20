@@ -896,8 +896,9 @@ class _BaseKMeans(
         )
         return X
 
-    def _init_centroids(self, X, x_squared_norms, init, random_state, init_size=None,
-                        n_centroids=None):
+    def _init_centroids(
+        self, X, x_squared_norms, init, random_state, init_size=None, n_centroids=None
+    ):
         """Compute the initial centroids.
 
         Parameters
