@@ -340,7 +340,6 @@ class BisectKMeans(KMeans):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-
             Training instances to cluster.
 
             .. note:: The data will be converted to C ordering,
