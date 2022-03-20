@@ -761,8 +761,10 @@ Instead of creating all centroids at once, centroids are picked progressively ba
 on a previous clustering: a cluster is split into two new clusters repeatedly 
 until the target number of clusters is reached.
 
-That approach is preferable to agglomerative clustering
-if the number of clusters is small, compared to the number of data points.
+This variant is preferable to agglomerative clustering
+if the number of clusters is small compared to the number of data points.
+
+This variant also do not produce empty clusters.
 
 Cluster to split is picked depending on parameter ``bisect_strategy``:
  - Cluster with largest amount of data points (with ``largest_cluster``)
