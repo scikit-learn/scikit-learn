@@ -94,4 +94,3 @@ cdef class Splitter:
 
     cdef int pointer_size(self) nogil
 
-cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil
