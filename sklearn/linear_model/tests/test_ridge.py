@@ -1290,14 +1290,6 @@ def test_dense_sparse(test_func):
     check_dense_sparse(test_func)
 
 
-def test_ridge_sparse_svd():
-    X = sp.csc_matrix(rng.rand(100, 10))
-    y = rng.rand(100)
-    ridge = Ridge(solver="svd", fit_intercept=False)
-    with pytest.raises(TypeError):
-        ridge.fit(X, y)
-
-
 def test_class_weights():
     # Test class weights.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
