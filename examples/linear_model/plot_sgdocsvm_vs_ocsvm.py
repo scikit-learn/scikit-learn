@@ -16,8 +16,8 @@ the number of samples whereas the complexity of a kernelized
 number of samples. It is not the purpose of this example to illustrate the
 benefits of such an approximation in terms of computation time but rather to
 show that we obtain similar results on a toy dataset.
-"""
-print(__doc__)  # noqa
+
+"""  # noqa: E501
 
 import numpy as np
 import matplotlib.pyplot as plt

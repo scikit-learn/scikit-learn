@@ -8,8 +8,8 @@ This example illustrates the use of the print_changed_only global parameter.
 Setting print_changed_only to True will alternate the representation of
 estimators to only show the parameters that have been set to non-default
 values. This can be used to have more compact representations.
+
 """
-print(__doc__)
 
 from sklearn.linear_model import LogisticRegression
 from sklearn import set_config

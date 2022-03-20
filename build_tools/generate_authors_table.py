@@ -43,7 +43,14 @@ def get_contributors():
     # get core devs and triage team
     core_devs = []
     triage_team = []
-    for team_id, lst in zip((11523, 3593183), (core_devs, triage_team)):
+    comm_team = []
+    core_devs_id = 11523
+    triage_team_id = 3593183
+    comm_team_id = 5368696
+    for team_id, lst in zip(
+        (core_devs_id, triage_team_id, comm_team_id),
+        (core_devs, triage_team, comm_team),
+    ):
         for page in [1, 2]:  # 30 per page
             reply = get(f"https://api.github.com/teams/{team_id}/members?page={page}")
             lst.extend(reply.json())
@@ -59,6 +66,7 @@ def get_contributors():
     # keep only the logins
     core_devs = set(c["login"] for c in core_devs)
     triage_team = set(c["login"] for c in triage_team)
+    comm_team = set(c["login"] for c in comm_team)
     members = set(c["login"] for c in members)
 
     # add missing contributors with GitHub accounts
@@ -75,13 +83,15 @@ def get_contributors():
     core_devs = [get_profile(login) for login in core_devs]
     emeritus = [get_profile(login) for login in emeritus]
     triage_team = [get_profile(login) for login in triage_team]
+    comm_team = [get_profile(login) for login in comm_team]
 
     # sort by last name
     core_devs = sorted(core_devs, key=key)
     emeritus = sorted(emeritus, key=key)
     triage_team = sorted(triage_team, key=key)
+    comm_team = sorted(comm_team, key=key)
 
-    return core_devs, emeritus, triage_team
+    return core_devs, emeritus, triage_team, comm_team
 
 
 def get_profile(login):
@@ -145,7 +155,7 @@ def generate_list(contributors):
 
 if __name__ == "__main__":
 
-    core_devs, emeritus, triage_team = get_contributors()
+    core_devs, emeritus, triage_team, comm_team = get_contributors()
 
     with open(REPO_FOLDER / "doc" / "authors.rst", "w+") as rst_file:
         rst_file.write(generate_table(core_devs))
@@ -155,3 +165,6 @@ if __name__ == "__main__":
 
     with open(REPO_FOLDER / "doc" / "triage_team.rst", "w+") as rst_file:
         rst_file.write(generate_table(triage_team))
+
+    with open(REPO_FOLDER / "doc" / "communication_team.rst", "w+") as rst_file:
+        rst_file.write(generate_table(comm_team))

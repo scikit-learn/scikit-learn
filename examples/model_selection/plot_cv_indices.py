@@ -9,6 +9,7 @@ groups in test sets, etc.
 
 This example visualizes the behavior of several common scikit-learn objects
 for comparison.
+
 """
 
 from sklearn.model_selection import (

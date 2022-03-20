@@ -14,7 +14,6 @@ make biclusters contiguous shows how accurately the algorithm found
 the biclusters.
 
 """
-print(__doc__)
 
 # Author: Kemal Eren <kemal@kemaleren.com>
 # License: BSD 3 clause

@@ -9,13 +9,13 @@ In this example, we give an overview of
 to illustrate the benefit of transforming the targets before learning a linear
 regression model. The first example uses synthetic data while the second
 example is based on the Ames housing data set.
+
 """
 
 # Author: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # License: BSD 3 clause
 
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_regression
@@ -23,17 +23,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import median_absolute_error, r2_score
-from sklearn.utils.fixes import parse_version
 
 # %%
 # Synthetic example
 ##############################################################################
-
-# `normed` is being deprecated in favor of `density` in histograms
-if parse_version(matplotlib.__version__) >= parse_version("2.1"):
-    density_param = {"density": True}
-else:
-    density_param = {"normed": True}
 
 # %%
 # A synthetic random regression dataset is generated. The targets ``y`` are
@@ -58,13 +51,13 @@ y_trans = np.log1p(y)
 
 f, (ax0, ax1) = plt.subplots(1, 2)
 
-ax0.hist(y, bins=100, **density_param)
+ax0.hist(y, bins=100, density=True)
 ax0.set_xlim([0, 2000])
 ax0.set_ylabel("Probability")
 ax0.set_xlabel("Target")
 ax0.set_title("Target distribution")
 
-ax1.hist(y_trans, bins=100, **density_param)
+ax1.hist(y_trans, bins=100, density=True)
 ax1.set_ylabel("Probability")
 ax1.set_xlabel("Target")
 ax1.set_title("Transformed target distribution")
@@ -151,13 +144,13 @@ y_trans = quantile_transform(
 
 f, (ax0, ax1) = plt.subplots(1, 2)
 
-ax0.hist(y, bins=100, **density_param)
+ax0.hist(y, bins=100, density=True)
 ax0.set_ylabel("Probability")
 ax0.set_xlabel("Target")
 ax0.text(s="Target distribution", x=1.2e5, y=9.8e-6, fontsize=12)
 ax0.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
-ax1.hist(y_trans, bins=100, **density_param)
+ax1.hist(y_trans, bins=100, density=True)
 ax1.set_ylabel("Probability")
 ax1.set_xlabel("Target")
 ax1.text(s="Transformed target distribution", x=-6.8, y=0.479, fontsize=12)

@@ -32,6 +32,7 @@ possible combinations of p subsample points to a randomly chosen subset and
 therefore also limits the runtime. Therefore, Theil-Sen is applicable to larger
 problems with the drawback of losing some of its mathematical properties since
 it then works on a random subset.
+
 """
 
 # Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
@@ -42,8 +43,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
 from sklearn.linear_model import RANSACRegressor
-
-print(__doc__)
 
 estimators = [
     ("OLS", LinearRegression()),

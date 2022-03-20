@@ -15,7 +15,9 @@ since it computes the neighbors graph, while subsequent call are faster as they
 do not need to recompute the graph. Here the durations are small since the
 dataset is small, but the gain can be more substantial when the dataset grows
 larger, or when the grid of parameter to search is large.
+
 """
+
 # Author: Tom Dupre la Tour
 #
 # License: BSD 3 clause
@@ -26,8 +28,6 @@ from sklearn.neighbors import KNeighborsTransformer, KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.datasets import load_digits
 from sklearn.pipeline import Pipeline
-
-print(__doc__)
 
 X, y = load_digits(return_X_y=True)
 n_neighbors_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]

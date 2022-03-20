@@ -8,7 +8,6 @@ using a k-Nearest Neighbor and the interpolation of the
 target using both barycenter and constant weights.
 
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
@@ -16,8 +15,9 @@ print(__doc__)
 # License: BSD 3 clause (C) INRIA
 
 
-# #############################################################################
+# %%
 # Generate sample data
+# --------------------
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import neighbors
@@ -30,8 +30,9 @@ y = np.sin(X).ravel()
 # Add noise to targets
 y[::5] += 1 * (0.5 - np.random.rand(8))
 
-# #############################################################################
+# %%
 # Fit regression model
+# --------------------
 n_neighbors = 5
 
 for i, weights in enumerate(["uniform", "distance"]):

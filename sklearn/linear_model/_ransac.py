@@ -1,5 +1,3 @@
-# coding: utf-8
-
 # Author: Johannes Schönberger
 #
 # License: BSD 3 clause
@@ -45,7 +43,7 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     """
     inlier_ratio = n_inliers / float(n_samples)
     nom = max(_EPSILON, 1 - probability)
-    denom = max(_EPSILON, 1 - inlier_ratio ** min_samples)
+    denom = max(_EPSILON, 1 - inlier_ratio**min_samples)
     if nom == 1:
         return 0
     if denom == 1:
@@ -65,7 +63,7 @@ class RANSACRegressor(
 
     Parameters
     ----------
-    base_estimator : object, default=None
+    estimator : object, default=None
         Base estimator object which implements the following methods:
 
          * `fit(X, y)`: Fit model to given training data and target values.
@@ -76,7 +74,7 @@ class RANSACRegressor(
          * `predict(X)`: Returns predicted values using the linear model,
            which is used to compute residual error using loss function.
 
-        If `base_estimator` is None, then
+        If `estimator` is None, then
         :class:`~sklearn.linear_model.LinearRegression` is used for
         target values of dtype float.
 
@@ -88,10 +86,10 @@ class RANSACRegressor(
         as an absolute number of samples for `min_samples >= 1`, treated as a
         relative number `ceil(min_samples * X.shape[0])` for
         `min_samples < 1`. This is typically chosen as the minimal number of
-        samples necessary to estimate the given `base_estimator`. By default a
+        samples necessary to estimate the given `estimator`. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
-        dependent upon the model, so if a `base_estimator` other than
+        dependent upon the model, so if a `estimator` other than
         :class:`linear_model.LinearRegression` is used, the user is
         encouraged to provide a value.
 
@@ -174,10 +172,17 @@ class RANSACRegressor(
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    base_estimator : object, default="deprecated"
+        Use `estimator` instead.
+
+        .. deprecated:: 1.1
+            `base_estimator` is deprecated and will be removed in 1.3.
+            Use `estimator` instead.
+
     Attributes
     ----------
     estimator_ : object
-        Best fitted model (copy of the `base_estimator` object).
+        Best fitted model (copy of the `estimator` object).
 
     n_trials_ : int
         Number of random selection trials until one of the stop criteria is
@@ -241,7 +246,7 @@ class RANSACRegressor(
 
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         *,
         min_samples=None,
         residual_threshold=None,
@@ -254,9 +259,10 @@ class RANSACRegressor(
         stop_probability=0.99,
         loss="absolute_error",
         random_state=None,
+        base_estimator="deprecated",
     ):
 
-        self.base_estimator = base_estimator
+        self.estimator = estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold
         self.is_data_valid = is_data_valid
@@ -268,6 +274,7 @@ class RANSACRegressor(
         self.stop_probability = stop_probability
         self.random_state = random_state
         self.loss = loss
+        self.base_estimator = base_estimator
 
     def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
@@ -282,7 +289,7 @@ class RANSACRegressor(
 
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample
-            raises error if sample_weight is passed and base_estimator
+            raises error if sample_weight is passed and estimator
             fit method does not support it.
 
             .. versionadded:: 0.18
@@ -301,7 +308,7 @@ class RANSACRegressor(
         """
         # Need to validate separately here. We can't pass multi_ouput=True
         # because that would allow y to be csr. Delay expensive finiteness
-        # check to the base estimator's own input validation.
+        # check to the estimator's own input validation.
         check_X_params = dict(accept_sparse="csr", force_all_finite=False)
         check_y_params = dict(ensure_2d=False)
         X, y = self._validate_data(
@@ -309,13 +316,21 @@ class RANSACRegressor(
         )
         check_consistent_length(X, y)
 
-        if self.base_estimator is not None:
-            base_estimator = clone(self.base_estimator)
+        if self.base_estimator != "deprecated":
+            warnings.warn(
+                "`base_estimator` was renamed to `estimator` in version 1.1 and "
+                "will be removed in 1.3.",
+                FutureWarning,
+            )
+            self.estimator = self.base_estimator
+
+        if self.estimator is not None:
+            estimator = clone(self.estimator)
         else:
-            base_estimator = LinearRegression()
+            estimator = LinearRegression()
 
         if self.min_samples is None:
-            if not isinstance(base_estimator, LinearRegression):
+            if not isinstance(estimator, LinearRegression):
                 # FIXME: in 1.2, turn this warning into an error
                 warnings.warn(
                     "From version 1.2, `min_samples` needs to be explicitly "
@@ -392,14 +407,12 @@ class RANSACRegressor(
         random_state = check_random_state(self.random_state)
 
         try:  # Not all estimator accept a random_state
-            base_estimator.set_params(random_state=random_state)
+            estimator.set_params(random_state=random_state)
         except ValueError:
             pass
 
-        estimator_fit_has_sample_weight = has_fit_parameter(
-            base_estimator, "sample_weight"
-        )
-        estimator_name = type(base_estimator).__name__
+        estimator_fit_has_sample_weight = has_fit_parameter(estimator, "sample_weight")
+        estimator_name = type(estimator).__name__
         if sample_weight is not None and not estimator_fit_has_sample_weight:
             raise ValueError(
                 "%s does not support sample_weight. Samples"
@@ -451,21 +464,21 @@ class RANSACRegressor(
 
             # fit model for current random sample set
             if sample_weight is None:
-                base_estimator.fit(X_subset, y_subset)
+                estimator.fit(X_subset, y_subset)
             else:
-                base_estimator.fit(
+                estimator.fit(
                     X_subset, y_subset, sample_weight=sample_weight[subset_idxs]
                 )
 
             # check if estimated model is valid
             if self.is_model_valid is not None and not self.is_model_valid(
-                base_estimator, X_subset, y_subset
+                estimator, X_subset, y_subset
             ):
                 self.n_skips_invalid_model_ += 1
                 continue
 
             # residuals of all data for current random sample model
-            y_pred = base_estimator.predict(X)
+            y_pred = estimator.predict(X)
             residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
@@ -483,7 +496,7 @@ class RANSACRegressor(
             y_inlier_subset = y[inlier_idxs_subset]
 
             # score of inlier data set
-            score_subset = base_estimator.score(X_inlier_subset, y_inlier_subset)
+            score_subset = estimator.score(X_inlier_subset, y_inlier_subset)
 
             # same number of inliers but worse score -> skip current random
             # sample
@@ -546,15 +559,15 @@ class RANSACRegressor(
 
         # estimate final model using all inliers
         if sample_weight is None:
-            base_estimator.fit(X_inlier_best, y_inlier_best)
+            estimator.fit(X_inlier_best, y_inlier_best)
         else:
-            base_estimator.fit(
+            estimator.fit(
                 X_inlier_best,
                 y_inlier_best,
                 sample_weight=sample_weight[inlier_best_idxs_subset],
             )
 
-        self.estimator_ = base_estimator
+        self.estimator_ = estimator
         self.inlier_mask_ = inlier_mask_best
         return self
 

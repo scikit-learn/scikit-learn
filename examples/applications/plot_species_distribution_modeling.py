@@ -33,6 +33,7 @@ References
    <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
+
 """
 
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -57,8 +58,6 @@ try:
     basemap = True
 except ImportError:
     basemap = False
-
-print(__doc__)
 
 
 def construct_grids(batch):
@@ -215,7 +214,7 @@ def plot_species_distribution(
         plt.scatter(
             species.pts_train["dd long"],
             species.pts_train["dd lat"],
-            s=2 ** 2,
+            s=2**2,
             c="black",
             marker="^",
             label="train",
@@ -223,7 +222,7 @@ def plot_species_distribution(
         plt.scatter(
             species.pts_test["dd long"],
             species.pts_test["dd lat"],
-            s=2 ** 2,
+            s=2**2,
             c="black",
             marker="x",
             label="test",

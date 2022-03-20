@@ -11,9 +11,8 @@ however.
 
 Note that those results can be highly dependent on the value of
 ``learning_rate_init``.
-"""
 
-print(__doc__)
+"""
 
 import warnings
 

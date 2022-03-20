@@ -22,8 +22,8 @@ pessimistic way.
 The figure also shows the performance of 3-fold cross validation which
 usually gives a better estimate of the test loss
 but is computationally more demanding.
+
 """
-print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #

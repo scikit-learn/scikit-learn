@@ -20,8 +20,8 @@ discriminative feature. On the other hand, mutual information can capture any
 kind of dependency between variables and it rates x_2 as the most
 discriminative feature, which probably agrees better with our intuitive
 perception for this example. Both methods correctly marks x_3 as irrelevant.
+
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

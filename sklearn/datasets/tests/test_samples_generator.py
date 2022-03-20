@@ -499,7 +499,7 @@ def test_make_sparse_coded_signal():
     for col in X.T:
         assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
     assert_array_almost_equal(np.dot(D, X), Y)
-    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
+    assert_array_almost_equal(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
 
 
 def test_make_sparse_uncorrelated():
@@ -523,11 +523,12 @@ def test_make_spd_matrix():
     )
 
 
-def test_make_swiss_roll():
-    X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0)
+@pytest.mark.parametrize("hole", [False, True])
+def test_make_swiss_roll(hole):
+    X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0, hole=hole)
 
-    assert X.shape == (5, 3), "X shape mismatch"
-    assert t.shape == (5,), "t shape mismatch"
+    assert X.shape == (5, 3)
+    assert t.shape == (5,)
     assert_array_almost_equal(X[:, 0], t * np.cos(t))
     assert_array_almost_equal(X[:, 2], t * np.sin(t))
 
@@ -631,8 +632,8 @@ def test_make_circles():
         center = [0.0, 0.0]
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
-            dist_exp = 1.0 if label == 0 else factor ** 2
-            dist_exp = 1.0 if label == 0 else factor ** 2
+            dist_exp = 1.0 if label == 0 else factor**2
+            dist_exp = 1.0 if label == 0 else factor**2
             assert_almost_equal(
                 dist_sqr, dist_exp, err_msg="Point is not on expected circle"
             )

@@ -24,12 +24,11 @@ At the end of the path, as alpha tends toward zero
 and the solution tends towards the ordinary least squares, coefficients
 exhibit big oscillations. In practise it is necessary to tune alpha
 in such a way that a balance is maintained between both.
+
 """
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 # License: BSD 3 clause
-
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

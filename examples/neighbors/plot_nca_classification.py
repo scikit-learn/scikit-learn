@@ -12,6 +12,7 @@ using the Euclidean distance after the transformation learned by Neighborhood
 Components Analysis. The latter aims to find a linear transformation that
 maximises the (stochastic) nearest neighbor classification accuracy on the
 training set.
+
 """
 
 # License: BSD 3 clause
@@ -26,8 +27,6 @@ from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalys
 from sklearn.pipeline import Pipeline
 
 
-print(__doc__)
-
 n_neighbors = 1
 
 dataset = datasets.load_iris()
@@ -41,7 +40,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, test_size=0.7, random_state=42
 )
 
-h = 0.01  # step size in the mesh
+h = 0.05  # step size in the mesh
 
 # Create color maps
 cmap_light = ListedColormap(["#FFAAAA", "#AAFFAA", "#AAAAFF"])

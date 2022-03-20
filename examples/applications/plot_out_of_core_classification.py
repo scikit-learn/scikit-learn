@@ -11,6 +11,7 @@ that the features space remains the same over time we leverage a
 HashingVectorizer that will project each example into the same feature space.
 This is especially useful in the case of text classification where new
 features (words) may appear in each batch.
+
 """
 
 # Authors: Eustache Diemert <eustache@diemert.fr>
@@ -185,7 +186,7 @@ def stream_reuters_documents(data_path=None):
 # maximum
 
 vectorizer = HashingVectorizer(
-    decode_error="ignore", n_features=2 ** 18, alternate_sign=False
+    decode_error="ignore", n_features=2**18, alternate_sign=False
 )
 
 

@@ -31,7 +31,9 @@ the clustering does not separate the waveforms. For the cityblock
 distance, the separation is good and the waveform classes are recovered.
 Finally, the cosine distance does not separate at all waveform 1 and 2,
 thus the clustering puts them in the same cluster.
+
 """
+
 # Author: Gael Varoquaux
 # License: BSD 3-Clause or CC-0
 

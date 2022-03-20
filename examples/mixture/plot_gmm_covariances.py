@@ -24,6 +24,7 @@ On the plots, train data is shown as dots, while test data is shown as
 crosses. The iris dataset is four-dimensional. Only the first two
 dimensions are shown here, and thus some points are separated in other
 dimensions.
+
 """
 
 # Author: Ron Weiss <ronweiss@gmail.com>, Gael Varoquaux
@@ -38,8 +39,6 @@ import numpy as np
 from sklearn import datasets
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import StratifiedKFold
-
-print(__doc__)
 
 colors = ["navy", "turquoise", "darkorange"]
 

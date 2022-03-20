@@ -9,9 +9,8 @@ dataset. The hotter the pixel, the more important it is.
 
 The code below also illustrates how the construction and the computation
 of the predictions can be parallelized within multiple jobs.
+
 """
-# %%
-print(__doc__)
 
 # %%
 # Loading the data and model fitting
@@ -56,9 +55,9 @@ forest.fit(X, y)
 # deviation of accumulation of the impurity decrease within each tree.
 #
 # .. warning::
-#     Impurity-based feature importances can be misleading for high cardinality
-#     features (many unique values). See :ref:`permutation_importance` as
-#     an alternative.
+#     Impurity-based feature importances can be misleading for **high
+#     cardinality** features (many unique values). See
+#     :ref:`permutation_importance` as an alternative.
 import time
 import matplotlib.pyplot as plt
 

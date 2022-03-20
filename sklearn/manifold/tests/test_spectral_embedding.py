@@ -19,6 +19,15 @@ from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 
+try:
+    from pyamg import smoothed_aggregation_solver  # noqa
+
+    pyamg_available = True
+except ImportError:
+    pyamg_available = False
+skip_if_no_pyamg = pytest.mark.skipif(
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -38,7 +47,7 @@ S, true_labels = make_blobs(
 def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """Check array A and B are equal with possible sign flipping on
     each columns"""
-    tol_squared = tol ** 2
+    tol_squared = tol**2
     for A_col, B_col in zip(A.T, B.T):
         assert (
             np.max((A_col - B_col) ** 2) <= tol_squared
@@ -85,7 +94,16 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
-def test_spectral_embedding_two_components(seed=36):
+@pytest.mark.parametrize(
+    "eigen_solver",
+    [
+        "arpack",
+        "lobpcg",
+        pytest.param("amg", marks=skip_if_no_pyamg),
+    ],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
@@ -117,31 +135,46 @@ def test_spectral_embedding_two_components(seed=36):
     true_label[0:n_sample] = 1
 
     se_precomp = SpectralEmbedding(
-        n_components=1, affinity="precomputed", random_state=np.random.RandomState(seed)
+        n_components=1,
+        affinity="precomputed",
+        random_state=np.random.RandomState(seed),
+        eigen_solver=eigen_solver,
     )
-    embedded_coordinate = se_precomp.fit_transform(affinity)
-    # Some numpy versions are touchy with types
-    embedded_coordinate = se_precomp.fit_transform(affinity.astype(np.float32))
+
+    embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
     # thresholding on the first components using 0.
-    label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
+    label_ = np.array(embedded_coordinate.ravel() < 0, dtype=np.int64)
     assert normalized_mutual_info_score(true_label, label_) == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
-def test_spectral_embedding_precomputed_affinity(X, seed=36):
+@pytest.mark.parametrize(
+    "eigen_solver",
+    [
+        "arpack",
+        "lobpcg",
+        pytest.param("amg", marks=skip_if_no_pyamg),
+    ],
+)
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype, seed=36):
     # Test spectral embedding with precomputed kernel
     gamma = 1.0
     se_precomp = SpectralEmbedding(
-        n_components=2, affinity="precomputed", random_state=np.random.RandomState(seed)
+        n_components=2,
+        affinity="precomputed",
+        random_state=np.random.RandomState(seed),
+        eigen_solver=eigen_solver,
     )
     se_rbf = SpectralEmbedding(
         n_components=2,
         affinity="rbf",
         gamma=gamma,
         random_state=np.random.RandomState(seed),
+        eigen_solver=eigen_solver,
     )
-    embed_precomp = se_precomp.fit_transform(rbf_kernel(X, gamma=gamma))
-    embed_rbf = se_rbf.fit_transform(X)
+    embed_precomp = se_precomp.fit_transform(rbf_kernel(X.astype(dtype), gamma=gamma))
+    embed_rbf = se_rbf.fit_transform(X.astype(dtype))
     assert_array_almost_equal(se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
     _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
@@ -205,10 +238,11 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
-def test_spectral_embedding_amg_solver(seed=36):
-    # Test spectral embedding with amg solver
-    pytest.importorskip("pyamg")
-
+@pytest.mark.skipif(
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_spectral_embedding_amg_solver(dtype, seed=36):
     se_amg = SpectralEmbedding(
         n_components=2,
         affinity="nearest_neighbors",
@@ -223,8 +257,8 @@ def test_spectral_embedding_amg_solver(seed=36):
         n_neighbors=5,
         random_state=np.random.RandomState(seed),
     )
-    embed_amg = se_amg.fit_transform(S)
-    embed_arpack = se_arpack.fit_transform(S)
+    embed_amg = se_amg.fit_transform(S.astype(dtype))
+    embed_arpack = se_arpack.fit_transform(S.astype(dtype))
     _assert_equal_with_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
     # same with special case in which amg is not actually used
@@ -239,8 +273,8 @@ def test_spectral_embedding_amg_solver(seed=36):
     ).toarray()
     se_amg.affinity = "precomputed"
     se_arpack.affinity = "precomputed"
-    embed_amg = se_amg.fit_transform(affinity)
-    embed_arpack = se_arpack.fit_transform(affinity)
+    embed_amg = se_amg.fit_transform(affinity.astype(dtype))
+    embed_arpack = se_arpack.fit_transform(affinity.astype(dtype))
     _assert_equal_with_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
 
@@ -258,12 +292,15 @@ def test_spectral_embedding_amg_solver(seed=36):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
-def test_spectral_embedding_amg_solver_failure():
+@pytest.mark.skipif(
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
     # Non-regression test for amg solver failure (issue #13393 on github)
-    pytest.importorskip("pyamg")
-    seed = 36
     num_nodes = 100
     X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
+    X = X.astype(dtype)
     upper = sparse.triu(X) - sparse.diags(X.diagonal())
     sym_matrix = upper + upper.T
     embedding = spectral_embedding(
@@ -314,7 +351,9 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
 def test_spectral_embedding_unknown_affinity(seed=36):
     # Test that SpectralClustering fails with an unknown affinity type
     se = SpectralEmbedding(
-        n_components=1, affinity="<unknown>", random_state=np.random.RandomState(seed)
+        n_components=1,
+        affinity="<unknown>",
+        random_state=np.random.RandomState(seed),
     )
     with pytest.raises(ValueError):
         se.fit(S)
@@ -399,10 +438,45 @@ def test_spectral_embedding_first_eigen_vector():
         assert np.std(embedding[:, 1]) > 1e-3
 
 
-# TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
-def test_spectral_embedding_pairwise_deprecated(affinity):
-    se = SpectralEmbedding(affinity=affinity)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        se._pairwise
+@pytest.mark.parametrize(
+    "eigen_solver",
+    [
+        "arpack",
+        "lobpcg",
+        pytest.param("amg", marks=skip_if_no_pyamg),
+    ],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_spectral_embedding_preserves_dtype(eigen_solver, dtype):
+    """Check that `SpectralEmbedding is preserving the dtype of the fitted
+    attribute and transformed data.
+
+    Ideally, this test should be covered by the common test
+    `check_transformer_preserve_dtypes`. However, this test only run
+    with transformers implementing `transform` while `SpectralEmbedding`
+    implements only `fit_transform`.
+    """
+    X = S.astype(dtype)
+    se = SpectralEmbedding(
+        n_components=2, affinity="rbf", eigen_solver=eigen_solver, random_state=0
+    )
+    X_trans = se.fit_transform(X)
+
+    assert X_trans.dtype == dtype
+    assert se.embedding_.dtype == dtype
+    assert se.affinity_matrix_.dtype == dtype
+
+
+@pytest.mark.skipif(
+    pyamg_available,
+    reason="PyAMG is installed and we should not test for an error.",
+)
+def test_error_pyamg_not_available():
+    se_precomp = SpectralEmbedding(
+        n_components=2,
+        affinity="rbf",
+        eigen_solver="amg",
+    )
+    err_msg = "The eigen_solver was set to 'amg', but pyamg is not available."
+    with pytest.raises(ValueError, match=err_msg):
+        se_precomp.fit_transform(S)

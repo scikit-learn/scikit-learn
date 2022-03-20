@@ -1,5 +1,3 @@
-# Authors: Vlad Niculae, Mathieu Blondel
-# License: BSD 3 clause
 """
 =========================
 Multilabel classification
@@ -28,8 +26,11 @@ while CCA is used to perform a supervised one.
 Note: in the plot, "unlabeled samples" does not mean that we don't know the
 labels (as in semi-supervised learning) but that the samples simply do *not*
 have a label.
+
 """
-print(__doc__)
+
+# Authors: Vlad Niculae, Mathieu Blondel
+# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
