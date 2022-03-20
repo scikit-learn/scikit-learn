@@ -469,8 +469,7 @@ class GaussianMixture(BaseMixture):
     n_components : int, default=1
         The number of mixture components.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'},
-    default='full'
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}, default='full'
         String describing the type of covariance parameters to use.
         Must be one of:
 
@@ -493,7 +492,7 @@ class GaussianMixture(BaseMixture):
     n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'},
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
     default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.

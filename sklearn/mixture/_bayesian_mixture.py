@@ -118,7 +118,7 @@ class BayesianGaussianMixture(BaseMixture):
         The number of initializations to perform. The result with the highest
         lower bound value on the likelihood is kept.
 
-    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'},
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
     default='kmeans'
         The method used to initialize the weights, the means and the
         covariances.
