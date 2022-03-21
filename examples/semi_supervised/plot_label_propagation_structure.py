@@ -32,7 +32,7 @@ labels[0] = outer
 labels[-1] = inner
 
 # %%
-# 
+#
 # The aim of :class:`~sklearn.semi_supervised.LabelSpreading` is to associate
 # a label to sample where the label is initially unknown.
 from sklearn.semi_supervised import LabelSpreading
