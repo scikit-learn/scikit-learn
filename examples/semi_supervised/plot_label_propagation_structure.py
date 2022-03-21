@@ -16,14 +16,10 @@ propagate correctly around the circle.
 # License: BSD
 
 # %%
-# Import the necessary modules
+# generate ring with inner box
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.semi_supervised import LabelSpreading
 from sklearn.datasets import make_circles
 
-# %%
-# generate ring with inner box
 n_samples = 200
 X, y = make_circles(n_samples=n_samples, shuffle=False)
 outer, inner = 0, 1
@@ -33,11 +29,15 @@ labels[-1] = inner
 
 # %%
 # Learn with LabelSpreading
+from sklearn.semi_supervised import LabelSpreading
+
 label_spread = LabelSpreading(kernel="knn", alpha=0.8)
 label_spread.fit(X, labels)
 
 # %%
 # Plot output labels
+import matplotlib.pyplot as plt
+
 output_labels = label_spread.transduction_
 plt.figure(figsize=(8.5, 4))
 plt.subplot(1, 2, 1)
