@@ -29,11 +29,6 @@ the best model.
 # License: BSD 3 clause
 
 # %%
-import sklearn
-
-sklearn.set_config(display="diagram")
-
-# %%
 # We will use the diabetes dataset.
 from sklearn.datasets import load_diabetes
 
