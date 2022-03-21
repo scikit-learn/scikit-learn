@@ -932,7 +932,7 @@ def check_array(
         if is_array_api:
             array = xp.asarray(array, dtype=dtype, order=order, copy=True)
         elif np.may_share_memory(array, array_orig):
-            array = xp.asarray(array, dtype=dtype, order=order, copy=True)
+            array = xp.asarray(np.array(array, dtype=dtype, order=order))
 
     return array
 
