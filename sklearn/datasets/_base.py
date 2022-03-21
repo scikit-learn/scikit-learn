@@ -487,9 +487,9 @@ def load_wine(*, return_X_y=False, as_frame=False):
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays. The first contains a 2D array of shape (178, 13)
-        with each row representing one sample and each column representing the features.
-        The second array of shape (178,) contains the target samples.
+        A tuple of two ndarrays by default. The first contains a 2D array of shape
+        (178, 13) with each row representing one sample and each column representing
+        the features. The second array of shape (178,) contains the target samples.
 
     Examples
     --------
