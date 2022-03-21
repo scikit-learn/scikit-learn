@@ -523,7 +523,10 @@ def test_ridge_sample_weights(
         assert_allclose(est.intercept_, cf_coefs[-1])
     else:
         est.fit(X, y, sample_weight=sample_weight)
-        assert_allclose(est.coef_, cf_coefs)
+        if n_features > n_samples and solver == "sag":
+            assert_allclose(est.coef_, cf_coefs, rtol=5e-3)
+        else:
+            assert_allclose(est.coef_, cf_coefs)
 
 
 def test_ridge_shapes_type():
