@@ -412,7 +412,7 @@ def test_loss_same_as_C_functions(loss, sample_weight):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
-def test_loss_gradients_are_the_same(loss, sample_weight):
+def test_loss_gradients_are_the_same(loss, sample_weight, global_random_seed):
     """Test that loss and gradient are the same across different functions.
 
     Also test that output arguments contain correct results.
@@ -422,7 +422,7 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
         n_samples=20,
         y_bound=(-100, 100),
         raw_bound=(-10, 10),
-        seed=42,
+        seed=global_random_seed,
     )
     if sample_weight == "range":
         sample_weight = np.linspace(1, y_true.shape[0], num=y_true.shape[0])
@@ -493,7 +493,7 @@ def test_loss_gradients_are_the_same(loss, sample_weight):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", ["ones", "random"])
-def test_sample_weight_multiplies(loss, sample_weight):
+def test_sample_weight_multiplies(loss, sample_weight, global_random_seed):
     """Test sample weights in loss, gradients and hessians.
 
     Make sure that passing sample weights to loss, gradient and hessian
@@ -505,13 +505,13 @@ def test_sample_weight_multiplies(loss, sample_weight):
         n_samples=n_samples,
         y_bound=(-100, 100),
         raw_bound=(-5, 5),
-        seed=42,
+        seed=global_random_seed,
     )
 
     if sample_weight == "ones":
         sample_weight = np.ones(shape=n_samples, dtype=np.float64)
     else:
-        rng = np.random.RandomState(42)
+        rng = np.random.RandomState(global_random_seed)
         sample_weight = rng.normal(size=n_samples).astype(np.float64)
 
     assert_allclose(
@@ -635,7 +635,7 @@ def test_loss_of_perfect_prediction(loss, sample_weight):
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
 @pytest.mark.parametrize("sample_weight", [None, "range"])
-def test_gradients_hessians_numerically(loss, sample_weight):
+def test_gradients_hessians_numerically(loss, sample_weight, global_random_seed):
     """Test gradients and hessians with numerical derivatives.
 
     Gradient should equal the numerical derivatives of the loss function.
@@ -647,7 +647,7 @@ def test_gradients_hessians_numerically(loss, sample_weight):
         n_samples=n_samples,
         y_bound=(-100, 100),
         raw_bound=(-5, 5),
-        seed=42,
+        seed=global_random_seed,
     )
 
     if sample_weight == "range":
@@ -799,7 +799,7 @@ def test_loss_intercept_only(loss, sample_weight):
     if not loss.is_multiclass:
         y_true = loss.link.inverse(np.linspace(-4, 4, num=n_samples))
     else:
-        y_true = np.arange(n_samples).astype(float) % loss.n_classes
+        y_true = np.arange(n_samples).astype(np.float64) % loss.n_classes
         y_true[::5] = 0  # exceedance of class 0
 
     if sample_weight == "range":
@@ -867,13 +867,13 @@ def test_loss_intercept_only(loss, sample_weight):
         (HalfBinomialLoss(), np.mean, "binomial"),
     ],
 )
-def test_specific_fit_intercept_only(loss, func, random_dist):
+def test_specific_fit_intercept_only(loss, func, random_dist, global_random_seed):
     """Test that fit_intercept_only returns the correct functional.
 
     We test the functional for specific, meaningful distributions, e.g.
     squared error estimates the expectation of a probability distribution.
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     if random_dist == "binomial":
         y_train = rng.binomial(1, 0.5, size=100)
     else:
@@ -921,9 +921,9 @@ def test_multinomial_loss_fit_intercept_only():
         assert_all_finite(baseline_prediction)
 
 
-def test_binomial_and_multinomial_loss():
+def test_binomial_and_multinomial_loss(global_random_seed):
     """Test that multinomial loss with n_classes = 2 is the same as binomial loss."""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 20
     binom = HalfBinomialLoss()
     multinom = HalfMultinomialLoss(n_classes=2)
@@ -939,7 +939,7 @@ def test_binomial_and_multinomial_loss():
 
 
 @pytest.mark.parametrize("loss", LOSS_INSTANCES, ids=loss_instance_name)
-def test_predict_proba(loss):
+def test_predict_proba(loss, global_random_seed):
     """Test that predict_proba and gradient_proba work as expected."""
     n_samples = 20
     y_true, raw_prediction = random_y_true_raw_prediction(
@@ -947,7 +947,7 @@ def test_predict_proba(loss):
         n_samples=n_samples,
         y_bound=(-100, 100),
         raw_bound=(-5, 5),
-        seed=42,
+        seed=global_random_seed,
     )
 
     if hasattr(loss, "predict_proba"):

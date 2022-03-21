@@ -19,99 +19,20 @@ automatically downloaded, then cached.
 #         Lars Buitinck
 # License: BSD 3 clause
 
-import logging
-import numpy as np
-from optparse import OptionParser
-import sys
-from time import time
-import matplotlib.pyplot as plt
 
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_selection import SelectFromModel
-from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.linear_model import RidgeClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors import NearestCentroid
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.utils.extmath import density
-from sklearn import metrics
+# %%
+# Configuration options for the analysis
+# --------------------------------------
 
+# If True, we use `HashingVectorizer`, otherwise we use a `TfidfVectorizer`
+USE_HASHING = False
 
-# Display progress logs on stdout
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+# Number of features used by `HashingVectorizer`
+N_FEATURES = 2**16
 
-op = OptionParser()
-op.add_option(
-    "--report",
-    action="store_true",
-    dest="print_report",
-    help="Print a detailed classification report.",
-)
-op.add_option(
-    "--chi2_select",
-    action="store",
-    type="int",
-    dest="select_chi2",
-    help="Select some number of features using a chi-squared test",
-)
-op.add_option(
-    "--confusion_matrix",
-    action="store_true",
-    dest="print_cm",
-    help="Print the confusion matrix.",
-)
-op.add_option(
-    "--top10",
-    action="store_true",
-    dest="print_top10",
-    help="Print ten most discriminative terms per class for every classifier.",
-)
-op.add_option(
-    "--all_categories",
-    action="store_true",
-    dest="all_categories",
-    help="Whether to use all categories or not.",
-)
-op.add_option("--use_hashing", action="store_true", help="Use a hashing vectorizer.")
-op.add_option(
-    "--n_features",
-    action="store",
-    type=int,
-    default=2**16,
-    help="n_features when using the hashing vectorizer.",
-)
-op.add_option(
-    "--filtered",
-    action="store_true",
-    help=(
-        "Remove newsgroup information that is easily overfit: "
-        "headers, signatures, and quoting."
-    ),
-)
-
-
-def is_interactive():
-    return not hasattr(sys.modules["__main__"], "__file__")
-
-
-# work-around for Jupyter notebook and IPython console
-argv = [] if is_interactive() else sys.argv[1:]
-(opts, args) = op.parse_args(argv)
-if len(args) > 0:
-    op.error("this script takes no arguments.")
-    sys.exit(1)
-
-print(__doc__)
-op.print_help()
-print()
+# Optional feature selection: either False, or an integer: the number of
+# features to select
+SELECT_CHI2 = False
 
 
 # %%
@@ -120,30 +41,21 @@ print()
 # Let's load data from the newsgroups dataset which comprises around 18000
 # newsgroups posts on 20 topics split in two subsets: one for training (or
 # development) and the other one for testing (or for performance evaluation).
-if opts.all_categories:
-    categories = None
-else:
-    categories = [
-        "alt.atheism",
-        "talk.religion.misc",
-        "comp.graphics",
-        "sci.space",
-    ]
+from sklearn.datasets import fetch_20newsgroups
 
-if opts.filtered:
-    remove = ("headers", "footers", "quotes")
-else:
-    remove = ()
-
-print("Loading 20 newsgroups dataset for categories:")
-print(categories if categories else "all")
+categories = [
+    "alt.atheism",
+    "talk.religion.misc",
+    "comp.graphics",
+    "sci.space",
+]
 
 data_train = fetch_20newsgroups(
-    subset="train", categories=categories, shuffle=True, random_state=42, remove=remove
+    subset="train", categories=categories, shuffle=True, random_state=42
 )
 
 data_test = fetch_20newsgroups(
-    subset="test", categories=categories, shuffle=True, random_state=42, remove=remove
+    subset="test", categories=categories, shuffle=True, random_state=42
 )
 print("data loaded")
 
@@ -163,16 +75,26 @@ print(
 )
 print("%d documents - %0.3fMB (test set)" % (len(data_test.data), data_test_size_mb))
 print("%d categories" % len(target_names))
-print()
 
+# %%
+# Vectorize the training and test data
+# -------------------------------------
+#
 # split a training set and a test set
 y_train, y_test = data_train.target, data_test.target
 
-print("Extracting features from the training data using a sparse vectorizer")
+# %%
+# Extracting features from the training data using a sparse vectorizer
+from time import time
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
+
 t0 = time()
-if opts.use_hashing:
+
+if USE_HASHING:
     vectorizer = HashingVectorizer(
-        stop_words="english", alternate_sign=False, n_features=opts.n_features
+        stop_words="english", alternate_sign=False, n_features=N_FEATURES
     )
     X_train = vectorizer.transform(data_train.data)
 else:
@@ -181,26 +103,30 @@ else:
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_train.shape)
-print()
 
-print("Extracting features from the test data using the same vectorizer")
+# %%
+# Extracting features from the test data using the same vectorizer
 t0 = time()
 X_test = vectorizer.transform(data_test.data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_test.shape)
-print()
 
+# %%
 # mapping from integer feature name to original token string
-if opts.use_hashing:
+if USE_HASHING:
     feature_names = None
 else:
     feature_names = vectorizer.get_feature_names_out()
 
-if opts.select_chi2:
-    print("Extracting %d best features by a chi-squared test" % opts.select_chi2)
+# %%
+# Keeping only the best features
+from sklearn.feature_selection import SelectKBest, chi2
+
+if SELECT_CHI2:
+    print("Extracting %d best features by a chi-squared test" % SELECT_CHI2)
     t0 = time()
-    ch2 = SelectKBest(chi2, k=opts.select_chi2)
+    ch2 = SelectKBest(chi2, k=SELECT_CHI2)
     X_train = ch2.fit_transform(X_train, y_train)
     X_test = ch2.transform(X_test)
     if feature_names is not None:
@@ -210,16 +136,21 @@ if opts.select_chi2:
     print()
 
 
+# %%
+# Benchmark classifiers
+# ------------------------------------
+#
+# First we define small benchmarking utilities
+import numpy as np
+from sklearn import metrics
+from sklearn.utils.extmath import density
+
+
 def trim(s):
     """Trim string to fit on terminal (assuming 80-column display)"""
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-# %%
-# Benchmark classifiers
-# ------------------------------------
-# We train and test the datasets with 15 different classification models
-# and get performance results for each model.
 def benchmark(clf):
     print("_" * 80)
     print("Training: ")
@@ -241,24 +172,38 @@ def benchmark(clf):
         print("dimensionality: %d" % clf.coef_.shape[1])
         print("density: %f" % density(clf.coef_))
 
-        if opts.print_top10 and feature_names is not None:
+        if feature_names is not None:
             print("top 10 keywords per class:")
             for i, label in enumerate(target_names):
                 top10 = np.argsort(clf.coef_[i])[-10:]
                 print(trim("%s: %s" % (label, " ".join(feature_names[top10]))))
         print()
 
-    if opts.print_report:
-        print("classification report:")
-        print(metrics.classification_report(y_test, pred, target_names=target_names))
+    print("classification report:")
+    print(metrics.classification_report(y_test, pred, target_names=target_names))
 
-    if opts.print_cm:
-        print("confusion matrix:")
-        print(metrics.confusion_matrix(y_test, pred))
+    print("confusion matrix:")
+    print(metrics.confusion_matrix(y_test, pred))
 
     print()
     clf_descr = str(clf).split("(")[0]
     return clf_descr, score, train_time, test_time
+
+
+# %%
+# We now train and test the datasets with 15 different classification
+# models and get performance results for each model.
+from sklearn.feature_selection import SelectFromModel
+from sklearn.linear_model import RidgeClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import Perceptron
+from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import NearestCentroid
+from sklearn.ensemble import RandomForestClassifier
 
 
 results = []
@@ -325,6 +270,8 @@ results.append(
 # ------------------------------------
 # The bar plot indicates the accuracy, training time (normalized) and test time
 # (normalized) of each classifier.
+import matplotlib.pyplot as plt
+
 indices = np.arange(len(results))
 
 results = [[x[i] for x in results] for i in range(4)]
