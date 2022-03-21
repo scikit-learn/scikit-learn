@@ -6,7 +6,6 @@
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
-import numbers
 import numpy as np
 from joblib import Parallel
 import scipy.sparse as sparse
