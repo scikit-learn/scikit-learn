@@ -17,7 +17,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.datasets._lfw.fetch_lfw_pairs",
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
-    "sklearn.datasets._samples_generator.make_sparse_coded_signal",
     "sklearn.datasets._samples_generator.make_spd_matrix",
     "sklearn.datasets._species_distributions.fetch_species_distributions",
     "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
