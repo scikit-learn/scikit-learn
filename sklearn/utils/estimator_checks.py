@@ -242,7 +242,7 @@ def _yield_transformer_checks(transformer):
         "LocallyLinearEmbedding",
         "RandomizedLasso",
         "LogisticRegressionCV",
-        "BisectKMeans",
+        "BisectingKMeans",
     ]
 
     name = transformer.__class__.__name__
@@ -3287,7 +3287,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
         "LinearSVC",
         "LogisticRegression",
         "SelfTrainingClassifier",
-        "BisectKMeans",
+        "BisectingKMeans",
     ]
 
     # Tested in test_transformer_n_iter

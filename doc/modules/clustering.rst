@@ -774,7 +774,7 @@ Bisecting K-Means
 
 .. _bisect_k_means:
 
-The :class:`BisectKMeans` is an iterative variant of :class:`KMeans`, using
+The :class:`BisectingKMeans` is an iterative variant of :class:`KMeans`, using
 divisive hierarchical clustering.
 Instead of creating all centroids at once, centroids are picked progressively based
 on a previous clustering: a cluster is split into two new clusters repeatedly 

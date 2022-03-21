@@ -95,7 +95,7 @@ def _check_labels_threadpool_limit(
     return labels
 
 
-class BisectKMeans(_BaseKMeans):
+class BisectingKMeans(_BaseKMeans):
     """Bisecting K-Means clustering.
 
     Read more in the :ref:`User Guide <bisect_k_means>`.
@@ -215,12 +215,12 @@ class BisectKMeans(_BaseKMeans):
 
     Examples
     --------
-    >>> from sklearn.cluster import BisectKMeans
+    >>> from sklearn.cluster import BisectingKMeans
     >>> import numpy as np
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [10, 2], [10, 4], [10, 0],
     ...               [10, 6], [10, 8], [10, 10]])
-    >>> bisect_means = BisectKMeans(n_clusters=3, random_state=0).fit(X)
+    >>> bisect_means = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
     >>> bisect_means.labels_
     array([0, 0, 0, 1, 1, 1, 2, 2, 2], dtype=int32)
     >>> bisect_means.predict([[0, 0], [12, 3]])
@@ -316,7 +316,7 @@ class BisectKMeans(_BaseKMeans):
         # less than 3 clusters
         if self.n_clusters < 3:
             warnings.warn(
-                "BisectKMeans might be inefficient for n_cluster "
+                "BisectingKMeans might be inefficient for n_cluster "
                 "smaller than 3  "
                 "- Use Normal KMeans from sklearn.cluster instead.",
                 EfficiencyWarning,
@@ -324,11 +324,11 @@ class BisectKMeans(_BaseKMeans):
 
         if X.shape[0] <= 1:
             raise ValueError(
-                "BisectKMeans needs more than one sample to perform bisection."
+                "BisectingKMeans needs more than one sample to perform bisection."
             )
 
         if hasattr(self.init, "__array__"):
-            raise ValueError("BisectKMeans does not support init as array.")
+            raise ValueError("BisectingKMeans does not support init as array.")
 
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""

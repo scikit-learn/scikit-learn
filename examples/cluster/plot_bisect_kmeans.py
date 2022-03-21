@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_moons
-from sklearn.cluster import BisectKMeans, KMeans
+from sklearn.cluster import BisectingKMeans, KMeans
 from sklearn.exceptions import EfficiencyWarning
 from sklearn.preprocessing import StandardScaler
 
@@ -34,12 +34,12 @@ X, _ = make_moons(n_samples=n_samples, noise=0.4, random_state=random_state)
 # Normalize dataset for easier parameter selection
 X = StandardScaler().fit_transform(X)
 
-# Number of cluster centers for KMeans and BisectKMeans
+# Number of cluster centers for KMeans and BisectingKMeans
 n_clusters_list = [2, 3, 4, 5]
 
 # Algorithms to compare
 clustering_algorithms = {
-    "Bisect K-Means": BisectKMeans,
+    "Bisect K-Means": BisectingKMeans,
     "K-Means": KMeans,
 }
 

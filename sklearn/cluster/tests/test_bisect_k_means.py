@@ -6,7 +6,7 @@ import scipy.sparse as sp
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
-from sklearn.cluster import BisectKMeans
+from sklearn.cluster import BisectingKMeans
 
 import pytest
 
@@ -25,7 +25,7 @@ def test_three_clusters(bisect_strategy):
     X = np.array(
         [[1, 2], [10, 4], [1, 0], [10, 2], [1, 4], [10, 0], [10, 6], [10, 8], [10, 10]]
     )
-    bisect_means = BisectKMeans(
+    bisect_means = BisectingKMeans(
         n_clusters=3, random_state=0, bisect_strategy=bisect_strategy
     )
     bisect_means.fit(X)
@@ -50,7 +50,7 @@ def test_sparse():
     X[X < 0.8] = 0
     X_csr = sp.csr_matrix(X)
 
-    bisect_means = BisectKMeans(n_clusters=3, random_state=0)
+    bisect_means = BisectingKMeans(n_clusters=3, random_state=0)
     bisect_means.fit(X_csr)
 
     # Check if labels obtained from fit(X) are equal to fit(X).predict(X)
@@ -73,7 +73,7 @@ def test_n_clusters(n_clusters):
     rng = np.random.RandomState(0)
     X = rng.rand(10, 2)
 
-    bisect_means = BisectKMeans(n_clusters=n_clusters, random_state=0)
+    bisect_means = BisectingKMeans(n_clusters=n_clusters, random_state=0)
     bisect_means.fit(X)
 
     assert_array_equal(np.unique(bisect_means.labels_), np.arange(n_clusters))
@@ -85,10 +85,10 @@ def test_one_cluster():
     X = np.array([[1, 2], [10, 2], [10, 8]])
 
     with pytest.warns(None) as w:
-        bisect_means = BisectKMeans(n_clusters=1, random_state=0)
+        bisect_means = BisectingKMeans(n_clusters=1, random_state=0)
         bisect_means.fit(X)
         msg = (
-            "BisectKMeans might be inefficient for n_cluster smaller than 3 "
+            "BisectingKMeans might be inefficient for n_cluster smaller than 3 "
             + " - Use Normal KMeans from sklearn.cluster instead."
         )
         assert str(w[0].message) == msg
@@ -112,13 +112,13 @@ def test_one_cluster():
         # Test init array
         (
             {"init": np.ones((5, 2))},
-            "BisectKMeans does not support init as array.",
+            "BisectingKMeans does not support init as array.",
             False,
         ),
         # Test single X value
         (
             {"n_clusters": 1},
-            "BisectKMeans needs more than one sample to perform bisection.",
+            "BisectingKMeans needs more than one sample to perform bisection.",
             True,
         ),
     ],
@@ -135,7 +135,7 @@ def test_wrong_params(param, match, single_value):
         X = rng.rand(5, 2)
 
     with pytest.raises(ValueError, match=match):
-        bisect_means = BisectKMeans(n_clusters=3, n_init=1)
+        bisect_means = BisectingKMeans(n_clusters=3, n_init=1)
         bisect_means.set_params(**param)
         bisect_means.fit(X)
 
@@ -145,7 +145,7 @@ def test_verbose(capsys):
     rng = np.random.RandomState(0)
     X = rng.rand(5, 2)
 
-    bisect_means = BisectKMeans(n_clusters=3, verbose=1)
+    bisect_means = BisectingKMeans(n_clusters=3, verbose=1)
     bisect_means.fit(X)
 
     captured = capsys.readouterr()
