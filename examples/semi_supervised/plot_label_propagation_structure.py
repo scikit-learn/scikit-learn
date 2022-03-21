@@ -22,7 +22,11 @@ from sklearn.datasets import make_circles
 
 n_samples = 200
 X, y = make_circles(n_samples=n_samples, shuffle=False)
-outer, inner = 0, 1
+# %%
+# We generate a dataset with two concentric circles. In addition, a label
+# is associated with each sample of the dataset that is: 0 (belonging to
+# the outer circle), 1 (belonging to the inner circle), and -1 (unknown).
+# Here, all labels but two are tagged as unknown.
 labels = np.full(n_samples, -1.0)
 labels[0] = outer
 labels[-1] = inner
