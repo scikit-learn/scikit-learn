@@ -1279,7 +1279,6 @@ def make_sparse_coded_signal(
     code : ndarray of shape (n_components, n_samples)
         The sparse code such that each column of this matrix has exactly
         n_nonzero_coefs non-zero items (X).
-
     """
     generator = check_random_state(random_state)
 
