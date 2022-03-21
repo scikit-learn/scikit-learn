@@ -721,5 +721,8 @@ def test_lda_array_api(X, y, array_namespace):
         result_xp_np = _convert_to_numpy(result_xp)
 
         assert_allclose(
-            result, result_xp_np, err_msg=f"{method} did not the return the same result"
+            result,
+            result_xp_np,
+            err_msg=f"{method} did not the return the same result",
+            atol=1e-6,
         )

@@ -522,6 +522,7 @@ class LinearDiscriminantAnalysis(
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
         _, S, Vt = svd(X, full_matrices=False)
+        Vt *= xp.sign(Vt[:, 0])
 
         if self._max_components == 0:
             self.explained_variance_ratio_ = xp.empty((0,), dtype=S.dtype)
