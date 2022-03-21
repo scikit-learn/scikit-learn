@@ -1387,8 +1387,15 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # import PIL only when needed
-    from ..externals._pilutil import imread
+    try:
+        from PIL import Image
+    except ImportError:
+        raise ImportError(
+            "The Python Imaging Library (PIL) is required to load data "
+            "from jpeg files. Please refer to "
+            "https://pillow.readthedocs.io/en/stable/installation.html "
+            "for installing PIL."
+        )
 
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
@@ -1397,7 +1404,8 @@ def load_sample_images():
         if filename.endswith(".jpg"):
             filenames.append(filename)
             with resources.open_binary(IMAGES_MODULE, filename) as image_file:
-                image = imread(image_file)
+                pil_image = Image.open(image_file)
+                image = np.asarray(pil_image)
             images.append(image)
 
     return Bunch(images=images, filenames=filenames, DESCR=descr)

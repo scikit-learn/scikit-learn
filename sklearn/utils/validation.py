@@ -585,7 +585,7 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
 
     if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
-        # Only handle extension arrays for interger and floats
+        # Only handle extension arrays for integer and floats
         return False
     elif is_float_dtype(pd_dtype):
         # Float ndarrays can normally support nans. They need to be converted
@@ -1156,7 +1156,7 @@ def column_or_1d(y, *, warn=False):
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance
+    """Turn seed into a np.random.RandomState instance.
 
     Parameters
     ----------
@@ -1165,6 +1165,11 @@ def check_random_state(seed):
         If seed is an int, return a new RandomState instance seeded with seed.
         If seed is already a RandomState instance, return it.
         Otherwise raise ValueError.
+
+    Returns
+    -------
+    None
+        No returns.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
