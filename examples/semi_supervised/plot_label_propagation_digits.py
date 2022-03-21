@@ -20,22 +20,13 @@ At the end, the top 10 most uncertain predictions will be shown.
 # License: BSD
 
 # %%
-# Import the necessary modules
-import numpy as np
-import matplotlib.pyplot as plt
-
-from scipy import stats
-
-from sklearn import datasets
-from sklearn.semi_supervised import LabelSpreading
-
-from sklearn.metrics import confusion_matrix, classification_report
-
-# %%
 # Data generation
 # ---------------
 #
 # We use the digits dataset. We only use a subset of randomly selected samples.
+from sklearn import datasets
+import numpy as np
+
 digits = datasets.load_digits()
 rng = np.random.RandomState(2)
 indices = np.arange(len(digits.data))
@@ -68,6 +59,9 @@ y_train[unlabeled_set] = -1
 #
 # We fit a :class:`~sklearn.semi_supervised.LabelSpreading` and use it to predict
 # the unknown labels.
+from sklearn.semi_supervised import LabelSpreading
+from sklearn.metrics import confusion_matrix, classification_report
+
 lp_model = LabelSpreading(gamma=0.25, max_iter=20)
 lp_model.fit(X, y_train)
 predicted_labels = lp_model.transduction_[unlabeled_set]
@@ -90,6 +84,8 @@ print(cm)
 # -----------------------------------
 #
 # Here, we will pick and show the 10 most uncertain predictions.
+from scipy import stats
+
 pred_entropies = stats.distributions.entropy(lp_model.label_distributions_.T)
 
 # %%
@@ -98,6 +94,8 @@ uncertainty_index = np.argsort(pred_entropies)[-10:]
 
 # %%
 # Plot
+import matplotlib.pyplot as plt
+
 f = plt.figure(figsize=(7, 5))
 for index, image_index in enumerate(uncertainty_index):
     image = images[image_index]
