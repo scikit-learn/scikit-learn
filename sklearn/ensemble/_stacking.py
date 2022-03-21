@@ -167,7 +167,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         check_scalar(
             self.passthrough,
             name="passthrough",
-            target_type=(np.bool_, numbers.Integral),
+            target_type=(np.bool_, bool),
             include_boundaries="neither",
         )
         # all_estimators contains all estimators, the one to be fitted and the
