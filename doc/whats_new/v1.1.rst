@@ -34,6 +34,17 @@ random sampling procedures.
   same solution, up to numerical rounding errors, but in general Lloyd's
   algorithm uses much less memory, and it is often faster.
 
+- |Efficiency| Fitting :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor` is on average 15% faster than in
+  previous versions thanks to a new sort algorithm to find the best split.
+  Models might be different because of a different handling of splits
+  with tied criterion values: both the old and the new sorting algorithm
+  are unstable sorting algorithms. :pr:`22868` by `Thomas Fan`_.
+
 - |Fix| The eigenvectors initialization for :class:`cluster.SpectralClustering`
   and :class:`manifold.SpectralEmbedding` now samples from a Gaussian when
   using the `'amg'` or `'lobpcg'` solver. This change  improves numerical
@@ -635,6 +646,10 @@ Changelog
 - |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
   message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
 
+- |API| `metrics.SCORERS` is now deprecated and will be removed in 1.3. Please
+  use :func:`~metrics.get_scorer_names` to retrieve the names of all available
+  scorers. :pr:`22866` by `Adrin Jalali`_.
+
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
   Using `neighbors.DistanceMetric` for imports is still valid for
@@ -888,6 +903,11 @@ Changelog
 - |API| :func:`utils.metaestimators.if_delegate_has_method` is deprecated and will be
   removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.
   :pr:`22830` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| Rich html representation of estimators is now enabled by default in Jupyter
+  notebooks. It can be deactivated by setting `display='text'` in
+  :func:`~sklearn.set_config`.
+  :pr:`22856` by `Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------

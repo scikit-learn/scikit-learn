@@ -12,16 +12,11 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.covariance._shrunk_covariance.ledoit_wolf",
-    "sklearn.datasets._base.load_sample_image",
-    "sklearn.datasets._base.load_wine",
-    "sklearn.datasets._california_housing.fetch_california_housing",
     "sklearn.datasets._covtype.fetch_covtype",
     "sklearn.datasets._kddcup99.fetch_kddcup99",
     "sklearn.datasets._lfw.fetch_lfw_pairs",
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
-    "sklearn.datasets._samples_generator.make_sparse_coded_signal",
     "sklearn.datasets._samples_generator.make_spd_matrix",
     "sklearn.datasets._species_distributions.fetch_species_distributions",
     "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
@@ -99,7 +94,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.model_selection._validation.validation_curve",
     "sklearn.pipeline.make_union",
     "sklearn.preprocessing._data.maxabs_scale",
-    "sklearn.preprocessing._data.power_transform",
     "sklearn.preprocessing._data.robust_scale",
     "sklearn.preprocessing._data.scale",
     "sklearn.preprocessing._label.label_binarize",

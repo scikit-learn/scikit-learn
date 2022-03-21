@@ -1252,16 +1252,16 @@ def make_sparse_coded_signal(
     Parameters
     ----------
     n_samples : int
-        Number of samples to generate
+        Number of samples to generate.
 
     n_components : int
-        Number of components in the dictionary
+        Number of components in the dictionary.
 
     n_features : int
-        Number of features of the dataset to generate
+        Number of features of the dataset to generate.
 
     n_nonzero_coefs : int
-        Number of active (non-zero) coefficients in each sample
+        Number of active (non-zero) coefficients in each sample.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
@@ -1279,7 +1279,6 @@ def make_sparse_coded_signal(
     code : ndarray of shape (n_components, n_samples)
         The sparse code such that each column of this matrix has exactly
         n_nonzero_coefs non-zero items (X).
-
     """
     generator = check_random_state(random_state)
 
