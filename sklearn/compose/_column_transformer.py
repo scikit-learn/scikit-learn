@@ -21,6 +21,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
+from ..utils import _determine_key_type
 from ..utils.deprecation import deprecated
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
@@ -444,6 +445,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ):
                 # selection was already strings
                 return column
+            elif isinstance(column, slice) and _determine_key_type(column) == "str":
+                # Assuming column and self._transformer_to_input_indices[name]
+                # are matched. True if column generated from _iter
+                column = self._transformer_to_input_indices[name]
+                return feature_names_in[column]
             else:
                 return feature_names_in[column]
 
@@ -453,6 +459,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 f"Transformer {name} (type {type(trans).__name__}) does "
                 "not provide get_feature_names_out."
             )
+        if isinstance(column, slice) and _determine_key_type(column) == "str":
+            # Assuming column and self._transformer_to_input_indices[name]
+            # are matched. True if column generated from _iter
+            column = self._transformer_to_input_indices[name]            
         if isinstance(column, slice) or (
             isinstance(column, Iterable)
             and not all(isinstance(col, str) for col in column)
