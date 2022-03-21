@@ -517,6 +517,7 @@ class MockMetaEstimatorDeprecatedDelegation:
         """Incorrect docstring but should not be tested"""
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 @pytest.mark.parametrize(
     "mock_meta",
     [
@@ -715,7 +716,7 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
 def test_memmap_on_contiguous_data(dtype):
-    """Test memory mapped array on contigous memoryview."""
+    """Test memory mapped array on contiguous memoryview."""
     x = np.arange(10).astype(dtype)
     assert x.flags["C_CONTIGUOUS"]
     assert x.flags["ALIGNED"]

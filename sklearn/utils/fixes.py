@@ -17,7 +17,6 @@ import sklearn
 import numpy as np
 import scipy
 import scipy.stats
-from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 import threadpoolctl
 from .._config import config_context, get_config
 from ..externals._packaging.version import parse as parse_version
