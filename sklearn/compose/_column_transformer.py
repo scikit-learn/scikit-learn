@@ -462,7 +462,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if isinstance(column, slice) and _determine_key_type(column) == "str":
             # Assuming column and self._transformer_to_input_indices[name]
             # are matched. True if column generated from _iter
-            column = self._transformer_to_input_indices[name]            
+            column = self._transformer_to_input_indices[name]
         if isinstance(column, slice) or (
             isinstance(column, Iterable)
             and not all(isinstance(col, str) for col in column)
