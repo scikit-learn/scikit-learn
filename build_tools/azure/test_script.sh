@@ -46,7 +46,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
 
-    # Python 3.10 deprecates distutils and is imported by numpy integrally during import time
+    # Python 3.10 deprecates distutils, which is imported by numpy internally
     TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
 fi
 
