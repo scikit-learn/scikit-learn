@@ -673,16 +673,15 @@ def test_get_feature_names_out():
 
 
 @pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
-@pytest.mark.parametrize("X, y", [(X, y), (X, y3)])
-def test_lda_array_api(X, y, array_namespace):
+def test_lda_array_api(array_namespace):
     """Check that the array_api Array gives the same results as ndarrays."""
     xp = pytest.importorskip(array_namespace)
 
     X_xp = xp.asarray(X)
-    y_xp = xp.asarray(y)
+    y_xp = xp.asarray(y3)
 
     lda = LinearDiscriminantAnalysis()
-    lda.fit(X, y)
+    lda.fit(X, y3)
 
     gm_attributes_arrays = {
         key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
