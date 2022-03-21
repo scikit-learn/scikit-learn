@@ -41,7 +41,7 @@ label_spread = LabelSpreading(kernel="knn", alpha=0.8)
 label_spread.fit(X, labels)
 
 # %%
-# Plot output labels
+# Now, we can check which labels have been associated with each sample when the label was unknown.
 import matplotlib.pyplot as plt
 
 output_labels = label_spread.transduction_
