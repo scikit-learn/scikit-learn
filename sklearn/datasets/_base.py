@@ -1419,7 +1419,7 @@ def load_sample_image(image_name):
     Parameters
     ----------
     image_name : {`china.jpg`, `flower.jpg`}
-        The name of the sample image loaded.
+        The name of the sample image loaded
 
     Returns
     -------
