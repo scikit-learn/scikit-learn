@@ -34,8 +34,10 @@ It can be concluded that the model with larger L is more likely.
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def func(x):
     return np.sin(2 * np.pi * x)
+
 
 size = 25
 rng = np.random.RandomState(1234)
