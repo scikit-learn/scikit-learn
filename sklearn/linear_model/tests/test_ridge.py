@@ -486,41 +486,44 @@ def test_ridge_regression_convergence_fail():
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1.0, 1e-2])
-def test_ridge_sample_weights(solver, fit_intercept, alpha, global_random_seed):
+def test_ridge_sample_weights(
+    solver, fit_intercept, alpha, ols_ridge_dataset, global_random_seed
+):
     # TODO: loop over sparse data as well
-    rng = np.random.RandomState(global_random_seed)
+    X, y, _, _ = ols_ridge_dataset
+    n_samples, n_features = X.shape
+    sample_weight = 1.0 + rng.rand(n_samples)
 
-    for n_samples, n_features in ((6, 5), (5, 10)):
+    # Closed form of the weighted regularized least square
+    # theta = (X^T W X + alpha I)^(-1) * X^T W y
+    W = np.diag(sample_weight)
+    if fit_intercept:
+        # last column of X = 1 corresponds to intercept
+        D = np.eye(n_features)
+        D[-1, -1] = 0
+    else:
+        D = np.eye(n_features)
+    cf_coefs = linalg.solve(X.T @ W @ X + alpha * D, X.T @ W @ y)
 
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
-        sample_weight = 1.0 + rng.rand(n_samples)
+    # Ridge with explicit sample_weight
+    params = dict(
+        alpha=alpha,
+        fit_intercept=fit_intercept,
+        solver=solver,
+        tol=1e-10,
+        random_state=global_random_seed,
+    )
+    est = Ridge(**params)
 
-        # Ridge with explicit sample_weight
-        est = Ridge(alpha=alpha, fit_intercept=fit_intercept, solver=solver, tol=1e-12)
+    if fit_intercept:
+        # exclude last column = intercept
+        X = X[:, :-1]
         est.fit(X, y, sample_weight=sample_weight)
-        coefs = est.coef_
-        inter = est.intercept_
-
-        # Closed form of the weighted regularized least square
-        # theta = (X^T W X + alpha I)^(-1) * X^T W y
-        W = np.diag(sample_weight)
-        if fit_intercept:
-            dummy_column = np.ones(shape=(n_samples, 1))
-            X_aug = np.concatenate((dummy_column, X), axis=1)
-            D = np.eye(n_features + 1)
-            D[0, 0] = 0
-        else:
-            X_aug = X
-            D = np.eye(n_features)
-
-        cf_coefs = linalg.solve(X_aug.T @ W @ X_aug + alpha * D, X_aug.T @ W @ y)
-
-        if fit_intercept:
-            assert_allclose(coefs, cf_coefs[1:], rtol=1e-2)
-            assert_allclose(inter, cf_coefs[0], rtol=1e-2)
-        else:
-            assert_allclose(coefs, cf_coefs)
+        assert_allclose(est.coef_, cf_coefs[:-1])
+        assert_allclose(est.intercept_, cf_coefs[-1])
+    else:
+        est.fit(X, y, sample_weight=sample_weight)
+        assert_allclose(est.coef_, cf_coefs)
 
 
 def test_ridge_shapes_type():
