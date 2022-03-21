@@ -1780,6 +1780,29 @@ class TransWithNames(Trans):
             "passthrough",
             ["bycol1__d", "bycol1__c", "bycol2__d", "remainder__a", "remainder__b"],
         ),
+        (
+            [
+                ("bycol1", TransWithNames(), slice("b", "c")),
+            ],
+            "drop",
+            ["bycol1__b", "bycol1__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", slice("d", "d")),
+            ],
+            "passthrough",
+            ["bycol1__b", "remainder__a", "remainder__c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice("d", "d")),
+            ],
+            "passthrough",
+            ["bycol1__d", "bycol1__c", "bycol2__d", "remainder__a", "remainder__b"],
+        ),
     ],
 )
 def test_verbose_feature_names_out_true(transformers, remainder, expected_names):
@@ -1875,6 +1898,30 @@ def test_verbose_feature_names_out_true(transformers, remainder, expected_names)
             [
                 ("bycol1", TransWithNames(), ["d", "c"]),
                 ("bycol2", "passthrough", slice(0, 2)),
+            ],
+            "drop",
+            ["d", "c", "a", "b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), slice("b", "b")),
+                ("bycol2", "drop", ["d"]),
+            ],
+            "passthrough",
+            ["b", "a", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["b"]),
+                ("bycol2", "drop", slice("d", "d")),
+            ],
+            "passthrough",
+            ["b", "a", "c"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice("a", "b")),
             ],
             "drop",
             ["d", "c", "a", "b"],
@@ -1980,6 +2027,24 @@ def test_verbose_feature_names_out_false(transformers, remainder, expected_names
             [
                 ("bycol1", TransWithNames(["a", "b"]), ["b"]),
                 ("bycol2", "passthrough", slice(0, 1)),
+                ("bycol3", TransWithNames(["b"]), ["c"]),
+            ],
+            "passthrough",
+            "['a', 'b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), slice("b", "b")),
+                ("bycol2", "passthrough", ["a"]),
+                ("bycol3", TransWithNames(["b"]), ["c"]),
+            ],
+            "passthrough",
+            "['a', 'b']",
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(["a", "b"]), ["b"]),
+                ("bycol2", "passthrough", slice("a", "a")),
                 ("bycol3", TransWithNames(["b"]), ["c"]),
             ],
             "passthrough",
