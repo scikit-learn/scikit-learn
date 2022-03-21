@@ -60,7 +60,7 @@ y_train[unlabeled_set] = -1
 # We fit a :class:`~sklearn.semi_supervised.LabelSpreading` and use it to predict
 # the unknown labels.
 from sklearn.semi_supervised import LabelSpreading
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import classification_report
 
 lp_model = LabelSpreading(gamma=0.25, max_iter=20)
 lp_model.fit(X, y_train)
