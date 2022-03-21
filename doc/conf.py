@@ -549,6 +549,7 @@ autosummary_filename_map = {
     "sklearn.cluster.dbscan": "dbscan-function",
     "sklearn.covariance.oas": "oas-function",
     "sklearn.decomposition.fastica": "fastica-function",
+    "sklearn.cluster.hdbscan": "hdbscan-function",
 }
 
 
