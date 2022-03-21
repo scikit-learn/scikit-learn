@@ -3317,9 +3317,8 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
 
 def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
-    """
-    Family of parametric, monotonic transformations to make data more Gaussian-like.
-    
+    """Parametric, monotonic transformation to make data more Gaussian-like.
+
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
