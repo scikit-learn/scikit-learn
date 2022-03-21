@@ -481,15 +481,15 @@ def plot_confusion_matrix(
     ax=None,
     colorbar=True,
 ):
-    """.. deprecated:: 1.0
+    """Plot Confusion Matrix.
+
+    Read more in the :ref:`User Guide <confusion_matrix>`.
+
+    .. deprecated:: 1.0
        `plot_confusion_matrix` is deprecated in 1.0 and will be removed in
        1.2. Use one of the following class methods:
        :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_predictions` or
        :func:`~sklearn.metrics.ConfusionMatrixDisplay.from_estimator`.
-
-    Plot Confusion Matrix.
-
-    Read more in the :ref:`User Guide <confusion_matrix>`.
 
     Parameters
     ----------
