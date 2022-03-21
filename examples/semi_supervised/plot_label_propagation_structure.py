@@ -74,7 +74,8 @@ label_spread = LabelSpreading(kernel="knn", alpha=0.8)
 label_spread.fit(X, labels)
 
 # %%
-# Now, we can check which labels have been associated with each sample when the label was unknown.
+# Now, we can check which labels have been associated with each sample
+# when the label was unknown.
 output_labels = label_spread.transduction_
 output_label_array = np.asarray(output_labels)
 outer_numbers = np.where(output_label_array == outer)[0]
