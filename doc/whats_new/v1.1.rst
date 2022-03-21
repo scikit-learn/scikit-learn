@@ -34,6 +34,17 @@ random sampling procedures.
   same solution, up to numerical rounding errors, but in general Lloyd's
   algorithm uses much less memory, and it is often faster.
 
+- |Efficiency| Fitting :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor` is on average 15% faster than in
+  previous versions thanks to a new sort algorithm to find the best split.
+  Models might be different because of a different handling of splits
+  with tied criterion values: both the old and the new sorting algorithm
+  are unstable sorting algorithms. :pr:`22868` by `Thomas Fan`_.
+
 - |Fix| The eigenvectors initialization for :class:`cluster.SpectralClustering`
   and :class:`manifold.SpectralEmbedding` now samples from a Gaussian when
   using the `'amg'` or `'lobpcg'` solver. This change  improves numerical
