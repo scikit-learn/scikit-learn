@@ -11,6 +11,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._array_api import _convert_to_numpy
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -671,11 +672,11 @@ def test_get_feature_names_out():
     assert_array_equal(names_out, expected_names_out)
 
 
+@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
 @pytest.mark.parametrize("X, y", [(X, y), (X, y3)])
-def test_lda_array_api(X, y):
+def test_lda_array_api(X, y, array_namespace):
     """Check that the array_api Array gives the same results as ndarrays."""
-    pytest.importorskip("numpy", minversion="1.22", reason="Requires Array API")
-    xp = pytest.importorskip("numpy.array_api")
+    xp = pytest.importorskip(array_namespace)
 
     X_xp = xp.asarray(X)
     y_xp = xp.asarray(y)
@@ -683,19 +684,21 @@ def test_lda_array_api(X, y):
     lda = LinearDiscriminantAnalysis()
     lda.fit(X, y)
 
+    gm_attributes_arrays = {
+        key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
+    }
+
     lda_xp = clone(lda)
     with config_context(array_api_dispatch=True):
         lda_xp.fit(X_xp, y_xp)
 
-    gm_attributes_array = {
-        key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
-    }
-    for key in gm_attributes_array:
+    for key, attribute in gm_attributes_arrays.items():
         gm_xp_param = getattr(lda_xp, key)
         assert hasattr(gm_xp_param, "__array_namespace__")
+        gm_xp_param_np = _convert_to_numpy(gm_xp_param)
 
         assert_allclose(
-            gm_attributes_array[key], gm_xp_param, err_msg=f"{key} not the same"
+            attribute, gm_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
         )
 
     # Check predictions are the same
@@ -715,6 +718,8 @@ def test_lda_array_api(X, y):
             result_xp, "__array_namespace__"
         ), f"{method} did not output an array_namespace"
 
+        result_xp_np = _convert_to_numpy(result_xp)
+
         assert_allclose(
-            result, result_xp, err_msg=f"{method} did not the return the same result"
+            result, result_xp_np, err_msg=f"{method} did not the return the same result"
         )

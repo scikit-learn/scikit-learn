@@ -849,7 +849,7 @@ def check_array(
                         array = np.asarray(array, order=order, dtype=dtype)
                         array = xp.asarray(array)
                     else:
-                        array = xp.asarray(array, dtype=dtype, copy=False)
+                        array = xp.asarray(array, dtype=dtype)
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)

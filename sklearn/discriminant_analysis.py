@@ -501,10 +501,10 @@ class LinearDiscriminantAnalysis(
         std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = 1.0 / (n_samples - n_classes)
+        fac = xp.asarray(1.0 / (n_samples - n_classes))
 
         # 2) Within variance scaling
-        X = math.sqrt(fac) * (Xc / std)
+        X = xp.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
         U, S, Vt = svd(X, full_matrices=False)
 

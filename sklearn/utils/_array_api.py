@@ -1,6 +1,6 @@
 """Tools to support array_api."""
 import numpy
-from .._config import get_config
+from .._config import get_config, config_context
 import scipy.special as special
 
 
@@ -56,12 +56,11 @@ class _NumPyApiWrapper:
         # astype is not defined in the top level NumPy namespace
         return x.astype(dtype, copy=copy, casting=casting)
 
-    def asarray(self, obj, *, dtype=None, device=None, copy=None, order=None):
-        # copy is in the ArrayAPI spec but not in NumPy's asarray
-        if copy:
-            return numpy.array(obj, dtype=dtype, order=order, copy=True)
+    def asarray(self, x, *, dtype=None, device=None, copy=None):
+        if copy is True:
+            return numpy.array(x, copy=True, dtype=dtype)
         else:
-            return numpy.asarray(obj, dtype=dtype, order=order)
+            return numpy.asarray(x, dtype=dtype)
 
     def unique_inverse(self, x):
         return numpy.unique(x, return_inverse=True)
@@ -147,8 +146,24 @@ def get_namespace(*arrays):
 
 
 def _expit(X):
-    xp, is_array_api = get_namespace(X)
-    if not is_array_api:
-        return special.expit(X)
+    xp, _ = get_namespace(X)
+    if xp.__name__ in {"numpy", "numpy.array_api"}:
+        return xp.asarray(special.expit(numpy.asarray(X)))
 
     return 1.0 / (1.0 + xp.exp(-X))
+
+
+def _convert_to_numpy(X):
+    """Convert X into a NumPy ndarray.
+
+    Only works on cupy.array_api and numpy.array_api.
+    """
+    with config_context(array_api_dispatch=True):
+        xp, _ = get_namespace(X)
+
+    if xp.__name__ == "cupy.array_api":
+        import cupy
+
+        return cupy.asnumpy(X._array)
+    else:
+        return numpy.asarray(X)
