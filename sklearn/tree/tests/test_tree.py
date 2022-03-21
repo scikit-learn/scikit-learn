@@ -978,6 +978,9 @@ def test_min_impurity_decrease():
                         actual_decrease, expected_decrease
                     )
 
+
+def test_pickle():
+    """Test pickling preserves Tree properties and performance."""
     for name, TreeEstimator in ALL_TREES.items():
         if "Classifier" in name:
             X, y = iris.data, iris.target
@@ -994,6 +997,24 @@ def test_min_impurity_decrease():
         serialized_object = pickle.dumps(est)
         est2 = pickle.loads(serialized_object)
         assert type(est2) == est.__class__
+
+        # test that all class properties are maintained
+        for prop_name in [
+            "n_classes",
+            "children_left",
+            "children_right",
+            "n_leaves",
+            "feature",
+            "threshold",
+            "impurity",
+            "n_node_samples",
+            "weighted_n_node_samples",
+            "value",
+        ]:
+            est_prop = getattr(est.tree_, prop_name)
+            est2_prop = getattr(est.tree_, prop_name)
+            assert_array_equal(est_prop, est2_prop)
+
         score2 = est2.score(X, y)
         assert (
             score == score2
