@@ -54,6 +54,10 @@ def _sym_decorrelation(W):
     i.e. W <- (W * W.T) ^{-1/2} * W
     """
     s, u = linalg.eigh(np.dot(W, W.T))
+    # avoid sqrt of negative values or division by zero because of rounding
+    # errors:
+    s = np.clip(s, a_min=np.finfo(W.dtype).eps, a_max=None)
+
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
     return np.linalg.multi_dot([u * (1.0 / np.sqrt(s)), u.T, W])

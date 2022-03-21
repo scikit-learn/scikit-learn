@@ -258,7 +258,7 @@ def test_non_square_fastica(add_noise):
         assert_allclose(np.dot(s2_, s2) / n_samples, 1, atol=1e-3)
 
 
-def test_fit_transform(global_random_seed):
+def test_fit_transform(global_random_seed, global_dtype):
     """Test unit variance of transformed data using FastICA algorithm.
 
     Check that `fit_transform` gives the same result as applying
@@ -266,28 +266,42 @@ def test_fit_transform(global_random_seed):
 
     Bug #13056
     """
-    # XXX: casting X with `.astype(global_dtype)` reveals a rare numerical
-    # stability problem of FastICA with float32 bit data. I can triggers
-    # NaN values somewhere in the computation, only for some random seeds.
-
     # multivariate uniform data in [0, 1]
     rng = np.random.RandomState(global_random_seed)
-    X = rng.random_sample((100, 10))
-
+    X = rng.random_sample((100, 10)).astype(global_dtype)
+    max_iter = 300
     for whiten, n_components in [["unit-variance", 5], [False, None]]:
         n_components_ = n_components if n_components is not None else X.shape[1]
 
-        ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
-        Xt = ica.fit_transform(X)
+        ica = FastICA(
+            n_components=n_components, max_iter=max_iter, whiten=whiten, random_state=0
+        )
+        with warnings.catch_warnings():
+            # make sure that numerical errors do not cause sqrt of negative
+            # values
+            warnings.simplefilter("error", RuntimeWarning)
+            # XXX: for some seeds, the model do not converge. However this is not
+            # what we test here.
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            Xt = ica.fit_transform(X)
         assert ica.components_.shape == (n_components_, 10)
-        assert Xt.shape == (100, n_components_)
+        assert Xt.shape == (X.shape[0], n_components_)
 
-        ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
-        ica.fit(X)
-        assert ica.components_.shape == (n_components_, 10)
-        Xt2 = ica.transform(X)
+        ica2 = FastICA(
+            n_components=n_components, max_iter=max_iter, whiten=whiten, random_state=0
+        )
+        with warnings.catch_warnings():
+            # make sure that numerical errors do not cause sqrt of negative
+            # values
+            warnings.simplefilter("error", RuntimeWarning)
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            ica2.fit(X)
+        assert ica2.components_.shape == (n_components_, 10)
+        Xt2 = ica2.transform(X)
 
-        assert_allclose(Xt, Xt2)
+        # XXX: we have to set atol for this test to pass for all seeds when
+        # fitting with float32 data. Is this is a revealing a bug?
+        assert_allclose(Xt, Xt2, atol=1e-6 if global_dtype == np.float32 else 0.0)
 
 
 @pytest.mark.filterwarnings("ignore:Ignoring n_components with whiten=False.")
@@ -303,20 +317,12 @@ def test_fit_transform(global_random_seed):
     ],
 )
 def test_inverse_transform(
-    whiten, n_components, expected_mixing_shape, global_random_seed
+    whiten, n_components, expected_mixing_shape, global_random_seed, global_dtype
 ):
-    # XXX: casting X with `.astype(global_dtype)` reveals a rare numerical
-    # stability problem of FastICA with float32 bit data. I can triggers
-    # NaN values somewhere in the computation, only for some random seeds.
-
-    # XXX: furthermore, even when we do not hit the NaN issue, the
-    # assert_allclose can only pass with rtol values significantly larger than
-    # the usual 1e-4 we expect for float32 data.
-
     # Test FastICA.inverse_transform
     n_samples = 100
     rng = np.random.RandomState(global_random_seed)
-    X = rng.random_sample((n_samples, 10))
+    X = rng.random_sample((n_samples, 10)).astype(global_dtype)
 
     ica = FastICA(n_components=n_components, random_state=rng, whiten=whiten)
     Xt = ica.fit_transform(X)
@@ -326,7 +332,9 @@ def test_inverse_transform(
 
     # reversibility test in non-reduction case
     if n_components == X.shape[1]:
-        assert_allclose(X, X2)
+        # XXX: we have to set atol for this test to pass for all seeds when
+        # fitting with float32 data. Is this is a revealing a bug?
+        assert_allclose(X, X2, atol=1e-6 if global_dtype == np.float32 else 0.0)
 
 
 # FIXME remove filter in 1.3
