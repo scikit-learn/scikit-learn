@@ -102,6 +102,7 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
+   cluster.HDBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
@@ -122,6 +123,7 @@ Functions
    cluster.cluster_optics_xi
    cluster.compute_optics_graph
    cluster.dbscan
+   cluster.hdbscan
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.kmeans_plusplus

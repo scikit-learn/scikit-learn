@@ -559,12 +559,12 @@ def hdbscan(
         The metric to use when calculating distance between instances in a
         feature array.
 
-        If metric is a string or callable, it must be one of
-        the options allowed by `metrics.pairwise.pairwise_distances` for its
-        metric parameter.
+        * If metric is a string or callable, it must be one of
+          the options allowed by `metrics.pairwise.pairwise_distances` for its
+          metric parameter.
 
-        If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square.
+        * If metric is "precomputed", X is assumed to be a distance matrix and
+          must be square.
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest
@@ -576,12 +576,12 @@ def hdbscan(
         to `best` which chooses the "best" algorithm given the nature of
         the data. You can force other options if you believe you know
         better. Options are:
-            * `best`
-            * `generic`
-            * `prims_kdtree`
-            * `prims_balltree`
-            * `boruvka_kdtree`
-            * `boruvka_balltree`
+        * `best`
+        * `generic`
+        * `prims_kdtree`
+        * `prims_balltree`
+        * `boruvka_kdtree`
+        * `boruvka_balltree`
 
     memory : str, default=None
         Used to cache the output of the computation of the tree.
@@ -609,8 +609,8 @@ def hdbscan(
         to find the most persistent clusters. Alternatively you can instead
         select the clusters at the leaves of the tree -- this provides the
         most fine grained and homogeneous clusters. Options are:
-            * `eom`
-            * `leaf`
+        * `eom`
+        * `leaf`
 
     allow_single_cluster : bool, default=False
         By default HDBSCAN* will not produce a single cluster, setting this
