@@ -585,7 +585,7 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
 
     if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
-        # Only handle extension arrays for interger and floats
+        # Only handle extension arrays for integer and floats
         return False
     elif is_float_dtype(pd_dtype):
         # Float ndarrays can normally support nans. They need to be converted

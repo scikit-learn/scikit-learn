@@ -1006,7 +1006,7 @@ def paired_euclidean_distances(X, Y):
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        Output array/matrix containing the calculated paired euclidian
+        Output array/matrix containing the calculated paired euclidean
         distances.
     """
     X, Y = check_paired_arrays(X, Y)

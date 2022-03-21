@@ -89,7 +89,7 @@ def _retry_on_network_error(
                     if retry_counter == 0:
                         raise
                     warn(
-                        f"A network error occured while downloading {url}. Retrying..."
+                        f"A network error occurred while downloading {url}. Retrying..."
                     )
                     retry_counter -= 1
                     time.sleep(delay)
