@@ -32,21 +32,10 @@ labels[0] = outer
 labels[-1] = inner
 
 # %%
-#
-# The aim of :class:`~sklearn.semi_supervised.LabelSpreading` is to associate
-# a label to sample where the label is initially unknown.
-from sklearn.semi_supervised import LabelSpreading
-
-label_spread = LabelSpreading(kernel="knn", alpha=0.8)
-label_spread.fit(X, labels)
-
-# %%
-# Now, we can check which labels have been associated with each sample when the label was unknown.
+# Plot raw data
 import matplotlib.pyplot as plt
 
-output_labels = label_spread.transduction_
 plt.figure(figsize=(8.5, 4))
-plt.subplot(1, 2, 1)
 plt.scatter(
     X[labels == outer, 0],
     X[labels == outer, 1],
@@ -75,7 +64,18 @@ plt.scatter(
 plt.legend(scatterpoints=1, shadow=False, loc="upper right")
 plt.title("Raw data (2 classes=outer and inner)")
 
-plt.subplot(1, 2, 2)
+# %%
+#
+# The aim of :class:`~sklearn.semi_supervised.LabelSpreading` is to associate
+# a label to sample where the label is initially unknown.
+from sklearn.semi_supervised import LabelSpreading
+
+label_spread = LabelSpreading(kernel="knn", alpha=0.8)
+label_spread.fit(X, labels)
+
+# %%
+# Now, we can check which labels have been associated with each sample when the label was unknown.
+output_labels = label_spread.transduction_
 output_label_array = np.asarray(output_labels)
 outer_numbers = np.where(output_label_array == outer)[0]
 inner_numbers = np.where(output_label_array == inner)[0]
