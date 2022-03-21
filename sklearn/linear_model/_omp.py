@@ -342,7 +342,7 @@ def orthogonal_mp(
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
-        iterating over the last axis yields coefficients in increasing order
+        iterating over the last axis generates coefficients in increasing order
         of active features.
 
     n_iters : array-like or int
@@ -351,10 +351,10 @@ def orthogonal_mp(
 
     See Also
     --------
-    OrthogonalMatchingPursuit
-    orthogonal_mp_gram
-    lars_path
-    sklearn.decomposition.sparse_encode
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model.
+    orthogonal_mp_gram : Solve OMP problems using Gram matrix and the product X.T * y.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     Notes
     -----
@@ -367,7 +367,6 @@ def orthogonal_mp(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
-
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False

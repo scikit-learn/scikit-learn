@@ -186,7 +186,7 @@ class ShrunkCovariance(EmpiricalCovariance):
 
 
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
-    """Estimates the shrunk Ledoit-Wolf covariance matrix.
+    """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 

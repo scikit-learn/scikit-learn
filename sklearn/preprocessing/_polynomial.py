@@ -14,7 +14,6 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.deprecation import deprecated
-from ..utils.fixes import linspace
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
 from ..utils.validation import _check_feature_names_in
 from ..utils.stats import _weighted_percentile
@@ -241,7 +240,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
             - If `input_features is None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -667,7 +667,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             x_min = np.amin(X[mask], axis=0)
             x_max = np.amax(X[mask], axis=0)
 
-            knots = linspace(
+            knots = np.linspace(
                 start=x_min,
                 stop=x_max,
                 num=n_knots,
@@ -714,7 +714,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -853,13 +854,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             dist_max = base_knots[-1] - base_knots[-2]
 
             knots = np.r_[
-                linspace(
+                np.linspace(
                     base_knots[0] - degree * dist_min,
                     base_knots[0] - dist_min,
                     num=degree,
                 ),
                 base_knots,
-                linspace(
+                np.linspace(
                     base_knots[-1] + dist_max,
                     base_knots[-1] + degree * dist_max,
                     num=degree,

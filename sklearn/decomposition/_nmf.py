@@ -929,6 +929,10 @@ def non_negative_factorization(
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
 
+    Note that the transformed data is named W and the components matrix is named H. In
+    the NMF literature, the naming convention is usually the opposite since the data
+    matrix X is transposed.
+
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
@@ -1150,6 +1154,10 @@ class NMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     The objective function is minimized with an alternating minimization of W
     and H.
+
+    Note that the transformed data is named W and the components matrix is named H. In
+    the NMF literature, the naming convention is usually the opposite since the data
+    matrix X is transposed.
 
     Read more in the :ref:`User Guide <NMF>`.
 
