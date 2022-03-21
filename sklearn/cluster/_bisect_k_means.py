@@ -10,7 +10,7 @@ from threadpoolctl import threadpool_limits
 from ..exceptions import ConvergenceWarning
 from ..exceptions import EfficiencyWarning
 
-from ._kmeans import KMeans
+from ._kmeans import _BaseKMeans
 from ._kmeans import _kmeans_single_elkan
 from ._kmeans import _kmeans_single_lloyd
 
@@ -95,7 +95,7 @@ def _check_labels_threadpool_limit(
     return labels
 
 
-class BisectKMeans(KMeans):
+class BisectKMeans(_BaseKMeans):
     """Bisecting K-Means clustering.
 
     Read more in the :ref:`User Guide <bisect_k_means>`.
@@ -155,14 +155,15 @@ class BisectKMeans(KMeans):
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
 
-    algorithm : {"auto", "full", "elkan"}, default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient on data with well-defined
-        clusters, by using the triangle inequality. However it's more memory
-        intensive due to the allocation of an extra array of shape
-        (n_samples, n_clusters).
-        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
-        might change in the future for a better heuristic.
+    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+        K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
+        The `"elkan"` variation can be more efficient on some datasets with
+        well-defined clusters, by using the triangle inequality. However it's
+        more memory intensive due to the allocation of an extra array of shape
+        `(n_samples, n_clusters)`.
+
+        `"auto"` and `"full"` are deprecated and they will be removed in
+        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
     bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
         Defines how should bisection by performed:
@@ -240,7 +241,7 @@ class BisectKMeans(KMeans):
         verbose=0,
         tol=1e-4,
         copy_x=True,
-        algorithm="auto",
+        algorithm="lloyd",
         bisect_strategy="biggest_sse",
     ):
 
@@ -252,10 +253,10 @@ class BisectKMeans(KMeans):
             random_state=random_state,
             tol=tol,
             n_init=n_init,
-            copy_x=copy_x,
-            algorithm=algorithm,
         )
 
+        self.copy_x = copy_x
+        self.algorithm = algorithm
         self.bisect_strategy = bisect_strategy
 
     def _compute_bisect_errors(self, X, centers, labels, sample_weight):
@@ -328,6 +329,15 @@ class BisectKMeans(KMeans):
 
         if hasattr(self.init, "__array__"):
             raise ValueError("BisectKMeans does not support init as array.")
+
+    def _warn_mkl_vcomp(self, n_active_threads):
+        """Warn when vcomp and mkl are both present"""
+        warnings.warn(
+            "BisectingKMeans is known to have a memory leak on Windows "
+            "with MKL, when there are less chunks than available "
+            "threads. You can avoid it by setting the environment"
+            f" variable OMP_NUM_THREADS={n_active_threads}."
+        )
 
     def _bisect(self, X, sample_weight, random_state):
         """Bisection of data.
@@ -437,7 +447,7 @@ class BisectKMeans(KMeans):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
 
-        if self._algorithm == "full":
+        if self.algorithm == "full":
             self._kmeans_single = _kmeans_single_lloyd
             self._check_mkl_vcomp(X, X.shape[0])
         else:
