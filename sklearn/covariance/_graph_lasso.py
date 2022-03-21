@@ -5,7 +5,6 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
-from collections.abc import Sequence
 import warnings
 import operator
 import sys
@@ -18,7 +17,7 @@ from joblib import Parallel
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import check_random_state
+from ..utils.validation import _is_arraylike_not_scalar, check_random_state
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -857,7 +856,7 @@ class GraphicalLassoCV(GraphicalLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if isinstance(n_alphas, Sequence):
+        if _is_arraylike_not_scalar(n_alphas):
             alphas = self.alphas
             n_refinements = 1
         else:
@@ -933,7 +932,7 @@ class GraphicalLassoCV(GraphicalLasso):
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
 
-            if not isinstance(n_alphas, Sequence):
+            if not _is_arraylike_not_scalar(n_alphas):
                 alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0), n_alphas + 2)
                 alphas = alphas[1:-1]
 

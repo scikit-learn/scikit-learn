@@ -29,7 +29,7 @@ def _generate_hypercube(samples, dimensions, rng):
                 _generate_hypercube(samples, 30, rng),
             ]
         )
-    out = sample_without_replacement(2 ** dimensions, samples, random_state=rng).astype(
+    out = sample_without_replacement(2**dimensions, samples, random_state=rng).astype(
         dtype=">u4", copy=False
     )
     out = np.unpackbits(out.view(">u1")).reshape((-1, 32))[:, -dimensions:]
@@ -155,6 +155,11 @@ def make_classification(
     y : ndarray of shape (n_samples,)
         The integer labels for class membership of each sample.
 
+    See Also
+    --------
+    make_blobs : Simplified variant.
+    make_multilabel_classification : Unrelated generator for multilabel tasks.
+
     Notes
     -----
     The algorithm is adapted from Guyon [1] and was designed to generate
@@ -164,11 +169,6 @@ def make_classification(
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
-
-    See Also
-    --------
-    make_blobs : Simplified variant.
-    make_multilabel_classification : Unrelated generator for multilabel tasks.
     """
     generator = check_random_state(random_state)
 
@@ -185,7 +185,7 @@ def make_classification(
         msg += " smaller or equal 2**n_informative({})={}"
         raise ValueError(
             msg.format(
-                n_classes, n_clusters_per_class, n_informative, 2 ** n_informative
+                n_classes, n_clusters_per_class, n_informative, 2**n_informative
             )
         )
 
@@ -340,7 +340,7 @@ def make_multilabel_classification(
         If ``True``, some instances might not belong to any class.
 
     sparse : bool, default=False
-        If ``True``, return a sparse feature matrix
+        If ``True``, return a sparse feature matrix.
 
         .. versionadded:: 0.17
            parameter to allow *sparse* output.
@@ -375,7 +375,6 @@ def make_multilabel_classification(
     p_w_c : ndarray of shape (n_features, n_classes)
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
-
     """
     if n_classes < 1:
         raise ValueError(
@@ -496,7 +495,7 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
 
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
-    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
+    y = ((X**2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
     y[y == 0.0] = -1.0
 
     return X, y
@@ -549,12 +548,12 @@ def make_regression(
         The bias term in the underlying linear model.
 
     effective_rank : int, default=None
-        if not None:
+        If not None:
             The approximate number of singular vectors required to explain most
             of the input data by linear combinations. Using this kind of
             singular spectrum in the input allows the generator to reproduce
             the correlations often observed in practice.
-        if None:
+        If None:
             The input set is well conditioned, centered and gaussian with
             unit variance.
 
@@ -1286,7 +1285,7 @@ def make_sparse_coded_signal(
 
     # generate dictionary
     D = generator.standard_normal(size=(n_features, n_components))
-    D /= np.sqrt(np.sum((D ** 2), axis=0))
+    D /= np.sqrt(np.sum((D**2), axis=0))
 
     # generate code
     X = np.zeros((n_components, n_samples))
@@ -1561,13 +1560,11 @@ def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     generator = check_random_state(random_state)
 
     t = 3 * np.pi * (generator.uniform(size=(1, n_samples)) - 0.5)
-    x = np.sin(t)
-    y = 2.0 * generator.uniform(size=(1, n_samples))
-    z = np.sign(t) * (np.cos(t) - 1)
-
-    X = np.concatenate((x, y, z))
-    X += noise * generator.standard_normal(size=(3, n_samples))
-    X = X.T
+    X = np.empty(shape=(n_samples, 3), dtype=np.float64)
+    X[:, 0] = np.sin(t)
+    X[:, 1] = 2.0 * generator.uniform(size=n_samples)
+    X[:, 2] = np.sign(t) * (np.cos(t) - 1)
+    X += noise * generator.standard_normal(size=(3, n_samples)).T
     t = np.squeeze(t)
 
     return X, t
@@ -1688,8 +1685,7 @@ def make_biclusters(
     shuffle=True,
     random_state=None,
 ):
-    """Generate an array with constant block diagonal structure for
-    biclustering.
+    """Generate a constant block diagonal structure array for biclustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1729,6 +1725,11 @@ def make_biclusters(
     cols : ndarray of shape (n_clusters, X.shape[1])
         The indicators for cluster membership of each column.
 
+    See Also
+    --------
+    make_checkerboard: Generate an array with block checkerboard structure for
+        biclustering.
+
     References
     ----------
 
@@ -1736,10 +1737,6 @@ def make_biclusters(
         words using bipartite spectral graph partitioning. In Proceedings
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
-
-    See Also
-    --------
-    make_checkerboard
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape

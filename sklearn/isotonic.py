@@ -103,7 +103,7 @@ def isotonic_regression(
 
     increasing : bool, default=True
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
-        (if set to False)
+        (if set to False).
 
     Returns
     -------

@@ -9,7 +9,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import _astype_copy_false
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -149,9 +148,9 @@ def test_relocate_empty_clusters(array_constr):
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
 @pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
-def test_kmeans_elkan_results(distribution, array_constr, tol):
+def test_kmeans_elkan_results(distribution, array_constr, tol, global_random_seed):
     # Check that results are identical between lloyd and elkan algorithms
-    rnd = np.random.RandomState(0)
+    rnd = np.random.RandomState(global_random_seed)
     if distribution == "normal":
         X = rnd.normal(size=(5000, 10))
     else:
@@ -219,7 +218,7 @@ def test_minibatch_update_consistency():
     weight_sums = np.zeros(centers_old.shape[0], dtype=X.dtype)
     weight_sums_csr = np.zeros(centers_old.shape[0], dtype=X.dtype)
 
-    x_squared_norms = (X ** 2).sum(axis=1)
+    x_squared_norms = (X**2).sum(axis=1)
     x_squared_norms_csr = row_norms(X_csr, squared=True)
 
     sample_weight = np.ones(X.shape[0], dtype=X.dtype)
@@ -783,7 +782,7 @@ def test_float_precision(Estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = data.astype(dtype, **_astype_copy_false(data))
+        X = data.astype(dtype, copy=False)
         km.fit(X)
 
         inertia[dtype] = km.inertia_
@@ -994,7 +993,7 @@ def test_euclidean_distance(dtype, squared):
     )
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
-    b_squared_norm = (b ** 2).sum()
+    b_squared_norm = (b**2).sum()
 
     expected = ((a_dense - b) ** 2).sum()
     expected = expected if squared else np.sqrt(expected)
@@ -1074,7 +1073,7 @@ def test_sample_weight_unchanged(Estimator):
         (
             {"init": "wrong"},
             r"init should be either 'k-means\+\+', 'random', "
-            r"a ndarray or a callable",
+            r"an array-like or a callable",
         ),
     ],
 )
@@ -1182,7 +1181,7 @@ def test_is_same_clustering():
     labels1 = np.array([1, 0, 0, 1, 2, 0, 2, 1], dtype=np.int32)
     assert _is_same_clustering(labels1, labels1, 3)
 
-    # these other labels represent the same clustering since we can retrive the first
+    # these other labels represent the same clustering since we can retrieve the first
     # labels by simply renaming the labels: 0 -> 1, 1 -> 2, 2 -> 0.
     labels2 = np.array([0, 2, 2, 0, 1, 2, 1, 0], dtype=np.int32)
     assert _is_same_clustering(labels1, labels2, 3)
@@ -1191,6 +1190,21 @@ def test_is_same_clustering():
     # mapped to a same value
     labels3 = np.array([1, 0, 0, 2, 2, 0, 2, 1], dtype=np.int32)
     assert not _is_same_clustering(labels1, labels3, 3)
+
+
+@pytest.mark.parametrize(
+    "kwargs", ({"init": np.str_("k-means++")}, {"init": [[0, 0], [1, 1]], "n_init": 1})
+)
+def test_kmeans_with_array_like_or_np_scalar_init(kwargs):
+    """Check that init works with numpy scalar strings.
+
+    Non-regression test for #21964.
+    """
+    X = np.asarray([[0, 0], [0.5, 0], [0.5, 1], [1, 1]], dtype=np.float64)
+
+    clustering = KMeans(n_clusters=2, **kwargs)
+    # Does not raise
+    clustering.fit(X)
 
 
 @pytest.mark.parametrize(

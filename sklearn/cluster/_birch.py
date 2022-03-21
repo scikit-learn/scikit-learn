@@ -328,7 +328,7 @@ class _CFSubcluster:
         #   r^2 = sum_i ||x_i||^2 / n - ||c||^2
         sq_radius = new_ss / new_n - new_sq_norm
 
-        if sq_radius <= threshold ** 2:
+        if sq_radius <= threshold**2:
             (
                 self.n_samples_,
                 self.linear_sum_,
@@ -543,7 +543,7 @@ class Birch(
                 min_val=1,
             )
 
-        # TODO: Remove deprected flags in 1.2
+        # TODO: Remove deprecated flags in 1.2
         self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
 
