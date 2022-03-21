@@ -74,7 +74,9 @@ print(
     % (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
 )
 
-print(classification_report(true_labels, predicted_labels))
+# %% Classification report
+# ------------------------
+classification_report(true_labels, predicted_labels)
 
 print("Confusion matrix")
 print(cm)
