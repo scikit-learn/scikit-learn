@@ -89,7 +89,7 @@ def fetch_california_housing(
 
     Returns
     -------
-    dataset : Class:`~sklearn.utils.Bunch`
+    dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
         data : ndarray, shape (20640, 8)
