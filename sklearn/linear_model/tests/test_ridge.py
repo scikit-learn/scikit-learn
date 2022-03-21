@@ -510,7 +510,7 @@ def test_ridge_sample_weights(
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-10,
+        tol=1e-15 if solver == "sag" else 1e-10,
         random_state=global_random_seed,
     )
     est = Ridge(**params)
