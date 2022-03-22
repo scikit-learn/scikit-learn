@@ -137,7 +137,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
     "sklearn.utils.sparsefuncs.mean_variance_axis",
-    "sklearn.utils.sparsefuncs.min_max_axis",
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",
 ]
