@@ -277,6 +277,7 @@ jobs:
     matrix:
       py38_conda_forge_mkl:
         DISTRIB: 'conda'
+        CONDA_CHANNEL: 'conda-forge'
         PYTHON_VERSION: '3.8'
         CHECK_WARNINGS: 'true'
         PYTHON_ARCH: '64'
