@@ -50,6 +50,8 @@ from sklearn.utils import check_random_state
 
 
 SOLVERS = ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga")
+SPARSE_SOLVERS_WITH_INTERCEPT = ("sparse_cg", "sag")
+SPARSE_SOLVERS_WITHOUT_INTERCEPT = ("sparse_cg", "cholesky", "lsqr", "sag", "saga")
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -485,48 +487,51 @@ def test_ridge_regression_convergence_fail():
 
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("sparseX", [True, False])
 @pytest.mark.parametrize("alpha", [1.0, 1e-2])
 def test_ridge_sample_weights(
-    solver, fit_intercept, alpha, ols_ridge_dataset, global_random_seed
+    solver, fit_intercept, sparseX, alpha, ols_ridge_dataset, global_random_seed
 ):
-    # TODO: loop over sparse data as well
-    X, y, _, _ = ols_ridge_dataset
+    """Test that Ridge with sample weights gives correct results.
+
+    We use the following trick:
+        ||y - Xw||_2 = (z - Aw)' W (z - Aw)
+    for z=[y, y], A' = [X', X'] (vstacked), and W[:n/2] + W[n/2:] = 1, W=diag(W)
+    """
+    if sparseX:
+        if fit_intercept and solver not in SPARSE_SOLVERS_WITH_INTERCEPT:
+            pytest.skip()
+        elif not fit_intercept and solver not in SPARSE_SOLVERS_WITHOUT_INTERCEPT:
+            pytest.skip()
+    X, y, _, coef = ols_ridge_dataset
     n_samples, n_features = X.shape
-    sample_weight = 1.0 + rng.rand(n_samples)
+    sw = rng.uniform(low=0, high=1, size=n_samples)
 
-    # Closed form of the weighted regularized least square
-    # theta = (X^T W X + alpha I)^(-1) * X^T W y
-    W = np.diag(sample_weight)
-    if fit_intercept:
-        # last column of X = 1 corresponds to intercept
-        D = np.eye(n_features)
-        D[-1, -1] = 0
-    else:
-        D = np.eye(n_features)
-    cf_coefs = linalg.solve(X.T @ W @ X + alpha * D, X.T @ W @ y)
-
-    # Ridge with explicit sample_weight
-    params = dict(
+    model = Ridge(
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-15 if solver == "sag" else 1e-10,
+        tol=1e-12 if solver in ["sag", "saga"] else 1e-10,
+        max_iter=100_000,
         random_state=global_random_seed,
     )
-    est = Ridge(**params)
-
+    X = X[:, :-1]  # remove intercept
+    X = np.concatenate((X, X), axis=0)
+    y = np.r_[y, y]
+    sw = np.r_[sw, 1 - sw] * alpha
     if fit_intercept:
-        # exclude last column = intercept
-        X = X[:, :-1]
-        est.fit(X, y, sample_weight=sample_weight)
-        assert_allclose(est.coef_, cf_coefs[:-1])
-        assert_allclose(est.intercept_, cf_coefs[-1])
+        intercept = coef[-1]
     else:
-        est.fit(X, y, sample_weight=sample_weight)
-        if n_features > n_samples and solver == "sag":
-            assert_allclose(est.coef_, cf_coefs, rtol=5e-3)
-        else:
-            assert_allclose(est.coef_, cf_coefs)
+        X = X - X.mean(axis=0)
+        y = y - y.mean()
+        intercept = 0
+    if sparseX:
+        X = sp.csr_matrix(X)
+    model.fit(X, y, sample_weight=sw)
+    coef = coef[:-1]
+
+    assert model.intercept_ == pytest.approx(intercept)
+    assert_allclose(model.coef_, coef)
 
 
 def test_ridge_shapes_type():
