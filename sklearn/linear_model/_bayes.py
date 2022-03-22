@@ -253,7 +253,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+            X, y, _ = _rescale_data(X, y, sample_weight)
 
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
