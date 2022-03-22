@@ -72,8 +72,8 @@ print(
     % (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
 )
 
-# %% Classification report
-# ------------------------
+# %% 
+# Classification report
 classification_report(true_labels, predicted_labels)
 
 # %%
