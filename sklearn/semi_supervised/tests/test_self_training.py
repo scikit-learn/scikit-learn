@@ -34,15 +34,6 @@ y_train_missing_strings = np.vectorize(mapping.get)(y_train_missing_labels).asty
 y_train_missing_strings[y_train_missing_labels == -1] = -1
 
 
-def test_missing_predict_proba():
-    # Check that an error is thrown if predict_proba is not implemented
-    base_estimator = SVC(probability=False, gamma="scale")
-    self_training = SelfTrainingClassifier(base_estimator)
-
-    with pytest.raises(ValueError, match=r"base_estimator \(SVC\) should"):
-        self_training.fit(X_train, y_train_missing_labels)
-
-
 def test_none_classifier():
     st = SelfTrainingClassifier(None)
     with pytest.raises(ValueError, match="base_estimator cannot be None"):
@@ -332,10 +323,30 @@ def test_base_estimator_meta_estimator():
         cv=2,
     )
 
-    # make sure that the `base_estimator` does not expose `predict_proba`
-    # without being fitted
-    assert not hasattr(base_estimator, "predict_proba")
-
+    assert hasattr(base_estimator, "predict_proba")
     clf = SelfTrainingClassifier(base_estimator=base_estimator)
     clf.fit(X_train, y_train_missing_labels)
     clf.predict_proba(X_test)
+
+    base_estimator = StackingClassifier(
+        estimators=[
+            ("svc_1", SVC(probability=False)),
+            ("svc_2", SVC(probability=False)),
+        ],
+        final_estimator=SVC(probability=False),
+        cv=2,
+    )
+
+    assert not hasattr(base_estimator, "predict_proba")
+    clf = SelfTrainingClassifier(base_estimator=base_estimator)
+    with pytest.raises(AttributeError):
+        clf.fit(X_train, y_train_missing_labels)
+
+
+def test_missing_predict_proba():
+    # Check that an error is thrown if predict_proba is not implemented
+    base_estimator = SVC(probability=False, gamma="scale")
+    self_training = SelfTrainingClassifier(base_estimator)
+
+    with pytest.raises(AttributeError, match="predict_proba is not available"):
+        self_training.fit(X_train, y_train_missing_labels)
