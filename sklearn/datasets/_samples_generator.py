@@ -1277,7 +1277,7 @@ def make_sparse_coded_signal(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    data_transposed: bool, default=True
+    data_transposed : bool, default=True
         By default, Y, D and X are transposed.
 
         .. versionadded:: 1.1
