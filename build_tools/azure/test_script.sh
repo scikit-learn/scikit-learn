@@ -26,6 +26,11 @@ mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
+python -c "
+from joblib import cpu_count
+print(f'Number of cores: {cpu_count(only_physical_cores=False)}')
+print(f'Number of physical cores: {cpu_count(only_physical_cores=True)}')
+"
 python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
