@@ -25,8 +25,6 @@ from functools import partial
 from collections import Counter
 
 import numpy as np
-import copy
-import warnings
 
 from . import (
     r2_score,
@@ -264,8 +262,8 @@ class _BaseScorer(_MetadataRequester):
                 f"{message} Overlapping parameters are: {overlap}", UserWarning
             )
 
-    def with_score_request(self, **kwargs):
-        """Create a scorer that requests metadata parameters.
+    def set_score_request(self, **kwargs):
+        """Set requested parameters by the scorer.
 
         Note that this method returns a new instance of the scorer, and does
         **not** change the original scorer object.

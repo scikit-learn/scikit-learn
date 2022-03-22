@@ -12,10 +12,9 @@ meta-estimators such as ``Pipeline`` and ``GridSearchCV``. In order to pass
 metadata to a method such as ``fit`` or ``score``, the object accepting the
 metadata, must *request* it. For estimators and splitters this is done via
 ``set_*_request`` methods, e.g. ``set_fit_request(...)``, and for scorers this
-is done via ``with_score_request`` method which creates a new scorer with the
-requested metadata. For grouped splitters such as ``GroupKFold`` a ``groups``
-parameter is requested by default. This is best demonstrated by the following
-examples.
+is done via ``set_score_request`` method. For grouped splitters such as
+``GroupKFold`` a ``groups`` parameter is requested by default. This is best
+demonstrated by the following examples.
 
 If you are developing a scikit-learn compatible estimator or meta-estimator,
 you can check our related developer guide:
@@ -48,11 +47,11 @@ Weighted scoring and fitting
 
 Here ``GroupKFold`` requests ``groups`` by default. However, we need to
 explicitly request weights for our scorer and for ``LogisticRegressionCV``.
-Note that ``with_score_request`` on a scorer does not mutate the instance and
+Note that ``set_score_request`` on a scorer does not mutate the instance and
 instead returns a new instance with the metadata request attached to it. Both
 of these *consumers* know how to use metadata called ``"sample_weight"``::
 
-  >>> weighted_acc = make_scorer(accuracy_score).with_score_request(
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
   ... )
   >>> lr = LogisticRegressionCV(
@@ -84,7 +83,7 @@ configure :class:`~linear_model.LogisticRegressionCV` to not request sample
 weights, so that :func:`~model_selection.cross_validate` does not pass the
 weights along::
 
-  >>> weighted_acc = make_scorer(accuracy_score).with_score_request(
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
   ... )
   >>> lr = LogisticRegressionCV(
@@ -114,7 +113,7 @@ Unweighted feature selection
 Unlike ``LogisticRegressionCV``, ``SelectKBest`` doesn't accept weights and
 therefore `"sample_weight"` is not routed to it::
 
-  >>> weighted_acc = make_scorer(accuracy_score).with_score_request(
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
   ... )
   >>> lr = LogisticRegressionCV(
@@ -139,7 +138,7 @@ Despite ``make_scorer`` and ``LogisticRegressionCV`` both expecting the key
 consumers. In this example, we pass ``scoring_weight`` to the scorer, and
 ``fitting_weight`` to ``LogisticRegressionCV``::
 
-  >>> weighted_acc = make_scorer(accuracy_score).with_score_request(
+  >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
@@ -191,9 +190,7 @@ supports ``sample_weight`` in ``fit`` and ``score``, it exposes
   ``my_weights`` is done at the router level, and not by the object, e.g.
   estimator, itself.
 
-For the scorers, this is done using ``with_score_request`` method which returns
-a new instance of the scorer with the requested metadata and does not change
-the original scorer.
+For the scorers, this is done the same way, using ``set_score_request`` method.
 
 If a metadata, e.g. ``sample_weight``, is passed by the user, the metadata
 request for all objects which potentially can accept ``sample_weight`` should
