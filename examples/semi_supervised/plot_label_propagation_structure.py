@@ -35,7 +35,7 @@ labels[-1] = inner
 # Plot raw data
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(8.5, 4))
+plt.figure(figsize=(4, 4))
 plt.scatter(
     X[labels == outer, 0],
     X[labels == outer, 1],
