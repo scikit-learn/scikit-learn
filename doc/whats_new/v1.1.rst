@@ -222,6 +222,12 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
+- |API| :func:`make_sparse_coded_signal` now accepts a parameter `data_transposed`
+  to explicitly specify the shape of matrix `X`. The default behavior `True` is to
+  return a transposed matrix `X` corresponding to a `(n_features, n_samples)`
+  shape. The default value will change to `False` in version 1.3. :pr:`21425` by
+  :user:`Gabriel Stefanini Vicente <g4brielvs>`.
+
 - |Enhancement| :func:`datasets.make_swiss_roll` now supports the optional argument
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
   :user:`Sebastian Pujalte <pujaltes>`.
