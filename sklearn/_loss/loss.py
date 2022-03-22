@@ -823,7 +823,7 @@ class HalfBinomialLoss(BaseLoss):
         Returns
         -------
         proba : array of shape (n_samples, 2)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
@@ -913,7 +913,7 @@ class HalfMultinomialLoss(BaseLoss):
         Returns
         -------
         proba : array of shape (n_samples, n_classes)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         return self.link.inverse(raw_prediction)
 
@@ -951,7 +951,7 @@ class HalfMultinomialLoss(BaseLoss):
             Element-wise gradients.
 
         proba : array of shape (n_samples, n_classes)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         if gradient_out is None:
             if proba_out is None:
