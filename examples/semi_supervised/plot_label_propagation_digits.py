@@ -74,7 +74,7 @@ print(
 
 # %% 
 # Classification report
-classification_report(true_labels, predicted_labels)
+print(classification_report(true_labels, predicted_labels))
 
 # %%
 # Confusion matrix
