@@ -167,7 +167,7 @@ def test_ridge_regression(solver, fit_intercept, ols_ridge_dataset, global_rando
         alpha=alpha,
         fit_intercept=True,
         solver=solver,
-        tol=1e-10,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
         random_state=global_random_seed,
     )
 
@@ -296,7 +296,6 @@ def test_ridge_regression_unpenalized(
         fit_intercept=fit_intercept,
         solver=solver,
         tol=1e-15 if solver in ("sag", "saga") else 1e-10,
-        max_iter=10_000,
         random_state=global_random_seed,
     )
 
@@ -353,7 +352,7 @@ def test_ridge_regression_unpenalized_hstacked_X(
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-10,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
         random_state=global_random_seed,
     )
     if fit_intercept:
@@ -408,7 +407,7 @@ def test_ridge_regression_unpenalized_vstacked_X(
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-10,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
         random_state=global_random_seed,
     )
 
@@ -487,7 +486,7 @@ def test_ridge_regression_sample_weights(
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-12 if solver in ["sag", "saga"] else 1e-10,
+        tol=1e-15 if solver in ["sag", "saga"] else 1e-10,
         max_iter=100_000,
         random_state=global_random_seed,
     )
