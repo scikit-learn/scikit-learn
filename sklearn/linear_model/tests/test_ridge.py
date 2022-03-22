@@ -295,7 +295,8 @@ def test_ridge_regression_unpenalized(
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-10,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
+        max_iter=10_000,
         random_state=global_random_seed,
     )
 
@@ -322,9 +323,9 @@ def test_ridge_regression_unpenalized(
         assert_allclose(model.predict(X), y)
         assert_allclose(X @ coef + intercept, y)
         # But it is not the minimum norm solution. (This should be equal.)
-        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > (
-            1 + 1e-4
-        ) * np.linalg.norm(np.r_[intercept, coef])
+        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
+            np.r_[intercept, coef]
+        )
 
         pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
         assert model.intercept_ == pytest.approx(intercept)
