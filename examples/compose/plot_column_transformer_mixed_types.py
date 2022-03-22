@@ -28,6 +28,7 @@ model.
 #
 # License: BSD 3 clause
 
+# %%
 import numpy as np
 
 from sklearn.compose import ColumnTransformer
@@ -40,6 +41,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 
 np.random.seed(0)
 
+# %%
 # Load data from https://www.openml.org/d/40945
 X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 
@@ -49,7 +51,7 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 
 # %%
 # Use ``ColumnTransformer`` by selecting column by names
-###############################################################################
+#
 # We will train our classifier with the following features:
 #
 # Numeric Features:
@@ -82,6 +84,7 @@ preprocessor = ColumnTransformer(
     ]
 )
 
+# %%
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
 clf = Pipeline(
@@ -95,17 +98,14 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 
 # %%
 # HTML representation of ``Pipeline`` (display diagram)
-###############################################################################
+#
 # When the ``Pipeline`` is printed out in a jupyter notebook an HTML
-# representation of the estimator is displayed as follows:
-from sklearn import set_config
-
-set_config(display="diagram")
+# representation of the estimator is displayed:
 clf
 
 # %%
 # Use ``ColumnTransformer`` by selecting column by data types
-###############################################################################
+#
 # When dealing with a cleaned dataset, the preprocessing can be automatic by
 # using the data types of the column to decide whether to treat a column as a
 # numerical or categorical feature.
@@ -150,6 +150,7 @@ clf = Pipeline(
 
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
+clf
 
 # %%
 # The resulting score is not exactly the same as the one from the previous
@@ -164,7 +165,7 @@ selector(dtype_include="category")(X_train)
 
 # %%
 # Using the prediction pipeline in a grid search
-##############################################################################
+#
 # Grid search can also be performed on the different preprocessing steps
 # defined in the ``ColumnTransformer`` object, together with the classifier's
 # hyperparameters as part of the ``Pipeline``.
