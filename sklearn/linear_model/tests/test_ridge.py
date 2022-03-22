@@ -464,7 +464,7 @@ def test_ridge_regression_convergence_fail():
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("sparseX", [True, False])
 @pytest.mark.parametrize("alpha", [1.0, 1e-2])
-def test_ridge_sample_weights(
+def test_ridge_regression_sample_weights(
     solver, fit_intercept, sparseX, alpha, ols_ridge_dataset, global_random_seed
 ):
     """Test that Ridge with sample weights gives correct results.
