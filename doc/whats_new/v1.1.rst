@@ -618,9 +618,14 @@ Changelog
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
   :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| The `intercept_` attribute of :class:`LinearRegression` is now correctly
-  computed in the presence of sample weights when the input is sparse.
-  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+- |Fix| The `coef_` and `intercept_` attributes of :class:`LinearRegression` are now
+  correctly computed in the presence of sample weights when the input is sparse.
+  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| The `coef_` and `intercept_` attributes of :class:`Ridge` with
+  `solver="sparse_cg"` and `solver="lbfgs"` are now correctly computed in the presence
+  of sample weights when the input is sparse.
+  :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
 
 :mod:`sklearn.manifold`
 .......................
