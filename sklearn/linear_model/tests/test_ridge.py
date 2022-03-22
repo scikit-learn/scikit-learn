@@ -1431,8 +1431,8 @@ def test_ridge_fit_intercept_sparse_sag(with_sample_weight, global_random_seed):
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         sparse_ridge.fit(X_csr, y, sample_weight=sample_weight)
-    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
-    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
+    assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
+    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
     with pytest.warns(UserWarning, match='"sag" solver requires.*'):
         Ridge(solver="sag").fit(X_csr, y)
 
