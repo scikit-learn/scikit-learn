@@ -4,6 +4,7 @@ from scipy import linalg
 from itertools import product
 
 import pytest
+import warnings
 
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_almost_equal
@@ -1421,9 +1422,9 @@ def test_ridge_fit_intercept_sparse_sag():
     dense_ridge = Ridge(**params)
     sparse_ridge = Ridge(**params)
     dense_ridge.fit(X, y)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         sparse_ridge.fit(X_csr, y)
-    assert not [w.message for w in record]
     assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
     assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
     with pytest.warns(UserWarning, match='"sag" solver requires.*'):
