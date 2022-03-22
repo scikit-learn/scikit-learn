@@ -493,6 +493,7 @@ class BisectingKMeans(_BaseKMeans):
             clusters += self._X_mean
 
         self.cluster_centers_ = clusters
+        self._n_features_out = self.cluster_centers_.shape[0]
 
         self.inertia_ = _inertia(
             X, sample_weight, self.cluster_centers_, self.labels_, self._n_threads
