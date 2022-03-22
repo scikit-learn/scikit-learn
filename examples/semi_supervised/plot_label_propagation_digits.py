@@ -76,8 +76,8 @@ print(
 # ------------------------
 classification_report(true_labels, predicted_labels)
 
-# %% Confusion matrix
-# -------------------
+# %%
+# Confusion matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 
 ConfusionMatrixDisplay.from_predictions(
