@@ -1410,10 +1410,16 @@ def test_ridge_fit_intercept_sparse_error(solver):
         sparse_ridge.fit(X_csr, y)
 
 
-def test_ridge_fit_intercept_sparse_sag():
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+def test_ridge_fit_intercept_sparse_sag(with_sample_weight, global_random_seed):
     X, y = _make_sparse_offset_regression(
-        n_features=5, n_samples=20, random_state=0, X_offset=5.0
+        n_features=5, n_samples=20, random_state=global_random_seed, X_offset=5.0
     )
+    if with_sample_weight:
+        rng = np.random.RandomState(global_random_seed)
+        sample_weight = 1.0 + rng.uniform(size=X.shape[0])
+    else:
+        sample_weight = None
     X_csr = sp.csr_matrix(X)
 
     params = dict(
@@ -1421,10 +1427,10 @@ def test_ridge_fit_intercept_sparse_sag():
     )
     dense_ridge = Ridge(**params)
     sparse_ridge = Ridge(**params)
-    dense_ridge.fit(X, y)
+    dense_ridge.fit(X, y, sample_weight=sample_weight)
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
-        sparse_ridge.fit(X_csr, y)
+        sparse_ridge.fit(X_csr, y, sample_weight=sample_weight)
     assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
     assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
     with pytest.warns(UserWarning, match='"sag" solver requires.*'):
