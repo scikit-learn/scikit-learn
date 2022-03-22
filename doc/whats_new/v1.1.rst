@@ -402,6 +402,13 @@ Changelog
 - |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
   with boolean arrays. :pr:`22235` by `Thomas Fan`_.
 
+- |Feature| Added the ability to pass callables to the `max_features` parameter
+  of :class:`feature_selection.SelectFromModel`. Also introduced new attribute
+  `max_features_` which is inferred from `max_features` and the data during
+  `fit`. If `max_features` is an integer, then `max_features_ = max_features`.
+  If `max_features` is a callable, then `max_features_ = max_features(X)`.
+  :pr:`22356` by :user:`Meekail Zain <micky774>`
+
 :mod:`sklearn.feature_selection`
 ................................
 - |Efficiency| Reduced memory usage of :func:`feature_selection.chi2`.
