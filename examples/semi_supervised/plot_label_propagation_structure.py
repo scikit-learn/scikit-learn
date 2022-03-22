@@ -102,6 +102,4 @@ plt.scatter(
 )
 plt.legend(scatterpoints=1, shadow=False, loc="upper right")
 plt.title("Labels learned with Label Spreading (KNN)")
-
-plt.subplots_adjust(left=0.07, bottom=0.07, right=0.93, top=0.92)
 plt.show()
