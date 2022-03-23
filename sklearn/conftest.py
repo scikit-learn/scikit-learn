@@ -4,12 +4,12 @@ import platform
 import sys
 
 import pytest
+import numpy as np
 from threadpoolctl import threadpool_limits
 from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-from sklearn.externals import _pilutil
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.utils.fixes import parse_version
 from sklearn.datasets import fetch_20newsgroups
@@ -40,6 +40,17 @@ dataset_fetchers = {
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
 }
+
+_SKIP32_MARK = pytest.mark.skipif(
+    environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
+    reason="Set SKLEARN_RUN_FLOAT32_TESTS=1 to run float32 dtype tests",
+)
+
+
+# Global fixtures
+@pytest.fixture(params=[pytest.param(np.float32, marks=_SKIP32_MARK), np.float64])
+def global_dtype(request):
+    yield request.param
 
 
 def _fetch_fixture(f):
@@ -173,7 +184,14 @@ def pytest_collection_modifyitems(config, items):
                 # details.
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
-    elif not _pilutil.pillow_installed:
+    try:
+        import PIL  # noqa
+
+        pillow_installed = True
+    except ImportError:
+        pillow_installed = False
+
+    if not pillow_installed:
         skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
         for item in items:
             if item.name in [

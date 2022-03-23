@@ -511,6 +511,8 @@ def test_feature_importance_regression(fetch_california_housing_fxt):
     assert set(sorted_features[1:4]) == {"Longitude", "AveOccup", "Latitude"}
 
 
+# TODO(1.3): Remove warning filter
+@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
 def test_max_feature_auto():
     # Test if max features is set properly for floats and str.
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
