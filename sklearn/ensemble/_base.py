@@ -172,7 +172,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             elif getattr(estimator, "criterion", None) == "mae":
                 estimator.set_params(criterion="absolute_error")
 
-        # TODO: Remove in v1.2
+        # TODO(1.3): Remove
         # max_features = 'auto' would cause warnings in every call to
         # Tree.fit(..)
         if isinstance(estimator, BaseDecisionTree):
