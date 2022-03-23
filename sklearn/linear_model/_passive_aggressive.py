@@ -438,11 +438,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> regr.fit(X, y)
     PassiveAggressiveRegressor(max_iter=100, random_state=0)
     >>> print(regr.coef_)
-    [20.50901376 34.20277924 67.61404406 87.91710776]
+    [20.48736655 34.18818427 67.59122734 87.94731329]
     >>> print(regr.intercept_)
-    [-0.0055367]
+    [-0.02306214]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-0.0055367]
+    [-0.02306214]
     """
 
     def __init__(

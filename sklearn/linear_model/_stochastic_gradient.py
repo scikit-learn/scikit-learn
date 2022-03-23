@@ -1592,11 +1592,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
     def _fit_regressor(
         self, X, y, alpha, C, loss, learning_rate, sample_weight, max_iter
     ):
-        random_state = check_random_state(self.random_state)
-        dataset, intercept_decay = make_dataset(
-            X, y, sample_weight, random_state=random_state
-        )
-
         loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(learning_rate)
@@ -1609,9 +1604,14 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             validation_mask, X, y, sample_weight
         )
 
+        random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
+
+        dataset, intercept_decay = make_dataset(
+            X, y, sample_weight, random_state=random_state
+        )
 
         tol = self.tol if self.tol is not None else -np.inf
 

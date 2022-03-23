@@ -627,12 +627,6 @@ Changelog
   of sample weights when the input is sparse.
   :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
 
-- |Fix| Add a `random_state` to make internal shuffling deterministic in
-  :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
-  :class:`linear_model.SparseSGDClassifier`, and
-  :class:`linear_model.SparseSGDRegressor`.
-  :pr:`19716` by :user:`Pierre Attard <PierreAttard>`.
-
 :mod:`sklearn.manifold`
 .......................
 
