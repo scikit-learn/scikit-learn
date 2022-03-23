@@ -1395,7 +1395,7 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude
         (["col_high"], 7, None),
         (["col_low", "col_mid", "col_high"], None, 7),
         (["col_mid"], 2, 6),
-        ([], 2,3),
+        ([], 2, 3),
     ],
 )
 def test_make_column_selector_with_cardinality(cols, min_cardinality, max_cardinality):
