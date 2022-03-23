@@ -260,7 +260,7 @@ def test_weighted_classification_toy():
 
 
 # TODO: Trees do not preserve dtype when fitting/predicting.
- # Add `global_dtype` when Trees have this ability.
+# Add `global_dtype` when Trees have this ability.
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_toy(Tree, criterion):
@@ -2120,7 +2120,7 @@ def test_poisson_vs_mse():
 
 
 # TODO: Trees do not preserve dtype when fitting/predicting.
- # Add `global_dtype` when Trees have this ability.
+# Add `global_dtype` when Trees have this ability.
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
     """Test that the impact of sample_weight is consistent."""
