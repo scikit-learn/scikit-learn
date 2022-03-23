@@ -523,7 +523,7 @@ def get_scorer(scoring):
     return scorer
 
 
-class _passthrough_scorer:
+class _PassthroughScorer:
     def __init__(self, estimator):
         self._estimator = estimator
 
@@ -602,7 +602,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         return get_scorer(scoring)
     elif scoring is None:
         if hasattr(estimator, "score"):
-            return _passthrough_scorer(estimator)
+            return _PassthroughScorer(estimator)
         elif allow_none:
             return None
         else:

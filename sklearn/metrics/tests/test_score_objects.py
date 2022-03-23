@@ -39,7 +39,7 @@ from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import (
     _PredictScorer,
-    _passthrough_scorer,
+    _PassthroughScorer,
     _MultimetricScorer,
     _check_multimetric_scoring,
 )
@@ -238,7 +238,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
-    assert isinstance(scorer, _passthrough_scorer)
+    assert isinstance(scorer, _PassthroughScorer)
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFitAndPredict()
@@ -1215,14 +1215,14 @@ def test_metadata_kwarg_conflict():
         scorer(lr, X, y, labels=lr.classes_)
 
 
-def test_passthrough_scorer_metadata_request():
-    scorer = _passthrough_scorer(
+def test_PassthroughScorer_metadata_request():
+    scorer = _PassthroughScorer(
         estimator=LinearSVC()
         .set_score_request(sample_weight="alias")
         .set_fit_request(sample_weight=True)
     )
-    # test that _passthrough_scorer leaves everything other than `score` empty
+    # test that _PassthroughScorer leaves everything other than `score` empty
     assert_request_is_empty(scorer.get_metadata_routing(), exclude="score")
-    # test that _passthrough_scorer doesn't behave like a router and leaves
+    # test that _PassthroughScorer doesn't behave like a router and leaves
     # the request as is.
     assert scorer.get_metadata_routing().score.requests["sample_weight"] == "alias"
