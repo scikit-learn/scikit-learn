@@ -15,7 +15,8 @@ from numpy.testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.utils.metadata_routing import MetadataRouter, RequestType
+from sklearn.tests.test_metadata_routing import assert_request_is_empty
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (
@@ -1165,15 +1166,16 @@ def test_scorer_metadata_request(name):
     assert hasattr(scorer, "set_score_request")
     assert hasattr(scorer, "get_metadata_routing")
 
-    assert str(scorer.get_metadata_routing()) == "{}"
+    assert_request_is_empty(scorer.get_metadata_routing())
 
     weighted_scorer = scorer.set_score_request(sample_weight=True)
     # set_score_request should mutate the instance
     assert weighted_scorer is scorer
 
+    assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
     assert (
-        str(weighted_scorer.get_metadata_routing())
-        == "{'score': {'sample_weight': <RequestType.REQUESTED: True>}}"
+        weighted_scorer.get_metadata_routing().score.requests["sample_weight"]
+        == RequestType.REQUESTED
     )
 
     # make sure putting the scorer in a router doesn't request anything
