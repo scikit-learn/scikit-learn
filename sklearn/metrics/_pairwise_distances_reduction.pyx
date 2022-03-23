@@ -779,7 +779,7 @@ cdef class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
         #
         # For the sake of explicitness:
         #   - when parallelizing on X, the pointers of those heaps are referencing
-        #   (with proper offsets) addresses of the two main heaps (see bellow)
+        #   (with proper offsets) addresses of the two main heaps (see below)
         #   - when parallelizing on Y, the pointers of those heaps are referencing
         #   small heaps which are thread-wise-allocated and whose content will be
         #   merged with the main heaps'.
@@ -1070,7 +1070,7 @@ cdef class FastEuclideanPairwiseDistancesArgKmin(PairwiseDistancesArgKmin):
 
                   ||X - Y||² = ||X||² - 2 X.Y^T + ||Y||²
 
-    The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
+    The middle term gets computed efficiently below using BLAS Level 3 GEMM.
 
     Notes
     -----
@@ -1618,7 +1618,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood(PairwiseDistancesRad
 
                   ||X - Y||² = ||X||² - 2 X.Y^T + ||Y||²
 
-    The middle term gets computed efficiently bellow using BLAS Level 3 GEMM.
+    The middle term gets computed efficiently below using BLAS Level 3 GEMM.
 
     Notes
     -----

@@ -26,6 +26,7 @@ mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
+python -c "import joblib; print(f'Number of cores: {joblib.cpu_count()}')"
 python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
@@ -46,7 +47,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
 
-    # Python 3.10 deprecates disutils and is imported by numpy interally during import time
+    # Python 3.10 deprecates distutils, which is imported by numpy internally
     TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
 fi
 
