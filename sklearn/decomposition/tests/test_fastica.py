@@ -300,7 +300,11 @@ def test_fit_transform(global_random_seed, global_dtype):
 
         # XXX: we have to set atol for this test to pass for all seeds when
         # fitting with float32 data. Is this is a revealing a bug?
-        assert_allclose(Xt, Xt2, atol=1e-6 if global_dtype == np.float32 else 0.0)
+        if global_dtype:
+            atol = np.abs(Xt2).mean() / 1e6
+        else:
+            atol = 0.0  # the default rtol is enough for float64 data
+        assert_allclose(Xt, Xt2, atol=atol)
 
 
 @pytest.mark.filterwarnings("ignore:Ignoring n_components with whiten=False.")
@@ -338,7 +342,11 @@ def test_inverse_transform(
     if n_components == X.shape[1]:
         # XXX: we have to set atol for this test to pass for all seeds when
         # fitting with float32 data. Is this is a revealing a bug?
-        assert_allclose(X, X2, atol=1e-6 if global_dtype == np.float32 else 0.0)
+        if global_dtype:
+            atol = np.abs(X2).mean() / 1e5
+        else:
+            atol = 0.0  # the default rtol is enough for float64 data
+        assert_allclose(X, X2, atol=atol)
 
 
 # FIXME remove filter in 1.3
