@@ -2442,14 +2442,7 @@ def test_check_node_ndarray():
 
 
 # TODO(1.3): Remove
-@pytest.mark.parametrize(
-    "old_max_features, new_max_features",
-    [
-        ("auto", "sqrt"),
-        ("auto", "sqrt"),
-    ],
-)
-def test_max_features_deprecated(old_max_features, new_max_features):
+def test_max_features_auto_deprecated():
     for Tree in CLF_TREES.values():
         tree = Tree(max_features=old_max_features)
         msg = (
