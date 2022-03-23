@@ -1386,17 +1386,19 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude
 
 
 @pytest.mark.parametrize(
-    "cols, cardinality, threshold",
+    "cols, min_cardinality, max_cardinality",
     [
-        (["col_high"], "high", 5),
-        (["col_low", "col_mid"], "low", 5),
-        (["col_mid", "col_high"], "high", 2),
-        (["col_low"], "low", 1),
-        ([], "high", 7),
+        (["col_low","col_mid", "col_high"], None, None),
+        (["col_low", "col_mid"], None, 5),
+        (["col_mid", "col_high"], 2, None),
+        (["col_low"], None, 1),
+        (["col_high"], 7, None),
         (["col_low", "col_mid", "col_high"], None, 7),
+        (["col_mid"], 2, 6),
+        ([], 2,3),
     ],
 )
-def test_make_column_selector_with_cardinality(cols, cardinality, threshold):
+def test_make_column_selector_with_cardinality(cols, min_cardinality, max_cardinality):
     pd = pytest.importorskip("pandas")
     X_df = pd.DataFrame(
         {
@@ -1408,7 +1410,7 @@ def test_make_column_selector_with_cardinality(cols, cardinality, threshold):
     )
 
     selector = make_column_selector(
-        cardinality=cardinality, cardinality_threshold=threshold
+        min_cardinality=min_cardinality, max_cardinality=max_cardinality
     )
 
     assert_array_equal(selector(X_df), cols)

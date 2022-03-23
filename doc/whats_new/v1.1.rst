@@ -200,7 +200,7 @@ Changelog
 
 - |Enhancement| :func:`compose.make_column_selector` now supports selecting
   columns by their cardinality (number of unique values) using the keyword
-  arguments `cardinality` and `cardinality_threshold`. Implemented in
+  arguments `min_cardinality` and `max_cardinality`. Implemented in
   :pr:`22923` by :user:`richardt94 <richardt94>`.
 
 :mod:`sklearn.cross_decomposition`

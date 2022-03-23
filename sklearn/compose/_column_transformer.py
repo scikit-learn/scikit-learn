@@ -975,9 +975,10 @@ class make_column_selector:
     """Create a callable to select columns to be used with
     :class:`ColumnTransformer`.
 
-    :func:`make_column_selector` can select columns based on datatype or the
-    columns name with a regex. When using multiple selection criteria, **all**
-    criteria must match for a column to be selected.
+    :func:`make_column_selector` can select columns based on datatype, the
+    column's name with a regex, or its cardinality (number of unique values).
+    When using multiple selection criteria, **all** criteria must match for
+    a column to be selected.
 
     Parameters
     ----------
@@ -993,13 +994,13 @@ class make_column_selector:
         A selection of dtypes to exclude. For more details, see
         :meth:`pandas.DataFrame.select_dtypes`.
 
-    cardinality : str, default=None
-        Select columns with cardinality greater than `cardinality_threshold`
-        (`"high"`), less than or equal to `cardinality_threshold` (`"low"`),
-        or do not filter columns by cardinality threshold (`None`).
+    min_cardinality : int, default=None
+        Minimum cardinality (number of unique values) to select a column.
+        If None, then no minimum cardinality is required to select.
 
-    cardinality_threshold : int, default=7
-        Threshold to use when filtering columns by cardinality.
+    max_cardinality : int, default=None
+        Maximum cardinality to select a column. If None, then no maximum
+        cardinality is required to select.
 
     Returns
     -------
@@ -1040,14 +1041,14 @@ class make_column_selector:
         *,
         dtype_include=None,
         dtype_exclude=None,
-        cardinality=None,
-        cardinality_threshold=7,
+        min_cardinality=None,
+        max_cardinality=None,
     ):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude
-        self.cardinality = cardinality
-        self.cardinality_threshold = cardinality_threshold
+        self.min_cardinality = min_cardinality
+        self.max_cardinality = max_cardinality
 
     def __call__(self, df):
         """Callable for column selection to be used by a
@@ -1071,11 +1072,11 @@ class make_column_selector:
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
 
-        if self.cardinality:
+        if self.min_cardinality or self.max_cardinality:
             cols_cardinality = df[cols].nunique()
-        if self.cardinality == "high":
-            cols = cols[cols_cardinality > self.cardinality_threshold]
-        elif self.cardinality == "low":
-            cols = cols[cols_cardinality <= self.cardinality_threshold]
+            if self.min_cardinality:
+                cols = cols[cols_cardinality >= self.min_cardinality]
+            if self.max_cardinality:
+                cols = cols[cols_cardinality[cols] <= self.max_cardinality]
 
         return cols.tolist()
