@@ -67,6 +67,7 @@ from ..utils.metadata_routing import _MetadataRequester
 from ..utils.metadata_routing import MetadataRequest
 from ..utils.metadata_routing import MetadataRouter
 from ..utils.metadata_routing import process_routing
+from ..utils.metadata_routing import get_routing_for_object
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -541,9 +542,12 @@ class _passthrough_scorer:
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        return MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self._estimator, method_mapping="score"
-        )
+        # This scorer doesn't do any validation or routing, it only exposes the
+        # score requests to the parent object. This object behaves as a
+        # consumer rather than a router.
+        res = MetadataRequest(owner=self._estimator.__class__.__name__)
+        res.score = get_routing_for_object(self._estimator).score
+        return res
 
 
 def check_scoring(estimator, scoring=None, *, allow_none=False):

@@ -1213,3 +1213,16 @@ def test_metadata_kwarg_conflict():
 
     with pytest.warns(UserWarning, match="There is an overlap"):
         scorer(lr, X, y, labels=lr.classes_)
+
+
+def test_passthrough_scorer_metadata_request():
+    scorer = _passthrough_scorer(
+        estimator=LinearSVC()
+        .set_score_request(sample_weight="alias")
+        .set_fit_request(sample_weight=True)
+    )
+    # test that _passthrough_scorer leaves everything other than `score` empty
+    assert_request_is_empty(scorer.get_metadata_routing(), exclude="score")
+    # test that _passthrough_scorer doesn't behave like a router and leaves
+    # the request as is.
+    assert scorer.get_metadata_routing().score.requests["sample_weight"] == "alias"
