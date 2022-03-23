@@ -54,7 +54,7 @@ def _sym_decorrelation(W):
     i.e. W <- (W * W.T) ^{-1/2} * W
     """
     s, u = linalg.eigh(np.dot(W, W.T))
-    # Avoid sqrt of negative values because of rounding errors. Not that
+    # Avoid sqrt of negative values because of rounding errors. Note that
     # np.sqrt(smallest_subnormal) is larger than smallest_subnormal and
     # therefore this clipping also prevents division by zero in the next step.
     s = np.clip(s, a_min=np.finfo(W.dtype).smallest_subnormal, a_max=None)
