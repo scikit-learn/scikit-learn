@@ -1477,9 +1477,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.decomposition import DictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
-    ...     random_state=42,
+    ...     random_state=42, data_transposed=False
     ... )
-    >>> X, dictionary, code = X.T, dictionary.T, code.T  # workaround gh-19894
     >>> dict_learner = DictionaryLearning(
     ...     n_components=15, transform_algorithm='lasso_lars', transform_alpha=0.1,
     ...     random_state=42,
@@ -1766,16 +1765,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.decomposition import MiniBatchDictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
-    ...     random_state=42)
+    ...     random_state=42, data_transposed=False)
     >>> dict_learner = MiniBatchDictionaryLearning(
-    ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
-    ... )
+    ...     n_components=15, transform_algorithm='lasso_lars', transform_alpha=0.1,
+    ...     random_state=42)
     >>> X_transformed = dict_learner.fit_transform(X)
 
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.86...
+    0.38...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1783,7 +1782,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.07...
+    0.059...
     """
 
     def __init__(

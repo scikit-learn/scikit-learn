@@ -60,6 +60,7 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
+
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
@@ -501,6 +502,8 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
+# TODO(1.3): Remove warning filter
+@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
 def test_max_features():
     # Check max_features.
     for name, TreeRegressor in REG_TREES.items():
@@ -2436,3 +2439,24 @@ def test_check_node_ndarray():
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+
+# TODO(1.3): Remove
+def test_max_features_auto_deprecated():
+    for Tree in CLF_TREES.values():
+        tree = Tree(max_features="auto")
+        msg = (
+            "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
+            " 1.3. To keep the past behaviour, explicitly set `max_features='sqrt'`."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            tree.fit(X, y)
+
+    for Tree in REG_TREES.values():
+        tree = Tree(max_features="auto")
+        msg = (
+            "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
+            " 1.3. To keep the past behaviour, explicitly set `max_features=1.0'`."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            tree.fit(X, y)
