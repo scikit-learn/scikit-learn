@@ -1385,6 +1385,35 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude
     assert_array_equal(selector(X_df), cols)
 
 
+@pytest.mark.parametrize(
+    "cols, cardinality, threshold",
+    [
+        (["col_high"], "high", 5),
+        (["col_low", "col_mid"], "low", 5),
+        (["col_mid", "col_high"], "high", 2),
+        (["col_low"], "low", 1),
+        ([], "high", 7),
+        (["col_low", "col_mid", "col_high"], None, 7),
+    ],
+)
+def test_make_column_selector_with_cardinality(cols, cardinality, threshold):
+    pd = pytest.importorskip("pandas")
+    X_df = pd.DataFrame(
+        {
+            "col_low": np.array([1, 1, 1, 1, 1, 1, 1], dtype=int),
+            "col_mid": np.array([1, 2, 3, 4, 5, 5, 5], dtype=int),
+            "col_high": np.array([1, 2, 3, 4, 5, 6, 7], dtype=int),
+        },
+        columns=["col_low", "col_mid", "col_high"],
+    )
+
+    selector = make_column_selector(
+        cardinality=cardinality, cardinality_threshold=threshold
+    )
+
+    assert_array_equal(selector(X_df), cols)
+
+
 def test_column_transformer_with_make_column_selector():
     # Functional test for column transformer + column selector
     pd = pytest.importorskip("pandas")
