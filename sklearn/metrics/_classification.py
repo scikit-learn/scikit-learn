@@ -1402,7 +1402,7 @@ def precision_recall_fscore_support(
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
-    intuitively the ability of the classifier not to label a negative sample as 
+    intuitively the ability of the classifier not to label a negative sample as
     positive.
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
