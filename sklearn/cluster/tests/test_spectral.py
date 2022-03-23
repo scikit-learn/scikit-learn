@@ -38,13 +38,10 @@ X, _ = make_blobs(
     random_state=0,
 )
 
-DTYPES = (np.float32, np.float64)
-
 
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_spectral_clustering(eigen_solver, assign_labels, dtype):
+def test_spectral_clustering(eigen_solver, assign_labels, global_dtype):
     S = np.array(
         [
             [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
@@ -55,7 +52,7 @@ def test_spectral_clustering(eigen_solver, assign_labels, dtype):
             [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
             [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
         ],
-        dtype=dtype,
+        dtype=global_dtype,
     )
 
     for mat in (S, sparse.csr_matrix(S)):
@@ -78,8 +75,7 @@ def test_spectral_clustering(eigen_solver, assign_labels, dtype):
         assert_array_equal(model_copy.labels_, model.labels_)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_spectral_unknown_mode(dtype):
+def test_spectral_unknown_mode():
     # Test that SpectralClustering fails with an unknown mode set.
     centers = np.array(
         [
@@ -91,7 +87,6 @@ def test_spectral_unknown_mode(dtype):
     X, true_labels = make_blobs(
         n_samples=100, centers=centers, cluster_std=1.0, random_state=42
     )
-    X = X.astype(dtype)
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
@@ -99,8 +94,7 @@ def test_spectral_unknown_mode(dtype):
         spectral_clustering(S, n_clusters=2, random_state=0, eigen_solver="<unknown>")
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_spectral_unknown_assign_labels(dtype):
+def test_spectral_unknown_assign_labels():
     # Test that SpectralClustering fails with an unknown assign_labels set.
     centers = np.array(
         [
@@ -112,7 +106,6 @@ def test_spectral_unknown_assign_labels(dtype):
     X, true_labels = make_blobs(
         n_samples=100, centers=centers, cluster_std=1.0, random_state=42
     )
-    X = X.astype(dtype)
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
@@ -161,15 +154,14 @@ def test_spectral_params_validation(input, params, err_type, err_msg):
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_spectral_clustering_sparse(assign_labels, dtype):
+def test_spectral_clustering_sparse(assign_labels, global_dtype):
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
 
     S = rbf_kernel(X, gamma=1)
     S = np.maximum(S - 1e-4, 0)
-    S = sparse.coo_matrix(S).astype(dtype)
+    S = sparse.coo_matrix(S).astype(global_dtype, copy=False)
 
     labels = (
         SpectralClustering(
@@ -184,13 +176,12 @@ def test_spectral_clustering_sparse(assign_labels, dtype):
     assert adjusted_rand_score(y, labels) == 1
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_precomputed_nearest_neighbors_filtering(dtype):
+def test_precomputed_nearest_neighbors_filtering(global_dtype):
     # Test precomputed graph filtering when containing too many neighbors
     X, y = make_blobs(
         n_samples=200, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
-    X = X.astype(dtype)
+    X = X.astype(global_dtype, copy=False)
 
     n_neighbors = 2
     results = []
@@ -212,15 +203,14 @@ def test_precomputed_nearest_neighbors_filtering(dtype):
     assert_array_equal(results[0], results[1])
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_affinities(dtype):
+def test_affinities(global_dtype):
     # Note: in the following, random_state has been selected to have
     # a dataset that yields a stable eigen decomposition both when built
     # on OSX and Linux
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
-    X = X.astype(dtype)
+    X = X.astype(global_dtype, copy=False)
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity="nearest_neighbors", random_state=0)
     with pytest.warns(UserWarning, match="not fully connected"):
@@ -232,6 +222,7 @@ def test_affinities(dtype):
     assert adjusted_rand_score(y, labels) == 1
 
     X = check_random_state(10).rand(10, 5) * 10
+    X = X.astype(global_dtype, copy=False)
 
     kernels_available = kernel_metrics()
     for kern in kernels_available:
@@ -261,15 +252,14 @@ def test_affinities(dtype):
         sp.fit(X)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_cluster_qr(dtype):
+def test_cluster_qr():
     # cluster_qr by itself should not be used for clustering generic data
     # other than the rows of the eigenvectors within spectral clustering,
     # but cluster_qr must still preserve the labels for different dtypes
     # of the generic fixed input even if the labels may be meaningless.
     random_state = np.random.RandomState(seed=8)
     n_samples, n_components = 10, 5
-    data = random_state.randn(n_samples, n_components).astype(dtype)
+    data = random_state.randn(n_samples, n_components)
     labels_float64 = cluster_qr(data.astype(np.float64))
     # Each sample is assigned a cluster identifier
     assert labels_float64.shape == (n_samples,)
@@ -280,12 +270,11 @@ def test_cluster_qr(dtype):
     assert np.array_equal(labels_float64, labels_float32)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_cluster_qr_permutation_invariance(dtype):
+def test_cluster_qr_permutation_invariance(global_dtype):
     # cluster_qr must be invariant to sample permutation.
     random_state = np.random.RandomState(seed=8)
     n_samples, n_components = 100, 5
-    data = random_state.randn(n_samples, n_components).astype(dtype)
+    data = random_state.randn(n_samples, n_components).astype(global_dtype, copy=False)
     perm = random_state.permutation(n_samples)
     assert np.array_equal(
         cluster_qr(data)[perm],
@@ -362,14 +351,13 @@ def test_spectral_clustering_with_arpack_amg_solvers():
             spectral_clustering(graph, n_clusters=2, eigen_solver="amg", random_state=0)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_n_components(dtype):
+def test_n_components(global_dtype):
     # Test that after adding n_components, result is different and
     # n_components = n_clusters by default
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
-    X = X.astype(dtype)
+    X = X.astype(global_dtype, copy=False)
     sp = SpectralClustering(n_clusters=2, random_state=0)
     labels = sp.fit(X).labels_
     # set n_components = n_cluster and test if result is the same
@@ -388,14 +376,13 @@ def test_n_components(dtype):
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_verbose(assign_labels, capsys, dtype):
+def test_verbose(assign_labels, capsys, global_dtype):
     # Check verbose mode of KMeans for better coverage.
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
 
-    X = X.astype(dtype)
+    X = X.astype(global_dtype, copy=False)
     SpectralClustering(n_clusters=2, random_state=42, verbose=1).fit(X)
 
     captured = capsys.readouterr()
