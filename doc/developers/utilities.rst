@@ -189,7 +189,7 @@ Helper Functions
   to ``n``.  Used in :func:`~sklearn.decomposition.dict_learning` and
   :func:`~sklearn.cluster.k_means`.
 
-- :class:`gen_batches`: generator to create slices containing batch size elements
+- :class:`gen_batches`: generator to create slices containing batch size elements 
   from 0 to ``n``
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected
