@@ -4,6 +4,7 @@ from scipy import linalg
 from itertools import product
 
 import pytest
+import warnings
 
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_almost_equal
@@ -342,20 +343,19 @@ def test_ridge_individual_penalties():
         (
             {"alpha": "1"},
             TypeError,
-            "alpha must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "alpha must be an instance of float, not str",
         ),
         ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
         (
             {"max_iter": "1"},
             TypeError,
-            "max_iter must be an instance of <class 'numbers.Integral'>, not <class"
-            " 'str'>",
+            "max_iter must be an instance of int, not str",
         ),
         ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
         (
             {"tol": "1"},
             TypeError,
-            "tol must be an instance of <class 'numbers.Real'>, not <class 'str'>",
+            "tol must be an instance of float, not str",
         ),
     ],
 )
@@ -1064,7 +1064,7 @@ def test_class_weight_vs_sample_weight(reg):
 
     # Check that sample_weight and class_weight are multiplicative
     reg1 = reg()
-    reg1.fit(iris.data, iris.target, sample_weight ** 2)
+    reg1.fit(iris.data, iris.target, sample_weight**2)
     reg2 = reg(class_weight=class_weight)
     reg2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(reg1.coef_, reg2.coef_)
@@ -1283,8 +1283,7 @@ def test_ridgecv_int_alphas():
         (
             {"alphas": (1, 1.0, "1")},
             TypeError,
-            r"alphas\[2\] must be an instance of <class 'numbers.Real'>, not <class"
-            r" 'str'>",
+            r"alphas\[2\] must be an instance of float, not str",
         ),
     ],
 )
@@ -1364,33 +1363,41 @@ def test_n_iter():
 
 
 @pytest.mark.parametrize("solver", ["sparse_cg", "lbfgs", "auto"])
-def test_ridge_fit_intercept_sparse(solver):
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+def test_ridge_fit_intercept_sparse(solver, with_sample_weight, global_random_seed):
+    """Check that ridge finds the same coefs and intercept on dense and sparse input
+    in the presence of sample weights.
+
+    For now only sparse_cg and lbfgs can correctly fit an intercept
+    with sparse X with default tol and max_iter.
+    'sag' is tested separately in test_ridge_fit_intercept_sparse_sag because it
+    requires more iterations and should raise a warning if default max_iter is used.
+    Other solvers raise an exception, as checked in
+    test_ridge_fit_intercept_sparse_error
+    """
     positive = solver == "lbfgs"
     X, y = _make_sparse_offset_regression(
-        n_features=20, random_state=0, positive=positive
+        n_features=20, random_state=global_random_seed, positive=positive
     )
-    X_csr = sp.csr_matrix(X)
 
-    # for now only sparse_cg and lbfgs can correctly fit an intercept
-    # with sparse X with default tol and max_iter.
-    # sag is tested separately in test_ridge_fit_intercept_sparse_sag
-    # because it requires more iterations and should raise a warning if default
-    # max_iter is used.
-    # other solvers raise an exception, as checked in
-    # test_ridge_fit_intercept_sparse_error
-    #
+    sample_weight = None
+    if with_sample_weight:
+        rng = np.random.RandomState(global_random_seed)
+        sample_weight = 1.0 + rng.uniform(size=X.shape[0])
+
     # "auto" should switch to "sparse_cg" when X is sparse
     # so the reference we use for both ("auto" and "sparse_cg") is
     # Ridge(solver="sparse_cg"), fitted using the dense representation (note
     # that "sparse_cg" can fit sparse or dense data)
-    dense_ridge = Ridge(solver="sparse_cg", tol=1e-12)
+    dense_solver = "sparse_cg" if solver == "auto" else solver
+    dense_ridge = Ridge(solver=dense_solver, tol=1e-12, positive=positive)
     sparse_ridge = Ridge(solver=solver, tol=1e-12, positive=positive)
-    dense_ridge.fit(X, y)
-    with pytest.warns(None) as record:
-        sparse_ridge.fit(X_csr, y)
-    assert len(record) == 0
-    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
-    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_)
+
+    dense_ridge.fit(X, y, sample_weight=sample_weight)
+    sparse_ridge.fit(sp.csr_matrix(X), y, sample_weight=sample_weight)
+
+    assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
+    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
 
 @pytest.mark.parametrize("solver", ["saga", "lsqr", "svd", "cholesky"])
@@ -1403,10 +1410,16 @@ def test_ridge_fit_intercept_sparse_error(solver):
         sparse_ridge.fit(X_csr, y)
 
 
-def test_ridge_fit_intercept_sparse_sag():
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+def test_ridge_fit_intercept_sparse_sag(with_sample_weight, global_random_seed):
     X, y = _make_sparse_offset_regression(
-        n_features=5, n_samples=20, random_state=0, X_offset=5.0
+        n_features=5, n_samples=20, random_state=global_random_seed, X_offset=5.0
     )
+    if with_sample_weight:
+        rng = np.random.RandomState(global_random_seed)
+        sample_weight = 1.0 + rng.uniform(size=X.shape[0])
+    else:
+        sample_weight = None
     X_csr = sp.csr_matrix(X)
 
     params = dict(
@@ -1414,12 +1427,12 @@ def test_ridge_fit_intercept_sparse_sag():
     )
     dense_ridge = Ridge(**params)
     sparse_ridge = Ridge(**params)
-    dense_ridge.fit(X, y)
-    with pytest.warns(None) as record:
-        sparse_ridge.fit(X_csr, y)
-    assert len(record) == 0
-    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
-    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
+    dense_ridge.fit(X, y, sample_weight=sample_weight)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        sparse_ridge.fit(X_csr, y, sample_weight=sample_weight)
+    assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
+    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
     with pytest.warns(UserWarning, match='"sag" solver requires.*'):
         Ridge(solver="sag").fit(X_csr, y)
 
@@ -1703,7 +1716,7 @@ def test_positive_ridge_loss(alpha):
             coef = model.coef_
 
         return 0.5 * np.sum((y - X @ coef - intercept) ** 2) + 0.5 * alpha * np.sum(
-            coef ** 2
+            coef**2
         )
 
     model = Ridge(alpha=alpha).fit(X, y)
@@ -1806,3 +1819,22 @@ def test_ridge_sample_weight_invariance(normalize, solver):
 
     assert_allclose(ridge_2sw.coef_, ridge_dup.coef_)
     assert_allclose(ridge_2sw.intercept_, ridge_dup.intercept_)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [RidgeCV, RidgeClassifierCV], ids=["RidgeCV", "RidgeClassifierCV"]
+)
+def test_ridgecv_normalize_deprecated(Estimator):
+    """Check that the normalize deprecation warning mentions the rescaling of alphas
+
+    Non-regression test for issue #22540
+    """
+    X = np.array([[1, -1], [1, 1]])
+    y = np.array([0, 1])
+
+    estimator = Estimator(normalize=True)
+
+    with pytest.warns(
+        FutureWarning, match=r"Set parameter alphas to: original_alphas \* n_samples"
+    ):
+        estimator.fit(X, y)

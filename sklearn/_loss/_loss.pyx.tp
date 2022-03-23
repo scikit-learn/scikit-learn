@@ -206,7 +206,7 @@ np.import_array()
 # Numerically stable version of log(1 + exp(x)) for double precision, see Eq. (10) of
 # https://cran.r-project.org/web/packages/Rmpfr/vignettes/log1mexp-note.pdf
 # Note: The only important cutoff is at x = 18. All others are to save computation
-# time. Compared to the reference, we add the additional case distiction x <= -2 in
+# time. Compared to the reference, we add the additional case distinction x <= -2 in
 # order to use log instead of log1p for improved performance. As with the other
 # cutoffs, this is accurate within machine precision of double.
 cdef inline double log1pexp(double x) nogil:
@@ -525,7 +525,7 @@ cdef inline double cgradient_half_binomial(
     #         return ((1 - y_true) - y_true * exp_tmp) / (1 + exp_tmp)
     # Note that optimal speed would be achieved, at the cost of precision, by
     #     return expit(raw_prediction) - y_true
-    # i.e. no "if else" and an own inline implemention of expit instead of
+    # i.e. no "if else" and an own inline implementation of expit instead of
     #     from scipy.special.cython_special cimport expit
     # The case distinction raw_prediction < 0 in the stable implementation
     # does not provide significant better precision. Therefore we go without
@@ -934,7 +934,7 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
     mapped to (y_true == k) for k = 0 .. n_classes - 1 which is either 0 or 1.
     """
 
-    # Note that we do not assume memory alignement/contiguity of 2d arrays.
+    # Note that we do not assume memory alignment/contiguity of 2d arrays.
     # There seems to be little benefit in doing so. Benchmarks proofing the
     # opposite are welcome.
     def loss(

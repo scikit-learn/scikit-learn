@@ -213,12 +213,16 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == "precomputed":
-        atol = np.finfo(X.dtype).eps * 100
-        if np.any(np.abs(np.diagonal(X)) > atol):
-            raise ValueError(
-                "The precomputed distance matrix contains non-zero "
-                "elements on the diagonal. Use np.fill_diagonal(X, 0)."
-            )
+        error_msg = ValueError(
+            "The precomputed distance matrix contains non-zero "
+            "elements on the diagonal. Use np.fill_diagonal(X, 0)."
+        )
+        if X.dtype.kind == "f":
+            atol = np.finfo(X.dtype).eps * 100
+            if np.any(np.abs(np.diagonal(X)) > atol):
+                raise ValueError(error_msg)
+        elif np.any(np.diagonal(X) != 0):  # integral dtype
+            raise ValueError(error_msg)
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
@@ -251,8 +255,8 @@ def calinski_harabasz_score(X, labels):
 
     It is also known as the Variance Ratio Criterion.
 
-    The score is defined as ratio between the within-cluster dispersion and
-    the between-cluster dispersion.
+    The score is defined as ratio of the sum of between-cluster dispersion and
+    of within-cluster dispersion.
 
     Read more in the :ref:`User Guide <calinski_harabasz_index>`.
 
