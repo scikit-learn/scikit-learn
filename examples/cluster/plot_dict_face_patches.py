@@ -1,4 +1,5 @@
 """
+==================================================
 Online learning of a dictionary of parts of faces
 ==================================================
 
@@ -33,9 +34,9 @@ from sklearn.feature_extraction.image import extract_patches_2d
 
 faces = datasets.fetch_olivetti_faces()
 
-# #############################################################################
+# %%
 # Learn the dictionary of images
-
+# ------------------------------
 print("Learning the dictionary... ")
 rng = np.random.RandomState(0)
 kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True)
@@ -44,7 +45,10 @@ patch_size = (20, 20)
 buffer = []
 t0 = time.time()
 
+# %%
 # The online learning part: cycle over the whole dataset 6 times
+# --------------------------------------------------------------
+
 index = 0
 for _ in range(6):
     for img in faces.images:
@@ -64,8 +68,10 @@ for _ in range(6):
 dt = time.time() - t0
 print("done in %.2fs." % dt)
 
-# #############################################################################
+# %%
 # Plot the results
+# ----------------
+
 plt.figure(figsize=(4.2, 4))
 for i, patch in enumerate(kmeans.cluster_centers_):
     plt.subplot(9, 9, i + 1)
