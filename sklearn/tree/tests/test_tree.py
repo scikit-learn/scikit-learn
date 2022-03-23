@@ -10,7 +10,6 @@ import copyreg
 
 import pytest
 import numpy as np
-from numpy.testing import assert_allclose
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
@@ -34,6 +33,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
@@ -260,7 +260,7 @@ def test_weighted_classification_toy():
 
 
 # TODO: Trees do not preserve dtype when fitting/predicting.
- # Add `global_dtype` when Trees have this ability.
+# Add `global_dtype` when Trees have this ability.
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_toy(Tree, criterion):
@@ -2120,9 +2120,9 @@ def test_poisson_vs_mse():
 
 
 # TODO: Trees do not preserve dtype when fitting/predicting.
- # Add `global_dtype` when Trees have this ability.
+# Add `global_dtype` when Trees have this ability.
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
+def test_decision_tree_regressor_sample_weight_consistentcy(criterion, global_dtype):
     """Test that the impact of sample_weight is consistent."""
     tree_params = dict(criterion=criterion)
     tree = DecisionTreeRegressor(**tree_params, random_state=42)
@@ -2138,6 +2138,10 @@ def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
     y = np.mean(X, axis=1) + rng.rand(n_samples)
     # make it positive in order to work also for poisson criterion
     y += np.min(y) + 0.1
+
+    # convert dtype
+    X = X.astype(global_dtype)
+    y = y.astype(global_dtype)
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating corresponding samples twice
@@ -2156,7 +2160,11 @@ def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
     # Thresholds, tree.tree_.threshold, and values, tree.tree_.value, are not
     # exactly the same, but on the training set, those differences do not
     # matter and thus predictions are the same.
-    assert_allclose(tree1.predict(X), tree2.predict(X))
+    y_pred1 = tree1.predict(X)
+    y_pred2 = tree2.predict(X)
+    # TODO: y_pred1 and y_pred2 will not match global_dtype for 32 bit
+    # assert y_pred1.dtype == global_dtype
+    assert_allclose(y_pred1, y_pred2)
 
 
 # TODO: Remove in v1.2
