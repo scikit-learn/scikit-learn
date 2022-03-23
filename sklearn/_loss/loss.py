@@ -823,7 +823,7 @@ class HalfBinomialLoss(BaseLoss):
         Returns
         -------
         proba : array of shape (n_samples, 2)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
@@ -863,10 +863,10 @@ class HalfMultinomialLoss(BaseLoss):
 
     Reference
     ---------
-    .. [1] Simon, Noah, J. Friedman and T. Hastie.
+    .. [1] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
-        Multinomial Regression."
-        https://arxiv.org/pdf/1311.6529.pdf
+        Multinomial Regression".
+        <1311.6529>`
     """
 
     is_multiclass = True
@@ -913,7 +913,7 @@ class HalfMultinomialLoss(BaseLoss):
         Returns
         -------
         proba : array of shape (n_samples, n_classes)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         return self.link.inverse(raw_prediction)
 
@@ -951,7 +951,7 @@ class HalfMultinomialLoss(BaseLoss):
             Element-wise gradients.
 
         proba : array of shape (n_samples, n_classes)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         if gradient_out is None:
             if proba_out is None:

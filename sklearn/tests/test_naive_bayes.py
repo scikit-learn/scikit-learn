@@ -12,7 +12,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -289,8 +288,6 @@ def test_NB_partial_fit_no_first_classes(NaiveBayes):
         clf.partial_fit(X2, y2, classes=np.arange(42))
 
 
-# TODO: Remove in version 1.1
-@ignore_warnings(category=FutureWarning)
 def test_discretenb_predict_proba():
     # Test discrete NB classes' probability scores
 
