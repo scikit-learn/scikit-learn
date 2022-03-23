@@ -119,7 +119,9 @@ def test_compute_mi_cd_unique_label(global_dtype):
 
 # We are going test that feature ordering by MI matches our expectations.
 def test_mutual_info_classif_discrete(global_dtype):
-    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]])
+    X = np.array(
+        [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=global_dtype
+    )
     y = np.array([0, 1, 2, 2, 1])
 
     # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
@@ -139,7 +141,7 @@ def test_mutual_info_regression(global_dtype):
     mean = np.zeros(4)
 
     rng = check_random_state(0)
-    Z = rng.multivariate_normal(mean, cov, size=1000).astype(global_dtype)
+    Z = rng.multivariate_normal(mean, cov, size=1000).astype(global_dtype, copy=False)
     X = Z[:, 1:]
     y = Z[:, 0]
 
@@ -154,7 +156,7 @@ def test_mutual_info_classif_mixed(global_dtype):
     # Here the target is discrete and there are two continuous and one
     # discrete feature. The idea of this test is clear from the code.
     rng = check_random_state(0)
-    X = rng.rand(1000, 3).astype(global_dtype)
+    X = rng.rand(1000, 3).astype(global_dtype, copy=False)
     X[:, 1] += X[:, 0]
     y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
     X[:, 2] = X[:, 2] > 0.5
@@ -204,4 +206,4 @@ def test_mutual_info_options(global_dtype):
         assert_allclose(mi_3, mi_4)
         assert_allclose(mi_5, mi_6)
 
-    assert not np.allclose(mi_1, mi_3)
+        assert not np.allclose(mi_1, mi_3)

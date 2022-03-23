@@ -10,7 +10,6 @@ import pytest
 from scipy import sparse
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 
 from sklearn.cluster import MeanShift
@@ -42,8 +41,12 @@ def test_estimate_bandwidth():
 def test_estimate_bandwidth_1sample(global_dtype):
     # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
     # n_neighbors is set to 1.
-    bandwidth = estimate_bandwidth(X.astype(global_dtype), n_samples=1, quantile=0.3)
-    assert bandwidth == pytest.approx(0.0, abs=1e-5)
+    bandwidth = estimate_bandwidth(
+        X.astype(global_dtype, copy=False), n_samples=1, quantile=0.3
+    )
+
+    assert bandwidth.dtype == X.dtype
+    assert_allclose(bandwidth, 0.0, atol=1e-5)
 
 
 @pytest.mark.parametrize(
@@ -54,14 +57,15 @@ def test_mean_shift(
     global_dtype, bandwidth, cluster_all, expected, first_cluster_label
 ):
     # Test MeanShift algorithm
+    X_ = X.astype(global_dtype, copy=False)
     ms = MeanShift(bandwidth=bandwidth, cluster_all=cluster_all)
-    labels = ms.fit(X.astype(global_dtype)).labels_
+    labels = ms.fit(X_).labels_
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert n_clusters_ == expected
     assert labels_unique[0] == first_cluster_label
 
-    cluster_centers, labels_mean_shift = mean_shift(X, cluster_all=cluster_all)
+    cluster_centers, labels_mean_shift = mean_shift(X_, cluster_all=cluster_all)
     labels_mean_shift_unique = np.unique(labels_mean_shift)
     n_clusters_mean_shift = len(labels_mean_shift_unique)
     assert n_clusters_mean_shift == expected
@@ -95,7 +99,7 @@ def test_parallel(global_dtype):
         random_state=11,
     )
 
-    X = X.astype(global_dtype)
+    X = X.astype(global_dtype, copy=False)
 
     ms1 = MeanShift(n_jobs=2)
     ms1.fit(X)
@@ -103,17 +107,16 @@ def test_parallel(global_dtype):
     ms2 = MeanShift()
     ms2.fit(X)
 
-    assert_array_almost_equal(ms1.cluster_centers_, ms2.cluster_centers_)
+    assert_allclose(ms1.cluster_centers_, ms2.cluster_centers_)
     assert_array_equal(ms1.labels_, ms2.labels_)
 
 
 def test_meanshift_predict(global_dtype):
     # Test MeanShift.predict
-    global X
     ms = MeanShift(bandwidth=1.2)
-    X = X.astype(global_dtype)
-    labels = ms.fit_predict(X)
-    labels2 = ms.predict(X)
+    X_ = X.astype(global_dtype, copy=False)
+    labels = ms.fit_predict(X_)
+    labels2 = ms.predict(X_)
     assert_array_equal(labels, labels2)
 
 
@@ -171,7 +174,7 @@ def test_bin_seeds(global_dtype):
     # we bail and use the whole data here.
     with warnings.catch_warnings(record=True):
         test_bins = get_bin_seeds(X, 0.01, 1)
-    assert_array_almost_equal(test_bins, X)
+    assert_allclose(test_bins, X)
 
     # tight clusters around [0, 0] and [1, 1], only get two bins
     X, _ = make_blobs(
@@ -181,7 +184,7 @@ def test_bin_seeds(global_dtype):
         cluster_std=0.1,
         random_state=0,
     )
-    X = X.astype(global_dtype)
+    X = X.astype(global_dtype, copy=False)
     test_bins = get_bin_seeds(X, 1)
     assert_array_equal(test_bins, [[0, 0], [1, 1]])
 
@@ -201,7 +204,11 @@ def test_max_iter(max_iter):
 
 def test_mean_shift_zero_bandwidth(global_dtype):
     # Check that mean shift works when the estimated bandwidth is 0.
-    X = np.array([1, 1, 1, 2, 2, 2, 3, 3]).reshape(-1, 1).astype(global_dtype)
+    X = (
+        np.array([1, 1, 1, 2, 2, 2, 3, 3])
+        .reshape(-1, 1)
+        .astype(global_dtype, copy=False)
+    )
 
     # estimate_bandwidth with default args returns 0 on this dataset
     bandwidth = estimate_bandwidth(X)
@@ -216,6 +223,6 @@ def test_mean_shift_zero_bandwidth(global_dtype):
     ms_nobinning = MeanShift(bin_seeding=False).fit(X)
     expected_labels = np.array([0, 0, 0, 1, 1, 1, 2, 2])
 
-    assert v_measure_score(ms_binning.labels_, expected_labels) == pytest.approx(1)
-    assert v_measure_score(ms_nobinning.labels_, expected_labels) == pytest.approx(1)
+    assert_allclose(v_measure_score(ms_binning.labels_, expected_labels), 1)
+    assert_allclose(v_measure_score(ms_nobinning.labels_, expected_labels), 1)
     assert_allclose(ms_binning.cluster_centers_, ms_nobinning.cluster_centers_)
