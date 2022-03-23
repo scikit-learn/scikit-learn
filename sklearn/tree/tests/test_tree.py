@@ -990,16 +990,12 @@ def test_pickle():
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
         score = est.score(X, y)
-        fitted_attribute = dict()
-        for attribute in ["max_depth", "node_count", "capacity"]:
-            fitted_attribute[attribute] = getattr(est.tree_, attribute)
-
-        serialized_object = pickle.dumps(est)
-        est2 = pickle.loads(serialized_object)
-        assert type(est2) == est.__class__
 
         # test that all class properties are maintained
-        for prop_name in [
+        attributes = [
+            "max_depth",
+            "node_count",
+            "capacity",
             "n_classes",
             "children_left",
             "children_right",
@@ -1010,21 +1006,27 @@ def test_pickle():
             "n_node_samples",
             "weighted_n_node_samples",
             "value",
-        ]:
-            est_prop = getattr(est.tree_, prop_name)
-            est2_prop = getattr(est.tree_, prop_name)
-            assert_array_equal(est_prop, est2_prop)
+        ]
+        fitted_attribute = {
+            attribute: getattr(est.tree_, attribute) for attribute in attributes
+        }
+
+        serialized_object = pickle.dumps(est)
+        est2 = pickle.loads(serialized_object)
+        assert type(est2) == est.__class__
 
         score2 = est2.score(X, y)
         assert (
             score == score2
         ), "Failed to generate same score  after pickling with {0}".format(name)
-
         for attribute in fitted_attribute:
-            assert (
-                getattr(est2.tree_, attribute) == fitted_attribute[attribute]
-            ), "Failed to generate same attribute {0} after pickling with {1}".format(
-                attribute, name
+            assert_array_equal(
+                getattr(est2.tree_, attribute),
+                fitted_attribute[attribute],
+                err_msg=(
+                    f"Failed to generate same attribute {attribute} after pickling with"
+                    f" {name}"
+                ),
             )
 
 
