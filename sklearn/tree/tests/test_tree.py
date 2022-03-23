@@ -2441,7 +2441,7 @@ def test_check_node_ndarray():
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
 
 
-# TODO: Remove in v1.2
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "old_max_features, new_max_features",
     [
