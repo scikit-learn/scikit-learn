@@ -28,8 +28,7 @@ X, y = make_classification(
 
 # Create the RFE object and compute a cross-validated score.
 svc = SVC(kernel="linear")
-# The "accuracy" scoring is proportional to the number of correct
-# classifications
+# The "accuracy" scoring shows the proportion of correct classifications
 
 min_features_to_select = 1  # Minimum number of features to consider
 rfecv = RFECV(
