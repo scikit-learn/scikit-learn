@@ -1072,7 +1072,7 @@ class make_column_selector:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
 
         if self.cardinality:
-            cols_cardinality = df.nunique()[cols]
+            cols_cardinality = df[cols].nunique()
         if self.cardinality == "high":
             cols = cols[cols_cardinality > self.cardinality_threshold]
         elif self.cardinality == "low":
