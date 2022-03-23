@@ -34,10 +34,12 @@ N_FEATURES = 2**16
 # features to select
 SELECT_CHI2 = False
 
+# If True, remove headers, footers and quotes when fetching dataset
+REMOVE_ALL = False
 
 # %%
 # Load data from the training set
-# ------------------------------------
+# -------------------------------
 # Let's load data from the newsgroups dataset which comprises around 18000
 # newsgroups posts on 20 topics split in two subsets: one for training (or
 # development) and the other one for testing (or for performance evaluation).
@@ -50,17 +52,25 @@ categories = [
     "sci.space",
 ]
 
+if REMOVE_ALL:
+    remove = ("headers", "footers", "quotes")
+else:
+    remove = ()
+
 data_train = fetch_20newsgroups(
-    subset="train", categories=categories, shuffle=True, random_state=42
+    subset="train", categories=categories, shuffle=True, random_state=42, remove=remove
 )
 
 data_test = fetch_20newsgroups(
-    subset="test", categories=categories, shuffle=True, random_state=42
+    subset="test", categories=categories, shuffle=True, random_state=42, remove=remove
 )
 print("data loaded")
 
 # order of labels in `target_names` can be different from `categories`
 target_names = data_train.target_names
+
+# split target in a training set and a test set
+y_train, y_test = data_train.target, data_test.target
 
 
 def size_mb(docs):
@@ -80,10 +90,6 @@ print("%d categories" % len(target_names))
 # Vectorize the training and test data
 # -------------------------------------
 #
-# split a training set and a test set
-y_train, y_test = data_train.target, data_test.target
-
-# %%
 # Extracting features from the training data using a sparse vectorizer
 from time import time
 
@@ -113,14 +119,14 @@ print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_test.shape)
 
 # %%
-# mapping from integer feature name to original token string
+# Mapping from integer feature name to original token string
 if USE_HASHING:
     feature_names = None
 else:
     feature_names = vectorizer.get_feature_names_out()
 
 # %%
-# Keeping only the best features
+# Keeping only the best features if SELECT_CHI2 == True
 from sklearn.feature_selection import SelectKBest, chi2
 
 if SELECT_CHI2:
@@ -135,14 +141,90 @@ if SELECT_CHI2:
     print("done in %fs" % (time() - t0))
     print()
 
+# %%
+# Compare feature effects
+import matplotlib
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import metrics
+from sklearn.linear_model import LogisticRegression
+
+clf = LogisticRegression(C=0.2, max_iter=200)
+clf.fit(X_train, y_train)
+pred = clf.predict(X_test)
+score = metrics.accuracy_score(y_test, pred)
+
+if feature_names is not None:
+    # learned coefficients weighted by frequency of appearance
+    feature_effects = clf.coef_ * np.asarray(X_train.mean(axis=0)).ravel()
+
+    for i, label in enumerate(target_names):
+        top5 = np.argsort(feature_effects[i])[-5:][::-1]
+        if i == 0:
+            top = pd.DataFrame(feature_names[top5], columns=[label])
+            top_indices = top5
+        else:
+            top[label] = feature_names[top5]
+            top_indices = np.concatenate((top_indices, top5), axis=None)
+    top_indices = np.unique(top_indices)
+    predictive_words = feature_names[top_indices]
+
+    # plot feature effects
+    bar_size = 0.25
+    padding = 0.5
+    y_locs = np.arange(len(top_indices)) * (bar_size * 3 + padding)
+    cmap = matplotlib.cm.get_cmap("viridis")
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    for i, label in enumerate(target_names):
+        ax.barh(
+            y_locs + i * bar_size,
+            feature_effects[i, top_indices],
+            height=bar_size,
+            color=cmap(i * 0.25),
+            label=label,
+        )
+    ax.set(
+        title="Feature impact",
+        yticks=y_locs,
+        yticklabels=predictive_words,
+        ylim=[0 - padding, len(y_locs) + 4.5],
+    )
+    _ = ax.legend(loc="lower right")
+
+    print("top 5 keywords per class:")
+    print(top)
+
+# %%
+# The word "caltech" as one of the top predictive features is the result of the
+# pollution in the dataset introduced by the headers. This effect can be fixed
+# by setting REMOVE_ALL == True, but other sources of pollution may still exist
+if feature_names is not None and not REMOVE_ALL:
+    for doc in data_train.data:
+        if "caltech" in doc:
+            print(doc)
+            break
+
+# %%
+# Setting REMOVE_ALL == True increases the overlap between classes
+import seaborn as sns
+
+cf_matrix = metrics.confusion_matrix(y_test, pred)
+ax = sns.heatmap(cf_matrix / np.sum(cf_matrix), annot=True, fmt=".2%", cmap="Blues")
+
+ax.set_xlabel("\nPredicted Category")
+ax.set_ylabel("Actual Category ")
+ax.xaxis.set_ticklabels(target_names)
+ax.yaxis.set_ticklabels(target_names)
+plt.tight_layout(rect=(0, 0, 1, 0.92))
+_ = ax.set_title("Confusion Matrix for the\n" + str(clf).split("(")[0])
 
 # %%
 # Benchmark classifiers
-# ------------------------------------
+# ---------------------
 #
 # First we define small benchmarking utilities
-import numpy as np
-from sklearn import metrics
 from sklearn.utils.extmath import density
 
 
@@ -208,6 +290,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 results = []
 for clf, name in (
+    (LogisticRegression(), "Logistic Regression"),
     (RidgeClassifier(tol=1e-2, solver="sag"), "Ridge Classifier"),
     (Perceptron(max_iter=50), "Perceptron"),
     (PassiveAggressiveClassifier(max_iter=50), "Passive-Aggressive"),
@@ -282,7 +365,7 @@ test_time = np.array(test_time) / np.max(test_time)
 
 plt.figure(figsize=(12, 8))
 plt.title("Score")
-plt.barh(indices, score, 0.2, label="score", color="navy")
+plt.barh(indices, score, 0.2, label="test accuracy", color="navy")
 plt.barh(indices + 0.3, training_time, 0.2, label="training time", color="c")
 plt.barh(indices + 0.6, test_time, 0.2, label="test time", color="darkorange")
 plt.yticks(())
@@ -295,3 +378,8 @@ for i, c in zip(indices, clf_names):
     plt.text(-0.3, i, c)
 
 plt.show()
+
+# %%
+# The Naive Bayesian models appear to have the best trade-off between score and
+# training/testing time. LogisticRegression and KNeighborsClassifier have
+# relatively low accuracy and high training and testing time, respectively.
