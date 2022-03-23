@@ -803,6 +803,9 @@ Changelog
   the model. The option is only available when `strategy` is set to `quantile`.
   :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
 
+- |Enhancement| Adds `encoded_missing_value` to :class:`preprocessing.OrdinalEncoder`
+  to configure the encoded value for missing data. :pr:`21988` by `Thomas Fan`_.
+
 - |Enhancement| Added the `get_feature_names_out` method and a new parameter
   `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
   `feature_names_out` to 'one-to-one' to use the input features names as the
