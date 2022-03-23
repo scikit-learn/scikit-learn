@@ -618,9 +618,14 @@ Changelog
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
   :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| The `intercept_` attribute of :class:`LinearRegression` is now correctly
-  computed in the presence of sample weights when the input is sparse.
-  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+- |Fix| The `coef_` and `intercept_` attributes of :class:`LinearRegression` are now
+  correctly computed in the presence of sample weights when the input is sparse.
+  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| The `coef_` and `intercept_` attributes of :class:`Ridge` with
+  `solver="sparse_cg"` and `solver="lbfgs"` are now correctly computed in the presence
+  of sample weights when the input is sparse.
+  :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
 
 :mod:`sklearn.manifold`
 .......................
@@ -797,6 +802,9 @@ Changelog
   This allows specifying a maximum number of samples to be used while fitting
   the model. The option is only available when `strategy` is set to `quantile`.
   :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
+
+- |Enhancement| Adds `encoded_missing_value` to :class:`preprocessing.OrdinalEncoder`
+  to configure the encoded value for missing data. :pr:`21988` by `Thomas Fan`_.
 
 - |Enhancement| Added the `get_feature_names_out` method and a new parameter
   `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set

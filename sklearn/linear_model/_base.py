@@ -325,13 +325,10 @@ def _preprocess_data(
 # sample_weight makes the refactoring tricky.
 
 
-def _rescale_data(X, y, sample_weight, sqrt_sample_weight=True):
+def _rescale_data(X, y, sample_weight):
     """Rescale data sample-wise by square root of sample_weight.
 
     For many linear models, this enables easy support for sample_weight.
-
-    Set sqrt_sample_weight=False if the square root of the sample weights has already
-    been done prior to calling this function.
 
     Returns
     -------
@@ -343,12 +340,11 @@ def _rescale_data(X, y, sample_weight, sqrt_sample_weight=True):
     sample_weight = np.asarray(sample_weight)
     if sample_weight.ndim == 0:
         sample_weight = np.full(n_samples, sample_weight, dtype=sample_weight.dtype)
-    if sqrt_sample_weight:
-        sample_weight = np.sqrt(sample_weight)
-    sw_matrix = sparse.dia_matrix((sample_weight, 0), shape=(n_samples, n_samples))
+    sample_weight_sqrt = np.sqrt(sample_weight)
+    sw_matrix = sparse.dia_matrix((sample_weight_sqrt, 0), shape=(n_samples, n_samples))
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
-    return X, y
+    return X, y, sample_weight_sqrt
 
 
 class LinearModel(BaseEstimator, metaclass=ABCMeta):
@@ -695,8 +691,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         )
 
         # Sample weight can be implemented via a simple rescaling.
-        sample_weight_sqrt = np.sqrt(sample_weight)
-        X, y = _rescale_data(X, y, sample_weight_sqrt, sqrt_sample_weight=False)
+        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
         if self.positive:
             if y.ndim < 2:
@@ -844,7 +839,7 @@ def _pre_fit(
             sample_weight=sample_weight,
         )
     if sample_weight is not None:
-        X, y = _rescale_data(X, y, sample_weight=sample_weight)
+        X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
 
     # FIXME: 'normalize' to be removed in 1.2
     if hasattr(precompute, "__array__"):
