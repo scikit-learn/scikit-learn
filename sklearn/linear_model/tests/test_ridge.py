@@ -440,26 +440,6 @@ def test_ridge_regression_unpenalized_vstacked_X(
         assert_allclose(model.coef_, coef)
 
 
-def test_primal_dual_relationship():
-    y = y_diabetes.reshape(-1, 1)
-    coef = _solve_cholesky(X_diabetes, y, alpha=[1e-2])
-    K = np.dot(X_diabetes, X_diabetes.T)
-    dual_coef = _solve_cholesky_kernel(K, y, alpha=[1e-2])
-    coef2 = np.dot(X_diabetes.T, dual_coef).T
-    assert_array_almost_equal(coef, coef2)
-
-
-def test_ridge_regression_convergence_fail():
-    rng = np.random.RandomState(0)
-    y = rng.randn(5)
-    X = rng.randn(5, 10)
-    warning_message = r"sparse_cg did not converge after" r" [0-9]+ iterations."
-    with pytest.warns(ConvergenceWarning, match=warning_message):
-        ridge_regression(
-            X, y, alpha=1.0, solver="sparse_cg", tol=0.0, max_iter=None, verbose=1
-        )
-
-
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("sparseX", [True, False])
@@ -507,6 +487,26 @@ def test_ridge_regression_sample_weights(
 
     assert model.intercept_ == pytest.approx(intercept)
     assert_allclose(model.coef_, coef)
+
+
+def test_primal_dual_relationship():
+    y = y_diabetes.reshape(-1, 1)
+    coef = _solve_cholesky(X_diabetes, y, alpha=[1e-2])
+    K = np.dot(X_diabetes, X_diabetes.T)
+    dual_coef = _solve_cholesky_kernel(K, y, alpha=[1e-2])
+    coef2 = np.dot(X_diabetes.T, dual_coef).T
+    assert_array_almost_equal(coef, coef2)
+
+
+def test_ridge_regression_convergence_fail():
+    rng = np.random.RandomState(0)
+    y = rng.randn(5)
+    X = rng.randn(5, 10)
+    warning_message = r"sparse_cg did not converge after" r" [0-9]+ iterations."
+    with pytest.warns(ConvergenceWarning, match=warning_message):
+        ridge_regression(
+            X, y, alpha=1.0, solver="sparse_cg", tol=0.0, max_iter=None, verbose=1
+        )
 
 
 def test_ridge_shapes_type():
