@@ -1697,6 +1697,8 @@ def test_max_samples_boundary_regressors(name):
     assert ms_1_ms == pytest.approx(ms_None_ms)
 
 
+# TODO: Trees do not preserve dtype when fitting/predicting.
+# Add `global_dtype` when Trees have this ability.
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
 def test_max_samples_boundary_classifiers(name):
     X_train, X_test, y_train, _ = train_test_split(
