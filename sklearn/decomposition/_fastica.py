@@ -54,9 +54,10 @@ def _sym_decorrelation(W):
     i.e. W <- (W * W.T) ^{-1/2} * W
     """
     s, u = linalg.eigh(np.dot(W, W.T))
-    # avoid sqrt of negative values or division by zero because of rounding
-    # errors:
-    s = np.clip(s, a_min=np.finfo(W.dtype).eps, a_max=None)
+    # Avoid sqrt of negative values because of rounding errors. Not that
+    # np.sqrt(smallest_subnormal) is larger than smallest_subnormal and
+    # therefore this clipping also prevents division by zero in the next step.
+    s = np.clip(s, a_min=np.finfo(W.dtype).smallest_subnormal, a_max=None)
 
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
