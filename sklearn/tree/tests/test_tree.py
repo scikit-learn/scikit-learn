@@ -2444,7 +2444,7 @@ def test_check_node_ndarray():
 # TODO(1.3): Remove
 def test_max_features_auto_deprecated():
     for Tree in CLF_TREES.values():
-        tree = Tree(max_features=old_max_features)
+        tree = Tree(max_features="auto")
         msg = (
             "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
             " 1.3. To keep the past behaviour, explicitly set `max_features='sqrt'`."
