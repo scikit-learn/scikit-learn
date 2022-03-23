@@ -84,7 +84,7 @@ def test_compute_mi_cd(global_dtype):
         y = np.empty(n_samples, global_dtype)
         mask = x == 0
         y[mask] = rng.uniform(-1, 1, size=np.sum(mask))
-        y[~mask] = rng.uniform(0, 2, size=np.sum(~mask)).astype(global_dtype)
+        y[~mask] = rng.uniform(0, 2, size=np.sum(~mask))
 
         I_theory = -0.5 * (
             (1 - p) * np.log(0.5 * (1 - p)) + p * np.log(0.5 * p) + np.log(0.5)
@@ -105,7 +105,7 @@ def test_compute_mi_cd_unique_label(global_dtype):
 
     y = np.empty(n_samples, global_dtype)
     mask = x == 0
-    y[mask] = np.random.uniform(-1, 1, size=np.sum(mask)).astype(global_dtype)
+    y[mask] = np.random.uniform(-1, 1, size=np.sum(mask))
     y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask))
 
     mi_1 = _compute_mi(x, y, x_discrete=True, y_discrete=False)
@@ -114,14 +114,12 @@ def test_compute_mi_cd_unique_label(global_dtype):
     y = np.hstack((y, 10))
     mi_2 = _compute_mi(x, y, x_discrete=True, y_discrete=False)
 
-    assert mi_1 == mi_2
+    assert_allclose(mi_1, mi_2)
 
 
 # We are going test that feature ordering by MI matches our expectations.
 def test_mutual_info_classif_discrete(global_dtype):
-    X = np.array(
-        [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=global_dtype
-    )
+    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]])
     y = np.array([0, 1, 2, 2, 1])
 
     # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
@@ -180,14 +178,10 @@ def test_mutual_info_options(global_dtype):
     X = np.array(
         [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=global_dtype
     )
-    y = np.array([0, 1, 2, 2, 1])
+    y = np.array([0, 1, 2, 2, 1], dtype=global_dtype)
     X_csr = csr_matrix(X)
 
-    for mutual_info, y_dtype in (
-        (mutual_info_regression, global_dtype),
-        (mutual_info_classif, y.dtype),
-    ):
-        y = y.astype(global_dtype)
+    for mutual_info in (mutual_info_regression, mutual_info_classif):
         with pytest.raises(ValueError):
             mutual_info(X_csr, y, discrete_features=False)
         with pytest.raises(ValueError):
