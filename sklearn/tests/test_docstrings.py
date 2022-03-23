@@ -12,15 +12,10 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.covariance._shrunk_covariance.ledoit_wolf",
-    "sklearn.datasets._base.load_sample_image",
-    "sklearn.datasets._base.load_wine",
-    "sklearn.datasets._covtype.fetch_covtype",
     "sklearn.datasets._kddcup99.fetch_kddcup99",
     "sklearn.datasets._lfw.fetch_lfw_pairs",
     "sklearn.datasets._lfw.fetch_lfw_people",
     "sklearn.datasets._samples_generator.make_gaussian_quantiles",
-    "sklearn.datasets._samples_generator.make_sparse_coded_signal",
     "sklearn.datasets._samples_generator.make_spd_matrix",
     "sklearn.datasets._species_distributions.fetch_species_distributions",
     "sklearn.datasets._svmlight_format_io.dump_svmlight_file",
@@ -51,7 +46,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._classification.hinge_loss",
     "sklearn.metrics._classification.jaccard_score",
     "sklearn.metrics._classification.log_loss",
-    "sklearn.metrics._plot.confusion_matrix.plot_confusion_matrix",
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics._ranking.auc",
@@ -99,7 +93,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.model_selection._validation.validation_curve",
     "sklearn.pipeline.make_union",
     "sklearn.preprocessing._data.maxabs_scale",
-    "sklearn.preprocessing._data.power_transform",
     "sklearn.preprocessing._data.robust_scale",
     "sklearn.preprocessing._data.scale",
     "sklearn.preprocessing._label.label_binarize",
@@ -143,7 +136,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
     "sklearn.utils.sparsefuncs.mean_variance_axis",
-    "sklearn.utils.sparsefuncs.min_max_axis",
     "sklearn.utils.validation.check_is_fitted",
     "sklearn.utils.validation.check_memory",
 ]
