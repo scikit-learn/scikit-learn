@@ -55,7 +55,7 @@ def test_lof(global_dtype):
 def test_lof_performance(global_dtype):
     # Generate train/test data
     rng = check_random_state(2)
-    X = 0.3 * rng.randn(120, 2).astype(global_dtype)
+    X = 0.3 * rng.randn(120, 2).astype(global_dtype, copy=False)
     X_train = X[:100]
 
     # Generate some abnormal novel observations
@@ -97,8 +97,8 @@ def test_lof_precomputed(global_dtype, random_state=42):
     """Tests LOF with a distance matrix."""
     # Note: smaller samples may result in spurious test success
     rng = np.random.RandomState(random_state)
-    X = rng.random_sample((10, 4)).astype(global_dtype)
-    Y = rng.random_sample((3, 4)).astype(global_dtype)
+    X = rng.random_sample((10, 4)).astype(global_dtype, copy=False)
+    Y = rng.random_sample((3, 4)).astype(global_dtype, copy=False)
     DXX = metrics.pairwise_distances(X, metric="euclidean")
     DYX = metrics.pairwise_distances(Y, X, metric="euclidean")
     # As a feature matrix (n_samples by n_features)
