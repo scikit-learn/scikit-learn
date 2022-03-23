@@ -5,8 +5,8 @@ Recursive feature elimination with cross-validation
 
 A recursive feature elimination example with automatic tuning of the
 number of features selected with cross-validation.
+
 """
-print(__doc__)
 
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
@@ -46,7 +46,7 @@ print("Optimal number of features : %d" % rfecv.n_features_)
 # Plot number of features VS. cross-validation scores
 plt.figure()
 plt.xlabel("Number of features selected")
-plt.ylabel("Cross validation score (nb of correct classifications)")
+plt.ylabel("Cross validation score (accuracy)")
 plt.plot(
     range(min_features_to_select, len(rfecv.grid_scores_) + min_features_to_select),
     rfecv.grid_scores_,

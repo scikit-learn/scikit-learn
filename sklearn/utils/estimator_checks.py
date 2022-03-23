@@ -39,7 +39,6 @@ from ..base import (
     is_regressor,
     is_outlier_detector,
     RegressorMixin,
-    _is_pairwise,
 )
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
@@ -53,6 +52,7 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
+from ..utils.fixes import threadpool_info
 from ..utils.validation import check_is_fitted
 
 from . import shuffle
@@ -77,7 +77,6 @@ CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
-    pairwise = _is_pairwise(estimator)
 
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
@@ -86,7 +85,7 @@ def _yield_checks(estimator):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
         yield check_sample_weights_list
-        if not pairwise:
+        if not tags["pairwise"]:
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
@@ -110,7 +109,7 @@ def _yield_checks(estimator):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
-    if pairwise:
+    if tags["pairwise"]:
         # Check that pairwise estimator throws error on non-square input
         yield check_nonsquare_error
 
@@ -167,18 +166,34 @@ def check_supervised_y_no_nan(name, estimator_orig):
     # Checks that the Estimator targets are not NaN.
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(888)
-    X = rng.randn(10, 5)
-    y = np.full(10, np.inf)
-    y = _enforce_estimator_tags_y(estimator, y)
+    X = rng.standard_normal(size=(10, 5))
 
-    match = (
-        "Input contains NaN, infinity or a value too large for " r"dtype\('float64'\)."
-    )
-    err_msg = (
-        f"Estimator {name} should have raised error on fitting array y with NaN value."
-    )
-    with raises(ValueError, match=match, err_msg=err_msg):
-        estimator.fit(X, y)
+    for value in [np.nan, np.inf]:
+        y = np.full(10, value)
+        y = _enforce_estimator_tags_y(estimator, y)
+
+        module_name = estimator.__module__
+        if module_name.startswith("sklearn.") and not (
+            "test_" in module_name or module_name.endswith("_testing")
+        ):
+            # In scikit-learn we want the error message to mention the input
+            # name and be specific about the kind of unexpected value.
+            if np.isinf(value):
+                match = (
+                    r"Input (y|Y) contains infinity or a value too large for"
+                    r" dtype\('float64'\)."
+                )
+            else:
+                match = r"Input (y|Y) contains NaN."
+        else:
+            # Do not impose a particular error message to third-party libraries.
+            match = None
+        err_msg = (
+            f"Estimator {name} should have raised error on fitting array y with inf"
+            " value."
+        )
+        with raises(ValueError, match=match, err_msg=err_msg):
+            estimator.fit(X, y)
 
 
 def _yield_regressor_checks(regressor):
@@ -261,6 +276,7 @@ def _yield_outliers_checks(estimator):
         # test if NotFittedError is raised
         if _safe_tags(estimator, key="requires_fit"):
             yield check_estimators_unfitted
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_all_checks(estimator):
@@ -299,8 +315,9 @@ def _yield_all_checks(estimator):
         for check in _yield_outliers_checks(estimator):
             yield check
     yield check_parameters_default_constructible
-    yield check_methods_sample_order_invariance
-    yield check_methods_subset_invariance
+    if not tags["non_deterministic"]:
+        yield check_methods_sample_order_invariance
+        yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_get_params_invariance
@@ -472,6 +489,10 @@ def parametrize_with_checks(estimators):
     -------
     decorator : `pytest.mark.parametrize`
 
+    See Also
+    --------
+    check_estimator : Check if estimator adheres to scikit-learn conventions.
+
     Examples
     --------
     >>> from sklearn.utils.estimator_checks import parametrize_with_checks
@@ -506,10 +527,10 @@ def parametrize_with_checks(estimators):
     )
 
 
-def check_estimator(Estimator, generate_only=False):
+def check_estimator(estimator=None, generate_only=False, Estimator="deprecated"):
     """Check if estimator adheres to scikit-learn conventions.
 
-    This estimator will run an extensive test-suite for input validation,
+    This function will run an extensive test-suite for input validation,
     shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
@@ -527,10 +548,10 @@ def check_estimator(Estimator, generate_only=False):
 
     Parameters
     ----------
-    Estimator : estimator object
+    estimator : estimator object
         Estimator instance to check.
 
-        .. versionchanged:: 0.24
+        .. versionadded:: 1.1
            Passing a class was deprecated in version 0.23, and support for
            classes was removed in 0.24.
 
@@ -542,13 +563,37 @@ def check_estimator(Estimator, generate_only=False):
 
         .. versionadded:: 0.22
 
+    Estimator : estimator object
+        Estimator instance to check.
+
+        .. deprecated:: 1.1
+            ``Estimator`` was deprecated in favor of ``estimator`` in version 1.1
+            and will be removed in version 1.3.
+
     Returns
     -------
     checks_generator : generator
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
+
+    See Also
+    --------
+    parametrize_with_checks : Pytest specific decorator for parametrizing estimator
+        checks.
     """
-    if isinstance(Estimator, type):
+
+    if estimator is None and Estimator == "deprecated":
+        msg = "Either estimator or Estimator should be passed to check_estimator."
+        raise ValueError(msg)
+
+    if Estimator != "deprecated":
+        msg = (
+            "'Estimator' was deprecated in favor of 'estimator' in version 1.1 "
+            "and will be removed in version 1.3."
+        )
+        warnings.warn(msg, FutureWarning)
+        estimator = Estimator
+    if isinstance(estimator, type):
         msg = (
             "Passing a class was deprecated in version 0.23 "
             "and isn't supported anymore from 0.24."
@@ -556,7 +601,6 @@ def check_estimator(Estimator, generate_only=False):
         )
         raise TypeError(msg)
 
-    estimator = Estimator
     name = type(estimator).__name__
 
     def checks_generator():
@@ -607,8 +651,7 @@ def _set_checking_parameters(estimator):
             estimator.set_params(max_iter=20)
         # NMF
         if estimator.__class__.__name__ == "NMF":
-            # FIXME : init should be removed in 1.1
-            estimator.set_params(max_iter=500, init="nndsvda")
+            estimator.set_params(max_iter=500)
         # MLP
         if estimator.__class__.__name__ in ["MLPClassifier", "MLPRegressor"]:
             estimator.set_params(max_iter=100)
@@ -623,11 +666,21 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+    if name == "MeanShift":
+        # In the case of check_fit2d_1sample, bandwidth is set to None and
+        # is thus estimated. De facto it is 0.0 as a single sample is provided
+        # and this makes the test fails. Hence we give it a placeholder value.
+        estimator.set_params(bandwidth=1.0)
 
     if name == "TruncatedSVD":
         # TruncatedSVD doesn't run with n_components = n_features
         # This is ugly :-/
         estimator.n_components = 1
+
+    if name == "LassoLarsIC":
+        # Noise variance estimation does not work when `n_samples < n_features`.
+        # We need to provide the noise variance explicitly.
+        estimator.set_params(noise_variance=1.0)
 
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = min(estimator.n_clusters, 2)
@@ -721,7 +774,8 @@ def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
     if _is_pairwise_metric(estimator):
         return pairwise_distances(X, metric="euclidean")
-    if _is_pairwise(estimator):
+    tags = _safe_tags(estimator)
+    if tags["pairwise"]:
         return kernel(X, X)
 
     return X
@@ -762,11 +816,11 @@ def _generate_sparse_matrix(X_csr):
 
 def check_estimator_sparse_data(name, estimator_orig):
     rng = np.random.RandomState(0)
-    X = rng.rand(40, 10)
+    X = rng.uniform(size=(40, 3))
     X[X < 0.8] = 0
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(int)
+    y = (4 * rng.uniform(size=40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
@@ -1052,7 +1106,7 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
+    X = _pairwise_estimator_convert_X(rng.uniform(size=(40, 10)), estimator_orig)
     X = X.astype(object)
     tags = _safe_tags(estimator_orig)
     y = (X[:, 0] * 4).astype(int)
@@ -1716,9 +1770,11 @@ def check_estimators_nan_inf(name, estimator_orig):
     y = np.ones(10)
     y[:5] = 0
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    error_string_fit = "Estimator doesn't check for NaN and inf in fit."
-    error_string_predict = "Estimator doesn't check for NaN and inf in predict."
-    error_string_transform = "Estimator doesn't check for NaN and inf in transform."
+    error_string_fit = f"Estimator {name} doesn't check for NaN and inf in fit."
+    error_string_predict = f"Estimator {name} doesn't check for NaN and inf in predict."
+    error_string_transform = (
+        f"Estimator {name} doesn't check for NaN and inf in transform."
+    )
     for X_train in [X_train_nan, X_train_inf]:
         # catch deprecation warnings
         with ignore_warnings(category=FutureWarning):
@@ -2032,6 +2088,22 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
+def _create_memmap_backed_data(numpy_arrays):
+    # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
+    # See: https://github.com/scipy/scipy/issues/14886
+    has_prescott_openblas = any(
+        True
+        for info in threadpool_info()
+        if info["internal_api"] == "openblas"
+        # Prudently assume Prescott might be the architecture if it is unknown.
+        and info.get("architecture", "prescott").lower() == "prescott"
+    )
+    return [
+        create_memmap_backed_data(array, aligned=has_prescott_openblas)
+        for array in numpy_arrays
+    ]
+
+
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2049,7 +2121,7 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
+        X_m, y_m, X_b, y_b = _create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
@@ -2102,7 +2174,7 @@ def check_classifiers_train(
         )
 
         if not tags["no_validation"]:
-            if _is_pairwise(classifier):
+            if tags["pairwise"]:
                 with raises(
                     ValueError,
                     err_msg=msg_pairwise.format(name, "predict"),
@@ -2128,7 +2200,7 @@ def check_classifiers_train(
 
                 # raises error on malformed input for decision_function
                 if not tags["no_validation"]:
-                    if _is_pairwise(classifier):
+                    if tags["pairwise"]:
                         with raises(
                             ValueError,
                             err_msg=msg_pairwise.format(name, "decision_function"),
@@ -2152,7 +2224,7 @@ def check_classifiers_train(
             assert_array_almost_equal(np.sum(y_prob, axis=1), np.ones(n_samples))
             if not tags["no_validation"]:
                 # raises error on malformed input for predict_proba
-                if _is_pairwise(classifier_orig):
+                if tags["pairwise"]:
                     with raises(
                         ValueError,
                         err_msg=msg_pairwise.format(name, "predict_proba"),
@@ -2625,7 +2697,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
 
 
 def _choose_check_classifiers_labels(name, y, y_names):
-    # Semisupervised classifers use -1 as the indicator for an unlabeled
+    # Semisupervised classifiers use -1 as the indicator for an unlabeled
     # sample.
     return (
         y
@@ -2717,7 +2789,7 @@ def check_regressors_train(
         y_ = y
 
     if readonly_memmap:
-        X, y, y_ = create_memmap_backed_data([X, y, y_])
+        X, y, y_ = _create_memmap_backed_data([X, y, y_])
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -2783,7 +2855,7 @@ def check_class_weight_classifiers(name, classifier_orig):
         )
 
         # can't use gram_if_pairwise() here, setting up gram matrix manually
-        if _is_pairwise(classifier_orig):
+        if _safe_tags(classifier_orig, key="pairwise"):
             X_test = rbf_kernel(X_test, X_train)
             X_train = rbf_kernel(X_train, X_train)
 
@@ -3182,7 +3254,7 @@ def _enforce_estimator_tags_y(estimator, y):
 def _enforce_estimator_tags_x(estimator, X):
     # Pairwise estimators only accept
     # X of shape (`n_samples`, `n_samples`)
-    if _is_pairwise(estimator):
+    if _safe_tags(estimator, key="pairwise"):
         X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
@@ -3208,11 +3280,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # labeled, hence n_iter_ = 0 is valid.
     not_run_check_n_iter = [
         "Ridge",
-        "SVR",
-        "NuSVR",
-        "NuSVC",
         "RidgeClassifier",
-        "SVC",
         "RandomizedLasso",
         "LogisticRegressionCV",
         "LinearSVC",
@@ -3237,9 +3305,11 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 
         set_random_state(estimator, 0)
 
+        X = _pairwise_estimator_convert_X(X, estimator_orig)
+
         estimator.fit(X, y_)
 
-        assert estimator.n_iter_ >= 1
+        assert np.all(estimator.n_iter_ >= 1)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3566,20 +3636,8 @@ def check_n_features_in(name, estimator_orig):
 
     assert not hasattr(estimator, "n_features_in_")
     estimator.fit(X, y)
-    if hasattr(estimator, "n_features_in_"):
-        assert estimator.n_features_in_ == X.shape[1]
-    else:
-        warnings.warn(
-            "As of scikit-learn 0.23, estimators should expose a "
-            "n_features_in_ attribute, unless the 'no_validation' tag is "
-            "True. This attribute should be equal to the number of features "
-            "passed to the fit method. "
-            "An error will be raised from version 1.0 (renaming of 0.25) "
-            "when calling check_estimator(). "
-            "See SLEP010: "
-            "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
-            FutureWarning,
-        )
+    assert hasattr(estimator, "n_features_in_")
+    assert estimator.n_features_in_ == X.shape[1]
 
 
 def check_requires_y_none(name, estimator_orig):
@@ -3595,14 +3653,6 @@ def check_requires_y_none(name, estimator_orig):
     X = rng.normal(loc=100, size=(n_samples, 2))
     X = _pairwise_estimator_convert_X(X, estimator)
 
-    warning_msg = (
-        "As of scikit-learn 0.23, estimators should have a "
-        "'requires_y' tag set to the appropriate value. "
-        "The default value of the tag is False. "
-        "An error will be raised from version 1.0 when calling "
-        "check_estimator() if the tag isn't properly set."
-    )
-
     expected_err_msgs = (
         "requires y to be passed, but the target y is None",
         "Expected array-like (array or non-string sequence), got None",
@@ -3613,7 +3663,7 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            warnings.warn(warning_msg, FutureWarning)
+            raise ve
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3738,7 +3788,16 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
-    estimator.fit(X, y)
+
+    # Check that calling `fit` does not raise any warnings about feature names.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "error",
+            message="X does not have valid feature names",
+            category=UserWarning,
+            module="sklearn",
+        )
+        estimator.fit(X, y)
 
     if not hasattr(estimator, "feature_names_in_"):
         raise ValueError(
@@ -3779,7 +3838,14 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         check_methods.append((method, callable_method))
 
     for _, method in check_methods:
-        method(X)  # works
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error",
+                message="X does not have valid feature names",
+                category=UserWarning,
+                module="sklearn",
+            )
+            method(X)  # works without UserWarning for valid features
 
     invalid_names = [
         (names[::-1], "Feature names must be in the same order as they were in fit."),
@@ -3793,6 +3859,12 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
             f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
         ),
     ]
+    params = {
+        key: value
+        for key, value in estimator.get_params().items()
+        if "early_stopping" in key
+    }
+    early_stopping_enabled = any(value is True for value in params.values())
 
     for invalid_name, additional_message in invalid_names:
         X_bad = pd.DataFrame(X, columns=invalid_name)
@@ -3816,7 +3888,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
                     method(X_bad)
 
         # partial_fit checks on second call
-        if not hasattr(estimator, "partial_fit"):
+        # Do not call partial fit if early_stopping is on
+        if not hasattr(estimator, "partial_fit") or early_stopping_enabled:
             continue
 
         estimator = clone(estimator_orig)
@@ -3869,6 +3942,7 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     feature_names_out = transformer.get_feature_names_out(input_features)
     assert feature_names_out is not None
     assert isinstance(feature_names_out, np.ndarray)
+    assert feature_names_out.dtype == object
     assert all(isinstance(name, str) for name in feature_names_out)
 
     if isinstance(X_transform, tuple):

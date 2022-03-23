@@ -279,7 +279,7 @@ class TweedieDistribution(ExponentialDispersionModel):
                 )
             )
             if p < 0:
-                # 'Extreme stable', y any realy number, y_pred > 0
+                # 'Extreme stable', y any real number, y_pred > 0
                 if (y_pred <= 0).any():
                     raise ValueError(message + "strictly positive y_pred.")
             elif p == 0:
@@ -290,7 +290,7 @@ class TweedieDistribution(ExponentialDispersionModel):
                     "Tweedie deviance is only defined for power<=0 and power>=1."
                 )
             elif 1 <= p < 2:
-                # Poisson and Compount poisson distribution, y >= 0, y_pred > 0
+                # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
                 if (y < 0).any() or (y_pred <= 0).any():
                     raise ValueError(
                         message + "non-negative y and strictly positive y_pred."
@@ -304,7 +304,7 @@ class TweedieDistribution(ExponentialDispersionModel):
                 raise ValueError
 
         if p < 0:
-            # 'Extreme stable', y any realy number, y_pred > 0
+            # 'Extreme stable', y any real number, y_pred > 0
             dev = 2 * (
                 np.power(np.maximum(y, 0), 2 - p) / ((1 - p) * (2 - p))
                 - y * np.power(y_pred, 1 - p) / (1 - p)

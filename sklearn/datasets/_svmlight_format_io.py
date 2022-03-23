@@ -446,7 +446,7 @@ def dump_svmlight_file(
         integer or float, or array-like objects of integer or float for
         multilabel classifications.
 
-    f : string or file-like in binary mode
+    f : str or file-like in binary mode
         If string, specifies the path that will contain the data.
         If file-like, data will be written to f. f should be opened in binary
         mode.
@@ -455,7 +455,7 @@ def dump_svmlight_file(
         Whether column indices should be written zero-based (True) or one-based
         (False).
 
-    comment : string, default=None
+    comment : str, default=None
         Comment to insert at the top of the file. This should be either a
         Unicode string, which will be encoded as UTF-8, or an ASCII byte
         string.
@@ -478,7 +478,6 @@ def dump_svmlight_file(
         # Convert comment string to list of lines in UTF-8.
         # If a byte string is passed, then check whether it's ASCII;
         # if a user wants to get fancy, they'll have to decode themselves.
-        # Avoid mention of str and unicode types for Python 3.x compat.
         if isinstance(comment, bytes):
             comment.decode("ascii")  # just for the exception
         else:

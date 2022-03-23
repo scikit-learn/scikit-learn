@@ -26,9 +26,8 @@ wage as a function of various features such as experience, age, or education.
 .. contents::
    :local:
    :depth: 1
-"""
 
-print(__doc__)
+"""
 
 import numpy as np
 import scipy as sp
@@ -135,7 +134,7 @@ numerical_columns = ["EDUCATION", "EXPERIENCE", "AGE"]
 preprocessor = make_column_transformer(
     (OneHotEncoder(drop="if_binary"), categorical_columns),
     remainder="passthrough",
-    prefix_feature_names_out=False,
+    verbose_feature_names_out=False,
 )
 
 # %%
@@ -312,7 +311,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -354,7 +353,7 @@ _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds
 
 # %%
 # Two regions are populated: when the EXPERIENCE coefficient is
-# positive the AGE one is negative and viceversa.
+# positive the AGE one is negative and vice-versa.
 #
 # To go further we remove one of the 2 features and check what is the impact
 # on the model stability.
@@ -367,7 +366,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -466,7 +465,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -572,7 +571,7 @@ cv_model = cross_validate(
     y,
     cv=RepeatedKFold(n_splits=5, n_repeats=5),
     return_estimator=True,
-    n_jobs=-1,
+    n_jobs=2,
 )
 coefs = pd.DataFrame(
     [
@@ -664,7 +663,7 @@ plt.subplots_adjust(left=0.3)
 # It is important to keep in mind that the coefficients that have been
 # dropped may still be related to the outcome by themselves: the model
 # chose to suppress them because they bring little or no additional
-# information on top of the other features. Additionnaly, this selection
+# information on top of the other features. Additionally, this selection
 # is unstable for correlated features, and should be interpreted with
 # caution.
 #

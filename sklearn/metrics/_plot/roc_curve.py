@@ -94,8 +94,8 @@ class RocCurveDisplay:
             created.
 
         name : str, default=None
-            Name of ROC Curve for labeling. If `None`, use the name of the
-            estimator.
+            Name of ROC Curve for labeling. If `None`, use `estimator_name` if
+            not `None`, otherwise no labeling is shown.
 
         Returns
         -------
@@ -301,7 +301,7 @@ class RocCurveDisplay:
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.DetCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
 
         See Also
@@ -350,10 +350,10 @@ class RocCurveDisplay:
 
 
 @deprecated(
-    "Function `plot_roc_curve` is deprecated in 1.0 and will be "
+    "Function :func:`plot_roc_curve` is deprecated in 1.0 and will be "
     "removed in 1.2. Use one of the class methods: "
-    "RocCurveDisplay.from_predictions or "
-    "RocCurveDisplay.from_estimator."
+    ":meth:`sklearn.metric.RocCurveDisplay.from_predictions` or "
+    ":meth:`sklearn.metric.RocCurveDisplay.from_estimator`."
 )
 def plot_roc_curve(
     estimator,
@@ -373,12 +373,6 @@ def plot_roc_curve(
     Extra keyword arguments will be passed to matplotlib's `plot`.
 
     Read more in the :ref:`User Guide <visualizations>`.
-
-    .. deprecated:: 1.0
-      `plot_roc_curve` is deprecated in 1.0 and will be removed in
-       1.2. Use one of the following class methods:
-       :func:`~sklearn.metrics.RocCurveDisplay.from_predictions` or
-       :func:`~sklearn.metrics.RocCurveDisplay.from_estimator`.
 
     Parameters
     ----------
@@ -419,6 +413,9 @@ def plot_roc_curve(
         metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
 
+    **kwargs : dict
+        Additional keywords arguments passed to matplotlib `plot` function.
+
         .. versionadded:: 0.24
 
     Returns
@@ -429,7 +426,7 @@ def plot_roc_curve(
     See Also
     --------
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay.from_estimator : ROC Curve visualzation given an estimator
+    RocCurveDisplay.from_estimator : ROC Curve visualization given an estimator
         and some data.
     RocCurveDisplay.from_predictions : ROC Curve visualisation given the
         true and predicted values.

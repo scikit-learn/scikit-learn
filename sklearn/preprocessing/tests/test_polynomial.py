@@ -13,7 +13,6 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
-from sklearn.utils.fixes import linspace, sp_version, parse_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -253,8 +252,8 @@ def test_spline_transformer_get_base_knot_positions(
 )
 def test_spline_transformer_periodicity_of_extrapolation(knots, n_knots, degree):
     """Test that the SplineTransformer is periodic for multiple features."""
-    X_1 = linspace((-1, 0), (1, 5), 10)
-    X_2 = linspace((1, 5), (3, 10), 10)
+    X_1 = np.linspace((-1, 0), (1, 5), 10)
+    X_2 = np.linspace((1, 5), (3, 10), 10)
 
     splt = SplineTransformer(
         knots=knots, n_knots=n_knots, degree=degree, extrapolation="periodic"
@@ -295,10 +294,6 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
 
 
-@pytest.mark.skipif(
-    sp_version < parse_version("1.0.0"),
-    reason="Periodic extrapolation not yet implemented for BSpline.",
-)
 def test_spline_transformer_periodic_spline_backport():
     """Test that the backport of extrapolate="periodic" works correctly"""
     X = np.linspace(-2, 3.5, 10)[:, None]
@@ -359,7 +354,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     dXt = Xt
     # We expect splines of degree `degree` to be (`degree`-1) times
     # continuously differentiable. I.e. for d = 0, ..., `degree` - 1 the d-th
-    # derivative should be continous. This is the case if the (d+1)-th
+    # derivative should be continuous. This is the case if the (d+1)-th
     # numerical derivative is reasonably small (smaller than `tol` in absolute
     # value). We thus compute d-th numeric derivatives for d = 1, ..., `degree`
     # and compare them to `tol`.
@@ -373,7 +368,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
         # Compute d-th numeric derivative
         dXt = diff / delta
 
-    # As degree `degree` splines are not `degree` times continously
+    # As degree `degree` splines are not `degree` times continuously
     # differentiable at the knots, the `degree + 1`-th numeric derivative
     # should have spikes at the knots.
     diff = np.diff(dXt, axis=0)
@@ -490,7 +485,7 @@ def test_polynomial_features_input_validation(params, err_msg):
 @pytest.fixture()
 def single_feature_degree3():
     X = np.arange(6)[:, np.newaxis]
-    P = np.hstack([np.ones_like(X), X, X ** 2, X ** 3])
+    P = np.hstack([np.ones_like(X), X, X**2, X**3])
     return X, P
 
 
@@ -541,16 +536,16 @@ def two_features_degree3():
     x2 = X[:, 1:]
     P = np.hstack(
         [
-            x1 ** 0 * x2 ** 0,  # 0
-            x1 ** 1 * x2 ** 0,  # 1
-            x1 ** 0 * x2 ** 1,  # 2
-            x1 ** 2 * x2 ** 0,  # 3
-            x1 ** 1 * x2 ** 1,  # 4
-            x1 ** 0 * x2 ** 2,  # 5
-            x1 ** 3 * x2 ** 0,  # 6
-            x1 ** 2 * x2 ** 1,  # 7
-            x1 ** 1 * x2 ** 2,  # 8
-            x1 ** 0 * x2 ** 3,  # 9
+            x1**0 * x2**0,  # 0
+            x1**1 * x2**0,  # 1
+            x1**0 * x2**1,  # 2
+            x1**2 * x2**0,  # 3
+            x1**1 * x2**1,  # 4
+            x1**0 * x2**2,  # 5
+            x1**3 * x2**0,  # 6
+            x1**2 * x2**1,  # 7
+            x1**1 * x2**2,  # 8
+            x1**0 * x2**3,  # 9
         ]
     )
     return X, P

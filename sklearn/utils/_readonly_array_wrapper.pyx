@@ -1,5 +1,5 @@
 """
-ReadonlyArrayWrapper implements the buffer protocol to make the wraped buffer behave as if
+ReadonlyArrayWrapper implements the buffer protocol to make the wrapped buffer behave as if
 writeable, even for readonly buffers. This way, even readonly arrays can be passed as
 argument of type (non const) memoryview.
 This is a workaround for the missing support for const fused-typed memoryviews in
@@ -48,12 +48,12 @@ cdef class ReadonlyArrayWrapper:
         PyBuffer_Release(buffer)
 
 
-def _test_sum(NUM_TYPES[:] x):
+def _test_sum(NUM_TYPES[::1] x):
     """This function is for testing only.
 
     As this function does not modify x, we would like to define it as
 
-            _test_sum(const NUM_TYPES[:] x)
+            _test_sum(const NUM_TYPES[::1] x)
 
     which is not possible as fused typed const memoryviews aren't
     supported in Cython<3.0.

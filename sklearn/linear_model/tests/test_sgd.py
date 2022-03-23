@@ -10,7 +10,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -247,13 +246,16 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
         ),
         ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
     ],
+    # Avoid long error messages in test names:
+    # https://github.com/scikit-learn/scikit-learn/issues/21362
+    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
 )
 def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
     """Validate parameters in the different SGD estimators."""
     try:
         sgd_estimator = klass(**params)
     except TypeError as err:
-        if "__init__() got an unexpected keyword argument" in str(err):
+        if "unexpected keyword argument" in str(err):
             # skip test if the parameter is not supported by the estimator
             return
         raise err
@@ -2095,9 +2097,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # this specific case, in-place modification of clf.coef_ would have caused
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
-
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
-        pytest.skip("loky backend does not exist in joblib <0.12")
 
     random_state = np.random.RandomState(42)
 

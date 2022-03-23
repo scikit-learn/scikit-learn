@@ -294,8 +294,8 @@ class DetCurveDisplay:
             created.
 
         name : str, default=None
-            Name of DET curve for labeling. If `None`, use the name of the
-            estimator.
+            Name of DET curve for labeling. If `None`, use `estimator_name` if
+            it is not `None`, otherwise no labeling is shown.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.

@@ -41,7 +41,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling
         the data. Pass an int for reproducible results across multiple function
-        calls. See :term: `Glossary <random_state>`.
+        calls. See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -215,7 +215,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
             Opposite of the Mahalanobis distances.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
         return -self.mahalanobis(X)
 
     def predict(self, X):

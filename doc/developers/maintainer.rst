@@ -33,7 +33,7 @@ Before a release
 
    - ``maint_tools/sort_whats_new.py`` can put what's new entries into
      sections. It's not perfect, and requires manual checking of the changes.
-     If the whats new list is well curated, it may not be necessary.
+     If the what's new list is well curated, it may not be necessary.
 
    - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
      requests that were merged but likely missing from What's New.
@@ -198,7 +198,7 @@ Making a release
   `Continuous Integration
   <https://en.wikipedia.org/wiki/Continuous_integration>`_. The CD workflow on
   GitHub Actions is also used to automatically create nightly builds and
-  publish packages for the developement branch of scikit-learn. See
+  publish packages for the development branch of scikit-learn. See
   :ref:`install_nightly_builds`.
 
 4. Once all the CD jobs have completed successfully in the PR, merge it,
@@ -210,6 +210,12 @@ Making a release
    following GitHub Actions workflow:
 
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Publish+to+Pypi%22
+
+4.1 You can test the conda-forge builds by submitting a PR to the feedstock
+    repo: https://github.com/conda-forge/scikit-learn-feedstock. If you want to
+    publish an RC release on conda-forge, the PR should target the `rc` branch
+    as opposed to the `master` branch. The two branches need to be kept sync
+    together otherwise.
 
 5. If this went fine, you can proceed with tagging. Proceed with caution.
    Ideally, tags should be created when you're almost certain that the release
@@ -237,7 +243,11 @@ Making a release
 
        rm -r dist
        pip install -U wheelhouse_uploader twine
-       python setup.py fetch_artifacts
+       python -m wheelhouse_uploader fetch \
+         --version 0.99.0 \
+         --local-folder dist \
+         scikit-learn \
+         https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
 
    This command will download all the binary packages accumulated in the
    `staging area on the anaconda.org hosting service
@@ -272,11 +282,11 @@ Making a release
        git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
        cd scikit-learn.github.io
        echo stable > .git/info/sparse-checkout
-       git checkout master
+       git checkout main
        rm stable
        ln -s 0.999 stable
        sed -i "s/latestStable = '.*/latestStable = '0.999';/" versionwarning.js
-       git add stable/ versionwarning.js
+       git add stable versionwarning.js
        git commit -m "Update stable to point to 0.999"
        git push origin master
 
@@ -293,14 +303,11 @@ The following GitHub checklist might be helpful in a release PR::
     * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
     * [ ] create tag on the main github repo
-    * [ ] upload the wheels and source tarball to PyPI
-    * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
     * [ ] confirm bot detected at
       https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
+    * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
-    * [ ] fix the binder release version in ``.binder/requirement.txt`` (see
-      #15847)
-    * [ ] announce on mailing list and on twitter
+    * [ ] announce on mailing list and on Twitter, and LinkedIn
 
 Merging Pull Requests
 ---------------------

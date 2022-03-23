@@ -1,5 +1,3 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
-#
 # Licence: BSD 3 clause
 
 # TODO: We still need to use ndarrays instead of typed memoryviews when using
@@ -279,7 +277,7 @@ def lloyd_iter_chunked_sparse(
         int n_features = X.shape[1]
         int n_clusters = centers_new.shape[0]
 
-        # Chosed same as for dense. Does not have the same impact since with
+        # Choose same as for dense. Does not have the same impact since with
         # sparse data the pairwise distances matrix is not precomputed.
         # However, splitting in chunks is necessary to get parallelism.
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
@@ -324,7 +322,7 @@ def lloyd_iter_chunked_sparse(
             _update_chunk_sparse(
                 X_data[X_indptr[start]: X_indptr[end]],
                 X_indices[X_indptr[start]: X_indptr[end]],
-                X_indptr[start: end],
+                X_indptr[start: end+1],
                 sample_weight[start: end],
                 x_squared_norms[start: end],
                 centers_old,

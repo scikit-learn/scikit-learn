@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils.class_weight import compute_sample_weight
@@ -30,7 +32,9 @@ def test_compute_class_weight_not_present():
         compute_class_weight("balanced", classes=classes, y=y)
     # Fix exception in error message formatting when missing label is a string
     # https://github.com/scikit-learn/scikit-learn/issues/8312
-    with pytest.raises(ValueError, match="Class label label_not_present not present"):
+    with pytest.raises(
+        ValueError, match=r"The classes, \[0, 1, 2, 3\], are not in class_weight"
+    ):
         compute_class_weight({"label_not_present": 1.0}, classes=classes, y=y)
     # Raise error when y has items not in classes
     classes = np.arange(2)
@@ -38,6 +42,15 @@ def test_compute_class_weight_not_present():
         compute_class_weight("balanced", classes=classes, y=y)
     with pytest.raises(ValueError):
         compute_class_weight({0: 1.0, 1: 2.0}, classes=classes, y=y)
+
+    # y contains a unweighted class that is not in class_weights
+    classes = np.asarray(["cat", "dog"])
+    y = np.asarray(["dog", "cat", "dog"])
+    class_weights = {"dogs": 3, "cat": 2}
+    msg = r"The classes, \['dog'\], are not in class_weight"
+
+    with pytest.raises(ValueError, match=msg):
+        compute_class_weight(class_weights, classes=classes, y=y)
 
 
 def test_compute_class_weight_dict():
@@ -50,17 +63,14 @@ def test_compute_class_weight_dict():
     # return them.
     assert_array_almost_equal(np.asarray([1.0, 2.0, 3.0]), cw)
 
-    # When a class weight is specified that isn't in classes, a ValueError
-    # should get raised
-    msg = "Class label 4 not present."
+    # When a class weight is specified that isn't in classes, the weight is ignored
     class_weights = {0: 1.0, 1: 2.0, 2: 3.0, 4: 1.5}
-    with pytest.raises(ValueError, match=msg):
-        compute_class_weight(class_weights, classes=classes, y=y)
+    cw = compute_class_weight(class_weights, classes=classes, y=y)
+    assert_allclose([1.0, 2.0, 3.0], cw)
 
-    msg = "Class label -1 not present."
-    class_weights = {-1: 5.0, 0: 1.0, 1: 2.0, 2: 3.0}
-    with pytest.raises(ValueError, match=msg):
-        compute_class_weight(class_weights, classes=classes, y=y)
+    class_weights = {-1: 5.0, 0: 4.0, 1: 2.0, 2: 3.0}
+    cw = compute_class_weight(class_weights, classes=classes, y=y)
+    assert_allclose([4.0, 2.0, 3.0], cw)
 
 
 def test_compute_class_weight_invariance():
@@ -185,7 +195,7 @@ def test_compute_sample_weight():
     # Test with multi-output of unbalanced classes
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1], [3, -1]])
     sample_weight = compute_sample_weight("balanced", y)
-    assert_array_almost_equal(sample_weight, expected_balanced ** 2, decimal=3)
+    assert_array_almost_equal(sample_weight, expected_balanced**2, decimal=3)
 
 
 def test_compute_sample_weight_with_subsample():
@@ -214,7 +224,7 @@ def test_compute_sample_weight_with_subsample():
     # Test with a bootstrap subsample for multi-output
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
     sample_weight = compute_sample_weight("balanced", y, indices=[0, 1, 1, 2, 2, 3])
-    assert_array_almost_equal(sample_weight, expected_balanced ** 2)
+    assert_array_almost_equal(sample_weight, expected_balanced**2)
 
     # Test with a missing class
     y = np.asarray([1, 1, 1, 2, 2, 2, 3])
@@ -261,3 +271,14 @@ def test_compute_sample_weight_more_than_32():
     indices = np.arange(50)  # use subsampling
     weight = compute_sample_weight("balanced", y, indices=indices)
     assert_array_almost_equal(weight, np.ones(y.shape[0]))
+
+
+def test_class_weight_does_not_contains_more_classses():
+    """Check that class_weight can contain more labels than in y.
+
+    Non-regression test for #22413
+    """
+    tree = DecisionTreeClassifier(class_weight={0: 1, 1: 10, 2: 20})
+
+    # Does not raise
+    tree.fit([[0, 0, 1], [1, 0, 1], [1, 2, 0]], [0, 0, 1])
