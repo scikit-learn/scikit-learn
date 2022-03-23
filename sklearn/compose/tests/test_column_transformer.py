@@ -1388,7 +1388,7 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude
 @pytest.mark.parametrize(
     "cols, min_cardinality, max_cardinality",
     [
-        (["col_low","col_mid", "col_high"], None, None),
+        (["col_low", "col_mid", "col_high"], None, None),
         (["col_low", "col_mid"], None, 5),
         (["col_mid", "col_high"], 2, None),
         (["col_low"], None, 1),
