@@ -29,12 +29,13 @@ X, _ = make_blobs(
     random_state=0,
 )
 
+# TODO: test dtype perservation for fitted attributes
+
 
 def test_affinity_propagation(global_dtype):
     # Affinity Propagation algorithm
     # Compute similarities
-    S = -euclidean_distances(X.astype(global_dtype), squared=True)
-    assert S.dtype == global_dtype
+    S = -euclidean_distances(X.astype(global_dtype, copy=False), squared=True)
 
     preference = np.median(S) * 10
 
@@ -54,12 +55,6 @@ def test_affinity_propagation(global_dtype):
 
     af = AffinityPropagation(preference=preference, verbose=True, random_state=37)
     labels = af.fit(X).labels_
-
-    # Fitted attribute must have the same dtype
-    # TODO: preserve dtype for cluster_centers_
-    # assert af.cluster_centers_.dtype == global_dtype
-    # TODO: preserve dtype for affinity_matrix_
-    # assert af.affinity_matrix_.dtype == global_dtype
 
     assert_array_equal(labels, labels_precomputed)
 
@@ -114,11 +109,9 @@ def test_affinity_propagation_predict(global_dtype):
     assert_array_equal(labels, labels2)
 
 
-def test_affinity_propagation_predict_error(global_dtype):
+def test_affinity_propagation_predict_error():
     # Test exception in AffinityPropagation.predict
     # Not fitted.
-    global X
-    X = X.astype(global_dtype)
     af = AffinityPropagation(affinity="euclidean")
     with pytest.raises(ValueError):
         af.predict(X)
@@ -131,11 +124,11 @@ def test_affinity_propagation_predict_error(global_dtype):
         af.predict(X)
 
 
-def test_affinity_propagation_fit_non_convergence(global_dtype):
+def test_affinity_propagation_fit_non_convergence():
     # In case of non-convergence of affinity_propagation(), the cluster
     # centers should be an empty array and training samples should be labelled
     # as noise (-1)
-    X = np.array([[0, 0], [1, 1], [-2, -2]]).astype(global_dtype)
+    X = np.array([[0, 0], [1, 1], [-2, -2]])
 
     # Force non-convergence by allowing only a single iteration
     af = AffinityPropagation(preference=-10, max_iter=1, random_state=82)
@@ -178,10 +171,10 @@ def test_affinity_propagation_equal_mutual_similarities(global_dtype):
     assert_array_equal([0, 0], labels)
 
 
-def test_affinity_propagation_predict_non_convergence(global_dtype):
+def test_affinity_propagation_predict_non_convergence():
     # In case of non-convergence of affinity_propagation(), the cluster
     # centers should be an empty array
-    X = np.array([[0, 0], [1, 1], [-2, -2]], dtype=global_dtype)
+    X = np.array([[0, 0], [1, 1], [-2, -2]])
 
     # Force non-convergence by allowing only a single iteration
     with pytest.warns(ConvergenceWarning):
@@ -195,10 +188,8 @@ def test_affinity_propagation_predict_non_convergence(global_dtype):
     assert_array_equal(np.array([-1, -1, -1]), y)
 
 
-def test_affinity_propagation_non_convergence_regressiontest(global_dtype):
-    X = np.array(
-        [[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]], dtype=global_dtype
-    )
+def test_affinity_propagation_non_convergence_regressiontest():
+    X = np.array([[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]])
     af = AffinityPropagation(affinity="euclidean", max_iter=2, random_state=34)
     msg = (
         "Affinity propagation did not converge, this model may return degenerate"
@@ -214,16 +205,13 @@ def test_equal_similarities_and_preferences(global_dtype):
     # Unequal distances
     X = np.array([[0, 0], [1, 1], [-2, -2]]).astype(global_dtype)
     S = -euclidean_distances(X, squared=True)
-    assert S.dtype == global_dtype
 
-    assert not _equal_similarities_and_preferences(S, np.array(0))
     assert not _equal_similarities_and_preferences(S, np.array([0, 0]))
     assert not _equal_similarities_and_preferences(S, np.array([0, 1]))
 
     # Equal distances
     X = np.array([[0, 0], [1, 1]]).astype(global_dtype)
     S = -euclidean_distances(X, squared=True)
-    assert S.dtype == global_dtype
 
     # Different preferences
     assert not _equal_similarities_and_preferences(S, np.array([0, 1]))
