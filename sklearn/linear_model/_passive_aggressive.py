@@ -442,7 +442,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> print(regr.intercept_)
     [-0.0055367]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-0.02306214]
+    [-0.0055367]
     """
 
     def __init__(
