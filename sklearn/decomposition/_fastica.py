@@ -19,7 +19,6 @@ from ..exceptions import ConvergenceWarning
 
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
 
 __all__ = ["fastica", "FastICA"]
 
@@ -506,7 +505,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             self._whiten = "arbitrary-variance"
 
         XT = self._validate_data(
-            X, copy=self._whiten, dtype=FLOAT_DTYPES, ensure_min_samples=2
+            X, copy=self._whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
         ).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
@@ -697,7 +696,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         check_is_fitted(self)
 
         X = self._validate_data(
-            X, copy=(copy and self._whiten), dtype=FLOAT_DTYPES, reset=False
+            X, copy=(copy and self._whiten), dtype=[np.float64, np.float32], reset=False
         )
         if self._whiten:
             X -= self.mean_
@@ -722,7 +721,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         """
         check_is_fitted(self)
 
-        X = check_array(X, copy=(copy and self._whiten), dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=(copy and self._whiten), dtype=[np.float64, np.float32])
         X = np.dot(X, self.mixing_.T)
         if self._whiten:
             X += self.mean_
