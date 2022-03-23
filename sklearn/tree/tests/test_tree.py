@@ -502,7 +502,7 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
-# TODO: Remove when issue #22458 is resolved
+# TODO(1.3): Remove warning filter
 @pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
 def test_max_features():
     # Check max_features.
