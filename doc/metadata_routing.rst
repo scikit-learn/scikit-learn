@@ -47,9 +47,7 @@ Weighted scoring and fitting
 
 Here ``GroupKFold`` requests ``groups`` by default. However, we need to
 explicitly request weights for our scorer and for ``LogisticRegressionCV``.
-Note that ``set_score_request`` on a scorer does not mutate the instance and
-instead returns a new instance with the metadata request attached to it. Both
-of these *consumers* know how to use metadata called ``"sample_weight"``::
+Both of these *consumers* know how to use metadata called ``"sample_weight"``::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True

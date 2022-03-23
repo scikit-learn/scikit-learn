@@ -227,9 +227,8 @@ the following two rules:
 
 - If it requires extra metadata to be passed to it, it should expose a
   ``get_metadata_routing`` method returning the requested metadata. The user
-  should be able to set the requested metadata via a ``with_score_request``
-  method returning a copy of the scorer with the appropriate requests set.
-  Please see :ref:`User Guide <metadata_routing>` for more details.
+  should be able to set the requested metadata via a ``set_score_request``
+  method. Please see :ref:`User Guide <metadata_routing>` for more details.
 
 
 .. note:: **Using custom scorers in functions where n_jobs > 1**

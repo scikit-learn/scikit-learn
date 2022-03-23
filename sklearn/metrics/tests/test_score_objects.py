@@ -1159,23 +1159,27 @@ def test_scorer_no_op_multiclass_select_proba():
     scorer(lr, X_test, y_test)
 
 
-@pytest.mark.parametrize("name, scorer", SCORERS.items())
-def test_scorer_metadata_request(name, scorer):
+@pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
+def test_scorer_metadata_request(name):
+    scorer = get_scorer(name)
     assert hasattr(scorer, "set_score_request")
     assert hasattr(scorer, "get_metadata_routing")
 
-    weighted_scorer = scorer.set_score_request(sample_weight=True)
-    # set_score_request shouldn't mutate the instance
-    assert weighted_scorer is not scorer
-
     assert str(scorer.get_metadata_routing()) == "{}"
+
+    weighted_scorer = scorer.set_score_request(sample_weight=True)
+    # set_score_request should mutate the instance
+    assert weighted_scorer is scorer
+
     assert (
         str(weighted_scorer.get_metadata_routing())
         == "{'score': {'sample_weight': <RequestType.REQUESTED: True>}}"
     )
 
     # make sure putting the scorer in a router doesn't request anything
-    router = MetadataRouter(owner="test").add(method_mapping="score", scorer=scorer)
+    router = MetadataRouter(owner="test").add(
+        method_mapping="score", scorer=get_scorer(name)
+    )
     with pytest.raises(TypeError, match="got unexpected argument"):
         router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
@@ -1203,7 +1207,7 @@ def test_metadata_kwarg_conflict():
         labels=lr.classes_,
     )
     with pytest.warns(UserWarning, match="already set as kwargs"):
-        scorer = scorer.with_score_request(labels=True)
+        scorer.set_score_request(labels=True)
 
     with pytest.warns(UserWarning, match="There is an overlap"):
         scorer(lr, X, y, labels=lr.classes_)
