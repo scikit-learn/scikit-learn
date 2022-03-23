@@ -245,7 +245,7 @@ def test_ridge_regression_vstacked_X(
 
     We work with a simple constructed data set with known solution.
     Fit on [X] with alpha is the same as fit on [X], [y]
-                                                [X], [y]  X]/2 with 2 * alpha.
+                                                [X], [y] with 2 * alpha.
     For wide X, [X', X'] is a singular matrix.
     """
     X, y, _, coef = ols_ridge_dataset
@@ -394,7 +394,7 @@ def test_ridge_regression_unpenalized_vstacked_X(
 
     We work with a simple constructed data set with known solution.
     OLS fit on [X] is the same as fit on [X], [y]
-                                         [X], [y] X]/2 with alpha/2.
+                                         [X], [y].
     For wide X, [X', X'] is a singular matrix and we check against the minimum norm
     solution:
         min ||w||_2 subject to X w = y
