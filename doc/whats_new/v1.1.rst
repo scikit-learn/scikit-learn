@@ -806,10 +806,6 @@ Changelog
 - |Enhancement| Adds `encoded_missing_value` to :class:`preprocessing.OrdinalEncoder`
   to configure the encoded value for missing data. :pr:`21988` by `Thomas Fan`_.
 
-- |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in `fit`
-  instead of `__init__`.
-  :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
-
 - |Enhancement| Added the `get_feature_names_out` method and a new parameter
   `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
   `feature_names_out` to 'one-to-one' to use the input features names as the
