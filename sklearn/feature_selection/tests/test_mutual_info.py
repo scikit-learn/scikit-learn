@@ -3,7 +3,11 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_equal, assert_almost_equal
+from sklearn.utils._testing import (
+    assert_array_equal,
+    assert_almost_equal,
+    assert_allclose,
+)
 from sklearn.feature_selection._mutual_info import _compute_mi
 from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
 
@@ -21,7 +25,7 @@ def test_compute_mi_dd():
     assert_almost_equal(_compute_mi(x, y, True, True), I_xy)
 
 
-def test_compute_mi_cc():
+def test_compute_mi_cc(global_dtype):
     # For two continuous variables a good approach is to test on bivariate
     # normal distribution, where mutual information is known.
 
@@ -43,15 +47,15 @@ def test_compute_mi_cc():
     I_theory = np.log(sigma_1) + np.log(sigma_2) - 0.5 * np.log(np.linalg.det(cov))
 
     rng = check_random_state(0)
-    Z = rng.multivariate_normal(mean, cov, size=1000)
+    Z = rng.multivariate_normal(mean, cov, size=1000).astype(global_dtype, copy=False)
 
     x, y = Z[:, 0], Z[:, 1]
 
-    # Theory and computed values won't be very close, assert that the
-    # first figures after decimal point match.
+    # Theory and computed values won't be very close
+    # We here check with a large relative tolerance
     for n_neighbors in [3, 5, 7]:
         I_computed = _compute_mi(x, y, False, False, n_neighbors)
-        assert_almost_equal(I_computed, I_theory, 1)
+        assert_allclose(I_computed, I_theory, rtol=1e-1)
 
 
 def test_compute_mi_cd():

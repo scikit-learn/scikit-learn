@@ -1158,7 +1158,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     " 'solver' is set to 'liblinear'. Got 'n_jobs'"
                     " = {}.".format(effective_n_jobs(self.n_jobs))
                 )
-            self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
+            self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
                 y,
                 self.C,
@@ -1173,7 +1173,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.random_state,
                 sample_weight=sample_weight,
             )
-            self.n_iter_ = np.array([n_iter_])
             return self
 
         if solver in ["sag", "saga"]:
