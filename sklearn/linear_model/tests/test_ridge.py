@@ -368,7 +368,7 @@ def test_ridge_regression_unpenalized_hstacked_X(
     if n_samples > n_features or not fit_intercept:
         assert model.intercept_ == pytest.approx(intercept)
         if solver == "cholesky":
-            pytest.xfail(reason="Cholesky is a bad choice for singular X.")
+            pytest.skip(reason="Cholesky is a bad choice for singular X.")
         assert_allclose(model.coef_, np.r_[coef, coef])
     else:
         # FIXME: Same as in test_ridge_regression_unpenalized.
