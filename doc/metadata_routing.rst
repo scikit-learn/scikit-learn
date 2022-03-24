@@ -46,7 +46,7 @@ Weighted scoring and fitting
 ----------------------------
 
 Here ``GroupKFold`` requests ``groups`` by default. However, we need to
-explicitly request weights in ``make_scorer`` and for ``LogisticRegressionCV``.
+explicitly request weights for our scorer and for ``LogisticRegressionCV``.
 Both of these *consumers* know how to use metadata called ``"sample_weight"``::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
