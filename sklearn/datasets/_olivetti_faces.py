@@ -17,7 +17,7 @@ from os.path import exists
 from os import makedirs, remove
 
 import numpy as np
-from scipy.io.matlab import loadmat
+from scipy.io import loadmat
 import joblib
 
 from . import get_data_home

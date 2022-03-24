@@ -21,7 +21,7 @@ from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
-from ._base import _deprecate_normalize, _rescale_data
+from ._base import _deprecate_normalize, _preprocess_data, _rescale_data
 from ._sag import sag_solver
 from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
@@ -41,17 +41,28 @@ from ..utils.sparsefuncs import mean_variance_axis
 
 
 def _solve_sparse_cg(
-    X, y, alpha, max_iter=None, tol=1e-3, verbose=0, X_offset=None, X_scale=None
+    X,
+    y,
+    alpha,
+    max_iter=None,
+    tol=1e-3,
+    verbose=0,
+    X_offset=None,
+    X_scale=None,
+    sample_weight_sqrt=None,
 ):
+    if sample_weight_sqrt is None:
+        sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
+
     def _get_rescaled_operator(X):
 
         X_offset_scale = X_offset / X_scale
 
         def matvec(b):
-            return X.dot(b) - b.dot(X_offset_scale)
+            return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
 
         def rmatvec(b):
-            return X.T.dot(b) - X_offset_scale * np.sum(b)
+            return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
 
         X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
         return X1
@@ -241,7 +252,15 @@ def _solve_svd(X, y, alpha):
 
 
 def _solve_lbfgs(
-    X, y, alpha, positive=True, max_iter=None, tol=1e-3, X_offset=None, X_scale=None
+    X,
+    y,
+    alpha,
+    positive=True,
+    max_iter=None,
+    tol=1e-3,
+    X_offset=None,
+    X_scale=None,
+    sample_weight_sqrt=None,
 ):
     """Solve ridge regression with LBFGS.
 
@@ -269,6 +288,9 @@ def _solve_lbfgs(
     else:
         X_offset_scale = None
 
+    if sample_weight_sqrt is None:
+        sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
+
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
     for i in range(y.shape[1]):
@@ -278,11 +300,11 @@ def _solve_lbfgs(
         def func(w):
             residual = X.dot(w) - y_column
             if X_offset_scale is not None:
-                residual -= w.dot(X_offset_scale)
+                residual -= sample_weight_sqrt * w.dot(X_offset_scale)
             f = 0.5 * residual.dot(residual) + 0.5 * alpha[i] * w.dot(w)
             grad = X.T @ residual + alpha[i] * w
             if X_offset_scale is not None:
-                grad -= X_offset_scale * np.sum(residual)
+                grad -= X_offset_scale * residual.dot(sample_weight_sqrt)
 
             return f, grad
 
@@ -332,7 +354,7 @@ def ridge_regression(
         Training data
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)
-        Target values
+        Target values.
 
     alpha : float or array-like of shape (n_targets,)
         Constant that multiplies the L2 term, controlling regularization
@@ -568,7 +590,7 @@ def _ridge_regression(
         if solver not in ["sag", "saga"]:
             # SAG supports sample_weight directly. For other solvers,
             # we implement sample_weight via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+            X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
@@ -603,6 +625,7 @@ def _ridge_regression(
             verbose=verbose,
             X_offset=X_offset,
             X_scale=X_scale,
+            sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
         )
 
     elif solver == "lsqr":
@@ -673,6 +696,7 @@ def _ridge_regression(
             max_iter=max_iter,
             X_offset=X_offset,
             X_scale=X_scale,
+            sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
         )
 
     if solver == "svd":
@@ -774,7 +798,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -804,7 +828,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         else:
             if sparse.issparse(X) and self.fit_intercept:
-                # required to fit intercept with sparse_cg solver
+                # required to fit intercept with sparse_cg and lbfgs solver
                 params = {"X_offset": X_offset, "X_scale": X_scale}
             else:
                 # for dense matrices or when intercept is set to 0
@@ -1885,7 +1909,7 @@ class _RidgeGCV(LinearModel):
 
         self.alphas = np.asarray(self.alphas)
 
-        X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -1910,8 +1934,7 @@ class _RidgeGCV(LinearModel):
         n_samples = X.shape[0]
 
         if sample_weight is not None:
-            X, y = _rescale_data(X, y, sample_weight)
-            sqrt_sw = np.sqrt(sample_weight)
+            X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
         else:
             sqrt_sw = np.ones(n_samples, dtype=X.dtype)
 

@@ -170,6 +170,7 @@ def average_precision_score(
     Returns
     -------
     average_precision : float
+        Average precision score.
 
     See Also
     --------
@@ -1192,6 +1193,9 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     Returns
     -------
     loss : float
+        Average number of label pairs that are incorrectly ordered given
+        y_score weighted by the size of the label set and the number of labels not
+        in the label set.
 
     References
     ----------
