@@ -867,8 +867,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     precision = np.divide(tps, tps + fps, where=tps + fps != 0)
 
-    # When no positive label in y_true, recall is set to 1 for
-    # all thresholds, such that the average_precision_score is 0.
+    # When no positive label in y_true, recall is set to 1 for all thresholds
     # tps[-1] == 0 <=> y_true == all negative labels
     if tps[-1] == 0:
         warnings.warn("No positive class found in y_true")
