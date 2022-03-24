@@ -13,7 +13,6 @@ import warnings
 import numpy as np
 import scipy.linalg
 from scipy import linalg
-import math
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
