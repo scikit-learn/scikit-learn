@@ -1697,11 +1697,16 @@ def test_max_samples_boundary_regressors(name):
     assert ms_1_ms == pytest.approx(ms_None_ms)
 
 
+# TODO: Tree-based model do not preserve dtype on their fitted attribute
+# Add a test using `global_dtype` when this is the case.
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-def test_max_samples_boundary_classifiers(name):
+def test_max_samples_boundary_classifiers(name, global_dtype):
     X_train, X_test, y_train, _ = train_test_split(
         X_large, y_large, random_state=0, stratify=y_large
     )
+    X_train = X_train.astype(global_dtype, copy=False)
+    X_test = X_test.astype(global_dtype, copy=False)
+    y_train = y_train.astype(global_dtype, copy=False)
 
     ms_1_model = FOREST_CLASSIFIERS[name](
         bootstrap=True, max_samples=1.0, random_state=0
@@ -1712,8 +1717,7 @@ def test_max_samples_boundary_classifiers(name):
         bootstrap=True, max_samples=None, random_state=0
     )
     ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
-
-    np.testing.assert_allclose(ms_1_proba, ms_None_proba)
+    assert_allclose(ms_1_proba, ms_None_proba)
 
 
 def test_forest_y_sparse():
