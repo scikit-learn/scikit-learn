@@ -2175,10 +2175,6 @@ def test_decision_tree_regressor_sample_weight_consistentcy(criterion, global_dt
     # matter and thus predictions are the same.
     y_pred1 = tree1.predict(X)
     y_pred2 = tree2.predict(X)
-    # TODO: y_pred1 and y_pred2 will not match global_dtype for 32 bit
-    if global_dtype == np.float64:
-        assert y_pred1.dtype == global_dtype
-        assert y_pred2.dtype == global_dtype
     assert_allclose(y_pred1, y_pred2)
 
 
