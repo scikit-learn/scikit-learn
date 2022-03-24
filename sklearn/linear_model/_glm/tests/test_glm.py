@@ -189,7 +189,7 @@ def test_glm_identity_regression(fit_intercept):
 @pytest.mark.parametrize(
     "GLMEstimator", [_GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor]
 )
-def test_glm_sample_weight_consistentcy(fit_intercept, alpha, GLMEstimator):
+def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     """Test that the impact of sample_weight is consistent"""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
