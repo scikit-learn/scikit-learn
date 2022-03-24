@@ -155,7 +155,7 @@ def test_check_inverse():
             validate=True,
         )
         with warnings.catch_warnings():
-            warnings.simplefilter("error")
+            warnings.simplefilter("error", UserWarning)
             Xt = trans.fit_transform(X)
 
         assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
@@ -166,13 +166,13 @@ def test_check_inverse():
         func=np.expm1, inverse_func=None, check_inverse=True, validate=True
     )
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", UserWarning)
         trans.fit(X_dense)
     trans = FunctionTransformer(
         func=None, inverse_func=np.expm1, check_inverse=True, validate=True
     )
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", UserWarning)
         trans.fit(X_dense)
 
 
