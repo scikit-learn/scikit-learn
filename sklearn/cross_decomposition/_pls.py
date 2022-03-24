@@ -504,7 +504,7 @@ class _PLS(
             "with other linear models in scikit-learn. Currently, `coef_` has a shape "
             "of (n_features, n_targets) and in the future it will have a shape of "
             "(n_targets, n_features).",
-            FutureWarning
+            FutureWarning,
         )
         return self._coef_.T
 
