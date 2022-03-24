@@ -197,12 +197,12 @@ class MultinomialLogit(BaseLink):
         - The inverse link h is the softmax function.
         - The sum is over the second axis, i.e. axis=1 (n_classes).
 
-    We have to choose additional contraints in order to make
+    We have to choose additional constraints in order to make
 
         y_pred[k] = exp(raw_pred[k]) / sum(exp(raw_pred[k]), k=0..n_classes-1)
 
     for n_classes classes identifiable and invertible.
-    We choose the symmetric side contraint where the geometric mean response
+    We choose the symmetric side constraint where the geometric mean response
     is set as reference category, see [2]:
 
     The symmetric multinomial logit link function for a single data point is
