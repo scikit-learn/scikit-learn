@@ -25,7 +25,6 @@ from scipy.special import comb
 import pytest
 
 import joblib
-from numpy.testing import assert_allclose
 
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
@@ -35,6 +34,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.exceptions import NotFittedError
 
