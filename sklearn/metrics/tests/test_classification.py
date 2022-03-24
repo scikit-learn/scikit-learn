@@ -590,13 +590,13 @@ def test_confusion_matrix_normalize_single_class():
 
     # additionally check that no warnings are raised due to a division by zero
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UndefinedMetricWarning)
+        warnings.simplefilter("error", RuntimeWarning)
         cm_pred = confusion_matrix(y_test, y_pred, normalize="pred")
 
     assert cm_pred.sum() == pytest.approx(1.0)
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UndefinedMetricWarning)
+        warnings.simplefilter("error", RuntimeWarning)
         confusion_matrix(y_pred, y_test, normalize="true")
 
 
