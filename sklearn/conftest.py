@@ -10,7 +10,6 @@ from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-from sklearn.externals import _pilutil
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.utils.fixes import parse_version
 from sklearn.datasets import fetch_20newsgroups
@@ -185,7 +184,14 @@ def pytest_collection_modifyitems(config, items):
                 # details.
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
-    elif not _pilutil.pillow_installed:
+    try:
+        import PIL  # noqa
+
+        pillow_installed = True
+    except ImportError:
+        pillow_installed = False
+
+    if not pillow_installed:
         skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
         for item in items:
             if item.name in [
