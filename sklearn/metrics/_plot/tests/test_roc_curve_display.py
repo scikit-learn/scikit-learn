@@ -207,7 +207,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
     y_pred = getattr(classifier, response_method)(X_test)
-    # we select the correcponding probability columns or reverse the decision
+    # we select the corresponding probability columns or reverse the decision
     # function otherwise
     y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
     y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]

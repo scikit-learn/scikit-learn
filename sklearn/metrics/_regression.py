@@ -37,7 +37,6 @@ from ..utils.validation import (
     _num_samples,
     column_or_1d,
     _check_sample_weight,
-    _deprecate_positional_args,
 )
 from ..utils.stats import _weighted_percentile
 
@@ -288,7 +287,6 @@ def mean_pinball_loss(
     return np.average(output_errors, weights=multioutput)
 
 
-@_deprecate_positional_args(version="1.1")
 def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -677,7 +675,7 @@ def explained_variance_score(
        The Explained Variance score is similar to the
        :func:`R^2 score <r2_score>`, with the notable difference that it
        does not account for systematic offsets in the prediction. Most often
-       the :func:`R^2 score <r2_score>` should be prefered.
+       the :func:`R^2 score <r2_score>` should be preferred.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
 
