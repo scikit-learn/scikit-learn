@@ -585,7 +585,7 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
 
     if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
-        # Only handle extension arrays for interger and floats
+        # Only handle extension arrays for integer and floats
         return False
     elif is_float_dtype(pd_dtype):
         # Float ndarrays can normally support nans. They need to be converted
@@ -869,23 +869,12 @@ def check_array(
                     "if it contains a single sample.".format(array)
                 )
 
-        # make sure we actually converted to numeric:
-        if dtype_numeric and array.dtype.kind in "OUSV":
-            warnings.warn(
-                "Arrays of bytes/strings is being converted to decimal "
-                "numbers if dtype='numeric'. This behavior is deprecated in "
-                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
-                "convert your data to numeric values explicitly instead.",
-                FutureWarning,
-                stacklevel=2,
+        if dtype_numeric and array.dtype.kind in "USV":
+            raise ValueError(
+                "dtype='numeric' is not compatible with arrays of bytes/strings."
+                "Convert your data to numeric values explicitly instead."
             )
-            try:
-                array = array.astype(np.float64)
-            except ValueError as e:
-                raise ValueError(
-                    "Unable to convert array of bytes/strings "
-                    "into decimal numbers with dtype='numeric'"
-                ) from e
+
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
                 "Found array with dim %d. %s expected <= 2."
@@ -1060,7 +1049,13 @@ def check_X_y(
         The converted and validated y.
     """
     if y is None:
-        raise ValueError("y cannot be None")
+        if estimator is None:
+            estimator_name = "estimator"
+        else:
+            estimator_name = _check_estimator_name(estimator)
+        raise ValueError(
+            f"{estimator_name} requires y to be passed, but the target y is None"
+        )
 
     X = check_array(
         X,
@@ -1150,7 +1145,7 @@ def column_or_1d(y, *, warn=False):
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance
+    """Turn seed into a np.random.RandomState instance.
 
     Parameters
     ----------
@@ -1159,6 +1154,11 @@ def check_random_state(seed):
         If seed is an int, return a new RandomState instance seeded with seed.
         If seed is already a RandomState instance, return it.
         Otherwise raise ValueError.
+
+    Returns
+    -------
+    None
+        No returns.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -1865,10 +1865,11 @@ def _check_feature_names_in(estimator, input_features=None, *, generate_names=Tr
         Input features.
 
         - If `input_features` is `None`, then `feature_names_in_` is
-            used as feature names in. If `feature_names_in_` is not defined,
-            then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+          used as feature names in. If `feature_names_in_` is not defined,
+          then the following input feature names are generated:
+          `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
         - If `input_features` is an array-like, then `input_features` must
-            match `feature_names_in_` if `feature_names_in_` is defined.
+          match `feature_names_in_` if `feature_names_in_` is defined.
 
     generate_names : bool, default=True
         Whether to generate names when `input_features` is `None` and

@@ -2633,6 +2633,30 @@ def test_standard_scaler_raise_error_for_1d_input():
         scaler.inverse_transform(X_2d[:, 0])
 
 
+def test_power_transformer_significantly_non_gaussian():
+    """Check that significantly non-Gaussian data before transforms correctly.
+
+    For some explored lambdas, the transformed data may be constant and will
+    be rejected. Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/14959
+    """
+
+    X_non_gaussian = 1e6 * np.array(
+        [0.6, 2.0, 3.0, 4.0] * 4 + [11, 12, 12, 16, 17, 20, 85, 90], dtype=np.float64
+    ).reshape(-1, 1)
+    pt = PowerTransformer()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        X_trans = pt.fit_transform(X_non_gaussian)
+
+    assert not np.any(np.isnan(X_trans))
+    assert X_trans.mean() == pytest.approx(0.0)
+    assert X_trans.std() == pytest.approx(1.0)
+    assert X_trans.min() > -2
+    assert X_trans.max() < 2
+
+
 @pytest.mark.parametrize(
     "Transformer",
     [
