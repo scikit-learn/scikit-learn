@@ -299,3 +299,71 @@ def test_meta_estimators_delegate_data_validation(estimator):
 
     # n_features_in_ should not be defined since data is not tabular data.
     assert not hasattr(estimator, "n_features_in_")
+
+
+def _generate_meta_estimator_instances():
+    for name, Estimator in all_estimators():
+        is_meta_estimator = (
+            name.endswith("CV")
+            or getattr(Estimator, "_required_parameters", None)
+            or set(Estimator().get_params().keys()).intersection(
+                [
+                    "steps",
+                    "estimator",
+                    "estimators",
+                    "base_estimator",
+                    "regressor",
+                    "classifier",
+                ]
+            )
+        )
+        if not is_meta_estimator:
+            continue
+
+        sig = set(signature(Estimator).parameters)
+
+        if "estimator" in sig or "base_estimator" in sig or "regressor" in sig:
+            if is_regressor(Estimator):
+                estimator = make_pipeline(TfidfVectorizer(), Ridge())
+                param_grid = {"ridge__alpha": [0.1, 1.0]}
+            else:
+                estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
+                param_grid = {"logisticregression__C": [0.1, 1.0]}
+
+            if "param_grid" in sig or "param_distributions" in sig:
+                # SearchCV estimators
+                extra_params = {"n_iter": 2} if "n_iter" in sig else {}
+                yield Estimator(estimator, param_grid, **extra_params)
+            else:
+                yield Estimator(estimator)
+
+        elif "transformer_list" in sig:
+            # FeatureUnion
+            transformer_list = [
+                ("trans1", make_pipeline(TfidfVectorizer(), MaxAbsScaler())),
+                (
+                    "trans2",
+                    make_pipeline(TfidfVectorizer(), StandardScaler(with_mean=False)),
+                ),
+            ]
+            yield Estimator(transformer_list)
+
+        elif "estimators" in sig:
+            # stacking, voting
+            if is_regressor(Estimator):
+                estimator = [
+                    ("est1", make_pipeline(TfidfVectorizer(), Ridge(alpha=0.1))),
+                    ("est2", make_pipeline(TfidfVectorizer(), Ridge(alpha=1))),
+                ]
+            else:
+                estimator = [
+                    (
+                        "est1",
+                        make_pipeline(TfidfVectorizer(), LogisticRegression(C=0.1)),
+                    ),
+                    ("est2", make_pipeline(TfidfVectorizer(), LogisticRegression(C=1))),
+                ]
+            yield Estimator(estimator)
+
+        else:
+            continue
