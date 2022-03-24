@@ -1,9 +1,9 @@
 from itertools import product
 
 import numpy as np
-from numpy.testing import (
+from sklearn.utils._testing import (
     assert_almost_equal,
-    assert_array_almost_equal,
+    assert_allclose,
     assert_array_equal,
 )
 from scipy import linalg
@@ -19,18 +19,22 @@ eigen_solvers = ["dense", "arpack"]
 
 # ----------------------------------------------------------------------
 # Test utility routines
-def test_barycenter_kneighbors_graph():
-    X = np.array([[0, 1], [1.01, 1.0], [2, 0]])
+def test_barycenter_kneighbors_graph(global_dtype):
+    X = np.array([[0, 1], [1.01, 1.0], [2, 0]], dtype=global_dtype)
 
-    A = barycenter_kneighbors_graph(X, 1)
-    assert_array_almost_equal(
-        A.toarray(), [[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+    graph = barycenter_kneighbors_graph(X, 1)
+    expected_graph = np.array(
+        [[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], dtype=global_dtype
     )
 
-    A = barycenter_kneighbors_graph(X, 2)
+    assert graph.dtype == global_dtype
+
+    assert_allclose(graph.toarray(), expected_graph)
+
+    graph = barycenter_kneighbors_graph(X, 2)
     # check that columns sum to one
-    assert_array_almost_equal(np.sum(A.toarray(), 1), np.ones(3))
-    pred = np.dot(A.toarray(), X)
+    assert_allclose(np.sum(graph.toarray(), 1), np.ones(3))
+    pred = np.dot(graph.toarray(), X)
     assert linalg.norm(pred - X) / X.shape[0] < 1
 
 
@@ -47,8 +51,10 @@ def test_lle_simple_grid(global_dtype):
     rng = np.random.RandomState(42)
 
     # grid of equidistant points in 2D, n_components = n_dim
-    X = np.array(list(product(range(5), repeat=2)), dtype=global_dtype)
+    X = np.array(list(product(range(5), repeat=2)))
     X = X + 1e-10 * rng.uniform(size=X.shape)
+    X = X.astype(global_dtype, copy=False)
+
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(
         n_neighbors=5, n_components=n_components, random_state=rng
@@ -81,9 +87,10 @@ def test_lle_simple_grid(global_dtype):
 def test_lle_manifold(global_dtype, method, solver):
     rng = np.random.RandomState(0)
     # similar test on a slightly more complex manifold
-    X = np.array(list(product(np.arange(18), repeat=2)), dtype=global_dtype)
+    X = np.array(list(product(np.arange(18), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 18]
     X = X + 1e-10 * rng.uniform(size=X.shape)
+    X = X.astype(global_dtype, copy=False)
     n_components = 2
 
     clf = manifold.LocallyLinearEmbedding(
