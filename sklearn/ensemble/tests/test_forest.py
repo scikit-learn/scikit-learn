@@ -25,6 +25,7 @@ from scipy.special import comb
 import pytest
 
 import joblib
+from numpy.testing import assert_allclose
 
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
@@ -34,7 +35,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
-from sklearn.utils._testing import assert_allclose
 
 from sklearn.exceptions import NotFittedError
 
@@ -1712,7 +1712,8 @@ def test_max_samples_boundary_classifiers(name):
         bootstrap=True, max_samples=None, random_state=0
     )
     ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
-    assert_allclose(ms_1_proba, ms_None_proba)
+
+    np.testing.assert_allclose(ms_1_proba, ms_None_proba)
 
 
 def test_forest_y_sparse():
