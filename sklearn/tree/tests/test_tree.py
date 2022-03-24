@@ -263,7 +263,7 @@ def test_weighted_classification_toy():
 # Add `global_dtype` when Trees have this ability.
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_regression_toy(Tree, criterion):
+def test_regression_toy(Tree, criterion, global_dtype):
     # Check regression on a toy dataset.
     if criterion == "poisson":
         # make target positive while not touching the original y and
@@ -275,13 +275,24 @@ def test_regression_toy(Tree, criterion):
         y_train = y
         y_test = true_result
 
+    y_train = np.array(y_train).astype(global_dtype, copy=False)
+    y_test = np.array(y_test).astype(global_dtype, copy=False)
+
     reg = Tree(criterion=criterion, random_state=1)
-    reg.fit(X, y_train)
-    assert_allclose(reg.predict(T), y_test)
+    reg.fit(np.array(X).astype(global_dtype), y_train)
+    y_pred = reg.predict(np.array(T).astype(global_dtype))
+    # TODO: y_pred will not match global_dtype for 32 bit
+    if global_dtype == np.float64:
+        assert y_pred.dtype == global_dtype
+    assert_allclose(y_pred, y_test)
 
     clf = Tree(criterion=criterion, max_features=1, random_state=1)
-    clf.fit(X, y_train)
-    assert_allclose(reg.predict(T), y_test)
+    clf.fit(np.array(X).astype(global_dtype), y_train)
+    y_pred = reg.predict(np.array(T).astype(global_dtype))
+    # TODO: y_pred will not match global_dtype for 32 bit
+    if global_dtype == np.float64:
+        assert y_pred.dtype == global_dtype
+    assert_allclose(y_pred, y_test)
 
 
 def test_xor():
@@ -2162,7 +2173,9 @@ def test_decision_tree_regressor_sample_weight_consistentcy(criterion, global_dt
     y_pred1 = tree1.predict(X)
     y_pred2 = tree2.predict(X)
     # TODO: y_pred1 and y_pred2 will not match global_dtype for 32 bit
-    # assert y_pred1.dtype == global_dtype
+    if global_dtype == np.float64:
+        assert y_pred1.dtype == global_dtype
+        assert y_pred2.dtype == global_dtype
     assert_allclose(y_pred1, y_pred2)
 
 

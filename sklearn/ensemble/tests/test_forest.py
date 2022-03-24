@@ -25,7 +25,6 @@ from scipy.special import comb
 import pytest
 
 import joblib
-from numpy.testing import assert_allclose
 
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
@@ -35,6 +34,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.exceptions import NotFittedError
 
@@ -1700,10 +1700,13 @@ def test_max_samples_boundary_regressors(name):
 # TODO: Trees do not preserve dtype when fitting/predicting.
 # Add `global_dtype` when Trees have this ability.
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-def test_max_samples_boundary_classifiers(name):
+def test_max_samples_boundary_classifiers(name, global_dtype):
     X_train, X_test, y_train, _ = train_test_split(
         X_large, y_large, random_state=0, stratify=y_large
     )
+    X_train = X_train.astype(global_dtype, copy=False)
+    X_test = X_test.astype(global_dtype, copy=False)
+    y_train = y_train.astype(global_dtype, copy=False)
 
     ms_1_model = FOREST_CLASSIFIERS[name](
         bootstrap=True, max_samples=1.0, random_state=0
@@ -1715,7 +1718,11 @@ def test_max_samples_boundary_classifiers(name):
     )
     ms_None_proba = ms_None_model.fit(X_train, y_train).predict_proba(X_test)
 
-    np.testing.assert_allclose(ms_1_proba, ms_None_proba)
+    # TODO: ms_1_proba and ms_None_proba will not match global_dtype for 32 bit
+    if global_dtype == np.float64:
+        assert ms_None_proba.dtype == global_dtype
+        assert ms_1_proba.dtype == global_dtype
+    assert_allclose(ms_1_proba, ms_None_proba)
 
 
 def test_forest_y_sparse():
