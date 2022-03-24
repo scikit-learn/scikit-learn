@@ -333,8 +333,7 @@ class _PredictScorer(_BaseScorer):
             kwargs=kwargs,
         )
         y_pred = method_caller(estimator, "predict", X)
-        scoring_kwargs = copy.deepcopy(self._kwargs)
-        scoring_kwargs.update(kwargs)
+        scoring_kwargs = {**self._kwargs, **kwargs}
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
 
@@ -387,11 +386,10 @@ class _ProbaScorer(_BaseScorer):
             # Thus, we need to check for the shape of `y_pred`.
             y_pred = self._select_proba_binary(y_pred, clf.classes_)
 
-        scoring_kwargs = copy.deepcopy(self._kwargs)
-        scoring_kwargs.update(kwargs)
+        scoring_kwargs = {**self._kwargs, **kwargs}
         # this is for backward compatibility to avoid passing sample_weight
         # to the scorer if it's None
-        # probably remove in v1.3
+        # TODO(1.3) Probably remove
         if scoring_kwargs.get("sample_weight", -1) is None:
             del scoring_kwargs["sample_weight"]
 
@@ -473,11 +471,10 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
-        scoring_kwargs = copy.deepcopy(self._kwargs)
-        scoring_kwargs.update(kwargs)
+        scoring_kwargs = {**self._kwargs, **kwargs}
         # this is for backward compatibility to avoid passing sample_weight
         # to the scorer if it's None
-        # probably remove in v1.3
+        # TODO(1.3) Probably remove
         if scoring_kwargs.get("sample_weight", -1) is None:
             del scoring_kwargs["sample_weight"]
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
