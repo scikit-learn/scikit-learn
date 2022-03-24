@@ -401,7 +401,6 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 1.1 when implicit conversion is removed
 @pytest.mark.parametrize(
     "X",
     [
@@ -412,32 +411,11 @@ def test_check_array():
         np.array([[b"1", b"2"], [b"3", b"4"]], dtype="V1"),
     ],
 )
-def test_check_array_numeric_warns(X):
-    """Test that check_array warns when it converts a bytes/string into a
-    float."""
-    expected_msg = (
-        r"Arrays of bytes/strings is being converted to decimal .*"
-        r"deprecated in 0.24 and will be removed in 1.1"
-    )
-    with pytest.warns(FutureWarning, match=expected_msg):
-        check_array(X, dtype="numeric")
-
-
-# TODO: remove in 1.1
-@ignore_warnings(category=FutureWarning)
-@pytest.mark.parametrize(
-    "X",
-    [
-        [["11", "12"], ["13", "xx"]],
-        np.array([["11", "12"], ["13", "xx"]], dtype="U"),
-        np.array([["11", "12"], ["13", "xx"]], dtype="S"),
-        [[b"a", b"b"], [b"c", b"d"]],
-    ],
-)
-def test_check_array_dtype_numeric_errors(X):
-    """Error when string-ike array can not be converted"""
-    expected_warn_msg = "Unable to convert array of bytes/strings"
-    with pytest.raises(ValueError, match=expected_warn_msg):
+def test_check_array_numeric_error(X):
+    """Test that check_array errors when it receives an array of bytes/string
+    while a numeric dtype is required."""
+    expected_msg = r"dtype='numeric' is not compatible with arrays of bytes/strings"
+    with pytest.raises(ValueError, match=expected_msg):
         check_array(X, dtype="numeric")
 
 
@@ -479,22 +457,6 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
         check_array(X, force_all_finite=True)
-
-
-# TODO: remove test in 1.1 once this behavior is deprecated
-def test_check_array_pandas_dtype_object_conversion():
-    # test that data-frame like objects with dtype object
-    # get converted
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
-    X_df = MockDataFrame(X)
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df).dtype.kind == "f"
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
-    # smoke-test against dataframes with column named "dtype"
-    X_df.dtype = "Hans"
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
 
 
 def test_check_array_pandas_dtype_casting():
