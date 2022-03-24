@@ -32,7 +32,8 @@ X, _ = make_blobs(
     random_state=0,
 )
 
-# TODO: test dtype perservation for fitted attributes
+# TODO: AffinityPropagation must preserve dtype for its fitted attributes
+# and test must be created accordingly to this new behavior.
 
 
 def test_affinity_propagation(global_dtype):
