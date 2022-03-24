@@ -3236,14 +3236,21 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         Like for Box-Cox, MLE is done via the brent optimizer.
         """
+        x_tiny = np.finfo(np.float64).tiny
 
         def _neg_log_likelihood(lmbda):
             """Return the negative log likelihood of the observed data x as a
             function of lambda."""
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
+            x_trans_var = x_trans.var()
 
-            loglike = -n_samples / 2 * np.log(x_trans.var())
+            # Reject transformed data that would raise a RuntimeWarning in np.log
+            if x_trans_var < x_tiny:
+                return np.inf
+
+            log_var = np.log(x_trans_var)
+            loglike = -n_samples / 2 * log_var
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike
