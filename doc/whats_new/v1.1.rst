@@ -815,6 +815,10 @@ Changelog
   then `get_output_feature_names` is not defined.
   :pr:`21569` by :user:`Aurélien Geron <ageron>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
+  better supports significantly non-Gaussian data when searching for an optimal
+  lambda. :pr:`20653` by `Thomas Fan`_.
+
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
@@ -881,6 +885,13 @@ Changelog
 - |Fix| Fix a bug in the Poisson splitting criterion for
   :class:`tree.DecisionTreeRegressor`.
   :pr:`22191` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |API| Changed the default value of :func:`max_features` to 1.0 for
+  :class:`tree.ExtraTreeRegressor` and to `"sqrt"` for :class:`ensemble.ExtraTreeClassifier`,
+  which will not change the fit result. The original default value `"auto"` has been deprecated
+  and will be removed in version 1.3. Setting :func:`max_features` to `"auto"` is also deprecated
+  for :class:`tree.DecisionTreeClassifier` and :class:`DecisionTreeRegressor`.
+  :pr:`22476` by :user: `Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.utils`
 ....................
