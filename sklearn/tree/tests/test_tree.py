@@ -2139,9 +2139,8 @@ def test_decision_tree_regressor_sample_weight_consistentcy(criterion, global_dt
     # make it positive in order to work also for poisson criterion
     y += np.min(y) + 0.1
 
-    # convert dtype
-    X = X.astype(global_dtype)
-    y = y.astype(global_dtype)
+    X = X.astype(global_dtype, copy=False)
+    y = y.astype(global_dtype, copy=False)
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating corresponding samples twice
