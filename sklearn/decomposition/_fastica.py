@@ -534,6 +534,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             )
 
         n_features, n_samples = XT.shape
+
         n_components = self.n_components
         if not self._whiten and n_components is not None:
             n_components = None

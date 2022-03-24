@@ -279,8 +279,8 @@ def test_fit_transform(global_random_seed, global_dtype):
             # make sure that numerical errors do not cause sqrt of negative
             # values
             warnings.simplefilter("error", RuntimeWarning)
-            # XXX: for some seeds, the model do not converge. However this is not
-            # what we test here.
+            # XXX: for some seeds, the model does not converge.
+            # However this is not what we test here.
             warnings.simplefilter("ignore", ConvergenceWarning)
             Xt = ica.fit_transform(X)
         assert ica.components_.shape == (n_components_, 10)
@@ -299,7 +299,7 @@ def test_fit_transform(global_random_seed, global_dtype):
         Xt2 = ica2.transform(X)
 
         # XXX: we have to set atol for this test to pass for all seeds when
-        # fitting with float32 data. Is this is a revealing a bug?
+        # fitting with float32 data. Is this revealing a bug?
         if global_dtype:
             atol = np.abs(Xt2).mean() / 1e6
         else:
@@ -341,8 +341,10 @@ def test_inverse_transform(
     # reversibility test in non-reduction case
     if n_components == X.shape[1]:
         # XXX: we have to set atol for this test to pass for all seeds when
-        # fitting with float32 data. Is this is a revealing a bug?
+        # fitting with float32 data. Is this revealing a bug?
         if global_dtype:
+            # XXX: dividing by a smaller number makes
+            # tests fail for some seeds.
             atol = np.abs(X2).mean() / 1e5
         else:
             atol = 0.0  # the default rtol is enough for float64 data
