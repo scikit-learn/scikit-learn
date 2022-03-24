@@ -61,13 +61,13 @@ def test_pairwise_distances(global_dtype):
     rng = np.random.RandomState(0)
 
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((5, 4)).astype(global_dtype)
+    X = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
     S = pairwise_distances(X, metric="euclidean")
     S2 = euclidean_distances(X)
     assert_allclose(S, S2)
 
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((2, 4)).astype(global_dtype)
+    Y = rng.random_sample((2, 4)).astype(global_dtype, copy=False)
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
     assert_allclose(S, S2)
@@ -75,8 +75,8 @@ def test_pairwise_distances(global_dtype):
     assert S.dtype == S2.dtype == global_dtype
 
     # Check to ensure NaNs work with pairwise_distances.
-    X_masked = rng.random_sample((5, 4)).astype(global_dtype)
-    Y_masked = rng.random_sample((2, 4)).astype(global_dtype)
+    X_masked = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
+    Y_masked = rng.random_sample((2, 4)).astype(global_dtype, copy=False)
     X_masked[0, 0] = np.nan
     Y_masked[0, 0] = np.nan
     S_masked = pairwise_distances(X_masked, Y_masked, metric="nan_euclidean")
@@ -93,7 +93,7 @@ def test_pairwise_distances(global_dtype):
 
     # Test haversine distance
     # The data should be valid latitude and longitude
-    X = rng.random_sample((5, 2)).astype(global_dtype)
+    X = rng.random_sample((5, 2)).astype(global_dtype, copy=False)
     X[:, 0] = (X[:, 0] - 0.5) * 2 * np.pi / 2
     X[:, 1] = (X[:, 1] - 0.5) * 2 * np.pi
     S = pairwise_distances(X, metric="haversine")
@@ -101,7 +101,7 @@ def test_pairwise_distances(global_dtype):
     assert_allclose(S, S2)
 
     # Test haversine distance, with Y != X
-    Y = rng.random_sample((2, 2)).astype(global_dtype)
+    Y = rng.random_sample((2, 2)).astype(global_dtype, copy=False)
     Y[:, 0] = (Y[:, 0] - 0.5) * 2 * np.pi / 2
     Y[:, 1] = (Y[:, 1] - 0.5) * 2 * np.pi
     S = pairwise_distances(X, Y, metric="haversine")
@@ -643,7 +643,7 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
 
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
-    assert_allclose(blockwise_distances, S)
+    assert_allclose(blockwise_distances, S, atol=1e-7)
 
 
 @pytest.mark.parametrize("metric", ("euclidean", "l2", "sqeuclidean"))
@@ -664,11 +664,11 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
 
 
 @ignore_warnings
-def test_pairwise_distances_chunked():
+def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((200, 4))
+    X = rng.random_sample((200, 4)).astype(global_dtype, copy=False)
     check_pairwise_distances_chunked(X, None, working_memory=1, metric="euclidean")
     # Test small amounts of memory
     for power in range(-16, 0):
@@ -680,7 +680,7 @@ def test_pairwise_distances_chunked():
         X.tolist(), None, working_memory=1, metric="euclidean"
     )
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((100, 4))
+    Y = rng.random_sample((100, 4)).astype(global_dtype, copy=False)
     check_pairwise_distances_chunked(X, Y, working_memory=1, metric="euclidean")
     check_pairwise_distances_chunked(
         X.tolist(), Y.tolist(), working_memory=1, metric="euclidean"
@@ -1482,7 +1482,7 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
         Y = X
         expected_dist = squareform(pdist(X, metric=metric))
     else:
-        Y = rng.random_sample((5, 4)).astype(global_dtype)
+        Y = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
         expected_dist = cdist(X, Y, metric=metric)
         # precompute parameters for seuclidean & mahalanobis when x is not y
         if metric == "seuclidean":
