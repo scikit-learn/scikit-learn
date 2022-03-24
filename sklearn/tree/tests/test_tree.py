@@ -260,8 +260,8 @@ def test_weighted_classification_toy():
         assert_array_equal(clf.predict(T), true_result, "Failed with {0}".format(name))
 
 
-# TODO: Trees do not preserve dtype when fitting/predicting.
-# Add `global_dtype` when Trees have this ability.
+# TODO: Tree-based model do not preserve dtype on their fitted attribute
+# Add a test using `global_dtype` when this is the case.
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_toy(Tree, criterion, global_dtype):
@@ -282,17 +282,11 @@ def test_regression_toy(Tree, criterion, global_dtype):
     reg = Tree(criterion=criterion, random_state=1)
     reg.fit(np.array(X).astype(global_dtype), y_train)
     y_pred = reg.predict(np.array(T).astype(global_dtype))
-    # TODO: y_pred will not match global_dtype for 32 bit
-    if global_dtype == np.float64:
-        assert y_pred.dtype == global_dtype
     assert_allclose(y_pred, y_test)
 
     clf = Tree(criterion=criterion, max_features=1, random_state=1)
     clf.fit(np.array(X).astype(global_dtype), y_train)
     y_pred = reg.predict(np.array(T).astype(global_dtype))
-    # TODO: y_pred will not match global_dtype for 32 bit
-    if global_dtype == np.float64:
-        assert y_pred.dtype == global_dtype
     assert_allclose(y_pred, y_test)
 
 
@@ -2133,8 +2127,8 @@ def test_poisson_vs_mse():
         assert metric_poi < 0.75 * metric_dummy
 
 
-# TODO: Trees do not preserve dtype when fitting/predicting.
-# Add `global_dtype` when Trees have this ability.
+# TODO: Tree-based model do not preserve dtype on their fitted attribute
+# Add a test using `global_dtype` when this is the case.
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_decision_tree_regressor_sample_weight_consistentcy(criterion, global_dtype):
     """Test that the impact of sample_weight is consistent."""
