@@ -815,6 +815,10 @@ Changelog
   then `get_output_feature_names` is not defined.
   :pr:`21569` by :user:`Aurélien Geron <ageron>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
+  better supports significantly non-Gaussian data when searching for an optimal
+  lambda. :pr:`20653` by `Thomas Fan`_.
+
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
   `fit` instead of `__init__`.
   :pr:`21434` by :user:`Krum Arnaudov <krumeto>`.
