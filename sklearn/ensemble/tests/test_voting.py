@@ -1,6 +1,5 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
-import warnings
 import pytest
 import re
 import numpy as np
@@ -428,10 +427,7 @@ def test_set_estimator_drop():
         weights=[1, 1, 0.5],
     )
     with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            eclf2.set_params(rf="drop").fit(X, y)
+        eclf2.set_params(rf="drop").fit(X, y)
 
     assert not [w.message for w in record]
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
@@ -445,10 +441,7 @@ def test_set_estimator_drop():
 
     eclf1.set_params(voting="soft").fit(X, y)
     with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            eclf2.set_params(voting="soft").fit(X, y)
+        eclf2.set_params(voting="soft").fit(X, y)
 
     assert not [w.message for w in record]
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
@@ -476,10 +469,7 @@ def test_set_estimator_drop():
         flatten_transform=False,
     )
     with pytest.warns(None) as record:
-        with warnings.catch_warnings():
-            # scipy 1.3.0 uses tostring which is deprecated in numpy
-            warnings.filterwarnings("ignore", "tostring", DeprecationWarning)
-            eclf2.set_params(rf="drop").fit(X1, y1)
+        eclf2.set_params(rf="drop").fit(X1, y1)
     assert not [w.message for w in record]
     assert_array_almost_equal(
         eclf1.transform(X1),
@@ -636,3 +626,83 @@ def test_voting_verbose(estimator, capsys):
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
+
+
+def test_get_features_names_out_regressor():
+    """Check get_feature_names_out output for regressor."""
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    voting = VotingRegressor(
+        estimators=[
+            ("lr", LinearRegression()),
+            ("tree", DecisionTreeRegressor(random_state=0)),
+            ("ignore", "drop"),
+        ]
+    )
+    voting.fit(X, y)
+
+    names_out = voting.get_feature_names_out()
+    expected_names = ["votingregressor_lr", "votingregressor_tree"]
+    assert_array_equal(names_out, expected_names)
+
+
+@pytest.mark.parametrize(
+    "kwargs, expected_names",
+    [
+        (
+            {"voting": "soft", "flatten_transform": True},
+            [
+                "votingclassifier_lr0",
+                "votingclassifier_lr1",
+                "votingclassifier_lr2",
+                "votingclassifier_tree0",
+                "votingclassifier_tree1",
+                "votingclassifier_tree2",
+            ],
+        ),
+        ({"voting": "hard"}, ["votingclassifier_lr", "votingclassifier_tree"]),
+    ],
+)
+def test_get_features_names_out_classifier(kwargs, expected_names):
+    """Check get_feature_names_out for classifier for different settings."""
+    X = [[1, 2], [3, 4], [5, 6], [1, 1.2]]
+    y = [0, 1, 2, 0]
+
+    voting = VotingClassifier(
+        estimators=[
+            ("lr", LogisticRegression(random_state=0)),
+            ("tree", DecisionTreeClassifier(random_state=0)),
+        ],
+        **kwargs,
+    )
+    voting.fit(X, y)
+    X_trans = voting.transform(X)
+    names_out = voting.get_feature_names_out()
+
+    assert X_trans.shape[1] == len(expected_names)
+    assert_array_equal(names_out, expected_names)
+
+
+def test_get_features_names_out_classifier_error():
+    """Check that error is raised when voting="soft" and flatten_transform=False."""
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    voting = VotingClassifier(
+        estimators=[
+            ("lr", LogisticRegression(random_state=0)),
+            ("tree", DecisionTreeClassifier(random_state=0)),
+        ],
+        voting="soft",
+        flatten_transform=False,
+    )
+    voting.fit(X, y)
+
+    msg = (
+        "get_feature_names_out is not supported when `voting='soft'` and "
+        "`flatten_transform=False`"
+    )
+    with pytest.raises(ValueError, match=msg):
+        voting.get_feature_names_out()
