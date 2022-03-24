@@ -10,8 +10,8 @@ and posterior distributions.
 
 Here, we only give some illustration. To know more about kernels' formulation,
 refer to the :ref:`User Guide <gp_kernels>`.
+
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
@@ -53,9 +53,6 @@ def plot_gpr_samples(gpr_model, n_samples, ax):
     """
     x = np.linspace(0, 5, 100)
     X = x.reshape(-1, 1)
-
-    y_mean, y_std = gpr_model.predict(X, return_std=True)
-    y_samples = gpr_model.sample_y(X, n_samples)
 
     y_mean, y_std = gpr_model.predict(X, return_std=True)
     y_samples = gpr_model.sample_y(X, n_samples)

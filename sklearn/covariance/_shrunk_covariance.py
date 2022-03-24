@@ -25,14 +25,14 @@ from ..utils import check_array
 
 
 def shrunk_covariance(emp_cov, shrinkage=0.1):
-    """Calculates a covariance matrix shrunk on the diagonal
+    """Calculate a covariance matrix shrunk on the diagonal.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
     emp_cov : array-like of shape (n_features, n_features)
-        Covariance matrix to be shrunk
+        Covariance matrix to be shrunk.
 
     shrinkage : float, default=0.1
         Coefficient in the convex combination used for the computation
@@ -45,11 +45,11 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Notes
     -----
-    The regularized (shrunk) covariance is given by:
+    The regularized (shrunk) covariance is given by::
 
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+        (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
-    where mu = trace(cov) / n_features
+    where `mu = trace(cov) / n_features`.
     """
     emp_cov = check_array(emp_cov)
     n_features = emp_cov.shape[0]
@@ -97,6 +97,12 @@ class ShrunkCovariance(EmpiricalCovariance):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -151,8 +157,8 @@ class ShrunkCovariance(EmpiricalCovariance):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -180,7 +186,7 @@ class ShrunkCovariance(EmpiricalCovariance):
 
 
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
-    """Estimates the shrunk Ledoit-Wolf covariance matrix.
+    """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
@@ -234,7 +240,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     # number of blocks to split the covariance matrix into
     n_splits = int(n_features / block_size)
-    X2 = X ** 2
+    X2 = X**2
     emp_cov_trace = np.sum(X2, axis=0) / n_samples
     mu = np.sum(emp_cov_trace) / n_features
     beta_ = 0.0  # sum of the coefficients of <X2.T, X2>
@@ -256,17 +262,17 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     delta_ += np.sum(
         np.dot(X.T[block_size * n_splits :], X[:, block_size * n_splits :]) ** 2
     )
-    delta_ /= n_samples ** 2
+    delta_ /= n_samples**2
     beta_ += np.sum(
         np.dot(X2.T[block_size * n_splits :], X2[:, block_size * n_splits :])
     )
     # use delta_ to compute beta
     beta = 1.0 / (n_features * n_samples) * (beta_ / n_samples - delta_)
     # delta is the sum of the squared coefficients of (<X.T,X> - mu*Id) / p
-    delta = delta_ - 2.0 * mu * emp_cov_trace.sum() + n_features * mu ** 2
+    delta = delta_ - 2.0 * mu * emp_cov_trace.sum() + n_features * mu**2
     delta /= n_features
     # get final beta as the min between beta and delta
-    # We do this to prevent shrinking more than "1", which whould invert
+    # We do this to prevent shrinking more than "1", which would invert
     # the value of covariances
     beta = min(beta, delta)
     # finally get shrinkage
@@ -275,14 +281,14 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
 
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
-    """Estimates the shrunk Ledoit-Wolf covariance matrix.
+    """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Data from which to compute the covariance estimate
+        Data from which to compute the covariance estimate.
 
     assume_centered : bool, default=False
         If True, data will not be centered before computation.
@@ -316,7 +322,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
             X = X - X.mean()
-        return np.atleast_2d((X ** 2).mean()), 0.0
+        return np.atleast_2d((X**2).mean()), 0.0
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
         warnings.warn(
@@ -385,6 +391,12 @@ class LedoitWolf(EmpiricalCovariance):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -512,7 +524,7 @@ def oas(X, *, assume_centered=False):
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
             X = X - X.mean()
-        return np.atleast_2d((X ** 2).mean()), 0.0
+        return np.atleast_2d((X**2).mean()), 0.0
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
         warnings.warn(
@@ -527,9 +539,9 @@ def oas(X, *, assume_centered=False):
     mu = np.trace(emp_cov) / n_features
 
     # formula from Chen et al.'s **implementation**
-    alpha = np.mean(emp_cov ** 2)
-    num = alpha + mu ** 2
-    den = (n_samples + 1.0) * (alpha - (mu ** 2) / n_features)
+    alpha = np.mean(emp_cov**2)
+    num = alpha + mu**2
+    den = (n_samples + 1.0) * (alpha - (mu**2) / n_features)
 
     shrinkage = 1.0 if den == 0 else min(num / den, 1.0)
     shrunk_cov = (1.0 - shrinkage) * emp_cov
@@ -584,6 +596,12 @@ class OAS(EmpiricalCovariance):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------

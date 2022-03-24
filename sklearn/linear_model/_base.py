@@ -23,6 +23,7 @@ import scipy.sparse as sp
 from scipy import linalg
 from scipy import optimize
 from scipy import sparse
+from scipy.sparse.linalg import lsqr
 from scipy.special import expit
 from joblib import Parallel
 
@@ -34,7 +35,6 @@ from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
-from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -66,7 +66,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
     default : bool,
         default normalize value used by the estimator
 
-    estimator_name : string,
+    estimator_name : str
         name of the linear estimator which calls this function.
         The name will be used for writing the deprecation warnings
 
@@ -124,7 +124,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
             "0. For other values of l1_ratio, no analytic formula is "
             "available."
         )
-    elif estimator_name == "RidgeCV" or estimator_name == "RidgeClassifierCV":
+    elif estimator_name in ("RidgeCV", "RidgeClassifierCV", "_RidgeGCV"):
         alpha_msg = "Set parameter alphas to: original_alphas * n_samples. "
     else:
         alpha_msg = ""
@@ -237,6 +237,21 @@ def _preprocess_data(
 
     This is here because nearly all linear models will want their data to be
     centered. This function also systematically makes y consistent with X.dtype
+
+    Returns
+    -------
+    X_out : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        If copy=True a copy of the input X is triggered, otherwise operations are
+        inplace.
+        If input X is dense, then X_out is centered.
+        If normalize is True, then X_out is rescaled (dense and sparse case)
+    y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
+        Centered version of y. Likely performed inplace on input y.
+    X_offset : ndarray of shape (n_features,)
+        The mean per column of input X.
+    y_offset : float or ndarray of shape (n_features,)
+    X_scale : ndarray of shape (n_features,)
+        The standard deviation per column of input X.
     """
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
@@ -325,11 +340,11 @@ def _rescale_data(X, y, sample_weight):
     sample_weight = np.asarray(sample_weight)
     if sample_weight.ndim == 0:
         sample_weight = np.full(n_samples, sample_weight, dtype=sample_weight.dtype)
-    sample_weight = np.sqrt(sample_weight)
-    sw_matrix = sparse.dia_matrix((sample_weight, 0), shape=(n_samples, n_samples))
+    sample_weight_sqrt = np.sqrt(sample_weight)
+    sw_matrix = sparse.dia_matrix((sample_weight_sqrt, 0), shape=(n_samples, n_samples))
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
-    return X, y
+    return X, y, sample_weight_sqrt
 
 
 class LinearModel(BaseEstimator, metaclass=ABCMeta):
@@ -361,8 +376,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         """
         return self._decision_function(X)
 
-    _preprocess_data = staticmethod(_preprocess_data)
-
     def _set_intercept(self, X_offset, y_offset, X_scale):
         """Set the intercept_"""
         if self.fit_intercept:
@@ -392,15 +405,15 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the confidence scores.
 
         Returns
         -------
-        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
-            Confidence scores per (sample, class) combination. In the binary
-            case, confidence score for self.classes_[1] where >0 means this
-            class would be predicted.
+        scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Confidence scores per `(n_samples, n_classes)` combination. In the
+            binary case, confidence score for `self.classes_[1]` where >0 means
+            this class would be predicted.
         """
         check_is_fitted(self)
 
@@ -414,13 +427,13 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The data matrix for which we want to get the predictions.
 
         Returns
         -------
-        C : array, shape [n_samples]
-            Predicted class label per sample.
+        y_pred : ndarray of shape (n_samples,)
+            Vector containing the class labels for each sample.
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
@@ -536,10 +549,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
-        speedup for n_targets > 1 and sufficient large problems.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        speedup in case of sufficiently large problems, that is if firstly
+        `n_targets > 1` and secondly `X` is sparse or if `positive` is set
+        to `True`. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        processors. See :term:`Glossary <n_jobs>` for more details.
 
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive. This
@@ -569,6 +583,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -656,10 +676,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
         )
 
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        sample_weight = _check_sample_weight(
+            sample_weight, X, dtype=X.dtype, only_non_negative=True
+        )
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
@@ -669,46 +690,42 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             return_mean=True,
         )
 
-        if sample_weight is not None:
-            # Sample weight can be implemented via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+        # Sample weight can be implemented via a simple rescaling.
+        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = optimize.nnls(X, y)
+                self.coef_ = optimize.nnls(X, y)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
                 )
-                self.coef_, self._residues = map(np.vstack, zip(*outs))
+                self.coef_ = np.vstack([out[0] for out in outs])
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
             def matvec(b):
-                return X.dot(b) - b.dot(X_offset_scale)
+                return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
 
             def rmatvec(b):
-                return X.T.dot(b) - X_offset_scale * np.sum(b)
+                return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
 
             X_centered = sparse.linalg.LinearOperator(
                 shape=X.shape, matvec=matvec, rmatvec=rmatvec
             )
 
             if y.ndim < 2:
-                out = sparse_lsqr(X_centered, y)
-                self.coef_ = out[0]
-                self._residues = out[3]
+                self.coef_ = lsqr(X_centered, y)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(sparse_lsqr)(X_centered, y[:, j].ravel())
+                    delayed(lsqr)(X_centered, y[:, j].ravel())
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
-                self._residues = np.vstack([out[3] for out in outs])
         else:
-            self.coef_, self._residues, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
@@ -785,7 +802,10 @@ def _pre_fit(
     check_input=True,
     sample_weight=None,
 ):
-    """Aux function used at beginning of fit in linear models
+    """Function used at beginning of fit in linear models with L1 or L0 penalty.
+
+    This function applies _preprocess_data and additionally computes the gram matrix
+    `precompute` as needed as well as `Xy`.
 
     Parameters
     ----------
@@ -819,7 +839,7 @@ def _pre_fit(
             sample_weight=sample_weight,
         )
     if sample_weight is not None:
-        X, y = _rescale_data(X, y, sample_weight=sample_weight)
+        X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
 
     # FIXME: 'normalize' to be removed in 1.2
     if hasattr(precompute, "__array__"):

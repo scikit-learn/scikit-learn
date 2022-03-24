@@ -933,6 +933,7 @@ details.
 
    metrics.check_scoring
    metrics.get_scorer
+   metrics.get_scorer_names
    metrics.make_scorer
 
 Classification metrics
@@ -994,6 +995,7 @@ details.
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
+   metrics.d2_tweedie_score
    metrics.mean_pinball_loss
 
 Multilabel ranking metrics
@@ -1057,6 +1059,16 @@ further details.
 
    metrics.consensus_score
 
+Distance metrics
+----------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.DistanceMetric
 
 Pairwise metrics
 ----------------
@@ -1123,7 +1135,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
-
+   calibration.CalibrationDisplay
 
 .. _mixture_ref:
 
@@ -1316,7 +1328,6 @@ Model validation
    :template: class.rst
 
    neighbors.BallTree
-   neighbors.DistanceMetric
    neighbors.KDTree
    neighbors.KernelDensity
    neighbors.KNeighborsClassifier
@@ -1603,7 +1614,6 @@ Plotting
    utils.gen_even_slices
    utils.graph.single_source_shortest_path_length
    utils.indexable
-   utils.metaestimators.if_delegate_has_method
    utils.metaestimators.available_if
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
@@ -1644,5 +1654,11 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 1.0 (renaming of 0.25)
----------------------------------------
+To be removed in 1.3
+--------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.metaestimators.if_delegate_has_method

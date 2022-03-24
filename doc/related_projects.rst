@@ -123,6 +123,11 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-porter <https://github.com/nok/sklearn-porter>`_
   Transpile trained scikit-learn models to C, Java, Javascript and others.
 
+- `m2cgen <https://github.com/BayesWitnesses/m2cgen>`_
+  A lightweight library which allows to transpile trained machine learning
+  models including many scikit-learn estimators into a native code of C, Java,
+  Go, R, PHP, Dart, Haskell, Rust and many other programming languages.
+
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
@@ -174,6 +179,11 @@ and tasks.
 - `scikeras <https://github.com/adriangb/scikeras>`_ provides a wrapper around
   Keras to interface it with scikit-learn. SciKeras is the successor
   of `tf.keras.wrappers.scikit_learn`.
+
+**Federated Learning**
+
+- `Flower <https://flower.dev/>`_ A friendly federated learning framework with a 
+  unified approach that can federate any workload, any ML framework, and any programming language.
 
 **Broad scope**
 

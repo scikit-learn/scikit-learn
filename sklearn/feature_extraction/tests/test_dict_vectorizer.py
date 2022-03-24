@@ -39,7 +39,10 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
         assert v.feature_names_ == sorted(v.feature_names_)
 
 
-def test_feature_selection():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_feature_selection(get_names):
     # make two feature dicts with two useful features and a bunch of useless
     # ones, in terms of chi2
     d1 = dict([("useless%d" % i, 10) for i in range(20)], useful1=1, useful2=20)
@@ -51,10 +54,13 @@ def test_feature_selection():
         sel = SelectKBest(chi2, k=2).fit(X, [0, 1])
 
         v.restrict(sel.get_support(indices=indices), indices=indices)
-        assert v.get_feature_names() == ["useful1", "useful2"]
+        assert_array_equal(getattr(v, get_names)(), ["useful1", "useful2"])
 
 
-def test_one_of_k():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_one_of_k(get_names):
     D_in = [
         {"version": "1", "ham": 2},
         {"version": "2", "spam": 0.3},
@@ -67,12 +73,15 @@ def test_one_of_k():
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 1, "ham": 2}
 
-    names = v.get_feature_names()
+    names = getattr(v, get_names)()
     assert "version=2" in names
     assert "version" not in names
 
 
-def test_iterable_value():
+# TODO: Remove in 1.2 when get_feature_names is removed.
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
+def test_iterable_value(get_names):
     D_names = ["ham", "spam", "version=1", "version=2", "version=3"]
     X_expected = [
         [2.0, 0.0, 2.0, 1.0, 0.0],
@@ -92,9 +101,9 @@ def test_iterable_value():
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 2, "version=2": 1, "ham": 2}
 
-    names = v.get_feature_names()
+    names = getattr(v, get_names)()
 
-    assert names == D_names
+    assert_array_equal(names, D_names)
 
 
 def test_iterable_not_string_error():
@@ -171,6 +180,17 @@ def test_n_features_in():
     assert not hasattr(dv, "n_features_in_")
 
 
+# TODO: Remove in 1.2 when get_feature_names is removed
+def test_feature_union_get_feature_names_deprecated():
+    """Check that get_feature_names is deprecated"""
+    D_in = [{"version": "1", "ham": 2}, {"version": "2", "spam": 0.3}]
+    v = DictVectorizer().fit(D_in)
+
+    msg = "get_feature_names is deprecated in 1.0"
+    with pytest.warns(FutureWarning, match=msg):
+        v.get_feature_names()
+
+
 def test_dictvectorizer_dense_sparse_equivalence():
     """Check the equivalence between between sparse and dense DictVectorizer.
     Non-regression test for:
@@ -227,3 +247,16 @@ def test_dict_vectorizer_unsupported_value_type():
     err_msg = "Unsupported value Type"
     with pytest.raises(TypeError, match=err_msg):
         vectorizer.fit_transform(X)
+
+
+def test_dict_vectorizer_get_feature_names_out():
+    """Check that integer feature names are converted to strings in
+    feature_names_out."""
+
+    X = [{1: 2, 3: 4}, {2: 4}]
+    dv = DictVectorizer(sparse=False).fit(X)
+
+    feature_names = dv.get_feature_names_out()
+    assert isinstance(feature_names, np.ndarray)
+    assert feature_names.dtype == object
+    assert_array_equal(feature_names, ["1", "2", "3"])

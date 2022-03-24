@@ -526,6 +526,11 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
         ovo_weighted_score,
     )
 
+    # Check that average=None raises NotImplemented error
+    error_message = "average=None is not implemented for multi_class='ovo'."
+    with pytest.raises(NotImplementedError, match=error_message):
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class="ovo", average=None)
+
 
 @pytest.mark.parametrize(
     "y_true, labels",
@@ -583,8 +588,13 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:, 0])
     out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:, 1])
     out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:, 2])
-    result_unweighted = (out_0 + out_1 + out_2) / 3.0
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multi_class="ovr", labels=labels, average=None),
+        [out_0, out_1, out_2],
+    )
 
+    # Compute unweighted results (default behaviour)
+    result_unweighted = (out_0 + out_1 + out_2) / 3.0
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multi_class="ovr", labels=labels),
         result_unweighted,
@@ -677,14 +687,14 @@ def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels, multi_class)
     [
         (
             (
-                r"average must be one of \('macro', 'weighted'\) for "
+                r"average must be one of \('macro', 'weighted', None\) for "
                 r"multiclass problems"
             ),
             {"average": "samples", "multi_class": "ovo"},
         ),
         (
             (
-                r"average must be one of \('macro', 'weighted'\) for "
+                r"average must be one of \('macro', 'weighted', None\) for "
                 r"multiclass problems"
             ),
             {"average": "micro", "multi_class": "ovr"},
@@ -1529,7 +1539,7 @@ def test_coverage_error():
     assert_almost_equal(coverage_error([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 2)
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
 
-    # Non trival case
+    # Non trivial case
     assert_almost_equal(
         coverage_error([[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]]),
         (1 + 3) / 2.0,
@@ -1588,7 +1598,7 @@ def test_label_ranking_loss():
     assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
     assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
 
-    # Non trival case
+    # Non trivial case
     assert_almost_equal(
         label_ranking_loss([[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]]),
         (0 + 2 / 2) / 2.0,
@@ -1930,46 +1940,85 @@ def test_top_k_accuracy_score_warning(y_true, k):
 
 
 @pytest.mark.parametrize(
-    "y_true, labels, msg",
+    "y_true, y_score, labels, msg",
     [
         (
             [0, 0.57, 1, 2],
+            [
+                [0.2, 0.1, 0.7],
+                [0.4, 0.3, 0.3],
+                [0.3, 0.4, 0.3],
+                [0.4, 0.5, 0.1],
+            ],
             None,
             "y type must be 'binary' or 'multiclass', got 'continuous'",
         ),
         (
             [0, 1, 2, 3],
+            [
+                [0.2, 0.1, 0.7],
+                [0.4, 0.3, 0.3],
+                [0.3, 0.4, 0.3],
+                [0.4, 0.5, 0.1],
+            ],
             None,
             r"Number of classes in 'y_true' \(4\) not equal to the number of "
             r"classes in 'y_score' \(3\).",
         ),
         (
             ["c", "c", "a", "b"],
+            [
+                [0.2, 0.1, 0.7],
+                [0.4, 0.3, 0.3],
+                [0.3, 0.4, 0.3],
+                [0.4, 0.5, 0.1],
+            ],
             ["a", "b", "c", "c"],
             "Parameter 'labels' must be unique.",
         ),
-        (["c", "c", "a", "b"], ["a", "c", "b"], "Parameter 'labels' must be ordered."),
+        (
+            ["c", "c", "a", "b"],
+            [
+                [0.2, 0.1, 0.7],
+                [0.4, 0.3, 0.3],
+                [0.3, 0.4, 0.3],
+                [0.4, 0.5, 0.1],
+            ],
+            ["a", "c", "b"],
+            "Parameter 'labels' must be ordered.",
+        ),
         (
             [0, 0, 1, 2],
+            [
+                [0.2, 0.1, 0.7],
+                [0.4, 0.3, 0.3],
+                [0.3, 0.4, 0.3],
+                [0.4, 0.5, 0.1],
+            ],
             [0, 1, 2, 3],
             r"Number of given labels \(4\) not equal to the number of classes in "
             r"'y_score' \(3\).",
         ),
         (
             [0, 0, 1, 2],
+            [
+                [0.2, 0.1, 0.7],
+                [0.4, 0.3, 0.3],
+                [0.3, 0.4, 0.3],
+                [0.4, 0.5, 0.1],
+            ],
             [0, 1, 3],
             "'y_true' contains labels not in parameter 'labels'.",
         ),
+        (
+            [0, 1],
+            [[0.5, 0.2, 0.2], [0.3, 0.4, 0.2]],
+            None,
+            "`y_true` is binary while y_score is 2d with 3 classes. If"
+            " `y_true` does not contain all the labels, `labels` must be provided",
+        ),
     ],
 )
-def test_top_k_accuracy_score_error(y_true, labels, msg):
-    y_score = np.array(
-        [
-            [0.2, 0.1, 0.7],
-            [0.4, 0.3, 0.3],
-            [0.3, 0.4, 0.3],
-            [0.4, 0.5, 0.1],
-        ]
-    )
+def test_top_k_accuracy_score_error(y_true, y_score, labels, msg):
     with pytest.raises(ValueError, match=msg):
         top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
