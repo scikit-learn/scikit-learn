@@ -24,6 +24,7 @@ from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
     PairwiseDistancesArgKmin,
+    PairwiseDistancesRadiusNeighborhood,
 )
 from ..utils import (
     check_array,
@@ -1070,20 +1071,43 @@ class RadiusNeighborsMixin:
         """
         check_is_fitted(self)
 
-        if X is not None:
-            query_is_train = False
+        if sort_results and not return_distance:
+            raise ValueError("return_distance must be True if sort_results is True.")
+
+        query_is_train = X is None
+        if query_is_train:
+            X = self._fit_X
+        else:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False)
-        else:
-            query_is_train = True
-            X = self._fit_X
+                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
 
         if radius is None:
             radius = self.radius
 
-        if self._fit_method == "brute" and self.metric == "precomputed" and issparse(X):
+        use_pairwise_distances_reductions = (
+            self._fit_method == "brute"
+            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
+                X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
+            )
+        )
+
+        if use_pairwise_distances_reductions:
+            results = PairwiseDistancesRadiusNeighborhood.compute(
+                X=X,
+                Y=self._fit_X,
+                radius=radius,
+                metric=self.effective_metric_,
+                metric_kwargs=self.effective_metric_params_,
+                strategy="auto",
+                return_distance=return_distance,
+                sort_results=sort_results,
+            )
+
+        elif (
+            self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
+        ):
             results = _radius_neighbors_from_graph(
                 X, radius=radius, return_distance=return_distance
             )
@@ -1126,10 +1150,6 @@ class RadiusNeighborsMixin:
                 results = _to_object_array(neigh_ind_list)
 
             if sort_results:
-                if not return_distance:
-                    raise ValueError(
-                        "return_distance must be True if sort_results is True."
-                    )
                 for ii in range(len(neigh_dist)):
                     order = np.argsort(neigh_dist[ii], kind="mergesort")
                     neigh_ind[ii] = neigh_ind[ii][order]

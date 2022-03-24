@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
@@ -837,6 +835,7 @@ def haversine_distances(X, Y=None):
     X : array-like of shape (n_samples_X, 2)
 
     Y : array-like of shape (n_samples_Y, 2), default=None
+        If `None`, uses `Y=X`.
 
     Returns
     -------
@@ -992,20 +991,23 @@ def cosine_distances(X, Y=None):
 
 # Paired distances
 def paired_euclidean_distances(X, Y):
-    """
-    Computes the paired euclidean distances between X and Y.
+    """Compute the paired euclidean distances between X and Y.
 
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
+        Input array/matrix X.
 
     Y : array-like of shape (n_samples, n_features)
+        Input array/matrix Y.
 
     Returns
     -------
     distances : ndarray of shape (n_samples,)
+        Output array/matrix containing the calculated paired euclidean
+        distances.
     """
     X, Y = check_paired_arrays(X, Y)
     return row_norms(X - Y)
