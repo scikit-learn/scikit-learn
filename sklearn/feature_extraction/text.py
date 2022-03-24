@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck
@@ -1986,7 +1985,7 @@ class TfidfVectorizer(CountVectorizer):
         if not self.use_idf:
             raise ValueError("`idf_` cannot be set when `user_idf=False`.")
         if not hasattr(self, "_tfidf"):
-            # We should support transfering `idf_` from another `TfidfTransformer`
+            # We should support transferring `idf_` from another `TfidfTransformer`
             # and therefore, we need to create the transformer instance it does not
             # exist yet.
             self._tfidf = TfidfTransformer(

@@ -539,24 +539,25 @@ def test_repr_mimebundle_():
     tree = DecisionTreeClassifier()
     output = tree._repr_mimebundle_()
     assert "text/plain" in output
-    assert "text/html" not in output
+    assert "text/html" in output
 
-    with config_context(display="diagram"):
+    with config_context(display="text"):
         output = tree._repr_mimebundle_()
         assert "text/plain" in output
-        assert "text/html" in output
+        assert "text/html" not in output
 
 
 def test_repr_html_wraps():
     # Checks the display configuration flag controls the html output
     tree = DecisionTreeClassifier()
-    msg = "_repr_html_ is only defined when"
-    with pytest.raises(AttributeError, match=msg):
-        output = tree._repr_html_()
 
-    with config_context(display="diagram"):
-        output = tree._repr_html_()
-        assert "<style>" in output
+    output = tree._repr_html_()
+    assert "<style>" in output
+
+    with config_context(display="text"):
+        msg = "_repr_html_ is only defined when"
+        with pytest.raises(AttributeError, match=msg):
+            output = tree._repr_html_()
 
 
 def test_n_features_in_validation():
