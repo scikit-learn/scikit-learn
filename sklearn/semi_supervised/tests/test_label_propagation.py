@@ -10,8 +10,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import NearestNeighbors
 from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_equal,
+)
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {"kernel": "rbf"}),
@@ -28,61 +30,49 @@ ESTIMATORS = [
     ),
 ]
 
-DTYPES = (np.float32, np.float64)
 
-
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_fit_transduction(dtype):
-    samples = np.asarray([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], dtype=dtype)
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
+def test_fit_transduction(global_dtype, Estimator, parameters):
+    samples = np.asarray([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], dtype=global_dtype)
     labels = [0, 1, -1]
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(samples, labels)
-        assert clf.transduction_[2] == 1
+    clf = Estimator(**parameters).fit(samples, labels)
+    assert clf.transduction_[2] == 1
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_distribution(dtype):
-    samples = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], dtype=dtype)
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
+def test_distribution(global_dtype, Estimator, parameters):
+    samples = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]], dtype=global_dtype)
     labels = [0, 1, -1]
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(samples, labels)
-        if parameters["kernel"] == "knn":
-            continue  # unstable test; changes in k-NN ordering break it
-            assert_array_almost_equal(
-                clf.predict_proba([[1.0, 0.0]]), np.array([[1.0, 0.0]]), 2
-            )
-        else:
-            assert_array_almost_equal(
-                np.asarray(clf.label_distributions_[2]), np.array([0.5, 0.5]), 2
-            )
-
-
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_predict(dtype):
-    samples = np.asarray([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], dtype=dtype)
-    labels = [0, 1, -1]
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(samples, labels)
-        assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
-
-
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_predict_proba(dtype):
-    samples = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], dtype=dtype)
-    labels = [0, 1, -1]
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(samples, labels)
-        assert_array_almost_equal(
-            clf.predict_proba([[1.0, 1.0]]), np.array([[0.5, 0.5]])
+    clf = Estimator(**parameters).fit(samples, labels)
+    # unstable test; changes in k-NN ordering break it
+    if parameters["kernel"] != "knn":
+        assert_allclose(
+            np.asarray(clf.label_distributions_[2]), np.array([0.5, 0.5]), 2
         )
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
+def test_predict(global_dtype, Estimator, parameters):
+    samples = np.asarray([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], dtype=global_dtype)
+    labels = [0, 1, -1]
+    clf = Estimator(**parameters).fit(samples, labels)
+    assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
+
+
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
+def test_predict_proba(global_dtype, Estimator, parameters):
+    samples = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], dtype=global_dtype)
+    labels = [0, 1, -1]
+    clf = Estimator(**parameters).fit(samples, labels)
+    assert_allclose(clf.predict_proba([[1.0, 1.0]]), np.array([[0.5, 0.5]]))
+
+
 @pytest.mark.parametrize("alpha", [0.1, 0.3, 0.5, 0.7, 0.9])
-def test_label_spreading_closed_form(dtype, alpha):
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
+def test_label_spreading_closed_form(global_dtype, Estimator, parameters, alpha):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
-    X = X.astype(dtype)
+    X = X.astype(global_dtype, copy=False)
     y[::3] = -1
     clf = label_propagation.LabelSpreading().fit(X, y)
     # adopting notation from Zhou et al (2004):
@@ -92,16 +82,18 @@ def test_label_spreading_closed_form(dtype, alpha):
     Y = Y[:, :-1]
     expected = np.dot(np.linalg.inv(np.eye(len(S)) - alpha * S), Y)
     expected /= expected.sum(axis=1)[:, np.newaxis]
+    # Inverting might cause zeros values to become NaN values in the case of float32.
+    # Hence, we replace those NaN values to 0.
+    expected = np.nan_to_num(expected)
     clf = label_propagation.LabelSpreading(max_iter=10000, alpha=alpha)
     clf.fit(X, y)
-    assert_array_almost_equal(expected, clf.label_distributions_, 4)
+    assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_label_propagation_closed_form(dtype):
+def test_label_propagation_closed_form(global_dtype):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
-    X = X.astype(dtype)
+    X = X.astype(global_dtype)
     y[::3] = -1
     Y = np.zeros((len(y), n_classes + 1))
     Y[np.arange(len(y)), y] = 1
@@ -122,25 +114,21 @@ def test_label_propagation_closed_form(dtype):
     expected[unlabelled_idx, :] = Y_u
     expected /= expected.sum(axis=1)[:, np.newaxis]
 
-    assert_array_almost_equal(expected, clf.label_distributions_, 4)
+    assert_allclose(expected, clf.label_distributions_, 4)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_valid_alpha(dtype):
+def test_valid_alpha():
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
-    X = X.astype(dtype)
     for alpha in [-0.1, 0, 1, 1.1, None]:
         with pytest.raises(ValueError):
             label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_convergence_speed(dtype):
+def test_convergence_speed():
     # This is a non-regression test for #5774
     X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
     y = np.array([0, 1, -1])
-    X = X.astype(dtype)
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=5000)
     mdl.fit(X, y)
 
@@ -149,12 +137,10 @@ def test_convergence_speed(dtype):
     assert_array_equal(mdl.predict(X), [0, 1, 1])
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_convergence_warning(dtype):
+def test_convergence_warning(global_dtype):
     # This is a non-regression test for #5774
-    X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
+    X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], dtype=global_dtype)
     y = np.array([0, 1, -1])
-    X = X.astype(dtype)
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=1)
     warn_msg = "max_iter=1 was reached without convergence."
     with pytest.warns(ConvergenceWarning, match=warn_msg):
@@ -181,13 +167,14 @@ def test_convergence_warning(dtype):
     "LabelPropagationCls",
     [label_propagation.LabelSpreading, label_propagation.LabelPropagation],
 )
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_label_propagation_non_zero_normalizer(LabelPropagationCls, dtype):
+def test_label_propagation_non_zero_normalizer(LabelPropagationCls, global_dtype):
     # check that we don't divide by zero in case of null normalizer
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/15946
     # https://github.com/scikit-learn/scikit-learn/issues/9292
-    X = np.array([[100.0, 100.0], [100.0, 100.0], [0.0, 0.0], [0.0, 0.0]], dtype=dtype)
+    X = np.array(
+        [[100.0, 100.0], [100.0, 100.0], [0.0, 0.0], [0.0, 0.0]], dtype=global_dtype
+    )
     y = np.array([0, 1, -1, -1])
     mdl = LabelPropagationCls(kernel="knn", max_iter=100, n_neighbors=1)
     with pytest.warns(None) as record:
@@ -195,8 +182,7 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls, dtype):
     assert not [w.message for w in record]
 
 
-@pytest.mark.parametrize("dtype", DTYPES)
-def test_predict_sparse_callable_kernel(dtype):
+def test_predict_sparse_callable_kernel(global_dtype):
     # This is a non-regression test for #15866
 
     # Custom sparse kernel (top-K RBF)
@@ -220,11 +206,11 @@ def test_predict_sparse_callable_kernel(dtype):
         n_repeated=0,
         random_state=0,
     )
+    X = X.astype(global_dtype)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=n_test, random_state=0
     )
-    X = X.astype(dtype)
 
     model = label_propagation.LabelSpreading(kernel=topk_rbf)
     model.fit(X_train, y_train)
