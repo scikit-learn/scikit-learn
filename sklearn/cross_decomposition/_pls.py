@@ -355,7 +355,7 @@ class _PLS(
             self.y_weights_,
             pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
         )
-        # FIXME: change `self._coef_` to `self.coef_` in 1.3
+        # TODO(1.3): change `self._coef_` to `self.coef_`
         self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
         self._coef_ = (self._coef_ * self._y_std).T
         self._n_features_out = self.x_rotations_.shape[1]
@@ -471,7 +471,7 @@ class _PLS(
         # Normalize
         X -= self._x_mean
         X /= self._x_std
-        # FIXME: change `self._coef_` to `self.coef_` in 1.3
+        # TODO(1.3): change `self._coef_` to `self.coef_`
         Ypred = X @ self._coef_.T
         return Ypred + self._y_mean
 
@@ -495,17 +495,17 @@ class _PLS(
         """
         return self.fit(X, y).transform(X, y)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The attribute `coef_` will be transposed in version 1.3 to be consistent "
-        "with other linear models in scikit-learn. Currently, `coef_` has a shape "
-        "of (n_features, n_targets) and in the future it will have a shape of "
-        "(n_targets, n_features)."
-    )
     @property
     def coef_(self):
-        # FIXME: remove in 1.3 and change `self._coef_` to `self.coef_`
+        # TODO(1.3): remove and change `self._coef_` to `self.coef_`
         # In addition, remove catch warnings from `_get_feature_importances`
+        warnings.warn(
+            "The attribute `coef_` will be transposed in version 1.3 to be consistent "
+            "with other linear models in scikit-learn. Currently, `coef_` has a shape "
+            "of (n_features, n_targets) and in the future it will have a shape of "
+            "(n_targets, n_features).",
+            FutureWarning
+        )
         return self._coef_.T
 
     def _more_tags(self):
@@ -576,11 +576,6 @@ class PLSRegression(_PLS):
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
-
-        .. deprecated:: 1.1
-           The attribute `coef_` will be transposed in version 1.3 to be
-           consistent with other linear models. The shape will be changed from
-           `(n_features, n_targets)` to `(n_targets, n_features)`.
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -716,11 +711,6 @@ class PLSCanonical(_PLS):
         The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
 
-        .. deprecated:: 1.1
-           The attribute `coef_` will be transposed in version 1.3 to be
-           consistent with other linear models. The shape will be changed from
-           `(n_features, n_targets)` to `(n_targets, n_features)`.
-
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
         component. Empty if `algorithm='svd'`.
@@ -832,11 +822,6 @@ class CCA(_PLS):
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
-
-        .. deprecated:: 1.1
-           The attribute `coef_` will be transposed in version 1.3 to be
-           consistent with other linear models. The shape will be changed from
-           `(n_features, n_targets)` to `(n_targets, n_features)`.
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each

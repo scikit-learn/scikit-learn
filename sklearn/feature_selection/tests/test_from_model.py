@@ -501,6 +501,7 @@ def test_importance_getter(estimator, importance_getter):
     assert selector.transform(data).shape[1] == 1
 
 
+# TODO(1.3): remove
 @pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
 def test_select_from_model_pls(PLSEstimator):
     """Check the behaviour of SelectFromModel with PLS estimators.
