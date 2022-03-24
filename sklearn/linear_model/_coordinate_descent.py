@@ -179,6 +179,8 @@ def _alpha_grid(
         X_scale = np.where(X_scale != 0, X_scale, 1.0)
         product /= X_scale
 
+    if product.ndim == 1:
+        product = product.reshape(-1, 1)
     alpha_max = np.max(np.sqrt(np.sum(product**2, axis=1))) / l1_ratio
     if alpha_max <= np.finfo(float).resolution:
         return np.full(n_alphas, np.finfo(float).resolution)
