@@ -963,9 +963,6 @@ Changelog
   class methods and will be removed in 1.2.
   :pr:`19278` by `Guillaume Lemaitre`_.
 
-- |Fix| Fix recall in multilabel classification when true labels are all negative.
-  :pr:`19085` by :user:`Varun Agrawal <varunagrawal>`.
-
 :mod:`sklearn.mixture`
 ......................
 

@@ -865,15 +865,22 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    precision = tps / (tps + fps)
-    precision[np.isnan(precision)] = 0
-    recall = np.ones(tps.size) if tps[-1] == 0 else tps / tps[-1]
+    precision = np.divide(tps, tps + fps, where=tps + fps != 0)
+
+    # When no positive label in y_true, recall is set to 1 for
+    # all thresholds, such that the average_precision_score is 0.
+    # tps[-1] == 0 <=> y_true == all negative labels
+    if tps[-1] == 0:
+        warnings.warn("No positive class found in y_true")
+        recall = np.ones_like(tps)
+    else:
+        recall = tps / tps[-1]
 
     # stop when full recall attained
     # and reverse the outputs so recall is decreasing
     last_ind = tps.searchsorted(tps[-1])
     sl = slice(last_ind, None, -1)
-    return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
+    return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
 def roc_curve(
