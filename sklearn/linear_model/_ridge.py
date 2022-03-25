@@ -29,8 +29,6 @@ from ._ridge_solvers import (
     _cholesky_helper,
     _solve_sparse_cg,
     _solve_lsqr,
-    _solve_cholesky,
-    _solve_cholesky_kernel,
     _solve_svd,
     _solve_lbfgs,
 )
@@ -361,7 +359,7 @@ def _ridge_regression(
 
     elif solver == "lsqr":
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
-    elif solver == 'cholesky':
+    elif solver == "cholesky":
         coef = _cholesky_helper(X, y, alpha, n_features, n_samples)
     elif solver in ["sag", "saga"]:
         # precompute max_squared_sum for all targets

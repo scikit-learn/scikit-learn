@@ -654,7 +654,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self.n_jobs = n_jobs
         self.positive = positive
         if solver not in ["lstsq", "cholesky"]:
-            raise ValueError(f"Solver must be either `lstsq` or `cholesky`, currently solver='{solver}'.")
+            raise ValueError(
+                "Solver must be either `lstsq` or `cholesky`, currently"
+                f" solver='{solver}'."
+            )
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
@@ -732,11 +735,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 alpha = np.repeat(alpha, n_targets)
 
             try:
-                self.coef_ = _cholesky_helper(X, y, alpha, n_features,
-                                              n_samples)
+                self.coef_ = _cholesky_helper(X, y, alpha, n_features, n_samples)
             except TypeError:
-                raise TypeError('X matrix is singular and sparse, and not'
-                                'supported by the Cholesky solver. ')
+                raise TypeError(
+                    "X matrix is singular and sparse, and not"
+                    "supported by the Cholesky solver. "
+                )
 
             if ravel:
                 # When y was passed as a 1d-array, we flatten the coefficients.
@@ -765,8 +769,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self.coef_ = np.vstack([out[0] for out in outs])
                 self._residues = np.vstack([out[3] for out in outs])
         else:
-            self.coef_, self._residues, self.rank_, self.singular_ = \
-                linalg.lstsq(X, y, check_finite=False)
+            self.coef_, self._residues, self.rank_, self.singular_ = linalg.lstsq(
+                X, y, check_finite=False
+            )
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
