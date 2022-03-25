@@ -22,6 +22,9 @@ from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler
+from sklearn.tests.test_metadata_routing import assert_request_is_empty
+from sklearn.tests.test_metadata_routing import check_recorded_metadata
+from sklearn.tests.test_metadata_routing import record_metadata
 
 
 class DelegatorData:
@@ -301,7 +304,81 @@ def test_meta_estimators_delegate_data_validation(estimator):
     assert not hasattr(estimator, "n_features_in_")
 
 
-def _generate_meta_estimator_instances():
+class RegressorSubEstimator(RegressorMixin, BaseEstimator):
+    """A regressor consuming metadata."""
+
+    def __init__(self, **kwargs):
+        for param, value in kwargs.items():
+            setattr(self, param, value)
+
+    def fit(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        return self
+
+    def predict(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        return np.zeros(shape=(len(X)))
+
+
+class ClassifierSubEstimator(ClassifierMixin, BaseEstimator):
+    """A classifier consuming metadata."""
+
+    def __init__(self, **kwargs):
+        for param, value in kwargs.items():
+            setattr(self, param, value)
+
+    def fit(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        self.classes_ = []
+        return self
+
+    def predict(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        return np.zeros(shape=(len(X)))
+
+    def predict_proba(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        return np.zeros(shape=(len(X)))
+
+    def predict_log_proba(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        return np.zeros(shape=(len(X)))
+
+
+class TransformerSubEstimator(TransformerMixin, BaseEstimator):
+    """A classifier consuming metadata."""
+
+    def __init__(self, **kwargs):
+        for param, value in kwargs.items():
+            setattr(self, param, value)
+
+    def fit(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        self.classes_ = []
+        return self
+
+    def transform(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        return np.zeros(shape=(len(X)))
+
+    def inverse_transform(self, X, y, sample_weight=None, metadata=None):
+        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        return np.zeros(shape=(len(X)))
+
+
+class MetaEstimatorData:
+    """Stores information on how to construct and use a meta-estimator in tests."""
+
+    def __init__(
+        self, *, name, construct, routing_methods=(), fit_args=make_classification()
+    ):
+        self.name = name
+        self.construct = construct
+        self.fit_args = fit_args
+        self.routing_methods = routing_methods
+
+
+def _generate_meta_estimator_data_for_metadata_routing():
     for name, Estimator in all_estimators():
         is_meta_estimator = (
             name.endswith("CV")
@@ -322,7 +399,9 @@ def _generate_meta_estimator_instances():
 
         sig = set(signature(Estimator).parameters)
 
-        if "estimator" in sig or "base_estimator" in sig or "regressor" in sig:
+        if set("estimator", "base_estimator", "regressor", "classifier").intersection(
+            sig
+        ):
             if is_regressor(Estimator):
                 estimator = make_pipeline(TfidfVectorizer(), Ridge())
                 param_grid = {"ridge__alpha": [0.1, 1.0]}
@@ -367,3 +446,21 @@ def _generate_meta_estimator_instances():
 
         else:
             continue
+
+
+def check_meta_estimator_metadata_routing(MetaEstimator, Estimator, methods):
+    # Check that by default request is empty
+    est = Estimator()
+    meta_est = MetaEstimator(est)
+    assert_request_is_empty(meta_est.get_metadata_routing())
+
+    # Check routing of metadata
+    if isinstance(methods, str):
+        methods = [methods]
+    for method in methods:
+        est = getattr(Estimator(), f"set_{method}_request")(
+            sample_weight=True, metadata="alias"
+        )
+        meta_est = MetaEstimator(est)
+        with pytest.raises(TypeError, match="here"):
+            meta_est.fit(X, y, sample_weight=[1], metadata="test")
