@@ -79,6 +79,9 @@ default_base = {
     "min_samples": 7,
     "xi": 0.05,
     "min_cluster_size": 0.1,
+    "allow_single_cluster": True,
+    "hdbscan_min_cluster_size": 15,
+    "hdbscan_min_samples": 3,
 }
 
 datasets = [
@@ -161,7 +164,11 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         affinity="nearest_neighbors",
     )
     dbscan = cluster.DBSCAN(eps=params["eps"])
-    hdbscan = cluster.HDBSCAN()
+    hdbscan = cluster.HDBSCAN(
+        min_samples=params["hdbscan_min_samples"],
+        min_cluster_size=params["hdbscan_min_cluster_size"],
+        allow_single_cluster=params["allow_single_cluster"],
+    )
     optics = cluster.OPTICS(
         min_samples=params["min_samples"],
         xi=params["xi"],
@@ -189,7 +196,8 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ("Ward", ward),
         ("Agglomerative\nClustering", average_linkage),
         ("DBSCAN", dbscan),
-        ("HDBSCAN", hdbscan)("OPTICS", optics),
+        ("HDBSCAN", hdbscan),
+        ("OPTICS", optics),
         ("BIRCH", birch),
         ("Gaussian\nMixture", gmm),
     )

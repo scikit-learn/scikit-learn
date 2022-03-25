@@ -25,11 +25,9 @@ X, labels_true = make_blobs(
 X = StandardScaler().fit_transform(X)
 
 # %%
-# Compute DBSCAN
+# Compute HDBSCAN
 # --------------
 hdb = HDBSCAN().fit(X)
-core_samples_mask = np.zeros_like(hdb.labels_, dtype=bool)
-core_samples_mask[hdb.core_sample_indices_] = True
 labels = hdb.labels_
 
 # Number of clusters in labels, ignoring noise if present.
@@ -61,27 +59,14 @@ for k, col in zip(unique_labels, colors):
         # Black used for noise.
         col = [0, 0, 0, 1]
 
-    class_member_mask = labels == k
-
-    xy = X[class_member_mask & core_samples_mask]
+    xy = X[labels == k]
     plt.plot(
         xy[:, 0],
         xy[:, 1],
         "o",
         markerfacecolor=tuple(col),
         markeredgecolor="k",
-        markersize=14,
+        markersize=8,
     )
-
-    xy = X[class_member_mask & ~core_samples_mask]
-    plt.plot(
-        xy[:, 0],
-        xy[:, 1],
-        "o",
-        markerfacecolor=tuple(col),
-        markeredgecolor="k",
-        markersize=6,
-    )
-
 plt.title("Estimated number of clusters: %d" % n_clusters_)
 plt.show()
