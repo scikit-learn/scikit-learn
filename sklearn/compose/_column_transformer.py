@@ -7,7 +7,6 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from itertools import chain
-from typing import Iterable
 from collections import Counter
 
 import numpy as np
