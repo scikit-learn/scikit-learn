@@ -155,10 +155,10 @@ def _alpha_grid(
             product = Xy / n_samples
     else:
         if (sample_weight is None) and (Xy is None):
-            product = safe_sparse_dot(X.T, y - y.mean())
+            product = safe_sparse_dot(X.T, y - y.mean(axis=0))
             product /= n_samples
         elif sample_weight is None:
-            product = Xy - y.mean() * X.sum(axis=0)
+            product = Xy - y.mean(axis=0) * X.sum(axis=0)
             product /= n_samples
         else:
             w = sample_weight / sample_weight.sum()
