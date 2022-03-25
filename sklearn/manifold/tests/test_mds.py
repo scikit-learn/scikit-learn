@@ -49,10 +49,10 @@ def test_normed_stress(k):
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
     X1, stress1 = mds.smacof(
-        sim, metric=False, normalize=True, max_iter=5, random_state=0
+        sim, metric=False, normalized_stress=True, max_iter=5, random_state=0
     )
     X2, stress2 = mds.smacof(
-        k * sim, metric=False, normalize=True, max_iter=5, random_state=0
+        k * sim, metric=False, normalized_stress=True, max_iter=5, random_state=0
     )
 
     assert_allclose(stress1, stress2, rtol=1e-5)
@@ -63,4 +63,4 @@ def test_normalize_metric_warning():
     msg = "Normalized stress is not supported"
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     with pytest.warns(UserWarning, match=msg):
-        mds.smacof(sim, metric=True, normalize=True)
+        mds.smacof(sim, metric=True, normalized_stress=True)
