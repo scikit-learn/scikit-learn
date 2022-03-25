@@ -1329,7 +1329,7 @@ cdef class Poisson(RegressionCriterion):
     cdef inline DOUBLE_t poisson_loss(self,
                                       SIZE_t start,
                                       SIZE_t end,
-                                      double[::1] y_sum,
+                                      const double[::1] y_sum,
                                       DOUBLE_t weight_sum) nogil:
         """Helper function to compute Poisson loss (~deviance) of a given node.
         """
