@@ -3,6 +3,8 @@ Testing Recursive feature elimination
 """
 
 from operator import attrgetter
+import warnings
+
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
@@ -615,6 +617,7 @@ def test_multioutput(ClsRFE):
     rfe_test.fit(X, y)
 
 
+# TODO(1.3): remove
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
 @pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
 def test_rfe_pls(ClsRFE, PLSEstimator):
@@ -627,7 +630,7 @@ def test_rfe_pls(ClsRFE, PLSEstimator):
     estimator = PLSEstimator(n_components=1)
     selector = ClsRFE(estimator, step=1)
     # We must not warn by accessing `coef_` attribute of PLSEstimator
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
         selector.fit(X, y)
-    assert len(records) == 0
     assert selector.score(X, y) > 0.5

@@ -2,6 +2,7 @@ import re
 import pytest
 import numpy as np
 from unittest.mock import Mock
+import warnings
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -513,9 +514,9 @@ def test_select_from_model_pls(PLSEstimator):
     estimator = PLSEstimator(n_components=1)
     model = make_pipeline(SelectFromModel(estimator), estimator)
     # We must not warn by accessing the `coef_` attribute of PLSEstimator
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
         model.fit(X, y)
-    assert len(records) == 0
     assert model.score(X, y) > 0.5
 
 
