@@ -720,6 +720,7 @@ def _multiplicative_update_h(
     denominator[denominator == 0] = EPSILON
 
     if A is not None and B is not None:
+        # Updates for the online nmf
         if gamma != 1:
             H **= 1 / gamma
         numerator *= H
@@ -2050,7 +2051,8 @@ class MiniBatchNMF(NMF):
         W = np.full((X.shape[0], self._n_components), avg, dtype=X.dtype)
         W_buffer = W.copy()
 
-        # get scaled regularization terms
+        # Get scaled regularization terms. Done for each minibatch to take into account
+        # variable sizes of minibatches.
         l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X)
 
         for i in range(max_iter):
@@ -2070,7 +2072,8 @@ class MiniBatchNMF(NMF):
         """Perform the update of W and H for one minibatch"""
         batch_size = X.shape[0]
 
-        # get scaled regularization terms
+        # get scaled regularization terms. Done for each minibatch to take into account
+        # variable sizes of minibatches.
         l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
 
         # update W
