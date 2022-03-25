@@ -1564,6 +1564,9 @@ def test_feature_union_check_if_fitted():
     with pytest.raises(NotFittedError):
         check_is_fitted(union)
 
+    union.fit(iris.data, iris.target)
+    check_is_fitted(union)
+
 
 def test_pipeline_get_feature_names_out_passes_names_through():
     """Check that pipeline passes names through.
