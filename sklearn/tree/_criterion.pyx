@@ -490,7 +490,8 @@ cdef class Entropy(ClassificationCriterion):
         cdef double entropy_left = 0.0
         cdef double entropy_right = 0.0
         cdef double count_k
-        # Pointeres benchmark better than using the memorview directly
+        # Pointers are being used here because benchmarks
+        # showed regression when using memory-views.
         cdef double* sum_left_ptr = &self.sum_left[0, 0]
         cdef double* sum_right_ptr = &self.sum_right[0, 0]
         cdef SIZE_t k
