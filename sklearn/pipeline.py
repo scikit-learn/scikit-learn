@@ -1234,7 +1234,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def __sklearn_is_fitted__(self):
         # Delegate whether feature union was fitted
-        transformers = list(self._iter())
         for _, transformer, _ in self._iter():
             check_is_fitted(transformer)
         return True
