@@ -32,7 +32,6 @@ It can be concluded that the model with larger L is more likely.
 # Generate sinusoidal data with noise
 # -----------------------------------
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def func(x):
@@ -49,16 +48,18 @@ x_test = np.linspace(0.0, 1.0, 100)
 # %%
 # Fit by cubic polynomial
 # -----------------------
+from sklearn.linear_model import BayesianRidge
+
 n_order = 3
 X_train = np.vander(x_train, n_order + 1, increasing=True)
 X_test = np.vander(x_test, n_order + 1, increasing=True)
+reg = BayesianRidge(tol=1e-6, fit_intercept=False, compute_score=True)
 
 # %%
 # Plot the true and predicted curves with log marginal likelihood (L)
 # -------------------------------------------------------------------
-from sklearn.linear_model import BayesianRidge
+import matplotlib.pyplot as plt
 
-reg = BayesianRidge(tol=1e-6, fit_intercept=False, compute_score=True)
 fig, axes = plt.subplots(1, 2, figsize=(8, 4))
 for i, ax in enumerate(axes):
     # Bayesian ridge regression with different initial value pairs
