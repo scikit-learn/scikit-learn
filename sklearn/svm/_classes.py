@@ -1255,7 +1255,7 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO: Remove in 1.3
+    # TODO(1.3): Remove
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
         " 1.3."

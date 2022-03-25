@@ -1521,6 +1521,7 @@ def test_n_iter_libsvm(estimator, expected_n_iter_type, dataset):
         assert n_iter.shape == (n_classes * (n_classes - 1) // 2,)
 
 
+# TODO(1.3): Remove
 @pytest.mark.parametrize("Klass", [SVR, NuSVR, OneClassSVM])
 @pytest.mark.parametrize("attr", ["n_support_", "class_weight_"])
 def test_libsvm_nclass_attrs_deprecated(Klass, attr):
