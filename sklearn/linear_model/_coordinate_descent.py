@@ -86,13 +86,14 @@ def _set_order(X, y, order="C"):
 def _alpha_grid(
     X,
     y,
-    Xy=None,
     sample_weight=None,
+    Xy=None,
     l1_ratio=1.0,
     fit_intercept=True,
     eps=1e-3,
     n_alphas=100,
     normalize=False,
+    copy_X=True,
 ):
     """Compute the grid of alpha values for elastic net parameter search
 
@@ -105,7 +106,7 @@ def _alpha_grid(
     y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Target values
 
-    Xy : array-like of shape (n_features,) or (n_features, n_outputs),\
+    Xy : array-like of shape (n_features,) or (n_features, n_outputs),
          default=None
         Xy = np.dot(X.T, y) that can be precomputed.
 
@@ -138,6 +139,9 @@ def _alpha_grid(
         .. deprecated:: 1.0
             ``normalize`` was deprecated in version 1.0 and will be removed in
             1.2.
+
+    copy_X : bool, default=True
+        If ``True``, X will be copied; else, it may be overwritten.
     """
     if l1_ratio == 0:
         raise ValueError(
@@ -146,41 +150,64 @@ def _alpha_grid(
             "your estimator with the appropriate `alphas=` "
             "argument."
         )
-
     n_samples = len(y)
-    if not fit_intercept:
-        if Xy is None:
-            product = safe_sparse_dot(X.T, y) / n_samples
-        else:
-            product = Xy / n_samples
+
+    sparse_center = False
+    if (sample_weight is not None) and fit_intercept:
+        wn = sample_weight / sample_weight.sum()
+        y1 = (y - np.dot(wn, y)) * wn
+        Xn = X - safe_sparse_dot(wn, X)
+        Xy = np.array(safe_sparse_dot(y1, Xn, dense_output=True)).reshape(-1, 1)
+        if normalize:
+            if sparse.issparse(X):
+                _, var = mean_variance_axis(X, axis=0)
+                X_scale = var**0.5
+            else:
+                X_scale = X.std(axis=0)
+            X_scale = np.where(X_scale != 0, X_scale, 1.0)
+            Xy /= X_scale
+        alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / l1_ratio
     else:
-        if (sample_weight is None) and (Xy is None):
-            product = safe_sparse_dot(X.T, y - y.mean(axis=0))
-            product /= n_samples
-        elif sample_weight is None:
-            product = Xy - y.mean(axis=0) * X.sum(axis=0)
-            product /= n_samples
-        else:
-            wn = sample_weight / sample_weight.sum()
-            y1 = (y - np.dot(wn, y)) * wn
-            Xn = X - safe_sparse_dot(wn, X)
-            product = np.array(safe_sparse_dot(y1, Xn, dense_output=True))
+        if Xy is None:
+            X_sparse = sparse.isspmatrix(X)
+            sparse_center = X_sparse and (fit_intercept or normalize)
+            X = check_array(
+                X, accept_sparse="csc", copy=(copy_X and fit_intercept and not X_sparse)
+            )
+            if not X_sparse:
+                # X can be touched inplace thanks to the above line
+                X, y, _, _, _ = _preprocess_data(
+                    X, y, fit_intercept, normalize, copy=False
+                )
+            Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
-    if normalize:
-        if sparse.issparse(X):
-            _, var = mean_variance_axis(X, axis=0)
-            X_scale = var**0.5
-        else:
-            X_scale = X.std(axis=0)
-        X_scale = np.where(X_scale != 0, X_scale, 1.0)
-        product /= X_scale
+            if sparse_center:
+                # Workaround to find alpha_max for sparse matrices.
+                # since we should not destroy the sparsity of such matrices.
+                _, _, X_offset, _, X_scale = _preprocess_data(
+                    X, y, fit_intercept, normalize, return_mean=True
+                )
+                mean_dot = X_offset * np.sum(y)
 
-    if product.ndim == 1:
-        product = product.reshape(-1, 1)
-    alpha_max = np.max(np.sqrt(np.sum(product**2, axis=1))) / l1_ratio
+        if Xy.ndim == 1:
+            Xy = Xy[:, np.newaxis]
+
+        if sparse_center:
+            if fit_intercept:
+                Xy -= mean_dot[:, np.newaxis]
+            if normalize:
+                Xy /= X_scale[:, np.newaxis]
+
+        alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (n_samples * l1_ratio)
+
     if alpha_max <= np.finfo(float).resolution:
-        return np.full(n_alphas, np.finfo(float).resolution)
-    return np.logspace(np.log10(alpha_max), np.log10(alpha_max * eps), num=n_alphas)
+        alphas = np.empty(n_alphas)
+        alphas.fill(np.finfo(float).resolution)
+        return alphas
+
+    return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max), num=n_alphas)[
+        ::-1
+    ]
 
 
 def lasso_path(
@@ -570,6 +597,7 @@ def enet_path(
             eps=eps,
             n_alphas=n_alphas,
             normalize=False,
+            copy_X=False,
         )
     else:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
@@ -1653,6 +1681,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     eps=self.eps,
                     n_alphas=self.n_alphas,
                     normalize=_normalize,
+                    copy_X=self.copy_X,
                 )
                 for l1_ratio in l1_ratios
             ]
