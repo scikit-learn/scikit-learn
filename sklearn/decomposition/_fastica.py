@@ -226,8 +226,8 @@ def fastica(
     whiten_solver : str, default='svd'
         The solver to use for whitening. Can either be 'svd' or 'eigh'.
 
-        * 'svd' is more stable numerically if the problem is degenerate, and
-        often faster when `num_samples<=num_features`.
+        - 'svd' is more stable numerically if the problem is degenerate, and
+          often faster when `num_samples<=num_features`.
 
         * 'eigh' is generally more memory efficient when
         `num_samples>=num_features`, and can be faster when
@@ -589,7 +589,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 
             # Give consistent eigenvectors for both svd solvers
-            # Uses same semantics as svd_flip
             u *= np.sign(u[0])
 
             K = (u / d).T[:n_components]  # see (6.33) p.140
