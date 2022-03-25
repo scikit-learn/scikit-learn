@@ -497,6 +497,7 @@ class _PLS(
 
     @property
     def coef_(self):
+        """The coefficients of the linear model."""
         # TODO(1.3): remove and change `self._coef_` to `self.coef_`
         # In addition, remove catch warnings from `_get_feature_importances`
         warnings.warn(
