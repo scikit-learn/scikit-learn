@@ -12,8 +12,6 @@
 #
 # License: BSD 3 clause
 
-from libc.stdlib cimport calloc
-from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs
@@ -26,8 +24,6 @@ from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
 
 from ._utils cimport log
-from ._utils cimport safe_realloc
-from ._utils cimport sizet_ptr_to_ndarray
 from ._utils cimport WeightedMedianCalculator
 
 # EPSILON is used in the Poisson criterion
@@ -289,7 +285,6 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t k
         cdef SIZE_t c
         cdef DOUBLE_t w = 1.0
-        cdef SIZE_t offset = 0
 
         for k in range(self.n_outputs):
             memset(&self.sum_total[k, 0], 0, self.n_classes[k] * sizeof(double))
