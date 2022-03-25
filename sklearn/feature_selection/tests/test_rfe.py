@@ -3,7 +3,6 @@ Testing Recursive feature elimination
 """
 
 from operator import attrgetter
-import warnings
 
 import pytest
 import numpy as np
