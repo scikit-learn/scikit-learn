@@ -34,6 +34,17 @@ random sampling procedures.
   same solution, up to numerical rounding errors, but in general Lloyd's
   algorithm uses much less memory, and it is often faster.
 
+- |Efficiency| Fitting :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor` is on average 15% faster than in
+  previous versions thanks to a new sort algorithm to find the best split.
+  Models might be different because of a different handling of splits
+  with tied criterion values: both the old and the new sorting algorithm
+  are unstable sorting algorithms. :pr:`22868` by `Thomas Fan`_.
+
 - |Fix| The eigenvectors initialization for :class:`cluster.SpectralClustering`
   and :class:`manifold.SpectralEmbedding` now samples from a Gaussian when
   using the `'amg'` or `'lobpcg'` solver. This change  improves numerical
@@ -210,6 +221,12 @@ Changelog
 
 :mod:`sklearn.datasets`
 .......................
+
+- |API| :func:`make_sparse_coded_signal` now accepts a parameter `data_transposed`
+  to explicitly specify the shape of matrix `X`. The default behavior `True` is to
+  return a transposed matrix `X` corresponding to a `(n_features, n_samples)`
+  shape. The default value will change to `False` in version 1.3. :pr:`21425` by
+  :user:`Gabriel Stefanini Vicente <g4brielvs>`.
 
 - |Enhancement| :func:`datasets.make_swiss_roll` now supports the optional argument
   hole; when set to True, it returns the swiss-hole dataset. :pr:`21482` by
@@ -390,6 +407,13 @@ Changelog
 
 - |Efficiency| Improve runtime performance of :func:`feature_selection.chi2`
   with boolean arrays. :pr:`22235` by `Thomas Fan`_.
+
+- |Feature| Added the ability to pass callables to the `max_features` parameter
+  of :class:`feature_selection.SelectFromModel`. Also introduced new attribute
+  `max_features_` which is inferred from `max_features` and the data during
+  `fit`. If `max_features` is an integer, then `max_features_ = max_features`.
+  If `max_features` is a callable, then `max_features_ = max_features(X)`.
+  :pr:`22356` by :user:`Meekail Zain <micky774>`
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -594,6 +618,15 @@ Changelog
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
   :user:`Arthur Imbert <Henley13>` and :pr:`22525` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| The `coef_` and `intercept_` attributes of :class:`LinearRegression` are now
+  correctly computed in the presence of sample weights when the input is sparse.
+  :pr:`22891` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| The `coef_` and `intercept_` attributes of :class:`Ridge` with
+  `solver="sparse_cg"` and `solver="lbfgs"` are now correctly computed in the presence
+  of sample weights when the input is sparse.
+  :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`. 
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -630,6 +663,10 @@ Changelog
 
 - |Enhancement| :func:`metrics.top_k_accuracy_score` raises an improved error
   message when `y_true` is binary and `y_score` is 2d. :pr:`22284` by `Thomas Fan`_.
+
+- |API| `metrics.SCORERS` is now deprecated and will be removed in 1.3. Please
+  use :func:`~metrics.get_scorer_names` to retrieve the names of all available
+  scorers. :pr:`22866` by `Adrin Jalali`_.
 
 - |API| :class:`metrics.DistanceMetric` has been moved from
   :mod:`sklearn.neighbors` to :mod:`sklearn.metric`.
@@ -697,6 +734,9 @@ Changelog
   parameter so progress on fitting can be seen.
   :pr:`22508` by :user:`Chris Combs <combscCode>`.
 
+- |Fix| :meth:`multiclass.OneVsOneClassifier.predict` returns correct predictions when
+  the inner classifier only has a :term:`predict_proba`. :pr:`22604` by `Thomas Fan`_.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -763,6 +803,9 @@ Changelog
   the model. The option is only available when `strategy` is set to `quantile`.
   :pr:`21445` by :user:`Felipe Bidu <fbidu>` and :user:`Amanda Dsouza <amy12xx>`.
 
+- |Enhancement| Adds `encoded_missing_value` to :class:`preprocessing.OrdinalEncoder`
+  to configure the encoded value for missing data. :pr:`21988` by `Thomas Fan`_.
+
 - |Enhancement| Added the `get_feature_names_out` method and a new parameter
   `feature_names_out` to :class:`preprocessing.FunctionTransformer`. You can set
   `feature_names_out` to 'one-to-one' to use the input features names as the
@@ -771,6 +814,10 @@ Changelog
   number of features. If `feature_names_out` is None (which is the default),
   then `get_output_feature_names` is not defined.
   :pr:`21569` by :user:`Aurélien Geron <ageron>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` with `method='yeo-johnson'`
+  better supports significantly non-Gaussian data when searching for an optimal
+  lambda. :pr:`20653` by `Thomas Fan`_.
 
 - |Fix| :class:`preprocessing.LabelBinarizer` now validates input parameters in
   `fit` instead of `__init__`.
@@ -839,6 +886,13 @@ Changelog
   :class:`tree.DecisionTreeRegressor`.
   :pr:`22191` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |API| Changed the default value of :func:`max_features` to 1.0 for
+  :class:`tree.ExtraTreeRegressor` and to `"sqrt"` for :class:`ensemble.ExtraTreeClassifier`,
+  which will not change the fit result. The original default value `"auto"` has been deprecated
+  and will be removed in version 1.3. Setting :func:`max_features` to `"auto"` is also deprecated
+  for :class:`tree.DecisionTreeClassifier` and :class:`DecisionTreeRegressor`.
+  :pr:`22476` by :user: `Zhehao Liu <MaxwellLZH>`.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -881,6 +935,11 @@ Changelog
 - |API| :func:`utils.metaestimators.if_delegate_has_method` is deprecated and will be
   removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.
   :pr:`22830` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| Rich html representation of estimators is now enabled by default in Jupyter
+  notebooks. It can be deactivated by setting `display='text'` in
+  :func:`~sklearn.set_config`.
+  :pr:`22856` by `Jérémie du Boisberranger <jeremiedbb>`.
 
 Code and Documentation Contributors
 -----------------------------------
