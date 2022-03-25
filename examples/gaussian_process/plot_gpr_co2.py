@@ -32,7 +32,7 @@ print(__doc__)
 #
 # We will derive a dataset from the Mauna Loa Observatory that collected air
 # samples. We are interested in estimating the concentration of CO2 and
-# extrapolate it for futher year. First, we load the original dataset available
+# extrapolate it for further year. First, we load the original dataset available
 # in OpenML.
 from sklearn.datasets import fetch_openml
 
@@ -208,7 +208,7 @@ _ = plt.title(
 gaussian_process.kernel_
 
 # %%
-# Thus, most of the target signal, with the mean substracted, is explained by a
+# Thus, most of the target signal, with the mean subtracted, is explained by a
 # long-term rising trend for ~45 ppm and a length-scale of ~52 years. The
 # periodic component has an amplitude of ~2.6ppm, a decay time of ~90 years and
 # a length-scale of ~1.5. The long decay time indicates that we have a

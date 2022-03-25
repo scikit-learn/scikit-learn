@@ -12,6 +12,7 @@ from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import available_if
+from ..utils.validation import check_scalar
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -112,8 +113,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         ``threshold`` in the case where the ``coef_`` attribute of the
         estimator is of dimension 2.
 
-    max_features : int, default=None
+    max_features : int, callable, default=None
         The maximum number of features to select.
+
+        - If an integer, then it specifies the maximum number of features to
+          allow.
+        - If a callable, then it specifies how to calculate the maximum number of
+          features allowed by using the output of `max_feaures(X)`.
+
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
@@ -147,6 +154,15 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
+
+    max_features_ : int
+        Maximum number of features calculated during :term:`fit`. Only defined
+        if the ``max_features`` is not `None`.
+
+        - If `max_features` is an int, then `max_features_ = max_features`.
+        - If `max_features` is a callable, then `max_features_ = max_features(X)`.
+
+        .. versionadded:: 1.1
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -190,6 +206,17 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.02],
            [-0.48],
            [ 1.48]])
+
+    Using a callable to create a selector that can use no more than half
+    of the input features.
+
+    >>> def half_callable(X):
+    ...     return round(len(X[0]) / 2)
+    >>> half_selector = SelectFromModel(estimator=LogisticRegression(),
+    ...                                 max_features=half_callable)
+    >>> _ = half_selector.fit(X, y)
+    >>> half_selector.max_features_
+    2
     """
 
     def __init__(
@@ -231,7 +258,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
             candidate_indices = np.argsort(-scores, kind="mergesort")[
-                : self.max_features
+                : self.max_features_
             ]
             mask[candidate_indices] = True
         else:
@@ -260,18 +287,29 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             Fitted estimator.
         """
         if self.max_features is not None:
-            if not isinstance(self.max_features, numbers.Integral):
-                raise TypeError(
-                    "'max_features' should be an integer between"
-                    " 0 and {} features. Got {!r} instead.".format(
-                        X.shape[1], self.max_features
-                    )
+            if isinstance(self.max_features, numbers.Integral):
+                check_scalar(
+                    self.max_features,
+                    "max_features",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=len(X[0]),
                 )
-            elif self.max_features < 0 or self.max_features > X.shape[1]:
-                raise ValueError(
-                    "'max_features' should be 0 and {} features.Got {} instead.".format(
-                        X.shape[1], self.max_features
-                    )
+                self.max_features_ = self.max_features
+            elif callable(self.max_features):
+                max_features = self.max_features(X)
+                check_scalar(
+                    max_features,
+                    "max_features(X)",
+                    numbers.Integral,
+                    min_val=0,
+                    max_val=len(X[0]),
+                )
+                self.max_features_ = max_features
+            else:
+                raise TypeError(
+                    "'max_features' must be either an int or a callable that takes"
+                    f" 'X' as input. Got {self.max_features} instead."
                 )
 
         if self.prefit:
