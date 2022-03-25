@@ -1801,7 +1801,14 @@ class TransWithNames(Trans):
                 ("bycol2", "passthrough", slice("c", "d")),
             ],
             "passthrough",
-            ["bycol1__d", "bycol1__c", "bycol2__c", "bycol2__d", "remainder__a", "remainder__b"],
+            [
+                "bycol1__d",
+                "bycol1__c",
+                "bycol2__c",
+                "bycol2__d",
+                "remainder__a",
+                "remainder__b",
+            ],
         ),
     ],
 )

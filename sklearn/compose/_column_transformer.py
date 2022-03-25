@@ -430,9 +430,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             feature_names.extend([f"{name}__{f}" for f in trans.get_feature_names()])
         return feature_names
 
-    def _get_feature_name_out_for_transformer(
-        self, name, trans, feature_names_in
-    ):
+    def _get_feature_name_out_for_transformer(self, name, trans, feature_names_in):
         """Gets feature names of transformer.
 
         Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
