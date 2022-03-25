@@ -958,6 +958,10 @@ than `minimum_cluster_size` many samples are considered noise. In practice, one
 can set `minimum_cluster_size = min_samples` to couple the parameters and
 simplify the hyperparameter space.
 
+.. |hdbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_001.png
+        :target: ../auto_examples/cluster/plot_hdbscan.html
+        :scale: 50
+
 .. topic:: References:
 
  * Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based Clustering
