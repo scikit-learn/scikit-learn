@@ -1542,6 +1542,28 @@ def test_feature_union_check_if_fitted():
     union.fit(iris.data, iris.target)
     check_is_fitted(union)
 
+    # passthrough is stateless
+    union = FeatureUnion([("pass", "passthrough")])
+    check_is_fitted(union)
+
+    union = FeatureUnion([("clf", Estimator()), ("pass", "passthrough")])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(iris.data, iris.target)
+    check_is_fitted(union)
+
+    union = clone(union)
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.set_params(clf="drop")
+    check_is_fitted(union)
+
+    union.set_params(clf=Estimator())
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
 
 def test_pipeline_get_feature_names_out_passes_names_through():
     """Check that pipeline passes names through.
