@@ -161,6 +161,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         affinity="nearest_neighbors",
     )
     dbscan = cluster.DBSCAN(eps=params["eps"])
+    hdbscan = cluster.HDBSCAN()
     optics = cluster.OPTICS(
         min_samples=params["min_samples"],
         xi=params["xi"],
@@ -188,7 +189,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ("Ward", ward),
         ("Agglomerative\nClustering", average_linkage),
         ("DBSCAN", dbscan),
-        ("OPTICS", optics),
+        ("HDBSCAN", hdbscan)("OPTICS", optics),
         ("BIRCH", birch),
         ("Gaussian\nMixture", gmm),
     )

@@ -959,7 +959,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         resulting clustering, but may have an effect on the runtime
         of the algorithm.
 
-    memory : Instance of joblib.Memory or str, default=Memory(verbose=1)
+    memory : str, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -1109,7 +1109,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         alpha=1.0,
         algorithm="best",
         leaf_size=40,
-        memory=Memory(cachedir=None, verbose=0),
+        memory=None,
         approx_min_span_tree=True,
         gen_min_span_tree=False,
         core_dist_n_jobs=4,
