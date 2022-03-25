@@ -26,7 +26,7 @@ def _smacof_single(
     verbose=0,
     eps=1e-3,
     random_state=None,
-    normalize=False,
+    normalized_stress=False,
 ):
     """Computes multidimensional scaling using SMACOF algorithm.
 
@@ -63,7 +63,7 @@ def _smacof_single(
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    normalize : bool, default=False
+    normalized_stress : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
@@ -77,9 +77,9 @@ def _smacof_single(
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If `normalize=True`, and `metric=False` returns Stress-1 (according to
-        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
-        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
+        If `normalized_stress =True`, and `metric=False` returns Stress-1
+        (according to Kruskal (1964, p. 3) value 0 indicates "perfect"
+        fit, 0.025 excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
     n_iter : int
         The number of iterations corresponding to the best stress.
@@ -127,7 +127,7 @@ def _smacof_single(
 
         # Compute stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
-        if normalize:
+        if normalized_stress:
             stress = np.sqrt(stress / ((disparities.ravel() ** 2).sum() / 2))
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
@@ -161,7 +161,7 @@ def smacof(
     eps=1e-3,
     random_state=None,
     return_n_iter=False,
-    normalize=False,
+    normalized_stress=False,
 ):
     """Compute multidimensional scaling using the SMACOF algorithm.
 
@@ -234,7 +234,7 @@ def smacof(
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    normalize : bool, default=False
+    normalized_stress : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
@@ -248,9 +248,9 @@ def smacof(
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If `normalize=True`, and `metric=False` returns Stress-1 (according to
-        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
-        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
+        If `normalized_stress =True`, and `metric=False` returns Stress-1
+        (according to Kruskal (1964, p. 3) value 0 indicates "perfect"
+        fit, 0.025 excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
     n_iter : int
         The number of iterations corresponding to the best stress. Returned
@@ -270,13 +270,13 @@ def smacof(
 
     dissimilarities = check_array(dissimilarities)
     random_state = check_random_state(random_state)
-    if normalize and metric:
+    if normalized_stress and metric:
         warnings.warn(
             "Normalized stress is not supported for metric MDS -- unnormalized stress"
             " will be used instead.",
             UserWarning,
         )
-        normalize = False
+        normalized_stress = False
     if hasattr(init, "__array__"):
         init = np.asarray(init).copy()
         if not n_init == 1:
@@ -299,7 +299,7 @@ def smacof(
                 verbose=verbose,
                 eps=eps,
                 random_state=random_state,
-                normalize=normalize,
+                normalized_stress=normalized_stress,
             )
             if best_stress is None or stress < best_stress:
                 best_stress = stress
@@ -317,7 +317,7 @@ def smacof(
                 verbose=verbose,
                 eps=eps,
                 random_state=seed,
-                normalize=normalize,
+                normalized_stress=normalized_stress,
             )
             for seed in seeds
         )
@@ -385,7 +385,7 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    normalize : bool, default=False
+    normalized_stress : bool, default=False
         Whether use and return normed stress value (Stress-1) instead of raw
         stress calculated by default. Only supported in non-metric MDS.
 
@@ -399,9 +399,9 @@ class MDS(BaseEstimator):
     stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-        If `normalize=True`, and `metric=False` returns Stress-1 (according to
-        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
-        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1
+        (according to Kruskal (1964, p. 3) value 0 indicates "perfect"
+        fit, 0.025 excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
     dissimilarity_matrix_ : ndarray of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Symmetric matrix that:
@@ -472,7 +472,7 @@ class MDS(BaseEstimator):
         n_jobs=None,
         random_state=None,
         dissimilarity="euclidean",
-        normalize=False,
+        normalized_stress=False,
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
@@ -483,7 +483,7 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
-        self.normalize = normalize
+        self.normalized_stress = normalized_stress
 
     def _more_tags(self):
         return {"pairwise": self.dissimilarity == "precomputed"}
@@ -570,7 +570,7 @@ class MDS(BaseEstimator):
             eps=self.eps,
             random_state=self.random_state,
             return_n_iter=True,
-            normalize=self.normalize,
+            normalized_stress=self.normalized_stress,
         )
 
         return self.embedding_
