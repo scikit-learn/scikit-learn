@@ -637,15 +637,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         sv = self.support_vectors_
         svm_type = LIBSVM_IMPL.index(self._impl)
         if svm_type in (0, 1):
-            if (
-                not self._sparse
-                and sv.size > 0
-                and self.n_support_.sum() != sv.shape[0]
-            ):
-                raise ValueError(
-                    f"The internal representation of {self.__class__.__name__} was"
-                    " altered"
-                )
+            total_support = self._n_support.sum()
+        else:
+            total_support = self._n_support[0]
+
+        if not self._sparse and sv.size > 0 and total_support != sv.shape[0]:
+            raise ValueError(
+                f"The internal representation of {self.__class__.__name__} was altered"
+            )
         return X
 
     @property
@@ -681,19 +680,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             check_is_fitted(self)
         except NotFittedError:
             raise AttributeError
-
-        svm_type = LIBSVM_IMPL.index(self._impl)
-        if svm_type in (0, 1):
-            return self._n_support
-        else:
-            # SVR, NuSVR, and OneClass
-            warnings.warn(
-                "Attribute `n_support_` was deprecated in version 1.1 and will be"
-                " removed in 1.3.",
-                FutureWarning,
-            )
-            # _n_support has size 2, we make it size 1
-            return np.array([self._n_support[0]])
+        return self._n_support
 
     @property
     def _class_weight(self):

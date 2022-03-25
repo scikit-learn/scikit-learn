@@ -1264,6 +1264,16 @@ class SVR(RegressorMixin, BaseLibSVM):
     def class_weight_(self):
         return np.empty(0)
 
+    # TODO(1.3): Remove
+    @deprecated(  # type: ignore
+        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def n_support_(self):
+        # _n_support has size 2, we make it size 1
+        return np.array([self._n_support[0]])
+
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1462,7 +1472,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO: Remove in 1.3
+    # TODO(1.3): Remove
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
         " 1.3."
@@ -1470,6 +1480,16 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     @property
     def class_weight_(self):
         return np.empty(0)
+
+    # TODO(1.3): Remove
+    @deprecated(  # type: ignore
+        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def n_support_(self):
+        # _n_support has size 2, we make it size 1
+        return np.array([self._n_support[0]])
 
     def _more_tags(self):
         return {
@@ -1658,7 +1678,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             random_state=None,
         )
 
-    # TODO: Remove in 1.3
+    # TODO(1.3): Remove
     @deprecated(  # type: ignore
         "Attribute `class_weight_` was deprecated in version 1.1 and will be removed in"
         " 1.3."
@@ -1666,6 +1686,16 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     @property
     def class_weight_(self):
         return np.empty(0)
+
+    # TODO(1.3): Remove
+    @deprecated(  # type: ignore
+        "Attribute `n_support_` was deprecated in version 1.1 and will be removed in"
+        " 1.3."
+    )
+    @property
+    def n_support_(self):
+        # _n_support has size 2, we make it size 1
+        return np.array([self._n_support[0]])
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """Detect the soft boundary of the set of samples X.

@@ -1427,15 +1427,15 @@ def test_n_support_oneclass_svr():
     with pytest.warns(FutureWarning):
         assert not hasattr(clf, "n_support_")
         clf.fit(X)
-        assert clf.n_support_ == clf.support_vectors_.shape[0]
+        assert clf.n_support_[0] == clf.support_vectors_.shape[0]
         assert clf.n_support_.size == 1
-        assert clf.n_support_ == 3
+        assert clf.n_support_[0] == 3
 
         y = np.arange(X.shape[0])
         reg = svm.SVR().fit(X, y)
-        assert reg.n_support_ == reg.support_vectors_.shape[0]
+        assert reg.n_support_[0] == reg.support_vectors_.shape[0]
         assert reg.n_support_.size == 1
-        assert reg.n_support_ == 4
+        assert reg.n_support_[0] == 4
 
 
 @pytest.mark.parametrize("Estimator", [svm.SVC, svm.SVR])
