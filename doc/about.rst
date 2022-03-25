@@ -65,6 +65,14 @@ longer active in the project:
 
 .. include:: authors_emeritus.rst
 
+Emeritus Communication Team
+---------------------------
+
+The following people have been active in the communication team in the
+past, but no longer have communication responsibilities:
+
+.. include:: communication_team_emeritus.rst
+
 
 .. _citing-scikit-learn:
 
