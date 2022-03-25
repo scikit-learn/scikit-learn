@@ -1232,6 +1232,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
 
+    def __sklearn_is_fitted__(self):
+        # Delegate whether feature union was fitted
+        check_is_fitted(self.transformer_list[0][1])
+        return True
+
     def _sk_visual_block_(self):
         names, transformers = zip(*self.transformer_list)
         return _VisualBlock("parallel", transformers, names=names)

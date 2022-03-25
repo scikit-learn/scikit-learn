@@ -1526,6 +1526,20 @@ def test_pipeline_check_if_fitted():
     check_is_fitted(pipeline)
 
 
+def test_feature_union_check_if_fitted():
+    class Estimator(BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+        def transform(self, X):
+            return X
+
+    union = make_union(Estimator())
+    union.fit(iris.data, iris.target)
+
+    check_is_fitted(union)
+
+
 def test_pipeline_get_feature_names_out_passes_names_through():
     """Check that pipeline passes names through.
 
