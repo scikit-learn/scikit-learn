@@ -181,8 +181,6 @@ class DecisionBoundaryDisplay:
 
         Read more in the :ref:`User Guide <visualizations>`.
 
-        .. versionadded:: 1.0
-
         Parameters
         ----------
         estimator : object
