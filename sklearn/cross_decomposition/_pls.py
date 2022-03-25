@@ -499,14 +499,19 @@ class _PLS(
     def coef_(self):
         """The coefficients of the linear model."""
         # TODO(1.3): remove and change `self._coef_` to `self.coef_`
-        # In addition, remove catch warnings from `_get_feature_importances`
-        warnings.warn(
-            "The attribute `coef_` will be transposed in version 1.3 to be consistent "
-            "with other linear models in scikit-learn. Currently, `coef_` has a shape "
-            "of (n_features, n_targets) and in the future it will have a shape of "
-            "(n_targets, n_features).",
-            FutureWarning,
-        )
+        #            remove catch warnings from `_get_feature_importances`
+        #            delete self._coef_no_warning
+        if getattr(self, "_coef_warning", True):
+            warnings.warn(
+                "The attribute `coef_` will be transposed in version 1.3 to be consistent "
+                "with other linear models in scikit-learn. Currently, `coef_` has a shape "
+                "of (n_features, n_targets) and in the future it will have a shape of "
+                "(n_targets, n_features).",
+                FutureWarning,
+            )
+            # Only warn the first time
+            self._coef_warning = False
+
         return self._coef_.T
 
     def _more_tags(self):

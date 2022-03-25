@@ -606,6 +606,12 @@ def test_pls_coef_shape(PLSEstimator):
     warning_msg = "The attribute `coef_` will be transposed in version 1.3"
     with pytest.warns(FutureWarning, match=warning_msg):
         assert pls.coef_.shape == (X.shape[1], Y.shape[1])
+
+    # Next accesses do not warn
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        pls.coef_
+
     # TODO(1.3): rename `_coef_` to `coef_`
     assert pls._coef_.shape == (Y.shape[1], X.shape[1])
 
