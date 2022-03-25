@@ -7,6 +7,7 @@ import warnings
 
 import numpy as np
 from scipy import stats
+from scipy import linalg
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -393,7 +394,7 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple_different_solvers(add_noise, global_random_seed):
     """Test FastICA is consistent between svd_solvers."""
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
@@ -421,3 +422,18 @@ def test_fastica_simple_different_solvers(add_noise, global_random_seed):
         assert sources.shape == (1000, 2)
 
     assert_array_almost_equal(outs["eigh"], outs["svd"])
+
+
+def test_fastica_eigh_low_rank_warning(global_random_seed):
+    """Test FastICA eigh solver raises warning for low-rank data."""
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.rand(100, 100)
+    U, S, V = linalg.svd(X)
+    s = np.zeros_like(S)
+    rank = 10
+    s[:rank] = S[:rank]
+    T = U @ linalg.diagsvd(s, *X.shape) @ V
+
+    msg = "There are some small singular values"
+    with pytest.warns(UserWarning, match=msg):
+        FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh").fit(T)
