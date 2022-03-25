@@ -163,12 +163,11 @@ def _alpha_grid(
         else:
             w = sample_weight / sample_weight.sum()
             sw = np.sqrt(w)
-            sw_matrix = sparse.dia_matrix((sw, 0), shape=(n_samples, n_samples))
-            z = (y - w.dot(y)) * sw
-            mu = z.mean()
-            z = (z - mu) * (1 - mu)
-            product = z @ safe_sparse_dot(sw_matrix, X)
-            product -= z.dot(sw) * safe_sparse_dot(sw, X)
+            yn = y - np.dot(w, y)
+            mu = (yn * sw).mean(axis=0)
+            z = (yn * w) - mu * (1 - mu) * sw
+            Xn = X - safe_sparse_dot(w, X)
+            product = safe_sparse_dot(z, Xn, dense_output=True)
 
     if normalize:
         if sparse.issparse(X):
