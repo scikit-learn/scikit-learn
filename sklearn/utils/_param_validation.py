@@ -115,7 +115,7 @@ def validate_params(parameter_constraints):
             params = {}
 
             # First, the positional arguments for which we need to parse the signature
-            # to recover their names. The signature objects holds the parameters in the
+            # to recover their names. The signature object holds the parameters in the
             # same order as in the function definition
             for val, param in zip(args, sig_params):
                 # ignore self for methods
@@ -128,7 +128,8 @@ def validate_params(parameter_constraints):
             for name, val in kwargs.items():
                 params[name] = val
 
-            # Finally, the parameters with have a default that are unset
+            # Finally, the unset parameters that have a default (they are not in args
+            # or kwargs)
             for param in [p for p in sig_params if p.default is not p.empty]:
                 if param.name not in params:
                     params[param.name] = param.default
@@ -222,10 +223,6 @@ class StrOptions(_Constraint):
         self.options = options
         self.deprecated = deprecated or {}
 
-    def generate_invalid_param_val(self):
-        """Return a value that does not satisfy the constraint."""
-        return "this_is_obviously_an_invalid_val"
-
     def is_satisfied_by(self, val):
         return isinstance(val, str) and val in self.options
 
@@ -260,7 +257,7 @@ class Interval(_Constraint):
     closed : {"left", "right", "both", "neither"}
         Whether the interval is open or closed. Possible choices are:
 
-        - `"left"`: the interval is closed on the left and open on the rigth.
+        - `"left"`: the interval is closed on the left and open on the right.
           It is equivalent to the interval `[ left, right )`.
         - `"right"`: the interval is closed on the right and open on the left.
           It is equivalent to the interval `( left, right ]`.
@@ -323,16 +320,6 @@ class Interval(_Constraint):
         if self.right is not None and right_cmp(val, self.right):
             return False
         return True
-
-    def generate_invalid_param_val(self):
-        """Return a value that does not satisfy the constraint."""
-        if self.left is None and self.right is None:
-            raise AttributeError
-
-        if self.left is not None:
-            return self.left - 1
-        else:
-            return self.right + 1
 
     def is_satisfied_by(self, val):
         if not isinstance(val, self.type):
@@ -404,3 +391,31 @@ class _RandomStates(_Constraint):
             f"{', '.join([repr(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
         )
+
+
+def generate_invalid_param_val(constraint):
+    """Return a value that does not satisfy the constraint.
+
+    Parameters
+    ----------
+    constraint : Constraint
+        The constraint to generate a value for.
+
+    Returns
+    -------
+    val : object
+        A value that does not satisfy the constraint.
+    """
+    if isinstance(constraint, StrOptions):
+        return f"not {' or'.join(constraint.options)}"
+    elif isinstance(constraint, Interval):
+        interval = constraint
+        if interval.left is None and interval.right is None:
+            raise NotImplementedError
+
+        if interval.left is not None:
+            return interval.left - 1
+        else:
+            return interval.right + 1
+    else:
+        raise NotImplementedError

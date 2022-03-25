@@ -13,6 +13,7 @@ from sklearn.utils._param_validation import _NoneConstraint
 from sklearn.utils._param_validation import _RandomStates
 from sklearn.utils._param_validation import _SparseMatrices
 from sklearn.utils._param_validation import make_constraint
+from sklearn.utils._param_validation import generate_invalid_param_val
 
 
 @pytest.mark.parametrize("interval_type", [Integral, Real])
@@ -99,8 +100,25 @@ def test_stroptions():
 )
 def test_generate_invalid_param_val(constraint):
     """Check that the value generated does not satisfy the constraint"""
-    bad_value = constraint.generate_invalid_param_val()
+    bad_value = generate_invalid_param_val(constraint)
     assert not constraint.is_satisfied_by(bad_value)
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        _ArrayLikes,
+        _Callables,
+        _InstancesOf,
+        _NoneConstraint,
+        _RandomStates,
+        _SparseMatrices,
+    ],
+)
+def test_generate_invalid_param_val_not_error(constraint):
+    """Check that the value generated does not satisfy the constraint"""
+    with pytest.raises(NotImplementedError):
+        generate_invalid_param_val(constraint)
 
 
 # a class to test the _InstancesOf constraint

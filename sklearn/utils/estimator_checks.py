@@ -55,6 +55,7 @@ from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
 from ..utils.fixes import threadpool_info
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
+from ..utils._param_validation import generate_invalid_param_val
 
 from . import shuffle
 from ._tags import (
@@ -4053,10 +4054,11 @@ def check_param_validation(name, estimator_orig):
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
-            if not hasattr(constraint, "generate_invalid_param_val"):
+            try:
+                bad_value = generate_invalid_param_val(constraint)
+            except NotImplementedError:
                 continue
 
-            bad_value = constraint.generate_invalid_param_val()
             estimator.set_params(**{param_name: bad_value})
 
             for method in methods:
