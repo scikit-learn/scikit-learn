@@ -1531,12 +1531,15 @@ def test_feature_union_check_if_fitted():
         def fit(self, X, y):
             self.fitted_ = True
             return self
+
         def transform(self, X):
             return X
 
-    union = make_union(Estimator())
-    union.fit(iris.data, iris.target)
+    union = FeatureUnion([("clf", Estimator())])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
 
+    union.fit(iris.data, iris.target)
     check_is_fitted(union)
 
 
