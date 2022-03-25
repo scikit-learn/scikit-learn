@@ -617,7 +617,6 @@ def test_multioutput(ClsRFE):
     rfe_test.fit(X, y)
 
 
-# TODO(1.3): remove
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
 @pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
 def test_rfe_pls(ClsRFE, PLSEstimator):
@@ -628,9 +627,5 @@ def test_rfe_pls(ClsRFE, PLSEstimator):
     """
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = PLSEstimator(n_components=1)
-    selector = ClsRFE(estimator, step=1)
-    # We must not warn by accessing `coef_` attribute of PLSEstimator
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        selector.fit(X, y)
+    selector = ClsRFE(estimator, step=1).fit(X, y)
     assert selector.score(X, y) > 0.5

@@ -502,7 +502,6 @@ def test_importance_getter(estimator, importance_getter):
     assert selector.transform(data).shape[1] == 1
 
 
-# TODO(1.3): remove
 @pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
 def test_select_from_model_pls(PLSEstimator):
     """Check the behaviour of SelectFromModel with PLS estimators.
@@ -512,11 +511,7 @@ def test_select_from_model_pls(PLSEstimator):
     """
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = PLSEstimator(n_components=1)
-    model = make_pipeline(SelectFromModel(estimator), estimator)
-    # We must not warn by accessing the `coef_` attribute of PLSEstimator
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        model.fit(X, y)
+    model = make_pipeline(SelectFromModel(estimator), estimator).fit(X, y)
     assert model.score(X, y) > 0.5
 
 
