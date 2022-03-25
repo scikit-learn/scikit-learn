@@ -21,7 +21,6 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
-from ..utils import _determine_key_type
 from ..utils.deprecation import deprecated
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
@@ -430,14 +429,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             feature_names.extend([f"{name}__{f}" for f in trans.get_feature_names()])
         return feature_names
 
-    def _get_feature_name_out_for_transformer(self, name, trans, feature_names_in):
+    def _get_feature_name_out_for_transformer(
+        self, name, trans, column, feature_names_in
+    ):
         """Gets feature names of transformer.
 
         Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
         """
         column_indices = self._transformer_to_input_indices[name]
         names = feature_names_in[column_indices]
-        if trans == "drop" or _is_empty_column_selection(names):
+        if trans == "drop" or _is_empty_column_selection(column):
             return
         elif trans == "passthrough":
             return names
@@ -475,9 +476,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # List of tuples (name, feature_names_out)
         transformer_with_feature_names_out = []
-        for name, trans, _, _ in self._iter(fitted=True):
+        for name, trans, column, _ in self._iter(fitted=True):
             feature_names_out = self._get_feature_name_out_for_transformer(
-                name, trans, input_features
+                name, trans, column, input_features
             )
             if feature_names_out is None:
                 continue
