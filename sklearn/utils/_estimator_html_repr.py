@@ -377,7 +377,10 @@ def estimator_html_repr(estimator):
         # The reverse logic applies to HTML repr div.sk-container.
         # div.sk-container is hidden by default and the loading the CSS displays it.
         fallback_msg = (
-            "Please rerun this cell to show the HTML repr or trust the notebook."
+            "In a Jupyter environment, please rerun this cell to show the HTML"
+            " representation or trust the notebook. <br />On GitHub, the"
+            " HTML representation is unable to render, please try loading this page"
+            " with nbviewer.org."
         )
         out.write(
             f"<style>{style_with_id}</style>"

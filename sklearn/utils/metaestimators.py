@@ -38,7 +38,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         except (TypeError, ValueError):
             # Ignore TypeError for cases where estimators is not a list of
             # (name, estimator) and ignore ValueError when the list is not
-            # formated correctly. This is to prevent errors when calling
+            # formatted correctly. This is to prevent errors when calling
             # `set_params`. `BaseEstimator.set_params` calls `get_params` which
             # can error for invalid values for `estimators`.
             return out

@@ -203,7 +203,7 @@ Note that scikit-learn tests are expected to run deterministically with
 explicit seeding of their own independent RNG instances instead of relying on
 the numpy or Python standard library RNG singletons to make sure that test
 results are independent of the test execution order. However some tests might
-forget to use explicit seeding and this variable is a way to control the intial
+forget to use explicit seeding and this variable is a way to control the initial
 state of the aforementioned singletons.
 
 `SKLEARN_TESTS_GLOBAL_RANDOM_SEED`
