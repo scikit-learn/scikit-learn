@@ -788,7 +788,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         base_estimator = clone(self.estimator)
 
-        parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
+        parallel = Parallel(
+            n_jobs=self.n_jobs,
+            verbose=self.verbose if self.n_jobs is not None and self.n_jobs > 1 else 0,
+            pre_dispatch=self.pre_dispatch,
+        )
 
         fit_and_score_kwargs = dict(
             scorer=scorers,
