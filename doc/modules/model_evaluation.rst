@@ -115,14 +115,15 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Use sorted(sklearn.metrics.SCORERS.keys()) to get valid options.
+    ValueError: 'wrong_choice' is not a valid scoring value. Use
+    sklearn.metrics.get_scorer_names() to get valid options.
 
 .. note::
 
-    The values listed by the ``ValueError`` exception correspond to the functions measuring
-    prediction accuracy described in the following sections.
-    The scorer objects for those functions are stored in the dictionary
-    ``sklearn.metrics.SCORERS``.
+    The values listed by the ``ValueError`` exception correspond to the
+    functions measuring prediction accuracy described in the following
+    sections. You can retrieve the names of all available scorers by calling
+    :func:`~sklearn.metrics.get_scorer_names`.
 
 .. currentmodule:: sklearn.metrics
 
@@ -563,8 +564,8 @@ or *informedness*.
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
-  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description 
-      and evaluation of a scalable learning classifier 
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
+      and evaluation of a scalable learning classifier
       system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
@@ -2196,7 +2197,7 @@ error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
 
 .. math::
 
-  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
+  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{\max(\epsilon, \left| y_i \right|)}
 
 where :math:`\epsilon` is an arbitrary small yet strictly positive number to
 avoid undefined results when y is zero.
@@ -2267,7 +2268,7 @@ defined as
 
 .. math::
 
-  \text{Max Error}(y, \hat{y}) = max(| y_i - \hat{y}_i |)
+  \text{Max Error}(y, \hat{y}) = \max(| y_i - \hat{y}_i |)
 
 Here is a small example of usage of the :func:`max_error` function::
 
@@ -2303,7 +2304,7 @@ The best possible score is 1.0, lower values are worse.
     The difference between the explained variance score and the :ref:`r2_score`
     is that when the explained variance score does not account for
     systematic offset in the prediction. For this reason, the
-    :ref:`r2_score` should be prefered in general.
+    :ref:`r2_score` should be preferred in general.
 
 In the particular case where the true target is constant, the Explained
 Variance score is not finite: it is either ``NaN`` (perfect predictions) or
