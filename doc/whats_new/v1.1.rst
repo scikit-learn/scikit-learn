@@ -802,6 +802,9 @@ Changelog
   `__init__`. Validation is now handled in `.fit()` and `.fit_transform()`.
   :pr:`21954` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
 
+- |Fix| Checking if :class:`pipeline.FeatureUnion` was fitted was broken.
+  :pr:`22953` by :user:`randomgeek78 <randomgeek78>` provides a fix.
+
 :mod:`sklearn.preprocessing`
 ............................
 
