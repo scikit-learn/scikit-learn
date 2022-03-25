@@ -164,7 +164,7 @@ def _alpha_grid(
             wn = sample_weight / sample_weight.sum()
             y1 = (y - np.dot(wn, y)) * wn
             Xn = X - safe_sparse_dot(wn, X)
-            product = safe_sparse_dot(y1, Xn, dense_output=True)
+            product = np.array(safe_sparse_dot(y1, Xn, dense_output=True))
 
     if normalize:
         if sparse.issparse(X):
