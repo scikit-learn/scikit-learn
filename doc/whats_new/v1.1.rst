@@ -173,8 +173,8 @@ Changelog
 
 - |Feature| Added a new estimator :class:`decomposition.MiniBatchNMF`. It is a faster
   but less accurate version of non-negative matrix factorization, better suited for
-  large datasets. :pr:`16948` by :user:`Chiara Marmo <cmarmo>` and
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  large datasets. :pr:`16948` by :user:`Chiara Marmo <cmarmo>`,
+  :user:`Patricio Cerda <pcerda>` and :user:`Jérémie du Boisberranger <jeremiedbb>`. 
 
 - |Enhancement| :func:`cross_decomposition._PLS.inverse_transform` now allows
   reconstruction of a `X` target when a `Y` parameter is given. :pr:`19680` by
