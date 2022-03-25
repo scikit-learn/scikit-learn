@@ -60,7 +60,7 @@ def _check_boundary_response_method(estimator, response_method):
 class DecisionBoundaryDisplay:
     """Decisions boundary visualization.
 
-    It is recommend to use
+    It is recommended to use
     :func:`~sklearn.inspection.DecisionBoundaryDisplay.from_estimator`
     to create a :class:`DecisionBoundaryDisplay`. All parameters are stored as
     attributes.
