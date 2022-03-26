@@ -194,7 +194,7 @@ def test_pairwise_boolean_distance(metric):
 
     # Check that no warning is raised if X is already boolean and Y is None:
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error", DataConversionWarning)
         pairwise_distances(X.astype(bool), metric=metric)
 
 
