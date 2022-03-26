@@ -12,7 +12,6 @@ from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import davies_bouldin_score
-from sklearn.exceptions import UndefinedMetricWarning
 
 
 def test_silhouette():
@@ -345,7 +344,7 @@ def test_davies_bouldin_score():
 
     # Ensure divide by zero warning is not raised in general case
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UndefinedMetricWarning)
+        warnings.simplefilter("error", RuntimeWarning)
         davies_bouldin_score(X, labels)
 
     # General case - cluster have one sample
