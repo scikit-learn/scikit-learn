@@ -77,7 +77,7 @@ def test_missing_value_handling(
 
     # check that the function leads to the same results as the class
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", RuntimeWarning)
         Xt_class = est.transform(X_train)
     kwargs = est.get_params()
     # remove the parameters which should be omitted because they
