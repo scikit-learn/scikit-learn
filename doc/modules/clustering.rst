@@ -93,6 +93,13 @@ Overview of clustering methods
        transductive
      - Distances between nearest points
 
+   * - :ref:`HDBSCAN <hdbscan>`
+     - minimum cluster membership, minimum point neighbors
+     - large ``n_samples``, medium ``n_clusters``
+     - Non-flat geometry, uneven cluster sizes, outlier removal,
+       transductive, hierarchical, variable cluster density
+     - Distances between nearest points
+
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
