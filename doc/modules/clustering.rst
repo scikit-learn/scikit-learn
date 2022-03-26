@@ -900,6 +900,11 @@ capture them. HDBSCAN alleviates this assumption and explores all possible
 density scales by building an alternative representation of the clustering
 problem.
 
+.. note::
+
+  This implementation is adapted from the work done in
+  https://github.com/scikit-learn-contrib/hdbscan
+
 Mutual Reachability Graph
 -------------------------
 
