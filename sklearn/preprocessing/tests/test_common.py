@@ -100,7 +100,7 @@ def test_missing_value_handling(
         est.fit(_get_valid_samples_by_column(X_train, i))
         # check transforming with NaN works even when training without NaN
         with warnings.catch_warnings():
-            warnings.simplefilter("error")
+            warnings.simplefilter("error", RuntimeWarning)
             Xt_col = est.transform(X_test[:, [i]])
         assert_allclose(Xt_col, Xt[:, [i]])
         # check non-NaN is handled as before - the 1st column is all nan
