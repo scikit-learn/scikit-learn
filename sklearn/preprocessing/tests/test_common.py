@@ -132,7 +132,7 @@ def test_missing_value_handling(
             X_test_sp = sparse_constructor(X_test)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", PendingDeprecationWarning)
-                warnings.simplefilter("error")
+                warnings.simplefilter("error", RuntimeWarning)
                 Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
 
             assert_allclose(Xt_sp.A, Xt_dense)
