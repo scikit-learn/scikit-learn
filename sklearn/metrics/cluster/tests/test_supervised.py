@@ -459,7 +459,7 @@ def test_adjusted_rand_score_overflow():
     y_true = rng.randint(0, 2, 100_000, dtype=np.int8)
     y_pred = rng.randint(0, 2, 100_000, dtype=np.int8)
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error", RuntimeWarning)
         adjusted_rand_score(y_true, y_pred)
 
 
