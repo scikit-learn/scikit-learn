@@ -1093,7 +1093,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     >>> hdb.fit(X)
     HDBSCAN(min_cluster_size=20)
     >>> hdb.labels_
-    array([ 2,  6, -1, ..., -1, -1, -1], dtype=int64)
+    array([ 2,  6, -1, ..., -1, -1, -1])
     """
 
     def _more_tags(self):
