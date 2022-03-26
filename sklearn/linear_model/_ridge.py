@@ -810,15 +810,15 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             else:
                 solver = self.solver
         elif sparse.issparse(X) and self.fit_intercept:
-            if self.solver not in ["auto", "lsqr", "sparse_cg", "sag", "lbfgs"]:
+            if self.solver not in ["auto", "lbfgs", "lsqr", "sag", "sparse_cg"]:
                 raise ValueError(
                     "solver='{}' does not support fitting the intercept "
                     "on sparse data. Please set the solver to 'auto' or "
                     "'lsqr', 'sparse_cg', 'sag', 'lbfgs' "
                     "or set `fit_intercept=False`".format(self.solver)
                 )
-            if self.solver == "lbfgs":
-                solver = "lbfgs"
+            if self.solver in ["lsqr", "lbfgs"]:
+                solver = self.solver
             elif self.solver == "sag" and self.max_iter is None and self.tol > 1e-4:
                 warnings.warn(
                     '"sag" solver requires many iterations to fit '
