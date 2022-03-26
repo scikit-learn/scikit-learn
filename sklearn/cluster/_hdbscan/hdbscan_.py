@@ -714,7 +714,7 @@ def hdbscan(
         check_precomputed_distance_matrix(X)
 
     # Python 2 and 3 compliant string_type checking
-    memory = Memory(cachedir=memory, verbose=0)
+    memory = Memory(location=memory, verbose=0)
 
     size = X.shape[0]
     min_samples = min(size - 1, min_samples)

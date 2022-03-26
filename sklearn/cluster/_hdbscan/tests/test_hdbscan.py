@@ -168,6 +168,14 @@ def test_hdbscan_algorithms(algo, metric):
                     metric=metric,
                     metric_params=METRIC_PARAMS.get(metric, None),
                 )
+        elif metric == "wminkowski":
+            with pytest.warns(FutureWarning):
+                hdbscan(
+                    X,
+                    algorithm=algo,
+                    metric=metric,
+                    metric_params=METRIC_PARAMS.get(metric, None),
+                )
         else:
             hdbscan(
                 X,
