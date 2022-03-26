@@ -485,27 +485,20 @@ cdef class Entropy(ClassificationCriterion):
         cdef double entropy_left = 0.0
         cdef double entropy_right = 0.0
         cdef double count_k
-        # Pointers are being used here because benchmarks
-        # showed regression when using memory-views.
-        cdef double* sum_left_ptr = &self.sum_left[0, 0]
-        cdef double* sum_right_ptr = &self.sum_right[0, 0]
         cdef SIZE_t k
         cdef SIZE_t c
 
         for k in range(self.n_outputs):
             for c in range(self.n_classes[k]):
-                count_k = sum_left_ptr[c]
+                count_k = self.sum_left[k, c]
                 if count_k > 0.0:
                     count_k /= self.weighted_n_left
                     entropy_left -= count_k * log(count_k)
 
-                count_k = sum_right_ptr[c]
+                count_k = self.sum_right[k, c]
                 if count_k > 0.0:
                     count_k /= self.weighted_n_right
                     entropy_right -= count_k * log(count_k)
-
-            sum_left_ptr += self.max_n_classes
-            sum_right_ptr += self.max_n_classes
 
         impurity_left[0] = entropy_left / self.n_outputs
         impurity_right[0] = entropy_right / self.n_outputs
