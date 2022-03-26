@@ -203,7 +203,7 @@ def test_no_data_conversion_warning():
     rng = np.random.RandomState(0)
     X = rng.randn(5, 4)
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error", DataConversionWarning)
         pairwise_distances(X, metric="minkowski")
 
 
