@@ -113,7 +113,7 @@ def test_missing_value_handling(
         est_sparse = clone(est)
 
         with warnings.catch_warnings():
-            warnings.simplefilter("error")
+            warnings.simplefilter("error", RuntimeWarning)
             Xt_dense = est_dense.fit(X_train).transform(X_test)
             Xt_inv_dense = est_dense.inverse_transform(Xt_dense)
 
