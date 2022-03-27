@@ -501,8 +501,9 @@ Changelog
 
 - |Enhancement| The `predict` and `fit_predict` methods of
   :class:`cluster.OPTICS` now accept sparse data type for input
-  data.
-  :pr:`20802` by :user:`Brandon Pokorny <Clickedbigfoot>`
+  data. :pr:`14736` by :user:`Hunt Zhan <huntzhan>`,
+  :pr:`20802` by :user:`Brandon Pokorny <Clickedbigfoot>`,
+  and :pr:`22965` by :user:`Meekail Zain <micky774>`
 
 :mod:`sklearn.compose`
 ......................
