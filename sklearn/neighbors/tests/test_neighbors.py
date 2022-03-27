@@ -25,9 +25,15 @@ from sklearn.exceptions import EfficiencyWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
+from sklearn.metrics.tests.test_pairwise_distances_reduction import (
+    assert_radius_neighborhood_results_equality,
+)
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import VALID_METRICS_SPARSE
+from sklearn.neighbors import (
+    VALID_METRICS_SPARSE,
+    KNeighborsRegressor,
+)
 from sklearn.neighbors._base import (
     _is_sorted_by_data,
     _check_precomputed,
@@ -2035,6 +2041,77 @@ def test_neighbors_distance_metric_deprecation():
     assert isinstance(dist_metric, ActualDistanceMetric)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
+@pytest.mark.parametrize(
+    "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
+)
+def test_radius_neighbors_brute_backend(
+    metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
+):
+    # Both backends for the 'brute' algorithm of radius_neighbors
+    # must give identical results.
+    X_train = rng.rand(n_samples, n_features)
+    X_test = rng.rand(n_query_pts, n_features)
+
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        feature_sl = slice(None, 2)
+        X_train = np.ascontiguousarray(X_train[:, feature_sl])
+        X_test = np.ascontiguousarray(X_test[:, feature_sl])
+
+    metric_params_list = _generate_test_params_for(metric, n_features)
+
+    # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
+    ExceptionToAssert = None
+    if metric == "wminkowski" and sp_version >= parse_version("1.6.0"):
+        ExceptionToAssert = FutureWarning
+
+    for metric_params in metric_params_list:
+        p = metric_params.pop("p", 2)
+
+        neigh = neighbors.NearestNeighbors(
+            n_neighbors=n_neighbors,
+            algorithm="brute",
+            metric=metric,
+            p=p,
+            metric_params=metric_params,
+        )
+
+        neigh.fit(X_train)
+        with pytest.warns(ExceptionToAssert):
+            with config_context(enable_cython_pairwise_dist=False):
+                # Use the legacy backend for brute
+                legacy_brute_dst, legacy_brute_idx = neigh.radius_neighbors(
+                    X_test, return_distance=True
+                )
+            with config_context(enable_cython_pairwise_dist=True):
+                # Use the PairwiseDistancesReduction as a backend for brute
+                pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
+                    X_test, return_distance=True
+                )
+
+        assert_radius_neighborhood_results_equality(
+            legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
+        )
+
+
 def test_valid_metrics_has_no_duplicate():
     for val in neighbors.VALID_METRICS.values():
         assert len(val) == len(set(val))
+
+
+def test_regressor_predict_on_arraylikes():
+    """Ensures that `predict` works for array-likes when `weights` is a callable.
+
+    Non-regression test for #22687.
+    """
+    X = [[5, 1], [3, 1], [4, 3], [0, 3]]
+    y = [2, 3, 5, 6]
+
+    def _weights(dist):
+        return np.ones_like(dist)
+
+    est = KNeighborsRegressor(n_neighbors=1, algorithm="brute", weights=_weights)
+    est.fit(X, y)
+    assert_allclose(est.predict([[0, 2.5]]), [6])
