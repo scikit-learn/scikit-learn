@@ -43,7 +43,7 @@ def _iterate_sparse_X(X):
         yield row
 
 
-def _split_node(node, threshold, branching_factor):
+def _split_node(node, threshold, branching_factor, dtype=None):
     """The node has to be split if there is no place for a new subcluster
     in the node.
     1. Two empty nodes and two empty subclusters are initialized.
@@ -60,12 +60,14 @@ def _split_node(node, threshold, branching_factor):
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
+        dtype=dtype,
     )
     new_node2 = _CFNode(
         threshold=threshold,
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
+        dtype=dtype,
     )
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
@@ -224,7 +226,10 @@ class _CFNode:
             # subcluster to accommodate the new child.
             else:
                 new_subcluster1, new_subcluster2 = _split_node(
-                    closest_subcluster.child_, threshold, branching_factor
+                    closest_subcluster.child_,
+                    threshold,
+                    branching_factor,
+                    dtype=self.dtype,
                 )
                 self.update_split_subclusters(
                     closest_subcluster, new_subcluster1, new_subcluster2
