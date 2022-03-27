@@ -54,7 +54,7 @@ def _tree_to_labels(
     """
     condensed_tree = condense_tree(single_linkage_tree, min_cluster_size)
     stability_dict = compute_stability(condensed_tree)
-    labels, probabilities, stabilities = get_clusters(
+    labels, probabilities = get_clusters(
         condensed_tree,
         stability_dict,
         cluster_selection_method,
@@ -64,7 +64,7 @@ def _tree_to_labels(
         max_cluster_size,
     )
 
-    return (labels, probabilities, stabilities, single_linkage_tree)
+    return (labels, probabilities, single_linkage_tree)
 
 
 def _hdbscan_generic(
@@ -258,14 +258,14 @@ def _hdbscan_boruvka_kdtree(
     metric="minkowski",
     leaf_size=40,
     approx_min_span_tree=True,
-    core_dist_n_jobs=4,
+    n_jobs=4,
     **kwargs,
 ):
     if leaf_size < 3:
         leaf_size = 3
 
-    if core_dist_n_jobs < 1:
-        core_dist_n_jobs = max(cpu_count() + 1 + core_dist_n_jobs, 1)
+    if n_jobs < 1:
+        n_jobs = max(cpu_count() + 1 + n_jobs, 1)
 
     if X.dtype != np.float64:
         X = X.astype(np.float64)
@@ -285,7 +285,7 @@ def _hdbscan_boruvka_kdtree(
         metric=metric,
         leaf_size=leaf_size // 3,
         approx_min_span_tree=approx_min_span_tree,
-        n_jobs=core_dist_n_jobs,
+        n_jobs=n_jobs,
         **kwargs,
     )
     min_spanning_tree = alg.spanning_tree()
@@ -304,14 +304,14 @@ def _hdbscan_boruvka_balltree(
     metric="minkowski",
     leaf_size=40,
     approx_min_span_tree=True,
-    core_dist_n_jobs=4,
+    n_jobs=4,
     **kwargs,
 ):
     if leaf_size < 3:
         leaf_size = 3
 
-    if core_dist_n_jobs < 1:
-        core_dist_n_jobs = max(cpu_count() + 1 + core_dist_n_jobs, 1)
+    if n_jobs < 1:
+        n_jobs = max(cpu_count() + 1 + n_jobs, 1)
 
     if X.dtype != np.float64:
         X = X.astype(np.float64)
@@ -323,7 +323,7 @@ def _hdbscan_boruvka_balltree(
         metric=metric,
         leaf_size=leaf_size // 3,
         approx_min_span_tree=approx_min_span_tree,
-        n_jobs=core_dist_n_jobs,
+        n_jobs=n_jobs,
         **kwargs,
     )
     min_spanning_tree = alg.spanning_tree()
@@ -461,7 +461,7 @@ def hdbscan(
     algorithm="best",
     memory=None,
     approx_min_span_tree=True,
-    core_dist_n_jobs=4,
+    n_jobs=4,
     cluster_selection_method="eom",
     allow_single_cluster=False,
     match_reference_implementation=False,
@@ -492,19 +492,13 @@ def hdbscan(
 
     cluster_selection_epsilon : float, default=0.0
         A distance threshold. Clusters below this value will be merged.
-        See [3]_ for more information. Note that this should not be used
-        if we want to predict the cluster labels for new points in future
-        (e.g. using approximate_predict), as the approximate_predict function
-        is not aware of this argument.
+        See [3]_ for more information.
 
     max_cluster_size : int, default=0
         A limit to the size of clusters returned by the eom algorithm.
         Has no effect when using leaf clustering (where clusters are
         usually small regardless) and can also be overridden in rare
-        cases by a high value for cluster_selection_epsilon. Note that
-        this should not be used if we want to predict the cluster labels
-        for new points in future (e.g. using approximate_predict), as
-        the approximate_predict function is not aware of this argument.
+        cases by a high value for cluster_selection_epsilon.
 
     metric : str or callable, default='minkowski'
         The metric to use when calculating distance between instances in a
@@ -546,10 +540,10 @@ def hdbscan(
         If you are willing to sacrifice speed for correctness you may want
         to explore this; in general this should be left at the default True.
 
-    core_dist_n_jobs : int, default=4
+    n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
-        supported by the specific algorithm). For `core_dist_n_jobs`
-        below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
+        supported by the specific algorithm). For `n_jobs`
+        below -1, (n_cpus + 1 + n_jobs) are used.
 
     cluster_selection_method : str, default='eom'
         The method used to select clusters from the condensed tree. The
@@ -584,13 +578,6 @@ def hdbscan(
     probabilities : ndarray, shape (n_samples, )
         Cluster membership strengths for each point. Noisy samples are assigned
         0.
-
-    cluster_persistence : array, shape  (n_clusters, )
-        A score of how persistent each cluster is. A score of 1.0 represents
-        a perfectly stable cluster that persists over all distance scales,
-        while a score of 0.0 represents a perfectly ephemeral cluster. These
-        scores can be guage the relative coherence of the clusters output
-        by the algorithm.
 
     single_linkage_tree : ndarray, shape (n_samples - 1, 4)
         The single linkage tree produced during clustering in scipy
@@ -707,7 +694,7 @@ def hdbscan(
                 metric,
                 leaf_size,
                 approx_min_span_tree,
-                core_dist_n_jobs,
+                n_jobs,
                 **metric_params,
             )
         elif algorithm == "boruvka_balltree":
@@ -725,7 +712,7 @@ def hdbscan(
                 metric,
                 leaf_size,
                 approx_min_span_tree,
-                core_dist_n_jobs,
+                n_jobs,
                 **metric_params,
             )
         else:
@@ -761,7 +748,7 @@ def hdbscan(
                     metric,
                     leaf_size,
                     approx_min_span_tree,
-                    core_dist_n_jobs,
+                    n_jobs,
                     **metric_params,
                 )
         else:  # Metric is a valid BallTree metric
@@ -783,7 +770,7 @@ def hdbscan(
                     metric,
                     leaf_size,
                     approx_min_span_tree,
-                    core_dist_n_jobs,
+                    n_jobs,
                     **metric_params,
                 )
 
@@ -824,13 +811,10 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         See [5]_ for more information.
 
     max_cluster_size : int, default=0
-        A limit to the size of clusters returned by the eom algorithm.
-        Has no effect when using leaf clustering (where clusters are
-        usually small regardless) and can also be overridden in rare
-        cases by a high value for cluster_selection_epsilon. Note that
-        this should not be used if we want to predict the cluster labels
-        for new points in future (e.g. using approximate_predict), as
-        the approximate_predict function is not aware of this argument.
+        A limit to the size of clusters returned by the `eom` cluster selection
+        algorithm. Has no effect if `cluster_selection_method=leaf`. Can be
+        overridden in rare cases by a high value for
+        `cluster_selection_epsilon`.
 
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
@@ -861,7 +845,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         - `boruvka_balltree`
 
     leaf_size : int, default=40
-        If using a space tree algorithm (kdtree, or balltree) the number
+        If using a space tree algorithm (`KDTree`, or `BallTree`) the number
         of points ina leaf node of the tree. This does not alter the
         resulting clustering, but may have an effect on the runtime
         of the algorithm.
@@ -876,12 +860,12 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         For some algorithms this can provide a significant speedup, but
         the resulting clustering may be of marginally lower quality.
         If you are willing to sacrifice speed for correctness you may want
-        to explore this; in general this should be left at the default True.
+        to explore this; in general this should be left at the default `True`.
 
-    core_dist_n_jobs : int, default=4
+    n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
-        supported by the specific algorithm). For `core_dist_n_jobs`
-        below -1, (n_cpus + 1 + core_dist_n_jobs) are used.
+        supported by the specific algorithm). For `n_jobs`
+        below -1, (n_cpus + 1 + n_jobs) are used.
 
     cluster_selection_method : str, default='eom'
         The method used to select clusters from the condensed tree. The
@@ -896,12 +880,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         By default HDBSCAN* will not produce a single cluster, setting this
         to True will override this and allow single cluster results in
         the case that you feel this is a valid result for your dataset.
-
-    prediction_data : bool, default=False
-        Whether to generate extra cached data for predicting labels or
-        membership vectors few new unseen points later. If you wish to
-        persist the clustering object for later re-use you probably want
-        to set this to True.
 
     match_reference_implementation : bool, default=False
         There exist some interpretational differences between this
@@ -925,13 +903,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         cluster. Noise points have probability zero; points in clusters
         have values assigned proportional to the degree that they
         persist as part of the cluster.
-
-    cluster_persistence_ : ndarray, shape (n_clusters, )
-        A score of how persistent each cluster is. A score of 1.0 represents
-        a perfectly stable cluster that persists over all distance scales,
-        while a score of 0.0 represents a perfectly ephemeral cluster. These
-        scores can be guage the relative coherence of the clusters output
-        by the algorithm.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -998,10 +969,9 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         leaf_size=40,
         memory=None,
         approx_min_span_tree=True,
-        core_dist_n_jobs=4,
+        n_jobs=4,
         cluster_selection_method="eom",
         allow_single_cluster=False,
-        prediction_data=False,
         match_reference_implementation=False,
         metric_params=None,
     ):
@@ -1015,11 +985,10 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         self.leaf_size = leaf_size
         self.memory = memory
         self.approx_min_span_tree = approx_min_span_tree
-        self.core_dist_n_jobs = core_dist_n_jobs
+        self.n_jobs = n_jobs
         self.cluster_selection_method = cluster_selection_method
         self.allow_single_cluster = allow_single_cluster
         self.match_reference_implementation = match_reference_implementation
-        self.prediction_data = prediction_data
         self.metric_params = metric_params
 
     def fit(self, X, y=None):
@@ -1068,13 +1037,11 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         kwargs = self.get_params()
         # prediction data only applies to the persistent model, so remove
         # it from the keyword args we pass on the the function
-        kwargs.pop("prediction_data", None)
         kwargs["metric_params"] = metric_params
 
         (
             self.labels_,
             self.probabilities_,
-            self.cluster_persistence_,
             self._single_linkage_tree_,
         ) = hdbscan(X, **kwargs)
 
@@ -1091,9 +1058,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
             new_probabilities = np.zeros(self._raw_data.shape[0])
             new_probabilities[finite_index] = self.probabilities_
             self.probabilities_ = new_probabilities
-
-        if self.prediction_data:
-            self.generate_prediction_data()
 
         return self
 

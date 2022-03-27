@@ -525,22 +525,6 @@ cdef get_probabilities(np.ndarray tree, dict cluster_map, np.ndarray labels):
     return result
 
 
-cpdef np.ndarray get_stability_scores(np.ndarray labels, set clusters,
-                                      dict stability, np.double_t max_lambda):
-
-    cdef np.intp_t cluster_size
-    cdef np.intp_t n
-
-    result = np.empty(len(clusters), dtype=np.double)
-    for n, c in enumerate(sorted(list(clusters))):
-        cluster_size = np.sum(labels == n)
-        if np.isinf(max_lambda) or max_lambda == 0.0 or cluster_size == 0:
-            result[n] = 1.0
-        else:
-            result[n] = stability[c] / (cluster_size * max_lambda)
-
-    return result
-
 cpdef list recurse_leaf_dfs(np.ndarray cluster_tree, np.intp_t current_node):
     children = cluster_tree[cluster_tree['parent'] == current_node]['child']
     if len(children) == 0:
@@ -737,6 +721,5 @@ cpdef tuple get_clusters(np.ndarray tree, dict stability,
                           allow_single_cluster, cluster_selection_epsilon,
                           match_reference_implementation)
     probs = get_probabilities(tree, reverse_cluster_map, labels)
-    stabilities = get_stability_scores(labels, clusters, stability, max_lambda)
 
-    return (labels, probs, stabilities)
+    return (labels, probs)
