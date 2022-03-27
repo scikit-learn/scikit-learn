@@ -17,10 +17,22 @@ from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
-                                   _copy, _scal)
-from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
-
+from ..utils._cython_blas cimport (
+    ColMajor,
+    NoTrans,
+    Trans,
+    # BLAS Level 1
+    _asum,
+    _axpy,
+    _copy,
+    _dot,
+    _nrm2,
+    _scal,
+    # BLAS Level 2
+    _ger,
+    _gemv,
+    # BLAS Level 3
+)
 
 from ..utils._random cimport our_rand_r
 
@@ -119,7 +131,9 @@ def enet_coordinate_descent(floating[::1] w,
     cdef unsigned int n_features = X.shape[1]
 
     # compute norms of the columns of X
-    cdef floating[::1] norm_cols_X = np.square(X).sum(axis=0)
+    # norm_cols_X = np.square(X).sum(axis=0)
+    # the following avoids large intermediate memory allocation
+    cdef floating[::1] norm_cols_X = np.einsum("ij,ij->j", X, X)
 
     # initial value of the residuals
     cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
@@ -657,9 +671,7 @@ def enet_coordinate_descent_gram(floating[::1] w,
                     dual_norm_XtA = abs_max(n_features, XtA_ptr)
 
                 # temp = np.sum(w * H)
-                tmp = 0.0
-                for ii in range(n_features):
-                    tmp += w[ii] * H[ii]
+                tmp = _dot(n_features, &w[0], 1, &H[0], 1)
                 R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
                 # w_norm2 = np.dot(w, w)
@@ -705,6 +717,11 @@ def enet_coordinate_descent_multi_task(
 
         0.5 * norm(Y - X W.T, 2)^2 + l1_reg ||W.T||_21 + 0.5 * l2_reg norm(W.T, 2)^2
 
+    Parameters
+    ----------
+    W : F-condiguous ndarray of shape (n_tasks, n_features)
+    X : F-condiguous ndarray of shape (n_samples, n_features)
+    Y : F-condiguous ndarray of shape (n_samples, n_tasks)
     """
 
     if floating is float:
@@ -791,7 +808,7 @@ def enet_coordinate_descent_multi_task(
                 #      &X[0, ii], 1,
                 #      &w_ii[0], 1, &R[0, 0], n_tasks)
                 # Using Blas Level1 and for loop to avoid slower threads
-                # for such small vectors
+                # for such small vectors (of size n_tasks)
                 for jj in range(n_tasks):
                     if w_ii[jj] != 0:
                         _axpy(n_samples, w_ii[jj], X_ptr + ii * n_samples, 1,
@@ -843,22 +860,38 @@ def enet_coordinate_descent_multi_task(
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
+                # Using numpy:
                 # XtA = np.dot(X.T, R) - l2_reg * W.T
+                #
+                # Using BLAS Level 3:
+                # floating[:, ::1] XtA = np.zeros((n_features, n_tasks), order="F")
+                #  # np.dot(R.T, X) - l2_reg * W
+                # _copy(n_features * n_tasks, &W[0, 0], 1, &XtA[0, 0], 1)
+                # _gemm(ColMajor, Trans, NoTrans, n_tasks, n_features, n_samples,
+                #       1.0, &R[0, 0], n_samples, &X[0, 0], n_samples, -l2_reg,
+                #       &XtA[0, 0], n_tasks)
+                #
+                # Using BLAS Level 2:
+                # for jj in range(n_tasks):
+                #     # XtA[:, jj] = X.T @ R[:, jj] - l2_reg * W[jj, :]
+                #     _gemv(ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
+                #         n_samples, &R[0, jj], 1, -l2_reg, &XtA[jj, 0], n_tasks)
+                # Using BLAS Level 1:
                 for ii in range(n_features):
                     for jj in range(n_tasks):
                         XtA[ii, jj] = _dot(
                             n_samples, X_ptr + ii * n_samples, 1, &R[0, jj], 1
-                            ) - l2_reg * W[jj, ii]
+                        ) - l2_reg * W[jj, ii]
 
                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
                 dual_norm_XtA = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(XtA ** 2, axis=1))
+                    # sum is over tasks
                     XtA_axis1norm = _nrm2(n_tasks, &XtA[ii, 0], 1)
                     if XtA_axis1norm > dual_norm_XtA:
                         dual_norm_XtA = XtA_axis1norm
 
-                # TODO: use squared L2 norm directly
                 # R_norm = linalg.norm(R, ord='fro')
                 # w_norm = linalg.norm(W, ord='fro')
                 R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
