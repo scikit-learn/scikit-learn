@@ -555,7 +555,11 @@ class Birch(
         first_call = not (partial and has_root)
 
         X = self._validate_data(
-            X, accept_sparse="csr", copy=self.copy, reset=first_call
+            X,
+            accept_sparse="csr",
+            copy=self.copy,
+            reset=first_call,
+            dtype=[np.float64, np.float32],
         )
         threshold = self.threshold
         branching_factor = self.branching_factor
@@ -607,7 +611,9 @@ class Birch(
                 self.root_.append_subcluster(new_subcluster1)
                 self.root_.append_subcluster(new_subcluster2)
 
-        centroids = np.concatenate([leaf.centroids_ for leaf in self._get_leaves()])
+        centroids = np.concatenate(
+            [leaf.centroids_ for leaf in self._get_leaves()], dtype=X.dtype
+        )
         self.subcluster_centers_ = centroids
         self._n_features_out = self.subcluster_centers_.shape[0]
 
@@ -719,7 +725,7 @@ class Birch(
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         with config_context(assume_finite=True):
-            return euclidean_distances(X, self.subcluster_centers_).astype(X.dtype)
+            return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):
         """
