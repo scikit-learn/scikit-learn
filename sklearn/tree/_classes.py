@@ -32,6 +32,7 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
+from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -147,14 +148,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
 
         random_state = check_random_state(self.random_state)
 
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
+        check_scalar(
+            self.ccp_alpha,
+            name="ccp_alpha",
+            target_type=numbers.Real,
+            min_val=0.0,
+        )
 
         if check_input:
             # Need to validate separately here.
@@ -227,52 +230,81 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
+        if self.max_depth is not None:
+            check_scalar(
+                self.max_depth,
+                name="max_depth",
+                target_type=numbers.Integral,
+                min_val=1,
+            )
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
-        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
         if isinstance(self.min_samples_leaf, numbers.Integral):
-            if not 1 <= self.min_samples_leaf:
-                raise ValueError(
-                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
-                    % self.min_samples_leaf
-                )
+            check_scalar(
+                self.min_samples_leaf,
+                name="min_samples_leaf",
+                target_type=numbers.Integral,
+                min_val=1,
+            )
             min_samples_leaf = self.min_samples_leaf
         else:  # float
-            if not 0.0 < self.min_samples_leaf <= 0.5:
-                raise ValueError(
-                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
-                    % self.min_samples_leaf
-                )
+            check_scalar(
+                self.min_samples_leaf,
+                name="min_samples_leaf",
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="neither",
+            )
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, numbers.Integral):
-            if not 2 <= self.min_samples_split:
-                raise ValueError(
-                    "min_samples_split must be an integer "
-                    "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the integer %s"
-                    % self.min_samples_split
-                )
+            check_scalar(
+                self.min_samples_split,
+                name="min_samples_split",
+                target_type=numbers.Integral,
+                min_val=2,
+            )
             min_samples_split = self.min_samples_split
         else:  # float
-            if not 0.0 < self.min_samples_split <= 1.0:
-                raise ValueError(
-                    "min_samples_split must be an integer "
-                    "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the float %s"
-                    % self.min_samples_split
-                )
+            check_scalar(
+                self.min_samples_split,
+                name="min_samples_split",
+                target_type=numbers.Real,
+                min_val=0.0,
+                max_val=1.0,
+                include_boundaries="right",
+            )
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
 
+        check_scalar(
+            self.min_weight_fraction_leaf,
+            name="min_weight_fraction_leaf",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=0.5,
+        )
+
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_in_)))
+                    warnings.warn(
+                        "`max_features='auto'` has been deprecated in 1.1 "
+                        "and will be removed in 1.3. To keep the past behaviour, "
+                        "explicitly set `max_features='sqrt'`.",
+                        FutureWarning,
+                    )
                 else:
                     max_features = self.n_features_in_
+                    warnings.warn(
+                        "`max_features='auto'` has been deprecated in 1.1 "
+                        "and will be removed in 1.3. To keep the past behaviour, "
+                        "explicitly set `max_features=1.0'`.",
+                        FutureWarning,
+                    )
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
@@ -286,8 +318,23 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         elif self.max_features is None:
             max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
+            check_scalar(
+                self.max_features,
+                name="max_features",
+                target_type=numbers.Integral,
+                min_val=1,
+                include_boundaries="left",
+            )
             max_features = self.max_features
         else:  # float
+            check_scalar(
+                self.max_features,
+                name="max_features",
+                target_type=numbers.Real,
+                min_val=0.0,
+                max_val=1.0,
+                include_boundaries="right",
+            )
             if self.max_features > 0.0:
                 max_features = max(1, int(self.max_features * self.n_features_in_))
             else:
@@ -295,26 +342,26 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         self.max_features_ = max_features
 
+        if self.max_leaf_nodes is not None:
+            check_scalar(
+                self.max_leaf_nodes,
+                name="max_leaf_nodes",
+                target_type=numbers.Integral,
+                min_val=2,
+            )
+        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+
+        check_scalar(
+            self.min_impurity_decrease,
+            name="min_impurity_decrease",
+            target_type=numbers.Real,
+            min_val=0.0,
+        )
+
         if len(y) != n_samples:
             raise ValueError(
                 "Number of labels=%d does not match number of samples=%d"
                 % (len(y), n_samples)
-            )
-        if not 0 <= self.min_weight_fraction_leaf <= 0.5:
-            raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
-        if max_depth <= 0:
-            raise ValueError("max_depth must be greater than zero. ")
-        if not (0 < max_features <= self.n_features_in_):
-            raise ValueError("max_features must be in (0, n_features]")
-        if not isinstance(max_leaf_nodes, numbers.Integral):
-            raise ValueError(
-                "max_leaf_nodes must be integral number but was %r" % max_leaf_nodes
-            )
-        if -1 < max_leaf_nodes < 2:
-            raise ValueError(
-                ("max_leaf_nodes {0} must be either None or larger than 1").format(
-                    max_leaf_nodes
-                )
             )
 
         if sample_weight is not None:
@@ -331,19 +378,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * n_samples
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
-
-        if self.min_impurity_decrease < 0.0:
-            raise ValueError("min_impurity_decrease must be greater than or equal to 0")
-
-        # TODO: Remove in 1.1
-        if X_idx_sorted != "deprecated":
-            warnings.warn(
-                "The parameter 'X_idx_sorted' is deprecated and has no "
-                "effect. It will be removed in 1.1 (renaming of 0.26). You "
-                "can suppress this warning by not passing any value to the "
-                "'X_idx_sorted' parameter.",
-                FutureWarning,
-            )
 
         # Build tree
         criterion = self.criterion
@@ -391,7 +425,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             self.tree_ = Tree(
                 self.n_features_in_,
-                # TODO: tree should't need this in this case
+                # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
             )
@@ -548,9 +582,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         """Prune tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self)
 
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
-
         if self.ccp_alpha == 0.0:
             return
 
@@ -699,6 +730,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
+
+            .. deprecated:: 1.1
+                The `"auto"` option was deprecated in 1.1 and will be removed
+                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -896,9 +931,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -922,12 +955,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated:: 0.24
-
         Returns
         -------
         self : DecisionTreeClassifier
@@ -939,7 +966,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -1038,8 +1064,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"squared_error", "mse", "friedman_mse", "absolute_error", \
-            "mae", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "friedman_mse", "absolute_error", \
+            "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
@@ -1115,6 +1141,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1275,9 +1305,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree regressor from the training set (X, y).
 
         Parameters
@@ -1300,12 +1328,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated:: 0.24
-
         Returns
         -------
         self : DecisionTreeRegressor
@@ -1317,7 +1339,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -1418,7 +1439,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="sqrt"
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1429,6 +1450,13 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
+
+            .. versionchanged:: 1.1
+                The default of `max_features` changed from `"auto"` to `"sqrt"`.
+
+            .. deprecated:: 1.1
+                The `"auto"` option was deprecated in 1.1 and will be removed
+                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1591,7 +1619,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features="sqrt",
         random_state=None,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
@@ -1630,8 +1658,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "mse", "friedman_mse", "mae"}, \
-            default="squared_error"
+    criterion : {"squared_error", "friedman_mse"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and "mae" for the
@@ -1692,7 +1719,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default=1.0
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1703,6 +1730,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to `1.0`.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1828,7 +1862,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features=1.0,
         random_state=None,
         min_impurity_decrease=0.0,
         max_leaf_nodes=None,

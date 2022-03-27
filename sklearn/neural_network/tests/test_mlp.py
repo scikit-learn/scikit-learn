@@ -393,7 +393,7 @@ def test_multilabel_classification():
         mlp.partial_fit(X, y, classes=[0, 1, 2, 3, 4])
     assert mlp.score(X, y) > 0.9
 
-    # Make sure early stopping still work now that spliting is stratified by
+    # Make sure early stopping still work now that splitting is stratified by
     # default (it is disabled for multilabel classification)
     mlp = MLPClassifier(early_stopping=True)
     mlp.fit(X, y).predict(X)
@@ -504,6 +504,24 @@ def test_partial_fit_errors():
 
     # lbfgs doesn't support partial_fit
     assert not hasattr(MLPClassifier(solver="lbfgs"), "partial_fit")
+
+
+def test_nonfinite_params():
+    # Check that MLPRegressor throws ValueError when dealing with non-finite
+    # parameter values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.standard_normal(size=n_samples)
+
+    clf = MLPRegressor()
+    msg = (
+        "Solver produced non-finite parameter weights. The input data may contain large"
+        " values and need to be preprocessed."
+    )
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 @pytest.mark.parametrize(

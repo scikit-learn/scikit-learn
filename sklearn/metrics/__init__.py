@@ -36,6 +36,8 @@ from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
 
+from ._dist_metrics import DistanceMetric
+
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
@@ -81,6 +83,8 @@ from ._scorer import check_scoring
 from ._scorer import make_scorer
 from ._scorer import SCORERS
 from ._scorer import get_scorer
+from ._scorer import get_scorer_names
+
 
 from ._plot.det_curve import plot_det_curve
 from ._plot.det_curve import DetCurveDisplay
@@ -115,6 +119,7 @@ __all__ = [
     "davies_bouldin_score",
     "DetCurveDisplay",
     "det_curve",
+    "DistanceMetric",
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",
@@ -167,6 +172,7 @@ __all__ = [
     "roc_auc_score",
     "roc_curve",
     "SCORERS",
+    "get_scorer_names",
     "silhouette_samples",
     "silhouette_score",
     "top_k_accuracy_score",

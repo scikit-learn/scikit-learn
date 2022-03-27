@@ -32,7 +32,7 @@ def test_errors(pyplot):
     )
     y_binary = y_multiclass == 0
 
-    # Unfitted classifer
+    # Unfitted classifier
     binary_clf = DecisionTreeClassifier()
     with pytest.raises(NotFittedError):
         plot_precision_recall_curve(binary_clf, X, y_binary)

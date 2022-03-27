@@ -12,6 +12,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
+from ..utils.deprecation import deprecated
 
 
 def _tosequence(X):
@@ -371,6 +372,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         """
         return self._transform(X, fitting=False)
 
+    @deprecated(
+        "get_feature_names is deprecated in 1.0 and will be removed "
+        "in 1.2. Please use get_feature_names_out instead."
+    )
     def get_feature_names(self):
         """Return a list of feature names, ordered by their indices.
 
@@ -383,6 +388,25 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
            List containing the feature names (e.g., "f=ham" and "f=spam").
         """
         return self.feature_names_
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        if any(not isinstance(name, str) for name in self.feature_names_):
+            feature_names = [str(name) for name in self.feature_names_]
+        else:
+            feature_names = self.feature_names_
+        return np.asarray(feature_names, dtype=object)
 
     def restrict(self, support, indices=False):
         """Restrict the features to those in support using feature selection.
@@ -410,12 +434,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         >>> D = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
         >>> X = v.fit_transform(D)
         >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
-        >>> v.get_feature_names()
-        ['bar', 'baz', 'foo']
+        >>> v.get_feature_names_out()
+        array(['bar', 'baz', 'foo'], ...)
         >>> v.restrict(support.get_support())
         DictVectorizer()
-        >>> v.get_feature_names()
-        ['bar', 'foo']
+        >>> v.get_feature_names_out()
+        array(['bar', 'foo'], ...)
         """
         if not indices:
             support = np.where(support)[0]

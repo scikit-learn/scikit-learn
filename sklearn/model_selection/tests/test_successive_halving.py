@@ -310,7 +310,7 @@ def test_random_search_discrete_distributions(
     # depends whether the distributions are 'all lists' or not (see
     # ParameterSampler for details). This is somewhat redundant with the checks
     # in ParameterSampler but interaction bugs were discovered during
-    # developement of SH
+    # development of SH
 
     n_samples = 1024
     X, y = make_classification(n_samples=n_samples, random_state=0)
@@ -665,7 +665,7 @@ def test_groups_support(Est):
     ]
     error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
-        gs = Est(clf, grid, cv=cv)
+        gs = Est(clf, grid, cv=cv, random_state=0)
         with pytest.raises(ValueError, match=error_msg):
             gs.fit(X, y)
         gs.fit(X, y, groups=groups)

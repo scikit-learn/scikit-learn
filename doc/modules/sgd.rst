@@ -123,7 +123,7 @@ Please refer to the :ref:`mathematical section below
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models (i.e. with more zero
-coefficents), even when L2 penalty is used.
+coefficients), even when L2 penalty is used.
 
 Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
@@ -408,7 +408,7 @@ parameters, we minimize the regularized training error given by
 where :math:`L` is a loss function that measures model (mis)fit and
 :math:`R` is a regularization term (aka penalty) that penalizes model
 complexity; :math:`\alpha > 0` is a non-negative hyperparameter that controls
-the regularization stength.
+the regularization strength.
 
 Different choices for :math:`L` entail different classifiers or regressors:
 
@@ -546,8 +546,8 @@ The code is written in Cython.
    .. [#1] `"Stochastic Gradient Descent"
        <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
-   .. [#2] `"Pegasos: Primal estimated sub-gradient solver for svm"
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+   .. [#2] :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
+      <10.1145/1273496.1273598>`
       S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
    .. [#3] `"Stochastic gradient descent training for l1-regularized
@@ -556,17 +556,17 @@ The code is written in Cython.
       Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL
       '09.
 
-   .. [#4] `"Towards Optimal One Pass Large Scale Learning with
+   .. [#4] :arxiv:`"Towards Optimal One Pass Large Scale Learning with
       Averaged Stochastic Gradient Descent"
-      <https://arxiv.org/pdf/1107.2490v2.pdf>`_
-      Xu, Wei
+      <1107.2490v2>`
+      Xu, Wei (2011)
 
-   .. [#5] `"Regularization and variable selection via the elastic net"
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
+   .. [#5] :doi:`"Regularization and variable selection via the elastic net"
+      <10.1111/j.1467-9868.2005.00503.x>`
       H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
       67 (2), 301-320.
 
-   .. [#6] `"Solving large scale linear prediction problems using stochastic
+   .. [#6] :doi:`"Solving large scale linear prediction problems using stochastic
       gradient descent algorithms"
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_
+      <10.1145/1015330.1015332>`
       T. Zhang - In Proceedings of ICML '04.

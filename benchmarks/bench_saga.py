@@ -119,7 +119,7 @@ def fit_single(
                 # Lightning predict_proba is not implemented for n_classes > 2
                 y_pred = _predict_proba(lr, X)
             score = log_loss(y, y_pred, normalize=False) / n_samples
-            score += 0.5 * alpha * np.sum(lr.coef_ ** 2) + beta * np.sum(
+            score += 0.5 * alpha * np.sum(lr.coef_**2) + beta * np.sum(
                 np.abs(lr.coef_)
             )
             scores.append(score)

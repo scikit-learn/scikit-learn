@@ -4,6 +4,7 @@
 import numpy as np
 import pytest
 from scipy import sparse
+import warnings
 
 from sklearn.datasets import make_blobs
 from sklearn.cluster import OPTICS
@@ -269,9 +270,10 @@ def test_nowarn_if_metric_bool_data_bool():
     pairwise_metric = "rogerstanimoto"
     X = np.random.randint(2, size=(5, 2), dtype=bool)
 
-    with pytest.warns(None) as warn_record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
+
         OPTICS(metric=pairwise_metric).fit(X)
-        assert len(warn_record) == 0
 
 
 def test_warn_if_metric_bool_data_no_bool():
@@ -296,12 +298,13 @@ def test_nowarn_if_metric_no_bool():
     X_bool = np.random.randint(2, size=(5, 2), dtype=bool)
     X_num = np.random.randint(2, size=(5, 2), dtype=np.int32)
 
-    with pytest.warns(None) as warn_record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
+
         # fit boolean data
         OPTICS(metric=pairwise_metric).fit(X_bool)
         # fit numeric data
         OPTICS(metric=pairwise_metric).fit(X_num)
-        assert len(warn_record) == 0
 
 
 @pytest.mark.parametrize("metric", ["minkowski", "euclidean"])

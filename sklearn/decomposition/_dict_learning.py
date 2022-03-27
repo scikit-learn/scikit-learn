@@ -14,8 +14,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import deprecated
+from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
@@ -240,7 +239,7 @@ def sparse_encode(
     verbose=0,
     positive=False,
 ):
-    """Sparse coding
+    """Sparse coding.
 
     Each row of the result is the solution to a sparse coding problem.
     The goal is to find a sparse array `code` such that::
@@ -328,19 +327,23 @@ def sparse_encode(
     Returns
     -------
     code : ndarray of shape (n_samples, n_components)
-        The sparse codes
+        The sparse codes.
 
     See Also
     --------
-    sklearn.linear_model.lars_path
-    sklearn.linear_model.orthogonal_mp
-    sklearn.linear_model.Lasso
-    SparseCoder
+    sklearn.linear_model.lars_path : Compute Least Angle Regression or Lasso
+        path using LARS algorithm.
+    sklearn.linear_model.orthogonal_mp : Solves Orthogonal Matching Pursuit problems.
+    sklearn.linear_model.Lasso : Train Linear Model with L1 prior as regularizer.
+    SparseCoder : Find a sparse representation of data from a fixed precomputed
+        dictionary.
     """
     if check_input:
         if algorithm == "lasso_cd":
-            dictionary = check_array(dictionary, order="C", dtype="float64")
-            X = check_array(X, order="C", dtype="float64")
+            dictionary = check_array(
+                dictionary, order="C", dtype=[np.float64, np.float32]
+            )
+            X = check_array(X, order="C", dtype=[np.float64, np.float32])
         else:
             dictionary = check_array(dictionary)
             X = check_array(X)
@@ -480,8 +483,8 @@ def _update_dict(
         if positive:
             np.clip(dictionary[k], 0, None, out=dictionary[k])
 
-        # Projection on the constraint set ||V_k|| == 1
-        dictionary[k] /= linalg.norm(dictionary[k])
+        # Projection on the constraint set ||V_k|| <= 1
+        dictionary[k] /= max(linalg.norm(dictionary[k]), 1)
 
     if verbose and n_unused > 0:
         print(f"{n_unused} unused atoms resampled.")
@@ -762,8 +765,9 @@ def dict_learning_online(
     X : ndarray of shape (n_samples, n_features)
         Data matrix.
 
-    n_components : int, default=2
-        Number of dictionary atoms to extract.
+    n_components : int or None, default=2
+        Number of dictionary atoms to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1
         Sparsity controlling parameter.
@@ -891,7 +895,8 @@ def dict_learning_online(
         dictionary = dictionary[:n_components, :]
     else:
         dictionary = np.r_[
-            dictionary, np.zeros((n_components - r, dictionary.shape[1]))
+            dictionary,
+            np.zeros((n_components - r, dictionary.shape[1]), dtype=dictionary.dtype),
         ]
 
     if verbose == 1:
@@ -903,21 +908,23 @@ def dict_learning_online(
     else:
         X_train = X
 
+    X_train = check_array(
+        X_train, order="C", dtype=[np.float64, np.float32], copy=False
+    )
+
     # Fortran-order dict better suited for the sparse coding which is the
     # bottleneck of this algorithm.
-    dictionary = check_array(dictionary, order="F", dtype=np.float64, copy=False)
+    dictionary = check_array(dictionary, order="F", dtype=X_train.dtype, copy=False)
     dictionary = np.require(dictionary, requirements="W")
-
-    X_train = check_array(X_train, order="C", dtype=np.float64, copy=False)
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
 
     # The covariance of the dictionary
     if inner_stats is None:
-        A = np.zeros((n_components, n_components))
+        A = np.zeros((n_components, n_components), dtype=X_train.dtype)
         # The data approximation
-        B = np.zeros((n_features, n_components))
+        B = np.zeros((n_features, n_components), dtype=X_train.dtype)
     else:
         A = inner_stats[0].copy()
         B = inner_stats[1].copy()
@@ -953,7 +960,7 @@ def dict_learning_online(
         if ii < batch_size - 1:
             theta = float((ii + 1) * batch_size)
         else:
-            theta = float(batch_size ** 2 + ii + 1 - batch_size)
+            theta = float(batch_size**2 + ii + 1 - batch_size)
         beta = (theta + 1 - batch_size) / (theta + 1)
 
         A *= beta
@@ -1013,7 +1020,7 @@ def dict_learning_online(
         return dictionary
 
 
-class _BaseSparseCoding(TransformerMixin):
+class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     """Base class from SparseCoder and DictionaryLearning algorithms."""
 
     def __init__(
@@ -1035,7 +1042,7 @@ class _BaseSparseCoding(TransformerMixin):
         self.positive_code = positive_code
 
     def _transform(self, X, dictionary):
-        """Private method allowing to accomodate both DictionaryLearning and
+        """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
@@ -1171,13 +1178,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     Attributes
     ----------
-    components_ : ndarray of shape (n_components, n_features)
-        The unchanged dictionary atoms.
-
-        .. deprecated:: 0.24
-           This attribute is deprecated in 0.24 and will be removed in
-           1.1 (renaming of 0.26). Use `dictionary` instead.
-
     n_components_ : int
         Number of atoms.
 
@@ -1270,15 +1270,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return self
 
-    @deprecated(  # type: ignore
-        "The attribute `components_` is deprecated "
-        "in 0.24 and will be removed in 1.1 (renaming of 0.26). Use the "
-        "`dictionary` instead."
-    )
-    @property
-    def components_(self):
-        return self.dictionary
-
     def transform(self, X, y=None):
         """Encode the data as a sparse combination of the dictionary atoms.
 
@@ -1302,7 +1293,10 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         return super()._transform(X, self.dictionary)
 
     def _more_tags(self):
-        return {"requires_fit": False}
+        return {
+            "requires_fit": False,
+            "preserves_dtype": [np.float64, np.float32],
+        }
 
     @property
     def n_components_(self):
@@ -1313,6 +1307,11 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     def n_features_in_(self):
         """Number of features seen during `fit`."""
         return self.dictionary.shape[1]
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.n_components_
 
 
 class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1325,7 +1324,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
     the entry-wise matrix norm which is the sum of the absolute values
@@ -1335,8 +1334,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, default=n_features
-        Number of dictionary elements to extract.
+    n_components : int, default=None
+        Number of dictionary elements to extract. If None, then ``n_components``
+        is set to ``n_features``.
 
     alpha : float, default=1.0
         Sparsity controlling parameter.
@@ -1477,17 +1477,18 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.decomposition import DictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
-    ...     random_state=42,
+    ...     random_state=42, data_transposed=False
     ... )
     >>> dict_learner = DictionaryLearning(
-    ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
+    ...     n_components=15, transform_algorithm='lasso_lars', transform_alpha=0.1,
+    ...     random_state=42,
     ... )
     >>> X_transformed = dict_learner.fit_transform(X)
 
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.87...
+    0.41...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1495,7 +1496,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.08...
+    0.07...
     """
 
     def __init__(
@@ -1585,6 +1586,16 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.error_ = E
         return self
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
+
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Mini-batch dictionary learning.
@@ -1596,7 +1607,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
        (U^*,V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
     the entry-wise matrix norm which is the sum of the absolute values
@@ -1754,16 +1765,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.decomposition import MiniBatchDictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
     ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
-    ...     random_state=42)
+    ...     random_state=42, data_transposed=False)
     >>> dict_learner = MiniBatchDictionaryLearning(
-    ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
-    ... )
+    ...     n_components=15, transform_algorithm='lasso_lars', transform_alpha=0.1,
+    ...     random_state=42)
     >>> X_transformed = dict_learner.fit_transform(X)
 
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.86...
+    0.38...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1771,7 +1782,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.07...
+    0.059...
     """
 
     def __init__(
@@ -1924,3 +1935,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.inner_stats_ = (A, B)
         self.iter_offset_ = iter_offset + 1
         return self
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
