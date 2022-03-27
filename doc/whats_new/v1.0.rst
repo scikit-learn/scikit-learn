@@ -499,11 +499,6 @@ Changelog
 - |API| :func:`cluster.spectral_clustering` raises an improved error when passed
   a `np.matrix`. :pr:`20560` by `Thomas Fan`_.
 
-- |Fix| :class:`cluster.AgglomerativeClustering` correctly connects components
-  when connectivity and affinity are both precomputed and the number
-  of connected components is greater than 1. :pr:`20597` by
-  `Thomas Fan`_.
-
 - |Enhancement| The `predict` and `fit_predict` methods of
   :class:`cluster.OPTICS` now accept sparse data type for input
   data.
