@@ -96,9 +96,6 @@ def _hdbscan_generic(
             distance_matrix,
             min_samples,
             alpha,
-            metric,
-            p,
-            leaf_size,
             **kwargs,
         )
 
@@ -129,9 +126,6 @@ def _hdbscan_sparse_distance_matrix(
     X,
     min_samples=5,
     alpha=1.0,
-    metric="minkowski",
-    p=2,
-    leaf_size=40,
     **kwargs,
 ):
     assert issparse(X)
@@ -261,7 +255,6 @@ def _hdbscan_prims_balltree(
 def _hdbscan_boruvka_kdtree(
     X,
     min_samples=5,
-    alpha=1.0,
     metric="minkowski",
     leaf_size=40,
     approx_min_span_tree=True,
@@ -308,7 +301,6 @@ def _hdbscan_boruvka_kdtree(
 def _hdbscan_boruvka_balltree(
     X,
     min_samples=5,
-    alpha=1.0,
     metric="minkowski",
     leaf_size=40,
     approx_min_span_tree=True,
@@ -712,7 +704,6 @@ def hdbscan(
             single_linkage_tree = memory.cache(_hdbscan_boruvka_kdtree)(
                 X,
                 min_samples,
-                alpha,
                 metric,
                 leaf_size,
                 approx_min_span_tree,
@@ -731,7 +722,6 @@ def hdbscan(
             single_linkage_tree = memory.cache(_hdbscan_boruvka_balltree)(
                 X,
                 min_samples,
-                alpha,
                 metric,
                 leaf_size,
                 approx_min_span_tree,
@@ -768,7 +758,6 @@ def hdbscan(
                 single_linkage_tree = memory.cache(_hdbscan_boruvka_kdtree)(
                     X,
                     min_samples,
-                    alpha,
                     metric,
                     leaf_size,
                     approx_min_span_tree,
@@ -791,7 +780,6 @@ def hdbscan(
                 single_linkage_tree = memory.cache(_hdbscan_boruvka_balltree)(
                     X,
                     min_samples,
-                    alpha,
                     metric,
                     leaf_size,
                     approx_min_span_tree,
