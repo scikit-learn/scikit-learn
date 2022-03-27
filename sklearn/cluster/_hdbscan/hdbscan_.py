@@ -9,7 +9,6 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 # License: BSD 3 clause
 
 import numpy as np
-from numpy import isclose
 
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.metrics import pairwise_distances
@@ -31,7 +30,6 @@ from ._hdbscan_tree import (
     condense_tree,
     compute_stability,
     get_clusters,
-    outlier_scores,
     labelling_at_cut,
 )
 from ._hdbscan_reachability import mutual_reachability, sparse_mutual_reachability
@@ -66,7 +64,7 @@ def _tree_to_labels(
         max_cluster_size,
     )
 
-    return (labels, probabilities, stabilities, condensed_tree, single_linkage_tree)
+    return (labels, probabilities, stabilities, single_linkage_tree)
 
 
 def _hdbscan_generic(
@@ -76,7 +74,6 @@ def _hdbscan_generic(
     metric="minkowski",
     p=2,
     leaf_size=None,
-    gen_min_span_tree=False,
     **kwargs,
 ):
     if metric == "minkowski":
@@ -102,7 +99,6 @@ def _hdbscan_generic(
             metric,
             p,
             leaf_size,
-            gen_min_span_tree,
             **kwargs,
         )
 
@@ -120,29 +116,13 @@ def _hdbscan_generic(
             UserWarning,
         )
 
-    # mst_linkage_core does not generate a full minimal spanning tree
-    # If a tree is required then we must build the edges from the information
-    # returned by mst_linkage_core (i.e. just the order of points to be merged)
-    if gen_min_span_tree:
-        result_min_span_tree = min_spanning_tree.copy()
-        for index, row in enumerate(result_min_span_tree[1:], 1):
-            candidates = np.where(isclose(mutual_reachability_[int(row[1])], row[2]))[0]
-            candidates = np.intersect1d(
-                candidates, min_spanning_tree[:index, :2].astype(int)
-            )
-            candidates = candidates[candidates != row[1]]
-            assert len(candidates) > 0
-            row[0] = candidates[0]
-    else:
-        result_min_span_tree = None
-
     # Sort edges of the min_spanning_tree by weight
     min_spanning_tree = min_spanning_tree[np.argsort(min_spanning_tree.T[2]), :]
 
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = label(min_spanning_tree)
 
-    return single_linkage_tree, result_min_span_tree
+    return single_linkage_tree
 
 
 def _hdbscan_sparse_distance_matrix(
@@ -152,7 +132,6 @@ def _hdbscan_sparse_distance_matrix(
     metric="minkowski",
     p=2,
     leaf_size=40,
-    gen_min_span_tree=False,
     **kwargs,
 ):
     assert issparse(X)
@@ -205,10 +184,7 @@ def _hdbscan_sparse_distance_matrix(
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = label(min_spanning_tree)
 
-    if gen_min_span_tree:
-        return single_linkage_tree, min_spanning_tree
-    else:
-        return single_linkage_tree, None
+    return single_linkage_tree
 
 
 def _hdbscan_prims_kdtree(
@@ -217,7 +193,6 @@ def _hdbscan_prims_kdtree(
     alpha=1.0,
     metric="minkowski",
     leaf_size=40,
-    gen_min_span_tree=False,
     **kwargs,
 ):
     if X.dtype != np.float64:
@@ -246,10 +221,7 @@ def _hdbscan_prims_kdtree(
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = label(min_spanning_tree)
 
-    if gen_min_span_tree:
-        return single_linkage_tree, min_spanning_tree
-    else:
-        return single_linkage_tree, None
+    return single_linkage_tree
 
 
 def _hdbscan_prims_balltree(
@@ -258,7 +230,6 @@ def _hdbscan_prims_balltree(
     alpha=1.0,
     metric="minkowski",
     leaf_size=40,
-    gen_min_span_tree=False,
     **kwargs,
 ):
     if X.dtype != np.float64:
@@ -284,10 +255,7 @@ def _hdbscan_prims_balltree(
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = label(min_spanning_tree)
 
-    if gen_min_span_tree:
-        return single_linkage_tree, min_spanning_tree
-    else:
-        return single_linkage_tree, None
+    return single_linkage_tree
 
 
 def _hdbscan_boruvka_kdtree(
@@ -297,7 +265,6 @@ def _hdbscan_boruvka_kdtree(
     metric="minkowski",
     leaf_size=40,
     approx_min_span_tree=True,
-    gen_min_span_tree=False,
     core_dist_n_jobs=4,
     **kwargs,
 ):
@@ -335,10 +302,7 @@ def _hdbscan_boruvka_kdtree(
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = label(min_spanning_tree)
 
-    if gen_min_span_tree:
-        return single_linkage_tree, min_spanning_tree
-    else:
-        return single_linkage_tree, None
+    return single_linkage_tree
 
 
 def _hdbscan_boruvka_balltree(
@@ -348,7 +312,6 @@ def _hdbscan_boruvka_balltree(
     metric="minkowski",
     leaf_size=40,
     approx_min_span_tree=True,
-    gen_min_span_tree=False,
     core_dist_n_jobs=4,
     **kwargs,
 ):
@@ -377,10 +340,7 @@ def _hdbscan_boruvka_balltree(
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = label(min_spanning_tree)
 
-    if gen_min_span_tree:
-        return single_linkage_tree, min_spanning_tree
-    else:
-        return single_linkage_tree, None
+    return single_linkage_tree
 
 
 def check_precomputed_distance_matrix(X):
@@ -509,7 +469,6 @@ def hdbscan(
     algorithm="best",
     memory=None,
     approx_min_span_tree=True,
-    gen_min_span_tree=False,
     core_dist_n_jobs=4,
     cluster_selection_method="eom",
     allow_single_cluster=False,
@@ -576,12 +535,12 @@ def hdbscan(
         to `best` which chooses the "best" algorithm given the nature of
         the data. You can force other options if you believe you know
         better. Options are:
-        * `best`
-        * `generic`
-        * `prims_kdtree`
-        * `prims_balltree`
-        * `boruvka_kdtree`
-        * `boruvka_balltree`
+        - `best`
+        - `generic`
+        - `prims_kdtree`
+        - `prims_balltree`
+        - `boruvka_kdtree`
+        - `boruvka_balltree`
 
     memory : str, default=None
         Used to cache the output of the computation of the tree.
@@ -595,9 +554,6 @@ def hdbscan(
         If you are willing to sacrifice speed for correctness you may want
         to explore this; in general this should be left at the default True.
 
-    gen_min_span_tree : bool, default=False
-        Whether to generate the minimum spanning tree for later analysis.
-
     core_dist_n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
         supported by the specific algorithm). For `core_dist_n_jobs`
@@ -609,8 +565,8 @@ def hdbscan(
         to find the most persistent clusters. Alternatively you can instead
         select the clusters at the leaves of the tree -- this provides the
         most fine grained and homogeneous clusters. Options are:
-        * `eom`
-        * `leaf`
+        - `eom`
+        - `leaf`
 
     allow_single_cluster : bool, default=False
         By default HDBSCAN* will not produce a single cluster, setting this
@@ -644,17 +600,10 @@ def hdbscan(
         scores can be guage the relative coherence of the clusters output
         by the algorithm.
 
-    condensed_tree : record array
-        The condensed cluster hierarchy used to generate clusters.
-
     single_linkage_tree : ndarray, shape (n_samples - 1, 4)
         The single linkage tree produced during clustering in scipy
         hierarchical clustering format
         (see http://docs.scipy.org/doc/scipy/reference/cluster.hierarchy.html).
-
-    min_spanning_tree : ndarray, shape (n_samples - 1, 3)
-        The minimum spanning as an edgelist. If gen_min_span_tree was False
-        this will be None.
 
     References
     ----------
@@ -727,58 +676,46 @@ def hdbscan(
             raise ValueError("Sparse data matrices only support algorithm 'generic'.")
 
         if algorithm == "generic":
-            (single_linkage_tree, result_min_span_tree) = memory.cache(
-                _hdbscan_generic
-            )(
+            single_linkage_tree = memory.cache(_hdbscan_generic)(
                 X,
                 min_samples,
                 alpha,
                 metric,
                 leaf_size,
-                gen_min_span_tree,
                 **metric_params,
             )
         elif algorithm == "prims_kdtree":
             if metric not in KDTree.valid_metrics:
                 raise ValueError("Cannot use Prim's with KDTree for this metric!")
-            (single_linkage_tree, result_min_span_tree) = memory.cache(
-                _hdbscan_prims_kdtree
-            )(
+            single_linkage_tree = memory.cache(_hdbscan_prims_kdtree)(
                 X,
                 min_samples,
                 alpha,
                 metric,
                 leaf_size,
-                gen_min_span_tree,
                 **metric_params,
             )
         elif algorithm == "prims_balltree":
             if metric not in BallTree.valid_metrics:
                 raise ValueError("Cannot use Prim's with BallTree for this metric!")
-            (single_linkage_tree, result_min_span_tree) = memory.cache(
-                _hdbscan_prims_balltree
-            )(
+            single_linkage_tree = memory.cache(_hdbscan_prims_balltree)(
                 X,
                 min_samples,
                 alpha,
                 metric,
                 leaf_size,
-                gen_min_span_tree,
                 **metric_params,
             )
         elif algorithm == "boruvka_kdtree":
             if metric not in KDTree.valid_metrics:
                 raise ValueError("Cannot use Boruvka with KDTree for this metric!")
-            (single_linkage_tree, result_min_span_tree) = memory.cache(
-                _hdbscan_boruvka_kdtree
-            )(
+            single_linkage_tree = memory.cache(_hdbscan_boruvka_kdtree)(
                 X,
                 min_samples,
                 alpha,
                 metric,
                 leaf_size,
                 approx_min_span_tree,
-                gen_min_span_tree,
                 core_dist_n_jobs,
                 **metric_params,
             )
@@ -791,16 +728,13 @@ def hdbscan(
                     "memory usage. If you are running out of memory consider "
                     "increasing the `leaf_size` parameter."
                 )
-            (single_linkage_tree, result_min_span_tree) = memory.cache(
-                _hdbscan_boruvka_balltree
-            )(
+            single_linkage_tree = memory.cache(_hdbscan_boruvka_balltree)(
                 X,
                 min_samples,
                 alpha,
                 metric,
                 leaf_size,
                 approx_min_span_tree,
-                gen_min_span_tree,
                 core_dist_n_jobs,
                 **metric_params,
             )
@@ -810,43 +744,34 @@ def hdbscan(
 
         if issparse(X) or metric not in FAST_METRICS:
             # We can't do much with sparse matrices ...
-            (single_linkage_tree, result_min_span_tree) = memory.cache(
-                _hdbscan_generic
-            )(
+            single_linkage_tree = memory.cache(_hdbscan_generic)(
                 X,
                 min_samples,
                 alpha,
                 metric,
                 leaf_size,
-                gen_min_span_tree,
                 **metric_params,
             )
         elif metric in KDTree.valid_metrics:
             # TO DO: Need heuristic to decide when to go to boruvka;
             # still debugging for now
             if X.shape[1] > 60:
-                (single_linkage_tree, result_min_span_tree) = memory.cache(
-                    _hdbscan_prims_kdtree
-                )(
+                single_linkage_tree = memory.cache(_hdbscan_prims_kdtree)(
                     X,
                     min_samples,
                     alpha,
                     metric,
                     leaf_size,
-                    gen_min_span_tree,
                     **metric_params,
                 )
             else:
-                (single_linkage_tree, result_min_span_tree) = memory.cache(
-                    _hdbscan_boruvka_kdtree
-                )(
+                single_linkage_tree = memory.cache(_hdbscan_boruvka_kdtree)(
                     X,
                     min_samples,
                     alpha,
                     metric,
                     leaf_size,
                     approx_min_span_tree,
-                    gen_min_span_tree,
                     core_dist_n_jobs,
                     **metric_params,
                 )
@@ -854,28 +779,22 @@ def hdbscan(
             # TO DO: Need heuristic to decide when to go to boruvka;
             # still debugging for now
             if X.shape[1] > 60:
-                (single_linkage_tree, result_min_span_tree) = memory.cache(
-                    _hdbscan_prims_balltree
-                )(
+                single_linkage_tree = memory.cache(_hdbscan_prims_balltree)(
                     X,
                     min_samples,
                     alpha,
                     metric,
                     leaf_size,
-                    gen_min_span_tree,
                     **metric_params,
                 )
             else:
-                (single_linkage_tree, result_min_span_tree) = memory.cache(
-                    _hdbscan_boruvka_balltree
-                )(
+                single_linkage_tree = memory.cache(_hdbscan_boruvka_balltree)(
                     X,
                     min_samples,
                     alpha,
                     metric,
                     leaf_size,
                     approx_min_span_tree,
-                    gen_min_span_tree,
                     core_dist_n_jobs,
                     **metric_params,
                 )
@@ -888,7 +807,7 @@ def hdbscan(
         match_reference_implementation,
         cluster_selection_epsilon,
         max_cluster_size,
-    ) + (result_min_span_tree,)
+    )
 
 
 # Inherits from sklearn
@@ -971,10 +890,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         If you are willing to sacrifice speed for correctness you may want
         to explore this; in general this should be left at the default True.
 
-    gen_min_span_tree : bool, default=False
-        Whether to generate the minimum spanning tree with regard
-        to mutual reachability distance for later analysis.
-
     core_dist_n_jobs : int, default=4
         Number of parallel jobs to run in core distance computations (if
         supported by the specific algorithm). For `core_dist_n_jobs`
@@ -1029,22 +944,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         while a score of 0.0 represents a perfectly ephemeral cluster. These
         scores can be guage the relative coherence of the clusters output
         by the algorithm.
-
-    outlier_scores_ : ndarray, shape (n_samples, )
-        Outlier scores for clustered points; the larger the score the more
-        outlier-like the point. Useful as an outlier detection technique.
-        Based on the GLOSH algorithm by Campello, Moulavi, Zimek and Sander.
-
-    relative_validity_ : float
-        A fast approximation of the Density Based Cluster Validity (DBCV)
-        score [4]. The only differece, and the speed, comes from the fact
-        that this relative_validity_ is computed using the mutual-
-        reachability minimum spanning tree, i.e. minimum_spanning_tree_,
-        instead of the all-points minimum spanning tree used in the
-        reference. This score might not be an objective measure of the
-        goodness of clusterering. It may only be used to compare results
-        across different choices of hyper-parameters, therefore is only a
-        relative score.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1111,7 +1010,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         leaf_size=40,
         memory=None,
         approx_min_span_tree=True,
-        gen_min_span_tree=False,
         core_dist_n_jobs=4,
         cluster_selection_method="eom",
         allow_single_cluster=False,
@@ -1129,7 +1027,6 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         self.leaf_size = leaf_size
         self.memory = memory
         self.approx_min_span_tree = approx_min_span_tree
-        self.gen_min_span_tree = gen_min_span_tree
         self.core_dist_n_jobs = core_dist_n_jobs
         self.cluster_selection_method = cluster_selection_method
         self.allow_single_cluster = allow_single_cluster
@@ -1190,17 +1087,12 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
             self.labels_,
             self.probabilities_,
             self.cluster_persistence_,
-            self._condensed_tree_,
             self._single_linkage_tree_,
-            self._min_spanning_tree,
         ) = hdbscan(X, **kwargs)
 
         if self.metric != "precomputed" and not self._all_finite:
             # remap indices to align with original data in the case of
             # non-finite entries.
-            self._condensed_tree_ = remap_condensed_tree(
-                self._condensed_tree_, internal_to_raw, outliers
-            )
             self._single_linkage_tree_ = remap_single_linkage_tree(
                 self._single_linkage_tree_, internal_to_raw, outliers
             )
@@ -1347,130 +1239,3 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         return labelling_at_cut(
             self._single_linkage_tree_, cut_distance, min_cluster_size
         )
-
-    @property
-    def outlier_scores_(self):
-        """
-        Points with larger scores are more outlier-like points.
-        """
-        if getattr(self, "_outlier_scores", None) is not None:
-            return self._outlier_scores
-        else:
-            if getattr(self, "_condensed_tree_", None) is not None:
-                self._outlier_scores = outlier_scores(self._condensed_tree_)
-                return self._outlier_scores
-            else:
-                raise AttributeError(
-                    "No condensed tree was generated; try running fit first."
-                )
-
-    @property
-    def minimum_spanning_tree_(self):
-        """
-        The minimum spanning tree of the mutual reachability graph.
-        """
-        if getattr(self, "_min_spanning_tree", None) is not None:
-            if self._raw_data is not None:
-                return self._min_spanning_tree, self._raw_data
-            else:
-                warn(
-                    "No raw data is available; this may be due to using"
-                    " a precomputed metric matrix. No minimum spanning"
-                    " tree will be provided without raw data."
-                )
-                return None
-        else:
-            raise AttributeError(
-                "No minimum spanning tree was generated."
-                "This may be due to optimized algorithm variations that skip"
-                " explicit generation of the spanning tree."
-            )
-
-    @property
-    def relative_validity_(self):
-        """
-        A fast approximation of the Density Based Cluster Validity (DBCV) score.
-        """
-        if getattr(self, "_relative_validity", None) is not None:
-            return self._relative_validity
-
-        if not self.gen_min_span_tree:
-            raise AttributeError(
-                "Minimum spanning tree not present. "
-                + "Either HDBSCAN object was created with "
-                + "gen_min_span_tree=False or the tree was "
-                + "not generated in spite of it owing to "
-                + "internal optimization criteria."
-            )
-            return
-
-        labels = self.labels_
-        sizes = np.bincount(labels + 1)
-        noise_size = sizes[0]
-        cluster_size = sizes[1:]
-        total = noise_size + np.sum(cluster_size)
-        num_clusters = len(cluster_size)
-        DSC = np.zeros(num_clusters)
-        min_outlier_sep = np.inf  # only required if num_clusters = 1
-        correction_const = 2  # only required if num_clusters = 1
-
-        # Unltimately, for each Ci, we only require the
-        # minimum of DSPC(Ci, Cj) over all Cj != Ci.
-        # So let's call this value DSPC_wrt(Ci), i.e.
-        # density separation 'with respect to' Ci.
-        DSPC_wrt = np.ones(num_clusters) * np.inf
-        max_distance = 0
-
-        mst_df = self.minimum_spanning_tree_.to_pandas()
-
-        for edge in mst_df.iterrows():
-            label1 = labels[int(edge[1]["from"])]
-            label2 = labels[int(edge[1]["to"])]
-            length = edge[1]["distance"]
-
-            max_distance = max(max_distance, length)
-
-            if label1 == -1 and label2 == -1:
-                continue
-            elif label1 == -1 or label2 == -1:
-                # If exactly one of the points is noise
-                min_outlier_sep = min(min_outlier_sep, length)
-                continue
-
-            if label1 == label2:
-                # Set the density sparseness of the cluster
-                # to the sparsest value seen so far.
-                DSC[label1] = max(length, DSC[label1])
-            else:
-                # Check whether density separations with
-                # respect to each of these clusters can
-                # be reduced.
-                DSPC_wrt[label1] = min(length, DSPC_wrt[label1])
-                DSPC_wrt[label2] = min(length, DSPC_wrt[label2])
-
-        # In case min_outlier_sep is still np.inf, we assign a new value to it.
-        # This only makes sense if num_clusters = 1 since it has turned out
-        # that the MR-MST has no edges between a noise point and a core point.
-        min_outlier_sep = max_distance if min_outlier_sep == np.inf else min_outlier_sep
-
-        # DSPC_wrt[Ci] might be infinite if the connected component for Ci is
-        # an "island" in the MR-MST. Whereas for other clusters Cj and Ck, the
-        # MR-MST might contain an edge with one point in Cj and ther other one
-        # in Ck. Here, we replace the infinite density separation of Ci by
-        # another large enough value.
-        #
-        # TODO: Think of a better yet efficient way to handle this.
-        correction = correction_const * (
-            max_distance if num_clusters > 1 else min_outlier_sep
-        )
-        DSPC_wrt[np.where(DSPC_wrt == np.inf)] = correction
-
-        V_index = [
-            (DSPC_wrt[i] - DSC[i]) / max(DSPC_wrt[i], DSC[i])
-            for i in range(num_clusters)
-        ]
-        score = np.sum(
-            [(cluster_size[i] * V_index[i]) / total for i in range(num_clusters)]
-        )
-        self._relative_validity = score
-        return self._relative_validity

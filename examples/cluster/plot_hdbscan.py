@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-===================================
+====================================
 Demo of HDBSCAN clustering algorithm
-===================================
+====================================
 
 """
 
@@ -26,7 +26,7 @@ X = StandardScaler().fit_transform(X)
 
 # %%
 # Compute HDBSCAN
-# --------------
+# ---------------
 hdb = HDBSCAN().fit(X)
 labels = hdb.labels_
 

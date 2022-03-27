@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import pairwise_distances
 from scipy.spatial.distance import cdist
 from ._hdbscan_linkage import mst_linkage_core
-from .hdbscan_ import isclose
+from numpy import isclose
 
 
 def all_points_core_distance(distance_matrix, d=2.0):

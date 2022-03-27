@@ -108,7 +108,7 @@ def test_hdbscan_sparse_distance_matrix():
     n_clusters_1 = len(set(labels)) - int(-1 in labels)  # ignore noise
     assert n_clusters_1 == n_clusters
 
-    labels = HDBSCAN(metric="precomputed", gen_min_span_tree=True).fit(D).labels_
+    labels = HDBSCAN(metric="precomputed").fit(D).labels_
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 
@@ -143,7 +143,7 @@ def test_hdbscan_algorithms(algo, metric):
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
-    labels = HDBSCAN(algorithm=algo, gen_min_span_tree=True).fit(X).labels_
+    labels = HDBSCAN(algorithm=algo).fit(X).labels_
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 
@@ -196,7 +196,7 @@ def test_hdbscan_high_dimensional():
     H, y = make_blobs(n_samples=50, random_state=0, n_features=64)
     # H, y = shuffle(X, y, random_state=7)
     H = StandardScaler().fit_transform(H)
-    labels, p, persist, ctree, ltree, mtree = hdbscan(H)
+    labels = hdbscan(H)[0]
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -214,9 +214,9 @@ def test_hdbscan_high_dimensional():
 
 
 def test_hdbscan_best_balltree_metric():
-    labels, p, persist, ctree, ltree, mtree = hdbscan(
-        X, metric="seuclidean", metric_params={"V": np.ones(X.shape[1])}
-    )
+    labels = hdbscan(X, metric="seuclidean", metric_params={"V": np.ones(X.shape[1])})[
+        0
+    ]
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_1 == n_clusters
 
@@ -287,12 +287,6 @@ def test_hdbscan_boruvka_matches(tree):
     num_mismatches = homogeneity(labels_prims, labels_boruvka)
 
     assert (num_mismatches / float(data.shape[0])) < 0.15
-
-
-def test_hdbscan_outliers():
-    clusterer = HDBSCAN(gen_min_span_tree=True).fit(X)
-    scores = clusterer.outlier_scores_
-    assert scores is not None
 
 
 def test_hdbscan_badargs():

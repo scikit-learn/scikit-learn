@@ -525,69 +525,6 @@ cdef get_probabilities(np.ndarray tree, dict cluster_map, np.ndarray labels):
     return result
 
 
-cpdef np.ndarray[np.double_t, ndim=1] outlier_scores(np.ndarray tree):
-    """Generate GLOSH outlier scores from a condensed tree.
-
-    Parameters
-    ----------
-    tree : numpy recarray
-        The condensed tree to generate GLOSH outlier scores from
-
-    Returns
-    -------
-    outlier_scores : ndarray (n_samples,)
-        Outlier scores for each sample point. The larger the score
-        the more outlying the point.
-    """
-
-    cdef np.ndarray[np.double_t, ndim=1] result
-    cdef np.ndarray[np.double_t, ndim=1] deaths
-    cdef np.ndarray[np.double_t, ndim=1] lambda_array
-    cdef np.ndarray[np.intp_t, ndim=1] child_array
-    cdef np.ndarray[np.intp_t, ndim=1] parent_array
-    cdef np.intp_t root_cluster
-    cdef np.intp_t point
-    cdef np.intp_t parent
-    cdef np.intp_t cluster
-    cdef np.double_t lambda_max
-
-    child_array = tree['child']
-    parent_array = tree['parent']
-    lambda_array = tree['lambda_val']
-
-    deaths = max_lambdas(tree)
-    root_cluster = parent_array.min()
-    result = np.zeros(root_cluster, dtype=np.double)
-
-    topological_sort_order = np.argsort(parent_array)
-    # topologically_sorted_tree = tree[topological_sort_order]
-
-    for n in topological_sort_order:
-        cluster = child_array[n]
-        if cluster < root_cluster:
-            break
-
-        parent = parent_array[n]
-        if deaths[cluster] > deaths[parent]:
-            deaths[parent] = deaths[cluster]
-
-    for n in range(tree.shape[0]):
-        point = child_array[n]
-        if point >= root_cluster:
-            continue
-
-        cluster = parent_array[n]
-        lambda_max = deaths[cluster]
-
-
-        if lambda_max == 0.0 or not np.isfinite(lambda_array[n]):
-            result[point] = 0.0
-        else:
-            result[point] = (lambda_max - lambda_array[n]) / lambda_max
-
-    return result
-
-
 cpdef np.ndarray get_stability_scores(np.ndarray labels, set clusters,
                                       dict stability, np.double_t max_lambda):
 
