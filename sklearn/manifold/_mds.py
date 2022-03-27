@@ -391,11 +391,11 @@ class MDS(BaseEstimator):
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
         If ``solver=='svd'``, metric must be set to True.
 
-    n_init : int, optional, default=4
+    n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress.
-        Ignored if ``solver=='svd'``.
+        Used only when ``solver=='smacof'``.
 
     max_iter : int, optional, default=300
         Maximum number of iterations of the SMACOF algorithm for a single run.
