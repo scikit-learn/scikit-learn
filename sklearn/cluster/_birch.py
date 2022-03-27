@@ -147,7 +147,7 @@ class _CFNode:
 
     """
 
-    def __init__(self, *, threshold, branching_factor, is_leaf, n_features):
+    def __init__(self, *, threshold, branching_factor, is_leaf, n_features, dtype=None):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.is_leaf = is_leaf
@@ -156,8 +156,11 @@ class _CFNode:
         # The list of subclusters, centroids and squared norms
         # to manipulate throughout.
         self.subclusters_ = []
-        self.init_centroids_ = np.zeros((branching_factor + 1, n_features))
-        self.init_sq_norm_ = np.zeros((branching_factor + 1))
+        self.dtype = dtype or np.float64
+        self.init_centroids_ = np.zeros(
+            (branching_factor + 1, n_features), dtype=self.dtype
+        )
+        self.init_sq_norm_ = np.zeros((branching_factor + 1), self.dtype)
         self.squared_norm_ = []
         self.prev_leaf_ = None
         self.next_leaf_ = None
@@ -575,6 +578,7 @@ class Birch(
                 branching_factor=branching_factor,
                 is_leaf=True,
                 n_features=n_features,
+                dtype=X.dtype,
             )
 
             # To enable getting back subclusters.
@@ -583,6 +587,7 @@ class Birch(
                 branching_factor=branching_factor,
                 is_leaf=True,
                 n_features=n_features,
+                dtype=X.dtype,
             )
             self.dummy_leaf_.next_leaf_ = self.root_
             self.root_.prev_leaf_ = self.dummy_leaf_
@@ -607,13 +612,12 @@ class Birch(
                     branching_factor=branching_factor,
                     is_leaf=False,
                     n_features=n_features,
+                    dtype=X.dtype,
                 )
                 self.root_.append_subcluster(new_subcluster1)
                 self.root_.append_subcluster(new_subcluster2)
 
-        centroids = np.concatenate(
-            [leaf.centroids_ for leaf in self._get_leaves()], dtype=X.dtype
-        )
+        centroids = np.concatenate([leaf.centroids_ for leaf in self._get_leaves()])
         self.subcluster_centers_ = centroids
         self._n_features_out = self.subcluster_centers_.shape[0]
 
