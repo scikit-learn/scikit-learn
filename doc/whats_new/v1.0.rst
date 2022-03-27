@@ -541,6 +541,17 @@ Changelog
   `'std_score'`, and `'split(k)_score'` in favor of `'mean_test_score'`
   `'std_test_score'`, and `'split(k)_test_score'`. :pr:`20583` by `Thomas Fan`_.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression`,
+  :class:`cross_decomposition.PLSCanonical`, and :class:`cross_decomposition.CCA`
+  estimators now properly return a 1-D prediction array
+  for single-target prediction, instead of a 2-D array.
+  This allows compatibility with meta-estimators such as
+  :class:`impute.IterativeImputer`.
+  :pr:`20355` by :user:`Leopoldo Corona <polocorona>`
+
 :mod:`sklearn.datasets`
 .......................
 

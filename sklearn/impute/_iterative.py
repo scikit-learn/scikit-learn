@@ -351,7 +351,6 @@ class IterativeImputer(_BaseImputer):
             imputed_values = np.clip(
                 imputed_values, self._min_value[feat_idx], self._max_value[feat_idx]
             )
-
         # update the feature
         X_filled[missing_row_mask, feat_idx] = imputed_values
         return X_filled, estimator
