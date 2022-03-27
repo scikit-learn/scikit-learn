@@ -469,6 +469,9 @@ class Birch(
     array([0, 0, 0, 1, 1, 1])
     """
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
     def __init__(
         self,
         *,
@@ -714,9 +717,9 @@ class Birch(
             Transformed data.
         """
         check_is_fitted(self)
-        self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self._validate_data(X, accept_sparse="csr", reset=False)
         with config_context(assume_finite=True):
-            return euclidean_distances(X, self.subcluster_centers_)
+            return euclidean_distances(X, self.subcluster_centers_).astype(X.dtype)
 
     def _global_clustering(self, X=None):
         """
