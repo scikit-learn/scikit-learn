@@ -335,16 +335,6 @@ def _hdbscan_boruvka_balltree(
     return single_linkage_tree
 
 
-def check_precomputed_distance_matrix(X):
-    """
-    Perform check_array(X) after removing infinite values (numpy.inf)
-    from the given distance matrix.
-    """
-    tmp = X.copy()
-    tmp[np.isinf(tmp)] = 1
-    check_array(tmp)
-
-
 def remap_condensed_tree(tree, internal_to_raw, outliers):
     """
     Takes an internal condensed_tree structure and adds back in a set of points
@@ -425,14 +415,6 @@ def remap_single_linkage_tree(tree, internal_to_raw, outliers):
         last_cluster_size += 1
     tree = np.vstack([tree, outlier_tree])
     return tree
-
-
-def is_finite(matrix):
-    """Returns true only if all the values of a ndarray or sparse matrix are finite"""
-    if issparse(matrix):
-        return np.alltrue(np.isfinite(matrix.tocoo().data))
-    else:
-        return np.alltrue(np.isfinite(matrix))
 
 
 def get_finite_row_indices(matrix):
@@ -638,8 +620,13 @@ def hdbscan(
         X = check_array(X, accept_sparse="csr", force_all_finite=False)
     else:
         # Only non-sparse, precomputed distance matrices are handled here
-        #   and thereby allowed to contain numpy.inf for missing distances
-        check_precomputed_distance_matrix(X)
+        # and thereby allowed to contain numpy.inf for missing distances
+
+        # Perform check_array(X) after removing infinite values (numpy.inf)
+        # from the given distance matrix.
+        tmp = X.copy()
+        tmp[np.isinf(tmp)] = 1
+        check_array(tmp)
 
     # Python 2 and 3 compliant string_type checking
     memory = Memory(location=memory, verbose=0)
@@ -1016,7 +1003,12 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
             X = self._validate_data(X, force_all_finite=False, accept_sparse="csr")
             self._raw_data = X
 
-            self._all_finite = is_finite(X)
+            self._all_finite = (
+                np.alltrue(np.isfinite(X.tocoo().data))
+                if issparse(X)
+                else np.alltrue(np.isfinite(X))
+            )
+
             if not self._all_finite:
                 # Pass only the purely finite indices into hdbscan
                 # We will later assign all non-finite points to the
