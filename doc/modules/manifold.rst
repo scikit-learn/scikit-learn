@@ -508,7 +508,7 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
     Kruskal, J. Psychometrika, 29, (1964)
 
   * `"An Introduction to MDS"
-    <https://www.researchgate.net/publication/228775338_An_introduction_to_MDS>`_
+    <https://www.hongfeili.com/files/paper100/paper4.pdf>`_
     Florian Wickelmaier, Sound Quality Research Unit, Aalborg University, Denmark (2003)
 
 

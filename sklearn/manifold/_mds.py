@@ -308,9 +308,9 @@ def smacof(
         return best_pos, best_stress
 
 
-def svd_scaler(dissimilarities, n_components=2):
+def eigh_scaler(dissimilarities, n_components=2):
     """
-    Computes multidimensional scaling using SVD algorithm
+    Computes multidimensional scaling using eigh solver.
 
     Parameters
     ----------
@@ -389,7 +389,7 @@ class MDS(BaseEstimator):
 
     metric : bool, default=True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
-        If ``solver=='svd'``, metric must be set to True.
+        If ``solver=='eigh'``, metric must be set to True.
 
     n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
@@ -399,7 +399,7 @@ class MDS(BaseEstimator):
 
     max_iter : int, optional, default=300
         Maximum number of iterations of the SMACOF algorithm for a single run.
-        Ignored if ``solver=='svd'``.
+        Ignored if ``solver=='eigh'``.
 
     verbose : int, optional, default=0
         Level of verbosity.
@@ -407,7 +407,7 @@ class MDS(BaseEstimator):
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
         convergence.
-        Ignored if ``solver=='svd'``.
+        Ignored if ``solver=='eigh'``.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
@@ -417,7 +417,7 @@ class MDS(BaseEstimator):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        Ignored if ``solver=='svd'``.
+        Ignored if ``solver=='eigh'``.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
@@ -434,7 +434,7 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    solver : {'smacof', 'svd'}, default = 'smacof'
+    solver : {'smacof', 'eigh'}, default = 'smacof'
         The solver used for solving the MDS problem.
 
         .. versionadded:: 1.1
@@ -469,7 +469,7 @@ class MDS(BaseEstimator):
 
     n_iter_ : int
         The number of iterations corresponding to the best stress.
-        It is set to ``None`` if ``solver=='svd'``.
+        It is set to ``None`` if ``solver=='eigh'``.
 
     See Also
     --------
@@ -550,7 +550,7 @@ class MDS(BaseEstimator):
         init : ndarray of shape (n_samples,), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
-            chosen array. Ignored if ``solver=='svd'``.
+            chosen array. Ignored if ``solver=='eigh'``.
 
         Returns
         -------
@@ -577,7 +577,7 @@ class MDS(BaseEstimator):
         init : ndarray of shape (n_samples,), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
-            chosen array. Ignored if ``solver=='svd'``.
+            chosen array. Ignored if ``solver=='eigh'``.
 
         Returns
         -------
@@ -618,16 +618,16 @@ class MDS(BaseEstimator):
                 random_state=self.random_state,
                 return_n_iter=True,
             )
-        elif self.solver == "svd":
+        elif self.solver == "eigh":
             if not self.metric:
-                raise ValueError("Using SVD requires metric=True")
-            self.embedding_, self.stress_ = svd_scaler(
+                raise ValueError("Using eigh requires metric=True")
+            self.embedding_, self.stress_ = eigh_scaler(
                 self.dissimilarity_matrix_, n_components=self.n_components
             )
             self.n_iter_ = None
         else:
             raise ValueError(
-                "Solver must be 'smacof' or 'svd'. Got %s instead" % str(self.solver)
+                "Solver must be 'smacof' or 'eigh'. Got %s instead" % str(self.solver)
             )
 
         return self.embedding_
