@@ -507,16 +507,6 @@ def test_warning_bounds():
             "fit again may find a better value."
         )
 
-    assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k2__length_scale is close to the "
-        "specified lower bound 1000.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
-    )
-
     X_tile = np.tile(X, 2)
     kernel_dims = RBF(length_scale=[1.0, 2.0], length_scale_bounds=[1e1, 1e2])
     gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
