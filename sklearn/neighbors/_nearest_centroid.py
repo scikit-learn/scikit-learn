@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Nearest Centroid Classification
 """
@@ -30,7 +29,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    metric : str or callable, default="euclidian"
+    metric : str or callable, default="euclidean"
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by
