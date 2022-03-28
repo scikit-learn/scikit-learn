@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import re
+import copy
 import numpy as np
 import scipy.sparse as sp
 import pytest
@@ -76,8 +77,8 @@ class ModifyInitParams(BaseEstimator):
     Doesn't fulfill a is a
     """
 
-    def __init__(self, a=np.array([0])):
-        self.a = a.copy()
+    def __init__(self, a=np.array([0, 1], dtype=int)):
+        self.a = a.astype(float)
 
 
 class Buggy(BaseEstimator):
@@ -208,6 +209,20 @@ def test_clone_class_rather_than_instance():
     msg = "You should provide an instance of scikit-learn estimator"
     with pytest.raises(TypeError, match=msg):
         clone(MyEstimator)
+
+
+def test_clone_eq_on_param():
+    # test that copying given parameters in constructor is a valid operation
+    # for `clone`
+    # regression test for #22857
+    class Est(BaseEstimator):
+        def __init__(self, param=None):
+            self.param = copy.deepcopy(param)
+
+    est1 = Est(param={"key": "value"})
+    # this should not raise
+    est2 = clone(est1)
+    assert est1.param == est2.param
 
 
 def test_repr():

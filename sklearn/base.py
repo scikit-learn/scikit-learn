@@ -92,7 +92,7 @@ def clone(estimator, *, safe=True):
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
-        if param1 is not param2:
+        if param1 is not param2 and param1 != param2:
             raise RuntimeError(
                 "Cannot clone object %s, as the constructor "
                 "either does not set or modifies parameter %s" % (estimator, name)
