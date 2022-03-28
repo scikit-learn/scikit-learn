@@ -440,9 +440,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     (1797, 7)
     """
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float32, np.float64]}
-
     def __init__(
         self,
         n_components=None,
@@ -733,3 +730,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float32, np.float64]}
