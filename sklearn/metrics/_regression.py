@@ -967,6 +967,35 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
+def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
+    """Mean Tweedie deviance regression loss."""
+    p = power
+    if p < 0:
+        # 'Extreme stable', y any real number, y_pred > 0
+        dev = 2 * (
+            np.power(np.maximum(y_true, 0), 2 - p) / ((1 - p) * (2 - p))
+            - y_true * np.power(y_pred, 1 - p) / (1 - p)
+            + np.power(y_pred, 2 - p) / (2 - p)
+        )
+    elif p == 0:
+        # Normal distribution, y and y_pred any real number
+        dev = (y_true - y_pred) ** 2
+    elif p == 1:
+        # Poisson distribution
+        dev = 2 * (xlogy(y_true, y_true / y_pred) - y_true + y_pred)
+    elif p == 2:
+        # Gamma distribution
+        dev = 2 * (np.log(y_pred / y_true) + y_true / y_pred - 1)
+    else:
+        dev = 2 * (
+            np.power(y_true, 2 - p) / ((1 - p) * (2 - p))
+            - y_true * np.power(y_pred, 1 - p) / (1 - p)
+            + np.power(y_pred, 2 - p) / (2 - p)
+        )
+
+    return np.average(dev, weights=sample_weight)
+
+
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
@@ -1054,30 +1083,9 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         # Unreachable statement
         raise ValueError
 
-    if p < 0:
-        # 'Extreme stable', y any real number, y_pred > 0
-        dev = 2 * (
-            np.power(np.maximum(y_true, 0), 2 - p) / ((1 - p) * (2 - p))
-            - y_true * np.power(y_pred, 1 - p) / (1 - p)
-            + np.power(y_pred, 2 - p) / (2 - p)
-        )
-    elif p == 0:
-        # Normal distribution, y and y_pred any real number
-        dev = (y_true - y_pred) ** 2
-    elif p == 1:
-        # Poisson distribution
-        dev = 2 * (xlogy(y_true, y_true / y_pred) - y_true + y_pred)
-    elif p == 2:
-        # Gamma distribution
-        dev = 2 * (np.log(y_pred / y_true) + y_true / y_pred - 1)
-    else:
-        dev = 2 * (
-            np.power(y_true, 2 - p) / ((1 - p) * (2 - p))
-            - y_true * np.power(y_pred, 1 - p) / (1 - p)
-            + np.power(y_pred, 2 - p) / (2 - p)
-        )
-
-    return np.average(dev, weights=sample_weight)
+    return _mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, power=power
+    )
 
 
 def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
@@ -1243,8 +1251,8 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         y_true, y_pred, sample_weight=sample_weight, power=power
     )
 
-    y_avg = np.full_like(y_true, np.average(y_true, weights=sample_weight))
-    denominator = mean_tweedie_deviance(
+    y_avg = np.average(y_true, weights=sample_weight)
+    denominator = _mean_tweedie_deviance(
         y_true, y_avg, sample_weight=sample_weight, power=power
     )
 
