@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -1141,3 +1143,20 @@ def test_loss_deprecated(old_loss, new_loss):
     est2 = HistGradientBoostingRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+def test_no_user_warning_with_scoring():
+    """Check that no UserWarning is raised when scoring is set.
+
+    Non-regression test for #22907.
+    """
+    pd = pytest.importorskip("pandas")
+    X, y = make_regression(n_samples=50, random_state=0)
+    X_df = pd.DataFrame(X, columns=[f"col{i}" for i in range(X.shape[1])])
+
+    est = HistGradientBoostingRegressor(
+        random_state=0, scoring="neg_mean_absolute_error", early_stopping=True
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        est.fit(X_df, y)
