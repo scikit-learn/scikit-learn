@@ -270,7 +270,7 @@ def benchmark(clf):
 
 
 # %%
-# We now train and test the datasets with 15 different classification
+# We now train and test the datasets with 9 different classification
 # models and get performance results for each model.
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import RidgeClassifier
