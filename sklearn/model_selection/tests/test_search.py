@@ -2034,15 +2034,18 @@ def test_generate_warm_start_groups(candidate_params, use_warm_start, expected):
     assert expected == actual
 
 
-@pytest.mark.parametrize("candidate_values", [
-    [6, "string"],
-    [6, {"a": 6}],
-    ["string", None],
-    [np.arange(3), np.arange(1, 4)],
-    [np.arange(3), np.arange(4)],
-    [6, np.arange(4)],
-    ["string", np.arange(4)],
-])
+@pytest.mark.parametrize(
+    "candidate_values",
+    [
+        [6, "string"],
+        [6, {"a": 6}],
+        ["string", None],
+        [np.arange(3), np.arange(1, 4)],
+        [np.arange(3), np.arange(4)],
+        [6, np.arange(4)],
+        ["string", np.arange(4)],
+    ],
+)
 def test_generate_warm_start_groups_value_types(candidate_values):
     # Check that different types of value are supported in _generate_wamr_start_groups
     candidate_params = []
