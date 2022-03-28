@@ -7,6 +7,7 @@ Generalized Linear Models with Exponential Dispersion Family
 # License: BSD 3 clause
 
 import numbers
+from collections.abc import Iterable
 
 import numpy as np
 import scipy.optimize
@@ -68,12 +69,16 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+    alpha : {float, array-like}, default=1
+        Constant(s) that multiplies the penalty term and thus determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
         Values must be in the range `[0.0, inf)`.
+        If alpha is a scalar then the value is applied to all non-intercept terms
+        If alpha is an array-like then each value must be in the range `[0.0, inf)`
+        and the length must equal to n_features.
+        If alpha is greater than 1 dimension it will be converted to 1 dimension.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -213,14 +218,6 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                     "an element of ['auto', 'identity', 'log']; "
                     "got (link={0})".format(self.link)
                 )
-
-        check_scalar(
-            self.alpha,
-            name="alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
         if not isinstance(self.fit_intercept, bool):
             raise ValueError(
                 "The argument fit_intercept must be bool; got {0}".format(
@@ -268,7 +265,29 @@ class GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
-
+        if isinstance(self.alpha, Iterable) and not isinstance(self.alpha, str):
+            for i, val in enumerate(self.alpha):
+                check_scalar(
+                    val,
+                    name=f"alpha at index {i}",
+                    target_type=numbers.Real,
+                    min_val=0.0,
+                    include_boundaries="left",
+                )
+            self.alpha = np.asarray(self.alpha, dtype=np.float64).ravel()
+            if self.alpha.size != X.shape[1]:
+                raise ValueError(
+                    f"X width is {X.shape[1]} while alpha is of length"
+                    f" {self.alpha.size}"
+                )
+        else:
+            check_scalar(
+                self.alpha,
+                name="alpha",
+                target_type=numbers.Real,
+                min_val=0.0,
+                include_boundaries="left",
+            )
         weights = _check_sample_weight(sample_weight, X)
 
         _, n_features = X.shape

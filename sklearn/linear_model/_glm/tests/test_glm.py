@@ -195,6 +195,60 @@ def test_glm_scalar_argument(Estimator, params, err_type, err_msg):
         glm.fit(X, y)
 
 
+@pytest.mark.parametrize(
+    "Estimator",
+    [GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
+)
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        (
+            {"alpha": [1, "2"]},
+            TypeError,
+            "alpha at index 1 must be an instance of float, not str.",
+        ),
+        (
+            {"alpha": [1, 2, 3], "fit_intercept": True},
+            ValueError,
+            "X width is 2 while alpha is of length 3",
+        ),
+        (
+            {"alpha": [1, 2, 3], "fit_intercept": False},
+            ValueError,
+            "X width is 2 while alpha is of length 3",
+        ),
+        ({"alpha": [-2, 2]}, ValueError, "alpha at index 0 == -2, must be >= 0.0"),
+    ],
+)
+def test_glm_alpha_array(Estimator, params, err_type, err_msg):
+    """Test GLM for invalid alpha input when alpha is an iterable"""
+    X = [[1, 2], [2, 4]]
+    y = [1, 2]
+    glm = Estimator(**params)
+    with pytest.raises(err_type, match=err_msg):
+        glm.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor, TweedieRegressor],
+)
+def test_glm_alpha_array_reg(Estimator):
+    """Test GLM regression when alpha is an array and 2nd column
+    has different alpha than 1st column
+    """
+    X = np.asarray([[1, 2], [1, 3], [1, 4], [1, 3]])
+    y = np.asarray([2, 2, 3, 2])
+    scalar_coefs = Estimator(alpha=1.0, fit_intercept=False).fit(X, y).coef_
+    X_scaled = X.copy()
+    X_scaled[:, 1] = X_scaled[:, 1] * 2.0
+    array_coefs = (
+        Estimator(alpha=[1.0, 4.0], fit_intercept=False).fit(X_scaled, y).coef_
+    )
+    array_coefs[1] *= 2.0
+    assert_allclose(scalar_coefs, array_coefs, atol=1e-4)
+
+
 @pytest.mark.parametrize("warm_start", ["not bool", 1, 0, [True]])
 def test_glm_warm_start_argument(warm_start):
     """Test GLM for invalid warm_start argument."""

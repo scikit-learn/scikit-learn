@@ -625,6 +625,12 @@ Changelog
   `alpha`, `max_iter` and `tol`.
   :pr:`22240` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |Enhancement| :class:`linear_model.PoissonRegressor`, `linear_model.GammaRegressor`,
+  and `linear_model.TweedieRegressor` fit methods will now allow penalty term `alpha`
+  to be an iterable of same length as the number of features in X in addition to a
+  scalar value.
+  :pr:`22485` by :user:`Xiao Wei <xiaowei1234>`.
+
 - |Fix| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now set the `n_iter_` attribute
   with a shape that respects the docstring and that is consistent with the shape
