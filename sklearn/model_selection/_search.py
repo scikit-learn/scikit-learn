@@ -63,11 +63,13 @@ def _are_candidates_equal(dict1, dict2):
         v2 = dict2[k]
         if v1 is not v2:
             return False
-        try:
-            if v1 != v2:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            try:
+                if v1 != v2:
+                    return False
+            except ValueError:
                 return False
-        except ValueError:
-            return False
     return True
 
 
