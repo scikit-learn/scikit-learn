@@ -526,12 +526,6 @@ Changelog
   :class:`kernel_approximation.Nystroem`,
   :class:`kernel_approximation.PolynomialCountSketch`,
   :class:`kernel_approximation.RBFSampler`, and
-  :class:`kernel_approximation.SkewedChi2Sampler`. :pr:`22694` by `Thomas Fan`_.
-
-- |API| Adds :term:`get_feature_names_out` to the following transformers
-  of the :mod:`~sklearn.kernel_approximation` module:
-  :class:`~sklearn.kernel_approximation.AdditiveChi2Sampler`.
-  :pr:`22137` by `Thomas Fan`_.
   :class:`kernel_approximation.SkewedChi2Sampler`.
   :pr:`22137` and :pr:`22694` by `Thomas Fan`_.
 
