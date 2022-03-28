@@ -47,22 +47,21 @@ def get_contributors():
     core_devs_slug = "core-devs"
     contributor_experience_team_slug = "contributor-experience-team"
     comm_team_slug = "communication-team"
+
+    entry_point = "https://api.github.com/orgs/scikit-learn/"
+
     for team_slug, lst in zip(
         (core_devs_slug, contributor_experience_team_slug, comm_team_slug),
         (core_devs, contributor_experience_team, comm_team),
     ):
         for page in [1, 2]:  # 30 per page
-            reply = get(
-                f"https://api.github.com/orgs/scikit-learn/teams/{team_slug}/members?page={page}"
-            )
+            reply = get(f"{entry_point}teams/{team_slug}/members?page={page}")
             lst.extend(reply.json())
 
     # get members of scikit-learn on GitHub
     members = []
     for page in [1, 2, 3]:  # 30 per page
-        reply = get(
-            "https://api.github.com/orgs/scikit-learn/members?page=%d" % (page,)
-        )
+        reply = get(f"{entry_point}members?page={page}")
         members.extend(reply.json())
 
     # keep only the logins
