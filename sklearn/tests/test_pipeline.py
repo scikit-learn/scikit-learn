@@ -1527,44 +1527,26 @@ def test_pipeline_check_if_fitted():
 
 
 def test_feature_union_check_if_fitted():
-    class Estimator(BaseEstimator):
-        def fit(self, X, y):
-            self.fitted_ = True
-            return self
 
-        def transform(self, X):
-            return X
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
 
-    union = FeatureUnion([("clf", Estimator())])
+    union = FeatureUnion([("clf", MinimalTransformer())])
     with pytest.raises(NotFittedError):
         check_is_fitted(union)
 
-    union.fit(iris.data, iris.target)
+    union.fit(X, y)
     check_is_fitted(union)
 
     # passthrough is stateless
     union = FeatureUnion([("pass", "passthrough")])
     check_is_fitted(union)
 
-    union = FeatureUnion([("clf", Estimator()), ("pass", "passthrough")])
+    union = FeatureUnion([("clf", MinimalTransformer()), ("pass", "passthrough")])
     with pytest.raises(NotFittedError):
         check_is_fitted(union)
 
-    union.fit(iris.data, iris.target)
-    check_is_fitted(union)
-
-    union = clone(union)
-    with pytest.raises(NotFittedError):
-        check_is_fitted(union)
-
-    union.set_params(clf="drop")
-    check_is_fitted(union)
-
-    union.set_params(clf=Estimator())
-    with pytest.raises(NotFittedError):
-        check_is_fitted(union)
-
-    union.fit(iris.data, iris.target)
+    union.fit(X, y)
     check_is_fitted(union)
 
 
