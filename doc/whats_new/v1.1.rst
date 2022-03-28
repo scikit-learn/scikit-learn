@@ -600,6 +600,12 @@ Changelog
   :pr:`21808`, :pr:`20567` and :pr:`21814` by
   :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| :class:`~linear_model.GammaRegressor`,
+  :class:`~linear_model.PoissonRegressor` and :class:`~linear_model.TweedieRegressor`
+  are faster for ``solvers="lbfgs"``.
+  :pr:`22548`, :pr:`21808` and :pr:`20567` by
+  :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| Rename parameter `base_estimator` to `estimator` in
   :class:`linear_model.RANSACRegressor` to improve readability and consistency.
   `base_estimator` is deprecated and will be removed in 1.3.
@@ -632,6 +638,12 @@ Changelog
   it would record only the maximum of the number of iterations for each binary
   sub-problem while now all of them are recorded. :pr:`21998` by
   :user:`Olivier Grisel <ogrisel>`.
+
+- |Fix| The property `family` of :class:`linear_model.TweedieRegressor` is not
+  validated in `__init__` anymore. Instead, this (private) property is deprecated in
+  :class:`linear_model.GammaRegressor`, :class:`linear_model.PoissonRegressor` and
+  :class:`linear_model.TweedieRegressor`, and will be removed in 1.3.
+  :pr:`22548` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| :class:`linear_model.BayesianRidge` and
   :class:`linear_model.ARDRegression` now preserve float32 dtype. :pr:`9087` by
