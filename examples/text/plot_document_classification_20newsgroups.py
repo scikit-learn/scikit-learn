@@ -346,8 +346,8 @@ results.append(
 
 
 # %%
-# Add plots
-# ------------------------------------
+# Plot accuracy, training and test time of each classifier
+# --------------------------------------------------------
 # The bar plot indicates the accuracy, training time (normalized) and test time
 # (normalized) of each classifier.
 import matplotlib.pyplot as plt
@@ -357,24 +357,27 @@ indices = np.arange(len(results))
 results = [[x[i] for x in results] for i in range(4)]
 
 clf_names, score, training_time, test_time = results
-training_time = np.array(training_time) / np.max(training_time)
-test_time = np.array(test_time) / np.max(test_time)
+training_time = np.array(training_time)
+test_time = np.array(test_time)
 
-plt.figure(figsize=(12, 8))
-plt.title("Score")
-plt.barh(indices, score, 0.2, label="test accuracy", color="navy")
-plt.barh(indices + 0.3, training_time, 0.2, label="training time", color="c")
-plt.barh(indices + 0.6, test_time, 0.2, label="test time", color="darkorange")
-plt.yticks(())
-plt.legend(loc="best")
-plt.subplots_adjust(left=0.25)
-plt.subplots_adjust(top=0.95)
-plt.subplots_adjust(bottom=0.05)
+fig, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=(10, 20))
+ax1.scatter(score, training_time, s=60)
+ax1.set(
+    title="Score-training time trade-off",
+    yscale="log",
+    ylabel="training time (s)",
+)
+ax2.scatter(score, test_time, s=60)
+ax2.set(
+    title="Score-test time trade-off",
+    yscale="log",
+    xlabel="test accuracy",
+    ylabel="test time (s)",
+)
 
-for i, c in zip(indices, clf_names):
-    plt.text(-0.3, i, c)
-
-plt.show()
+for i, txt in enumerate(clf_names):
+    ax1.annotate(txt, (score[i], training_time[i]))
+    ax2.annotate(txt, (score[i], test_time[i]))
 
 # %%
 # The Naive Bayesian models appear to have the best trade-off between score and
