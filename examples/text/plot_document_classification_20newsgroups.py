@@ -277,9 +277,7 @@ from sklearn.linear_model import RidgeClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
+from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
@@ -289,8 +287,6 @@ results = []
 for clf, name in (
     (LogisticRegression(), "Logistic Regression"),
     (RidgeClassifier(tol=1e-2, solver="sag"), "Ridge Classifier"),
-    (Perceptron(max_iter=50), "Perceptron"),
-    (PassiveAggressiveClassifier(max_iter=50), "Passive-Aggressive"),
     (KNeighborsClassifier(n_neighbors=10), "kNN"),
     (RandomForestClassifier(), "Random forest"),
 ):
@@ -298,21 +294,11 @@ for clf, name in (
     print(name)
     results.append(benchmark(clf))
 
-for penalty in ["l2", "l1"]:
-    print("=" * 80)
-    print("%s penalty" % penalty.upper())
-    # Train Liblinear model
-    results.append(benchmark(LinearSVC(penalty=penalty, dual=False, tol=1e-3)))
+# Train Liblinear model
+results.append(benchmark(LinearSVC(C=10, dual=False, tol=1e-3)))
 
-    # Train SGD model
-    results.append(benchmark(SGDClassifier(alpha=0.0001, max_iter=50, penalty=penalty)))
-
-# Train SGD with Elastic Net penalty
-print("=" * 80)
-print("Elastic-Net penalty")
-results.append(
-    benchmark(SGDClassifier(alpha=0.0001, max_iter=50, penalty="elasticnet"))
-)
+# Train SGD model
+results.append(benchmark(SGDClassifier(alpha=1e-5, early_stopping=True)))
 
 # Train NearestCentroid without threshold
 print("=" * 80)
@@ -322,8 +308,6 @@ results.append(benchmark(NearestCentroid()))
 # Train sparse Naive Bayes classifiers
 print("=" * 80)
 print("Naive Bayes")
-results.append(benchmark(MultinomialNB(alpha=0.01)))
-results.append(benchmark(BernoulliNB(alpha=0.01)))
 results.append(benchmark(ComplementNB(alpha=0.1)))
 
 print("=" * 80)
