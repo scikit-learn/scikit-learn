@@ -303,7 +303,7 @@ def test_iforest_chunks_works2(mocked_get_chunk, contamination, n_predict_calls)
     assert mocked_get_chunk.call_count == n_predict_calls
 
 
-def test_iforest_with_uniform_data(global_random_seed):
+def test_iforest_with_uniform_data():
     """Test whether iforest predicts inliers when using uniform data"""
 
     # 2-d array of all 1s
@@ -311,7 +311,7 @@ def test_iforest_with_uniform_data(global_random_seed):
     iforest = IsolationForest()
     iforest.fit(X)
 
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(0)
 
     assert all(iforest.predict(X) == 1)
     assert all(iforest.predict(rng.randn(100, 10)) == 1)
