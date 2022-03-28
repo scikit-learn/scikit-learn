@@ -27,6 +27,7 @@ from .utils import check_random_state
 from .utils.validation import check_is_fitted, has_fit_parameter, _check_fit_params
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
+from .utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
 
 __all__ = [
     "MultiOutputRegressor",
@@ -150,7 +151,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         return self
 
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    def fit(self, X, y, **fit_params):
         """Fit the model to data, separately for each output variable.
 
         Parameters
@@ -161,11 +162,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If `None`, then samples are equally weighted.
-            Only supported if the underlying regressor supports sample
-            weights.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
@@ -191,13 +187,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                 "y must have at least two dimensions for "
                 "multi-output regression but has only one."
             )
-
-        if sample_weight is not None and not has_fit_parameter(
-            self.estimator, "sample_weight"
-        ):
-            raise ValueError("Underlying estimator does not support sample weights.")
-
-        fit_params_validated = _check_fit_params(X, fit_params)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
@@ -239,6 +228,19 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
     def _more_tags(self):
         return {"multioutput_only": True}
+
+    def get_metadata_routing(self):
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping()
+                .add(callee="partial_fit", caller="fit")
+                .add(callee="fit", caller="fit"),
+            )
+            .warn_on("estimator", "fit", "partial_fit")
+        )
+        return router
 
 
 class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
