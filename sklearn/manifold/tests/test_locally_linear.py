@@ -74,7 +74,7 @@ def test_lle_simple_grid(global_dtype):
         )
 
         assert reconstruction_error < tol
-        assert_almost_equal(clf.reconstruction_error_, reconstruction_error, decimal=1)
+        assert_allclose(clf.reconstruction_error_, reconstruction_error, decimal=1)
 
     # re-embed a noisy version of X using the transform method
     noise = rng.randn(*X.shape).astype(global_dtype, copy=False) / 100
