@@ -81,7 +81,11 @@ def get_contributors():
     )
 
     emeritus = members - core_devs - contributor_experience_team - comm_team
+
+    # hard coded
     emeritus_comm_team = {"reshamas"}
+
+    comm_team -= {"reshamas"}  # in the comm team but not on the web page
 
     # get profiles from GitHub
     core_devs = [get_profile(login) for login in core_devs]
