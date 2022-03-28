@@ -13,7 +13,16 @@ __all__ = [
     "SkipTestWarning",
     "UndefinedMetricWarning",
     "PositiveSpectrumWarning",
+    "UnsetMetadataPassedError",
 ]
+
+
+class UnsetMetadataPassedError(ValueError):
+    """Exception class to raise if a metadata is passed which is not explicitly \
+        requested.
+
+    .. versionadded:: 1.1
+    """
 
 
 class NotFittedError(ValueError, AttributeError):

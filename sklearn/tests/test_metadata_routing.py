@@ -844,3 +844,57 @@ def test_metadata_routing_get_param_names():
     assert router._get_param_names(
         method="fit", return_alias=True, ignore_self=True
     ) == router._get_param_names(method="fit", return_alias=False, ignore_self=True)
+
+
+def test_router_deprecation_warning():
+    class MetaEstimator(BaseEstimator, MetaEstimatorMixin):
+        def __init__(self, estimator):
+            self.estimator = estimator
+
+        def fit(self, X, y, **fit_params):
+            routed_params = process_routing(self, "fit", fit_params)
+            self.estimator_ = clone(self.estimator).fit(
+                X, y, **routed_params.estimator.fit
+            )
+
+        def predict(self, X, **predict_params):
+            routed_params = process_routing(self, "predict", predict_params)
+            return self.estimator_.predict(X, **routed_params.estimator.predict)
+
+        def get_metadata_routing(self):
+            return (
+                MetadataRouter(owner=self.__class__.__name__)
+                .add(estimator=self.estimator, method_mapping="one-to-one")
+                .warn_on(child="estimator", methods=["fit"], raise_on="1.3")
+            )
+
+    class Estimator(BaseEstimator):
+        def fit(self, X, y, sample_weight=None):
+            return self
+
+        def predict(self, X, sample_weight=None):
+            return np.ones(shape=len(X))
+
+    est = MetaEstimator(estimator=Estimator())
+    # the meta-estimator has est to have a warning on `fit`.
+    with pytest.warns(
+        FutureWarning, match="From version 1.3 this results in the following error"
+    ):
+        est.fit(X, y, sample_weight=my_weights)
+
+    # but predict should raise since there is no warn_on set for it.
+    with pytest.raises(
+        ValueError, match="sample_weight is passed but is not explicitly set"
+    ):
+        est.predict(X, sample_weight=my_weights)
+
+    # also check if passing a meta-estimator as a child object warns
+    est = MetaEstimator(
+        estimator=WeightedMetaRegressor(
+            estimator=RegressorMetadata().set_fit_request(sample_weight=True)
+        )
+    )
+    with pytest.warns(
+        FutureWarning, match="From version 1.3 this results in the following error"
+    ):
+        est.fit(X, y, sample_weight=my_weights)

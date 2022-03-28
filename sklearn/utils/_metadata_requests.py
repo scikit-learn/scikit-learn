@@ -12,6 +12,7 @@ from warnings import warn
 from collections import namedtuple
 from typing import Union, Optional
 from ._bunch import Bunch
+from ..exceptions import UnsetMetadataPassedError
 
 # This namedtuple is used to store a (mapping, routing) pair. Mapping is a
 # MethodMapping object, and routing is the output of `get_metadata_routing`.
@@ -177,6 +178,17 @@ class MethodMetadataRequest:
         """Dictionary of the form: ``{key: alias}``."""
         return self._requests
 
+    def _assume_requested(self):
+        """Convert all ERROR_IF_PASSED to REQUESTED."""
+        res = MethodMetadataRequest(owner=self.owner, method=self.method)
+        res._requests = {
+            param: (
+                alias if alias != RequestType.ERROR_IF_PASSED else RequestType.REQUESTED
+            )
+            for param, alias in self._requests.items()
+        }
+        return res
+
     def add_request(
         self,
         *,
@@ -299,7 +311,7 @@ class MethodMetadataRequest:
             elif alias == RequestType.REQUESTED and prop in args:
                 res[prop] = args[prop]
             elif alias == RequestType.ERROR_IF_PASSED and prop in args:
-                raise ValueError(
+                raise UnsetMetadataPassedError(
                     f"{prop} is passed but is not explicitly set as "
                     f"requested or not for {self.owner}.{self.method}"
                 )
@@ -350,8 +362,17 @@ class MetadataRequest:
     _type = "metadata_request"
 
     def __init__(self, owner):
+        # this is used to check if the user has set any request values
+        self._is_default_request = False
         for method in METHODS:
             setattr(self, method, MethodMetadataRequest(owner=owner, method=method))
+
+    def _assume_requested(self):
+        """Convert all ERROR_IF_PASSED to REQUESTED."""
+        res = MetadataRequest(owner=None)
+        for method in METHODS:
+            setattr(self, method, getattr(self, method)._assume_requested())
+        return res
 
     def _get_param_names(self, method, return_alias, ignore_self=None):
         """Get names of all metadata that can be consumed or routed by specified \
@@ -566,6 +587,9 @@ class MetadataRouter:
         # `add_self()`) is treated differently from the other objects which are
         # stored in _route_mappings.
         self._self = None
+        # this attribute is used to decide if there should be an error raised
+        # or a FutureWarning if a metadata is passed which is not requested.
+        self._warn_on = dict()
         self.owner = owner
 
     def add_self(self, obj):
@@ -763,9 +787,59 @@ class MetadataRouter:
             res[name] = Bunch()
             for _callee, _caller in mapping:
                 if _caller == caller:
-                    res[name][_callee] = router._route_params(
-                        params=params, method=_callee
+                    res[name][_callee] = self._route_warn_or_error(
+                        child=name, router=router, params=params, method=_callee
                     )
+        return res
+
+    def _route_warn_or_error(self, *, child, router, params, method):
+        """Route parameters wile handling error or deprecation warning choice.
+
+        This method warns instead of raising an error if the parent object
+        has set ``warn_on`` for the child object's method and the user has not
+        set any metadata request for that child object. This is used during the
+        deprecation cycle for backward compatibility.
+
+        Parameters
+        ----------
+        child : str
+            The name of the child object.
+
+        router : MetadataRouter or MetadataRequest
+            The router for the child object.
+
+        params : dict
+            The parameters to be routed.
+
+        method : str
+            The name of the callee method.
+
+        Returns
+        -------
+        dict
+            The routed parameters.
+        """
+        try:
+            res = router._route_params(params=params, method=method)
+        except UnsetMetadataPassedError as e:
+            warn_on = self._warn_on.get(child, {"methods": [], "raise_on": "1.3"})
+            if method not in warn_on["methods"]:
+                # there is no warn_on set for this method of this child object,
+                # we raise as usual
+                raise
+            if not getattr(router, "_is_default_request", None):
+                # the user has set at least one request value for this child
+                # object, but not for all of them. Therefore we raise as usual.
+                raise
+            # otherwise raise a FutureWarning
+            router = router._assume_requested()
+            res = router._route_params(params=params, method=method)
+            warn(
+                "You are passing metadata for which the request values are not"
+                f" explicitly set. From version {warn_on['raise_on']} this results in"
+                f" the following error: {str(e)}",
+                FutureWarning,
+            )
         return res
 
     def validate_metadata(self, *, method, params):
@@ -797,6 +871,42 @@ class MetadataRouter:
                 f"{method} got unexpected argument(s) {extra_keys}, which are "
                 "not requested metadata in any object."
             )
+
+    def warn_on(self, child, methods, raise_on="1.3"):
+        """Set where deprecation warnings on no set requests should occur.
+
+        This method is used in meta-estimators during the transition period for
+        backward compatibility. Expected behavior for meta-estimators on a code
+        such as ``RFE(Ridge()).fit(X, y, sample_weight=sample_weight)`` is to
+        raise a ``ValueError`` complaining about the fact that ``Ridge()`` has
+        not explicitly set the request values for ``sample_weight``. However,
+        this breaks backward compatibility for existing meta-estimators.
+
+        Calling this method on a ``MetadataRouter`` object such as
+        ``warn_on(child='estimator', methods=['fit', 'score'])`` tells the
+        router to raise a ``FutureWarning`` instead of a ``ValueError`` if the
+        child object has no set requests.
+
+        Parameters
+        ----------
+        child : str
+            The name of the child object.
+
+        methods : list of str
+            List of methods for which there should be a ``FutureWarning``
+            instead of a ``ValueError``.
+
+        raise_on : str, default="1.3"
+            The version after which there should be an error. Used in the
+            warning message to inform users.
+
+        Returns
+        -------
+        self : MetadataRouter
+            Returns `self`.
+        """
+        self._warn_on[child] = {"methods": methods, "raise_on": raise_on}
+        return self
 
     def _serialize(self):
         """Serialize the object.
@@ -1055,6 +1165,9 @@ class _MetadataRequester:
         signatures.
         """
         requests = MetadataRequest(owner=cls.__name__)
+        # this indicates that the user has not set any request values for this
+        # object
+        requests._is_default_request = True
         for method in METHODS:
             setattr(requests, method, cls._build_request_for_signature(method=method))
 
