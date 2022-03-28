@@ -230,7 +230,7 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-def benchmark(clf):
+def benchmark(clf, custom_name=False):
     print("_" * 80)
     print("Training: ")
     print(clf)
@@ -265,7 +265,10 @@ def benchmark(clf):
     print(metrics.confusion_matrix(y_test, pred))
 
     print()
-    clf_descr = str(clf).split("(")[0]
+    if custom_name:
+        clf_descr = str(custom_name)
+    else:
+        clf_descr = str(clf).split("(")[0]
     return clf_descr, score, train_time, test_time
 
 
@@ -324,7 +327,8 @@ results.append(
                 ),
                 ("classification", LinearSVC(penalty="l2")),
             ]
-        )
+        ),
+        custom_name="SelectFromModel LinearSVC",
     )
 )
 
