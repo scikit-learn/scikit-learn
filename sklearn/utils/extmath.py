@@ -828,11 +828,12 @@ def softmax(X, copy=True):
     max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
 
-    if is_array_api:
+    if xp.__name__ in {"numpy", "numpy.array_api"}:
+        # optimization for NumPy arrays
+        np.exp(X, out=np.asarray(X))
+    else:
         # array_api does not have `out=`
         X = xp.exp(X)
-    else:
-        np.exp(X, out=X)
 
     sum_prob = xp.reshape(xp.sum(X, axis=1), (-1, 1))
     X /= sum_prob
