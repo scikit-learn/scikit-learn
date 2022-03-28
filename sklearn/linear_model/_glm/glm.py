@@ -439,7 +439,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         """
         return HalfSquaredError()
 
-    # FIXME: remove in v1.3
+    # TODO(1.3): remove
     @deprecated(  # type: ignore
         "Attribute `family` was deprecated in version 1.1 and will be removed in 1.3."
     )

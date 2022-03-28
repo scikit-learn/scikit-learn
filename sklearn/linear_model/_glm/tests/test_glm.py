@@ -455,7 +455,7 @@ def test_tags(estimator, value):
     assert estimator._get_tags()["requires_positive_y"] is value
 
 
-# FIXME: remove in v1.3
+# TODO(1.3): remove
 @pytest.mark.parametrize(
     "est, family",
     [

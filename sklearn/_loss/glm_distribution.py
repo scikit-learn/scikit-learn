@@ -5,7 +5,7 @@ Distribution functions used in GLM
 # Author: Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
 #
-# TODO: Remove with v1.3
+# TODO(1.3): remove file
 #       This is only used for backward compatibility in _GeneralizedLinearRegressor
 #       for the deprecated family attribute.
 
