@@ -32,6 +32,7 @@ from ..utils._cython_blas cimport (
     _ger,
     _gemv,
     # BLAS Level 3
+    _gemm,
 )
 
 from ..utils._random cimport our_rand_r
@@ -735,7 +736,7 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int n_tasks = Y.shape[1]
 
     # to store XtA
-    cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks), dtype=dtype)
+    cdef floating[::1, :] XtA = np.zeros((n_tasks, n_features), dtype=dtype, order="F")
     cdef floating XtA_axis1norm
     cdef floating dual_norm_XtA
 
@@ -861,34 +862,33 @@ def enet_coordinate_descent_multi_task(
                 # criterion
 
                 # Using numpy:
-                # XtA = np.dot(X.T, R) - l2_reg * W.T
+                # XtA = np.dot(R.T, X) - l2_reg * W
                 #
                 # Using BLAS Level 3:
-                # floating[:, ::1] XtA = np.zeros((n_features, n_tasks), order="F")
-                #  # np.dot(R.T, X) - l2_reg * W
-                # _copy(n_features * n_tasks, &W[0, 0], 1, &XtA[0, 0], 1)
-                # _gemm(ColMajor, Trans, NoTrans, n_tasks, n_features, n_samples,
-                #       1.0, &R[0, 0], n_samples, &X[0, 0], n_samples, -l2_reg,
-                #       &XtA[0, 0], n_tasks)
-                #
+                # np.dot(R.T, X)
+                _gemm(ColMajor, Trans, NoTrans, n_tasks, n_features, n_samples, 1.0,
+                      &R[0, 0], n_samples, &X[0, 0], n_samples, 0.0, &XtA[0, 0],
+                      n_tasks)
+                # XtA -= l2_reg * W
+                _axpy(n_features * n_tasks, -l2_reg, &W[0, 0], 1 ,&XtA[0, 0], 1)
                 # Using BLAS Level 2:
                 # for jj in range(n_tasks):
-                #     # XtA[:, jj] = X.T @ R[:, jj] - l2_reg * W[jj, :]
+                #     # XtA[jj, :] = X.T @ R[:, jj] - l2_reg * W[jj, :]
                 #     _gemv(ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
                 #         n_samples, &R[0, jj], 1, -l2_reg, &XtA[jj, 0], n_tasks)
                 # Using BLAS Level 1:
-                for ii in range(n_features):
-                    for jj in range(n_tasks):
-                        XtA[ii, jj] = _dot(
-                            n_samples, X_ptr + ii * n_samples, 1, &R[0, jj], 1
-                        ) - l2_reg * W[jj, ii]
+                # for ii in range(n_features):
+                #     for jj in range(n_tasks):
+                #         XtA[jj, ii] = _dot(
+                #             n_samples, X_ptr + ii * n_samples, 1, &R[0, jj], 1
+                #         ) - l2_reg * W[jj, ii]
 
-                # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
+                # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=0)))
                 dual_norm_XtA = 0.0
                 for ii in range(n_features):
-                    # np.sqrt(np.sum(XtA ** 2, axis=1))
+                    # np.sqrt(np.sum(XtA ** 2, axis=0))
                     # sum is over tasks
-                    XtA_axis1norm = _nrm2(n_tasks, &XtA[ii, 0], 1)
+                    XtA_axis1norm = _nrm2(n_tasks, &XtA[0, ii], 1)
                     if XtA_axis1norm > dual_norm_XtA:
                         dual_norm_XtA = XtA_axis1norm
 
