@@ -170,13 +170,13 @@ def test_iforest_performance(global_random_seed):
 
     # Generate train/test data
     rng = check_random_state(global_random_seed)
-    X = 0.3 * rng.randn(1200, 2)
-    X_train = np.r_[X + 2, X - 2]
+    X = 0.3 * rng.randn(600, 2)
+    X = rng.permutation(np.vstack((X + 2, X - 2)))
     X_train = X[:1000]
 
     # Generate some abnormal novel observations
-    X_outliers = rng.uniform(low=-16, high=16, size=(200, 2))
-    X_test = np.r_[X[1000:], X_outliers]
+    X_outliers = rng.uniform(low=-1, high=1, size=(200, 2))
+    X_test = np.vstack((X[1000:], X_outliers))
     y_test = np.array([0] * 200 + [1] * 200)
 
     # fit the model
