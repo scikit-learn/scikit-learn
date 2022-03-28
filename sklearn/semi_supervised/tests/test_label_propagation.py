@@ -46,9 +46,7 @@ def test_distribution(global_dtype, Estimator, parameters):
     clf = Estimator(**parameters).fit(samples, labels)
     # unstable test; changes in k-NN ordering break it
     if parameters["kernel"] != "knn":
-        assert_allclose(
-            np.asarray(clf.label_distributions_[2]), np.array([0.5, 0.5]), 2
-        )
+        assert_allclose(clf.label_distributions_[2], [0.5, 0.5], atol=1e-2)
 
 
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
@@ -93,7 +91,7 @@ def test_label_spreading_closed_form(global_dtype, Estimator, parameters, alpha)
 def test_label_propagation_closed_form(global_dtype):
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
-    X = X.astype(global_dtype)
+    X = X.astype(global_dtype, copy=False)
     y[::3] = -1
     Y = np.zeros((len(y), n_classes + 1))
     Y[np.arange(len(y)), y] = 1
@@ -114,7 +112,7 @@ def test_label_propagation_closed_form(global_dtype):
     expected[unlabelled_idx, :] = Y_u
     expected /= expected.sum(axis=1)[:, np.newaxis]
 
-    assert_allclose(expected, clf.label_distributions_, 4)
+    assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
 def test_valid_alpha():
@@ -137,9 +135,9 @@ def test_convergence_speed():
     assert_array_equal(mdl.predict(X), [0, 1, 1])
 
 
-def test_convergence_warning(global_dtype):
+def test_convergence_warning():
     # This is a non-regression test for #5774
-    X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], dtype=global_dtype)
+    X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=1)
     warn_msg = "max_iter=1 was reached without convergence."
@@ -167,14 +165,12 @@ def test_convergence_warning(global_dtype):
     "LabelPropagationCls",
     [label_propagation.LabelSpreading, label_propagation.LabelPropagation],
 )
-def test_label_propagation_non_zero_normalizer(LabelPropagationCls, global_dtype):
+def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     # check that we don't divide by zero in case of null normalizer
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/15946
     # https://github.com/scikit-learn/scikit-learn/issues/9292
-    X = np.array(
-        [[100.0, 100.0], [100.0, 100.0], [0.0, 0.0], [0.0, 0.0]], dtype=global_dtype
-    )
+    X = np.array([[100.0, 100.0], [100.0, 100.0], [0.0, 0.0], [0.0, 0.0]])
     y = np.array([0, 1, -1, -1])
     mdl = LabelPropagationCls(kernel="knn", max_iter=100, n_neighbors=1)
     with pytest.warns(None) as record:
