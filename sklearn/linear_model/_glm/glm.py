@@ -27,18 +27,6 @@ from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._linear_loss import LinearModelLoss
 
 
-class HalfInverseGaussianLoss(HalfTweedieLoss):
-    """Half inverse Gaussian deviance loss with log-link, for regression.
-
-    This is equivalent to HalfTweedieLoss(power=3).
-    """
-
-    def __init__(self, sample_weight=None):
-        super().__init__(sample_weight=sample_weight, power=3)
-
-
-# TODO: We could allow strings for _base_loss (as before for the now removed
-# family parameter): 'normal', 'poisson', 'gamma', 'inverse-gaussian'
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
