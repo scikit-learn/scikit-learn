@@ -820,13 +820,6 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         self.power = power
 
     def _get_loss(self):
-        # We could raise ValueError. But we want to be able to reset power
-        # gracefully.
-        # if self.power != self.base_loss.power:
-        #     raise ValueError(
-        #         "TweedieRegressor must have self.base_loss.power = self.power."
-        #     )
-
         if self.link == "auto":
             if self.power <= 0:
                 # identity link
