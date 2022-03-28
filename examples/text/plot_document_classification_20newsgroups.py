@@ -143,7 +143,6 @@ if SELECT_CHI2:
 
 # %%
 # Compare feature effects
-import matplotlib
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -174,7 +173,6 @@ if feature_names is not None:
     bar_size = 0.25
     padding = 0.5
     y_locs = np.arange(len(top_indices)) * (bar_size * 3 + padding)
-    cmap = matplotlib.cm.get_cmap("viridis")
 
     fig, ax = plt.subplots(figsize=(10, 8))
     for i, label in enumerate(target_names):
@@ -182,7 +180,6 @@ if feature_names is not None:
             y_locs + i * bar_size,
             feature_effects[i, top_indices],
             height=bar_size,
-            color=cmap(i * 0.25),
             label=label,
         )
     ax.set(
