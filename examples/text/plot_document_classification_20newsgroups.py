@@ -344,13 +344,15 @@ clf_names, score, training_time, test_time = results
 training_time = np.array(training_time)
 test_time = np.array(test_time)
 
-fig, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=(10, 20))
+fig, ax1 = plt.subplots(figsize=(10, 8))
 ax1.scatter(score, training_time, s=60)
 ax1.set(
     title="Score-training time trade-off",
     yscale="log",
+    xlabel="test accuracy",
     ylabel="training time (s)",
 )
+fig, ax2 = plt.subplots(figsize=(10, 8))
 ax2.scatter(score, test_time, s=60)
 ax2.set(
     title="Score-test time trade-off",
