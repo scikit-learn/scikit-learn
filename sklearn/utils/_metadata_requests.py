@@ -1112,8 +1112,9 @@ class _MetadataRequester:
 
         Returns
         -------
-        routing : dict
-            A dict representing a MetadataRouter.
+        routing : MetadataRequest
+            A :class:`~utils.metadata_routing.MetadataRequest` encapsulating
+            routing information.
         """
         return self._get_metadata_request()
 

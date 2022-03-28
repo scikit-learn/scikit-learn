@@ -15,6 +15,8 @@ from numpy.testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.metadata_routing import MetadataRouter, RequestType
+from sklearn.tests.test_metadata_routing import assert_request_is_empty
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (
@@ -37,7 +39,7 @@ from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import (
     _PredictScorer,
-    _passthrough_scorer,
+    _PassthroughScorer,
     _MultimetricScorer,
     _check_multimetric_scoring,
 )
@@ -236,7 +238,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = scoring_validator(estimator)
-    assert scorer is _passthrough_scorer
+    assert isinstance(scorer, _PassthroughScorer)
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFitAndPredict()
@@ -630,11 +632,14 @@ def test_classification_scorer_sample_weight():
         else:
             target = y_test
         try:
+            scorer = scorer.set_score_request(sample_weight=True)
             weighted = scorer(
                 estimator[name], X_test, target, sample_weight=sample_weight
             )
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
+            # this should not raise. sample_weight should be ignored if None.
+            _ = scorer(estimator[name], X_test[:10], target[:10], sample_weight=None)
             assert weighted != unweighted, (
                 f"scorer {name} behaves identically when called with "
                 f"sample weights: {weighted} vs {unweighted}"
@@ -1153,3 +1158,71 @@ def test_scorer_no_op_multiclass_select_proba():
         labels=lr.classes_,
     )
     scorer(lr, X_test, y_test)
+
+
+@pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
+def test_scorer_metadata_request(name):
+    scorer = get_scorer(name)
+    assert hasattr(scorer, "set_score_request")
+    assert hasattr(scorer, "get_metadata_routing")
+
+    assert_request_is_empty(scorer.get_metadata_routing())
+
+    weighted_scorer = scorer.set_score_request(sample_weight=True)
+    # set_score_request should mutate the instance
+    assert weighted_scorer is scorer
+
+    assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
+    assert (
+        weighted_scorer.get_metadata_routing().score.requests["sample_weight"]
+        == RequestType.REQUESTED
+    )
+
+    # make sure putting the scorer in a router doesn't request anything
+    router = MetadataRouter(owner="test").add(
+        method_mapping="score", scorer=get_scorer(name)
+    )
+    with pytest.raises(TypeError, match="got unexpected argument"):
+        router.validate_metadata(params={"sample_weight": 1}, method="score")
+    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
+    assert not routed_params.scorer.score
+
+    # make sure putting weighted_scorer in a router requests sample_weight
+    router = MetadataRouter(owner="test").add(
+        scorer=weighted_scorer, method_mapping="score"
+    )
+    router.validate_metadata(params={"sample_weight": 1}, method="score")
+    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
+    assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
+
+
+def test_metadata_kwarg_conflict():
+    X, y = make_classification(
+        n_classes=3, n_informative=3, n_samples=20, random_state=0
+    )
+    lr = LogisticRegression().fit(X, y)
+
+    scorer = make_scorer(
+        roc_auc_score,
+        needs_proba=True,
+        multi_class="ovo",
+        labels=lr.classes_,
+    )
+    with pytest.warns(UserWarning, match="already set as kwargs"):
+        scorer.set_score_request(labels=True)
+
+    with pytest.warns(UserWarning, match="There is an overlap"):
+        scorer(lr, X, y, labels=lr.classes_)
+
+
+def test_PassthroughScorer_metadata_request():
+    scorer = _PassthroughScorer(
+        estimator=LinearSVC()
+        .set_score_request(sample_weight="alias")
+        .set_fit_request(sample_weight=True)
+    )
+    # test that _PassthroughScorer leaves everything other than `score` empty
+    assert_request_is_empty(scorer.get_metadata_routing(), exclude="score")
+    # test that _PassthroughScorer doesn't behave like a router and leaves
+    # the request as is.
+    assert scorer.get_metadata_routing().score.requests["sample_weight"] == "alias"
