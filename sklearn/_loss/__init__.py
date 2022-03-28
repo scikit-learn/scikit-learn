@@ -10,6 +10,7 @@ from .loss import (
     HalfPoissonLoss,
     HalfGammaLoss,
     HalfTweedieLoss,
+    HalfTweedieLossIdentity,
     HalfBinomialLoss,
     HalfMultinomialLoss,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "HalfPoissonLoss",
     "HalfGammaLoss",
     "HalfTweedieLoss",
+    "HalfTweedieLossIdentity",
     "HalfBinomialLoss",
     "HalfMultinomialLoss",
 ]
