@@ -1527,6 +1527,7 @@ def test_pipeline_check_if_fitted():
 
 
 def test_feature_union_check_if_fitted():
+    """Check __sklearn_is_fitted__ is defined correctly."""
 
     X = [[1, 2], [3, 4], [5, 6]]
     y = [0, 1, 2]
