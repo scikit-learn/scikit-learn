@@ -304,6 +304,12 @@ Changelog
   :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and
   :user:`Maren Westermann <marenwestermann>`.
 
+- |Fix| :class:`decomposition.FastICA` now accepts `np.float32` data without
+  silent upcasting. The dtype is preserved by `fit` and `fit_transform` and the
+  main fitted attributes use a dtype of the same precision as the training
+  data. :pr:`22806` by :user:`Jihane Bennis <JihaneBennis>` and :user:`Olivier
+  Grisel <ogrisel>`.
+
 - |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
   in `fit` instead of `__init__`.
   :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
