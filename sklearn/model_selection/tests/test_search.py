@@ -2044,7 +2044,7 @@ def test_generate_warm_start_groups(candidate_params, use_warm_start, expected):
     ["string", np.arange(4)],
 ])
 def test_generate_warm_start_groups_value_types(candidate_values):
-    """Check that different types of value are supported in _generate_wamr_start_groups"""
+    # Check that different types of value are supported in _generate_wamr_start_groups
     candidate_params = []
     for val in candidate_values:
         candidate_params.append({"param": val, "other": 1})
