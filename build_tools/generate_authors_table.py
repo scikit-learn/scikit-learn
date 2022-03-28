@@ -53,13 +53,13 @@ def get_contributors():
     ):
         for page in [1, 2]:  # 30 per page
             reply = get(
-                f"https://api.github.com/orgs/scikit-learn/teams/{team_slug}/members"
+                f"https://api.github.com/orgs/scikit-learn/teams/{team_slug}/members?page={page}"
             )
             lst.extend(reply.json())
 
     # get members of scikit-learn on GitHub
     members = []
-    for page in [1, 2]:  # 30 per page
+    for page in [1, 2, 3]:  # 30 per page
         reply = get(
             "https://api.github.com/orgs/scikit-learn/members?page=%d" % (page,)
         )

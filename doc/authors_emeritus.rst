@@ -17,8 +17,10 @@
 - Kyle Kastner
 - manoj kumar
 - Robert Layton
+- Wei Li
 - Paolo Losi
 - Gilles Louppe
+- Vincent Michel
 - Jarrod Millman
 - Alexandre Passos
 - Fabian Pedregosa
