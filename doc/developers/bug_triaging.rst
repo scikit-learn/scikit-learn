@@ -50,11 +50,11 @@ Reviewing code is also encouraged. Contributors and users are welcome to
 participate to the review process following our :ref:`review guidelines
 <code_review>`.
 
-Triaging operations for members of the core and triage teams
-------------------------------------------------------------
+Triaging operations for members of the Core Developers and Contributor Experience teams
+---------------------------------------------------------------------------------------
 
-In addition to the above, members of the core team and the triage team
-can do the following important tasks:
+In addition to the above, members of the Core Developers Team and the Contributor Experience
+Team can do the following important tasks:
 
 - Update :ref:`labels for issues and PRs <issue_tracker_tags>`: see the list of
   the `available github labels

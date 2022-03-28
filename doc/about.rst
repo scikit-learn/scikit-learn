@@ -39,14 +39,14 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
-Triage Team
------------
+Contributor Experience Team
+---------------------------
 
 The following people are active contributors who also help with
 :ref:`triaging issues <bug_triaging>`, PRs, and general
 maintenance:
 
-.. include:: triage_team.rst
+.. include:: contributor_experience_team.rst
 
 Communication Team
 ------------------
