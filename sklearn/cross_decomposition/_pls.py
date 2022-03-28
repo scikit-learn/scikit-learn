@@ -501,7 +501,7 @@ class _PLS(
         # TODO(1.3): remove and change `self._coef_` to `self.coef_`
         #            remove catch warnings from `_get_feature_importances`
         #            delete self._coef_no_warning
-        if getattr(self, "_coef_warning", True):
+        if hasattr(self, "_coef_") and getattr(self, "_coef_warning", True):
             warnings.warn(
                 "The attribute `coef_` will be transposed in version 1.3 to be "
                 "consistent with other linear models in scikit-learn. Currently, "
