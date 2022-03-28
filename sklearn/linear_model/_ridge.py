@@ -41,7 +41,10 @@ from ..utils.sparsefuncs import mean_variance_axis
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
-    """Helper function to get a LinearOperator for X @ coef."""
+    """Create LinearOperator for matrix products with implicit centering.
+
+    Matrix product `LinearOperator @ coef` returns `(X - X_offset) @ coef`.
+    """
 
     def matvec(b):
         return X.dot(b) - sample_weight_sqrt * b.dot(X_offset)
