@@ -57,6 +57,7 @@ class _NumPyApiWrapper:
         return x.astype(dtype, copy=copy, casting=casting)
 
     def asarray(self, x, *, dtype=None, device=None, copy=None):
+        # Support copy in NumPy namespace
         if copy is True:
             return numpy.array(x, copy=True, dtype=dtype)
         else:
@@ -151,6 +152,29 @@ def _expit(X):
         return xp.asarray(special.expit(numpy.asarray(X)))
 
     return 1.0 / (1.0 + xp.exp(-X))
+
+
+def _asarray_with_order(array, dtype=None, order=None, copy=None, xp=None):
+    """Helper to support the order kwarg only for NumPy-backed arrays
+
+    Memory layout parameter `order` is not exposed in the Array API standard,
+    however some input validation code in scikit-learn needs to work both
+    for classes and functions that will leverage Array API only operations
+    and for code that inherently relies on NumPy backed data containers with
+    specific memory layout constraints (e.g. our own Cython code). The
+    purpose of this helper is to make it possible to share code for data
+    container validation without memory copies for both downstream use cases:
+    the `order` parameter is only enforced if the input array implementation
+    is NumPy based, otherwise `order` is just silently ignored.
+    """
+    if xp is None:
+        xp, _ = get_namespace(array)
+    if xp.__name__ in {"numpy", "numpy.array_api"}:
+        # Use NumPy API to support order
+        array = numpy.asarray(array, order=order, dtype=dtype)
+        return xp.asarray(array, copy=copy)
+    else:
+        return xp.asarray(array, dtype=dtype, copy=copy)
 
 
 def _convert_to_numpy(X):

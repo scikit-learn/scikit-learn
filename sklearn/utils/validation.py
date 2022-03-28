@@ -30,6 +30,7 @@ from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ..utils._array_api import get_namespace
+from ..utils._array_api import _asarray_with_order
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -833,7 +834,7 @@ def check_array(
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
-                    array = xp.asarray(array, order=order)
+                    array = _asarray_with_order(array, order=order, xp=xp)
                     if array.dtype.kind == "f":
                         _assert_all_finite(
                             array,
@@ -844,12 +845,7 @@ def check_array(
                         )
                     array = xp.astype(array, dtype, copy=False)
                 else:
-                    if xp.__name__ in {"numpy", "numpy.array_api"}:
-                        # Use NumPy API to support order
-                        array = np.asarray(array, order=order, dtype=dtype)
-                        array = xp.asarray(array)
-                    else:
-                        array = xp.asarray(array, dtype=dtype)
+                    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)
@@ -917,10 +913,17 @@ def check_array(
             )
 
     if copy:
-        if is_array_api:
-            array = xp.asarray(array, dtype=dtype, order=order, copy=True)
-        elif np.may_share_memory(array, array_orig):
-            array = xp.asarray(np.array(array, dtype=dtype, order=order))
+        if xp.__name__ in {"numpy", "numpy.array_api"}:
+            # only make a copy if `array` and `array_orig` may share memory`
+            if np.may_share_memory(array, array_orig):
+                array = _asarray_with_order(
+                    array, dtype=dtype, order=order, copy=True, xp=xp
+                )
+        else:
+            # always make a copy for non-numpy arrays
+            array = _asarray_with_order(
+                array, dtype=dtype, order=order, copy=True, xp=xp
+            )
 
     return array
 
@@ -1140,12 +1143,7 @@ def column_or_1d(y, *, warn=False):
     y = xp.asarray(y)
     shape = y.shape
     if len(shape) == 1:
-        if xp.__name__ in {"numpy", "numpy.array_api"}:
-            # Use NumPy API to support order
-            y = np.asarray(xp.reshape(y, -1), order="C")
-            return xp.asarray(y)
-        else:
-            return xp.reshape(y, -1)
+        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1155,12 +1153,7 @@ def column_or_1d(y, *, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        if xp.__name__ in {"numpy", "numpy.array_api"}:
-            # Use NumPy API to support order
-            y = np.asarray(xp.reshape(y, -1), order="C")
-            return xp.asarray(y)
-        else:
-            return xp.reshape(y, -1)
+        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)

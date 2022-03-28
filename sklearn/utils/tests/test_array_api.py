@@ -5,6 +5,7 @@ import pytest
 from sklearn.utils._array_api import get_namespace
 from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
+from sklearn.utils._array_api import _asarray_with_order
 from sklearn._config import config_context
 
 pytestmark = pytest.mark.filterwarnings(
