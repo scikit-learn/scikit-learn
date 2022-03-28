@@ -38,7 +38,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         1/(2*sum(s_i)) * sum(s_i * deviance(y_i, h(x_i*w)) + 1/2 * alpha * ||w||_2^2
 
     with inverse link function h, s=sample_weight and per observation (unit) deviance
-    deviance(y_i, h(x_i*w)). Note that for an EDM 1/2 * deviance is the negative
+    deviance(y_i, h(x_i*w)). Note that for an EDM, 1/2 * deviance is the negative
     log-likelihood up to a constant (in w) term.
     The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
 
@@ -63,26 +63,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
-
-    _base_loss : BaseLoss, default=HalfSquaredError()
-        A `_base_loss` contains a specific loss function as well as the link
-        function. The loss to be minimized specifies the distributional assumption of
-        the GLM, i.e. the distribution from the EDM. Here are some examples:
-
-        =======================  ========  ==========================
-        _base_loss               Link      Target Domain
-        =======================  ========  ==========================
-        HalfSquaredError         identity  y any real number
-        HalfPoissonLoss          log       0 <= y
-        HalfGammaLoss            log       0 < y
-        HalfInverseGaussianLoss  log       0 < y
-        HalfTweedieLoss          log       dependend on tweedie power
-        HalfTweedieLossIdentity  identity  dependend on tweedie power
-        =======================  ========  ==========================
-
-        The link function of the GLM, i.e. mapping from linear predictor
-        `X @ coeff + intercept` to prediction `y_pred`. For instance, with a log link,
-        we have `y_pred = exp(X @ coeff + intercept)`.
 
     solver : 'lbfgs', default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -120,6 +100,26 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    _base_loss : BaseLoss, default=HalfSquaredError()
+        This is set during fit via `self._get_loss()`.
+        A `_base_loss` contains a specific loss function as well as the link
+        function. The loss to be minimized specifies the distributional assumption of
+        the GLM, i.e. the distribution from the EDM. Here are some examples:
+
+        =======================  ========  ==========================
+        _base_loss               Link      Target Domain
+        =======================  ========  ==========================
+        HalfSquaredError         identity  y any real number
+        HalfPoissonLoss          log       0 <= y
+        HalfGammaLoss            log       0 < y
+        HalfTweedieLoss          log       dependend on tweedie power
+        HalfTweedieLossIdentity  identity  dependend on tweedie power
+        =======================  ========  ==========================
+
+        The link function of the GLM, i.e. mapping from linear predictor
+        `X @ coeff + intercept` to prediction `y_pred`. For instance, with a log link,
+        we have `y_pred = exp(X @ coeff + intercept)`.
     """
 
     def __init__(
