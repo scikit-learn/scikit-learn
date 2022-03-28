@@ -46,11 +46,13 @@ def test_get_namespace_array_api():
             get_namespace(1)
 
 
-class _NumPyArrayAPIWrapper:
+class _NumPyArrayAPITestWrapper(_ArrayAPIWrapper):
+    """NumPy Array API wrapper that has a different name. Used for testing."""
+
     __name__ = "wrapped_numpy.array_api"
 
     def __init__(self, array_namespace):
-        self._namespace = array_namespace
+        super().__init__(array_namespace=array_namespace)
 
     def __getattr__(self, name):
         return getattr(self._namespace, name)
@@ -59,9 +61,7 @@ class _NumPyArrayAPIWrapper:
 def test_array_api_wrapper():
     """Test _ArrayAPIWrapper for ArrayAPIs that is not NumPy."""
     xp = pytest.importorskip("numpy.array_api")
-
-    wrapped_np = _NumPyArrayAPIWrapper(xp)
-    xp_ = _ArrayAPIWrapper(wrapped_np)
+    xp_ = _NumPyArrayAPITestWrapper(xp)
 
     X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
     X_converted = xp_.astype(X, xp.float32)
@@ -78,3 +78,33 @@ def test_array_api_wrapper():
     # Check take compared to NumPy's with axis=1
     X_take = xp_.take(X, xp.asarray([0, 2]), axis=1)
     assert_array_equal(X_take, numpy.take(X, [0, 2], axis=1))
+
+
+@pytest.mark.parametrize("is_array_api", [True, False])
+def test_asarray_with_order(is_array_api):
+    """Test _asarray_with_order passes along order for NumPy arrays"""
+    if is_array_api:
+        xp = pytest.importorskip("numpy.array_api")
+    else:
+        xp = numpy
+
+    X = xp.asarray([1.2, 3.4, 5.1])
+    X_new = _asarray_with_order(X, order="F")
+
+    X_new_np = numpy.asarray(X_new)
+    assert X_new_np.flags["F_CONTIGUOUS"]
+
+
+def test_asarray_with_order_ignored():
+    """Test _asarray_with_order ignores order for Generic ArrayAPI"""
+    xp = pytest.importorskip("numpy.array_api")
+    xp_ = _NumPyArrayAPITestWrapper(xp)
+
+    X = numpy.asarray([[1.2, 3.4, 5.1], [3.4, 5.5, 1.2]], order="C")
+    X = xp_.asarray(X)
+
+    X_new = _asarray_with_order(X, order="F", xp=xp_)
+
+    X_new_np = numpy.asarray(X_new)
+    assert X_new_np.flags["C_CONTIGUOUS"]
+    assert not X_new_np.flags["F_CONTIGUOUS"]
