@@ -96,6 +96,7 @@ Display Objects
 
    calibration.CalibrationDisplay
    inspection.PartialDependenceDisplay
+   inspection.DecisionBoundaryDisplay
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
