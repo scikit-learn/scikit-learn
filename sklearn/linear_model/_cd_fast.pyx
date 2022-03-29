@@ -737,7 +737,7 @@ def enet_coordinate_descent_multi_task(
 
     # to store XtA
     cdef floating[::1, :] XtA = np.zeros((n_tasks, n_features), dtype=dtype, order="F")
-    cdef floating XtA_axis1norm
+    cdef floating XtA_axis0norm
     cdef floating dual_norm_XtA
 
     # initial value of the residuals
@@ -876,9 +876,9 @@ def enet_coordinate_descent_multi_task(
                 for ii in range(n_features):
                     # np.sqrt(np.sum(XtA ** 2, axis=0))
                     # sum is over tasks
-                    XtA_axis1norm = _nrm2(n_tasks, &XtA[0, ii], 1)
-                    if XtA_axis1norm > dual_norm_XtA:
-                        dual_norm_XtA = XtA_axis1norm
+                    XtA_axis0norm = _nrm2(n_tasks, &XtA[0, ii], 1)
+                    if XtA_axis0norm > dual_norm_XtA:
+                        dual_norm_XtA = XtA_axis0norm
 
                 # TODO: use squared L2 norm directly
                 # R_norm = linalg.norm(R, ord='fro')
