@@ -548,6 +548,10 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
+- |Feature| Add a display to plot the boundary decision of a classifier by
+  using the method :func:`inspection.DecisionBoundaryDisplay.from_estimator`.
+  :pr:`16061` by `Thomas Fan`_.
+
 - |Enhancement| In
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` and
   :meth:`~sklearn.inspection.PartialDependenceDisplay.from_predictions`, allow
