@@ -1,5 +1,15 @@
 {% extends "layout.html" %}
 {% set title = 'scikit-learn: machine learning in Python' %}
+
+{% if theme_link_to_live_contributing_page|tobool %}
+  {%- set contributing_link = "https://scikit-learn.org/dev/developers/contributing.html" %}
+  {%- set contributing_attrs = 'target="_blank" rel="noopener noreferrer"' %}
+{%- else %}
+  {%- set contributing_link = pathto('developers/contributing') %}
+  {%- set contributing_attrs = '' %}
+{%- endif %}
+
+
 {% block content %}
 <div class="container-fluid sk-landing-bg py-3">
   <div class="container sk-landing-container">
@@ -182,7 +192,7 @@
       <div class="col-md-4">
         <h4 class="sk-landing-call-header">Community</h4>
         <ul class="sk-landing-call-list list-unstyled">
-        <li><strong>About us:</strong> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
+        <li><strong>About us:</strong> See <a href="about.html#people">authors</a> and <a href="{{ contributing_link }}" {{ contributing_attrs }}>contributing</a></li>
         <li><strong>More Machine Learning:</strong> Find <a href="related_projects.html">related projects</a></li>
         <li><strong>Questions?</strong> See <a href="faq.html">FAQ</a> and <a href="https://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
         <li><strong>Subscribe to the</strong> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">mailing list</a></li>
