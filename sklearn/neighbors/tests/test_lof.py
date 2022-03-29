@@ -8,13 +8,14 @@ import numpy as np
 from sklearn import neighbors
 import re
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.estimator_checks import parametrize_with_checks
 
@@ -59,7 +60,9 @@ def test_lof_performance(global_dtype):
     X_train = X[:100]
 
     # Generate some abnormal novel observations
-    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2)).astype(
+        global_dtype, copy=False
+    )
     X_test = np.r_[X[100:], X_outliers]
     y_test = np.array([0] * 20 + [1] * 20)
 
@@ -83,14 +86,14 @@ def test_lof_values(global_dtype):
     s_0 = 2.0 * sqrt(2.0) / (1.0 + sqrt(2.0))
     s_1 = (1.0 + sqrt(2)) * (1.0 / (4.0 * sqrt(2.0)) + 1.0 / (2.0 + 2.0 * sqrt(2)))
     # check predict()
-    assert_array_almost_equal(-clf1.negative_outlier_factor_, [s_0, s_1, s_1])
-    assert_array_almost_equal(-clf2.negative_outlier_factor_, [s_0, s_1, s_1])
+    assert_allclose(-clf1.negative_outlier_factor_, [s_0, s_1, s_1])
+    assert_allclose(-clf2.negative_outlier_factor_, [s_0, s_1, s_1])
     # check predict(one sample not in train)
-    assert_array_almost_equal(-clf1.score_samples([[2.0, 2.0]]), [s_0])
-    assert_array_almost_equal(-clf2.score_samples([[2.0, 2.0]]), [s_0])
+    assert_allclose(-clf1.score_samples([[2.0, 2.0]]), [s_0])
+    assert_allclose(-clf2.score_samples([[2.0, 2.0]]), [s_0])
     # check predict(one sample already in train)
-    assert_array_almost_equal(-clf1.score_samples([[1.0, 1.0]]), [s_1])
-    assert_array_almost_equal(-clf2.score_samples([[1.0, 1.0]]), [s_1])
+    assert_allclose(-clf1.score_samples([[1.0, 1.0]]), [s_1])
+    assert_allclose(-clf2.score_samples([[1.0, 1.0]]), [s_1])
 
 
 def test_lof_precomputed(global_dtype, random_state=42):
@@ -115,8 +118,8 @@ def test_lof_precomputed(global_dtype, random_state=42):
     pred_D_X = lof_D._predict()
     pred_D_Y = lof_D.predict(DYX)
 
-    assert_array_almost_equal(pred_X_X, pred_D_X)
-    assert_array_almost_equal(pred_X_Y, pred_D_Y)
+    assert_allclose(pred_X_X, pred_D_X)
+    assert_allclose(pred_X_Y, pred_D_Y)
 
 
 def test_n_neighbors_attribute():
@@ -138,15 +141,15 @@ def test_score_samples(global_dtype):
         n_neighbors=2, contamination=0.1, novelty=True
     ).fit(X_train)
     clf2 = neighbors.LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
-    assert_array_equal(
+    assert_allclose(
         clf1.score_samples(X_test),
         clf1.decision_function(X_test) + clf1.offset_,
     )
-    assert_array_equal(
+    assert_allclose(
         clf2.score_samples(X_test),
         clf2.decision_function(X_test) + clf2.offset_,
     )
-    assert_array_equal(clf1.score_samples(X_test), clf2.score_samples(X_test))
+    assert_allclose(clf1.score_samples(X_test), clf2.score_samples(X_test))
 
 
 def test_contamination():
