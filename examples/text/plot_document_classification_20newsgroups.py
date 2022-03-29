@@ -295,9 +295,13 @@ for clf, name in (
     results.append(benchmark(clf))
 
 # Train Liblinear model
+print("=" * 80)
+print("L2 penalty Linear SVC")
 results.append(benchmark(LinearSVC(C=10, dual=False, tol=1e-3)))
 
 # Train SGD model
+print("=" * 80)
+print("L2 penalty Linear SGD")
 results.append(benchmark(SGDClassifier(alpha=1e-5, early_stopping=True)))
 
 # Train NearestCentroid without threshold
