@@ -22,9 +22,6 @@ from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler
-from sklearn.tests.test_metadata_routing import assert_request_is_empty
-from sklearn.tests.test_metadata_routing import check_recorded_metadata
-from sklearn.tests.test_metadata_routing import record_metadata
 
 
 class DelegatorData:
