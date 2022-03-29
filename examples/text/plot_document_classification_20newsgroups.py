@@ -205,13 +205,10 @@ if feature_names is not None and not REMOVE_ALL:
 
 # %%
 # Setting REMOVE_ALL == True increases the overlap between classes
-import seaborn as sns
+from sklearn.metrics import ConfusionMatrixDisplay
 
-cf_matrix = metrics.confusion_matrix(y_test, pred)
-ax = sns.heatmap(cf_matrix / np.sum(cf_matrix), annot=True, fmt=".2%", cmap="Blues")
-
-ax.set_xlabel("\nPredicted Category")
-ax.set_ylabel("Actual Category ")
+fig, ax = plt.subplots(figsize=(10, 5))
+ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
 plt.tight_layout(rect=(0, 0, 1, 0.92))
