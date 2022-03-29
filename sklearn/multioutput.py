@@ -81,7 +81,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self.n_jobs = n_jobs
 
     @_available_if_estimator_has("partial_fit")
-    def partial_fit(self, X, y, classes=None, **partial_fit_params):
+    def partial_fit(self, X, y, classes=None, sample_weight=None, **partial_fit_params):
         """Incrementally fit a separate model for each class output.
 
         Parameters
@@ -124,6 +124,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             obj=self,
             method="partial_fit",
             other_params=partial_fit_params,
+            sample_weight=sample_weight,
         )
 
         first_time = not hasattr(self, "estimators_")
@@ -147,7 +148,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         return self
 
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the model to data, separately for each output variable.
 
         Parameters
@@ -184,7 +185,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                 "multi-output regression but has only one."
             )
 
-        routed_params = process_routing(obj=self, method="fit", other_params=fit_params)
+        routed_params = process_routing(
+            obj=self, method="fit", other_params=fit_params, sample_weight=sample_weight
+        )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
@@ -311,7 +314,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         super().__init__(estimator, n_jobs=n_jobs)
 
     @_available_if_estimator_has("partial_fit")
-    def partial_fit(self, X, y, **partial_fit_params):
+    def partial_fit(self, X, y, sample_weight=None, **partial_fit_params):
         """Incrementally fit the model to data, for each output variable.
 
         Parameters
@@ -332,7 +335,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
-        super().partial_fit(X, y, **partial_fit_params)
+        super().partial_fit(X, y, sample_weight=sample_weight, **partial_fit_params)
 
 
 class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
@@ -406,7 +409,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    def fit(self, X, Y, **fit_params):
+    def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -427,7 +430,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
-        super().fit(X, Y, **fit_params)
+        super().fit(X, Y, sample_weight=sample_weight, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 

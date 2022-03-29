@@ -1337,6 +1337,9 @@ def process_routing(obj, method, other_params, **kwargs):
     #     fit_params["sample_weight"] = sample_weight
     all_params = other_params if other_params is not None else dict()
     all_params.update(kwargs)
+    all_params = {
+        param: value for param, value in all_params.items() if value is not None
+    }
 
     request_routing = get_routing_for_object(obj)
     request_routing.validate_metadata(params=all_params, method=method)
