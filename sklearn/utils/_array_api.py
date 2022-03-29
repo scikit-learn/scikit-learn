@@ -1,6 +1,6 @@
 """Tools to support array_api."""
 import numpy
-from .._config import get_config, config_context
+from .._config import get_config
 import scipy.special as special
 
 
@@ -177,15 +177,38 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, xp=None):
         return xp.asarray(array, dtype=dtype, copy=copy)
 
 
-def _convert_to_numpy(X):
+def _convert_to_numpy(array, xp):
     """Convert X into a NumPy ndarray.
 
     Only works on cupy.array_api and numpy.array_api.
     """
-    with config_context(array_api_dispatch=True):
-        xp, _ = get_namespace(X)
+    supported_array_api = ["numpy.array_api", "cupy.array_api"]
+    if xp.__name__ not in supported_array_api:
+        support_array_api_str = ", ".join(supported_array_api)
+        raise ValueError(f"Supported namespaces are: {support_array_api_str}")
 
     if xp.__name__ == "cupy.array_api":
-        return X._array.get()
+        return array._array.get()
     else:
-        return numpy.asarray(X)
+        return numpy.asarray(array)
+
+
+def _convert_estimator_to_ndarray(estimator):
+    """Inplace convert estimator attributes that implement Array API spec into NumPy.
+
+    Converting from a Array API implementation to a NumPy ndarray is not specified
+    and is library dependent. Currently, only `cupy.array_api` and `numpy.array_api`
+    is supported.
+
+    Parameters
+    ----------
+    estimator : Estimator
+        Estimator to convert
+    """
+    for key, attribute in vars(estimator).items():
+        if not hasattr(attribute, "__array_namespace__"):
+            continue
+
+        xp = attribute.__array_namespace__()
+        new_attribute = _convert_to_numpy(attribute, xp=xp)
+        setattr(estimator, key, new_attribute)

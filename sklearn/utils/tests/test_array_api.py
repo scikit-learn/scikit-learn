@@ -6,6 +6,8 @@ from sklearn.utils._array_api import get_namespace
 from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
 from sklearn.utils._array_api import _asarray_with_order
+from sklearn.utils._array_api import _convert_to_numpy
+from sklearn.utils._array_api import _convert_estimator_to_ndarray
 from sklearn._config import config_context
 
 pytestmark = pytest.mark.filterwarnings(
@@ -82,7 +84,7 @@ def test_array_api_wrapper():
 
 @pytest.mark.parametrize("is_array_api", [True, False])
 def test_asarray_with_order(is_array_api):
-    """Test _asarray_with_order passes along order for NumPy arrays"""
+    """Test _asarray_with_order passes along order for NumPy arrays."""
     if is_array_api:
         xp = pytest.importorskip("numpy.array_api")
     else:
@@ -96,7 +98,7 @@ def test_asarray_with_order(is_array_api):
 
 
 def test_asarray_with_order_ignored():
-    """Test _asarray_with_order ignores order for Generic ArrayAPI"""
+    """Test _asarray_with_order ignores order for Generic ArrayAPI."""
     xp = pytest.importorskip("numpy.array_api")
     xp_ = _NumPyArrayAPITestWrapper(xp)
 
@@ -108,3 +110,31 @@ def test_asarray_with_order_ignored():
     X_new_np = numpy.asarray(X_new)
     assert X_new_np.flags["C_CONTIGUOUS"]
     assert not X_new_np.flags["F_CONTIGUOUS"]
+
+
+def test_convert_to_numpy_error():
+    """Test convert to numpy errors for unsupported namespaces."""
+    xp = pytest.importorskip("numpy.array_api")
+    xp_ = _NumPyArrayAPITestWrapper(xp)
+
+    X = xp_.asarray([1.2, 3.4])
+
+    with pytest.raises(ValueError, match="Supported namespaces are:"):
+        _convert_to_numpy(X, xp=xp_)
+
+
+@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
+def test_convert_estimator_to_ndarray(array_namespace):
+    xp = pytest.importorskip(array_namespace)
+
+    class Estimator:
+        def fit(self, X, y=None):
+            self.X_ = X
+            self.n_features_ = X.shape[0]
+            return self
+
+    X = xp.asarray([[1.3, 4.5]])
+    est = Estimator().fit(X)
+
+    _convert_estimator_to_ndarray(est)
+    assert isinstance(est.X_, numpy.ndarray)

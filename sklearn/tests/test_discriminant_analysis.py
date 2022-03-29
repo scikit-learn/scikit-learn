@@ -694,7 +694,7 @@ def test_lda_array_api(array_namespace):
     for key, attribute in gm_attributes_arrays.items():
         gm_xp_param = getattr(lda_xp, key)
         assert hasattr(gm_xp_param, "__array_namespace__")
-        gm_xp_param_np = _convert_to_numpy(gm_xp_param)
+        gm_xp_param_np = _convert_to_numpy(gm_xp_param, xp=xp)
 
         assert_allclose(
             attribute, gm_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
@@ -717,7 +717,7 @@ def test_lda_array_api(array_namespace):
             result_xp, "__array_namespace__"
         ), f"{method} did not output an array_namespace"
 
-        result_xp_np = _convert_to_numpy(result_xp)
+        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
         assert_allclose(
             result,

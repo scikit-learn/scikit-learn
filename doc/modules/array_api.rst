@@ -45,21 +45,18 @@ Here is an example code snippet to demonstrate how to use `CuPy
 After the model is trained, fitted attributes that are arrays will also be
 from the same Array API namespace as the training data. For example, if CuPy's
 Array API namespace was used for training, then fitted attributes will be on the
-GPU. Moving the fitted attributes to the CPU depends on the array library. For
-example, if you use `cupy.array_api` then the transfer can be done as follows::
+GPU. We provide a experimental `_convert_estimator_to_ndarray` utility that
+transfers an estimator attributes from Array API to a ndarray::
 
-.. code-block:: python
-
-    >>> for key, attribute in vars(lda).items():
-    ...     if not hasattr(attribute, "__array_namespace__"):
-    ...         # Does not implement the Array API specification
-    ...         continue
-    ...     # Convert `cupy.array_api` array into a NumPy ndarray
-    ...     setattr(lda, key, attribute._array.get())
-    >>> # transform on a CPU
+    >>> from sklearn.utils._array_api import _convert_estimator_to_ndarray
+    >>> _convert_estimator_to_ndarray(lda)
     >>> X_trans = lda.transform(X_np)
     >>> type(X_trans)
     <class 'numpy.ndarray'>
+
+.. note::
+    Only `cupy.array_api` and `numpy.array_api` are supported by
+    `_convert_estimator_to_ndarray`
 
 .. _array_api_estimators:
 
