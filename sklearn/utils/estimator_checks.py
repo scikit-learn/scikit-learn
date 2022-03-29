@@ -2128,7 +2128,7 @@ def check_classifiers_train(
     if not tags["binary_only"]:
         problems.append((X_m, y_m))
 
-    for (X, y) in problems:
+    for X, y in problems:
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
