@@ -1003,7 +1003,7 @@ def _plain_mbgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     w.reset_wscale()
 
-    return weights, intercept, average_weights, average_intercept, epoch + 1
+    return weights, intercept, average_weights, average_intercept, epoch + 1, minibatch_size
 
 cdef bint any_nonfinite(double *w, int n) nogil:
     for i in range(n):

@@ -5,6 +5,7 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.linear_model._minibatch_gradient import BaseMBGDClassifier, BaseMBGDRegressor, MBGDOneClassSVM
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -583,7 +584,7 @@ def test_set_intercept_offset(klass, fit_params):
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor, BaseMBGDClassifier]
 )
 def test_sgd_early_stopping_with_partial_fit(klass):
     """Check that we raise an error for `early_stopping` used with
@@ -1029,13 +1030,13 @@ def test_sample_weights(klass):
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM]
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDOneClassSVM, SparseSGDOneClassSVM, MBGDOneClassSVM]
 )
 def test_wrong_sample_weights(klass):
     # Test if ValueError is raised if sample_weight has wrong shape
     if klass in [SGDClassifier, SparseSGDClassifier]:
         clf = klass(alpha=0.1, max_iter=1000, fit_intercept=False)
-    elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM]:
+    elif klass in [SGDOneClassSVM, SparseSGDOneClassSVM, MBGDOneClassSVM]:
         clf = klass(nu=0.1, max_iter=1000, fit_intercept=False)
     # provided sample_weight too long
     with pytest.raises(ValueError):

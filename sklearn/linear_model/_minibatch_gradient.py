@@ -26,7 +26,8 @@ from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
-from ._sgd_fast import _plain_sgd
+from ._sgd_fast import _plain_mbgd
+# from ._sgd_fast import _plain_sgd
 from ..utils import compute_class_weight
 from ._sgd_fast import Hinge
 from ._sgd_fast import SquaredHinge
@@ -445,7 +446,7 @@ def fit_binary(
 
     tol = est.tol if est.tol is not None else -np.inf
 
-    coef, intercept, average_coef, average_intercept, n_iter_ = _plain_sgd(
+    coef, intercept, average_coef, average_intercept, n_iter_, minibatch_size = _plain_mbgd(
         coef,
         intercept,
         average_coef,
@@ -475,6 +476,7 @@ def fit_binary(
         est.t_,
         intercept_decay,
         est.average,
+        1
     )
 
     if est.average:
@@ -1624,7 +1626,7 @@ class BaseMBGDRegressor(RegressorMixin, BaseMBGD):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
-        coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_sgd(
+        coef, intercept, average_coef, average_intercept, self.n_iter_, minibatch_size = _plain_mbgd(
             coef,
             intercept[0],
             average_coef,
@@ -1654,7 +1656,10 @@ class BaseMBGDRegressor(RegressorMixin, BaseMBGD):
             self.t_,
             intercept_decay,
             self.average,
+            1
         )
+
+        print(minibatch_size)
 
         self.t_ += self.n_iter_ * X.shape[0]
 
@@ -2185,7 +2190,7 @@ class MBGDOneClassSVM(BaseMBGD, OutlierMixin):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
-        coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_sgd(
+        coef, intercept, average_coef, average_intercept, self.n_iter_, minibatch_size = _plain_mbgd(
             coef,
             intercept[0],
             average_coef,
@@ -2215,7 +2220,10 @@ class MBGDOneClassSVM(BaseMBGD, OutlierMixin):
             self.t_,
             offset_decay,
             self.average,
+            1
         )
+
+        print(minibatch_size)
 
         self.t_ += self.n_iter_ * n_samples
 
