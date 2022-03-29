@@ -1,3 +1,4 @@
+import math
 import pickle
 
 import joblib
@@ -584,7 +585,7 @@ def test_set_intercept_offset(klass, fit_params):
 
 
 @pytest.mark.parametrize(
-    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor, BaseMBGDClassifier]
+    "klass", [SGDClassifier, SparseSGDClassifier, SGDRegressor, SparseSGDRegressor]
 )
 def test_sgd_early_stopping_with_partial_fit(klass):
     """Check that we raise an error for `early_stopping` used with
@@ -1496,7 +1497,7 @@ def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
     return average_coef, 1 - average_intercept
 
 
-@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM])
+@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM, MBGDOneClassSVM])
 def _test_warm_start_oneclass(klass, X, lr):
     # Test that explicit warm restart...
     clf = klass(nu=0.5, eta0=0.01, shuffle=False, learning_rate=lr)
@@ -1519,7 +1520,7 @@ def _test_warm_start_oneclass(klass, X, lr):
     assert_allclose(clf3.coef_, clf2.coef_)
 
 
-@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM])
+@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM, MBGDOneClassSVM])
 @pytest.mark.parametrize("lr", ["constant", "optimal", "invscaling", "adaptive"])
 def test_warm_start_oneclass(klass, lr):
     _test_warm_start_oneclass(klass, X, lr)
@@ -1538,8 +1539,7 @@ def test_clone_oneclass(klass):
 
     assert_array_equal(clf.coef_, clf2.coef_)
 
-
-@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM])
+@pytest.mark.parametrize("klass", [SGDOneClassSVM, SparseSGDOneClassSVM, MBGDOneClassSVM])
 def test_partial_fit_oneclass(klass):
     third = X.shape[0] // 3
     clf = klass(nu=0.1)

@@ -2190,7 +2190,7 @@ class MBGDOneClassSVM(BaseMBGD, OutlierMixin):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
-        coef, intercept, average_coef, average_intercept, self.n_iter_, minibatch_size = _plain_mbgd(
+        coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_mbgd(
             coef,
             intercept[0],
             average_coef,
@@ -2222,8 +2222,6 @@ class MBGDOneClassSVM(BaseMBGD, OutlierMixin):
             self.average,
             1
         )
-
-        print(minibatch_size)
 
         self.t_ += self.n_iter_ * n_samples
 
