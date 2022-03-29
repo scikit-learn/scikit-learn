@@ -30,7 +30,7 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE, G_H_DTYPE
+from .common import Y_DTYPE, X_DTYPE, G_H_DTYPE
 
 from .binning import _BinMapper
 from .grower import TreeGrower
@@ -936,8 +936,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predicted values.
         """
         is_binned = getattr(self, "_in_fit", False)
-        dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
-        X = self._validate_data(X, dtype=dtype, force_all_finite=False, reset=False)
+        if not is_binned:
+            X = self._validate_data(
+                X, dtype=X_DTYPE, force_all_finite=False, reset=False
+            )
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(

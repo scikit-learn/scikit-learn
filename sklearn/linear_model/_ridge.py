@@ -805,7 +805,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             self._normalize,
             self.copy_X,
             sample_weight=sample_weight,
-            return_mean=True,
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
@@ -2011,7 +2010,10 @@ class _RidgeGCV(LinearModel):
         self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
-        X_offset += X_mean * X_scale
+        if sparse.issparse(X):
+            X_offset = X_mean * X_scale
+        else:
+            X_offset += X_mean * X_scale
         self._set_intercept(X_offset, y_offset, X_scale)
 
         if self.store_cv_values:
