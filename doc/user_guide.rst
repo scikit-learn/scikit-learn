@@ -30,4 +30,4 @@ User Guide
    computing.rst
    model_persistence.rst
    common_pitfalls.rst
-   array_api.rst
+   dispatching.rst
