@@ -161,7 +161,7 @@ def test_spectral_clustering_sparse(assign_labels, global_dtype):
 
     S = rbf_kernel(X, gamma=1)
     S = np.maximum(S - 1e-4, 0)
-    S = sparse.coo_matrix(S).astype(global_dtype, copy=False)
+    S = sparse.coo_matrix(S, dtype=global_dtype)
 
     labels = (
         SpectralClustering(
@@ -276,7 +276,7 @@ def test_cluster_qr_permutation_invariance(global_dtype):
     n_samples, n_components = 100, 5
     data = random_state.randn(n_samples, n_components).astype(global_dtype, copy=False)
     perm = random_state.permutation(n_samples)
-    assert np.array_equal(
+    assert_array_equal(
         cluster_qr(data)[perm],
         cluster_qr(data[perm]),
     )
@@ -376,13 +376,12 @@ def test_n_components(global_dtype):
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-def test_verbose(assign_labels, capsys, global_dtype):
+def test_verbose(assign_labels, capsys):
     # Check verbose mode of KMeans for better coverage.
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
 
-    X = X.astype(global_dtype, copy=False)
     SpectralClustering(n_clusters=2, random_state=42, verbose=1).fit(X)
 
     captured = capsys.readouterr()
