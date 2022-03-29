@@ -49,8 +49,8 @@ GPU. We provide a experimental `_convert_estimator_to_ndarray` utility that
 transfers an estimator attributes from Array API to a ndarray::
 
     >>> from sklearn.utils._array_api import _convert_estimator_to_ndarray
-    >>> _convert_estimator_to_ndarray(lda)
-    >>> X_trans = lda.transform(X_np)
+    >>> lda_np = _convert_estimator_to_ndarray(lda)
+    >>> X_trans = lda_np.transform(X_np)
     >>> type(X_trans)
     <class 'numpy.ndarray'>
 

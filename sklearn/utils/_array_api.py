@@ -194,7 +194,7 @@ def _convert_to_numpy(array, xp):
 
 
 def _convert_estimator_to_ndarray(estimator):
-    """Inplace convert estimator attributes that implement Array API spec into NumPy.
+    """Convert estimator attributes that implement Array API spec into NumPy.
 
     Converting from a Array API implementation to a NumPy ndarray is not specified
     and is library dependent. Currently, only `cupy.array_api` and `numpy.array_api`
@@ -204,11 +204,18 @@ def _convert_estimator_to_ndarray(estimator):
     ----------
     estimator : Estimator
         Estimator to convert
-    """
-    for key, attribute in vars(estimator).items():
-        if not hasattr(attribute, "__array_namespace__"):
-            continue
 
-        xp = attribute.__array_namespace__()
-        new_attribute = _convert_to_numpy(attribute, xp=xp)
-        setattr(estimator, key, new_attribute)
+    Returns
+    -------
+    new_estimator : Estimator
+        Convert estimator
+    """
+    from sklearn.base import clone
+
+    new_estimator = clone(estimator)
+    for key, attribute in vars(estimator).items():
+        if hasattr(attribute, "__array_namespace__"):
+            xp = attribute.__array_namespace__()
+            attribute = _convert_to_numpy(attribute, xp=xp)
+        setattr(new_estimator, key, attribute)
+    return new_estimator

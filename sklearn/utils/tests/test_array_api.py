@@ -2,6 +2,7 @@ import numpy
 from numpy.testing import assert_array_equal
 import pytest
 
+from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import get_namespace
 from sklearn.utils._array_api import _NumPyApiWrapper
 from sklearn.utils._array_api import _ArrayAPIWrapper
@@ -127,7 +128,7 @@ def test_convert_to_numpy_error():
 def test_convert_estimator_to_ndarray(array_namespace):
     xp = pytest.importorskip(array_namespace)
 
-    class Estimator:
+    class Estimator(BaseEstimator):
         def fit(self, X, y=None):
             self.X_ = X
             self.n_features_ = X.shape[0]
@@ -136,5 +137,5 @@ def test_convert_estimator_to_ndarray(array_namespace):
     X = xp.asarray([[1.3, 4.5]])
     est = Estimator().fit(X)
 
-    _convert_estimator_to_ndarray(est)
-    assert isinstance(est.X_, numpy.ndarray)
+    new_est = _convert_estimator_to_ndarray(est)
+    assert isinstance(new_est.X_, numpy.ndarray)
