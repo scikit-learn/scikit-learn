@@ -42,8 +42,7 @@ Here is an example code snippet to demonstrate how to use `CuPy
 
     >>> with config_context(array_api_dispatch=True):
     ...     lda = LinearDiscriminantAnalysis()
-    ...     lda.fit(X, y)
-    ...     X_trans = lda.transform(X)
+    ...     X_trans = lda.fit_transform(X, y)
     ...
     >>> X_trans.device
     <CUDA Device 0>
