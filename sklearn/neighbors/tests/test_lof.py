@@ -48,7 +48,7 @@ def test_lof(global_dtype):
 
     # Assert predict() works:
     clf = neighbors.LocalOutlierFactor(contamination=0.25, n_neighbors=5).fit(X)
-    expected_predictions = np.asarray(6 * [1] + 2 * [-1], dtype=global_dtype)
+    expected_predictions = 6 * [1] + 2 * [-1]
     assert_array_equal(clf._predict(), expected_predictions)
     assert_array_equal(clf.fit_predict(X), expected_predictions)
 
