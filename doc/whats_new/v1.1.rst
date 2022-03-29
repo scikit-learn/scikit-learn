@@ -347,8 +347,10 @@ Changelog
 ....................................
 
 - |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
-  support the `Array API <https://data-apis.org/array-api/latest/>`_ for
-  `solver="svd"`. :pr:`22554` by `Thomas Fan`_.
+  supports the `Array API <https://data-apis.org/array-api/latest/>`_ for
+  `solver="svd"`. Array API support is considered experimental and might evolve
+  without being subjected to our usual rolling deprecation cycle policy. See
+  :ref:`array_api` for more details. :pr:`22554` by `Thomas Fan`_.
 
 - |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now uses
   the correct variance-scaling coefficient which may result in different model
