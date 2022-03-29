@@ -274,8 +274,6 @@ def test_neigh_predictions_algorithm_agnosticity(
                 f"The '{algorithm}' and '{next_algorithm}' "
                 "algorithms return different predictions."
             ),
-            rtol=1e-7,
-            atol=1e-7,
         )
 
 
@@ -305,7 +303,7 @@ def test_unsupervised_inputs(global_dtype, KNeighborsMixinSubclass):
         dist2, ind2 = nbrs.kneighbors(X)
 
         assert_allclose(dist1, dist2)
-        assert_allclose(ind1, ind2)
+        assert_array_equal(ind1, ind2)
 
 
 def test_n_neighbors_datatype():
@@ -357,7 +355,7 @@ def check_precomputed(make_train_test, estimators):
         nbrs_D.fit(DXX)
         dist_D, ind_D = getattr(nbrs_D, method)(DYX)
         assert_allclose(dist_X, dist_D)
-        assert_allclose(ind_X, ind_D)
+        assert_array_equal(ind_X, ind_D)
 
         # Check auto works too
         nbrs_D = neighbors.NearestNeighbors(
@@ -366,13 +364,13 @@ def check_precomputed(make_train_test, estimators):
         nbrs_D.fit(DXX)
         dist_D, ind_D = getattr(nbrs_D, method)(DYX)
         assert_allclose(dist_X, dist_D)
-        assert_allclose(ind_X, ind_D)
+        assert_array_equal(ind_X, ind_D)
 
         # Check X=None in prediction
         dist_X, ind_X = getattr(nbrs_X, method)(None)
         dist_D, ind_D = getattr(nbrs_D, method)(None)
         assert_allclose(dist_X, dist_D)
-        assert_allclose(ind_X, ind_D)
+        assert_array_equal(ind_X, ind_D)
 
         # Must raise a ValueError if the matrix is not of correct shape
         with pytest.raises(ValueError):
@@ -750,7 +748,7 @@ def test_radius_neighbors_classifier_outlier_labeling(global_dtype, algorithm, w
     clf.fit(X, y)
     assert_array_equal(correct_labels1, clf.predict(z1))
     assert_array_equal(correct_labels2, clf.predict(z2))
-    assert_array_equal(outlier_proba, clf.predict_proba(z2)[0])
+    assert_allclose(outlier_proba, clf.predict_proba(z2)[0])
 
     # test outlier_labeling of using predict_proba()
     RNC = neighbors.RadiusNeighborsClassifier
@@ -1034,7 +1032,7 @@ def test_RadiusNeighborsClassifier_multioutput():
         y_pred_mo = rnn_mo.predict(X_test)
 
         assert y_pred_mo.shape == y_test.shape
-        assert_allclose(y_pred_mo, y_pred_so)
+        assert_array_equal(y_pred_mo, y_pred_so)
 
 
 def test_kneighbors_classifier_sparse(
@@ -1091,14 +1089,14 @@ def test_KNeighborsClassifier_multioutput():
         y_pred_mo = knn_mo.predict(X_test)
 
         assert y_pred_mo.shape == y_test.shape
-        assert_allclose(y_pred_mo, y_pred_so)
+        assert_array_equal(y_pred_mo, y_pred_so)
 
         # Check proba
         y_pred_proba_mo = knn_mo.predict_proba(X_test)
         assert len(y_pred_proba_mo) == n_output
 
         for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
-            assert_allclose(proba_mo, proba_so)
+            assert_array_equal(proba_mo, proba_so)
 
 
 def test_kneighbors_regressor(
@@ -1531,12 +1529,7 @@ def test_neighbors_metrics(
                 and algorithm == "brute"
                 and sp_version >= parse_version("1.6.0")
             ):
-                if global_dtype == np.float64:
-                    # Warning from sklearn.metrics._dist_metrics.WMinkowskiDistance
-                    ExceptionToAssert = FutureWarning
-                if global_dtype == np.float32:
-                    # Warning from Scipy
-                    ExceptionToAssert = DeprecationWarning
+                ExceptionToAssert = FutureWarning
 
             with pytest.warns(ExceptionToAssert):
                 results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
