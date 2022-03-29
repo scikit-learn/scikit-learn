@@ -683,7 +683,7 @@ def test_lda_array_api(array_namespace):
     lda = LinearDiscriminantAnalysis()
     lda.fit(X, y3)
 
-    gm_attributes_arrays = {
+    array_attributes = {
         key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
     }
 
@@ -691,7 +691,7 @@ def test_lda_array_api(array_namespace):
     with config_context(array_api_dispatch=True):
         lda_xp.fit(X_xp, y_xp)
 
-    for key, attribute in gm_attributes_arrays.items():
+    for key, attribute in array_attributes.items():
         gm_xp_param = getattr(lda_xp, key)
         assert hasattr(gm_xp_param, "__array_namespace__")
         gm_xp_param_np = _convert_to_numpy(gm_xp_param, xp=xp)
