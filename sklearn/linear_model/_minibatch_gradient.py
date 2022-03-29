@@ -26,16 +26,16 @@ from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
-from ._MBGD_fast import _plain_MBGD
+from ._sgd_fast import _plain_sgd
 from ..utils import compute_class_weight
-from ._MBGD_fast import Hinge
-from ._MBGD_fast import SquaredHinge
-from ._MBGD_fast import Log
-from ._MBGD_fast import ModifiedHuber
-from ._MBGD_fast import SquaredLoss
-from ._MBGD_fast import Huber
-from ._MBGD_fast import EpsilonInsensitive
-from ._MBGD_fast import SquaredEpsilonInsensitive
+from ._sgd_fast import Hinge
+from ._sgd_fast import SquaredHinge
+from ._sgd_fast import Log
+from ._sgd_fast import ModifiedHuber
+from ._sgd_fast import SquaredLoss
+from ._sgd_fast import Huber
+from ._sgd_fast import EpsilonInsensitive
+from ._sgd_fast import SquaredEpsilonInsensitive
 
 LEARNING_RATE_TYPES = {
     "constant": 1,
@@ -445,7 +445,7 @@ def fit_binary(
 
     tol = est.tol if est.tol is not None else -np.inf
 
-    coef, intercept, average_coef, average_intercept, n_iter_ = _plain_MBGD(
+    coef, intercept, average_coef, average_intercept, n_iter_ = _plain_sgd(
         coef,
         intercept,
         average_coef,
@@ -913,7 +913,7 @@ class MBGDClassifier(BaseMBGDClassifier):
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
 
-    Read more in the :ref:`User Guide <MBGD>`.
+    Read more in the :ref:`User Guide <sgd>`.
 
     Parameters
     ----------
@@ -935,7 +935,7 @@ class MBGDClassifier(BaseMBGDClassifier):
         :class:`~sklearn.linear_model.MBGDRegressor` for a description.
 
         More details about the losses formulas can be found in the
-        :ref:`User Guide <MBGD_mathematical_formulation>`.
+        :ref:`User Guide <sgd_mathematical_formulation>`.
 
         .. deprecated:: 1.0
             The loss 'squared_loss' was deprecated in v1.0 and will be removed
@@ -1149,7 +1149,7 @@ class MBGDClassifier(BaseMBGDClassifier):
     ...                     MBGDClassifier(max_iter=1000, tol=1e-3))
     >>> clf.fit(X, Y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('MBGDclassifier', MBGDClassifier())])
+                    ('sgdclassifier', MBGDClassifier())])
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
@@ -1624,7 +1624,7 @@ class BaseMBGDRegressor(RegressorMixin, BaseMBGD):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
-        coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_MBGD(
+        coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_sgd(
             coef,
             intercept[0],
             average_coef,
@@ -1691,7 +1691,7 @@ class MBGDRegressor(BaseMBGDRegressor):
     This implementation works with data represented as dense numpy arrays of
     floating point values for the features.
 
-    Read more in the :ref:`User Guide <MBGD>`.
+    Read more in the :ref:`User Guide <sgd>`.
 
     Parameters
     ----------
@@ -1708,7 +1708,7 @@ class MBGDRegressor(BaseMBGDRegressor):
         a tolerance of epsilon.
 
         More details about the losses formulas can be found in the
-        :ref:`User Guide <MBGD_mathematical_formulation>`.
+        :ref:`User Guide <sgd_mathematical_formulation>`.
 
         .. deprecated:: 1.0
             The loss 'squared_loss' was deprecated in v1.0 and will be removed
@@ -1891,7 +1891,7 @@ class MBGDRegressor(BaseMBGDRegressor):
     ...                     MBGDRegressor(max_iter=1000, tol=1e-3))
     >>> reg.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('MBGDregressor', MBGDRegressor())])
+                    ('sgdregressor', MBGDRegressor())])
     """
 
     def __init__(
@@ -1957,7 +1957,7 @@ class MBGDOneClassSVM(BaseMBGD, OutlierMixin):
     similar to `sklearn.svm.OneClassSVM` which uses a Gaussian kernel by
     default.
 
-    Read more in the :ref:`User Guide <MBGD_online_one_class_svm>`.
+    Read more in the :ref:`User Guide <sgd_online_one_class_svm>`.
 
     .. versionadded:: 1.0
 
@@ -2185,7 +2185,7 @@ class MBGDOneClassSVM(BaseMBGD, OutlierMixin):
             average_coef = None  # Not used
             average_intercept = [0]  # Not used
 
-        coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_MBGD(
+        coef, intercept, average_coef, average_intercept, self.n_iter_ = _plain_sgd(
             coef,
             intercept[0],
             average_coef,
