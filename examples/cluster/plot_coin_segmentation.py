@@ -28,7 +28,7 @@ There are three options to assign labels:
 import time
 
 import numpy as np
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 from skimage.data import coins
 from skimage.transform import rescale

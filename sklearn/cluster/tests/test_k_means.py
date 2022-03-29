@@ -1181,7 +1181,7 @@ def test_is_same_clustering():
     labels1 = np.array([1, 0, 0, 1, 2, 0, 2, 1], dtype=np.int32)
     assert _is_same_clustering(labels1, labels1, 3)
 
-    # these other labels represent the same clustering since we can retrive the first
+    # these other labels represent the same clustering since we can retrieve the first
     # labels by simply renaming the labels: 0 -> 1, 1 -> 2, 2 -> 0.
     labels2 = np.array([0, 2, 2, 0, 1, 2, 1, 0], dtype=np.int32)
     assert _is_same_clustering(labels1, labels2, 3)

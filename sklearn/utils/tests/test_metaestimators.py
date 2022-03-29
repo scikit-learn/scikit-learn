@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import warnings
 
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.metaestimators import available_if
@@ -21,6 +22,7 @@ class MockMetaEstimator:
         pass
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 def test_delegated_docstring():
     assert "This is a mock delegated function" in str(
         MockMetaEstimator.__dict__["func"].__doc__
@@ -76,6 +78,7 @@ class HasPredictAsNDArray:
     predict = np.ones((10, 2), dtype=np.int64)
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 def test_if_delegate_has_method():
     assert hasattr(MetaEst(HasPredict()), "predict")
     assert not hasattr(MetaEst(HasNoPredict()), "predict")
@@ -131,6 +134,7 @@ def test_available_if_unbound_method():
         AvailableParameterEstimator.available_func(est)
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 def test_if_delegate_has_method_numpy_array():
     """Check that we can check for an attribute that is a NumPy array.
 
@@ -139,3 +143,15 @@ def test_if_delegate_has_method_numpy_array():
     """
     estimator = MetaEst(HasPredictAsNDArray())
     assert hasattr(estimator, "predict")
+
+
+def test_if_delegate_has_method_deprecated():
+    """Check the deprecation warning of if_delegate_has_method"""
+    # don't warn when creating the decorator
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        _ = if_delegate_has_method(delegate="predict")
+
+    # Only when calling it
+    with pytest.warns(FutureWarning, match="if_delegate_has_method was deprecated"):
+        hasattr(MetaEst(HasPredict()), "predict")
