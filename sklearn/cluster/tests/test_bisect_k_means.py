@@ -4,7 +4,7 @@ from warnings import simplefilter
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal, assert_allclose
 
 from sklearn.cluster import BisectingKMeans
 
@@ -34,14 +34,14 @@ def test_three_clusters(bisect_strategy):
     expected_predict = [0, 1]
     expected_labels = [0, 1, 0, 1, 0, 1, 2, 2, 2]
 
-    assert_array_equal(expected_centers, bisect_means.cluster_centers_)
+    assert_allclose(expected_centers, bisect_means.cluster_centers_)
     assert_array_equal(expected_predict, bisect_means.predict([[0, 0], [12, 3]]))
     assert_array_equal(expected_labels, bisect_means.labels_)
 
 
 def test_sparse():
     """Test Bisecting K-Means with sparse data
-    Also test if results obtained from fit(X) are the same as fit(X).predict(X)
+    Checks if labels and centers are the same between dense and sparse
     """
 
     rng = np.random.RandomState(0)
@@ -51,12 +51,8 @@ def test_sparse():
     X_csr = sp.csr_matrix(X)
 
     bisect_means = BisectingKMeans(n_clusters=3, random_state=0)
+
     bisect_means.fit(X_csr)
-
-    # Check if labels obtained from fit(X) are equal to fit(X).predict(X)
-    # X_csr is passed here to check also predict for sparse
-    assert_array_almost_equal(bisect_means.labels_, bisect_means.predict(X_csr))
-
     sparse_centers = bisect_means.cluster_centers_
 
     bisect_means.fit(X)
@@ -151,3 +147,20 @@ def test_verbose(capsys):
     captured = capsys.readouterr()
 
     assert search(r"Running Bisecting K-Means", captured.out)
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_fit_predict(is_sparse):
+    """Check if labels from fit(X) method are same as from fit(X).predict(X)"""
+    rng = np.random.RandomState(0)
+
+    X = rng.rand(10, 2)
+
+    if is_sparse:
+        X[X < 0.8] = 0
+        X = sp.csr_matrix(X)
+
+    bisect_means = BisectingKMeans(n_clusters=3, random_state=0)
+    bisect_means.fit(X)
+
+    assert_array_equal(bisect_means.labels_, bisect_means.predict(X))
