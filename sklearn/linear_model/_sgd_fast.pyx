@@ -832,6 +832,7 @@ def _plain_mbgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double MAX_DLOSS = 1e12
     cdef double max_change = 0.0
     cdef double max_weight = 0.0
+    cdef int n_batches = n_samples // minibatch_size + 1 #need to find the cieling of this division
 
     cdef long long sample_index
     cdef unsigned char [:] validation_mask_view = validation_mask
@@ -867,134 +868,150 @@ def _plain_mbgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     print("-- Epoch %d" % (epoch + 1))
             if shuffle:
                 dataset.shuffle(seed)
-            for i in range(n_samples):
-                dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
-                             &y, &sample_weight)
+            
+            sample_count = 0 # keeps track of the number of samples we have iterated through so far
+            m = minibatch_size # number of samples in each minibatch 
+            for minibatch in range(n_batches):
 
-                sample_index = dataset.index_data_ptr[dataset.current_index]
-                if validation_mask_view[sample_index]:
-                    # do not learn on the validation set
-                    continue
+                # if we are on the last batch, there are likely fewer datapoints than minibatch_size,
+                # so we might need to stop computing the gradient early 
+                if minibatch == n_batches - 1:
+                    m = n_samples - sample_count
 
-                p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
-                if learning_rate == OPTIMAL:
-                    eta = 1.0 / (alpha * (optimal_init + t - 1))
-                elif learning_rate == INVSCALING:
-                    eta = eta0 / pow(t, power_t)
+                # iterate through data in each minibatch
+                for i in range(m):
 
-                if verbose or not early_stopping:
-                    sumloss += loss.loss(p, y)
+                    # get next datapoint
+                    dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
+                                &y, &sample_weight)
+                    sample_count += 1
 
-                if y > 0.0:
-                    class_weight = weight_pos
-                else:
-                    class_weight = weight_neg
+                    sample_index = dataset.index_data_ptr[dataset.current_index]
 
-                if learning_rate == PA1:
-                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    if update == 0:
+                    # we skip over the datapoint if its part of the validation set (we need to watch out for this)
+                    if validation_mask_view[sample_index]:
+                        # do not learn on the validation set
                         continue
-                    update = min(C, loss.loss(p, y) / update)
-                elif learning_rate == PA2:
-                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    update = loss.loss(p, y) / (update + 0.5 / C)
-                else:
-                    dloss = loss.dloss(p, y)
-                    # clip dloss with large values to avoid numerical
-                    # instabilities
-                    if dloss < -MAX_DLOSS:
-                        dloss = -MAX_DLOSS
-                    elif dloss > MAX_DLOSS:
-                        dloss = MAX_DLOSS
-                    update = -eta * dloss
 
-                if learning_rate >= PA1:
-                    if is_hinge:
-                        # classification
-                        update *= y
-                    elif y - p < 0:
-                        # regression
-                        update *= -1
+                    p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
+                    if learning_rate == OPTIMAL:
+                        eta = 1.0 / (alpha * (optimal_init + t - 1))
+                    elif learning_rate == INVSCALING:
+                        eta = eta0 / pow(t, power_t)
 
-                update *= class_weight * sample_weight
+                    if verbose or not early_stopping:
+                        sumloss += loss.loss(p, y)
 
-                if penalty_type >= L2:
-                    # do not scale to negative values when eta or alpha are too
-                    # big: instead set the weights to zero
-                    w.scale(max(0, 1.0 - ((1.0 - l1_ratio) * eta * alpha)))
+                    if y > 0.0:
+                        class_weight = weight_pos
+                    else:
+                        class_weight = weight_neg
 
-                if update != 0.0:
-                    w.add(x_data_ptr, x_ind_ptr, xnnz, update)
-                if fit_intercept == 1:
-                    intercept_update = update
-                    if one_class:  # specific for One-Class SVM
-                        intercept_update -= 2. * eta * alpha
-                    if intercept_update != 0:
-                        intercept += intercept_update * intercept_decay
+                    if learning_rate == PA1:
+                        update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                        if update == 0:
+                            continue
+                        update = min(C, loss.loss(p, y) / update)
+                    elif learning_rate == PA2:
+                        update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                        update = loss.loss(p, y) / (update + 0.5 / C)
+                    else:
+                        dloss = loss.dloss(p, y)
+                        # clip dloss with large values to avoid numerical
+                        # instabilities
+                        if dloss < -MAX_DLOSS:
+                            dloss = -MAX_DLOSS
+                        elif dloss > MAX_DLOSS:
+                            dloss = MAX_DLOSS
+                        update = -eta * dloss
 
-                if 0 < average <= t:
-                    # compute the average for the intercept and update the
-                    # average weights, this is done regardless as to whether
-                    # the update is 0
+                    if learning_rate >= PA1:
+                        if is_hinge:
+                            # classification
+                            update *= y
+                        elif y - p < 0:
+                            # regression
+                            update *= -1
 
-                    w.add_average(x_data_ptr, x_ind_ptr, xnnz,
-                                  update, (t - average + 1))
-                    average_intercept += ((intercept - average_intercept) /
-                                          (t - average + 1))
+                    update *= class_weight * sample_weight
 
-                if penalty_type == L1 or penalty_type == ELASTICNET:
-                    u += (l1_ratio * eta * alpha)
-                    l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
+                    if penalty_type >= L2:
+                        # do not scale to negative values when eta or alpha are too
+                        # big: instead set the weights to zero
+                        w.scale(max(0, 1.0 - ((1.0 - l1_ratio) * eta * alpha)))
 
-                t += 1
-                count += 1
+                    if update != 0.0:
+                        w.add(x_data_ptr, x_ind_ptr, xnnz, update)
+                    if fit_intercept == 1:
+                        intercept_update = update
+                        if one_class:  # specific for One-Class SVM
+                            intercept_update -= 2. * eta * alpha
+                        if intercept_update != 0:
+                            intercept += intercept_update * intercept_decay
 
-            # report epoch information
-            if verbose > 0:
-                with gil:
-                    print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
-                          "Avg. loss: %f"
-                          % (w.norm(), weights.nonzero()[0].shape[0],
-                             intercept, count, sumloss / n_samples))
-                    print("Total training time: %.2f seconds."
-                          % (time() - t_start))
+                    if 0 < average <= t:
+                        # compute the average for the intercept and update the
+                        # average weights, this is done regardless as to whether
+                        # the update is 0
 
-            # floating-point under-/overflow check.
-            if (not skl_isfinite(intercept)
-                or any_nonfinite(<double *>weights.data, n_features)):
-                infinity = True
-                break
+                        w.add_average(x_data_ptr, x_ind_ptr, xnnz,
+                                    update, (t - average + 1))
+                        average_intercept += ((intercept - average_intercept) /
+                                            (t - average + 1))
 
-            # evaluate the score on the validation set
-            if early_stopping:
-                with gil:
-                    score = validation_score_cb(weights, intercept)
-                if tol > -INFINITY and score < best_score + tol:
-                    no_improvement_count += 1
-                else:
-                    no_improvement_count = 0
-                if score > best_score:
-                    best_score = score
-            # or evaluate the loss on the training set
-            else:
-                if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
-                    no_improvement_count += 1
-                else:
-                    no_improvement_count = 0
-                if sumloss < best_loss:
-                    best_loss = sumloss
+                    if penalty_type == L1 or penalty_type == ELASTICNET:
+                        u += (l1_ratio * eta * alpha)
+                        l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
-            # if there is no improvement several times in a row
-            if no_improvement_count >= n_iter_no_change:
-                if learning_rate == ADAPTIVE and eta > 1e-6:
-                    eta = eta / 5
-                    no_improvement_count = 0
-                else:
-                    if verbose:
-                        with gil:
-                            print("Convergence after %d epochs took %.2f "
-                                  "seconds" % (epoch + 1, time() - t_start))
+                    t += 1
+                    count += 1
+
+                # report epoch information
+                if verbose > 0:
+                    with gil:
+                        print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
+                            "Avg. loss: %f"
+                            % (w.norm(), weights.nonzero()[0].shape[0],
+                                intercept, count, sumloss / n_samples))
+                        print("Total training time: %.2f seconds."
+                            % (time() - t_start))
+
+                # floating-point under-/overflow check.
+                if (not skl_isfinite(intercept)
+                    or any_nonfinite(<double *>weights.data, n_features)):
+                    infinity = True
                     break
+
+                # evaluate the score on the validation set
+                if early_stopping:
+                    with gil:
+                        score = validation_score_cb(weights, intercept)
+                    if tol > -INFINITY and score < best_score + tol:
+                        no_improvement_count += 1
+                    else:
+                        no_improvement_count = 0
+                    if score > best_score:
+                        best_score = score
+                # or evaluate the loss on the training set
+                else:
+                    if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
+                        no_improvement_count += 1
+                    else:
+                        no_improvement_count = 0
+                    if sumloss < best_loss:
+                        best_loss = sumloss
+
+                # if there is no improvement several times in a row
+                if no_improvement_count >= n_iter_no_change:
+                    if learning_rate == ADAPTIVE and eta > 1e-6:
+                        eta = eta / 5
+                        no_improvement_count = 0
+                    else:
+                        if verbose:
+                            with gil:
+                                print("Convergence after %d epochs took %.2f "
+                                    "seconds" % (epoch + 1, time() - t_start))
+                        break
 
     if infinity:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
@@ -1003,7 +1020,7 @@ def _plain_mbgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     w.reset_wscale()
 
-    return weights, intercept, average_weights, average_intercept, epoch + 1, minibatch_size
+    return weights, intercept, average_weights, average_intercept, epoch + 1
 
 cdef bint any_nonfinite(double *w, int n) nogil:
     for i in range(n):
