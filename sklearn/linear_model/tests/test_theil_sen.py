@@ -111,9 +111,7 @@ def test_modweiszfeld_step_1d():
     assert_array_less(new_y, y)
     # Check that a single vector is identity
     X = np.array([1.0, 2.0, 3.0]).reshape(1, 3)
-    y = X[
-        0,
-    ]
+    y = X[0]
     new_y = _modified_weiszfeld_step(X, y)
     assert_array_equal(y, new_y)
 
