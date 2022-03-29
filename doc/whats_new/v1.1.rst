@@ -666,6 +666,10 @@ Changelog
   of sample weights when the input is sparse.
   :pr:`22899` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Feature| :class:`Ridge` with `solver="lsqr"` now supports to fit sparse input with
+  `fit_intercept=True`.
+  :pr:`22950` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.manifold`
 .......................
 

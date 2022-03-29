@@ -1362,7 +1362,7 @@ def test_n_iter():
         assert reg.n_iter_ is None
 
 
-@pytest.mark.parametrize("solver", ["sparse_cg", "lbfgs", "auto"])
+@pytest.mark.parametrize("solver", ["lsqr", "sparse_cg", "lbfgs", "auto"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 def test_ridge_fit_intercept_sparse(solver, with_sample_weight, global_random_seed):
     """Check that ridge finds the same coefs and intercept on dense and sparse input
@@ -1400,7 +1400,7 @@ def test_ridge_fit_intercept_sparse(solver, with_sample_weight, global_random_se
     assert_allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
 
-@pytest.mark.parametrize("solver", ["saga", "lsqr", "svd", "cholesky"])
+@pytest.mark.parametrize("solver", ["saga", "svd", "cholesky"])
 def test_ridge_fit_intercept_sparse_error(solver):
     X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
