@@ -536,7 +536,7 @@ def test_unsupervised_radius_neighbors(
             # sort the results: this is not done automatically for
             # radius searches
             dist, ind = neigh.radius_neighbors(test, return_distance=True)
-            for (d, i, i1) in zip(dist, ind, ind1):
+            for d, i, i1 in zip(dist, ind, ind1):
                 j = d.argsort()
                 d[:] = d[j]
                 i[:] = i[j]
