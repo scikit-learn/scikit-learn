@@ -164,7 +164,10 @@ def _solve_lsqr(
 
     With sample weights S=diag(sample_weight), this becomes
         ||sqrt(S) (y - (X - X_offset) w)||_2^2 + alpha * ||w||_2^2
-    and we expect y and X to already be rescaled, i.e. sqrt(S) @ y, sqrt(S) @ X.
+    and we expect y and X to already be rescaled, i.e. sqrt(S) @ y, sqrt(S) @ X. In
+    this case, X_offset is the sample_weight weighted mean of X before scaling by
+    sqrt(S). The objective then reads
+       ||y - (X - sqrt(S) X_offset) w)||_2^2 + alpha * ||w||_2^2
     """
     if sample_weight_sqrt is None:
         sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
