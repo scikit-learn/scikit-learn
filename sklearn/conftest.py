@@ -21,6 +21,10 @@ from sklearn.datasets import fetch_olivetti_faces
 from sklearn.datasets import fetch_rcv1
 
 
+# This plugin is necessary to define the random seed fixture
+pytest_plugins = ("sklearn.tests.random_seed",)
+
+
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
         "Your version of pytest is too old, you should have "

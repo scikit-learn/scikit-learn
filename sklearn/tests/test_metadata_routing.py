@@ -587,7 +587,9 @@ def test_setting_default_requests():
 
 
 def test_method_metadata_request():
-    mmr = MethodMetadataRequest(owner="test", method="fit")
+    mmr = MethodMetadataRequest(
+        router=MetadataRequest(owner="test"), owner="test", method="fit"
+    )
 
     with pytest.raises(
         ValueError, match="alias should be either a valid identifier or"
@@ -654,9 +656,9 @@ def test_estimator_warnings():
     "obj, string",
     [
         (
-            MethodMetadataRequest(owner="test", method="fit").add_request(
-                param="foo", alias="bar"
-            ),
+            MethodMetadataRequest(
+                router=MetadataRequest(owner="test"), owner="test", method="fit"
+            ).add_request(param="foo", alias="bar"),
             "{'foo': 'bar'}",
         ),
         (
@@ -888,13 +890,47 @@ def test_router_deprecation_warning():
     ):
         est.predict(X, sample_weight=my_weights)
 
-    # also check if passing a meta-estimator as a child object warns
+    # In this case both a warning and an error are raised. The warning comes
+    # from the MetaEstimator, and the error from WeightedMetaRegressor since it
+    # doesn't have any warn_on set but sample_weight is passed.
+    est = MetaEstimator(estimator=WeightedMetaRegressor(estimator=RegressorMetadata()))
+    with pytest.raises(
+        ValueError, match="sample_weight is passed but is not explicitly set"
+    ):
+        with pytest.warns(
+            FutureWarning, match="From version 1.3 this results in the following error"
+        ):
+            est.fit(X, y, sample_weight=my_weights)
+
+    class WarningWeightedMetaRegressor(WeightedMetaRegressor):
+        """A WeightedMetaRegressor which warns instead."""
+
+        def get_metadata_routing(self):
+            router = (
+                MetadataRouter(owner=self.__class__.__name__)
+                .add_self(self)
+                .add(estimator=self.estimator, method_mapping="one-to-one")
+                .warn_on(child="estimator", methods=["fit", "score"], raise_on="1.3")
+            )
+            return router
+
+    # Now there's only a warning since both meta-estimators warn.
     est = MetaEstimator(
-        estimator=WeightedMetaRegressor(
-            estimator=RegressorMetadata().set_fit_request(sample_weight=True)
-        )
+        estimator=WarningWeightedMetaRegressor(estimator=RegressorMetadata())
     )
     with pytest.warns(
         FutureWarning, match="From version 1.3 this results in the following error"
+    ):
+        est.fit(X, y, sample_weight=my_weights)
+
+    # but if the inner estimator has a non-default request, we fall ack to
+    # raising an error
+    est = MetaEstimator(
+        estimator=WarningWeightedMetaRegressor(
+            estimator=RegressorMetadata().set_fit_request(sample_weight=True)
+        )
+    )
+    with pytest.raises(
+        ValueError, match="sample_weight is passed but is not explicitly set"
     ):
         est.fit(X, y, sample_weight=my_weights)

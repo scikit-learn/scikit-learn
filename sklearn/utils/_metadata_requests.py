@@ -168,8 +168,9 @@ class MethodMetadataRequest:
         The name of the method to which these requests belong.
     """
 
-    def __init__(self, owner, method):
+    def __init__(self, router, owner, method):
         self._requests = dict()
+        self.router = router
         self.owner = owner
         self.method = method
 
@@ -178,9 +179,13 @@ class MethodMetadataRequest:
         """Dictionary of the form: ``{key: alias}``."""
         return self._requests
 
-    def _assume_requested(self):
-        """Convert all ERROR_IF_PASSED to REQUESTED."""
-        res = MethodMetadataRequest(owner=self.owner, method=self.method)
+    def _assume_requested(self, router):
+        """Convert all ERROR_IF_PASSED to REQUESTED.
+
+        This method returns a new object with the above change and leaves the
+        original object unchanged.
+        """
+        res = MethodMetadataRequest(router=router, owner=self.owner, method=self.method)
         res._requests = {
             param: (
                 alias if alias != RequestType.ERROR_IF_PASSED else RequestType.REQUESTED
@@ -221,6 +226,9 @@ class MethodMetadataRequest:
                 "alias should be either a valid identifier or one of "
                 "{None, True, False}, or a RequestType."
             )
+
+        if alias != self._requests.get(param, None):
+            self.router._is_default_request = False
 
         if alias == param:
             alias = RequestType.REQUESTED
@@ -365,13 +373,21 @@ class MetadataRequest:
         # this is used to check if the user has set any request values
         self._is_default_request = False
         for method in METHODS:
-            setattr(self, method, MethodMetadataRequest(owner=owner, method=method))
+            setattr(
+                self,
+                method,
+                MethodMetadataRequest(router=self, owner=owner, method=method),
+            )
 
     def _assume_requested(self):
-        """Convert all ERROR_IF_PASSED to REQUESTED."""
+        """Convert all ERROR_IF_PASSED to REQUESTED.
+
+        This method returns a new object with the above change and leaves the
+        original object unchanged.
+        """
         res = MetadataRequest(owner=None)
         for method in METHODS:
-            setattr(self, method, getattr(self, method)._assume_requested())
+            setattr(self, method, getattr(self, method)._assume_requested(router=res))
         return res
 
     def _get_param_names(self, method, return_alias, ignore_self=None):
@@ -591,6 +607,31 @@ class MetadataRouter:
         # or a FutureWarning if a metadata is passed which is not requested.
         self._warn_on = dict()
         self.owner = owner
+
+    @property
+    def _is_default_request(self):
+        """Return ``True`` only if all sub-components have default values."""
+        if self._self:
+            if not self._self._is_default_request:
+                return False
+
+        for router_mapping in self._route_mappings.values():
+            if not router_mapping.router._is_default_request:
+                return False
+
+        return True
+
+    def _assume_requested(self):
+        """Convert all ERROR_IF_PASSED to REQUESTED.
+
+        This method returns a new object with the above change and leaves the
+        original object unchanged.
+        """
+        res = MetadataRouter(owner=self.owner)
+        if self._self:
+            res._self = self._self._assume_requested()
+        res._route_mappings = deepcopy(self._route_mappings)
+        return res
 
     def add_self(self, obj):
         """Add `self` (as a consumer) to the routing.
@@ -1039,6 +1080,7 @@ class RequestMethod:
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
                     method_metadata_request.add_request(param=prop, alias=alias)
+                    requests._is_default_request = False
             instance._metadata_request = requests
 
             return instance
@@ -1121,7 +1163,7 @@ class _MetadataRequester:
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _build_request_for_signature(cls, method):
+    def _build_request_for_signature(cls, router, method):
         """Build the `MethodMetadataRequest` for a method using its signature.
 
         This method takes all arguments from the method signature and uses
@@ -1130,6 +1172,8 @@ class _MetadataRequester:
 
         Parameters
         ----------
+        router : MetadataRequest
+            The parent object for the created `MethodMetadataRequest`.
         method : str
             The name of the method.
 
@@ -1138,7 +1182,7 @@ class _MetadataRequester:
         method_request : MethodMetadataRequest
             The prepared request using the method's signature.
         """
-        mmr = MethodMetadataRequest(owner=cls.__name__, method=method)
+        mmr = MethodMetadataRequest(router=router, owner=cls.__name__, method=method)
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
         if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
@@ -1165,11 +1209,12 @@ class _MetadataRequester:
         signatures.
         """
         requests = MetadataRequest(owner=cls.__name__)
-        # this indicates that the user has not set any request values for this
-        # object
-        requests._is_default_request = True
         for method in METHODS:
-            setattr(requests, method, cls._build_request_for_signature(method=method))
+            setattr(
+                requests,
+                method,
+                cls._build_request_for_signature(router=requests, method=method),
+            )
 
         # Then overwrite those defaults with the ones provided in
         # __metadata_request__* attributes. Defaults set in
@@ -1197,6 +1242,11 @@ class _MetadataRequester:
             method = attr[attr.index(substr) + len(substr) :]
             for prop, alias in value.items():
                 getattr(requests, method).add_request(param=prop, alias=alias)
+
+        # this indicates that the user has not set any request values for this
+        # object
+        requests._is_default_request = True
+
         return requests
 
     def _get_metadata_request(self):

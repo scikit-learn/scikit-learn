@@ -4,6 +4,3 @@
 # details. For example, this allows to build extensions in place and run pytest
 # doc/modules/clustering.rst and use sklearn from the local folder rather than
 # the one from site-packages.
-
-# This plugin is necessary to define the random seed fixture
-pytest_plugins = ("sklearn.tests.random_seed",)
