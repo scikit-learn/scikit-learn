@@ -186,8 +186,6 @@ def _convert_to_numpy(X):
         xp, _ = get_namespace(X)
 
     if xp.__name__ == "cupy.array_api":
-        import cupy
-
-        return cupy.asnumpy(X._array)
+        return X._array.get()
     else:
         return numpy.asarray(X)
