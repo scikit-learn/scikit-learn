@@ -863,25 +863,13 @@ def enet_coordinate_descent_multi_task(
 
                 # Using numpy:
                 # XtA = np.dot(R.T, X) - l2_reg * W
-                #
                 # Using BLAS Level 3:
-                # np.dot(R.T, X)
+                # XtA = np.dot(R.T, X)
                 _gemm(ColMajor, Trans, NoTrans, n_tasks, n_features, n_samples, 1.0,
                       &R[0, 0], n_samples, &X[0, 0], n_samples, 0.0, &XtA[0, 0],
                       n_tasks)
                 # XtA -= l2_reg * W
                 _axpy(n_features * n_tasks, -l2_reg, &W[0, 0], 1 ,&XtA[0, 0], 1)
-                # Using BLAS Level 2:
-                # for jj in range(n_tasks):
-                #     # XtA[jj, :] = X.T @ R[:, jj] - l2_reg * W[jj, :]
-                #     _gemv(ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
-                #         n_samples, &R[0, jj], 1, -l2_reg, &XtA[jj, 0], n_tasks)
-                # Using BLAS Level 1:
-                # for ii in range(n_features):
-                #     for jj in range(n_tasks):
-                #         XtA[jj, ii] = _dot(
-                #             n_samples, X_ptr + ii * n_samples, 1, &R[0, jj], 1
-                #         ) - l2_reg * W[jj, ii]
 
                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=0)))
                 dual_norm_XtA = 0.0
@@ -892,6 +880,7 @@ def enet_coordinate_descent_multi_task(
                     if XtA_axis1norm > dual_norm_XtA:
                         dual_norm_XtA = XtA_axis1norm
 
+                # TODO: use squared L2 norm directly
                 # R_norm = linalg.norm(R, ord='fro')
                 # w_norm = linalg.norm(W, ord='fro')
                 R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
