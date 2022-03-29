@@ -40,6 +40,22 @@ from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
 
 
+def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
+    """Create LinearOperator for matrix products with implicit centering.
+
+    Matrix product `LinearOperator @ coef` returns `(X - X_offset) @ coef`.
+    """
+
+    def matvec(b):
+        return X.dot(b) - sample_weight_sqrt * b.dot(X_offset)
+
+    def rmatvec(b):
+        return X.T.dot(b) - X_offset * b.dot(sample_weight_sqrt)
+
+    X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
+    return X1
+
+
 def _solve_sparse_cg(
     X,
     y,
@@ -54,25 +70,13 @@ def _solve_sparse_cg(
     if sample_weight_sqrt is None:
         sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
 
-    def _get_rescaled_operator(X):
-
-        X_offset_scale = X_offset / X_scale
-
-        def matvec(b):
-            return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
-
-        def rmatvec(b):
-            return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
-
-        X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
-        return X1
-
     n_samples, n_features = X.shape
 
     if X_offset is None or X_scale is None:
         X1 = sp_linalg.aslinearoperator(X)
     else:
-        X1 = _get_rescaled_operator(X)
+        X_offset_scale = X_offset / X_scale
+        X1 = _get_rescaled_operator(X, X_offset_scale, sample_weight_sqrt)
 
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
@@ -137,7 +141,44 @@ def _solve_sparse_cg(
     return coefs
 
 
-def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
+def _solve_lsqr(
+    X,
+    y,
+    *,
+    alpha,
+    fit_intercept=True,
+    max_iter=None,
+    tol=1e-3,
+    X_offset=None,
+    X_scale=None,
+    sample_weight_sqrt=None,
+):
+    """Solve Ridge regression via LSQR.
+
+    We expect that y is always mean centered.
+    If X is dense, we expect it to be mean centered such that we can solve
+        ||y - Xw||_2^2 + alpha * ||w||_2^2
+
+    If X is sparse, we expect X_offset to be given such that we can solve
+        ||y - (X - X_offset)w||_2^2 + alpha * ||w||_2^2
+
+    With sample weights S=diag(sample_weight), this becomes
+        ||sqrt(S) (y - (X - X_offset) w)||_2^2 + alpha * ||w||_2^2
+    and we expect y and X to already be rescaled, i.e. sqrt(S) @ y, sqrt(S) @ X. In
+    this case, X_offset is the sample_weight weighted mean of X before scaling by
+    sqrt(S). The objective then reads
+       ||y - (X - sqrt(S) X_offset) w)||_2^2 + alpha * ||w||_2^2
+    """
+    if sample_weight_sqrt is None:
+        sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
+
+    if sparse.issparse(X) and fit_intercept:
+        X_offset_scale = X_offset / X_scale
+        X1 = _get_rescaled_operator(X, X_offset_scale, sample_weight_sqrt)
+    else:
+        # No need to touch anything
+        X1 = X
+
     n_samples, n_features = X.shape
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
     n_iter = np.empty(y.shape[1], dtype=np.int32)
@@ -148,7 +189,7 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     for i in range(y.shape[1]):
         y_column = y[:, i]
         info = sp_linalg.lsqr(
-            X, y_column, damp=sqrt_alpha[i], atol=tol, btol=tol, iter_lim=max_iter
+            X1, y_column, damp=sqrt_alpha[i], atol=tol, btol=tol, iter_lim=max_iter
         )
         coefs[i] = info[0]
         n_iter[i] = info[2]
@@ -351,7 +392,7 @@ def ridge_regression(
     ----------
     X : {ndarray, sparse matrix, LinearOperator} of shape \
         (n_samples, n_features)
-        Training data
+        Training data.
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)
         Target values.
@@ -409,9 +450,9 @@ def ridge_regression(
           `scipy.optimize.minimize`. It can be used only when `positive`
           is True.
 
-        All last six solvers support both dense and sparse data. However, only
-        'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
-        is True.
+        All solvers except 'svd' support both dense and sparse data. However, only
+        'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
+        `fit_intercept` is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -518,6 +559,7 @@ def _ridge_regression(
     X_scale=None,
     X_offset=None,
     check_input=True,
+    fit_intercept=False,
 ):
 
     has_sw = sample_weight is not None
@@ -629,7 +671,17 @@ def _ridge_regression(
         )
 
     elif solver == "lsqr":
-        coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
+        coef, n_iter = _solve_lsqr(
+            X,
+            y,
+            alpha=alpha,
+            fit_intercept=fit_intercept,
+            max_iter=max_iter,
+            tol=tol,
+            X_offset=X_offset,
+            X_scale=X_scale,
+            sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
+        )
 
     elif solver == "cholesky":
         if n_features > n_samples:
@@ -764,15 +816,15 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             else:
                 solver = self.solver
         elif sparse.issparse(X) and self.fit_intercept:
-            if self.solver not in ["auto", "sparse_cg", "sag", "lbfgs"]:
+            if self.solver not in ["auto", "lbfgs", "lsqr", "sag", "sparse_cg"]:
                 raise ValueError(
                     "solver='{}' does not support fitting the intercept "
                     "on sparse data. Please set the solver to 'auto' or "
-                    "'sparse_cg', 'sag', 'lbfgs' "
+                    "'lsqr', 'sparse_cg', 'sag', 'lbfgs' "
                     "or set `fit_intercept=False`".format(self.solver)
                 )
-            if self.solver == "lbfgs":
-                solver = "lbfgs"
+            if self.solver in ["lsqr", "lbfgs"]:
+                solver = self.solver
             elif self.solver == "sag" and self.max_iter is None and self.tol > 1e-4:
                 warnings.warn(
                     '"sag" solver requires many iterations to fit '
@@ -846,6 +898,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 return_n_iter=True,
                 return_intercept=False,
                 check_input=False,
+                fit_intercept=self.fit_intercept,
                 **params,
             )
             self._set_intercept(X_offset, y_offset, X_scale)
@@ -944,9 +997,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           `scipy.optimize.minimize`. It can be used only when `positive`
           is True.
 
-        All last six solvers support both dense and sparse data. However, only
-        'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
-        is True.
+        All solvers except 'svd' support both dense and sparse data. However, only
+        'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
+        `fit_intercept` is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
