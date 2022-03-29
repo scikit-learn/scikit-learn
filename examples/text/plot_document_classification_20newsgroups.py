@@ -147,9 +147,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import RidgeClassifier
 
-clf = LogisticRegression(C=0.2, max_iter=200)
+clf = RidgeClassifier(tol=1e-2, solver="sparse_cg")
 clf.fit(X_train, y_train)
 pred = clf.predict(X_test)
 score = metrics.accuracy_score(y_test, pred)
@@ -273,7 +273,7 @@ def benchmark(clf, custom_name=False):
 # We now train and test the datasets with 9 different classification
 # models and get performance results for each model.
 from sklearn.feature_selection import SelectFromModel
-from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
@@ -286,7 +286,7 @@ from sklearn.ensemble import RandomForestClassifier
 results = []
 for clf, name in (
     (LogisticRegression(), "Logistic Regression"),
-    (RidgeClassifier(tol=1e-2, solver="sag"), "Ridge Classifier"),
+    (RidgeClassifier(tol=1e-2, solver="sparse_cg"), "Ridge Classifier"),
     (KNeighborsClassifier(n_neighbors=10), "kNN"),
     (RandomForestClassifier(), "Random forest"),
 ):
