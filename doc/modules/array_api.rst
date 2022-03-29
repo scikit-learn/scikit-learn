@@ -23,7 +23,7 @@ Example usage
 
 Here is an example code snippet to demonstrate how to use `CuPy
 <https://cupy.dev/>`_ to run
-:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis` on a GPU::
+:class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a GPU::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn import config_context
