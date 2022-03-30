@@ -515,14 +515,14 @@ def test_lda_dimension_warning(n_classes, n_features):
     ],
 )
 def test_lda_dtype_match(data_type, expected_type):
-    for (solver, shrinkage) in solver_shrinkage:
+    for solver, shrinkage in solver_shrinkage:
         clf = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
         clf.fit(X.astype(data_type), y.astype(data_type))
         assert clf.coef_.dtype == expected_type
 
 
 def test_lda_numeric_consistency_float32_float64():
-    for (solver, shrinkage) in solver_shrinkage:
+    for solver, shrinkage in solver_shrinkage:
         clf_32 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
         clf_32.fit(X.astype(np.float32), y.astype(np.float32))
         clf_64 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
