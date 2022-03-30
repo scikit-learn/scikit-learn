@@ -157,12 +157,12 @@ def test_unsupervised_kneighbors(
 
     # Redefining the rng locally to use the same generated X
     local_rng = np.random.RandomState(0)
-    X = local_rng.rand(n_samples, n_features).astype(global_dtype)
+    X = local_rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
 
     query = (
         X
         if query_is_train
-        else local_rng.rand(n_query_pts, n_features).astype(global_dtype)
+        else local_rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
     )
 
     results_nodist = []
@@ -244,10 +244,10 @@ def test_neigh_predictions_algorithm_agnosticity(
 
     # Redefining the rng locally to use the same generated X
     local_rng = np.random.RandomState(0)
-    X = local_rng.rand(n_samples, n_features).astype(global_dtype)
+    X = local_rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
     y = local_rng.randint(3, size=n_samples)
 
-    query = local_rng.rand(n_query_pts, n_features).astype(global_dtype)
+    query = local_rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
 
     predict_results = []
 
@@ -288,7 +288,7 @@ def test_neigh_predictions_algorithm_agnosticity(
 def test_unsupervised_inputs(global_dtype, KNeighborsMixinSubclass):
     # Test unsupervised inputs for neighbors estimators
 
-    X = rng.random_sample((10, 3)).astype(global_dtype)
+    X = rng.random_sample((10, 3)).astype(global_dtype, copy=False)
     y = rng.randint(3, size=10)
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
     nbrs_fid.fit(X)
@@ -528,9 +528,9 @@ def test_unsupervised_radius_neighbors(
     # Test unsupervised radius-based query
     rng = np.random.RandomState(random_state)
 
-    X = rng.rand(n_samples, n_features).astype(global_dtype)
+    X = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
 
-    test = rng.rand(n_query_pts, n_features).astype(global_dtype)
+    test = rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
 
     for p in P:
         results = []
@@ -578,7 +578,7 @@ def test_kneighbors_classifier(
 ):
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype) - 1
+    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
     y_str = y.astype(str)
 
@@ -605,7 +605,7 @@ def test_kneighbors_classifier_float_labels(
 ):
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype) - 1
+    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
 
     knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
@@ -619,7 +619,7 @@ def test_kneighbors_classifier_predict_proba(global_dtype):
     # Test KNeighborsClassifier.predict_proba() method
     X = np.array(
         [[0, 2, 0], [0, 2, 1], [2, 0, 0], [2, 2, 0], [0, 0, 2], [0, 0, 1]]
-    ).astype(global_dtype)
+    ).astype(global_dtype, copy=False)
     y = np.array([4, 4, 5, 5, 1, 1])
     cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
     cls.fit(X, y)
@@ -661,7 +661,7 @@ def test_radius_neighbors_classifier(
 ):
     # Test radius-based classification
     rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype) - 1
+    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
     y_str = y.astype(str)
 
@@ -701,12 +701,16 @@ def test_radius_neighbors_classifier_when_no_neighbors(
     # Test radius-based classifier when no neighbors found.
     # In this case it should rise an informative exception
 
-    X = np.array([[1.0, 1.0], [2.0, 2.0]]).astype(global_dtype)
+    X = np.array([[1.0, 1.0], [2.0, 2.0]]).astype(global_dtype, copy=False)
     y = np.array([1, 2])
     radius = 0.1
 
-    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(global_dtype)  # no outliers
-    z2 = np.array([[1.01, 1.01], [1.4, 1.4]]).astype(global_dtype)  # one outlier
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(
+        global_dtype, copy=False
+    )  # no outliers
+    z2 = np.array([[1.01, 1.01], [1.4, 1.4]]).astype(
+        global_dtype, copy=False
+    )  # one outlier
 
     rnc = neighbors.RadiusNeighborsClassifier
     clf = rnc(
@@ -730,13 +734,15 @@ def test_radius_neighbors_classifier_outlier_labeling(global_dtype, algorithm, w
 
     X = np.array(
         [[1.0, 1.0], [2.0, 2.0], [0.99, 0.99], [0.98, 0.98], [2.01, 2.01]]
-    ).astype(global_dtype)
+    ).astype(global_dtype, copy=False)
     y = np.array([1, 2, 1, 1, 2])
     radius = 0.1
 
-    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(global_dtype)  # no outliers
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(
+        global_dtype, copy=False
+    )  # no outliers
     z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01, 2.01]]).astype(
-        global_dtype
+        global_dtype, copy=False
     )  # one outlier
     correct_labels1 = np.array([1, 2])
     correct_labels2 = np.array([-1, 1, 2])
@@ -753,7 +759,7 @@ def test_radius_neighbors_classifier_outlier_labeling(global_dtype, algorithm, w
     # test outlier_labeling of using predict_proba()
     RNC = neighbors.RadiusNeighborsClassifier
     X = np.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]).astype(
-        global_dtype
+        global_dtype, copy=False
     )
     y = np.array([0, 2, 2, 1, 1, 1, 3, 3, 3, 3])
 
@@ -1488,8 +1494,8 @@ def test_neighbors_metrics(
 ):
     # Test computing the neighbors for various metrics
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    X_train = rng.rand(n_samples, n_features).astype(global_dtype)
-    X_test = rng.rand(n_query_pts, n_features).astype(global_dtype)
+    X_train = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
+    X_test = rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
 
     metric_params_list = _generate_test_params_for(metric, n_features)
 
@@ -1558,8 +1564,8 @@ def test_kneighbors_brute_backend(
     global_dtype, metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
 ):
     # Both backend for the 'brute' algorithm of kneighbors must give identical results.
-    X_train = rng.rand(n_samples, n_features).astype(global_dtype)
-    X_test = rng.rand(n_query_pts, n_features).astype(global_dtype)
+    X_train = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
+    X_test = rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -1634,7 +1640,7 @@ def test_callable_metric():
 def test_valid_brute_metric_for_auto_algorithm(
     global_dtype, metric, n_samples=20, n_features=12
 ):
-    X = rng.rand(n_samples, n_features).astype(global_dtype)
+    X = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
     Xcsr = csr_matrix(X)
 
     metric_params_list = _generate_test_params_for(metric, n_features)
