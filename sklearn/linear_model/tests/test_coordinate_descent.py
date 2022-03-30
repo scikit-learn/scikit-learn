@@ -1056,10 +1056,10 @@ def test_elasticnet_precompute_gram_weighted_samples():
     X_r = X_c * np.sqrt(w_norm)[:, np.newaxis]
     gram = np.dot(X_r.T, X_r)
 
-    clf1 = ElasticNet(alpha=0.01, precompute=gram)
+    clf1 = ElasticNet(alpha=0.01, precompute=gram, tol=1e-5)
     clf1.fit(X_c, y, sample_weight=sample_weight)
 
-    clf2 = ElasticNet(alpha=0.01, precompute=False)
+    clf2 = ElasticNet(alpha=0.01, precompute=False, tol=1e-5)
     clf2.fit(X, y, sample_weight=sample_weight)
 
     assert_allclose(clf1.coef_, clf2.coef_)
