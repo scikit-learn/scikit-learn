@@ -37,56 +37,6 @@ handler = logging.StreamHandler()
 logger.addHandler(handler)
 
 
-def execute_command(command_list):
-    proc = subprocess.Popen(
-        command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-
-    out, err = proc.communicate()
-    out, err = out.decode(), err.decode()
-
-    if proc.returncode != 0:
-        command_str = " ".join(command_list)
-        raise RuntimeError(
-            "Command exited with non-zero exit code.\n"
-            "Exit code: {}\n"
-            "Command:\n{}\n"
-            "stdout:\n{}\n"
-            "stderr:\n{}\n".format(proc.returncode, command_str, out, err)
-        )
-    return out
-
-
-def get_package_with_constraint(package_name, build_metadata, uses_pip=False):
-    build_package_constraints = build_metadata.get("package_constraints")
-    if build_package_constraints is None:
-        constraint = None
-    else:
-        constraint = build_package_constraints.get(package_name)
-
-    constraint = constraint or default_package_constraints.get(package_name)
-
-    if constraint is None:
-        return package_name
-
-    comment = ""
-    if constraint == "min":
-        constraint = execute_command(
-            [sys.executable, "sklearn/_min_dependencies.py", package_name]
-        ).strip()
-        comment = "  # min"
-
-    if re.match(r"\d[.\d]*", constraint):
-        equality = "==" if uses_pip else "="
-        constraint = equality + constraint
-
-    return f"{package_name}{constraint}{comment}"
-
-
-environment = Environment(trim_blocks=True, lstrip_blocks=True)
-environment.filters["get_package_with_constraint"] = get_package_with_constraint
-
-
 common_dependencies_without_coverage = [
     "python",
     "numpy",
@@ -218,6 +168,85 @@ conda_build_metadata_list = [
 ]
 
 
+pip_build_metadata_list = [
+    {
+        "build_name": "debian_atlas_32bit",
+        "pip_dependencies": ["cython", "joblib", "threadpoolctl", "pytest"],
+        "package_constraints": {
+            "joblib": "min",
+            "threadpoolctl": "2.2.0",
+            "pytest": "min",
+            # no pytest-xdist because it causes issue on 32bit
+        },
+        # same Python version as in debian-32 build
+        "python_version": "3.9.2",
+    },
+    {
+        "build_name": "ubuntu_atlas",
+        "pip_dependencies": [
+            "cython",
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-xdist",
+        ],
+        "package_constraints": {"joblib": "min", "threadpoolctl": "min"},
+        # same Python version as in Ubuntu 20.04 build
+        "python_version": "3.8.2",
+    },
+]
+
+
+def execute_command(command_list):
+    proc = subprocess.Popen(
+        command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+
+    out, err = proc.communicate()
+    out, err = out.decode(), err.decode()
+
+    if proc.returncode != 0:
+        command_str = " ".join(command_list)
+        raise RuntimeError(
+            "Command exited with non-zero exit code.\n"
+            "Exit code: {}\n"
+            "Command:\n{}\n"
+            "stdout:\n{}\n"
+            "stderr:\n{}\n".format(proc.returncode, command_str, out, err)
+        )
+    return out
+
+
+def get_package_with_constraint(package_name, build_metadata, uses_pip=False):
+    build_package_constraints = build_metadata.get("package_constraints")
+    if build_package_constraints is None:
+        constraint = None
+    else:
+        constraint = build_package_constraints.get(package_name)
+
+    constraint = constraint or default_package_constraints.get(package_name)
+
+    if constraint is None:
+        return package_name
+
+    comment = ""
+    if constraint == "min":
+        constraint = execute_command(
+            [sys.executable, "sklearn/_min_dependencies.py", package_name]
+        ).strip()
+        comment = "  # min"
+
+    if re.match(r"\d[.\d]*", constraint):
+        equality = "==" if uses_pip else "="
+        constraint = equality + constraint
+
+    return f"{package_name}{constraint}{comment}"
+
+
+environment = Environment(trim_blocks=True, lstrip_blocks=True)
+environment.filters["get_package_with_constraint"] = get_package_with_constraint
+
+
 def get_conda_environment_content(build_metadata):
     template = environment.from_string(
         """
@@ -344,35 +373,6 @@ def write_pip_lock_file(build_metadata, folder_path):
 def write_all_pip_lock_files(build_metadata_list, folder_path):
     for build_metadata in build_metadata_list:
         write_pip_lock_file(build_metadata, folder_path)
-
-
-pip_build_metadata_list = [
-    {
-        "build_name": "debian_atlas_32bit",
-        "pip_dependencies": ["cython", "joblib", "threadpoolctl", "pytest"],
-        "package_constraints": {
-            "joblib": "min",
-            "threadpoolctl": "2.2.0",
-            "pytest": "min",
-            # no pytest-xdist because it causes issue on 32bit
-        },
-        # same Python version as in debian-32 build
-        "python_version": "3.9.2",
-    },
-    {
-        "build_name": "ubuntu_atlas",
-        "pip_dependencies": [
-            "cython",
-            "joblib",
-            "threadpoolctl",
-            "pytest",
-            "pytest-xdist",
-        ],
-        "package_constraints": {"joblib": "min", "threadpoolctl": "min"},
-        # same Python version as in Ubuntu 20.04 build
-        "python_version": "3.8.2",
-    },
-]
 
 
 if __name__ == "__main__":

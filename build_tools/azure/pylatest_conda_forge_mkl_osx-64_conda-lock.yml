@@ -156,13 +156,13 @@ package:
 - category: main
   dependencies: {}
   hash:
-    md5: a3a6a53beaa92c5cfe52ee3a198e78cc
-    sha256: 2421046db13b5f161a4330ff4f0e536999bce1ea3b8db5eb0d78e045146707ca
+    md5: 49f20ed86f7ed34204be74fbb2868c60
+    sha256: 7e01a61f197bae37cc4c21f3e4767f9fb3b327a9e100c9b479ec83d8ede4a921
   manager: conda
   name: libzlib
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/libzlib-1.2.11-h9173be1_1013.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/libzlib-1.2.11-h6c3fc93_1014.tar.bz2
   version: 1.2.11
 - category: main
   dependencies: {}
@@ -354,14 +354,14 @@ package:
   dependencies:
     ca-certificates: ''
   hash:
-    md5: f7bcdbb7a5dae97030eee20b884b1f8a
-    sha256: cd2e39b522f944907b465c29b1d038ebf941aaf94ed57d119df9cba8140296f3
+    md5: abb88e2a46c2da71e2644045e4397839
+    sha256: 440d3dd9a4a75a2e8ac32e18c7035b8aa44df2d23e0aff85281d7a2c45c3757c
   manager: conda
   name: openssl
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/openssl-1.1.1l-h0d85af4_0.tar.bz2
-  version: 1.1.1l
+  url: https://conda.anaconda.org/conda-forge/osx-64/openssl-1.1.1n-h6c3fc93_0.tar.bz2
+  version: 1.1.1n
 - category: main
   dependencies:
     ncurses: '>=6.2,<7.0.0a0'
@@ -412,15 +412,15 @@ package:
   version: 8.6.12
 - category: main
   dependencies:
-    libzlib: 1.2.11 h9173be1_1013
+    libzlib: 1.2.11 h6c3fc93_1014
   hash:
-    md5: cf985617d679990418c380099620b01a
-    sha256: 9102c5f89c78c56b0bb0766a074f509d67362cf97aa66d706d4e95e9061bb03c
+    md5: 98b82f6a8de694bc6259f2d1a69bc02b
+    sha256: 825ad325db6febfcc5ec1051a57a50be5504613c737ef3be8ccf38ec4dd12b70
   manager: conda
   name: zlib
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/zlib-1.2.11-h9173be1_1013.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/zlib-1.2.11-h6c3fc93_1014.tar.bz2
   version: 1.2.11
 - category: main
   dependencies:
@@ -685,21 +685,21 @@ package:
     libffi: '>=3.4.2,<3.5.0a0'
     libzlib: '>=1.2.11,<1.3.0a0'
     ncurses: '>=6.3,<7.0a0'
-    openssl: '>=1.1.1l,<1.1.2a'
+    openssl: '>=1.1.1n,<1.1.2a'
     readline: '>=8.1,<9.0a0'
-    sqlite: '>=3.37.0,<4.0a0'
+    sqlite: '>=3.37.1,<4.0a0'
     tk: '>=8.6.12,<8.7.0a0'
     tzdata: ''
     xz: '>=5.2.5,<5.3.0a0'
   hash:
-    md5: 49719836b745429d6e3751ac39d7efe6
-    sha256: cf68f8dc72f542988381e9a299b8b73276d266f98913252722232a318dd556e4
+    md5: 62ebdb09c27c4cd4bcc84c6a283cb6cb
+    sha256: ae3b9b0a239cad96eb82af92e79c6dc1246e75da6dd193d7759866f054a72980
   manager: conda
   name: python
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/python-3.10.2-h1dd9edd_4_cpython.tar.bz2
-  version: 3.10.2
+  url: https://conda.anaconda.org/conda-forge/osx-64/python-3.10.4-h8b4d769_0_cpython.tar.bz2
+  version: 3.10.4
 - category: main
   dependencies:
     python: '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*'
@@ -981,14 +981,14 @@ package:
   dependencies:
     python: '>=3'
   hash:
-    md5: 7e4f811bff46a5a6a7e0094921389395
-    sha256: 3202ebd55b901bc3e77316304007d85194d27987bfafbf53cba4f40b5ee890b0
+    md5: b87d66d6d3991d988fb31510c95a9267
+    sha256: 082043d171a5055d679bd01ad9f5f39125a7aef894049ce7f035bd7134dffd21
   manager: conda
   name: pytz
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/noarch/pytz-2021.3-pyhd8ed1ab_0.tar.bz2
-  version: '2021.3'
+  url: https://conda.anaconda.org/conda-forge/noarch/pytz-2022.1-pyhd8ed1ab_0.tar.bz2
+  version: '2022.1'
 - category: main
   dependencies:
     python: ''
@@ -1107,17 +1107,17 @@ package:
   version: '6.2'
 - category: main
   dependencies:
-    libcxx: '>=11.1.0'
+    libcxx: '>=12.0.1'
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
   hash:
-    md5: 73baab5ff7df09aca16bb1bf379d4af8
-    sha256: 4ac426d21c719a2433ad3fa4f022d288cdfbd931773da2bae8e69bd713724ee2
+    md5: e64ce4765543ae5323438b9e2ef907ac
+    sha256: 6df9de07cd21494aa2b8826d2f9a0d401f34182797fcfb0850c6950173baefe5
   manager: conda
   name: cython
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/cython-0.29.28-py310hba3363e_0.tar.bz2
+  url: https://conda.anaconda.org/conda-forge/osx-64/cython-0.29.28-py310h9d931ec_1.tar.bz2
   version: 0.29.28
 - category: main
   dependencies:
@@ -1125,14 +1125,14 @@ package:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
   hash:
-    md5: 7630fc618bdc3c32caa48215a081ba1a
-    sha256: 9aea640a1e82ca16e9774ffc59228afd42465fd61882f545e8fbcbb5384cb87e
+    md5: e10afcbbb096a44f2e5d04fc907c08fd
+    sha256: 8b97d5cf62ef473a8d23e56c4f108a8089b82f8cd89dbefaedc571cd08dd0381
   manager: conda
   name: kiwisolver
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/kiwisolver-1.4.0-py310h6be76da_0.tar.bz2
-  version: 1.4.0
+  url: https://conda.anaconda.org/conda-forge/osx-64/kiwisolver-1.4.2-py310h6be76da_0.tar.bz2
+  version: 1.4.2
 - category: main
   dependencies:
     libblas: 3.9.0 13_osx64_mkl
@@ -1245,14 +1245,14 @@ package:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
   hash:
-    md5: 8b111f660850143319c7d3715b083246
-    sha256: f79d6a24e64d7f8704eec8b49519c5ff71affd38017f76b462020ee962dc6d0c
+    md5: 1770038384b28cfd4376feaa86d01a54
+    sha256: 45ccbf5c00b86cbe3adf9fdd742310bf5e48a76e02144f8fd22939f8349f81de
   manager: conda
   name: setuptools
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/setuptools-60.10.0-py310h2ec42d9_0.tar.bz2
-  version: 60.10.0
+  url: https://conda.anaconda.org/conda-forge/osx-64/setuptools-61.2.0-py310h2ec42d9_3.tar.bz2
+  version: 61.2.0
 - category: main
   dependencies:
     python: '>=3.10,<3.11.0a0'
@@ -1329,14 +1329,14 @@ package:
     python: '>=3.10,<3.11.0a0'
     python_abi: 3.10.* *_cp310
   hash:
-    md5: 463fb2dda6729ce5be2b8113a4f47a92
-    sha256: e807e378966ae8e143850935514568f098dd6da700b69602d4d05c94d66cd1a5
+    md5: cc46bb8ca0f51269ff244989b61aeaf5
+    sha256: fdc2642bea9dbe96b2ea187f3c287ced36d7786e3137b6eac9fcc21f2c5ce98f
   manager: conda
   name: cryptography
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/cryptography-36.0.1-py310ha82f1d4_0.tar.bz2
-  version: 36.0.1
+  url: https://conda.anaconda.org/conda-forge/osx-64/cryptography-36.0.2-py310hd6fa1ae_0.tar.bz2
+  version: 36.0.2
 - category: main
   dependencies:
     brotli: ''
@@ -1345,14 +1345,14 @@ package:
     python_abi: 3.10.* *_cp310
     unicodedata2: '>=14.0.0'
   hash:
-    md5: df61da3b8a7922cb48a7e4f024d38300
-    sha256: c1bbd5d949494140e117f297dbc878973c45d08eef09f2f7ed8d163078731e3c
+    md5: 76c5c40b9be00cdb8bf022f1cd877928
+    sha256: 9e6457494f33a97df24862354aa1a0150863da0febfde5eab569ec37c4940cab
   manager: conda
   name: fonttools
   optional: false
   platform: osx-64
-  url: https://conda.anaconda.org/conda-forge/osx-64/fonttools-4.30.0-py310h1961e1f_0.tar.bz2
-  version: 4.30.0
+  url: https://conda.anaconda.org/conda-forge/osx-64/fonttools-4.31.2-py310h1961e1f_0.tar.bz2
+  version: 4.31.2
 - category: main
   dependencies:
     python: '>=3.6'

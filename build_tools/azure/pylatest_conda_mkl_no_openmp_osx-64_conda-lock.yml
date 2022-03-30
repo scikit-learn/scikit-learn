@@ -35,14 +35,14 @@ package:
 - category: main
   dependencies: {}
   hash:
-    md5: 7d08031532902274b38cf0ffb229a12d
-    sha256: 7d46ffcc425ec2026ef497eebe80a9ea99371ef5a7c9f5508562e08738a4bdd0
+    md5: 91e9f915e7c9a5a3432a0a88a9fd142a
+    sha256: 59dcfed97a5a946808156507c5b1206e3590f2cc2fd838062c1dc5ad6735bb9d
   manager: conda
   name: ca-certificates
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/ca-certificates-2022.2.1-hecd8cb5_0.conda
-  version: 2022.2.1
+  url: https://repo.anaconda.com/pkgs/main/osx-64/ca-certificates-2022.3.18-hecd8cb5_0.conda
+  version: 2022.3.18
 - category: main
   dependencies: {}
   hash:
@@ -229,14 +229,14 @@ package:
   dependencies:
     ca-certificates: ''
   hash:
-    md5: 83bb9d9bb9557ed5dfbb7696ac0a882e
-    sha256: 78c26b2af3ec7fcd9fff7c92809b09cc7b86b8f74b5e106655575c292d444aee
+    md5: bc164c37a7706bb3d7e0a43435bcdae7
+    sha256: 77375a0610f6742dd43df5fb52974eae2915b10b9dc83e1d011bf53d00fa40a6
   manager: conda
   name: openssl
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.1.1m-hca72f7f_0.conda
-  version: 1.1.1m
+  url: https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.1.1n-hca72f7f_0.conda
+  version: 1.1.1n
 - category: main
   dependencies:
     ncurses: '>=6.3,<7.0a0'
@@ -321,25 +321,25 @@ package:
   version: 4.2.0
 - category: main
   dependencies:
-    libcxx: '>=10.0.0'
+    libcxx: '>=12.0.0'
     libffi: '>=3.3,<3.4.0a0'
-    ncurses: '>=6.2,<7.0a0'
-    openssl: '>=1.1.1l,<1.1.2a'
+    ncurses: '>=6.3,<7.0a0'
+    openssl: '>=1.1.1n,<1.1.2a'
     readline: '>=8.0,<9.0a0'
-    sqlite: '>=3.36.0,<4.0a0'
-    tk: '>=8.6.10,<8.7.0a0'
+    sqlite: '>=3.37.2,<4.0a0'
+    tk: '>=8.6.11,<8.7.0a0'
     tzdata: ''
     xz: '>=5.2.5,<6.0a0'
     zlib: '>=1.2.11,<1.3.0a0'
   hash:
-    md5: 8e3b06b77b02497b4aa28bbe227b0851
-    sha256: f6f1946f76dd3648fb64d495ff095f6d0ec9ee701a2014b4f235462150525242
+    md5: 53dbfd0a1d355da8c68efb83934b0b07
+    sha256: 44371dd221a82a6e283c8e2b2f6c3701145842c6e7aa889561dd6009f2e88056
   manager: conda
   name: python
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/python-3.9.7-h88f2d9e_1.conda
-  version: 3.9.7
+  url: https://repo.anaconda.com/pkgs/main/osx-64/python-3.9.11-hdfd78df_2.conda
+  version: 3.9.11
 - category: main
   dependencies:
     python: ''
@@ -405,14 +405,14 @@ package:
     libcxx: '>=12.0.0'
     python: '>=3.9,<3.10.0a0'
   hash:
-    md5: 369ee397408332184ed8e947f5c69cf3
-    sha256: cf4ba2650c565444cda0f41632fcadcea20b7680fd0e69162b540443a1467eb1
+    md5: ebbe0186b64db68fa2625b75ebd825b1
+    sha256: f2ef45a5cec7446b5d4cba64b8e9b440d74ab350b9a60a928786a39f70b2df45
   manager: conda
   name: cython
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/cython-0.29.25-py39he9d5cce_0.conda
-  version: 0.29.25
+  url: https://repo.anaconda.com/pkgs/main/osx-64/cython-0.29.28-py39he9d5cce_0.conda
+  version: 0.29.28
 - category: main
   dependencies:
     python: 2.7|>=3.5
@@ -519,13 +519,13 @@ package:
   dependencies:
     python: '>=3.9,<3.10.0a0'
   hash:
-    md5: 20d105f688fb10fd716cf0715e9039a9
-    sha256: 7fc1deca600f6937afd4468459138823558b1ba485e16ec93438a39b11061844
+    md5: c5507133514846cc5f54dc4de9ba1563
+    sha256: b16945f522eb9ce1418e2a50ad75a97876d8a5d27b7522f0d47c473a567b05ae
   manager: conda
   name: pluggy
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/pluggy-1.0.0-py39hecd8cb5_0.conda
+  url: https://repo.anaconda.com/pkgs/main/osx-64/pluggy-1.0.0-py39hecd8cb5_1.conda
   version: 1.0.0
 - category: main
   dependencies:
@@ -907,14 +907,14 @@ package:
     numpy: '>=1.16.6,<2.0a0'
     python: '>=3.9,<3.10.0a0'
   hash:
-    md5: adf476dc30ed4992557cd0349b34f909
-    sha256: 0e4eb5dabf8d3bc81d63bc00404ab8ef574374c7e7641f42e684ff82441cc58d
+    md5: 8da674eeda1069663e69f0b112232ffb
+    sha256: fd14abc014e4ff82dcad4087eb51301faba87f6826f77050fd75007d0bf4fc6b
   manager: conda
   name: bottleneck
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/bottleneck-1.3.2-py39he3068b8_1.conda
-  version: 1.3.2
+  url: https://repo.anaconda.com/pkgs/main/osx-64/bottleneck-1.3.4-py39h67323c0_0.conda
+  version: 1.3.4
 - category: main
   dependencies:
     matplotlib-base: '>=3.5.1,<3.5.2.0a0'
@@ -1049,13 +1049,13 @@ package:
     python-dateutil: '>=2.8.1'
     pytz: '>=2020.1'
   hash:
-    md5: 6f20fecea8be72e1264640a0f4fdd4b1
-    sha256: 0d32b66abf59434f26a4ab8e1f8093a79705827bb211cec0dc34a71ab98ccc2c
+    md5: 338d343588f8ded3a346d58e17197fc9
+    sha256: cadb051d5fc75475a35ba6f70a3d66937f38b8af1483963ead500d5e4a93c678
   manager: conda
   name: pandas
   optional: false
   platform: osx-64
-  url: https://repo.anaconda.com/pkgs/main/osx-64/pandas-1.4.1-py39he9d5cce_0.conda
+  url: https://repo.anaconda.com/pkgs/main/osx-64/pandas-1.4.1-py39he9d5cce_1.conda
   version: 1.4.1
 - category: main
   dependencies:
