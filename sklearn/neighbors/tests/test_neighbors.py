@@ -662,7 +662,7 @@ def test_radius_neighbors_classifier(
     # Test radius-based classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
-    y = ((X**2).sum(axis=1) < 0.5).astype(int)
+    y = ((X**2).sum(axis=1) < radius).astype(int)
     y_str = y.astype(str)
 
     neigh = neighbors.RadiusNeighborsClassifier(
@@ -701,16 +701,15 @@ def test_radius_neighbors_classifier_when_no_neighbors(
     # Test radius-based classifier when no neighbors found.
     # In this case it should rise an informative exception
 
-    X = np.array([[1.0, 1.0], [2.0, 2.0]]).astype(global_dtype, copy=False)
+    X = np.array([[1.0, 1.0], [2.0, 2.0]], dtype=global_dtype)
     y = np.array([1, 2])
     radius = 0.1
 
-    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(
-        global_dtype, copy=False
-    )  # no outliers
-    z2 = np.array([[1.01, 1.01], [1.4, 1.4]]).astype(
-        global_dtype, copy=False
-    )  # one outlier
+    # no outliers
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]], dtype=global_dtype)
+
+    # one outlier
+    z2 = np.array([[1.01, 1.01], [1.4, 1.4]], dtype=global_dtype)
 
     rnc = neighbors.RadiusNeighborsClassifier
     clf = rnc(
@@ -733,17 +732,18 @@ def test_radius_neighbors_classifier_outlier_labeling(global_dtype, algorithm, w
     # are labeled.
 
     X = np.array(
-        [[1.0, 1.0], [2.0, 2.0], [0.99, 0.99], [0.98, 0.98], [2.01, 2.01]]
-    ).astype(global_dtype, copy=False)
+        [[1.0, 1.0], [2.0, 2.0], [0.99, 0.99], [0.98, 0.98], [2.01, 2.01]],
+        dtype=global_dtype,
+    )
     y = np.array([1, 2, 1, 1, 2])
     radius = 0.1
 
-    z1 = np.array([[1.01, 1.01], [2.01, 2.01]]).astype(
-        global_dtype, copy=False
-    )  # no outliers
-    z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01, 2.01]]).astype(
-        global_dtype, copy=False
-    )  # one outlier
+    # no outliers
+    z1 = np.array([[1.01, 1.01], [2.01, 2.01]], dtype=global_dtype)
+
+    # one outlier
+    z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01, 2.01]], dtype=global_dtype)
+
     correct_labels1 = np.array([1, 2])
     correct_labels2 = np.array([-1, 1, 2])
     outlier_proba = np.array([0, 0])
@@ -753,14 +753,14 @@ def test_radius_neighbors_classifier_outlier_labeling(global_dtype, algorithm, w
     )
     clf.fit(X, y)
     assert_array_equal(correct_labels1, clf.predict(z1))
-    assert_array_equal(correct_labels2, clf.predict(z2))
-    assert_allclose(outlier_proba, clf.predict_proba(z2)[0])
+    with pytest.warns(UserWarning, match="Outlier label -1 is not in training classes"):
+        assert_array_equal(correct_labels2, clf.predict(z2))
+    with pytest.warns(UserWarning, match="Outlier label -1 is not in training classes"):
+        assert_allclose(outlier_proba, clf.predict_proba(z2)[0])
 
     # test outlier_labeling of using predict_proba()
     RNC = neighbors.RadiusNeighborsClassifier
-    X = np.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]).astype(
-        global_dtype, copy=False
-    )
+    X = np.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]], dtype=global_dtype)
     y = np.array([0, 2, 2, 1, 1, 1, 3, 3, 3, 3])
 
     # test outlier_label scalar verification
