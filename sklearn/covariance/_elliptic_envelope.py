@@ -160,7 +160,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Parameters
         ----------
+<<<<<<< HEAD
         X : {array-like} of shape (n_samples, n_features)
+=======
+        X : array-like of shape (n_samples, n_features)
+>>>>>>> upstream/main
             Training data.
 
         y : Ignored
