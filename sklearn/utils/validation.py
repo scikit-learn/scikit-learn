@@ -585,7 +585,7 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
 
     if is_sparse(pd_dtype) or not is_extension_array_dtype(pd_dtype):
         # Sparse arrays will be converted later in `check_array`
-        # Only handle extension arrays for interger and floats
+        # Only handle extension arrays for integer and floats
         return False
     elif is_float_dtype(pd_dtype):
         # Float ndarrays can normally support nans. They need to be converted
@@ -869,23 +869,12 @@ def check_array(
                     "if it contains a single sample.".format(array)
                 )
 
-        # make sure we actually converted to numeric:
-        if dtype_numeric and array.dtype.kind in "OUSV":
-            warnings.warn(
-                "Arrays of bytes/strings is being converted to decimal "
-                "numbers if dtype='numeric'. This behavior is deprecated in "
-                "0.24 and will be removed in 1.1 (renaming of 0.26). Please "
-                "convert your data to numeric values explicitly instead.",
-                FutureWarning,
-                stacklevel=2,
+        if dtype_numeric and array.dtype.kind in "USV":
+            raise ValueError(
+                "dtype='numeric' is not compatible with arrays of bytes/strings."
+                "Convert your data to numeric values explicitly instead."
             )
-            try:
-                array = array.astype(np.float64)
-            except ValueError as e:
-                raise ValueError(
-                    "Unable to convert array of bytes/strings "
-                    "into decimal numbers with dtype='numeric'"
-                ) from e
+
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
                 "Found array with dim %d. %s expected <= 2."
@@ -1156,7 +1145,7 @@ def column_or_1d(y, *, warn=False):
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance
+    """Turn seed into a np.random.RandomState instance.
 
     Parameters
     ----------
@@ -1165,6 +1154,11 @@ def check_random_state(seed):
         If seed is an int, return a new RandomState instance seeded with seed.
         If seed is already a RandomState instance, return it.
         Otherwise raise ValueError.
+
+    Returns
+    -------
+    None
+        No returns.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand

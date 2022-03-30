@@ -1128,3 +1128,6 @@ class TSNE(BaseEstimator):
         """
         self.fit_transform(X)
         return self
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}

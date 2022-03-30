@@ -146,8 +146,8 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             else:
                 raise ValueError("The estimator has no decision_function method.")
 
+    X_eval = X.copy()
     for new_values in grid:
-        X_eval = X.copy()
         for i, variable in enumerate(features):
             if hasattr(X_eval, "iloc"):
                 X_eval.iloc[:, variable] = new_values[i]

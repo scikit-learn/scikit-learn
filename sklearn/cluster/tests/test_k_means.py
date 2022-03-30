@@ -148,9 +148,9 @@ def test_relocate_empty_clusters(array_constr):
     "array_constr", [np.array, sp.csr_matrix], ids=["dense", "sparse"]
 )
 @pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
-def test_kmeans_elkan_results(distribution, array_constr, tol):
+def test_kmeans_elkan_results(distribution, array_constr, tol, global_random_seed):
     # Check that results are identical between lloyd and elkan algorithms
-    rnd = np.random.RandomState(0)
+    rnd = np.random.RandomState(global_random_seed)
     if distribution == "normal":
         X = rnd.normal(size=(5000, 10))
     else:
@@ -1181,7 +1181,7 @@ def test_is_same_clustering():
     labels1 = np.array([1, 0, 0, 1, 2, 0, 2, 1], dtype=np.int32)
     assert _is_same_clustering(labels1, labels1, 3)
 
-    # these other labels represent the same clustering since we can retrive the first
+    # these other labels represent the same clustering since we can retrieve the first
     # labels by simply renaming the labels: 0 -> 1, 1 -> 2, 2 -> 0.
     labels2 = np.array([0, 2, 2, 0, 1, 2, 1, 0], dtype=np.int32)
     assert _is_same_clustering(labels1, labels2, 3)
