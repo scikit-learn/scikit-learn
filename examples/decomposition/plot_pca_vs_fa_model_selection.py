@@ -16,7 +16,8 @@ One can observe that with homoscedastic noise both FA and PCA succeed
 in recovering the size of the low rank subspace. The likelihood with PCA
 is higher than FA in this case. However PCA fails and overestimates
 the rank when heteroscedastic noise is present. Under appropriate
-circumstances the low rank models are more likely than shrinkage models.
+circumstances (choice of the number of components), the held-out
+data is more likely for low rank models than for shrinkage models.
 
 The automatic estimation from
 Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
@@ -40,7 +41,7 @@ from sklearn.model_selection import GridSearchCV
 # #############################################################################
 # Create the data
 
-n_samples, n_features, rank = 1000, 50, 10
+n_samples, n_features, rank = 500, 25, 5
 sigma = 1.0
 rng = np.random.RandomState(42)
 U, _, _ = linalg.svd(rng.randn(n_features, n_features))

@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import numbers
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
@@ -13,6 +14,7 @@ from ..utils.extmath import svd_flip, _randomized_eigsh
 from ..utils.validation import (
     check_is_fitted,
     _check_psd_eigenvalues,
+    check_scalar,
 )
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
@@ -257,8 +259,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         copy_X=True,
         n_jobs=None,
     ):
-        if fit_inverse_transform and kernel == "precomputed":
-            raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         self.n_components = n_components
         self.kernel = kernel
         self.kernel_params = kernel_params
@@ -275,16 +275,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
 
     # TODO: Remove in 1.2
     # mypy error: Decorated property not supported
@@ -323,10 +313,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         if self.n_components is None:
             n_components = K.shape[0]  # use all dimensions
         else:
-            if self.n_components < 1:
-                raise ValueError(
-                    f"`n_components` should be >= 1, got: {self.n_component}"
-                )
+            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
@@ -429,6 +416,8 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self : object
             Returns the instance itself.
         """
+        if self.fit_inverse_transform and self.kernel == "precomputed":
+            raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)

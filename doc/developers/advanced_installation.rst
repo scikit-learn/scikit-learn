@@ -67,7 +67,7 @@ feature, code or documentation improvement).
      conda activate sklearn-env
 
 #. **Alternative to conda:** If you run Linux or similar, you can instead use
-   your system's Python provided it is recent enough (3.7 or higher
+   your system's Python provided it is recent enough (3.8 or higher
    at the time of writing). In this case, we recommend to create a dedicated
    virtualenv_ and install the scikit-learn build dependencies with pip:
 
@@ -114,16 +114,11 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.7),
+- Python (>= 3.8),
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),
 - threadpoolctl (>= |ThreadpoolctlMinVersion|).
-
-.. note::
-
-   For running on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
-   are required. For PyPy, only installation instructions with pip apply.
 
 Build dependencies
 ~~~~~~~~~~~~~~~~~~
@@ -205,14 +200,14 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, install `Build Tools for Visual Studio 2019
-<https://visualstudio.microsoft.com/downloads/>`_.
+First, download the `Build Tools for Visual Studio 2019 installer
+<https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
-.. warning::
+Run the downloaded `vs_buildtools.exe` file, during the installation you will
+need to make sure you select "Desktop development with C++", similarly to this
+screenshot:
 
-    You DO NOT need to install Visual Studio 2019. You only need the "Build
-    Tools for Visual Studio 2019", under "All downloads" -> "Tools for Visual
-    Studio 2019".
+.. image:: ../images/visual-studio-build-tools-selection.png
 
 Secondly, find out if you are running 64-bit or 32-bit Python. The building
 command depends on the architecture of the Python interpreter. You can check

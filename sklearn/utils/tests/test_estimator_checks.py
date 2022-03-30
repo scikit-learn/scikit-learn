@@ -21,8 +21,8 @@ from sklearn.utils._testing import (
     MinimalTransformer,
     SkipTest,
 )
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.fixes import np_version, parse_version
+
+from sklearn.utils.validation import check_is_fitted, check_X_y
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -51,9 +51,13 @@ from sklearn.utils.estimator_checks import (
     check_fit_score_takes_y,
     check_no_attributes_set_in_init,
     check_regressor_data_not_an_array,
+    check_requires_y_none,
     check_outlier_corruption,
     set_random_state,
     check_fit_check_is_fitted,
+    check_methods_sample_order_invariance,
+    check_methods_subset_invariance,
+    _yield_all_checks,
 )
 
 
@@ -427,8 +431,6 @@ class PartialFitChecksName(BaseEstimator):
 
 
 def test_not_an_array_array_function():
-    if np_version < parse_version("1.17"):
-        raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
     with raises(TypeError, match=msg):
@@ -802,7 +804,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     # 1. unknown output type
     clf = MultiLabelClassifierPredictProba(response_output=sp.csr_matrix(y_test))
     err_msg = (
-        r"Unknown returned type <class 'scipy.sparse.csr.csr_matrix'> by "
+        "Unknown returned type .*csr_matrix.* by "
         r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
         r"array is expected."
     )
@@ -1042,3 +1044,45 @@ def test_check_fit_check_is_fitted():
 
     check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
     check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
+
+
+def test_check_requires_y_none():
+    class Estimator(BaseEstimator):
+        def fit(self, X, y):
+            X, y = check_X_y(X, y)
+
+    with warnings.catch_warnings(record=True) as record:
+        check_requires_y_none("estimator", Estimator())
+
+    # no warnings are raised
+    assert not [r.message for r in record]
+
+
+# TODO: Remove in 1.3 when Estimator is removed
+def test_deprecated_Estimator_check_estimator():
+    err_msg = "'Estimator' was deprecated in favor of"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        with raises(FutureWarning, match=err_msg, may_pass=True):
+            check_estimator(Estimator=NuSVC())
+
+    err_msg = "Either estimator or Estimator should be passed"
+    with raises(ValueError, match=err_msg, may_pass=False):
+        check_estimator()
+
+
+def test_non_deterministic_estimator_skip_tests():
+    # check estimators with non_deterministic tag set to True
+    # will skip certain tests, refer to issue #22313 for details
+    for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
+        all_tests = list(_yield_all_checks(est()))
+        assert check_methods_sample_order_invariance in all_tests
+        assert check_methods_subset_invariance in all_tests
+
+        class Estimator(est):
+            def _more_tags(self):
+                return {"non_deterministic": True}
+
+        all_tests = list(_yield_all_checks(Estimator()))
+        assert check_methods_sample_order_invariance not in all_tests
+        assert check_methods_subset_invariance not in all_tests
