@@ -140,7 +140,7 @@ class KernelDensity(BaseEstimator):
         if bandwidth in ['scott', 'silvermann']:
             self.bandwidth = bandwidth
         elif bandwidth > 0:
-            self.bandwidth = bandwidth 
+            self.bandwidth = bandwidth
         else:
             raise ValueError("bandwidth must be positive, scott or silvermann")
 
@@ -191,7 +191,7 @@ class KernelDensity(BaseEstimator):
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
         if self.bandwidth == 'scott':
-            self.bandwidth =  X.shape[0]**(-1 / (X.shape[1]+4)) 
+            self.bandwidth = X.shape[0]**(-1 / (X.shape[1]+4))
         elif self.bandwidth == 'silvermann':
             self.bandwidth = (X.shape[0] * (X.shape[1]+2) / 4)**(-1 / (X.shape[1]+4))
         if self.kernel not in VALID_KERNELS:
