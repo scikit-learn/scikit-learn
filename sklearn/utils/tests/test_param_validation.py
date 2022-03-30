@@ -22,7 +22,6 @@ from sklearn.utils._param_validation import validate_params
 @validate_params({"a": [Real], "b": [Real], "c": [Real], "d": [Real]})
 def _func(a, b=0, *args, c, d=None, **kwargs):
     """A function to test the validation of functions."""
-    pass
 
 
 class _Class:
@@ -34,7 +33,7 @@ class _Class:
         }
     )
     def _method(self, a):
-        pass
+        """A validated method"""
 
 
 class _Estimator(BaseEstimator):
@@ -49,7 +48,6 @@ class _Estimator(BaseEstimator):
 
     def fit(self, X=None, y=None):
         self._validate_params()
-        return self
 
 
 @pytest.mark.parametrize("interval_type", [Integral, Real])
