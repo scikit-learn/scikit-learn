@@ -58,8 +58,8 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
                 )
 
             raise ValueError(
-                f"The {param_name!r} parameter of {caller_name} must be {constraints_str}. "
-                f"Got {param_val!r} instead."
+                f"The {param_name!r} parameter of {caller_name} must be"
+                f" {constraints_str}. Got {param_val!r} instead."
             )
 
 
