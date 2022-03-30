@@ -137,11 +137,13 @@ def fetch_covtype(
             The names of the target columns.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
-
     """
-
     data_home = get_data_home(data_home=data_home)
     covtype_dir = join(data_home, "covertype")
     samples_path = _pkl_filepath(covtype_dir, "samples")

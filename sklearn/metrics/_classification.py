@@ -1402,8 +1402,8 @@ def precision_recall_fscore_support(
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
-    intuitively the ability of the classifier not to label as positive a sample
-    that is negative.
+    intuitively the ability of the classifier not to label a negative sample as
+    positive.
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
     true positives and ``fn`` the number of false negatives. The recall is
@@ -2084,8 +2084,11 @@ def classification_report(
 
     See Also
     --------
-    precision_recall_fscore_support, confusion_matrix,
-    multilabel_confusion_matrix
+    precision_recall_fscore_support: Compute precision, recall, F-measure and
+        support for each class.
+    confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
+        classification.
+    multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
 
     Examples
     --------

@@ -40,7 +40,7 @@ on the parameters epsilon and C of the SVR.
 
 import numpy as np
 
-rng = np.random.RandomState(0)
+rng = np.random.RandomState(42)
 
 # %%
 # Generate sample data
@@ -146,10 +146,10 @@ plt.figure()
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
 y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
-sizes = np.logspace(1, 4, 7).astype(int)
+sizes = np.logspace(1, 3.8, 7).astype(int)
 for name, estimator in {
-    "KRR": KernelRidge(kernel="rbf", alpha=0.1, gamma=10),
-    "SVR": SVR(kernel="rbf", C=1e1, gamma=10),
+    "KRR": KernelRidge(kernel="rbf", alpha=0.01, gamma=10),
+    "SVR": SVR(kernel="rbf", C=1e2, gamma=10),
 }.items():
     train_time = []
     test_time = []
