@@ -177,7 +177,7 @@ plt.yscale("log")
 plt.xlabel("Train size")
 plt.ylabel("Time (seconds)")
 plt.title("Execution Time")
-plt.legend(loc="best")
+_ = plt.legend(loc="best")
 
 # %%
 # Visualize the learning curves
