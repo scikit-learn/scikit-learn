@@ -247,3 +247,12 @@ def test_check_is_fitted(method):
 
     with pytest.raises(NotFittedError):
         getattr(kde, method)(X)
+
+@pytest.mark.parametrize("bandwidth", ['scott', 'silvermann', 0.1])
+def test_bandwidth(bandwidth):
+    n_samples, n_features = (100, 3)
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    kde = KernelDensity(bandwidth=bandwidth).fit(X)
+    samp = kde.sample(100)
+    assert X.shape == samp.shape

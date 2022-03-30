@@ -36,8 +36,10 @@ class KernelDensity(BaseEstimator):
 
     Parameters
     ----------
-    bandwidth : float, default=1.0
-        The bandwidth of the kernel.
+    bandwidth : float | string, default=1.0
+        The bandwidth of the kernel. If bandwidth is a float it defines the 
+        bandwidth of the kernel. If bandwidth is a string one of the estimation
+        methods is implemented. Valid options are: ['scott'|'silvermann'].
 
     algorithm : {'kd_tree', 'ball_tree', 'auto'}, default='auto'
         The tree algorithm to use.
@@ -135,6 +137,13 @@ class KernelDensity(BaseEstimator):
         self.leaf_size = leaf_size
         self.metric_params = metric_params
 
+        if bandwidth in ['scott', 'silvermann']:
+            self.bandwidth = bandwidth
+        elif bandwidth > 0:
+            self.bandwidth = bandwidth 
+        else:
+            raise ValueError("bandwidth must be positive, scott or silvermann")
+
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
         # algorithm to compute the result.
@@ -181,8 +190,10 @@ class KernelDensity(BaseEstimator):
 
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
-        if self.bandwidth <= 0:
-            raise ValueError("bandwidth must be positive")
+        if self.bandwidth == 'scott':
+            self.bandwidth =  X.shape[0]**(-1 / (X.shape[1]+4)) 
+        elif self.bandwidth == 'silvermann':
+            self.bandwidth = (X.shape[0] * (X.shape[1]+2) / 4)**(-1 / (X.shape[1]+4))
         if self.kernel not in VALID_KERNELS:
             raise ValueError("invalid kernel: '{0}'".format(self.kernel))
 
