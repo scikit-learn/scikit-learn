@@ -44,7 +44,7 @@ rng = np.random.RandomState(0)
 
 # %%
 # Generate sample data
-# ------------------
+# --------------------
 
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
@@ -55,8 +55,8 @@ y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 X_plot = np.linspace(0, 5, 100000)[:, None]
 
 # %%
-# Fit the regression models
-# -------------------------
+# Fit the kernel-based regression models
+# --------------------------------------
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
@@ -134,10 +134,11 @@ plt.plot(
 plt.xlabel("data")
 plt.ylabel("target")
 plt.title("SVR versus Kernel Ridge")
-plt.legend()
+_ = plt.legend()
 
 # %%
-# Visualize training and prediction time
+# Visualize training and prediction times
+# ---------------------------------------
 
 plt.figure()
 
@@ -184,7 +185,8 @@ plt.title("Execution Time")
 plt.legend(loc="best")
 
 # %%
-# Visualize learning curves
+# Visualize the learning curves
+# -----------------------------
 
 from sklearn.model_selection import learning_curve
 
