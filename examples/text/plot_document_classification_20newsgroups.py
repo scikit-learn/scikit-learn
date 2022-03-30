@@ -24,12 +24,6 @@ automatically downloaded, then cached.
 # Configuration options for the analysis
 # --------------------------------------
 
-# If True, we use `HashingVectorizer`, otherwise we use a `TfidfVectorizer`
-USE_HASHING = False
-
-# Number of features used by `HashingVectorizer`
-N_FEATURES = 2**16
-
 # Optional feature selection: either False, or an integer: the number of
 # features to select
 SELECT_CHI2 = False
@@ -94,18 +88,11 @@ print("%d categories" % len(target_names))
 from time import time
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
 
 t0 = time()
 
-if USE_HASHING:
-    vectorizer = HashingVectorizer(
-        stop_words="english", alternate_sign=False, n_features=N_FEATURES
-    )
-    X_train = vectorizer.transform(data_train.data)
-else:
-    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words="english")
-    X_train = vectorizer.fit_transform(data_train.data)
+vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words="english")
+X_train = vectorizer.fit_transform(data_train.data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_train.shape)
@@ -119,11 +106,7 @@ print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_test.shape)
 
 # %%
-# Mapping from integer feature name to original token string
-if USE_HASHING:
-    feature_names = None
-else:
-    feature_names = vectorizer.get_feature_names_out()
+feature_names = vectorizer.get_feature_names_out()
 
 # %%
 # Keeping only the best features if SELECT_CHI2 == True
@@ -135,9 +118,8 @@ if SELECT_CHI2:
     ch2 = SelectKBest(chi2, k=SELECT_CHI2)
     X_train = ch2.fit_transform(X_train, y_train)
     X_test = ch2.transform(X_test)
-    if feature_names is not None:
-        # keep selected feature names
-        feature_names = feature_names[ch2.get_support()]
+    # keep selected feature names
+    feature_names = feature_names[ch2.get_support()]
     print("done in %fs" % (time() - t0))
     print()
 
@@ -154,50 +136,50 @@ clf.fit(X_train, y_train)
 pred = clf.predict(X_test)
 score = metrics.accuracy_score(y_test, pred)
 
-if feature_names is not None:
-    # learned coefficients weighted by frequency of appearance
-    feature_effects = clf.coef_ * np.asarray(X_train.mean(axis=0)).ravel()
+# learned coefficients weighted by frequency of appearance
+feature_effects = clf.coef_ * np.asarray(X_train.mean(axis=0)).ravel()
 
-    for i, label in enumerate(target_names):
-        top5 = np.argsort(feature_effects[i])[-5:][::-1]
-        if i == 0:
-            top = pd.DataFrame(feature_names[top5], columns=[label])
-            top_indices = top5
-        else:
-            top[label] = feature_names[top5]
-            top_indices = np.concatenate((top_indices, top5), axis=None)
-    top_indices = np.unique(top_indices)
-    predictive_words = feature_names[top_indices]
+for i, label in enumerate(target_names):
+    top5 = np.argsort(feature_effects[i])[-5:][::-1]
+    if i == 0:
+        top = pd.DataFrame(feature_names[top5], columns=[label])
+        top_indices = top5
+    else:
+        top[label] = feature_names[top5]
+        top_indices = np.concatenate((top_indices, top5), axis=None)
+top_indices = np.unique(top_indices)
+predictive_words = feature_names[top_indices]
 
-    # plot feature effects
-    bar_size = 0.25
-    padding = 0.5
-    y_locs = np.arange(len(top_indices)) * (bar_size * 3 + padding)
+# plot feature effects
+bar_size = 0.25
+padding = 0.5
+y_locs = np.arange(len(top_indices)) * (bar_size * 3 + padding)
 
-    fig, ax = plt.subplots(figsize=(10, 8))
-    for i, label in enumerate(target_names):
-        ax.barh(
-            y_locs + i * bar_size,
-            feature_effects[i, top_indices],
-            height=bar_size,
-            label=label,
-        )
-    ax.set(
-        title="Feature impact",
-        yticks=y_locs,
-        yticklabels=predictive_words,
-        ylim=[0 - padding, len(y_locs) + 4.5],
+fig, ax = plt.subplots(figsize=(10, 8))
+for i, label in enumerate(target_names):
+    ax.barh(
+        y_locs + i * bar_size,
+        feature_effects[i, top_indices],
+        height=bar_size,
+        label=label,
     )
-    _ = ax.legend(loc="lower right")
+ax.set(
+    title="Feature impact",
+    yticks=y_locs,
+    yticklabels=predictive_words,
+    ylim=[0 - padding, len(y_locs) + 4.5],
+)
+_ = ax.legend(loc="lower right")
 
-    print("top 5 keywords per class:")
-    print(top)
+print("top 5 keywords per class:")
+print(top)
 
 # %%
 # The word "caltech" as one of the top predictive features is the result of the
 # pollution in the dataset introduced by the headers. This effect can be fixed
 # by setting REMOVE_ALL == True, but other sources of pollution may still exist
-if feature_names is not None and not REMOVE_ALL:
+
+if not REMOVE_ALL:
     for doc in data_train.data:
         if "caltech" in doc:
             print(doc)
@@ -211,7 +193,6 @@ fig, ax = plt.subplots(figsize=(10, 5))
 ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
-plt.tight_layout(rect=(0, 0, 1, 0.92))
 _ = ax.set_title("Confusion Matrix for the\n" + str(clf).split("(")[0])
 
 # %%
@@ -247,12 +228,10 @@ def benchmark(clf, custom_name=False):
     if hasattr(clf, "coef_"):
         print("dimensionality: %d" % clf.coef_.shape[1])
         print("density: %f" % density(clf.coef_))
-
-        if feature_names is not None:
-            print("top 10 keywords per class:")
-            for i, label in enumerate(target_names):
-                top10 = np.argsort(clf.coef_[i])[-10:]
-                print(trim("%s: %s" % (label, " ".join(feature_names[top10]))))
+        print("top 10 keywords per class:")
+        for i, label in enumerate(target_names):
+            top10 = np.argsort(clf.coef_[i])[-10:]
+            print(trim("%s: %s" % (label, " ".join(feature_names[top10]))))
         print()
 
     print("classification report:")
