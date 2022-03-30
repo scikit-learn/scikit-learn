@@ -158,11 +158,11 @@ def test_cluster_hierarchy_(global_dtype):
     assert diff / len(X) < 0.05
 
 
-def test_correct_number_of_clusters(global_dtype):
+def test_correct_number_of_clusters():
     # in 'auto' mode
 
     n_clusters = 3
-    X = generate_clustered_data(n_clusters=n_clusters).astype(global_dtype, copy=False)
+    X = generate_clustered_data(n_clusters=n_clusters)
     # Parameters chosen specifically for this task.
     # Compute OPTICS
     clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1)
@@ -295,7 +295,6 @@ def test_dbscan_optics_parity(eps, min_samples, global_dtype):
     )
 
     X = X.astype(global_dtype, copy=False)
-    labels_true = labels_true.astype(global_dtype, copy=False)
 
     # calculate optics with dbscan extract at 0.3 epsilon
     op = OPTICS(min_samples=min_samples, cluster_method="dbscan", eps=eps).fit(X)
