@@ -611,7 +611,9 @@ class BaseEstimator:
         accepted constraints.
         """
         validate_parameter_constraints(
-            self._parameter_constraints, self.get_params(deep=False)
+            self._parameter_constraints,
+            self.get_params(deep=False),
+            caller_name=self.__class__.__name__,
         )
 
     @property

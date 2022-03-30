@@ -12,7 +12,7 @@ from scipy.sparse import issparse
 from .validation import _is_arraylike_not_scalar
 
 
-def validate_parameter_constraints(parameter_constraints, params):
+def validate_parameter_constraints(parameter_constraints, params, caller_name):
     """Validate types and values of given parameters.
 
     Parameters
@@ -23,6 +23,7 @@ def validate_parameter_constraints(parameter_constraints, params):
         - an Interval object, representing a continuous or discrete range of numbers
         - the string "array-like"
         - the string "sparse matrix"
+        - the string "random state"
         - callable
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
@@ -31,10 +32,15 @@ def validate_parameter_constraints(parameter_constraints, params):
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
         constraints.
-    """
-    for param_name, constraints in parameter_constraints.items():
 
-        param_val = params[param_name]
+    caller_name : str
+        The name of the estimator or function or method that called this function.
+    """
+    for param_name, param_val in params.items():
+        # for param_name, constraints in parameter_constraints.items():
+
+        # param_val = params[param_name]
+        constraints = parameter_constraints[param_name]
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
@@ -52,7 +58,8 @@ def validate_parameter_constraints(parameter_constraints, params):
                 )
 
             raise ValueError(
-                f"{param_name} must be {constraints_str}. Got {param_val!r} instead."
+                f"The {param_name!r} parameter of {caller_name} must be {constraints_str}. "
+                f"Got {param_val!r} instead."
             )
 
 
@@ -118,23 +125,25 @@ def validate_params(parameter_constraints):
             # to recover their names. The signature object holds the parameters in the
             # same order as in the function definition
             for val, param in zip(args, sig_params):
-                # ignore self for methods
-                if param.name == "self":
+
+                # ignore self and extra args
+                if param.name == "self" or param.kind != param.POSITIONAL_OR_KEYWORD:
                     continue
 
                 params[param.name] = val
 
             # Then, the keyword arguments which already hold both the name and the value
             for name, val in kwargs.items():
+
+                # ignore extra kwargs
+                if name not in [p.name for p in sig_params]:
+                    continue
+
                 params[name] = val
 
-            # Finally, the unset parameters that have a default (they are not in args
-            # or kwargs)
-            for param in [p for p in sig_params if p.default is not p.empty]:
-                if param.name not in params:
-                    params[param.name] = param.default
-
-            validate_parameter_constraints(parameter_constraints, params)
+            validate_parameter_constraints(
+                parameter_constraints, params, caller_name=func.__qualname__
+            )
             return func(*args, **kwargs)
 
         return wrapper
@@ -269,7 +278,7 @@ class Interval(_Constraint):
     Notes
     -----
     Setting a bound to `None` and setting the interval closed is valid. For instance,
-    strictly speaking, `Interval(0, None, closed="both")` corresponds to
+    strictly speaking, `Interval(Real, 0, None, closed="both")` corresponds to
     `[0, +∞) U {+∞}`.
     """
 
@@ -407,7 +416,7 @@ def generate_invalid_param_val(constraint):
         A value that does not satisfy the constraint.
     """
     if isinstance(constraint, StrOptions):
-        return f"not {' or'.join(constraint.options)}"
+        return f"not {' or '.join(constraint.options)}"
     elif isinstance(constraint, Interval):
         interval = constraint
         if interval.left is None and interval.right is None:
