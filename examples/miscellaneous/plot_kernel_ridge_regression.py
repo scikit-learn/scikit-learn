@@ -35,16 +35,11 @@ on the parameters epsilon and C of the SVR.
 # License: BSD 3 clause
 
 # %%
-# Set the random seed
-# ------------------
-
+# Generate sample data
+# --------------------
 import numpy as np
 
 rng = np.random.RandomState(42)
-
-# %%
-# Generate sample data
-# --------------------
 
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
