@@ -81,7 +81,6 @@ ccache -s --verbose
 
 mamba list
 
-cp setup.cfg /tmp
 # Changing directory not to have module resolution use scikit-learn source
 # directory but to the installed package.
 cd /tmp
