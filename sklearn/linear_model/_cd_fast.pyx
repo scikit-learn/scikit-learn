@@ -108,16 +108,17 @@ def enet_coordinate_descent(floating[::1] w,
 
     As ultimate stopping criterion, we use the dual gap. There are two version for it.
 
-    A) Write Z' = [X', sqrt(beta) * identity], i.e. append rows to X, and appending
-    zeros to y such that the primal reduces to the Lasso via the usual Lagrangian
+    A) Write Z' = [X', sqrt(beta) * identity], i.e. append rows to X, and use u to
+    denote y with appended zeros such that the primal reduces to the Lasso via the
+    usual Lagrangian
 
-        L(w, r, v) = 1/2 ||r||_2^2  + alpha ||w||_1 + v'(Z w - y - r)               (2)
+        L(w, r, v) = 1/2 ||r||_2^2  + alpha ||w||_1 + v'(Z w - u - r)               (2)
 
-        D(v) = inf_{w, z} L(w, r, v) = -1/2 ||v||_2^2 - v'y    if ||Z'v||_inf <= alpha
+        D(v) = inf_{w, z} L(w, r, v) = -1/2 ||v||_2^2 - v'u    if ||Z'v||_inf <= alpha
                                        - inf                   else
 
-    with infinum norm ||Z'v||_inf = max_j |(Z'v)_j| and v = Z w - y at optimum.
-    Replacing Z and choosing v = (Z w - y) * c for some constant c:
+    with supremum norm ||Z'v||_inf = max_j |(Z'v)_j| and v = Z w - u at optimum.
+    Replacing Z and choosing v = (Z w - u) * c for some constant c:
 
         D(v) = -c^2/2 ||y - Xw||_2^2 - c^2 alpha/2 ||w||_2^2  - c y'(X w - y)       (3)
                         if |c| * ||X'(X w - y) + beta * w||_inf <= alpha
