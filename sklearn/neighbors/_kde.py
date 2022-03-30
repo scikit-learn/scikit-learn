@@ -37,7 +37,7 @@ class KernelDensity(BaseEstimator):
     Parameters
     ----------
     bandwidth : float | string, default=1.0
-        The bandwidth of the kernel. If bandwidth is a float it defines the 
+        The bandwidth of the kernel. If bandwidth is a float it defines the
         bandwidth of the kernel. If bandwidth is a string one of the estimation
         methods is implemented. Valid options are: ['scott'|'silvermann'].
 
