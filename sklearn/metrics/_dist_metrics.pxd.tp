@@ -17,7 +17,7 @@ implementation_specific_values = [
     # implementations.
     #
     # We also use 64bit types as defined in `sklearn.utils._typedefs`
-    # to maintain backward compatibility as the symbol level for extra
+    # to maintain backward compatibility at the symbol level for extra
     # safety.
     #
     ('', '64', 'DTYPE_t', 'DTYPE'),
