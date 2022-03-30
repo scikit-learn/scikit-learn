@@ -65,6 +65,14 @@ longer active in the project:
 
 .. include:: authors_emeritus.rst
 
+Emeritus Communication Team
+---------------------------
+
+The following people have been active in the communication team in the
+past, but no longer have communication responsibilities:
+
+.. include:: communication_team_emeritus.rst
+
 
 .. _citing-scikit-learn:
 
@@ -211,32 +219,6 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    </div>
    </div>
 
-........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
-July 2017.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/sydney-primary.jpeg
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 ..........
 
 .. raw:: html
@@ -333,6 +315,32 @@ Past Sponsors
    :width: 50pt
    :align: center
    :target: https://www.columbia.edu/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
+(2017-2021).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sydney-primary.jpeg
+   :width: 100pt
+   :align: center
+   :target: https://sydney.edu.au/
 
 .. raw:: html
 
