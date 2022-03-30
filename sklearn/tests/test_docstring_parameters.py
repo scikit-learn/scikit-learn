@@ -258,6 +258,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == "FastICA":
         est.set_params(whiten="unit-variance")
 
+    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
+    if Estimator.__name__ == "MiniBatchDictionaryLearning":
+        est.set_params(batch_size=5)
+
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}
 
