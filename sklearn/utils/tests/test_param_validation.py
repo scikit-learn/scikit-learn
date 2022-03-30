@@ -27,11 +27,7 @@ def _func(a, b=0, *args, c, d=None, **kwargs):
 class _Class:
     """A class to test the _InstancesOf constraint and the validation of methods."""
 
-    @validate_params(
-        {
-            "a": [Real],
-        }
-    )
+    @validate_params({"a": [Real]})
     def _method(self, a):
         """A validated method"""
 
@@ -39,9 +35,7 @@ class _Class:
 class _Estimator(BaseEstimator):
     """An estimator to test the validation of estimator parameters."""
 
-    _parameter_constraints = {
-        "a": [Real],
-    }
+    _parameter_constraints = {"a": [Real]}
 
     def __init__(self, a):
         self.a = a
