@@ -22,6 +22,14 @@ prediction of 100000 target values is more than tree times faster with SVR
 since it has learned a sparse model using only approx. 1/3 of the 100 training
 datapoints as support vectors.
 
+TODO: merge this suggestion with previous sentence
+ However, prediction of 100000 target values is could be in theory approximately
+tree times faster with SVR since it has learned a sparse model using only
+approximately 1/3 of the training datapoints as support vectors. However, in
+practice, this is not necessarily the case because of implementation details
+in the way the kernel function is computed for each model that can make the
+KRR model as fast or even faster despite computing more arithmetic operations.
+
 The next figure compares the time for fitting and prediction of KRR and SVR for
 different sizes of the training set. Fitting KRR is faster than SVR for medium-
 sized training sets (less than 1000 samples); however, for larger training sets
@@ -50,8 +58,8 @@ y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 X_plot = np.linspace(0, 5, 100000)[:, None]
 
 # %%
-# Fit the kernel-based regression models
-# --------------------------------------
+# Construct the kernel-based regression models
+# --------------------------------------------
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
@@ -59,13 +67,11 @@ from sklearn.kernel_ridge import KernelRidge
 
 train_size = 100
 
-# Fit the SVR
 svr = GridSearchCV(
     SVR(kernel="rbf", gamma=0.1),
     param_grid={"C": [1e0, 1e1, 1e2, 1e3], "gamma": np.logspace(-2, 2, 5)},
 )
 
-# Fit the Kernel Ridge Regression
 kr = GridSearchCV(
     KernelRidge(kernel="rbf", gamma=0.1),
     param_grid={"alpha": [1e0, 0.1, 1e-2, 1e-3], "gamma": np.logspace(-2, 2, 5)},
@@ -73,18 +79,20 @@ kr = GridSearchCV(
 
 # %%
 # Compare times of SVR and Kernel Ridge Regression
-# ----------------------------------------------
+# ------------------------------------------------
 
 import time
 
 t0 = time.time()
 svr.fit(X[:train_size], y[:train_size])
 svr_fit = time.time() - t0
+print(f"Best SVR with params: {svr.best_params_} and R2 score: {svr.best_score_:.3f}")
 print("SVR complexity and bandwidth selected and model fitted in %.3f s" % svr_fit)
 
 t0 = time.time()
 kr.fit(X[:train_size], y[:train_size])
 kr_fit = time.time() - t0
+print(f"Best KRR with params: {kr.best_params_} and R2 score: {kr.best_score_:.3f}")
 print("KRR complexity and bandwidth selected and model fitted in %.3f s" % kr_fit)
 
 sv_ratio = svr.best_estimator_.support_.shape[0] / train_size
@@ -137,10 +145,6 @@ _ = plt.legend()
 
 plt.figure()
 
-# Generate sample data
-X = 5 * rng.rand(10000, 1)
-y = np.sin(X).ravel()
-y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 sizes = np.logspace(1, 3.8, 7).astype(int)
 for name, estimator in {
     "KRR": KernelRidge(kernel="rbf", alpha=0.01, gamma=10),
@@ -187,27 +191,28 @@ from sklearn.model_selection import learning_curve
 
 plt.figure()
 
-svr = SVR(kernel="rbf", C=1e1, gamma=0.1)
-kr = KernelRidge(kernel="rbf", alpha=0.1, gamma=0.1)
 train_sizes, train_scores_svr, test_scores_svr = learning_curve(
-    svr,
-    X[:100],
-    y[:100],
-    train_sizes=np.linspace(0.1, 1, 10),
+    svr.best_estimator_,
+    X[:1000],
+    y[:1000],
+    train_sizes=np.linspace(0.1, 1, 7),
     scoring="neg_mean_squared_error",
     cv=10,
 )
 train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
-    kr,
-    X[:100],
-    y[:100],
-    train_sizes=np.linspace(0.1, 1, 10),
+    kr.best_estimator_,
+    X[:1000],
+    y[:1000],
+    train_sizes=np.linspace(0.1, 1, 7),
     scoring="neg_mean_squared_error",
     cv=10,
 )
 
-plt.plot(train_sizes, -test_scores_svr.mean(1), "o-", color="r", label="SVR")
-plt.plot(train_sizes, -test_scores_kr.mean(1), "o-", color="g", label="KRR")
+plt.plot(train_sizes, -train_scores_kr.mean(1), "o-", color="g", label="KRR (train)")
+plt.plot(train_sizes, -test_scores_kr.mean(1), "o--", color="g", label="KRR (test)")
+plt.plot(train_sizes, -train_scores_svr.mean(1), "o-", color="r", label="SVR (train)")
+plt.plot(train_sizes, -test_scores_svr.mean(1), "o--", color="r", label="SVR (test)")
+
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")
 plt.title("Learning curves")
