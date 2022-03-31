@@ -2147,7 +2147,7 @@ def test_loss_squared_loss_deprecated(Estimator):
 )
 def test_sgd_random_state(Estimator, global_random_seed):
     # Train the same model on the same data without converging and check that we
-    # can reprodicible results by fixing the random seed.
+    # get reproducible results by fixing the random seed.
     if Estimator == linear_model.SGDRegressor:
         X, y = datasets.make_regression(random_state=global_random_seed)
     else:
