@@ -727,3 +727,515 @@ class BisectingKMeans(_BaseKMeans):
             labels[temp_labels == center_id] = i
 
         return labels
+
+
+class _BisectingTree:
+    """Tree structure representing the hierarchical clusters of BisectingKMeans."""
+
+    def __init__(self, center, indices, score):
+        """Create a new cluster node in the tree.
+
+        The node holds the center of this cluster and the indices of the data points
+        that belong to it.
+        """
+        self.center = center
+        self.indices = indices
+        self.score = score
+
+        self.left = None
+        self.right = None
+
+    def split(self, labels, centers, scores):
+        """Split the cluster node into two subclusters."""
+        self.left = _BisectingTree(
+            indices=self.indices[labels == 0], center=centers[0], score=scores[0]
+        )
+        self.right = _BisectingTree(
+            indices=self.indices[labels == 1], center=centers[1], score=scores[1]
+        )
+
+        # reset the indices attribute to save memory
+        self.indices = None
+
+    def get_cluster_to_bisect(self):
+        """Return the cluster node to bisect next.
+
+        It's based on the score of the cluster (see `bisect_strategy` for details).
+        """
+        max_score = None
+
+        for cluster_leaf in self.iter_leaves():
+            if max_score is None or cluster_leaf.score > max_score:
+                max_score = cluster_leaf.score
+                best_cluster_leaf = cluster_leaf
+
+        return best_cluster_leaf
+
+    def iter_leaves(self):
+        """Iterate over all the cluster leaves in the tree."""
+        if self.left is None:
+            yield self
+        else:
+            yield from self.left.iter_leaves()
+            yield from self.right.iter_leaves()
+
+
+class BisectingKMeans2(_BaseKMeans):
+    """Bisecting K-Means clustering.
+
+    Read more in the :ref:`User Guide <bisect_k_means>`.
+
+    .. versionadded:: 1.1
+
+    Parameters
+    ----------
+    n_clusters : int, default=8
+        The number of clusters to form as well as the number of
+        centroids to generate.
+
+    init : {'k-means++', 'random'} or callable, default='k-means++'
+        Method for initialization:
+
+        'k-means++' : selects initial cluster centers for k-mean
+        clustering in a smart way to speed up convergence. See section
+        Notes in k_init for more details.
+
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
+
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
+
+    n_init : int, default=10
+        Number of time the inner k-means algorithm will be run with different
+        centroid seeds in each bisection.
+        That will result producing for each bisection best output of n_init
+        consecutive runs in terms of inertia.
+
+    random_state : int, RandomState instance or None, default=None
+        Determines random number generation for centroid initialization. Use
+        an int to make the randomness deterministic.
+        See :term:`Glossary <random_state>`.
+
+    max_iter : int, default=30
+        Maximum number of iterations of the inner k-means algorithm at each
+        bisection.
+
+    verbose : int, default=0
+        Verbosity mode.
+
+    tol : float, default=1e-4
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations  to declare
+        convergence. Used in inner k-means algorithm at each bisection to pick
+        best possible clusters.
+
+    copy_x : bool, default=True
+        When pre-computing distances it is more numerically accurate to center
+        the data first. If copy_x is True (default), then the original data is
+        not modified. If False, the original data is modified, and put back
+        before the function returns, but small numerical differences may be
+        introduced by subtracting and then adding the data mean. Note that if
+        the original data is not C-contiguous, a copy will be made even if
+        copy_x is False. If the original data is sparse, but not in CSR format,
+        a copy will be made even if copy_x is False.
+
+    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
+        K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
+        The `"elkan"` variation can be more efficient on some datasets with
+        well-defined clusters, by using the triangle inequality. However it's
+        more memory intensive due to the allocation of an extra array of shape
+        `(n_samples, n_clusters)`.
+
+        `"auto"` and `"full"` are deprecated and they will be removed in
+        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
+
+    bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
+        Defines how should bisection by performed:
+
+         - "biggest_sse" means that Bisect K-Means will always check
+            all calculated cluster for cluster with biggest SSE
+            (Sum of squared errors) and bisect it. This approach concentrates on
+            precision, but may be costly in terms of execution time (especially for
+            larger ammount of data points).
+
+         - "largest_cluster" - Bisect K-Means will always split cluster with
+            largest amount of points assigned to it from all clusters
+            previously calculated. That should work faster than picking by SSE
+            ('biggest_sse') and may produce similar results in most cases.
+
+    Attributes
+    ----------
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
+        Coordinates of cluster centers. If the algorithm stops before fully
+        converging (see ``tol`` and ``max_iter``), these will not be
+        consistent with ``labels_``.
+
+    labels_ : ndarray of shape (n_samples,)
+        Labels of each point.
+
+    inertia_ : float
+        Sum of squared distances of samples to their closest cluster center,
+        weighted by the sample weights if provided.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+    See Also
+    --------
+    KMeans : Original implementation of K-Means algorithm.
+
+    Notes
+    -----
+    Bisection cannot be performed if n_cluster < 2.
+    Despite that in case when n_cluster == 1 - centroid will be created and points
+    will be assigned to it.
+
+    Also it might be inefficient when n_cluster is equal to 2, due to unnecassary
+    calculations for that case.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import BisectingKMeans
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0],
+    ...               [10, 6], [10, 8], [10, 10]])
+    >>> bisect_means = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
+    >>> bisect_means.labels_
+    array([0, 0, 0, 1, 1, 1, 2, 2, 2], dtype=int32)
+    >>> bisect_means.predict([[0, 0], [12, 3]])
+    array([0, 1], dtype=int32)
+    >>> bisect_means.cluster_centers_
+    array([[ 1.,  2.],
+           [10.,  2.],
+           [10.,  8.]])
+    """
+
+    def __init__(
+        self,
+        n_clusters=8,
+        init="k-means++",
+        n_init=10,
+        random_state=None,
+        max_iter=30,
+        verbose=0,
+        tol=1e-4,
+        copy_x=True,
+        algorithm="lloyd",
+        bisect_strategy="biggest_sse",
+    ):
+
+        super().__init__(
+            n_clusters=n_clusters,
+            init=init,
+            max_iter=max_iter,
+            verbose=verbose,
+            random_state=random_state,
+            tol=tol,
+            n_init=n_init,
+        )
+
+        self.copy_x = copy_x
+        self.algorithm = algorithm
+        self.bisect_strategy = bisect_strategy
+
+    def _compute_bisect_errors(self, X, centers, labels, sample_weight):
+        """
+        Calculate the sum of squared errors (inertia) and group them by label (center).
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
+
+        centers : ndarray of shape (n_clusters, n_features)
+            The cluster centers.
+
+        labels : ndarray of shape (n_samples,)
+            Index of the cluster each sample belongs to.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X.
+
+        Returns
+        -------
+        errors_by_label : dict
+            dictionary containing squared error of each point by label
+            as ndarray.
+        """
+        errors_by_label = {}
+
+        _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
+
+        for value in range(centers.shape[0]):
+            indexes = labels == value
+
+            data = X[indexes]
+            weights = sample_weight[indexes]
+            center = centers[value][np.newaxis, :]
+            label = np.zeros(data.shape[0], dtype=np.intc)
+
+            errors_by_label[value] = _inertia(
+                data, weights, center, label, self._n_threads
+            )
+
+        return errors_by_label
+
+    def _check_params(self, X):
+        super()._check_params(X)
+
+        # bisect_strategy
+        if self.bisect_strategy not in ["biggest_sse", "largest_cluster"]:
+            raise ValueError(
+                "Bisect Strategy must be 'biggest_sse', "
+                "or 'largest_cluster' "
+                f"got {self.bisect_strategy} instead."
+            )
+
+        # Regular K-Means should do less computations when there are only
+        # less than 3 clusters
+        if self.n_clusters < 3:
+            warnings.warn(
+                "BisectingKMeans might be inefficient for n_cluster "
+                "smaller than 3  "
+                "- Use Normal KMeans from sklearn.cluster instead.",
+                EfficiencyWarning,
+            )
+
+        if X.shape[0] <= 1:
+            raise ValueError(
+                "BisectingKMeans needs more than one sample to perform bisection."
+            )
+
+        if hasattr(self.init, "__array__"):
+            raise ValueError("BisectingKMeans does not support init as array.")
+
+    def _warn_mkl_vcomp(self, n_active_threads):
+        """Warn when vcomp and mkl are both present"""
+        warnings.warn(
+            "BisectingKMeans is known to have a memory leak on Windows "
+            "with MKL, when there are less chunks than available "
+            "threads. You can avoid it by setting the environment"
+            f" variable OMP_NUM_THREADS={n_active_threads}."
+        )
+
+    def _bisect(self, X, x_squared_norms, sample_weight, cluster_to_bisect):
+        """Split a cluster into 2 subsclusters.
+
+        Parameters
+        ----------
+        X : {ndarray, csr_matrix} of shape (n_samples, n_features)
+            Training instances to cluster.
+
+        x_squared_norms : ndarray of shape (n_samples,)
+            Squared euclidean norm of each data point.
+
+        sample_weight : ndarray of shape (n_samples,)
+            The weights for each observation in X.
+
+        cluster_to_bisect : _BisectingTree node object
+            The cluster node to split.
+        """
+        X = X[cluster_to_bisect.indices]
+        x_squared_norms = x_squared_norms[cluster_to_bisect.indices]
+        sample_weight = sample_weight[cluster_to_bisect.indices]
+
+        # Split this X into 2 clusters
+        centers_init = self._init_centroids(
+            X, x_squared_norms, self.init, self._random_state, n_centroids=2
+        )
+
+        labels, _, centers, _ = self._kmeans_single(
+            X,
+            sample_weight,
+            centers_init,
+            max_iter=self.max_iter,
+            verbose=self.verbose,
+            tol=self.tol,
+            x_squared_norms=x_squared_norms,
+            n_threads=self._n_threads,
+        )
+
+        if self.bisect_strategy == "biggest_sse":
+            scores = self._compute_bisect_errors(X, centers, labels, sample_weight)
+        else:  # bisect_strategy == "largest_cluster"
+            scores = np.bincount(labels)
+
+        cluster_to_bisect.split(labels, centers, scores)
+
+    def fit(self, X, y=None, sample_weight=None):
+        """Compute bisecting k-means clustering.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+
+            Training instances to cluster.
+
+            .. note:: The data will be converted to C ordering,
+                which will cause a memory copy
+                if the given data is not C-contiguous.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+        Returns
+        -------
+        self
+            Fitted estimator.
+        """
+        X = self._validate_data(
+            X,
+            accept_sparse="csr",
+            dtype=[np.float64, np.float32],
+            order="C",
+            copy=self.copy_x,
+            accept_large_sparse=False,
+        )
+
+        self._check_params(X)
+        self._random_state = check_random_state(self.random_state)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        self._n_threads = _openmp_effective_n_threads()
+
+        if self.algorithm == "full":
+            self._kmeans_single = _kmeans_single_lloyd
+            self._check_mkl_vcomp(X, X.shape[0])
+        else:
+            self._kmeans_single = _kmeans_single_elkan
+
+        # Subtract of mean of X for more accurate distance computations
+        if not sp.issparse(X):
+            self._X_mean = X.mean(axis=0)
+            X -= self._X_mean
+
+        # Initialize the hierearchical clusters tree
+        self._bisecting_tree = _BisectingTree(
+            indices=np.arange(X.shape[0]),
+            center=None,
+            score=0,
+        )
+
+        x_squared_norms = row_norms(X, squared=True)
+
+        for _ in range(self.n_clusters - 1):
+            # Chose cluster to bisect
+            cluster_to_bisect = self._bisecting_tree.get_cluster_to_bisect()
+
+            # Split this cluster into 2 subclusters
+            self._bisect(X, x_squared_norms, sample_weight, cluster_to_bisect)
+
+        # Aggregate final labels and centers from the bisecting tree
+        self.labels_ = np.full(X.shape[0], -1, dtype=np.int32)
+        self.cluster_centers_ = np.empty((self.n_clusters, X.shape[1]), dtype=X.dtype)
+
+        for i, cluster_node in enumerate(self._bisecting_tree.iter_leaves()):
+            self.labels_[cluster_node.indices] = i
+            self.cluster_centers_[i] = cluster_node.center
+            cluster_node.label = i  # label final clusters for future prediction
+
+        # Restore original data
+        if not sp.issparse(X):
+            X += self._X_mean
+            self.cluster_centers_ += self._X_mean
+
+        self._n_features_out = self.cluster_centers_.shape[0]
+
+        _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
+        self.inertia_ = _inertia(
+            X, sample_weight, self.cluster_centers_, self.labels_, self._n_threads
+        )
+
+        return self
+
+    def predict(self, X):
+        """Predict which cluster each sample in X belongs to.
+
+        Prediction is made by going down the hierarchical tree
+        in searching of closest leaf cluster.
+
+        In the vector quantization literature, `cluster_centers_` is called
+        the code book and each value returned by `predict` is the index of
+        the closest code in the code book.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to predict.
+
+        Returns
+        -------
+        labels : ndarray of shape (n_samples,)
+            Index of the cluster each sample belongs to.
+        """
+        check_is_fitted(self)
+
+        X = self._check_test_data(X)
+        x_squared_norms = row_norms(X, squared=True)
+        # sample weights are unused but necessary in cython helpers
+        sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+
+        labels = self._predict_recursive(
+            X, x_squared_norms, sample_weight, self._bisecting_tree
+        )
+
+        return labels
+
+    def _predict_recursive(self, X, x_squared_norms, sample_weight, cluster_node):
+        """Predict recursively by going down the hierarchical tree.
+
+        Parameters
+        ----------
+        X : {ndarray, csr_matrix} of shape (n_samples, n_features)
+            The data points, currently assigned to `cluster_node`, to predict between
+            the subclusters of this node.
+
+        x_squared_norms : ndarray of shape (n_samples,)
+            Squared euclidean norm of each data point.
+
+        sample_weight : ndarray of shape (n_samples,)
+            The weights for each observation in X.
+
+        cluster_node : _BisectingTree node object
+            The cluster node of the hierarchical tree.
+
+        Returns
+        -------
+        labels : ndarray of shape (n_samples,)
+            Index of the cluster each sample belongs to.
+        """
+        if cluster_node.left is None:
+            # This cluster has no subcluster. Labels are just the label of the cluster.
+            return np.full(X.shape[0], cluster_node.label, dtype=np.int32)
+
+        # Determine if data points belong to the left or right subcluster
+        centers = np.vstack((cluster_node.left.center, cluster_node.right.center))
+        if hasattr(self, "_X_mean"):
+            centers += self._X_mean
+
+        cluster_labels = _check_labels_threadpool_limit(
+            X, sample_weight, x_squared_norms, centers, self._n_threads
+        )
+        mask = cluster_labels == 0
+
+        # Compute the labels for each subset of the data points.
+        labels = np.full(X.shape[0], -1, dtype=np.int32)
+
+        labels[mask] = self._predict_recursive(
+            X[mask], x_squared_norms[mask], sample_weight[mask], cluster_node.left
+        )
+
+        labels[~mask] = self._predict_recursive(
+            X[~mask], x_squared_norms[~mask], sample_weight[~mask], cluster_node.right
+        )
+
+        return labels
