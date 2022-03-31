@@ -1129,7 +1129,7 @@ a transformer that applies a log transformation in a pipeline, do::
     >>> from sklearn.preprocessing import FunctionTransformer
     >>> transformer = FunctionTransformer(np.log1p, validate=True)
     >>> X = np.array([[0, 1], [2, 3]])
-    >>> transformer.transform(X)
+    >>> transformer.fit_transform(X)
     array([[0.        , 0.69314718],
            [1.09861229, 1.38629436]])
 
