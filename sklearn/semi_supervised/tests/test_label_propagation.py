@@ -1,6 +1,5 @@
 """ test the label propagation module """
 
-from decimal import DivisionByZero
 import numpy as np
 import pytest
 import warnings
