@@ -647,14 +647,18 @@ def _set_checking_parameters(estimator):
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC
-        if estimator.__class__.__name__ in ["LinearSVR", "LinearSVC"]:
+        if name in ["LinearSVR", "LinearSVC"]:
             estimator.set_params(max_iter=20)
         # NMF
-        if estimator.__class__.__name__ == "NMF":
+        if name == "NMF":
             estimator.set_params(max_iter=500)
         # MLP
-        if estimator.__class__.__name__ in ["MLPClassifier", "MLPRegressor"]:
+        if name in ["MLPClassifier", "MLPRegressor"]:
             estimator.set_params(max_iter=100)
+        # MiniBatchDictionaryLearning
+        if name == "MiniBatchDictionaryLearning":
+            estimator.set_params(max_iter=5)
+
     if "n_resampling" in params:
         # randomized lasso
         estimator.set_params(n_resampling=5)
@@ -666,6 +670,9 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+    if "batch_size" in params:
+        estimator.set_params(batch_size=10)
+
     if name == "MeanShift":
         # In the case of check_fit2d_1sample, bandwidth is set to None and
         # is thus estimated. De facto it is 0.0 as a single sample is provided
