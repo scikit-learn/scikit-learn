@@ -1,5 +1,6 @@
 """ test the label propagation module """
 
+from decimal import DivisionByZero
 import numpy as np
 import pytest
 import warnings
@@ -153,15 +154,13 @@ def test_convergence_warning():
 
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=500)
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", ConvergenceWarning)
         mdl.fit(X, y)
-    
 
     mdl = label_propagation.LabelPropagation(kernel="rbf", max_iter=500)
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", ConvergenceWarning)
         mdl.fit(X, y)
-    
 
 
 @pytest.mark.parametrize(
@@ -177,6 +176,7 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     y = np.array([0, 1, -1, -1])
     mdl = LabelPropagationCls(kernel="knn", max_iter=100, n_neighbors=1)
     with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         mdl.fit(X, y)
 
 
