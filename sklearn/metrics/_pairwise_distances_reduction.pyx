@@ -42,7 +42,7 @@ from ..utils._heap cimport heap_push
 from ..utils._sorting cimport simultaneous_sort
 from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t
-from ..utils._typedefs cimport ITYPECODE, DTYPECODE
+from ..utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Integral, Real
 from typing import List
@@ -74,70 +74,6 @@ ctypedef fused vector_DITYPE_t:
 ctypedef fused vector_vector_DITYPE_t:
     vector[vector[ITYPE_t]]
     vector[vector[DTYPE_t]]
-
-
-cdef class StdVectorSentinel:
-    """Wraps a reference to a vector which will be deallocated with this object.
-
-    When created, the StdVectorSentinel swaps the reference of its internal
-    vectors with the provided one (vec_ptr), thus making the StdVectorSentinel
-    manage the provided one's lifetime.
-    """
-    pass
-
-
-# We necessarily need to define two extension types extending StdVectorSentinel
-# because we need to provide the dtype of the vector but can't use numeric fused types.
-cdef class StdVectorSentinelDTYPE(StdVectorSentinel):
-    cdef vector[DTYPE_t] vec
-
-    @staticmethod
-    cdef StdVectorSentinel create_for(vector[DTYPE_t] * vec_ptr):
-        # This initializes the object directly without calling __init__
-        # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
-        cdef StdVectorSentinelDTYPE sentinel = StdVectorSentinelDTYPE.__new__(StdVectorSentinelDTYPE)
-        sentinel.vec.swap(deref(vec_ptr))
-        return sentinel
-
-
-cdef class StdVectorSentinelITYPE(StdVectorSentinel):
-    cdef vector[ITYPE_t] vec
-
-    @staticmethod
-    cdef StdVectorSentinel create_for(vector[ITYPE_t] * vec_ptr):
-        # This initializes the object directly without calling __init__
-        # See: https://cython.readthedocs.io/en/latest/src/userguide/extension_types.html#instantiation-from-existing-c-c-pointers # noqa
-        cdef StdVectorSentinelITYPE sentinel = StdVectorSentinelITYPE.__new__(StdVectorSentinelITYPE)
-        sentinel.vec.swap(deref(vec_ptr))
-        return sentinel
-
-
-cdef np.ndarray vector_to_nd_array(vector_DITYPE_t * vect_ptr):
-    """Create a numpy ndarray given a C++ vector.
-
-    The numpy array buffer is the one of the C++ vector.
-    A StdVectorSentinel is registered as the base object for the numpy array,
-    freeing the C++ vector it encapsulates when the numpy array is freed.
-    """
-    typenum = DTYPECODE if vector_DITYPE_t is vector[DTYPE_t] else ITYPECODE
-    cdef:
-        np.npy_intp size = deref(vect_ptr).size()
-        np.ndarray arr = np.PyArray_SimpleNewFromData(1, &size, typenum,
-                                                      deref(vect_ptr).data())
-        StdVectorSentinel sentinel
-
-    if vector_DITYPE_t is vector[DTYPE_t]:
-        sentinel = StdVectorSentinelDTYPE.create_for(vect_ptr)
-    else:
-        sentinel = StdVectorSentinelITYPE.create_for(vect_ptr)
-
-    # Makes the numpy array responsible of the life-cycle of its buffer.
-    # A reference to the StdVectorSentinel will be stolen by the call to
-    # `PyArray_SetBaseObject` below, so we increase its reference counter.
-    # See: https://docs.python.org/3/c-api/intro.html#reference-count-details
-    Py_INCREF(sentinel)
-    np.PyArray_SetBaseObject(arr, sentinel)
-    return arr
 
 
 cdef np.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
