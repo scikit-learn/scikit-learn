@@ -423,7 +423,8 @@ def ridge_regression(
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'cholesky'.
+          coefficients. It is the most stable solver, in particular more stable
+          for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution via a Cholesky decomposition of
@@ -971,7 +972,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'cholesky'.
+          coefficients. It is the most stable solver, in particular more stable
+          for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
@@ -1275,7 +1277,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'cholesky'.
+          coefficients. It is the most stable solver, in particular more stable
+          for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.

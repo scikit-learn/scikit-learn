@@ -34,8 +34,10 @@ from sklearn.linear_model._ridge import _solve_svd
 from sklearn.linear_model._ridge import _solve_lbfgs
 from sklearn.linear_model._ridge import _check_gcv_mode
 from sklearn.linear_model._ridge import _X_CenterStackOp
+from sklearn.datasets import make_low_rank_matrix
 from sklearn.datasets import make_regression
 from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
@@ -45,7 +47,11 @@ from sklearn.model_selection import LeaveOneOut
 
 from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
-from sklearn.datasets import make_multilabel_classification
+
+
+SOLVERS = ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga")
+SPARSE_SOLVERS_WITH_INTERCEPT = ("sparse_cg", "sag")
+SPARSE_SOLVERS_WITHOUT_INTERCEPT = ("sparse_cg", "cholesky", "lsqr", "sag", "saga")
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -77,41 +83,411 @@ def _mean_squared_error_callable(y_test, y_pred):
     return ((y_test - y_pred) ** 2).mean()
 
 
-@pytest.mark.parametrize("solver", ("svd", "sparse_cg", "cholesky", "lsqr", "sag"))
-def test_ridge(solver):
-    # Ridge regression convergence test using score
-    # TODO: for this test to be robust, we should use a dataset instead
-    # of np.random.
-    rng = np.random.RandomState(0)
-    alpha = 1.0
+@pytest.fixture(params=["long", "wide"])
+def ols_ridge_dataset(global_random_seed, request):
+    """Dataset with OLS and Ridge solutions, well conditioned X.
 
-    # With more samples than features
-    n_samples, n_features = 6, 5
-    y = rng.randn(n_samples)
-    X = rng.randn(n_samples, n_features)
+    The construction is based on the SVD decomposition of X = U S V'.
 
-    ridge = Ridge(alpha=alpha, solver=solver)
-    ridge.fit(X, y)
-    assert ridge.coef_.shape == (X.shape[1],)
-    assert ridge.score(X, y) > 0.47
+    Parameters
+    ----------
+    type : {"long", "wide"}
+        If "long", then n_samples > n_features.
+        If "wide", then n_features > n_samples.
 
-    if solver in ("cholesky", "sag"):
-        # Currently the only solvers to support sample_weight.
-        ridge.fit(X, y, sample_weight=np.ones(n_samples))
-        assert ridge.score(X, y) > 0.47
+    For "wide", we return the minimum norm solution w = X' (XX')^-1 y:
 
-    # With more features than samples
-    n_samples, n_features = 5, 10
-    y = rng.randn(n_samples)
-    X = rng.randn(n_samples, n_features)
-    ridge = Ridge(alpha=alpha, solver=solver)
-    ridge.fit(X, y)
-    assert ridge.score(X, y) > 0.9
+        min ||w||_2 subject to X w = y
 
-    if solver in ("cholesky", "sag"):
-        # Currently the only solvers to support sample_weight.
-        ridge.fit(X, y, sample_weight=np.ones(n_samples))
-        assert ridge.score(X, y) > 0.9
+    Returns
+    -------
+    X : ndarray
+        Last column of 1, i.e. intercept.
+    y : ndarray
+    coef_ols : ndarray of shape
+        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with mininum ||w||_2 in
+        case of ambiguity)
+        Last coefficient is intercept.
+    coef_ridge : ndarray of shape (5,)
+        Ridge solution with alpha=1, i.e. min ||X w - y||_2_2 + ||w||_2^2.
+        Last coefficient is intercept.
+    """
+    # Make larger dim more than double as big as the smaller one.
+    # This helps when constructing singular matrices like (X, X).
+    if request.param == "long":
+        n_samples, n_features = 12, 4
+    else:
+        n_samples, n_features = 4, 12
+    k = min(n_samples, n_features)
+    rng = np.random.RandomState(global_random_seed)
+    X = make_low_rank_matrix(
+        n_samples=n_samples, n_features=n_features, effective_rank=k
+    )
+    X[:, -1] = 1  # last columns acts as intercept
+    U, s, Vt = linalg.svd(X)
+    assert np.all(s) > 1e-3  # to be sure
+    U1, U2 = U[:, :k], U[:, k:]
+    Vt1, _ = Vt[:k, :], Vt[k:, :]
+
+    if request.param == "long":
+        # Add a term that vanishes in the product X'y
+        coef_ols = rng.uniform(low=-10, high=10, size=n_features)
+        y = X @ coef_ols
+        y += U2 @ rng.normal(size=n_samples - n_features) ** 2
+    else:
+        y = rng.uniform(low=-10, high=10, size=n_samples)
+        # w = X'(XX')^-1 y = V s^-1 U' y
+        coef_ols = Vt1.T @ np.diag(1 / s) @ U1.T @ y
+
+    # Add penalty alpha * ||coef||_2^2 for alpha=1 and solve via normal equations.
+    # Note that the problem is well conditioned such that we get accurate results.
+    alpha = 1
+    d = alpha * np.identity(n_features)
+    d[-1, -1] = 0  # intercept gets no penalty
+    coef_ridge = linalg.solve(X.T @ X + d, X.T @ y)
+
+    # To be sure
+    R_OLS = y - X @ coef_ols
+    R_Ridge = y - X @ coef_ridge
+    assert np.linalg.norm(R_OLS) < np.linalg.norm(R_Ridge)
+
+    return X, y, coef_ols, coef_ridge
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_regression(solver, fit_intercept, ols_ridge_dataset, global_random_seed):
+    """Test that Ridge converges for all solvers to correct solution.
+
+    We work with a simple constructed data set with known solution.
+    """
+    X, y, _, coef = ols_ridge_dataset
+    alpha = 1.0  # because ols_ridge_dataset uses this.
+    params = dict(
+        alpha=alpha,
+        fit_intercept=True,
+        solver=solver,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
+        random_state=global_random_seed,
+    )
+
+    # Calculate residuals and R2.
+    res_null = y - np.mean(y)
+    res_Ridge = y - X @ coef
+    R2_Ridge = 1 - np.sum(res_Ridge**2) / np.sum(res_null**2)
+
+    model = Ridge(**params)
+    X = X[:, :-1]  # remove intercept
+    if fit_intercept:
+        intercept = coef[-1]
+    else:
+        X = X - X.mean(axis=0)
+        y = y - y.mean()
+        intercept = 0
+    model.fit(X, y)
+    coef = coef[:-1]
+
+    assert model.intercept_ == pytest.approx(intercept)
+    assert_allclose(model.coef_, coef)
+    assert model.score(X, y) == pytest.approx(R2_Ridge)
+
+    # Same with sample_weight.
+    model = Ridge(**params).fit(X, y, sample_weight=np.ones(X.shape[0]))
+    assert model.intercept_ == pytest.approx(intercept)
+    assert_allclose(model.coef_, coef)
+    assert model.score(X, y) == pytest.approx(R2_Ridge)
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_regression_hstacked_X(
+    solver, fit_intercept, ols_ridge_dataset, global_random_seed
+):
+    """Test that Ridge converges for all solvers to correct solution on hstacked data.
+
+    We work with a simple constructed data set with known solution.
+    Fit on [X] with alpha is the same as fit on [X, X]/2 with alpha/2.
+    For long X, [X, X] is a singular matrix.
+    """
+    X, y, _, coef = ols_ridge_dataset
+    n_samples, n_features = X.shape
+    alpha = 1.0  # because ols_ridge_dataset uses this.
+
+    model = Ridge(
+        alpha=alpha / 2,
+        fit_intercept=fit_intercept,
+        solver=solver,
+        tol=1e-12,
+        random_state=global_random_seed,
+    )
+    X = X[:, :-1]  # remove intercept
+    X = 0.5 * np.concatenate((X, X), axis=1)
+    assert np.linalg.matrix_rank(X) <= min(n_samples, n_features - 1)
+    if fit_intercept:
+        intercept = coef[-1]
+    else:
+        X = X - X.mean(axis=0)
+        y = y - y.mean()
+        intercept = 0
+    model.fit(X, y)
+    coef = coef[:-1]
+
+    assert model.intercept_ == pytest.approx(intercept)
+    assert_allclose(model.coef_, np.r_[coef, coef])
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_regression_vstacked_X(
+    solver, fit_intercept, ols_ridge_dataset, global_random_seed
+):
+    """Test that Ridge converges for all solvers to correct solution on vstacked data.
+
+    We work with a simple constructed data set with known solution.
+    Fit on [X] with alpha is the same as fit on [X], [y]
+                                                [X], [y] with 2 * alpha.
+    For wide X, [X', X'] is a singular matrix.
+    """
+    X, y, _, coef = ols_ridge_dataset
+    n_samples, n_features = X.shape
+    alpha = 1.0  # because ols_ridge_dataset uses this.
+
+    model = Ridge(
+        alpha=2 * alpha,
+        fit_intercept=fit_intercept,
+        solver=solver,
+        tol=1e-11,
+        random_state=global_random_seed,
+    )
+    X = X[:, :-1]  # remove intercept
+    X = np.concatenate((X, X), axis=0)
+    assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
+    y = np.r_[y, y]
+    if fit_intercept:
+        intercept = coef[-1]
+    else:
+        X = X - X.mean(axis=0)
+        y = y - y.mean()
+        intercept = 0
+    model.fit(X, y)
+    coef = coef[:-1]
+
+    assert model.intercept_ == pytest.approx(intercept)
+    assert_allclose(model.coef_, coef)
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_regression_unpenalized(
+    solver, fit_intercept, ols_ridge_dataset, global_random_seed
+):
+    """Test that unpenalized Ridge = OLS converges for all solvers to correct solution.
+
+    We work with a simple constructed data set with known solution.
+    Note: This checks the minimum norm solution for wide X, i.e.
+    n_samples < n_features:
+        min ||w||_2 subject to X w = y
+    """
+    X, y, coef, _ = ols_ridge_dataset
+    n_samples, n_features = X.shape
+    alpha = 0  # OLS
+    params = dict(
+        alpha=alpha,
+        fit_intercept=fit_intercept,
+        solver=solver,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
+        random_state=global_random_seed,
+    )
+
+    model = Ridge(**params)
+    # Note that cholesky might give a warning: "Singular matrix in solving dual
+    # problem. Using least-squares solution instead."
+    if fit_intercept:
+        X = X[:, :-1]  # remove intercept
+        intercept = coef[-1]
+        coef = coef[:-1]
+    else:
+        intercept = 0
+    model.fit(X, y)
+
+    # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
+    # for the wide/fat case with n_features > n_samples. The current Ridge solvers do
+    # NOT return the minimum norm solution with fit_intercept=True.
+    if n_samples > n_features or not fit_intercept:
+        assert model.intercept_ == pytest.approx(intercept)
+        assert_allclose(model.coef_, coef)
+    else:
+        # As it is an underdetermined problem, residuals = 0. This shows that we get
+        # a solution to X w = y ....
+        assert_allclose(model.predict(X), y)
+        assert_allclose(X @ coef + intercept, y)
+        # But it is not the minimum norm solution. (This should be equal.)
+        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
+            np.r_[intercept, coef]
+        )
+
+        pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
+        assert model.intercept_ == pytest.approx(intercept)
+        assert_allclose(model.coef_, coef)
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_regression_unpenalized_hstacked_X(
+    solver, fit_intercept, ols_ridge_dataset, global_random_seed
+):
+    """Test that unpenalized Ridge = OLS converges for all solvers to correct solution.
+
+    We work with a simple constructed data set with known solution.
+    OLS fit on [X] is the same as fit on [X, X]/2.
+    For long X, [X, X] is a singular matrix and we check against the minimum norm
+    solution:
+        min ||w||_2 subject to min ||X w - y||_2
+    """
+    X, y, coef, _ = ols_ridge_dataset
+    n_samples, n_features = X.shape
+    alpha = 0  # OLS
+
+    model = Ridge(
+        alpha=alpha,
+        fit_intercept=fit_intercept,
+        solver=solver,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
+        random_state=global_random_seed,
+    )
+    if fit_intercept:
+        X = X[:, :-1]  # remove intercept
+        intercept = coef[-1]
+        coef = coef[:-1]
+    else:
+        intercept = 0
+    X = 0.5 * np.concatenate((X, X), axis=1)
+    assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
+    model.fit(X, y)
+
+    if n_samples > n_features or not fit_intercept:
+        assert model.intercept_ == pytest.approx(intercept)
+        if solver == "cholesky":
+            # Cholesky is a bad choice for singular X.
+            pytest.skip()
+        assert_allclose(model.coef_, np.r_[coef, coef])
+    else:
+        # FIXME: Same as in test_ridge_regression_unpenalized.
+        # As it is an underdetermined problem, residuals = 0. This shows that we get
+        # a solution to X w = y ....
+        assert_allclose(model.predict(X), y)
+        # But it is not the minimum norm solution. (This should be equal.)
+        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
+            np.r_[intercept, coef, coef]
+        )
+
+        pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
+        assert model.intercept_ == pytest.approx(intercept)
+        assert_allclose(model.coef_, np.r_[coef, coef])
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_regression_unpenalized_vstacked_X(
+    solver, fit_intercept, ols_ridge_dataset, global_random_seed
+):
+    """Test that unpenalized Ridge = OLS converges for all solvers to correct solution.
+
+    We work with a simple constructed data set with known solution.
+    OLS fit on [X] is the same as fit on [X], [y]
+                                         [X], [y].
+    For wide X, [X', X'] is a singular matrix and we check against the minimum norm
+    solution:
+        min ||w||_2 subject to X w = y
+    """
+    X, y, coef, _ = ols_ridge_dataset
+    n_samples, n_features = X.shape
+    alpha = 0  # OLS
+
+    model = Ridge(
+        alpha=alpha,
+        fit_intercept=fit_intercept,
+        solver=solver,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
+        random_state=global_random_seed,
+    )
+
+    if fit_intercept:
+        X = X[:, :-1]  # remove intercept
+        intercept = coef[-1]
+        coef = coef[:-1]
+    else:
+        intercept = 0
+    X = np.concatenate((X, X), axis=0)
+    assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
+    y = np.r_[y, y]
+    model.fit(X, y)
+
+    if n_samples > n_features or not fit_intercept:
+        assert model.intercept_ == pytest.approx(intercept)
+        assert_allclose(model.coef_, coef)
+    else:
+        # FIXME: Same as in test_ridge_regression_unpenalized.
+        # As it is an underdetermined problem, residuals = 0. This shows that we get
+        # a solution to X w = y ....
+        assert_allclose(model.predict(X), y)
+        # But it is not the minimum norm solution. (This should be equal.)
+        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
+            np.r_[intercept, coef]
+        )
+
+        pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
+        assert model.intercept_ == pytest.approx(intercept)
+        assert_allclose(model.coef_, coef)
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("sparseX", [True, False])
+@pytest.mark.parametrize("alpha", [1.0, 1e-2])
+def test_ridge_regression_sample_weights(
+    solver, fit_intercept, sparseX, alpha, ols_ridge_dataset, global_random_seed
+):
+    """Test that Ridge with sample weights gives correct results.
+
+    We use the following trick:
+        ||y - Xw||_2 = (z - Aw)' W (z - Aw)
+    for z=[y, y], A' = [X', X'] (vstacked), and W[:n/2] + W[n/2:] = 1, W=diag(W)
+    """
+    if sparseX:
+        if fit_intercept and solver not in SPARSE_SOLVERS_WITH_INTERCEPT:
+            pytest.skip()
+        elif not fit_intercept and solver not in SPARSE_SOLVERS_WITHOUT_INTERCEPT:
+            pytest.skip()
+    X, y, _, coef = ols_ridge_dataset
+    n_samples, n_features = X.shape
+    sw = rng.uniform(low=0, high=1, size=n_samples)
+
+    model = Ridge(
+        alpha=alpha,
+        fit_intercept=fit_intercept,
+        solver=solver,
+        tol=1e-15 if solver in ["sag", "saga"] else 1e-10,
+        max_iter=100_000,
+        random_state=global_random_seed,
+    )
+    X = X[:, :-1]  # remove intercept
+    X = np.concatenate((X, X), axis=0)
+    y = np.r_[y, y]
+    sw = np.r_[sw, 1 - sw] * alpha
+    if fit_intercept:
+        intercept = coef[-1]
+    else:
+        X = X - X.mean(axis=0)
+        y = y - y.mean()
+        intercept = 0
+    if sparseX:
+        X = sp.csr_matrix(X)
+    model.fit(X, y, sample_weight=sw)
+    coef = coef[:-1]
+
+    assert model.intercept_ == pytest.approx(intercept)
+    assert_allclose(model.coef_, coef)
 
 
 def test_primal_dual_relationship():
@@ -121,45 +497,6 @@ def test_primal_dual_relationship():
     dual_coef = _solve_cholesky_kernel(K, y, alpha=[1e-2])
     coef2 = np.dot(X_diabetes.T, dual_coef).T
     assert_array_almost_equal(coef, coef2)
-
-
-def test_ridge_singular():
-    # test on a singular matrix
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 6, 6
-    y = rng.randn(n_samples // 2)
-    y = np.concatenate((y, y))
-    X = rng.randn(n_samples // 2, n_features)
-    X = np.concatenate((X, X), axis=0)
-
-    ridge = Ridge(alpha=0)
-    ridge.fit(X, y)
-    assert ridge.score(X, y) > 0.9
-
-
-def test_ridge_regression_sample_weights():
-    rng = np.random.RandomState(0)
-
-    for solver in ("cholesky",):
-        for n_samples, n_features in ((6, 5), (5, 10)):
-            for alpha in (1.0, 1e-2):
-                y = rng.randn(n_samples)
-                X = rng.randn(n_samples, n_features)
-                sample_weight = 1.0 + rng.rand(n_samples)
-
-                coefs = ridge_regression(
-                    X, y, alpha=alpha, sample_weight=sample_weight, solver=solver
-                )
-
-                # Sample weight can be implemented via a simple rescaling
-                # for the square loss.
-                coefs2 = ridge_regression(
-                    X * np.sqrt(sample_weight)[:, np.newaxis],
-                    y * np.sqrt(sample_weight),
-                    alpha=alpha,
-                    solver=solver,
-                )
-                assert_array_almost_equal(coefs, coefs2)
 
 
 def test_ridge_regression_convergence_fail():
@@ -173,54 +510,7 @@ def test_ridge_regression_convergence_fail():
         )
 
 
-def test_ridge_sample_weights():
-    # TODO: loop over sparse data as well
-    # Note: parametrizing this test with pytest results in failed
-    #       assertions, meaning that is is not extremely robust
-
-    rng = np.random.RandomState(0)
-    param_grid = product(
-        (1.0, 1e-2), (True, False), ("svd", "cholesky", "lsqr", "sparse_cg")
-    )
-
-    for n_samples, n_features in ((6, 5), (5, 10)):
-
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
-        sample_weight = 1.0 + rng.rand(n_samples)
-
-        for alpha, intercept, solver in param_grid:
-
-            # Ridge with explicit sample_weight
-            est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver, tol=1e-12)
-            est.fit(X, y, sample_weight=sample_weight)
-            coefs = est.coef_
-            inter = est.intercept_
-
-            # Closed form of the weighted regularized least square
-            # theta = (X^T W X + alpha I)^(-1) * X^T W y
-            W = np.diag(sample_weight)
-            if intercept is False:
-                X_aug = X
-                D = np.eye(n_features)
-            else:
-                dummy_column = np.ones(shape=(n_samples, 1))
-                X_aug = np.concatenate((dummy_column, X), axis=1)
-                D = np.eye(n_features + 1)
-                D[0, 0] = 0
-
-            cf_coefs = linalg.solve(
-                X_aug.T.dot(W).dot(X_aug) + alpha * D, X_aug.T.dot(W).dot(y)
-            )
-
-            if intercept is False:
-                assert_array_almost_equal(coefs, cf_coefs)
-            else:
-                assert_array_almost_equal(coefs, cf_coefs[1:])
-                assert_almost_equal(inter, cf_coefs[0])
-
-
-def test_ridge_shapes():
+def test_ridge_shapes_type():
     # Test shape of coef_ and intercept_
     rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
@@ -234,14 +524,20 @@ def test_ridge_shapes():
     ridge.fit(X, y)
     assert ridge.coef_.shape == (n_features,)
     assert ridge.intercept_.shape == ()
+    assert isinstance(ridge.coef_, np.ndarray)
+    assert isinstance(ridge.intercept_, float)
 
     ridge.fit(X, Y1)
     assert ridge.coef_.shape == (1, n_features)
     assert ridge.intercept_.shape == (1,)
+    assert isinstance(ridge.coef_, np.ndarray)
+    assert isinstance(ridge.intercept_, np.ndarray)
 
     ridge.fit(X, Y)
     assert ridge.coef_.shape == (2, n_features)
     assert ridge.intercept_.shape == (2,)
+    assert isinstance(ridge.coef_, np.ndarray)
+    assert isinstance(ridge.intercept_, np.ndarray)
 
 
 def test_ridge_intercept():
@@ -260,28 +556,6 @@ def test_ridge_intercept():
     ridge.fit(X, Y)
     assert_almost_equal(ridge.intercept_[0], intercept)
     assert_almost_equal(ridge.intercept_[1], intercept + 1.0)
-
-
-def test_toy_ridge_object():
-    # Test BayesianRegression ridge classifier
-    # TODO: test also n_samples > n_features
-    X = np.array([[1], [2]])
-    Y = np.array([1, 2])
-    reg = Ridge(alpha=0.0)
-    reg.fit(X, Y)
-    X_test = [[1], [2], [3], [4]]
-    assert_almost_equal(reg.predict(X_test), [1.0, 2, 3, 4])
-
-    assert len(reg.coef_.shape) == 1
-    assert type(reg.intercept_) == np.float64
-
-    Y = np.vstack((Y, Y)).T
-
-    reg.fit(X, Y)
-    X_test = [[1], [2], [3], [4]]
-
-    assert len(reg.coef_.shape) == 2
-    assert type(reg.intercept_) == np.ndarray
 
 
 def test_ridge_vs_lstsq():
@@ -996,14 +1270,6 @@ def check_dense_sparse(test_func):
 )
 def test_dense_sparse(test_func):
     check_dense_sparse(test_func)
-
-
-def test_ridge_sparse_svd():
-    X = sp.csc_matrix(rng.rand(100, 10))
-    y = rng.rand(100)
-    ridge = Ridge(solver="svd", fit_intercept=False)
-    with pytest.raises(TypeError):
-        ridge.fit(X, y)
 
 
 def test_class_weights():
