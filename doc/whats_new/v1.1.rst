@@ -195,8 +195,8 @@ Changelog
 
 - |Fix| :term:`get_feature_names_out` functionality in
   :class:`compose.ColumnTransformer` was broken when columns were specified
-  using `slice`. This is fixed in :pr:`22775` by :user:`randomgeek78
-  <randomgeek78>`
+  using `slice`. This is fixed in :pr:`22775` and :pr:`22913` by
+  :user:`randomgeek78 <randomgeek78>`
 
 :mod:`sklearn.cross_decomposition`
 ..................................
