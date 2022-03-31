@@ -63,7 +63,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.cluster._supervised.entropy",
     "sklearn.metrics.cluster._supervised.fowlkes_mallows_score",
     "sklearn.metrics.cluster._supervised.homogeneity_completeness_v_measure",
-    "sklearn.metrics.cluster._supervised.homogeneity_score",
     "sklearn.metrics.cluster._supervised.mutual_info_score",
     "sklearn.metrics.cluster._supervised.normalized_mutual_info_score",
     "sklearn.metrics.cluster._supervised.pair_confusion_matrix",
