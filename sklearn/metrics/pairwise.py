@@ -1288,7 +1288,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_features)
+    X : ndarray
+        A ndarray of shape (n_samples_X, n_features).
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
         If `None`, uses `Y=X`.
@@ -1298,7 +1299,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
 
     Returns
     -------
-    kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel_matrix : ndarray
+        A ndarray ndarray of shape (n_samples_X, n_samples_Y).
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
