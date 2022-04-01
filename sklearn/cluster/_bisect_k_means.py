@@ -174,7 +174,7 @@ class BisectingKMeans(_BaseKMeans):
             precision, but may be costly in terms of execution time (especially for
             larger ammount of data points).
 
-         - "largest_cluster" - Bisect K-Means will always split cluster with
+         - "largest_cluster" - BisectingKMeans will always split cluster with
             largest amount of points assigned to it from all clusters
             previously calculated. That should work faster than picking by SSE
             ('biggest_sse') and may produce similar results in most cases.
