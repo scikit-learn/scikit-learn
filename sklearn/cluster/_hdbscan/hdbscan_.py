@@ -71,13 +71,10 @@ def _hdbscan_generic(
     X,
     min_samples=5,
     alpha=1.0,
-    metric="minkowski",
-    p=2,
+    metric="euclidean",
     **metric_params,
 ):
-    if metric == "minkowski":
-        distance_matrix = pairwise_distances(X, metric=metric, p=p)
-    elif metric == "arccos":
+    if metric == "arccos":
         distance_matrix = pairwise_distances(X, metric="cosine", **metric_params)
     elif metric == "precomputed":
         # Treating this case explicitly, instead of letting
@@ -184,7 +181,7 @@ def _hdbscan_prims_kdtree(
     X,
     min_samples=5,
     alpha=1.0,
-    metric="minkowski",
+    metric="euclidean",
     leaf_size=40,
     **metric_params,
 ):
@@ -197,7 +194,6 @@ def _hdbscan_prims_kdtree(
 
     tree = KDTree(X, metric=metric, leaf_size=leaf_size, **metric_params)
 
-    # TO DO: Deal with p for minkowski appropriately
     dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
     # Get distance to kth nearest neighbour
@@ -221,7 +217,7 @@ def _hdbscan_prims_balltree(
     X,
     min_samples=5,
     alpha=1.0,
-    metric="minkowski",
+    metric="euclidean",
     leaf_size=40,
     **metric_params,
 ):
@@ -254,7 +250,7 @@ def _hdbscan_prims_balltree(
 def _hdbscan_boruvka_kdtree(
     X,
     min_samples=5,
-    metric="minkowski",
+    metric="euclidean",
     leaf_size=40,
     approx_min_span_tree=True,
     n_jobs=4,
@@ -300,7 +296,7 @@ def _hdbscan_boruvka_kdtree(
 def _hdbscan_boruvka_balltree(
     X,
     min_samples=5,
-    metric="minkowski",
+    metric="euclidean",
     leaf_size=40,
     approx_min_span_tree=True,
     n_jobs=4,
@@ -437,7 +433,7 @@ def hdbscan(
     alpha=1.0,
     cluster_selection_epsilon=0.0,
     max_cluster_size=0,
-    metric="minkowski",
+    metric="euclidean",
     leaf_size=40,
     algorithm="best",
     memory=None,
@@ -465,7 +461,7 @@ def hdbscan(
     min_samples : int, default=None
         The number of samples in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
-        defaults to the min_cluster_size.
+        defaults to the `min_cluster_size`.
 
     alpha : float, default=1.0
         A distance scaling parameter as used in robust single linkage.
@@ -476,20 +472,20 @@ def hdbscan(
         See [3]_ for more information.
 
     max_cluster_size : int, default=0
-        A limit to the size of clusters returned by the eom algorithm.
-        Has no effect when using leaf clustering (where clusters are
-        usually small regardless) and can also be overridden in rare
-        cases by a high value for cluster_selection_epsilon.
+        A limit to the size of clusters returned by the `eom` cluster selection
+        algorithm. Has no effect if `cluster_selection_method=leaf`. Can be
+        overridden in rare cases by a high value for
+        `cluster_selection_epsilon`.
 
     metric : str or callable, default='minkowski'
         The metric to use when calculating distance between instances in a
         feature array.
 
-        * If metric is a string or callable, it must be one of
+        - If metric is a string or callable, it must be one of
           the options allowed by `metrics.pairwise.pairwise_distances` for its
           metric parameter.
 
-        * If metric is "precomputed", X is assumed to be a distance matrix and
+        - If metric is "precomputed", X is assumed to be a distance matrix and
           must be square.
 
     leaf_size : int, default=40
@@ -781,13 +777,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     min_cluster_size : int, default=5
-        The minimum size of clusters; single linkage splits that contain
-        fewer points than this will be considered points "falling out" of a
-        cluster rather than a cluster splitting into two new clusters.
+        The minimum number of samples in a group for that group to be
+        considered a cluster; groupings smaller than this size will be left
+        as noise.
 
     min_samples : int, default=None
-        The number of samples in a neighbourhood for a point to be
-        considered a core point.
+        The number of samples in a neighborhood for a point
+        to be considered as a core point. This includes the point itself.
+        defaults to the `min_cluster_size`.
 
     cluster_selection_epsilon : float, default=0.0
         A distance threshold. Clusters below this value will be merged.
