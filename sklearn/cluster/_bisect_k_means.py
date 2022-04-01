@@ -508,7 +508,7 @@ class BisectingKMeans(_BaseKMeans):
         - "biggest sse": Picks cluster with biggest SSE (Sum of Squared Errors)
          from all calculated.
 
-        - "largest_cluster": Picks always cluster with largest number of
+        - "largest_cluster": Always picks cluster with largest number of
          points assigned from all calculated. That method will perform faster
           than picking by SSE methods, while producing similar results.
 
