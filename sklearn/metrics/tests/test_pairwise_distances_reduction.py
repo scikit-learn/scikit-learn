@@ -130,8 +130,8 @@ def test_argkmin_factory_method_wrong_usages():
     metric = "euclidean"
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
-        "got: X.dtype=float32 and Y.dtype=float64"
+        "Datasets must be of np.float64 type. Currently: "
+        "X.dtype=float32 and Y.dtype=float64."
     )
     with pytest.raises(ValueError, match=msg):
         PairwiseDistancesArgKmin.compute(
@@ -139,8 +139,8 @@ def test_argkmin_factory_method_wrong_usages():
         )
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
-        "got: X.dtype=float64 and Y.dtype=int32"
+        "Datasets must be of np.float64 type. Currently: "
+        "X.dtype=float64 and Y.dtype=int32"
     )
     with pytest.raises(ValueError, match=msg):
         PairwiseDistancesArgKmin.compute(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
@@ -190,8 +190,8 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     with pytest.raises(
         ValueError,
         match=(
-            "Only 64bit float datasets are supported at this time, "
-            "got: X.dtype=float32 and Y.dtype=float64"
+            "Datasets must be of np.float64 type. "
+            "Currently: X.dtype=float32 and Y.dtype=float64"
         ),
     ):
         PairwiseDistancesRadiusNeighborhood.compute(
@@ -201,8 +201,8 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     with pytest.raises(
         ValueError,
         match=(
-            "Only 64bit float datasets are supported at this time, "
-            "got: X.dtype=float64 and Y.dtype=int32"
+            "Datasets must be of np.float64 type. "
+            "Currently: X.dtype=float64 and Y.dtype=int32"
         ),
     ):
         PairwiseDistancesRadiusNeighborhood.compute(
