@@ -32,7 +32,7 @@ def test_barycenter_kneighbors_graph(global_dtype):
 
     graph = barycenter_kneighbors_graph(X, 2)
     # check that columns sum to one
-    assert_allclose(np.sum(graph.toarray(), 1), np.ones(3))
+    assert_allclose(np.sum(graph.toarray(), axis=1), np.ones(3))
     pred = np.dot(graph.toarray(), X)
     assert linalg.norm(pred - X) / X.shape[0] < 1
 
