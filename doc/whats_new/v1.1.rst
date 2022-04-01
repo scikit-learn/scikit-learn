@@ -130,6 +130,12 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.base`
+...................
+- |Fix| :func:`base.clone` now clones estimators which store a copy of their
+  constructor arguments as long as they are not arrays. :pr:`22973` by `Adrin
+  Jalali`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
