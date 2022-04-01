@@ -1475,8 +1475,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     Parameters
     ----------
-    estimatorNBs : list of tuples
-        List of (name, estimatorNB, columns) tuples specifying the naive Bayes
+    nb_estimators : list of tuples
+        List of (name, nb_estimator, columns) tuples specifying the naive Bayes
         estimators to be combined into a single naive Bayes meta-estimator.
 
         name : str
@@ -1486,7 +1486,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             and :class:`~sklearn.compose.ColumnTransformer`, this allows the
             subestimator and its parameters to be set using :term:`set_params`
             and searched in grid search.
-        estimatorNB : estimator
+        nb_estimator : estimator
             The estimator must support :term:`fit` or :term:`partial_fit`,
             depending on how the meta-estimator is fitted. In addition, the
             estimator must support ``_joint_log_likelihood`` method, which
@@ -1498,7 +1498,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
-            ``estimatorNB`` expects X to be a 1d array-like (vector),
+            ``nb_estimator`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above. To select multiple columns by name or dtype, you can use
@@ -1522,11 +1522,11 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     Attributes
     ----------
     estimators_ : list of tuples
-        List of ``(name, fitted_estimatorNB, columns)`` tuples, which follow
-        the order of `estimatorNBs`. Here, ``fitted_estimatorNB`` is a fitted naive
+        List of ``(name, fitted_nb_estimator, columns)`` tuples, which follow
+        the order of `nb_estimators`. Here, ``fitted_nb_estimator`` is a fitted naive
         Bayes estimator, except when ``columns`` presents an empty selection of
-        columns, in which case it is the original unfitted ``estimatorNB``. If
-        the original specification of ``columns`` in ``estimatorNBs`` was a
+        columns, in which case it is the original unfitted ``nb_estimator``. If
+        the original specification of ``columns`` in ``nb_estimators`` was a
         callable, then ``columns`` is converted to a list of column indices.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
@@ -1589,26 +1589,26 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([0, 0, 1, 1, 2, 2])
     >>> from sklearn.naive_bayes import MultinomialNB, GaussianNB, ColumnwiseNB
-    >>> clf = ColumnwiseNB(estimatorNBs=[('mnb1', MultinomialNB(), [0, 1]),
+    >>> clf = ColumnwiseNB(nb_estimators=[('mnb1', MultinomialNB(), [0, 1]),
     ...                                ('mnb2', MultinomialNB(), [3, 4]),
     ...                                ('gnb1', GaussianNB(), [5])])
     >>> clf.fit(X, y)
-    ColumnwiseNB(estimatorNBs=[('mnb1', MultinomialNB(), [0, 1]),
+    ColumnwiseNB(nb_estimators=[('mnb1', MultinomialNB(), [0, 1]),
                             ('mnb2', MultinomialNB(), [3, 4]),
                             ('gnb1', GaussianNB(), [5])])
     >>> print(clf.predict(X))
     [0 0 1 0 2 2]
     """
 
-    _required_parameters = ["estimatorNBs"]
+    _required_parameters = ["nb_estimators"]
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
         return "(%d of %d) Processing %s" % (idx, total, name)
 
-    def __init__(self, estimatorNBs, *, priors=None, n_jobs=None, verbose=False):
-        self.estimatorNBs = estimatorNBs
+    def __init__(self, nb_estimators, *, priors=None, n_jobs=None, verbose=False):
+        self.nb_estimators = nb_estimators
         self.priors = priors
         self.n_jobs = n_jobs
         self.verbose = verbose
@@ -1627,13 +1627,13 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     def _joint_log_likelihood(self, X):
         """Calculate the meta-estimator's joint log likelihood ``log P(x,c)``."""
         # Because data must follow the same path as it would in subestimators,
-        # _jll_one(estimatorNB, X) passes it through estimatorNB._check_X to
+        # _jll_one(nb_estimator, X) passes it through nb_estimator._check_X to
         # match the implementation of _BaseNB.predict_log_proba.
         # Changes therein must be reflected in _jll_one or here.
         estimators = self._iter(fitted=True, replace_strings=True)
         all_jlls = Parallel(n_jobs=self.n_jobs)(
-            delayed(_jll_one)(estimator=estimatorNB, X=_safe_indexing(X, cols, axis=1))
-            for (_, estimatorNB, cols) in estimators
+            delayed(_jll_one)(estimator=nb_estimator, X=_safe_indexing(X, cols, axis=1))
+            for (_, nb_estimator, cols) in estimators
         )
         n_estimators = len(all_jlls)
         log_prior = np.log(self.class_prior_)
@@ -1642,12 +1642,12 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     def _validate_estimators(self, check_partial=False):
         # Check if estimators have fit/partial_fit and jll methods
         # Validate estimator names via _BaseComposition._validate_names(self, names)
-        if not self.estimatorNBs:
+        if not self.nb_estimators:
             raise ValueError(
                 "A list of naive Bayes estimators must be provided "
-                "in the form [(name, estimatorNB, columns), ... ]."
+                "in the form [(name, nb_estimator, columns), ... ]."
             )
-        names, estimators, _ = zip(*self.estimatorNBs)
+        names, estimators, _ = zip(*self.nb_estimators)
         for e in estimators:
             if (not check_partial) and (
                 not (hasattr(e, "fit") and hasattr(e, "_joint_log_likelihood"))
@@ -1679,7 +1679,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         # ColumnTransformer code.
         all_columns = []
         estimator_to_input_indices = {}
-        for name, _, columns in self.estimatorNBs:
+        for name, _, columns in self.nb_estimators:
             if callable(columns):
                 columns = columns(X)
             all_columns.append(columns)
@@ -1700,7 +1700,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         return Bunch(**{name: e for name, e, _ in self.estimators_})
 
     def _iter(self, *, fitted=False, replace_strings=False):
-        """Generate ``(name, estimatorNB, columns)`` tuples.
+        """Generate ``(name, nb_estimator, columns)`` tuples.
 
         This is a private method, similar to ColumnTransformer._iter.
         Must not be called before _validate_column_callables.
@@ -1722,7 +1722,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         Yields
         ------
         tuple
-            of the form ``(name, estimatorNB, columns)``.
+            of the form ``(name, nb_estimator, columns)``.
 
         Notes
         -----
@@ -1751,7 +1751,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 else:
                     yield (name, estimator, cols)
         else:  # fitted=False
-            for (name, estimator, _), cols in zip(self.estimatorNBs, self._columns):
+            for (name, estimator, _), cols in zip(self.nb_estimators, self._columns):
                 if replace_strings and _is_empty_column_selection(cols):
                     continue
                 else:
@@ -1795,18 +1795,18 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         estimators_ = []
         fitted_estimators = iter(fitted_estimators)
 
-        for name, estimatorNB, cols in self._iter():
+        for name, nb_estimator, cols in self._iter():
             if not _is_empty_column_selection(cols):
-                updated_estimatorNB = next(fitted_estimators)
+                updated_nb_estimator = next(fitted_estimators)
             else:  # don't advance fitted_estimators; use original
-                updated_estimatorNB = estimatorNB
-            estimators_.append((name, updated_estimatorNB, cols))
+                updated_nb_estimator = nb_estimator
+            estimators_.append((name, updated_nb_estimator, cols))
         self.estimators_ = estimators_
 
     def fit(self, X, y, sample_weight=None):
         """Fit the naive Bayes meta-estimator.
 
-        Calls `fit` of each subestimator ``estimatorNB``.  Only a corresponding
+        Calls `fit` of each subestimator ``nb_estimator``.  Only a corresponding
         subset of columns of `X` is passed to each subestimator; `sample_weight`
         and `y` are passed to the subestimators as they are.
 
@@ -1854,14 +1854,14 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         estimators = list(self._iter(fitted=False, replace_strings=True))
         fitted_estimators = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one)(
-                estimator=clone(estimatorNB),
+                estimator=clone(nb_estimator),
                 X=_safe_indexing(X, cols, axis=1),
                 y=y,
                 message_clsname="ColumnwiseNB",
                 message=self._log_message(name, idx, len(estimators)),
                 sample_weight=sample_weight,
             )
-            for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
+            for idx, (name, nb_estimator, cols) in enumerate(estimators, 1)
         )
         self._update_fitted_estimators(fitted_estimators)
         self._update_class_prior()
@@ -1934,7 +1934,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         estimators = list(self._iter(fitted=not first_call, replace_strings=True))
         fitted_estimators = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_one)(
-                estimator=clone(estimatorNB) if first_call else estimatorNB,
+                estimator=clone(nb_estimator) if first_call else nb_estimator,
                 X=_safe_indexing(X, cols, axis=1),
                 y=y,
                 message_clsname="ColumnwiseNB",
@@ -1942,7 +1942,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 classes=classes,
                 sample_weight=sample_weight,
             )
-            for idx, (name, estimatorNB, cols) in enumerate(estimators, 1)
+            for idx, (name, nb_estimator, cols) in enumerate(estimators, 1)
         )
         self._update_fitted_estimators(fitted_estimators)
         self._update_class_prior()
@@ -1957,21 +1957,21 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         """
         # Implemented in the image and likeness of ColumnTranformer._transformers
         try:
-            return [(name, e) for name, e, _ in self.estimatorNBs]
+            return [(name, e) for name, e, _ in self.nb_estimators]
         except (TypeError, ValueError):  # to pass init test in test_common.py
-            return self.estimatorNBs
+            return self.nb_estimators
 
     @_estimators.setter
     def _estimators(self, value):
         # Implemented in the image and likeness of ColumnTranformer._transformers
         # TODO: Is renaming or changing the order legal? Swap `name` and `_`?
         try:
-            self.estimatorNBs = [
+            self.nb_estimators = [
                 (name, e, col)
-                for ((name, e), (_, _, col)) in zip(value, self.estimatorNBs)
+                for ((name, e), (_, _, col)) in zip(value, self.nb_estimators)
             ]
         except (TypeError, ValueError):  # to pass init test in test_common.py
-            self.estimatorNBs = value
+            self.nb_estimators = value
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
