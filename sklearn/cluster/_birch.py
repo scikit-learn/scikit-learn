@@ -60,14 +60,14 @@ def _split_node(node, threshold, branching_factor, dtype=None):
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
-        dtype=dtype,
+        dtype=node.dtype,
     )
     new_node2 = _CFNode(
         threshold=threshold,
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
-        dtype=dtype,
+        dtype=node.dtype,
     )
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
@@ -149,7 +149,7 @@ class _CFNode:
 
     """
 
-    def __init__(self, *, threshold, branching_factor, is_leaf, n_features, dtype=None):
+    def __init__(self, *, threshold, branching_factor, is_leaf, n_features, dtype):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.is_leaf = is_leaf
