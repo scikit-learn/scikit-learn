@@ -537,9 +537,9 @@ def hdbscan(
         - `leaf`
 
     allow_single_cluster : bool, default=False
-        By default HDBSCAN* will not produce a single cluster, setting this
-        to t=True will override this and allow single cluster results in
-        the case that you feel this is a valid result for your dataset.
+        By default HDBSCAN* will not produce a single cluster. Setting this to
+        `True` will allow single cluster results in the case that you feel this
+        is a valid result for your dataset.
 
     match_reference_implementation : bool, default=False
         There exist some interpretational differences between this

@@ -58,6 +58,7 @@ def configuration(parent_package="", top_path=None):
     )
 
     config.add_subpackage("tests")
+    config.add_subpackage("_hdbscan")
 
     # HDBSCAN subpackage
     config.add_subpackage("_hdbscan.tests")
@@ -82,12 +83,6 @@ def configuration(parent_package="", top_path=None):
     config.add_extension(
         "_hdbscan._hdbscan_tree",
         sources=["_hdbscan/_hdbscan_tree.pyx"],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
-    config.add_extension(
-        "_hdbscan._prediction_utils",
-        sources=["_hdbscan/_prediction_utils.pyx"],
         include_dirs=[numpy.get_include()],
         libraries=libraries,
     )
