@@ -6,10 +6,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy import sparse
 from scipy import stats
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_raises,
-)
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.cluster import HDBSCAN, hdbscan
 from sklearn.cluster._hdbscan._validity import validity_index
 
@@ -288,31 +285,31 @@ def test_hdbscan_boruvka_matches(tree):
     assert (num_mismatches / float(data.shape[0])) < 0.15
 
 
-def test_hdbscan_badargs():
-    assert_raises(ValueError, hdbscan, X="fail")
-    assert_raises(ValueError, hdbscan, X=None)
-    assert_raises(ValueError, hdbscan, X, min_cluster_size="fail")
-    assert_raises(ValueError, hdbscan, X, min_samples="fail")
-    assert_raises(ValueError, hdbscan, X, min_samples=-1)
-    assert_raises(ValueError, hdbscan, X, metric="imperial")
-    assert_raises(ValueError, hdbscan, X, metric=None)
-    assert_raises(
-        ValueError, hdbscan, X, metric="precomputed", algorithm="boruvka_kdtree"
-    )
-    assert_raises(
-        ValueError, hdbscan, X, metric="precomputed", algorithm="prims_kdtree"
-    )
-    assert_raises(
-        ValueError, hdbscan, X, metric="precomputed", algorithm="prims_balltree"
-    )
-    assert_raises(
-        ValueError, hdbscan, X, metric="precomputed", algorithm="boruvka_balltree"
-    )
-    assert_raises(ValueError, hdbscan, X, alpha=-1)
-    assert_raises(ValueError, hdbscan, X, alpha="fail")
-    assert_raises(Exception, hdbscan, X, algorithm="something_else")
-    assert_raises(TypeError, hdbscan, X, metric="minkowski", p=None)
-    assert_raises(ValueError, hdbscan, X, leaf_size=0)
+@pytest.mark.parametrize(
+    "kwargs, error",
+    [
+        [{"X": "fail"}, ValueError],
+        [{"X": None}, ValueError],
+        [{"min_cluster_size": "fail"}, ValueError],
+        [{"min_samples": "fail"}, ValueError],
+        [{"min_samples": -1}, ValueError],
+        [{"metric": "imperial"}, ValueError],
+        [{"metric": None}, ValueError],
+        [{"metric": "precomputed", "algorithm": "boruvka_kdtree"}, ValueError],
+        [{"metric": "precomputed", "algorithm": "prims_kdtree"}, ValueError],
+        [{"metric": "precomputed", "algorithm": "boruvka_balltree"}, ValueError],
+        [{"metric": "precomputed", "algorithm": "prims_balltree"}, ValueError],
+        [{"alpha": -1}, ValueError],
+        [{"alpha": "fail"}, ValueError],
+        [{"leaf_size": 0}, ValueError],
+        [{"algorithm": "something_else"}, TypeError],
+        [{"metric": "minkowski", "metric_params": {"p": None}}, TypeError],
+    ],
+)
+def test_hdbscan_badargs(kwargs, error):
+    _X = kwargs.pop("X", X)
+    with pytest.raises(error):
+        hdbscan(_X, **kwargs)
 
 
 def test_hdbscan_sparse():
@@ -348,8 +345,10 @@ def test_hdbscan_centroids_medoids():
 
 def test_hdbscan_no_centroid_medoid_for_noise():
     clusterer = HDBSCAN().fit(X)
-    assert_raises(ValueError, clusterer.weighted_cluster_centroid, -1)
-    assert_raises(ValueError, clusterer.weighted_cluster_medoid, -1)
+    with pytest.raises(ValueError):
+        clusterer.weighted_cluster_centroid(-1)
+    with pytest.raises(ValueError):
+        clusterer.weighted_cluster_medoid(-1)
 
 
 def test_hdbscan_allow_single_cluster_with_epsilon():
