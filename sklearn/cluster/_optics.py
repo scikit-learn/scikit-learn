@@ -82,6 +82,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
+        Sparse matrices are only supported by scikit-learn metrics.
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
