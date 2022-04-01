@@ -1745,7 +1745,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             parameter management: get_params_, set_params_, _estimators.
         """
         if fitted:
-            for (name, estimator, cols) in self.estimators_:
+            for name, estimator, cols in self.estimators_:
                 if replace_strings and _is_empty_column_selection(cols):
                     continue
                 else:
