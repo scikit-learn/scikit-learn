@@ -554,7 +554,7 @@ def homogeneity_score(labels_true, labels_pred):
 
 
 def completeness_score(labels_true, labels_pred):
-    """Completeness metric of a cluster labeling given a ground truth.
+    """Compute completeness metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies completeness if all the data points
     that are members of a given class are elements of the same cluster.
