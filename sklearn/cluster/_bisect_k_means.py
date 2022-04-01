@@ -168,7 +168,7 @@ class BisectingKMeans(_BaseKMeans):
     bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
         Defines how bisection should be performed:
 
-         - "biggest_sse" means that Bisect K-Means will always check
+         - "biggest_sse" means that BisectingKMeans will always check
             all calculated cluster for cluster with biggest SSE
             (Sum of squared errors) and bisect it. This approach concentrates on
             precision, but may be costly in terms of execution time (especially for
