@@ -1092,10 +1092,12 @@ def test_cwnb_estimators_pandas():
 def test_cwnb_estimators_1():
     # Subestimators spec: repeated col ints have the same effect as repeating data
     clf1 = ColumnwiseNB(
-        nb_estimators=[("g1", GaussianNB(), [1, 1]), ("b1", BernoulliNB(), [0, 0, 1, 1])]
+        nb_estimators=[("g1", GaussianNB(), [1, 1]),
+                       ("b1", BernoulliNB(), [0, 0, 1, 1])]
     )
     clf2 = ColumnwiseNB(
-        nb_estimators=[("g1", GaussianNB(), [0, 1]), ("b1", BernoulliNB(), [2, 3, 4, 5])]
+        nb_estimators=[("g1", GaussianNB(), [0, 1]),
+                       ("b1", BernoulliNB(), [2, 3, 4, 5])]
     )
     clf1.fit(X1, y1)
     clf2.fit(X1[:, [1, 1, 0, 0, 1, 1]], y1)
