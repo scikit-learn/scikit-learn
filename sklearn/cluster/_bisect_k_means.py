@@ -261,7 +261,7 @@ class BisectingKMeans(_BaseKMeans):
 
     def _compute_bisect_errors(self, X, centers, labels, sample_weight):
         """
-        Calculate the sum of squared errors (inertia) and group them by label (center).
+        Calculate the sum of squared errors (inertia) per cluster.
 
         Parameters
         ----------
