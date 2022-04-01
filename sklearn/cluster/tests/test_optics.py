@@ -168,7 +168,6 @@ def test_correct_number_of_clusters(metric, is_sparse):
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
-
     # Parameters chosen specifically for this task.
     # Compute OPTICS
     clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1, metric=metric)
@@ -214,12 +213,7 @@ def test_bad_extract():
     )
 
     # Compute OPTICS
-    clust = OPTICS(
-        max_eps=5.0 * 0.03,
-        cluster_method="dbscan",
-        eps=0.3,
-        min_samples=10,
-    )
+    clust = OPTICS(max_eps=5.0 * 0.03, cluster_method="dbscan", eps=0.3, min_samples=10)
     with pytest.raises(ValueError, match=msg):
         clust.fit(X)
 
