@@ -272,7 +272,7 @@ def enet_coordinate_descent(
                     )
                 warnings.warn(message, ConvergenceWarning)
 
-    return w, gap, tol, n_iter + 1
+    return np.asarray(w), gap, tol, n_iter + 1
 
 
 def sparse_enet_coordinate_descent(
@@ -561,7 +561,7 @@ def sparse_enet_coordinate_descent(
                               "gap: {}, tolerance: {}".format(gap, tol),
                               ConvergenceWarning)
 
-    return w, gap, tol, n_iter + 1
+    return np.asarray(w), gap, tol, n_iter + 1
 
 
 def enet_coordinate_descent_gram(
