@@ -1309,7 +1309,7 @@ def test_saga_vs_liblinear():
     )
     X_sparse = sparse.csr_matrix(X_sparse)
 
-    for (X, y) in ((X_bin, y_bin), (X_sparse, y_sparse)):
+    for X, y in ((X_bin, y_bin), (X_sparse, y_sparse)):
         for penalty in ["l1", "l2"]:
             n_samples = X.shape[0]
             # alpha=1e-3 is time consuming

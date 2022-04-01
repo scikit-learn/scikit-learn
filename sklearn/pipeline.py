@@ -319,7 +319,7 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        for (step_idx, name, transformer) in self._iter(
+        for step_idx, name, transformer in self._iter(
             with_final=False, filter_passthrough=False
         ):
             if transformer is None or transformer == "passthrough":

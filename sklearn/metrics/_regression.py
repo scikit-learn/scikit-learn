@@ -19,21 +19,23 @@ the lower the better.
 #          Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
-#          Christian Lorentzen <lorentzen.ch@googlemail.com>
+#          Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
 #          Uttam kumar <bajiraouttamsinha@gmail.com>
 #          Sylvain Marie <sylvain.marie@se.com>
 # License: BSD 3 clause
 
+import numbers
 import warnings
 
 import numpy as np
+from scipy.special import xlogy
 
-from .._loss.glm_distribution import TweedieDistribution
 from ..exceptions import UndefinedMetricWarning
 from ..utils.validation import (
     check_array,
     check_consistent_length,
+    check_scalar,
     _num_samples,
     column_or_1d,
     _check_sample_weight,
@@ -965,6 +967,35 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
+def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
+    """Mean Tweedie deviance regression loss."""
+    p = power
+    if p < 0:
+        # 'Extreme stable', y any real number, y_pred > 0
+        dev = 2 * (
+            np.power(np.maximum(y_true, 0), 2 - p) / ((1 - p) * (2 - p))
+            - y_true * np.power(y_pred, 1 - p) / (1 - p)
+            + np.power(y_pred, 2 - p) / (2 - p)
+        )
+    elif p == 0:
+        # Normal distribution, y and y_pred any real number
+        dev = (y_true - y_pred) ** 2
+    elif p == 1:
+        # Poisson distribution
+        dev = 2 * (xlogy(y_true, y_true / y_pred) - y_true + y_pred)
+    elif p == 2:
+        # Gamma distribution
+        dev = 2 * (np.log(y_pred / y_true) + y_true / y_pred - 1)
+    else:
+        dev = 2 * (
+            np.power(y_true, 2 - p) / ((1 - p) * (2 - p))
+            - y_true * np.power(y_pred, 1 - p) / (1 - p)
+            + np.power(y_pred, 2 - p) / (2 - p)
+        )
+
+    return np.average(dev, weights=sample_weight)
+
+
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
@@ -1024,10 +1055,37 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         sample_weight = column_or_1d(sample_weight)
         sample_weight = sample_weight[:, np.newaxis]
 
-    dist = TweedieDistribution(power=power)
-    dev = dist.unit_deviance(y_true, y_pred, check_input=True)
+    p = check_scalar(
+        power,
+        name="power",
+        target_type=numbers.Real,
+    )
 
-    return np.average(dev, weights=sample_weight)
+    message = f"Mean Tweedie deviance error with power={p} can only be used on "
+    if p < 0:
+        # 'Extreme stable', y any real number, y_pred > 0
+        if (y_pred <= 0).any():
+            raise ValueError(message + "strictly positive y_pred.")
+    elif p == 0:
+        # Normal, y and y_pred can be any real number
+        pass
+    elif 0 < p < 1:
+        raise ValueError("Tweedie deviance is only defined for power<=0 and power>=1.")
+    elif 1 <= p < 2:
+        # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
+        if (y_true < 0).any() or (y_pred <= 0).any():
+            raise ValueError(message + "non-negative y and strictly positive y_pred.")
+    elif p >= 2:
+        # Gamma and Extreme stable distribution, y and y_pred > 0
+        if (y_true <= 0).any() or (y_pred <= 0).any():
+            raise ValueError(message + "strictly positive y and y_pred.")
+    else:  # pragma: nocover
+        # Unreachable statement
+        raise ValueError
+
+    return _mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, power=power
+    )
 
 
 def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
@@ -1182,24 +1240,20 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
         msg = "D^2 score is not well-defined with less than two samples."
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        sample_weight = sample_weight[:, np.newaxis]
-
-    dist = TweedieDistribution(power=power)
-
-    dev = dist.unit_deviance(y_true, y_pred, check_input=True)
-    numerator = np.average(dev, weights=sample_weight)
+    y_true, y_pred = np.squeeze(y_true), np.squeeze(y_pred)
+    numerator = mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, power=power
+    )
 
     y_avg = np.average(y_true, weights=sample_weight)
-    dev = dist.unit_deviance(y_true, y_avg, check_input=True)
-    denominator = np.average(dev, weights=sample_weight)
+    denominator = _mean_tweedie_deviance(
+        y_true, y_avg, sample_weight=sample_weight, power=power
+    )
 
     return 1 - numerator / denominator
