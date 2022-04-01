@@ -1,6 +1,6 @@
 """
 Tests for HDBSCAN clustering algorithm
-Shamelessly based on (i.e. ripped off from) the DBSCAN test code
+Based on the DBSCAN test code
 """
 import numpy as np
 from scipy.spatial import distance
