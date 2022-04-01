@@ -970,7 +970,7 @@ hyperparameter.
 
 .. centered:: |hdbscan_results|
 
-HDBSCAN can be smoothed with an additional hyperparameter `minimum_cluster_size`
+HDBSCAN can be smoothed with an additional hyperparameter `min_cluster_size`
 which specifies that during the hierarchical clustering, components with fewer
 than `minimum_cluster_size` many samples are considered noise. In practice, one
 can set `minimum_cluster_size = min_samples` to couple the parameters and
