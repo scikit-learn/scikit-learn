@@ -374,6 +374,13 @@ def _get_check_estimator_ids(obj):
             return re.sub(r"\s", "", str(obj))
 
 
+def _weighted(estimator):
+    """Request sample_weight for fit and score."""
+    return estimator.set_fit_request(sample_weight=True).set_score_request(
+        sample_weight=True
+    )
+
+
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
     required_parameters = getattr(Estimator, "_required_parameters", [])
@@ -384,16 +391,19 @@ def _construct_instance(Estimator):
             # For common test, we can enforce using `LinearRegression` that
             # is the default estimator in `RANSACRegressor` instead of `Ridge`.
             if issubclass(Estimator, RANSACRegressor):
-                estimator = Estimator(LinearRegression())
+                estimator = Estimator(_weighted(LinearRegression()))
             elif issubclass(Estimator, RegressorMixin):
-                estimator = Estimator(Ridge())
+                estimator = Estimator(_weighted(Ridge()))
             else:
-                estimator = Estimator(LogisticRegression(C=1))
+                estimator = Estimator(_weighted(LogisticRegression(C=1)))
         elif required_parameters in (["estimators"],):
             # Heterogeneous ensemble classes (i.e. stacking, voting)
             if issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(
-                    estimators=[("est1", Ridge(alpha=0.1)), ("est2", Ridge(alpha=1))]
+                    estimators=[
+                        ("est1", _weighted(Ridge(alpha=0.1))),
+                        ("est2", _weighted(Ridge(alpha=1))),
+                    ]
                 )
             else:
                 estimator = Estimator(
