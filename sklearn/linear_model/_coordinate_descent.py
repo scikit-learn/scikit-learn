@@ -750,7 +750,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than ``tol``, see Notes below.
+        than ``tol``.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -815,12 +815,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
-
-    The precise stopping criteria based on `tol` are the following: First, check that
-    that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
-    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
-    If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\text{samples}}`.
 
     Examples
     --------
@@ -1187,7 +1181,7 @@ class Lasso(ElasticNet):
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than ``tol``, see Notes below.
+        than ``tol``.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -1263,12 +1257,6 @@ class Lasso(ElasticNet):
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
-
-    The precise stopping criteria based on `tol` are the following: First, check that
-    that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
-    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
-    If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\text{samples}}`.
 
     Examples
     --------
