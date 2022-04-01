@@ -106,7 +106,7 @@ data = extract_patches_2d(distorted[:, : width // 2], patch_size)
 data = data.reshape(data.shape[0], -1)
 data -= np.mean(data, axis=0)
 data /= np.std(data, axis=0)
-print("done in %.2fs." % (time() - t0))
+print(f"{data.shape[0]} patches extracted in %.2fs." % (time() - t0))
 
 
 # %%
@@ -116,10 +116,17 @@ from sklearn.decomposition import MiniBatchDictionaryLearning
 
 print("Learning the dictionary...")
 t0 = time()
-dico = MiniBatchDictionaryLearning(n_components=50, alpha=1, n_iter=250)
+dico = MiniBatchDictionaryLearning(
+    # increase to 300 for higher quality results at the cost of slower
+    # training times.
+    n_components=50,
+    batch_size=200,
+    alpha=1.0,
+    max_iter=10,
+)
 V = dico.fit(data).components_
 dt = time() - t0
-print("done in %.2fs." % dt)
+print(f"{dico.n_iter_} iterations / {dico.n_steps_} steps in {dt:.2f}.")
 
 plt.figure(figsize=(4.2, 4))
 for i, comp in enumerate(V[:100]):

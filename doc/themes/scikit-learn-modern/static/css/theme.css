@@ -205,6 +205,28 @@ ul.search li div.context {
   ul.search li div.context {
     margin-left: 1rem;
   }
+
+  .sk-search-text-input {
+    width: 5rem;
+  }
+}
+
+@media screen and (min-width: 806px) {
+  .sk-search-text-input {
+    width: 7rem;
+  }
+}
+
+@media screen and (min-width: 820px) {
+  .sk-search-text-input {
+    width: 8rem;
+  }
+}
+
+@media screen and (min-width: 886px) {
+  .sk-search-text-input {
+    width: 12rem;
+  }
 }
 
 ul.search li a {
