@@ -107,6 +107,15 @@ def enet_coordinate_descent(floating[::1] w,
 
         (1/2) * norm(y - X w, 2)^2 + alpha norm(w, 1) + (beta/2) norm(w, 2)^2
 
+    Returns
+    -------
+    w : ndarray of shape (n_features)
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
     """
 
     if floating is float:
@@ -289,6 +298,16 @@ def sparse_enet_coordinate_descent(
         + (beta/2) * norm(w, 2)^2
 
     and X_mean is the weighted average of X (per column).
+
+    Returns
+    -------
+    w : ndarray of shape (n_features)
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
     """
     # Notes for sample_weight:
     # For dense X, one centers X and y and then rescales them by sqrt(sample_weight).
@@ -556,6 +575,16 @@ def enet_coordinate_descent_gram(floating[::1] w,
         which amount to the Elastic-Net problem when:
         Q = X^T X (Gram matrix)
         q = X^T y
+
+    Returns
+    -------
+    w : ndarray of shape (n_features)
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
     """
 
     if floating is float:
@@ -705,6 +734,15 @@ def enet_coordinate_descent_multi_task(
 
         0.5 * norm(Y - X W.T, 2)^2 + l1_reg ||W.T||_21 + 0.5 * l2_reg norm(W.T, 2)^2
 
+    Returns
+    -------
+    W : ndarray of shape (n_tasks, n_features)
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
     """
 
     if floating is float:
