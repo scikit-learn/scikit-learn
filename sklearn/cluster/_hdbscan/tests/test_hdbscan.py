@@ -19,7 +19,6 @@ from sklearn.preprocessing import StandardScaler
 from scipy.stats import mode
 from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import KDTree, BallTree
-from tempfile import mkdtemp
 import pytest
 
 from sklearn import datasets
@@ -52,11 +51,12 @@ def test_missing_data():
 
 
 def generate_noisy_data():
+    rng = np.random.RandomState(0)
     blobs, _ = datasets.make_blobs(
         n_samples=200, centers=[(-0.75, 2.25), (1.0, 2.0)], cluster_std=0.25
     )
     moons, _ = datasets.make_moons(n_samples=200, noise=0.05)
-    noise = np.random.uniform(-1.0, 3.0, (50, 2))
+    noise = rng.uniform(-1.0, 3.0, (50, 2))
     return np.vstack([blobs, moons, noise])
 
 
@@ -324,11 +324,10 @@ def test_hdbscan_sparse():
     assert n_clusters == 3
 
 
-def test_hdbscan_caching():
+def test_hdbscan_caching(tmp_path):
 
-    cachedir = mkdtemp()
-    labels1 = HDBSCAN(memory=cachedir, min_samples=5).fit(X).labels_
-    labels2 = HDBSCAN(memory=cachedir, min_samples=5, min_cluster_size=6).fit(X).labels_
+    labels1 = HDBSCAN(memory=tmp_path, min_samples=5).fit(X).labels_
+    labels2 = HDBSCAN(memory=tmp_path, min_samples=5, min_cluster_size=6).fit(X).labels_
     n_clusters1 = len(set(labels1)) - int(-1 in labels1)
     n_clusters2 = len(set(labels2)) - int(-1 in labels2)
     assert n_clusters1 == n_clusters2
@@ -354,8 +353,8 @@ def test_hdbscan_no_centroid_medoid_for_noise():
 
 
 def test_hdbscan_allow_single_cluster_with_epsilon():
-    np.random.seed(0)
-    no_structure = np.random.rand(150, 2)
+    rng = np.random.RandomState(0)
+    no_structure = rng.rand(150, 2)
     # without epsilon we should see many noise points as children of root.
     labels = HDBSCAN(
         min_cluster_size=5,
