@@ -605,7 +605,7 @@ def test_ward_linkage_tree_return_distance():
 
     linkage_options = ["complete", "average", "single"]
     X_linkage_truth = [linkage_X_complete, linkage_X_average]
-    for (linkage, X_truth) in zip(linkage_options, X_linkage_truth):
+    for linkage, X_truth in zip(linkage_options, X_linkage_truth):
         out_X_unstructured = linkage_tree(X, return_distance=True, linkage=linkage)
         out_X_structured = linkage_tree(
             X, connectivity=connectivity_X, linkage=linkage, return_distance=True
