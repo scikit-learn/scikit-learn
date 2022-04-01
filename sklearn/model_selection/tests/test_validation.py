@@ -460,7 +460,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         fitted_estimators,
     ) = scores
     # Test single metric evaluation when scoring is string or singleton list
-    for (return_train_score, dict_len) in ((True, 4), (False, 3)):
+    for return_train_score, dict_len in ((True, 4), (False, 3)):
         # Single metric passed as a string
         if return_train_score:
             mse_scores_dict = cross_validate(

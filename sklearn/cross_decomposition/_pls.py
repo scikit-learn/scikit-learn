@@ -355,9 +355,9 @@ class _PLS(
             self.y_weights_,
             pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
         )
-
-        self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self.coef_ = self.coef_ * self._y_std
+        # TODO(1.3): change `self._coef_` to `self.coef_`
+        self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+        self._coef_ = (self._coef_ * self._y_std).T
         self._n_features_out = self.x_rotations_.shape[1]
         return self
 
@@ -471,7 +471,8 @@ class _PLS(
         # Normalize
         X -= self._x_mean
         X /= self._x_std
-        Ypred = np.dot(X, self.coef_)
+        # TODO(1.3): change `self._coef_` to `self.coef_`
+        Ypred = X @ self._coef_.T
         return Ypred + self._y_mean
 
     def fit_transform(self, X, y=None):
@@ -493,6 +494,25 @@ class _PLS(
             Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
+
+    @property
+    def coef_(self):
+        """The coefficients of the linear model."""
+        # TODO(1.3): remove and change `self._coef_` to `self.coef_`
+        #            remove catch warnings from `_get_feature_importances`
+        #            delete self._coef_no_warning
+        if hasattr(self, "_coef_") and getattr(self, "_coef_warning", True):
+            warnings.warn(
+                "The attribute `coef_` will be transposed in version 1.3 to be "
+                "consistent with other linear models in scikit-learn. Currently, "
+                "`coef_` has a shape of (n_features, n_targets) and in the future it "
+                "will have a shape of (n_targets, n_features).",
+                FutureWarning,
+            )
+            # Only warn the first time
+            self._coef_warning = False
+
+        return self._coef_.T
 
     def _more_tags(self):
         return {"poor_score": True, "requires_y": False}

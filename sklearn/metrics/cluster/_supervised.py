@@ -503,15 +503,20 @@ def homogeneity_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     homogeneity : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling.
+
+    See Also
+    --------
+    completeness_score : Completeness metric of cluster labeling.
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
 
     References
     ----------
@@ -519,11 +524,6 @@ def homogeneity_score(labels_true, labels_pred):
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
-
-    See Also
-    --------
-    completeness_score
-    v_measure_score
 
     Examples
     --------
