@@ -61,8 +61,8 @@ def _are_candidates_equal(dict1, dict2):
         return False
     for k, v1 in dict1.items():
         v2 = dict2[k]
-        if v1 is not v2:
-            return False
+        if v1 is v2:
+            continue
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:

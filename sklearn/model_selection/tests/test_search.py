@@ -2050,12 +2050,14 @@ def test_generate_warm_start_groups_value_types(candidate_values):
     # Check that different types of value are supported in _generate_wamr_start_groups
     candidate_params = []
     for val in candidate_values:
-        candidate_params.append({"param": val, "other": 1})
-        candidate_params.append({"param": val, "other": 2})
+        candidate_params.append({"const": "foo", "param": val, "other": 1})
+        candidate_params.append({"const": "foo", "param": val, "other": 2})
 
     actual = list(_generate_warm_start_groups(candidate_params, "other"))
     for warm_start_group, val in zip(actual, candidate_values):
         assert len(warm_start_group) == 2
+        assert warm_start_group[0]["const"] == "foo"
+        assert warm_start_group[1]["const"] == "foo"
         assert warm_start_group[0]["other"] == 1
         assert warm_start_group[1]["other"] == 2
         assert val is warm_start_group[0]["param"]
