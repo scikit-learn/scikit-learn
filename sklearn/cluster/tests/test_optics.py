@@ -357,16 +357,12 @@ def test_dbscan_optics_parity(eps, min_samples, metric, is_sparse):
     assert percent_mismatch <= 0.05
 
 
-@pytest.mark.parametrize(
-    "metric, is_sparse",
-    [["minkowski", False], ["euclidean", False], ["euclidean", True]],
-)
+@pytest.mark.parametrize("metric", ["minkowski", "euclidean"])
 def test_min_samples_edge_case(metric, is_sparse):
     C1 = [[0, 0], [0, 0.1], [0, -0.1]]
     C2 = [[10, 10], [10, 9], [10, 11]]
     C3 = [[100, 100], [100, 96], [100, 106]]
     X = np.vstack((C1, C2, C3))
-    X = sparse.csr_matrix(X) if is_sparse else X
 
     expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
     clust = OPTICS(
