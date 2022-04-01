@@ -3,13 +3,10 @@
 Classification of text documents using sparse features
 ======================================================
 
-This is an example showing how scikit-learn can be used to classify documents
-by topics using a bag-of-words approach. This example uses a scipy.sparse
-matrix to store the features and demonstrates various classifiers that can
-efficiently handle sparse matrices.
-
-The dataset used in this example is the 20 newsgroups dataset. It will be
-automatically downloaded, then cached.
+This is an example showing how scikit-learn can be used to classify documents by
+topics using a bag-of-words approach. This example uses a Tf-idf-weighted
+document-term sparse matrix to encode the features and demonstrates various
+classifiers that can efficiently handle sparse matrices.
 
 """
 
@@ -21,23 +18,17 @@ automatically downloaded, then cached.
 
 
 # %%
-# Configuration options for the analysis
-# --------------------------------------
+# Load data
+# ---------
+# We define a function to load data from :ref:`20newsgroups_dataset`, which
+# comprises around 18000 newsgroups posts on 20 topics split in two subsets: one
+# for training (or development) and the other one for testing (or for
+# performance evaluation). The text samples contain metadata such as 'headers',
+# 'footers' (signatures) and 'quotes' to other posts.
 
-# Optional feature selection: either False, or an integer: the number of
-# features to select
-SELECT_CHI2 = False
-
-# If True, remove headers, footers and quotes when fetching dataset
-REMOVE_ALL = False
-
-# %%
-# Load data from the training set
-# -------------------------------
-# Let's load data from the newsgroups dataset which comprises around 18000
-# newsgroups posts on 20 topics split in two subsets: one for training (or
-# development) and the other one for testing (or for performance evaluation).
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import TfidfVectorizer
+from time import time
 
 categories = [
     "alt.atheism",
@@ -46,154 +37,192 @@ categories = [
     "sci.space",
 ]
 
-if REMOVE_ALL:
-    remove = ("headers", "footers", "quotes")
-else:
-    remove = ()
-
-data_train = fetch_20newsgroups(
-    subset="train", categories=categories, shuffle=True, random_state=42, remove=remove
-)
-
-data_test = fetch_20newsgroups(
-    subset="test", categories=categories, shuffle=True, random_state=42, remove=remove
-)
-print("data loaded")
-
-# order of labels in `target_names` can be different from `categories`
-target_names = data_train.target_names
-
-# split target in a training set and a test set
-y_train, y_test = data_train.target, data_test.target
-
 
 def size_mb(docs):
     return sum(len(s.encode("utf-8")) for s in docs) / 1e6
 
 
-data_train_size_mb = size_mb(data_train.data)
-data_test_size_mb = size_mb(data_test.data)
+def load_dataset(verbose=False, remove=()):
+    """Load and vectorize the 20 newsgroups dataset."""
 
-print(
-    "%d documents - %0.3fMB (training set)" % (len(data_train.data), data_train_size_mb)
-)
-print("%d documents - %0.3fMB (test set)" % (len(data_test.data), data_test_size_mb))
-print("%d categories" % len(target_names))
+    data_train = fetch_20newsgroups(
+        subset="train",
+        categories=categories,
+        shuffle=True,
+        random_state=42,
+        remove=remove,
+    )
 
-# %%
-# Vectorize the training and test data
-# -------------------------------------
-#
-# Extracting features from the training data using a sparse vectorizer
-from time import time
+    data_test = fetch_20newsgroups(
+        subset="test",
+        categories=categories,
+        shuffle=True,
+        random_state=42,
+        remove=remove,
+    )
 
-from sklearn.feature_extraction.text import TfidfVectorizer
+    # order of labels in `target_names` can be different from `categories`
+    target_names = data_train.target_names
 
-t0 = time()
+    # split target in a training set and a test set
+    y_train, y_test = data_train.target, data_test.target
 
-vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5, stop_words="english")
-X_train = vectorizer.fit_transform(data_train.data)
-duration = time() - t0
-print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
-print("n_samples: %d, n_features: %d" % X_train.shape)
-
-# %%
-# Extracting features from the test data using the same vectorizer
-t0 = time()
-X_test = vectorizer.transform(data_test.data)
-duration = time() - t0
-print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
-print("n_samples: %d, n_features: %d" % X_test.shape)
-
-# %%
-feature_names = vectorizer.get_feature_names_out()
-
-# %%
-# Keeping only the best features if SELECT_CHI2 == True
-from sklearn.feature_selection import SelectKBest, chi2
-
-if SELECT_CHI2:
-    print("Extracting %d best features by a chi-squared test" % SELECT_CHI2)
+    # Extracting features from the training data using a sparse vectorizer
     t0 = time()
-    ch2 = SelectKBest(chi2, k=SELECT_CHI2)
-    X_train = ch2.fit_transform(X_train, y_train)
-    X_test = ch2.transform(X_test)
-    # keep selected feature names
-    feature_names = feature_names[ch2.get_support()]
-    print("done in %fs" % (time() - t0))
-    print()
+    vectorizer = TfidfVectorizer(
+        sublinear_tf=True, max_df=0.5, min_df=5, stop_words="english"
+    )
+    X_train = vectorizer.fit_transform(data_train.data)
+    duration_train = time() - t0
+
+    # Extracting features from the test data using the same vectorizer
+    t0 = time()
+    X_test = vectorizer.transform(data_test.data)
+    duration_test = time() - t0
+
+    feature_names = vectorizer.get_feature_names_out()
+
+    if verbose:
+
+        # compute size of loaded data
+        data_train_size_mb = size_mb(data_train.data)
+        data_test_size_mb = size_mb(data_test.data)
+
+        print(
+            "%d documents - %0.3fMB (training set)"
+            % (len(data_train.data), data_train_size_mb)
+        )
+        print(
+            "%d documents - %0.3fMB (test set)"
+            % (len(data_test.data), data_test_size_mb)
+        )
+        print("%d categories" % len(target_names))
+        print(
+            "vectorize training done in %fs at %0.3fMB/s"
+            % (duration_train, data_train_size_mb / duration_train)
+        )
+        print("n_samples: %d, n_features: %d" % X_train.shape)
+        print(
+            "vectorize testing done in %fs at %0.3fMB/s"
+            % (duration_test, data_test_size_mb / duration_test)
+        )
+        print("n_samples: %d, n_features: %d" % X_test.shape)
+
+    return X_train, X_test, y_train, y_test, feature_names, target_names
+
 
 # %%
 # Compare feature effects
+# -----------------------
+# First we train a model using the datasets with metadata. This will cause
+# overfitting
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from sklearn.linear_model import RidgeClassifier
+from sklearn.metrics import ConfusionMatrixDisplay
+
+X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset(
+    verbose=True
+)
 
 clf = RidgeClassifier(tol=1e-2, solver="sparse_cg")
 clf.fit(X_train, y_train)
 pred = clf.predict(X_test)
-score = metrics.accuracy_score(y_test, pred)
-
-# learned coefficients weighted by frequency of appearance
-feature_effects = clf.coef_ * np.asarray(X_train.mean(axis=0)).ravel()
-
-for i, label in enumerate(target_names):
-    top5 = np.argsort(feature_effects[i])[-5:][::-1]
-    if i == 0:
-        top = pd.DataFrame(feature_names[top5], columns=[label])
-        top_indices = top5
-    else:
-        top[label] = feature_names[top5]
-        top_indices = np.concatenate((top_indices, top5), axis=None)
-top_indices = np.unique(top_indices)
-predictive_words = feature_names[top_indices]
-
-# plot feature effects
-bar_size = 0.25
-padding = 0.5
-y_locs = np.arange(len(top_indices)) * (bar_size * 3 + padding)
-
-fig, ax = plt.subplots(figsize=(10, 8))
-for i, label in enumerate(target_names):
-    ax.barh(
-        y_locs + i * bar_size,
-        feature_effects[i, top_indices],
-        height=bar_size,
-        label=label,
-    )
-ax.set(
-    title="Feature impact",
-    yticks=y_locs,
-    yticklabels=predictive_words,
-    ylim=[0 - padding, len(y_locs) + 4.5],
-)
-_ = ax.legend(loc="lower right")
-
-print("top 5 keywords per class:")
-print(top)
-
-# %%
-# The word "caltech" as one of the top predictive features is the result of the
-# pollution in the dataset introduced by the headers. This effect can be fixed
-# by setting REMOVE_ALL == True, but other sources of pollution may still exist
-
-if not REMOVE_ALL:
-    for doc in data_train.data:
-        if "caltech" in doc:
-            print(doc)
-            break
-
-# %%
-# Setting REMOVE_ALL == True increases the overlap between classes
-from sklearn.metrics import ConfusionMatrixDisplay
 
 fig, ax = plt.subplots(figsize=(10, 5))
 ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
-_ = ax.set_title("Confusion Matrix for the\n" + str(clf).split("(")[0])
+_ = ax.set_title("Confusion Matrix with headers for the\n" + str(clf).split("(")[0])
+
+
+def plot_feature_effects():
+    # learned coefficients weighted by frequency of appearance
+    feature_effects = clf.coef_ * np.asarray(X_train.mean(axis=0)).ravel()
+
+    for i, label in enumerate(target_names):
+        top5 = np.argsort(feature_effects[i])[-5:][::-1]
+        if i == 0:
+            top = pd.DataFrame(feature_names[top5], columns=[label])
+            top_indices = top5
+        else:
+            top[label] = feature_names[top5]
+            top_indices = np.concatenate((top_indices, top5), axis=None)
+    top_indices = np.unique(top_indices)
+    predictive_words = feature_names[top_indices]
+
+    # plot feature effects
+    bar_size = 0.25
+    padding = 0.75
+    y_locs = np.arange(len(top_indices)) * (4 * bar_size + padding)
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    for i, label in enumerate(target_names):
+        ax.barh(
+            y_locs + (i - 2) * bar_size,
+            feature_effects[i, top_indices],
+            height=bar_size,
+            label=label,
+        )
+    ax.set(
+        yticks=y_locs,
+        yticklabels=predictive_words,
+        ylim=[
+            0 - 4 * bar_size,
+            len(top_indices) * (4 * bar_size + padding) - 4 * bar_size,
+        ],
+    )
+    ax.legend(loc="lower right")
+
+    print("top 5 keywords per class:")
+    print(top)
+
+    return ax
+
+
+_ = plot_feature_effects().set_title("Feature impact with headers")
+
+# %%
+# The word "caltech" is one of the top predictive features for atheism due to
+# pollution in the dataset introduced by the metadata
+data_train = fetch_20newsgroups(
+    subset="train", categories=categories, shuffle=True, random_state=42
+)
+
+for doc in data_train.data:
+    if "caltech" in doc:
+        print(doc)
+        break
+
+# %%
+# We can remove the metadata, but other sources of pollution may still exist
+(
+    X_train,
+    X_test,
+    y_train,
+    y_test,
+    feature_names,
+    target_names,
+) = load_dataset(remove=("headers", "footers", "quotes"))
+
+clf = RidgeClassifier(tol=1e-2, solver="sparse_cg")
+clf.fit(X_train, y_train)
+pred = clf.predict(X_test)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
+ax.xaxis.set_ticklabels(target_names)
+ax.yaxis.set_ticklabels(target_names)
+_ = ax.set_title("Confusion Matrix without headers for the\n" + str(clf).split("(")[0])
+
+_ = plot_feature_effects().set_title("Feature impact without headers")
+
+# %%
+# By looking at the confusion matrix, it is more evident that the scores of the
+# model trained with metadata were overoptimistic.
 
 # %%
 # Benchmark classifiers
@@ -249,11 +278,9 @@ def benchmark(clf, custom_name=False):
 
 
 # %%
-# We now train and test the datasets with 9 different classification
+# We now train and test the datasets with 8 different classification
 # models and get performance results for each model.
-from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import ComplementNB
@@ -264,24 +291,28 @@ from sklearn.ensemble import RandomForestClassifier
 
 results = []
 for clf, name in (
-    (LogisticRegression(), "Logistic Regression"),
-    (RidgeClassifier(tol=1e-2, solver="sparse_cg"), "Ridge Classifier"),
-    (KNeighborsClassifier(n_neighbors=10), "kNN"),
-    (RandomForestClassifier(), "Random forest"),
+    (LogisticRegression(C=5, max_iter=1000), "Logistic Regression"),
+    (RidgeClassifier(alpha=1.0, solver="sparse_cg"), "Ridge Classifier"),
+    (KNeighborsClassifier(n_neighbors=100), "kNN"),
+    (RandomForestClassifier(), "Random Forest"),
 ):
     print("=" * 80)
     print(name)
-    results.append(benchmark(clf))
+    results.append(benchmark(clf, name))
 
 # Train Liblinear model
 print("=" * 80)
 print("L2 penalty Linear SVC")
-results.append(benchmark(LinearSVC(C=10, dual=False, tol=1e-3)))
+results.append(benchmark(LinearSVC(C=0.1, dual=False, max_iter=1000)))
 
 # Train SGD model
 print("=" * 80)
 print("L2 penalty Linear SGD")
-results.append(benchmark(SGDClassifier(alpha=1e-5, early_stopping=True)))
+results.append(
+    benchmark(
+        SGDClassifier(loss="log", alpha=1e-4, n_iter_no_change=3, early_stopping=True)
+    )
+)
 
 # Train NearestCentroid without threshold
 print("=" * 80)
@@ -293,32 +324,11 @@ print("=" * 80)
 print("Naive Bayes")
 results.append(benchmark(ComplementNB(alpha=0.1)))
 
-print("=" * 80)
-print("LinearSVC with L1-based feature selection")
-# The smaller C, the stronger the regularization.
-# The more regularization, the more sparsity.
-results.append(
-    benchmark(
-        Pipeline(
-            [
-                (
-                    "feature_selection",
-                    SelectFromModel(LinearSVC(penalty="l1", dual=False, tol=1e-3)),
-                ),
-                ("classification", LinearSVC(penalty="l2")),
-            ]
-        ),
-        custom_name="SelectFromModel LinearSVC",
-    )
-)
-
-
 # %%
 # Plot accuracy, training and test time of each classifier
 # --------------------------------------------------------
-# The bar plot indicates the accuracy, training time (normalized) and test time
-# (normalized) of each classifier.
-import matplotlib.pyplot as plt
+# The scatter plots show the trade-off between the test accuracy and the
+# training and testing time of each classifier.
 
 indices = np.arange(len(results))
 
@@ -350,6 +360,7 @@ for i, txt in enumerate(clf_names):
     ax2.annotate(txt, (score[i], test_time[i]))
 
 # %%
-# The Naive Bayesian models appear to have the best trade-off between score and
-# training/testing time. LogisticRegression and KNeighborsClassifier have
-# relatively low accuracy and high training and testing time, respectively.
+# The Naive Bayesian model has the best trade-off between score and
+# training/testing time, while Random Forest has the worst global trade-off.
+# KNeighborsClassifier has relatively low accuracy and has the highest testing
+# time.
