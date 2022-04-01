@@ -582,17 +582,17 @@ def completeness_score(labels_true, labels_pred):
     completeness : float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
+    See Also
+    --------
+    homogeneity_score
+    v_measure_score
+
     References
     ----------
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
-
-    See Also
-    --------
-    homogeneity_score
-    v_measure_score
 
     Examples
     --------
