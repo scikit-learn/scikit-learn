@@ -584,8 +584,8 @@ def completeness_score(labels_true, labels_pred):
 
     See Also
     --------
-    homogeneity_score
-    v_measure_score
+    homogeneity_score : Homogeneity metric of cluster labeling.
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
 
     References
     ----------
