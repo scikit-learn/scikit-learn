@@ -175,7 +175,7 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     y = np.array([0, 1, -1, -1])
     mdl = LabelPropagationCls(kernel="knn", max_iter=100, n_neighbors=1)
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error", RuntimeWarning)
         mdl.fit(X, y)
 
 
