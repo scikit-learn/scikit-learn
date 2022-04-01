@@ -609,8 +609,7 @@ class SVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
-        ('ovo') is always used as multi-class strategy. The parameter is
+        (n_samples, n_classes * (n_classes - 1) / 2). The parameter is
         ignored for binary classification.
 
         .. versionchanged:: 0.19
