@@ -94,12 +94,18 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
     return m
 
 
-def enet_coordinate_descent(floating[::1] w,
-                            floating alpha, floating beta,
-                            floating[::1, :] X,
-                            floating[::1] y,
-                            int max_iter, floating tol,
-                            object rng, bint random=0, bint positive=0):
+def enet_coordinate_descent(
+    floating[::1] w,
+    floating alpha,
+    floating beta,
+    floating[::1, :] X,
+    floating[::1] y,
+    int max_iter,
+    floating tol,
+    object rng,
+    bint random=0,
+    bint positive=0
+):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -558,13 +564,19 @@ def sparse_enet_coordinate_descent(
     return w, gap, tol, n_iter + 1
 
 
-def enet_coordinate_descent_gram(floating[::1] w,
-                                 floating alpha, floating beta,
-                                 np.ndarray[floating, ndim=2, mode='c'] Q,
-                                 np.ndarray[floating, ndim=1, mode='c'] q,
-                                 np.ndarray[floating, ndim=1] y,
-                                 int max_iter, floating tol, object rng,
-                                 bint random=0, bint positive=0):
+def enet_coordinate_descent_gram(
+    floating[::1] w,
+    floating alpha,
+    floating beta,
+    np.ndarray[floating, ndim=2, mode='c'] Q,
+    np.ndarray[floating, ndim=1, mode='c'] q,
+    np.ndarray[floating, ndim=1] y,
+    int max_iter,
+    floating tol,
+    object rng,
+    bint random=0,
+    bint positive=0
+):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -723,10 +735,16 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
 
 def enet_coordinate_descent_multi_task(
-        floating[::1, :] W, floating l1_reg, floating l2_reg,
-        np.ndarray[floating, ndim=2, mode='fortran'] X,  # TODO: use views with Cython 3.0
-        np.ndarray[floating, ndim=2, mode='fortran'] Y,  # hopefully with skl 1.0
-        int max_iter, floating tol, object rng, bint random=0):
+    floating[::1, :] W,
+    floating l1_reg,
+    floating l2_reg,
+    np.ndarray[floating, ndim=2, mode='fortran'] X,  # TODO: use views with Cython 3.0
+    np.ndarray[floating, ndim=2, mode='fortran'] Y,  # hopefully with skl 1.0
+    int max_iter,
+    floating tol,
+    object rng,
+    bint random=0
+):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
 
