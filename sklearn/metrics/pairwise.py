@@ -1288,8 +1288,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
 
     Parameters
     ----------
-    X : ndarray
-        A ndarray of shape (n_samples_X, n_features).
+    X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
         If `None`, uses `Y=X`.
