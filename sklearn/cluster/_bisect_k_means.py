@@ -502,8 +502,8 @@ class BisectingKMeans(_BaseKMeans):
         return self
 
     def _run_bisect_kmeans(self, X, sample_weight, random_state):
-        """Performs Bisecting K-Means, which splits always cluster depending
-        on 'bisect_strategy' attribute:
+        """Performs Bisecting K-Means, which hierarchicaly splits clusters depending
+        on the `bisect_strategy` attribute:
 
         - "biggest sse": Picks cluster with biggest SSE (Sum of Squared Errors)
          from all calculated.
