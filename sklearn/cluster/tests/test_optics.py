@@ -192,20 +192,20 @@ def test_correct_number_of_clusters(metric, is_sparse):
     assert set(clust.ordering_) == set(range(len(X)))
 
 
-def test_minimum_number_of_sample_check(metric):
+def test_minimum_number_of_sample_check():
     # test that we check a minimum number of samples
     msg = "min_samples must be no greater than"
 
     # Compute OPTICS
     X = [[1, 1]]
-    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1, metric=metric)
+    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1)
 
     # Run the fit
     with pytest.raises(ValueError, match=msg):
         clust.fit(X)
 
 
-def test_bad_extract(metric):
+def test_bad_extract():
     # Test an extraction of eps too close to original eps
     msg = "Specify an epsilon smaller than 0.15. Got 0.3."
     centers = [[1, 1], [-1, -1], [1, -1]]
@@ -219,13 +219,12 @@ def test_bad_extract(metric):
         cluster_method="dbscan",
         eps=0.3,
         min_samples=10,
-        metric=metric,
     )
     with pytest.raises(ValueError, match=msg):
         clust.fit(X)
 
 
-def test_bad_reachability(metric):
+def test_bad_reachability():
     msg = "All reachability values are inf. Set a larger max_eps."
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
@@ -233,7 +232,7 @@ def test_bad_reachability(metric):
     )
 
     with pytest.warns(UserWarning, match=msg):
-        clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015, metric=metric)
+        clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
         clust.fit(X)
 
 
@@ -282,7 +281,7 @@ def test_nowarn_if_metric_no_bool():
         OPTICS(metric=pairwise_metric).fit(X_num)
 
 
-def test_close_extract(metric):
+def test_close_extract():
     # Test extract where extraction eps is close to scaled max_eps
 
     centers = [[1, 1], [-1, -1], [1, -1]]
@@ -291,9 +290,7 @@ def test_close_extract(metric):
     )
 
     # Compute OPTICS
-    clust = OPTICS(
-        max_eps=1.0, cluster_method="dbscan", eps=0.3, min_samples=10, metric=metric
-    ).fit(X)
+    clust = OPTICS(max_eps=1.0, cluster_method="dbscan", eps=0.3, min_samples=10).fit(X)
     # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
     assert max(clust.labels_) == 2
 
