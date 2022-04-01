@@ -21,6 +21,7 @@ jobs:
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     SHOW_SHORT_SUMMARY: 'false'
     CPU_COUNT: '2'
+    SELECTED_TESTS: $[ dependencies.git_commit.outputs['commit.selected'] ]
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -41,7 +42,8 @@ jobs:
     - bash: ./build_tools/azure/test_script.sh
       displayName: 'Test Library'
     - bash: ./build_tools/azure/upload_codecov.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)

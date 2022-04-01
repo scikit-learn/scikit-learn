@@ -37,6 +37,7 @@ jobs:
     TEST_DOCSTRINGS: 'false'
     CREATE_ISSUE_ON_TRACKER: 'false'
     SHOW_SHORT_SUMMARY: 'false'
+    SELECTED_TESTS: $[ dependencies.git_commit.outputs['commit.selected'] ]
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -65,10 +66,12 @@ jobs:
     - script: |
         build_tools/azure/test_docs.sh
       displayName: 'Test Docs'
+      condition: eq(variables['SELECTED_TESTS'], '')
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test Soft Dependency'
-      condition: eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true')
+      condition: and(eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
@@ -106,7 +109,8 @@ jobs:
                      eq(variables['Build.Reason'], 'Schedule'))
     - script: |
         build_tools/azure/upload_codecov.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)

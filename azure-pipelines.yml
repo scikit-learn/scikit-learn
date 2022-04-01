@@ -21,10 +21,25 @@ jobs:
           # message is the second to last commit
           COMMIT_ID=$(echo $BUILD_SOURCEVERSIONMESSAGE | awk '{print $2}')
           message=$(git log $COMMIT_ID -1 --pretty=%B)
+          message=$(echo $message)
         else
           message=$BUILD_SOURCEVERSIONMESSAGE
         fi
         echo "##vso[task.setvariable variable=message;isOutput=true]$message"
+
+        # Check if run only specific tests but on all random seeds
+        # commit message must take the form
+        # <title> [all random seeds]
+        # <test_name_1>
+        # <test_name_2>
+        # ...
+        if [[ "$message" =~ \[all\ random\ seeds\] ]]; then
+          message=$(echo $message | sed -n -e 's/^.*all\ random\ seeds\] //p')
+          selected="${message// / or }"
+        else
+          selected=""
+        fi
+        echo "##vso[task.setvariable variable=selected;isOutput=true]$selected"
       name: commit
       displayName: Get source version message
 
