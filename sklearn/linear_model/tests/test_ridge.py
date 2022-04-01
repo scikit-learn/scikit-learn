@@ -189,7 +189,7 @@ def test_ridge_sample_weights():
         X = rng.randn(n_samples, n_features)
         sample_weight = 1.0 + rng.rand(n_samples)
 
-        for (alpha, intercept, solver) in param_grid:
+        for alpha, intercept, solver in param_grid:
 
             # Ridge with explicit sample_weight
             est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver, tol=1e-12)
