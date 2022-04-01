@@ -13,14 +13,14 @@ License: BSD 3 clause
 import warnings
 import numpy as np
 
-from ..exceptions import DataConversionWarning, EfficiencyWarning
+from ..exceptions import DataConversionWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from scipy.sparse import issparse, SparseEfficiencyWarning
+from scipy.sparse import issparse
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -290,9 +290,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
             # Set each diagonal to an explicit value so each point is its own neighbor
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=SparseEfficiencyWarning)
-                X.setdiag(X.diagonal())
+            X.setdiag(X.diagonal())
         memory = check_memory(self.memory)
 
         if self.cluster_method not in ["dbscan", "xi"]:
@@ -530,16 +528,13 @@ def compute_optics_graph(
         n_jobs=n_jobs,
     )
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=EfficiencyWarning)
-        # Efficiency warning appears when using sparse precomputed matrices
-        nbrs.fit(X)
-        # Here we first do a kNN query for each point, this differs from
-        # the original OPTICS that only used epsilon range queries.
-        # TODO: handle working_memory somehow?
-        core_distances_ = _compute_core_distances_(
-            X=X, neighbors=nbrs, min_samples=min_samples, working_memory=None
-        )
+    nbrs.fit(X)
+    # Here we first do a kNN query for each point, this differs from
+    # the original OPTICS that only used epsilon range queries.
+    # TODO: handle working_memory somehow?
+    core_distances_ = _compute_core_distances_(
+        X=X, neighbors=nbrs, min_samples=min_samples, working_memory=None
+    )
     # OPTICS puts an upper limit on these, use inf for undefined.
     core_distances_[core_distances_ > max_eps] = np.inf
     np.around(
@@ -602,10 +597,7 @@ def _set_reach_dist(
     # Assume that radius_neighbors is faster without distances
     # and we don't need all distances, nevertheless, this means
     # we may be doing some work twice.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=EfficiencyWarning)
-        # Efficiency warning appears when using sparse precomputed matrices
-        indices = nbrs.radius_neighbors(P, radius=max_eps, return_distance=False)[0]
+    indices = nbrs.radius_neighbors(P, radius=max_eps, return_distance=False)[0]
 
     # Getting indices of neighbors that have not been processed
     unproc = np.compress(~np.take(processed, indices), indices)
@@ -625,9 +617,7 @@ def _set_reach_dist(
         dists = pairwise_distances(P, X[unproc], metric, n_jobs=None, **_params).ravel()
 
     if issparse(dists):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=SparseEfficiencyWarning)
-            rdists = dists.maximum(core_distances_[point_index])
+        rdists = dists.maximum(core_distances_[point_index])
         np.around(
             rdists.data, decimals=np.finfo(rdists.dtype).precision, out=rdists.data
         )

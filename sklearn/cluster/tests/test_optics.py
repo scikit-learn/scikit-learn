@@ -101,7 +101,6 @@ def test_extract_xi(metric):
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
     expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5, -1, [4] * 5]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
-    X = sparse.lil_matrix(X) if metric == "euclidean" else X
 
     clust = OPTICS(
         min_samples=3,
@@ -129,7 +128,6 @@ def test_extract_xi(metric):
         [1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5, -1, -1, [4] * 5
     ]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
-    X = sparse.lil_matrix(X) if metric == "euclidean" else X
 
     clust = OPTICS(
         min_samples=3,
@@ -148,7 +146,6 @@ def test_extract_xi(metric):
     X = np.vstack((C1, C2, C3))
     expected_labels = np.r_[[0] * 4, [1] * 4, [2] * 4]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
-    X = sparse.lil_matrix(X) if metric == "euclidean" else X
 
     clust = OPTICS(
         min_samples=2,
@@ -169,7 +166,7 @@ def test_cluster_hierarchy_(metric):
     C2 = [0, 0] + 50 * rng.randn(n_points_per_cluster, 2)
     X = np.vstack((C1, C2))
     X = shuffle(X, random_state=0)
-    X = sparse.lil_matrix(X) if metric == "euclidean" else X
+    X = sparse.csr_matrix(X) if metric == "euclidean" else X
 
     clusters = OPTICS(min_samples=20, xi=0.1, metric=metric).fit(X).cluster_hierarchy_
     assert clusters.shape == (2, 2)
@@ -191,7 +188,7 @@ def test_correct_number_of_clusters(metric, is_sparse):
     # Parameters chosen specifically for this task.
     # Compute OPTICS
     clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1, metric=metric)
-    clust.fit(sparse.lil_matrix(X) if is_sparse else X)
+    clust.fit(sparse.csr_matrix(X) if is_sparse else X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
     assert n_clusters_1 == n_clusters
@@ -218,7 +215,7 @@ def test_minimum_number_of_sample_check(metric):
 
     # Compute OPTICS
     X = [[1, 1]]
-    X = sparse.lil_matrix(X) if metric == "euclidean" else X
+    X = sparse.csr_matrix(X) if metric == "euclidean" else X
     clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1, metric=metric)
 
     # Run the fit
@@ -234,7 +231,7 @@ def test_bad_extract(metric):
     X, labels_true = make_blobs(
         n_samples=750, centers=centers, cluster_std=0.4, random_state=0
     )
-    X = sparse.lil_matrix(X) if metric == "euclidean" else X
+    X = sparse.csr_matrix(X) if metric == "euclidean" else X
 
     # Compute OPTICS
     clust = OPTICS(
@@ -255,7 +252,7 @@ def test_bad_reachability(metric):
     X, labels_true = make_blobs(
         n_samples=750, centers=centers, cluster_std=0.4, random_state=0
     )
-    X = sparse.lil_matrix(X) if metric == "euclidean" else X
+    X = sparse.csr_matrix(X) if metric == "euclidean" else X
 
     with pytest.warns(UserWarning, match=msg):
         clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015, metric=metric)
@@ -315,7 +312,7 @@ def test_close_extract(metric):
     X, labels_true = make_blobs(
         n_samples=750, centers=centers, cluster_std=0.4, random_state=0
     )
-    X = sparse.lil_matrix(X) if metric == "euclidean" else X
+    X = sparse.csr_matrix(X) if metric == "euclidean" else X
 
     # Compute OPTICS
     clust = OPTICS(
@@ -338,7 +335,7 @@ def test_dbscan_optics_parity(eps, min_samples, metric, is_sparse):
     X, labels_true = make_blobs(
         n_samples=750, centers=centers, cluster_std=0.4, random_state=0
     )
-    X = sparse.lil_matrix(X) if is_sparse else X
+    X = sparse.csr_matrix(X) if is_sparse else X
 
     # calculate optics with dbscan extract at 0.3 epsilon
     op = OPTICS(
@@ -369,7 +366,7 @@ def test_min_samples_edge_case(metric, is_sparse):
     C2 = [[10, 10], [10, 9], [10, 11]]
     C3 = [[100, 100], [100, 96], [100, 106]]
     X = np.vstack((C1, C2, C3))
-    X = sparse.lil_matrix(X) if is_sparse else X
+    X = sparse.csr_matrix(X) if is_sparse else X
 
     expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
     clust = OPTICS(
@@ -393,14 +390,9 @@ def test_min_samples_edge_case(metric, is_sparse):
 
 # try arbitrary minimum sizes
 @pytest.mark.parametrize("min_cluster_size", range(2, X.shape[0] // 10, 23))
-@pytest.mark.parametrize(
-    "metric, is_sparse",
-    [["minkowski", False], ["euclidean", False], ["euclidean", True]],
-)
-def test_min_cluster_size(min_cluster_size, metric, is_sparse):
+@pytest.mark.parametrize("metric", ["minkowski", "euclidean"])
+def test_min_cluster_size(min_cluster_size, metric):
     redX = X[::2]  # reduce for speed
-
-    redX = sparse.lil_matrix(redX) if is_sparse else redX
 
     clust = OPTICS(min_samples=9, min_cluster_size=min_cluster_size, metric=metric).fit(
         redX
@@ -424,7 +416,7 @@ def test_min_cluster_size_invalid(min_cluster_size):
 
     clust = OPTICS(min_cluster_size=min_cluster_size, metric="euclidean")
     with pytest.raises(ValueError, match="must be a positive integer or a "):
-        clust.fit(sparse.lil_matrix(X))
+        clust.fit(sparse.csr_matrix(X))
 
 
 def test_min_cluster_size_invalid2():
@@ -434,18 +426,17 @@ def test_min_cluster_size_invalid2():
 
     clust = OPTICS(min_cluster_size=len(X) + 1, metric="euclidean")
     with pytest.raises(ValueError, match="must be no greater than the "):
-        clust.fit(sparse.lil_matrix(X))
+        clust.fit(sparse.csr_matrix(X))
 
 
 @pytest.mark.parametrize(
-    "metric, is_sparse",
-    [["minkowski", False], ["euclidean", False], ["euclidean", True]],
+    "metric",
+    ["minkowski", "euclidean"],
 )
-def test_processing_order(metric, is_sparse):
+def test_processing_order(metric):
     # Ensure that we consider all unprocessed points,
     # not only direct neighbors. when picking the next point.
     Y = [[0], [10], [-10], [25]]
-    Y = sparse.lil_matrix(Y) if is_sparse else Y
 
     clust = OPTICS(min_samples=3, max_eps=15, metric=metric).fit(Y)
     assert_array_equal(clust.reachability_, [np.inf, 10, 10, 15])
@@ -880,7 +871,7 @@ def test_extract_dbscan():
 def test_precomputed_dists(is_sparse):
     redX = X[::2]
     dists = pairwise_distances(redX, metric="euclidean")
-    dists = sparse.lil_matrix(dists).tocsr() if is_sparse else dists
+    dists = sparse.csr_matrix(dists) if is_sparse else dists
     clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
 
