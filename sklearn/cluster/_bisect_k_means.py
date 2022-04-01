@@ -166,7 +166,7 @@ class BisectingKMeans(_BaseKMeans):
         Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
     bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
-        Defines how should bisection by performed:
+        Defines how bisection should be performed:
 
          - "biggest_sse" means that Bisect K-Means will always check
             all calculated cluster for cluster with biggest SSE
