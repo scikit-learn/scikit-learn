@@ -73,13 +73,12 @@ def _hdbscan_generic(
     alpha=1.0,
     metric="minkowski",
     p=2,
-    leaf_size=None,
-    **kwargs,
+    **metric_params,
 ):
     if metric == "minkowski":
         distance_matrix = pairwise_distances(X, metric=metric, p=p)
     elif metric == "arccos":
-        distance_matrix = pairwise_distances(X, metric="cosine", **kwargs)
+        distance_matrix = pairwise_distances(X, metric="cosine", **metric_params)
     elif metric == "precomputed":
         # Treating this case explicitly, instead of letting
         #   sklearn.metrics.pairwise_distances handle it,
@@ -88,7 +87,7 @@ def _hdbscan_generic(
         # TODO: Check if copying is necessary
         distance_matrix = X.copy()
     else:
-        distance_matrix = pairwise_distances(X, metric=metric, **kwargs)
+        distance_matrix = pairwise_distances(X, metric=metric, **metric_params)
 
     if issparse(distance_matrix):
         # raise TypeError('Sparse distance matrices not yet supported')
@@ -96,7 +95,7 @@ def _hdbscan_generic(
             distance_matrix,
             min_samples,
             alpha,
-            **kwargs,
+            **metric_params,
         )
 
     mutual_reachability_ = mutual_reachability(distance_matrix, min_samples, alpha)
@@ -126,7 +125,7 @@ def _hdbscan_sparse_distance_matrix(
     X,
     min_samples=5,
     alpha=1.0,
-    **kwargs,
+    **metric_params,
 ):
     assert issparse(X)
     # Check for connected component on X
@@ -143,7 +142,7 @@ def _hdbscan_sparse_distance_matrix(
 
     # Compute sparse mutual reachability graph
     # if max_dist > 0, max distance to use when the reachability is infinite
-    max_dist = kwargs.get("max_dist", 0.0)
+    max_dist = metric_params.get("max_dist", 0.0)
     mutual_reachability_ = sparse_mutual_reachability(
         lil_matrix, min_points=min_samples, max_dist=max_dist, alpha=alpha
     )
@@ -187,7 +186,7 @@ def _hdbscan_prims_kdtree(
     alpha=1.0,
     metric="minkowski",
     leaf_size=40,
-    **kwargs,
+    **metric_params,
 ):
     if X.dtype != np.float64:
         X = X.astype(np.float64)
@@ -196,10 +195,10 @@ def _hdbscan_prims_kdtree(
     if not X.flags["C_CONTIGUOUS"]:
         X = np.array(X, dtype=np.double, order="C")
 
-    tree = KDTree(X, metric=metric, leaf_size=leaf_size, **kwargs)
+    tree = KDTree(X, metric=metric, leaf_size=leaf_size, **metric_params)
 
     # TO DO: Deal with p for minkowski appropriately
-    dist_metric = DistanceMetric.get_metric(metric, **kwargs)
+    dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
     # Get distance to kth nearest neighbour
     core_distances = tree.query(
@@ -224,7 +223,7 @@ def _hdbscan_prims_balltree(
     alpha=1.0,
     metric="minkowski",
     leaf_size=40,
-    **kwargs,
+    **metric_params,
 ):
     if X.dtype != np.float64:
         X = X.astype(np.float64)
@@ -233,9 +232,9 @@ def _hdbscan_prims_balltree(
     if not X.flags["C_CONTIGUOUS"]:
         X = np.array(X, dtype=np.double, order="C")
 
-    tree = BallTree(X, metric=metric, leaf_size=leaf_size, **kwargs)
+    tree = BallTree(X, metric=metric, leaf_size=leaf_size, **metric_params)
 
-    dist_metric = DistanceMetric.get_metric(metric, **kwargs)
+    dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
     # Get distance to kth nearest neighbour
     core_distances = tree.query(
@@ -259,7 +258,7 @@ def _hdbscan_boruvka_kdtree(
     leaf_size=40,
     approx_min_span_tree=True,
     n_jobs=4,
-    **kwargs,
+    **metric_params,
 ):
     if leaf_size < 3:
         leaf_size = 3
@@ -270,7 +269,7 @@ def _hdbscan_boruvka_kdtree(
     if X.dtype != np.float64:
         X = X.astype(np.float64)
 
-    tree = KDTree(X, metric=metric, leaf_size=leaf_size, **kwargs)
+    tree = KDTree(X, metric=metric, leaf_size=leaf_size, **metric_params)
 
     n_samples = X.shape[0]
     if min_samples + 1 > n_samples:
@@ -286,7 +285,7 @@ def _hdbscan_boruvka_kdtree(
         leaf_size=leaf_size // 3,
         approx_min_span_tree=approx_min_span_tree,
         n_jobs=n_jobs,
-        **kwargs,
+        **metric_params,
     )
     min_spanning_tree = alg.spanning_tree()
     # Sort edges of the min_spanning_tree by weight
@@ -305,7 +304,7 @@ def _hdbscan_boruvka_balltree(
     leaf_size=40,
     approx_min_span_tree=True,
     n_jobs=4,
-    **kwargs,
+    **metric_params,
 ):
     if leaf_size < 3:
         leaf_size = 3
@@ -316,7 +315,7 @@ def _hdbscan_boruvka_balltree(
     if X.dtype != np.float64:
         X = X.astype(np.float64)
 
-    tree = BallTree(X, metric=metric, leaf_size=leaf_size, **kwargs)
+    tree = BallTree(X, metric=metric, leaf_size=leaf_size, **metric_params)
     alg = BallTreeBoruvkaAlgorithm(
         tree,
         min_samples,
@@ -324,7 +323,7 @@ def _hdbscan_boruvka_balltree(
         leaf_size=leaf_size // 3,
         approx_min_span_tree=approx_min_span_tree,
         n_jobs=n_jobs,
-        **kwargs,
+        **metric_params,
     )
     min_spanning_tree = alg.spanning_tree()
     # Sort edges of the min_spanning_tree by weight
@@ -647,7 +646,6 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                leaf_size,
                 **metric_params,
             )
         elif algorithm == "prims_kdtree":
@@ -658,7 +656,6 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                leaf_size,
                 **metric_params,
             )
         elif algorithm == "prims_balltree":
@@ -713,7 +710,6 @@ def hdbscan(
                 min_samples,
                 alpha,
                 metric,
-                leaf_size,
                 **metric_params,
             )
         elif metric in KDTree.valid_metrics:
@@ -773,7 +769,7 @@ def hdbscan(
 
 
 # Inherits from sklearn
-class HDBSCAN(BaseEstimator, ClusterMixin):
+class HDBSCAN(ClusterMixin, BaseEstimator):
     """Perform HDBSCAN clustering from vector array or distance matrix.
 
     HDBSCAN - Hierarchical Density-Based Spatial Clustering of Applications
@@ -1004,9 +1000,9 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
             self._raw_data = X
 
             self._all_finite = (
-                np.alltrue(np.isfinite(X.tocoo().data))
+                np.all(np.isfinite(X.tocoo().data))
                 if issparse(X)
-                else np.alltrue(np.isfinite(X))
+                else np.all(np.isfinite(X))
             )
 
             if not self._all_finite:
