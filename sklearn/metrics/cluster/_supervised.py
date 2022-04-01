@@ -572,15 +572,15 @@ def completeness_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     completeness : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling.
 
     See Also
     --------
