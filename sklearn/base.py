@@ -88,14 +88,24 @@ def clone(estimator, *, safe=True):
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
 
+    init_param_error = (
+        f"Cannot clone object {estimator}, as the constructor "
+        f"either does not set or modifies parameter {name}."
+    )
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
-        if param1 is not param2 and param1 != param2:
+        if param1 is param2:
+            continue
+        try:
+            if param1 != param2:
+                raise RuntimeError(init_param_error)
+        except ValueError as e:
             raise RuntimeError(
-                "Cannot clone object %s, as the constructor "
-                "either does not set or modifies parameter %s" % (estimator, name)
+                init_param_error
+                + " The following error occurred while comparing old and new"
+                f" parameters: {str(e)}"
             )
     return new_object
 

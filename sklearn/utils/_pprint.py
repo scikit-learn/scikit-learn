@@ -98,8 +98,14 @@ def _changed_params(estimator):
     def has_changed(k, v):
         if k not in init_params:  # happens if k is part of a **kwargs
             return True
-        if init_params[k] == inspect._empty:  # k has no default value
-            return True
+        try:
+            if init_params[k] == inspect._empty:  # k has no default value
+                return True
+        except ValueError:
+            # skip if "ValueError: The truth value of an array with more than
+            # one element is ambiguous. Use a.any() or a.all()" is raised
+            # during comparison.
+            pass
         # try to avoid calling repr on nested estimators
         if isinstance(v, BaseEstimator) and v.__class__ != init_params[k].__class__:
             return True
