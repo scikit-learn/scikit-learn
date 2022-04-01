@@ -3,6 +3,7 @@
 #         John Healy <jchealy@gmail.com>
 #
 # License: BSD 3 clause
+# Currently only used in test_hdbscan.py for testing the correctness of HDBSCAN
 
 import numpy as np
 from sklearn.metrics import pairwise_distances
