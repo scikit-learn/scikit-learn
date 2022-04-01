@@ -1032,7 +1032,7 @@ reproductive exponential dispersion model (EDM) [11]_).
 
 The minimization problem becomes:
 
-.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2,
+.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2^2,
 
 where :math:`\alpha` is the L2 regularization penalty. When sample weights are
 provided, the average becomes a weighted average.
