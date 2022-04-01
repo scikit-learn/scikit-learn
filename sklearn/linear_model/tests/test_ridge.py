@@ -256,7 +256,7 @@ def test_ridge_regression_vstacked_X(
         alpha=2 * alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-11,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
         random_state=global_random_seed,
     )
     X = X[:, :-1]  # remove intercept
@@ -1663,7 +1663,7 @@ def test_ridge_fit_intercept_sparse(solver, with_sample_weight, global_random_se
     sparse_ridge.fit(sp.csr_matrix(X), y, sample_weight=sample_weight)
 
     assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
-    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_)
+    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=5e-7)
 
 
 @pytest.mark.parametrize("solver", ["saga", "svd", "cholesky"])
