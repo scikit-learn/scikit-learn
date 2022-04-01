@@ -1,6 +1,36 @@
-from sklearn._engines import list_engine_provider_names
-from sklearn._engines import load_engines
-import pytest
+from sklearn._engine import list_engine_provider_names
+from sklearn._engine import _parse_entry_point
+
+
+class FakeEngine:
+    pass
+
+
+class FakeEngineHolder:
+    class NestedFakeEngine:
+        pass
+
+
+def test_get_engine_class():
+    fake_entry_point = {
+        "name": "fake_engine",
+        "value": "sklearn.tests.test_engines:FakeEngine"
+    }
+    spec = _parse_entry_point(fake_entry_point)
+    assert spec.name == "fake_engine"
+    assert spec.provider_name == "sklearn"  # or should it be scikit-learn?
+    assert spec.get_engine_class() is FakeEngine
+
+
+def test_get_nested_engine_class():
+    fake_entry_point = {
+        "name": "nested_fake_engine",
+        "value": "sklearn.tests.test_engines:FakeEngineHolder.NestedFakeEngine"
+    }
+    spec = _parse_entry_point(fake_entry_point)
+    assert spec.name == "fake_engine"
+    assert spec.provider_name == "sklearn"  # or should it be scikit-learn?
+    assert spec.get_engine_class() is FakeEngineHolder.NestedFakeEngine
 
 
 def test_list_engine_provider_names():
@@ -9,11 +39,3 @@ def test_list_engine_provider_names():
         assert isinstance(provider_name, str)
 
 
-def test_load_engines():
-    all_engines = load_engines()
-    # TODO: write me
-
-def test_load_engines_invalid_provider():
-    provider_name = "some_invalid_test_provider_name"
-    assert provider_name not in list_engine_provider_names()
-    assert load_engines(provider_name=provider_name) == []
