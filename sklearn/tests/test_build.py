@@ -27,6 +27,7 @@ def test_openmp_parallelism_enabled():
 
         You can skip this test by setting the environment variable
         SKLEARN_SKIP_OPENMP_TEST to any value.
-        """).format(base_url)
+        """
+    ).format(base_url)
 
     assert _openmp_parallelism_enabled(), err_msg

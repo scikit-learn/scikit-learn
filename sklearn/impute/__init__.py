@@ -9,8 +9,4 @@ if typing.TYPE_CHECKING:
     # TODO: remove this check once the estimator is no longer experimental.
     from ._iterative import IterativeImputer  # noqa
 
-__all__ = [
-    'MissingIndicator',
-    'SimpleImputer',
-    'KNNImputer'
-]
+__all__ = ["MissingIndicator", "SimpleImputer", "KNNImputer"]

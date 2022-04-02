@@ -3,8 +3,6 @@
 # Uses the pool adjacent violators algorithm (PAVA), with the
 # enhancement of searching for the longest decreasing subsequence to
 # pool at each step.
-#
-# cython: boundscheck=False, wraparound=False, cdivision=True
 
 import numpy as np
 cimport numpy as np

@@ -50,10 +50,10 @@ Reviewing code is also encouraged. Contributors and users are welcome to
 participate to the review process following our :ref:`review guidelines
 <code_review>`.
 
-Triaging operations for members of the core and triage teams
-------------------------------------------------------------
+Triaging operations for members of the core and contributor experience teams
+----------------------------------------------------------------------------
 
-In addition to the above, members of the core team and the triage team
+In addition to the above, members of the core team and the contributor experience team
 can do the following important tasks:
 
 - Update :ref:`labels for issues and PRs <issue_tracker_tags>`: see the list of
@@ -148,6 +148,8 @@ The following workflow [1]_ is a good way to approach issue triaging:
 
    An additional useful step can be to tag the corresponding module e.g.
    `sklearn.linear_models` when relevant.
+
+#. Remove the "Needs Triage" label from the issue if the label exists.
 
 .. [1] Adapted from the pandas project `maintainers guide
        <https://dev.pandas.io/docs/development/maintaining.html>`_

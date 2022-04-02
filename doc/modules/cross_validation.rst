@@ -447,7 +447,7 @@ fold cross validation should be preferred to LOO.
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
    <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
-   <http://web.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI
+   <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
@@ -679,7 +679,7 @@ Implementation notes:
 - With the current implementation full shuffle is not possible in most
   scenarios. When shuffle=True, the following happens:
 
-  1. All groups a shuffled.
+  1. All groups are shuffled.
   2. Groups are sorted by standard deviation of classes using stable sort.
   3. Sorted groups are iterated over and assigned to folds.
 
@@ -954,7 +954,7 @@ to obtain good results. A high p-value could be due to a lack of dependency
 between features and labels (there is no difference in feature values between
 the classes) or because the classifier was not able to use the dependency in
 the data. In the latter case, using a more appropriate classifier that
-is able to utilize the structure in the data, would result in a low
+is able to utilize the structure in the data, would result in a lower
 p-value.
 
 Cross-validation provides information about how well a classifier generalizes,
@@ -974,13 +974,13 @@ test is therefore only able to show when the model reliably outperforms
 random guessing.
 
 Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
-using brute force and interally fits ``(n_permutations + 1) * n_cv`` models.
+using brute force and internally fits ``(n_permutations + 1) * n_cv`` models.
 It is therefore only tractable with small datasets for which fitting an
 individual model is very fast.
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
 
 .. topic:: References:
 
