@@ -474,9 +474,9 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
         Embedding of the training data in low-dimensional space.
 
     n_neighbors : int, default=5
-        Number of neighbors that will be considered. Should be lesser than
-        n_samples/2 to ensure trustworthiness is within [0, 1]. A warning will
-        be raised otherwise.
+        The number of neighbors that will be considered. Should be fewer than
+        `n_samples / 2` to ensure the trustworthiness to lies within [0, 1], as
+        mentioned in [1]_. A warning will be raised otherwise.
 
     metric : str or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples
@@ -493,6 +493,17 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     -------
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
+
+    References
+    ----------
+    .. [1] Jarkko Venna and Samuel Kaski. 2001. Neighborhood
+    Preservation in Nonlinear Projection Methods: An Experimental Study.
+    In Proceedings of the International Conference on Artificial Neural Networks
+    (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
+
+    .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
+    Local Structure. Proceedings of the Twelth International Conference on
+    Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
     """
     n_samples = X.shape[0]
     if n_neighbors >= n_samples / 2:
