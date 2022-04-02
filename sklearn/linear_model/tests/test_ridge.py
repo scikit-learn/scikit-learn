@@ -1880,11 +1880,11 @@ def test_ridge_sag_with_X_fortran():
 
 def test_ridge_alpha_boundary_warning():
     X, y = X_diabetes, y_diabetes
-    with pytest.warns(ConvergenceWarning, match="Some of the individual targets"):
-        RidgeCV(alphas=[0.1, 1]).fit(X, y)
     with pytest.warns(
         ConvergenceWarning, match="The optimal value for the regularization parameter"
     ):
+        RidgeCV(alphas=[0.1, 1]).fit(X, y)
+    with pytest.warns(ConvergenceWarning, match="Some of the individual targets"):
         RidgeCV(alphas=1, alpha_per_target=True).fit(X, y)
 
 
