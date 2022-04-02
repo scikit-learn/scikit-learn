@@ -347,12 +347,8 @@ class BisectingKMeans(_BaseKMeans):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training instances to cluster.
-
-            .. note:: The data will be converted to C ordering,
-                which will cause a memory copy
-                if the given data is not C-contiguous.
+        X : {ndarray, csr_matrix} of shape (n_samples, n_features)
+            Data points of the cluster to bisect.
 
         sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X. If None, all observations
