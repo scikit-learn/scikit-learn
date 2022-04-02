@@ -1,5 +1,7 @@
+import re
 import pytest
 import numpy as np
+from unittest.mock import Mock
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -8,6 +10,8 @@ from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._testing import MinimalClassifier
 
 from sklearn import datasets
+from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
+from sklearn.datasets import make_friedman1
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
@@ -60,14 +64,32 @@ def test_input_estimator_unchanged():
 @pytest.mark.parametrize(
     "max_features, err_type, err_msg",
     [
-        (-1, ValueError, "'max_features' should be 0 and"),
-        (data.shape[1] + 1, ValueError, "'max_features' should be 0 and"),
-        ("gobbledigook", TypeError, "should be an integer"),
-        ("all", TypeError, "should be an integer"),
+        (-1, ValueError, "max_features =="),
+        (
+            data.shape[1] + 1,
+            ValueError,
+            "max_features ==",
+        ),
+        (
+            lambda X: 1.5,
+            TypeError,
+            "max_features(X) must be an instance of int, not float.",
+        ),
+        (
+            "gobbledigook",
+            TypeError,
+            "'max_features' must be either an int or a callable",
+        ),
+        (
+            "all",
+            TypeError,
+            "'max_features' must be either an int or a callable",
+        ),
     ],
 )
 def test_max_features_error(max_features, err_type, err_msg):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    err_msg = re.escape(err_msg)
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
 
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
@@ -77,13 +99,61 @@ def test_max_features_error(max_features, err_type, err_msg):
 
 
 @pytest.mark.parametrize("max_features", [0, 2, data.shape[1]])
-def test_max_features_dim(max_features):
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+def test_inferred_max_features_integer(max_features):
+    """Check max_features_ and output shape for integer max_features."""
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
         estimator=clf, max_features=max_features, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
-    assert X_trans.shape[1] == max_features
+    assert transformer.max_features_ == max_features
+    assert X_trans.shape[1] == transformer.max_features_
+
+
+@pytest.mark.parametrize(
+    "max_features",
+    [lambda X: 1, lambda X: X.shape[1], lambda X: min(X.shape[1], 10000)],
+)
+def test_inferred_max_features_callable(max_features):
+    """Check max_features_ and output shape for callable max_features."""
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
+    transformer = SelectFromModel(
+        estimator=clf, max_features=max_features, threshold=-np.inf
+    )
+    X_trans = transformer.fit_transform(data, y)
+    assert transformer.max_features_ == max_features(data)
+    assert X_trans.shape[1] == transformer.max_features_
+
+
+@pytest.mark.parametrize("max_features", [lambda X: round(len(X[0]) / 2), 2])
+def test_max_features_array_like(max_features):
+    X = [
+        [0.87, -1.34, 0.31],
+        [-2.79, -0.02, -0.85],
+        [-1.34, -0.48, -2.55],
+        [1.92, 1.48, 0.65],
+    ]
+    y = [0, 1, 0, 1]
+
+    clf = RandomForestClassifier(n_estimators=5, random_state=0)
+    transformer = SelectFromModel(
+        estimator=clf, max_features=max_features, threshold=-np.inf
+    )
+    X_trans = transformer.fit_transform(X, y)
+    assert X_trans.shape[1] == transformer.max_features_
+
+
+@pytest.mark.parametrize(
+    "max_features",
+    [lambda X: min(X.shape[1], 10000), lambda X: X.shape[1], lambda X: 1],
+)
+def test_max_features_callable_data(max_features):
+    """Tests that the callable passed to `fit` is called on X."""
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    m = Mock(side_effect=max_features)
+    transformer = SelectFromModel(estimator=clf, max_features=m, threshold=-np.inf)
+    transformer.fit_transform(data, y)
+    m.assert_called_with(data)
 
 
 class FixedImportanceEstimator(BaseEstimator):
@@ -429,6 +499,19 @@ def test_importance_getter(estimator, importance_getter):
     )
     selector.fit(data, y)
     assert selector.transform(data).shape[1] == 1
+
+
+@pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
+def test_select_from_model_pls(PLSEstimator):
+    """Check the behaviour of SelectFromModel with PLS estimators.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = PLSEstimator(n_components=1)
+    model = make_pipeline(SelectFromModel(estimator), estimator).fit(X, y)
+    assert model.score(X, y) > 0.5
 
 
 def test_estimator_does_not_support_feature_names():

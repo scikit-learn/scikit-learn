@@ -4,6 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import scipy.sparse as sp
 import pytest
+import warnings
 
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
@@ -1134,9 +1135,9 @@ def test_tsne_init_futurewarning(init):
         with pytest.warns(FutureWarning, match="The PCA initialization.*"):
             tsne.fit_transform(X)
     else:
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
             tsne.fit_transform(X)
-        assert not [w.message for w in record]
 
 
 # TODO: Remove in 1.2
@@ -1154,9 +1155,9 @@ def test_tsne_learning_rate_futurewarning(learning_rate):
         with pytest.warns(FutureWarning, match="The default learning rate.*"):
             tsne.fit_transform(X)
     else:
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
             tsne.fit_transform(X)
-        assert not [w.message for w in record]
 
 
 @pytest.mark.filterwarnings("ignore:The default initialization in TSNE")
@@ -1196,6 +1197,37 @@ def test_tsne_n_jobs(method):
     ).fit_transform(X)
 
     assert_allclose(X_tr_ref, X_tr)
+
+
+# TODO: Remove filterwarnings in 1.2
+@pytest.mark.filterwarnings("ignore:.*TSNE will change.*:FutureWarning")
+def test_tsne_with_mahalanobis_distance():
+    """Make sure that method_parameters works with mahalanobis distance."""
+    random_state = check_random_state(0)
+    n_samples, n_features = 300, 10
+    X = random_state.randn(n_samples, n_features)
+    default_params = {
+        "perplexity": 40,
+        "n_iter": 250,
+        "learning_rate": "auto",
+        "n_components": 3,
+        "random_state": 0,
+    }
+
+    tsne = TSNE(metric="mahalanobis", **default_params)
+    msg = "Must provide either V or VI for Mahalanobis distance"
+    with pytest.raises(ValueError, match=msg):
+        tsne.fit_transform(X)
+
+    precomputed_X = squareform(pdist(X, metric="mahalanobis"), checks=True)
+    X_trans_expected = TSNE(metric="precomputed", **default_params).fit_transform(
+        precomputed_X
+    )
+
+    X_trans = TSNE(
+        metric="mahalanobis", metric_params={"V": np.cov(X.T)}, **default_params
+    ).fit_transform(X)
+    assert_allclose(X_trans, X_trans_expected)
 
 
 @pytest.mark.filterwarnings("ignore:The PCA initialization in TSNE will change")

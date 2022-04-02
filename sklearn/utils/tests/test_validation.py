@@ -401,7 +401,6 @@ def test_check_array():
     assert isinstance(result, np.ndarray)
 
 
-# TODO: Check for error in 1.1 when implicit conversion is removed
 @pytest.mark.parametrize(
     "X",
     [
@@ -412,32 +411,11 @@ def test_check_array():
         np.array([[b"1", b"2"], [b"3", b"4"]], dtype="V1"),
     ],
 )
-def test_check_array_numeric_warns(X):
-    """Test that check_array warns when it converts a bytes/string into a
-    float."""
-    expected_msg = (
-        r"Arrays of bytes/strings is being converted to decimal .*"
-        r"deprecated in 0.24 and will be removed in 1.1"
-    )
-    with pytest.warns(FutureWarning, match=expected_msg):
-        check_array(X, dtype="numeric")
-
-
-# TODO: remove in 1.1
-@ignore_warnings(category=FutureWarning)
-@pytest.mark.parametrize(
-    "X",
-    [
-        [["11", "12"], ["13", "xx"]],
-        np.array([["11", "12"], ["13", "xx"]], dtype="U"),
-        np.array([["11", "12"], ["13", "xx"]], dtype="S"),
-        [[b"a", b"b"], [b"c", b"d"]],
-    ],
-)
-def test_check_array_dtype_numeric_errors(X):
-    """Error when string-ike array can not be converted"""
-    expected_warn_msg = "Unable to convert array of bytes/strings"
-    with pytest.raises(ValueError, match=expected_warn_msg):
+def test_check_array_numeric_error(X):
+    """Test that check_array errors when it receives an array of bytes/string
+    while a numeric dtype is required."""
+    expected_msg = r"dtype='numeric' is not compatible with arrays of bytes/strings"
+    with pytest.raises(ValueError, match=expected_msg):
         check_array(X, dtype="numeric")
 
 
@@ -454,7 +432,7 @@ def test_check_array_dtype_numeric_errors(X):
 )
 def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     # Test pandas numerical extension arrays with pd.NA
-    pd = pytest.importorskip("pandas", minversion="1.0")
+    pd = pytest.importorskip("pandas")
 
     if pd_dtype in {"Float32", "Float64"}:
         # Extension dtypes with Floats was added in 1.2
@@ -479,22 +457,6 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
         check_array(X, force_all_finite=True)
-
-
-# TODO: remove test in 1.1 once this behavior is deprecated
-def test_check_array_pandas_dtype_object_conversion():
-    # test that data-frame like objects with dtype object
-    # get converted
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
-    X_df = MockDataFrame(X)
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df).dtype.kind == "f"
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
-    # smoke-test against dataframes with column named "dtype"
-    X_df.dtype = "Hans"
-    with pytest.warns(FutureWarning):
-        assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
 
 
 def test_check_array_pandas_dtype_casting():
@@ -1055,8 +1017,13 @@ def test_check_non_negative(retype):
 def test_check_X_y_informative_error():
     X = np.ones((2, 2))
     y = None
-    with pytest.raises(ValueError, match="y cannot be None"):
+    msg = "estimator requires y to be passed, but the target y is None"
+    with pytest.raises(ValueError, match=msg):
         check_X_y(X, y)
+
+    msg = "RandomForestRegressor requires y to be passed, but the target y is None"
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y, estimator=RandomForestRegressor())
 
 
 def test_retrieve_samples_from_non_standard_shape():
@@ -1484,7 +1451,7 @@ def test_check_fit_params(indices):
 def test_check_sparse_pandas_sp_format(sp_format):
     # check_array converts pandas dataframe with only sparse arrays into
     # sparse matrix
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
@@ -1518,7 +1485,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
     sparse extension arrays with unsupported mixed dtype
     and pandas version below 1.1. pandas versions 1.1 and
     above fixed this issue so no error will be raised."""
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
             "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),
@@ -1560,7 +1527,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 def test_check_pandas_sparse_valid(ntype1, ntype2, expected_subtype):
     # check that we support the conversion of sparse dataframe with mixed
     # type which can be converted safely.
-    pd = pytest.importorskip("pandas", minversion="0.25.0")
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
             "col1": pd.arrays.SparseArray([0, 1, 0], dtype=ntype1, fill_value=0),

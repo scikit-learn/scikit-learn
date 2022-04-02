@@ -184,7 +184,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         # FIXME: to be removed in 1.3
         if self.n_features_to_select in ("warn", None):
-            # for backwards compability
+            # for backwards compatibility
             warnings.warn(
                 "Leaving `n_features_to_select` to "
                 "None is deprecated in 1.0 and will become 'auto' "
@@ -306,5 +306,4 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     def _more_tags(self):
         return {
             "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-            "requires_y": True,
         }
