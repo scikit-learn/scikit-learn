@@ -1051,7 +1051,7 @@ def test_check_scalar_valid(x):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error")
         scalar = check_scalar(
             x,
             "test_name",
@@ -1617,7 +1617,7 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error", FutureWarning)
         names = _get_feature_names(X)
     assert names is None
 
