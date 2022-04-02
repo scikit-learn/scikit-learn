@@ -1879,16 +1879,13 @@ def test_ridge_sag_with_X_fortran():
 
 
 def test_ridge_alpha_boundary_warning():
-    ridge = RidgeCV(alphas=[0.1, 1])
     X, y = X_diabetes, y_diabetes
     with pytest.warns(ConvergenceWarning, match="Some of the individual targets"):
-        ridge.fit(X, y)
-    ridge = RidgeCV(alphas=1, alpha_per_target=True)
-    X, y = X_diabetes, y_diabetes
+        RidgeCV(alphas=[0.1, 1]).fit(X, y)
     with pytest.warns(
         ConvergenceWarning, match="The optimal value for the regularization parameter"
     ):
-        ridge.fit(X, y)
+        RidgeCV(alphas=1, alpha_per_target=True).fit(X, y)
 
 
 @pytest.mark.parametrize(
