@@ -43,7 +43,7 @@ def _iterate_sparse_X(X):
         yield row
 
 
-def _split_node(node, threshold, branching_factor, dtype=None):
+def _split_node(node, threshold, branching_factor):
     """The node has to be split if there is no place for a new subcluster
     in the node.
     1. Two empty nodes and two empty subclusters are initialized.
@@ -158,7 +158,7 @@ class _CFNode:
         # The list of subclusters, centroids and squared norms
         # to manipulate throughout.
         self.subclusters_ = []
-        self.dtype = dtype or np.float64
+        self.dtype = dtype
         self.init_centroids_ = np.zeros(
             (branching_factor + 1, n_features), dtype=self.dtype
         )
