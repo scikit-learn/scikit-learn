@@ -793,9 +793,9 @@ Picking by largest amount of data points in most cases produces result as
 accurate as picking by SSE and is faster (especially for larger amount of data
 points, where calculating error may be costly).
 
-Difference between Bisect K-Means and regular K-Means can be seen on example
+Difference between Bisecting K-Means and regular K-Means can be seen on example
 :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py` - while regular K-Means tend to create non-related
-clusters, clusters from Bisect K-Means are well ordered and create quite visible hierarchy.
+clusters, clusters from Bisecting K-Means are well ordered and create quite visible hierarchy.
 
 
 .. topic:: References:
