@@ -186,6 +186,9 @@ Changelog
   `-1` and the original warning message is shown.
   :pr:`22217` by :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`cluster.Birch` now preserves dtype for `numpy.float32`
+  inputs. :pr:`22968` by `Meekail Zain <micky774>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -284,7 +287,7 @@ Changelog
     deprecated.
   - the default value of the `batch_size` parameter of both will change from 3 to 256
     in version 1.3.
-  
+
   :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
