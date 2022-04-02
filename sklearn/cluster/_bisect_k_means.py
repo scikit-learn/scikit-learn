@@ -163,10 +163,10 @@ class BisectingKMeans(_BaseKMeans):
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
 
-    bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
+    bisecting_strategy : {"biggest_inertia", "largest_cluster"}, default="biggest_inertia"
         Defines how bisection should be performed:
 
-         - "biggest_sse" means that BisectingKMeans will always check
+         - "biggest_inertia" means that BisectingKMeans will always check
             all calculated cluster for cluster with biggest SSE
             (Sum of squared errors) and bisect it. This approach concentrates on
             precision, but may be costly in terms of execution time (especially for
@@ -175,7 +175,7 @@ class BisectingKMeans(_BaseKMeans):
          - "largest_cluster" - BisectingKMeans will always split cluster with
             largest amount of points assigned to it from all clusters
             previously calculated. That should work faster than picking by SSE
-            ('biggest_sse') and may produce similar results in most cases.
+            ('biggest_inertia') and may produce similar results in most cases.
 
     Attributes
     ----------
@@ -240,7 +240,7 @@ class BisectingKMeans(_BaseKMeans):
         tol=1e-4,
         copy_x=True,
         algorithm="lloyd",
-        bisect_strategy="biggest_sse",
+        bisecting_strategy="biggest_inertia",
     ):
 
         super().__init__(
@@ -255,7 +255,7 @@ class BisectingKMeans(_BaseKMeans):
 
         self.copy_x = copy_x
         self.algorithm = algorithm
-        self.bisect_strategy = bisect_strategy
+        self.bisecting_strategy = bisecting_strategy
 
     def _compute_bisect_errors(self, X, centers, labels, sample_weight):
         """
@@ -302,12 +302,12 @@ class BisectingKMeans(_BaseKMeans):
     def _check_params(self, X):
         super()._check_params(X)
 
-        # bisect_strategy
-        if self.bisect_strategy not in ["biggest_sse", "largest_cluster"]:
+        # bisecting_strategy
+        if self.bisecting_strategy not in ["biggest_inertia", "largest_cluster"]:
             raise ValueError(
-                "Bisect Strategy must be 'biggest_sse', "
+                "Bisect Strategy must be 'biggest_inertia', "
                 "or 'largest_cluster' "
-                f"got {self.bisect_strategy} instead."
+                f"got {self.bisecting_strategy} instead."
             )
 
         # Regular K-Means should do less computations when there are only
@@ -439,7 +439,7 @@ class BisectingKMeans(_BaseKMeans):
             print(f"-> number of clusters: {self.n_clusters}")
             print(f"-> number of centroid initializations: {self.n_init}")
             print(f"-> relative tolerance: {self.tol:.4e}")
-            print(f"-> bisect strategy: {self.bisect_strategy} \n")
+            print(f"-> bisect strategy: {self.bisecting_strategy} \n")
 
         # Subtract of mean of X for more accurate distance computations
         if not sp.issparse(X):
@@ -482,7 +482,7 @@ class BisectingKMeans(_BaseKMeans):
 
     def _run_bisecting_kmeans(self, X, sample_weight, random_state):
         """Performs Bisecting K-Means, which hierarchicaly splits clusters depending
-        on the `bisect_strategy` attribute:
+        on the `bisecting_strategy` attribute:
 
         - "biggest sse": Picks cluster with biggest SSE (Sum of Squared Errors)
          from all calculated.
@@ -512,7 +512,7 @@ class BisectingKMeans(_BaseKMeans):
         labels_ : ndarray of shape (n_samples,)
             Labels of each point.
         """
-        strategy = self.bisect_strategy
+        strategy = self.bisecting_strategy
 
         # Dictionary to imitate tree view of created centers.
         # Used to keep hierarchical ordering.
@@ -521,7 +521,7 @@ class BisectingKMeans(_BaseKMeans):
         # Leaves Dictionary used for clustering.
         # Stores information which data points are assigned to given cluster
         # along with error or amount of assigned points, depending on
-        # specified 'bisect_strategy'
+        # specified 'bisecting_strategy'
         leaves_dict = {
             -1: {"samples": np.ones(X.shape[0], dtype=bool), "error_or_size": None}
         }
@@ -545,7 +545,7 @@ class BisectingKMeans(_BaseKMeans):
                 print(f"Centroid Found: {_centers[0]}")
                 print(f"Centroid Found: {_centers[1]}")
 
-            if strategy == "biggest_sse":
+            if strategy == "biggest_inertia":
                 metrics_values = self._compute_bisect_errors(
                     picked_data, _centers, _labels, picked_weights
                 )
@@ -735,7 +735,7 @@ class _BisectingTree:
     def get_cluster_to_bisect(self):
         """Return the cluster node to bisect next.
 
-        It's based on the score of the cluster (see `bisect_strategy` for details).
+        It's based on the score of the cluster (see `bisecting_strategy` for details).
         """
         max_score = None
 
@@ -825,10 +825,10 @@ class BisectingKMeans2(_BaseKMeans):
         `"auto"` and `"full"` are deprecated and they will be removed in
         Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
-    bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
+    bisecting_strategy : {"biggest_inertia", "largest_cluster"}, default="biggest_inertia"
         Defines how should bisection by performed:
 
-         - "biggest_sse" means that Bisect K-Means will always check
+         - "biggest_inertia" means that Bisect K-Means will always check
             all calculated cluster for cluster with biggest SSE
             (Sum of squared errors) and bisect it. This approach concentrates on
             precision, but may be costly in terms of execution time (especially for
@@ -837,7 +837,7 @@ class BisectingKMeans2(_BaseKMeans):
          - "largest_cluster" - Bisect K-Means will always split cluster with
             largest amount of points assigned to it from all clusters
             previously calculated. That should work faster than picking by SSE
-            ('biggest_sse') and may produce similar results in most cases.
+            ('biggest_inertia') and may produce similar results in most cases.
 
     Attributes
     ----------
@@ -902,7 +902,7 @@ class BisectingKMeans2(_BaseKMeans):
         tol=1e-4,
         copy_x=True,
         algorithm="lloyd",
-        bisect_strategy="biggest_sse",
+        bisecting_strategy="biggest_inertia",
     ):
 
         super().__init__(
@@ -917,7 +917,7 @@ class BisectingKMeans2(_BaseKMeans):
 
         self.copy_x = copy_x
         self.algorithm = algorithm
-        self.bisect_strategy = bisect_strategy
+        self.bisecting_strategy = bisecting_strategy
 
     def _compute_bisect_errors(self, X, centers, labels, sample_weight):
         """
@@ -964,12 +964,12 @@ class BisectingKMeans2(_BaseKMeans):
     def _check_params(self, X):
         super()._check_params(X)
 
-        # bisect_strategy
-        if self.bisect_strategy not in ["biggest_sse", "largest_cluster"]:
+        # bisecting_strategy
+        if self.bisecting_strategy not in ["biggest_inertia", "largest_cluster"]:
             raise ValueError(
-                "Bisect Strategy must be 'biggest_sse', "
+                "Bisect Strategy must be 'biggest_inertia', "
                 "or 'largest_cluster' "
-                f"got {self.bisect_strategy} instead."
+                f"got {self.bisecting_strategy} instead."
             )
 
         # Regular K-Means should do less computations when there are only
@@ -1036,9 +1036,9 @@ class BisectingKMeans2(_BaseKMeans):
             n_threads=self._n_threads,
         )
 
-        if self.bisect_strategy == "biggest_sse":
+        if self.bisecting_strategy == "biggest_inertia":
             scores = self._compute_bisect_errors(X, centers, labels, sample_weight)
-        else:  # bisect_strategy == "largest_cluster"
+        else:  # bisecting_strategy == "largest_cluster"
             scores = np.bincount(labels)
 
         cluster_to_bisect.split(labels, centers, scores)

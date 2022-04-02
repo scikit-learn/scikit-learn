@@ -11,8 +11,8 @@ from sklearn.cluster import BisectingKMeans
 import pytest
 
 
-@pytest.mark.parametrize("bisect_strategy", ["biggest_sse", "largest_cluster"])
-def test_three_clusters(bisect_strategy):
+@pytest.mark.parametrize("bisecting_strategy", ["biggest_inertia", "largest_cluster"])
+def test_three_clusters(bisecting_strategy):
     """Tries to perform bisect k-means for three clusters to check
     if splitting data is performed correctly
     """
@@ -26,7 +26,7 @@ def test_three_clusters(bisect_strategy):
         [[1, 2], [10, 4], [1, 0], [10, 2], [1, 4], [10, 0], [10, 6], [10, 8], [10, 10]]
     )
     bisect_means = BisectingKMeans(
-        n_clusters=3, random_state=0, bisect_strategy=bisect_strategy
+        n_clusters=3, random_state=0, bisecting_strategy=bisecting_strategy
     )
     bisect_means.fit(X)
 
@@ -99,10 +99,10 @@ def test_one_cluster():
 @pytest.mark.parametrize(
     "param, match, single_value",
     [
-        # Test bisect_strategy param
+        # Test bisecting_strategy param
         (
-            {"bisect_strategy": "None"},
-            r"Bisect Strategy must be 'biggest_sse', or 'largest_cluster'",
+            {"bisecting_strategy": "None"},
+            r"Bisect Strategy must be 'biggest_inertia', or 'largest_cluster'",
             False,
         ),
         # Test init array
