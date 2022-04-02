@@ -229,7 +229,6 @@ class _CFNode:
                     closest_subcluster.child_,
                     threshold,
                     branching_factor,
-                    dtype=self.dtype,
                 )
                 self.update_split_subclusters(
                     closest_subcluster, new_subcluster1, new_subcluster2
