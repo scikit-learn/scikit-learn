@@ -263,7 +263,7 @@ class BisectingKMeans(_BaseKMeans):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X : {ndarray, csr_matrix} of shape (n_samples, n_features)
             The input samples.
 
         centers : ndarray of shape (n_clusters, n_features)
