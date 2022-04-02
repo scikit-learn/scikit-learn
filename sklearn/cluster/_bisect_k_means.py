@@ -360,7 +360,7 @@ class BisectingKMeans(_BaseKMeans):
             The weights for each observation in X. If None, all observations
             are assigned equal weight.
 
-        random_state : int, RandomState instance
+        random_state : RandomState instance
             Determines random number generation for centroid initialization.
 
         Returns
