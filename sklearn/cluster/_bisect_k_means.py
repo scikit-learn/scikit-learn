@@ -128,8 +128,8 @@ class BisectingKMeans(_BaseKMeans):
         consecutive runs in terms of inertia.
 
     random_state : int, RandomState instance or None, default=None
-        Determines random number generation for centroid initialization. Use
-        an int to make the randomness deterministic.
+        Determines random number generation for centroid initialization
+        in inner K-Means. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
     max_iter : int, default=30
@@ -155,15 +155,13 @@ class BisectingKMeans(_BaseKMeans):
         copy_x is False. If the original data is sparse, but not in CSR format,
         a copy will be made even if copy_x is False.
 
-    algorithm : {"lloyd", "elkan", "auto", "full"}, default="lloyd"
-        K-means algorithm to use. The classical EM-style algorithm is `"lloyd"`.
+    algorithm : {"lloyd", "elkan"}, default="lloyd"
+        Inner K-means algorithm used in bisection.
+        The classical EM-style algorithm is `"lloyd"`.
         The `"elkan"` variation can be more efficient on some datasets with
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        `"auto"` and `"full"` are deprecated and they will be removed in
-        Scikit-Learn 1.3. They are both aliases for `"lloyd"`.
 
     bisect_strategy : {"biggest_sse", "largest_cluster"}, default="biggest_sse"
         Defines how bisection should be performed:
@@ -567,15 +565,11 @@ class BisectingKMeans(_BaseKMeans):
                 print(f"Centroid Found: {_centers[1]}")
 
             if strategy == "biggest_sse":
-                # "biggest_sse" uses computed SSE (Sum of Squared Errors)
-                # to pick cluster with biggest SSE Error
                 metrics_values = self._compute_bisect_errors(
                     picked_data, _centers, _labels, picked_weights
                 )
             else:
                 # strategy == 'largest_cluster'
-                # 'largest_cluster' takes counts occurances of each label
-                # to pick cluster with largest number of data points assigned
                 metrics_values = np.bincount(_labels)
 
             # "Create Hierarchy":
