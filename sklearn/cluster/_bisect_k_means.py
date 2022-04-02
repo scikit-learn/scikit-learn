@@ -7,7 +7,6 @@ import numpy as np
 import scipy.sparse as sp
 from threadpoolctl import threadpool_limits
 
-from ..exceptions import ConvergenceWarning
 from ..exceptions import EfficiencyWarning
 
 from ._kmeans import _BaseKMeans
