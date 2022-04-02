@@ -107,7 +107,7 @@ class BisectingKMeans(_BaseKMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random'} or callable, default='k-means++'
+    init : {'k-means++', 'random'} or callable, default='random'
         Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -120,7 +120,7 @@ class BisectingKMeans(_BaseKMeans):
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
 
-    n_init : int, default=10
+    n_init : int, default=1
         Number of time the inner k-means algorithm will be run with different
         centroid seeds in each bisection.
         That will result producing for each bisection best output of n_init
@@ -231,8 +231,8 @@ class BisectingKMeans(_BaseKMeans):
     def __init__(
         self,
         n_clusters=8,
-        init="k-means++",
-        n_init=10,
+        init="random",
+        n_init=1,
         random_state=None,
         max_iter=30,
         verbose=0,
@@ -318,7 +318,6 @@ class BisectingKMeans(_BaseKMeans):
                 "- Use Normal KMeans from sklearn.cluster instead.",
                 EfficiencyWarning,
             )
-
 
         if hasattr(self.init, "__array__"):
             raise ValueError("BisectingKMeans does not support init as array.")
