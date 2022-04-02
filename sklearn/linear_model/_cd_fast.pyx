@@ -275,11 +275,16 @@ def enet_coordinate_descent(floating[::1] w,
                     break
 
                 if not positive and beta > 0:
-                    # Try alternative duality gap according to Eq (5) above.
+                    # Try alternative duality gap according to Eq. (5) above.
+                    # TODO: As this computation has a cost, we could try it only every
+                    # few iterations.
+                    # Note: When starting from w=0, the very first iterations usually
+                    # give a poor bound (much too large).
+
                     # XtA += beta * w, such that XtA = np.dot(X.T, R)
                     _axpy(n_features, beta, &w[0], 1, &XtA[0], 1)
 
-                    # 1/(2 beta) sum_j max(0, |v'X_j| - alpha)^2
+                    # 1/(2 beta) sum_j max(0, |v'X_j| - alpha)^2 with v = -R
                     gap = 0.0
                     for ii in range(n_features):
                         gap += fmax(fabs(XtA[ii]) - alpha, 0) ** 2
