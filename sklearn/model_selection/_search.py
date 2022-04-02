@@ -468,7 +468,7 @@ def _generate_jobs(
     warm_start_groups = _generate_warm_start_groups(candidate_params, use_warm_start)
 
     for warm_candidates in warm_start_groups:
-        for (split_idx, (train, test)) in enumerate(splits):
+        for split_idx, (train, test) in enumerate(splits):
             yield delayed(_warm_fit_and_score)(
                 clone(base_estimator),
                 warm_candidates,
