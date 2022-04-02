@@ -350,9 +350,8 @@ class BisectingKMeans(_BaseKMeans):
         X : {ndarray, csr_matrix} of shape (n_samples, n_features)
             Data points of the cluster to bisect.
 
-        sample_weight : array-like of shape (n_samples,)
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight.
+        sample_weight : ndarray of shape (n_samples,)
+            The weights for each observation in X.
 
         random_state : RandomState instance
             Determines random number generation for centroid initialization.
