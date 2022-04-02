@@ -272,7 +272,7 @@ class BisectingKMeans(_BaseKMeans):
         labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : ndarray of shape (n_samples,)
             The weights for each observation in X.
 
         Returns
