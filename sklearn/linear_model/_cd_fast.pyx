@@ -125,7 +125,7 @@ def enet_coordinate_descent(floating[::1] w,
                - inf    else
 
     One often sets c = min(1, alpha/||X'(X w - y) + beta * w||_inf), which ensures
-    D(v) > - inf.
+    D(v) > - inf. See [1, 2].
 
     B) Direct calculation based on
 
@@ -136,10 +136,21 @@ def enet_coordinate_descent(floating[::1] w,
 
         D(v) = -1/2 ||v||_2^2 - v'y - 1/(2 beta) sum_j max(0, |v'X_j| - alpha)^2    (5)
 
-    valid for all v, and again v = X w - y at optimum.
+    valid for all v, and again v = X w - y at optimum. See [3].
 
     The duality gap G(w, v) = P(w) - D(v) based on (3) seems better for early
     iterations, the one based on (5) better for later iterations.
+
+    References
+    ----------
+    .. [1] Zou, Hui and Trevor J. Hastie. "Regularization and variable selection via
+           the elastic net." Journal of the Royal Statistical Society: Series B
+           (Statistical Methodology) 67 (2005): n. pag.
+    .. [2] Kim, Seung-Jean et al. "An Interior-Point Method for Large-Scale
+           $\ell_1$-Regularized Least Squares." IEEE Journal of Selected Topics in
+           Signal Processing 1 (2007): 606-617.
+    .. [3] Mendler-Dünner, Celestine et al. "Primal-Dual Rates and Certificates." ICML
+           (2016).
     """
 
     if floating is float:
