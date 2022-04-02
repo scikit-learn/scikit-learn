@@ -59,6 +59,7 @@ for kwargs in KWARGS:
 import matplotlib.pyplot as plt
 
 for labels, probabilities, kwargs in models:
+    _, ax = plt.subplots()
     # Black removed and is used for noise instead.
     unique_labels = set(labels)
     colors = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(unique_labels))]
@@ -72,7 +73,7 @@ for labels, probabilities, kwargs in models:
 
         class_index = np.where(labels == k)[0]
         for ci in class_index:
-            plt.plot(
+            ax.plot(
                 X[ci, 0],
                 X[ci, 1],
                 "x" if k == -1 else "o",
@@ -80,5 +81,5 @@ for labels, probabilities, kwargs in models:
                 markeredgecolor="k",
                 markersize=4 if k == -1 else 1 + 5 * proba_map[ci],
             )
-    plt.title(f"Estimated number of clusters: {n_clusters_} | {kwargs=}")
+    ax.set_title(f"Estimated number of clusters: {n_clusters_} | {kwargs=}")
     plt.show()
