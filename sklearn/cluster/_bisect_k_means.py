@@ -320,10 +320,6 @@ class BisectingKMeans(_BaseKMeans):
                 EfficiencyWarning,
             )
 
-        if X.shape[0] <= 1:
-            raise ValueError(
-                "BisectingKMeans needs more than one sample to perform bisection."
-            )
 
         if hasattr(self.init, "__array__"):
             raise ValueError("BisectingKMeans does not support init as array.")
@@ -388,16 +384,6 @@ class BisectingKMeans(_BaseKMeans):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
-
-        distinct_clusters = len(set(best_labels))
-        if distinct_clusters != 2:
-            warnings.warn(
-                "Number of distinct clusters ({}) found smaller than "
-                "n_clusters ({}). Possibly due to duplicate points "
-                "in X.".format(distinct_clusters, 2),
-                ConvergenceWarning,
-                stacklevel=2,
-            )
 
         return best_centers, best_labels
 

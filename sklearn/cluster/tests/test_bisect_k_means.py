@@ -114,7 +114,9 @@ def test_one_cluster():
         # Test single X value
         (
             {"n_clusters": 1},
-            "BisectingKMeans needs more than one sample to perform bisection.",
+            # 'Found array with 0 sample(s) (shape=(0, 1))
+            #  while a minimum of 1 is required by BisectingKMeans.'
+            "a minimum of 1 is required by BisectingKMeans.",
             True,
         ),
     ],
@@ -125,7 +127,7 @@ def test_wrong_params(param, match, single_value):
     simplefilter("ignore")
 
     if single_value:
-        X = np.ones((1, 1))
+        X = np.ones((0, 1))
     else:
         rng = np.random.RandomState(0)
         X = rng.rand(5, 2)
