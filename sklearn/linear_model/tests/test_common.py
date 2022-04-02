@@ -18,7 +18,6 @@ from sklearn.linear_model import ARDRegression
 
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils import check_random_state
-
 from sklearn.exceptions import ConvergenceWarning
 
 

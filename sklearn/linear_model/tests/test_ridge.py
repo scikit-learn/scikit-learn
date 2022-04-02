@@ -1095,6 +1095,7 @@ def test_ridge_best_score(ridge, make_dataset, cv):
     assert isinstance(ridge.best_score_, float)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_ridge_cv_individual_penalties():
     # Tests the ridge_cv object optimizing individual penalties for each target
 
@@ -1880,8 +1881,12 @@ def test_ridge_sag_with_X_fortran():
 def test_ridge_alpha_boundary_warning():
     ridge = RidgeCV(alphas=[0.1, 1])
     X, y = X_diabetes, y_diabetes
+    with pytest.warns(ConvergenceWarning, match="Some of the individual targets"):
+        ridge.fit(X, y)
+    ridge = RidgeCV(alphas=1, alpha_per_target=True)
+    X, y = X_diabetes, y_diabetes
     with pytest.warns(
-        ConvergenceWarning, match="lies at a boundary of the explored range"
+        ConvergenceWarning, match="The optimal value for the regularization parameter"
     ):
         ridge.fit(X, y)
 
