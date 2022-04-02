@@ -116,3 +116,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
             break
 
     return (dtype, data, indices, indptr, labels, query)
+
+def _dump_svmlight_file(X, y, X_dtype, y_dtype, f,
+                        bint multilabel, bint zero_based, int[:] query_id,
+                        const unsigned char[:] comment):
+    print(f"{X_dtype}")
