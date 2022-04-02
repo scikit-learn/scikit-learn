@@ -1704,3 +1704,4 @@ def test_check_feature_names_in_pandas():
 
     with pytest.raises(ValueError, match="input_features is not equal to"):
         est.get_feature_names_out(["x1", "x2", "x3"])
+ 
