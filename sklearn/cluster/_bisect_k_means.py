@@ -462,7 +462,7 @@ class BisectingKMeans(_BaseKMeans):
         else:
             # Run proper bisection to gather
             # self.cluster_centers_ and self.labels_
-            clusters, self.labels_ = self._run_bisect_kmeans(
+            clusters, self.labels_ = self._run_bisecting_kmeans(
                 X, sample_weight, random_state
             )
 
@@ -480,7 +480,7 @@ class BisectingKMeans(_BaseKMeans):
 
         return self
 
-    def _run_bisect_kmeans(self, X, sample_weight, random_state):
+    def _run_bisecting_kmeans(self, X, sample_weight, random_state):
         """Performs Bisecting K-Means, which hierarchicaly splits clusters depending
         on the `bisect_strategy` attribute:
 
