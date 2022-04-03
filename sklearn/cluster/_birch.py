@@ -60,14 +60,14 @@ def _split_node(node, threshold, branching_factor):
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
-        dtype=node.dtype,
+        dtype=node.init_centroids_.dtype,
     )
     new_node2 = _CFNode(
         threshold=threshold,
         branching_factor=branching_factor,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
-        dtype=node.dtype,
+        dtype=node.init_centroids_.dtype,
     )
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
@@ -158,11 +158,8 @@ class _CFNode:
         # The list of subclusters, centroids and squared norms
         # to manipulate throughout.
         self.subclusters_ = []
-        self.dtype = dtype
-        self.init_centroids_ = np.zeros(
-            (branching_factor + 1, n_features), dtype=self.dtype
-        )
-        self.init_sq_norm_ = np.zeros((branching_factor + 1), self.dtype)
+        self.init_centroids_ = np.zeros((branching_factor + 1, n_features), dtype=dtype)
+        self.init_sq_norm_ = np.zeros((branching_factor + 1), dtype)
         self.squared_norm_ = []
         self.prev_leaf_ = None
         self.next_leaf_ = None
