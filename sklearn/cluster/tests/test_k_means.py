@@ -299,11 +299,11 @@ def _check_fitted_model(km):
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_all_init(Estimator, data, init, global_random_seed):
+def test_all_init(Estimator, data, init):
     # Check KMeans and MiniBatchKMeans with all possible init.
     n_init = 10 if isinstance(init, str) else 1
     km = Estimator(
-        init=init, n_clusters=n_clusters, random_state=global_random_seed, n_init=n_init
+        init=init, n_clusters=n_clusters, random_state=42, n_init=n_init
     ).fit(data)
     _check_fitted_model(km)
 
@@ -313,11 +313,11 @@ def test_all_init(Estimator, data, init, global_random_seed):
     ["random", "k-means++", centers, lambda X, k, random_state: centers],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
-def test_minibatch_kmeans_partial_fit_init(init, global_random_seed):
+def test_minibatch_kmeans_partial_fit_init(init):
     # Check MiniBatchKMeans init with partial_fit
     n_init = 10 if isinstance(init, str) else 1
     km = MiniBatchKMeans(
-        init=init, n_clusters=n_clusters, random_state=global_random_seed, n_init=n_init
+        init=init, n_clusters=n_clusters, random_state=0, n_init=n_init
     )
     for i in range(100):
         # "random" init requires many batches to recover the true labels.
@@ -543,17 +543,17 @@ def test_minibatch_kmeans_init_size():
 
 
 @pytest.mark.parametrize("tol, max_no_improvement", [(1e-4, None), (0, 10)])
-def test_minibatch_declared_convergence(capsys, tol, max_no_improvement, global_random_seed):
+def test_minibatch_declared_convergence(capsys, tol, max_no_improvement):
     # Check convergence detection based on ewa batch inertia or on
     # small center change.
-    X, _, centers = make_blobs(centers=3, random_state=global_random_seed, return_centers=True)
+    X, _, centers = make_blobs(centers=3, random_state=0, return_centers=True)
 
     km = MiniBatchKMeans(
         n_clusters=3,
         init=centers,
         batch_size=20,
         tol=tol,
-        random_state=global_random_seed,
+        random_state=0,
         max_iter=10,
         n_init=1,
         verbose=1,
@@ -773,9 +773,9 @@ def test_k_means_function():
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_float_precision(Estimator, data, global_random_seed):
+def test_float_precision(Estimator, data):
     # Check that the results are the same for single and double precision.
-    km = Estimator(n_init=1, random_state=global_random_seed)
+    km = Estimator(n_init=1, random_state=0)
 
     inertia = {}
     Xt = {}
@@ -1010,9 +1010,9 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_inertia(dtype, global_random_seed):
+def test_inertia(dtype):
     # Check that the _inertia_(dense/sparse) helpers produce correct results.
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(0)
     X_sparse = sp.random(
         100, 10, density=0.5, format="csr", random_state=rng, dtype=dtype
     )
