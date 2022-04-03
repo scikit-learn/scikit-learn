@@ -579,7 +579,7 @@ def enet_path(
             normalize=False,
             copy_X=False,
         )
-    else:
+    elif len(alphas) > 1:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)

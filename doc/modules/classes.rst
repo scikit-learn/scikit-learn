@@ -657,6 +657,7 @@ Plotting
    :toctree: generated/
    :template: class.rst
 
+   inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
 
 .. autosummary::

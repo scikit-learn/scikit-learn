@@ -423,7 +423,7 @@ def test_suffstat_sk_diag():
     covars_pred_diag = _estimate_gaussian_covariances_diag(resp, X, nk, xk, 0)
 
     ecov = EmpiricalCovariance()
-    for (cov_full, cov_diag) in zip(covars_pred_full, covars_pred_diag):
+    for cov_full, cov_diag in zip(covars_pred_full, covars_pred_diag):
         ecov.covariance_ = np.diag(np.diag(cov_full))
         cov_diag = np.diag(cov_diag)
         assert_almost_equal(ecov.error_norm(cov_diag, norm="frobenius"), 0)
