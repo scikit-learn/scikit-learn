@@ -704,7 +704,7 @@ def _lars_path_solver(
                 i = 0
                 L_ = L[:n_active, :n_active].copy()
                 while not np.isfinite(AA):
-                    L_.flat[:: n_active + 1] += (2**i) * eps
+                    L_.flat[:: n_active + 1] += (2 ** i) * eps
                     least_squares, _ = solve_cholesky(
                         L_, sign_active[:n_active], lower=True
                     )
@@ -1447,7 +1447,7 @@ def _lars_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train**2, axis=0))
+        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -1684,8 +1684,7 @@ class LarsCV(Lars):
         if hasattr(Gram, "__array__"):
             warnings.warn(
                 'Parameter "precompute" cannot be an array in '
-                '%s. Automatically switch to "auto" instead.'
-                % self.__class__.__name__
+                '%s. Automatically switch to "auto" instead.' % self.__class__.__name__
             )
             Gram = "auto"
 
@@ -2219,7 +2218,7 @@ class LassoLarsIC(LassoLars):
             )
 
         residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
-        residuals_sum_squares = np.sum(residuals**2, axis=0)
+        residuals_sum_squares = np.sum(residuals ** 2, axis=0)
         degrees_of_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps

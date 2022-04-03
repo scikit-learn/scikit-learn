@@ -370,8 +370,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if self.remainder not in ("drop", "passthrough") and not is_transformer:
             raise ValueError(
                 "The remainder keyword needs to be one of 'drop', "
-                "'passthrough', or estimator. '%s' was passed instead"
-                % self.remainder
+                "'passthrough', or estimator. '%s' was passed instead" % self.remainder
             )
 
         self._n_features = X.shape[1]

@@ -2558,15 +2558,13 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
         if self.n_quantiles <= 0:
             raise ValueError(
                 "Invalid value for 'n_quantiles': %d. "
-                "The number of quantiles must be at least one."
-                % self.n_quantiles
+                "The number of quantiles must be at least one." % self.n_quantiles
             )
 
         if self.subsample <= 0:
             raise ValueError(
                 "Invalid value for 'subsample': %d. "
-                "The number of subsamples must be at least one."
-                % self.subsample
+                "The number of subsamples must be at least one." % self.subsample
             )
 
         if self.n_quantiles > self.subsample:

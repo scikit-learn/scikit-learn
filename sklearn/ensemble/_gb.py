@@ -614,8 +614,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         if (
                             "pass parameters to specific steps of "
                             "your pipeline using the "
-                            "stepname__parameter"
-                            in str(e)
+                            "stepname__parameter" in str(e)
                         ):  # pipeline
                             raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
@@ -901,8 +900,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             warnings.warn(
                 "Using recursion method with a non-constant init predictor "
                 "will lead to incorrect partial dependence values. "
-                "Got init=%s."
-                % self.init,
+                "Got init=%s." % self.init,
                 UserWarning,
             )
         grid = np.asarray(grid, dtype=DTYPE, order="C")

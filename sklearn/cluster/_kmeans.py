@@ -528,7 +528,7 @@ def _kmeans_single_elkan(
             break
         else:
             # No strict convergence, check for tol based convergence.
-            center_shift_tot = (center_shift**2).sum()
+            center_shift_tot = (center_shift ** 2).sum()
             if center_shift_tot <= tol:
                 if verbose:
                     print(
@@ -671,7 +671,7 @@ def _kmeans_single_lloyd(
                 break
             else:
                 # No strict convergence, check for tol based convergence.
-                center_shift_tot = (center_shift**2).sum()
+                center_shift_tot = (center_shift ** 2).sum()
                 if center_shift_tot <= tol:
                     if verbose:
                         print(

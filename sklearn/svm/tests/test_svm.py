@@ -1195,8 +1195,7 @@ def test_linear_svc_intercept_scaling():
         msg = (
             "Intercept scaling is %r but needs to be greater than 0."
             " To disable fitting an intercept,"
-            " set fit_intercept=False."
-            % lsvc.intercept_scaling
+            " set fit_intercept=False." % lsvc.intercept_scaling
         )
         with pytest.raises(ValueError, match=msg):
             lsvc.fit(X, Y)

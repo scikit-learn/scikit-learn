@@ -1020,8 +1020,7 @@ def test_logreg_intercept_scaling():
         msg = (
             "Intercept scaling is %r but needs to be greater than 0."
             " To disable fitting an intercept,"
-            " set fit_intercept=False."
-            % clf.intercept_scaling
+            " set fit_intercept=False." % clf.intercept_scaling
         )
         with pytest.raises(ValueError, match=msg):
             clf.fit(X, Y1)

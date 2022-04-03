@@ -132,9 +132,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
     if default and normalize == "deprecated":
         warnings.warn(
             "The default of 'normalize' will be set to False in version 1.2 "
-            "and deprecated in version 1.4.\n"
-            + pipeline_msg
-            + alpha_msg,
+            "and deprecated in version 1.4.\n" + pipeline_msg + alpha_msg,
             FutureWarning,
         )
     elif normalize != "deprecated" and normalize and not default:

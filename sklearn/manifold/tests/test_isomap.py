@@ -81,7 +81,7 @@ def test_isomap_reconstruction_error(n_neighbors, radius):
     else:
         G = neighbors.radius_neighbors_graph(X, radius, mode="distance").toarray()
     centerer = preprocessing.KernelCenterer()
-    K = centerer.fit_transform(-0.5 * G**2)
+    K = centerer.fit_transform(-0.5 * G ** 2)
 
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
@@ -104,7 +104,7 @@ def test_isomap_reconstruction_error(n_neighbors, radius):
                     clf.embedding_, radius, mode="distance"
                 )
             G_iso = G_iso.toarray()
-            K_iso = centerer.fit_transform(-0.5 * G_iso**2)
+            K_iso = centerer.fit_transform(-0.5 * G_iso ** 2)
 
             # make sure error agrees
             reconstruction_error = np.linalg.norm(K - K_iso) / n_pts
@@ -183,7 +183,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
 def test_different_metric():
     # Test that the metric parameters work correctly, and default to euclidean
     def custom_metric(x1, x2):
-        return np.sqrt(np.sum(x1**2 + x2**2))
+        return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
 
     # metric, p, is_euclidean
     metrics = [

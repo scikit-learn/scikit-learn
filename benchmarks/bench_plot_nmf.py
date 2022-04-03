@@ -162,7 +162,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha, l1_rati
         proj_grad_W = squared_norm(gradW * np.logical_or(gradW < 0, W > 0))
         proj_grad_H = squared_norm(gradH * np.logical_or(gradH < 0, H > 0))
 
-        if (proj_grad_W + proj_grad_H) / init_grad < tol**2:
+        if (proj_grad_W + proj_grad_H) / init_grad < tol ** 2:
             break
 
         # update W
@@ -260,8 +260,7 @@ class _PGNMF(NMF):
         if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
             raise ValueError(
                 "Maximum number of iterations must be a positive "
-                "integer; got (max_iter=%r)"
-                % self.max_iter
+                "integer; got (max_iter=%r)" % self.max_iter
             )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError(
@@ -307,8 +306,7 @@ class _PGNMF(NMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iteration %d reached. Increase it"
-                " to improve convergence."
-                % self.max_iter,
+                " to improve convergence." % self.max_iter,
                 ConvergenceWarning,
             )
 

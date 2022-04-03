@@ -279,8 +279,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 raise ValueError(
                     "max_samples (%s) is not supported."
                     'Valid choices are: "auto", int or'
-                    "float"
-                    % self.max_samples
+                    "float" % self.max_samples
                 )
 
         elif isinstance(self.max_samples, numbers.Integral):

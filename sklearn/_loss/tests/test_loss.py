@@ -228,10 +228,10 @@ def test_loss_boundary_y_pred(loss, y_pred_success, y_pred_fail):
         (PinballLoss(quantile=0.25), 5.0, 1.0, 4 * 0.25),
         (HalfPoissonLoss(), 2.0, np.log(4), 4 - 2 * np.log(4)),
         (HalfGammaLoss(), 2.0, np.log(4), np.log(4) + 2 / 4),
-        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4**2),
+        (HalfTweedieLoss(power=3), 2.0, np.log(4), -1 / 4 + 1 / 4 ** 2),
         (HalfTweedieLossIdentity(power=1), 2.0, 4.0, 2 - 2 * np.log(2)),
         (HalfTweedieLossIdentity(power=2), 2.0, 4.0, np.log(2) - 1 / 2),
-        (HalfTweedieLossIdentity(power=3), 2.0, 4.0, -1 / 4 + 1 / 4**2 + 1 / 2 / 2),
+        (HalfTweedieLossIdentity(power=3), 2.0, 4.0, -1 / 4 + 1 / 4 ** 2 + 1 / 2 / 2),
         (HalfBinomialLoss(), 0.25, np.log(4), np.log(5) - 0.25 * np.log(4)),
         (
             HalfMultinomialLoss(n_classes=3),
@@ -1169,5 +1169,5 @@ def test_tweedie_log_identity_consistency(p):
     )
     assert_allclose(gradient_log, y_pred * gradient_identity)
     assert_allclose(
-        hessian_log, y_pred * gradient_identity + y_pred**2 * hessian_identity
+        hessian_log, y_pred * gradient_identity + y_pred ** 2 * hessian_identity
     )

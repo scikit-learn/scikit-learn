@@ -395,8 +395,7 @@ class _VectorizerMixin:
                     "Your stop_words may be inconsistent with "
                     "your preprocessing. Tokenizing the stop "
                     "words generated tokens %r not in "
-                    "stop_words."
-                    % sorted(inconsistent)
+                    "stop_words." % sorted(inconsistent)
                 )
             return not inconsistent
         except Exception:
@@ -504,8 +503,7 @@ class _VectorizerMixin:
         if min_n > max_m:
             raise ValueError(
                 "Invalid value for ngram_range=%s "
-                "lower boundary larger than the upper boundary."
-                % str(self.ngram_range)
+                "lower boundary larger than the upper boundary." % str(self.ngram_range)
             )
 
     def _warn_for_unused_params(self):
@@ -737,7 +735,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         token_pattern=r"(?u)\b\w\w+\b",
         ngram_range=(1, 1),
         analyzer="word",
-        n_features=(2**20),
+        n_features=(2 ** 20),
         binary=False,
         norm="l2",
         alternate_sign=True,

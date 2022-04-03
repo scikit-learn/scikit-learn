@@ -394,7 +394,7 @@ def orthogonal_mp(
         G = np.asfortranarray(G)
         Xy = np.dot(X.T, y)
         if tol is not None:
-            norms_squared = np.sum((y**2), axis=0)
+            norms_squared = np.sum((y ** 2), axis=0)
         else:
             norms_squared = None
         return orthogonal_mp_gram(
@@ -752,7 +752,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 return_n_iter=True,
             )
         else:
-            norms_sq = np.sum(y**2, axis=0) if self.tol is not None else None
+            norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
 
             coef_, self.n_iter_ = orthogonal_mp_gram(
                 Gram,
@@ -843,7 +843,7 @@ def _omp_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train**2, axis=0))
+        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 

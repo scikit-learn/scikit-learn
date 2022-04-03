@@ -174,7 +174,7 @@ def test_ridge_regression(solver, fit_intercept, ols_ridge_dataset, global_rando
     # Calculate residuals and R2.
     res_null = y - np.mean(y)
     res_Ridge = y - X @ coef
-    R2_Ridge = 1 - np.sum(res_Ridge**2) / np.sum(res_null**2)
+    R2_Ridge = 1 - np.sum(res_Ridge ** 2) / np.sum(res_null ** 2)
 
     model = Ridge(**params)
     X = X[:, :-1]  # remove intercept
@@ -1330,7 +1330,7 @@ def test_class_weight_vs_sample_weight(reg):
 
     # Check that sample_weight and class_weight are multiplicative
     reg1 = reg()
-    reg1.fit(iris.data, iris.target, sample_weight**2)
+    reg1.fit(iris.data, iris.target, sample_weight ** 2)
     reg2 = reg(class_weight=class_weight)
     reg2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(reg1.coef_, reg2.coef_)
@@ -1982,7 +1982,7 @@ def test_positive_ridge_loss(alpha):
             coef = model.coef_
 
         return 0.5 * np.sum((y - X @ coef - intercept) ** 2) + 0.5 * alpha * np.sum(
-            coef**2
+            coef ** 2
         )
 
     model = Ridge(alpha=alpha).fit(X, y)
