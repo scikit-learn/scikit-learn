@@ -458,12 +458,6 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     neighbors in the output space are penalised in proportion to their rank in
     the input space.
 
-    * "Neighborhood Preservation in Nonlinear Projection Methods: An
-      Experimental Study"
-      J. Venna, S. Kaski
-    * "Learning a Parametric Embedding by Preserving Local Structure"
-      L.J.P. van der Maaten
-
     Parameters
     ----------
     X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
@@ -507,8 +501,9 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     """
     n_samples = X.shape[0]
     if n_neighbors >= n_samples / 2:
-        warnings.warn(
-            f"n_neighbors ({n_neighbors}) should be less than {n_samples / 2}"
+        raise ValueError(
+            f"n_neighbors ({n_neighbors}) should be less than n_samples / 2"
+            f" ({n_samples / 2})"
         )
     dist_X = pairwise_distances(X, metric=metric)
     if metric == "precomputed":

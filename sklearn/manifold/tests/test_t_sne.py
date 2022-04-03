@@ -1,4 +1,3 @@
-import numbers
 import sys
 from io import StringIO
 import numpy as np
@@ -34,7 +33,6 @@ from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import cosine_distances
-from sklearn.utils.validation import check_scalar
 
 
 x = np.linspace(0, 1, 10)
@@ -283,16 +281,11 @@ def test_trustworthiness_warning():
     regex = "n_neighbors .+ should be less than .+"
     X = np.random.rand(7, 4)
     X_embedded = np.random.rand(7, 2)
-    with pytest.warns(UserWarning, match=regex):
+    with pytest.raises(ValueError, match=regex):
         trustworthiness(X, X_embedded, n_neighbors=5)
 
-    check_scalar(
-        trustworthiness(X, X_embedded, n_neighbors=3),
-        "trustworthiness",
-        numbers.Real,
-        min_val=0,
-        max_val=1,
-    )
+    trust = trustworthiness(X, X_embedded, n_neighbors=3)
+    assert 0 <= trust <= 1
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
