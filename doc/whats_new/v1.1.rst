@@ -284,7 +284,7 @@ Changelog
     deprecated.
   - the default value of the `batch_size` parameter of both will change from 3 to 256
     in version 1.3.
-  
+
   :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
@@ -790,6 +790,11 @@ Changelog
   :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
   its square root.
   :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`mixture.GaussianMixture` now normalizes `weights_` directly
+  instead of dividing by `n_features`, preventing rounding errors when fitting
+  a single component mixture on few samples.
+  :pr:`23034` by :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.multiclass`
 .........................
