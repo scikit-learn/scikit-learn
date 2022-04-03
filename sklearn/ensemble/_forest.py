@@ -510,9 +510,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 )
 
             if self.oob_score is True:
-                self._set_oob_score_and_attributes(X, y, scoring_function=accuracy_score)
+                self._set_oob_score_and_attributes(
+                    X, y, scoring_function=accuracy_score
+                )
             else:
-                self._set_oob_score_and_attributes(X, y, scoring_function=self.oob_score)
+                self._set_oob_score_and_attributes(
+                    X, y, scoring_function=self.oob_score
+                )
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
