@@ -1879,6 +1879,7 @@ def test_ridge_sag_with_X_fortran():
 
 
 def test_ridge_alpha_boundary_warning():
+    """Test the warning is raised when optimal alpha is on the boundary."""
     X, y = X_diabetes, y_diabetes
     with pytest.warns(
         ConvergenceWarning, match="The optimal value for the regularization parameter"
