@@ -458,10 +458,9 @@ Gradient Tree Boosting
 
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
 or Gradient Boosted Decision Trees (GBDT) is a generalization
-of boosting to arbitrary
-differentiable loss functions. GBDT is an accurate and effective
-off-the-shelf procedure that can be used for both regression and
-classification problems in a
+of boosting to arbitrary differentiable loss functions, see the seminal work of
+[F2001]. GBDT is an accurate and effective off-the-shelf procedure that can be used for
+both regression and classification problems in a
 variety of areas including Web search ranking and ecology.
 
 The module :mod:`sklearn.ensemble` provides methods
@@ -635,12 +634,12 @@ case.
 Regression
 ^^^^^^^^^^
 
-GBRT regressors are additive models whose prediction :math:`y_i` for a
+GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
 given input :math:`x_i` is of the following form:
 
   .. math::
 
-    \hat{y_i} = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
+    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
 where the :math:`h_m` are estimators called *weak learners* in the context
 of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
@@ -895,6 +894,19 @@ based on permutation of the features.
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+
+.. topic:: References
+
+  .. [F1999] Friedman, J.H. (2002). `Stochastic gradient boosting.
+     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+     Computational Statistics & Data Analysis, 38, 367-378.
+
+  .. [F2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
+      boosting machine <10.1214/aos/1013203451>`.
+      Annals of Statistics, 29, 1189-1232.
+
+  .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
+     package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
 
 .. _histogram_based_gradient_boosting:
 
@@ -1209,17 +1221,16 @@ Finally, many parts of the implementation of
 
 .. topic:: References
 
-  .. [F1999] Friedmann, Jerome H., 2007, `"Stochastic Gradient Boosting"
-     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
-  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
-     package", 2007
   .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
      Boosting System" <1603.02754>`
+
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
-  .. [Fisher1958] Walter D. Fisher. `"On Grouping for Maximum Homogeneity"
-     <http://www.csiss.org/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+
+  .. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
+     <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+     Journal of the American Statistical Association, 53, 789-798.
 
 .. _voting_classifier:
 
