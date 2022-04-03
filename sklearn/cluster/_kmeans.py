@@ -266,7 +266,7 @@ def k_means(
     *,
     sample_weight=None,
     init="k-means++",
-    n_init=10,
+    n_init="warn",
     max_iter=300,
     verbose=False,
     tol=1e-4,
@@ -312,6 +312,9 @@ def k_means(
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         `n_init` consecutive runs in terms of inertia.
+
+        .. versionchanged:: 1.1
+           `n_init` default changed from 10 to 5
 
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
@@ -1142,6 +1145,9 @@ class KMeans(_BaseKMeans):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
+        .. versionchanged:: 1.1
+           `n_init` default changed from 10 to 5
+
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
         single run.
@@ -1265,7 +1271,7 @@ class KMeans(_BaseKMeans):
         n_clusters=8,
         *,
         init="k-means++",
-        n_init=10,
+        n_init="warn",
         max_iter=300,
         tol=1e-4,
         verbose=0,
@@ -1287,6 +1293,14 @@ class KMeans(_BaseKMeans):
         self.algorithm = algorithm
 
     def _check_params(self, X):
+        # TODO(1.3): Remove
+        if self.n_init == "warn":
+            warnings.warn(
+                "The default value of n_init will change from 10 to 5 in 1.3",
+                FutureWarning,
+            )
+            self.n_init = 10
+
         super()._check_params(X)
 
         # algorithm
