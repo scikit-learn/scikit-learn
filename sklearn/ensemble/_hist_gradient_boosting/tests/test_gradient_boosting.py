@@ -39,8 +39,8 @@ _LOSSES = {
     "absolute_error": AbsoluteError,
     "poisson": HalfPoissonLoss,
     "quantile": PinballLoss,
-    "binary_crossentropy": HalfBinomialLoss,
-    "categorical_crossentropy": HalfMultinomialLoss,
+    "binary_log_loss": HalfBinomialLoss,
+    "multiclass_los_loss": HalfMultinomialLoss,
 }
 
 
@@ -93,11 +93,11 @@ def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
 
 
 def test_invalid_classification_loss():
-    binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
+    binary_clf = HistGradientBoostingClassifier(loss="binary_log_loss")
     err_msg = (
-        "loss='binary_crossentropy' is not defined for multiclass "
+        "loss='binary_log_loss' is not defined for multiclass "
         "classification with n_classes=3, use "
-        "loss='categorical_crossentropy' instead"
+        "loss='multiclass_log_loss' instead"
     )
     with pytest.raises(ValueError, match=err_msg):
         binary_clf.fit(np.zeros(shape=(3, 2)), np.arange(3))
@@ -430,7 +430,7 @@ def test_missing_values_resilience(
         make_classification(random_state=0, n_classes=2),
         make_classification(random_state=0, n_classes=3, n_informative=3),
     ],
-    ids=["binary_crossentropy", "categorical_crossentropy"],
+    ids=["binary_log_loss", "multiclass_log_loss"],
 )
 def test_zero_division_hessians(data):
     # non regression test for issue #14018
@@ -622,13 +622,13 @@ def test_infinite_values_missing_values():
 
 
 def test_crossentropy_binary_problem():
-    # categorical_crossentropy should only be used if there are more than two
+    # multiclass_log_loss should only be used if there are more than two
     # classes present. PR #14869
     X = [[1], [0]]
     y = [0, 1]
-    gbrt = HistGradientBoostingClassifier(loss="categorical_crossentropy")
+    gbrt = HistGradientBoostingClassifier(loss="multiclass_log_loss")
     with pytest.raises(
-        ValueError, match="loss='categorical_crossentropy' is not suitable for"
+        ValueError, match="loss='multiclass_log_loss' is not suitable for"
     ):
         gbrt.fit(X, y)
 
@@ -665,7 +665,7 @@ def test_zero_sample_weights_classification():
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    gb = HistGradientBoostingClassifier(loss="binary_crossentropy", min_samples_leaf=1)
+    gb = HistGradientBoostingClassifier(loss="binary_log_loss", min_samples_leaf=1)
     gb.fit(X, y, sample_weight=sample_weight)
     assert_array_equal(gb.predict([[1, 0]]), [1])
 
@@ -1125,22 +1125,34 @@ def test_uint8_predict(Est):
     est.predict(X)
 
 
-# TODO: Remove in v1.2
 @pytest.mark.parametrize(
-    "old_loss, new_loss",
+    "old_loss, new_loss, Estimator",
     [
-        ("least_squares", "squared_error"),
-        ("least_absolute_deviation", "absolute_error"),
+        # TODO(1.2): Remove
+        ("least_squares", "squared_error", HistGradientBoostingRegressor),
+        ("least_absolute_deviation", "absolute_error", HistGradientBoostingRegressor),
+        # TODO(1.3): Remove
+        ("auto", "log_loss", HistGradientBoostingClassifier),
+        ("binary_crossentropy", "binary_log_loss", HistGradientBoostingClassifier),
+        (
+            "categorical_crossentropy",
+            "multiclass_log_loss",
+            HistGradientBoostingClassifier,
+        ),
     ],
 )
-def test_loss_deprecated(old_loss, new_loss):
-    X, y = make_regression(n_samples=50, random_state=0)
-    est1 = HistGradientBoostingRegressor(loss=old_loss, random_state=0)
+def test_loss_deprecated(old_loss, new_loss, Estimator):
+    X, y = X_classification[:10], y_classification[:10]
+
+    if old_loss == "categorical_crossentropy":
+        y[0] = 3  # make sure it is multiclass
+
+    est1 = Estimator(loss=old_loss, random_state=0)
 
     with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
-    est2 = HistGradientBoostingRegressor(loss=new_loss, random_state=0)
+    est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 
