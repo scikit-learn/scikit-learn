@@ -497,13 +497,13 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     References
     ----------
     .. [1] Jarkko Venna and Samuel Kaski. 2001. Neighborhood
-    Preservation in Nonlinear Projection Methods: An Experimental Study.
-    In Proceedings of the International Conference on Artificial Neural Networks
-    (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
+           Preservation in Nonlinear Projection Methods: An Experimental Study.
+           In Proceedings of the International Conference on Artificial Neural Networks
+           (ICANN '01). Springer-Verlag, Berlin, Heidelberg, 485-491.
 
     .. [2] Laurens van der Maaten. Learning a Parametric Embedding by Preserving
-    Local Structure. Proceedings of the Twelth International Conference on
-    Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
+           Local Structure. Proceedings of the Twelth International Conference on
+           Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
     """
     n_samples = X.shape[0]
     if n_neighbors >= n_samples / 2:
