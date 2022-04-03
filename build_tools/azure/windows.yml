@@ -1,0 +1,53 @@
+
+parameters:
+  name: ''
+  vmImage: ''
+  matrix: []
+  dependsOn: []
+  condition: ne(variables['Build.Reason'], 'Schedule')
+
+jobs:
+- job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  variables:
+    VIRTUALENV: 'testvenv'
+    JUNITXML: 'test-data.xml'
+    SKLEARN_SKIP_NETWORK_TESTS: '1'
+    PYTEST_VERSION: '5.2.1'
+    PYTEST_XDIST_VERSION: 'latest'
+    TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
+    SHOW_SHORT_SUMMARY: 'false'
+    CPU_COUNT: '2'
+  strategy:
+    matrix:
+      ${{ insert }}: ${{ parameters.matrix }}
+
+  steps:
+    - bash: echo "##vso[task.prependpath]$CONDA/Scripts"
+      displayName: Add conda to PATH for 64 bit Python
+      condition: eq(variables['PYTHON_ARCH'], '64')
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(PYTHON_VERSION)'
+        addToPath: true
+        architecture: 'x86'
+      displayName: Use 32 bit System Python
+      condition: eq(variables['PYTHON_ARCH'], '32')
+    - bash: ./build_tools/azure/install_win.sh
+      displayName: 'Install'
+    - bash: ./build_tools/azure/test_script.sh
+      displayName: 'Test Library'
+    - bash: ./build_tools/azure/upload_codecov.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
+      displayName: 'Upload To Codecov'
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+      displayName: 'Publish Test Results'
+      condition: succeededOrFailed()

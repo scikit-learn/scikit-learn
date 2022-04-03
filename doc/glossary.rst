@@ -41,7 +41,7 @@ General Concepts
         contributor documentation <api_overview>`.
 
         The specific interfaces that constitute Scikit-learn's public API are
-        largely documented in :ref:`api_ref`. However we less formally consider
+        largely documented in :ref:`api_ref`. However, we less formally consider
         anything as public API if none of the identifiers required to access it
         begins with ``_``.  We generally try to maintain :term:`backwards
         compatibility` for all objects in the public API.
@@ -106,12 +106,12 @@ General Concepts
         are documented under an estimator's *Parameters* documentation.
 
     backwards compatibility
-        We generally try to maintain backwards compatibility (i.e. interfaces
+        We generally try to maintain backward compatibility (i.e. interfaces
         and behaviors may be extended but not changed or removed) from release
         to release but this comes with some exceptions:
 
         Public API only
-            The behaviour of objects accessed through private identifiers
+            The behavior of objects accessed through private identifiers
             (those beginning ``_``) may be changed arbitrarily between
             versions.
         As documented
@@ -145,8 +145,8 @@ General Concepts
             assumed but not formally tested.
 
         Despite this informal contract with our users, the software is provided
-        as is, as stated in the licence.  When a release inadvertently
-        introduces changes that are not backwards compatible, these are known
+        as is, as stated in the license.  When a release inadvertently
+        introduces changes that are not backward compatible, these are known
         as software regressions.
 
     callable
@@ -170,9 +170,9 @@ General Concepts
         :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
-        `http://contrib.scikit-learn.org/categorical-encoding
-        <category_encoders>`_ package for tools related to encoding
-        categorical features.
+        `categorical-encoding
+        <https://github.com/scikit-learn-contrib/category_encoders>`_
+        package for tools related to encoding categorical features.
 
     clone
     cloned
@@ -185,6 +185,13 @@ General Concepts
         (Exceptions, for legacy reasons, include
         :class:`~pipeline.Pipeline` and
         :class:`~pipeline.FeatureUnion`.)
+
+        If the estimator's `random_state` parameter is an integer (or if the
+        estimator doesn't have a `random_state` parameter), an *exact clone*
+        is returned: the clone and the original estimator will give the exact
+        same results. Otherwise, *statistical clone* is returned: the clone
+        might yield different results from the original estimator. More
+        details can be found in :ref:`randomness`.
 
     common tests
         This refers to the tests run on almost every estimator class in
@@ -200,7 +207,7 @@ General Concepts
 
     deprecation
         We use deprecation to slowly violate our :term:`backwards
-        compatibility` assurances, usually to to:
+        compatibility` assurances, usually to:
 
         * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
@@ -225,8 +232,8 @@ General Concepts
         accessible as the object's ``__doc__`` attribute.
 
         We try to adhere to `PEP257
-        <http://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
-        conventions <numpydoc.readthedocs.io/en/latest/format.html>`_.
+        <https://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
+        conventions <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
     double underscore
     double underscore notation
@@ -247,6 +254,13 @@ General Concepts
         We may support object or string data types for arrays before encoding
         or vectorizing.  Our estimators do not work with struct arrays, for
         instance.
+
+        Our documentation can sometimes give information about the dtype
+        precision, e.g. `np.int32`, `np.int64`, etc. When the precision is
+        provided, it refers to the NumPy dtype. If an arbitrary precision is
+        used, the documentation will refer to dtype `integer` or `floating`.
+        Note that in this case, the precision can be platform dependent.
+        The `numeric` dtype refers to accepting both `integer` and `floating`.
 
         TODO: Mention efficiency and precision issues; casting policy.
 
@@ -294,7 +308,7 @@ General Concepts
         convergence of the training loss, to avoid over-fitting. This is
         generally done by monitoring the generalization score on a validation
         set. When available, it is activated through the parameter
-        ``early_stopping`` or by setting a postive :term:`n_iter_no_change`.
+        ``early_stopping`` or by setting a positive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -320,6 +334,12 @@ General Concepts
           User Guide.
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
+
+    experimental
+        An experimental tool is already usable but its public API, such as
+        default parameter values or fitted attributes, is still subject to
+        change in future versions without the usual :term:`deprecation`
+        warning policy.
 
     evaluation metric
     evaluation metrics
@@ -363,16 +383,7 @@ General Concepts
                 adopted on a :term:`meta-estimator`.  Its value should usually be
                 checked by way of a helper such as :func:`base.is_classifier`.
 
-            ``_pairwise``
-                This boolean attribute indicates whether the data (``X``) passed to
-                :func:`fit` and similar methods consists of pairwise measures over
-                samples rather than a feature representation for each sample.  It
-                is usually ``True`` where an estimator has a ``metric`` or
-                ``affinity`` or ``kernel`` parameter with value 'precomputed'.
-                Its primary purpose is that when a :term:`meta-estimator`
-                extracts a sub-sample of data intended for a pairwise estimator,
-                the data needs to be indexed on both axes, while other data is
-                indexed only on the first axis.
+        For more detailed info, see :ref:`estimator_tags`.
 
     feature
     features
@@ -461,7 +472,7 @@ General Concepts
         and/or :term:`transform` methods.
 
     joblib
-        A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
+        A Python library (https://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
         :term:`memory mapping`. See :ref:`parallelism` for more
@@ -502,8 +513,9 @@ General Concepts
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
         specifying another ``missing_values`` value when :term:`imputation` or
-        learning can be performed in integer space.  :term:`Unlabeled data`
-        is a special case of missing values in the :term:`target`.
+        learning can be performed in integer space.
+        :term:`Unlabeled data <unlabeled data>` is a special case of missing
+        values in the :term:`target`.
 
     ``n_features``
         The number of :term:`features`.
@@ -615,12 +627,11 @@ General Concepts
 
         Note that for most distance metrics, we rely on implementations from
         :mod:`scipy.spatial.distance`, but may reimplement for efficiency in
-        our context.  The :mod:`neighbors` module also duplicates some metric
-        implementations for integration with efficient binary tree search data
-        structures.
+        our context. The :class:`metrics.DistanceMetric` interface is used to implement
+        distance metrics for integration with efficient neighbors search.
 
     pd
-        A shorthand for `Pandas <http://pandas.pydata.org>`_ due to the
+        A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
         conventional import statement::
 
             import pandas as pd
@@ -636,16 +647,16 @@ General Concepts
         sample and each column to a training sample.
 
         Use of precomputed X is usually indicated by setting a ``metric``,
-        ``affinity`` or ``kernel`` parameter to the string 'precomputed'.  An
-        estimator should mark itself as being :term:`_pairwise` if this is the
-        case.
+        ``affinity`` or ``kernel`` parameter to the string 'precomputed'. If
+        this is the case, then the estimator should set the `pairwise`
+        estimator tag as True.
 
     rectangular
         Data that can be represented as a matrix with :term:`samples` on the
         first axis and a fixed, finite set of :term:`features` on the second
         is called rectangular.
 
-        This term excludes samples with non-vectorial structure, such as text,
+        This term excludes samples with non-vectorial structures, such as text,
         an image of arbitrary size, a time series of arbitrary length, a set of
         vectors, etc. The purpose of a :term:`vectorizer` is to produce
         rectangular forms of such data.
@@ -673,7 +684,20 @@ General Concepts
         A venue for publishing Scikit-learn-compatible libraries that are
         broadly authorized by the core developers and the contrib community,
         but not maintained by the core developer team.
-        See http://scikit-learn-contrib.github.io.
+        See https://scikit-learn-contrib.github.io.
+
+    scikit-learn enhancement proposals
+    SLEP
+    SLEPs
+        Changes to the API principles and changes to dependencies or supported
+        versions happen via a :ref:`SLEP <slep>` and follows the
+        decision-making process outlined in :ref:`governance`.
+        For all votes, a proposal must have been made public and discussed before the
+        vote. Such a proposal must be a consolidated document, in the form of a
+        ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+        issue. A SLEP must be submitted as a pull-request to
+        `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
+        `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
 
     semi-supervised
     semi-supervised learning
@@ -684,6 +708,7 @@ General Concepts
         to :term:`unlabeled` samples in semi-supervised classification.
 
     sparse matrix
+    sparse graph
         A representation of two-dimensional numeric data that is more memory
         efficient the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
@@ -841,16 +866,17 @@ Class APIs and Estimator Types
     feature extractors
         A :term:`transformer` which takes input where each sample is not
         represented as an :term:`array-like` object of fixed length, and
-        produces an `array-like` object of :term:`features` for each sample
-        (and thus a 2-dimensional array-like for a set of samples).  In other
-        words, it (lossily) maps a non-rectangular data representation into
-        :term:`rectangular` data.
+        produces an :term:`array-like` object of :term:`features` for each
+        sample (and thus a 2-dimensional array-like for a set of samples).  In
+        other words, it (lossily) maps a non-rectangular data representation
+        into :term:`rectangular` data.
 
         Feature extractors must implement at least:
 
         * :term:`fit`
         * :term:`transform`
         * :term:`get_feature_names`
+        * :term:`get_feature_names_out`
 
     meta-estimator
     meta-estimators
@@ -865,12 +891,12 @@ Class APIs and Estimator Types
         In a meta-estimator's :term:`fit` method, any contained estimators
         should be :term:`cloned` before they are fit (although FIXME: Pipeline
         and FeatureUnion do not do this currently). An exception to this is
-        that an estimator may explicitly document that it accepts a prefitted
+        that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
         :class:`feature_selection.SelectFromModel`). One known issue with this
-        is that the prefitted estimator will lose its model if the
+        is that the pre-fitted estimator will lose its model if the
         meta-estimator is cloned.  A meta-estimator should have ``fit`` called
-        before prediction, even if all contained estimators are prefitted.
+        before prediction, even if all contained estimators are pre-fitted.
 
         In cases where a meta-estimator's primary behaviors (e.g.
         :term:`predict` or :term:`transform` implementation) are functions of
@@ -880,7 +906,7 @@ Class APIs and Estimator Types
         possible to identify which methods are provided by the underlying
         estimator until the meta-estimator has been :term:`fitted` (see also
         :term:`duck typing`), for which
-        :func:`utils.metaestimators.if_delegate_has_method` may help.  It
+        :func:`utils.metaestimators.available_if` may help.  It
         should also provide (or modify) the :term:`estimator tags` and
         :term:`classes_` attribute provided by the base estimator.
 
@@ -955,6 +981,25 @@ such as:
         and do not provide :term:`set_params` or :term:`get_params`.
         Parameter validation may be performed in ``__init__``.
 
+    cross-validation estimator
+        An estimator that has built-in cross-validation capabilities to
+        automatically select the best hyper-parameters (see the :ref:`User
+        Guide <grid_search>`). Some example of cross-validation estimators
+        are :class:`ElasticNetCV <linear_model.ElasticNetCV>` and
+        :class:`LogisticRegressionCV <linear_model.LogisticRegressionCV>`.
+        Cross-validation estimators are named `EstimatorCV` and tend to be
+        roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
+        advantage of using a cross-validation estimator over the canonical
+        :term:`estimator` class along with :ref:`grid search <grid_search>` is
+        that they can take advantage of warm-starting by reusing precomputed
+        results in the previous steps of the cross-validation process. This
+        generally leads to speed improvements. An exception is the
+        :class:`RidgeCV <linear_model.RidgeCV>` class, which can instead
+        perform efficient Leave-One-Out (LOO) CV. By default, all these
+        estimators, apart from :class:`RidgeCV <linear_model.RidgeCV>` with an
+        LOO-CV, will be refitted on the full training dataset after finding the
+        best combination of hyper-parameters.
+
     scorer
         A non-estimator callable object which evaluates an estimator on given
         test data, returning a number. Unlike :term:`evaluation metrics`,
@@ -963,7 +1008,7 @@ such as:
 
 Further examples:
 
-* :class:`neighbors.DistanceMetric`
+* :class:`metrics.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
 
@@ -976,7 +1021,7 @@ Target Types
 
     binary
         A classification problem consisting of two classes.  A binary target
-        may represented as for a :term:`multiclass` problem but with only two
+        may  be represented as for a :term:`multiclass` problem but with only two
         labels.  A binary decision function is represented as a 1d array.
 
         Semantically, one class is often considered the "positive" class.
@@ -996,7 +1041,7 @@ Target Types
 
     continuous
         A regression problem where each sample's target is a finite floating
-        point number, represented as a 1-dimensional array of floats (or
+        point number represented as a 1-dimensional array of floats (or
         sometimes ints).
 
         :func:`~utils.multiclass.type_of_target` will return 'continuous' for
@@ -1004,7 +1049,9 @@ Target Types
         identified as 'multiclass'.
 
     continuous multioutput
+    continuous multi-output
     multioutput continuous
+    multi-output continuous
         A regression problem where each sample's target consists of ``n_outputs``
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
@@ -1019,6 +1066,7 @@ Target Types
         'multiclass-multioutput'.
 
     multiclass
+    multi-class
         A classification problem consisting of more than two classes.  A
         multiclass target may be represented as a 1-dimensional array of
         strings or integers.  A 2d column vector of integers (i.e. a
@@ -1031,7 +1079,7 @@ Target Types
         For semi-supervised classification, :term:`unlabeled` samples should
         have the special label -1 in ``y``.
 
-        Within sckit-learn, all estimators supporting binary classification
+        Within scikit-learn, all estimators supporting binary classification
         also support multiclass classification, using One-vs-Rest by default.
 
         A :class:`preprocessing.LabelEncoder` helps to canonicalize multiclass
@@ -1042,11 +1090,13 @@ Target Types
         identically to 'multiclass'.
 
     multiclass multioutput
+    multi-class multi-output
     multioutput multiclass
+    multi-output multi-class
         A classification problem where each sample's target consists of
         ``n_outputs`` :term:`outputs`, each a class label, for a fixed int
         ``n_outputs > 1`` in a particular dataset.  Each output has a
-        fixed set of available classes, and each sample is labelled with a
+        fixed set of available classes, and each sample is labeled with a
         class for each output. An output may be binary or multiclass, and in
         the case where all outputs are binary, the target is
         :term:`multilabel`.
@@ -1068,6 +1118,7 @@ Target Types
         'multiclass-multioutput' for multiclass multioutput input.
 
     multilabel
+    multi-label
         A :term:`multiclass multioutput` target where each output is
         :term:`binary`.  This may be represented as a 2d (dense) array or
         sparse matrix of integers, such that each column is a separate binary
@@ -1131,7 +1182,7 @@ Methods
 
             TODO: `This gist
             <https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5>`_
-            higlights the use of the different formats for multilabel.
+            highlights the use of the different formats for multilabel.
         multioutput classification
             A list of 2d arrays, corresponding to each multiclass decision
             function.
@@ -1174,17 +1225,17 @@ Methods
         return the same value, wherein training data needs to be handled
         differently (due to model blending in stacked ensembles, for instance;
         such cases should be clearly documented).
-        :term:`Transductive` transformers may also provide ``fit_transform``
-        but not :term:`transform`.
+        :term:`Transductive <transductive>` transformers may also provide
+        ``fit_transform`` but not :term:`transform`.
 
         One reason to implement ``fit_transform`` is that performing ``fit``
         and ``transform`` separately would be less efficient than together.
         :class:`base.TransformerMixin` provides a default implementation,
         providing a consistent interface across transformers where
-        ``fit_transform`` is or is not specialised.
+        ``fit_transform`` is or is not specialized.
 
         In :term:`inductive` learning -- where the goal is to learn a
-        generalised model that can be applied to new data -- users should be
+        generalized model that can be applied to new data -- users should be
         careful not to apply ``fit_transform`` to the entirety of a dataset
         (i.e. training and test data together) before further modelling, as
         this results in :term:`data leakage`.
@@ -1193,9 +1244,20 @@ Methods
         Primarily for :term:`feature extractors`, but also used for other
         transformers to provide string names for each column in the output of
         the estimator's :term:`transform` method.  It outputs a list of
-        strings, and may take a list of strings as input, corresponding
+        strings and may take a list of strings as input, corresponding
         to the names of input columns from which output column names can
         be generated.  By default input features are named x0, x1, ....
+
+    ``get_feature_names_out``
+        Primarily for :term:`feature extractors`, but also used for other
+        transformers to provide string names for each column in the output of
+        the estimator's :term:`transform` method.  It outputs an array of
+        strings and may take an array-like of strings as input, corresponding
+        to the names of input columns from which output column names can
+        be generated.  If `input_features` is not passed in, then the
+        `feature_names_in_` attribute will be used. If the
+        `feature_names_in_` attribute is not defined, then the
+        input names are named `[x0, x1, ..., x(n_features_in_ - 1)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
@@ -1218,9 +1280,10 @@ Methods
     ``partial_fit``
         Facilitates fitting an estimator in an online fashion.  Unlike ``fit``,
         repeatedly calling ``partial_fit`` does not clear the model, but
-        updates it with respect to the data provided. The portion of data
+        updates it with the data provided. The portion of data
         provided to ``partial_fit`` may be called a mini-batch.
-        Each mini-batch must be of consistent shape, etc.
+        Each mini-batch must be of consistent shape, etc. In iterative
+        estimators, ``partial_fit`` often only performs a single iteration.
 
         ``partial_fit`` may also be used for :term:`out-of-core` learning,
         although usually limited to the case where learning can be performed
@@ -1242,6 +1305,8 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
+        NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
+
     ``predict``
         Makes a prediction for each sample, usually only taking :term:`X` as
         input (but see under regressor output conventions below). In a
@@ -1260,9 +1325,10 @@ Methods
 
         classifier
             An array of shape ``(n_samples,)`` ``(n_samples, n_outputs)``.
-            :term:`Multilabel` data may be represented as a sparse matrix if
-            a sparse matrix was used in fitting. Each element should be one
-            of the values in the classifier's :term:`classes_` attribute.
+            :term:`Multilabel <multilabel>` data may be represented as a sparse
+            matrix if a sparse matrix was used in fitting. Each element should
+            be one of the values in the classifier's :term:`classes_`
+            attribute.
 
         clusterer
             An array of shape ``(n_samples,)`` where each value is from 0 to
@@ -1287,7 +1353,7 @@ Methods
         to facilitate numerical stability.
 
     ``predict_proba``
-        A method in :term:`classifiers` and :term:`clusterers` that are able to
+        A method in :term:`classifiers` and :term:`clusterers` that can
         return probability estimates for each class/cluster.  Its input is
         usually only some observed data, :term:`X`.
 
@@ -1346,7 +1412,7 @@ Methods
         In a :term:`transformer`, transforms the input, usually only :term:`X`,
         into some transformed space (conventionally notated as :term:`Xt`).
         Output is an array or sparse matrix of length :term:`n_samples` and
-        with number of columns fixed after :term:`fitting`.
+        with the number of columns fixed after :term:`fitting`.
 
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
@@ -1370,8 +1436,8 @@ functions or non-estimator constructors.
         :term:`multioutput` (including :term:`multilabel`) tasks, the weights
         are multiplied across outputs (i.e. columns of ``y``).
 
-        By default all samples have equal weight such that classes are
-        effectively weighted by their their prevalence in the training data.
+        By default, all samples have equal weight such that classes are
+        effectively weighted by their prevalence in the training data.
         This could be achieved explicitly with ``class_weight={label1: 1,
         label2: 1, ...}`` for all class labels.
 
@@ -1382,7 +1448,14 @@ functions or non-estimator constructors.
         ``class_weight='balanced'`` can be used to give all classes
         equal weight by giving each sample a weight inversely related
         to its class's prevalence in the training data:
-        ``n_samples / (n_classes * np.bincount(y))``.
+        ``n_samples / (n_classes * np.bincount(y))``. Class weights will be
+        used differently depending on the algorithm: for linear models (such
+        as linear SVM or logistic regression), the class weights will alter the
+        loss function by weighting the loss of each sample by its class weight.
+        For tree-based algorithms, the class weights will be used for
+        reweighting the splitting criterion.
+        **Note** however that this rebalancing does not take the weight of
+        samples in each class into account.
 
         For multioutput classification, a list of dicts is used to specify
         weights for each output. For example, for four-class multilabel
@@ -1414,7 +1487,7 @@ functions or non-estimator constructors.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold.
+        all is an option), the default is 5-fold.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
@@ -1468,38 +1541,32 @@ functions or non-estimator constructors.
         early.
 
     ``n_jobs``
-        This is used to specify how many concurrent processes/threads should be
-        used for parallelized routines.  Scikit-learn uses one processor for
-        its processing by default, although it also makes use of NumPy, which
-        may be configured to use a threaded numerical processor library (like
-        MKL; see :ref:`FAQ <faq_mkl_threading>`).
+        This parameter is used to specify how many concurrent processes or
+        threads should be used for routines that are parallelized with
+        :term:`joblib`.
 
-        ``n_jobs`` is an int, specifying the maximum number of concurrently
-        running jobs.  If set to -1, all CPUs are used. If 1 is given, no
-        parallel computing code is used at all.  For n_jobs below -1, (n_cpus +
-        1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
+        ``n_jobs`` is an integer, specifying the maximum number of concurrently
+        running workers. If 1 is given, no joblib parallelism is used at all,
+        which is useful for debugging. If set to -1, all CPUs are used. For
+        ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used. For example with
+        ``n_jobs=-2``, all CPUs but one are used.
 
-        The use of ``n_jobs``-based parallelism in estimators varies:
+        ``n_jobs`` is ``None`` by default, which means *unset*; it will
+        generally be interpreted as ``n_jobs=1``, unless the current
+        :class:`joblib.Parallel` backend context specifies otherwise.
 
-        * Most often parallelism happens in :term:`fitting <fit>`, but
-          sometimes parallelism happens in prediction (e.g. in random forests).
-        * Some parallelism uses a multi-threading backend by default, some
-          a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
-        * Whether parallel processing is helpful at improving runtime depends
-          on many factors, and it's usually a good idea to experiment rather
-          than assuming that increasing the number of jobs is always a good
-          thing.  *It can be highly detrimental to performance to run multiple
-          copies of some estimators or functions in parallel.*
+        Note that even if ``n_jobs=1``, low-level parallelism (via Numpy and OpenMP)
+        might be used in some configuration.
 
-        Nested uses of ``n_jobs``-based parallelism with the same backend will
-        result in an exception.
-        So ``GridSearchCV(OneVsRestClassifier(SVC(), n_jobs=2), n_jobs=2)``
-        won't work.
+        For more details on the use of ``joblib`` and its interactions with
+        scikit-learn, please refer to our :ref:`parallelism notes
+        <parallelism>`.
 
-        When ``n_jobs`` is not 1, the estimator being parallelized must be
-        picklable.  This means, for instance, that lambdas cannot be used
-        as estimator parameters.
+    ``pos_label``
+        Value with which positive labels must be encoded in binary
+        classification problems in which the positive class is not assumed.
+        This value is typically required to compute asymmetric evaluation
+        metrics such as precision and recall.
 
     ``random_state``
         Whenever randomization is part of a Scikit-learn algorithm, a
@@ -1508,30 +1575,38 @@ functions or non-estimator constructors.
         mean that randomization is always used, as it may be dependent on
         another parameter, e.g. ``shuffle``, being set.
 
-        ``random_state``'s value may be:
+        The passed value will have an effect on the reproducibility of the
+        results returned by the function (:term:`fit`, :term:`split`, or any
+        other function like :func:`~sklearn.cluster.k_means`). `random_state`'s
+        value may be:
 
         None (default)
-            Use the global random state from :mod:`numpy.random`.
+            Use the global random state instance from :mod:`numpy.random`.
+            Calling the function multiple times will reuse
+            the same instance, and will produce different results.
 
         An integer
             Use a new random number generator seeded by the given integer.
-            To make a randomized algorithm deterministic (i.e. running it
-            multiple times will produce the same result), an arbitrary
-            integer ``random_state`` can be used. However, it may be
+            Using an int will produce the same results across different calls.
+            However, it may be
             worthwhile checking that your results are stable across a
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
-            <http://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            <https://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            Integer values must be in the range `[0, 2**32 - 1]`.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users
-            of the same random state instance. Calling fit multiple times
-            will reuse the same instance, and will produce different
-            results.
+            of that same random state instance. Calling the function
+            multiple times will reuse the same instance, and
+            will produce different results.
 
         :func:`utils.check_random_state` is used internally to validate the
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
         instance.
+
+        For more details on how to control the randomness of scikit-learn
+        objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
         Specifies the score function to be maximized (usually by :ref:`cross
@@ -1544,10 +1619,11 @@ functions or non-estimator constructors.
         in the User Guide.
 
         Where multiple metrics can be evaluated, ``scoring`` may be given
-        either as a list of unique strings or a dict with names as keys and
-        callables as values. Note that this does *not* specify which score
-        function is to be maximised, and another parameter such as ``refit``
-        may be used for this purpose.
+        either as a list of unique strings, a dictionary with names as keys and
+        callables as values or a callable that returns a dictionary. Note that
+        this does *not* specify which score function is to be maximized, and
+        another parameter such as ``refit`` maybe used for this purpose.
+
 
         The ``scoring`` parameter is validated and interpreted using
         :func:`metrics.check_scoring`.
@@ -1567,9 +1643,9 @@ functions or non-estimator constructors.
         When fitting an estimator repeatedly on the same dataset, but for
         multiple parameter values (such as to find the value maximizing
         performance as in :ref:`grid search <grid_search>`), it may be possible
-        to reuse aspects of the model learnt from the previous parameter value,
+        to reuse aspects of the model learned from the previous parameter value,
         saving time.  When ``warm_start`` is true, the existing :term:`fitted`
-        model :term:`attributes` an are used to initialise the new model
+        model :term:`attributes` are used to initialize the new model
         in a subsequent call to :term:`fit`.
 
         Note that this is only applicable for some models and some
@@ -1664,8 +1740,8 @@ See concept :term:`sample property`.
 .. glossary::
 
     ``groups``
-        Used in cross validation routines to identify samples which are
-        correlated.  Each value is an identifier such that, in a supporting
+        Used in cross-validation routines to identify samples that are correlated.
+        Each value is an identifier such that, in a supporting
         :term:`CV splitter`, samples from some ``groups`` value may not
         appear in both a training set and its corresponding test set.
         See :ref:`group_cv`.

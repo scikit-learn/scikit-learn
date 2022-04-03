@@ -1,71 +1,83 @@
-# make it explicit that we favor the new container-based travis workers
-sudo: false
-
+# Make it explicit that we favor the
+# new container-based Travis workers
 language: python
+dist: xenial
+# Only used to install cibuildwheel, CIBW_BUILD determines the python version being
+# built in the docker image itself. Also: travis does not have 3.10 yet.
+python: 3.9
 
 cache:
   apt: true
   directories:
-  - $HOME/.cache/pip
-  - $HOME/.ccache
-
-dist: trusty
+    - $HOME/.cache/pip
+    - $HOME/.ccache
 
 env:
   global:
-    # Directory where tests are run from
-    - TEST_DIR=/tmp/sklearn
-    - OMP_NUM_THREADS=4
-    - OPENBLAS_NUM_THREADS=4
+    - CPU_COUNT=3
+    - TEST_DIR=/tmp/sklearn  # Test directory for continuous integration jobs
+    - PYTEST_VERSION=latest
+    - OMP_NUM_THREADS=2
+    - OPENBLAS_NUM_THREADS=2
+    - SKLEARN_BUILD_PARALLEL=3
+    - SKLEARN_SKIP_NETWORK_TESTS=1
+    - PYTHONUNBUFFERED=1
+    # Custom environment variables for the ARM wheel builder
+    - CIBW_BUILD_VERBOSITY=1
+    - CIBW_TEST_COMMAND="bash {project}/build_tools/travis/test_wheels.sh"
+    - CIBW_ENVIRONMENT="CPU_COUNT=4
+                        OMP_NUM_THREADS=2
+                        OPENBLAS_NUM_THREADS=2
+                        SKLEARN_BUILD_PARALLEL=10
+                        SKLEARN_SKIP_NETWORK_TESTS=1
+                        PYTHONUNBUFFERED=1"
 
-matrix:
+jobs:
   include:
-    # This environment tests that scikit-learn can be built against
-    # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
-    # i.e. numpy 1.8.2 and scipy 0.13.3
-    - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.5"
-           COVERAGE=true
-      if: type != cron
-      addons:
-        apt:
-          packages:
-            # these only required by the DISTRIB="ubuntu" builds:
-            - python-scipy
-            - libatlas3-base
-            - libatlas-dev
-    # Python 3.4 build
-    - env: DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="false"
-           NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.16.1" CYTHON_VERSION="0.25.2"
-           PILLOW_VERSION="4.0.0" COVERAGE=true
-      if: type != cron
-    # This environment tests the newest supported Anaconda release (5.0.0)
-    # It also runs tests requiring Pandas and PyAMG
-    - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
-           NUMPY_VERSION="1.14.2" SCIPY_VERSION="1.0.0" PANDAS_VERSION="0.20.3"
-           CYTHON_VERSION="0.26.1" PYAMG_VERSION="3.3.2" PILLOW_VERSION="4.3.0"
-           COVERAGE=true
-           CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
-      if: type != cron
-    # flake8 linting on diff wrt common ancestor with upstream/master
-    - env: RUN_FLAKE8="true" SKIP_TESTS="true"
-           DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
-           CYTHON_VERSION="0.26.1"
-      if: type != cron
-    # This environment tests scikit-learn against numpy and scipy master
-    # installed from their CI wheels in a virtualenv with the Python
-    # interpreter provided by travis.
-    -  python: 3.6
-       env: DISTRIB="scipy-dev"
-       if: type = cron OR commit_message =~ /\[scipy-dev\]/
+    # Linux environments to build the scikit-learn wheels for the ARM64
+    # architecture and Python 3.8 and newer. This is used both at release time
+    # with the manual trigger in the commit message in the release branch and as
+    # a scheduled task to build the weekly dev build on the main branch. The
+    # weekly frequency is meant to avoid depleting the Travis CI credits too
+    # fast.
+    - os: linux
+      arch: arm64-graviton2
+      dist: focal
+      virt: vm
+      group: edge
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD=cp38-manylinux_aarch64
+        - BUILD_WHEEL=true
 
-install: source build_tools/travis/install.sh
-script: bash build_tools/travis/test_script.sh
-after_success: source build_tools/travis/after_success.sh
+    - os: linux
+      arch: arm64-graviton2
+      dist: focal
+      virt: vm
+      group: edge
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD=cp39-manylinux_aarch64
+        - BUILD_WHEEL=true
+
+    - os: linux
+      arch: arm64-graviton2
+      dist: focal
+      virt: vm
+      group: edge
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD=cp310-manylinux_aarch64
+        - BUILD_WHEEL=true
+
+install: source build_tools/travis/install.sh || travis_terminate 1
+script: source build_tools/travis/script.sh || travis_terminate 1
+after_success: source build_tools/travis/after_success.sh || travis_terminate 1
+
 notifications:
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/4ffabb4df010b70cd624
-    on_success: change  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # options: [always|never|change] default: always
+    on_success: change
+    on_failure: always
+    on_start: never

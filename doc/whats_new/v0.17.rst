@@ -376,7 +376,7 @@ Bug fixes
 
 - Fixed a bug in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` when using
-  ``class_weight='balanced'```or ``class_weight='auto'``.
+  ``class_weight='balanced'`` or ``class_weight='auto'``.
   By `Tom Dupre la Tour`_.
 
 - Fixed bug :issue:`5495` when
@@ -508,4 +508,3 @@ Unterthiner, Tiago Freitas Pereira, Tian Wang, Tim Head, Timothy Hopper,
 tokoroten, Tom Dupré la Tour, Trevor Stephens, Valentin Stolbunov, Vighnesh
 Birodkar, Vinayak Mehta, Vincent, Vincent Michel, vstolbunov, wangz10, Wei Xue,
 Yucheng Low, Yury Zhauniarovich, Zac Stewart, zhai_pro, Zichen Wang
-

@@ -1,5 +1,8 @@
-.. _tutorial_menu:
+.. Places global toc into the sidebar
 
+:globalsidebartoc: True
+
+.. _tutorial_menu:
 
 
 .. include:: ../includes/big_toc_css.rst

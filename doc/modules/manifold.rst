@@ -23,7 +23,26 @@ Manifold learning
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_001.png
    :target: ../auto_examples/manifold/plot_compare_methods.html
    :align: center
-   :scale: 60
+   :scale: 70%
+
+.. |manifold_img3| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_003.png
+  :target: ../auto_examples/manifold/plot_compare_methods.html
+  :scale: 60%
+
+.. |manifold_img4| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_004.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. |manifold_img5| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_005.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. |manifold_img6| image:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_006.png
+    :target: ../auto_examples/manifold/plot_compare_methods.html
+    :scale: 60%
+
+.. centered:: |manifold_img3| |manifold_img4| |manifold_img5| |manifold_img6|
+
 
 Manifold learning is an approach to non-linear dimensionality reduction.
 Algorithms for this task are based on the idea that the dimensionality of
@@ -116,7 +135,7 @@ Complexity
 The Isomap algorithm comprises three stages:
 
 1. **Nearest neighbor search.**  Isomap uses
-   :class:`sklearn.neighbors.BallTree` for efficient neighbor search.
+   :class:`~sklearn.neighbors.BallTree` for efficient neighbor search.
    The cost is approximately :math:`O[D \log(k) N \log(N)]`, for :math:`k`
    nearest neighbors of :math:`N` points in :math:`D` dimensions.
 
@@ -132,7 +151,7 @@ The Isomap algorithm comprises three stages:
    :math:`N \times N` isomap kernel.  For a dense solver, the cost is
    approximately :math:`O[d N^2]`.  This cost can often be improved using
    the ``ARPACK`` solver.  The eigensolver can be specified by the user
-   with the ``path_method`` keyword of ``Isomap``.  If unspecified, the
+   with the ``eigen_solver`` keyword of ``Isomap``.  If unspecified, the
    code attempts to choose the best algorithm for the input data.
 
 The overall complexity of Isomap is
@@ -234,7 +253,7 @@ The MLLE algorithm comprises three stages:
    to that of standard LLE.  The second term has to do with constructing the
    weight matrix from multiple weights.  In practice, the added cost of
    constructing the MLLE weight matrix is relatively small compared to the
-   cost of steps 1 and 3.
+   cost of stages 1 and 3.
 
 3. **Partial Eigenvalue Decomposition**. Same as standard LLE
 
@@ -343,7 +362,7 @@ The overall complexity of spectral embedding is
 
    * `"Laplacian Eigenmaps for Dimensionality Reduction
      and Data Representation"
-     <http://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
+     <https://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
      M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
 
 
@@ -387,9 +406,9 @@ The overall complexity of standard LTSA is
 
 .. topic:: References:
 
-   * `"Principal manifolds and nonlinear dimensionality reduction via
+   * :arxiv:`"Principal manifolds and nonlinear dimensionality reduction via
      tangent space alignment"
-     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.4.3693>`_
+     <cs/0212008>`
      Zhang, Z. & Zha, H. Journal of Shanghai Univ. 8:406 (2004)
 
 .. _multidimensional_scaling:
@@ -402,8 +421,8 @@ Multi-dimensional Scaling (MDS)
 representation of the data in which the distances respect well the
 distances in the original high-dimensional space.
 
-In general, is a technique used for analyzing similarity or
-dissimilarity data. :class:`MDS` attempts to model similarity or dissimilarity data as
+In general, :class:`MDS` is a technique used for analyzing similarity or
+dissimilarity data. It attempts to model similarity or dissimilarity data as
 distances in a geometric spaces. The data can be ratings of similarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
@@ -426,7 +445,7 @@ space and the similarities/dissimilarities.
 Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
 :math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
 the similarities chosen in some optimal ways. The objective, called the
-stress, is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
+stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 
 
 Metric MDS
@@ -443,7 +462,7 @@ Nonmetric MDS
 -------------
 
 Non metric :class:`MDS` focuses on the ordination of the data. If
-:math:`S_{ij} < S_{kl}`, then the embedding should enforce :math:`d_{ij} <
+:math:`S_{ij} < S_{jk}`, then the embedding should enforce :math:`d_{ij} <
 d_{jk}`. A simple algorithm to enforce that is to use a monotonic regression
 of :math:`d_{ij}` on :math:`S_{ij}`, yielding disparities :math:`\hat{d}_{ij}`
 in the same order as :math:`S_{ij}`.
@@ -461,15 +480,15 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 .. topic:: References:
 
   * `"Modern Multidimensional Scaling - Theory and Applications"
-    <http://www.springer.com/fr/book/9780387251509>`_
+    <https://www.springer.com/fr/book/9780387251509>`_
     Borg, I.; Groenen P. Springer Series in Statistics (1997)
 
   * `"Nonmetric multidimensional scaling: a numerical method"
-    <http://link.springer.com/article/10.1007%2FBF02289694>`_
+    <https://link.springer.com/article/10.1007%2FBF02289694>`_
     Kruskal, J. Psychometrika, 29 (1964)
 
   * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
-    <http://link.springer.com/article/10.1007%2FBF02289565>`_
+    <https://link.springer.com/article/10.1007%2FBF02289565>`_
     Kruskal, J. Psychometrika, 29, (1964)
 
 .. _t_sne:
@@ -509,7 +528,7 @@ The disadvantages to using t-SNE are roughly:
 * The algorithm is stochastic and multiple restarts with different seeds can
   yield different embeddings. However, it is perfectly legitimate to pick the
   embedding with the least error.
-* Global structure is not explicitly preserved. This is problem is mitigated by
+* Global structure is not explicitly preserved. This problem is mitigated by
   initializing points with PCA (using `init='pca'`).
 
 
@@ -555,13 +574,16 @@ between natural clusters in the data. If the factor is too high, the KL
 divergence could increase during this phase. Usually it does not have to be
 tuned. A critical parameter is the learning rate. If it is too low gradient
 descent will get stuck in a bad local minimum. If it is too high the KL
-divergence will increase during optimization. More tips can be found in
+divergence will increase during optimization. A heuristic suggested in
+Belkina et al. (2019) is to set the learning rate to the sample size
+divided by the early exaggeration factor. We implement this heuristic
+as `learning_rate='auto'` argument. More tips can be found in
 Laurens van der Maaten's FAQ (see references). The last parameter, angle,
 is a tradeoff between performance and accuracy. Larger angles imply that we
 can approximate larger regions by a single point, leading to better speed
 but less accurate results.
 
-`"How to Use t-SNE Effectively" <http://distill.pub/2016/misread-tsne/>`_
+`"How to Use t-SNE Effectively" <https://distill.pub/2016/misread-tsne/>`_
 provides a good discussion of the effects of the various parameters, as well
 as interactive plots to explore the effects of different parameters.
 
@@ -579,7 +601,7 @@ Barnes-Hut method improves on the exact method where t-SNE complexity is
   or less. The 2D case is typical when building visualizations.
 * Barnes-Hut only works with dense input data. Sparse data matrices can only be
   embedded with the exact method or can be approximated by a dense low rank
-  projection for instance using :class:`sklearn.decomposition.TruncatedSVD`
+  projection for instance using :class:`~sklearn.decomposition.TruncatedSVD`
 * Barnes-Hut is an approximation of the exact method. The approximation is
   parameterized with the angle parameter, therefore the angle parameter is
   unused when method="exact"
@@ -599,7 +621,7 @@ be well separated by non linear methods that focus on the local structure (e.g.
 an SVM with a Gaussian RBF kernel). However, failing to visualize well
 separated homogeneously labeled groups with t-SNE in 2D does not necessarily
 imply that the data cannot be correctly classified by a supervised model. It
-might be the case that 2 dimensions are not low enough to accurately represents
+might be the case that 2 dimensions are not high enough to accurately represent
 the internal structure of the data.
 
 
@@ -611,12 +633,18 @@ the internal structure of the data.
     (2008)
 
   * `"t-Distributed Stochastic Neighbor Embedding"
-    <http://lvdmaaten.github.io/tsne/>`_
+    <https://lvdmaaten.github.io/tsne/>`_
     van der Maaten, L.J.P.
 
-  * `"Accelerating t-SNE using Tree-Based Algorithms."
+  * `"Accelerating t-SNE using Tree-Based Algorithms"
     <https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
-    L.J.P. van der Maaten.  Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
+    van der Maaten, L.J.P.; Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
+
+  * `"Automated optimized parameters for T-distributed stochastic neighbor
+    embedding improve visualization and analysis of large datasets"
+    <https://www.nature.com/articles/s41467-019-13055-y>`_
+    Belkina, A.C., Ciccolella, C.O., Anno, R., Halpert, R., Spidlen, J.,
+    Snyder-Cappione, J.E., Nature Communications 10, 5415 (2019).
 
 Tips on practical use
 =====================

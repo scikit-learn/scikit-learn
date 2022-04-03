@@ -1,0 +1,5 @@
+# A binder requirement file is required by sphinx-gallery.
+# We don't really need one since our binder requirement file lives in the
+# .binder directory.
+# This file can be removed if 'dependencies' is made an optional key for
+# binder in sphinx-gallery.
