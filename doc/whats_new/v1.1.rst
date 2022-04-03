@@ -284,7 +284,7 @@ Changelog
     deprecated.
   - the default value of the `batch_size` parameter of both will change from 3 to 256
     in version 1.3.
-  
+
   :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
@@ -711,6 +711,12 @@ Changelog
 - |Enhancement| added `metric_params` to :class:`manifold.TSNE` constructor for
   additional parameters of distance metric to use in optimization.
   :pr:`21805` by :user:`Jeanne Dionisi <jeannedionisi>` and :pr:`22685` by
+  :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| Add a warning for :func:`manifold.trustworthiness` if
+  `n_neighbours` is less than `n_samples / 2` to ensure a correct
+  support for the function.
+  :pr:`18832` by :user:`Hong Shao Yang <hongshaoyang>` and :pr:`23033` by
   :user:`Meekail Zain <micky774>`.
 
 :mod:`sklearn.metrics`
