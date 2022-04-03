@@ -1,7 +1,7 @@
 {{py:
 
 """
-Template file for easily generate loops over samples using Tempita
+Template file to easily generate loops over samples using Tempita
 (https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
 
 Generated file: _loss.pyx
@@ -117,6 +117,28 @@ doc_HalfTweedieLoss = (
     """
 )
 
+doc_HalfTweedieLossIdentity = (
+    """Half Tweedie deviance loss with identity link.
+
+    Domain:
+    y_true in real numbers if p <= 0
+    y_true in non-negative real numbers if 0 < p < 2
+    y_true in positive real numbers if p >= 2
+    y_pred and power in positive real numbers, y_pred may be negative for p=0.
+
+    Link:
+    y_pred = raw_prediction
+
+    Half Tweedie deviance with identity link and p=power is
+        max(y_true, 0)**(2-p) / (1-p) / (2-p)
+        - y_true * y_pred**(1-p) / (1-p)
+        + y_pred**(2-p) / (2-p)
+
+    Notes:
+    - Here, we do not drop constant terms in contrast to the version with log-link.
+    """
+)
+
 doc_HalfBinomialLoss = (
     """Half Binomial deviance loss with logit link.
 
@@ -151,6 +173,9 @@ class_list = [
     ("CyHalfTweedieLoss", doc_HalfTweedieLoss, "power",
      "closs_half_tweedie", "closs_grad_half_tweedie",
      "cgradient_half_tweedie", "cgrad_hess_half_tweedie"),
+    ("CyHalfTweedieLossIdentity", doc_HalfTweedieLossIdentity, "power",
+     "closs_half_tweedie_identity", "closs_grad_half_tweedie_identity",
+     "cgradient_half_tweedie_identity", "cgrad_hess_half_tweedie_identity"),
     ("CyHalfBinomialLoss", doc_HalfBinomialLoss, None,
      "closs_half_binomial", "closs_grad_half_binomial",
      "cgradient_half_binomial", "cgrad_hess_half_binomial"),
@@ -194,7 +219,7 @@ from cython.parallel import parallel, prange
 import numpy as np
 cimport numpy as np
 
-from libc.math cimport exp, fabs, log, log1p
+from libc.math cimport exp, fabs, log, log1p, pow
 from libc.stdlib cimport malloc, free
 
 np.import_array()
@@ -420,7 +445,7 @@ cdef inline double_pair cgrad_hess_half_gamma(
 
 
 # Half Tweedie Deviance with Log-Link, dropping constant terms
-# Note that by dropping constants this is no longer smooth in parameter power.
+# Note that by dropping constants this is no longer continuous in parameter power.
 cdef inline double closs_half_tweedie(
     double y_true,
     double raw_prediction,
@@ -498,6 +523,102 @@ cdef inline double_pair cgrad_hess_half_tweedie(
         exp2 = exp((2. - power) * raw_prediction)
         gh.val1 = exp2 - y_true * exp1                                # gradient
         gh.val2 = (2. - power) * exp2 - (1. - power) * y_true * exp1  # hessian
+    return gh
+
+
+# Half Tweedie Deviance with identity link, without dropping constant terms!
+# Therefore, best loss value is zero.
+cdef inline double closs_half_tweedie_identity(
+    double y_true,
+    double raw_prediction,
+    double power
+) nogil:
+    cdef double tmp
+    if power == 0.:
+        return closs_half_squared_error(y_true, raw_prediction)
+    elif power == 1.:
+        if y_true == 0:
+            return raw_prediction
+        else:
+            return y_true * log(y_true/raw_prediction) + raw_prediction - y_true
+    elif power == 2.:
+        return log(raw_prediction/y_true) + y_true/raw_prediction - 1.
+    else:
+        tmp = pow(raw_prediction, 1. - power)
+        tmp = raw_prediction * tmp / (2. - power) - y_true * tmp / (1. - power)
+        if y_true > 0:
+            tmp += pow(y_true, 2. - power) / ((1. - power) * (2. - power))
+        return tmp
+
+
+cdef inline double cgradient_half_tweedie_identity(
+    double y_true,
+    double raw_prediction,
+    double power
+) nogil:
+    if power == 0.:
+        return raw_prediction - y_true
+    elif power == 1.:
+        return 1. - y_true / raw_prediction
+    elif power == 2.:
+        return (raw_prediction - y_true) / (raw_prediction * raw_prediction)
+    else:
+        return pow(raw_prediction, -power) * (raw_prediction - y_true)
+
+
+cdef inline double_pair closs_grad_half_tweedie_identity(
+    double y_true,
+    double raw_prediction,
+    double power
+) nogil:
+    cdef double_pair lg
+    cdef double tmp
+    if power == 0.:
+        lg.val2 = raw_prediction - y_true  # gradient
+        lg.val1 = 0.5 * lg.val2 * lg.val2  # loss
+    elif power == 1.:
+        if y_true == 0:
+            lg.val1 = raw_prediction
+        else:
+            lg.val1 = (y_true * log(y_true/raw_prediction)  # loss
+                       + raw_prediction - y_true)
+        lg.val2 = 1. - y_true / raw_prediction              # gradient
+    elif power == 2.:
+        lg.val1 = log(raw_prediction/y_true) + y_true/raw_prediction - 1.  # loss
+        tmp = raw_prediction * raw_prediction
+        lg.val2 = (raw_prediction - y_true) / tmp                          # gradient
+    else:
+        tmp = pow(raw_prediction, 1. - power)
+        lg.val1 = (raw_prediction * tmp / (2. - power)  # loss
+                   - y_true * tmp / (1. - power))
+        if y_true > 0:
+            lg.val1 += (pow(y_true, 2. - power)
+                        / ((1. - power) * (2. - power)))
+        lg.val2 = tmp * (1. - y_true / raw_prediction)    # gradient
+    return lg
+
+
+cdef inline double_pair cgrad_hess_half_tweedie_identity(
+    double y_true,
+    double raw_prediction,
+    double power
+) nogil:
+    cdef double_pair gh
+    cdef double tmp
+    if power == 0.:
+        gh.val1 = raw_prediction - y_true  # gradient
+        gh.val2 = 1.                       # hessian
+    elif power == 1.:
+        gh.val1 = 1. - y_true / raw_prediction                # gradient
+        gh.val2 = y_true / (raw_prediction * raw_prediction)  # hessian
+    elif power == 2.:
+        tmp = raw_prediction * raw_prediction
+        gh.val1 = (raw_prediction - y_true) / tmp             # gradient
+        gh.val2 = (-1. + 2. * y_true / raw_prediction) / tmp  # hessian
+    else:
+        tmp = pow(raw_prediction, -power)
+        gh.val1 = tmp * (raw_prediction - y_true)                         # gradient
+        gh.val2 = tmp * ((1. - power) + power * y_true / raw_prediction)  # hessian
     return gh
 
 
