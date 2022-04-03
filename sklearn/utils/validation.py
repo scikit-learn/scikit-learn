@@ -342,17 +342,19 @@ def check_memory(memory):
     Parameters
     ----------
     memory : None, str or object with the joblib.Memory interface
+        If string or None, the location on which we want to create the joblib.Memory \
+            interface.
 
     Returns
     -------
     memory : object with the joblib.Memory interface
+        A correct joblib.Memory object.
 
     Raises
     ------
     ValueError
         If ``memory`` is not joblib.Memory-like.
     """
-
     if memory is None or isinstance(memory, str):
         memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, "cache"):
