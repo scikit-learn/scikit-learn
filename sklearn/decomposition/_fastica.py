@@ -229,9 +229,9 @@ def fastica(
         - 'svd' is more stable numerically if the problem is degenerate, and
           often faster when `num_samples<=num_features`.
 
-        * 'eigh' is generally more memory efficient when
-        `num_samples>=num_features`, and can be faster when
-        `num_samples>= 50*num_features`.
+        - 'eigh' is generally more memory efficient when
+          `num_samples>=num_features`, and can be faster when
+          `num_samples>= 50*num_features`.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
