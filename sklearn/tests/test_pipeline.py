@@ -11,6 +11,7 @@ import pytest
 import numpy as np
 from scipy import sparse
 import joblib
+import warnings
 
 from sklearn.utils._testing import (
     assert_allclose,
@@ -990,27 +991,27 @@ def test_set_feature_union_step_drop(get_names):
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_array_equal(["m2__x2", "m3__x3"], getattr(ft, get_names)())
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         ft.set_params(m2="drop")
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
     assert not [w.message for w in record]
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         ft.set_params(m3="drop")
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert_array_equal([], getattr(ft, get_names)())
     assert not [w.message for w in record]
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
     assert not [w.message for w in record]
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
         # Check 'drop' step at construction time
         ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
         assert_array_equal([[3]], ft.fit(X).transform(X))
