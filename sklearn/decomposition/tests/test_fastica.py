@@ -10,6 +10,7 @@ from scipy import stats
 from scipy import linalg
 
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 
 from sklearn.decomposition import FastICA, fastica, PCA
