@@ -23,8 +23,13 @@ classifiers that can efficiently handle sparse matrices.
 # We define a function to load data from :ref:`20newsgroups_dataset`, which
 # comprises around 18000 newsgroups posts on 20 topics split in two subsets: one
 # for training (or development) and the other one for testing (or for
-# performance evaluation). The text samples contain metadata such as 'headers',
-# 'footers' (signatures) and 'quotes' to other posts.
+# performance evaluation). Note that, by default, the text samples contain
+# some message metadata such as 'headers', 'footers' (signatures) and 'quotes'
+# to other posts. The `fetch_20newsgroups` function therefore accepts a
+# parameter named `remove` to make it possible to attempt stripping those
+# extra information that can make the classification problem "too easy". This
+# is achieved using simple heuristics that are neither perfect nor standard, hence
+# disabled by default.
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -114,8 +119,8 @@ def load_dataset(verbose=False, remove=()):
 # %%
 # Compare feature effects
 # -----------------------
-# First we train a model using the datasets with metadata. This will cause
-# overfitting
+# We train a first classification model without attempting to strip the metadata of
+# the dataset.
 
 import pandas as pd
 import numpy as np
@@ -128,6 +133,14 @@ X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset(
     verbose=True
 )
 
+# %%
+# Our first model is an instance of the
+# :class:`~sklearn.linear_model.RidgeClassifier` class. This is a
+# linear classification model that uses the mean squared error on
+# {-1, 1} encoded targets, one for each possible class. Contrary to
+# :class:`~sklearn.linear_model.LogisticRegression`, `RidgeClassifier`
+# does not provide probabilistic predictions (no `predict_proba` method),
+# but it is often faster to train.
 clf = RidgeClassifier(tol=1e-2, solver="sparse_cg")
 clf.fit(X_train, y_train)
 pred = clf.predict(X_test)
@@ -218,11 +231,14 @@ ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
 _ = ax.set_title("Confusion Matrix without headers for the\n" + str(clf).split("(")[0])
 
+# %%
 _ = plot_feature_effects().set_title("Feature impact without headers")
 
 # %%
 # By looking at the confusion matrix, it is more evident that the scores of the
-# model trained with metadata were overoptimistic.
+# model trained with metadata were overoptimistic. The classification problem
+# without access to the metadata is harder (more errors) but more representative
+# of the intended text classification problem.
 
 # %%
 # Benchmark classifiers
@@ -279,7 +295,13 @@ def benchmark(clf, custom_name=False):
 
 # %%
 # We now train and test the datasets with 8 different classification
-# models and get performance results for each model.
+# models and get performance results for each model. The goal of this study
+# is to highlight the computation/accuracy tradeoffs of the choice of the
+# type of classifier for such a multi-class text classification problem.
+#
+# Note that the most important hyper-parameters values where tuned with
+# a simple grid search procedure not shown in this notebook for the sake
+# of simplicity. 
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
@@ -360,7 +382,17 @@ for i, txt in enumerate(clf_names):
     ax2.annotate(txt, (score[i], test_time[i]))
 
 # %%
-# The Naive Bayesian model has the best trade-off between score and
-# training/testing time, while Random Forest has the worst global trade-off.
+# The Naive Bayes model has the best trade-off between score and
+# training/testing time, while Random Forest is both slow to train
+# expensive to predict and has a comparatively bad accuracy. This is
+# expected: for high-dimensional prediction problems, linear models are
+# often better suited as all problem became linearly separable as the
+# dimensionality of the feature space increases to 10,000 dimensions or
+# more.
 # KNeighborsClassifier has relatively low accuracy and has the highest testing
-# time.
+# time. The long prediction time is expected: for each prediction the model
+# has to compute the pairwise distances with each document in the training
+# set which is very expensive.
+# Furthermore, the curse of dimensionality harms the ability of this model to
+# yield competitive accuracy in the high dimensional feature space of text
+# classification problems.
