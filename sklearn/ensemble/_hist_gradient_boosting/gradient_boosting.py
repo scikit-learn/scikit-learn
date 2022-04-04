@@ -1392,7 +1392,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         if self.loss == "gamma":
             # Ensure y > 0
             if not np.all(y > 0):
-                raise ValueError("loss='gamma' requires positive y.")
+                raise ValueError("loss='gamma' requires strictly positive y.")
         elif self.loss == "poisson":
             # Ensure y >= 0 and sum(y) > 0
             if not (np.all(y >= 0) and np.sum(y) > 0):

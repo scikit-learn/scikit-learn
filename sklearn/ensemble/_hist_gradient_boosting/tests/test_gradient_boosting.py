@@ -254,7 +254,7 @@ def test_absolute_error_sample_weight():
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
 def test_gamma_y_positive(y):
     # Test that ValueError is raised if any y_i <= 0.
-    err_msg = r"loss='gamma' requires positive y."
+    err_msg = r"loss='gamma' requires strictly positive y."
     gbdt = HistGradientBoostingRegressor(loss="gamma", random_state=0)
     with pytest.raises(ValueError, match=err_msg):
         gbdt.fit(np.zeros(shape=(len(y), 1)), y)
@@ -293,14 +293,14 @@ def test_gamma():
     cor = np.mean(y_train) / np.mean(gbdt_gamma.predict(X_train))
 
     for X, y in [(X_train, y_train), (X_test, y_test)]:
-        metric_gamma = mean_gamma_deviance(y, cor * gbdt_gamma.predict(X))
+        mgd_gbdt_gamma = mean_gamma_deviance(y, cor * gbdt_gamma.predict(X))
         # squared_error might produce non-positive predictions => clip
-        metric_ls = mean_gamma_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15, None))
-        metric_pois = mean_gamma_deviance(y, gbdt_pois.predict(X))
-        metric_dummy = mean_gamma_deviance(y, dummy.predict(X))
-        assert metric_gamma < metric_ls
-        assert metric_gamma < metric_pois
-        assert metric_gamma < metric_dummy
+        mgd_gbdt_ls = mean_gamma_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15, None))
+        mgd_gbdt_pois = mean_gamma_deviance(y, gbdt_pois.predict(X))
+        mgd_dummy = mean_gamma_deviance(y, dummy.predict(X))
+        assert mgd_gbdt_gamma < mgd_gbdt_ls
+        assert mgd_gbdt_gamma < mgd_gbdt_pois
+        assert mgd_gbdt_gamma < mgd_dummy
 
 
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 0.0, 0.0])])
