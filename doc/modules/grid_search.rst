@@ -507,27 +507,27 @@ additional information related to the successive halving process.
 
 Here is an example with some of the columns of a (truncated) dataframe:
 
-====  ======  ===============  =================  =======================================================================================
+====  ======  ===============  =================  ========================================================================================
   ..    iter      n_resources    mean_test_score  params
-====  ======  ===============  =================  =======================================================================================
-   0       0              125           0.983667  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
+====  ======  ===============  =================  ========================================================================================
+   0       0              125           0.983667  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
    1       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 8, 'min_samples_split': 7}
    2       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
-   3       0              125           0.983667  {'criterion': 'entropy', 'max_depth': None, 'max_features': 6, 'min_samples_split': 6}
+   3       0              125           0.983667  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 6, 'min_samples_split': 6}
  ...     ...              ...                ...  ...
-  15       2              500           0.951958  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
+  15       2              500           0.951958  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
   16       2              500           0.947958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
   17       2              500           0.951958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
-  18       3             1000           0.961009  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
+  18       3             1000           0.961009  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
   19       3             1000           0.955989  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
-====  ======  ===============  =================  =======================================================================================
+====  ======  ===============  =================  ========================================================================================
 
 Each row corresponds to a given parameter combination (a candidate) and a given
 iteration. The iteration is given by the ``iter`` column. The ``n_resources``
 column tells you how many resources were used.
 
 In the example above, the best parameter combination is ``{'criterion':
-'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
+'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
 since it has reached the last iteration (3) with the highest score:
 0.96.
 
