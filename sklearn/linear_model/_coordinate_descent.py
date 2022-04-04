@@ -154,7 +154,7 @@ def _alpha_grid(
         pass
     else:
         # Compute Xy.
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, _, _ = _preprocess_data(
             X,
             y,
             fit_intercept,
@@ -174,7 +174,9 @@ def _alpha_grid(
 
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
-    alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (l1_ratio * X.shape[0])
+    n_samples = X.shape[0]
+    alpha_max = np.max(np.sqrt(np.sum(Xy**2, axis=1))) / (l1_ratio * n_samples)
+
     if alpha_max <= np.finfo(float).resolution:
         return np.full(n_alphas, np.finfo(float).resolution)
     return np.logspace(np.log10(alpha_max), np.log10(alpha_max * eps), num=n_alphas)
