@@ -61,7 +61,8 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 
-CLF_CRITERIONS = ("gini", "entropy")
+# TODO(1.3): Remove "entropy"
+CLF_CRITERIONS = ("gini", "log_loss", "entropy")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
@@ -2181,16 +2182,20 @@ def test_decision_tree_regressor_sample_weight_consistency(criterion):
     assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
-# TODO: Remove in v1.2
-@pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize(
-    "old_criterion, new_criterion",
+    "old_criterion, new_criterion, Tree",
     [
-        ("mse", "squared_error"),
-        ("mae", "absolute_error"),
+        # TODO(1.2): Remove "mse" and "mae"
+        ("mse", "squared_error", DecisionTreeRegressor),
+        ("mse", "squared_error", ExtraTreeRegressor),
+        ("mae", "absolute_error", DecisionTreeRegressor),
+        ("mae", "absolute_error", ExtraTreeRegressor),
+        # TODO(1.3): Remove "entropy"
+        ("entropy", "log_loss", DecisionTreeClassifier),
+        ("entropy", "log_loss", ExtraTreeClassifier),
     ],
 )
-def test_criterion_deprecated(Tree, old_criterion, new_criterion):
+def test_criterion_deprecated(old_criterion, new_criterion, Tree):
     tree = Tree(criterion=old_criterion)
 
     with pytest.warns(
