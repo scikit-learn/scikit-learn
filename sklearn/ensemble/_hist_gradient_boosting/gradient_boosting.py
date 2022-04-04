@@ -16,6 +16,7 @@ from ..._loss.loss import (
     HalfMultinomialLoss,
     HalfPoissonLoss,
     HalfSquaredError,
+    PinballLoss,
 )
 from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
 from ...utils import check_random_state, resample
@@ -30,7 +31,7 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE, G_H_DTYPE
+from .common import Y_DTYPE, X_DTYPE, G_H_DTYPE
 
 from .binning import _BinMapper
 from .grower import TreeGrower
@@ -44,6 +45,7 @@ _LOSSES.update(
         "least_absolute_deviation": AbsoluteError,
         "poisson": HalfPoissonLoss,
         "gamma": HalfGammaLoss,
+        "quantile": PinballLoss,
         "binary_crossentropy": HalfBinomialLoss,
         "categorical_crossentropy": HalfMultinomialLoss,
     }
@@ -936,8 +938,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predicted values.
         """
         is_binned = getattr(self, "_in_fit", False)
-        dtype = X_BINNED_DTYPE if is_binned else X_DTYPE
-        X = self._validate_data(X, dtype=dtype, force_all_finite=False, reset=False)
+        if not is_binned:
+            X = self._validate_data(
+                X, dtype=X_DTYPE, force_all_finite=False, reset=False
+            )
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
             raise ValueError(
@@ -1117,7 +1121,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson'}, \
+    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile'}, \
             default='squared_error'
         The loss function to use in the boosting process. Note that the
         "squared error", "gamma" and "poisson" losses actually implement
@@ -1125,12 +1129,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         deviance" to simplify the computation of the gradient. Furthermore,
         "gamma" and "poisson" losses internally use a log-link, "gamma"
         requires ``y > 0`` and "poisson" requires ``y >= 0``.
+        "quantile" uses the pinball loss.
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
 
         .. versionchanged:: 1.1
-           Added option 'gamma'.
+           Added options 'gamma' and 'quantile'.
 
         .. deprecated:: 1.0
             The loss 'least_squares' was deprecated in v1.0 and will be removed
@@ -1141,6 +1146,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             be removed in version 1.2. Use `loss='absolute_error'` which is
             equivalent.
 
+    quantile : float, default=None
+        If loss is "quantile", this parameter specifies which quantile to be estimated
+        and must be between 0 and 1.
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -1301,12 +1309,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         "least_absolute_deviation",
         "gamma",
         "poisson",
+        "quantile",
     )
 
     def __init__(
         self,
         loss="squared_error",
         *,
+        quantile=None,
         learning_rate=0.1,
         max_iter=100,
         max_leaf_nodes=31,
@@ -1345,6 +1355,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             verbose=verbose,
             random_state=random_state,
         )
+        self.quantile = quantile
 
     def predict(self, X):
         """Predict values for X.
@@ -1420,7 +1431,12 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             )
             return _LOSSES["absolute_error"](sample_weight=sample_weight)
 
-        return _LOSSES[self.loss](sample_weight=sample_weight)
+        if self.loss == "quantile":
+            return _LOSSES[self.loss](
+                sample_weight=sample_weight, quantile=self.quantile
+            )
+        else:
+            return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
 class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):

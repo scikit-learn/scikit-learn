@@ -60,6 +60,7 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
+
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
@@ -501,6 +502,8 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
+# TODO(1.3): Remove warning filter
+@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
 def test_max_features():
     # Check max_features.
     for name, TreeRegressor in REG_TREES.items():
@@ -621,14 +624,14 @@ def test_error():
         (
             {"max_depth": 1.1},
             TypeError,
-            "max_depth must be an instance of <class 'numbers.Integral'>",
+            "max_depth must be an instance of int",
         ),
         ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
         ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
         (
             {"min_samples_leaf": "foo"},
             TypeError,
-            "min_samples_leaf must be an instance of <class 'numbers.Real'>",
+            "min_samples_leaf must be an instance of float",
         ),
         ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
         (
@@ -644,7 +647,7 @@ def test_error():
         (
             {"min_samples_split": "foo"},
             TypeError,
-            "min_samples_split must be an instance of <class 'numbers.Real'>",
+            "min_samples_split must be an instance of float",
         ),
         (
             {"min_weight_fraction_leaf": -1},
@@ -659,10 +662,9 @@ def test_error():
         (
             {"min_weight_fraction_leaf": "foo"},
             TypeError,
-            "min_weight_fraction_leaf must be an instance of <class 'numbers.Real'>",
+            "min_weight_fraction_leaf must be an instance of float",
         ),
         ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 1000}, ValueError, "max_features == 1000, must be <="),
         ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
         ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
         ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
@@ -670,7 +672,7 @@ def test_error():
         (
             {"max_leaf_nodes": 1.5},
             TypeError,
-            "max_leaf_nodes must be an instance of <class 'numbers.Integral'>",
+            "max_leaf_nodes must be an instance of int",
         ),
         (
             {"min_impurity_decrease": -1},
@@ -680,13 +682,13 @@ def test_error():
         (
             {"min_impurity_decrease": "foo"},
             TypeError,
-            "min_impurity_decrease must be an instance of <class 'numbers.Real'>",
+            "min_impurity_decrease must be an instance of float",
         ),
         ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
         (
             {"ccp_alpha": "foo"},
             TypeError,
-            "ccp_alpha must be an instance of <class 'numbers.Real'>",
+            "ccp_alpha must be an instance of float",
         ),
     ],
 )
@@ -979,6 +981,9 @@ def test_min_impurity_decrease():
                         actual_decrease, expected_decrease
                     )
 
+
+def test_pickle():
+    """Test pickling preserves Tree properties and performance."""
     for name, TreeEstimator in ALL_TREES.items():
         if "Classifier" in name:
             X, y = iris.data, iris.target
@@ -988,23 +993,43 @@ def test_min_impurity_decrease():
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
         score = est.score(X, y)
-        fitted_attribute = dict()
-        for attribute in ["max_depth", "node_count", "capacity"]:
-            fitted_attribute[attribute] = getattr(est.tree_, attribute)
+
+        # test that all class properties are maintained
+        attributes = [
+            "max_depth",
+            "node_count",
+            "capacity",
+            "n_classes",
+            "children_left",
+            "children_right",
+            "n_leaves",
+            "feature",
+            "threshold",
+            "impurity",
+            "n_node_samples",
+            "weighted_n_node_samples",
+            "value",
+        ]
+        fitted_attribute = {
+            attribute: getattr(est.tree_, attribute) for attribute in attributes
+        }
 
         serialized_object = pickle.dumps(est)
         est2 = pickle.loads(serialized_object)
         assert type(est2) == est.__class__
+
         score2 = est2.score(X, y)
         assert (
             score == score2
         ), "Failed to generate same score  after pickling with {0}".format(name)
-
         for attribute in fitted_attribute:
-            assert (
-                getattr(est2.tree_, attribute) == fitted_attribute[attribute]
-            ), "Failed to generate same attribute {0} after pickling with {1}".format(
-                attribute, name
+            assert_array_equal(
+                getattr(est2.tree_, attribute),
+                fitted_attribute[attribute],
+                err_msg=(
+                    f"Failed to generate same attribute {attribute} after pickling with"
+                    f" {name}"
+                ),
             )
 
 
@@ -1254,7 +1279,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = TreeClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight ** 2)
+    clf1.fit(iris.data, iris.target, sample_weight**2)
     clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -1372,7 +1397,7 @@ def test_with_only_one_non_constant_features():
 
 def test_big_input():
     # Test if the warning for too large inputs is appropriate.
-    X = np.repeat(10 ** 40.0, 4).astype(np.float64).reshape(-1, 1)
+    X = np.repeat(10**40.0, 4).astype(np.float64).reshape(-1, 1)
     clf = DecisionTreeClassifier()
     try:
         clf.fit(X, [0, 1, 0, 1])
@@ -2119,7 +2144,7 @@ def test_poisson_vs_mse():
 
 
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
+def test_decision_tree_regressor_sample_weight_consistency(criterion):
     """Test that the impact of sample_weight is consistent."""
     tree_params = dict(criterion=criterion)
     tree = DecisionTreeRegressor(**tree_params, random_state=42)
@@ -2437,3 +2462,24 @@ def test_check_node_ndarray():
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+
+# TODO(1.3): Remove
+def test_max_features_auto_deprecated():
+    for Tree in CLF_TREES.values():
+        tree = Tree(max_features="auto")
+        msg = (
+            "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
+            " 1.3. To keep the past behaviour, explicitly set `max_features='sqrt'`."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            tree.fit(X, y)
+
+    for Tree in REG_TREES.values():
+        tree = Tree(max_features="auto")
+        msg = (
+            "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
+            " 1.3. To keep the past behaviour, explicitly set `max_features=1.0'`."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            tree.fit(X, y)

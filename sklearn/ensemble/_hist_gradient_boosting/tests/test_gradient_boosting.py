@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -8,6 +10,7 @@ from sklearn._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
     HalfSquaredError,
+    PinballLoss,
 )
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_low_rank_matrix
@@ -37,6 +40,7 @@ _LOSSES = {
     "absolute_error": AbsoluteError,
     "gamma": HalfGammaLoss,
     "poisson": HalfPoissonLoss,
+    "quantile": PinballLoss,
     "binary_crossentropy": HalfBinomialLoss,
     "categorical_crossentropy": HalfMultinomialLoss,
 }
@@ -301,6 +305,44 @@ def test_gamma():
         assert mgd_gbdt_gamma < mgd_gbdt_ls
         assert mgd_gbdt_gamma < mgd_gbdt_pois
         assert mgd_gbdt_gamma < mgd_dummy
+
+
+@pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
+def test_quantile_asymmetric_error(quantile):
+    """Test quantile regression for asymmetric distributed targets."""
+    n_samples = 10_000
+    rng = np.random.RandomState(42)
+    # take care that X @ coef + intercept > 0
+    X = np.concatenate(
+        (
+            np.abs(rng.randn(n_samples)[:, None]),
+            -rng.randint(2, size=(n_samples, 1)),
+        ),
+        axis=1,
+    )
+    intercept = 1.23
+    coef = np.array([0.5, -2])
+    # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
+    # the quantile at level q is:
+    #   quantile(q) = - log(1 - q) / lambda
+    #   scale = 1/lambda = -quantile(q) / log(1-q)
+    y = rng.exponential(
+        scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
+    )
+    model = HistGradientBoostingRegressor(
+        loss="quantile",
+        quantile=quantile,
+        max_iter=25,
+        random_state=0,
+        max_leaf_nodes=10,
+    ).fit(X, y)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=1e-2)
+
+    pinball_loss = PinballLoss(quantile=quantile)
+    loss_true_quantile = pinball_loss(y, X @ coef + intercept)
+    loss_pred_quantile = pinball_loss(y, model.predict(X))
+    # we are overfitting
+    assert loss_pred_quantile <= loss_true_quantile
 
 
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 0.0, 0.0])])
@@ -1155,3 +1197,20 @@ def test_loss_deprecated(old_loss, new_loss):
     est2 = HistGradientBoostingRegressor(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+def test_no_user_warning_with_scoring():
+    """Check that no UserWarning is raised when scoring is set.
+
+    Non-regression test for #22907.
+    """
+    pd = pytest.importorskip("pandas")
+    X, y = make_regression(n_samples=50, random_state=0)
+    X_df = pd.DataFrame(X, columns=[f"col{i}" for i in range(X.shape[1])])
+
+    est = HistGradientBoostingRegressor(
+        random_state=0, scoring="neg_mean_absolute_error", early_stopping=True
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        est.fit(X_df, y)

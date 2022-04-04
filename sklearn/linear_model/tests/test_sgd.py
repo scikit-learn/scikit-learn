@@ -10,7 +10,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.fixes import parse_version
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -2103,9 +2102,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
 
-    if parse_version(joblib.__version__) < parse_version("0.12") and backend == "loky":
-        pytest.skip("loky backend does not exist in joblib <0.12")
-
     random_state = np.random.RandomState(42)
 
     # Create a classification problem with 50000 features and 20 classes. Using
@@ -2144,3 +2140,41 @@ def test_loss_squared_loss_deprecated(Estimator):
         assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
     else:
         assert_allclose(est1.predict(X), est2.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
+)
+def test_sgd_random_state(Estimator, global_random_seed):
+    # Train the same model on the same data without converging and check that we
+    # get reproducible results by fixing the random seed.
+    if Estimator == linear_model.SGDRegressor:
+        X, y = datasets.make_regression(random_state=global_random_seed)
+    else:
+        X, y = datasets.make_classification(random_state=global_random_seed)
+
+    # Fitting twice a model with the same hyper-parameters on the same training
+    # set with the same seed leads to the same results deterministically.
+
+    est = Estimator(random_state=global_random_seed, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_same_seed_a = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    est = Estimator(random_state=global_random_seed, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_same_seed_b = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    assert_allclose(coef_same_seed_a, coef_same_seed_b)
+
+    # Fitting twice a model with the same hyper-parameters on the same training
+    # set but with different random seed leads to different results after one
+    # epoch because of the random shuffling of the dataset.
+
+    est = Estimator(random_state=global_random_seed + 1, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_other_seed = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    assert np.abs(coef_same_seed_a - coef_other_seed).max() > 1.0
