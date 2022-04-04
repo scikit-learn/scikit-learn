@@ -101,7 +101,7 @@ def test_get_engine_class():
     )
     assert engine_class == FakeEngineHolder.NestedFakeEngine
 
-    with pytest.raises(ImportError):
+    with pytest.raises(ImportError, match=re.escape("sklearn.provider1")):
         # Invalid imports are delayed until they are actually needed.
         _get_engine_class(
             engine_name="kmeans",
