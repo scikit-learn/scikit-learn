@@ -394,7 +394,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         # Check parameters
         self._validate_estimator()
-        # TODO: Remove in v1.2
+        # TODO(1.2): Remove "mse" and "mae"
         if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
             if self.criterion == "mse":
                 warn(
@@ -411,6 +411,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     FutureWarning,
                 )
 
+            # TODO(1.3): Remove "auto"
             if self.max_features == "auto":
                 warn(
                     "`max_features='auto'` has been deprecated in 1.1 "
@@ -420,8 +421,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "RandomForestRegressors and ExtraTreesRegressors.",
                     FutureWarning,
                 )
-
+        # TODO(1.3): Remove "entropy" and "auto"
         elif isinstance(self, (RandomForestClassifier, ExtraTreesClassifier)):
+            if self.criterion == "entropy":
+                warn(
+                    "Criterion 'entropy' was deprecated in v1.1 and will be removed "
+                    "in version 1.3. Use `criterion='log_loss'` which is equivalent.",
+                    FutureWarning,
+                )
             if self.max_features == "auto":
                 warn(
                     "`max_features='auto'` has been deprecated in 1.1 "
@@ -1109,10 +1116,14 @@ class RandomForestClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity and "log_loss" for the information gain.
         Note: this parameter is tree-specific.
+
+        .. deprecated:: 1.1
+            Criterion "entropy" was deprecated in v1.1 and will be removed in
+            version 1.3. Use `criterion="log_loss"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1780,9 +1791,13 @@ class ExtraTreesClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity and "log_loss" for the information gain.
+
+        .. deprecated:: 1.1
+            Criterion "entropy" was deprecated in v1.1 and will be removed in
+            version 1.3. Use `criterion="log_loss"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
