@@ -88,8 +88,8 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 - |API| The option for using the log loss, aka binomial or multinomial deviance, via
-  the ``loss` parameters was made more consistent. The preferred way is by
-  setting the value to `"log_loss"`. Old option names are still valid,
+  the `loss` parameters was made more consistent. The preferred way is by
+  setting the value to `"log_loss"`. Old option names are still valid and
   produce the same models, but are deprecated and will be removed in version
   1.3.
 
