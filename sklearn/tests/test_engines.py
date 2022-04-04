@@ -28,7 +28,7 @@ def test_get_nested_engine_class():
         "value": "sklearn.tests.test_engines:FakeEngineHolder.NestedFakeEngine"
     }
     spec = _parse_entry_point(fake_entry_point)
-    assert spec.name == "fake_engine"
+    assert spec.name == "nested_fake_engine"
     assert spec.provider_name == "sklearn"  # or should it be scikit-learn?
     assert spec.get_engine_class() is FakeEngineHolder.NestedFakeEngine
 

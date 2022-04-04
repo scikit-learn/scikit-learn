@@ -11,11 +11,12 @@ SKLEARN_ENGINES_ENTRY_POINT = "skearn_engines"
 
 class EngineSpec:
 
-    __slots__ = ["name", "provider_name", "engine_qualname"]
+    __slots__ = ["name", "provider_name", "module_name", "engine_qualname"]
 
-    def __init__(self, name, provider_name, engine_qualname):
+    def __init__(self, name, provider_name, module_name, engine_qualname):
         self.name = name
         self.provider_name = provider_name
+        self.module_name = module_name
         self.engine_qualname = engine_qualname
 
     def get_engine_class(self):
@@ -39,15 +40,13 @@ def computational_engine(provider_names):
 def _parse_entry_point(entry_point):
     module_name, engine_qualname = entry_point["value"].split(":")
     provider_name = next(iter(module_name.split(".", 1)))
-    return EngineSpec(
-        entry_point["name"], provider_name, engine_qualname
-    )
+    return EngineSpec(entry_point["name"], provider_name, module_name, engine_qualname)
 
 
 @lru_cache
 def _parse_entry_points(provider_names=None):
     specs = []
-    for entry_point in entry_points.select(group=SKLEARN_ENGINES_ENTRY_POINT):
+    for entry_point in entry_points().select(group=SKLEARN_ENGINES_ENTRY_POINT):
         try:
             spec = _parse_entry_point(entry_point)
             if provider_names is not None and spec.provider_name in provider_names:
