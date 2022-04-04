@@ -114,7 +114,6 @@ print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 # (`n_runs` = 1) in this example, in practice one should repeat the experiment several
 # times to compensate for the stochastic nature of :class:`PolynomialCountSketch`.
 
-from sklearn.pipeline import Pipeline
 from sklearn.kernel_approximation import PolynomialCountSketch
 
 n_runs = 1
@@ -126,14 +125,9 @@ for n_components in N_COMPONENTS:
     ps_lsvm_score = 0
     for _ in range(n_runs):
 
-        pipeline = Pipeline(
-            steps=[
-                (
-                    "kernel_approximator",
-                    PolynomialCountSketch(n_components=n_components, degree=4),
-                ),
-                ("linear_classifier", LinearSVC()),
-            ]
+        pipeline = make_pipeline(
+            PolynomialCountSketch(n_components=n_components, degree=4),
+            LinearSVC(),
         )
 
         start = time.time()
