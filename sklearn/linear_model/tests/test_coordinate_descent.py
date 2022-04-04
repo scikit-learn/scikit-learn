@@ -1643,14 +1643,16 @@ def test_enet_cv_grid_search(sample_weight):
 
 
 @pytest.mark.parametrize("sparseX", [False, True])
-def test_enet_alpha_max_sample_weight(sparseX):
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_enet_alpha_max_sample_weight(sparseX, fit_intercept):
     X = np.array([[3, 1], [2, 5], [5, 3], [1, 4]])
     beta = np.array([1, 1])
     y = X @ beta
     sample_weight = np.array([10, 1, 10, 1])
     if sparseX:
         X = sparse.csc_matrix(X)
-    reg = ElasticNetCV(n_alphas=1, cv=2).fit(X, y, sample_weight=sample_weight)
+    reg = ElasticNetCV(n_alphas=1, cv=2, eps=1, fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
     assert_almost_equal(reg.coef_, 0)
 
 
