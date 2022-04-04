@@ -13,6 +13,7 @@ classifiers that can efficiently handle sparse matrices.
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
+#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
 #         Lars Buitinck
 # License: BSD 3 clause
 
@@ -23,13 +24,12 @@ classifiers that can efficiently handle sparse matrices.
 # We define a function to load data from :ref:`20newsgroups_dataset`, which
 # comprises around 18000 newsgroups posts on 20 topics split in two subsets: one
 # for training (or development) and the other one for testing (or for
-# performance evaluation). Note that, by default, the text samples contain
-# some message metadata such as 'headers', 'footers' (signatures) and 'quotes'
+# performance evaluation). Note that, by default, the text samples contain some
+# message metadata such as `'headers'`, `'footers'` (signatures) and `'quotes'`
 # to other posts. The `fetch_20newsgroups` function therefore accepts a
-# parameter named `remove` to make it possible to attempt stripping those
-# extra information that can make the classification problem "too easy". This
-# is achieved using simple heuristics that are neither perfect nor standard, hence
-# disabled by default.
+# parameter named `remove` to attempt stripping such information that can make
+# the classification problem "too easy". This is achieved using simple
+# heuristics that are neither perfect nor standard, hence disabled by default.
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -122,34 +122,42 @@ def load_dataset(verbose=False, remove=()):
 # We train a first classification model without attempting to strip the metadata of
 # the dataset.
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn import metrics
-from sklearn.linear_model import RidgeClassifier
-from sklearn.metrics import ConfusionMatrixDisplay
-
 X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset(
     verbose=True
 )
 
 # %%
 # Our first model is an instance of the
-# :class:`~sklearn.linear_model.RidgeClassifier` class. This is a
-# linear classification model that uses the mean squared error on
-# {-1, 1} encoded targets, one for each possible class. Contrary to
-# :class:`~sklearn.linear_model.LogisticRegression`, `RidgeClassifier`
-# does not provide probabilistic predictions (no `predict_proba` method),
-# but it is often faster to train.
+# :class:`~sklearn.linear_model.RidgeClassifier` class. This is a linear
+# classification model that uses the mean squared error on {-1, 1} encoded
+# targets, one for each possible class. Contrary to
+# :class:`~sklearn.linear_model.LogisticRegression`, `RidgeClassifier` does not
+# provide probabilistic predictions (no `predict_proba` method), but it is often
+# faster to train.
+
+from sklearn.linear_model import RidgeClassifier
+
 clf = RidgeClassifier(tol=1e-2, solver="sparse_cg")
 clf.fit(X_train, y_train)
 pred = clf.predict(X_test)
+
+# %%
+# Plot confusion matrix with metadata
+
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
 
 fig, ax = plt.subplots(figsize=(10, 5))
 ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
-_ = ax.set_title("Confusion Matrix with headers for the\n" + str(clf).split("(")[0])
+_ = ax.set_title("Confusion Matrix with metadata using a\n" + str(clf).split("(")[0])
+
+# %%
+# Identify the words with the highest feature effects
+
+import pandas as pd
+import numpy as np
 
 
 def plot_feature_effects():
@@ -199,8 +207,17 @@ def plot_feature_effects():
 _ = plot_feature_effects().set_title("Feature impact with headers")
 
 # %%
-# The word "caltech" is one of the top predictive features for atheism due to
-# pollution in the dataset introduced by the metadata
+# We can observe that the most predictive words are often strongly positively
+# associated with a single class and negatively associated with all the other
+# classes. Most of those positive associations are quite easy to interpret.
+# However, some words such as "god" and "people" are positively associated to
+# both "talk.misc.religion" and "alt.atheism" as those two classes expectedly
+# share some common vocabulary. Notice however that there are also words such as
+# "christian" and "morality" that are only positively associated with
+# "talk.misc.religion". Furthermore, in this version of the dataset, the word
+# "caltech" is one of the top predictive features for atheism due to pollution
+# in the dataset introduced by the metadata.
+
 data_train = fetch_20newsgroups(
     subset="train", categories=categories, shuffle=True, random_state=42
 )
@@ -211,7 +228,8 @@ for doc in data_train.data:
         break
 
 # %%
-# We can remove the metadata, but other sources of pollution may still exist
+# We can remove the metadata and repeat the experiment, but other sources of
+# pollution may still exist
 (
     X_train,
     X_test,
@@ -229,16 +247,19 @@ fig, ax = plt.subplots(figsize=(10, 5))
 ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
-_ = ax.set_title("Confusion Matrix without headers for the\n" + str(clf).split("(")[0])
-
-# %%
-_ = plot_feature_effects().set_title("Feature impact without headers")
+_ = ax.set_title("Confusion Matrix without metadata using a\n" + str(clf).split("(")[0])
 
 # %%
 # By looking at the confusion matrix, it is more evident that the scores of the
 # model trained with metadata were overoptimistic. The classification problem
-# without access to the metadata is harder (more errors) but more representative
+# without access to the metadata is less accurate but more representative
 # of the intended text classification problem.
+
+_ = plot_feature_effects().set_title("Feature impact without metadata")
+
+# %%
+# In the next section we keep the dataset without metadata to compare several
+# classifiers
 
 # %%
 # Benchmark classifiers
@@ -246,6 +267,7 @@ _ = plot_feature_effects().set_title("Feature impact without headers")
 #
 # First we define small benchmarking utilities
 from sklearn.utils.extmath import density
+from sklearn import metrics
 
 
 def trim(s):
@@ -273,17 +295,10 @@ def benchmark(clf, custom_name=False):
     if hasattr(clf, "coef_"):
         print("dimensionality: %d" % clf.coef_.shape[1])
         print("density: %f" % density(clf.coef_))
-        print("top 10 keywords per class:")
-        for i, label in enumerate(target_names):
-            top10 = np.argsort(clf.coef_[i])[-10:]
-            print(trim("%s: %s" % (label, " ".join(feature_names[top10]))))
         print()
 
     print("classification report:")
     print(metrics.classification_report(y_test, pred, target_names=target_names))
-
-    print("confusion matrix:")
-    print(metrics.confusion_matrix(y_test, pred))
 
     print()
     if custom_name:
@@ -299,9 +314,8 @@ def benchmark(clf, custom_name=False):
 # is to highlight the computation/accuracy tradeoffs of the choice of the
 # type of classifier for such a multi-class text classification problem.
 #
-# Note that the most important hyper-parameters values where tuned with
-# a simple grid search procedure not shown in this notebook for the sake
-# of simplicity. 
+# Notice that the most important hyperparameters values were tuned using a grid
+# search procedure not shown in this notebook for the sake of simplicity.
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
@@ -317,34 +331,21 @@ for clf, name in (
     (RidgeClassifier(alpha=1.0, solver="sparse_cg"), "Ridge Classifier"),
     (KNeighborsClassifier(n_neighbors=100), "kNN"),
     (RandomForestClassifier(), "Random Forest"),
+    # L2 penalty Linear SVC
+    (LinearSVC(C=0.1, dual=False, max_iter=1000), "Linear SVC"),
+    # L2 penalty Linear SGD
+    (
+        SGDClassifier(loss="log", alpha=1e-4, n_iter_no_change=3, early_stopping=True),
+        "log-loss SGD",
+    ),
+    # NearestCentroid (aka Rocchio classifier)
+    (NearestCentroid(), "NearestCentroid"),
+    # Sparse Naive Bayes classifier
+    (ComplementNB(alpha=0.1), "Complement Naive Bayes"),
 ):
     print("=" * 80)
     print(name)
     results.append(benchmark(clf, name))
-
-# Train Liblinear model
-print("=" * 80)
-print("L2 penalty Linear SVC")
-results.append(benchmark(LinearSVC(C=0.1, dual=False, max_iter=1000)))
-
-# Train SGD model
-print("=" * 80)
-print("L2 penalty Linear SGD")
-results.append(
-    benchmark(
-        SGDClassifier(loss="log", alpha=1e-4, n_iter_no_change=3, early_stopping=True)
-    )
-)
-
-# Train NearestCentroid without threshold
-print("=" * 80)
-print("NearestCentroid (aka Rocchio classifier)")
-results.append(benchmark(NearestCentroid()))
-
-# Train sparse Naive Bayes classifiers
-print("=" * 80)
-print("Naive Bayes")
-results.append(benchmark(ComplementNB(alpha=0.1)))
 
 # %%
 # Plot accuracy, training and test time of each classifier
@@ -383,16 +384,16 @@ for i, txt in enumerate(clf_names):
 
 # %%
 # The Naive Bayes model has the best trade-off between score and
-# training/testing time, while Random Forest is both slow to train
-# expensive to predict and has a comparatively bad accuracy. This is
-# expected: for high-dimensional prediction problems, linear models are
-# often better suited as all problem became linearly separable as the
-# dimensionality of the feature space increases to 10,000 dimensions or
-# more.
-# KNeighborsClassifier has relatively low accuracy and has the highest testing
-# time. The long prediction time is expected: for each prediction the model
-# has to compute the pairwise distances with each document in the training
-# set which is very expensive.
-# Furthermore, the curse of dimensionality harms the ability of this model to
-# yield competitive accuracy in the high dimensional feature space of text
-# classification problems.
+# training/testing time, while Random Forest is both slow to train, expensive to
+# predict and has a comparatively bad accuracy. This is expected: for
+# high-dimensional prediction problems, linear models are often better suited as
+# all problem became linearly separable when the dimensionality of the feature
+# space increases to 10,000 dimensions or more.
+#
+# KNeighborsClassifier has a relatively low accuracy and has the highest testing
+# time. The long prediction time is also expected: for each prediction the model
+# has to compute the pairwise distances between the testing sample and each
+# document in the training set, which is very expensive. Furthermore, the "curse
+# of dimensionality" harms the ability of this model to yield competitive
+# accuracy in the high dimensional feature space of text classification
+# problems.
