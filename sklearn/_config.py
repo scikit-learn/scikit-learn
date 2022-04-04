@@ -13,6 +13,7 @@ _global_config = {
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
     "enable_cython_pairwise_dist": True,
+    "engine_provider": (),
 }
 _threadlocal = threading.local()
 
@@ -50,6 +51,7 @@ def set_config(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
+    engine_provider=None,
 ):
     """Set global scikit-learn configuration
 
@@ -128,6 +130,8 @@ def set_config(
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
+    if engine_provider is not None:
+        local_config["engine_provider"] = engine_provider
 
 
 @contextmanager
@@ -139,6 +143,7 @@ def config_context(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
+    engine_provider=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -232,6 +237,7 @@ def config_context(
         display=display,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
+        engine_provider=engine_provider,
     )
 
     try:

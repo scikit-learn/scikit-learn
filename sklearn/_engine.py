@@ -1,10 +1,10 @@
-from dataclasses import dataclass
 from importlib.metadata import entry_points
 from importlib import import_module
 from contextlib import contextmanager
 from functools import lru_cache
 import warnings
 
+from sklearn._config import get_config
 
 SKLEARN_ENGINES_ENTRY_POINT = "skearn_engines"
 
@@ -24,17 +24,6 @@ class EngineSpec:
         for attr in self.engine_qualname.split("."):
             engine = getattr(engine, attr)
         return engine
-
-
-@contextmanager
-def computational_engine(provider_names):
-    if isinstance(provider_names, str):
-        provider_names = [provider_names]
-    # TODO: implement me and complain if no entry point can be found with the given provider name
-    parsed_entry_points = _parse_entry_points(provider_names=provider_names)
-    if len(parsed_entry_points) == 0:
-        raise RuntimeError()
-    yield
 
 
 def _parse_entry_point(entry_point):
@@ -58,8 +47,16 @@ def _parse_entry_points(provider_names=None):
             # installed in the same Python env as scikit-learn: just warn and
             # skip.
             warnings.warn(
-                f"Invalid sklearn_engine entry point {entry_point['name']} "
-                f"with value {entry_point['value']}: {e}"
+                f"Invalid {SKLEARN_ENGINES_ENTRY_POINT} entry point"
+                f" {entry_point['name']} with value {entry_point['value']}: {e}"
+            )
+    if provider_names is not None:
+        observed_provider_names = {spec.provider_name for spec in specs}
+        missing_providers = set(provider_names) - observed_provider_names
+        if missing_providers:
+            raise RuntimeError(
+                f"Could not find any provider for the {SKLEARN_ENGINES_ENTRY_POINT}"
+                f" entry point with name(s): {', '.join(sorted(missing_providers))}"
             )
     return specs
 
@@ -70,3 +67,37 @@ def list_engine_provider_names():
     This function only inspects the metadata and should trigger any module import.
     """
     return sorted({spec.provider_name for spec in _parse_entry_points()})
+
+
+def _get_engine_class(engine_name, provider_names, engine_specs):
+    specs_by_provider = {}
+    for spec in engine_specs:
+        if spec.name != engine_name:
+            continue
+        specs_by_provider.setdefault(spec.provider_name, spec)
+
+    for provider_name in provider_names:
+        spec = specs_by_provider.get(provider_name)
+        if spec is not None:
+            # XXX: should we return an instance or the class itself?
+            return spec.get_engine_class()
+
+    return None
+
+
+def get_engine_class(engine_name):
+    provider_names = get_config()["engine_provider"]
+    if isinstance(provider_names, str):
+        provider_names = (provider_names,)
+    elif not isinstance(provider_names, tuple):
+        # Make sure the provider names are a tuple to make it possible for the
+        # lru cache to hash them.
+        provider_names = tuple(provider_names)
+    if not provider_names:
+        return None
+    engine_specs = _parse_entry_points(provider_names=provider_names)
+    return _get_engine_class(
+        engine_name=engine_name,
+        provider_names=provider_names,
+        engine_specs=engine_specs,
+    )
