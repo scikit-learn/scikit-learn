@@ -926,8 +926,8 @@ class SGDClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-    loss : {'hinge', 'log_loss', 'modified_huber', 'squared_hinge', 'perceptron',\
-        'squared_error', 'huber', 'epsilon_insensitive',\
+    loss : {'hinge', 'log_loss', 'log', 'modified_huber', 'squared_hinge',\
+        'perceptron', 'squared_error', 'huber', 'epsilon_insensitive',\
         'squared_epsilon_insensitive'}, default='hinge'
         The loss function to be used.
 
