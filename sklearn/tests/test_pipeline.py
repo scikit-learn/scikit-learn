@@ -11,7 +11,6 @@ import pytest
 import numpy as np
 from scipy import sparse
 import joblib
-import warnings
 
 from sklearn.utils._testing import (
     assert_allclose,
