@@ -1511,8 +1511,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
             # This is done in parallel sample-wise (no need for locks)
             # using dynamic scheduling because we might not have
             # the same number of neighbors for each query vector.
-            # TODO: compare 'dynamic' vs 'static' vs 'guided'
-            for idx in prange(self.n_samples_X, schedule='dynamic'):
+            for idx in prange(self.n_samples_X, schedule='static'):
                 self._merge_vectors(idx, self.chunks_n_threads)
 
             # The content of the vector have been std::moved.
@@ -1536,7 +1535,7 @@ cdef class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
         cdef:
             ITYPE_t i, j
 
-        for i in prange(self.n_samples_X, nogil=True, schedule='dynamic',
+        for i in prange(self.n_samples_X, nogil=True, schedule='static',
                         num_threads=self.effective_n_threads):
             for j in range(deref(self.neigh_indices)[i].size()):
                 deref(self.neigh_distances)[i][j] = (
