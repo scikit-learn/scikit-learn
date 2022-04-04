@@ -808,7 +808,7 @@ stopping. For a more detailed discussion of the interaction between
 Subsampling
 -----------
 
-[F1999]_ proposed stochastic gradient boosting, which combines gradient
+[Friedman2002]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
 the base classifier is trained on a fraction ``subsample`` of
 the available training data. The subsample is drawn without replacement.
@@ -897,13 +897,13 @@ based on permutation of the features.
 
 .. topic:: References
 
-  .. [F1999] Friedman, J.H. (2002). `Stochastic gradient boosting.
-     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
-     Computational Statistics & Data Analysis, 38, 367-378.
-
   .. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
       boosting machine <10.1214/aos/1013203451>`.
       Annals of Statistics, 29, 1189-1232.
+
+  .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
+     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+     Computational Statistics & Data Analysis, 38, 367-378.
 
   .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
      package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
