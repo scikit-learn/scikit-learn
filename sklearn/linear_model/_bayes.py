@@ -9,7 +9,7 @@ from math import log
 import numpy as np
 from scipy import linalg
 
-from ._base import LinearModel, _rescale_data
+from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
 from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
@@ -237,12 +237,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
                 )
             )
 
-        X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True)
+        X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -253,7 +253,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+            X, y, _ = _rescale_data(X, y, sample_weight)
 
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
@@ -618,13 +618,13 @@ class ARDRegression(RegressorMixin, LinearModel):
         )
 
         X, y = self._validate_data(
-            X, y, dtype=np.float64, y_numeric=True, ensure_min_samples=2
+            X, y, dtype=[np.float64, np.float32], y_numeric=True, ensure_min_samples=2
         )
 
         n_samples, n_features = X.shape
-        coef_ = np.zeros(n_features)
+        coef_ = np.zeros(n_features, dtype=X.dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X, y, self.fit_intercept, self._normalize, self.copy_X
         )
 
@@ -645,7 +645,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         # Add `eps` in the denominator to omit division by zero if `np.var(y)`
         # is zero
         alpha_ = 1.0 / (np.var(y) + eps)
-        lambda_ = np.ones(n_features)
+        lambda_ = np.ones(n_features, dtype=X.dtype)
 
         self.scores_ = list()
         coef_old_ = None
@@ -726,7 +726,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         X_keep = X[:, keep_lambda]
         inv_lambda = 1 / lambda_[keep_lambda].reshape(1, -1)
         sigma_ = pinvh(
-            np.eye(n_samples) / alpha_ + np.dot(X_keep * inv_lambda, X_keep.T)
+            np.eye(n_samples, dtype=X.dtype) / alpha_
+            + np.dot(X_keep * inv_lambda, X_keep.T)
         )
         sigma_ = np.dot(sigma_, X_keep * inv_lambda)
         sigma_ = -np.dot(inv_lambda.reshape(-1, 1) * X_keep.T, sigma_)
@@ -739,7 +740,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         # invert a matrix of shape (n_features, n_features)
         X_keep = X[:, keep_lambda]
         gram = np.dot(X_keep.T, X_keep)
-        eye = np.eye(gram.shape[0])
+        eye = np.eye(gram.shape[0], dtype=X.dtype)
         sigma_inv = lambda_[keep_lambda] * eye + alpha_ * gram
         sigma_ = pinvh(sigma_inv)
         return sigma_
