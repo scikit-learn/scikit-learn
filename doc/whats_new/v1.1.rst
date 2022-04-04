@@ -120,7 +120,6 @@ Changelog
   can respectively be up to ×20 and ×5 faster than previously.
 
   :pr:`21987`, :pr:`22064`, :pr:`22065`, :pr:`22288` and :pr:`22590`.
-  :pr:`21987`, :pr:`22064`, :pr:`22065`, :pr:`22288` and :pr:`22320`
   by :user:`Julien Jerphanion <jjerphan>`
 
 - |Enhancement| All scikit-learn models now generate a more informative
