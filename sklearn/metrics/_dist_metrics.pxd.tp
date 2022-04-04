@@ -3,7 +3,7 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, bitness, DTYPE_t, DTYPE
+    #       name_suffix, DTYPE_t, DTYPE
     #
     # On the first hand, an empty string is use for `name_suffix`
     # for the float64 case as to still be able to expose the original
@@ -20,8 +20,8 @@ implementation_specific_values = [
     # to maintain backward compatibility at the symbol level for extra
     # safety.
     #
-    ('', '64', 'DTYPE_t', 'DTYPE'),
-    ('32', '32', 'np.float32_t', 'np.float32')
+    ('', 'DTYPE_t', 'DTYPE'),
+    ('32', 'np.float32_t', 'np.float32')
 ]
 
 }}
@@ -30,7 +30,7 @@ from libc.math cimport sqrt, exp
 
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t
 
-{{for name_suffix, bitness, DTYPE_t, DTYPE in implementation_specific_values}}
+{{for name_suffix, DTYPE_t, DTYPE in implementation_specific_values}}
 
 ######################################################################
 # Inline distance functions

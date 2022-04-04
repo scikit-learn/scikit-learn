@@ -3,7 +3,7 @@ import pickle
 import copy
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 import pytest
 
@@ -104,7 +104,7 @@ def test_cdist(metric_param_grid, X, Y):
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
         D_sklearn = dm.pairwise(X, Y)
-        assert_array_almost_equal(D_sklearn, D_scipy_cdist)
+        assert_allclose(D_sklearn, D_scipy_cdist)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
@@ -115,7 +115,7 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
     D_true = cdist(X_bool, Y_bool, metric)
     dm = DistanceMetric.get_metric(metric)
     D12 = dm.pairwise(X_bool, Y_bool)
-    assert_array_almost_equal(D12, D_true)
+    assert_allclose(D12, D_true)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -148,7 +148,7 @@ def test_pdist(metric_param_grid, X, Y):
 
         dm = DistanceMetricInterface.get_metric(metric, **kwargs)
         D12 = dm.pairwise(X)
-        assert_array_almost_equal(D12, D_true)
+        assert_allclose(D12, D_true)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
@@ -162,7 +162,7 @@ def test_pdist_bool_metrics(metric, X_bool):
     # was changed to return 0, instead of nan.
     if metric == "jaccard" and sp_version < parse_version("1.2.0"):
         D_true[np.isnan(D_true)] = 0
-    assert_array_almost_equal(D12, D_true)
+    assert_allclose(D12, D_true)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -187,7 +187,7 @@ def test_pickle(writable_kwargs, metric_param_grid, X):
         D1 = dm.pairwise(X)
         dm2 = pickle.loads(pickle.dumps(dm))
         D2 = dm2.pairwise(X)
-        assert_array_almost_equal(D1, D2)
+        assert_allclose(D1, D2)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -199,7 +199,7 @@ def test_pickle_bool_metrics(metric, X_bool):
     D1 = dm.pairwise(X_bool)
     dm2 = pickle.loads(pickle.dumps(dm))
     D2 = dm2.pairwise(X_bool)
-    assert_array_almost_equal(D1, D2)
+    assert_allclose(D1, D2)
 
 
 def test_haversine_metric():
@@ -221,8 +221,8 @@ def test_haversine_metric():
         for j, x2 in enumerate(X):
             D2[i, j] = haversine_slow(x1, x2)
 
-    assert_array_almost_equal(D1, D2)
-    assert_array_almost_equal(haversine.dist_to_rdist(D1), np.sin(0.5 * D2) ** 2)
+    assert_allclose(D1, D2)
+    assert_allclose(haversine.dist_to_rdist(D1), np.sin(0.5 * D2) ** 2)
 
 
 def test_pyfunc_metric():
@@ -242,8 +242,8 @@ def test_pyfunc_metric():
     D1_pkl = euclidean_pkl.pairwise(X)
     D2_pkl = pyfunc_pkl.pairwise(X)
 
-    assert_array_almost_equal(D1, D2)
-    assert_array_almost_equal(D1_pkl, D2_pkl)
+    assert_allclose(D1, D2)
+    assert_allclose(D1_pkl, D2_pkl)
 
 
 def test_input_data_size():
@@ -258,7 +258,7 @@ def test_input_data_size():
 
     pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
     eucl = DistanceMetric.get_metric("euclidean")
-    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
+    assert_allclose(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -329,4 +329,4 @@ def test_wminkowski_minkowski_equivalence(p):
     dm_mks = DistanceMetric.get_metric("minkowski", p=p, w=w)
     D_wmks = dm_wmks.pairwise(X64, Y64)
     D_mks = dm_mks.pairwise(X64, Y64)
-    assert_array_almost_equal(D_wmks, D_mks)
+    assert_allclose(D_wmks, D_mks)
