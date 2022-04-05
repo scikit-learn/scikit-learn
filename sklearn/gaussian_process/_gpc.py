@@ -320,7 +320,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         gamma = LAMBDAS * f_star
         integrals = (
             np.sqrt(np.pi / alpha)
-            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS ** 2)))
+            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2)))
             / (2 * np.sqrt(var_f_star * 2 * np.pi))
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()
@@ -503,7 +503,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
-        the kernel's hyperparameters are optimized during fitting.
+        the kernel's hyperparameters are optimized during fitting. Also kernel
+        cannot be a `CompoundKernel`.
 
     optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
@@ -673,6 +674,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        if isinstance(self.kernel, CompoundKernel):
+            raise ValueError("kernel cannot be a CompoundKernel")
+
         if self.kernel is None or self.kernel.requires_vector_input:
             X, y = self._validate_data(
                 X, y, multi_output=False, ensure_2d=True, dtype="numeric"

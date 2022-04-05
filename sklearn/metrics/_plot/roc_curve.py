@@ -301,7 +301,7 @@ class RocCurveDisplay:
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.DetCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
 
         See Also
