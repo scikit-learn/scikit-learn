@@ -51,8 +51,8 @@ jobs:
         # <test_name_1>
         # <test_name_2>
         # ...
-        if [[ "$(COMMIT_MESSAGE)" =~ \[all\ random\ seeds\] ]]; then
-          message=$(echo $(COMMIT_MESSAGE) | sed -n -e 's/^.*all\ random\ seeds\] //p')
+        if [[ "$COMMIT_MESSAGE" =~ \[all\ random\ seeds\] ]]; then
+          message=$(echo $COMMIT_MESSAGE | sed -n -e 's/^.*all\ random\ seeds\] //p')
           selected="${message// / or }"
         else
           selected=""
