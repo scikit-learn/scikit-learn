@@ -111,6 +111,15 @@ def set_config(
 
         .. versionadded:: 1.1
 
+    engine_provider : str or sequence of str, default=None
+        Enable computational engine implementation provided by third party
+        packages to leverage specific hardware platforms using frameworks or
+        libraries outside of the usual scikit-learn project dependencies.
+
+        TODO: add link to doc
+
+        .. versionadded:: 1.2
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -201,6 +210,15 @@ def config_context(
         setting.
 
         .. versionadded:: 1.1
+
+    engine_provider : str or sequence of str, default=None
+        Enable computational engine implementation provided by third party
+        packages to leverage specific hardware platforms using frameworks or
+        libraries outside of the usual scikit-learn project dependencies.
+
+        TODO: add link to doc
+
+        .. versionadded:: 1.2
 
     Yields
     ------
