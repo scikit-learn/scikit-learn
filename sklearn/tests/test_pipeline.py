@@ -1526,6 +1526,31 @@ def test_pipeline_check_if_fitted():
     check_is_fitted(pipeline)
 
 
+def test_feature_union_check_if_fitted():
+    """Check __sklearn_is_fitted__ is defined correctly."""
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    union = FeatureUnion([("clf", MinimalTransformer())])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(X, y)
+    check_is_fitted(union)
+
+    # passthrough is stateless
+    union = FeatureUnion([("pass", "passthrough")])
+    check_is_fitted(union)
+
+    union = FeatureUnion([("clf", MinimalTransformer()), ("pass", "passthrough")])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(X, y)
+    check_is_fitted(union)
+
+
 def test_pipeline_get_feature_names_out_passes_names_through():
     """Check that pipeline passes names through.
 
