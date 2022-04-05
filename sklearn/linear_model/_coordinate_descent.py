@@ -150,10 +150,8 @@ def _alpha_grid(
             "argument."
         )
     if Xy is not None and ((sample_weight is None) or (fit_intercept is False)):
-        # In this case, the precomputed Xy should be valid.
-        pass
+        Xyw = Xy
     else:
-        # Compute Xy.
         X, y, X_offset, _, _ = _preprocess_data(
             X,
             y,
@@ -168,14 +166,14 @@ def _alpha_grid(
         else:
             yw = y
         if sparse.issparse(X):
-            Xy = safe_sparse_dot(X.T, yw, dense_output=True) - np.sum(yw) * X_offset
+            Xyw = safe_sparse_dot(X.T, yw, dense_output=True) - np.sum(yw) * X_offset
         else:
-            Xy = np.dot(X.T, yw)
+            Xyw = np.dot(X.T, yw)
 
-    if Xy.ndim == 1:
-        Xy = Xy[:, np.newaxis]
+    if Xyw.ndim == 1:
+        Xyw = Xyw[:, np.newaxis]
     n_samples = X.shape[0]
-    alpha_max = np.max(np.sqrt(np.sum(Xy**2, axis=1))) / (l1_ratio * n_samples)
+    alpha_max = np.max(np.sqrt(np.sum(Xyw**2, axis=1))) / (l1_ratio * n_samples)
 
     if alpha_max <= np.finfo(float).resolution:
         return np.full(n_alphas, np.finfo(float).resolution)
