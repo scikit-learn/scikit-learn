@@ -59,7 +59,7 @@ jobs:
         else
           selected=""
         fi
-        echo "##vso[task.setvariable variable=SELECTED_TESTS]$selected"
+        echo ##vso[task.setvariable variable=SELECTED_TESTS]$selected
       displayName: Check selected tests for all random seeds
     - task: Cache@2
       inputs:
