@@ -51,8 +51,8 @@ pre_python_environment_install() {
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
         conda update -n base conda -y
-        conda create --name $VIRTUALENV
-        conda install --name $VIRTUALENV --file $LOCK_FILE
+        conda create --name $VIRTUALENV -y
+        conda install --name $VIRTUALENV --file $LOCK_FILE -y
         source activate $VIRTUALENV
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
