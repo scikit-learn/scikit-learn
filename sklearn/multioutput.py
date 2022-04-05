@@ -101,6 +101,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             and can be omitted in the subsequent calls.
             Note that `y` doesn't need to contain all labels in `classes`.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If `None`, then samples are equally weighted.
+            Only supported if the underlying regressor supports sample
+            weights.
+
         **partial_fit_params : dict of string -> object
             Parameters passed to the ``estimator.partial_fit`` method of each step.
 
@@ -159,6 +164,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If `None`, then samples are equally weighted.
+            Only supported if the underlying regressor supports sample
+            weights.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
@@ -231,6 +241,17 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         return {"multioutput_only": True}
 
     def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
         router = (
             MetadataRouter(owner=self.__class__.__name__)
             .add(
@@ -324,6 +345,11 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
 
         y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If `None`, then samples are equally weighted.
+            Only supported if the underlying regressor supports sample
+            weights.
 
         **partial_fit_params : dict of string -> object
             Parameters passed to the ``estimator.partial_fit`` method of each step.
@@ -419,6 +445,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         Y : array-like of shape (n_samples, n_classes)
             The target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If `None`, then samples are equally weighted.
+            Only supported if the underlying regressor supports sample
+            weights.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
