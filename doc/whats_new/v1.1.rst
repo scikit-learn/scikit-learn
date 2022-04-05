@@ -361,6 +361,9 @@ Changelog
   calling `fit` or `fit_transform`.
   :pr:`22553` by :user:`Meekail Zain <micky774>`.
 
+- |Efficiency| ENH Optimise decomposition.FastICA.fit memory footprint and runtime.
+  :pr:`22268` by :user:`MohamedBsh <Bsh>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
