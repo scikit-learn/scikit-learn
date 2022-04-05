@@ -665,7 +665,7 @@ previously chosen dictionary elements.
  * https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
  * `Matching pursuits with time-frequency dictionaries
-   <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
+   <https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
    S. G. Mallat, Z. Zhang,
 
 
@@ -1032,7 +1032,7 @@ reproductive exponential dispersion model (EDM) [11]_).
 
 The minimization problem becomes:
 
-.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2,
+.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2^2,
 
 where :math:`\alpha` is the L2 regularization penalty. When sample weights are
 provided, the average becomes a weighted average.
@@ -1366,7 +1366,7 @@ performance.
  * https://en.wikipedia.org/wiki/RANSAC
  * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
    Image Analysis and Automated Cartography"
-   <https://www.sri.com/sites/default/files/publications/ransac-publication.pdf>`_
+   <https://www.cs.ait.ac.th/~mdailey/cvreadings/Fischler-RANSAC.pdf>`_
    Martin A. Fischler and Robert C. Bolles - SRI International (1981)
  * `"Performance Evaluation of RANSAC Family"
    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_

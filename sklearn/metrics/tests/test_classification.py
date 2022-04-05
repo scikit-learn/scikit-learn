@@ -255,7 +255,7 @@ def test_precision_recall_f1_score_binary():
 
         assert_almost_equal(
             my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs),
+            (1 + 2**2) * ps * rs / (2**2 * ps + rs),
             2,
         )
 
@@ -589,14 +589,15 @@ def test_confusion_matrix_normalize_single_class():
     assert cm_true.sum() == pytest.approx(2.0)
 
     # additionally check that no warnings are raised due to a division by zero
-    with pytest.warns(None) as rec:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         cm_pred = confusion_matrix(y_test, y_pred, normalize="pred")
-    assert not rec
+
     assert cm_pred.sum() == pytest.approx(1.0)
 
-    with pytest.warns(None) as rec:
-        cm_pred = confusion_matrix(y_pred, y_test, normalize="true")
-    assert not rec
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        confusion_matrix(y_pred, y_test, normalize="true")
 
 
 def test_cohen_kappa():
@@ -1443,12 +1444,12 @@ def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
     # check that we don't issue warning by passing the zero_division parameter
     y_true = np.array([[1, 0, 1], [0, 0, 0]])
     y_pred = np.array([[0, 0, 0], [0, 0, 0]])
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UndefinedMetricWarning)
         score = jaccard_score(
             y_true, y_pred, average="samples", zero_division=zero_division
         )
     assert score == pytest.approx(expected_score)
-    assert len(record) == 0
 
 
 @ignore_warnings

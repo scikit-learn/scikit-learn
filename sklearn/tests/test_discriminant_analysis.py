@@ -368,8 +368,8 @@ def test_lda_orthogonality():
 
     d1 = means_transformed[3] - means_transformed[0]
     d2 = means_transformed[2] - means_transformed[1]
-    d1 /= np.sqrt(np.sum(d1 ** 2))
-    d2 /= np.sqrt(np.sum(d2 ** 2))
+    d1 /= np.sqrt(np.sum(d1**2))
+    d2 /= np.sqrt(np.sum(d2**2))
 
     # the transformed within-class covariance should be the identity matrix
     assert_almost_equal(np.cov(clf.transform(scatter).T), np.eye(2))
@@ -515,14 +515,14 @@ def test_lda_dimension_warning(n_classes, n_features):
     ],
 )
 def test_lda_dtype_match(data_type, expected_type):
-    for (solver, shrinkage) in solver_shrinkage:
+    for solver, shrinkage in solver_shrinkage:
         clf = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
         clf.fit(X.astype(data_type), y.astype(data_type))
         assert clf.coef_.dtype == expected_type
 
 
 def test_lda_numeric_consistency_float32_float64():
-    for (solver, shrinkage) in solver_shrinkage:
+    for solver, shrinkage in solver_shrinkage:
         clf_32 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
         clf_32.fit(X.astype(np.float32), y.astype(np.float32))
         clf_64 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)

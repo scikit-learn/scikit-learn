@@ -334,8 +334,8 @@ class IncrementalPCA(_BasePCA):
 
         U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
         U, Vt = svd_flip(U, Vt, u_based_decision=False)
-        explained_variance = S ** 2 / (n_total_samples - 1)
-        explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
+        explained_variance = S**2 / (n_total_samples - 1)
+        explained_variance_ratio = S**2 / np.sum(col_var * n_total_samples)
 
         self.n_samples_seen_ = n_total_samples
         self.components_ = Vt[: self.n_components_]
