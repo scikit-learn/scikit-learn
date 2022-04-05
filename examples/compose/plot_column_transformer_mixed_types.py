@@ -75,12 +75,7 @@ numeric_transformer = Pipeline(
 )
 
 categorical_features = ["embarked", "sex", "pclass"]
-categorical_transformer = Pipeline(
-    steps=[
-        ("imputer", SimpleImputer(strategy="constant", fill_value="missing")),
-        ("encoder", OneHotEncoder(handle_unknown="ignore")),
-    ]
-)
+categorical_transformer = OneHotEncoder(handle_unknown="ignore")
 
 preprocessor = ColumnTransformer(
     transformers=[
