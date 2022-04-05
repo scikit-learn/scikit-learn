@@ -1332,5 +1332,4 @@ def test_gaussian_mixture_single_component_stable():
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(np.zeros(2), np.identity(2), size=3)
     gm = GaussianMixture(n_components=1)
-    gm.fit(X)
-    print(gm.sample())  # This will throw a ValueError
+    gm.fit(X).sample()
