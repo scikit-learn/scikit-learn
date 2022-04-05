@@ -113,7 +113,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
         # np.einsum allows having the lowest memory footprint.
-        # It is faster than chaining np.dot with np.diag.
+        # It is faster than np.diag(np.dot(W1, W.T)).
         lim = max(abs(abs(np.einsum("ij,ij->i", W1, W)) - 1))
         W = W1
         if lim < tol:
