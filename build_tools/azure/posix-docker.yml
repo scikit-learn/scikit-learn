@@ -32,7 +32,6 @@ jobs:
     COVERAGE: 'false'
     TEST_DOCSTRINGS: 'false'
     BLAS: 'openblas'
-    SELECTED_TESTS: $[ dependencies.git_commit.outputs['commit.selected'] ]
     # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''
@@ -45,6 +44,24 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    - bash: |
+        set -ex
+        message=$[ dependencies.git_commit.outputs['commit.message'] ]
+
+        # Check if run only specific tests but on all random seeds
+        # commit message must take the form
+        # <title> [all random seeds]
+        # <test_name_1>
+        # <test_name_2>
+        # ...
+        if [[ "$message" =~ \[all\ random\ seeds\] ]]; then
+          message=$(echo $message | sed -n -e 's/^.*all\ random\ seeds\] //p')
+          selected="${message// / or }"
+        else
+          selected=""
+        fi
+        echo "##vso[task.setvariable variable=SELECTED_TESTS;isOutput=true]$selected"
+      displayName: Check selected tests for all random seeds
     - task: Cache@2
       inputs:
         key: '"ccache-v1" | "$(Agent.JobName)" | "$(Build.BuildNumber)"'
@@ -85,7 +102,7 @@ jobs:
         -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
         -e BLAS=$BLAS
-        -e SELECTED_TESTS=$SELECTED_TESTS
+        -e SELECTED_TESTS=$(SELECTED_TESTS)
         -e CPU_COUNT=$CPU_COUNT
         -e CCACHE_DIR=/ccache
         -e CCACHE_COMPRESS=$CCACHE_COMPRESS

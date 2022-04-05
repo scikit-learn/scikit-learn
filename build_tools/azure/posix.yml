@@ -37,12 +37,29 @@ jobs:
     TEST_DOCSTRINGS: 'false'
     CREATE_ISSUE_ON_TRACKER: 'false'
     SHOW_SHORT_SUMMARY: 'false'
-    SELECTED_TESTS: $[ dependencies.git_commit.outputs['commit.selected'] ]
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    - bash: |
+        set -ex
+        message=$[ dependencies.git_commit.outputs['commit.message'] ]
+
+        # Check if run only specific tests but on all random seeds
+        # commit message must take the form
+        # <title> [all random seeds]
+        # <test_name_1>
+        # <test_name_2>
+        # ...
+        if [[ "$message" =~ \[all\ random\ seeds\] ]]; then
+          message=$(echo $message | sed -n -e 's/^.*all\ random\ seeds\] //p')
+          selected="${message// / or }"
+        else
+          selected=""
+        fi
+        echo "##vso[task.setvariable variable=SELECTED_TESTS;isOutput=true]$selected"
+      displayName: Check selected tests for all random seeds
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
       condition: startsWith(variables['DISTRIB'], 'conda')
