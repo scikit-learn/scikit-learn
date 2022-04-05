@@ -16,6 +16,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
+
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
