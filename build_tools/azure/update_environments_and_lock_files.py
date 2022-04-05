@@ -284,8 +284,8 @@ def write_all_conda_environments(build_metadata_list, folder_path):
 
 def conda_lock(environment_path, lock_file_path, platform):
     command = (
-        f"conda-lock lock --mamba --platform {platform} "
-        f"--file {environment_path} --lockfile {lock_file_path}"
+        f"conda-lock lock --mamba --kind explicit --platform {platform} "
+        f"--file {environment_path} --filename-template {lock_file_path}"
     )
 
     logger.debug("conda-lock command: %s", command)
@@ -300,7 +300,7 @@ def create_conda_lock_file(build_metadata, folder_path):
     if not lock_file_basename.endswith(platform):
         lock_file_basename = f"{lock_file_basename}_{platform}"
 
-    lock_file_path = folder_path / f"{lock_file_basename}_conda-lock.yml"
+    lock_file_path = folder_path / f"{lock_file_basename}_conda.lock"
     conda_lock(environment_path, lock_file_path, platform)
 
 
