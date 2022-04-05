@@ -74,7 +74,7 @@ jobs:
     matrix:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
-        LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock'
         CHECK_WARNINGS: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
@@ -100,7 +100,7 @@ jobs:
     matrix:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
-        LOCK_FILE: 'build_tools/azure/pylatest_conda_forge_mkl_no_coverage_linux-64_conda-lock.yml'
+        LOCK_FILE: 'build_tools/azure/pylatest_conda_forge_mkl_no_coverage_linux-64_conda.lock'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'true'
 
@@ -122,7 +122,7 @@ jobs:
       pypy3:
         DOCKER_CONTAINER: 'condaforge/miniforge3:4.10.3-5'
         DISTRIB: 'conda-pypy3'
-        LOCK_FILE: './build_tools/azure/pypy3_linux-64_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/pypy3_linux-64_conda.lock'
         CREATE_ISSUE_ON_TRACKER: 'true'
 
 # Will run all the time regardless of linting outcome.
@@ -139,7 +139,7 @@ jobs:
     matrix:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
         COVERAGE: 'true'
         SHOW_SHORT_SUMMARY: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
@@ -159,7 +159,7 @@ jobs:
     matrix:
       py38_conda_forge_openblas_ubuntu_1804:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_1804_linux-64_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_1804_linux-64_conda.lock'
         COVERAGE: 'false'
         BUILD_WITH_ICC: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
@@ -187,7 +187,7 @@ jobs:
       # Linux + Python 3.8 build with OpenBLAS
       py38_conda_defaults_openblas:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/py38_conda_defaults_openblas_linux-64_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/py38_conda_defaults_openblas_linux-64_conda.lock'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_RUN_FLOAT32_TESTS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
@@ -195,7 +195,7 @@ jobs:
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
-        LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
@@ -235,11 +235,11 @@ jobs:
     matrix:
       pylatest_conda_forge_mkl:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda-lock.yml'
+        LOCK_FILE: './build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda.lock'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '6'  # non-default seed
