@@ -763,6 +763,9 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.normalized_mutual_info_score` which could return
   unbounded values. :pr:`22635` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixes `precision_recall_curve` and `average_precision_score` when true labels
+  are all negative. :pr:`19085` by :user:`Varun Agrawal <varunagrawal>`.
+
 :mod:`sklearn.mixture`
 ......................
 
@@ -771,9 +774,6 @@ Changelog
   k-means++ and random data points. :pr:`20408` by
   :user:`Gordon Walsh <g-walsh>`, :user:`Alberto Ceballos<alceballosa>`
   and :user:`Andres Rios<ariosramirez>`.
-
-- |Fix| Fixes `precision_recall_curve` and `average_precision_score` when true labels
-  are all negative. :pr:`19085` by :user:`Varun Agrawal <varunagrawal>`.
 
 :mod:`sklearn.model_selection`
 ..............................
