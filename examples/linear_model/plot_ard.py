@@ -8,22 +8,23 @@ This example compares two different bayesian regressors:
  - a :ref:`automatic_relevance_determination`
  - a :ref:`bayesian_ridge_regression`
 
-In addition, we will also use an :ref:`ordinary_least_squares` (OLS) model as a
+In the first part, we use an :ref:`ordinary_least_squares` (OLS) model as a
 baseline for comparing the models' coefficients with respect to the true
 coefficients.
 
-The estimation of the model is done in both cases by iteratively maximizing the
-marginal log-likelihood of the observations.
+Thereafter, we show that the estimation of the model is done in both cases by
+iteratively maximizing the marginal log-likelihood of the observations.
 
-We also plot predictions and uncertainties for the ARD and the Bayesian Ridge
-regressions using a polynomial feature expansion to fit a non-linear
-relationship between `X` and `y`. Notice that the ARD regression captures the
-ground truth the best, but due to the limitations of a polynomial regression,
-both models fail when extrapolating.
+In the last section we plot predictions and uncertainties for the ARD and the
+Bayesian Ridge regressions using a polynomial feature expansion to fit a
+non-linear relationship between `X` and `y`.
 
 """
 
 # %%
+# Models robustness to recover the ground truth weights
+# =====================================================
+#
 # Generate synthetic dataset
 # --------------------------
 #
@@ -101,7 +102,7 @@ _ = plt.title("Models' coefficients")
 
 # %%
 # Plot the marginal log-likelihood
-# --------------------------------
+# ================================
 import numpy as np
 
 ard_scores = -np.array(ard.scores_)
@@ -115,8 +116,12 @@ plt.legend()
 _ = plt.title("Models log-likelihood")
 
 # %%
-# Plotting polynomial regressions with std errors of the scores
-# -------------------------------------------------------------
+# Bayesian regressions with polynomial feature expansion
+# ======================================================
+# Generate synthetic dataset
+# --------------------------
+# We create a target that is a non-linear function of the input feature.
+# Noise following a standard uniform distribution is added.
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
@@ -131,22 +136,32 @@ y = np.sqrt(X) * np.sin(X) + noise
 full_data = pd.DataFrame({"input_feature": X, "target": y})
 X = X.reshape((-1, 1))
 
-# `fit_intercept=True` for `ARDRegression()` and `BayesianRidge()`,
-# then `PolynomialFeatures` should not introduce the bias feature
+# %%
+# Fit the regressors
+# ------------------
+#
+# Here we try a degree 10 polynomial to potentially overfit, though the bayesian
+# linear models regularize the size of the polynomial coefficients.
+# As `fit_intercept=True` by default for `ARDRegression()` and `BayesianRidge()`,
+# then `PolynomialFeatures` should not introduce an additional bias feature.
+
 ard_poly = make_pipeline(
     PolynomialFeatures(degree=10, include_bias=False),
     StandardScaler(),
     ARDRegression(),
-)
+).fit(X, y)
 brr_poly = make_pipeline(
     PolynomialFeatures(degree=10, include_bias=False),
     StandardScaler(),
     BayesianRidge(),
-)
-ard_poly.fit(X, y)
-brr_poly.fit(X, y)
+).fit(X, y)
+
 y_ard, y_ard_std = ard_poly.predict(X, return_std=True)
 y_brr, y_brr_std = brr_poly.predict(X, return_std=True)
+
+# %%
+# Plotting polynomial regressions with std errors of the scores
+# -------------------------------------------------------------
 
 ax = sns.scatterplot(
     data=full_data, x="input_feature", y="target", color="black", alpha=0.75
@@ -170,3 +185,9 @@ ax.fill_between(
 )
 ax.legend()
 _ = ax.set_title("Polynomial fit of a non-linear feature")
+
+# %%
+# The error bars represent one standard deviation of the predicted gaussian
+# distribution of the query points. Notice that the ARD regression captures the
+# ground truth the best, but due to the limitations of a polynomial regression,
+# both models fail when extrapolating.
