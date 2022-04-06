@@ -49,6 +49,7 @@ from ._k_means_elkan import init_bounds_dense
 from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
+from .._engine import get_engine_class
 
 
 ###############################################################################
@@ -258,6 +259,17 @@ def _tolerance(X, tol):
     else:
         variances = np.var(X, axis=0)
     return np.mean(variances) * tol
+
+
+class KMeansCythonEngine:
+    """Cython-based implementation of the core k-means routines
+    
+    This implementation is meant to be swappable by alternative implementations
+    in third-party packages via the sklearn_engines entry-point and the
+    `engine_provider` kwarg of `sklearn.config_context`.
+
+    TODO: see URL for more details.
+    """
 
 
 def k_means(
@@ -1347,6 +1359,9 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        engine_class = get_engine_class("kmeans", default=KMeansCythonEngine)
+        engine = engine_class(self)
+
         X = self._validate_data(
             X,
             accept_sparse="csr",

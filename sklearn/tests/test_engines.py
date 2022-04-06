@@ -46,6 +46,14 @@ def test_list_engine_provider_names():
         assert isinstance(provider_name, str)
 
 
+def test_get_engine_class_with_default():
+    # Use config_context with an empty provider tuple to make sure that not provider
+    # are available for test_missing_engine_name
+    with config_context(engine_provider=()):
+        engine_class = get_engine_class("test_missing_engine_name", default=FakeEngine)
+    assert engine_class is FakeEngine
+
+
 def test_get_engine_class_for_invalid_provider():
     expected_message = re.escape(
         "Could not find any provider for the skearn_engines entry point with"
