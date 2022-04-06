@@ -207,19 +207,22 @@ results will stop getting significantly better beyond a critical number of
 trees. The latter is the size of the random subsets of features to consider
 when splitting a node. The lower the greater the reduction of variance, but
 also the greater the increase in bias. Empirical good default values are
-``max_features=None`` (always considering all features instead of a random
-subset) for regression problems, and ``max_features="sqrt"`` (using a random
-subset of size ``sqrt(n_features)``) for classification tasks (where
-``n_features`` is the number of features in the data). Good results are often
-achieved when setting ``max_depth=None`` in combination with
-``min_samples_split=2`` (i.e., when fully developing the trees). Bear in mind
-though that these values are usually not optimal, and might result in models
-that consume a lot of RAM. The best parameter values should always be
-cross-validated. In addition, note that in random forests, bootstrap samples
-are used by default (``bootstrap=True``) while the default strategy for
-extra-trees is to use the whole dataset (``bootstrap=False``). When using
-bootstrap sampling the generalization accuracy can be estimated on the left out
-or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
+``max_features=1.0`` or equivalently ``max_features=None`` (always considering
+all features instead of a random subset) for regression problems, and
+``max_features="sqrt"`` (using a random subset of size ``sqrt(n_features)``)
+for classification tasks (where ``n_features`` is the number of features in
+the data). The default value of ``max_features=1.0`` is equivalent to bagged
+trees and more randomness can be achieved by setting smaller values (e.g. 0.3
+is a typical default in the literature). Good results are often achieved when
+setting ``max_depth=None`` in combination with ``min_samples_split=2`` (i.e.,
+when fully developing the trees). Bear in mind though that these values are
+usually not optimal, and might result in models that consume a lot of RAM.
+The best parameter values should always be cross-validated. In addition, note
+that in random forests, bootstrap samples are used by default
+(``bootstrap=True``) while the default strategy for extra-trees is to use the
+whole dataset (``bootstrap=False``). When using bootstrap sampling the
+generalization error can be estimated on the left out or out-of-bag samples.
+This can be enabled by setting ``oob_score=True``.
 
 .. note::
 
@@ -721,9 +724,9 @@ homogeneous to a prediction: it cannot be a class, since the trees predict
 continuous values.
 
 The mapping from the value :math:`F_M(x_i)` to a class or a probability is
-loss-dependent. For the deviance (or log-loss), the probability that
+loss-dependent. For the log-loss, the probability that
 :math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
-x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid function.
+x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
 
 For multiclass classification, K trees (for K classes) are built at each of
 the :math:`M` iterations. The probability that :math:`x_i` belongs to class
@@ -761,11 +764,11 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The binomial
-      negative log-likelihood loss function for binary classification (provides
-      probability estimates).  The initial model is given by the
+    * Binary log-loss (``'log-loss'``): The binomial
+      negative log-likelihood loss function for binary classification. It provides
+      probability estimates.  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The multinomial
+    * Multi-class log-loss (``'log-loss'``): The multinomial
       negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
@@ -774,7 +777,7 @@ the parameter ``loss``:
       inefficient for data sets with a large number of classes.
     * Exponential loss (``'exponential'``): The same loss function
       as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'deviance'``; can only be used for binary
+      examples than ``'log-loss'``; can only be used for binary
       classification.
 
 .. _gradient_boosting_shrinkage:
@@ -1210,8 +1213,8 @@ Finally, many parts of the implementation of
      <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
   .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
      package", 2007
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, `"XGBoost: A Scalable Tree
-     Boosting System" <https://arxiv.org/abs/1603.02754>`_
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
+     Boosting System" <1603.02754>`
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_

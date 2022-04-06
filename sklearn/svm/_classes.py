@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
@@ -221,8 +222,8 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
@@ -253,7 +254,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
-        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
+        self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
             self.C,
@@ -270,6 +271,11 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             self.loss,
             sample_weight=sample_weight,
         )
+        # Backward compatibility: _fit_liblinear is used both by LinearSVC/R
+        # and LogisticRegression but LogisticRegression sets a structured
+        # `n_iter_` attribute with information about the underlying OvR fits
+        # while LinearSVC/R only reports the maximum value.
+        self.n_iter_ = n_iter_.max().item()
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -450,8 +456,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
@@ -480,7 +486,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             accept_large_sparse=False,
         )
         penalty = "l2"  # SVR only accepts l2 penalty
-        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
+        self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
             self.C,
@@ -498,6 +504,11 @@ class LinearSVR(RegressorMixin, LinearModel):
             sample_weight=sample_weight,
         )
         self.coef_ = self.coef_.ravel()
+        # Backward compatibility: _fit_liblinear is used both by LinearSVC/R
+        # and LogisticRegression but LogisticRegression sets a structured
+        # `n_iter_` attribute with information about the underlying OvR fits
+        # while LinearSVC/R only reports the maximum value.
+        self.n_iter_ = n_iter_.max().item()
 
         return self
 
@@ -537,10 +548,9 @@ class SVC(BaseSVC):
         inversely proportional to C. Must be strictly positive. The penalty
         is a squared l2 penalty.
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
         Specifies the kernel type to be used in the algorithm.
-        It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-        a callable.
         If none is given, 'rbf' will be used. If a callable is given it is
         used to pre-compute the kernel matrix from data matrices; that matrix
         should be an array of shape ``(n_samples, n_samples)``.
@@ -599,9 +609,10 @@ class SVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
-        ('ovo') is always used as multi-class strategy. The parameter is
-        ignored for binary classification.
+        (n_samples, n_classes * (n_classes - 1) / 2). However, note that
+        internally, one-vs-one ('ovo') is always used as a multi-class strategy
+        to train models; an ovr matrix is only constructed from the ovo matrix.
+        The parameter is ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -668,6 +679,13 @@ class SVC(BaseSVC):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : ndarray of shape (n_classes * (n_classes - 1) // 2,)
+        Number of iterations run by the optimization routine to fit the model.
+        The shape of this attribute depends on the number of models optimized
+        which in turn depends on the number of classes.
+
+        .. versionadded:: 1.1
 
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
@@ -794,10 +812,9 @@ class NuSVC(BaseSVC):
         <nu_svc>`) and a lower bound of the fraction of support vectors.
         Should be in the interval (0, 1].
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -923,6 +940,13 @@ class NuSVC(BaseSVC):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : ndarray of shape (n_classes * (n_classes - 1) // 2,)
+        Number of iterations run by the optimization routine to fit the model.
+        The shape of this attribute depends on the number of models optimized
+        which in turn depends on the number of classes.
+
+        .. versionadded:: 1.1
 
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
@@ -1052,10 +1076,9 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1138,6 +1161,11 @@ class SVR(RegressorMixin, BaseLibSVM):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1251,10 +1279,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     C : float, default=1.0
         Penalty parameter C of the error term.
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1326,6 +1353,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1429,10 +1461,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1510,6 +1541,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1591,8 +1627,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Set of samples, where n_samples is the number of samples and
-            n_features is the number of features.
+            Set of samples, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -1604,6 +1640,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         **params : dict
             Additional fit parameters.
 
+            .. deprecated:: 1.0
+                The `fit` method will not longer accept extra keyword
+                parameters in 1.2. These keyword parameters were
+                already discarded.
+
         Returns
         -------
         self : object
@@ -1613,7 +1654,16 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         -----
         If X is not a C-ordered contiguous array it is copied.
         """
-        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight, **params)
+        # TODO: Remove in v1.2
+        if len(params) > 0:
+            warnings.warn(
+                "Passing additional keyword parameters has no effect and is "
+                "deprecated in 1.0. An error will be raised from 1.2 and "
+                "beyond. The ignored keyword parameter(s) are: "
+                f"{params.keys()}.",
+                FutureWarning,
+            )
+        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self
 
