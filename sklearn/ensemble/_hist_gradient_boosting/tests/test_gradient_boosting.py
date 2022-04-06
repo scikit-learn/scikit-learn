@@ -1128,10 +1128,11 @@ def test_uint8_predict(Est):
     ],
 )
 def test_loss_deprecated(old_loss, new_loss, Estimator):
-    X, y = X_classification[:10], y_classification[:10]
-
     if old_loss == "categorical_crossentropy":
-        y[0] = 3  # make sure it is multiclass
+        X, y = X_multi_classification[:10], y_multi_classification[:10]
+        assert len(np.unique(y)) > 2
+    else:
+        X, y = X_classification[:10], y_classification[:10]
 
     est1 = Estimator(loss=old_loss, random_state=0)
 
