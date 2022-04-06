@@ -260,7 +260,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
     y_pred = getattr(classifier, response_method)(X_test)
-    # we select the correcponding probability columns or reverse the decision
+    # we select the corresponding probability columns or reverse the decision
     #  function otherwise
     y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
     y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
