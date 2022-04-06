@@ -549,14 +549,6 @@ Changelog
   values in the training set.
   :pr:`21617` by :user:`Christian Ritter <chritter>`.
 
-:mod:`sklearn.linear_model`
-...........................
-
-- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
-  `predict` was performing an `argmax` on the scores obtained from
-  `decision_function` instead of returning the multilabel indicator matrix.
-  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 - |Enhancement| :class:`linear_model.RidgeClassifier` is now supporting
   multilabel classification.
   :pr:`19689` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -650,6 +642,7 @@ Changelog
 - |Fix| :class:`linear_model.TheilSenRegressor` now validates input parameter
   max_subpopulation in `fit` instead of `__init__`.
   :pr:`21767` by :user:`Maren Westermann <marenwestermann>`.
+
 - |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`

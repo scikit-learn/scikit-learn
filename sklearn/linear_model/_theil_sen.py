@@ -382,7 +382,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             "max_subpopulation",
             # target_type should be numbers.Integral but can accept float
             # for backward compatibility reasons
-            target_type=numbers.Real,
+            target_type=(numbers.Real, numbers.Integral),
             min_val=1,
         )
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))

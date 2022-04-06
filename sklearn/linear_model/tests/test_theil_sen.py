@@ -208,7 +208,7 @@ def test_calc_breakdown_point():
         (
             {"max_subpopulation": "hello"},
             TypeError,
-            "max_subpopulation must be an instance of <class 'numbers.Real'>",
+            "max_subpopulation must be an instance of {float, int}",
         ),
         (
             {"max_subpopulation": -1},
