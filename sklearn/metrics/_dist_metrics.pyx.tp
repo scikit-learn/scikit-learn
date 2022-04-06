@@ -18,7 +18,7 @@ implementation_specific_values = [
     # implementations.
     #
     # We also use 64bit types as defined in `sklearn.utils._typedefs`
-    # to maintain backward compatibility as the symbol level for extra
+    # to maintain backward compatibility at the symbol level for extra
     # safety.
     #
     ('', '64', 'DTYPE_t', 'DTYPE'),
@@ -896,8 +896,7 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
-    D(x, y) = (N_TF + N_FT) / (N_TT + N_TF + N_FT)
-
+        D(x, y) = (N_TF + N_FT) / (N_TT + N_TF + N_FT)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -926,8 +925,7 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
-    D(x, y) = (N_TF + N_FT) / N
-
+        D(x, y) = (N_TF + N_FT) / N
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1000,8 +998,7 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
-    D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
-
+        D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1024,9 +1021,7 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
-    D(x, y) = (N - N_TT) / N
-
-
+        D(x, y) = (N - N_TT) / N
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1049,8 +1044,7 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
-    D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
-
+        D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1073,8 +1067,7 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
-    D(x, y) = (N_TF + N_FT) / (N_TT / 2 + N_FT + N_TF)
-
+        D(x, y) = (N_TF + N_FT) / (N_TT / 2 + N_FT + N_TF)
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
