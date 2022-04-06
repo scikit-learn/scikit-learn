@@ -578,6 +578,13 @@ Changelog
   plot to draw for each feature interaction.
   :pr:`19438` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support plotting centered
+  Individual Conditional Expectation (cICE) and centered PDP curves controlled
+  by setting the ``centered`` parameter to True.
+  :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.isotonic`
 .......................
 

@@ -748,17 +748,6 @@ Changelog
   :func:`inspection.permutation_importance`. :pr:`19411` by :user:`Simona
   Maggio <simonamaggio>`.
 
-- |Enhancement| :func:`inspection.partial_dependence` and
-  :func:`inspection.plot_partial_dependence` now support plotting centered
-  Individual Conditional Expectation (cICE) and centered PDP curves controlled
-  by setting the ``centered`` parameter to True.
-  :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and
-  :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Enhancement| Add kwargs to format ICE and PD lines separately in partial
-  dependence plots :func:`~sklearn.inspection.plot_partial_dependence` and
-  :meth:`~sklearn.inspection.PartialDependenceDisplay.plot`.
-  :pr:`19428` by :user:`Mehdi Hamoumi <mhham>`.
 - |API| :class:`inspection.PartialDependenceDisplay` exposes a class method:
   :func:`~inspection.PartialDependenceDisplay.from_estimator`.
   :func:`inspection.plot_partial_dependence` is deprecated in favor of the

@@ -173,13 +173,10 @@ def test_plot_partial_dependence_kind(
     assert disp.contours_[0, 1] is None
     assert disp.contours_[0, 2] is None
 
-    # # this PR
-    # if kind in ("both", "individual") and centered:
-    #     assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
-    # else:
-    #     assert all([ln._y[0] != 0.0 for ln in disp.lines_.ravel() if ln is not None])
-    # # main
-    # assert disp.kind == kind
+    if kind in ("both", "individual") and centered:
+        assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
+    else:
+        assert all([ln._y[0] != 0.0 for ln in disp.lines_.ravel() if ln is not None])
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
