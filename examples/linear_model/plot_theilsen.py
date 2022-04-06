@@ -85,7 +85,7 @@ for name, estimator in estimators:
 
 plt.axis("tight")
 plt.legend(loc="upper left")
-plt.title("Corrupt y")
+_ = plt.title("Corrupt y")
 
 # %%
 # Outliers in the X direction
