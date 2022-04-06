@@ -20,10 +20,6 @@ stacking strategy. Stacking slightly improves the overall performance.
 #          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
 
-from sklearn import set_config
-
-set_config(display="diagram")
-
 # %%
 # Download the dataset
 ##############################################################################
@@ -249,11 +245,11 @@ for ax, (name, est) in zip(
 ):
     start_time = time.time()
     score = cross_validate(
-        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=-1, verbose=0
+        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=2, verbose=0
     )
     elapsed_time = time.time() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+    y_pred = cross_val_predict(est, X, y, n_jobs=2, verbose=0)
 
     plot_regression_results(
         ax,

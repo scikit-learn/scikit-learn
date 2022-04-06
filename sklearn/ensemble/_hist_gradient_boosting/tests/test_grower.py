@@ -476,12 +476,12 @@ def test_grow_tree_categories():
     assert left["count"] >= right["count"]
 
     # check binned category value (1)
-    expected_binned_cat_bitset = [2 ** 1] + [0] * 7
+    expected_binned_cat_bitset = [2**1] + [0] * 7
     binned_cat_bitset = predictor.binned_left_cat_bitsets
     assert_array_equal(binned_cat_bitset[0], expected_binned_cat_bitset)
 
     # check raw category value (9)
-    expected_raw_cat_bitsets = [2 ** 9] + [0] * 7
+    expected_raw_cat_bitsets = [2**9] + [0] * 7
     raw_cat_bitsets = predictor.raw_left_cat_bitsets
     assert_array_equal(raw_cat_bitsets[0], expected_raw_cat_bitsets)
 

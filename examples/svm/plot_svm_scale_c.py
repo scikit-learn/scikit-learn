@@ -138,7 +138,7 @@ for clf, cs, X, y in clf_sets:
             refit=False,
             param_grid=param_grid,
             cv=ShuffleSplit(
-                train_size=train_size, test_size=0.3, n_splits=250, random_state=1
+                train_size=train_size, test_size=0.3, n_splits=50, random_state=1
             ),
         )
         grid.fit(X, y)

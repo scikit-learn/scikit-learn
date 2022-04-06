@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import warnings
 
 from scipy.sparse import issparse
 from sklearn.semi_supervised import _label_propagation as label_propagation
@@ -151,14 +152,14 @@ def test_convergence_warning():
     assert mdl.n_iter_ == mdl.max_iter
 
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=500)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
         mdl.fit(X, y)
-    assert len(record) == 0
 
     mdl = label_propagation.LabelPropagation(kernel="rbf", max_iter=500)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
         mdl.fit(X, y)
-    assert len(record) == 0
 
 
 @pytest.mark.parametrize(
@@ -173,9 +174,9 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     X = np.array([[100.0, 100.0], [100.0, 100.0], [0.0, 0.0], [0.0, 0.0]])
     y = np.array([0, 1, -1, -1])
     mdl = LabelPropagationCls(kernel="knn", max_iter=100, n_neighbors=1)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         mdl.fit(X, y)
-    assert len(record) == 0
 
 
 def test_predict_sparse_callable_kernel():
@@ -183,7 +184,7 @@ def test_predict_sparse_callable_kernel():
 
     # Custom sparse kernel (top-K RBF)
     def topk_rbf(X, Y=None, n_neighbors=10, gamma=1e-5):
-        nn = NearestNeighbors(n_neighbors=10, metric="euclidean", n_jobs=-1)
+        nn = NearestNeighbors(n_neighbors=10, metric="euclidean", n_jobs=2)
         nn.fit(X)
         W = -1 * nn.kneighbors_graph(Y, mode="distance").power(2) * gamma
         np.exp(W.data, out=W.data)
