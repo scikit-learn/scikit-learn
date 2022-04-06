@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
@@ -1008,7 +1006,7 @@ def paired_euclidean_distances(X, Y):
     Returns
     -------
     distances : ndarray of shape (n_samples,)
-        Output array/matrix containing the calculated paired euclidian
+        Output array/matrix containing the calculated paired euclidean
         distances.
     """
     X, Y = check_paired_arrays(X, Y)
@@ -1291,9 +1289,10 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1301,6 +1300,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The kernel matrix.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
