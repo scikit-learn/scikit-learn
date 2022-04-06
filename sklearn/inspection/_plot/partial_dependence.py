@@ -291,7 +291,7 @@ def plot_partial_dependence(
         the ICE and PD lines are centered around the origin of the x-axis. By
         default, no centering is done.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.1
 
     Returns
     -------
@@ -598,7 +598,7 @@ class PartialDependenceDisplay:
         max for two-way partial dependence curves. If `None`, the limit will be
         inferred from the global minimum and maximum of all predictions.
 
-        .. deprecated:: 1.0
+        .. deprecated:: 1.1
            Pass the parameter `pdp_lim` to
            :meth:`~sklearn.inspection.PartialDependenceDisplay.plot` instead.
 
@@ -751,6 +751,7 @@ class PartialDependenceDisplay:
         contour_kw=None,
         ax=None,
         kind="average",
+        centered=False,
         subsample=1000,
         random_state=None,
     ):
@@ -942,6 +943,13 @@ class PartialDependenceDisplay:
            ``kind='average'``. Plotting individual dependencies requires using the
            slower ``method='brute'`` option.
 
+        centered : bool, default=False
+            Only has an effect when `kind='both'` or `kind='individual'`. When `True`,
+            the ICE and PD lines are centered around the origin of the x-axis. By
+            default, no centering is done.
+
+            .. versionadded:: 1.1
+
         subsample : float, int or None, default=1000
             Sampling for ICE curves when `kind` is 'individual' or 'both'.
             If `float`, should be between 0.0 and 1.0 and represent the proportion
@@ -998,6 +1006,7 @@ class PartialDependenceDisplay:
             kind=kind,
             subsample=subsample,
             random_state=random_state,
+            centered=centered,
         )
 
     def _get_sample_count(self, n_samples):
@@ -1393,8 +1402,8 @@ class PartialDependenceDisplay:
         # FIXME: remove in 1.2
         if self.pdp_lim != "deprecated":
             warnings.warn(
-                "The `pdp_lim` parameter is deprecated in version 1.0 and will be "
-                "removed in version 1.2. Provide `pdp_lim` to the `plot` method."
+                "The `pdp_lim` parameter is deprecated in version 1.1 and will be "
+                "removed in version 1.3. Provide `pdp_lim` to the `plot` method."
                 "instead.",
                 FutureWarning,
             )

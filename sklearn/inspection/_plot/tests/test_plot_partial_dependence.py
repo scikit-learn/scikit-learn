@@ -751,7 +751,9 @@ def test_partial_dependence_overwrite_labels(
 
 
 # FIXME: remove in 1.2
-def test_partial_dependence_display_deprecation(pyplot, clf_diabetes, diabetes):
+def test_partial_dependence_display_deprecation(
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes
+):
     """Check that we raise the proper warning in the display."""
     disp = plot_partial_dependence(
         clf_diabetes,
@@ -781,7 +783,7 @@ def test_partial_dependence_display_deprecation(pyplot, clf_diabetes, diabetes):
 @pytest.mark.parametrize("kind", ["individual", "average", "both"])
 @pytest.mark.parametrize("centered", [True, False])
 def test_partial_dependence_plot_limits_one_way(
-    pyplot, clf_diabetes, diabetes, kind, centered
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes, kind, centered
 ):
     """Check that the PD limit on the plots are properly set."""
     disp = plot_partial_dependence(
@@ -811,7 +813,7 @@ def test_partial_dependence_plot_limits_one_way(
 
 @pytest.mark.parametrize("centered", [True, False])
 def test_partial_dependence_plot_limits_two_way(
-    pyplot, clf_diabetes, diabetes, centered
+    plot_partial_dependence, pyplot, clf_diabetes, diabetes, centered
 ):
     disp = plot_partial_dependence(
         clf_diabetes,
