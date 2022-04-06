@@ -14,33 +14,24 @@ contain outliers.
 2. The ROC curve is computed on the same dataset using the knowledge
 of the labels.
 
-There is no particular reason to choose algorithms LOF and ROC. The goal
+There is no particular reason to choose algorithms LOF and IForest. The goal
 is to show that different algorithm performs well on different datasets.
-
-Interpreting the ROC plot
--------------------------
-The algorithm performance relates to how good the true positive rate (TPR)
-is at low value of the false positive rate (FPR). The better algorithms
-have the curve on the top-left of the plot and the area under curve (AUC)
-close to 1. The diagonal dashed line represents a random classification
-of outliers and inliers.
 """
 
-from time import time
-import math
+# Author: Pharuj Rajborirug <pharuj.ra@kmitl.ac.th>
+# License: BSD 3 clause
+
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.ensemble import IsolationForest
-from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
-from sklearn.preprocessing import LabelBinarizer
 
 print(__doc__)
 
 rng = np.random.RandomState(42)
 
-# datasets
+# %%
+# Generate datasets
+# -----------------
+#
+# The example uses real world datasets available in `scikit-learn.datasets`.
 datasets = [
     "http",
     "smtp",
@@ -52,11 +43,31 @@ datasets = [
     "cardiotocography",
 ]
 
-# outlier detection models
+# %%
+# Generate outlier detection models
+# ---------------------------------
+
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.ensemble import IsolationForest
+
 models = [
     ("LOF", LocalOutlierFactor(n_neighbors=20, contamination="auto")),
     ("IForest", IsolationForest(random_state=rng, contamination="auto")),
 ]
+
+# %%
+# Preprocess data and compute ROC curves
+# --------------------------------------
+#
+# During the data preprocessing, we reduce the sample size of some datasets to
+# speed up computation.
+
+import math
+import matplotlib.pyplot as plt
+from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
+from sklearn.preprocessing import LabelBinarizer
+from time import time
+from sklearn.metrics import roc_curve, auc
 
 rows = math.ceil(len(datasets) / 2)
 plt.figure(figsize=(10, rows * 3))
@@ -73,7 +84,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
     print("vectorizing data")
     if dataset_name == "SF":
         idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
-        X = X[idx]  # reduce the sample size to speed up computation
+        X = X[idx]  # reduce the sample size
         y = y[idx]
         lb = LabelBinarizer()
         x1 = lb.fit_transform(X[:, 1].astype(str))
@@ -82,7 +93,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
 
     if dataset_name == "SA":
         idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
-        X = X[idx]  # reduce the sample size to speed up computation
+        X = X[idx]  # reduce the sample size
         y = y[idx]
         lb = LabelBinarizer()
         x1 = lb.fit_transform(X[:, 1].astype(str))
@@ -99,7 +110,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         X = dataset.data
         y = dataset.target
         idx = rng.choice(X.shape[0], int(X.shape[0] * 0.1), replace=False)
-        X = X[idx]  # reduce the sample size to speed up computation
+        X = X[idx]  # reduce the sample size
         y = y[idx]
 
         # normal data are those with attribute 2
@@ -124,7 +135,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
             X_mal, y_mal = X[s], y[s]
             X_ben, y_ben = X[~s], y[~s]
 
-            # downsampled to 39 points (9.8% outliers) to speed up computation
+            # downsampled to 39 points (9.8% outliers)
             idx = rng.choice(y_mal.shape[0], 39, replace=False)
             X_mal2 = X_mal[idx]
             y_mal2 = y_mal[idx]
@@ -153,6 +164,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         area = auc(fpr, tpr)
         label_ = f"{model_name} (AUC = {area:0.3f}, train time: {fit_time:0.2f})"
         plt.plot(fpr, tpr, lw=1, label=label_)
+    plt.plot([0, 1], [0, 1], lw=1, linestyle=":")
 
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
@@ -162,3 +174,13 @@ for dataset_idx, dataset_name in enumerate(datasets):
     plt.ylabel("True Positive Rate")
 plt.tight_layout(pad=2.0)  # spacing between subplots
 plt.show()
+
+# %%
+# Interpreting the ROC plot
+# -------------------------
+#
+# The algorithm performance relates to how good the true positive rate (TPR)
+# is at low value of the false positive rate (FPR). The best algorithms
+# have the curve on the top-left of the plot and the area under curve (AUC)
+# close to 1. The diagonal dashed line represents a random classification
+# of outliers and inliers.
