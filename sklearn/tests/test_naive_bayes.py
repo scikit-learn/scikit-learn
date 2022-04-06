@@ -515,7 +515,7 @@ def test_mnb_prior_unobserved_targets():
     clf = MultinomialNB()
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error", RuntimeWarning)
 
         clf.partial_fit(X, y, classes=[0, 1, 2])
 
@@ -525,7 +525,7 @@ def test_mnb_prior_unobserved_targets():
 
     # add a training example with previously unobserved class
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.simplefilter("error", RuntimeWarning)
 
         clf.partial_fit([[1, 1]], [2])
 
