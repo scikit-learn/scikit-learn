@@ -896,6 +896,8 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+    D(x, y) = (N_TF + N_FT) / (N_TT + N_TF + N_FT)
+
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -924,6 +926,8 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+    D(x, y) = (N_TF + N_FT) / N
+
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -945,6 +949,8 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Dice Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
+
+        D(x, y) = (N_TF + N_FT) / (2 * N_TT + N_TF + N_FT)
 
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -969,6 +975,8 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+        D(x, y) = 1 - N_TT / (N + N_TF + N_FT)
+
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -992,6 +1000,8 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+    D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
+
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1013,6 +1023,9 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Russell-Rao Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
+
+    D(x, y) = (N - N_TT) / N
+
 
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -1036,6 +1049,8 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
+    D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
+
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
                              ITYPE_t size) nogil except -1:
@@ -1057,6 +1072,8 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     Sokal-Sneath Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
+
+    D(x, y) = (N_TF + N_FT) / (N_TT / 2 + N_FT + N_TF)
 
     """
     cdef inline DTYPE_t dist(self, const {{DTYPE_t}}* x1, const {{DTYPE_t}}* x2,
@@ -1082,6 +1099,8 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     the surface of a sphere.  The first distance of each point is assumed
     to be the latitude, the second is the longitude, given in radians.
     The dimension of the points must be 2:
+
+    D(x, y) = 2 arcsin[sqrt{sin^2((x1 - y1) / 2) + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
 
     """
 
