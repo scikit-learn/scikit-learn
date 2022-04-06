@@ -777,6 +777,20 @@ Changelog
 - |Fix| Fixes `precision_recall_curve` and `average_precision_score` when true labels
   are all negative. :pr:`19085` by :user:`Varun Agrawal <varunagrawal>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Enhancement| :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture` can now be initialized using
+  k-means++ and random data points. :pr:`20408` by
+  :user:`Gordon Walsh <g-walsh>`, :user:`Alberto Ceballos<alceballosa>`
+  and :user:`Andres Rios<ariosramirez>`.
+
+- |Fix| Fix a bug that correctly initialize `precisions_cholesky_` in
+  :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
+  its square root.
+  :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -793,14 +807,6 @@ Changelog
   :class:`model_selection.HalvingGridSearchCV`
   now validate input parameters in `fit` instead of `__init__`.
   :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
-
-:mod:`sklearn.mixture`
-......................
-
-- |Fix| Fix a bug that correctly initialize `precisions_cholesky_` in
-  :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
-  its square root.
-  :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.multiclass`
 .........................
