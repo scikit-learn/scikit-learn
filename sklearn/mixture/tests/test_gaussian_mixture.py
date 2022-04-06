@@ -1253,21 +1253,42 @@ def test_gaussian_mixture_setting_best_params():
 @pytest.mark.parametrize(
     "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
 )
-def test_check_non_unique_means_initialisation(init_params):
-    # Check that all initialisations provide unique starting means
-    rng = np.random.RandomState(0)
+def test_init_means_not_duplicated(init_params, global_random_seed):
+    # Check that all initialisations provide not duplicated starting means
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng, scale=5)
     n_components = rand_data.n_components
     X = rand_data.X["full"]
-    default_means_init = {}
 
     gmm = GaussianMixture(
-        n_components=n_components, random_state=0, init_params=init_params, max_iter=1
+        n_components=n_components, init_params=init_params, random_state=rng, max_iter=0
     )
     gmm.fit(X)
-    default_means_init[init_params] = gmm.means_
-    for i_mean, j_mean in itertools.combinations(default_means_init.values(), r=2):
-        assert np.any(np.not_equal(i_mean, j_mean))
+
+    means = gmm.means_
+    for i_mean, j_mean in itertools.combinations(means, r=2):
+        assert not np.allclose(i_mean, j_mean)
+
+
+@pytest.mark.parametrize(
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+)
+def test_means_for_all_inits(init_params, global_random_seed):
+    # Check fitted means properties for all initializations
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, scale=5)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+
+    gmm = GaussianMixture(
+        n_components=n_components, init_params=init_params, random_state=rng
+    )
+    gmm.fit(X)
+
+    assert gmm.means_.shape == (n_components, X.shape[1])
+    assert np.all(X.min(axis=0) <= gmm.means_)
+    assert np.all(gmm.means_ <= X.max(axis=0))
+    assert gmm.converged_
 
 
 def test_max_iter_zero():
