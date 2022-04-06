@@ -34,7 +34,8 @@ def init_bounds_dense(
         floating[:, ::1] center_half_distances,  # IN
         int[::1] labels,                         # OUT
         floating[::1] upper_bounds,              # OUT
-        floating[:, ::1] lower_bounds):          # OUT
+        floating[:, ::1] lower_bounds,           # OUT
+        int n_threads):
     """Initialize upper and lower bounds for each sample for dense input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -72,6 +73,9 @@ def init_bounds_dense(
     lower_bounds : ndarray, of shape(n_samples, n_clusters), dtype=floating
         The lower bound on the distance between each sample and each cluster
         center. This array is modified in place.
+
+    n_threads : int
+        The number of threads to be used by openmp.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -81,7 +85,9 @@ def init_bounds_dense(
         floating min_dist, dist
         int best_cluster, i, j
 
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(
+        n_samples, num_threads=n_threads, schedule='static', nogil=True
+    ):
         best_cluster = 0
         min_dist = _euclidean_dense_dense(&X[i, 0], &centers[0, 0],
                                           n_features, False)
@@ -104,7 +110,8 @@ def init_bounds_sparse(
         floating[:, ::1] center_half_distances,  # IN
         int[::1] labels,                         # OUT
         floating[::1] upper_bounds,              # OUT
-        floating[:, ::1] lower_bounds):          # OUT
+        floating[:, ::1] lower_bounds,           # OUT
+        int n_threads):
     """Initialize upper and lower bounds for each sample for sparse input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -142,6 +149,9 @@ def init_bounds_sparse(
     lower_bounds : ndarray of shape(n_samples, n_clusters), dtype=floating
         The lower bound on the distance between each sample and each cluster
         center. This array is modified in place.
+
+    n_threads : int
+        The number of threads to be used by openmp.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -157,7 +167,9 @@ def init_bounds_sparse(
 
         floating[::1] centers_squared_norms = row_norms(centers, squared=True)
 
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(
+        n_samples, num_threads=n_threads, schedule='static', nogil=True
+    ):
         best_cluster = 0
         min_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],

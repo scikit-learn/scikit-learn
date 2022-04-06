@@ -25,7 +25,7 @@ class PrecisionRecallDisplay:
     Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
-    -----------
+    ----------
     precision : ndarray
         Precision values.
 

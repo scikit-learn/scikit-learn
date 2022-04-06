@@ -112,14 +112,14 @@ def fit_single(
         train_time = time.clock() - t0
 
         scores = []
-        for (X, y) in [(X_train, y_train), (X_test, y_test)]:
+        for X, y in [(X_train, y_train), (X_test, y_test)]:
             try:
                 y_pred = lr.predict_proba(X)
             except NotImplementedError:
                 # Lightning predict_proba is not implemented for n_classes > 2
                 y_pred = _predict_proba(lr, X)
             score = log_loss(y, y_pred, normalize=False) / n_samples
-            score += 0.5 * alpha * np.sum(lr.coef_ ** 2) + beta * np.sum(
+            score += 0.5 * alpha * np.sum(lr.coef_**2) + beta * np.sum(
                 np.abs(lr.coef_)
             )
             scores.append(score)

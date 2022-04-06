@@ -5,6 +5,7 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import numbers
 
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
@@ -13,6 +14,7 @@ from scipy.sparse.linalg import eigsh, svds
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..utils import check_random_state
+from ..utils import check_scalar
 
 from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
 
@@ -102,7 +104,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_init = n_init
         self.random_state = random_state
 
-    def _check_parameters(self):
+    def _check_parameters(self, n_samples):
         legal_svd_methods = ("randomized", "arpack")
         if self.svd_method not in legal_svd_methods:
             raise ValueError(
@@ -110,6 +112,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                     self.svd_method, legal_svd_methods
                 )
             )
+        check_scalar(self.n_init, "n_init", target_type=numbers.Integral, min_val=1)
 
     def fit(self, X, y=None):
         """Create a biclustering for X.
@@ -128,7 +131,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             SpectralBiclustering instance.
         """
         X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
-        self._check_parameters()
+        self._check_parameters(X.shape[0])
         self._fit(X)
         return self
 
@@ -294,9 +297,9 @@ class SpectralCoclustering(BaseSpectral):
 
     References
     ----------
-    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
-      bipartite spectral graph partitioning
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
+    * :doi:`Dhillon, Inderjit S, 2001. Co-clustering documents and words using
+      bipartite spectral graph partitioning.
+      <10.1145/502512.502550>`
 
     Examples
     --------
@@ -326,6 +329,16 @@ class SpectralCoclustering(BaseSpectral):
     ):
         super().__init__(
             n_clusters, svd_method, n_svd_vecs, mini_batch, init, n_init, random_state
+        )
+
+    def _check_parameters(self, n_samples):
+        super()._check_parameters(n_samples)
+        check_scalar(
+            self.n_clusters,
+            "n_clusters",
+            target_type=numbers.Integral,
+            min_val=1,
+            max_val=n_samples,
         )
 
     def _fit(self, X):
@@ -452,9 +465,9 @@ class SpectralBiclustering(BaseSpectral):
     References
     ----------
 
-    * Kluger, Yuval, et. al., 2003. `Spectral biclustering of microarray
-      data: coclustering genes and conditions
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
+    * :doi:`Kluger, Yuval, et. al., 2003. Spectral biclustering of microarray
+      data: coclustering genes and conditions.
+      <10.1101/gr.648603>`
 
     Examples
     --------
@@ -492,8 +505,8 @@ class SpectralBiclustering(BaseSpectral):
         self.n_components = n_components
         self.n_best = n_best
 
-    def _check_parameters(self):
-        super()._check_parameters()
+    def _check_parameters(self, n_samples):
+        super()._check_parameters(n_samples)
         legal_methods = ("bistochastic", "scale", "log")
         if self.method not in legal_methods:
             raise ValueError(
@@ -502,36 +515,49 @@ class SpectralBiclustering(BaseSpectral):
                 )
             )
         try:
-            int(self.n_clusters)
-        except TypeError:
+            check_scalar(
+                self.n_clusters,
+                "n_clusters",
+                target_type=numbers.Integral,
+                min_val=1,
+                max_val=n_samples,
+            )
+        except (ValueError, TypeError):
             try:
-                r, c = self.n_clusters
-                int(r)
-                int(c)
+                n_row_clusters, n_column_clusters = self.n_clusters
+                check_scalar(
+                    n_row_clusters,
+                    "n_row_clusters",
+                    target_type=numbers.Integral,
+                    min_val=1,
+                    max_val=n_samples,
+                )
+                check_scalar(
+                    n_column_clusters,
+                    "n_column_clusters",
+                    target_type=numbers.Integral,
+                    min_val=1,
+                    max_val=n_samples,
+                )
             except (ValueError, TypeError) as e:
                 raise ValueError(
                     "Incorrect parameter n_clusters has value:"
-                    " {}. It should either be a single integer"
+                    f" {self.n_clusters}. It should either be a single integer"
                     " or an iterable with two integers:"
                     " (n_row_clusters, n_column_clusters)"
+                    " And the values are should be in the"
+                    " range: (1, n_samples)"
                 ) from e
-        if self.n_components < 1:
-            raise ValueError(
-                "Parameter n_components must be greater than 0,"
-                " but its value is {}".format(self.n_components)
-            )
-        if self.n_best < 1:
-            raise ValueError(
-                "Parameter n_best must be greater than 0, but its value is {}".format(
-                    self.n_best
-                )
-            )
-        if self.n_best > self.n_components:
-            raise ValueError(
-                "n_best cannot be larger than n_components, but {} >  {}".format(
-                    self.n_best, self.n_components
-                )
-            )
+        check_scalar(
+            self.n_components, "n_components", target_type=numbers.Integral, min_val=1
+        )
+        check_scalar(
+            self.n_best,
+            "n_best",
+            target_type=numbers.Integral,
+            min_val=1,
+            max_val=self.n_components,
+        )
 
     def _fit(self, X):
         n_sv = self.n_components
