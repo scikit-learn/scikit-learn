@@ -10,9 +10,7 @@ This example compares two different bayesian regressors:
 
 In the first part, we use an :ref:`ordinary_least_squares` (OLS) model as a
 baseline for comparing the models' coefficients with respect to the true
-coefficients.
-
-Thereafter, we show that the estimation of the model is done in both cases by
+coefficients. Thereafter, we show that the estimation of such models is done by
 iteratively maximizing the marginal log-likelihood of the observations.
 
 In the last section we plot predictions and uncertainties for the ARD and the
@@ -102,7 +100,7 @@ _ = plt.title("Models' coefficients")
 
 # %%
 # Plot the marginal log-likelihood
-# ================================
+# --------------------------------
 import numpy as np
 
 ard_scores = -np.array(ard.scores_)
@@ -116,6 +114,8 @@ plt.legend()
 _ = plt.title("Models log-likelihood")
 
 # %%
+# In this case ARD shows a faster convergence than BayesianRidge.
+#
 # Bayesian regressions with polynomial feature expansion
 # ======================================================
 # Generate synthetic dataset
