@@ -87,6 +87,17 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+- |API| The option for using the log loss, aka binomial or multinomial deviance, via
+  the `loss` parameters was made more consistent. The preferred way is by
+  setting the value to `"log_loss"`. Old option names are still valid and
+  produce the same models, but are deprecated and will be removed in version
+  1.3.
+
+  - For :class:`ensemble.GradientBoostingClassifier`, The `loss` parameter name
+    "deviance" is deprecated in favor of the new name "log_loss", which is now the
+    default.
+    :pr:`23036` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| Low-level routines for reductions on pairwise distances
   for dense float64 datasets have been refactored. The following functions
   and estimators now benefit from improved performances in terms of hardware
@@ -195,8 +206,8 @@ Changelog
 
 - |Fix| :term:`get_feature_names_out` functionality in
   :class:`compose.ColumnTransformer` was broken when columns were specified
-  using `slice`. This is fixed in :pr:`22775` by :user:`randomgeek78
-  <randomgeek78>`
+  using `slice`. This is fixed in :pr:`22775` and :pr:`22913` by
+  :user:`randomgeek78 <randomgeek78>`
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -268,6 +279,24 @@ Changelog
   :func:`sklearn.decomposition.randomized_svd` and
   get accurate results when the number of features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
+
+- |Enhancement| The :class:`decomposition.MiniBatchDictionaryLearning` and
+  :func:`decomposition.dict_learning_online` have been refactored and now have a
+  stopping criterion based on a small change of the dictionary or objective function,
+  controlled by the new `max_iter`, `tol` and `max_no_improvement` parameters. In
+  addition, some of their parameters and attributes are deprecated.
+
+  - the `n_iter` parameter of both is deprecated. Use `max_iter` instead.
+  - the `iter_offset`, `return_inner_stats`, `inner_stats` and `return_n_iter`
+    parameters of :func:`decomposition.dict_learning_online` serve internal purpose
+    and are deprecated.
+  - the `inner_stats_`, `iter_offset_` and `random_state_` attributes of
+    :class:`decomposition.MiniBatchDictionaryLearning` serve internal purpose and are
+    deprecated.
+  - the default value of the `batch_size` parameter of both will change from 3 to 256
+    in version 1.3.
+
+  :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`
   and :func:`decomposition.sparse_encode` preserve dtype for `numpy.float32`.
@@ -748,6 +777,20 @@ Changelog
 - |Fix| Fixes `precision_recall_curve` and `average_precision_score` when true labels
   are all negative. :pr:`19085` by :user:`Varun Agrawal <varunagrawal>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Enhancement| :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture` can now be initialized using
+  k-means++ and random data points. :pr:`20408` by
+  :user:`Gordon Walsh <g-walsh>`, :user:`Alberto Ceballos<alceballosa>`
+  and :user:`Andres Rios<ariosramirez>`.
+
+- |Fix| Fix a bug that correctly initialize `precisions_cholesky_` in
+  :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
+  its square root.
+  :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -765,13 +808,8 @@ Changelog
   now validate input parameters in `fit` instead of `__init__`.
   :pr:`21880` by :user:`Mrinal Tyagi <MrinalTyagi>`.
 
-:mod:`sklearn.mixture`
-......................
-
-- |Fix| Fix a bug that correctly initialize `precisions_cholesky_` in
-  :class:`mixture.GaussianMixture` when providing `precisions_init` by taking
-  its square root.
-  :pr:`22058` by :user:`Guillaume Lemaitre <glemaitre>`.
+- |Fix| :func:`model_selection.learning_curve` now supports `partial_fit`
+  with regressors. :pr:`22982` by `Thomas Fan`_.
 
 :mod:`sklearn.multiclass`
 .........................
@@ -835,6 +873,10 @@ Changelog
 - |Fix| :class:`pipeline.FeatureUnion` does not validate hyper-parameters in
   `__init__`. Validation is now handled in `.fit()` and `.fit_transform()`.
   :pr:`21954` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
+
+- |Fix| Defines `__sklearn_is_fitted__` in :class:`pipeline.FeatureUnion` to
+  return correct result with :func:`utils.validation.check_is_fitted`.
+  :pr:`22953` by :user:`randomgeek78 <randomgeek78>`.
 
 :mod:`sklearn.preprocessing`
 ............................
