@@ -176,8 +176,8 @@ plt.tight_layout(pad=2.0)  # spacing between subplots
 plt.show()
 
 # %%
-# Interpreting the ROC plot
-# -------------------------
+# Interpret the ROC plot
+# ----------------------
 #
 # The algorithm performance relates to how good the true positive rate (TPR)
 # is at low value of the false positive rate (FPR). The best algorithms
