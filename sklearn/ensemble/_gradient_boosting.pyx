@@ -219,7 +219,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                     tree.nodes, tree.value,
                     scale, k, K, X.shape[0], X.shape[1],
                     <float64 *> (<np.ndarray> out).data)
-                ## out[:, k] += np.squeeze(scale * tree.predict(X))
+                ## out[:, k] += scale * tree.predict(X).ravel()
 
 
 
