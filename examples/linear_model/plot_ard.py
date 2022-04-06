@@ -107,8 +107,8 @@ import numpy as np
 
 ard_scores = -np.array(ard.scores_)
 brr_scores = -np.array(brr.scores_)
-plt.plot(ard_scores, color="navy", label="ARD with polynomial features")
-plt.plot(brr_scores, color="red", label="BayesianRidge with polynomial features")
+plt.plot(ard_scores, color="navy", label="ARD")
+plt.plot(brr_scores, color="red", label="BayesianRidge")
 plt.ylabel("Log-likelihood")
 plt.xlabel("Iterations")
 plt.xlim(1, 30)
