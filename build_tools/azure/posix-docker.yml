@@ -9,6 +9,7 @@ jobs:
 - job: ${{ parameters.name }}
   dependsOn: ${{ parameters.dependsOn }}
   condition: ${{ parameters.condition }}
+  timeoutInMinutes: 120
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
