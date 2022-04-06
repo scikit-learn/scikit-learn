@@ -36,10 +36,13 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    for param_name, param_val in params.items():
-        # for param_name, constraints in parameter_constraints.items():
+    if not params.keys() == parameter_constraints.keys():
+        raise ValueError(
+            f"The parameter constraints {list(parameter_constraints.keys())} do not "
+            f"match the parameters to validate {list(params.keys())}."
+        )
 
-        # param_val = params[param_name]
+    for param_name, param_val in params.items():
         constraints = parameter_constraints[param_name]
         constraints = [make_constraint(constraint) for constraint in constraints]
 
@@ -111,35 +114,21 @@ def validate_params(parameter_constraints):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            sig_params = [
-                p
-                for p in signature(func).parameters.values()
-                if p.kind not in (p.VAR_KEYWORD, p.VAR_POSITIONAL)
+
+            func_sig = signature(func)
+
+            # Map *args/**kwargs to the function signature
+            params = func_sig.bind(*args, **kwargs)
+            params.apply_defaults()
+
+            # ignore self/cls and positional/keyword markers
+            to_ignore = [
+                p.name
+                for p in func_sig.parameters.values()
+                if p.kind in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
             ]
-
-            # combine the signature and the actual args and kwargs to build a map
-            # param_name: param_value
-            params = {}
-
-            # First, the positional arguments for which we need to parse the signature
-            # to recover their names. The signature object holds the parameters in the
-            # same order as in the function definition
-            for val, param in zip(args, sig_params):
-
-                # ignore self and extra args
-                if param.name == "self" or param.kind != param.POSITIONAL_OR_KEYWORD:
-                    continue
-
-                params[param.name] = val
-
-            # Then, the keyword arguments which already hold both the name and the value
-            for name, val in kwargs.items():
-
-                # ignore extra kwargs
-                if name not in [p.name for p in sig_params]:
-                    continue
-
-                params[name] = val
+            to_ignore += ["self", "cls"]
+            params = {k: v for k, v in params.arguments.items() if k not in to_ignore}
 
             validate_parameter_constraints(
                 parameter_constraints, params, caller_name=func.__qualname__
